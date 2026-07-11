@@ -203,16 +203,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/Primitive/exampleIntArithmetic"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/Primitive/exampleIntArithmetic -> /Data/Primitive/Integer = CInt 0 ]
-                    }
-                )
-            ,
                 ( "/Data/Primitive/mempty"
                 , ObjectMapItem
                     { omiDecls = []
@@ -475,7 +465,6 @@ Prgm
         , CGType
         , CGType
         , CGType
-        , CGType
         , CGClass
             ( False
             , /Data/Primitive/Integer
@@ -535,15 +524,51 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "  agree on the diagonal — i.e. it derives and verifies [x - x == 0]." )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "The arithmetic operators on [Integer]. Their results are numbers, which are too polymorphic" )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  ([Integer] or [Float]) to render directly, so the examples are [#assert]ed properties rather" )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  than printed values. ([operator-] and [operator//] are omitted here: their result unions" )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  currently trip a solver-completeness frontier when constrained to a concrete [Integer] this" )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  way — see the note passed back with this change.)" )
+            ( Value /text -> /Data/String = CStr "The arithmetic operators on [Integer], shown on concrete inputs. [operator%] is the remainder." )
+        , /Catln/#print
+            ( Value /p ->
+                ( /operator+
+                    ( /r=/Data/Primitive/Integer
+                    , /l=/Data/Primitive/Integer
+                    ) + /Data/Primitive/Integer
+                ) = /operator+
+                ( Value /l -> /Data/Primitive/Integer = CInt 2 )
+                ( Value /r -> /Data/Primitive/Integer = CInt 3 )
+            )
+            ( Value /result -> /Data/String = CStr "5" )
+        , /Catln/#print
+            ( Value /p ->
+                ( /operator-
+                    ( /r=/Data/Primitive/Integer
+                    , /l=/Data/Primitive/Integer
+                    ) + /Data/Primitive/Integer
+                ) = /operator-
+                ( Value /l -> /Data/Primitive/Integer = CInt 5 )
+                ( Value /r -> /Data/Primitive/Integer = CInt 2 )
+            )
+            ( Value /result -> /Data/String = CStr "3" )
+        , /Catln/#print
+            ( Value /p ->
+                ( /operator*
+                    ( /r=/Data/Primitive/Integer
+                    , /l=/Data/Primitive/Integer
+                    ) + /Data/Primitive/Integer
+                ) = /operator*
+                ( Value /l -> /Data/Primitive/Integer = CInt 4 )
+                ( Value /r -> /Data/Primitive/Integer = CInt 3 )
+            )
+            ( Value /result -> /Data/String = CStr "12" )
+        , /Catln/#print
+            ( Value /p ->
+                ( /operator%
+                    ( /r=/Data/Primitive/Integer
+                    , /l=/Data/Primitive/Integer
+                    ) + /Data/Primitive/Integer
+                ) = /operator%
+                ( Value /l -> /Data/Primitive/Integer = CInt 7 )
+                ( Value /r -> /Data/Primitive/Integer = CInt 3 )
+            )
+            ( Value /result -> /Data/String = CStr "1" )
         , /Catln/#print
             ( Value /p -> UnionType
                 ( Just

@@ -34,18 +34,15 @@ module(Data/Primitive)
   (_ :: Integer % _ :: Integer) -> Integer
     #runtime("int%")
 
-  # The arithmetic operators on [Integer]. Their results are numbers, which are too polymorphic
-  #   ([Integer] or [Float]) to render directly, so the examples are [#assert]ed properties rather
-  #   than printed values. ([operator-] and [operator//] are omitted here: their result unions
-  #   currently trip a solver-completeness frontier when constrained to a concrete [Integer] this
-  #   way — see the note passed back with this change.)
-  exampleIntArithmetic =
-    #example
-    #assert(test= 2 + 3 == 5)
-    #assert(test= 4 * 3 == 12)
-    #assert(test= 7 % 3 == 1)
-    0
-
+  # The arithmetic operators on [Integer], shown on concrete inputs. [operator%] is the remainder.
+  > (2 + 3)
+    >>> 5
+  > (5 - 2)
+    >>> 3
+  > (4 * 3)
+    >>> 12
+  > (7 % 3)
+    >>> 1
   (_ :: Integer <= _ :: Integer) -> Boolean
     #runtime("int<=")
 

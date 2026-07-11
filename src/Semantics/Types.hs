@@ -2675,7 +2675,25 @@ foldRecursiveType TypeEnv{teClassGraph=ClassGraph cg} _vaenv t@(UnionType Nothin
     matchingClassNames = [ fromPartialName cKey
                          | (CGClass (sealed, _, classTypes, _), cKey, _) <- graphToNodes cg
                          , sealed
-                         , S.unions (map leafNameSet classTypes) == tNames ]
+                         , S.unions (map leafNameSet classTypes) == tNames
+                         , leafsWithinMembers classTypes ]
+    -- Fold gate against WIDENING: a union leaf that carries an argument key NOT declared by its
+    -- class member, with a narrowing (non-⊤) value, is strictly smaller than the bare member — so
+    -- the union does not cover the class expansion @U_C@ and folding to @~C@ would widen it. Such
+    -- extraneous keys arise when an application's argument keys (e.g. @/l@\/@/r@ from @operator-@)
+    -- leak onto a primitive result leaf (@Integer(/r=Integer)@ from @5 - 2@), whose bare member
+    -- @Integer@ declares no fields. A genuine over-unrolling only carries the member's DECLARED
+    -- fields (a @Cons@'s @head@\/@tail@), so this never rejects a real recursive fold. ⊤-valued
+    -- extra keys do not narrow, so they are permitted.
+    leafsWithinMembers classTypes = all leafOk leafList
+      where
+        memberArgKeys = H.fromListWith S.union
+          [ (ptName m, H.keysSet (ptArgs m)) | ct <- classTypes, m <- memberPartials ct ]
+        memberPartials (UnionType _ pos _) = splitUnionType pos
+        memberPartials _                   = []
+        leafOk l =
+          let declKeys = H.lookupDefault S.empty (ptName l) memberArgKeys
+          in null [() | (k, v) <- H.toList (ptArgs l), not (S.member k declKeys), v /= PTopType]
     -- Prefer a 'PredRel' partial nested within @t@ (it carries the right type-var bindings,
     -- e.g. @ConsList[T=$_T]@); otherwise fall back to the bare class partial. This also
     -- catches recursions that bottom out in 'TopType' rather than an explicit @~C@.

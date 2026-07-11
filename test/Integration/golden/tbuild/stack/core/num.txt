@@ -205,16 +205,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/Primitive/exampleIntArithmetic"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/Primitive/exampleIntArithmetic -> /Data/Primitive/Integer = 0 ]
-                    }
-                )
-            ,
                 ( "/Data/Primitive/mempty"
                 , ObjectMapItem
                     { omiDecls = []
@@ -521,7 +511,6 @@ Prgm
         , CGType
         , CGType
         , CGType
-        , CGType
         , CGClass
             ( False
             , /Data/Primitive/Integer
@@ -581,15 +570,59 @@ Prgm
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "  agree on the diagonal — i.e. it derives and verifies [x - x == 0]." )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "The arithmetic operators on [Integer]. Their results are numbers, which are too polymorphic" )
-        , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "  ([Integer] or [Float]) to render directly, so the examples are [#assert]ed properties rather" )
-        , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "  than printed values. ([operator-] and [operator//] are omitted here: their result unions" )
-        , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "  currently trip a solver-completeness frontier when constrained to a concrete [Integer] this" )
-        , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "  way — see the note passed back with this change.)" )
+            ( EAppArg Value /text -> /Data/String = "The arithmetic operators on [Integer], shown on concrete inputs. [operator%] is the remainder." )
+        , /Catln/#print
+            ( EAppArg Value /p ->
+                ( /operator+
+                    ( /r=/Data/Primitive/Integer
+                    , /l=/Data/Primitive/Integer
+                    ) + /Data/Primitive/Integer
+                ) =
+                ( /operator+
+                    ( EAppArg Value /l -> /Data/Primitive/Integer = 2 )
+                    ( EAppArg Value /r -> /Data/Primitive/Integer = 3 ) ↦ /Data/Primitive/Integer
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "5" )
+        , /Catln/#print
+            ( EAppArg Value /p ->
+                ( /operator-
+                    ( /r=/Data/Primitive/Integer
+                    , /l=/Data/Primitive/Integer
+                    ) + /Data/Primitive/Integer
+                ) =
+                ( /operator-
+                    ( EAppArg Value /l -> /Data/Primitive/Integer = 5 )
+                    ( EAppArg Value /r -> /Data/Primitive/Integer = 2 ) ↦ /Data/Primitive/Integer
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "3" )
+        , /Catln/#print
+            ( EAppArg Value /p ->
+                ( /operator*
+                    ( /r=/Data/Primitive/Integer
+                    , /l=/Data/Primitive/Integer
+                    ) + /Data/Primitive/Integer
+                ) =
+                ( /operator*
+                    ( EAppArg Value /l -> /Data/Primitive/Integer = 4 )
+                    ( EAppArg Value /r -> /Data/Primitive/Integer = 3 ) ↦ /Data/Primitive/Integer
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "12" )
+        , /Catln/#print
+            ( EAppArg Value /p ->
+                ( /operator%
+                    ( /r=/Data/Primitive/Integer
+                    , /l=/Data/Primitive/Integer
+                    ) + /Data/Primitive/Integer
+                ) =
+                ( /operator%
+                    ( EAppArg Value /l -> /Data/Primitive/Integer = 7 )
+                    ( EAppArg Value /r -> /Data/Primitive/Integer = 3 ) ↦ /Data/Primitive/Integer
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "1" )
         , /Catln/#print
             ( EAppArg Value /p -> UnionType
                 ( Just

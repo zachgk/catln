@@ -191,16 +191,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/Primitive/exampleIntArithmetic"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/Primitive/exampleIntArithmetic= CInt 0 ]
-                    }
-                )
-            ,
                 ( "/Data/Primitive/mempty"
                 , ObjectMapItem
                     { omiDecls = []
@@ -368,7 +358,6 @@ Prgm
         , CGType
         , CGType
         , CGType
-        , CGType
         , CGClass
             ( False
             , /Data/Primitive/Integer
@@ -428,15 +417,31 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "  agree on the diagonal — i.e. it derives and verifies [x - x == 0]." )
         , /Catln/#md
-            ( Value /text= CStr "The arithmetic operators on [Integer]. Their results are numbers, which are too polymorphic" )
-        , /Catln/#md
-            ( Value /text= CStr "  ([Integer] or [Float]) to render directly, so the examples are [#assert]ed properties rather" )
-        , /Catln/#md
-            ( Value /text= CStr "  than printed values. ([operator-] and [operator//] are omitted here: their result unions" )
-        , /Catln/#md
-            ( Value /text= CStr "  currently trip a solver-completeness frontier when constrained to a concrete [Integer] this" )
-        , /Catln/#md
-            ( Value /text= CStr "  way — see the note passed back with this change.)" )
+            ( Value /text= CStr "The arithmetic operators on [Integer], shown on concrete inputs. [operator%] is the remainder." )
+        , /Catln/#print
+            ( Value /p= /operator+
+                ( Value /l= CInt 2 )
+                ( Value /r= CInt 3 )
+            )
+            ( Value /result= CStr "5" )
+        , /Catln/#print
+            ( Value /p= /operator-
+                ( Value /l= CInt 5 )
+                ( Value /r= CInt 2 )
+            )
+            ( Value /result= CStr "3" )
+        , /Catln/#print
+            ( Value /p= /operator*
+                ( Value /l= CInt 4 )
+                ( Value /r= CInt 3 )
+            )
+            ( Value /result= CStr "12" )
+        , /Catln/#print
+            ( Value /p= /operator%
+                ( Value /l= CInt 7 )
+                ( Value /r= CInt 3 )
+            )
+            ( Value /result= CStr "1" )
         , /Catln/#print
             ( Value /p= /operator<
                 ( Value /l= CInt 2 )
