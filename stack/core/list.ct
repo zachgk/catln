@@ -94,16 +94,17 @@ module(Data)
       the [x <= head] decision, splicing [x] in when [True] and recursing into the [tail] when
       [False].
 
-  insertStep[$T -> /Data/Algebra/Ord](before -> Boolean, x -> $T, head -> $T, tail -> ConsList[$T -> /Data/Algebra/Ord]) -> ConsList
-  insertStep(before= /Data/Primitive/True, x, head, tail)= /Data/Cons(head= x, tail= /Data/Cons(head= head, tail= tail))
-  insertStep(before= /Data/Primitive/False, x, head, tail)= /Data/Cons(head= head, tail= insert(x= x, lst= tail))
-
-  insert[$T -> /Data/Algebra/Ord](x -> $T, lst -> ConsList[$T -> /Data/Algebra/Ord]) -> ConsList
-  insert(x, lst= Nil)= /Data/Cons(head= x, tail= /Data/Nil)
-  insert(x, lst= /Data/Cons[$T -> /Data/Algebra/Ord](head, tail))= insertStep(before= x.compareTo(other= head).isLessEq, x= x, head= head, tail= tail)
-
   sorted(lst= Nil)= /Data/Nil
-  sorted(lst= /Data/Cons[$T -> /Data/Algebra/Ord](head, tail))= insert(x= head, lst= sorted(lst= tail))
+  sorted(lst= /Data/Cons[$T -> /Data/Algebra/Ord](head@h, tail@t)) =
+    insertStep[$T -> /Data/Algebra/Ord](before -> Boolean, x -> $T, head -> $T, tail -> ConsList[$T -> /Data/Algebra/Ord]) -> ConsList
+    insertStep(before= /Data/Primitive/True, x, head, tail)= /Data/Cons(head= x, tail= /Data/Cons(head= head, tail= tail))
+    insertStep(before= /Data/Primitive/False, x, head, tail)= /Data/Cons(head= head, tail= insert(x= x, lst= tail))
+
+    insert[$T -> /Data/Algebra/Ord](x -> $T, lst -> ConsList[$T -> /Data/Algebra/Ord]) -> ConsList
+    insert(x, lst= Nil)= /Data/Cons(head= x, tail= /Data/Nil)
+    insert(x, lst= /Data/Cons[$T -> /Data/Algebra/Ord](head, tail))= insertStep(before= x.compareTo(other= head).isLessEq, x= x, head= head, tail= tail)
+
+    insert(x= h, lst= sorted(lst= t))
 
   > (/Data/sorted(lst= [3, 1, 2]) == [1, 2, 3])
     >>> True

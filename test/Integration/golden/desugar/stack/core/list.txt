@@ -40,6 +40,23 @@ Prgm
                     }
                 )
             ,
+                ( "/sorted./Data/insertStep"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ sorted./Data/insertStep( Value /t )( Value /h )[ /T : ∀/Data/Algebra/Ord ]( Value before -> ∀/Data/Primitive/Boolean )( Value x -> $/T )( Value head -> $/T )
+                            ( Value tail -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/ConsList
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ sorted./Data/insertStep( Value /t )( Value /h )( Value before= Value /Data/Primitive/False )( Value x )( Value head )( Value tail ) -> ∀/Data/ConsList = /Data/Cons( Value head= Value head )
+                            ( Value tail= insert( Value /t= Value /t )( Value /h= Value /h )( Value x= Value x )( Value lst= Value tail ) )
+                        , sorted./Data/insertStep( Value /t )( Value /h )( Value before= Value /Data/Primitive/True )( Value x )( Value head )( Value tail ) -> ∀/Data/ConsList = /Data/Cons( Value head= Value x )
+                            ( Value tail= /Data/Cons( Value head= Value head )( Value tail= Value tail ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/range./Data/rangeFrom"
                 , ObjectMapItem
                     { omiDecls =
@@ -229,23 +246,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/insertStep"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/insertStep[ /T : ∀/Data/Algebra/Ord ]( Value before -> ∀/Data/Primitive/Boolean )( Value x -> $/T )( Value head -> $/T )
-                            ( Value tail -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/ConsList
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/insertStep( Value before= Value /Data/Primitive/True )( Value x )( Value head )( Value tail ) -> ∀/Data/ConsList = /Data/Cons( Value head= Value x )
-                            ( Value tail= /Data/Cons( Value head= Value head )( Value tail= Value tail ) )
-                        , /Data/insertStep( Value before= Value /Data/Primitive/False )( Value x )( Value head )( Value tail ) -> ∀/Data/ConsList = /Data/Cons( Value head= Value head )
-                            ( Value tail= insert( Value x= Value x )( Value lst= Value tail ) )
-                        ]
-                    }
-                )
-            ,
                 ( "/range./Data/rangeStep"
                 , ObjectMapItem
                     { omiDecls =
@@ -275,8 +275,8 @@ Prgm
                     , omiDefs =
                         [ /Data/sorted( Value lst= Value Nil ) -> ∀/Data/List = Value /Data/Nil
                         , /Data/sorted
-                            ( Value lst= /Data/Cons[ /T : ∀/Data/Algebra/Ord ]( Value head )( Value tail ) ) -> ∀/Data/List = insert( Value x= Value head )
-                            ( Value lst= sorted( Value lst= Value tail ) )
+                            ( Value lst= /Data/Cons[ /T : ∀/Data/Algebra/Ord ]( Value head@Value h )( Value tail@Value t ) ) -> ∀/Data/List = insert( Value /t= Value /t )( Value /h= Value /h )( Value x= Value h )
+                            ( Value lst= sorted( Value lst= Value t ) )
                         ]
                     }
                 )
@@ -357,6 +357,25 @@ Prgm
                     }
                 )
             ,
+                ( "/sorted./Data/insert"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ sorted./Data/insert( Value /t )( Value /h )[ /T : ∀/Data/Algebra/Ord ]( Value x -> $/T )
+                            ( Value lst -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/ConsList
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ sorted./Data/insert( Value /t )( Value /h )( Value x )
+                            ( Value lst= /Data/Cons[ /T : ∀/Data/Algebra/Ord ]( Value head )( Value tail ) ) -> ∀/Data/ConsList = insertStep( Value /t= Value /t )( Value /h= Value /h )
+                            ( Value before= isLessEq
+                                ( Value /this= compareTo( Value other= Value head )( Value /this= Value x ) )
+                            )( Value x= Value x )( Value head= Value head )( Value tail= Value tail )
+                        , sorted./Data/insert( Value /t )( Value /h )( Value x )( Value lst= Value Nil ) -> ∀/Data/ConsList = /Data/Cons( Value head= Value x )( Value tail= Value /Data/Nil )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/consThen"
                 , ObjectMapItem
                     { omiDecls =
@@ -384,25 +403,6 @@ Prgm
                         , /Data/all
                             ( Value lst= /Data/Cons[ /T : ∀/Data/Primitive/Boolean ]( Value head )( Value tail ) ) -> ∀/Data/Primitive/Boolean = /operator&&( Value /l= Value head )
                             ( Value /r= all( Value lst= Value tail ) )
-                        ]
-                    }
-                )
-            ,
-                ( "/Data/insert"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/insert[ /T : ∀/Data/Algebra/Ord ]( Value x -> $/T )
-                            ( Value lst -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/ConsList
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/insert( Value x )( Value lst= Value Nil ) -> ∀/Data/ConsList = /Data/Cons( Value head= Value x )( Value tail= Value /Data/Nil )
-                        , /Data/insert( Value x )
-                            ( Value lst= /Data/Cons[ /T : ∀/Data/Algebra/Ord ]( Value head )( Value tail ) ) -> ∀/Data/ConsList = insertStep
-                            ( Value before= isLessEq
-                                ( Value /this= compareTo( Value other= Value head )( Value /this= Value x ) )
-                            )( Value x= Value x )( Value head= Value head )( Value tail= Value tail )
                         ]
                     }
                 )

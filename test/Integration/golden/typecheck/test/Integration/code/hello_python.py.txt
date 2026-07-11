@@ -113,15 +113,19 @@ Prgm
                                 , fromList []
                                 )
                             ,
-                                ( /Data/Nil + /Data/insertStep[ /T=∀/Data/Algebra/Ord ]
+                                ( /sorted./Data/insertStep[ /T=∀/Data/Algebra/Ord ]
                                     ( /head=∀/Data/Algebra/Ord
-                                    , /before=∀/Data/Primitive/Boolean
+                                    , /before=( /Data/Primitive/True + /Data/Primitive/False )
+                                    , /t=TopType
                                     , /x=∀/Data/Algebra/Ord
                                     , /tail=∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    ) + /Data/sorted
-                                    ( /lst=∀/Data/List[ /T=∀/Data/Algebra/Ord ] ) + /Data/insert[ /T=∀/Data/Algebra/Ord ]
-                                    ( /x=∀/Data/Algebra/Ord
+                                    , /h=TopType
+                                    ) + /Data/Nil + /Data/sorted
+                                    ( /lst=∀/Data/List[ /T=∀/Data/Algebra/Ord ] ) + /sorted./Data/insert[ /T=∀/Data/Algebra/Ord ]
+                                    ( /t=∀/Data/List[ /T=∀/Data/Algebra/Ord ]
+                                    , /x=∀/Data/Algebra/Ord
                                     , /lst=∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                    , /h=∀/Data/Algebra/Ord
                                     )
                                 )
                             , []
@@ -274,11 +278,11 @@ Prgm
                     , omiDefs =
                         [ /add( Value /x -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer ) ->
                             ( /operator+
-                                ( /r=/Data/String
-                                , /l=/Data/String
-                                ) + /operator+
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
+                                ) + /operator+
+                                ( /r=/Data/String
+                                , /l=/Data/String
                                 ) + /operator+
                                 ( /r=/Data/Primitive/Float
                                 , /l=/Data/Primitive/Float
@@ -492,11 +496,11 @@ Prgm
                             ( Value /x -> ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float ) )
                             ( Value /y -> ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float ) ) ->
                             ( /operator+
-                                ( /r=/Data/String
-                                , /l=/Data/String
-                                ) + /operator+
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
+                                ) + /operator+
+                                ( /r=/Data/String
+                                , /l=/Data/String
                                 ) + /operator+
                                 ( /r=/Data/Primitive/Float
                                 , /l=/Data/Primitive/Float
