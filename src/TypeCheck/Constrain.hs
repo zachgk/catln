@@ -33,12 +33,15 @@ isSolved _                                 = False
 
 -- | Updates a 'VarMeta' point to a new 'Scheme' value
 setScheme :: FEnv -> VConstraint -> (RConstraint, RConstraint) -> VarMeta -> Scheme -> String -> FEnv
-setScheme env@FEnv{feTypeEnv} con (oldCon, newCon) p scheme baseMsg = setDescriptor env con p (checkScheme scheme) (msg "" "")
+setScheme env con (oldCon, newCon) p scheme baseMsg = setDescriptor env con p (checkScheme scheme) (msg "" "")
   where
     -- checkScheme (TypeCheckResult _ (SType ub _ desc)) | containsBottomType ub = error $ msg desc $ printf "Actual type contains bottomType: %s" (show ub)
     checkScheme (TypeCheckResult notes (SType ub _ _ desc)) | containsBottomType ub = TypeCheckResE (mkTracedTypeCheckError env p (msg desc "Actual type contains bottomType") : notes)
     checkScheme (TypeCheckResult notes (SType _ req _ desc)) | containsBottomType req = TypeCheckResE (mkTracedTypeCheckError env p (msg desc "Required type contains bottomType") : notes)
-    checkScheme (TypeCheckResult notes (SType act req _ desc)) | not (isSubtypeOfWithEnv feTypeEnv (fmap stypeAct $ fromJust $ tcreToMaybe $ descriptorConVaenv env con) act req) = TypeCheckResE (mkTracedTypeCheckError env p (msg desc "Act is not less than req") : notes)
+    -- NOTE: the @act ⊆ req@ invariant is NOT enforced here. During inference a requirement (req)
+    -- may legitimately run ahead of the still-widening actual (act) — e.g. an 'ArrowTo' dest that
+    -- requires @Integer@ while its actual is still the wider @Integer ∪ Float@ reach. The invariant
+    -- is checked once, after convergence, in 'TypeCheck.Decode.toMeta'.
     checkScheme s = s
 
     msg :: String -> String -> String

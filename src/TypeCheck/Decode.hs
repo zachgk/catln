@@ -30,7 +30,13 @@ toMeta :: VarMeta -> StateT FEnv TypeCheckResult TypedMeta
 toMeta  m@(Meta pt pos mid _) = do
   env@FEnv{feTypeEnv} <- get
   case descriptor env m of
-    TypeCheckResult notes SType{stypeAct=ub, stypeTree=rt} -> lift $ TypeCheckResult notes $ Meta (intersectTypes feTypeEnv ub pt) pos mid rt
+    TypeCheckResult notes SType{stypeAct=ub, stypeReq=req, stypeTree=rt} -> do
+      -- The @act ⊆ req@ invariant is deferred out of inference ('TypeCheck.Constrain.checkScheme')
+      -- and enforced here, once inference has converged: the actual must satisfy the requirement.
+      let notes' = if isSubtypeOfWithEnv feTypeEnv H.empty ub req
+            then notes
+            else GenTypeCheckError (clearMetaDat ArrMeta m) (printf "Actual type %s is not a subtype of the required type %s" (show ub) (show req)) : notes
+      lift $ TypeCheckResult notes' $ Meta (intersectTypes feTypeEnv ub pt) pos mid rt
     TypeCheckResE notes -> lift $ TypeCheckResult notes (Meta BottomType pos mid Nothing)
 
 member :: Name -> [Name] -> Bool
