@@ -96,6 +96,7 @@ data ConstraintDat p
   | BoundedByKnown Int p Type -- ^ Both Actual and Req
   | BoundedByObjs Int p Type
   | NoReturnArg Int p
+  | EqReqAct Int p -- ^ Pull an input argument's actual down to its requirement (an input actually is only whatever it is required to be)
   | ArrowTo Int p p -- ArrowTo src dest
   | PropEq Int (p, TypeVarAux) p -- ^ Both Actual and Req
   | FnInputBound Int (p, ArgName, ArgName) p -- ^ Actual only. @FnInputBound (call, fnArgKey, inputKey) input@ bounds a call-site lambda argument's input point by the matched declarations' input type for that position (see 'fnArgInputBound')
@@ -142,6 +143,7 @@ mapMConDat f (BoundedByObjs i p t) = do
   p' <- f p
   return $ BoundedByObjs i p' t
 mapMConDat f (NoReturnArg i p) = NoReturnArg i <$> f p
+mapMConDat f (EqReqAct i p) = EqReqAct i <$> f p
 mapMConDat f (ArrowTo i p1 p2) = do
   p1' <- f p1
   ArrowTo i p1' <$> f p2
@@ -288,6 +290,7 @@ instance (Show p) => Show (ConstraintDat p) where
   show (BoundedByKnown i s t) = printf "%s %d⊆_Known %s" (show s) i (show t)
   show (BoundedByObjs i s _) = printf "BoundedByObjs%d %s" i (show s)
   show (NoReturnArg i s) = printf "NoReturnArg%d %s" i (show s)
+  show (EqReqAct i s) = printf "EqReqAct%d %s" i (show s)
   show (ArrowTo i s d) = printf "%s %d-> %s" (show s) i (show d)
   show (PropEq i (s1, n) s2) = printf "(%s).(%s) %d== %s"  (show s1) (show n) i (show s2)
   show (FnInputBound i (s, fnKey, inKey) inp) = printf "%s %d⊆_FnInput (%s).(%s).(%s)" (show inp) i (show s) (show fnKey) (show inKey)

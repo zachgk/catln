@@ -193,6 +193,14 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (NoReturnArg i p@SType
       _                        -> posLeafs
     act' = UnionType (Just topData) posLeafs' consts
 computeConstraint _ con@(Constraint _ _ NoReturnArg{}) = (False, con)
+-- An input argument actually is only whatever it is required to be, so pull its actual down to its
+-- requirement. As uses (and the ArrowTo reverse propagation) keep narrowing the requirement, this
+-- re-runs each epoch (returns False, not "done"); both bounds only shrink, so the actual stays
+-- monotone (@act ∩ req ⊆ act@) and a bare 'TypeVar' requirement is preserved by the intersection.
+computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (EqReqAct i p@SType{stypeAct=act, stypeReq=req})) = (False, con{conDat=EqReqAct i p{stypeAct=act'}})
+  where
+    vaenv' = fmap (stypeAct . snd) vaenv
+    act' = intersectTypesEnv feTypeEnv vaenv' act req
 computeConstraint env con@(Constraint _ _ (ArrowTo i src dest)) = case arrowConstrainUbs env con src dest of
     TypeCheckResult _ (srcAct', srcReq', destAct', destRT') -> (False, con{conDat=ArrowTo i src{stypeAct=srcAct', stypeReq=srcReq'} dest{stypeAct=destAct', stypeTree=destRT'}})
     TypeCheckResE _ -> (True, con)

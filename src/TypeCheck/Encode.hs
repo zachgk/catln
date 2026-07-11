@@ -302,6 +302,10 @@ fromObjectMap oa@ObjArr{oaAnnots, oaObj=Just obj, oaArr} = do
   modify startConstrainBlock
   obj' <- fromExpr inEst obj
   modify $ addConstraints $ nonLinearEqConstraints obj'
+  -- Each matched input argument actually is only whatever it is required to be, so tie its actual
+  -- to its (use-narrowed) requirement. 'exprVarArgs' yields the argument's type slot ('arrM'), the
+  -- point Decode renders as the argument's type.
+  modify $ addConstraints [EqReqAct 34 arrM | (_, arrM) <- concat (H.elems (exprVarArgs obj'))]
 
   let est = EncodeOut (Just obj')
   oaAnnots' <- mapM (fromExpr est) oaAnnots
