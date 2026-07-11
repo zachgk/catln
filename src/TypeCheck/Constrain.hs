@@ -233,13 +233,16 @@ computeConstraint env con@(Constraint _ vaenv (AddArg i (src, newArgName) dest))
 computeConstraint env con@(Constraint _ vaenv (AddInferArg i src dest)) = (False, con{conDat=AddInferArg i src dest'})
   where
     dest' = addInferArgToScheme env (fmap snd vaenv) src dest
-computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (SetArgMode i mode src@SType{stypeAct=srcAct} dest@SType{stypeAct=destAct})) = (False, con{conDat=SetArgMode i mode src dest{stypeAct=destAct'}})
+computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (SetArgMode i mode src@SType{stypeAct=srcAct, stypeReq=srcReq} dest@SType{stypeAct=destAct, stypeReq=destReq})) = (False, con{conDat=SetArgMode i mode src dest{stypeAct=destAct', stypeReq=destReq'}})
   where
     vaenv' = fmap (stypeAct . snd) vaenv
-    fromSrc = if mode
-      then powersetType feTypeEnv vaenv' srcAct
-      else setArgMode vaenv' PtArgAny srcAct
-    destAct' = intersectTypes feTypeEnv fromSrc destAct
+    argModeType venv t = if mode
+      then powersetType feTypeEnv venv t
+      else setArgMode venv PtArgAny t
+    destAct' = intersectTypes feTypeEnv (argModeType vaenv' srcAct) destAct
+    -- The arg-mode transform is an upper bound on the destination, so it applies to the required
+    -- type as well as the actual (both are upper bounds — see 'SType'); mirror it on each side.
+    destReq' = intersectTypes feTypeEnv (argModeType (fmap (stypeReq . snd) vaenv) srcReq) destReq
 computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (ConWhere i base cond res)) = (False, con{conDat=ConWhere i base cond res'}) -- TODO Currently using temp equals relationship, switch to actual constraint
   where
     vaenv' = fmap (stypeAct . snd) vaenv
