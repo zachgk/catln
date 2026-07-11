@@ -107,7 +107,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/rel( EAppArg Value /a )( EAppArg Value /b )
-                            ( EAppArg Value /this -> ∀/Data/Algebra/Ordering[ /T=$/T ] ) -> UnionType
+                            ( EAppArg Value /this ->
+                                ( TopType | PredClass /Data/Algebra/Ordering[ /T=$/T ] && PredClass /Data/Algebra/Eqv[ /T=$/T ] )
+                            ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []

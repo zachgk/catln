@@ -90,7 +90,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/eq( EAppArg Value /this -> ∀/Data/Primitive/Boolean ) -> /Data/Primitive/BoolEqv = Value /Data/Primitive/BoolEqv ]
+                        [ /Data/Algebra/eq
+                            ( EAppArg Value /this -> ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/Primitive/Boolean ) ) -> /Data/Primitive/BoolEqv = Value /Data/Primitive/BoolEqv
+                        ]
                     }
                 )
             ,
@@ -152,7 +154,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/equal( EAppArg Value /other -> ∀/Data/Algebra/Eq )( EAppArg Value /this -> ∀/Data/Primitive/Boolean ) -> UnionType
+                        [ /Data/Algebra/equal( EAppArg Value /other -> ∀/Data/Algebra/Eq )
+                            ( EAppArg Value /this -> ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/Primitive/Boolean ) ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []

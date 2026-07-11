@@ -146,7 +146,7 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByKnown i p@ST
     act' = intersectTypesEnv feTypeEnv vaenv' act boundTp'
     req' = intersectTypesEnv feTypeEnv (fmap (stypeReq . snd) vaenv) req boundTp'
 computeConstraint _ con@(Constraint _ _ (BoundedByObjs _ SType{stypeAct=PTopType} _)) = (False, con)
-computeConstraint FEnv{feTypeEnv, feCompletedAllObjsKey, feCompletedAllObjs} con@(Constraint _ vaenv (BoundedByObjs i p@SType{stypeAct=pAct} objMapBoundUb)) = (False, con{conDat=BoundedByObjs i (p{stypeAct=pAct'}) objMapBoundUb})
+computeConstraint FEnv{feTypeEnv, feCompletedAllObjsKey, feCompletedAllObjs} con@(Constraint _ vaenv (BoundedByObjs i p@SType{stypeAct=pAct, stypeReq=pReq} objMapBoundUb)) = (False, con{conDat=BoundedByObjs i (p{stypeAct=pAct', stypeReq=pReq'}) objMapBoundUb})
   where
     vaenv' = fmap (stypeAct . snd) vaenv
     argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnv vaenv' $ UnionType Nothing (joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con) []
@@ -175,8 +175,23 @@ computeConstraint FEnv{feTypeEnv, feCompletedAllObjsKey, feCompletedAllObjs} con
     boundUb = relaxRecursiveSelfArgs feTypeEnv $ unionTypes feTypeEnv (unionTypes feTypeEnv objMapBoundUb' (openClassPart feTypeEnv pAct)) argsBoundUb
 
     -- A partially applied tuple would not be a raw type on the unionObj,
-    -- but a subset of the arguments in that type
+    -- but a subset of the arguments in that type. The object-universe bound is an upper bound, so it
+    -- applies to the required type as well as the actual (both are upper bounds — see 'SType'), just
+    -- as 'BoundedByKnown' narrows both; each side is resolved against its own ambient var-env.
     (_, pAct') = intersectTypesWithVarEnv feTypeEnv vaenv' pAct boundUb
+    -- Only narrow a *concrete* requirement. A Top requirement meets the whole universe to the whole
+    -- universe (every known object) — not a narrowing, and a performance blowup — so leave it be
+    -- (mirroring the 'stypeAct=PTopType' guard above). A named requirement instead meets only its
+    -- name-matching objects, tightening the requirement's arg fields (e.g. @/f(/a=Top)@ narrows to
+    -- @/f(/a=<declared>)@). If the meet empties the requirement — e.g. a @(Top | Functor && Eq)@ law
+    -- requirement whose type variables resolve differently under the required var-env than under the
+    -- actual — keep the un-narrowed requirement: a requirement is an upper bound, so widening it is
+    -- always sound, whereas narrowing it to ∅ would spuriously reject a valid program ('checkScheme'
+    -- rejects a required type containing bottomType).
+    narrowedReq = snd $ intersectTypesWithVarEnv feTypeEnv (fmap (stypeReq . snd) vaenv) pReq boundUb
+    pReq' | pReq == PTopType               = pReq
+          | containsBottomType narrowedReq = pReq
+          | otherwise                      = narrowedReq
 computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (NoReturnArg i p@SType{stypeAct=act@(UnionType Nothing _ _)})) = (True, con{conVaenv=updateCOVarArgEnvAct vaenv'' vaenv, conDat=NoReturnArg i p{stypeAct=act'}})
   where
     vaenv' = fmap (stypeAct . snd) vaenv

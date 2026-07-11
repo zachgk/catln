@@ -19,7 +19,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/pure
-                            [ /M : ∀/Data/Maybe[ /T=$_/T ] ]( Value /v ) -> /Data/Some[ /T=TopType ]( /value=$/T ) = /Data/Some( Value /value -> TVArg /v = Value /v )
+                            [ /M :
+                                ( TopType | PredClass /Data/Monad[ /T=$_/A ] && PredClass /Data/Maybe[ /T=$_/T ] )
+                            ]( Value /v ) -> /Data/Some[ /T=TopType ]( /value=$/T ) = /Data/Some( Value /value -> TVArg /v = Value /v )
                         ]
                     }
                 )

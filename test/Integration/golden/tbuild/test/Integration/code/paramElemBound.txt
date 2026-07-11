@@ -43,7 +43,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /useBox
-                            ( EAppArg Value /p -> /Box[ /A=∀/Boxed ]( /x=$/A ) = /Box( EAppArg Value /x -> ∀/Boxed ) ) ->
+                            ( EAppArg Value /p -> /Box[ /A=∀/Boxed ]( /x=∀/Boxed ) = /Box( EAppArg Value /x -> ∀/Boxed ) ) ->
                             ( /unbox( /b=∀/Boxed ) + /Data/Primitive/Integer ) = /unbox
                             ( EAppArg Value /b -> TVArg /x = ( Value /x ↦ TVArg /x ) )
                         ]
