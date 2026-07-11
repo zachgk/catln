@@ -33,7 +33,13 @@ toMeta  m@(Meta pt pos mid _) = do
     TypeCheckResult notes SType{stypeAct=ub, stypeReq=req, stypeTree=rt} -> do
       -- The @act ⊆ req@ invariant is deferred out of inference ('TypeCheck.Constrain.checkScheme')
       -- and enforced here, once inference has converged: the actual must satisfy the requirement.
-      let notes' = if isSubtypeOfWithEnv feTypeEnv H.empty ub req
+      -- A bare type-variable actual is a placeholder that cannot be compared without its binding
+      -- (which lived in the constraint var-arg env, unavailable here), so skip it — mirroring
+      -- 'verifyScheme's 'verifySchemeActLowers'.
+      let actSatisfiesReq = case ub of
+            TypeVar{} -> True
+            _         -> isSubtypeOfWithEnv feTypeEnv H.empty ub req
+      let notes' = if actSatisfiesReq
             then notes
             else GenTypeCheckError (clearMetaDat ArrMeta m) (printf "Actual type %s is not a subtype of the required type %s" (show ub) (show req)) : notes
       lift $ TypeCheckResult notes' $ Meta (intersectTypes feTypeEnv ub pt) pos mid rt

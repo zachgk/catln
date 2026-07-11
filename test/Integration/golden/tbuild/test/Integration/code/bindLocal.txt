@@ -107,7 +107,7 @@ Prgm
                                     , /A=TopType
                                     ]
                                     ( /fn( /v=TopType )=
-                                        ( /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) + /Data/Some
+                                        ( /Data/Some
                                             [ /T=/operator+
                                                 ( /r=/Data/Primitive/Integer
                                                 , /l=/Data/Primitive/Integer
@@ -117,7 +117,7 @@ Prgm
                                                 ( /r=/Data/Primitive/Integer
                                                 , /l=/Data/Primitive/Integer
                                                 )
-                                            )
+                                            ) + /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
                                         )
                                     , /m=
                                         ( TopType | PredClass /Data/Monad[ /T=$_/A ] && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] )
@@ -134,7 +134,7 @@ Prgm
                             ) = /Data/bindap
                             ( EAppArg Value /m -> TVArg /m = ( Value /m ↦ TVArg /m ) )
                             ( EAppArg /fn( EAppArg Value /v -> /Data/Primitive/Integer ) ->
-                                ( /Data/Some
+                                ( /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) + /Data/Some
                                     [ /T=/operator+
                                         ( /r=/Data/Primitive/Integer
                                         , /l=/Data/Primitive/Integer
@@ -144,12 +144,12 @@ Prgm
                                         ( /r=/Data/Primitive/Integer
                                         , /l=/Data/Primitive/Integer
                                         )
-                                    ) + /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                    )
                                 ) =
                                 ( /bindWithLocal.$71c85d
                                     ( EAppArg Value /m -> TVArg /m = ( Value /m ↦ TVArg /m ) )
                                     ( EAppArg Value /$71c85d-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) ) ↦
-                                    ( /Data/Some
+                                    ( /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) + /Data/Some
                                         [ /T=/operator+
                                             ( /r=/Data/Primitive/Integer
                                             , /l=/Data/Primitive/Integer
@@ -159,7 +159,7 @@ Prgm
                                             ( /r=/Data/Primitive/Integer
                                             , /l=/Data/Primitive/Integer
                                             )
-                                        ) + /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                        )
                                     )
                                 )
                             )

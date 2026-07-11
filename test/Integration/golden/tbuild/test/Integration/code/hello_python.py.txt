@@ -128,8 +128,7 @@ Prgm
                                     , /x=∀/Data/Algebra/Ord
                                     , /tail=∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ]
                                     , /h=TopType
-                                    ) + /Data/Nil + /Data/sorted
-                                    ( /lst=∀/Data/List[ /T=∀/Data/Algebra/Ord ] ) + /sorted./Data/insert[ /T=∀/Data/Algebra/Ord ]
+                                    ) + /Data/Nil + /Data/sorted( /lst=∀/Data/List ) + /sorted./Data/insert[ /T=∀/Data/Algebra/Ord ]
                                     ( /t=∀/Data/List[ /T=∀/Data/Algebra/Ord ]
                                     , /x=∀/Data/Algebra/Ord
                                     , /lst=∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ]
@@ -266,8 +265,7 @@ Prgm
                                 ( /operator||
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
-                                    ) + /Data/any
-                                    ( /lst=∀/Data/List[ /T=∀/Data/Primitive/Boolean ] )
+                                    ) + /Data/any( /lst=∀/Data/List )
                                 )
                             , []
                             ) = /any
@@ -628,8 +626,7 @@ Prgm
                                 ( /operator&&
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
-                                    ) + /Data/all
-                                    ( /lst=∀/Data/List[ /T=∀/Data/Primitive/Boolean ] )
+                                    ) + /Data/all( /lst=∀/Data/List )
                                 )
                             , []
                             ) = /all

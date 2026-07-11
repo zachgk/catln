@@ -289,8 +289,10 @@ mkReachesEnv env (Constraint maybeConOa stypeVaenv _) = do
   return $ ReachesEnv (argTypeEnv <> feTypeEnv') (fmap snd vaenv) S.empty
 
 arrowConstrainUbs :: FEnv -> RConstraint -> SType -> SType -> TypeCheckResult (Type, Type, Type, Maybe ReachesTree)
--- Derives the destination actual from what the source reaches (the arrows applicable to it),
--- bounded by the destination's requirement, and returns @(srcAct', srcReq', destAct', reaches)@.
+-- Relates the source and destination of an arrow in both directions and returns
+-- @(srcAct', srcReq', destAct', reaches)@. Forward: derive the destination actual from what the
+-- source reaches (the arrows applicable to it), bounded by the destination's requirement. Reverse:
+-- narrow the source requirement to the components that actually reach that destination.
 -- When the src is fully unresolved (Top) we cannot yet pick an arrow, so skip
 -- deriving the destination from the whole-universe reach. This avoids re-running
 -- the (expensive) universe 'reachesPartials' every epoch while the src stays Top;
@@ -328,6 +330,31 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
   let destFinal = compactType feTypeEnv vaenv' (resolveNew dest')
   -- Return-type direction: a declaration output that is a bare declared variable is determined
   -- by the call site's destination — bind it onto the call partial (see 'outVarBoundSrc').
-  let src' = outVarBoundSrc env destFinal src
-  -- TODO Narrow the source requirement to the partials that actually reach the destination.
-  return (src', srcReq, destFinal, Just reaches')
+  let srcBound = outVarBoundSrc env destFinal src
+
+  -- Reverse direction: the arrow imposes a requirement back on the source. Keep only the source
+  -- components that actually reach the required destination — a component is viable if its own
+  -- singleton is within 'destFinal', or (following intermediate arrows) its reach subtree can be
+  -- cut to within 'destFinal'. This is the per-child test 'reachesHasCutSubtypeOf' already uses, so
+  -- a source that reaches the destination only through a further arrow still counts as viable.
+  let viableKeys = case reaches' of
+        ReachesPartialTree children ->
+          [ key
+          | (key, subTree) <- H.toList children
+          , isSubtypeOfWithEnv feTypeEnv vaenv' (singletonType key) destFinal
+            || reachesHasCutSubtypeOf feTypeEnv vaenv' subTree destFinal ]
+        _ -> []
+  let viableComponents = UnionType Nothing (joinUnionType viableKeys) []
+  let reqVaenv = fmap (stypeReq . snd) conVaenv
+  let narrowedAct = intersectTypesEnv feTypeEnv vaenv'   srcBound viableComponents
+  let narrowedReq = intersectTypesEnv feTypeEnv reqVaenv srcReq   viableComponents
+  -- Narrow act and req in lockstep so the deferred act⊆req check still holds at Decode, and each
+  -- side only shrinks. First guard: never publish an empty viability (a transiently-incomplete
+  -- reach would otherwise drive the source to BottomType). Second guard: skip a narrowing that
+  -- would drop a TypeVar the source carries (the output-directed dispatch 'outVarBoundSrc'
+  -- handles), so 'verifyNoTypeVarLost' cannot fire.
+  let (src', srcReq')
+        | null viableKeys             = (srcBound, srcReq)
+        | typeVarLost src narrowedAct = (srcBound, srcReq)
+        | otherwise                   = (narrowedAct, narrowedReq)
+  return (src', srcReq', destFinal, Just reaches')
