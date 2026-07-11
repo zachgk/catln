@@ -71,16 +71,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/List/testMmapNil"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/List/testMmapNil -> /Data/Primitive/Integer = CInt 0 ]
-                    }
-                )
-            ,
                 ( "/sorted./Data/insertStep"
                 , ObjectMapItem
                     { omiDecls =
@@ -177,16 +167,6 @@ Prgm
                             ( Value /l -> /Data/Primitive/Integer = CInt 1 )
                             ( Value /r -> /Data/Primitive/Integer = /Data/length( Value /this -> TVArg /tail = Value /tail ) )
                         ]
-                    }
-                )
-            ,
-                ( "/Data/List/testAppend"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/List/testAppend -> /Data/Primitive/Integer = CInt 0 ]
                     }
                 )
             ,
@@ -501,16 +481,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/List/testMmapConsBind"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/List/testMmapConsBind -> /Data/Primitive/Integer = CInt 0 ]
-                    }
-                )
-            ,
                 ( "/Data/fmap"
                 , ObjectMapItem
                     { omiDecls = []
@@ -573,16 +543,6 @@ Prgm
                             ) = /operator||( Value /l -> TVArg /head = Value /head )
                             ( Value /r -> ∀/Data/Primitive/Boolean = /Data/any( Value /lst -> TVArg /tail = Value /tail ) )
                         ]
-                    }
-                )
-            ,
-                ( "/Data/List/testPureCons"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/List/testPureCons -> /Data/Primitive/Integer = CInt 0 ]
                     }
                 )
             ,
@@ -822,10 +782,6 @@ Prgm
         )
     , prgmCG =
         [ CGType
-        , CGType
-        , CGType
-        , CGType
-        , CGType
         , CGType
         , CGType
         , CGType
@@ -1656,8 +1612,102 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "required to be totally covered here." )
         , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[append] joins two lists end to end." )
+        , /Catln/#print
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) = /operator==
+                ( Value /l ->
+                    ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/Algebra/Eq ) = /Data/append
+                    ( Value /a -> /Data/Cons[ /T=/Data/Primitive/Integer ]
+                        ( /head=/Data/Primitive/Integer
+                        , /tail=/Data/Nil
+                        ) = /Data/Cons
+                        ( Value /head -> /Data/Primitive/Integer = CInt 1 )( Value /tail -> /Data/Nil = Value /Data/Nil )
+                    )
+                    ( Value /b -> /Data/Cons[ /T=/Data/Primitive/Integer ]
+                        ( /head=/Data/Primitive/Integer
+                        , /tail=/Data/Nil
+                        ) = /Data/Cons
+                        ( Value /head -> /Data/Primitive/Integer = CInt 2 )( Value /tail -> /Data/Nil = Value /Data/Nil )
+                    )
+                )
+                ( Value /r -> /Data/Cons[ /T=/Data/Primitive/Integer ]
+                    ( /head=/Data/Primitive/Integer
+                    , /tail=/Data/Cons[ /T=/Data/Primitive/Integer ]
+                        ( /head=/Data/Primitive/Integer
+                        , /tail=/Data/Nil
+                        )
+                    ) = /Data/Cons
+                    ( Value /head -> /Data/Primitive/Integer = CInt 1 )
+                    ( Value /tail -> /Data/Cons[ /T=/Data/Primitive/Integer ]
+                        ( /head=/Data/Primitive/Integer
+                        , /tail=/Data/Nil
+                        ) = /Data/Cons
+                        ( Value /head -> /Data/Primitive/Integer = CInt 2 )( Value /tail -> /Data/Nil = Value /Data/Nil )
+                    )
+                )
+            )
+            ( Value /result -> /Data/String = CStr "True" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[mmap] over a [ConsList] is concatMap: the function returns a whole list per element and the" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "  results are appended, so binding [[1]] to a function returning [[2]] yields [[2]], and binding" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "  the empty list yields the empty list." )
+        , /Catln/#print
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) = /operator==
+                ( Value /l ->
+                    ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/Algebra/Eq ) = /Data/mmap
+                    ( Value /m -> /Data/Cons[ /T=/Data/Primitive/Integer ]
+                        ( /head=/Data/Primitive/Integer
+                        , /tail=/Data/Nil
+                        ) = /Data/Cons
+                        ( Value /head -> /Data/Primitive/Integer = CInt 1 )( Value /tail -> /Data/Nil = Value /Data/Nil )
+                    )
+                    ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Cons[ /T=/Data/Primitive/Integer ]
+                        ( /head=/Data/Primitive/Integer
+                        , /tail=/Data/Nil
+                        ) = /Data/Cons
+                        ( Value /head -> /Data/Primitive/Integer = CInt 2 )( Value /tail -> /Data/Nil = Value /Data/Nil )
+                    )
+                )
+                ( Value /r -> /Data/Cons[ /T=/Data/Primitive/Integer ]
+                    ( /head=/Data/Primitive/Integer
+                    , /tail=/Data/Nil
+                    ) = /Data/Cons
+                    ( Value /head -> /Data/Primitive/Integer = CInt 2 )( Value /tail -> /Data/Nil = Value /Data/Nil )
+                )
+            )
+            ( Value /result -> /Data/String = CStr "True" )
+        , /Catln/#print
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) = /operator==
+                ( Value /l -> /Data/Nil = /Data/mmap( Value /m -> /Data/Nil = Value /Data/Nil )
+                    ( /fn( Value /v ) -> /Data/Cons[ /T=TopType ]
+                        ( /head=$/T
+                        , /tail=/Data/Nil
+                        ) = /Data/Cons( Value /head -> TVArg /v = Value /v )( Value /tail -> /Data/Nil = Value /Data/Nil )
+                    )
+                )( Value /r -> /Data/Nil = Value /Data/Nil )
+            )
+            ( Value /result -> /Data/String = CStr "True" )
+        , /Catln/#md
             ( Value /text -> /Data/String = CStr "[pure] for [ConsList] builds a singleton list; the call site's expected list type selects" )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "this instance (return-type-directed dispatch — see [pure] in [Data/monad])." )
+        , /Catln/#print
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) = /operator==
+                ( Value /l -> /Data/Cons[ /T=/Data/Primitive/Integer ]
+                    ( /head=/Data/Primitive/Integer
+                    , /tail=∀/Data/ConsList[ /T=$_/T ]
+                    ) = /Data/List/pureConsInt
+                    ( Value /v -> /Data/Primitive/Integer = CInt 1 )
+                )
+                ( Value /r -> /Data/Cons[ /T=/Data/Primitive/Integer ]
+                    ( /head=/Data/Primitive/Integer
+                    , /tail=/Data/Nil
+                    ) = /Data/Cons
+                    ( Value /head -> /Data/Primitive/Integer = CInt 1 )( Value /tail -> /Data/Nil = Value /Data/Nil )
+                )
+            )
+            ( Value /result -> /Data/String = CStr "True" )
         ]
     }

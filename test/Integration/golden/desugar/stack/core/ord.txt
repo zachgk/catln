@@ -59,16 +59,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/Algebra/exampleOrdEq"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/Algebra/exampleOrdEq= CInt 0 ]
-                    }
-                )
-            ,
                 ( "/Data/Algebra/mkDivComparison"
                 , ObjectMapItem
                     { omiDecls =
@@ -106,16 +96,6 @@ Prgm
                         [ /Data/Algebra/testOrdReflexive
                             [ /O : ∀/Data/Algebra/Ordering[ /T=TopType ] ]( Value o -> $/O )( Value t -> $/T )= CInt 0
                         ]
-                    }
-                )
-            ,
-                ( "/Data/Algebra/examplePartialOrder"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/Algebra/examplePartialOrder= CInt 0 ]
                     }
                 )
             ,
@@ -278,16 +258,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/Algebra/exampleIntOrd"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/Algebra/exampleIntOrd= CInt 0 ]
-                    }
-                )
-            ,
                 ( "/Data/Algebra/compareTo"
                 , ObjectMapItem
                     { omiDecls =
@@ -301,9 +271,6 @@ Prgm
         )
     , prgmCG =
         [ CGType
-        , CGType
-        , CGType
-        , CGType
         , CGType
         , CGType
         , CGType
@@ -445,8 +412,56 @@ Prgm
             ( Value /text= CStr "## Examples
             [compareTo] ranks integers by size, and a type's equality agrees with its ordering: values
             compare [Equal] exactly when they are equal." )
+        , /Catln/#print
+            ( Value /p= isLess
+                ( Value /this= compareTo
+                    ( Value other= CInt 3 )
+                    ( Value /this= CInt 2 )
+                )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#print
+            ( Value /p= isEq
+                ( Value /this= compareTo
+                    ( Value other= CInt 3 )
+                    ( Value /this= CInt 3 )
+                )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#print
+            ( Value /p= isGreater
+                ( Value /this= compareTo
+                    ( Value other= CInt 3 )
+                    ( Value /this= CInt 4 )
+                )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#print
+            ( Value /p= isLessEq
+                ( Value /this= compareTo
+                    ( Value other= CInt 3 )
+                    ( Value /this= CInt 2 )
+                )
+            )
+            ( Value /result= CStr "True" )
         , /Catln/#md
             ( Value /text= CStr "The divisibility ordering distinguishes ordered pairs from incomparable ones." )
+        , /Catln/#print
+            ( Value /p= isComparable
+                ( Value /this= pcompare
+                    ( Value a= CInt 2 )
+                    ( Value b= CInt 6 )
+                )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#print
+            ( Value /p= isNoOrdering
+                ( Value /this= pcompare
+                    ( Value a= CInt 2 )
+                    ( Value b= CInt 3 )
+                )
+            )
+            ( Value /result= CStr "True" )
         , /Catln/#md
             ( Value /text= CStr "## Laws of ordering
             Each law is a property of the [Ordering] class itself, checked against every instance ([$O]) at

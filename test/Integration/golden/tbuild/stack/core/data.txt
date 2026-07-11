@@ -120,6 +120,12 @@ Prgm
             ( EAppArg Value /text -> /Data/String = "[ToString] is the class of types that can render themselves as a [String]. Defining
             [toString] for a type makes its values printable and, more importantly, lets generic
             containers such as [List] render their contents by rendering each element." )
+        , /Catln/#print
+            ( EAppArg Value /p -> /Data/String = "hello" )
+            ( EAppArg Value /result -> /Data/String = "hello" )
+        , /Catln/#print
+            ( EAppArg Value /p -> /Data/Primitive/Integer = 42 )
+            ( EAppArg Value /result -> /Data/String = "42" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "## Context" )
         , /Catln/#md
@@ -132,9 +138,7 @@ Prgm
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "type-variable member interacts poorly with expanding the open [Functor] class during" )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "inference. (Sketch of a future instance: None.fmap(fn) = None; $T.fmap(fn($T)) = fn(this).)" )
-        , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "The [Functor] class and the generic [fmap] live in [Data/functor.ct]; the [List]" )
+            ( EAppArg Value /text -> /Data/String = "inference. The [Functor] class and the generic [fmap] live in [Data/functor.ct]; the [List]" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "collection and its [ConsList] implementation live in [Data/list.ct]." )
         , /Catln/#md

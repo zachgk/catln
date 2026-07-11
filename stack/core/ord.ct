@@ -127,26 +127,19 @@ module(Data/Algebra)
   # ## Examples
     [compareTo] ranks integers by size, and a type's equality agrees with its ordering: values
     compare [Equal] exactly when they are equal.
-  exampleIntOrd =
-    #example
-    #assert(test= 2.compareTo(other= 3).isLess)
-    #assert(test= 3.compareTo(other= 3).isEq)
-    #assert(test= 4.compareTo(other= 3).isGreater)
-    0
-
-  exampleOrdEq =
-    #example
-    #assert(test= 3.compareTo(other= 3).isEq)
-    #assert(test= 2.compareTo(other= 3).isLessEq)
-    0
-
+  > 2.compareTo(other= 3).isLess
+    >>> True
+  > 3.compareTo(other= 3).isEq
+    >>> True
+  > 4.compareTo(other= 3).isGreater
+    >>> True
+  > 2.compareTo(other= 3).isLessEq
+    >>> True
   # The divisibility ordering distinguishes ordered pairs from incomparable ones.
-  examplePartialOrder =
-    #example
-    #assert(test= pcompare(a= 2, b= 6).isComparable)
-    #assert(test= pcompare(a= 2, b= 3).isNoOrdering)
-    0
-
+  > pcompare(a= 2, b= 6).isComparable
+    >>> True
+  > pcompare(a= 2, b= 3).isNoOrdering
+    >>> True
   # ## Laws of ordering
     Each law is a property of the [Ordering] class itself, checked against every instance ([$O]) at
     arbitrary members of that instance's type ([$T]).

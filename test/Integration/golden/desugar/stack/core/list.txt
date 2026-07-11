@@ -30,16 +30,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/List/testMmapNil"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/List/testMmapNil= CInt 0 ]
-                    }
-                )
-            ,
                 ( "/sorted./Data/insertStep"
                 , ObjectMapItem
                     { omiDecls =
@@ -93,16 +83,6 @@ Prgm
                             ( Value /l= CInt 1 )
                             ( Value /r= length( Value /this= Value tail ) )
                         ]
-                    }
-                )
-            ,
-                ( "/Data/List/testAppend"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/List/testAppend= CInt 0 ]
                     }
                 )
             ,
@@ -281,16 +261,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/List/testMmapConsBind"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/List/testMmapConsBind= CInt 0 ]
-                    }
-                )
-            ,
                 ( "/Data/fmap"
                 , ObjectMapItem
                     { omiDecls = []
@@ -324,16 +294,6 @@ Prgm
                             ( Value lst= /Data/Cons[ /T : ∀/Data/Primitive/Boolean ]( Value head )( Value tail ) ) -> ∀/Data/Primitive/Boolean = /operator||( Value /l= Value head )
                             ( Value /r= any( Value lst= Value tail ) )
                         ]
-                    }
-                )
-            ,
-                ( "/Data/List/testPureCons"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/List/testPureCons= CInt 0 ]
                     }
                 )
             ,
@@ -449,10 +409,6 @@ Prgm
         )
     , prgmCG =
         [ CGType
-        , CGType
-        , CGType
-        , CGType
-        , CGType
         , CGType
         , CGType
         , CGType
@@ -906,8 +862,66 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "required to be totally covered here." )
         , /Catln/#md
+            ( Value /text= CStr "[append] joins two lists end to end." )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= /Data/append
+                    ( Value a= /Data/Cons
+                        ( Value /head= CInt 1 )( Value /tail= Value /Data/Nil )
+                    )
+                    ( Value b= /Data/Cons
+                        ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
+                    )
+                )
+                ( Value /r= /Data/Cons
+                    ( Value /head= CInt 1 )
+                    ( Value /tail= /Data/Cons
+                        ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
+                    )
+                )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#md
+            ( Value /text= CStr "[mmap] over a [ConsList] is concatMap: the function returns a whole list per element and the" )
+        , /Catln/#md
+            ( Value /text= CStr "  results are appended, so binding [[1]] to a function returning [[2]] yields [[2]], and binding" )
+        , /Catln/#md
+            ( Value /text= CStr "  the empty list yields the empty list." )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= /Data/mmap
+                    ( Value m= /Data/Cons
+                        ( Value /head= CInt 1 )( Value /tail= Value /Data/Nil )
+                    )
+                    ( fn( Value v )= /Data/Cons
+                        ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
+                    )
+                )
+                ( Value /r= /Data/Cons
+                    ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
+                )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= /Data/mmap( Value m= Value /Data/Nil )
+                    ( fn( Value v )= /Data/Cons( Value /head= Value v )( Value /tail= Value /Data/Nil ) )
+                )( Value /r= Value /Data/Nil )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#md
             ( Value /text= CStr "[pure] for [ConsList] builds a singleton list; the call site's expected list type selects" )
         , /Catln/#md
             ( Value /text= CStr "this instance (return-type-directed dispatch — see [pure] in [Data/monad])." )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= pureConsInt
+                    ( Value v= CInt 1 )
+                )
+                ( Value /r= /Data/Cons
+                    ( Value /head= CInt 1 )( Value /tail= Value /Data/Nil )
+                )
+            )
+            ( Value /result= CStr "True" )
         ]
     }

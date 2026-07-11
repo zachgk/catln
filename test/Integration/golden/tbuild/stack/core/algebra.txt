@@ -22,6 +22,16 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Algebra/exampleIntSemigroup"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/Algebra/exampleIntSemigroup -> /Data/Primitive/Integer = 0 ]
+                    }
+                )
+            ,
                 ( "/Data/Algebra/mempty"
                 , ObjectMapItem
                     { omiDecls =
@@ -92,6 +102,7 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
         , CGClass
             ( False
             , /Data/Algebra/CommutativeMonoid
@@ -147,14 +158,16 @@ Prgm
             ( EAppArg Value /text -> /Data/String = "A semigroup is a type combined with an associative operation called [operator++].
             For example, integers with the addition operation are a semigroup." )
         , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "[Integer] is a [Semigroup] under addition, so [operator++] combines two of them. The result is" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "  a number (too polymorphic to render directly), so it is shown as an [#assert]ed property." )
+        , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "The [Monoid] builds on top of the [Semigroup].
             It adds the identity value [mempty].
             The integers with addition form a [Monoid], and 0 is the value for [mempty].
             Another example is [String] where "" is the value for [mempty]" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "We can test to verify that [mempty] works with both the left and right." )
-        , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "mconcat<Monoid $T>(List<$T> lst) = lst.fold(operator++, mempty)" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "Using the [Monoid], it is possible to combine a list of monoids together." )
         , /Catln/#md

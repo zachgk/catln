@@ -2,16 +2,6 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
-                ( "/Data/Maybe/testPureMaybe"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/Maybe/testPureMaybe -> /Data/Primitive/Integer = 0 ]
-                    }
-                )
-            ,
                 ( "/Data/Some"
                 , ObjectMapItem
                     { omiDecls =
@@ -19,16 +9,6 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
-                    }
-                )
-            ,
-                ( "/Data/Maybe/testMmapSomeToNothing"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/Maybe/testMmapSomeToNothing -> /Data/Primitive/Integer = 0 ]
                     }
                 )
             ,
@@ -42,26 +22,6 @@ Prgm
                             ( EAppVar /M ∀/Data/Maybe[ /T=$_/T ] )( EAppArg Value /v ) -> /Data/Some[ /T=TopType ]( /value=$/T ) = /Data/Some
                             ( EAppArg Value /value -> TVArg /v = ( Value /v ↦ TVArg /v ) )
                         ]
-                    }
-                )
-            ,
-                ( "/Data/Maybe/testOrdMaybe"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/Maybe/testOrdMaybe -> /Data/Primitive/Integer = 0 ]
-                    }
-                )
-            ,
-                ( "/Data/Maybe/testEqSomeSomeEq"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/Maybe/testEqSomeSomeEq -> /Data/Primitive/Integer = 0 ]
                     }
                 )
             ,
@@ -91,26 +51,6 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
-                    }
-                )
-            ,
-                ( "/Data/Maybe/testMmapSomeBind"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/Maybe/testMmapSomeBind -> /Data/Primitive/Integer = 0 ]
-                    }
-                )
-            ,
-                ( "/Data/Maybe/testMmapNothing"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/Maybe/testMmapNothing -> /Data/Primitive/Integer = 0 ]
                     }
                 )
             ,
@@ -194,16 +134,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/Maybe/testEqSomeSomeNeq"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/Maybe/testEqSomeSomeNeq -> /Data/Primitive/Integer = 0 ]
-                    }
-                )
-            ,
                 ( "/Data/mmap"
                 , ObjectMapItem
                     { omiDecls = []
@@ -275,13 +205,6 @@ Prgm
         , CGType
         , CGType
         , CGType
-        , CGType
-        , CGType
-        , CGType
-        , CGType
-        , CGType
-        , CGType
-        , CGType
         , CGClass
             ( False
             , /Data/Maybe
@@ -329,15 +252,84 @@ Prgm
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]." )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "# Maybe equality tests" )
+            ( EAppArg Value /text -> /Data/String = "# Maybe equality and ordering examples" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "A [Maybe] of any [Eq] element is an [Eq] member (see the end of this file), so [operator==]" )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "checks both arms structurally." )
+            ( EAppArg Value /text -> /Data/String = "  checks both arms structurally." )
+        , /Catln/#print
+            ( EAppArg Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+                ( /operator==
+                    ( EAppArg Value /l -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Some
+                        ( EAppArg Value /value -> /Data/Primitive/Integer = 1 )
+                    )
+                    ( EAppArg Value /r -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Some
+                        ( EAppArg Value /value -> /Data/Primitive/Integer = 1 )
+                    ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "True" )
+        , /Catln/#print
+            ( EAppArg Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+                ( /operator==
+                    ( EAppArg Value /l -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Some
+                        ( EAppArg Value /value -> /Data/Primitive/Integer = 1 )
+                    )
+                    ( EAppArg Value /r -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Some
+                        ( EAppArg Value /value -> /Data/Primitive/Integer = 2 )
+                    ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "False" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "A [Maybe] of any [Ord] element is an [Ord] member (see the end of this file), so [compareTo]" )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "orders both arms structurally, with [Nothing] before any [Some]." )
+            ( EAppArg Value /text -> /Data/String = "  orders both arms structurally, with [Nothing] before any [Some]." )
+        , /Catln/#print
+            ( EAppArg Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) =
+                ( /Data/Algebra/isLess
+                    ( EAppArg Value /this -> ∀/Data/Algebra/Comparison =
+                        ( /Data/Algebra/compareTo
+                            ( EAppArg Value /other -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Some
+                                ( EAppArg Value /value -> /Data/Primitive/Integer = 2 )
+                            )
+                            ( EAppArg Value /this -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Some
+                                ( EAppArg Value /value -> /Data/Primitive/Integer = 1 )
+                            ) ↦ ∀/Data/Algebra/Comparison
+                        )
+                    ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean )
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "True" )
+        , /Catln/#print
+            ( EAppArg Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) =
+                ( /Data/Algebra/isEq
+                    ( EAppArg Value /this -> ∀/Data/Algebra/Comparison =
+                        ( /Data/Algebra/compareTo
+                            ( EAppArg Value /other -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Some
+                                ( EAppArg Value /value -> /Data/Primitive/Integer = 2 )
+                            )
+                            ( EAppArg Value /this -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Some
+                                ( EAppArg Value /value -> /Data/Primitive/Integer = 2 )
+                            ) ↦ ∀/Data/Algebra/Comparison
+                        )
+                    ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean )
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "True" )
+        , /Catln/#print
+            ( EAppArg Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) =
+                ( /Data/Algebra/isGreater
+                    ( EAppArg Value /this -> ∀/Data/Algebra/Comparison =
+                        ( /Data/Algebra/compareTo( EAppArg Value /other -> /Data/Nothing = Value /Data/Nothing )
+                            ( EAppArg Value /this -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Some
+                                ( EAppArg Value /value -> /Data/Primitive/Integer = 1 )
+                            ) ↦ ∀/Data/Algebra/Comparison
+                        )
+                    ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean )
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "True" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "# Maybe Eq membership
             Makes a [Maybe] of any [Eq] element a proper member of [Eq], so the generic [operator==]
@@ -364,16 +356,76 @@ Prgm
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "[mmap] binds through the [Some] arm (its result is whatever [Maybe] the function returns) and" )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "short-circuits the [Nothing] arm. [Maybe] is already an [Eq] member (see above), so the" )
+            ( EAppArg Value /text -> /Data/String = "  short-circuits the [Nothing] arm. [Maybe] is already an [Eq] member (see above), so the" )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "flattened result compares with [operator==]. (A function whose body computes the wrapped value," )
+            ( EAppArg Value /text -> /Data/String = "  flattened result compares with [operator==]. (A function whose body computes the wrapped" )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "e.g. [Some(value= v + 1)], is not yet comparable — a pre-existing gap unrelated to [Monad]; see" )
+            ( EAppArg Value /text -> /Data/String = "  value, e.g. [Some(value= v + 1)], is not yet comparable — a pre-existing gap unrelated to" )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "the note in [Data/monad].)" )
+            ( EAppArg Value /text -> /Data/String = "  [Monad]; see the note in [Data/monad].)" )
+        , /Catln/#print
+            ( EAppArg Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+                ( /operator==
+                    ( EAppArg Value /l -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) =
+                        ( /Data/mmap
+                            ( EAppArg Value /m -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Some
+                                ( EAppArg Value /value -> /Data/Primitive/Integer = 5 )
+                            )
+                            ( EAppArg /fn( EAppArg Value /v -> /Data/Primitive/Integer ) -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Some
+                                ( EAppArg Value /value -> /Data/Primitive/Integer = 6 )
+                            ) ↦ /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                        )
+                    )
+                    ( EAppArg Value /r -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Some
+                        ( EAppArg Value /value -> /Data/Primitive/Integer = 6 )
+                    ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "True" )
+        , /Catln/#print
+            ( EAppArg Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+                ( /operator==
+                    ( EAppArg Value /l -> /Data/Nothing =
+                        ( /Data/mmap
+                            ( EAppArg Value /m -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Some
+                                ( EAppArg Value /value -> /Data/Primitive/Integer = 5 )
+                            )
+                            ( EAppArg /fn( EAppArg Value /v ) -> /Data/Nothing = Value /Data/Nothing ) ↦ /Data/Nothing
+                        )
+                    )( EAppArg Value /r -> /Data/Nothing = Value /Data/Nothing ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "True" )
+        , /Catln/#print
+            ( EAppArg Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+                ( /operator==
+                    ( EAppArg Value /l -> /Data/Nothing =
+                        ( /Data/mmap( EAppArg Value /m -> /Data/Nothing = Value /Data/Nothing )
+                            ( EAppArg /fn( EAppArg Value /v ) -> /Data/Some[ /T=TopType ]( /value=$/T ) = /Data/Some
+                                ( EAppArg Value /value -> TVArg /v = ( Value /v ↦ TVArg /v ) )
+                            ) ↦ /Data/Nothing
+                        )
+                    )( EAppArg Value /r -> /Data/Nothing = Value /Data/Nothing ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "True" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "[pure] for [Maybe] wraps the value in a [Some]; the call site's expected [Maybe] type selects" )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "this instance (return-type-directed dispatch — see [pure] in [Data/monad])." )
+            ( EAppArg Value /text -> /Data/String = "  this instance (return-type-directed dispatch — see [pure] in [Data/monad])." )
+        , /Catln/#print
+            ( EAppArg Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+                ( /operator==
+                    ( EAppArg Value /l -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) =
+                        ( /Data/Maybe/pureSomeInt
+                            ( EAppArg Value /v -> /Data/Primitive/Integer = 5 ) ↦ /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                        )
+                    )
+                    ( EAppArg Value /r -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Some
+                        ( EAppArg Value /value -> /Data/Primitive/Integer = 5 )
+                    ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "True" )
         ]
     }

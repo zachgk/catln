@@ -22,6 +22,13 @@ module(Data/Algebra)
     #assert(test= (a ++ b) ++ c == a ++ (b ++ c))
     0
 
+  # [Integer] is a [Semigroup] under addition, so [operator++] combines two of them. The result is
+  #   a number (too polymorphic to render directly), so it is shown as an [#assert]ed property.
+  exampleIntSemigroup =
+    #example
+    #assert(test= 2 ++ 3 == 5)
+    0
+
   class(Monoid)
     # The [Monoid] builds on top of the [Semigroup].
       It adds the identity value [mempty].
@@ -34,15 +41,16 @@ module(Data/Algebra)
     # mempty is the "zero" or "empty" value that can be combined with [operator++] to result in the same operation
 
   # We can test to verify that [mempty] works with both the left and right.
-  #test
-    testRightMonoidIdentity[$T -> /Data/Algebra/Monoid](t -> $T) =
-      #assert(test= (t ++ mempty) == t)
-      0
+  testRightMonoidIdentity[$T -> /Data/Algebra/Monoid](t -> $T) =
+    #test
+    #assert(test= (t ++ mempty) == t)
+    0
 
-    testLeftMonoidIdentity[$T -> /Data/Algebra/Monoid](t -> $T) =
-      #assert(test= mempty ++ t == t)
-      0
-  # mconcat<Monoid $T>(List<$T> lst) = lst.fold(operator++, mempty)
+  testLeftMonoidIdentity[$T -> /Data/Algebra/Monoid](t -> $T) =
+    #test
+    #assert(test= mempty ++ t == t)
+    0
+
   # Using the [Monoid], it is possible to combine a list of monoids together.
   class(CommutativeMonoid)
     # The [CommutativeMonoid] builds on top of the [Monoid].

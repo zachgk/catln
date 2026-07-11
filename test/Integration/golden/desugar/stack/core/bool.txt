@@ -199,13 +199,46 @@ Prgm
             [Boolean] is the type of truth values — [True] and [False] — with the standard logical
             operators. Its equality is defined here alongside the type." )
         , /Catln/#md
-            ( Value /text= CStr "enum<Boolean> = [False, True]" )
+            ( Value /text= CStr "[boolEq] is the primitive truth-table equality on [Boolean]s; [BoolEqv] and [equal] below build" )
+        , /Catln/#md
+            ( Value /text= CStr "  on it." )
+        , /Catln/#print
+            ( Value /p= /operator~( Value /a= Value True ) )
+            ( Value /result= CStr "False" )
+        , /Catln/#print
+            ( Value /p= /operator&&( Value /l= Value True )( Value /r= Value True ) )
+            ( Value /result= CStr "True" )
+        , /Catln/#print
+            ( Value /p= /operator&&( Value /l= Value True )( Value /r= Value False ) )
+            ( Value /result= CStr "False" )
+        , /Catln/#print
+            ( Value /p= /operator||( Value /l= Value False )( Value /r= Value True ) )
+            ( Value /result= CStr "True" )
+        , /Catln/#print
+            ( Value /p= /operator||( Value /l= Value False )( Value /r= Value False ) )
+            ( Value /result= CStr "False" )
+        , /Catln/#print
+            ( Value /p= /operator^( Value /l= Value True )( Value /r= Value False ) )
+            ( Value /result= CStr "True" )
+        , /Catln/#print
+            ( Value /p= /operator^( Value /l= Value True )( Value /r= Value True ) )
+            ( Value /result= CStr "False" )
         , /Catln/#md
             ( Value /text= CStr "## Equality
             [Boolean] is an [Eq] type: [BoolEqv] wraps the primitive [boolEq], and [eq]/[equal] follow." )
+        , /Catln/#print
+            ( Value /p= /operator==( Value /l= Value True )( Value /r= Value True ) )
+            ( Value /result= CStr "True" )
+        , /Catln/#print
+            ( Value /p= /operator==( Value /l= Value True )( Value /r= Value False ) )
+            ( Value /result= CStr "False" )
         , /Catln/#md
             ( Value /text= CStr "## Rendering as text" )
         , /Catln/#md
             ( Value /text= CStr "A [Boolean] renders as the text of its constructor." )
+        , /Catln/#print( Value /p= Value True )
+            ( Value /result= CStr "True" )
+        , /Catln/#print( Value /p= Value False )
+            ( Value /result= CStr "False" )
         ]
     }

@@ -34,6 +34,18 @@ module(Data/Primitive)
   (_ :: Integer % _ :: Integer) -> Integer
     #runtime("int%")
 
+  # The arithmetic operators on [Integer]. Their results are numbers, which are too polymorphic
+  #   ([Integer] or [Float]) to render directly, so the examples are [#assert]ed properties rather
+  #   than printed values. ([operator-] and [operator//] are omitted here: their result unions
+  #   currently trip a solver-completeness frontier when constrained to a concrete [Integer] this
+  #   way — see the note passed back with this change.)
+  exampleIntArithmetic =
+    #example
+    #assert(test= 2 + 3 == 5)
+    #assert(test= 4 * 3 == 12)
+    #assert(test= 7 % 3 == 1)
+    0
+
   (_ :: Integer <= _ :: Integer) -> Boolean
     #runtime("int<=")
 
@@ -43,6 +55,8 @@ module(Data/Primitive)
   (_ :: Integer < _ :: Integer) -> Boolean
     #runtime("int<")
 
+  > (2 < 3)
+    >>> True
   (_ :: Integer > _ :: Integer) -> Boolean
     #runtime("int>")
 
@@ -73,14 +87,13 @@ module(Data/Primitive)
 
   :Integer.equal(other)= this.eq.rel(a= this, b= other)
 
+  > (2 == 2)
+    >>> True
+  > (2 == 3)
+    >>> False
   # ### Commutative Group
   every(Integer, isa= [/Data/Algebra/CommutativeMonoid])
   every(Integer, isa= [/Data/Algebra/Group])
-
-  exampleZeroPlusZero =
-    #example
-    #assert(test= 0 + 0 == 0)
-    0
 
   mempty -> Integer= 0
 
@@ -116,6 +129,10 @@ module(Data/Primitive)
   (_ :: Float < _ :: Float) -> Boolean
     #runtime("float<")
 
+  # [Float] renders no text of its own (it is not a [ToString]), so its behavior is shown through
+  #   the [Boolean] a comparison produces.
+  > (1.5 < 2.5)
+    >>> True
   (_ :: Float > _ :: Float) -> Boolean
     #runtime("float>")
 

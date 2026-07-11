@@ -46,16 +46,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/Algebra/exampleIntEqv"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/Algebra/exampleIntEqv= CInt 0 ]
-                    }
-                )
-            ,
                 ( "/Data/Algebra/testEqvSymmetric"
                 , ObjectMapItem
                     { omiDecls = []
@@ -137,7 +127,6 @@ Prgm
         , CGType
         , CGType
         , CGType
-        , CGType
         , CGClass
             ( False
             , /Data/Algebra/Eq
@@ -192,7 +181,26 @@ Prgm
             distinct values)." )
         , /Catln/#md
             ( Value /text= CStr "## Example
-            The simplest [Eqv] over [Integer] compares its values with the built-in integer equality." )
+            The simplest [Eqv] over [Integer] compares its values with the built-in integer equality;
+            [AllEqv] relates every pair." )
+        , /Catln/#print
+            ( Value /p= rel
+                ( Value a= CInt 2 )
+                ( Value b= CInt 2 )( Value /this= Value IntEqExample )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#print
+            ( Value /p= rel
+                ( Value a= CInt 2 )
+                ( Value b= CInt 3 )( Value /this= Value IntEqExample )
+            )
+            ( Value /result= CStr "False" )
+        , /Catln/#print
+            ( Value /p= rel
+                ( Value a= CInt 2 )
+                ( Value b= CInt 3 )( Value /this= Value AllEqv )
+            )
+            ( Value /result= CStr "True" )
         , /Catln/#md
             ( Value /text= CStr "## Laws of equivalence
             Reflexivity is a property of the [Eqv] class itself: every equivalence relation must relate

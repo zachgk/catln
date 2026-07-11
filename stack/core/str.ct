@@ -22,6 +22,10 @@ module(Data)
 
   :String.equal(other)= this.eq.rel(a= this, b= other)
 
+  > ("hi" == "hi")
+    >>> True
+  > ("hi" == "no")
+    >>> False
   # ## Concatenation
   every(String, isa= [/Data/Algebra/Semigroup])
     # [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
@@ -31,3 +35,6 @@ module(Data)
   (_ :: String ++ _ :: String) -> String
     # [operator++] joins two strings, the [Semigroup] operation on [String].
     #runtime("strConcat")
+
+  > ("foo" ++ "bar")
+    >>> foobar

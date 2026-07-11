@@ -80,16 +80,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/Algebra/exampleIntEqv"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/Algebra/exampleIntEqv -> /Data/Primitive/Integer = CInt 0 ]
-                    }
-                )
-            ,
                 ( "/Data/Algebra/testEqvSymmetric"
                 , ObjectMapItem
                     { omiDecls = []
@@ -190,7 +180,6 @@ Prgm
         , CGType
         , CGType
         , CGType
-        , CGType
         , CGClass
             ( False
             , /Data/Algebra/Eq
@@ -245,7 +234,53 @@ Prgm
             distinct values)." )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "## Example
-            The simplest [Eqv] over [Integer] compares its values with the built-in integer equality." )
+            The simplest [Eqv] over [Integer] compares its values with the built-in integer equality;
+            [AllEqv] relates every pair." )
+        , /Catln/#print
+            ( Value /p ->
+                ( /Data/Primitive/True + /Data/Algebra/rel
+                    ( /this=/Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ]
+                    , /a=/Data/Primitive/Integer
+                    , /b=/Data/Primitive/Integer
+                    ) + /Data/Primitive/False + /Data/Primitive/intEq
+                    ( /r=/Data/Primitive/Integer
+                    , /l=/Data/Primitive/Integer
+                    )
+                ) = /rel
+                ( Value /a -> /Data/Primitive/Integer = CInt 2 )
+                ( Value /b -> /Data/Primitive/Integer = CInt 2 )
+                ( Value /this -> /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] = Value /Data/Algebra/IntEqExample )
+            )
+            ( Value /result -> /Data/String = CStr "True" )
+        , /Catln/#print
+            ( Value /p ->
+                ( /Data/Primitive/True + /Data/Algebra/rel
+                    ( /this=/Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ]
+                    , /a=/Data/Primitive/Integer
+                    , /b=/Data/Primitive/Integer
+                    ) + /Data/Primitive/False + /Data/Primitive/intEq
+                    ( /r=/Data/Primitive/Integer
+                    , /l=/Data/Primitive/Integer
+                    )
+                ) = /rel
+                ( Value /a -> /Data/Primitive/Integer = CInt 2 )
+                ( Value /b -> /Data/Primitive/Integer = CInt 3 )
+                ( Value /this -> /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] = Value /Data/Algebra/IntEqExample )
+            )
+            ( Value /result -> /Data/String = CStr "False" )
+        , /Catln/#print
+            ( Value /p ->
+                ( /Data/Primitive/True + /Data/Algebra/rel
+                    ( /this=/Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ]
+                    , /a=/Data/Primitive/Integer
+                    , /b=/Data/Primitive/Integer
+                    ) + /Data/Primitive/False
+                ) = /rel
+                ( Value /a -> /Data/Primitive/Integer = CInt 2 )
+                ( Value /b -> /Data/Primitive/Integer = CInt 3 )
+                ( Value /this -> /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] = Value /Data/Algebra/AllEqv )
+            )
+            ( Value /result -> /Data/String = CStr "True" )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "## Laws of equivalence
             Reflexivity is a property of the [Eqv] class itself: every equivalence relation must relate

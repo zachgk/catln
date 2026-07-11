@@ -2,16 +2,6 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
-                ( "/Data/testMonadIdentityPure"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/testMonadIdentityPure= CInt 0 ]
-                    }
-                )
-            ,
                 ( "/Data/pureId"
                 , ObjectMapItem
                     { omiDecls =
@@ -38,16 +28,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/testMonadIdentityMmap"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/testMonadIdentityMmap= CInt 0 ]
-                    }
-                )
-            ,
                 ( "/Data/mmap"
                 , ObjectMapItem
                     { omiDecls =
@@ -68,8 +48,6 @@ Prgm
         )
     , prgmCG =
         [ CGType
-        , CGType
-        , CGType
         , CGType
         , CGType
         , CGClass
@@ -123,6 +101,19 @@ Prgm
             ( Value /text= CStr "slot ([reduceAppliedType] settles only top-level leaves, not nested data-construction fields)," )
         , /Catln/#md
             ( Value /text= CStr "so [Some(value= 5 + 1) == Some(value= 6)] fails on its own, independent of [mmap]." )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= mmap
+                    ( Value m= Id
+                        ( Value value= CInt 5 )
+                    )
+                    ( fn( Value v )= Id( Value value= Value v ) )
+                )
+                ( Value /r= Id
+                    ( Value value= CInt 5 )
+                )
+            )
+            ( Value /result= CStr "True" )
         , /Catln/#md
             ( Value /text= CStr "## Pure
             [pure] wraps a single plain value into a [Monad]. Every instance shares the same input shape —
@@ -131,5 +122,15 @@ Prgm
             resolved concrete expected type (such as a declared return type) where it calls [pure]." )
         , /Catln/#md
             ( Value /text= CStr "Concrete smoke test: the declared return type of [pureId] selects the [Identity] instance." )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= pureId
+                    ( Value v= CInt 5 )
+                )
+                ( Value /r= Id
+                    ( Value value= CInt 5 )
+                )
+            )
+            ( Value /result= CStr "True" )
         ]
     }

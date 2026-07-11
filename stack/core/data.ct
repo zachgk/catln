@@ -22,11 +22,15 @@ module(Data)
   :String.toString= this
     # A [String] renders as itself.
 
+  > "hello"
+    >>> hello
   every(Integer, isa= [/Data/ToString])
 
   :Integer.toString -> String
     #runtime("intToString")
 
+  > 42
+    >>> 42
   # ## Context
   data(/Context[$V](value -> $V, .._))
     # The context is used to represent state.
@@ -45,8 +49,7 @@ module(Data)
 
   # [Option] is not currently a [Functor]: it has no [fmap] instance yet, and its bare
   # type-variable member interacts poorly with expanding the open [Functor] class during
-  # inference. (Sketch of a future instance: None.fmap(fn) = None; $T.fmap(fn($T)) = fn(this).)
-  # The [Functor] class and the generic [fmap] live in [Data/functor.ct]; the [List]
+  # inference. The [Functor] class and the generic [fmap] live in [Data/functor.ct]; the [List]
   # collection and its [ConsList] implementation live in [Data/list.ct].
   class(Set[$T])
 

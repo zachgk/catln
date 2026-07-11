@@ -51,12 +51,14 @@ module(Data/Algebra)
   :AllEqv.rel(a, b)= True
 
   # ## Example
-    The simplest [Eqv] over [Integer] compares its values with the built-in integer equality.
-  exampleIntEqv =
-    #example
-    #assert(test= IntEqExample.rel(a= 2, b= 2))
-    0
-
+    The simplest [Eqv] over [Integer] compares its values with the built-in integer equality;
+    [AllEqv] relates every pair.
+  > IntEqExample.rel(a= 2, b= 2)
+    >>> True
+  > IntEqExample.rel(a= 2, b= 3)
+    >>> False
+  > AllEqv.rel(a= 2, b= 3)
+    >>> True
   # ## Laws of equivalence
     Reflexivity is a property of the [Eqv] class itself: every equivalence relation must relate
     each value to itself. Expressed as a property test, it is checked against every [Eqv]

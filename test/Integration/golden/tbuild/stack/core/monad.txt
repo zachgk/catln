@@ -2,16 +2,6 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
-                ( "/Data/testMonadIdentityPure"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/testMonadIdentityPure -> /Data/Primitive/Integer = 0 ]
-                    }
-                )
-            ,
                 ( "/Data/pureId"
                 , ObjectMapItem
                     { omiDecls =
@@ -46,16 +36,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/testMonadIdentityMmap"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/testMonadIdentityMmap -> /Data/Primitive/Integer = 0 ]
-                    }
-                )
-            ,
                 ( "/Data/mmap"
                 , ObjectMapItem
                     { omiDecls =
@@ -79,8 +59,6 @@ Prgm
         )
     , prgmCG =
         [ CGType
-        , CGType
-        , CGType
         , CGType
         , CGType
         , CGClass
@@ -134,6 +112,25 @@ Prgm
             ( EAppArg Value /text -> /Data/String = "slot ([reduceAppliedType] settles only top-level leaves, not nested data-construction fields)," )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "so [Some(value= 5 + 1) == Some(value= 6)] fails on its own, independent of [mmap]." )
+        , /Catln/#print
+            ( EAppArg Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) =
+                ( /operator==
+                    ( EAppArg Value /l -> /Data/Id[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) =
+                        ( /Data/mmap
+                            ( EAppArg Value /m -> /Data/Id[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Id
+                                ( EAppArg Value /value -> /Data/Primitive/Integer = 5 )
+                            )
+                            ( EAppArg /fn( EAppArg Value /v -> /Data/Primitive/Integer ) -> /Data/Id[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Id
+                                ( EAppArg Value /value -> TVArg /v = ( Value /v ↦ TVArg /v ) )
+                            ) ↦ /Data/Id[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                        )
+                    )
+                    ( EAppArg Value /r -> /Data/Id[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Id
+                        ( EAppArg Value /value -> /Data/Primitive/Integer = 5 )
+                    ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean )
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "True" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "## Pure
             [pure] wraps a single plain value into a [Monad]. Every instance shares the same input shape —
@@ -142,5 +139,33 @@ Prgm
             resolved concrete expected type (such as a declared return type) where it calls [pure]." )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "Concrete smoke test: the declared return type of [pureId] selects the [Identity] instance." )
+        , /Catln/#print
+            ( EAppArg Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) =
+                ( /operator==
+                    ( EAppArg Value /l -> UnionType
+                        ( Just
+                            ( PredClass /Data/Monad[ /T=$_/A ] && PredClass /Data/Algebra/Eq
+                            , fromList []
+                            )
+                        , /Data/Id[ /T=∀/Data/Algebra/Eq ]( /value=$/T )
+                        , []
+                        ) =
+                        ( /Data/pureId
+                            ( EAppArg Value /v -> /Data/Primitive/Integer = 5 ) ↦ UnionType
+                            ( Just
+                                ( PredClass /Data/Monad[ /T=$_/A ] && PredClass /Data/Algebra/Eq
+                                , fromList []
+                                )
+                            , /Data/Id[ /T=∀/Data/Algebra/Eq ]( /value=$/T )
+                            , []
+                            )
+                        )
+                    )
+                    ( EAppArg Value /r -> /Data/Id[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Id
+                        ( EAppArg Value /value -> /Data/Primitive/Integer = 5 )
+                    ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean )
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "True" )
         ]
     }

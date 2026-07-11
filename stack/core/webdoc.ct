@@ -8,12 +8,13 @@ module(Catln/Doc)
   class(DShow)
     # Represents objects which can be shown in the webdocs.
 
-  # dshow(s) -> /Catln/Doc/DShow
   dshow(s -> DShow)= s
+    # [dshow] resolves a value or annotation to its [DShow] display form. The identity arm passes a
+      value that is already [DShow] straight through; the arms below turn compiler annotations (like
+      [#md] or [#type]) into their visualization types.
 
   every(String, isa= [/Catln/Doc/DShow])
   every(CatlnResult.., isa= [/Catln/Doc/DShow])
-
   every(/Data/ToString, isa= [/Catln/Doc/DShow])
     # Every [/Data/ToString] value is displayable, so [ToString] is a subset of [DShow]: the
       webdocs render such a value through its [/Data/toString]. This is what lets a `> value`

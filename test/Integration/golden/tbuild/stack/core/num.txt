@@ -205,6 +205,16 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Primitive/exampleIntArithmetic"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/Primitive/exampleIntArithmetic -> /Data/Primitive/Integer = 0 ]
+                    }
+                )
+            ,
                 ( "/Data/Primitive/mempty"
                 , ObjectMapItem
                     { omiDecls = []
@@ -300,16 +310,6 @@ Prgm
                         [ /Data/Primitive/intEq( EAppArg Value /l -> /Data/Primitive/Integer )( EAppArg Value /r -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ]
                     , omiRefineDecls = []
                     , omiDefs = []
-                    }
-                )
-            ,
-                ( "/Data/Primitive/exampleZeroPlusZero"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/Primitive/exampleZeroPlusZero -> /Data/Primitive/Integer = 0 ]
                     }
                 )
             ,
@@ -581,6 +581,32 @@ Prgm
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "  agree on the diagonal — i.e. it derives and verifies [x - x == 0]." )
         , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "The arithmetic operators on [Integer]. Their results are numbers, which are too polymorphic" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "  ([Integer] or [Float]) to render directly, so the examples are [#assert]ed properties rather" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "  than printed values. ([operator-] and [operator//] are omitted here: their result unions" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "  currently trip a solver-completeness frontier when constrained to a concrete [Integer] this" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "  way — see the note passed back with this change.)" )
+        , /Catln/#print
+            ( EAppArg Value /p -> UnionType
+                ( Just
+                    ( PredClass /Data/Primitive/Boolean
+                    , fromList []
+                    )
+                , /operator<
+                    ( /r=/Data/Primitive/Integer
+                    , /l=/Data/Primitive/Integer
+                    )
+                , []
+                ) = /operator<
+                ( EAppArg Value /l -> /Data/Primitive/Integer = 2 )
+                ( EAppArg Value /r -> /Data/Primitive/Integer = 3 )
+            )
+            ( EAppArg Value /result -> /Data/String = "True" )
+        , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "The primitive integer "less than" is also exposed as a named function so [Data/Algebra/ord]'s" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "  [Ordering] instances can build a [Comparison] from it." )
@@ -594,10 +620,170 @@ Prgm
             ( EAppArg Value /text -> /Data/String = "  [/Data/Algebra/Ordering]; [ord] and [compareTo] follow from it, and [eq] derives from the" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "  same ordering (an [Ordering] is an [Eqv], so it doubles as the canonical equivalence)." )
+        , /Catln/#print
+            ( EAppArg Value /p ->
+                ( /operator==[ /T=∀/Data/Algebra/Eq ]
+                    ( /r=/Data/Primitive/Integer
+                    , /l=/Data/Primitive/Integer
+                    ) + /Data/strEqual
+                    ( /r=/Data/String
+                    , /l=/Data/String
+                    ) + /Data/Primitive/True + /Data/Algebra/rel
+                    ( /this=
+                        ( /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] + /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] + /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] + /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] + /Data/StrEqv[ /T=/Data/String ] )
+                    , /a=UnionType
+                        ( Just
+                            ( PredClass /Data/Primitive/Boolean
+                            , fromList []
+                            )
+                        , ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float )
+                        , []
+                        )
+                    , /b=∀/Data/Algebra/Eq
+                    ) + /Data/Primitive/False + /Data/Primitive/boolEq
+                    ( /r=∀/Data/Primitive/Boolean
+                    , /l=∀/Data/Primitive/Boolean
+                    ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
+                    ( /r=/Data/Primitive/Integer
+                    , /l=/Data/Primitive/Integer
+                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
+                    ( /this=∀/Data/Algebra/Eq
+                    , /other=∀/Data/Algebra/Eq
+                    )
+                ) =
+                ( /operator==
+                    ( EAppArg Value /l -> /Data/Primitive/Integer = 2 )
+                    ( EAppArg Value /r -> /Data/Primitive/Integer = 2 ) ↦ UnionType
+                    ( Just
+                        ( PredClass /Data/Primitive/Boolean
+                        , fromList []
+                        )
+                    ,
+                        ( /Data/strEqual
+                            ( /r=/Data/String
+                            , /l=/Data/String
+                            ) + /Data/Algebra/rel
+                            ( /this=
+                                ( /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] + /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] + /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] + /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] + /Data/StrEqv[ /T=/Data/String ] )
+                            , /a=UnionType
+                                ( Just
+                                    ( PredClass /Data/Primitive/Boolean
+                                    , fromList []
+                                    )
+                                , ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float )
+                                , []
+                                )
+                            , /b=∀/Data/Algebra/Eq
+                            ) + /Data/Primitive/boolEq
+                            ( /r=∀/Data/Primitive/Boolean
+                            , /l=∀/Data/Primitive/Boolean
+                            ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
+                            ( /r=/Data/Primitive/Integer
+                            , /l=/Data/Primitive/Integer
+                            ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
+                            ( /this=∀/Data/Algebra/Eq
+                            , /other=∀/Data/Algebra/Eq
+                            )
+                        )
+                    , []
+                    )
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "True" )
+        , /Catln/#print
+            ( EAppArg Value /p ->
+                ( /operator==[ /T=∀/Data/Algebra/Eq ]
+                    ( /r=/Data/Primitive/Integer
+                    , /l=/Data/Primitive/Integer
+                    ) + /Data/strEqual
+                    ( /r=/Data/String
+                    , /l=/Data/String
+                    ) + /Data/Primitive/True + /Data/Algebra/rel
+                    ( /this=
+                        ( /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] + /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] + /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] + /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] + /Data/StrEqv[ /T=/Data/String ] )
+                    , /a=UnionType
+                        ( Just
+                            ( PredClass /Data/Primitive/Boolean
+                            , fromList []
+                            )
+                        , ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float )
+                        , []
+                        )
+                    , /b=∀/Data/Algebra/Eq
+                    ) + /Data/Primitive/False + /Data/Primitive/boolEq
+                    ( /r=∀/Data/Primitive/Boolean
+                    , /l=∀/Data/Primitive/Boolean
+                    ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
+                    ( /r=/Data/Primitive/Integer
+                    , /l=/Data/Primitive/Integer
+                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
+                    ( /this=∀/Data/Algebra/Eq
+                    , /other=∀/Data/Algebra/Eq
+                    )
+                ) =
+                ( /operator==
+                    ( EAppArg Value /l -> /Data/Primitive/Integer = 2 )
+                    ( EAppArg Value /r -> /Data/Primitive/Integer = 3 ) ↦ UnionType
+                    ( Just
+                        ( PredClass /Data/Primitive/Boolean
+                        , fromList []
+                        )
+                    ,
+                        ( /Data/strEqual
+                            ( /r=/Data/String
+                            , /l=/Data/String
+                            ) + /Data/Algebra/rel
+                            ( /this=
+                                ( /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] + /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] + /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] + /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] + /Data/StrEqv[ /T=/Data/String ] )
+                            , /a=UnionType
+                                ( Just
+                                    ( PredClass /Data/Primitive/Boolean
+                                    , fromList []
+                                    )
+                                , ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float )
+                                , []
+                                )
+                            , /b=∀/Data/Algebra/Eq
+                            ) + /Data/Primitive/boolEq
+                            ( /r=∀/Data/Primitive/Boolean
+                            , /l=∀/Data/Primitive/Boolean
+                            ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
+                            ( /r=/Data/Primitive/Integer
+                            , /l=/Data/Primitive/Integer
+                            ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
+                            ( /this=∀/Data/Algebra/Eq
+                            , /other=∀/Data/Algebra/Eq
+                            )
+                        )
+                    , []
+                    )
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "False" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "### Commutative Group" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "## Floats" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "[Float] renders no text of its own (it is not a [ToString]), so its behavior is shown through" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "  the [Boolean] a comparison produces." )
+        , /Catln/#print
+            ( EAppArg Value /p -> UnionType
+                ( Just
+                    ( PredClass /Data/Primitive/Boolean
+                    , fromList []
+                    )
+                , /operator<
+                    ( /r=/Data/Primitive/Float
+                    , /l=/Data/Primitive/Float
+                    )
+                , []
+                ) = /operator<
+                ( EAppArg Value /l -> /Data/Primitive/Float = 1.5 )
+                ( EAppArg Value /r -> /Data/Primitive/Float = 2.5 )
+            )
+            ( EAppArg Value /result -> /Data/String = "True" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "Named-function form of the primitive float "less than", used by [Data/Algebra/ord]." )
         , /Catln/#md

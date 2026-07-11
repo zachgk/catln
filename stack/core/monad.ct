@@ -34,11 +34,8 @@ module(Data)
   # computed field keeps the unreduced [/operator+(Integer, Integer)] applied type in its element
   # slot ([reduceAppliedType] settles only top-level leaves, not nested data-construction fields),
   # so [Some(value= 5 + 1) == Some(value= 6)] fails on its own, independent of [mmap].
-  testMonadIdentityMmap =
-    #test
-    #assert(test= mmap(m= Id(value= 5), fn(v)= Id(value= v)) == Id(value= 5))
-    0
-
+  > (mmap(m= Id(value= 5), fn(v)= Id(value= v)) == Id(value= 5))
+    >>> True
   # ## Pure
     [pure] wraps a single plain value into a [Monad]. Every instance shares the same input shape —
     a bare value — so nothing about the arguments selects an instance: the call site's expected
@@ -51,7 +48,5 @@ module(Data)
   pureId(v -> Integer) -> Id[$T -> Integer]
   pureId(v)= pure(v= v)
 
-  testMonadIdentityPure =
-    #test
-    #assert(test= pureId(v= 5) == Id(value= 5))
-    0
+  > (pureId(v= 5) == Id(value= 5))
+    >>> True

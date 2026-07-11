@@ -71,16 +71,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/Algebra/exampleOrdEq"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/Algebra/exampleOrdEq -> /Data/Primitive/Integer = CInt 0 ]
-                    }
-                )
-            ,
                 ( "/Data/Algebra/mkDivComparison"
                 , ObjectMapItem
                     { omiDecls =
@@ -125,16 +115,6 @@ Prgm
                         [ /Data/Algebra/testOrdReflexive
                             [ /O : ∀/Data/Algebra/Ordering[ /T=TopType ] ]( Value /o -> $/O )( Value /t -> $/T ) -> /Data/Primitive/Integer = CInt 0
                         ]
-                    }
-                )
-            ,
-                ( "/Data/Algebra/examplePartialOrder"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/Algebra/examplePartialOrder -> /Data/Primitive/Integer = CInt 0 ]
                     }
                 )
             ,
@@ -297,16 +277,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/Algebra/exampleIntOrd"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/Algebra/exampleIntOrd -> /Data/Primitive/Integer = CInt 0 ]
-                    }
-                )
-            ,
                 ( "/Data/Algebra/compareTo"
                 , ObjectMapItem
                     { omiDecls =
@@ -320,9 +290,6 @@ Prgm
         )
     , prgmCG =
         [ CGType
-        , CGType
-        , CGType
-        , CGType
         , CGType
         , CGType
         , CGType
@@ -464,8 +431,76 @@ Prgm
             ( Value /text -> /Data/String = CStr "## Examples
             [compareTo] ranks integers by size, and a type's equality agrees with its ordering: values
             compare [Equal] exactly when they are equal." )
+        , /Catln/#print
+            ( Value /p ->
+                ( /Data/Primitive/True + /Data/Algebra/isLess( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/False ) = /Data/Algebra/isLess
+                ( Value /this -> ∀/Data/Algebra/Comparison = /compareTo
+                    ( Value /other -> /Data/Primitive/Integer = CInt 3 )
+                    ( Value /this -> /Data/Primitive/Integer = CInt 2 )
+                )
+            )
+            ( Value /result -> /Data/String = CStr "True" )
+        , /Catln/#print
+            ( Value /p ->
+                ( /Data/Primitive/True + /Data/Primitive/False + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) ) = /Data/Algebra/isEq
+                ( Value /this -> ∀/Data/Algebra/Comparison = /compareTo
+                    ( Value /other -> /Data/Primitive/Integer = CInt 3 )
+                    ( Value /this -> /Data/Primitive/Integer = CInt 3 )
+                )
+            )
+            ( Value /result -> /Data/String = CStr "True" )
+        , /Catln/#print
+            ( Value /p ->
+                ( /Data/Primitive/True + /Data/Algebra/isGreater( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/False ) = /Data/Algebra/isGreater
+                ( Value /this -> ∀/Data/Algebra/Comparison = /compareTo
+                    ( Value /other -> /Data/Primitive/Integer = CInt 3 )
+                    ( Value /this -> /Data/Primitive/Integer = CInt 4 )
+                )
+            )
+            ( Value /result -> /Data/String = CStr "True" )
+        , /Catln/#print
+            ( Value /p ->
+                ( /Data/Primitive/True + /Data/Primitive/False + /Data/Algebra/isLessEq( /this=∀/Data/Algebra/Comparison ) ) = /Data/Algebra/isLessEq
+                ( Value /this -> ∀/Data/Algebra/Comparison = /compareTo
+                    ( Value /other -> /Data/Primitive/Integer = CInt 3 )
+                    ( Value /this -> /Data/Primitive/Integer = CInt 2 )
+                )
+            )
+            ( Value /result -> /Data/String = CStr "True" )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "The divisibility ordering distinguishes ordered pairs from incomparable ones." )
+        , /Catln/#print
+            ( Value /p ->
+                ( /Data/Primitive/True + /Data/Primitive/False + /Data/Algebra/isComparable( /this=∀/Data/Algebra/PComparison ) ) = /Data/Algebra/isComparable
+                ( Value /this -> UnionType
+                    ( Just
+                        ( PredClass /Data/Algebra/PComparison
+                        , fromList []
+                        )
+                    , ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                    , []
+                    ) = /Data/Algebra/pcompare
+                    ( Value /a -> /Data/Primitive/Integer = CInt 2 )
+                    ( Value /b -> /Data/Primitive/Integer = CInt 6 )
+                )
+            )
+            ( Value /result -> /Data/String = CStr "True" )
+        , /Catln/#print
+            ( Value /p ->
+                ( /Data/Primitive/True + /Data/Primitive/False + /Data/Algebra/isNoOrdering( /this=∀/Data/Algebra/PComparison ) ) = /Data/Algebra/isNoOrdering
+                ( Value /this -> UnionType
+                    ( Just
+                        ( PredClass /Data/Algebra/PComparison
+                        , fromList []
+                        )
+                    , ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                    , []
+                    ) = /Data/Algebra/pcompare
+                    ( Value /a -> /Data/Primitive/Integer = CInt 2 )
+                    ( Value /b -> /Data/Primitive/Integer = CInt 3 )
+                )
+            )
+            ( Value /result -> /Data/String = CStr "True" )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "## Laws of ordering
             Each law is a property of the [Ordering] class itself, checked against every instance ([$O]) at
