@@ -1,0 +1,100 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
+                    }
+                )
+            ,
+                ( "/isOne"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /isOne( Value /a -> /Data/Primitive/Integer ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            ,
+                                ( /operator==[ /T=∀/Data/Algebra/Eq ]
+                                    ( /r=UnionType
+                                        ( Just
+                                            ( PredClass /Data/Algebra/Eq
+                                            , fromList []
+                                            )
+                                        , /Data/Primitive/Integer
+                                        , []
+                                        )
+                                    , /l=∀/Data/Algebra/Eq
+                                    ) + /Data/strEqual
+                                    ( /r=/Data/String
+                                    , /l=/Data/String
+                                    ) + /Data/Algebra/rel
+                                    ( /this=UnionType
+                                        ( Just
+                                            ( PredClass /Data/Algebra/Eqv[ /T=TopType ]
+                                            , fromList []
+                                            )
+                                        ,
+                                            ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
+                                        , []
+                                        )
+                                    , /a=UnionType
+                                        ( Just
+                                            ( PredClass /Data/Primitive/Boolean
+                                            , fromList []
+                                            )
+                                        , ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float )
+                                        , []
+                                        )
+                                    , /b=∀/Data/Algebra/Eq
+                                    ) + /operator&&
+                                    ( /r=∀/Data/Primitive/Boolean
+                                    , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Primitive/boolEq
+                                    ( /r=∀/Data/Primitive/Boolean
+                                    , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
+                                    ( /this=∀/Data/Algebra/Eq
+                                    , /other=∀/Data/Algebra/Eq
+                                    )
+                                )
+                            , []
+                            ) = /operator==
+                            ( Value /l -> /Data/Primitive/Integer = /operator+
+                                ( Value /l -> /Data/Primitive/Integer = CInt 1 )( Value /r -> TVArg /a = Value /a )
+                            )
+                            ( Value /r -> /Data/Primitive/Integer = CInt 2 )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String = CStr "Infers an undeclared argument's type from how it is used. `a` is never annotated,
+            yet `1 + a` forces it to be an Integer (arithmetic's concrete Integer operator),
+            so the compiler infers `isOne(a -> Integer)` and augments the written definition
+            with that requirement — see `a -> /Data/Primitive/Integer` in the typecheck golden.
+            TODO: the intended form is `a == 1`, inferring the Integer requirement directly
+            through Eq. That does not yet reach Integer: generic Eq equality joins the operand
+            types up to `∀Eq` rather than unifying the shared type variable `$T` (from
+            `operator==(l -> $T)(r -> $T)[$T -> Eq]`) down to Integer. `1 + a` is a stepping
+            stone until shared-type-variable unification lands for Eq." )
+        ]
+    }
