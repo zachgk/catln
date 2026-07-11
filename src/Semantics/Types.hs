@@ -2823,7 +2823,7 @@ intersectAllTypes typeEnv types = foldr1 (intersectTypes typeEnv) types
 intersectPartialsBase :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Maybe (TypeVarArgEnv, [PartialType])
 intersectPartialsBase _ _ PartialType{ptName=aName} PartialType{ptName=bName} | aName /= bName = Nothing
 intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArgMode aLb aUb)) (PartialType _ bVars bArgs bPreds (PtArgMode bLb bUb)) = do
-  (varsVaenvs, vars') <- unzip <$> intersectMap H.empty aVars bVars
+  (varsVaenvs, vars') <- unzip <$> intersectMapVars H.empty aVars bVars
   -- Args (unlike vars) are intersected without killing the partial when a value intersects to
   -- bottom: such an arg simply cannot be present. For a *required* arg (a lower-bounded side
   -- lists it) that makes the partial uninhabited; for an *optional* arg (a lower-unbounded mode)
@@ -2845,7 +2845,21 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
   -- through unchanged is dropped: it lives in the caller's env, and stamping it onto every
   -- intersected partial invents foreign var slots (an operator's /B appearing on a Cons leaf).
   let ambientVars = fst $ splitVarArgEnv vaenv
-  let argsVarBindings = H.filterWithKey (\k v -> H.lookup k ambientVars /= Just v) $ fst $ splitVarArgEnv $ mergeAllVarEnvs typeEnv argsVaenvs
+  -- Only a binding some arg value REFERENCES externally (@$_T@ — a declaration's passthrough,
+  -- e.g. @unwrap@'s @/b@ valued @Box[/T=$_T]@ meeting @Box[/T=Integer]@) may be kept: the
+  -- reference marks the name as belonging to THIS partial's scope. The arg meets also record
+  -- under names with no such reference — a nested partial's demoted local ('demoteTVExtVars')
+  -- resolving per value, or a class predicate's own var KEY (@∀Monad[/T=..]@ meeting a member
+  -- binds the class's @/T@) — and stamping those onto this partial captures a like-named var
+  -- of an unrelated scope (@operator==[$T]@ gaining @/T=Integer@ from its operand's element).
+  -- A partial-local ('TVInt') reference that is the arg's DIRECT value (a declaration's own
+  -- field pointer — @Id(/value=$T)@, @testFunctorIdentity(/x=$F)@) also names this partial's
+  -- scope; one nested inside an embedded partial (@/l=Cons[$T]@) names the inner partial's.
+  let ownRefNames t = typeTVExtVarRefs t `S.union` case t of
+        TypeVar (TVVar n) TVInt -> S.singleton n
+        _                       -> S.empty
+  let hoistNames = S.unions $ map ownRefNames (H.elems aArgs ++ H.elems bArgs)
+  let argsVarBindings = H.filterWithKey (\k v -> S.member k hoistNames && H.lookup k ambientVars /= Just v) $ fst $ splitVarArgEnv $ mergeAllVarEnvs typeEnv argsVaenvs
   let venvs' = mergeAllVarEnvs typeEnv [argsVarBindings, vars']
   let preds' = predsAnd aPreds bPreds
   -- The two arg-sets each constrain the instance args to an interval over the
@@ -2884,7 +2898,14 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
   if null partials' then Nothing else Just (mergeAllVarEnvs typeEnv varsVaenvs, partials')
   where
     -- intersectMap unions so that all typeVars from either a or b are kept
-    intersectMap vev a b = traverse subValidate $ H.unionWith subUnion (fmap (vev,) a) (fmap (vev,) b)
+    intersectMapVars vev a b = traverse subValidate $ H.unionWith subUnionVar (fmap (vev,) a) (fmap (vev,) b)
+    -- A bare partial-local ('TVInt') reference stored in a VAR slot is a pointer within the
+    -- partial itself (e.g. a demoted foreign arm's element var — see 'demoteTVExtVars'): it is
+    -- flexible per value and must neither read nor record ambient bindings under its name — a
+    -- like-named var of the enclosing scope is a DIFFERENT var. The meet is the other side.
+    subUnionVar (aVaenv, TypeVar _ TVInt) (bVaenv, b) = (mergeAllVarEnvs typeEnv [aVaenv, bVaenv], b)
+    subUnionVar (aVaenv, a) (bVaenv, TypeVar _ TVInt) = (mergeAllVarEnvs typeEnv [aVaenv, bVaenv], a)
+    subUnionVar a b = subUnion a b
     subUnion (aVaenv, a) (bVaenv, b) = intersectTypesWithVarEnv typeEnv (mergeAllVarEnvs typeEnv [aVaenv, bVaenv]) a b
     subValidate (vev, subTp) = if isBottomType subTp then Nothing else Just (vev, subTp)
 
@@ -3273,6 +3294,51 @@ substitutePartialKeep vaenv partial@PartialType{ptVars, ptArgs, ptPreds} = parti
     ptVars' = fmap (substituteKeep vaenv) ptVars
     innerVaenv = joinVarArgEnv ptVars' H.empty
 
+-- | Demotes every external ('TVExt') type-VARIABLE reference in a type to partial-local
+-- ('TVInt'). Used when a type crosses a scope boundary INWARD — a point's type being written
+-- into another partial's arg\/var slot ('updateTypeProp'). A @$_T@ in the written type referred
+-- to the SOURCE point's scope (e.g. an instance arm's own element var, kept raw in the point's
+-- union); inside the receiving partial that scope does not exist, and keeping the reference
+-- external lets a like-named var of the RECEIVING scope capture it (a @pure@ arm's
+-- @Cons[/T=$_T]@ stamping @/T=Integer@ onto an enclosing @operator==[$T]@ through the arg-meet
+-- hoist of 'intersectPartialsBase'). Partial-local is exactly the remaining meaning: an element
+-- instantiable per value, resolved only against its own partial. 'TVArg' references are left
+-- untouched (pointer slots have their own machinery), as is everything under a 'Just' top's
+-- predicates (a recursive @PredClass ConsList[/T=$_T]@ stays linked — see 'substitutePartialKeep').
+demoteTVExtVars :: Type -> Type
+demoteTVExtVars (TypeVar (TVVar n) TVExt) = TypeVar (TVVar n) TVInt
+demoteTVExtVars (UnionType Nothing partials consts) =
+  UnionType Nothing (joinUnionType $ map demotePartialTVExtVars $ splitUnionType partials) consts
+demoteTVExtVars t = t
+
+demotePartialTVExtVars :: PartialType -> PartialType
+demotePartialTVExtVars partial@PartialType{ptVars, ptArgs} = partial{
+    ptVars = fmap demoteTVExtVars ptVars,
+    ptArgs = fmap demoteTVExtVars ptArgs
+    }
+
+-- | The names of all external ('TVExt') type-VARIABLE references occurring anywhere in a type —
+-- var\/arg slot values of every positive and negative leaf, and predicate partials. Used by
+-- 'intersectPartialsBase' to decide which arg-meet discoveries genuinely belong to the
+-- enclosing partial's scope.
+typeTVExtVarRefs :: Type -> S.HashSet TypeVarName
+typeTVExtVarRefs (TypeVar (TVVar n) TVExt) = S.singleton n
+typeTVExtVarRefs (TypeVar _ _) = S.empty
+typeTVExtVarRefs PTopType = S.empty
+typeTVExtVarRefs (UnionType mtop leafs _) = S.unions $ topRefs ++ map partialRefs (splitUnionType leafs)
+  where
+    topRefs = case mtop of
+      Just (preds, negLeafs) -> predsRefs preds : map partialRefs (splitUnionType negLeafs)
+      Nothing                -> []
+    predsRefs (PredsOne p')  = predRefs p'
+    predsRefs (PredsAnd ps') = S.unions (map predsRefs ps')
+    predsRefs (PredsNot p')  = predsRefs p'
+    predRefs (PredClass c) = partialRefs c
+    predRefs (PredRel r)   = partialRefs r
+    predRefs (PredExpr e)  = partialRefs e
+    partialRefs PartialType{ptVars=vs, ptArgs=as, ptPreds=ps} =
+      S.unions $ predsRefs ps : map typeTVExtVarRefs (H.elems vs ++ H.elems as)
+
 -- | See 'substitutePartialKeep': substitutes only concrete external bindings, keeping every other
 -- var unchanged.
 substituteKeep :: TypeVarArgEnv -> Type -> Type
@@ -3406,20 +3472,23 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
       -- writing an update against that would clobber the pointer.
       let rawSlot (TVVar k) p = H.lookup k (ptVars p)
           rawSlot (TVArg k) p = H.lookup k (ptArgs p)
+      -- The value STORED into the slot is demoted ('demoteTVExtVars'): the sub's type crosses
+      -- into the sup partial's scope, where its external var references would be captured by
+      -- like-named sup vars. The value RETURNED to the sub point keeps its own scope's refs.
       let intersectedPartials sup@PartialType{ptVars=supVars} sub = case (rawSlot propName sup, typeGetAux propName sup) of
             (Just (TypeVar (TVVar v) TVInt), _) -> do
               let supVar = H.lookupDefault PTopType v supVars
               let newProp = intersectTypesEnv typeEnv vaenv supVar sub
-              Just (sup{ptVars=H.insert v newProp supVars}, newProp)
+              Just (sup{ptVars=H.insert v (demoteTVExtVars newProp) supVars}, newProp)
             (_, Just (TypeVar (TVVar v) TVInt)) -> do
               let supVar = H.lookupDefault PTopType v supVars
               let newProp = intersectTypesEnv typeEnv vaenv supVar sub
-              Just (sup{ptVars=H.insert v newProp supVars}, newProp)
+              Just (sup{ptVars=H.insert v (demoteTVExtVars newProp) supVars}, newProp)
             (_, Just supProp) -> do
               let newProp = intersectTypesEnv typeEnv vaenv supProp sub
               if isBottomType newProp
                 then Nothing
-                else Just (typeSetAux propName newProp sup, newProp)
+                else Just (typeSetAux propName (demoteTVExtVars newProp) sup, newProp)
             (_, Nothing) -> Nothing
       case subType of
         UnionType Nothing subPartials [] -> do
