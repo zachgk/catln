@@ -570,7 +570,9 @@ Prgm
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "  agree on the diagonal — i.e. it derives and verifies [x - x == 0]." )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "The arithmetic operators on [Integer], shown on concrete inputs. [operator%] is the remainder." )
+            ( EAppArg Value /text -> /Data/String = "The arithmetic operators on [Integer], shown on concrete inputs. [operator//] is integer" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "  division (rounding toward zero) and [operator%] is the remainder." )
         , /Catln/#print
             ( EAppArg Value /p ->
                 ( /operator+
@@ -610,6 +612,19 @@ Prgm
                 )
             )
             ( EAppArg Value /result -> /Data/String = "12" )
+        , /Catln/#print
+            ( EAppArg Value /p ->
+                ( /operator//
+                    ( /r=/Data/Primitive/Integer
+                    , /l=/Data/Primitive/Integer
+                    ) + /Data/Primitive/Integer
+                ) =
+                ( /operator//
+                    ( EAppArg Value /l -> /Data/Primitive/Integer = 10 )
+                    ( EAppArg Value /r -> /Data/Primitive/Integer = 3 ) ↦ /Data/Primitive/Integer
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "3" )
         , /Catln/#print
             ( EAppArg Value /p ->
                 ( /operator%

@@ -417,7 +417,9 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "  agree on the diagonal — i.e. it derives and verifies [x - x == 0]." )
         , /Catln/#md
-            ( Value /text= CStr "The arithmetic operators on [Integer], shown on concrete inputs. [operator%] is the remainder." )
+            ( Value /text= CStr "The arithmetic operators on [Integer], shown on concrete inputs. [operator//] is integer" )
+        , /Catln/#md
+            ( Value /text= CStr "  division (rounding toward zero) and [operator%] is the remainder." )
         , /Catln/#print
             ( Value /p= /operator+
                 ( Value /l= CInt 2 )
@@ -436,6 +438,12 @@ Prgm
                 ( Value /r= CInt 3 )
             )
             ( Value /result= CStr "12" )
+        , /Catln/#print
+            ( Value /p= /operator//
+                ( Value /l= CInt 10 )
+                ( Value /r= CInt 3 )
+            )
+            ( Value /result= CStr "3" )
         , /Catln/#print
             ( Value /p= /operator%
                 ( Value /l= CInt 7 )

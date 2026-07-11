@@ -34,13 +34,16 @@ module(Data/Primitive)
   (_ :: Integer % _ :: Integer) -> Integer
     #runtime("int%")
 
-  # The arithmetic operators on [Integer], shown on concrete inputs. [operator%] is the remainder.
+  # The arithmetic operators on [Integer], shown on concrete inputs. [operator//] is integer
+  #   division (rounding toward zero) and [operator%] is the remainder.
   > (2 + 3)
     >>> 5
   > (5 - 2)
     >>> 3
   > (4 * 3)
     >>> 12
+  > (10 // 3)
+    >>> 3
   > (7 % 3)
     >>> 1
   (_ :: Integer <= _ :: Integer) -> Boolean
@@ -100,7 +103,7 @@ module(Data/Primitive)
   inverse(t -> Integer) -> Integer= -t
 
   (_ :: Integer // _ :: Integer) -> Integer
-    #runtime("intDiv")
+    #runtime("int//")
 
   # ## Floats
   (-(_ :: Float)) -> Float
