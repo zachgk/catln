@@ -95,13 +95,22 @@ completeTreeSet TBEnv{tbTypeEnv} fullPartial initialOptions
     -- (no 'PredExpr'/constants); out-of-fragment dispatch keeps the materialized accumulation.
     inFragment = dispatchInFragment fullPartial && all (\(t, _, _) -> dispatchInFragment t) initialOptions
 
+    -- Coverage of the source could not be completed. Report what was accumulated and list the
+    -- candidate arrows tried — but only mention "Tried guards" when there were candidates, so an
+    -- empty 'initialOptions' does not leave a dangling label with nothing beneath it.
+    coverageFailure acc = GenMapCErr Nothing msg subs
+      where
+        subs = zip (map show initialOptions) (map (return . show) initialOptions)
+        msg = printf "Failed to handle a condition. Could not find enough arrows for the src. Only found %s.%s"
+                acc (if null initialOptions then "" else " Tried guards:" :: String)
+
     -- Engine loop: the accumulation is the plain list of contributing option partials;
     -- coverage and does-this-add are 'satGoal' queries over the original small types.
     engineRes = engineAux [] [] False initialOptions
     engineAux :: [ResBuildEnvItem] -> [PartialType] -> Bool -> [ResBuildEnvItem] -> CRes [ResBuildEnvItem]
     engineAux accArrows accOpts _ _ | dispatchCoveredSymbolic tbTypeEnv fullPartial accOpts = return (reverse accArrows)
     engineAux accArrows _ True [] = return (reverse accArrows) -- see the accHasConds workaround below
-    engineAux _ accOpts False [] = CErr [MkCNote $ GenMapCErr Nothing (printf "Failed to handle a condition. Could not find enough arrows for the src. Only found %s. Tried guards:" (show accOpts)) (zip (map show initialOptions) (map (return . show) initialOptions))]
+    engineAux _ accOpts False [] = CErr [MkCNote $ coverageFailure (show accOpts)]
     engineAux accArrows accOpts accHasConds (opt@(optType, optOa, _):opts) =
       if dispatchAddsSymbolic tbTypeEnv fullPartial optType accOpts
         then case optOa of
@@ -125,7 +134,7 @@ completeTreeSet TBEnv{tbTypeEnv} fullPartial initialOptions
     -- TODO Remove need for this line (and the accHasConds argument) by adding refinement types
     aux accArrows _ True [] = return (reverse accArrows)
 
-    aux _ accType False [] = CErr [MkCNote $ GenMapCErr Nothing (printf "Failed to handle a condition. Could not find enough arrows for the src. Only found %s. Tried guards:" (show accType)) (zip (map show initialOptions) (map (return . show) initialOptions))]
+    aux _ accType False [] = CErr [MkCNote $ coverageFailure (show accType)]
     aux accArrows accType accHasConds (opt@(optType, optOa, _):opts) = do
       let accType' = intersectTypes tbTypeEnv fullType $ compactType tbTypeEnv H.empty $ unionTypes tbTypeEnv accType (singletonType optType)
 
@@ -241,8 +250,24 @@ buildPartialCallTree env@TBEnv{tbTypeEnv} os visitedArrows srcType destType = do
     resArrows' <- sortArrows env resArrows
     resArrows'' <- handleElseArrows resArrows'
     let resArrows''WithPostTypes = concatMap (\item@(_, _, resArrow) -> map (item,) $ resArrowDestType tbTypeEnv srcType resArrow) resArrows''
-    let resArrows''' = mapMaybe (cresToMaybe . arrowFollowup env os visitedArrows srcType destType) resArrows''WithPostTypes
-    joinArrowsWithCond env srcType destType resArrows'''
+    let followups = map (arrowFollowup env os visitedArrows srcType destType) resArrows''WithPostTypes
+    let resArrows''' = mapMaybe cresToMaybe followups
+    -- When every candidate arrow's followup fails, 'joinArrowsWithCond' is handed an empty guard
+    -- set and 'completeTreeSet' can only report a contentless "could not find enough arrows …
+    -- Tried guards:" — the actual reasons (each arrow's failed chain toward 'destType') having been
+    -- dropped by 'cresToMaybe'. In that case, replace the error with those reasons, prefixed by an
+    -- explicit note when 'srcType' simply does not reach 'destType' (the innermost recursion names
+    -- the stuck type). Only an EXISTING error is enriched — a success passes through untouched — and
+    -- a PARTIAL failure (some arrows still build) is left to 'joinArrowsWithCond', which either
+    -- completes coverage or forms a runtime 'TCMatch'.
+    case joinArrowsWithCond env srcType destType resArrows''' of
+      CErr _ | null resArrows''' && not (null followups) ->
+        CErr $ reachHint ++ concat [ns | CErr ns <- followups]
+      res -> res
+  where
+    reachHint
+      | reachesTo tbTypeEnv H.empty (singletonType srcType) destType = []
+      | otherwise = [MkCNote $ BuildTreeCErr Nothing $ printf "The type %s does not reach the destination %s" (show srcType) (show destType)]
 
 -- | Builds a call tree to convert something from 'srcType' to 'destType'
 buildCallTree :: TBEnv -> [ObjSrc] -> VisitedArrows -> Type -> Type -> CRes TCallTree
