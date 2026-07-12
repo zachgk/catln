@@ -25,7 +25,8 @@ import           Control.Monad
 import           Control.Monad.State
 import           CtConstants         (runtimeAnnot)
 import           Data.Bifunctor      (Bifunctor (bimap))
-import           Data.List           (find, intercalate, nub)
+import           Data.List           (find, intercalate, isInfixOf, nub, partition)
+import           Debug.Trace         (trace)
 import           Data.Maybe          (mapMaybe)
 import           Data.UUID           (nil)
 import           MapMeta
@@ -309,22 +310,74 @@ arrowConstrainUbs env con@Constraint{conVaenv} srcS@SType{stypeAct=TypeVar v _, 
 arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=src@(UnionType Nothing srcPartials consts), stypeReq=srcReq} SType{stypeAct=destAct, stypeReq=destReq} = do
   reachesEnv <- mkReachesEnv env con
   let allPartials = splitUnionType srcPartials ++ map constantPartialType consts
-  let reaches' = reachesPartials reachesEnv allPartials
+  let reaches0 = reachesPartials reachesEnv allPartials
   let vaenv' = fmap (stypeAct . snd) conVaenv
-  let destByGraph = unionReachesTree feTypeEnv vaenv' reaches'
-  -- The destination the reach must satisfy is the meet of the destination's actual and required
-  -- bounds. Because the act⊆req invariant is only enforced at Decode, a use may narrow the required
-  -- bound below the actual; intersecting here cuts the reachable-destination union down to what is
-  -- required, letting the arrow drop non-matching definitions when several are available (e.g. an
-  -- Integer requirement picks the Integer-returning arrow out of an @Integer ∪ Float@ reach).
+
+  -- Where and how the requirement acts depends on the kind of destination:
+  --   * A consumption point (an argument slot, a where-clause bool) holds the settled value
+  --     its consumer receives, so the whole reached union takes the full actual∧required meet.
+  --   * An Arrow result ('TypeCheck.Encode.fromObjectMap' constraint 32) is the definition
+  --     body's rewrite frontier, deliberately holding raw applied forms alongside what they
+  --     settle to (eval's dispatch keying reads them). There the requirement acts by ARROW
+  --     CHOICE, and only when it actually FORCES one: when the plain reach already satisfies
+  --     the requirement up to settling, it must do nothing — even a semantically-no-op meet
+  --     can rewrite representations (completing a bare class member @IntOrdering@ to
+  --     @IntOrdering[/T=Integer]@), which eval's value matching cannot tolerate. When it does
+  --     force a choice, the reach tree's choice nodes are cut to the arrows guaranteed to
+  --     satisfy it (an Integer requirement picks the Integer-returning arrow out of an
+  --     @Integer ∪ Float@ reach), guarded by source coverage ('cutReachesTree').
+  let destIsArrowResult = case con of
+        Constraint _ _ (ArrowTo 32 _ _) -> True
+        _                               -> False
+  let destByGraph0 = unionReachesTree feTypeEnv vaenv' reaches0
+  -- A Top reach carries no information yet (some arm is still unresolved): there is nothing
+  -- to choose among, so the requirement cannot engage — forcing a choice there would derive
+  -- a destination from the few arms that happen to have resolved, which is not an upper
+  -- bound of the point's values and gets locked in by monotonicity.
+  let reqForcesChoice = destIsArrowResult && destReq /= PTopType && destByGraph0 /= PTopType && not (isSubtypeUpToSettlingOf feTypeEnv vaenv' destByGraph0 destReq)
+  () <- return $ if "rangeStep" `isInfixOf` show src
+    then trace (printf "[RTRACE] src=%s\n  destReq=%s\n  destAct=%s\n  forces=%s\n  destByGraph0=%s" (show src) (show destReq) (show destAct) (show reqForcesChoice) (show destByGraph0)) ()
+    else ()
   let destBound = intersectTypesEnv feTypeEnv vaenv' destAct destReq
+  let reaches' = if reqForcesChoice then cutReachesTree feTypeEnv vaenv' destBound reaches0 else reaches0
+  let destByGraph = if reqForcesChoice then unionReachesTree feTypeEnv vaenv' reaches' else destByGraph0
   -- An arrow dest carrying a symbolic external var (an instance arm constructing
   -- @Some[/T=$_T]@) meets the accumulated dest's bound in the intersection's returned env,
   -- while the type keeps the bare var — discarding the env would WIDEN the stored dest (the
   -- free var reads as Top) and fail 'verifySchemeActLowers'. Resolve the newly recorded
   -- meets back into the result; still-unresolved vars stay symbolic ('substituteKeep', the
   -- 'mergeVarEnvVal' doctrine).
-  let (venv', dest') = intersectTypesWithVarEnv feTypeEnv vaenv' destBound destByGraph
+  let (venv', dest')
+        | reqForcesChoice =
+            -- A choice-forcing requirement splits the reached union: RAW leaves (ones the graph
+            -- can still rewrite — the body's unrewritten calls, which eval's dispatch keying
+            -- reads) are bounded only by the accumulated actual; the settled remainder is
+            -- bounded by the full actual∧required meet, cutting reach over-approximation (e.g.
+            -- a generic instance result impossible for this call) down to what is required. The
+            -- raws are reattached STRUCTURALLY (a leaf-map union): an algebraic union with the
+            -- settled part's predicate top would absorb them.
+            let (rawLeafs, settledLeafs) = partition (not . isSettledLeaf feTypeEnv) $ case destByGraph of
+                  UnionType _ leafs _ -> splitUnionType leafs
+                  _                   -> []
+                destByGraphSettled = case destByGraph of
+                  UnionType dMTop _ dConsts -> UnionType dMTop (joinUnionType settledLeafs) dConsts
+                  t                         -> t
+                (venvRaw, destRaw') = intersectTypesWithVarEnv feTypeEnv vaenv' destAct (UnionType Nothing (joinUnionType rawLeafs) [])
+                (venvSettled, destSettled') = intersectTypesWithVarEnv feTypeEnv vaenv' destBound destByGraphSettled
+                merged = case (destRaw', destSettled') of
+                  (UnionType Nothing rawLs [], UnionType sMt sLs sCs) -> UnionType sMt (H.unionWith S.union rawLs sLs) sCs
+                  (r, s) | isBottomType r -> s
+                         | isBottomType s -> r
+                         | otherwise      -> unionTypesWithEnv feTypeEnv vaenv' r s
+            in (mergeAllVarEnvs feTypeEnv [venvRaw, venvSettled], merged)
+        -- An Arrow result whose reach already satisfies the requirement: the requirement is
+        -- inert; only the accumulated actual bounds it (see the policy comment above).
+        -- KNOWN GAP: without the meet's implicit ∅-gate an immature reach (an epoch where the
+        -- source has not yet narrowed) publishes early and monotonicity locks it in — see the
+        -- operator== deep-closure loss.
+        | destIsArrowResult = intersectTypesWithVarEnv feTypeEnv vaenv' destAct destByGraph
+        -- A consumption point: the committed full-meet behavior.
+        | otherwise = intersectTypesWithVarEnv feTypeEnv vaenv' destBound destByGraph
   let newBindings = H.difference venv' vaenv'
   let resolveNew = if H.null newBindings then id else substituteKeep newBindings
   let destFinal = compactType feTypeEnv vaenv' (resolveNew dest')
@@ -357,4 +410,4 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
         | null viableKeys             = (srcBound, srcReq)
         | typeVarLost src narrowedAct = (srcBound, srcReq)
         | otherwise                   = (narrowedAct, narrowedReq)
-  return (src', srcReq', destFinal, Just reaches')
+  return (src', srcReq', destFinal, Just reaches0) -- TEMP BISECT: store uncut tree

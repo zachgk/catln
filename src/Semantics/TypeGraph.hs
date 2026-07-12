@@ -20,7 +20,6 @@
 module Semantics.TypeGraph where
 import           Control.Monad
 import           Data.Aeson          (ToJSON)
-import           Data.Bifunctor      (Bifunctor (second))
 import           Data.Hashable       (Hashable)
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
@@ -82,6 +81,59 @@ reachesHasCutSubtypeOf typeEnv vaenv (ReachesTypeTree children) superType = any 
   where childIsSubtype (key, (_, val)) = isSubtypeOfWithEnv typeEnv vaenv key superType || reachesHasCutSubtypeOf typeEnv vaenv val superType
 reachesHasCutSubtypeOf _ _ ReachesLeaf _ = False
 
+-- | Cuts a reaches tree to a required destination. At a source partial's choice node
+-- ('ReachesTypeTree'), a child arrow is GUARANTEED when its claimed type satisfies the
+-- requirement ('isSubtypeUpToSettlingOf' — raw applied claims judged by what they settle to)
+-- or its subtree can be cut to within it ('reachesHasCutSubtypeOf'). When the guaranteed
+-- children jointly COVER the source partial — every value the source admits is accepted by
+-- some guaranteed arrow — only they are kept: the requirement forces the arrow choice, and
+-- no input is stranded by ignoring the others. Without joint coverage the node is left whole:
+-- the remaining arrows are value dispatch (each accepting inputs the guaranteed ones do not),
+-- which the compiler is not free to choose among. Required nodes ('ReachesPartialTree') keep
+-- every child — their keys are the source terms themselves, which eval needs intact.
+cutReachesTree :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> ReachesTree -> ReachesTree
+cutReachesTree typeEnv vaenv req (ReachesPartialTree children) = ReachesPartialTree $ H.mapWithKey cutChild children
+  where
+    cutChild srcPartial (ReachesTypeTree arms) = ReachesTypeTree $ fmap recurseArm arms'
+      where
+        guaranteed key (_, subTree) = isSubtypeUpToSettlingOf typeEnv vaenv key req || reachesHasCutSubtypeOf typeEnv vaenv subTree req
+        kept = H.filterWithKey guaranteed arms
+        -- The portion of the source each kept arm accepts, re-queried from the graph (the tree
+        -- keeps its lean committed shape; see 'typeGraphQueryWithReason').
+        keptCoverage = unionAllTypesWithEnv typeEnv vaenv
+          [ coveredSrc
+          | (reason, coveredSrc, dest) <- typeGraphQueryWithReason typeEnv vaenv srcPartial
+          , Just (keptReason, _) <- [H.lookup dest kept]
+          , reason == keptReason ]
+        covers = isSubtypeOfWithEnv typeEnv vaenv (singletonType srcPartial) keptCoverage
+        arms' = if not (H.null kept) && covers then kept else arms
+        recurseArm (reason, subTree) = (reason, cutReachesTree typeEnv vaenv req subTree)
+    cutChild _ subTree = cutReachesTree typeEnv vaenv req subTree
+cutReachesTree typeEnv vaenv req (ReachesTypeTree children) = ReachesTypeTree $ fmap (fmap (cutReachesTree typeEnv vaenv req)) children
+cutReachesTree _ _ _ ReachesLeaf = ReachesLeaf
+
+-- | A SETTLED leaf is a data value: one whose name has a data definition. Everything else —
+-- a function-named applied term, including one whose name is still relative (an exact graph
+-- lookup would miss it) — is a term the graph may still rewrite. Only settled leaves are
+-- what a requirement constrains; the rewritable ones settle at their own points.
+isSettledLeaf :: (TypeGraph tg) => TypeEnv tg -> PartialType -> Bool
+isSettledLeaf typeEnv l = not (null (typeGraphData typeEnv (ptName l)))
+
+-- | @sub ⊆ sup@ up to settling: a requirement constrains what a term settles to, so a
+-- positive leaf the type graph may still rewrite (a raw applied call, kept alongside its
+-- settled forms for eval's dispatch keying) is exempt from the check — the results its
+-- arrows produce carry their own bounds at their own points. Settled leaves (data values,
+-- 'isSettledLeaf'), constants, and the predicate component are checked structurally.
+isSubtypeUpToSettlingOf :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Bool
+isSubtypeUpToSettlingOf typeEnv vaenv sub sup = case sub of
+  UnionType mTop leafs consts ->
+    isSubtypeOfWithEnv typeEnv vaenv (UnionType mTop H.empty consts) sup
+      && all leafOk (splitUnionType leafs)
+  _ -> isSubtypeOfWithEnv typeEnv vaenv sub sup
+  where
+    leafOk l = not (isSettledLeaf typeEnv l)
+             || isSubtypeOfWithEnv typeEnv vaenv (singletonType l) sup
+
 reachesPartials :: (TypeGraph tg) => ReachesEnv tg -> [PartialType] -> ReachesTree
 reachesPartials typeEnv partials = ReachesPartialTree $ H.fromList $ zip partials (map (reachesPartial typeEnv) partials)
   where
@@ -95,7 +147,7 @@ reachesPartials typeEnv partials = ReachesPartialTree $ H.fromList $ zip partial
       let env' = env{rVisited=S.insert partial rVisited}
       if null ttypes
         then ReachesLeaf
-        else ReachesTypeTree $ H.fromList $ zip (map snd ttypes) (map (second (reaches env')) ttypes)
+        else ReachesTypeTree $ H.fromList [(dest, (reason, reaches env' dest)) | (reason, _, dest) <- ttypes]
 
 reaches :: (TypeGraph tg) => ReachesEnv tg -> Type -> ReachesTree
 reaches _     (UnionType (Just _) _ _) = ReachesLeaf

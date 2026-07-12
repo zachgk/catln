@@ -314,7 +314,10 @@ fromObjectMap oa@ObjArr{oaAnnots, oaObj=Just obj, oaArr} = do
     case maybeArrE of
       Just arrE -> do
         vExpr <- fromExpr est arrE
-        arrM' <- fromMeta BAct est (emptyMetaM arrM) $ printf "Arrow result from %s" (show $ exprPath obj')
+        -- The Arrow result carries the declared return as its REQUIREMENT (the actual is
+        -- inferred from the body): the ArrowTo destination bound that lets the arrow choose
+        -- among definitions by the required result ('arrowConstrainUbs').
+        arrM' <- fromMeta BReq est arrM $ printf "Arrow result from %s" (show $ exprPath obj')
         modify $ addConstraints [ArrowTo 32 (getExprMeta vExpr) arrM', ArrowTo 33 (getExprMeta vExpr) mUserReturn', NoReturnArg 33 arrM']
         return (Just vExpr, arrM')
       Nothing -> return (Nothing, mUserReturn')

@@ -33,13 +33,13 @@ instance Semigroup (ObjArrTypeGraph e m) where
 instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGraph e m) where
   typeGraphQueryWithReason typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName} = concatMap tryTArrow $ flatObjectMapItem $ H.lookupDefault mempty ptName tg
     where
-      tryTArrow :: (ExprClass e, MetaDat m, Show m, Show (e m)) => ObjArr e m -> [(String, Type)]
+      tryTArrow :: (ExprClass e, MetaDat m, Show m, Show (e m)) => ObjArr e m -> [(String, Type, Type)]
       tryTArrow oa@ObjArr{oaArr=Just{}} = do
         -- It is possible to send part of a partial through the arrow, so must compute the valid part
         -- If none of it is valid, then there is Nothing
         case intersectTypesEnv typeEnv vaenv (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa) of
           potentialSrc@(UnionType Nothing potSrcLeafs []) -> if not (isBottomType potentialSrc)
-            then map (printf "using %s" (show oa),) $ joinPartialDestTypes [arrowDestType typeEnv potentialSrcPartial oa | potentialSrcPartial <- splitUnionType potSrcLeafs]
+            then map (printf "using %s" (show oa), potentialSrc,) $ joinPartialDestTypes [arrowDestType typeEnv potentialSrcPartial oa | potentialSrcPartial <- splitUnionType potSrcLeafs]
             else []
           _ -> error "Unexpected non-union in TryTArrow"
       tryTArrow ObjArr{oaArr=Nothing} = []
@@ -226,7 +226,7 @@ reduceAppliedType typeEnv vaenv t@(UnionType Nothing leafs []) = case splitUnion
   where
     reduceLeaf l = case typeGraphQueryWithReason typeEnv vaenv l of
       []    -> singletonType l
-      dests -> unionAllTypesWithEnv typeEnv vaenv (map snd dests)
+      dests -> unionAllTypesWithEnv typeEnv vaenv (map (\(_, _, dest) -> dest) dests)
 reduceAppliedType _ _ t = t
 
 -- | 'reduceAppliedType', additionally settling the field and parameter positions of a leaf no
@@ -244,7 +244,7 @@ reduceAppliedTypeDeep typeEnv vaenv t@(UnionType Nothing leafs []) = case splitU
   where
     reduceLeaf l = case typeGraphQueryWithReason typeEnv vaenv l of
       []    -> singletonType (reduceLeafPositions l)
-      dests -> unionAllTypesWithEnv typeEnv vaenv (map snd dests)
+      dests -> unionAllTypesWithEnv typeEnv vaenv (map (\(_, _, dest) -> dest) dests)
     reduceLeafPositions p@PartialType{ptArgs, ptVars} = p
       { ptArgs = fmap (reduceAppliedTypeDeep typeEnv vaenv) ptArgs
       , ptVars = fmap (reduceAppliedTypeDeep typeEnv vaenv) ptVars }

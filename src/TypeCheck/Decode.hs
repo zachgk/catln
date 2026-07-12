@@ -22,6 +22,7 @@ import           Data.Maybe          (mapMaybe)
 import           MapMeta             (MetaType (ArrMeta), clearMetaDat)
 import           Semantics
 import           Semantics.Prgm
+import           Semantics.TypeGraph (isSubtypeUpToSettlingOf)
 import           Semantics.Types
 import           Text.Printf
 import           TypeCheck.Common
@@ -35,10 +36,12 @@ toMeta  m@(Meta pt pos mid _) = do
       -- and enforced here, once inference has converged: the actual must satisfy the requirement.
       -- A bare type-variable actual is a placeholder that cannot be compared without its binding
       -- (which lived in the constraint var-arg env, unavailable here), so skip it — mirroring
-      -- 'verifyScheme's 'verifySchemeActLowers'.
+      -- 'verifyScheme's 'verifySchemeActLowers'. The requirement constrains what a term settles
+      -- to, so raw applied leaves (a body's unrewritten call, kept alongside the settled forms
+      -- for eval's dispatch keying) are exempt ('isSubtypeUpToSettlingOf').
       let actSatisfiesReq = case ub of
             TypeVar{} -> True
-            _         -> isSubtypeOfWithEnv feTypeEnv H.empty ub req
+            _         -> isSubtypeUpToSettlingOf feTypeEnv H.empty ub req
       let notes' = if actSatisfiesReq
             then notes
             else GenTypeCheckError (clearMetaDat ArrMeta m) (printf "Actual type %s is not a subtype of the required type %s" (show ub) (show req)) : notes

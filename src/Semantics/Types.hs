@@ -270,14 +270,7 @@ data TypeVarAux
   = TVVar TypeVarName -- ^ A type variable stored from the 'PartialType' ptVars
   | TVArg ArgName -- ^ A type variable referring to an arguments type
   | TVApplied TypeVarAux !(H.HashMap TypeVarName Type) -- ^ A type variable re-applied with new parameter bindings (@$F[$T -> $_B]@): whatever the base variable resolves to, with the named parameter slots rebound ('applyTypeVarOverrides')
-  deriving (Eq, Ord, Show, Generic, ToJSON, ToJSONKey)
-
--- | Shallow hash on the override map (size only), mirroring 'PartialType': equality is
--- still checked via 'Eq', and 'Type' hashing is a known hot path.
-instance Hashable TypeVarAux where
-  hashWithSalt s (TVVar n)          = s `hashWithSalt` (0 :: Int) `hashWithSalt` n
-  hashWithSalt s (TVArg n)          = s `hashWithSalt` (1 :: Int) `hashWithSalt` n
-  hashWithSalt s (TVApplied b ovr)  = s `hashWithSalt` (2 :: Int) `hashWithSalt` b `hashWithSalt` H.size ovr
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON, ToJSONKey)
 
 -- | Whether the typeclass can be extended or not
 type Sealed = Bool
@@ -291,8 +284,11 @@ type Sealed = Bool
 newtype ClassGraph = ClassGraph (GraphData CGNode PartialName)
 
 class TypeGraph tg where
-  -- | Queries the type graph for possible conversions from a partial type to a type, returning the reason for each conversion as well.
-  typeGraphQueryWithReason :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> [(String, Type)]
+  -- | Queries the type graph for possible conversions from a partial type to a type. Each result
+  -- carries the reason for the conversion, the portion of the source partial the arrow accepts
+  -- (its object intersected with the source — the whole source when the arrow covers it), and
+  -- the destination type.
+  typeGraphQueryWithReason :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> [(String, Type, Type)]
 
   -- | Queries the type graph for possible conversions from a TopTypes PredExpr to the possible partialTypes that can contain the PredExpr
   typeGraphExpandPredExpr :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> Maybe [PartialType]
@@ -312,7 +308,7 @@ instance TypeGraph EmptyTypeGraph where
   typeGraphData _ _ = []
 
 typeGraphQuery :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> [Type]
-typeGraphQuery typeEnv vaenv src = map snd $ typeGraphQueryWithReason typeEnv vaenv src
+typeGraphQuery typeEnv vaenv src = map (\(_, _, dest) -> dest) $ typeGraphQueryWithReason typeEnv vaenv src
 
 data TypeEnv tg = TypeEnv {
   teClassGraph        :: ClassGraph,

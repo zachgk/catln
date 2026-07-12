@@ -215,12 +215,12 @@ evalCallTree input (TCArg _ name) = do
     Just arg' -> return arg'
     Nothing -> evalError $ printf "Unknown arg %s found during evaluation \n\t\t with arg env %s" name (show evArgs)
 evalCallTree input (TCObjArr oa) = evalObjArr input (Left oa)
-evalCallTree input (TCPrim _ (EPrim _ f)) = do
+evalCallTree input (TCPrim oa (EPrim _ f)) = do
   case input of
     (TupleVal _ args) -> case f args of
       Right val -> return val
       Left err  -> evalError err
-    _                 -> error "Unexpected eval PrimArrow input"
+    _                 -> evalError $ printf "Unexpected eval PrimArrow input %s to %s" (show input) (show oa)
 evalCallTree _ TCMacro{} = evalError $ printf "Can't evaluate a macro - it should be removed during TreeBuild"
 
 -- | Checks the implicit equality of a non-linear pattern's shared argument positions. For an
