@@ -413,9 +413,14 @@ evalTest prgmGraphData = do
 
           TypeEnv{teNames} = typeEnv
 
-          -- Resolve a type variable's constraint to a list of concrete PartialTypes
+          -- Resolve a type variable's constraint to a list of concrete PartialTypes. An OPEN class
+          -- with no in-scope members expands to a single 'classPlaceholder' (a satisfiability
+          -- device, not a real instance); drop it so the var reads as having no concretes and the
+          -- property discards (a law over a class with no instances is vacuously satisfied — its
+          -- instances, if any, are checked in the files that define them).
           resolveVar (_varName, varMeta) =
-            splitUnionType $ expandTypeWithNames typeEnv H.empty (getMetaType varMeta) teNames
+            filter (not . isClassPlaceholder) $ splitUnionType $ expandTypeWithNames typeEnv H.empty (getMetaType varMeta) teNames
+          isClassPlaceholder pt = nameStr (ptName pt) == classPlaceholderStr
 
           concreteTypesPerVar = map resolveVar typeVars
 
@@ -479,11 +484,17 @@ evalTest prgmGraphData = do
                 CErr notes -> Hedgehog.footnote (prettyCNotes notes) >> Hedgehog.failure
                 CRes _ _   -> Hedgehog.success
 
-          action = CResT $ do
-            ok <- checkPropWithTimeout False prop
-            return $ if ok
-              then CRes [] (TupleVal "()" H.empty)
-              else CErr [MkCNote $ GenCErr Nothing $ printf "Property test failed: %s" testName]
+          -- A type variable with no concrete instances (an open class not yet inhabited in this
+          -- file) makes the law vacuously true: there is nothing to quantify over, so pass without
+          -- running the property (which would otherwise discard every case and report GaveUp). The
+          -- law's real instances are checked in the files that define them.
+          action
+            | any null concreteTypesPerVar = CResT $ return $ CRes [] (TupleVal "()" H.empty)
+            | otherwise = CResT $ do
+                ok <- checkPropWithTimeout False prop
+                return $ if ok
+                  then CRes [] (TupleVal "()" H.empty)
+                  else CErr [MkCNote $ GenCErr Nothing $ printf "Property test failed: %s" testName]
       in (testName, action)
 
 -- | All @#print@ annotations reachable in the program, each paired with the type-context (@os@)

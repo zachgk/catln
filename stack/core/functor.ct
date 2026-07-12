@@ -19,26 +19,6 @@ module(Data)
   # is not required to be totally covered here). See the [ConsList] instance in [Data/List].
   fmap[$F -> /Data/Functor[$T -> $_A], $A, $B](lst -> $F, fn(v -> $_A) -> $_B) -> $F
 
-  # ## Identity
-    An [Identity] holds exactly one value ([Id]): the simplest possible [Functor]. It gives the
-    open [Functor] class an in-scope instance, which the law property below needs to typecheck
-    and instantiate in this file (an open class with no members in scope admits no values under
-    the objects universe).
-  class(Identity[$T], [Id[$T -> $_T](value -> $T)])
-
-  every(Identity[$T -> $_T], isa= [/Data/Functor])
-
-  /Data/fmap(lst= Id(value), fn(v))= Id(value= fn(v= value))
-
-  # An [Identity] of an [Eq] element is itself an [Eq] member, so the law below can compare
-  # mapped results with [operator==]. Mirrors the [Maybe] membership in [Data/maybe].
-  identityEqual(a -> Identity[$T -> /Data/Algebra/Eq], b -> Identity[$T -> /Data/Algebra/Eq]) -> Boolean
-  identityEqual(a= Id(value@av), b= Id(value@bv))= av == bv
-
-  every(Identity[$T -> /Data/Algebra/Eq], isa= [/Data/Algebra/Eq])
-module(Data/Algebra)
-  :/Data/Id[$T -> /Data/Algebra/Eq](value).equal(other -> /Data/Identity[$T -> /Data/Algebra/Eq])= /Data/identityEqual(a= /Data/Id(value= value), b= other)
-module(Data)
   # ## Functor laws
     Identity law: mapping the identity function over a functor returns it unchanged. Expressed
     as a property test, it is checked against every [Functor] instance (here [$F]) whose

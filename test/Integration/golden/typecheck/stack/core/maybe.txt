@@ -91,12 +91,16 @@ Prgm
                                     ) + /Data/strEqual
                                     ( /r=/Data/String
                                     , /l=/Data/String
-                                    ) + /Data/identityEqual
-                                    ( /a=/Data/Id[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq )
-                                    , /b=∀/Data/Identity[ /T=∀/Data/Algebra/Eq ]
                                     ) + /Data/Algebra/rel
-                                    ( /this=
-                                        ( /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] + /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] + /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] + /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] + /Data/StrEqv[ /T=/Data/String ] )
+                                    ( /this=UnionType
+                                        ( Just
+                                            ( PredClass /Data/Algebra/Eqv[ /T=TopType ]
+                                            , fromList []
+                                            )
+                                        ,
+                                            ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
+                                        , []
+                                        )
                                     , /a=UnionType
                                         ( Just
                                             ( PredClass /Data/Primitive/Boolean
@@ -164,8 +168,7 @@ Prgm
                                     ( /eq=∀/Data/Primitive/Boolean
                                     , /lt=∀/Data/Primitive/Boolean
                                     ) + /Data/Algebra/compare
-                                    ( /this=
-                                        ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
+                                    ( /this=∀/Data/Algebra/Ordering[ /T=TopType ]
                                     , /a=( /Data/Primitive/Integer + /Data/Primitive/Float )
                                     , /b=∀/Data/Algebra/Ord
                                     ) + /Data/consThen
@@ -245,7 +248,7 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "  checks both arms structurally." )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /operator==
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) = /operator==
                 ( Value /l -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Some
                     ( Value /value -> /Data/Primitive/Integer = CInt 1 )
                 )
@@ -255,7 +258,7 @@ Prgm
             )
             ( Value /result -> /Data/String = CStr "True" )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /operator==
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) = /operator==
                 ( Value /l -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Some
                     ( Value /value -> /Data/Primitive/Integer = CInt 1 )
                 )
@@ -335,7 +338,7 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "  [Monad]; see the note in [Data/monad].)" )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /operator==
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) = /operator==
                 ( Value /l -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/mmap
                     ( Value /m -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Some
                         ( Value /value -> /Data/Primitive/Integer = CInt 5 )
@@ -350,7 +353,7 @@ Prgm
             )
             ( Value /result -> /Data/String = CStr "True" )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /operator==
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) = /operator==
                 ( Value /l -> /Data/Nothing = /Data/mmap
                     ( Value /m -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Some
                         ( Value /value -> /Data/Primitive/Integer = CInt 5 )
@@ -360,7 +363,7 @@ Prgm
             )
             ( Value /result -> /Data/String = CStr "True" )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /operator==
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) = /operator==
                 ( Value /l -> /Data/Nothing = /Data/mmap( Value /m -> /Data/Nothing = Value /Data/Nothing )
                     ( /fn( Value /v ) -> /Data/Some[ /T=TopType ]( /value=$/T ) = /Data/Some( Value /value -> TVArg /v = Value /v ) )
                 )( Value /r -> /Data/Nothing = Value /Data/Nothing )
@@ -371,7 +374,7 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "  this instance (return-type-directed dispatch — see [pure] in [Data/monad])." )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /operator==
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) = /operator==
                 ( Value /l -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/pureSomeInt
                     ( Value /v -> /Data/Primitive/Integer = CInt 5 )
                 )

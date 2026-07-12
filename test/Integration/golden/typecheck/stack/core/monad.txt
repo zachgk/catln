@@ -2,23 +2,6 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
-                ( "/Data/pureId"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/pureId( Value /v -> /Data/Primitive/Integer ) -> /Data/Id[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/pureId( Value /v -> /Data/Primitive/Integer ) ->
-                            ( /Data/pure
-                                [ /M=/Data/Id[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                                , /A=/Data/Primitive/Integer
-                                ]( /v=/Data/Primitive/Integer ) + /Data/Id[ /T=TopType ]( /value=TopType )
-                            ) = /Data/pure( Value /v -> TVArg /v = Value /v )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/pure"
                 , ObjectMapItem
                     { omiDecls =
@@ -27,10 +10,7 @@ Prgm
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/pure
-                            [ /M : ∀/Data/Identity[ /T=$_/T ] ]( Value /v ) -> /Data/Id[ /T=TopType ]( /value=$/T ) = /Data/Id( Value /value -> TVArg /v = Value /v )
-                        ]
+                    , omiDefs = []
                     }
                 )
             ,
@@ -43,11 +23,7 @@ Prgm
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/mmap
-                            ( Value /m -> /Data/Id[ /T=TopType ]( /value=$/T ) = /Data/Id( Value /value ) )
-                            ( /fn( Value /v ) -> ∀/Data/Monad[ /T=$_/A ] ) -> ∀/Data/Monad[ /T=$_/A ] = /fn( Value /v -> TVArg /value = Value /value )
-                        ]
+                    , omiDefs = []
                     }
                 )
             ]
@@ -55,14 +31,12 @@ Prgm
     , prgmCG =
         [ CGType
         , CGType
-        , CGType
         , CGClass
             ( False
             , /Data/Monad[ /T=TopType ]
-            ,
-                [ ∀/Data/Identity[ /T=$_/T ] ]
+            , []
             , Just "A [Monad] extends the container idea of a [Functor] with sequencing.
-              Its single operation [mmap] chains a value-to-monad function across the elements it holds. "
+              Its single operation [mmap] chains a value-to-monad function across the elements it holds."
             )
         ]
     , prgmAnnots =
@@ -85,65 +59,12 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "then flattens. See the [ConsList] instance in [Data/List] and the [Maybe] one in [Data/Maybe]." )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "## Identity
-            The [Identity] monad (declared as a [Functor] in [Data/functor]) holds exactly one value, so
-            [mmap] simply applies the function to it. Reusing [Identity] here gives the open [Monad] class
-            an in-scope instance, so the smoke test below can typecheck and instantiate in this file." )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "Concrete smoke test. Unlike the [Functor] laws, this passes a function whose body constructs a" )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "new container ([Id(value= v)]) — the monadic-bind shape — proving a caller-supplied" )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "container-returning function binds and flattens. [Identity] is already an [Eq] member (see" )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "[Data/functor]), so the mapped result can be compared with [operator==]." )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "NOTE: a *computed* mapped field (e.g. [Id(value= v + 1)]) currently cannot be compared with" )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "[operator==] — not a [Monad] limitation but a pre-existing gap: a container built with a" )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "computed field keeps the unreduced [/operator+(Integer, Integer)] applied type in its element" )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "slot ([reduceAppliedType] settles only top-level leaves, not nested data-construction fields)," )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "so [Some(value= 5 + 1) == Some(value= 6)] fails on its own, independent of [mmap]." )
-        , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) = /operator==
-                ( Value /l -> /Data/Id[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/mmap
-                    ( Value /m -> /Data/Id[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Id
-                        ( Value /value -> /Data/Primitive/Integer = CInt 5 )
-                    )
-                    ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Id[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Id( Value /value -> TVArg /v = Value /v ) )
-                )
-                ( Value /r -> /Data/Id[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Id
-                    ( Value /value -> /Data/Primitive/Integer = CInt 5 )
-                )
-            )
-            ( Value /result -> /Data/String = CStr "True" )
-        , /Catln/#md
             ( Value /text -> /Data/String = CStr "## Pure
             [pure] wraps a single plain value into a [Monad]. Every instance shares the same input shape —
             a bare value — so nothing about the arguments selects an instance: the call site's expected
             result type ([$M]) does, through return-type-directed dispatch. A caller therefore needs a
-            resolved concrete expected type (such as a declared return type) where it calls [pure]." )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "Concrete smoke test: the declared return type of [pureId] selects the [Identity] instance." )
-        , /Catln/#print
-            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) = /operator==
-                ( Value /l -> UnionType
-                    ( Just
-                        ( PredClass /Data/Monad[ /T=$_/A ] && PredClass /Data/Algebra/Eq
-                        , fromList []
-                        )
-                    , /Data/Id[ /T=∀/Data/Algebra/Eq ]( /value=$/T )
-                    , []
-                    ) = /Data/pureId
-                    ( Value /v -> /Data/Primitive/Integer = CInt 5 )
-                )
-                ( Value /r -> /Data/Id[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Id
-                    ( Value /value -> /Data/Primitive/Integer = CInt 5 )
-                )
-            )
-            ( Value /result -> /Data/String = CStr "True" )
+            resolved concrete expected type (such as a declared return type) where it calls [pure]. Each
+            instance supplies its own definition in a separate module (see the [Maybe] instance in
+            [Data/Maybe])." )
         ]
     }

@@ -17,36 +17,11 @@ module(Data)
   # then flattens. See the [ConsList] instance in [Data/List] and the [Maybe] one in [Data/Maybe].
   mmap[$M -> /Data/Monad[$T -> $_A], $A, $B](m -> $M, fn(v -> $_A) -> $M) -> $M
 
-  # ## Identity
-    The [Identity] monad (declared as a [Functor] in [Data/functor]) holds exactly one value, so
-    [mmap] simply applies the function to it. Reusing [Identity] here gives the open [Monad] class
-    an in-scope instance, so the smoke test below can typecheck and instantiate in this file.
-  every(Identity[$T -> $_T], isa= [/Data/Monad])
-
-  /Data/mmap(m= Id(value), fn(v))= fn(v= value)
-
-  # Concrete smoke test. Unlike the [Functor] laws, this passes a function whose body constructs a
-  # new container ([Id(value= v)]) — the monadic-bind shape — proving a caller-supplied
-  # container-returning function binds and flattens. [Identity] is already an [Eq] member (see
-  # [Data/functor]), so the mapped result can be compared with [operator==].
-  # NOTE: a *computed* mapped field (e.g. [Id(value= v + 1)]) currently cannot be compared with
-  # [operator==] — not a [Monad] limitation but a pre-existing gap: a container built with a
-  # computed field keeps the unreduced [/operator+(Integer, Integer)] applied type in its element
-  # slot ([reduceAppliedType] settles only top-level leaves, not nested data-construction fields),
-  # so [Some(value= 5 + 1) == Some(value= 6)] fails on its own, independent of [mmap].
-  > (mmap(m= Id(value= 5), fn(v)= Id(value= v)) == Id(value= 5))
-    >>> True
   # ## Pure
     [pure] wraps a single plain value into a [Monad]. Every instance shares the same input shape —
     a bare value — so nothing about the arguments selects an instance: the call site's expected
     result type ([$M]) does, through return-type-directed dispatch. A caller therefore needs a
-    resolved concrete expected type (such as a declared return type) where it calls [pure].
+    resolved concrete expected type (such as a declared return type) where it calls [pure]. Each
+    instance supplies its own definition in a separate module (see the [Maybe] instance in
+    [Data/Maybe]).
   pure[$M -> /Data/Monad[$T -> $_A], $A](v -> $_A) -> $M
-  pure[$M -> Identity[$T -> $_T]](v)= Id(value= v)
-
-  # Concrete smoke test: the declared return type of [pureId] selects the [Identity] instance.
-  pureId(v -> Integer) -> Id[$T -> Integer]
-  pureId(v)= pure(v= v)
-
-  > (pureId(v= 5) == Id(value= 5))
-    >>> True

@@ -162,7 +162,14 @@ computeConstraint FEnv{feTypeEnv, feCompletedAllObjsKey, feCompletedAllObjs} con
     -- Relax each bound object's self-referential field (one that recurses back to a type the
     -- object participates in) so a destructured value whose corresponding field is still an
     -- unconstrained pattern variable can reconcile with it (see 'relaxRecursiveSelfArgs').
-    boundUb = relaxRecursiveSelfArgs feTypeEnv $ unionTypes feTypeEnv objMapBoundUb' argsBoundUb
+    -- The objects universe is closed-world (only currently-declared data objects), but an OPEN
+    -- (unsealed) class may gain instances in a future file, so a value typed by one is genuinely
+    -- inhabitable and must survive the bound rather than empty. Admit the value's OWN open-class
+    -- predicate components (with their real element bounds) as inhabitable bound members: the
+    -- intersection then preserves exactly those components (a foreign class-top with an
+    -- unconstrained element would instead let the value's element widen). Sealed classes are
+    -- excluded — they equal their declared members, already in the universe.
+    boundUb = relaxRecursiveSelfArgs feTypeEnv $ unionTypes feTypeEnv (unionTypes feTypeEnv objMapBoundUb' (openClassPart feTypeEnv pAct)) argsBoundUb
 
     -- A partially applied tuple would not be a raw type on the unionObj,
     -- but a subset of the arguments in that type

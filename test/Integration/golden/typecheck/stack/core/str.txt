@@ -79,16 +79,30 @@ Prgm
                                     ( /r=/Data/String
                                     , /l=/Data/String
                                     ) + /Data/Algebra/rel
-                                    ( /this=
-                                        ( /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] + /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] + /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] + /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] + /Data/StrEqv[ /T=/Data/String ] )
+                                    ( /this=UnionType
+                                        ( Just
+                                            ( PredClass /Data/Algebra/Eqv[ /T=TopType ]
+                                            , fromList []
+                                            )
+                                        ,
+                                            ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
+                                        , []
+                                        )
                                     , /a=/Data/String
                                     , /b=∀/Data/Algebra/Eq
                                     ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison )
                                 )
                             , []
                             ) = /rel( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
-                            ( Value /this ->
-                                ( /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] + /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] + /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] + /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] + /Data/StrEqv[ /T=/Data/String ] ) = /eq( Value /this -> TVArg /this = Value /this )
+                            ( Value /this -> UnionType
+                                ( Just
+                                    ( PredClass /Data/Algebra/Eqv[ /T=TopType ]
+                                    , fromList []
+                                    )
+                                ,
+                                    ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
+                                , []
+                                ) = /eq( Value /this -> TVArg /this = Value /this )
                             )
                         ]
                     }
@@ -150,8 +164,15 @@ Prgm
                     ( /r=/Data/String
                     , /l=/Data/String
                     ) + /Data/Primitive/True + /Data/Algebra/rel
-                    ( /this=
-                        ( /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] + /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] + /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] + /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] + /Data/StrEqv[ /T=/Data/String ] )
+                    ( /this=UnionType
+                        ( Just
+                            ( PredClass /Data/Algebra/Eqv[ /T=TopType ]
+                            , fromList []
+                            )
+                        ,
+                            ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
+                        , []
+                        )
                     , /a=UnionType
                         ( Just
                             ( PredClass /Data/Primitive/Boolean
@@ -185,8 +206,15 @@ Prgm
                     ( /r=/Data/String
                     , /l=/Data/String
                     ) + /Data/Primitive/True + /Data/Algebra/rel
-                    ( /this=
-                        ( /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] + /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] + /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] + /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] + /Data/StrEqv[ /T=/Data/String ] )
+                    ( /this=UnionType
+                        ( Just
+                            ( PredClass /Data/Algebra/Eqv[ /T=TopType ]
+                            , fromList []
+                            )
+                        ,
+                            ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
+                        , []
+                        )
                     , /a=UnionType
                         ( Just
                             ( PredClass /Data/Primitive/Boolean
@@ -218,11 +246,18 @@ Prgm
             (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
             yet dispatched by return type across multiple types, so only the [Semigroup] is declared.)" )
         , /Catln/#print
-            ( Value /p ->
-                ( /operator++[ /T=∀/Data/Algebra/Semigroup ]
-                    ( /r=/Data/String
-                    , /l=/Data/String
-                    ) + /Data/String + /Data/Primitive/Integer
+            ( Value /p -> UnionType
+                ( Just
+                    ( PredClass /Data/Algebra/Semigroup
+                    , fromList []
+                    )
+                ,
+                    ( /operator++[ /T=∀/Data/Algebra/Semigroup ]
+                        ( /r=/Data/String
+                        , /l=/Data/String
+                        ) + /Data/Primitive/Integer
+                    )
+                , []
                 ) = /operator++
                 ( Value /l -> /Data/String = CStr "foo" )
                 ( Value /r -> /Data/String = CStr "bar" )

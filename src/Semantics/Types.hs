@@ -1021,6 +1021,31 @@ relaxNameBoundArgs _ t = t
 classPartial :: PartialType -> Type
 classPartial p = TopType H.empty (PredsOne (PredClass p))
 
+-- | The open-class predicate component of a type, for use as an additional 'BoundedByObjs'
+-- bound. The objects universe is closed-world (only currently-declared data objects), but an
+-- /open/ (unsealed) class may gain instances in a future file, so a value typed by one is
+-- genuinely inhabitable and must survive the bound rather than empty (e.g. a @Functor[Eq]@
+-- argument in a law with no in-scope instance). Returns the value's own predicate-top (with its
+-- real element bounds) when its predicates reference an unsealed class, so intersecting it back
+-- preserves exactly that component; 'BottomType' otherwise (union-neutral, leaving the bound
+-- unchanged). Using the value's own component - rather than a synthetic @any C@ with an
+-- unconstrained element - avoids widening the value's element to 'TopType'.
+openClassPart :: (TypeGraph tg) => TypeEnv tg -> Type -> Type
+openClassPart typeEnv (UnionType (Just (preds, negLeafs)) _ _)
+  | predsReferenceUnsealed preds = TopType negLeafs preds
+  where
+    predsReferenceUnsealed = go
+      where
+        go (PredsAnd ps) = any go ps
+        go (PredsNot p)  = go p
+        go PredsNone     = False
+        go (PredsOne a)  = case a of
+          PredClass c -> unsealed (ptName c)
+          PredRel   c -> unsealed (ptName c)
+          _           -> False
+        unsealed n = maybe False (not . csiSealed) $ H.lookup n (scClasses (teSatCache typeEnv))
+openClassPart _ _ = BottomType
+
 -- | Creates a classPlaceholder[$T] partial type for a given class name.
 -- Used when expanding a class that has no constituent types to avoid returning the empty set.
 classPlaceholderLeaf :: TypeName -> PartialType
@@ -1944,10 +1969,18 @@ satDecide site engineR oldR
 
 -- | Engine-backed emptiness of a predicate conjunction ('predsEmpty' fast path):
 -- @Just isEmpty@ when the predicates are within the decidable fragment.
+--
+-- The satisfiability check runs under the open-world gate ('gatePos' = 'True'), so a
+-- conjunction of distinct /open/ classes (e.g. @Functor[Eq] ∧ Eq@) is treated as satisfiable
+-- rather than empty: a future file may declare a type inhabiting both, so the conjunction is
+-- not provably disjoint. The gate itself folds in 'tePrgmEnv' ('classSatCandidates'), so in the
+-- closed-world coverage environment ('tePrgmEnv' set) enumeration is still exhaustive and a
+-- genuinely uninhabited conjunction is reported empty. Only classes provably disjoint by the
+-- class graph remain empty in the open world.
 predsEmptySymbolic :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> TypePredicates -> Maybe Bool
 predsEmptySymbolic typeEnv vaenv preds = do
   goals <- predsSatDNF True preds
-  Just (not (any (satGoal typeEnv vaenv False S.empty) goals))
+  Just (not (any (satGoal typeEnv vaenv True S.empty) goals))
 
 -- | Engine-backed subtype: @Just (t1 ⊆ t2)@, decided as emptiness of @t1 ∧ ¬t2@, when both
 -- types are within the decidable fragment. 'gatePos' gates enumeration of t1's classes

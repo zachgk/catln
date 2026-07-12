@@ -1059,11 +1059,7 @@ Prgm
             ( Value /text -> /Data/String = CStr "## Sorting" )
         , /Catln/#print
             ( Value /p ->
-                ( /Data/Nil + /Data/Cons[ /T=$_/T ]
-                    ( /head=$/T
-                    , /tail=∀/Data/ConsList[ /T=$_/T ]
-                    )
-                ) = /Data/sorted
+                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/List[ /T=∀/Data/Algebra/Ord ] ) = /Data/sorted
                 ( Value /lst -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/Cons[ /T=/Data/Primitive/Integer ]
@@ -1095,11 +1091,7 @@ Prgm
             ( Value /result -> /Data/String = CStr "[1, 2, 3]" )
         , /Catln/#print
             ( Value /p ->
-                ( /Data/Nil + /Data/Cons[ /T=$_/T ]
-                    ( /head=$/T
-                    , /tail=∀/Data/ConsList[ /T=$_/T ]
-                    )
-                ) = /Data/sorted
+                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/List[ /T=∀/Data/Algebra/Ord ] ) = /Data/sorted
                 ( Value /lst -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/Cons[ /T=/Data/Primitive/Integer ]
@@ -1515,11 +1507,7 @@ Prgm
             ( Value /text -> /Data/String = CStr "  the empty list yields the empty list." )
         , /Catln/#print
             ( Value /p ->
-                ( /Data/Nil + /Data/Cons[ /T=$_/T ]
-                    ( /head=$/T
-                    , /tail=∀/Data/ConsList[ /T=$_/T ]
-                    )
-                ) = /Data/mmap
+                ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Catln/Doc/DShow ) = /Data/mmap
                 ( Value /m -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/Nil
