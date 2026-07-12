@@ -8,7 +8,9 @@ Catln is a term-rewriting programming language. The compiler is written in Haske
 
 Remember that the compiler is still in development and there may be compiler errors during other tasks. Finding compiler errors is part of the purpose of tasks and should be highlighted.
 
-Making changes to an early language must be done carefully and can have broad effects. Avoid making short-term fixes without express permission and instead focus on a long term approach intended to always work for all possible compiler inputs. Make changes one at a time and run tests between each one. If other fixes need to be made, ask whether to stash progress on the main task and make the other fix first.
+Making changes to an early language must be done carefully and can have broad effects. Rely on the test suite to prevent regressions and try to keep changes small. When doing tasks and running into larger gaps, begin by investigating the cause of the gap and find specific evidence of how the language is deviating from expected behavior. Make plans citing the specific evidence. If there are multiple gaps make minimal reproducible examples to better isolate to single gaps and get those working while the main task is stashed. This helps make changes one at a time with an opportunity to get tests fully working and commit incremental progress in small commits.
+
+Avoid making short-term fixes without express permission and instead focus on a long term approach intended to always work for all possible compiler inputs. Fallbacks that mask core failures should be avoided. When running into problems, find the root cause rather than fixating on the main goal. Making the functionality stable and reliable is more important than new features, and new features are a way to further exercise existing capabilities to find gaps and bugs.
 
 Ask questions rather than making assumptions and investigate thoroughly. If you run into a problem and don't know how to figure it out, raise the issue with me. Provide direct evidence for all of the explanations with the artifacts from the code or outputs that led to the understanding         
 
