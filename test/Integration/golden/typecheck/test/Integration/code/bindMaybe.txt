@@ -18,14 +18,11 @@ Prgm
                                 ( /Data/Nil + /Data/append
                                     ( /a=∀/Data/ConsList[ /T=$_/T ]
                                     , /b=∀/Data/ConsList[ /T=$_/T ]
-                                    ) + /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) + /Data/Cons[ /T=/Data/Primitive/Integer ]
-                                    ( /head=/Data/Primitive/Integer
-                                    , /tail=∀/Data/ConsList[ /T=/Data/Primitive/Integer ]
-                                    ) + /Data/Nothing + /Data/bindap
+                                    ) + /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) + /Data/Nothing + /Data/bindap
                                     [ /T=
                                         ( /operator+
                                             ( /r=/Data/Primitive/Integer
-                                            , /l=/Data/Primitive/Integer
+                                            , /l=TopType
                                             ) + /Data/Primitive/Integer
                                         )
                                     , /B=TopType
@@ -33,7 +30,7 @@ Prgm
                                     , /A=TopType
                                     ]
                                     ( /fn( /v=TopType )=
-                                        ( /Data/Some
+                                        ( /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) + /Data/Some
                                             [ /T=/operator+
                                                 ( /r=/Data/Primitive/Integer
                                                 , /l=/Data/Primitive/Integer
@@ -43,7 +40,7 @@ Prgm
                                                 ( /r=/Data/Primitive/Integer
                                                 , /l=/Data/Primitive/Integer
                                                 )
-                                            ) + /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                            )
                                         )
                                     , /m=
                                         ( TopType | PredClass /Data/Monad[ /T=$_/A ] && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] )
@@ -59,7 +56,7 @@ Prgm
                             , []
                             ) = /Data/bindap( Value /m -> TVArg /m = Value /m )
                             ( /fn( Value /v -> /Data/Primitive/Integer ) ->
-                                ( /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) + /Data/Some
+                                ( /Data/Some
                                     [ /T=/operator+
                                         ( /r=/Data/Primitive/Integer
                                         , /l=/Data/Primitive/Integer
@@ -69,7 +66,7 @@ Prgm
                                         ( /r=/Data/Primitive/Integer
                                         , /l=/Data/Primitive/Integer
                                         )
-                                    )
+                                    ) + /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
                                 ) = /maybeBind.$71c85d( Value /m -> TVArg /m = Value /m )
                                 ( Value /$71c85d-arg -> TVArg /v = Value /v )
                             )

@@ -3000,7 +3000,19 @@ intersectPartialLeafsWithVarEnv typeEnv vaenv aPartials bPartials = (vaenv', typ
       [e] -> e
       es  -> foldr1 (H.unionWith (unionTypes typeEnv)) es
     vaenv' = mergeAllVarEnvs typeEnv [vaenv, joinedAlternatives]
-    type' = joinUnionTypeByName $ fmap (concatMap snd) intersected
+    -- A pairwise leaf meet can bind an external var while its leaf keeps the var pointer
+    -- (e.g. @Some[/T=operator+..] ∩ Some[/T=$_/T]@ records @$_/T ↦ operator+..@ yet leaves the leaf
+    -- as @Some[/T=$_/T]@, WIDER than the operand). Resolve each pair's freshly recorded bindings
+    -- back into its OWN leafs so the result is the true meet — per pair (not the joined @vaenv'@),
+    -- since each pair is a distinct distributed alternative with its own binding. @vaenv'@ itself is
+    -- returned unchanged for the caller's downstream threading.
+    resolvePairLeafs (e, ps)
+      | H.null nb = ps
+      | otherwise = case substituteKeep nb (UnionType Nothing (joinUnionType ps) []) of
+                      UnionType Nothing leafs' _ -> splitUnionType leafs'
+                      _                          -> ps
+      where nb = H.difference e vaenv
+    type' = joinUnionTypeByName $ fmap (concatMap resolvePairLeafs) intersected
 
 intersectPartialLeafsEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialLeafs -> PartialLeafs -> PartialLeafs
 intersectPartialLeafsEnv typeEnv vaenv aPartials bPartials = debugTrace typeEnv msg result
