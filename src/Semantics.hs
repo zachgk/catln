@@ -153,7 +153,7 @@ arrowDestTypeDispatch = arrowDestTypeBase True
 arrowDestTypeBase :: (TypeGraph tg, ExprClass e, Show m, Show (e m), MetaDat m) => Bool -> TypeEnv tg -> PartialType -> ObjArr e m -> [Type]
 arrowDestTypeBase resolveAppFields typeEnv src oa@ObjArr{oaArr=Just (oaArrExpr, oaM)} = map (arrowDestTypeForVaenv . fmap snd) $ exprVarArgsWithSrc typeEnv (oaObjExpr oa) srcPartial
   where
-    srcPartial = case maybeGetSingleton $ substituteVars $ singletonType src of
+    srcPartial = case maybeGetSingleton $ substituteTVExt H.empty $ singletonType src of
       Just s  -> s
       Nothing -> error $ printf "Non-singleton in arrowDestType"
     arrowDestTypeForVaenv vaenv = case oaArrExpr of
@@ -161,7 +161,7 @@ arrowDestTypeBase resolveAppFields typeEnv src oa@ObjArr{oaArr=Just (oaArrExpr, 
       Just n | isJust (maybeExprPath n) -> maybe joinedResolved substitute (H.lookup (TVArg $ inExprSingleton n) vaenv)
       _                              -> joinedResolved
       where
-        substitute = substituteWithVarArgEnv vaenv
+        substitute = substituteTVExt vaenv
         expr' = fmap (substitute . getExprType) oaArrExpr
         arr' = substitute $ getMetaType oaM
         joined = fromMaybe arr' expr'

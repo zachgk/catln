@@ -214,7 +214,7 @@ fnArgInputBound env callAct fnKey inKey = case callAct of
                        , (cvn, extV) <- boundClassVarPtrs bound
                        , let elemT = unionAllTypes typeEnv (mapMaybe (H.lookup cvn . ptVars) (splitUnionType rLeafs))
                        , not (isBottomType elemT) ]
-      let inTy = substituteWithVarArgEnv (mergeAllVarEnvs typeEnv (venv0 : boundVenvs)) (getMetaType inM)
+      let inTy = substituteTVExt (mergeAllVarEnvs typeEnv (venv0 : boundVenvs)) (getMetaType inM)
       guard (typeFullyConcrete inTy)
       return inTy
     -- The (class parameter name, external var name) pointers of a bound's class partials:
@@ -280,7 +280,7 @@ mkReachesEnv env (Constraint maybeConOa stypeVaenv _) = do
     inExpr' <- showExpr env InputMeta inExpr
     outM' <- showM env ArrMeta outM
     return (mapMeta clearMetaDat InputMeta inExpr', outM')
-  let argObjMap = objectMapFromList $ concatMap (\(inExpr, outM) -> [ObjArr (Just inExpr) ArgObj Nothing [] (Just (Nothing, emptyMetaT (substituteWithVarArgEnv (fmap snd vaenv) (getMetaType outM))))]) $ H.elems argVaenv'
+  let argObjMap = objectMapFromList $ concatMap (\(inExpr, outM) -> [ObjArr (Just inExpr) ArgObj Nothing [] (Just (Nothing, emptyMetaT (substituteTVExt (fmap snd vaenv) (getMetaType outM))))]) $ H.elems argVaenv'
 
   -- final ReachesEnv. Reuse the per-epoch cached reaches type graph ('feReachesTypeEnv');
   -- it is constraint-independent, so rebuilding it per call would be redundant.
