@@ -574,39 +574,22 @@ Prgm
             ( Value /result= CStr "False" )
         , /Catln/#md
             ( Value /text= CStr "## Reversing" )
-        , /Catln/#md
-            ( Value /text= CStr "The result's element type stays generic, so it is compared with a known list rather than" )
-        , /Catln/#md
-            ( Value /text= CStr "  rendered directly; the [Boolean] comparison then prints on its own." )
         , /Catln/#print
-            ( Value /p= /operator==
-                ( Value /l= /Data/reversed
-                    ( Value lst= /Data/Cons
-                        ( Value /head= CInt 1 )
-                        ( Value /tail= /Data/Cons
-                            ( Value /head= CInt 2 )
-                            ( Value /tail= /Data/Cons
-                                ( Value /head= CInt 3 )( Value /tail= Value /Data/Nil )
-                            )
-                        )
-                    )
-                )
-                ( Value /r= /Data/Cons
-                    ( Value /head= CInt 3 )
+            ( Value /p= /Data/reversed
+                ( Value lst= /Data/Cons
+                    ( Value /head= CInt 1 )
                     ( Value /tail= /Data/Cons
                         ( Value /head= CInt 2 )
                         ( Value /tail= /Data/Cons
-                            ( Value /head= CInt 1 )( Value /tail= Value /Data/Nil )
+                            ( Value /head= CInt 3 )( Value /tail= Value /Data/Nil )
                         )
                     )
                 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr "[3, 2, 1]" )
         , /Catln/#print
-            ( Value /p= /operator==
-                ( Value /l= /Data/reversed( Value lst= Value /Data/Nil ) )( Value /r= Value /Data/Nil )
-            )
-            ( Value /result= CStr "True" )
+            ( Value /p= /Data/reversed( Value lst= Value /Data/Nil ) )
+            ( Value /result= CStr "[]" )
         , /Catln/#md
             ( Value /text= CStr "## Sorting" )
         , /Catln/#print
@@ -688,32 +671,21 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "for [fmap] calls on a [ConsList]." )
         , /Catln/#print
-            ( Value /p= /operator==
-                ( Value /l= /Data/fmap
-                    ( Value lst= /Data/Cons
-                        ( Value /head= CInt 1 )
+            ( Value /p= /Data/fmap
+                ( Value lst= /Data/Cons
+                    ( Value /head= CInt 1 )
+                    ( Value /tail= /Data/Cons
+                        ( Value /head= CInt 2 )
                         ( Value /tail= /Data/Cons
-                            ( Value /head= CInt 2 )
-                            ( Value /tail= /Data/Cons
-                                ( Value /head= CInt 3 )( Value /tail= Value /Data/Nil )
-                            )
+                            ( Value /head= CInt 3 )( Value /tail= Value /Data/Nil )
                         )
-                    )
-                    ( fn( Value v )= /operator+( Value /l= Value v )
-                        ( Value /r= CInt 1 )
                     )
                 )
-                ( Value /r= /Data/Cons
-                    ( Value /head= CInt 2 )
-                    ( Value /tail= /Data/Cons
-                        ( Value /head= CInt 3 )
-                        ( Value /tail= /Data/Cons
-                            ( Value /head= CInt 4 )( Value /tail= Value /Data/Nil )
-                        )
-                    )
+                ( fn( Value v )= /operator+( Value /l= Value v )
+                    ( Value /r= CInt 1 )
                 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr "[2, 3, 4]" )
         , /Catln/#md
             ( Value /text= CStr "# ConsList Eq membership
             Makes a [ConsList] of any [Eq] element a proper member of [Eq], so the generic [operator==]
@@ -843,23 +815,15 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "[append] joins two lists end to end." )
         , /Catln/#print
-            ( Value /p= /operator==
-                ( Value /l= /Data/append
-                    ( Value a= /Data/Cons
-                        ( Value /head= CInt 1 )( Value /tail= Value /Data/Nil )
-                    )
-                    ( Value b= /Data/Cons
-                        ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
-                    )
+            ( Value /p= /Data/append
+                ( Value a= /Data/Cons
+                    ( Value /head= CInt 1 )( Value /tail= Value /Data/Nil )
                 )
-                ( Value /r= /Data/Cons
-                    ( Value /head= CInt 1 )
-                    ( Value /tail= /Data/Cons
-                        ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
-                    )
+                ( Value b= /Data/Cons
+                    ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
                 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr "[1, 2]" )
         , /Catln/#md
             ( Value /text= CStr "[mmap] over a [ConsList] is concatMap: the function returns a whole list per element and the" )
         , /Catln/#md
@@ -867,40 +831,28 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "  the empty list yields the empty list." )
         , /Catln/#print
-            ( Value /p= /operator==
-                ( Value /l= /Data/mmap
-                    ( Value m= /Data/Cons
-                        ( Value /head= CInt 1 )( Value /tail= Value /Data/Nil )
-                    )
-                    ( fn( Value v )= /Data/Cons
-                        ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
-                    )
+            ( Value /p= /Data/mmap
+                ( Value m= /Data/Cons
+                    ( Value /head= CInt 1 )( Value /tail= Value /Data/Nil )
                 )
-                ( Value /r= /Data/Cons
+                ( fn( Value v )= /Data/Cons
                     ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
                 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr "[2]" )
         , /Catln/#print
-            ( Value /p= /operator==
-                ( Value /l= /Data/mmap( Value m= Value /Data/Nil )
-                    ( fn( Value v )= /Data/Cons( Value /head= Value v )( Value /tail= Value /Data/Nil ) )
-                )( Value /r= Value /Data/Nil )
+            ( Value /p= /Data/mmap( Value m= Value /Data/Nil )
+                ( fn( Value v )= /Data/Cons( Value /head= Value v )( Value /tail= Value /Data/Nil ) )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr "[]" )
         , /Catln/#md
             ( Value /text= CStr "[pure] for [ConsList] builds a singleton list; the call site's expected list type selects" )
         , /Catln/#md
             ( Value /text= CStr "this instance (return-type-directed dispatch — see [pure] in [Data/monad])." )
         , /Catln/#print
-            ( Value /p= /operator==
-                ( Value /l= pureConsInt
-                    ( Value v= CInt 1 )
-                )
-                ( Value /r= /Data/Cons
-                    ( Value /head= CInt 1 )( Value /tail= Value /Data/Nil )
-                )
+            ( Value /p= pureConsInt
+                ( Value v= CInt 1 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr "[1]" )
         ]
     }

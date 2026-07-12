@@ -79,12 +79,10 @@ module(Data)
     reverseOnto(lst= /Data/Cons(head, tail), acc)= reverseOnto(lst= tail, acc= /Data/Cons(head= head, tail= acc))
     reverseOnto(lst= lst, acc= /Data/Nil)
 
-  # The result's element type stays generic, so it is compared with a known list rather than
-  #   rendered directly; the [Boolean] comparison then prints on its own.
-  > (/Data/reversed(lst= [1, 2, 3]) == [3, 2, 1])
-    >>> True
-  > (/Data/reversed(lst= []) == [])
-    >>> True
+  > /Data/reversed(lst= [1, 2, 3])
+    >>> [3, 2, 1]
+  > /Data/reversed(lst= [])
+    >>> []
   # ## Sorting
   sorted(lst -> /Data/List[$T -> /Data/Algebra/Ord]) -> /Data/List[$T -> /Data/Algebra/Ord]
     # [sorted] returns the items of an [Ord] list in ascending order using insertion sort: it sorts
@@ -172,8 +170,8 @@ module(Data/List)
   /Data/fmap(lst= Nil, fn(v))= Nil
   /Data/fmap(lst= /Data/Cons(head, tail), fn(v))= /Data/Cons(head= fn(v= head), tail= /Data/fmap(lst= tail, fn(v)= fn(v= v)))
 
-  > (/Data/fmap(lst= [1, 2, 3], fn(v)= v + 1) == [2, 3, 4])
-    >>> True
+  > /Data/fmap(lst= [1, 2, 3], fn(v)= v + 1)
+    >>> [2, 3, 4]
 
 # # ConsList Eq membership
   Makes a [ConsList] of any [Eq] element a proper member of [Eq], so the generic [operator==]
@@ -240,15 +238,15 @@ module(Data/List)
   /Data/mmap(m= /Data/Cons(head, tail), fn(v))= /Data/append(a= fn(v= head), b= /Data/mmap(m= tail, fn(v)= fn(v= v)))
 
   # [append] joins two lists end to end.
-  > (/Data/append(a= [1], b= [2]) == [1, 2])
-    >>> True
+  > /Data/append(a= [1], b= [2])
+    >>> [1, 2]
   # [mmap] over a [ConsList] is concatMap: the function returns a whole list per element and the
   #   results are appended, so binding [[1]] to a function returning [[2]] yields [[2]], and binding
   #   the empty list yields the empty list.
-  > (/Data/mmap(m= [1], fn(v)= [2]) == [2])
-    >>> True
-  > (/Data/mmap(m= [], fn(v)= [v]) == [])
-    >>> True
+  > /Data/mmap(m= [1], fn(v)= [2])
+    >>> [2]
+  > /Data/mmap(m= [], fn(v)= [v])
+    >>> []
   # [pure] for [ConsList] builds a singleton list; the call site's expected list type selects
   # this instance (return-type-directed dispatch — see [pure] in [Data/monad]).
   /Data/pure[$M -> /Data/ConsList[$T -> $_T]](v)= /Data/Cons(head= v, tail= /Data/Nil)
@@ -256,5 +254,5 @@ module(Data/List)
   pureConsInt(v -> Integer) -> /Data/Cons[$T -> Integer]
   pureConsInt(v)= /Data/pure(v= v)
 
-  > (pureConsInt(v= 1) == [1])
-    >>> True
+  > pureConsInt(v= 1)
+    >>> [1]
