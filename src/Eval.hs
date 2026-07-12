@@ -375,12 +375,12 @@ evalDShowAnnot env@Env{evTbEnv, evTypeEnv} os annot0
       | otherwise = CErr []
     -- Whether 'valToEExpr' can rebuild this value (it errors on closures, IO, and other runtime-only
     -- values, none of which are @ToString@).
-    reconstructableVal IntVal{}         = True
-    reconstructableVal FloatVal{}       = True
-    reconstructableVal StrVal{}         = True
-    reconstructableVal CharVal{}        = True
-    reconstructableVal (TupleVal _ as)  = all reconstructableVal (H.elems as)
-    reconstructableVal _                = False
+    reconstructableVal IntVal{}        = True
+    reconstructableVal FloatVal{}      = True
+    reconstructableVal StrVal{}        = True
+    reconstructableVal CharVal{}       = True
+    reconstructableVal (TupleVal _ as) = all reconstructableVal (H.elems as)
+    reconstructableVal _               = False
     -- Evaluate @p@ to its concrete value by building it toward @DShow@ (which certifies
     -- displayability and yields the value itself). @p@ is declared @-> DShow@, so this resolves for
     -- every valid print.
