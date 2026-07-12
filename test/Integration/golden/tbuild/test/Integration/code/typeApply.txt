@@ -17,7 +17,7 @@ Prgm
                             ( EAppArg Value /lst -> ∀/Data/Functor[ /T=$_/A ] )
                             ( EAppArg /fn( EAppArg Value /v ) ) -> UnionType
                             ( Just
-                                ( PredClass /Data/Functor[ /T=$_/A ]
+                                ( PredClass /Data/Functor[ /T=TopType ]
                                 , fromList []
                                 )
                             ,
@@ -55,7 +55,7 @@ Prgm
                         [ /strMaybe
                             ( EAppArg Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> UnionType
                             ( Just
-                                ( PredClass /Data/Functor[ /T=$_/A ]
+                                ( PredClass /Data/Functor[ /T=TopType ]
                                 , fromList []
                                 )
                             ,
@@ -147,7 +147,7 @@ Prgm
                         [ /incMaybe
                             ( EAppArg Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> UnionType
                             ( Just
-                                ( PredClass /Data/Functor[ /T=$_/A ]
+                                ( PredClass /Data/Functor[ /T=TopType ]
                                 , fromList []
                                 )
                             ,

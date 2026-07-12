@@ -17,7 +17,10 @@ module(Data)
   # same kind. This is the generic interface declared over the [Functor] class; each
   # instance supplies its own definition in a separate module (so the open [Functor] class
   # is not required to be totally covered here). See the [ConsList] instance in [Data/List].
-  fmap[$F -> /Data/Functor[$T -> $_A], $A, $B](lst -> $F, fn(v -> $_A) -> $_B) -> $F
+  # The result is the input container's shape with the element rebound to the mapped
+  # function's return ([$F[$T -> $_B]]) — a bare [$F] would wrongly claim the element type
+  # is preserved.
+  fmap[$F -> /Data/Functor[$T -> $_A], $A, $B](lst -> $F, fn(v -> $_A) -> $_B) -> $F[$T -> $_B]
 
   # ## Functor laws
     Identity law: mapping the identity function over a functor returns it unchanged. Expressed

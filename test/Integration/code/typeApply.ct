@@ -5,7 +5,6 @@ import "core"
 # bound container [$F] resolves to, with its [$T] parameter rebound to [$_B] — "same shape,
 # new element". This is the contract of a mapping function: the compiler cannot know the
 # result's element type from [$F] alone (that would claim the element is preserved).
-
 # An element-preserving map: [$_B] equals the input element, so the applied form claims the
 # same type the bare [$F] would.
 applyInc[$F -> /Data/Functor[$T -> $_A], $A, $B](lst -> $F, fn(v -> $_A) -> $_B) -> $F[$T -> $_B]

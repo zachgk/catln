@@ -14,16 +14,87 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/identityEqual"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/identityEqual
+                            ( Value /a -> ∀/Data/Identity[ /T=∀/Data/Algebra/Eq ] )
+                            ( Value /b -> ∀/Data/Identity[ /T=∀/Data/Algebra/Eq ] ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/identityEqual
+                            ( Value /a -> /Data/Id[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) = /Data/Id( Value /value@Value /av -> ∀/Data/Algebra/Eq ) )
+                            ( Value /b -> /Data/Id[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) = /Data/Id( Value /value@Value /bv -> ∀/Data/Algebra/Eq ) ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            ,
+                                ( /operator==[ /T=∀/Data/Algebra/Eq ]
+                                    ( /r=∀/Data/Algebra/Eq
+                                    , /l=∀/Data/Algebra/Eq
+                                    ) + /Data/strEqual
+                                    ( /r=/Data/String
+                                    , /l=/Data/String
+                                    ) + /Data/Primitive/True + /Data/identityEqual
+                                    ( /a=/Data/Id[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq )
+                                    , /b=∀/Data/Identity[ /T=∀/Data/Algebra/Eq ]
+                                    ) + /Data/Algebra/rel
+                                    ( /this=
+                                        ( /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] + /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] + /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] + /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] + /Data/StrEqv[ /T=/Data/String ] )
+                                    , /a=UnionType
+                                        ( Just
+                                            ( PredClass /Data/Primitive/Boolean
+                                            , fromList []
+                                            )
+                                        , ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float )
+                                        , []
+                                        )
+                                    , /b=∀/Data/Algebra/Eq
+                                    ) + /Data/Primitive/False + /Data/Primitive/boolEq
+                                    ( /r=∀/Data/Primitive/Boolean
+                                    , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
+                                    ( /this=∀/Data/Algebra/Eq
+                                    , /other=∀/Data/Algebra/Eq
+                                    )
+                                )
+                            , []
+                            ) = /operator==( Value /l -> TVArg /av = Value /av )( Value /r -> TVArg /bv = Value /bv )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Id"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Id[ /T : TopType ]( Value /value -> $/T ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/fmap"
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/fmap[ /B : TopType ][ /A : TopType ]
                             [ /F : ∀/Data/Functor[ /T=$_/A ] ]( Value /lst -> $/F )
-                            ( /fn( Value /v -> $_/A ) -> $_/B ) -> $/F
+                            ( /fn( Value /v -> $_/A ) -> $_/B ) -> $/F[ /T=$_/B ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /Data/fmap
+                            ( Value /lst -> /Data/Id[ /T=TopType ]( /value=$/T ) = /Data/Id( Value /value ) )
+                            ( /fn( Value /v ) ) -> /Data/Id[ /T=TopType ]( /value=$/T ) = /Data/Id
+                            ( Value /value= /fn( Value /v -> TVArg /value = Value /value ) )
+                        ]
                     }
                 )
             ,
@@ -38,18 +109,91 @@ Prgm
                         ]
                     }
                 )
+            ,
+                ( "/Data/Algebra/equal"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/equal
+                            ( Value /other ->
+                                ( TopType | PredClass /Data/Identity[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq )
+                            )
+                            ( Value /this -> /Data/Id[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) = /Data/Id[ /T : ∀/Data/Algebra/Eq ]( Value /value -> ∀/Data/Algebra/Eq ) ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            ,
+                                ( /operator==[ /T=∀/Data/Algebra/Eq ]
+                                    ( /r=∀/Data/Algebra/Eq
+                                    , /l=∀/Data/Algebra/Eq
+                                    ) + /Data/strEqual
+                                    ( /r=/Data/String
+                                    , /l=/Data/String
+                                    ) + /Data/Primitive/True + /Data/identityEqual
+                                    ( /a=/Data/Id[ /T=∀/Data/Algebra/Eq ]( /value=TopType )
+                                    , /b=∀/Data/Identity[ /T=∀/Data/Algebra/Eq ]
+                                    ) + /Data/Algebra/rel
+                                    ( /this=
+                                        ( /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] + /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] + /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] + /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] + /Data/StrEqv[ /T=/Data/String ] )
+                                    , /a=UnionType
+                                        ( Just
+                                            ( PredClass /Data/Primitive/Boolean
+                                            , fromList []
+                                            )
+                                        , ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float )
+                                        , []
+                                        )
+                                    , /b=∀/Data/Algebra/Eq
+                                    ) + /Data/Primitive/False + /Data/Primitive/boolEq
+                                    ( /r=∀/Data/Primitive/Boolean
+                                    , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
+                                    ( /this=∀/Data/Algebra/Eq
+                                    , /other=∀/Data/Algebra/Eq
+                                    )
+                                )
+                            , []
+                            ) = /Data/identityEqual
+                            ( Value /a -> /Data/Id[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) = /Data/Id( Value /value -> TVArg /value = Value /value ) )( Value /b -> TVArg /other = Value /other )
+                        ]
+                    }
+                )
             ]
         )
     , prgmCG =
         [ CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Data/Identity
+            ,
+                [ ∀/Data/Identity[ /T=∀/Data/Algebra/Eq ] ]
+            , Just ""
+            )
         , CGClass
             ( False
             , /Data/Functor[ /T=TopType ]
-            , []
+            ,
+                [ ∀/Data/Identity[ /T=$_/T ] ]
             , Just "A [Functor] is a basic property of a collection.
-              It has a single operation [fmap] that applies a function to each element in the collection.$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]"
+              It has a single operation [fmap] that applies a function to each element in the collection.$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T] "
+            )
+        , CGClass
+            ( True
+            , /Data/Identity[ /T=TopType ]
+            ,
+                [ /Data/Id[ /T=$_/T ]( /value=$/T ) ]
+            , Just ""
             )
         ]
     , prgmAnnots =
@@ -73,6 +217,22 @@ Prgm
             ( Value /text -> /Data/String = CStr "instance supplies its own definition in a separate module (so the open [Functor] class" )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "is not required to be totally covered here). See the [ConsList] instance in [Data/List]." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "The result is the input container's shape with the element rebound to the mapped" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "function's return ([$F[$T -> $_B]]) — a bare [$F] would wrongly claim the element type" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "is preserved." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "## Identity
+            An [Identity] holds exactly one value ([Id]): the simplest possible [Functor]. It gives the
+            open [Functor] class an in-scope instance, which the law property below needs to typecheck
+            and instantiate in this file (an open class with no members in scope admits no values under
+            the objects universe)." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "An [Identity] of an [Eq] element is itself an [Eq] member, so the law below can compare" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "mapped results with [operator==]. Mirrors the [Maybe] membership in [Data/maybe]." )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "## Functor laws
             Identity law: mapping the identity function over a functor returns it unchanged. Expressed

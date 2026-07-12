@@ -17,7 +17,7 @@ Prgm
                             ( Value /lst -> ∀/Data/Functor[ /T=$_/A ] )
                             ( /fn( Value /v ) ) -> UnionType
                             ( Just
-                                ( PredClass /Data/Functor[ /T=$_/A ]
+                                ( PredClass /Data/Functor[ /T=TopType ]
                                 , fromList []
                                 )
                             ,
@@ -50,7 +50,7 @@ Prgm
                         [ /strMaybe
                             ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> UnionType
                             ( Just
-                                ( PredClass /Data/Functor[ /T=$_/A ]
+                                ( PredClass /Data/Functor[ /T=TopType ]
                                 , fromList []
                                 )
                             ,
@@ -126,7 +126,7 @@ Prgm
                         [ /incMaybe
                             ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> UnionType
                             ( Just
-                                ( PredClass /Data/Functor[ /T=$_/A ]
+                                ( PredClass /Data/Functor[ /T=TopType ]
                                 , fromList []
                                 )
                             ,

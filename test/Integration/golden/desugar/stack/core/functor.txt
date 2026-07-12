@@ -19,7 +19,7 @@ Prgm
                     { omiDecls =
                         [ /Data/fmap[ /B : TopType ][ /A : TopType ]
                             [ /F : ∀/Data/Functor[ /T=$_/A ] ]( Value lst -> $/F )
-                            ( fn( Value v -> $_/A ) -> $_/B ) -> $/F
+                            ( fn( Value v -> $_/A ) -> $_/B ) -> $/F[ /T=$_/B ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -73,6 +73,12 @@ Prgm
             ( Value /text= CStr "instance supplies its own definition in a separate module (so the open [Functor] class" )
         , /Catln/#md
             ( Value /text= CStr "is not required to be totally covered here). See the [ConsList] instance in [Data/List]." )
+        , /Catln/#md
+            ( Value /text= CStr "The result is the input container's shape with the element rebound to the mapped" )
+        , /Catln/#md
+            ( Value /text= CStr "function's return ([$F[$T -> $_B]]) — a bare [$F] would wrongly claim the element type" )
+        , /Catln/#md
+            ( Value /text= CStr "is preserved." )
         , /Catln/#md
             ( Value /text= CStr "## Functor laws
             Identity law: mapping the identity function over a functor returns it unchanged. Expressed
