@@ -269,7 +269,15 @@ data TypeVarLoc
 data TypeVarAux
   = TVVar TypeVarName -- ^ A type variable stored from the 'PartialType' ptVars
   | TVArg ArgName -- ^ A type variable referring to an arguments type
-  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON, ToJSONKey)
+  | TVApplied TypeVarAux !(H.HashMap TypeVarName Type) -- ^ A type variable re-applied with new parameter bindings (@$F[$T -> $_B]@): whatever the base variable resolves to, with the named parameter slots rebound ('applyTypeVarOverrides')
+  deriving (Eq, Ord, Show, Generic, ToJSON, ToJSONKey)
+
+-- | Shallow hash on the override map (size only), mirroring 'PartialType': equality is
+-- still checked via 'Eq', and 'Type' hashing is a known hot path.
+instance Hashable TypeVarAux where
+  hashWithSalt s (TVVar n)          = s `hashWithSalt` (0 :: Int) `hashWithSalt` n
+  hashWithSalt s (TVArg n)          = s `hashWithSalt` (1 :: Int) `hashWithSalt` n
+  hashWithSalt s (TVApplied b ovr)  = s `hashWithSalt` (2 :: Int) `hashWithSalt` b `hashWithSalt` H.size ovr
 
 -- | Whether the typeclass can be extended or not
 type Sealed = Bool
@@ -464,6 +472,8 @@ showTypeD _ (TypeVar (TVVar n) TVInt) = "$" ++ show n
 showTypeD _ (TypeVar (TVVar n) TVExt) = "$_" ++ show n
 showTypeD _ (TypeVar (TVArg n) TVInt) = "TVArg " ++ show n
 showTypeD _ (TypeVar (TVArg n) TVExt) = "TVArg(ext) " ++ show n
+showTypeD d (TypeVar (TVApplied b ovr) loc) = showTypeD d (TypeVar b loc) ++ "[" ++ intercalate ", " (map showOvr (H.toList ovr)) ++ "]"
+    where showOvr (k, v) = show k ++ "=" ++ showTypeD (d - 1) v
 
 instance Show ClassGraph where
   show (ClassGraph graphData) = show $ map fst3 $ graphToNodes graphData
@@ -763,6 +773,7 @@ splitVarArgEnv vaenv = bimap H.fromList H.fromList $ partitionEithers $ map eith
   where
     eitherVarArg (TVVar v, t) = Left (v, t)
     eitherVarArg (TVArg v, t) = Right (v, t)
+    eitherVarArg (TVApplied v _, _) = error $ printf "Unexpected TVApplied %s used as an env key in splitVarArgEnv" (show v)
 
 makeAbsoluteName :: Name -> Name
 makeAbsoluteName n = case nameStr n of
@@ -1477,6 +1488,7 @@ expandClassPartial typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv PartialType
             Just v -> expandNeg $ intersectTypesEnv typeEnv vaenv v (H.lookupDefault PTopType t classVars)
             Nothing -> error $ printf "Unknown var %s in expandPartial" (show t)
           mapClassType (TypeVar (TVArg t) _) = error $ printf "Arg %s found in expandPartial" (show t)
+          mapClassType (TypeVar (TVApplied t _) _) = error $ printf "Applied var %s found in expandPartial" (show t)
           mapClassType (UnionType Nothing p []) = UnionType Nothing (joinUnionType $ map mapClassPartial $ splitUnionType p) []
           mapClassType t@(UnionType Nothing _ _) = t
           mapClassType t@(UnionType (Just _) _ _) = t
@@ -2067,6 +2079,7 @@ satLeafEscapesAll typeEnv vaenv hyps m negs0
           Nothing -> False
     elemAt (TVVar k) PartialType{ptVars} = H.lookup k ptVars
     elemAt (TVArg k) PartialType{ptArgs} = H.lookup k ptArgs
+    elemAt (TVApplied k _) _ = error $ printf "Unexpected TVApplied %s used as a position in elemAt" (show k)
 
     -- Exhaustive top-level cases of a position's type: union components, class members
     -- (via 'classSatCandidates', gated closed-world like the outer coverage decisions), or
@@ -3294,10 +3307,28 @@ mergeVarEnvs typeEnv = H.unionWith mergeVarEnvVal
 mergeAllVarEnvs :: (TypeGraph tg, Foldable f, Eq k, Hashable k, Show (f (H.HashMap k Type))) => TypeEnv tg -> f (H.HashMap k Type) -> H.HashMap k Type
 mergeAllVarEnvs typeEnv = foldr (mergeVarEnvs typeEnv) H.empty
 
+-- | Applies a 'TVApplied' reference's parameter overrides to the type its base variable
+-- resolved to: each var slot named by an override is rebound on every positive leaf and on
+-- every predicate partial (a class application such as @PredClass Maybe[/T=…]@). Slots a
+-- leaf does not carry (e.g. the parameterless 'Nothing' member of 'Maybe') are left
+-- untouched, matching class-application expansion. A still-unresolved base variable stays
+-- symbolic: the overrides are kept on (or merged into) the 'TVApplied' reference.
+applyTypeVarOverrides :: H.HashMap TypeVarName Type -> Type -> Type
+applyTypeVarOverrides overrides t | H.null overrides = t
+applyTypeVarOverrides overrides (UnionType mNeg posLeafs consts) = UnionType mNeg' posLeafs' consts
+  where
+    mNeg' = fmap (first (mapTypePreds (mapTypePred overridePartial))) mNeg
+    posLeafs' = joinUnionType $ map overridePartial $ splitUnionType posLeafs
+    overridePartial p@PartialType{ptVars} = p{ptVars=H.mapWithKey (\k old -> H.lookupDefault old k overrides) ptVars}
+applyTypeVarOverrides overrides (TypeVar (TVApplied b ovr) loc) = TypeVar (TVApplied b (H.union overrides ovr)) loc
+applyTypeVarOverrides overrides (TypeVar b loc) = TypeVar (TVApplied b overrides) loc
+
 -- | Looks up a 'TypeVarAux' in the 'TypeVarArgEnv', returning 'PTopType' on miss.
 -- Treats 'TVVar' and 'TVArg' uniformly: both kinds default to 'PTopType' when absent,
 -- matching the TVInt/TVExt semantics where an unconstrained TVExt is unknown (i.e. PTopType).
+-- A 'TVApplied' reference resolves its base variable, then applies its overrides to the result.
 vaenvLookup :: TypeVarArgEnv -> TypeVarAux -> Type
+vaenvLookup vaenv (TVApplied b overrides) = applyTypeVarOverrides overrides (vaenvLookup vaenv b)
 vaenvLookup vaenv v = H.lookupDefault PTopType v vaenv
 
 -- | Replaces type variables in a 'Type' using the provided 'TypeVarArgEnv'.
@@ -3327,6 +3358,8 @@ substituteTVExt vaenv (UnionType Nothing partials []) =
 -- dropped to Top), so a recursive predicate like @PredClass ConsList[/T=$_T]@ stays linked.
 substituteTVExt vaenv (UnionType (Just (preds, negLeafs)) posLeafs consts) =
   UnionType (Just (mapTypePreds (mapTypePred (substitutePartialKeep vaenv)) preds, negLeafs)) posLeafs consts
+substituteTVExt vaenv (TypeVar (TVApplied b overrides) loc) =
+  applyTypeVarOverrides (fmap (substituteTVExt vaenv) overrides) (substituteTVExt vaenv (TypeVar b loc))
 substituteTVExt vaenv (TypeVar v _) = vaenvLookup vaenv v
 substituteTVExt _     t             = t
 
@@ -3393,6 +3426,8 @@ typeTVExtVarRefs (UnionType mtop leafs _) = S.unions $ topRefs ++ map partialRef
 -- | See 'substitutePartialKeep': substitutes only concrete external bindings, keeping every other
 -- var unchanged.
 substituteKeep :: TypeVarArgEnv -> Type -> Type
+substituteKeep vaenv (TypeVar (TVApplied b overrides) loc) =
+  applyTypeVarOverrides (fmap (substituteKeep vaenv) overrides) (substituteKeep vaenv (TypeVar b loc))
 substituteKeep vaenv t@(TypeVar v TVExt) = case H.lookup v vaenv of
   Just b | not (isTop b) -> b
   _                      -> t
@@ -3426,6 +3461,7 @@ substituteWithVarArgEnv = substituteTVExt
 typeGetAux :: TypeVarAux -> PartialType -> Maybe Type
 typeGetAux (TVVar v) p = Just $ H.lookupDefault PTopType v $ ptVars p
 typeGetAux (TVArg v) p = typeGetArg v p
+typeGetAux (TVApplied b overrides) p = applyTypeVarOverrides overrides <$> typeGetAux b p
 
 -- | Resolves TVInt references in @t@ against @partial@'s own bindings, "lifting"
 -- @t@ out of the partial's scope.  TVExt references are also substituted via
@@ -3480,6 +3516,7 @@ typesGetArg _ _ _ = Nothing
 typeSetAux :: TypeVarAux -> Type -> PartialType -> PartialType
 typeSetAux (TVVar k) v p@PartialType{ptVars} = p{ptVars=H.insert k v ptVars}
 typeSetAux (TVArg k) v p@PartialType{ptArgs} = p{ptArgs=H.insert k v ptArgs}
+typeSetAux (TVApplied k _) _ _ = error $ printf "Unexpected TVApplied %s used as a position in typeSetAux" (show k)
 
 -- | Undo a widening of an EXTERNAL type variable ('TVExt') back to Top. Wherever @old@ carried such
 -- a variable at a nested argument or type-parameter position and @new@ replaced it with Top, keep
@@ -3521,8 +3558,9 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
       -- and updated through the partial's OWN var; the resolving read ('typeGetAux' ->
       -- 'typeGetArg') follows the pointer to the var's current (often Top) binding, and
       -- writing an update against that would clobber the pointer.
-      let rawSlot (TVVar k) p = H.lookup k (ptVars p)
-          rawSlot (TVArg k) p = H.lookup k (ptArgs p)
+      let rawSlot (TVVar k) p   = H.lookup k (ptVars p)
+          rawSlot (TVArg k) p   = H.lookup k (ptArgs p)
+          rawSlot TVApplied{} _ = Nothing
       -- The value STORED into the slot is demoted ('demoteTVExtVars'): the sub's type crosses
       -- into the sup partial's scope, where its external var references would be captured by
       -- like-named sup vars. The value RETURNED to the sub point keeps its own scope's refs.

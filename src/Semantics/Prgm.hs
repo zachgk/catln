@@ -515,8 +515,9 @@ exprPath = fst . exprPathM
 exprArgs :: (ExprClass e, MetaDat m, Show m) => e m -> H.HashMap ArgName [(e m, Meta m)]
 exprArgs e = H.fromList $ mapMaybe aux $ H.toList $ exprVarArgs e
   where
-    aux (TVArg a, ms) = Just (a, ms)
-    aux (TVVar _, _)  = Nothing
+    aux (TVArg a, ms)      = Just (a, ms)
+    aux (TVVar _, _)       = Nothing
+    aux (TVApplied _ _, _) = Nothing
 
 exprAppliedArgsMap :: (ExprClass e, MetaDat m, Show m, Show (e m)) => e m -> H.HashMap ArgName (Maybe (Meta m, Maybe (e m)))
 exprAppliedArgsMap = H.fromList . mapMaybe mapArg . exprAppliedArgs

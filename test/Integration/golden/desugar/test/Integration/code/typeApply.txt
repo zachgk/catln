@@ -1,0 +1,86 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/applyInc"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ applyInc[ /B : TopType ][ /A : TopType ]
+                            [ /F : ∀/Data/Functor[ /T=$_/A ] ]( Value lst -> $/F )
+                            ( fn( Value v -> $_/A ) -> $_/B ) -> $/F[ /T=$_/B ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ applyInc
+                            [ /F : ∀/Data/Functor[ /T=$_/A ] ]( Value lst )
+                            ( fn( Value v ) )= /Data/fmap( Value lst= Value lst )
+                            ( fn( Value v )= fn( Value v= Value v ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/strMaybe"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ strMaybe
+                            ( Value m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )= applyInc( Value lst= Value m )
+                            ( fn( Value v )= toString( Value /this= Value v ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
+                    }
+                )
+            ,
+                ( "/incMaybe"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ incMaybe
+                            ( Value m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )= applyInc( Value lst= Value m )
+                            ( fn( Value v )= /operator+( Value /l= Value v )
+                                ( Value /r= CInt 1 )
+                            )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "Exercises applied type variables in a return annotation: [$F[$T -> $_B]] is the type the" )
+        , /Catln/#md
+            ( Value /text= CStr "bound container [$F] resolves to, with its [$T] parameter rebound to [$_B] — "same shape," )
+        , /Catln/#md
+            ( Value /text= CStr "new element". This is the contract of a mapping function: the compiler cannot know the" )
+        , /Catln/#md
+            ( Value /text= CStr "result's element type from [$F] alone (that would claim the element is preserved)." )
+        , /Catln/#md
+            ( Value /text= CStr "An element-preserving map: [$_B] equals the input element, so the applied form claims the" )
+        , /Catln/#md
+            ( Value /text= CStr "same type the bare [$F] would." )
+        , /Catln/#md
+            ( Value /text= CStr "An element-CHANGING map (Integer -> String): the applied form claims element [$_B] where" )
+        , /Catln/#md
+            ( Value /text= CStr "the bare [$F] would wrongly claim the input's element type." )
+        ]
+    }

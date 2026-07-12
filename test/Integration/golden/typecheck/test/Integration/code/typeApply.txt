@@ -1,0 +1,204 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/applyInc"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /applyInc[ /B : TopType ][ /A : TopType ]
+                            [ /F : ∀/Data/Functor[ /T=$_/A ] ]( Value /lst -> $/F )
+                            ( /fn( Value /v -> $_/A ) -> $_/B ) -> $/F[ /T=$_/B ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /applyInc
+                            [ /F : ∀/Data/Functor[ /T=$_/A ] ]
+                            ( Value /lst -> ∀/Data/Functor[ /T=$_/A ] )
+                            ( /fn( Value /v ) ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Functor[ /T=$_/A ]
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Nil + /Data/Some[ /T=$_/T ]( /value=$/T ) + /Data/Cons[ /T=$_/T ]
+                                    ( /head=$/T
+                                    , /tail=
+                                        ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/Functor[ /T=$_/A ] )
+                                    ) + /Data/fmap
+                                    [ /F=∀/Data/Functor[ /T=$_/A ]
+                                    , /B=TopType
+                                    , /A=TopType
+                                    ]
+                                    ( /fn( /v=TopType )=$/B
+                                    , /lst=∀/Data/Functor[ /T=$_/A ]
+                                    ) + /Data/Nothing
+                                )
+                            , []
+                            ) = /Data/fmap( Value /lst -> TVArg /lst = Value /lst )
+                            ( /fn( Value /v )= /fn( Value /v -> TVArg /v = Value /v ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/strMaybe"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /strMaybe
+                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Functor[ /T=$_/A ]
+                                , fromList []
+                                )
+                            ,
+                                ( /applyInc
+                                    [ /F=∀/Data/Functor[ /T=$_/A ]
+                                    , /B=
+                                        ( /operator++[ /T=/Data/String ]
+                                            ( /r=/Data/String
+                                            , /l=UnionType
+                                                ( Just
+                                                    ( PredClass /Data/Algebra/Semigroup
+                                                    , fromList []
+                                                    )
+                                                , /Data/Primitive/Integer
+                                                , []
+                                                )
+                                            ) + /Data/toString[ /T=∀/Data/ToString ]( /this=∀/Data/ToString ) + /Data/String
+                                        )
+                                    , /A=TopType
+                                    ]
+                                    ( /fn( /v=TopType )=$/B
+                                    , /lst=
+                                        ( TopType | PredClass /Data/Functor[ /T=$_/A ] && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] )
+                                    ) + /Data/Nil + /Data/Some[ /T=$_/T ]( /value=$/T ) + /Data/Cons[ /T=$_/T ]
+                                    ( /head=$/T
+                                    , /tail=
+                                        ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/Functor[ /T=$_/A ] )
+                                    ) + /Data/fmap
+                                    [ /F=∀/Data/Functor[ /T=$_/A ]
+                                    , /B=TopType
+                                    , /A=TopType
+                                    ]
+                                    ( /fn( /v=TopType )=TopType
+                                    , /lst=∀/Data/Functor[ /T=$_/A ]
+                                    ) + /Data/Nothing
+                                )
+                            , []
+                            ) = /applyInc( Value /lst -> TVArg /m = Value /m )
+                            ( /fn( Value /v -> ∀/Data/ToString ) ->
+                                ( /operator++[ /T=/Data/String ]
+                                    ( /r=/Data/String
+                                    , /l=UnionType
+                                        ( Just
+                                            ( PredClass /Data/Algebra/Semigroup
+                                            , fromList []
+                                            )
+                                        , /Data/Primitive/Integer
+                                        , []
+                                        )
+                                    ) + /Data/toString[ /T=∀/Data/ToString ]( /this=∀/Data/ToString ) + /Data/String
+                                ) = /Data/toString( Value /this -> TVArg /v = Value /v )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
+                    }
+                )
+            ,
+                ( "/incMaybe"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /incMaybe
+                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Functor[ /T=$_/A ]
+                                , fromList []
+                                )
+                            ,
+                                ( /applyInc
+                                    [ /F=∀/Data/Functor[ /T=$_/A ]
+                                    , /B=
+                                        ( /operator+
+                                            ( /r=/Data/Primitive/Integer
+                                            , /l=/Data/Primitive/Integer
+                                            ) + /Data/Primitive/Integer
+                                        )
+                                    , /A=TopType
+                                    ]
+                                    ( /fn( /v=TopType )=
+                                        ( /operator+
+                                            ( /r=/Data/Primitive/Integer
+                                            , /l=/Data/Primitive/Integer
+                                            ) + /Data/Primitive/Integer
+                                        )
+                                    , /lst=
+                                        ( TopType | PredClass /Data/Functor[ /T=$_/A ] && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] )
+                                    ) + /Data/Nil + /Data/Some[ /T=$_/T ]( /value=$/T ) + /Data/Cons[ /T=$_/T ]
+                                    ( /head=$/T
+                                    , /tail=
+                                        ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/Functor[ /T=$_/A ] )
+                                    ) + /Data/fmap
+                                    [ /F=∀/Data/Functor[ /T=$_/A ]
+                                    , /B=TopType
+                                    , /A=TopType
+                                    ]
+                                    ( /fn( /v=TopType )=TopType
+                                    , /lst=∀/Data/Functor[ /T=$_/A ]
+                                    ) + /Data/Nothing
+                                )
+                            , []
+                            ) = /applyInc( Value /lst -> TVArg /m = Value /m )
+                            ( /fn
+                                ( Value /v -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) ) ->
+                                ( /operator+
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    ) + /Data/Primitive/Integer
+                                ) = /operator+( Value /l -> TVArg /v = Value /v )
+                                ( Value /r -> /Data/Primitive/Integer = CInt 1 )
+                            )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String = CStr "Exercises applied type variables in a return annotation: [$F[$T -> $_B]] is the type the" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "bound container [$F] resolves to, with its [$T] parameter rebound to [$_B] — "same shape," )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "new element". This is the contract of a mapping function: the compiler cannot know the" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "result's element type from [$F] alone (that would claim the element is preserved)." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "An element-preserving map: [$_B] equals the input element, so the applied form claims the" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "same type the bare [$F] would." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "An element-CHANGING map (Integer -> String): the applied form claims element [$_B] where" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "the bare [$F] would wrongly claim the input's element type." )
+        ]
+    }

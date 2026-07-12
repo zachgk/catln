@@ -95,6 +95,7 @@ addArgToType FEnv{feTypeEnv} _ (UnionType Nothing partials []) newArg = Just $ u
     fromPartial partial@PartialType{ptVars, ptArgs} = case newArg of
       TVArg newArg' -> Just $ singletonType partial{ptArgs=H.insertWith (unionTypes feTypeEnv) newArg' PTopType ptArgs}
       TVVar newArg' -> Just $ singletonType partial{ptVars=H.insertWith (unionTypes feTypeEnv) newArg' PTopType ptVars}
+      TVApplied k _ -> error $ printf "Unexpected TVApplied %s used as an arg name in addArgToType" (show k)
 addArgToType _ _ _ _ = Nothing
 
 -- | A helper for the 'AddArg' 'Constraint'

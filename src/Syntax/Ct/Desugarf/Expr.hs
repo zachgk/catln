@@ -177,6 +177,21 @@ exprToType :: PVarArgMap -> PExpr -> Type
 exprToType _ (RawValue _ n) | isJust (parseTVVar (nameStr n)) = fromJust $ parseTVVar (nameStr n)
 -- TODO Migrate the TypeVar check to the one below and remove the one above. This is for having type variables without the $ prefix.
 -- exprToType vaenv (RawValue _ n) | H.member (TVVar $ partialKey $ makeAbsoluteName n) vaenv  = TypeVar (TVVar $ partialKey n) TVInt
+-- An applied type variable @$F[$T -> $_B]@: whatever @$F@ resolves to, with the named
+-- parameter slots rebound ('TVApplied'). The var-name extraction mirrors 'semiDesExpr's
+-- 'RawVarsApply' handling for ordinary class applications.
+exprToType vaenv (RawVarsApply _ (RawValue _ n) vs) | isJust (parseTVVar (nameStr n)) =
+  case fromJust $ parseTVVar (nameStr n) of
+    TypeVar bAux loc -> TypeVar (TVApplied bAux (H.fromList $ mapMaybe toOverride vs)) loc
+    t -> error $ printf "parseTVVar returned a non-var %s for applied type var %s" (show t) (nameStr n)
+  where
+    toOverride RawObjArr{roaObj=Just varExpr, roaArr} = (varName,) . exprToType vaenv <$> (roaArr >>= snd)
+      where
+        varName = case fmap nameStr (maybeExprPath varExpr) of
+          Just ('$':vn) -> partialKey (mkName vn)
+          Just vn       -> partialKey (mkName vn)
+          Nothing       -> error $ printf "No var name found in applied type var %s" (show varExpr)
+    toOverride roa = error $ printf "Unexpected var application in applied type var: %s" (show roa)
 exprToType _ e                        = getExprType $ exprPropagateTypes $ desExpr $ semiDesExpr SDType Nothing e
 
 exprToTypeMeta :: PVarArgMap -> PExpr -> ParseMeta

@@ -1,0 +1,229 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/applyInc"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /applyInc( EAppVar /B TopType )( EAppVar /A TopType )
+                            ( EAppVar /F ∀/Data/Functor[ /T=$_/A ] )( EAppArg Value /lst -> $/F )
+                            ( EAppArg /fn( EAppArg Value /v -> $_/A ) -> $_/B ) -> $/F[ /T=$_/B ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /applyInc
+                            ( EAppVar /F ∀/Data/Functor[ /T=$_/A ] )
+                            ( EAppArg Value /lst -> ∀/Data/Functor[ /T=$_/A ] )
+                            ( EAppArg /fn( EAppArg Value /v ) ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Functor[ /T=$_/A ]
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Nil + /Data/Some[ /T=$_/T ]( /value=$/T ) + /Data/Cons[ /T=$_/T ]
+                                    ( /head=$/T
+                                    , /tail=
+                                        ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/Functor[ /T=$_/A ] )
+                                    ) + /Data/fmap
+                                    [ /F=∀/Data/Functor[ /T=$_/A ]
+                                    , /B=TopType
+                                    , /A=TopType
+                                    ]
+                                    ( /fn( /v=TopType )=$/B
+                                    , /lst=∀/Data/Functor[ /T=$_/A ]
+                                    ) + /Data/Nothing
+                                )
+                            , []
+                            ) = /Data/fmap
+                            ( EAppArg Value /lst -> TVArg /lst = ( Value /lst ↦ TVArg /lst ) )
+                            ( EAppArg /fn( EAppArg Value /v )=
+                                ( /fn
+                                    ( EAppArg Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) ) ↦ TopType
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/strMaybe"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /strMaybe
+                            ( EAppArg Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Functor[ /T=$_/A ]
+                                , fromList []
+                                )
+                            ,
+                                ( /applyInc
+                                    [ /F=∀/Data/Functor[ /T=$_/A ]
+                                    , /B=
+                                        ( /operator++[ /T=/Data/String ]
+                                            ( /r=/Data/String
+                                            , /l=UnionType
+                                                ( Just
+                                                    ( PredClass /Data/Algebra/Semigroup
+                                                    , fromList []
+                                                    )
+                                                , /Data/Primitive/Integer
+                                                , []
+                                                )
+                                            ) + /Data/toString[ /T=∀/Data/ToString ]( /this=∀/Data/ToString ) + /Data/String
+                                        )
+                                    , /A=TopType
+                                    ]
+                                    ( /fn( /v=TopType )=$/B
+                                    , /lst=
+                                        ( TopType | PredClass /Data/Functor[ /T=$_/A ] && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] )
+                                    ) + /Data/Nil + /Data/Some[ /T=$_/T ]( /value=$/T ) + /Data/Cons[ /T=$_/T ]
+                                    ( /head=$/T
+                                    , /tail=
+                                        ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/Functor[ /T=$_/A ] )
+                                    ) + /Data/fmap
+                                    [ /F=∀/Data/Functor[ /T=$_/A ]
+                                    , /B=TopType
+                                    , /A=TopType
+                                    ]
+                                    ( /fn( /v=TopType )=TopType
+                                    , /lst=∀/Data/Functor[ /T=$_/A ]
+                                    ) + /Data/Nothing
+                                )
+                            , []
+                            ) = /applyInc
+                            ( EAppArg Value /lst -> TVArg /m = ( Value /m ↦ TVArg /m ) )
+                            ( EAppArg /fn( EAppArg Value /v -> ∀/Data/ToString ) ->
+                                ( /operator++[ /T=/Data/String ]
+                                    ( /r=/Data/String
+                                    , /l=UnionType
+                                        ( Just
+                                            ( PredClass /Data/Algebra/Semigroup
+                                            , fromList []
+                                            )
+                                        , /Data/Primitive/Integer
+                                        , []
+                                        )
+                                    ) + /Data/toString[ /T=∀/Data/ToString ]( /this=∀/Data/ToString ) + /Data/String
+                                ) =
+                                ( /Data/toString
+                                    ( EAppArg Value /this -> TVArg /v = ( Value /v ↦ TVArg /v ) ) ↦
+                                    ( /operator++[ /T=/Data/String ]
+                                        ( /r=/Data/String
+                                        , /l=UnionType
+                                            ( Just
+                                                ( PredClass /Data/Algebra/Semigroup
+                                                , fromList []
+                                                )
+                                            , /Data/Primitive/Integer
+                                            , []
+                                            )
+                                        ) + /Data/String
+                                    )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                    }
+                )
+            ,
+                ( "/incMaybe"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /incMaybe
+                            ( EAppArg Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Functor[ /T=$_/A ]
+                                , fromList []
+                                )
+                            ,
+                                ( /applyInc
+                                    [ /F=∀/Data/Functor[ /T=$_/A ]
+                                    , /B=
+                                        ( /operator+
+                                            ( /r=/Data/Primitive/Integer
+                                            , /l=/Data/Primitive/Integer
+                                            ) + /Data/Primitive/Integer
+                                        )
+                                    , /A=TopType
+                                    ]
+                                    ( /fn( /v=TopType )=
+                                        ( /operator+
+                                            ( /r=/Data/Primitive/Integer
+                                            , /l=/Data/Primitive/Integer
+                                            ) + /Data/Primitive/Integer
+                                        )
+                                    , /lst=
+                                        ( TopType | PredClass /Data/Functor[ /T=$_/A ] && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] )
+                                    ) + /Data/Nil + /Data/Some[ /T=$_/T ]( /value=$/T ) + /Data/Cons[ /T=$_/T ]
+                                    ( /head=$/T
+                                    , /tail=
+                                        ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/Functor[ /T=$_/A ] )
+                                    ) + /Data/fmap
+                                    [ /F=∀/Data/Functor[ /T=$_/A ]
+                                    , /B=TopType
+                                    , /A=TopType
+                                    ]
+                                    ( /fn( /v=TopType )=TopType
+                                    , /lst=∀/Data/Functor[ /T=$_/A ]
+                                    ) + /Data/Nothing
+                                )
+                            , []
+                            ) = /applyInc
+                            ( EAppArg Value /lst -> TVArg /m = ( Value /m ↦ TVArg /m ) )
+                            ( EAppArg /fn
+                                ( EAppArg Value /v -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) ) ->
+                                ( /operator+
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    ) + /Data/Primitive/Integer
+                                ) =
+                                ( /operator+
+                                    ( EAppArg Value /l -> TVArg /v = ( Value /v ↦ TVArg /v ) )
+                                    ( EAppArg Value /r -> /Data/Primitive/Integer = 1 ) ↦ /Data/Primitive/Integer
+                                )
+                            )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "Exercises applied type variables in a return annotation: [$F[$T -> $_B]] is the type the" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "bound container [$F] resolves to, with its [$T] parameter rebound to [$_B] — "same shape," )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "new element". This is the contract of a mapping function: the compiler cannot know the" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "result's element type from [$F] alone (that would claim the element is preserved)." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "An element-preserving map: [$_B] equals the input element, so the applied form claims the" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "same type the bare [$F] would." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "An element-CHANGING map (Integer -> String): the applied form claims element [$_B] where" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "the bare [$F] would wrongly claim the input's element type." )
+        ]
+    }
