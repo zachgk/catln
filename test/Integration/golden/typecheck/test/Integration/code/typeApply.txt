@@ -24,7 +24,7 @@ Prgm
                                 ( /Data/Nil + /Data/Some[ /T=$_/T ]( /value=$/T ) + /Data/Cons[ /T=$_/T ]
                                     ( /head=$/T
                                     , /tail=
-                                        ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/Functor[ /T=$_/A ] )
+                                        ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/Functor[ /T=TopType ] )
                                     ) + /Data/fmap
                                     [ /F=∀/Data/Functor[ /T=$_/A ]
                                     , /B=TopType
@@ -77,7 +77,7 @@ Prgm
                                     ) + /Data/Nil + /Data/Some[ /T=$_/T ]( /value=$/T ) + /Data/Cons[ /T=$_/T ]
                                     ( /head=$/T
                                     , /tail=
-                                        ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/Functor[ /T=$_/A ] )
+                                        ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/Functor[ /T=TopType ] )
                                     ) + /Data/fmap
                                     [ /F=∀/Data/Functor[ /T=$_/A ]
                                     , /B=TopType
@@ -151,7 +151,7 @@ Prgm
                                     ) + /Data/Nil + /Data/Some[ /T=$_/T ]( /value=$/T ) + /Data/Cons[ /T=$_/T ]
                                     ( /head=$/T
                                     , /tail=
-                                        ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/Functor[ /T=$_/A ] )
+                                        ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/Functor[ /T=TopType ] )
                                     ) + /Data/fmap
                                     [ /F=∀/Data/Functor[ /T=$_/A ]
                                     , /B=TopType

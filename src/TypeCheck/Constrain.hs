@@ -184,15 +184,14 @@ computeConstraint FEnv{feTypeEnv, feCompletedAllObjsKey, feCompletedAllObjs} con
     -- universe (every known object) — not a narrowing, and a performance blowup — so leave it be
     -- (mirroring the 'stypeAct=PTopType' guard above). A named requirement instead meets only its
     -- name-matching objects, tightening the requirement's arg fields (e.g. @/f(/a=Top)@ narrows to
-    -- @/f(/a=<declared>)@). If the meet empties the requirement — e.g. a @(Top | Functor && Eq)@ law
-    -- requirement whose type variables resolve differently under the required var-env than under the
-    -- actual — keep the un-narrowed requirement: a requirement is an upper bound, so widening it is
-    -- always sound, whereas narrowing it to ∅ would spuriously reject a valid program ('checkScheme'
-    -- rejects a required type containing bottomType).
-    narrowedReq = snd $ intersectTypesWithVarEnv feTypeEnv (fmap (stypeReq . snd) vaenv) pReq boundUb
-    pReq' | pReq == PTopType               = pReq
-          | containsBottomType narrowedReq = pReq
-          | otherwise                      = narrowedReq
+    -- @/f(/a=<declared>)@). The requirement narrows against its OWN open-class part
+    -- ('openClassPart pReq'), exactly as 'boundUb' above uses 'openClassPart pAct': an open-class
+    -- requirement (e.g. a @Functor[Eq]@ law argument with no in-scope instance) must survive the
+    -- object-universe bound rather than empty — and its matching actual is often still a bare type
+    -- variable, so 'openClassPart pAct' would be empty and cannot cover it.
+    boundUbReq = relaxRecursiveSelfArgs feTypeEnv $ unionTypes feTypeEnv (unionTypes feTypeEnv objMapBoundUb' (openClassPart feTypeEnv pReq)) argsBoundUb
+    pReq' | pReq == PTopType = pReq
+          | otherwise        = snd $ intersectTypesWithVarEnv feTypeEnv (fmap (stypeReq . snd) vaenv) pReq boundUbReq
 computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (NoReturnArg i p@SType{stypeAct=act@(UnionType Nothing _ _)})) = (True, con{conVaenv=updateCOVarArgEnvAct vaenv'' vaenv, conDat=NoReturnArg i p{stypeAct=act'}})
   where
     vaenv' = fmap (stypeAct . snd) vaenv

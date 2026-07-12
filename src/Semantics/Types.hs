@@ -3574,7 +3574,17 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
               let newProp = intersectTypesEnv typeEnv vaenv supVar sub
               Just (sup{ptVars=H.insert v (demoteTVExtVars newProp) supVars}, newProp)
             (_, Just supProp) -> do
-              let newProp = intersectTypesEnv typeEnv vaenv supProp sub
+              -- Same-class predicate intersection ('mergePredsAnd') unifies e.g.
+              -- @Functor[/T=$_A] ∧ Functor[/T=Integer]@ into @Functor[/T=$_A]@ while recording the
+              -- tighter binding @$_A ↦ Integer@ in the returned env. 'intersectTypesEnv' drops that
+              -- env, leaving the wider @Functor[/T=$_A]@ — a result NOT ⊆ either operand, which
+              -- re-widens the sub point a later epoch and breaks monotonicity ('verifySchemeActLowers').
+              -- Resolve the freshly recorded bindings back into the result so it is the true (concrete)
+              -- meet, mirroring 'intersectTypesWithVarEnv's own mixed-union recombination.
+              let (ivaenv, newProp0) = intersectTypesWithVarEnv typeEnv vaenv supProp sub
+                  newBindings = H.difference ivaenv vaenv
+                  newProp | H.null newBindings = newProp0
+                          | otherwise          = substituteKeep newBindings newProp0
               if isBottomType newProp
                 then Nothing
                 else Just (typeSetAux propName (demoteTVExtVars newProp) sup, newProp)
