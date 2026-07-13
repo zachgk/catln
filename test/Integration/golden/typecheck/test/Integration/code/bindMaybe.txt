@@ -11,14 +11,14 @@ Prgm
                         [ /maybeBind
                             ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> UnionType
                             ( Just
-                                ( PredClass /Data/Monad[ /T=$_/A ]
+                                ( PredClass /Data/Monad[ /T=$_/A ] && PredClass /Data/Maybe
                                 , fromList []
                                 )
                             ,
-                                ( /Data/Nil + /Data/append
+                                ( /Data/append
                                     ( /a=∀/Data/ConsList[ /T=$_/T ]
                                     , /b=∀/Data/ConsList[ /T=$_/T ]
-                                    ) + /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) + /Data/Nothing + /Data/bindap
+                                    ) + /Data/bindap
                                     [ /T=
                                         ( /operator+
                                             ( /r=/Data/Primitive/Integer

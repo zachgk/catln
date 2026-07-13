@@ -315,7 +315,7 @@ Prgm
                                     , /Data/Primitive/Integer
                                     , []
                                     )
-                                ) + /Data/String + /Data/Primitive/Integer
+                                ) + /Data/String
                             ) = /operator++
                             ( Value /l -> UnionType
                                 ( Just
@@ -400,7 +400,7 @@ Prgm
                         [ /Data/reversed
                             ( Value /lst -> ( TopType | PredClass /Data/ConsList && PredClass /Data/List ) ) -> UnionType
                             ( Just
-                                ( PredClass /Data/ConsList
+                                ( PredClass /Data/ConsList && PredClass /Data/List
                                 , fromList []
                                 )
                             , /reversed./Data/reverseOnto
@@ -427,7 +427,7 @@ Prgm
                     , omiDefs =
                         [ /range./Data/rangeStep( Value /more -> /Data/Primitive/True = Value /Data/Primitive/True )( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
-                            , /tail=∀/Data/ConsList[ /T=$_/T ]
+                            , /tail=∀/Data/ConsList[ /T=/Data/Primitive/Integer ]
                             ) = /Data/Cons( Value /head -> TVArg /i = Value /i )
                             ( Value /tail ->
                                 ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/List[ /T=/Data/Primitive/Integer ] ) = /range./Data/rangeFrom
@@ -460,7 +460,7 @@ Prgm
                                 )
                             ) -> UnionType
                             ( Just
-                                ( PredClass /Data/ConsList
+                                ( PredClass /Data/ConsList && PredClass /Data/List[ /T=∀/Data/Algebra/Ord ]
                                 , fromList []
                                 )
                             ,

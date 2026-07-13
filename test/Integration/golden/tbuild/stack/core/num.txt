@@ -199,8 +199,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/eq( EAppArg Value /this -> /Data/Primitive/Integer ) -> /Data/Primitive/IntOrdering = Value /Data/Primitive/IntOrdering
-                        , /Data/Algebra/eq( EAppArg Value /this -> /Data/Primitive/Float ) -> /Data/Primitive/FloatOrdering = Value /Data/Primitive/FloatOrdering
+                        [ /Data/Algebra/eq( EAppArg Value /this -> /Data/Primitive/Integer ) -> /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] = Value /Data/Primitive/IntOrdering
+                        , /Data/Algebra/eq( EAppArg Value /this -> /Data/Primitive/Float ) -> /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] = Value /Data/Primitive/FloatOrdering
                         ]
                     }
                 )
@@ -433,8 +433,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/ord( EAppArg Value /this -> /Data/Primitive/Integer ) -> /Data/Primitive/IntOrdering = Value /Data/Primitive/IntOrdering
-                        , /Data/Algebra/ord( EAppArg Value /this -> /Data/Primitive/Float ) -> /Data/Primitive/FloatOrdering = Value /Data/Primitive/FloatOrdering
+                        [ /Data/Algebra/ord( EAppArg Value /this -> /Data/Primitive/Integer ) -> /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] = Value /Data/Primitive/IntOrdering
+                        , /Data/Algebra/ord( EAppArg Value /this -> /Data/Primitive/Float ) -> /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] = Value /Data/Primitive/FloatOrdering
                         ]
                     }
                 )

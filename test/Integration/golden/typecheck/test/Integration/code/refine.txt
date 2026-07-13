@@ -10,7 +10,7 @@ Prgm
                     , omiDefs =
                         [ /even( Value /x -> /Data/Primitive/Integer ) -> UnionType
                             ( Just
-                                ( PredClass /Data/Primitive/Boolean
+                                ( PredRel Bool && PredClass /Data/Primitive/Boolean
                                 , fromList []
                                 )
                             ,

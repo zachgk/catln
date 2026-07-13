@@ -18,11 +18,12 @@ import           Control.Monad.State
 import           CtConstants         (thisKey)
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
+import           Data.List           (partition)
 import           Data.Maybe          (mapMaybe)
 import           MapMeta             (MetaType (ArrMeta), clearMetaDat)
 import           Semantics
 import           Semantics.Prgm
-import           Semantics.TypeGraph (isSubtypeUpToSettlingOf)
+import           Semantics.TypeGraph (isSettledLeaf, isSubtypeUpToSettlingOf)
 import           Semantics.Types
 import           Text.Printf
 import           TypeCheck.Common
@@ -45,7 +46,23 @@ toMeta  m@(Meta pt pos mid _) = do
       let notes' = if actSatisfiesReq
             then notes
             else GenTypeCheckError (clearMetaDat ArrMeta m) (printf "Actual type %s is not a subtype of the required type %s" (show ub) (show req)) : notes
-      lift $ TypeCheckResult notes' $ Meta (intersectTypes feTypeEnv ub pt) pos mid rt
+      -- The meta's preset type @pt@ is met into the final type. Under actual seeding
+      -- ('TypeCheck.Encode.fromMeta' BAct) this is a no-op — the actual started at @pt@ and only
+      -- narrowed. Under requirement seeding (BReq) @pt@ constrains what the point SETTLES to, so
+      -- the meet applies to settled leaves only: a raw applied leaf (a body's unrewritten call,
+      -- kept alongside its settled forms) is what eval's dispatch keying and lazy arm-body builds
+      -- read — meeting it away would make a chained tree evaluate past its own step (the next
+      -- arrow then receives an already-settled value its pattern cannot destructure).
+      let ubMet = case (ub, pt) of
+            (UnionType mTop leafs consts, UnionType{}) | pt /= PTopType ->
+              let (rawLeafs, settledLeafs) = partition (not . isSettledLeaf feTypeEnv) $ splitUnionType leafs
+                  settledMet = intersectTypes feTypeEnv (UnionType mTop (joinUnionType settledLeafs) consts) pt
+              in case settledMet of
+                   UnionType sMt sLs sCs -> UnionType sMt (H.unionWith S.union (joinUnionType rawLeafs) sLs) sCs
+                   t | null rawLeafs -> t
+                     | otherwise -> unionTypes feTypeEnv (UnionType Nothing (joinUnionType rawLeafs) []) t
+            _ -> intersectTypes feTypeEnv ub pt
+      lift $ TypeCheckResult notes' $ Meta ubMet pos mid rt
     TypeCheckResE notes -> lift $ TypeCheckResult notes (Meta BottomType pos mid Nothing)
 
 member :: Name -> [Name] -> Bool

@@ -91,7 +91,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/eq
-                            ( EAppArg Value /this -> ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/Primitive/Boolean ) ) -> /Data/Primitive/BoolEqv = Value /Data/Primitive/BoolEqv
+                            ( EAppArg Value /this -> ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/Primitive/Boolean ) ) -> /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] = Value /Data/Primitive/BoolEqv
                         ]
                     }
                 )
