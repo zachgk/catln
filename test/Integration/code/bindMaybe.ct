@@ -5,7 +5,8 @@ import "core"
 # [Maybe]. The continuation returns a [Maybe], so the results are flattened (not nested). A
 # bind-using function needs a declared return type to pin the [bindap] result.
 maybeBind(m -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe =
-  x <- m
+  x<- m
+
   /Data/Some(value= x + 1)
 
 main{io -> IO} =
