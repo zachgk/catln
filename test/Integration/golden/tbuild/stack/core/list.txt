@@ -514,11 +514,12 @@ Prgm
                     , omiDefs =
                         [ /range./Data/rangeStep( EAppArg Value /more -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /i -> /Data/Primitive/Integer )( EAppArg Value /stop -> /Data/Primitive/Integer ) -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
-                            , /tail=∀/Data/ConsList[ /T=/Data/Primitive/Integer ]
+                            , /tail=
+                                ( TopType | PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ] && PredClass /Data/List[ /T=/Data/Primitive/Integer ] )
                             ) = /Data/Cons
                             ( EAppArg Value /head -> TVArg /i = ( Value /i ↦ TVArg /i ) )
                             ( EAppArg Value /tail ->
-                                ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/List[ /T=/Data/Primitive/Integer ] ) =
+                                ( TopType | PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ] && PredClass /Data/List[ /T=/Data/Primitive/Integer ] ) =
                                 ( /range./Data/rangeFrom
                                     ( EAppArg Value /i -> /Data/Primitive/Integer =
                                         ( /operator+
@@ -527,7 +528,7 @@ Prgm
                                         )
                                     )
                                     ( EAppArg Value /stop -> TVArg /stop = ( Value /stop ↦ TVArg /stop ) ) ↦
-                                    ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/List[ /T=/Data/Primitive/Integer ] )
+                                    ( TopType | PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ] && PredClass /Data/List[ /T=/Data/Primitive/Integer ] )
                                 )
                             )
                         , /range./Data/rangeStep( EAppArg Value /more -> /Data/Primitive/False = Value /Data/Primitive/False )( EAppArg Value /i -> /Data/Primitive/Integer )( EAppArg Value /stop -> /Data/Primitive/Integer ) -> /Data/Nil = Value /Data/Nil

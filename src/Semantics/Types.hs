@@ -567,12 +567,17 @@ mergePredsAnd typeEnv vaenv0 ps1 ps2 = (vaenvF, rebuild keptF)
     atomKC _                        = Nothing
     mkAtom 0 p = PredsOne (PredClass p)
     mkAtom _ p = PredsOne (PredRel   p)
+    -- Each unification EXTENDS the accumulated env with the meet's discoveries
+    -- ('intersectPartials' returns the discovered bindings only): a later step that
+    -- discovers nothing must not wipe an earlier step's binding (@ConsList[$_T] ∧
+    -- ConsList[Int]@ records @$_T ↦ Int@, which a following @List[Int] ∧ List[Int]@
+    -- unification would otherwise erase, leaving the kept flexible form unresolvable).
     step (v, kept) atom = case atomKC atom of
       Nothing     -> (v, kept ++ [atom])
       Just (k, p) -> case break (sameKN k p) kept of
         (pre, ex:post) | Just (_, ep) <- atomKC ex ->
           case intersectPartials typeEnv v ep p of
-            (v', [m]) -> (v', pre ++ mkAtom k m : post)
+            (v', [m]) -> (mergeAllVarEnvs typeEnv [v, v'], pre ++ mkAtom k m : post)
             _         -> (v, kept ++ [atom])
         _ -> (v, kept ++ [atom])
     sameKN k p a = case atomKC a of
@@ -1511,6 +1516,73 @@ data SatCand
 satGoalNorm :: SatGoal -> SatGoal
 satGoalNorm (SatGoal pos neg) = SatGoal (L.sort (L.nub pos)) (L.sort (L.nub neg))
 
+-- | Resolve same-class (and same-relation) POSITIVE atoms in a goal against each other: a
+-- goal's positive atoms all constrain the ONE witness value, so two atoms over the same
+-- class meet into a single atom, with the meet's own discovered bindings resolved back into
+-- it (the standalone reading, as 'mergePredsAnd'; @Maybe[$_A] ∧ Maybe[Int] → Maybe[Int]@).
+-- Such a pair cannot be unified at the type level (the predicate merge only sees DISTINCT
+-- classes there, e.g. @Functor[$_A] ∧ Maybe[Int]@) — it arises here, when class-member
+-- expansion ('classSatCandidates') rewrites the outer class into a member atom. Without the
+-- meet, candidates generated from the flexible atom keep an unbound slot and manufacture
+-- escape witnesses no value satisfying BOTH atoms has (@Some[$_A]@ "escaping" @∀Maybe[Int]@
+-- — a false SAT that surfaced as a 'verifySchemeActLowers' monotonicity failure once the
+-- flexible-slot cover was made sound). The discoveries are NOT propagated to the goal's
+-- other atoms: an unbound flexible slot constrains nothing beyond class membership, so the
+-- collapsed pair is exact, while pinning the variable elsewhere would strengthen those
+-- atoms towards a false UNSAT — the polarity ('satGoal' is conservative-to-SAT; UNSAT
+-- claims prove subtypes) the engine must never err towards.
+satGoalUnifyPos :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatGoal -> SatGoal
+satGoalUnifyPos typeEnv vaenv goal@(SatGoal pos neg)
+  | length (L.nub keys) == length keys = goal
+  | otherwise = satGoalNorm (SatGoal (foldl step [] pos) neg)
+  where
+    keys = [(k, ptName p) | Just (k, p) <- map atomKP pos]
+    atomKP (SatClass p) = Just (0 :: Int, p)
+    atomKP (SatRel p)   = Just (1, p)
+    atomKP SatLeafs{}   = Nothing
+    mkAtom 0 p = SatClass p
+    mkAtom _ p = SatRel p
+    step kept atom = case atomKP atom of
+      Nothing -> kept ++ [atom]
+      Just (k, p) -> case break (sameKN k p) kept of
+        (pre, ex:post) | Just (_, ep) <- atomKP ex ->
+          case unifyAtomVars ep p of
+            Just m  -> pre ++ mkAtom k m : post
+            Nothing -> kept ++ [atom]
+        _ -> kept ++ [atom]
+    sameKN k p a = case atomKP a of
+      Just (k', p') -> k' == k && ptName p' == ptName p
+      Nothing       -> False
+    -- Slot-wise meet of two same-name atoms, resolvable only when each shared slot pair has
+    -- a side that constrains nothing (⊤ or an unbound\/partial-local variable): take the
+    -- other side. Anything else (two distinct concrete bounds, predicates, args) bails to
+    -- keeping both atoms — the enumeration handles them as before. Deliberately NOT the full
+    -- 'intersectPartials': the type-algebra meet re-enters engine decisions from inside
+    -- 'satGoal', which is both a recursion hazard (no goal-stack guard protects this entry
+    -- normalization) and a hot-path cost.
+    unifyAtomVars a b
+      | ptPreds a /= PredsNone || ptPreds b /= PredsNone = Nothing
+      | not (H.null (ptArgs a) && H.null (ptArgs b)) = Nothing
+      | otherwise = do
+          vars <- sequenceA (H.unionWith meetSlot (fmap Just (ptVars a)) (fmap Just (ptVars b)))
+          Just a{ptVars=vars}
+    meetSlot mx my = do
+      x <- mx
+      y <- my
+      meet2 x y
+    meet2 x y
+      | x == y = Just x
+      | slotFree x = Just y
+      | slotFree y = Just x
+      | otherwise = Nothing
+    slotFree PTopType = True
+    slotFree (TypeVar _ TVInt) = True
+    slotFree (TypeVar v TVExt) = case H.lookup v vaenv of
+      Nothing             -> True
+      Just (TypeVar v' _) -> v' == v
+      _                   -> False
+    slotFree _ = False
+
 mergeSatGoals :: SatGoal -> SatGoal -> SatGoal
 mergeSatGoals (SatGoal p1 n1) (SatGoal p2 n2) = SatGoal (p1 ++ p2) (n1 ++ n2)
 
@@ -1766,13 +1838,30 @@ partialsOverlapSat typeEnv vaenv gatePos hyps a b =
 -- sub-side element that is an unresolved type variable is flexible - it can be bound to the
 -- super's element (as 'intersectTypesWithVarEnv' would) - so it does not defeat the cover.
 partialCoversSat :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Bool -> SatHyps -> PartialType -> PartialType -> Bool
-partialCoversSat typeEnv vaenv gatePos hyps sup sub =
+partialCoversSat typeEnv vaenv gatePos hyps sup0 sub0 =
   ptName sup == ptName sub
   && argModeCovers sup sub
   && all varCovered (H.elems (H.intersectionWith (,) (ptVars sub) (ptVars sup)))
   && all elemCovered (H.elems (H.intersectionWith (,) (ptArgs sub) (ptArgs sup)))
   && supPredsCover
   where
+    sup = sup0
+    sub = sub0
+    -- A sub-side slot holding an internal POINTER (@/head=$T@, an arg or var naming one of
+    -- the partial's own parameters, 'TVInt') denotes that parameter's binding: read it
+    -- through before deciding (single step, as 'compactOwnVarRefs' materializes). SUB side
+    -- only — the sub is the witness VALUE, whose pointers denote its actual content (an
+    -- exact reading; engine-made member shapes never pass through 'compactType', and a
+    -- var-free but predicate-bounded binding is never materialized at all, leaving
+    -- field-resolved and param-resolved forms of the SAME value otherwise incomparable —
+    -- the 'verifySchemeActLowers' trap 'compactOwnVarRefs' documents). The sup is the cover
+    -- PATTERN: its pointer slots read as the flexible bounds its author wrote, and
+    -- resolving them strengthens escape decisions that the predicate absorption of REQ
+    -- bounds depends on (core @list.ct@ stops compiling).
+    subSlot t@(TypeVar (TVVar n) TVInt) = case H.lookup n (ptVars sub) of
+      Just b | b /= PTopType, b /= t -> b
+      _                              -> t
+    subSlot t = t
     -- Under projection (matching/dispatch consumers, 'teArgModeProjection'), a Top-valued type
     -- parameter on the value side carries no information — it is equivalent to the parameter
     -- being absent, which the shared-keys discipline already skips. A definition whose element
@@ -1781,9 +1870,19 @@ partialCoversSat typeEnv vaenv gatePos hyps sup sub =
     -- The precise set algebra (projection off) keeps Top ⊄ concrete.
     varCovered (PTopType, _) | teArgModeProjection typeEnv = True
     varCovered p             = elemCovered p
-    elemCovered (tSub, tSup)
-      | isFlexibleVar tSub = True
+    -- This is the ∀-cover primitive (every sub value within sup — the escape/coverage
+    -- direction), so under the precise algebra a flexible slot is covered only by a cover
+    -- slot that itself admits every binding (⊤ or another flexible variable): its values
+    -- range over every binding (@Maybe[$T]@ contains @Some(Some(5))@), and treating it as
+    -- covered by a CONSTRAINED slot denies escapes the engine's conservative-to-SAT polarity
+    -- requires (it made @Maybe[⊤] ⟹ Maybe[Integer]@ hold). Binding-on-demand belongs to the
+    -- ∃-overlap direction ('partialsOverlapSat', the admit checks). Under projection
+    -- (matching/dispatch consumers) a flexible slot on the value side behaves like the
+    -- Top-valued parameter above: it binds per value and carries no dispatch information.
+    elemCovered (tSub0, tSup)
+      | isFlexibleVar tSub = tSup == PTopType || isFlexibleVar tSup || teArgModeProjection typeEnv
       | otherwise = not (typesSatDiff typeEnv vaenv gatePos hyps tSub tSup)
+      where tSub = subSlot tSub0
     isFlexibleVar (TypeVar _ TVInt) = True -- partial-local var: bindable per value
     isFlexibleVar (TypeVar v TVExt) = case H.lookup v vaenv of
       Nothing             -> True
@@ -1874,7 +1973,7 @@ satGoal typeEnv vaenv gatePos hyps goal0
         Nothing    -> True -- cannot enumerate: conservative
         Just cands -> any checkCand cands
   where
-    goal = satGoalNorm goal0
+    goal = satGoalUnifyPos typeEnv vaenv (satGoalNorm goal0)
     hyps' = S.insert goal hyps
 
     -- Prefer the most concrete generator: concrete leafs, then a class, then a relation.
@@ -3025,6 +3124,14 @@ intersectTypesWithVarEnv typeEnv vaenv (UnionType Nothing aPartials aConsts) (Un
     msg = printf "[INTERSECT] %s ∩ %s = %s" (show $ UnionType Nothing aPartials aConsts) (show $ UnionType Nothing bPartials bConsts) (show result)
 intersectTypesWithVarEnv _ _ t1 t2 = error $ printf "intersectTypesWithVarEnv: unhandled case %s ∩ %s" (show t1) (show t2)
 
+-- | 'intersectTypesWithVarEnv' with the returned env DISCARDED: a meet against a bare
+-- external variable keeps the variable in the type while its binding lives only in that env
+-- (the mergeVarEnvVal doctrine), so the result here can read WIDER than the true meet
+-- (@∀C[$_v] ∩ ∀C[Integer]@ reads as @∀C[$_v]@). That is deliberate: many stored types keep
+-- vars symbolic so cross-alternative joins and later refinement still work (eagerly
+-- substituting here widened a call-site lambda's param, 'FnInputBound'). A caller that needs
+-- the standalone (resolved) reading must fold the returned bindings back itself, as
+-- 'TypeCheck.TypeUtils.arrowConstrainUbs' and 'updateTypeProp' do.
 intersectTypesEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Type
 intersectTypesEnv typeEnv vaenv t1 t2 = snd $ intersectTypesWithVarEnv typeEnv vaenv t1 t2
 
@@ -3435,7 +3542,15 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
           let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectedPartials sup (singletonType sub) | sup <- supPartialList, sub <- subPartialList]
           (vaenv, compactType typeEnv vaenv $ UnionType Nothing (joinUnionType supPartialList') [], unionAllTypes typeEnv subPartialList')
         TypeVar v _ -> do
-          let tp' = intersectTypesEnv typeEnv vaenv (H.lookupDefault PTopType v vaenv) (unionAllTypesWithEnv typeEnv vaenv $ mapMaybe (typeGetAux propName) supPartialList)
+          -- The meet stored as the var's refined binding must be its STANDALONE reading: the
+          -- intersection records a met external var in its returned env while the type keeps
+          -- the var (@∀ConsList[Ord] ∩ ∀ConsList[$_T]@ reads as @∀ConsList[$_T]@ alone — WIDER
+          -- than the existing binding, a monotonicity violation when this constraint's scope
+          -- does not bind @$_T@). Resolve the meet's fresh discoveries back in, mirroring the
+          -- prop intersection above ('intersectedPartials').
+          let (ivaenv, tp0) = intersectTypesWithVarEnv typeEnv vaenv (H.lookupDefault PTopType v vaenv) (unionAllTypesWithEnv typeEnv vaenv $ mapMaybe (typeGetAux propName) supPartialList)
+          let tpBindings = H.difference ivaenv vaenv
+          let tp' = if H.null tpBindings then tp0 else substituteKeep tpBindings tp0
           let vaenv' = H.insert v tp' vaenv
           let tp'' = substituteTVExt vaenv' tp'
           let updateSuperPartial p@PartialType{ptVars=pVars} = case (rawSlot propName p, typeGetAux propName p) of

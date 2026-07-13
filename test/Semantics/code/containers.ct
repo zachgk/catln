@@ -8,4 +8,8 @@ class(ConsList[$T], [Cons[$T -> $T](head -> $T, tail -> ConsList[$T -> $T]), Nil
 
 every(ConsList, isa= [/List])
 
+class(Bag[$T])
+
+every(ConsList[$T -> $_T], isa= [/Bag])
+
 :List.length -> Integer

@@ -6,6 +6,8 @@ import           Control.Monad.Trans       (lift)
 import           CRes
 import           CtService
 import qualified Data.HashMap.Strict       as H
+import qualified Data.HashSet              as S
+import           Data.List                 (isInfixOf)
 import           Data.Maybe
 import           Hedgehog
 import qualified Hedgehog.Gen              as HG
@@ -422,10 +424,161 @@ propClassGraphMatchesPredClass gPrgm = property $ do
     isClassNode (CGClass{}, _, _) = True
     isClassNode _                 = False
 
+-- | A parameterized class over ⊤ must not imply the same class over a narrower element:
+-- @∀ConsList[⊤]@ contains a list of ANY element (e.g. a list of lists), which
+-- @∀ConsList[Integer]@ excludes. The symbolic engine once claimed this implication: class
+-- members enumerate with an uninstantiated parameter left flexible, and the ∀-cover escape
+-- check ('partialCoversSat') bound the flexible slot on demand toward being covered, so no
+-- member ever escaped the narrower class. Also pins the sound directions: covariance upward,
+-- and the class's member expansion staying within the class (flexible-vs-flexible cover).
+propParamClassWideNotNarrow :: IO Prgms -> Property
+propParamClassWideNotNarrow ioPrgms = property $ do
+  prgms <- lift ioPrgms
+  prgm <- case [v | (k, v) <- H.toList prgms, "containers" `isInfixOf` k] of
+    (prgm:_) -> return prgm
+    []       -> fail "containers.ct program not found"
+  let typeEnv@TypeEnv{teClassGraph=ClassGraph cgData, teNames} = mkTypeEnv prgm
+  clsPt <- case [cpt | (CGClass (_, cpt, cts, _), _, _) <- graphToNodes cgData, "ConsList" `isInfixOf` nameStr (ptName cpt), not (null cts)] of
+    (cpt:_) -> return cpt
+    []      -> fail "ConsList class not found"
+  intT <- case [n | n <- S.toList teNames, "Integer" `isInfixOf` nameStr n] of
+    (n:_) -> return $ singletonType $ partialVal n
+    []    -> fail "Integer type not found"
+  tKey <- case H.keys (ptVars clsPt) of
+    (k:_) -> return k
+    []    -> fail "ConsList class has no type parameter"
+  let clsOver elemT = UnionType (Just (PredsOne (PredClass clsPt{ptVars=H.singleton tKey elemT}), H.empty)) H.empty []
+  let wide = clsOver PTopType
+  let narrow = clsOver intT
+  let bare = classPartial clsPt
+  let expanded = expandClassPartial typeEnv H.empty clsPt
+  annotate $ printf "wide = %s" (show wide)
+  annotate $ printf "narrow = %s" (show narrow)
+  annotate $ printf "bare = %s" (show bare)
+  annotate $ printf "expanded = %s" (show expanded)
+  -- Covariance holds upward: a narrower element bound is within the wider.
+  assert $ isSubtypeOf typeEnv narrow wide
+  -- Soundness downward: the wide form contains values the narrow form excludes.
+  assert $ not (isSubtypeOf typeEnv wide narrow)
+  assert $ not (isSubtypeOf typeEnv bare narrow)
+  -- The class's own member expansion (flexible parameters) stays within the class.
+  assert $ isSubtypeOf typeEnv expanded bare
+
+-- | Intersecting the same class over an unresolved element variable and over a concrete
+-- element must keep the concrete bound (@C[Ord] ⟹ C[$_T]@ by covariance with the unbound
+-- variable reading as ⊤, so the conjunction absorbs to @C[Ord]@). The unsound flexible
+-- cover made the implication hold the OTHER way as well, absorbing to the flexible form —
+-- an intersection that WIDENED, which let a constraint re-widen a narrowed point invisibly.
+propParamClassIntersectAbsorb :: IO Prgms -> Property
+propParamClassIntersectAbsorb ioPrgms = property $ do
+  prgms <- lift ioPrgms
+  prgm <- case [v | (k, v) <- H.toList prgms, "containers" `isInfixOf` k] of
+    (prgm:_) -> return prgm
+    []       -> fail "containers.ct program not found"
+  let typeEnv@TypeEnv{teClassGraph=ClassGraph cgData, teNames} = mkTypeEnv prgm
+  clsPt <- case [cpt | (CGClass (_, cpt, cts, _), _, _) <- graphToNodes cgData, "ConsList" `isInfixOf` nameStr (ptName cpt), not (null cts)] of
+    (cpt:_) -> return cpt
+    []      -> fail "ConsList class not found"
+  intT <- case [n | n <- S.toList teNames, "Integer" `isInfixOf` nameStr n] of
+    (n:_) -> return $ singletonType $ partialVal n
+    []    -> fail "Integer type not found"
+  tKey <- case H.keys (ptVars clsPt) of
+    (k:_) -> return k
+    []    -> fail "ConsList class has no type parameter"
+  let clsOver elemT = UnionType (Just (PredsOne (PredClass clsPt{ptVars=H.singleton tKey elemT}), H.empty)) H.empty []
+  -- The variable is deliberately NAMED like the class's own parameter key (an external @$_T@
+  -- meeting a class whose parameter is also @/T@) — the shape a completed data field takes.
+  let flexVar = TypeVar (TVVar tKey) TVExt
+  let narrow = clsOver intT
+  let flexed = clsOver flexVar
+  -- The meet's standalone reading: the intersection records a var's binding in the returned
+  -- env while the type keeps the var, so resolve the discovered bindings back in. This is
+  -- exactly what env-holding consumers ('updateTypeProp') do; the regression pinned here was
+  -- 'mergePredsAnd' WIPING an earlier unification's binding, leaving nothing to resolve.
+  let resolvedIntersect a b =
+        let (venv, t) = intersectTypesWithVarEnv typeEnv H.empty a b
+            newBindings = H.filter (/= PTopType) venv
+        in if H.null newBindings then t else substituteKeep newBindings t
+  let met = resolvedIntersect flexed narrow
+  annotate $ printf "flexed = %s" (show flexed)
+  annotate $ printf "narrow = %s" (show narrow)
+  annotate $ printf "flexed ∩ narrow = %s" (show met)
+  -- The meet must not widen: it stays within the concrete-bounded form.
+  assert $ isSubtypeOf typeEnv met narrow
+  -- And the concrete-bounded form stays within the meet (the meet is exactly the narrow form).
+  assert $ isSubtypeOf typeEnv narrow met
+  -- The same meet through a CONJUNCTION with a second class (the shape a completed data field
+  -- takes: the field's class with an unresolved element ∧ a supertype class with the bound):
+  -- @(ConsList[$_v] ∧ List[Int]) ∩ (ConsList[Int] ∧ List[Int])@ must also keep the bound.
+  listPt <- case [cpt | (CGClass (_, cpt, _, _), _, _) <- graphToNodes cgData, "List" `isInfixOf` nameStr (ptName cpt), not ("ConsList" `isInfixOf` nameStr (ptName cpt))] of
+    (cpt:_) -> return cpt
+    []      -> fail "List class not found"
+  lKey <- case H.keys (ptVars listPt) of
+    (k:_) -> return k
+    []    -> fail "List class has no type parameter"
+  let conj elemA elemB = UnionType (Just (predsAnd (PredsOne (PredClass clsPt{ptVars=H.singleton tKey elemA})) (PredsOne (PredClass listPt{ptVars=H.singleton lKey elemB})), H.empty)) H.empty []
+  let flexConj = conj flexVar intT
+  let narrowConj = conj intT intT
+  let metConj = resolvedIntersect flexConj narrowConj
+  annotate $ printf "flexConj = %s" (show flexConj)
+  annotate $ printf "narrowConj = %s" (show narrowConj)
+  annotate $ printf "flexConj ∩ narrowConj = %s" (show metConj)
+  assert $ isSubtypeOf typeEnv metConj narrowConj
+  assert $ isSubtypeOf typeEnv narrowConj metConj
+
+-- | A conjunction of a flexible-element outer class with a concrete-element member class
+-- stays within the member class's expansion: @Bag[$_A] ∧ ConsList[Integer] ⊆ ∀ConsList[Integer]@
+-- (any value satisfying both IS a @ConsList[Integer]@; the flexible atom constrains nothing
+-- beyond membership). The type-level predicate merge cannot unify DISTINCT classes, so the
+-- same-class pair only meets inside the engine after member expansion
+-- (@ConsList[$_A] ∧ ConsList[Integer]@); the goal must resolve that pair, or the member
+-- candidate generated from the flexible atom keeps its unbound slot and — under the sound
+-- flexible-slot cover — manufactures an escape witness (@Cons[$_A]@ "escaping"
+-- @∀ConsList[Integer]@) that no value satisfying BOTH atoms has. Surfaced as a
+-- 'verifySchemeActLowers' Grows-by on typeApply.ct's element-changing map
+-- (@Functor[$_A] ∧ Maybe[Integer] ⊄ ∀Maybe[Integer]@).
+propConjMemberClassSubtype :: IO Prgms -> Property
+propConjMemberClassSubtype ioPrgms = property $ do
+  prgms <- lift ioPrgms
+  prgm <- case [v | (k, v) <- H.toList prgms, "containers" `isInfixOf` k] of
+    (prgm:_) -> return prgm
+    []       -> fail "containers.ct program not found"
+  let typeEnv@TypeEnv{teClassGraph=ClassGraph cgData, teNames} = mkTypeEnv prgm
+  consListPt <- case [cpt | (CGClass (_, cpt, cts, _), _, _) <- graphToNodes cgData, "ConsList" `isInfixOf` nameStr (ptName cpt), not (null cts)] of
+    (cpt:_) -> return cpt
+    []      -> fail "ConsList class not found"
+  bagPt <- case [cpt | (CGClass (_, cpt, _, _), _, _) <- graphToNodes cgData, "Bag" `isInfixOf` nameStr (ptName cpt)] of
+    (cpt:_) -> return cpt
+    []      -> fail "Bag class not found"
+  intT <- case [n | n <- S.toList teNames, "Integer" `isInfixOf` nameStr n] of
+    (n:_) -> return $ singletonType $ partialVal n
+    []    -> fail "Integer type not found"
+  tKey <- case H.keys (ptVars consListPt) of
+    (k:_) -> return k
+    []    -> fail "ConsList class has no type parameter"
+  bKey <- case H.keys (ptVars bagPt) of
+    (k:_) -> return k
+    []    -> fail "Bag class has no type parameter"
+  -- An UNBOUND external variable, named unlike the class parameters: flexible (binds per
+  -- value), the reading an authored @$_A@ has.
+  let flexA = TypeVar (TVVar (partialKey "A")) TVExt
+  let consListInt = consListPt{ptVars=H.singleton tKey intT}
+  let conjOver outer = UnionType (Just (predsAnd (PredsOne (PredClass outer)) (PredsOne (PredClass consListInt)), H.empty)) H.empty []
+  let conj = conjOver bagPt{ptVars=H.singleton bKey flexA}
+  -- The same conjunction with the outer atom UNBOUND (a bare membership atom, the form a
+  -- parameterless isa-entry produces).
+  let conjBare = conjOver bagPt{ptVars=H.empty}
+  let narrowExpanded = expandClassPartial typeEnv H.empty consListInt
+  annotate $ printf "conj = %s" (show conj)
+  annotate $ printf "conjBare = %s" (show conjBare)
+  annotate $ printf "narrowExpanded = %s" (show narrowExpanded)
+  assert $ isSubtypeOf typeEnv conj narrowExpanded
+  assert $ isSubtypeOf typeEnv conjBare narrowExpanded
+
 typeTests :: TestTree
-typeTests = withResource (ggPrgm <$> findPrgms) (const $ pure ()) tests
+typeTests = withResource findPrgms (const $ pure ()) tests
   where
-    tests gPrgm = testGroup "TypeTests" [
+    tests ioPrgms = testGroup "TypeTests" [
       HG.testProperty "propCompactNoChanges" (p $ propCompactNoChanges gPrgm)
       , HG.testProperty "propCompactIdempotent" (p $ propCompactIdempotent gPrgm)
       , HG.testProperty "propSubtypeByUnion" (p $ propSubtypeByUnion gPrgm)
@@ -448,7 +601,11 @@ typeTests = withResource (ggPrgm <$> findPrgms) (const $ pure ()) tests
       , HG.testProperty "propSubtypeUnionVarSplit" (withDiscards 1000 $ p $ propSubtypeUnionVarSplit gPrgm)
       , HG.testProperty "propClassExpansionLeafSubtype" (withDiscards 1000 $ p $ propClassExpansionLeafSubtype gPrgm)
       , HG.testProperty "propClassGraphMatchesPredClass" (withDiscards 1000 $ p $ propClassGraphMatchesPredClass gPrgm)
+      , HG.testProperty "propParamClassWideNotNarrow" (withTests 1 $ propParamClassWideNotNarrow ioPrgms)
+      , HG.testProperty "propParamClassIntersectAbsorb" (withTests 1 $ propParamClassIntersectAbsorb ioPrgms)
+      , HG.testProperty "propConjMemberClassSubtype" (withTests 1 $ propConjMemberClassSubtype ioPrgms)
                                         ]
+      where gPrgm = ggPrgm <$> ioPrgms
     p prop = prop
     -- p prop = withTests 100000 prop
 
