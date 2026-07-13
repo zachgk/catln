@@ -25,8 +25,7 @@ import           Control.Monad
 import           Control.Monad.State
 import           CtConstants         (runtimeAnnot)
 import           Data.Bifunctor      (Bifunctor (bimap))
-import           Data.List           (find, intercalate, isInfixOf, nub, partition)
-import           Debug.Trace         (trace)
+import           Data.List           (find, intercalate, nub, partition)
 import           Data.Maybe          (mapMaybe)
 import           Data.UUID           (nil)
 import           MapMeta
@@ -335,9 +334,6 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
   -- a destination from the few arms that happen to have resolved, which is not an upper
   -- bound of the point's values and gets locked in by monotonicity.
   let reqForcesChoice = destIsArrowResult && destReq /= PTopType && destByGraph0 /= PTopType && not (isSubtypeUpToSettlingOf feTypeEnv vaenv' destByGraph0 destReq)
-  () <- return $ if "rangeStep" `isInfixOf` show src
-    then trace (printf "[RTRACE] src=%s\n  destReq=%s\n  destAct=%s\n  forces=%s\n  destByGraph0=%s" (show src) (show destReq) (show destAct) (show reqForcesChoice) (show destByGraph0)) ()
-    else ()
   let destBound = intersectTypesEnv feTypeEnv vaenv' destAct destReq
   let reaches' = if reqForcesChoice then cutReachesTree feTypeEnv vaenv' destBound reaches0 else reaches0
   let destByGraph = if reqForcesChoice then unionReachesTree feTypeEnv vaenv' reaches' else destByGraph0
@@ -372,9 +368,6 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
             in (mergeAllVarEnvs feTypeEnv [venvRaw, venvSettled], merged)
         -- An Arrow result whose reach already satisfies the requirement: the requirement is
         -- inert; only the accumulated actual bounds it (see the policy comment above).
-        -- KNOWN GAP: without the meet's implicit ∅-gate an immature reach (an epoch where the
-        -- source has not yet narrowed) publishes early and monotonicity locks it in — see the
-        -- operator== deep-closure loss.
         | destIsArrowResult = intersectTypesWithVarEnv feTypeEnv vaenv' destAct destByGraph
         -- A consumption point: the committed full-meet behavior.
         | otherwise = intersectTypesWithVarEnv feTypeEnv vaenv' destBound destByGraph
@@ -410,4 +403,7 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
         | null viableKeys             = (srcBound, srcReq)
         | typeVarLost src narrowedAct = (srcBound, srcReq)
         | otherwise                   = (narrowedAct, narrowedReq)
-  return (src', srcReq', destFinal, Just reaches0) -- TEMP BISECT: store uncut tree
+  -- The stored tree is always the UNCUT reach: a requirement-forced cut is a per-epoch choice
+  -- (valid only against that epoch's requirement), while the stored tree is read downstream as
+  -- the record of where the source can rewrite to.
+  return (src', srcReq', destFinal, Just reaches0)
