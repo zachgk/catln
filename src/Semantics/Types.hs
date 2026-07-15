@@ -1531,8 +1531,8 @@ satGoalNorm (SatGoal pos neg) = SatGoal (L.sort (L.nub pos)) (L.sort (L.nub neg)
 -- collapsed pair is exact, while pinning the variable elsewhere would strengthen those
 -- atoms towards a false UNSAT — the polarity ('satGoal' is conservative-to-SAT; UNSAT
 -- claims prove subtypes) the engine must never err towards.
-satGoalUnifyPos :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatGoal -> SatGoal
-satGoalUnifyPos typeEnv vaenv goal@(SatGoal pos neg)
+satGoalUnifyPos :: TypeVarArgEnv -> SatGoal -> SatGoal
+satGoalUnifyPos vaenv goal@(SatGoal pos neg)
   | length (L.nub keys) == length keys = goal
   | otherwise = satGoalNorm (SatGoal (foldl step [] pos) neg)
   where
@@ -1973,7 +1973,7 @@ satGoal typeEnv vaenv gatePos hyps goal0
         Nothing    -> True -- cannot enumerate: conservative
         Just cands -> any checkCand cands
   where
-    goal = satGoalUnifyPos typeEnv vaenv (satGoalNorm goal0)
+    goal = satGoalUnifyPos vaenv (satGoalNorm goal0)
     hyps' = S.insert goal hyps
 
     -- Prefer the most concrete generator: concrete leafs, then a class, then a relation.
