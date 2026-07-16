@@ -1,0 +1,41 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                    }
+                )
+            ,
+                ( "/mdbl"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /mdbl( EAppArg Value /v -> /Data/Primitive/Integer ) -> TVArg /v = ( Value /v ↦ TVArg /v )
+                        , /mdbl( EAppArg Value /v -> /Data/Primitive/Integer ) -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Some
+                            ( EAppArg Value /value -> TVArg /v = ( Value /v ↦ TVArg /v ) )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "Tests multiple definitions of the same name distinguished by their RETURN type. Both `mdbl`
+            definitions take the same input (`v -> Integer`) but return different types: one returns
+            `Integer`, the other `Maybe[Integer]`. The use site `mdbl(v= 1) + 1` demands an `Integer`
+            (the operand of `+`), so the compiler must select the Integer-returning definition. That gives
+            `1 + 1 == 2`." )
+        ]
+    }
