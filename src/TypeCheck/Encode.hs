@@ -132,6 +132,13 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
   arg'' <- case arg of
     EAppArg a -> do
       arg' <- fromObjArr est a
+      -- An input argument actually is only whatever it is required to be (it only ever receives
+      -- declared values), so tie the argument's type slot ('arrM') actual down to its
+      -- (use-narrowed) requirement. Emitting this here in the Tuple-arg handling covers every input
+      -- argument form — matched-value args (@f(x= True)@, wildcards @f(x= _)@) and destructuring
+      -- patterns as well as typed parameters — whereas the old 'exprVarArgs'-driven emission in
+      -- 'fromObjectMap' only reached the parameter/binding forms it collected.
+      let eqReqActs = [EqReqAct 34 arrM' | EncodeIn <- [est], Just (_, arrM') <- [oaArr arg']]
       let constraints = case (est, oaObj arg', oaArr arg') of
             (EncodeOut{}, Just obj, Just (Just _argExpr', arrM')) ->
               -- Output with (x=x)
@@ -178,13 +185,15 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
                         PropEq 25 (m', TVArg $ inExprSingleton obj) arrM'
                         ]
             _ -> error $ printf "Invalid fromExpr in %s mode for %s" (show est) (show arg)
-      modify $ addConstraints constraints
+      modify $ addConstraints (eqReqActs ++ constraints)
       modify $ endConstraintBlock (if isJust (oaObj arg') then Just arg' else Nothing) (maybe H.empty (fmap (first getExprMeta . head) . exprVarArgs) (oaObj arg'))
       return $ EAppArg arg'
     EAppVar vn vm -> do
       let baseName = printf "VarApply %s[%s = %s]" (show baseExpr) (show vn) (show vm) :: String
       vm' <- fromMeta BAct est vm $ printf "%s val" baseName
-      modify $ addConstraints [AddArg 27 (baseM', TVVar vn) m', PropEq 27 (m', TVVar vn) vm']
+      -- As with the 'EAppArg' inputs above, an input type-variable application's actual is only
+      -- whatever it is required to be, so pull its value slot's actual down to its requirement.
+      modify $ addConstraints ([AddArg 27 (baseM', TVVar vn) m', PropEq 27 (m', TVVar vn) vm'] ++ [EqReqAct 34 vm' | EncodeIn <- [est]])
       return $ EAppVar vn vm'
     EAppSpread a@HoleExpr{} -> do -- Shortcut for Hole since no need to track neglected args
       a' <- fromExpr est a
@@ -302,10 +311,8 @@ fromObjectMap oa@ObjArr{oaAnnots, oaObj=Just obj, oaArr} = do
   modify startConstrainBlock
   obj' <- fromExpr inEst obj
   modify $ addConstraints $ nonLinearEqConstraints obj'
-  -- Each matched input argument actually is only whatever it is required to be, so tie its actual
-  -- to its (use-narrowed) requirement. 'exprVarArgs' yields the argument's type slot ('arrM'), the
-  -- point Decode renders as the argument's type.
-  modify $ addConstraints [EqReqAct 34 arrM | (_, arrM) <- concat (H.elems (exprVarArgs obj'))]
+  -- The input arguments' 'EqReqAct' constraints (tying each arg's actual down to its requirement)
+  -- are emitted per-argument in 'fromExpr' (the Tuple-arg handling), covering every argument form.
 
   let est = EncodeOut (Just obj')
   oaAnnots' <- mapM (fromExpr est) oaAnnots
