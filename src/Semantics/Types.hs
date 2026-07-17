@@ -1419,19 +1419,20 @@ expandClassPartialWithNamesFull typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaen
               hasOut = any (\PartialType{ptName=n} -> not $ S.member n allowedNames) fullList
           in (joinUnionType $ map mapClassPartial filteredList, hasOut)
         mapClassTypeWithNamesFull t = expandTypesWithNamesFull typeEnv vaenv t allowedNames
-        -- In the closed-world program-coverage view ('tePrgmEnv'), relax each member's
-        -- explicitly-written fields to 'PTopType' (keys only). A class member is a match /target/
-        -- whose field types are supplied by the value being matched; preserving the written field
-        -- here reintroduces the member's type parameter (e.g. @head -> $T@ resolving to the class's
-        -- instantiated element bound) and spuriously holds a destructured definition's binding
-        -- field (which merely binds and ignores the value) outside its declaration. During
-        -- inference ('tePrgmEnv' off) the precise field tie is kept, so recursive-type scheme
-        -- verification ('verifySchemeActLowers') is unaffected. The true field types always remain
-        -- in the data graph.
-        mapClassPartial tp@PartialType{ptVars, ptArgs}
+        -- Substitute this class's instantiated arguments through the member ('substitutePartialKeep'
+        -- resolves each external 'TVExt' reference in 'ptVars' and 'ptArgs' while keeping every
+        -- 'TVInt' field tied to the member's own now-substituted 'ptVars'), so a field like
+        -- @tail -> ConsList[/T=$_T]@ receives the class argument rather than a free variable that
+        -- later widens to Top. In the closed-world program-coverage view ('tePrgmEnv') the member is
+        -- a match /target/ whose field types are supplied by the value being matched, so its
+        -- explicitly-written fields are then relaxed to 'PTopType' (keys only) — preserving them
+        -- would spuriously hold a destructured definition's binding field (which merely binds and
+        -- ignores the value) outside its declaration. The true field types always remain in the data
+        -- graph.
+        mapClassPartial tp@PartialType{ptArgs}
           | tePrgmEnv typeEnv = base{ptArgs=fmap (const PTopType) ptArgs}
           | otherwise         = base
-          where base = tp{ptVars=fmap (substituteVarsWithVarEnv classVars) ptVars}
+          where base = substitutePartialKeep (joinVarArgEnv classVars H.empty) tp
     r -> error $ printf "Unknown class %s in expandPartial. Found %s" (show (PClassName ptName)) (show r)
 
 
