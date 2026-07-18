@@ -146,8 +146,8 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByKnown i p@ST
       t                                             -> t
     act' = intersectTypesEnv feTypeEnv vaenv' act boundTp'
     req' = intersectTypesEnv feTypeEnv (fmap (stypeReq . snd) vaenv) req boundTp'
-computeConstraint _ con@(Constraint _ _ (BoundedByObjs _ SType{stypeAct=PTopType} _)) = (False, con)
-computeConstraint FEnv{feTypeEnv, feCompletedAllObjsKey, feCompletedAllObjs} con@(Constraint _ vaenv (BoundedByObjs i p@SType{stypeAct=pAct, stypeReq=pReq} objMapBoundUb)) = (False, con{conDat=BoundedByObjs i (p{stypeAct=pAct', stypeReq=pReq'}) objMapBoundUb})
+computeConstraint _ con@(Constraint _ _ (BoundedByObjs _ SType{stypeReq=PTopType} _)) = (False, con)
+computeConstraint FEnv{feTypeEnv, feCompletedAllObjsKey, feCompletedAllObjs} con@(Constraint _ vaenv (BoundedByObjs i p@SType{stypeReq=pReq} objMapBoundUb)) = (False, con{conDat=BoundedByObjs i (p{stypeReq=pReq'}) objMapBoundUb})
   where
     vaenv' = fmap (stypeAct . snd) vaenv
     argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnv vaenv' $ UnionType Nothing (joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con) []
@@ -163,32 +163,26 @@ computeConstraint FEnv{feTypeEnv, feCompletedAllObjsKey, feCompletedAllObjs} con
     -- shifted mid-epoch), so the result is byte-identical to the uncached computation.
     objMapBoundUb' | objMapBoundUb == feCompletedAllObjsKey = feCompletedAllObjs
                    | otherwise = unionTypes feTypeEnv objMapBoundUb (completeDataPartials feTypeEnv objMapBoundUb)
+    -- A type is REQUIRED to be a declared/defined object, but that does not mean it ACTUALLY is one:
+    -- being one of the known objects is only a requirement. So narrow only the requirement against
+    -- the object-universe bound and leave the actual untouched.
+    --
     -- Relax each bound object's self-referential field (one that recurses back to a type the
     -- object participates in) so a destructured value whose corresponding field is still an
     -- unconstrained pattern variable can reconcile with it (see 'relaxRecursiveSelfArgs').
     -- The objects universe is closed-world (only currently-declared data objects), but an OPEN
     -- (unsealed) class may gain instances in a future file, so a value typed by one is genuinely
-    -- inhabitable and must survive the bound rather than empty. Admit the value's OWN open-class
-    -- predicate components (with their real element bounds) as inhabitable bound members: the
-    -- intersection then preserves exactly those components (a foreign class-top with an
-    -- unconstrained element would instead let the value's element widen). Sealed classes are
+    -- inhabitable and must survive the bound rather than empty. Admit the requirement's OWN
+    -- open-class predicate components (with their real element bounds) as inhabitable bound members
+    -- ('openClassPart pReq'): an open-class requirement (e.g. a @Functor[Eq]@ law argument with no
+    -- in-scope instance) must survive the object-universe bound rather than empty. Sealed classes are
     -- excluded — they equal their declared members, already in the universe.
-    boundUb = relaxRecursiveSelfArgs feTypeEnv $ unionTypes feTypeEnv (unionTypes feTypeEnv objMapBoundUb' (openClassPart feTypeEnv pAct)) argsBoundUb
-
-    -- A partially applied tuple would not be a raw type on the unionObj,
-    -- but a subset of the arguments in that type. The object-universe bound is an upper bound, so it
-    -- applies to the required type as well as the actual (both are upper bounds — see 'SType'), just
-    -- as 'BoundedByKnown' narrows both; each side is resolved against its own ambient var-env.
-    (_, pAct') = intersectTypesWithVarEnv feTypeEnv vaenv' pAct boundUb
+    --
     -- Only narrow a *concrete* requirement. A Top requirement meets the whole universe to the whole
     -- universe (every known object) — not a narrowing, and a performance blowup — so leave it be
-    -- (mirroring the 'stypeAct=PTopType' guard above). A named requirement instead meets only its
-    -- name-matching objects, tightening the requirement's arg fields (e.g. @/f(/a=Top)@ narrows to
-    -- @/f(/a=<declared>)@). The requirement narrows against its OWN open-class part
-    -- ('openClassPart pReq'), exactly as 'boundUb' above uses 'openClassPart pAct': an open-class
-    -- requirement (e.g. a @Functor[Eq]@ law argument with no in-scope instance) must survive the
-    -- object-universe bound rather than empty — and its matching actual is often still a bare type
-    -- variable, so 'openClassPart pAct' would be empty and cannot cover it.
+    -- (the 'stypeReq=PTopType' guard above already short-circuits it). A named requirement instead
+    -- meets only its name-matching objects, tightening the requirement's arg fields (e.g.
+    -- @/f(/a=Top)@ narrows to @/f(/a=<declared>)@).
     boundUbReq = relaxRecursiveSelfArgs feTypeEnv $ unionTypes feTypeEnv (unionTypes feTypeEnv objMapBoundUb' (openClassPart feTypeEnv pReq)) argsBoundUb
     pReq' | pReq == PTopType = pReq
           | otherwise        = snd $ intersectTypesWithVarEnv feTypeEnv (fmap (stypeReq . snd) vaenv) pReq boundUbReq
@@ -208,14 +202,37 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (NoReturnArg i p@SType
       _                        -> posLeafs
     act' = UnionType (Just topData) posLeafs' consts
 computeConstraint _ con@(Constraint _ _ NoReturnArg{}) = (False, con)
--- An input argument actually is only whatever it is required to be, so pull its actual down to its
--- requirement. As uses (and the ArrowTo reverse propagation) keep narrowing the requirement, this
--- re-runs each epoch (returns False, not "done"); both bounds only shrink, so the actual stays
--- monotone (@act ∩ req ⊆ act@) and a bare 'TypeVar' requirement is preserved by the intersection.
-computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (EqReqAct i p@SType{stypeAct=act, stypeReq=req})) = (False, con{conDat=EqReqAct i p{stypeAct=act'}})
+-- An input argument actually IS whatever it is required to be, AND VICE VERSA: a declaration LHS is
+-- an input, so its actual and requirement denote the same thing and must agree. Meet the two and
+-- assign it to BOTH bounds. Pulling the actual down to the requirement gives it the requirement's
+-- object-universe bound ('BoundedByObjs' now narrows only the requirement); pulling the requirement
+-- down to the actual carries an ANNOTATION written on the LHS (e.g. @Cons[$T -> Integer]@, whose
+-- @/T=Integer@ arrives on the actual) into the requirement, so a destructured field @/head=$T@ then
+-- resolves through @/T@ to @Integer@ in the requirement rather than staying Top - which was leaving
+-- the field binding's own requirement Top, so its EqReqAct meet could not narrow anything. As uses
+-- (and the ArrowTo reverse propagation) keep narrowing, this re-runs each epoch (returns False, not
+-- "done"); the meet only shrinks either bound (@act ∩ req ⊆ act@, @⊆ req@), so both stay monotone
+-- and a bare 'TypeVar' bound is preserved by the intersection.
+computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (EqReqAct i p@SType{stypeAct=act, stypeReq=req})) = (False, con{conDat=EqReqAct i p{stypeAct=meet, stypeReq=meet}})
   where
     vaenv' = fmap (stypeAct . snd) vaenv
-    act' = intersectTypesEnv feTypeEnv vaenv' act req
+    -- An LHS input's actual and requirement denote the same thing, so meet them and set BOTH: pulling
+    -- the actual down to the requirement gives it the requirement's object-universe bound
+    -- ('BoundedByObjs' now narrows only the requirement); pulling the requirement down to the actual
+    -- carries an LHS ANNOTATION (@Cons[$T -> Integer]@, whose @/T=Integer@ lands on the actual) into
+    -- the requirement so a destructured field @/head=$T@ resolves through @/T@ there. Resolve the
+    -- meet's freshly-discovered bindings back into the result: meeting a narrow actual
+    -- (@∀ConsList[/T=∀Eq]@) with a requirement carrying a bare recursion var (@∀ConsList[/T=$_T]@)
+    -- records @$_T ↦ ∀Eq@ but keeps @$_T@ in the type, which unresolved reads WIDER and re-widens it
+    -- (a 'verifySchemeActLowers' failure), the trap 'intersectPartialsBase'/'arrowConstrainUbs'
+    -- resolve back. Still-unresolved vars stay symbolic ('substituteKeep').
+    (ivaenv, meet0) = intersectTypesWithVarEnv feTypeEnv vaenv' act req
+    newBindings = H.difference ivaenv vaenv'
+    -- Re-'compactType' after resolving: 'substituteKeep' can unroll a recursive var a level deeper
+    -- into the type ('foldRecursiveType' folds it back to @~C@); without it a recursive definition
+    -- (@rangeFrom@'s @Cons(tail=rangeFrom(..))@) unrolls a level each epoch and never converges.
+    meet | H.null newBindings = meet0
+         | otherwise          = substituteKeep newBindings meet0
 computeConstraint env con@(Constraint _ _ (ArrowTo i src dest)) = case arrowConstrainUbs env con src dest of
     TypeCheckResult _ (srcAct', srcReq', destAct', destRT') -> (False, con{conDat=ArrowTo i src{stypeAct=srcAct', stypeReq=srcReq'} dest{stypeAct=destAct', stypeTree=destRT'}})
     TypeCheckResE _ -> (True, con)
