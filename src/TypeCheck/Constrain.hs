@@ -236,14 +236,17 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (EqReqAct i p@SType{st
     -- records @$_T ↦ ∀Eq@ but keeps @$_T@ in the type, which unresolved reads WIDER and re-widens it
     -- (a 'verifySchemeActLowers' failure), the trap 'intersectPartialsBase'/'arrowConstrainUbs'
     -- resolve back. Still-unresolved vars stay symbolic ('substituteKeep').
-    (_ivaenv, meet0) = intersectTypesWithVarEnv feTypeEnv vaenv' actC req
-    -- NOTE: the meet's freshly-discovered bindings are NOT resolved back into the result. Resolving
-    -- (@substituteKeep@) narrows a widened element (@∀ConsList[/T=$_T]@ with @$_T ↦ ∀Eq@ recorded ⇒
-    -- @∀ConsList[/T=∀Eq]@) but also unrolls a recursive raw-call binding (@rangeFrom@'s
-    -- @Cons(tail=rangeFrom(..))@) a level deeper each epoch, which never converges. The two cases
-    -- are indistinguishable here, so the recursion is kept symbolic; the residual element-widening
-    -- (@∀ConsList[/T=$_T]@) is left for the requirement-side element bound to supply.
-    meet = meet0
+    (ivaenv, meet0) = intersectTypesWithVarEnv feTypeEnv vaenv' actC req
+    -- Resolve the meet's freshly-discovered bindings back into the result. Meeting a concretized
+    -- actual (@∀ConsList[/T=∀Eq]@) with a requirement carrying the recursion element var
+    -- (@∀ConsList[/T=$_T]@) records @/T ↦ ∀Eq@ but keeps @$_T@ (which is literally @TVVar "/T"@,
+    -- referring to the enclosing Cons's own element) in the type — unresolved it reads WIDER and the
+    -- requirement re-widens (@verifySchemeReqLowers@) and the actual re-widens
+    -- (@verifySchemeActLowers@). Resolving is exactly correct: the tail's element IS the enclosing
+    -- element. 'substituteKeep' leaves any still-unresolved var symbolic.
+    newBindings = H.difference ivaenv vaenv'
+    meet | H.null newBindings = meet0
+         | otherwise          = substituteKeep newBindings meet0
 computeConstraint env con@(Constraint _ _ (ArrowTo i src dest)) = case arrowConstrainUbs env con src dest of
     TypeCheckResult _ (srcAct', srcReq', destAct', destRT') -> (False, con{conDat=ArrowTo i src{stypeAct=srcAct', stypeReq=srcReq'} dest{stypeAct=destAct', stypeTree=destRT'}})
     TypeCheckResE _ -> (True, con)

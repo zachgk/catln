@@ -2804,8 +2804,15 @@ compactType typeEnv vaenv (UnionType (Just topData@(preds, _)) pos cs)
     -- the recursive field. NON-recursive fields are kept, so a concrete member (@IntOrdering(x=5)@)
     -- is absorbed into @∀Ord@ only when it genuinely is one — widening every field would fold
     -- concrete members into their class top, erasing structure eval dispatch keys on.
+    -- Only fold a leaf whose type parameters are fully CONCRETE (e.g. @Cons[/T=Integer]@ from
+    -- @rangeFrom@'s over-unrolling recursion): its structure is redundant once the class top holds
+    -- the same element. A leaf with an ABSTRACT element (@Cons[/T=∀Ord]@, a test value or generic
+    -- list) is left alone — folding it into its class top erases the constructor structure eval
+    -- dispatch keys on. Widen the arg values to ⊤ for the membership check (soundness:
+    -- @leaf ⊆ leaf{args=⊤}@) since membership is by class + element, not by recursive-field value.
     absorbable l = S.member (makeAbsoluteName (ptName l)) constituentNames
-                   && isSubtypeOfWithEnv typeEnv vaenv (relaxRecursiveSelfArgs typeEnv (singletonType l)) (UnionType (Just topData) H.empty [])
+                   && all typeFullyConcrete (H.elems (ptVars l))
+                   && isSubtypeOfWithEnv typeEnv vaenv (singletonType l{ptArgs = fmap (const PTopType) (ptArgs l)}) (UnionType (Just topData) H.empty [])
 -- Top component catch-all (includes PTopType and TopType np PredsNone); preserve constants.
 -- Also compact the pos component for structural canonicalization (ensures union commutativity
 -- holds structurally: different union orderings that mix Just and Nothing forms produce
