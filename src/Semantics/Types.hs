@@ -915,6 +915,29 @@ completeDataPartialsTop typeEnv = go
           TypeVar (TVVar v) _ | Just b <- H.lookup v ptVars, not (isTypeVar b) -> b
           _                                                                    -> PTopType
 
+-- | Narrow each partial's present fields to their /concrete/ declared type. A destructure pattern
+-- (@#md(text)@) leaves its field's actual at Top; the declaration @#md(text -> String)@ says the
+-- field IS a @String@, so an LHS input actually is one. Unlike 'completeDataPartialsTop' (which
+-- adds missing fields as Top for keying), this tightens an /already-present/ field to its declared
+-- type. Only a 'typeFullyConcrete' declared field type is carried — a parameter-typed field
+-- (@v -> $A@, or a still-parameterized @tail -> ConsList[$T]@) is left as inference has it, so no
+-- free type parameter is reintroduced. Recurses into nested args/vars.
+completeConcreteFields :: (TypeGraph tg) => TypeEnv tg -> Type -> Type
+completeConcreteFields typeEnv = onUnion
+  where
+    onUnion (UnionType mPreds leafs consts) = UnionType (fmap (bimap id onLeafs) mPreds) (onLeafs leafs) consts
+    onUnion t = t
+    onLeafs = joinUnionType . map onPartial . splitUnionType
+    onPartial p@PartialType{ptName, ptArgs, ptVars} =
+      let recArgs = fmap onUnion ptArgs
+          p1 = p{ptArgs = recArgs, ptVars = fmap onUnion ptVars}
+      in case [dArgs | PartialType{ptArgs=dArgs} <- typeGraphData typeEnv ptName, not (H.null dArgs)] of
+           (dArgs:_) -> p1{ptArgs = H.mapWithKey (narrowField dArgs) recArgs}
+           []        -> p1
+    narrowField dArgs k v = case H.lookup k dArgs of
+      Just dt | typeFullyConcrete dt -> intersectTypesEnv typeEnv H.empty v dt
+      _                              -> v
+
 -- | Relax each data partial's self-referential field — a field whose type recurses back to a
 -- type the partial itself participates in (the same type, or a class the partial is a constituent
 -- of) — to 'PTopType'. Used on a bound that constrains a destructured value: such a field would
@@ -2772,16 +2795,17 @@ compactType typeEnv vaenv (UnionType (Just topData@(preds, _)) pos cs)
     constituentNames = case tryPredsToList preds of
       Just ps -> S.unions [classConstituentNames typeEnv (ptName c) | PredClass c <- ps]
       Nothing -> S.empty
-    -- Membership in the predicate top is by class + element, NOT by argument value: a
-    -- @Cons[/T=Integer](head=…, tail=…)@ is a @∀List[/T=Integer]@ whatever its tail. The strict
-    -- subtype of the leaf-with-args can spuriously fail on a recursive field — the over-unrolled
-    -- tail is @List@-topped while the class expansion of @Cons@ declares its tail @ConsList@ (and
-    -- @List ⊋ ConsList@), so @Cons(tail=∀List) ⊄ Cons(tail=∀ConsList)@. Test the leaf with its args
-    -- widened to ⊤; this is a SOUND over-approximation for absorption (@leaf ⊆ leaf{args=⊤}@, so
-    -- @leaf{args=⊤} ⊆ top ⟹ leaf ⊆ top@) that ignores the recursive field while still rejecting a
-    -- genuine element mismatch (@Cons[/T=⊤] ⊄ List[/T=Integer]@).
+    -- A leaf's RECURSIVE self-referential field can spuriously fail the strict subtype: the
+    -- over-unrolled tail is @List@-topped while the class expansion of @Cons@ declares its tail
+    -- @ConsList@ (and @List ⊋ ConsList@), so @Cons(tail=∀List) ⊄ Cons(tail=∀ConsList)@. Widen ONLY
+    -- the recursive self-referential fields to ⊤ for the check ('relaxDeclaredRecursiveArgs', which
+    -- keys off the DECLARATION so it applies even when the field's value is a complex union) — a
+    -- sound over-approximation (@leaf ⊆ relaxed leaf@, so @relaxed ⊆ top ⟹ leaf ⊆ top@) that ignores
+    -- the recursive field. NON-recursive fields are kept, so a concrete member (@IntOrdering(x=5)@)
+    -- is absorbed into @∀Ord@ only when it genuinely is one — widening every field would fold
+    -- concrete members into their class top, erasing structure eval dispatch keys on.
     absorbable l = S.member (makeAbsoluteName (ptName l)) constituentNames
-                   && isSubtypeOfWithEnv typeEnv vaenv (singletonType l{ptArgs = fmap (const PTopType) (ptArgs l)}) (UnionType (Just topData) H.empty [])
+                   && isSubtypeOfWithEnv typeEnv vaenv (relaxRecursiveSelfArgs typeEnv (singletonType l)) (UnionType (Just topData) H.empty [])
 -- Top component catch-all (includes PTopType and TopType np PredsNone); preserve constants.
 -- Also compact the pos component for structural canonicalization (ensures union commutativity
 -- holds structurally: different union orderings that mix Just and Nothing forms produce

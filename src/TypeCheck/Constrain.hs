@@ -216,6 +216,16 @@ computeConstraint _ con@(Constraint _ _ NoReturnArg{}) = (False, con)
 computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (EqReqAct i p@SType{stypeAct=act, stypeReq=req})) = (False, con{conDat=EqReqAct i p{stypeAct=meet, stypeReq=meet}})
   where
     vaenv' = fmap (stypeAct . snd) vaenv
+    -- A destructure pattern's field carries only the value inference gives it, which for a bare
+    -- pattern variable (@#md(text)@) is Top: the data/annotation declaration says the field IS its
+    -- declared type (@text -> String@), so an LHS input actually is that. 'BoundedByObjs' would
+    -- narrow it via the object universe, but now only touches the requirement — and an open-class
+    -- bound on the pattern's slot (@dshow(s -> DShow)@) re-widens the requirement's field, leaving
+    -- the meet Top and building @Show/MD(text=Top)@. So complete each partial's concrete declared
+    -- fields onto the actual directly (option 1): only fields whose declared type is fully concrete
+    -- are carried (a parameter-typed field @v -> $A@ stays as inference left it, so no free
+    -- parameter is reintroduced). This narrows the field on both bounds through the meet below.
+    actC = completeConcreteFields feTypeEnv act
     -- An LHS input's actual and requirement denote the same thing, so meet them and set BOTH: pulling
     -- the actual down to the requirement gives it the requirement's object-universe bound
     -- ('BoundedByObjs' now narrows only the requirement); pulling the requirement down to the actual
@@ -226,13 +236,14 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (EqReqAct i p@SType{st
     -- records @$_T ↦ ∀Eq@ but keeps @$_T@ in the type, which unresolved reads WIDER and re-widens it
     -- (a 'verifySchemeActLowers' failure), the trap 'intersectPartialsBase'/'arrowConstrainUbs'
     -- resolve back. Still-unresolved vars stay symbolic ('substituteKeep').
-    (ivaenv, meet0) = intersectTypesWithVarEnv feTypeEnv vaenv' act req
-    newBindings = H.difference ivaenv vaenv'
-    -- Re-'compactType' after resolving: 'substituteKeep' can unroll a recursive var a level deeper
-    -- into the type ('foldRecursiveType' folds it back to @~C@); without it a recursive definition
-    -- (@rangeFrom@'s @Cons(tail=rangeFrom(..))@) unrolls a level each epoch and never converges.
-    meet | H.null newBindings = meet0
-         | otherwise          = substituteKeep newBindings meet0
+    (_ivaenv, meet0) = intersectTypesWithVarEnv feTypeEnv vaenv' actC req
+    -- NOTE: the meet's freshly-discovered bindings are NOT resolved back into the result. Resolving
+    -- (@substituteKeep@) narrows a widened element (@∀ConsList[/T=$_T]@ with @$_T ↦ ∀Eq@ recorded ⇒
+    -- @∀ConsList[/T=∀Eq]@) but also unrolls a recursive raw-call binding (@rangeFrom@'s
+    -- @Cons(tail=rangeFrom(..))@) a level deeper each epoch, which never converges. The two cases
+    -- are indistinguishable here, so the recursion is kept symbolic; the residual element-widening
+    -- (@∀ConsList[/T=$_T]@) is left for the requirement-side element bound to supply.
+    meet = meet0
 computeConstraint env con@(Constraint _ _ (ArrowTo i src dest)) = case arrowConstrainUbs env con src dest of
     TypeCheckResult _ (srcAct', srcReq', destAct', destRT') -> (False, con{conDat=ArrowTo i src{stypeAct=srcAct', stypeReq=srcReq'} dest{stypeAct=destAct', stypeTree=destRT'}})
     TypeCheckResE _ -> (True, con)
