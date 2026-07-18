@@ -3566,6 +3566,55 @@ substituteKeep vaenv (UnionType (Just (preds, negLeafs)) posLeafs consts) =
   UnionType (Just (mapTypePreds (mapTypePred (substitutePartialKeep vaenv)) preds, negLeafs)) posLeafs consts
 substituteKeep _     t                   = t
 
+-- | Resolve a recursive value's free element vars (@$_T@) throughout a type, both:
+--
+--   * SELF-references — a recursive field's @$_T@ naming the partial's OWN @/T@ param (the
+--     'resolveSelfRefs' case: @tail -> ConsList[/T=$_T]@), resolved through that partial's
+--     @ptVars@; and
+--   * AMBIENT references — a top-level raw @Cons[/T=$_T]@ the body constructs, whose @$_T@ names
+--     the enclosing DEFINITION's own @/T@ (bound concretely in @ambient@ — @sorted@'s @/T=Ord@).
+--
+-- Unlike 'substituteKeep' / 'substituteTVExt' this ALSO descends into the positive leaves of a
+-- mixed 'Just'-top union — a partially-unrolled recursive tail
+-- @UnionType(Just(ConsList[/T=$_T]), Cons[/T=$_T](..))@ carries the free element in BOTH the
+-- predicate top and the enumerated leaf, and leaving the leaf unresolved keeps it reading as Top.
+-- A var absent from both the partial's @ptVars@ and @ambient@ stays symbolic (a genuinely generic
+-- element), so a generic scope is untouched.
+--
+-- Needed on an Arrow result before intersecting/checking it: an unresolved recursive tail reads
+-- as Top, so the meet of two otherwise-concrete @Cons[/T=Ord]@ leaves re-derives the outer element
+-- from it and collapses @/T@ to Top (a 'verifySchemeActLowers' widening), and the result fails the
+-- declaration's requirement check. Leaves with no @/T@ param (raw applied forms kept for eval
+-- dispatch) resolve nothing.
+resolveTypeSelfRefs :: TypeVarArgEnv -> Type -> Type
+resolveTypeSelfRefs = go
+  where
+    go env (UnionType mtop pos consts) =
+      UnionType (fmap (goTop env) mtop) (joinUnionType $ map (goLeaf env) $ splitUnionType pos) consts
+    go env (TypeVar (TVApplied b overrides) loc) =
+      applyTypeVarOverrides (fmap (go env) overrides) (go env (TypeVar b loc))
+    go env t@(TypeVar v TVExt) = case H.lookup v env of
+      Just b | not (isTopT b) -> b
+      _                       -> t
+    go _   t                   = t
+    goTop env (preds, negLeafs) =
+      (mapTypePreds (mapTypePred (goLeaf env)) preds, joinUnionType $ map (goLeaf env) $ splitUnionType negLeafs)
+    goLeaf env p@PartialType{ptVars, ptArgs, ptPreds} = p{
+        ptVars  = fmap (go env) ptVars,
+        ptArgs  = fmap (go innerEnv) ptArgs,
+        ptPreds = mapTypePreds (mapTypePred (goLeaf innerEnv)) ptPreds
+      }
+      where
+        -- Field vars resolve against the ambient env EXTENDED with this partial's own (resolved)
+        -- @ptVars@ — a concrete own slot wins over ambient, a still-symbolic own slot defers to it.
+        ownVars  = joinVarArgEnv (fmap (go env) ptVars) H.empty
+        innerEnv = H.unionWith (\o a -> if isResolvable o then o else a) ownVars env
+    isTopT PTopType = True
+    isTopT _        = False
+    isResolvable (TypeVar _ _) = False
+    isResolvable PTopType      = False
+    isResolvable _             = True
+
 -- | Replaces 'TVExt' 'TVVar' references in a 'Type' using the provided 'TypeVarEnv'.
 -- Thin wrapper over 'substituteTVExt'.
 substituteVarsWithVarEnv :: TypeVarEnv -> Type -> Type

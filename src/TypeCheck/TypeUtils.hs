@@ -334,9 +334,18 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
   -- a destination from the few arms that happen to have resolved, which is not an upper
   -- bound of the point's values and gets locked in by monotonicity.
   let reqForcesChoice = destIsArrowResult && destReq /= PTopType && destByGraph0 /= PTopType && not (isSubtypeUpToSettlingOf feTypeEnv vaenv' destByGraph0 destReq)
-  let destBound = intersectTypesEnv feTypeEnv vaenv' destAct destReq
+  -- Resolve each operand's recursive self-refs before it feeds any intersection below
+  -- ('resolveTypeSelfRefs'): a concrete @Cons[/T=Ord]@ leaf carrying an unresolved recursive
+  -- tail top @ConsList[/T=$_T]@ reads that tail as Top, so meeting it re-derives the outer
+  -- element from the tail and collapses @/T@ to Top — WIDENING the stored Arrow result across
+  -- epochs ('verifySchemeActLowers'). A leaf with no @/T@ param (raw applied forms the result
+  -- keeps for eval dispatch) is untouched. The reqForcesChoice GATE above still uses the raw
+  -- @destByGraph0@, so this cannot change which arrows a requirement forces.
+  let resolveSelf = if destIsArrowResult then resolveTypeSelfRefs H.empty else id
+  let destActR = resolveSelf destAct
+  let destBound = intersectTypesEnv feTypeEnv vaenv' destActR destReq
   let reaches' = if reqForcesChoice then cutReachesTree feTypeEnv vaenv' destBound reaches0 else reaches0
-  let destByGraph = if reqForcesChoice then unionReachesTree feTypeEnv vaenv' reaches' else destByGraph0
+  let destByGraph = resolveSelf $ if reqForcesChoice then unionReachesTree feTypeEnv vaenv' reaches' else destByGraph0
   -- An arrow dest carrying a symbolic external var (an instance arm constructing
   -- @Some[/T=$_T]@) meets the accumulated dest's bound in the intersection's returned env,
   -- while the type keeps the bare var — discarding the env would WIDEN the stored dest (the
@@ -358,7 +367,7 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
                 destByGraphSettled = case destByGraph of
                   UnionType dMTop _ dConsts -> UnionType dMTop (joinUnionType settledLeafs) dConsts
                   t                         -> t
-                (venvRaw, destRaw') = intersectTypesWithVarEnv feTypeEnv vaenv' destAct (UnionType Nothing (joinUnionType rawLeafs) [])
+                (venvRaw, destRaw') = intersectTypesWithVarEnv feTypeEnv vaenv' destActR (UnionType Nothing (joinUnionType rawLeafs) [])
                 (venvSettled, destSettled') = intersectTypesWithVarEnv feTypeEnv vaenv' destBound destByGraphSettled
                 merged = case (destRaw', destSettled') of
                   (UnionType Nothing rawLs [], UnionType sMt sLs sCs) -> UnionType sMt (H.unionWith S.union rawLs sLs) sCs
@@ -367,13 +376,14 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
                          | otherwise      -> unionTypesWithEnv feTypeEnv vaenv' r s
             in (mergeAllVarEnvs feTypeEnv [venvRaw, venvSettled], merged)
         -- An Arrow result whose reach already satisfies the requirement: the requirement is
-        -- inert; only the accumulated actual bounds it (see the policy comment above).
-        | destIsArrowResult = intersectTypesWithVarEnv feTypeEnv vaenv' destAct destByGraph
+        -- inert; only the accumulated actual bounds it (see the policy comment above). Both
+        -- operands are already self-ref-resolved ('destActR'/'destByGraph').
+        | destIsArrowResult = intersectTypesWithVarEnv feTypeEnv vaenv' destActR destByGraph
         -- A consumption point: the committed full-meet behavior.
         | otherwise = intersectTypesWithVarEnv feTypeEnv vaenv' destBound destByGraph
   let newBindings = H.difference venv' vaenv'
   let resolveNew = if H.null newBindings then id else substituteKeep newBindings
-  let destFinal = compactType feTypeEnv vaenv' (resolveNew dest')
+  let destFinal = compactType feTypeEnv vaenv' (resolveSelf (resolveNew dest'))
   -- Return-type direction: a declaration output that is a bare declared variable is determined
   -- by the call site's destination — bind it onto the call partial (see 'outVarBoundSrc').
   let srcBound = outVarBoundSrc env destFinal src
