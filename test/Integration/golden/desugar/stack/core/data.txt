@@ -12,6 +12,15 @@ Prgm
                     }
                 )
             ,
+                ( "/main"
+                , ObjectMapItem
+                    { omiDecls = [ Value /main ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/toString"
                 , ObjectMapItem
                     { omiDecls =
@@ -69,6 +78,7 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

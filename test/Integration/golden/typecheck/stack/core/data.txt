@@ -12,6 +12,15 @@ Prgm
                     }
                 )
             ,
+                ( "/main"
+                , ObjectMapItem
+                    { omiDecls = [ Value /main ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/toString"
                 , ObjectMapItem
                     { omiDecls =
@@ -40,7 +49,7 @@ Prgm
                         [ /Context[ /V : TopType ]( Value /value -> $/V )( ..Hole TopType HoleActive Nothing ) ]
                     , omiRuntimeDecls =
                         [ /Context[ /T : TopType ][ /V : TopType ]( Value /value -> $/V )( ..Hole TopType HoleActive Nothing ) | /operator?->
-                            ( Value /l -> /ContextIn[ /V=TopType ]( /value=$/V ).. = /ContextIn[ /V : $_/V ]( Value /value -> $/V = Hole $/V HoleActive Nothing )( ..Hole TopType HoleActive Nothing ) )( Value /r -> $/T = Hole $/T HoleActive Nothing ) -> $/T
+                            ( Value /l -> /ContextIn[ /V=TopType ]( /value=TopType ).. = /ContextIn[ /V : $_/V ]( Value /value -> $/V = Hole $/V HoleActive Nothing )( ..Hole TopType HoleActive Nothing ) )( Value /r -> $/T = Hole $/T HoleActive Nothing ) -> $/T
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -69,6 +78,7 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

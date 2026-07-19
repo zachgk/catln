@@ -16,18 +16,10 @@ Prgm
                                 )
                             ,
                                 ( /Data/strEqual
-                                    ( /r=/Data/String
-                                    , /l=/Data/String
+                                    ( /r=TopType
+                                    , /l=TopType
                                     ) + /Data/Algebra/rel
-                                    ( /this=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Algebra/Eqv[ /T=TopType ]
-                                            , fromList []
-                                            )
-                                        ,
-                                            ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
-                                        , []
-                                        )
+                                    ( /this=∀/Data/Algebra/Eqv[ /T=TopType ]
                                     , /a=UnionType
                                         ( Just
                                             ( PredClass /Data/Primitive/Boolean
@@ -38,12 +30,12 @@ Prgm
                                         )
                                     , /b=∀/Data/Algebra/Eq
                                     ) + /Data/Primitive/boolEq
-                                    ( /r=∀/Data/Primitive/Boolean
-                                    , /l=∀/Data/Primitive/Boolean
+                                    ( /r=TopType
+                                    , /l=TopType
                                     ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
-                                    ( /r=/Data/Primitive/Integer
-                                    , /l=/Data/Primitive/Integer
-                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
+                                    ( /r=TopType
+                                    , /l=TopType
+                                    ) + /Data/Algebra/equal
                                     ( /this=∀/Data/Algebra/Eq
                                     , /other=∀/Data/Algebra/Eq
                                     )
@@ -108,20 +100,18 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/rel( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer )
-                            ( Value /this -> /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] ) -> UnionType
+                        [ /Data/Algebra/rel( Value /a )( Value /b )( Value /this -> /Data/Algebra/IntEqExample ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
                                 )
                             , /Data/Primitive/intEq
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
+                                ( /r=TopType
+                                , /l=TopType
                                 )
                             , []
                             ) = /Data/Primitive/intEq( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
-                        , /Data/Algebra/rel( Value /a )( Value /b )
-                            ( Value /this -> /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /Data/Algebra/rel( Value /a )( Value /b )( Value /this -> /Data/Algebra/AllEqv ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         ]
                     }
                 )
@@ -255,8 +245,7 @@ Prgm
                     )
                 ) = /rel
                 ( Value /a -> /Data/Primitive/Integer = CInt 2 )
-                ( Value /b -> /Data/Primitive/Integer = CInt 2 )
-                ( Value /this -> /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] = Value /Data/Algebra/IntEqExample )
+                ( Value /b -> /Data/Primitive/Integer = CInt 2 )( Value /this -> /Data/Algebra/IntEqExample = Value /Data/Algebra/IntEqExample )
             )
             ( Value /result -> /Data/String = CStr "True" )
         , /Catln/#print
@@ -271,21 +260,24 @@ Prgm
                     )
                 ) = /rel
                 ( Value /a -> /Data/Primitive/Integer = CInt 2 )
-                ( Value /b -> /Data/Primitive/Integer = CInt 3 )
-                ( Value /this -> /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] = Value /Data/Algebra/IntEqExample )
+                ( Value /b -> /Data/Primitive/Integer = CInt 3 )( Value /this -> /Data/Algebra/IntEqExample = Value /Data/Algebra/IntEqExample )
             )
             ( Value /result -> /Data/String = CStr "False" )
         , /Catln/#print
-            ( Value /p ->
-                ( /Data/Primitive/True + /Data/Algebra/rel
-                    ( /this=/Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ]
+            ( Value /p -> UnionType
+                ( Just
+                    ( PredClass /Data/Primitive/Boolean
+                    , fromList []
+                    )
+                , /Data/Algebra/rel
+                    ( /this=/Data/Algebra/AllEqv
                     , /a=/Data/Primitive/Integer
                     , /b=/Data/Primitive/Integer
-                    ) + /Data/Primitive/False
+                    )
+                , []
                 ) = /rel
                 ( Value /a -> /Data/Primitive/Integer = CInt 2 )
-                ( Value /b -> /Data/Primitive/Integer = CInt 3 )
-                ( Value /this -> /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] = Value /Data/Algebra/AllEqv )
+                ( Value /b -> /Data/Primitive/Integer = CInt 3 )( Value /this -> /Data/Algebra/AllEqv = Value /Data/Algebra/AllEqv )
             )
             ( Value /result -> /Data/String = CStr "True" )
         , /Catln/#md
