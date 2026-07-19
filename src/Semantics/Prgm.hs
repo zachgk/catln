@@ -622,8 +622,15 @@ getRecursiveObjs oa = error $ printf "getRecursiveObjs with no input expression:
 -- 'exprVarArgs' is exactly the binding classifier (it keys aliases\/args\/vars and never criteria),
 -- so the bound names come from it; the criteria and body are simply not traversed.
 getAllObjArrNames :: (ExprClass e, MetaDat m, Show m, Show (e m)) => ObjArr e m -> [Name]
-getAllObjArrNames oa@ObjArr{oaObj} = oaObjPath oa : maybe [] boundNames oaObj
+getAllObjArrNames oa@ObjArr{oaObj} = oaObjPath oa : (maybe [] getAllExprNames oaObj ++ maybe [] boundNames oaObj)
   where
+    -- The OBJECT pattern's names — its head plus every arg name recursed through
+    -- 'getAllExprNames'\/'exprAppliedArgs' — are all part of the DEFINITION: a parameter
+    -- (@tst(d= T(x))@'s @d@) or an entry point (@main{io->IO}@ desugared to
+    -- @ContextIn(value= main)@) is declared here, and its 'BoundedByKnown' relative bound (@~d@,
+    -- @~main@) resolves only if the name is in 'teNames'. The arrow BODY is intentionally NOT
+    -- traversed: a name USED there (@this.eq.rel@'s @rel@) must not mint an object. Aliases
+    -- ('exprVarArgs') are added on top — 'getAllExprNames' takes an alias's base, not its new name.
     boundNames objE = mapMaybe varAuxName $ H.keys $ exprVarArgs objE
     varAuxName (TVArg n)       = Just (pkName n)
     varAuxName (TVVar n)       = Just (pkName n)
