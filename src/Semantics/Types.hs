@@ -3280,8 +3280,22 @@ intersectTypesWithVarEnv _ _ t1 t2 = error $ printf "intersectTypesWithVarEnv: u
 -- substituting here widened a call-site lambda's param, 'FnInputBound'). A caller that needs
 -- the standalone (resolved) reading must fold the returned bindings back itself, as
 -- 'TypeCheck.TypeUtils.arrowConstrainUbs' and 'updateTypeProp' do.
+-- | The env-dropping meet. 'intersectTypesWithVarEnv' returns a var-meet as the bare VARIABLE while
+-- recording the tightened binding in its returned env (@Integer ∩ $_T@ → @$_T@ with @$_T ↦ Integer@),
+-- so the meet's occurrences stay linked. Dropping that env verbatim leaves the WIDER free var — a
+-- recursive-tail @ConsList[/T=$_T]@ reading as Top, so a @/T=Integer@ list meets a @/T=Eq@ requirement
+-- to the abstract @Eq@ (a 'verifySchemeReqLowers' widening). Resolve the meet's freshly discovered
+-- bindings back into the result before discarding the env (the 'mergeVarEnvVal' resolve-meets-back
+-- rule the manual call sites already apply) — but ONLY the CONCRETE ones. A binding to another
+-- variable is genuine var LINKING (an @operator+[$T]@ tying its operands and result together); keeping
+-- that link a var is the whole point of returning the var, and substituting it would collapse the
+-- polymorphic operator. A binding to a concrete type is a true narrowing that the free var would
+-- otherwise lose.
 intersectTypesEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Type
-intersectTypesEnv typeEnv vaenv t1 t2 = snd $ intersectTypesWithVarEnv typeEnv vaenv t1 t2
+intersectTypesEnv typeEnv vaenv t1 t2 =
+  let (vaenv', t) = intersectTypesWithVarEnv typeEnv vaenv t1 t2
+      newBindings = H.filter (not . isTypeVar) $ H.difference vaenv' vaenv
+  in if H.null newBindings then t else substituteKeep newBindings t
 
 -- | Takes the intersection of two 'Type' (∩).
 intersectTypes :: (TypeGraph tg) => TypeEnv tg -> Type -> Type -> Type
