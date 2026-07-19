@@ -3111,7 +3111,18 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
     subUnionVar (aVaenv, TypeVar _ TVInt) (bVaenv, b) = (mergeAllVarEnvs typeEnv [aVaenv, bVaenv], b)
     subUnionVar (aVaenv, a) (bVaenv, TypeVar _ TVInt) = (mergeAllVarEnvs typeEnv [aVaenv, bVaenv], a)
     subUnionVar a b = subUnion a b
-    subUnion (aVaenv, a) (bVaenv, b) = intersectTypesWithVarEnv typeEnv (mergeAllVarEnvs typeEnv [aVaenv, bVaenv]) a b
+    -- Resolve the field meet's freshly-discovered CONCRETE bindings back into its TYPE (the same
+    -- resolve-meets-back rule 'intersectTypesEnv' applies at the top level, hoisted into the
+    -- recursive field meet). A recursive-tail field @tail -> ∀ConsList[/T=$_T]@ met with a concrete
+    -- @Cons[/T=Integer]@ discovers @/T ↦ Integer@ but 'intersectTypesWithVarEnv' returns the bare var;
+    -- taking @snd@ alone leaves the deep tail free, so it falls to the requirement's declared bound
+    -- (@Ord@) — abstracting a concrete list's element at depth. Concrete-only, so a genuine var link
+    -- (a polymorphic parameter tying positions together) is left as a var.
+    subUnion (aVaenv, a) (bVaenv, b) =
+      let inEnv = mergeAllVarEnvs typeEnv [aVaenv, bVaenv]
+          (outEnv, t) = intersectTypesWithVarEnv typeEnv inEnv a b
+          newBindings = H.filter (not . isTypeVar) $ H.difference outEnv inEnv
+      in (outEnv, if H.null newBindings then t else substituteKeep newBindings t)
     subValidate (vev, subTp) = if isBottomType subTp then Nothing else Just (vev, subTp)
 
 intersectPartials :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> (TypeVarArgEnv, [PartialType])
