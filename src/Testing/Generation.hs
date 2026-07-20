@@ -97,8 +97,30 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens >>= (return . completeDataPartia
     withRandomArgModes t = return t
 
     gens = if graphEmpty cg
-      then [genBasic, genConst]
-      else [genBasic, genCGOld, genCG, genCGRel, genObjM, genObj, genConst]
+      then [genBasic, genConst, genMultiConst]
+      else [genBasic, genCGOld, genCG, genCGRel, genObjM, genObj, genConst, genMultiConst]
+
+    -- Unions of several constants, and constants joined with a positive partial. Single-constant
+    -- 'genConst' never exercises the multi-constant union paths or the constant-not-covered-by-top
+    -- expansion in 'unionTypesWithEnv'\/'intersectTypesWithVarEnv'.
+    genMultiConst :: Gen Type
+    genMultiConst = do
+      cs <- HG.list (linear 1 3) genConstant
+      leafs <- if nullObjectMap objMap then return H.empty else HG.choice [return H.empty, someLeafs]
+      return $ UnionType Nothing leafs (nubConsts cs)
+      where
+        nubConsts = foldr (\c acc -> if c `elem` acc then acc else c : acc) []
+        someLeafs = do
+          t <- genObj
+          return $ case t of
+            UnionType Nothing ls [] -> ls
+            _                       -> H.empty
+
+    genConstant :: Gen Constant
+    genConstant = HG.choice [ CInt <$> HG.integral (linear (-100) 100)
+                            , CFloat <$> HG.double (linearFrac (-100) 100)
+                            , CStr <$> HG.string (linear 0 5) HG.alpha
+                            , CChar <$> HG.unicode ]
 
     -- Find all functions with single argument having thisKey
     typePropFunctions = mapMaybe checkFunction $ flatObjectMap objMap

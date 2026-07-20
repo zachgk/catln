@@ -3219,6 +3219,11 @@ intersectTypesWithVarEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Typ
 intersectTypesWithVarEnv TypeEnv{teDebug=True} _ l r | trace (printf "[INTERSECT] %s ∩ %s" (show l) (show r)) False = undefined
 intersectTypesWithVarEnv _ vaenv PTopType t = (vaenv, t)
 intersectTypesWithVarEnv _ vaenv t PTopType = (vaenv, t)
+-- ⊥ absorbs: @X ∩ ⊥ = ⊥@ for any @X@. Must precede the 'TypeVar' clause below, which would
+-- otherwise intercept @$a ∩ ⊥@ and record @$a ↦ ⊥@ while returning the bare @$a@ — reading as ⊤
+-- once the env is dropped (a self-difference @$a − $a = $a ∩ ¬$a@ then wrongly keeps the var).
+intersectTypesWithVarEnv _ vaenv _ BottomType = (vaenv, BottomType)
+intersectTypesWithVarEnv _ vaenv BottomType _ = (vaenv, BottomType)
 -- Mixed type (both top and pos non-empty): distribute intersection over union
 -- (top ∪ pos) ∩ t = (top ∩ t) ∪ (pos ∩ t)
 intersectTypesWithVarEnv typeEnv vaenv (UnionType (Just topData) pos cs) t2
@@ -3258,8 +3263,6 @@ intersectTypesWithVarEnv typeEnv vaenv tv@(TypeVar v _) t
   where isSelfVar var (TypeVar var' _) = var' == var
         isSelfVar _   _                = False
 intersectTypesWithVarEnv typeEnv vaenv t tv@TypeVar{} = intersectTypesWithVarEnv typeEnv vaenv tv t
-intersectTypesWithVarEnv _ vaenv _ BottomType = (vaenv, BottomType)
-intersectTypesWithVarEnv _ vaenv BottomType _ = (vaenv, BottomType)
 -- PosPartials with constants ∩ Top: handle constant exclusion before leafs logic
 intersectTypesWithVarEnv typeEnv vaenv (UnionType Nothing posLeafs posConsts) t2@(UnionType (Just (preds, negLeafs)) (H.null -> True) negConsts)
   | not (null posConsts) || not (null negConsts) =
