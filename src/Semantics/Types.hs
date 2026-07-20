@@ -3371,6 +3371,14 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
 
     differencePartial :: PartialType -> PartialType -> [PartialType]
     differencePartial p1 p2 | p1 == p2 = []
+    -- @p1 ⊆ p2 ⟹ p1 − p2 = ∅@. The syntactic @p1 == p2@ above only catches identical partials;
+    -- this also cancels a partial contained in the neg up to variable renaming or field widening —
+    -- e.g. a @Cons[/T=$_a](head=$x, tail=…)@ minus the class member @Cons[/T=$_b](head=$y, tail=…)@,
+    -- whose free element\/field variables all read as ⊤, so the pos IS the member. Without this the
+    -- per-field 'subtractElems' produces spurious variable-vs-variable escape leafs (@$x − $y@ never
+    -- proves ∅) and the difference wrongly keeps a partial its own subtype relation calls covered.
+    -- Uses the precise partial subtype (this env has 'teArgModeProjection' False).
+    differencePartial p1 p2 | isSubPartialOfWithEnv typeEnv vaenv p1 p2 = []
     differencePartial p1@PartialType{ptArgs=posArgs, ptArgMode=PtArgExact} PartialType{ptArgs=negArgs, ptArgMode=PtArgExact} | H.keysSet posArgs /= H.keysSet negArgs = [p1]
     -- PtArgAny pos minus PtArgExact neg: pos = {S ⊇ posArgs}, neg = {S = negArgs}. The only
     -- arg-set of pos that neg can cover is exactly negArgs, which requires posArgs ⊆ negArgs.
@@ -3412,10 +3420,18 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
             BottomType -> Nothing
             argVal'    -> Just $ p1{ptArgs=H.insert argName argVal' (ptArgs p1)}
           Nothing -> Nothing
+        -- Mirror 'subtractArg': skip a neg type-parameter the pos partial does not itself
+        -- constrain. Defaulting a missing pos var to ⊤ and subtracting (⊤ − negVar) manufactured
+        -- a spurious narrowed leaf — e.g. the universe @Cons{}@ minus the class member
+        -- @Cons(…, /T=$T)@ produced @Cons[/T = ⊤−$T = ∅]@, a bottom-element partial that then
+        -- emptied any intersection against it (a partial-application subset @Cons(head)@ read as
+        -- ⊆ its class by difference while intersect/subtype correctly read it as disjoint).
         subtractVar (_, PTopType) = Nothing
-        subtractVar (varName, negVarVal) = case H.lookupDefault PTopType varName (ptVars p1) of
-          BottomType -> Nothing
-          varVal' -> Just p1{ptVars=H.insert varName (snd $ differenceTypeWithEnv typeEnv vaenv varVal' negVarVal) (ptVars p1)}
+        subtractVar (varName, negVarVal) = case H.lookup varName (ptVars p1) of
+          Just posVarVal -> case snd $ differenceTypeWithEnv typeEnv vaenv posVarVal negVarVal of
+            BottomType -> Nothing
+            varVal'    -> Just p1{ptVars=H.insert varName varVal' (ptVars p1)}
+          Nothing -> Nothing
 
 -- | Difference of two types (t1 − t2 = t1 ∩ ¬t2).
 differenceTypeWithEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> (TypeVarArgEnv, Type)

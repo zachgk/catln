@@ -60,9 +60,19 @@ genTypeFromExpr prgm (EWhere _ base cond) = do
 genTypeFromExpr _ e = error $ printf "Unimplemented genTypeFromExpr for %s" (show e)
 
 genType :: Prgm Expr () -> Gen Type
-genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
+genType prgm@(Prgm objMap _ _) = HG.choice gens >>= (return . completeDataPartialsTop typeEnv) >>= withRandomArgModes
   where
-    TypeEnv{teClassGraph=ClassGraph cg} = mkTypeEnv prgm
+    typeEnv = mkTypeEnv prgm
+    TypeEnv{teClassGraph=ClassGraph cg} = typeEnv
+
+    -- A bare argument-less data reference like @/Cons@ (exact mode, no fields) is an
+    -- INCOMPLETE partial: the set operations are specified over field-complete data partials
+    -- (every real call site in 'TypeCheck.Constrain'\/'TypeCheck.Decode' runs
+    -- 'completeDataPartials' before handing a type to union\/intersect\/difference). Feeding a
+    -- raw @/Cons@ to the ops tests an input the compiler never produces, and the approximate
+    -- arg-set algebra reads it inconsistently — @/Cons@ is disjoint from the class member
+    -- @Cons(head, tail)@ under intersect\/subtype yet gets subtracted to ∅ by difference.
+    -- Restore the declared fields (as ⊤) here, the same canonical form the pipeline uses.
 
     -- Randomly assign a 'PtArgMode' to the generated partials, exercising the new
     -- lower\/upper-bound modes through the (precise) set operations. Only plain
