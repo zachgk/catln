@@ -595,6 +595,11 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propComplementInverse" (p $ propComplementInverse gPrgm)
       , HG.testProperty "propDifferenceIdentity" (p $ propDifferenceIdentity gPrgm)
       , HG.testProperty "propDifferenceSubset" (p $ propDifferenceSubset gPrgm)
+      -- Disabled: these two exact set-identities (A∩B = A−(A−B) and A−B = A−(A∩B)) require the
+      -- difference operator to be exact, but @differenceTypeEnv@ is deliberately conservative for
+      -- relation types — @~/Cons − /Cons..@ stays an UNREDUCED symbolic subtraction, and two such
+      -- forms differing only in arg-mode (@/Cons..@ vs @/Cons@) are not recognised as equal. Making
+      -- rel-type difference exact is out of scope; left off pending that work.
       -- , HG.testProperty "propIntersectByDifference" (p $ propIntersectByDifference gPrgm)
       -- , HG.testProperty "propDifferenceByIntersection" (p $ propDifferenceByIntersection gPrgm)
       , HG.testProperty "propParamClassCovariant" (p $ propParamClassCovariant gPrgm)
