@@ -60,19 +60,9 @@ genTypeFromExpr prgm (EWhere _ base cond) = do
 genTypeFromExpr _ e = error $ printf "Unimplemented genTypeFromExpr for %s" (show e)
 
 genType :: Prgm Expr () -> Gen Type
-genType prgm@(Prgm objMap _ _) = HG.choice gens >>= (return . completeDataPartialsTop typeEnv) >>= withRandomArgModes
+genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
   where
-    typeEnv = mkTypeEnv prgm
-    TypeEnv{teClassGraph=ClassGraph cg} = typeEnv
-
-    -- A bare argument-less data reference like @/Cons@ (exact mode, no fields) is an
-    -- INCOMPLETE partial: the set operations are specified over field-complete data partials
-    -- (every real call site in 'TypeCheck.Constrain'\/'TypeCheck.Decode' runs
-    -- 'completeDataPartials' before handing a type to union\/intersect\/difference). Feeding a
-    -- raw @/Cons@ to the ops tests an input the compiler never produces, and the approximate
-    -- arg-set algebra reads it inconsistently — @/Cons@ is disjoint from the class member
-    -- @Cons(head, tail)@ under intersect\/subtype yet gets subtracted to ∅ by difference.
-    -- Restore the declared fields (as ⊤) here, the same canonical form the pipeline uses.
+    TypeEnv{teClassGraph=ClassGraph cg} = mkTypeEnv prgm
 
     -- Randomly assign a 'PtArgMode' to the generated partials, exercising the new
     -- lower\/upper-bound modes through the (precise) set operations. Only plain
@@ -193,6 +183,35 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens >>= (return . completeDataPartia
         addPred partial prop = do
           propType <- genTypeFromExpr prgm prop
           return $ partialAddPreds partial (PredsOne $ PredExpr propType)
+
+-- | Generates a type structurally RELATED to a given one. When the input is a positive-partial
+-- union, one leaf is mutated along a single dimension: its argument mode flipped among the three
+-- set-exact modes, or one declared field widened to ⊤ \/ narrowed to another type. Otherwise it
+-- falls back to an independent 'genType'.
+--
+-- Two independently generated types almost always carry different names and so are trivially
+-- disjoint; the difference and intersection then short-circuit before touching the per-field
+-- machinery. Drawing the second operand as a same-name single-field mutation instead forces the
+-- pair through 'subtractArg'\/'subtractVar', 'looseArgModeRejects' and 'argModeCovers' — the
+-- precise arg-set-interval reasoning that is otherwise never exercised.
+genRelatedType :: Prgm Expr () -> Type -> Gen Type
+genRelatedType prgm a = case a of
+  UnionType Nothing leafs [] | not (H.null leafs) -> do
+    p  <- HG.element (splitUnionType leafs)
+    p' <- mutate p
+    return $ completeDataPartialsTop (mkTypeEnv prgm) $ singletonType p'
+  _ -> genType prgm
+  where
+    -- the three modes that are exact under all set operations (see 'genType.withRandomArgModes')
+    safeModes = [PtArgExact, PtArgAny, PtArgMode False True]
+    mutate p = HG.choice $
+      [ do m <- HG.element safeModes
+           return p{ptArgMode = if H.null (ptArgs p) then m{ptArgLb=True} else m}
+      ] ++ [ mutateArg p | not (H.null (ptArgs p)) ]
+    mutateArg p = do
+      k       <- HG.element (H.keys (ptArgs p))
+      newVal  <- HG.choice [return PTopType, singletonType <$> genPartialType prgm]
+      return p{ptArgs = H.insert k newVal (ptArgs p)}
 
 genPartialType :: Prgm Expr () -> Gen PartialType
 genPartialType prgm@(Prgm objMap _ _) = do

@@ -184,7 +184,7 @@ propDifferenceShrinks gPrgm = property $ do
   prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
-  b <- forAll $ genType prgm
+  b <- forAll $ HG.choice [genType prgm, genRelatedType prgm a]
   let diff' = differenceTypeEnv typeEnv a b
   annotate $ printf "diff' = %s" (show diff')
   assert $ isSubtypeOf typeEnv diff' a
@@ -248,7 +248,7 @@ propDifferenceSubset gPrgm = property $ do
   prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
-  b <- forAll $ genType prgm
+  b <- forAll $ HG.choice [genType prgm, genRelatedType prgm a]
   let intersected = intersectTypes typeEnv a b
   let overlapping = intersected /= BottomType
   annotate $ printf "does a overlaps b? %s" (show overlapping)
