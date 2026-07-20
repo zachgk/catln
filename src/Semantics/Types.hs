@@ -299,6 +299,14 @@ class TypeGraph tg where
   -- back to its full field form (@Box[T](v=$T)@).
   typeGraphData :: TypeEnv tg -> TypeName -> [PartialType]
 
+  -- | The declared RESULT type of an applied form — the destination of its DECLARATION
+  -- arrow(s) resolved against the source partial. A raw/recursive applied form
+  -- (@sorted(raw)@, @fmap(raw)@) uses this as the type it will settle to, so the reach can
+  -- follow any arrow the settled value could reach even before it settles (see
+  -- 'Semantics.TypeGraph.presentRawArgResults'). An undeclared function has no declaration
+  -- arrow and so starts at 'PTopType', refining as inference narrows its arms.
+  typeGraphDeclaredResult :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> Type
+
 data EmptyTypeGraph = EmptyTypeGraph
 instance Semigroup EmptyTypeGraph where
   _ <> _ = EmptyTypeGraph
@@ -306,6 +314,7 @@ instance TypeGraph EmptyTypeGraph where
   typeGraphQueryWithReason _ _ _ = []
   typeGraphExpandPredExpr _ _ _ = Nothing
   typeGraphData _ _ = []
+  typeGraphDeclaredResult _ _ _ = PTopType
 
 typeGraphQuery :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> [Type]
 typeGraphQuery typeEnv vaenv src = map (\(_, _, dest) -> dest) $ typeGraphQueryWithReason typeEnv vaenv src
@@ -2843,9 +2852,46 @@ compactType typeEnv vaenv (UnionType Nothing partials consts) =
 -- nested inside an argument (e.g. the @tail@ of a @Cons@) is never canonicalised.
 compactPartialArgs :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType
 compactPartialArgs typeEnv vaenv p = p
+  -- Self-ref capping is applied ONLY to type-VARIABLE slots ('ptVars'), never argument slots
+  -- ('ptArgs'). A recursive value's structure lives in its ARGUMENTS — a @ConsList@'s @tail=ConsList@,
+  -- a @reverseOnto@'s accumulator @acc@ — and is load-bearing. The spurious over-unrolling to cap is a
+  -- non-class arrow's result re-nesting into its own type PARAMETER (@operator++@'s @/T@), which no
+  -- value structure depends on.
   { ptArgs = fmap (compactType typeEnv vaenv) (ptArgs p)
-  , ptVars = fmap (compactType typeEnv vaenv) (ptVars p)
+  , ptVars = fmap (compactType typeEnv vaenv . settleSelfRefRedundant typeEnv vaenv pName) (ptVars p)
   }
+  where pName = makeAbsoluteName (ptName p)
+
+-- | Drop an over-unrolled DIRECT self-referential leaf from a partial's own nested argument\/variable
+-- union when its settled form is already covered by a non-self sibling. An arrow's raw applied form is
+-- kept in the reaches for eval dispatch, but when it is tied back into one of its OWN parameters — a
+-- non-class arrow (@operator++ -> $T@) whose raw result feeds its own @/T@ — it re-nests one level per
+-- constraint epoch and never reaches a fixpoint ("Reached runConstraints limit"). Two signals gate the
+-- drop, and BOTH are required to avoid removing anything real:
+--
+--   * SELF-REFERENCE — the leaf's name equals @pName@, the enclosing partial's name (the immediate
+--     cycle @operator++[/T=(operator++ + …)]@). A NON-self recursive tail (@Cons(tail=rangeFrom(..))@,
+--     a different name) is the genuine structure of a recursive list and is left alone.
+--   * COVERAGE — the leaf REDUCES (through its arrows) to a type already present among the non-self
+--     sibling leaves, so removing it loses nothing. A self leaf that does not reduce, or whose reduced
+--     form is not covered, is a real value and is kept.
+--
+-- Applied only at NESTED positions (via 'compactPartialArgs'), so the top-level raw forms eval's
+-- dispatch keying still needs are untouched.
+settleSelfRefRedundant :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> TypeName -> Type -> Type
+settleSelfRefRedundant typeEnv vaenv pName (UnionType Nothing pos consts)
+  | not (null selfRefs)
+  = UnionType Nothing (joinUnionType (others ++ filter keep selfRefs)) consts
+  where
+    leaves = splitUnionType pos
+    (selfRefs, others) = L.partition (\l -> makeAbsoluteName (ptName l) == pName) leaves
+    coveredType = UnionType Nothing (joinUnionType others) consts
+    keep l = let sl = singletonType l
+                 reduced = case typeGraphQueryWithReason typeEnv vaenv l of
+                             []    -> sl
+                             dests -> unionAllTypesWithEnv typeEnv vaenv [d | (_, _, d) <- dests]
+             in reduced == sl || not (isSubtypeOfWithEnv typeEnv vaenv reduced coveredType)
+settleSelfRefRedundant _ _ _ t = t
 
 -- | Fold an explicit union of partials back into a recursive class predicate when the
 -- union is semantically equal to that class's expansion (the inverse of
@@ -3639,6 +3685,33 @@ resolveTypeSelfRefs = go
     isResolvable (TypeVar _ _) = False
     isResolvable PTopType      = False
     isResolvable _             = True
+
+-- | Relate an arrow's declared result to the type variables the source bound. A method whose
+-- result is a class parameterized by the RECEIVER's own type — @:$T.eq[$T -> Eq] -> Eqv[$T]@ — loses
+-- that link at desugar: a bare @Eqv[$T]@ becomes @Eqv[/T=Top]@ (the var reads as the parameter NAME,
+-- not a value bound to it), so 'arrowDestType's 'substituteTVExt' finds no @$/T@ occurrence to fill
+-- and the element stays Top. Re-link each Top class-parameter slot whose NAME is a type variable the
+-- source bound ('vaenv') to that binding — @Eqv[/T=Top]@ under @/T ↦ Integer@ becomes
+-- @Eqv[/T=Integer]@, carrying the element the receiver determines. A slot with no matching bound var
+-- stays Top (a genuinely open parameter), and a non-Top slot is left to 'substituteTVExt' (it already
+-- holds its value or a resolvable var).
+relateArrowVars :: TypeVarArgEnv -> Type -> Type
+relateArrowVars vaenv = go
+  where
+    go (UnionType mtop pos consts) =
+      UnionType (fmap goTop mtop) (joinUnionType $ map goLeaf $ splitUnionType pos) consts
+    go t = t
+    goTop (preds, negLeafs) =
+      (mapTypePreds (mapTypePred goLeaf) preds, joinUnionType $ map goLeaf $ splitUnionType negLeafs)
+    goLeaf p@PartialType{ptVars, ptArgs, ptPreds} = p{
+        ptVars  = H.mapWithKey relateVar ptVars,
+        ptArgs  = fmap go ptArgs,
+        ptPreds = mapTypePreds (mapTypePred goLeaf) ptPreds
+      }
+    relateVar k PTopType = case H.lookup (TVVar k) vaenv of
+      Just b | b /= PTopType -> b
+      _                      -> PTopType
+    relateVar _ v = go v
 
 -- | Replaces 'TVExt' 'TVVar' references in a 'Type' using the provided 'TypeVarEnv'.
 -- Thin wrapper over 'substituteTVExt'.

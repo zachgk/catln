@@ -31,8 +31,26 @@ newtype ObjArrTypeGraph e m = ObjArrTypeGraph (ObjectMap e m)
 instance Semigroup (ObjArrTypeGraph e m) where
   (ObjArrTypeGraph a) <> (ObjArrTypeGraph b) = ObjArrTypeGraph (a <> b)
 instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGraph e m) where
-  typeGraphQueryWithReason typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName} = concatMap tryTArrow $ flatObjectMapItem $ H.lookupDefault mempty ptName tg
+  typeGraphQueryWithReason typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName} = concatMap tryTArrow $ mostSpecificPromises $ flatObjectMapItem $ H.lookupDefault mempty ptName tg
     where
+      -- Each declaration/definition is a PROMISE: given an input of one type, an output of a certain
+      -- type can be produced. Among the promises the source triggers, keep only the MOST HELPFUL — an
+      -- arrow whose object (input type) is a strict SUPERTYPE of another triggered arrow's object is
+      -- dominated and dropped. The abstract accessor DECLARATION @:$T.eq -> Eqv[$T]@ (object
+      -- @eq(this=$T->Eq)@, result the class-top @∀Eqv@) is thus dropped for a concrete source whenever
+      -- the specific DEFINITION @:Integer.eq= IntOrdering@ (object @eq(this=Integer)@) also triggers,
+      -- so the concrete rewrite is not absorbed by the declaration's class-top in the reaches union.
+      -- Declarations and definitions compete on equal footing; specificity alone decides, and equally
+      -- specific promises (e.g. a recursive function's own decl and def) are both kept.
+      mostSpecificPromises arrows = filter (\oa -> not (any (`strictlyDominates` oa) triggered)) triggered
+        where triggered = filter accepts arrows
+      accepts oa@ObjArr{oaArr=Just{}} = not $ isBottomType $ intersectTypesEnv typeEnv vaenv (singletonType partial) (arrowObjType oa)
+      accepts _ = False
+      arrowObjType oa = getMetaType $ getExprMeta $ oaObjExpr oa
+      -- @a@ strictly dominates @b@ when a's object is a strict subtype of b's (a is more specific).
+      strictlyDominates a b = let oa' = arrowObjType a; ob = arrowObjType b
+                              in oa' /= ob && isSubtypeOfWithEnv typeEnv vaenv oa' ob
+
       tryTArrow :: (ExprClass e, MetaDat m, Show m, Show (e m)) => ObjArr e m -> [(String, Type, Type)]
       tryTArrow oa@ObjArr{oaArr=Just{}} = do
         -- It is possible to send part of a partial through the arrow, so must compute the valid part
@@ -60,6 +78,35 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
         UnionType Nothing leafs _ -> splitUnionType leafs
         _                         -> []
       dataPartials ObjArr{oaArr=Just{}} = []
+
+  typeGraphDeclaredResult typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName=pName} =
+    case declDests of
+      (_:_) -> unionAllTypes typeEnv declDests
+      -- No declaration (e.g. @sorted@): the return type is INFERRED from the definition arms —
+      -- 'PTopType' until they resolve, refining as they do. Each arm dest's own raw applied leaves
+      -- are then replaced by THEIR declared result (one level, declared-only, so this terminates):
+      -- @sorted@'s Cons arm dest @insert(raw)@ becomes @∀ConsList@, giving @sorted@ the @Cons@ its
+      -- arms produce so a requirement built from it admits @Cons@ instead of collapsing to @Nil@.
+      []    -> case [ armDest
+                    | oa@ObjArr{oaArr=Just{}} <- omiDefs item
+                    , not $ isBottomType $ intersectTypesEnv typeEnv vaenv (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa)
+                    , armDest <- arrowDestType typeEnv partial oa ] of
+                 []       -> PTopType
+                 defDests -> unionAllTypes typeEnv (defDests ++ concatMap declResultOfRawLeaves defDests)
+    where
+      item = H.lookupDefault mempty pName tg
+      declDests = [ dest
+                  | oa@ObjArr{oaArr=Just{}} <- omiDecls item
+                  , not $ isBottomType $ intersectTypesEnv typeEnv vaenv (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa)
+                  , dest <- arrowDestType typeEnv partial oa ]
+      -- The declared result of each raw applied leaf in a type (declared functions only — no
+      -- recursion into undeclared ones, keeping this bounded).
+      declResultOfRawLeaves (UnionType Nothing ls _) =
+        [ d | l <- splitUnionType ls, null (typeGraphData typeEnv (ptName l))
+            , oa@ObjArr{oaArr=Just{}} <- omiDecls (H.lookupDefault mempty (ptName l) tg)
+            , not $ isBottomType $ intersectTypesEnv typeEnv vaenv (singletonType l) (getMetaType $ getExprMeta $ oaObjExpr oa)
+            , d <- arrowDestType typeEnv l oa ]
+      declResultOfRawLeaves _ = []
 
 newtype CTSSConfig = CTSSConfig {
   -- TODO Replace stack path with (CTSSStackConfig = CTSSStackTest | CTSSStackBuild DirString BranchString) when adding support for auto-downloading core
@@ -163,7 +210,11 @@ arrowDestTypeBase resolveAppFields typeEnv src oa@ObjArr{oaArr=Just (oaArrExpr, 
       where
         substitute = substituteTVExt vaenv
         expr' = fmap (substitute . getExprType) oaArrExpr
-        arr' = substitute $ getMetaType oaM
+        -- Re-link the declared result's Top class-parameter slots to the type variables the source
+        -- bound before substituting: an accessor result parameterized by the receiver's own type
+        -- (@:$T.eq -> Eqv[$T]@) desugars to @Eqv[/T=Top]@, dropping the @$/T@ link, so without this
+        -- the element cannot follow the receiver (see 'relateArrowVars').
+        arr' = substitute $ relateArrowVars vaenv $ getMetaType oaM
         joined = fromMaybe arr' expr'
         -- Only rewrite a body that directly CONSTRUCTS a data value (@Cons(head=x)@): its applied
         -- arguments are the constructor's fields. A function/operator body (@a && b@, @f(a=..)@) has
