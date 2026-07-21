@@ -2397,9 +2397,21 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing subPartials []) t2@(Union
 isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing leafs cs@(_:_)) t2 =
   isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing leafs []) t2
   && all (\c -> constantInType typeEnv vaenv c t2) cs
--- NegPartials ⊆ NegPartials: (U_p1-n1) ⊆ (U_p2-n2).
--- Same predicates: sufficient iff n2 ⊆ n1.
--- Differing predicates: sufficient iff predImplies p1 p2 and n2 ⊆ n1; otherwise False.
+-- Pure NegPartials-top ⊆ pure NegPartials-top, SAME predicates: (U_p − n1) ⊆ (U_p − n2) holds EXACTLY
+-- iff (U_p ∩ n2) ⊆ n1. Only the part of n2 inside the shared predicate universe matters — an excluded
+-- leaf outside U_p removes nothing from either side, and one that differs from an n1 leaf only in
+-- arg-mode/field-completion still excludes the same U_p members. This is what makes @∀Bag − /Cons..@
+-- and @∀Bag − /Cons[full]@ compare equal (both exclude @∀Bag ∩ /Cons.. = /Cons[full]@). Matched only
+-- for the PURE-top form (no positive leafs, no excluded constants on either side), where the identity
+-- is exact; the general clause below keeps its conservative @n2 ⊆ n1@ for the mixed/constant-bearing
+-- forms (whose full types the symbolic fallback still needs, via its @t1@/@t2@ bindings).
+isSubtypeOfWithEnv typeEnv vaenv (UnionType (Just (p1, n1)) (H.null -> True) []) (UnionType (Just (p2, n2)) (H.null -> True) [])
+  | p1 == p2 = isSubtypeOfWithEnv typeEnv vaenv (intersectTypesEnv typeEnv vaenv (TopType H.empty p1) (UnionType Nothing n2 [])) (UnionType Nothing n1 [])
+-- NegPartials ⊆ NegPartials: (U_p1-n1) ⊆ (U_p2-n2). The positive leafs and excluded constants of t1/t2
+-- are captured by the @t1@/@t2@ bindings and consulted by the symbolic-coverage and re-expression
+-- fallbacks below (not ignored); the cheap same-/differing-predicate guards decide the common cases.
+-- Same predicates: sufficient iff n2 ⊆ n1 (pure-top same predicates are decided exactly above).
+-- Differing predicates: sufficient iff predImplies p1 p2 and n2 ⊆ n1; otherwise the symbolic decision.
 isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (p1, n1)) _ _) t2@(UnionType (Just (p2, n2)) _ _)
   | p1 == p2             = isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing n2 []) (UnionType Nothing n1 [])
   | isPredsContradictory p1 = True  -- t1 = ∅ ⊆ anything
@@ -2709,15 +2721,32 @@ compactType typeEnv vaenv t@(UnionType (Just (preds, negPartials)) posLeafs [])
       -- ¬(contradictory) = PredsNone = everything → PTopType
       (PredsNot p) | isPredsContradictory p -> PTopType
       _ -> t
--- Top component with non-empty neg and non-trivial preds
--- If the negated partials don't intersect with the predicated domain, the exclusion is vacuous.
--- Use intersection check (A ∩ B = ∅) rather than subtype check (A ⊆ ¬B) since the latter
--- can fail to prove disjointness when the ¬B expansion is approximate (hasOutside=True).
-compactType typeEnv vaenv t@(UnionType (Just (preds, negPartials)) posLeafs [])
-  | not (H.null negPartials) && H.null posLeafs && preds /= PredsNone =
-      if isBottomType $ intersectTypesEnv typeEnv vaenv (UnionType Nothing negPartials []) (TopType H.empty preds)
-        then UnionType (Just (preds, H.empty)) H.empty []
-        else t
+-- Top component with non-trivial preds and some exclusion (negated partials and/or excluded
+-- constants), no positive leafs. This is the residual @U_preds − negPartials − negConsts@ that a
+-- relation/class-top difference (@t1 ∩ ¬t2@) produces. Canonicalise it:
+--  * Drop any exclusion disjoint from the predicated domain — excluding something not in the set is a
+--    no-op (a negLeaf whose intersection with U_preds is ∅, or a negConst not a member of U_preds).
+--    This is what lets @~/Cons − /Nil@ collapse back to @~/Cons@. Use the intersection check
+--    (A ∩ B = ∅) rather than a subtype check for the leafs since the latter can fail to prove
+--    disjointness when the ¬B expansion is approximate (hasOutside=True).
+--  * If the SURVIVING negated partials cover the ENTIRE predicated domain (@U_preds ⊆ negPartials@)
+--    the whole thing is empty. This is what makes @~/Cons − /Cons..@ reduce: it is
+--    @Top(PredRel /Cons, {/Cons..})@ and @~/Cons ⊆ /Cons..@, so ∅ (without this the difference stays
+--    an unreduced symbolic subtraction). 'isSubtypeOfWithEnv' is sound (no false positives), so this
+--    never empties a genuinely inhabited residual.
+compactType typeEnv vaenv t@(UnionType (Just (preds, negPartials)) posLeafs negConsts)
+  | H.null posLeafs && preds /= PredsNone
+  , not (H.null negPartials) || not (null negConsts) =
+      if not (H.null keptNegLeafs) && isSubtypeOfWithEnv typeEnv vaenv predUniverse (UnionType Nothing keptNegLeafs [])
+        then BottomType
+      else if keptNegLeafs == negPartials && keptNegConsts == negConsts
+        then t
+      else compactType typeEnv vaenv $ UnionType (Just (preds, keptNegLeafs)) H.empty keptNegConsts
+  where
+    predUniverse  = TopType H.empty preds
+    keptNegLeafs  = joinUnionType $ filter negLeafIntersects $ splitUnionType negPartials
+    keptNegConsts = filter (\c -> constantInType typeEnv vaenv c predUniverse) negConsts
+    negLeafIntersects p = not $ isBottomType $ intersectTypesEnv typeEnv vaenv (singletonType p) predUniverse
 -- ¬(contradictory) = everything: top component is U, simplify to PTopType
 compactType typeEnv vaenv (UnionType (Just (PredsNot p, negLeafs)) posLeafs cs)
   | isPredsContradictory p = compactType typeEnv vaenv (UnionType (Just (PredsNone, negLeafs)) posLeafs cs)

@@ -268,7 +268,7 @@ propIntersectByDifference gPrgm = property $ do
   prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
-  b <- forAll $ genType prgm
+  b <- forAll $ HG.choice [genType prgm, genRelatedType prgm a]
   let intersect' = intersectTypes typeEnv a b
   annotate $ printf "intersect' = %s" (show intersect')
   let subDiff' = differenceTypeEnv typeEnv a b
@@ -284,7 +284,7 @@ propDifferenceByIntersection gPrgm = property $ do
   prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
-  b <- forAll $ genType prgm
+  b <- forAll $ HG.choice [genType prgm, genRelatedType prgm a]
   let diff' = differenceTypeEnv typeEnv a b
   annotate $ printf "diff' = %s" (show diff')
   let subInter' = intersectTypes typeEnv a b
@@ -595,11 +595,15 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propComplementInverse" (p $ propComplementInverse gPrgm)
       , HG.testProperty "propDifferenceIdentity" (p $ propDifferenceIdentity gPrgm)
       , HG.testProperty "propDifferenceSubset" (p $ propDifferenceSubset gPrgm)
-      -- Disabled: these two exact set-identities (A∩B = A−(A−B) and A−B = A−(A∩B)) require the
-      -- difference operator to be exact, but @differenceTypeEnv@ is deliberately conservative for
-      -- relation types — @~/Cons − /Cons..@ stays an UNREDUCED symbolic subtraction, and two such
-      -- forms differing only in arg-mode (@/Cons..@ vs @/Cons@) are not recognised as equal. Making
-      -- rel-type difference exact is out of scope; left off pending that work.
+      -- Disabled: these two exact set-identities (A∩B = A−(A−B) and A−B = A−(A∩B)) now hold for
+      -- relation/class-top difference (see the compactType coverage-reduction and the pure-top
+      -- @isSubtypeOf@ clause), but still fail on a SEPARATE arg-mode gap: the difference of two
+      -- arg-mode intervals is not representable as positive partials. @/x.. − /x[exact]@ ("x with ≥1
+      -- extra arg") needs a NEGATIVE partial, but @differencePartialLeafs@ only emits positive
+      -- @UnionType Nothing@ forms, so it returns ∅ — unsound, since @isSubtypeOf@ correctly reports
+      -- @/x.. ⊋ /x[exact]@. The root fix is declaration-aware normalisation of @..@/@??@ partials
+      -- (vacuous on the declaration-complete partials the generator produces), which overlaps the
+      -- completion pass of the (separate) unsealed-class-∪-constant task. Left off pending that work.
       -- , HG.testProperty "propIntersectByDifference" (p $ propIntersectByDifference gPrgm)
       -- , HG.testProperty "propDifferenceByIntersection" (p $ propDifferenceByIntersection gPrgm)
       , HG.testProperty "propParamClassCovariant" (p $ propParamClassCovariant gPrgm)
