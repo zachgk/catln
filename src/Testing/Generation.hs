@@ -92,7 +92,7 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
 
     gens = if graphEmpty cg
       then [genBasic, genConst, genMultiConst]
-      else [genBasic, genCGOld, genCG, genCGRel, genObjM, genObj, genConst, genMultiConst, genPredShape]
+      else [genBasic, genCGOld, genCG, genCGRel, genObjM, genObj, genConst, genMultiConst, genPredShape, genMixed]
 
     -- Compound predicate formulae: conjunctions (and negated conjunctions) of PredClass/PredRel
     -- atoms drawn from the class graph. Exercises P∨¬P=⊤ / P∧¬P=∅ and the De Morgan handling of
@@ -118,6 +118,29 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
 
     genPredShape :: Gen Type
     genPredShape = TopType H.empty <$> genPreds
+
+    -- Mixed types as direct inputs: a subtractive 'Just'-top component (predicates, negative
+    -- leafs, negative constants) unioned with positive leafs and constants. These arise as
+    -- intermediate results of the set operations; generating them directly exercises the
+    -- mixed-distribute intersection, the mixed-left subtype branch, and the mixed
+    -- compactType\/complement clauses as top-level inputs.
+    genMixed :: Gen Type
+    genMixed = do
+      preds     <- HG.choice [genPreds, genPreds, return PredsNone]
+      negLeafs  <- HG.choice [return H.empty, leafsOf genObj]
+      negConsts <- HG.choice [return [], nubConsts <$> HG.list (linear 1 2) genConstant]
+      posLeafs  <- HG.choice [return H.empty, leafsOf genObj]
+      posConsts <- HG.choice [return [], nubConsts <$> HG.list (linear 1 2) genConstant]
+      if H.null posLeafs && H.null negLeafs && preds == PredsNone && null negConsts && null posConsts
+        then genCG
+        else return $ UnionType (Just (preds, negLeafs, negConsts)) posLeafs posConsts
+      where
+        nubConsts = foldr (\c acc -> if c `elem` acc then acc else c : acc) []
+        leafsOf g = do
+          t <- g
+          return $ case t of
+            UnionType Nothing ls [] -> ls
+            _                       -> H.empty
 
     -- Unions of several constants, and constants joined with a positive partial. Single-constant
     -- 'genConst' never exercises the multi-constant union paths or the constant-not-covered-by-top
