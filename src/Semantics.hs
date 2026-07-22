@@ -79,6 +79,21 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
         _                         -> []
       dataPartials ObjArr{oaArr=Just{}} = []
 
+  -- The arg keysets come from the object EXPRESSION structure ('exprAppliedArgs' /
+  -- 'inExprSingleton' — the same keying every partial built from an expression uses), not
+  -- the expression's meta type, which need not be resolved. A relatively-spelled name (a
+  -- class-graph node's @#noCore@ vs the objMap's @/#noCore@) matches by
+  -- 'relativeNameFilter'; its realizable arg-sets are bounded by the union over every
+  -- matching declaration. A name matching no declaration is open world ('Nothing').
+  typeGraphArgKeys TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name = case H.lookup name tg of
+    Just item -> Just $ itemArgKeys item
+    Nothing   -> case relativeNameFilter name (H.keys tg) of
+      []    -> Nothing
+      names -> Just $ concatMap (itemArgKeys . (tg H.!)) names
+    where
+      itemArgKeys item = [ S.fromList [inExprSingleton (oaObjExpr a) | a <- exprAppliedArgs (oaObjExpr oa)]
+                         | oa <- flatObjectMapItem item ]
+
   typeGraphDeclaredResult typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName=pName} =
     case declDests of
       (_:_) -> unionAllTypes typeEnv declDests

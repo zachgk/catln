@@ -595,17 +595,8 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propComplementInverse" (p $ propComplementInverse gPrgm)
       , HG.testProperty "propDifferenceIdentity" (p $ propDifferenceIdentity gPrgm)
       , HG.testProperty "propDifferenceSubset" (p $ propDifferenceSubset gPrgm)
-      -- Disabled: these two exact set-identities (A∩B = A−(A−B) and A−B = A−(A∩B)) now hold for
-      -- relation/class-top difference (see the compactType coverage-reduction and the pure-top
-      -- @isSubtypeOf@ clause), but still fail on a SEPARATE arg-mode gap: the difference of two
-      -- arg-mode intervals is not representable as positive partials. @/x.. − /x[exact]@ ("x with ≥1
-      -- extra arg") needs a NEGATIVE partial, but @differencePartialLeafs@ only emits positive
-      -- @UnionType Nothing@ forms, so it returns ∅ — unsound, since @isSubtypeOf@ correctly reports
-      -- @/x.. ⊋ /x[exact]@. The root fix is declaration-aware normalisation of @..@/@??@ partials
-      -- (vacuous on the declaration-complete partials the generator produces), which overlaps the
-      -- completion pass of the (separate) unsealed-class-∪-constant task. Left off pending that work.
-      -- , HG.testProperty "propIntersectByDifference" (p $ propIntersectByDifference gPrgm)
-      -- , HG.testProperty "propDifferenceByIntersection" (p $ propDifferenceByIntersection gPrgm)
+      , HG.testProperty "propIntersectByDifference" (p $ propIntersectByDifference gPrgm)
+      , HG.testProperty "propDifferenceByIntersection" (p $ propDifferenceByIntersection gPrgm)
       , HG.testProperty "propParamClassCovariant" (p $ propParamClassCovariant gPrgm)
       , HG.testProperty "propSubtypeUnionVarSplit" (withDiscards 1000 $ p $ propSubtypeUnionVarSplit gPrgm)
       , HG.testProperty "propClassExpansionLeafSubtype" (withDiscards 1000 $ p $ propClassExpansionLeafSubtype gPrgm)

@@ -307,6 +307,15 @@ class TypeGraph tg where
   -- arrow and so starts at 'PTopType', refining as inference narrows its arms.
   typeGraphDeclaredResult :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> Type
 
+  -- | The declared arg-name sets for a type name, one keyset per object declaration (data
+  -- AND function objects, unlike 'typeGraphData'). An instance's args are always a subset
+  -- of some declared arg-set (partial application never adds args), so these bound the
+  -- realizable arg-sets of a moded partial (see 'normalizePtArgMode'). 'Nothing' when the
+  -- name has no declaration in the graph: its realizable arg-sets are then unknown (open
+  -- world) and no arg-mode reasoning may assume a bound.
+  typeGraphArgKeys :: TypeEnv tg -> TypeName -> Maybe [S.HashSet ArgName]
+  typeGraphArgKeys _ _ = Nothing
+
 data EmptyTypeGraph = EmptyTypeGraph
 instance Semigroup EmptyTypeGraph where
   _ <> _ = EmptyTypeGraph
@@ -1907,6 +1916,103 @@ argModesOverlap PartialType{ptArgs=aArgs, ptArgMode=PtArgMode aLb aUb} PartialTy
     ub' = aUb || bUb
     capKeys = (if aUb then H.keysSet aArgs else allKeys) `S.intersection` (if bUb then H.keysSet bArgs else allKeys)
 
+-- | The declared arg-keysets bounding a name's realizable arg-sets, when known.
+-- Object declarations come from 'typeGraphArgKeys'. A CLASS name has no object, but its
+-- positive-partial form (the class placeholder) is exactly the bare argless reference —
+-- a parameterized class carries type parameters in 'ptVars', never 'ptArgs' — so its only
+-- realizable arg-set is ∅; likewise the synthetic 'classPlaceholderLeaf' marker name,
+-- which is only ever built argless. An unknown name (neither declared nor a class) is
+-- open world.
+declaredArgKeys :: TypeGraph tg => TypeEnv tg -> TypeName -> Maybe [S.HashSet ArgName]
+declaredArgKeys typeEnv name = case typeGraphArgKeys typeEnv name of
+  Just kss -> Just kss
+  Nothing | H.member name (scClasses (teSatCache typeEnv)) -> Just [S.empty]
+          | nameStr name == classPlaceholderStr -> Just [S.empty]
+          | otherwise -> Nothing
+
+-- | Drops vacuous arg-mode interval bounds (see 'PtArgMode'), canonicalizing the mode
+-- without changing the partial's value set:
+--
+--   * an unset lower bound is vacuous with no listed args (the interval floor is ∅ either way);
+--   * an unset upper bound is vacuous when no declared arg-set strictly contains the listed
+--     args ('declaredArgKeys'): every realizable arg-set is a subset of some declared one, so
+--     no realizable arg-set lies strictly above the listed args and the interval collapses to
+--     its floor. This is what makes e.g. @/length(this=..)..@ ('relaxNameBoundArgs' widening)
+--     one set with @/length(this=..)@ — @/length@ declares no larger arg-set to relax into.
+--
+-- An unknown name (open world) keeps its bounds. Exact partials return instantly.
+normalizePtArgMode :: TypeGraph tg => TypeEnv tg -> PartialType -> PartialType
+normalizePtArgMode typeEnv p@PartialType{ptName, ptArgs, ptArgMode=PtArgMode lb ub}
+  | lb' && ub' = if ptArgMode p == PtArgExact then p else p{ptArgMode=PtArgExact}
+  | otherwise = p{ptArgMode=PtArgMode lb' ub'}
+  where
+    lb' = lb || H.null ptArgs
+    ub' = ub || case declaredArgKeys typeEnv ptName of
+      Just kss -> not $ any (H.keysSet ptArgs `strictSubsetOf`) kss
+      Nothing  -> False
+    strictSubsetOf a b = S.size a < S.size b && a `S.isSubsetOf` b
+
+-- | The finite list of arg-keysets a partial's arg-mode interval admits, when enumerable:
+-- an upper-bounded interval enumerates the subsets of its listed args directly; an
+-- upper-unbounded one is bounded by the name's declared arg-sets ('declaredArgKeys' —
+-- every realizable arg-set is a subset of a declared one). 'Nothing' only for an
+-- upper-unbounded interval on an unknown name (open world).
+ptIntervalArgKeys :: TypeGraph tg => TypeEnv tg -> PartialType -> Maybe [S.HashSet ArgName]
+ptIntervalArgKeys typeEnv PartialType{ptName, ptArgs, ptArgMode=PtArgMode lb ub}
+  | ub = Just $ if lb then [aKeys] else subsetsBetween S.empty aKeys
+  | otherwise = do
+      kss <- declaredArgKeys typeEnv ptName
+      let lo = if lb then aKeys else S.empty
+      return $ L.nub $ concat [subsetsBetween lo ks | ks <- kss, lo `S.isSubsetOf` ks]
+  where
+    aKeys = H.keysSet ptArgs
+    subsetsBetween lo hi = [lo `S.union` S.fromList extra | extra <- powerset $ S.toList $ hi `S.difference` lo]
+
+-- | Restricts a moded partial to one arg-set of its interval: the exact-mode partial with
+-- precisely those args, keeping the listed values and leaving unlisted args unconstrained (⊤).
+ptAtArgKeys :: PartialType -> S.HashSet ArgName -> PartialType
+ptAtArgKeys p@PartialType{ptArgs} ks = p{ptArgs=args', ptArgMode=PtArgExact}
+  where args' = H.mapWithKey (\k _ -> H.lookupDefault PTopType k ptArgs) (S.toMap ks)
+
+-- | Reads a partial's FREE var references as ⊤: a bare partial-local ('TVInt') reference
+-- in one of the partial's values names the partial's own var\/arg scope (or the ambient
+-- env); one bound in neither is free — it constrains nothing, so its value set is ⊤
+-- (the reading 'isSubtypeOfWithEnv' gives an UNBOUND var). Only a direct top-level
+-- reference is rewritten: a nested one names the nested partial's own scope.
+freeTVIntToTop :: TypeVarArgEnv -> PartialType -> Type -> Type
+freeTVIntToTop vaenv p t@(TypeVar v TVInt) | not (H.member v (ptVarArg p)), not (H.member v vaenv) = PTopType
+                                           | otherwise = t
+freeTVIntToTop _ _ t = t
+
+-- | All partial-local ('TVInt') references appearing in a type at any depth. Over-collects
+-- through nested scopes (a name a nested partial itself binds is still counted), the safe
+-- direction for its consumer ('subtractElems'\'s identical-form skip only becomes rarer).
+typeTVIntRefs :: Type -> S.HashSet TypeVarAux
+typeTVIntRefs (TypeVar v TVInt) = S.singleton v
+typeTVIntRefs (UnionType mtop pos _) = S.unions $ topRefs ++ map leafRefs (splitUnionType pos)
+  where
+    topRefs = case mtop of
+      Just (preds, negLeafs) -> predsRefs preds : map leafRefs (splitUnionType negLeafs)
+      Nothing                -> S.empty : []
+    leafRefs PartialType{ptVars, ptArgs, ptPreds} =
+      S.unions $ predsRefs ptPreds : map typeTVIntRefs (H.elems ptVars ++ H.elems ptArgs)
+    predsRefs (PredsOne p)  = leafRefs (predPartial p)
+    predsRefs (PredsAnd ps) = S.unions $ map predsRefs ps
+    predsRefs (PredsNot p)  = predsRefs p
+    predPartial (PredExpr p)  = p
+    predPartial (PredClass p) = p
+    predPartial (PredRel p)   = p
+typeTVIntRefs _ = S.empty
+
+-- | The value SET a partial's value denotes standalone: read via 'substituteTVExt' under
+-- the partial's OWN var\/arg scope over the ambient env — the codebase's canonical reading
+-- (the same one 'mergeVarEnvVal' applies to every stored env binding), so forms produced
+-- here are structurally comparable with the intersection's. A top-level reference reads
+-- through the partial's slot (@head=$/T@ with @/T=X@ denotes @X@), a nested partial's
+-- references read through ITS own slots, and an unbound reference reads as ⊤.
+resolveOwnScopeRefs :: TypeVarArgEnv -> PartialType -> Type -> Type
+resolveOwnScopeRefs vaenv p = substituteTVExt (ptVarArg p `H.union` vaenv)
+
 -- | Keyset coverage: every arg-set allowed by @sub@ is allowed by @sup@
 -- (the @negCoversAllPos@ reasoning of 'differencePartialLeafs').
 argModeCovers :: PartialType -> PartialType -> Bool
@@ -1944,7 +2050,10 @@ partialsOverlapSat typeEnv vaenv gatePos hyps a b =
 partialCoversSat :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Bool -> SatHyps -> PartialType -> PartialType -> Bool
 partialCoversSat typeEnv vaenv gatePos hyps sup0 sub0 =
   ptName sup == ptName sub
-  && argModeCovers sup sub
+  -- Mode-normalized ('normalizePtArgMode') for parity with 'isSubPartialOfWithEnv': a
+  -- vacuous interval bound must not defeat a cover (e.g. @/x..@ with no larger declared
+  -- arg-set is one set with @/x@).
+  && argModeCovers (normalizePtArgMode typeEnv sup) (normalizePtArgMode typeEnv sub)
   && all varCovered (H.elems (H.intersectionWith (,) (ptVars sub) (ptVars sup)))
   && all elemCovered (H.elems (H.intersectionWith (,) (ptArgs sub) (ptArgs sup)))
   && supPredsCover
@@ -2318,14 +2427,19 @@ isSubPartialOfWithEnv typeEnv _ sub super
   | teArgModeProjection typeEnv
   , looseArgModeRejects sub super = False
 -- Keyset feasibility on the arg-set interval (see 'PtArgMode'): sub ⊆ super requires
--- super's lower\/upper bound to hold for every arg-set allowed by sub ('argModeCovers').
+-- super's lower\/upper bound to hold for every arg-set allowed by sub ('argModeCovers'),
+-- on mode-normalized partials so a vacuous bound does not read as extra arg-sets
+-- (e.g. @/length(this=..)..@ IS @/length(this=..)@ — see 'normalizePtArgMode').
 isSubPartialOfWithEnv typeEnv _ sub super
   | not (teArgModeProjection typeEnv)
-  , not (argModeCovers super sub) = False
+  , not (argModeCovers (normalizePtArgMode typeEnv super) (normalizePtArgMode typeEnv sub)) = False
 isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subArgs, ptPreds=subPreds} super@PartialType{ptVars=superVars, ptArgs=superArgs, ptPreds=superPreds} = debugTrace typeEnv msg result
   where
     vaenv' = H.union vaenv (substituteTVExt vaenv <$> H.unionWith (intersectTypesEnv typeEnv vaenv) (ptVarArg super) (ptVarArg sub))
-    hasAll sb sp = and $ H.elems $ H.intersectionWith (isSubtypeOfWithEnv typeEnv vaenv') sb sp
+    -- A sub-side FREE reference reads as ⊤ ('freeTVIntToTop'): it must not resolve through
+    -- the shared env's like-named SUPER binding, which would narrow the sub's value set to
+    -- the super's and wrongly prove e.g. @Cons(head=$/T) ⊆ Cons[/T=#noCore](head=#noCore)@.
+    hasAll sb sp = and $ H.elems $ H.intersectionWith (isSubtypeOfWithEnv typeEnv vaenv') (fmap (freeTVIntToTop vaenv sub) sb) sp
     -- Type parameters: mirrors 'partialCoversSat' — under projection a Top-valued parameter on
     -- the sub side is no constraint (≡ absent, which the shared-keys intersection skips).
     hasAllVars sb sp = and $ H.elems $ H.intersectionWith varOk sb sp
@@ -2475,9 +2589,18 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing subPartials []) (UnionType N
     result = H.keysSet subsByName `S.isSubsetOf` H.keysSet supersByName
           && and (H.intersectionWith areSubPartials subsByName supersByName)
     areSubPartials subList superList = all (isSubPartial superList) subList
-    isSubPartial sup sub = directCheck || coveredBySplit (splitPartialByUnionVarArgs sub) || coveredBySplit (splitPartialByUnionVarArgs expandedSub)
+    isSubPartial sup sub = directCheck || coveredByArgSets || coveredBySplit (splitPartialByUnionVarArgs sub) || coveredBySplit (splitPartialByUnionVarArgs expandedSub)
       where
         directCheck = any (isSubPartialOfWithEnv typeEnv vaenv sub) sup
+        -- A moded sub leaf IS the union of its arg-set interval's exact pieces
+        -- ('ptIntervalArgKeys'); it is covered when every piece is — each piece may be
+        -- covered by a DIFFERENT super leaf (e.g. @/x(a=A)??@ ⊆ @/x ∪ /x(a=A)@), a joint
+        -- cover no single-leaf check sees. Only a genuinely multi-piece interval recurses
+        -- (an exact leaf is its own single piece, already decided by 'directCheck').
+        coveredByArgSets = case ptIntervalArgKeys typeEnv subN of
+          Just kss@(_:_:_) -> all (isSubPartial sup . ptAtArgKeys subN) kss
+          _                -> False
+          where subN = normalizePtArgMode typeEnv sub
         -- A genuinely split sub is covered when every split component is covered by some super.
         coveredBySplit splits = length splits > 1
                                 && all (\s -> any (isSubPartialOfWithEnv typeEnv vaenv s) sup) splits
@@ -3140,7 +3263,15 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
         TypeVar (TVVar n) TVInt -> S.singleton n
         _                       -> S.empty
   let hoistNames = S.unions $ map ownRefNames (H.elems aArgs ++ H.elems bArgs)
-  let argsVarBindings = H.filterWithKey (\k v -> S.member k hoistNames && H.lookup k ambientVars /= Just v) $ fst $ splitVarArgEnv $ mergeAllVarEnvs typeEnv argsVaenvs
+  -- A hoisted binding is stored in its canonical 'substituteTVExt' reading (the same one
+  -- 'mergeVarEnvVal' gives every merged env binding), so a binding that only passed through
+  -- ONE env is structurally comparable with one that met across several — and with the
+  -- difference side's 'resolveOwnScopeRefs' reading. A binding that IS a bare var is a
+  -- genuine link and stays symbolic (the reading would default it to ⊤).
+  let canonBinding t@TypeVar{} = t
+      canonBinding t           = substituteTVExt H.empty t
+  let hoistFilter env = fmap canonBinding $ H.filterWithKey (\k v -> S.member k hoistNames && H.lookup k ambientVars /= Just v) $ fst $ splitVarArgEnv env
+  let argsVarBindings = hoistFilter (mergeAllVarEnvs typeEnv argsVaenvs)
   let venvs' = mergeAllVarEnvs typeEnv [argsVarBindings, vars']
   let preds' = predsAnd aPreds bPreds
   -- The two arg-sets each constrain the instance args to an interval over the
@@ -3155,15 +3286,25 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
   let capKeys = ((if aUb then H.keysSet aArgs else okKeys) `S.intersection` (if bUb then H.keysSet bArgs else okKeys)) `S.difference` bottomKeys
   let restrict ks = H.filterWithKey (\k _ -> k `S.member` ks) args'
   let mkPartial lb' ub'' ks = PartialType name' venvs' (restrict ks) preds' (PtArgMode lb' ub'')
+  -- A var binding hoisted from an OPTIONAL arg's meet (the arg is outside reqKeys) holds
+  -- only for the arg-sets CONTAINING that arg — stamping it on the whole interval would
+  -- narrow the arg-sets missing the arg (e.g. @/T=#noCore@ from a @head@ meet constraining
+  -- the argless piece). No single ptVars fits, so such an interval is enumerated with each
+  -- arg-set carrying exactly the bindings ITS OWN args' meets discovered.
+  let liveArgEnvs = fmap fst $ H.filter (not . isBottomType . snd) argsMap
+  let bindingOptArgs = S.filter (\k -> not (H.null (hoistFilter (H.lookupDefault H.empty k liveArgEnvs)))) (capKeys `S.difference` reqKeys)
+  let venvsFor ks = mergeAllVarEnvs typeEnv [hoistFilter (mergeAllVarEnvs typeEnv [H.lookupDefault H.empty k liveArgEnvs | k <- S.toList ks]), vars']
+  let mkPartialAt ks = PartialType name' (venvsFor ks) (restrict ks) preds' PtArgExact
   let partials'
         | not (S.null (reqKeys `S.intersection` bottomKeys)) = [] -- a required arg is uninhabited
         | ub' = if reqKeys `S.isSubsetOf` capKeys -- bounded interval [reqKeys, capKeys]
             then if reqKeys == capKeys
               then [mkPartial True True capKeys]         -- single arg-set: exact
-              else if S.null reqKeys
+              else if S.null reqKeys && S.null bindingOptArgs
                 then [mkPartial False True capKeys]      -- [∅, capKeys]: powerset
-                -- strict bounded interval: enumerate each arg-set as an exact partial
-                else [mkPartial True True (reqKeys `S.union` S.fromList extra) | extra <- powerset $ S.toList (capKeys `S.difference` reqKeys)]
+                -- strict bounded interval (or optional-arg bindings): enumerate each
+                -- arg-set as an exact partial with its own arg-derived bindings
+                else [mkPartialAt (reqKeys `S.union` S.fromList extra) | extra <- powerset $ S.toList (capKeys `S.difference` reqKeys)]
             else []                                       -- infeasible: required exceeds cap
         -- upper-unbounded. Optional keys (listed but not required) that are Top-typed
         -- add no constraint and can be dropped, usually leaving an exact single partial
@@ -3401,57 +3542,81 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
     differencePartialNegs :: PartialType -> [PartialType] -> [PartialType]
     differencePartialNegs pos = foldr (\n ps -> concatMap (`differencePartial` n) ps) [pos]
 
+    -- Exact difference on the arg-set intervals (see 'PtArgMode'), on mode-normalized
+    -- partials ('normalizePtArgMode' — so a vacuous bound never reads as extra arg-sets):
+    --   * identical or contained pos ⟹ ∅;
+    --   * disjoint intervals ('argModesOverlap' fails) ⟹ pos unchanged;
+    --   * neg interval covering the whole pos interval ('argModeCovers'), pos
+    --     lower-bounded ⟹ only the per-arg\/var value escapes remain ('subtractElems').
+    --     Lower-bounded pos only: escaping via an arg's value requires the arg PRESENT,
+    --     which a lower bound guarantees; a lower-unbounded pos admits arg-sets missing
+    --     the arg (vacuously inside neg), so it enumerates instead;
+    --   * PARTIAL interval overlap: enumerate the pos interval's arg-sets
+    --     ('ptIntervalArgKeys' — finite via the declared arg-sets) as exact partials and
+    --     recurse; each exact piece is decided by the clauses above (an exact pos interval
+    --     is a single point: it is covered by neg or disjoint from it, never partial).
+    --   * Only an upper-unbounded pos of an UNKNOWN name (open world: arg-sets not
+    --     enumerable) falls back to keeping pos unchanged.
     differencePartial :: PartialType -> PartialType -> [PartialType]
-    differencePartial p1 p2 | p1 == p2 = []
-    -- @p1 ⊆ p2 ⟹ p1 − p2 = ∅@. The syntactic @p1 == p2@ above only catches identical partials;
-    -- this also cancels a partial contained in the neg up to variable renaming or field widening —
-    -- e.g. a @Cons[/T=$_a](head=$x, tail=…)@ minus the class member @Cons[/T=$_b](head=$y, tail=…)@,
-    -- whose free element\/field variables all read as ⊤, so the pos IS the member. Without this the
-    -- per-field 'subtractElems' produces spurious variable-vs-variable escape leafs (@$x − $y@ never
-    -- proves ∅) and the difference wrongly keeps a partial its own subtype relation calls covered.
-    -- Uses the precise partial subtype (this env has 'teArgModeProjection' False).
-    differencePartial p1 p2 | isSubPartialOfWithEnv typeEnv vaenv p1 p2 = []
-    differencePartial p1@PartialType{ptArgs=posArgs, ptArgMode=PtArgExact} PartialType{ptArgs=negArgs, ptArgMode=PtArgExact} | H.keysSet posArgs /= H.keysSet negArgs = [p1]
-    -- PtArgAny pos minus PtArgExact neg: pos = {S ⊇ posArgs}, neg = {S = negArgs}. The only
-    -- arg-set of pos that neg can cover is exactly negArgs, which requires posArgs ⊆ negArgs.
-    -- When posArgs ⊄ negArgs the two are disjoint (every pos instance has a required arg that the
-    -- exact neg arg-set omits), so pos survives unchanged → [p1]. (This subsumes the old "neg has
-    -- no args but pos does" case.) When posArgs ⊆ negArgs they overlap on the negArgs arg-set;
-    -- fall through to the legacy subtractArg handler below.
-    differencePartial p1@PartialType{ptArgs=posArgs, ptArgMode=PtArgAny} PartialType{ptArgs=negArgs, ptArgMode=PtArgExact}
-      | not (H.keysSet posArgs `S.isSubsetOf` H.keysSet negArgs) = [p1]
-    -- The legacy clauses below are only valid when both sides are lower-bounded (the old
-    -- modes); any lower-unbounded mode falls through to the general handler at the end.
-    differencePartial p1@PartialType{ptArgMode=posArgMode} p2@PartialType{ptArgMode=negArgMode}
-      | ptArgLb posArgMode && ptArgLb negArgMode && (posArgMode == negArgMode || negArgMode == PtArgExact) = subtractElems p1 p2
-    -- PtArgExact - PtArgAny: neg requires at least negArgs; pos (exact) is in neg iff neg's required
-    -- keys are all present in pos with matching values. Subtract matching args just like the main case.
-    differencePartial p1@PartialType{ptArgs=posArgs, ptArgMode=posArgMode} p2@PartialType{ptArgs=negArgs, ptArgMode=PtArgAny}
-      | ptArgLb posArgMode && not (H.keysSet negArgs `S.isSubsetOf` H.keysSet posArgs) = [p1]
-      | ptArgLb posArgMode = subtractElems p1 p2
-    -- General handler for arg-mode combinations involving the lower-unbounded modes
-    -- (the cases above cover the legacy modes verbatim). Reasoning on the arg-set
-    -- intervals (see 'PtArgMode'): when neg's interval covers every arg-set allowed by
-    -- pos ('argModeCovers'), the only pos instances escaping neg are those failing neg
-    -- on some per-arg\/var type; subtract those. Otherwise pos has arg-sets entirely
-    -- outside neg, so conservatively keep pos.
-    differencePartial p1 p2
-      | argModeCovers p2 p1 = subtractElems p1 p2
-      | otherwise = [p1]
+    differencePartial posRaw negRaw = go (normalizePtArgMode typeEnv posRaw) (normalizePtArgMode typeEnv negRaw)
+      where
+        go p1 p2 | p1 == p2 = []
+        -- @p1 ⊆ p2 ⟹ p1 − p2 = ∅@. The syntactic @p1 == p2@ above only catches identical partials;
+        -- this also cancels a partial contained in the neg up to variable renaming or field widening —
+        -- e.g. a @Cons[/T=$_a](head=$x, tail=…)@ minus the class member @Cons[/T=$_b](head=$y, tail=…)@,
+        -- whose free element\/field variables all read as ⊤, so the pos IS the member. Without this the
+        -- per-field 'subtractElems' produces spurious variable-vs-variable escape leafs (@$x − $y@ never
+        -- proves ∅) and the difference wrongly keeps a partial its own subtype relation calls covered.
+        -- Uses the precise partial subtype (this env has 'teArgModeProjection' False).
+        go p1 p2 | isSubPartialOfWithEnv typeEnv vaenv p1 p2 = []
+        go p1 p2 | not (argModesOverlap p1 p2) = [p1]
+        go p1 p2 | argModeCovers p2 p1, ptArgLb (ptArgMode p1) = subtractElems p1 p2
+        go p1 p2 | Just kss <- ptIntervalArgKeys typeEnv p1 = concatMap ((`go` p2) . ptAtArgKeys p1) kss
+        go p1 _ = [p1]
 
     -- The pos instances escaping neg on some per-arg\/var type: for each neg arg\/var, the
     -- pos partial with that element narrowed to its difference from neg's. A ⊤-valued neg
     -- element excludes nothing; a neg arg that pos does not constrain is skipped.
     subtractElems :: PartialType -> PartialType -> [PartialType]
-    subtractElems p1 PartialType{ptArgs=negArgs, ptVars=negVars} =
+    subtractElems p1 p2@PartialType{ptArgs=negArgs, ptVars=negVars} =
       mapMaybe subtractArg (H.toList negArgs) ++ mapMaybe subtractVar (H.toList negVars)
       where
-        subtractArg (_, PTopType) = Nothing
-        subtractArg (argName, negArgVal) = case H.lookup argName (ptArgs p1) of
-          Just posArgVal -> case snd $ differenceTypeWithEnv typeEnv vaenv posArgVal negArgVal of
-            BottomType -> Nothing
-            argVal'    -> Just $ p1{ptArgs=H.insert argName argVal' (ptArgs p1)}
+        -- A neg value subtracts as the value SET it denotes: its own-scope references read
+        -- through the NEG partial's slots ('resolveOwnScopeRefs' — @head=$/T@ under the
+        -- neg's @/T=X@ excludes @X@, not the ambient reading of a bare @$/T@).
+        negValSet = resolveOwnScopeRefs vaenv p2
+        subtractArg (argName, negArgValRaw) = case H.lookup argName (ptArgs p1) of
           Nothing -> Nothing
+          -- IDENTICAL linked forms on both sides (@tail=∀ConsList[/T=$/T]@) whose every
+          -- reference the POS partial itself binds differ only through the two partials'
+          -- own var scopes; those dimensions are exactly what 'subtractVar' subtracts, so
+          -- the arg contributes no separate escape (emitting one duplicates the var escape
+          -- as an unrecognizable symbolic residue). A reference the pos does NOT bind
+          -- reads as ⊤ on the pos side only — a real per-arg escape — so it must subtract.
+          Just posArgVal | posArgVal == negArgValRaw
+                         , all (`H.member` ptVarArg p1) (S.toList (typeTVIntRefs posArgVal)) -> Nothing
+          -- The pos value subtracts as the value SET it denotes: a free reference reads as
+          -- ⊤ ('freeTVIntToTop' — @Cons(head=$/T)@ with no @/T@ slot escapes on @⊤ − neg@),
+          -- while a DECLARED-var reference subtracts on the var slot via 'narrowPiece'.
+          Just posArgVal -> case negValSet negArgValRaw of
+            PTopType  -> Nothing -- a ⊤-valued neg element excludes nothing
+            negArgVal -> case differenceTypeWithEnv typeEnv vaenv (freeTVIntToTop vaenv p1 posArgVal) negArgVal of
+              (_, BottomType)    -> Nothing
+              (outEnv, argVal')  -> narrowPiece p1{ptArgs=H.insert argName argVal' (ptArgs p1)} outEnv
+        -- An arg valued by a var reference (@head=$/T@) subtracts on the partial's own var
+        -- slot: the escape's narrowing comes back only as an env binding (the env-dropping
+        -- wrappers return the bare var — the same resolve-meets-back rule as
+        -- 'intersectTypesEnv'), so fold the discovered CONCRETE bindings onto the piece's
+        -- DECLARED 'ptVars' (a name the partial does not declare is another scope's var and
+        -- is dropped). A var slot narrowed to ∅ makes the escape piece uninhabited.
+        narrowPiece piece outEnv
+          | H.null varBindings = Just piece
+          | any isBottomType (H.elems vars') = Nothing
+          | otherwise = Just piece{ptVars=vars'}
+          where
+            newBindings = H.filter (not . isTypeVar) $ H.difference outEnv vaenv
+            varBindings = H.filterWithKey (\k _ -> k `H.member` ptVars piece) $ fst $ splitVarArgEnv newBindings
+            vars' = H.unionWith (intersectTypesEnv typeEnv vaenv) (ptVars piece) varBindings
         -- Mirror 'subtractArg': skip a neg type-parameter the pos partial does not itself
         -- constrain. Defaulting a missing pos var to ⊤ and subtracting (⊤ − negVar) manufactured
         -- a spurious narrowed leaf — e.g. the universe @Cons{}@ minus the class member
