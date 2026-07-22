@@ -916,6 +916,12 @@ completeDataPartials typeEnv = onArgs
 -- field-form value (one written with explicit args) would not reconcile with it. Restoring the
 -- fields as 'PTopType' lets such a value match on its keys. (Fields and type parameters are
 -- otherwise tracked independently and are not auto-related.)
+--
+-- This is NOT a semantic no-op: a bare argument-less exact partial like @/Cons@ is itself a
+-- value — the partial-application form a @/Cons@ has before its args are applied (arg-set @{}@,
+-- disjoint from the field forms) — and completing it maps it to a DIFFERENT type. Apply this
+-- only where the bare form is known to stand for the field forms (a supertype/bound to match
+-- against), never as a general canonicalization of value types.
 completeDataPartialsTop :: (TypeGraph tg) => TypeEnv tg -> Type -> Type
 completeDataPartialsTop typeEnv = go
   where
