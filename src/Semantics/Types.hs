@@ -224,12 +224,15 @@ type PartialLeafs = H.HashMap TypeName (S.HashSet PartialArgsOption)
 
 -- |
 -- The basic format of a 'Type' in Catln.
--- 'UnionType mTop posLeafs consts' semantics:
---   * Nothing             + posLeafs + []     = positive union of partials
---   * Just (preds, negLeafs) + posLeafs + []  = complement type (universal filtered by preds, minus negLeafs) ∪ posLeafs
---   * Any                 + _         + consts = union includes constants
+-- 'UnionType mTop posLeafs posConsts' semantics:
+--   * Nothing:                          posLeafs ∪ posConsts (positive union of partials and constants)
+--   * Just (preds, negLeafs, negConsts): (universe filtered by preds − negLeafs − negConsts) ∪ posLeafs ∪ posConsts
+-- The 'Just' tuple is the whole subtractive component; the outer 'PartialLeafs' and '[Constant]'
+-- are ALWAYS positive members of the union. (Previously a 'Just'-top reused the outer constant
+-- list for its exclusions, so "class-top ∪ positive constant" was unrepresentable and forced a
+-- lossy expansion of the class-top to its materialized members.)
 data Type
-  = UnionType (Maybe (TypePredicates, PartialLeafs)) PartialLeafs [Constant]
+  = UnionType (Maybe (TypePredicates, PartialLeafs, [Constant])) PartialLeafs [Constant]
   | TypeVar TypeVarAux TypeVarLoc
   deriving (Eq, Ord, Generic, ToJSON, ToJSONKey)
 
@@ -244,17 +247,23 @@ instance Hashable Type where
               `hashWithSalt` length cs
               `hashWithSalt` H.size leafs
         h' = case mt of
-               Nothing           -> h `hashWithSalt` (0 :: Int)
-               Just (preds, neg) -> h `hashWithSalt` (1 :: Int)
-                                      `hashWithSalt` predsTag preds
-                                      `hashWithSalt` H.size neg
+               Nothing                -> h `hashWithSalt` (0 :: Int)
+               Just (preds, neg, ncs) -> h `hashWithSalt` (1 :: Int)
+                                           `hashWithSalt` predsTag preds
+                                           `hashWithSalt` H.size neg
+                                           `hashWithSalt` length ncs
     in H.foldlWithKey' (\acc k _ -> acc `hashWithSalt` k) h' leafs
 
 -- | Backward-compat pattern: matches a complement/top type (predicates, negative partials).
 -- Corresponds to the old @TopType PartialLeafs TypePredicates@ constructor.
 pattern TopType :: PartialLeafs -> TypePredicates -> Type
-pattern TopType negLeafs preds <- UnionType (Just (preds, negLeafs)) (H.null -> True) []
-  where TopType negLeafs preds = UnionType (Just (preds, negLeafs)) H.empty []
+pattern TopType negLeafs preds <- UnionType (Just (preds, negLeafs, [])) (H.null -> True) []
+  where TopType negLeafs preds = UnionType (Just (preds, negLeafs, [])) H.empty []
+
+-- | Maps a function over the negative leafs of a 'Just'-top tuple, keeping predicates and
+-- excluded constants unchanged.
+mapTopNegLeafs :: (PartialLeafs -> PartialLeafs) -> (TypePredicates, PartialLeafs, [Constant]) -> (TypePredicates, PartialLeafs, [Constant])
+mapTopNegLeafs f (preds, negLeafs, ncs) = (preds, f negLeafs, ncs)
 
 -- | Indicates whether a type var or arg is located internally to the object or externally.
 -- | 'TVInt' references a variable defined on the *same* 'PartialType' (resolved against its 'ptVars'/'ptArgs').
@@ -466,7 +475,7 @@ showJoinParts ps  = "(" ++ intercalate " + " ps ++ ")"
 showTypeD :: Int -> Type -> String
 showTypeD d _ | d <= 0 = showTruncated
 showTypeD d (UnionType Nothing leafs []) = showJoinParts $ map (showPartialD (d - 1)) $ splitUnionType leafs
-showTypeD d (UnionType (Just (p, negPartials)) (H.null -> True) []) = p' ++ negPartials'
+showTypeD d (UnionType (Just (p, negPartials, negConsts)) (H.null -> True) []) = p' ++ negPartials' ++ negConsts'
     where
       p' = case tryPredsToList p of
                 Just [PredClass c] -> "∀" ++ showPartialD (d - 1) c
@@ -476,6 +485,9 @@ showTypeD d (UnionType (Just (p, negPartials)) (H.null -> True) []) = p' ++ negP
       negPartials' = if H.null negPartials
         then ""
         else " - " ++ (showJoinParts $ map (showPartialD (d - 1)) $ splitUnionType negPartials)
+      negConsts' = if null negConsts
+        then ""
+        else " - " ++ show negConsts
 showTypeD d (UnionType mTop leafs consts) = "UnionType(" ++ show mTop ++ ", " ++ showJoinParts (map (showPartialD (d - 1)) $ splitUnionType leafs) ++ ", " ++ show consts ++ ")"
 showTypeD _ (TypeVar (TVVar n) TVInt) = "$" ++ show n
 showTypeD _ (TypeVar (TVVar n) TVExt) = "$_" ++ show n
@@ -746,8 +758,8 @@ constantType c = UnionType Nothing H.empty [c]
 
 -- | The 'Type' containing all possible values, equivalent to the universal.
 pattern PTopType :: Type
-pattern PTopType <- UnionType (Just (PredsNone, H.null -> True)) (H.null -> True) []
-  where PTopType = UnionType (Just (PredsNone, H.empty)) H.empty []
+pattern PTopType <- UnionType (Just (PredsNone, H.null -> True, [])) (H.null -> True) []
+  where PTopType = UnionType (Just (PredsNone, H.empty, [])) H.empty []
 
 -- | The 'Type' containing no possible values, equivalent to the empty set ∅.
 -- It often corresponds to errors in the type inference process and indicates the error type.
@@ -771,8 +783,8 @@ typeContainsTypeVar TypeVar{} = True
 typeContainsTypeVar (UnionType mPreds leafs _) = predsPart || any partialHas (splitUnionType leafs)
   where
     predsPart = case mPreds of
-      Just (preds, negLeafs) -> predsHas preds || any partialHas (splitUnionType negLeafs)
-      Nothing                -> False
+      Just (preds, negLeafs, _) -> predsHas preds || any partialHas (splitUnionType negLeafs)
+      Nothing                   -> False
     predsHas (PredsAnd ps) = any predsHas ps
     predsHas (PredsOne p)  = predHas p
     predsHas (PredsNot p)  = predsHas p
@@ -894,7 +906,7 @@ completeDataPartials typeEnv = onArgs
   where
     -- Top level: recurse into args/vars only; do not complete the outermost partials.
     onArgs (TypeVar v l) = TypeVar v l
-    onArgs (UnionType mPreds leafs consts) = UnionType (fmap (bimap id onArgsLeafs) mPreds) (onArgsLeafs leafs) consts
+    onArgs (UnionType mPreds leafs consts) = UnionType (fmap (mapTopNegLeafs onArgsLeafs) mPreds) (onArgsLeafs leafs) consts
     onArgsLeafs = joinUnionType . map recurseArgs . splitUnionType
     recurseArgs p@PartialType{ptVars, ptArgs} = p{ptVars = fmap (completeDataPartialsTop typeEnv) ptVars, ptArgs = fmap (completeDataPartialsTop typeEnv) ptArgs}
 
@@ -909,7 +921,7 @@ completeDataPartialsTop typeEnv = go
   where
     -- Nested: complete each partial against its def, then recurse into its args/vars.
     go (TypeVar v l) = TypeVar v l
-    go (UnionType mPreds leafs consts) = UnionType (fmap (bimap id goLeafs) mPreds) (goLeafs leafs) consts
+    go (UnionType mPreds leafs consts) = UnionType (fmap (mapTopNegLeafs goLeafs) mPreds) (goLeafs leafs) consts
     goLeafs = joinUnionType . map completePartial . splitUnionType
     -- Only an argument-less partial in /exact/ mode is an ambiguous bare reference needing its
     -- declared fields restored. A non-exact mode (an authored spread like @CatlnResult..@)
@@ -943,7 +955,7 @@ completeDataPartialsTop typeEnv = go
 completeConcreteFields :: (TypeGraph tg) => TypeEnv tg -> Type -> Type
 completeConcreteFields typeEnv = onUnion
   where
-    onUnion (UnionType mPreds leafs consts) = UnionType (fmap (bimap id onLeafs) mPreds) (onLeafs leafs) consts
+    onUnion (UnionType mPreds leafs consts) = UnionType (fmap (mapTopNegLeafs onLeafs) mPreds) (onLeafs leafs) consts
     onUnion t = t
     onLeafs = joinUnionType . map onPartial . splitUnionType
     onPartial p@PartialType{ptName, ptArgs, ptVars} =
@@ -969,7 +981,7 @@ completeConcreteFields typeEnv = onUnion
 relaxRecursiveSelfArgs :: (TypeGraph tg) => TypeEnv tg -> Type -> Type
 relaxRecursiveSelfArgs typeEnv = onUnion
   where
-    onUnion (UnionType mPreds leafs consts) = UnionType (fmap (bimap id onLeafs) mPreds) (onLeafs leafs) consts
+    onUnion (UnionType mPreds leafs consts) = UnionType (fmap (mapTopNegLeafs onLeafs) mPreds) (onLeafs leafs) consts
     onUnion t = t
     onLeafs = joinUnionType . map onPartial . splitUnionType
     onPartial p@PartialType{ptName, ptArgs} = p{ptArgs = fmap (relaxArg ptName) ptArgs}
@@ -983,7 +995,7 @@ relaxRecursiveSelfArgs typeEnv = onUnion
 
     -- Top-level type names referenced by a field that is a bare self-reference: a @~C@
     -- predicate-rel, or a lone positive @C@ partial. Anything more complex is left untouched.
-    fieldRefNames (UnionType (Just (preds, negLeafs)) ls _)
+    fieldRefNames (UnionType (Just (preds, negLeafs, _)) ls _)
       | H.null ls && H.null negLeafs = case tryPredsToList preds of
           Just ps -> [ptName r | PredRel r <- ps]
           Nothing -> []
@@ -1017,7 +1029,7 @@ classConstituentNames TypeEnv{teClassGraph=ClassGraph cg} = go S.empty
     -- @∀ConsList@, a @Just (PredClass ConsList)@ with no positive leaf). 'leafNameSet' sees only the
     -- former, so also read the class\/rel atom names out of the predicate top.
     memberNames t = leafNameSet t `S.union` topAtomNames t
-    topAtomNames (UnionType (Just (preds, _)) _ _) =
+    topAtomNames (UnionType (Just (preds, _, _)) _ _) =
       S.fromList $ mapMaybe atomName $ fromMaybe [] (tryPredsToList preds)
     topAtomNames _ = S.empty
     atomName (PredClass p) = Just (ptName p)
@@ -1121,7 +1133,7 @@ classPartial p = TopType H.empty (PredsOne (PredClass p))
 -- unchanged). Using the value's own component - rather than a synthetic @any C@ with an
 -- unconstrained element - avoids widening the value's element to 'TopType'.
 openClassPart :: (TypeGraph tg) => TypeEnv tg -> Type -> Type
-openClassPart typeEnv (UnionType (Just (preds, negLeafs)) _ _)
+openClassPart typeEnv (UnionType (Just (preds, negLeafs, _)) _ _)
   | predsReferenceUnsealed preds = TopType negLeafs preds
   where
     predsReferenceUnsealed = go
@@ -1412,9 +1424,13 @@ expandTypesWithNamesFull TypeEnv{teNames} _ PTopType allowedNames =
   (topFilteredLeafs, not $ S.isSubsetOf teNames allowedNames)
   where
     topFilteredLeafs = joinUnionType $ map ((\p -> p{ptArgMode=PtArgAny}) . partialVal) $ S.toList allowedNames
--- Constants carry no partial-name information; drop them before filtering
+-- Constants carry no partial-name information; drop them before filtering (both the outer
+-- positive constants and a Just-top's excluded constants — this computes leaf expansions only,
+-- and a point exclusion never removes a leaf)
 expandTypesWithNamesFull typeEnv vaenv (UnionType mTop leafs (_:_)) allowedNames =
   expandTypesWithNamesFull typeEnv vaenv (UnionType mTop leafs []) allowedNames
+expandTypesWithNamesFull typeEnv vaenv (UnionType (Just (preds, negLeafs, _:_)) leafs []) allowedNames =
+  expandTypesWithNamesFull typeEnv vaenv (UnionType (Just (preds, negLeafs, [])) leafs []) allowedNames
 expandTypesWithNamesFull typeEnv@TypeEnv{teNames} vaenv (TopType negPartials preds) allowedNames =
   let (leafs, hasOutside) = expandPredsWithNamesFull preds
   in (subtractNeg leafs, hasOutside)
@@ -1729,10 +1745,11 @@ typeSatDNF vaenv tv@(TypeVar v TVExt) = case vaenvLookup vaenv v of
   looked | looked == tv -> Just [SatGoal [] []] -- unbound/self-bound var: no constraint
   looked                -> typeSatDNF (H.delete v vaenv) looked -- delete to break var reference cycles
 typeSatDNF _ (UnionType _ _ (_:_)) = Nothing -- constants: out of fragment
+typeSatDNF _ (UnionType (Just (_, _, _:_)) _ _) = Nothing -- excluded constants: out of fragment
 typeSatDNF _ (UnionType Nothing leafs []) = case splitUnionType leafs of
   [] -> Just [] -- bottom: unsatisfiable
   ls -> Just [SatGoal [SatLeafs ls] []]
-typeSatDNF vaenv (UnionType (Just (preds, negLeafs)) pos []) = do
+typeSatDNF vaenv (UnionType (Just (preds, negLeafs, [])) pos []) = do
   topGoals <- predsSatDNF True preds
   let negAtoms = [SatLeafs (splitUnionType negLeafs) | not (H.null negLeafs)]
   let topGoals' = map (\g -> g{sgNeg = sgNeg g ++ negAtoms}) topGoals
@@ -1992,7 +2009,7 @@ typeTVIntRefs (TypeVar v TVInt) = S.singleton v
 typeTVIntRefs (UnionType mtop pos _) = S.unions $ topRefs ++ map leafRefs (splitUnionType pos)
   where
     topRefs = case mtop of
-      Just (preds, negLeafs) -> predsRefs preds : map leafRefs (splitUnionType negLeafs)
+      Just (preds, negLeafs, _) -> predsRefs preds : map leafRefs (splitUnionType negLeafs)
       Nothing                -> S.empty : []
     leafRefs PartialType{ptVars, ptArgs, ptPreds} =
       S.unions $ predsRefs ptPreds : map typeTVIntRefs (H.elems ptVars ++ H.elems ptArgs)
@@ -2012,6 +2029,50 @@ typeTVIntRefs _ = S.empty
 -- references read through ITS own slots, and an unbound reference reads as ⊤.
 resolveOwnScopeRefs :: TypeVarArgEnv -> PartialType -> Type -> Type
 resolveOwnScopeRefs vaenv p = substituteTVExt (ptVarArg p `H.union` vaenv)
+
+-- | 'freeTVIntToTop' applied DEEP: every partial-local reference the given partial does not bind
+-- reads as ⊤ at ANY depth, including class-predicate parameters (@∀ConsList[/T=$/T]@ under a
+-- partial with no @/T@ slot reads @∀ConsList[/T=⊤]@ — the union over all instantiations). Used to
+-- instantiate a DECLARED field type under a specific partial: the template's free parameters must
+-- NOT stay symbolic, lest they resolve through a like-named SUPER binding in a shared env during
+-- a subtype check (the same leak 'freeTVIntToTop' guards against, at depth). A reference a NESTED
+-- partial itself links is also widened — a sound over-approximation of the field's value set,
+-- which for a clamp read only makes the check more conservative.
+freeTVIntToTopDeep :: TypeVarArgEnv -> PartialType -> Type -> Type
+freeTVIntToTopDeep vaenv p = go
+  where
+    go t@(TypeVar v TVInt) | not (H.member v (ptVarArg p)), not (H.member v vaenv) = PTopType
+                           | otherwise = t
+    go (UnionType mtop pos consts) = UnionType (fmap goTop mtop) (goLeafs pos) consts
+    go t = t
+    goTop (preds, negLeafs, ncs) = (mapTypePreds (mapTypePred goPartial) preds, goLeafs negLeafs, ncs)
+    goLeafs = joinUnionType . map goPartial . splitUnionType
+    goPartial pt = pt{ ptVars  = fmap go (ptVars pt)
+                     , ptArgs  = fmap go (ptArgs pt)
+                     , ptPreds = mapTypePreds (mapTypePred goPartial) (ptPreds pt) }
+
+-- | Whether a partial is uninhabited under DECLARATION-BOUNDING: a field value disjoint from the
+-- field's declared type admits no constructible value (@Cons(tail=#noCore)@ denotes ∅ — every
+-- @Cons@ tail is declared @∀ConsList@), making the partial set-equal to the empty set. Only a
+-- concrete non-⊤ value differing from its declared bound pays the disjointness meet; ⊤ and
+-- symbolic (variable) values, a ⊤/variable declared bound, and a value equal to its bound are
+-- trivially inside, so member-form and field-completed partials decide without any meet.
+partialUninhabitedByDecl :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> Bool
+partialUninhabitedByDecl typeEnv vaenv p@PartialType{ptName, ptArgs}
+  | H.null ptArgs = False
+  | null decls = False
+  | otherwise = any argEmptyInAllDecls (H.toList ptArgs)
+  where
+    decls = [dArgs | PartialType{ptArgs=dArgs} <- typeGraphData typeEnv ptName, not (H.null dArgs)]
+    argEmptyInAllDecls (k, v) =
+      let bounds = mapMaybe (H.lookup k) decls
+      in not (null bounds) && all (clampEmpty v) bounds
+    clampEmpty PTopType _  = False
+    clampEmpty TypeVar{} _ = False
+    clampEmpty _ PTopType  = False
+    clampEmpty _ TypeVar{} = False
+    clampEmpty v d | v == d = False
+                   | otherwise = isBottomType (intersectTypesEnv typeEnv vaenv v (freeTVIntToTopDeep vaenv p d))
 
 -- | Keyset coverage: every arg-set allowed by @sub@ is allowed by @sup@
 -- (the @negCoversAllPos@ reasoning of 'differencePartialLeafs').
@@ -2304,8 +2365,9 @@ dispatchInFragment PartialType{ptVars, ptArgs, ptPreds} =
     elemInFrag PTopType = True
     elemInFrag TypeVar{} = True
     elemInFrag (UnionType _ _ (_:_)) = False -- constants: out of fragment
+    elemInFrag (UnionType (Just (_, _, _:_)) _ _) = False -- excluded constants: out of fragment
     elemInFrag (UnionType mtop leafs []) =
-      maybe True (predsInFrag . fst) mtop
+      maybe True (\(preds, _, _) -> predsInFrag preds) mtop
       && all dispatchInFragment (splitUnionType leafs)
 
 -- | SAT(m ∧ ¬n₁ ∧ … ∧ ¬nₖ): can a single value of shape @m@ escape ALL of @negs@ jointly?
@@ -2357,7 +2419,7 @@ satLeafEscapesAll typeEnv vaenv hyps m negs0
     enumTypeCases (UnionType Nothing leafs []) = case splitUnionType leafs of
       ls@(_:_:_) -> Just (map singletonType ls)
       _          -> Nothing -- single leaf: no top-level refinement available
-    enumTypeCases (UnionType (Just (preds, _)) pos []) = do
+    enumTypeCases (UnionType (Just (preds, _, [])) pos []) = do
       dnf <- predsSatDNF True preds
       satPos <- case dnf of
         [SatGoal ps _] -> Just ps
@@ -2439,7 +2501,21 @@ isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subAr
     -- A sub-side FREE reference reads as ⊤ ('freeTVIntToTop'): it must not resolve through
     -- the shared env's like-named SUPER binding, which would narrow the sub's value set to
     -- the super's and wrongly prove e.g. @Cons(head=$/T) ⊆ Cons[/T=#noCore](head=#noCore)@.
-    hasAll sb sp = and $ H.elems $ H.intersectionWith (isSubtypeOfWithEnv typeEnv vaenv') (fmap (freeTVIntToTop vaenv sub) sb) sp
+    -- A field's value set is DECLARATION-BOUNDED: no constructible value holds a field outside
+    -- its declared type (@Cons(tail=⊤)@ admits no tail outside @∀ConsList@), so when the literal
+    -- comparison fails the sub value is re-read clamped by the declared field type (the clamp
+    -- only shrinks the sub side, so checking it as a fallback equals always clamping). This is
+    -- what makes the field-completed @Cons(head=⊤, tail=⊤)@ a subtype of the class member form
+    -- @Cons[/T=$/T](head=$/T, tail=∀ConsList[/T=$/T])@ — the same set under the declaration.
+    -- The declared bound is instantiated with 'freeTVIntToTopDeep' under the SUB's scope: its
+    -- free template parameters read ⊤ rather than staying symbolic and resolving through the
+    -- shared env's SUPER binding (which would wrongly prove
+    -- @Cons(head=$/T) ⊆ Cons[/T=#noCore](head=#noCore)@ again through the clamp).
+    hasAll sb sp = and $ H.elems $ H.intersectionWithKey argOk (fmap (freeTVIntToTop vaenv sub) sb) sp
+      where
+        argOk k sbVal spVal = isSubtypeOfWithEnv typeEnv vaenv' sbVal spVal
+          || any (\d -> isSubtypeOfWithEnv typeEnv vaenv' (intersectTypesEnv typeEnv vaenv' sbVal d) spVal) (declArgBounds k)
+        declArgBounds k = [freeTVIntToTopDeep vaenv sub d | PartialType{ptArgs=dArgs} <- typeGraphData typeEnv (ptName sub), Just d <- [H.lookup k dArgs]]
     -- Type parameters: mirrors 'partialCoversSat' — under projection a Top-valued parameter on
     -- the sub side is no constraint (≡ absent, which the shared-keys intersection skips).
     hasAllVars sb sp = and $ H.elems $ H.intersectionWith varOk sb sp
@@ -2464,14 +2540,14 @@ constantCoveredByLeafs c leafs = isSubtypeOfWithEnv emptyTypeEnv' H.empty (singl
 constantInType :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Constant -> Type -> Bool
 constantInType _ _ _ PTopType = True
 constantInType _ _ c (UnionType Nothing leafs cs) = c `elem` cs || constantCoveredByLeafs c leafs
--- NegPartials: c is in the type iff not excluded by negConsts, and either covered by posLeafs or
--- (not covered by negLeafs and parent is in the predicated set)
-constantInType typeEnv vaenv c (UnionType (Just (preds, negLeafs)) posLeafs negConsts) =
-  c `notElem` negConsts
-  && ( constantCoveredByLeafs c posLeafs
-     || ( not (constantCoveredByLeafs c negLeafs)
-          && isSubtypeOfWithEnv typeEnv vaenv (singletonType $ constantPartialType c) (UnionType (Just (preds, H.empty)) H.empty [])
-        )
+-- Just-top: c is in the type iff it is a positive member (posConsts/posLeafs), or it is in the
+-- predicated universe and not excluded (by negConsts or negLeafs)
+constantInType typeEnv vaenv c (UnionType (Just (preds, negLeafs, negConsts)) posLeafs posConsts) =
+  c `elem` posConsts
+  || constantCoveredByLeafs c posLeafs
+  || ( c `notElem` negConsts
+       && not (constantCoveredByLeafs c negLeafs)
+       && isSubtypeOfWithEnv typeEnv vaenv (singletonType $ constantPartialType c) (TopType H.empty preds)
      )
 constantInType _ _ _ _ = False
 
@@ -2491,11 +2567,11 @@ isSubtypeOfWithEnv typeEnv vaenv t1 (TypeVar v _) = case vaenvLookup vaenv v of
   TypeVar v' _ | v' == v -> isSubtypeOfWithEnv typeEnv vaenv t1 PTopType
   looked                 -> isSubtypeOfWithEnv typeEnv vaenv t1 looked
 isSubtypeOfWithEnv _ _ PTopType t = t == PTopType
--- Mixed type on left (top + non-empty positive leafs): (top ∪ posLeafs) ⊆ t2 iff top ⊆ t2 ∧ posLeafs ⊆ t2
+-- Mixed type on left (top + positive leafs/constants): (top ∪ pos ∪ cs) ⊆ t2 iff top ⊆ t2 ∧ (pos ∪ cs) ⊆ t2
 isSubtypeOfWithEnv typeEnv vaenv (UnionType (Just topData) pos cs) t2
-  | not (H.null pos) =
-      isSubtypeOfWithEnv typeEnv vaenv (UnionType (Just topData) H.empty cs) t2
-      && isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing pos []) t2
+  | not (H.null pos) || not (null cs) =
+      isSubtypeOfWithEnv typeEnv vaenv (UnionType (Just topData) H.empty []) t2
+      && isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing pos cs) t2
 -- PosPartials ⊆ NegPartials: filter by name.
 -- filteredLeafs is always exact for names in allowedNames; hasOutside only means the type
 -- has additional elements outside those names, which cannot affect subtype checking here.
@@ -2511,28 +2587,35 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing subPartials []) t2@(Union
 isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing leafs cs@(_:_)) t2 =
   isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing leafs []) t2
   && all (\c -> constantInType typeEnv vaenv c t2) cs
--- Pure NegPartials-top ⊆ pure NegPartials-top, SAME predicates: (U_p − n1) ⊆ (U_p − n2) holds EXACTLY
--- iff (U_p ∩ n2) ⊆ n1. Only the part of n2 inside the shared predicate universe matters — an excluded
--- leaf outside U_p removes nothing from either side, and one that differs from an n1 leaf only in
--- arg-mode/field-completion still excludes the same U_p members. This is what makes @∀Bag − /Cons..@
--- and @∀Bag − /Cons[full]@ compare equal (both exclude @∀Bag ∩ /Cons.. = /Cons[full]@). Matched only
--- for the PURE-top form (no positive leafs, no excluded constants on either side), where the identity
--- is exact; the general clause below keeps its conservative @n2 ⊆ n1@ for the mixed/constant-bearing
--- forms (whose full types the symbolic fallback still needs, via its @t1@/@t2@ bindings).
-isSubtypeOfWithEnv typeEnv vaenv (UnionType (Just (p1, n1)) (H.null -> True) []) (UnionType (Just (p2, n2)) (H.null -> True) [])
+-- Pure NegPartials-top ⊆ pure NegPartials-top, SAME predicates: (U_p − n1 − nc1) ⊆ (U_p − n2 − nc2)
+-- holds EXACTLY iff (U_p ∩ n2) ⊆ n1 and no point of nc2 is still in t1. Only the part of n2 inside
+-- the shared predicate universe matters — an excluded leaf outside U_p removes nothing from either
+-- side, and one that differs from an n1 leaf only in arg-mode/field-completion still excludes the
+-- same U_p members. This is what makes @∀Bag − /Cons..@ and @∀Bag − /Cons[full]@ compare equal
+-- (both exclude @∀Bag ∩ /Cons.. = /Cons[full]@). A point exclusion (nc1) can never cover the leaf
+-- region (U_p ∩ n2) − n1 (leaf regions are not finite constant sets), so the region check ignores
+-- nc1; the nc2 points are checked individually. Matched only for the PURE-top form (no positive
+-- leafs/constants on either side), where the identity is exact; the general clause below keeps its
+-- conservative @n2 ⊆ n1@ for the mixed forms (whose full types the symbolic fallback still needs,
+-- via its @t1@/@t2@ bindings).
+isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (p1, n1, _)) (H.null -> True) []) (UnionType (Just (p2, n2, nc2)) (H.null -> True) [])
   | p1 == p2 = isSubtypeOfWithEnv typeEnv vaenv (intersectTypesEnv typeEnv vaenv (TopType H.empty p1) (UnionType Nothing n2 [])) (UnionType Nothing n1 [])
+               && all (\c -> not $ constantInType typeEnv vaenv c t1) nc2
 -- NegPartials ⊆ NegPartials: (U_p1-n1) ⊆ (U_p2-n2). The positive leafs and excluded constants of t1/t2
 -- are captured by the @t1@/@t2@ bindings and consulted by the symbolic-coverage and re-expression
 -- fallbacks below (not ignored); the cheap same-/differing-predicate guards decide the common cases.
--- Same predicates: sufficient iff n2 ⊆ n1 (pure-top same predicates are decided exactly above).
+-- Same predicates: sufficient iff n2 ⊆ n1 and no nc2 point remains in t1 (pure-top same predicates
+-- are decided exactly above).
 -- Differing predicates: sufficient iff predImplies p1 p2 and n2 ⊆ n1; otherwise the symbolic decision.
-isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (p1, n1)) _ _) t2@(UnionType (Just (p2, n2)) _ _)
+isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (p1, n1, _)) _ _) t2@(UnionType (Just (p2, n2, nc2)) _ _)
   | p1 == p2             = isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing n2 []) (UnionType Nothing n1 [])
+                           && all (\c -> not $ constantInType typeEnv vaenv c t1) nc2
   | isPredsContradictory p1 = True  -- t1 = ∅ ⊆ anything
   | isPredsContradictory (predsAnd p1 (predsNot p2)) = True  -- p1 ≤ p2 syntactically (p1 ∧ ¬p2 = ∅)
   | predImplies typeEnv vaenv p1 p2
-    && isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing n2 []) (UnionType Nothing n1 []) = True
-    -- U_p1 ⊆ U_p2 and n2 ⊆ n1, so (U_p1 - n1) ⊆ (U_p2 - n2)
+    && isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing n2 []) (UnionType Nothing n1 [])
+    && all (\c -> not $ constantInType typeEnv vaenv c t1) nc2 = True
+    -- U_p1 ⊆ U_p2, n2 ⊆ n1 and no nc2 point remains in t1, so (U_p1 - n1 - nc1) ⊆ (U_p2 - n2 - nc2)
   | predsEmpty typeEnv vaenv p1 = True  -- t1 = ∅ by class-graph disjointness ⊆ anything (fallback: expansion is costly)
   -- Symbolic decision (emptiness of @t1 ∧ ¬t2@); the engine's positive gate reproduces the
   -- 'tePrgmEnv'/'predsSealed' enumeration gate of the re-expression fallback.
@@ -2551,17 +2634,18 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (p1, n1)) _ _) t2@(UnionTyp
 --   True if preds are syntactically contradictory (t1 = ∅).
 --   True if predImpliesPartials establishes U_preds ⊆ superPartials (negLeafs removal can only shrink).
 --   Otherwise False (conservative: can't prove subtype without knowing predicate members).
-isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (preds, negLeafs)) _ t1Consts) t2@(UnionType Nothing superPartials _) =
-  -- The predicate region (U_preds - negLeafs) and any constants carried alongside it must both be
-  -- covered by t2. (Positive leaves of t1 are split off by the "mixed type on left" branch above,
-  -- so only the constants remain to add here; previously they were dropped.)
-  predsCovered && all (\c -> constantInType typeEnv vaenv c t2) t1Consts
+isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (preds, negLeafs, _)) _ _) t2@(UnionType Nothing superPartials _) =
+  -- The predicate region (U_preds - negLeafs) must be covered by t2; the excluded constants only
+  -- shrink t1 further, and a positive union cannot cover all-but-points of a leaf region, so the
+  -- region check without them is exact. (Positive leaves and constants of t1 are split off by the
+  -- "mixed type on left" branch above.)
+  predsCovered
   where
    -- Symbolic decision first (emptiness of @(U_preds − negLeafs) ∧ ¬t2@ against the class
    -- graph, ungated - subsuming the ungated 'predImpliesPartials'/'predsEmpty' routes below);
    -- the materialized chain remains as the out-of-fragment fallback.
    predsCovered = fromMaybe predsCoveredExpand
-     (typeCoveredSymbolic typeEnv vaenv False (UnionType (Just (preds, negLeafs)) H.empty []) t2)
+     (typeCoveredSymbolic typeEnv vaenv False (UnionType (Just (preds, negLeafs, [])) H.empty []) t2)
    predsCoveredExpand = case expandTypesWithNamesFull typeEnv vaenv t1 (H.keysSet superPartials) of
     (_, True)      | isPredsContradictory preds -> True
     (_, True)      | predImpliesPartials typeEnv vaenv preds superPartials -> True
@@ -2586,10 +2670,14 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing subPartials []) (UnionType N
   where
     supersByName = splitUnionTypeByName superPartials
     subsByName   = splitUnionTypeByName subPartials
-    result = H.keysSet subsByName `S.isSubsetOf` H.keysSet supersByName
-          && and (H.intersectionWith areSubPartials subsByName supersByName)
-    areSubPartials subList superList = all (isSubPartial superList) subList
-    isSubPartial sup sub = directCheck || coveredByArgSets || coveredBySplit (splitPartialByUnionVarArgs sub) || coveredBySplit (splitPartialByUnionVarArgs expandedSub)
+    -- A sub group with no same-named super can still be covered when every one of its leaves is
+    -- uninhabited by declaration-bounding ('partialUninhabitedByDecl' — the empty set is a subset
+    -- of anything); an inhabited leaf requires a same-named super as before.
+    result = and (H.elems (H.mapWithKey subGroupCovered subsByName))
+    subGroupCovered n subs = case H.lookup n supersByName of
+      Just sups -> all (isSubPartial sups) subs
+      Nothing   -> all (partialUninhabitedByDecl typeEnv vaenv) subs
+    isSubPartial sup sub = directCheck || coveredByArgSets || coveredBySplit (splitPartialByUnionVarArgs sub) || coveredBySplit (splitPartialByUnionVarArgs expandedSub) || partialUninhabitedByDecl typeEnv vaenv sub
       where
         directCheck = any (isSubPartialOfWithEnv typeEnv vaenv sub) sup
         -- A moded sub leaf IS the union of its arg-set interval's exact pieces
@@ -2611,7 +2699,7 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing subPartials []) (UnionType N
           -- union-joined positive leaves (and constants), under-approximating the arg and
           -- producing a false-positive subtype (e.g. @m(⊤)@, a leaf outside @preds@, would
           -- vanish). Union the partial component back in so the expansion is faithful.
-          where expandArg (UnionType (Just (preds, negLeafs)) pos cs) =
+          where expandArg (UnionType (Just (preds, negLeafs, _)) pos cs) =
                   unionTypesWithEnv typeEnv vaenv
                     (snd $ differenceTypeWithEnv typeEnv vaenv (expandPredicates typeEnv vaenv preds) (UnionType Nothing negLeafs []))
                     (UnionType Nothing pos cs)
@@ -2704,7 +2792,7 @@ compactPartialsWithClassPred typeEnv vaenv partials = unionPartialLeafs $ map tr
         partial' = partial{ptPreds = PredsAnd $ map (PredsOne . PredExpr) exprPreds}
 
         asLeafs (UnionType Nothing leafs []) = leafs
-        asLeafs (UnionType (Just (_, negLeafs)) posLeafs []) = H.unionWith S.union negLeafs posLeafs  -- shouldn't normally occur
+        asLeafs (UnionType (Just (_, negLeafs, _)) posLeafs []) = H.unionWith S.union negLeafs posLeafs  -- shouldn't normally occur
         asLeafs t = error $ printf "compactPartialsWithClassPred: unexpected type %s" (show t)
 
         splitPreds :: [TypePredicate] -> ([PartialType], [PartialType], [PartialType])
@@ -2811,8 +2899,8 @@ compactType _ _ t@(UnionType Nothing pos [])
 -- otherwise return such a top unchanged. The class-graph detector is gated to pure positive
 -- PredClass conjunctions to keep the expansion finite, cheap, and non-recursive (the expansion
 -- yields positive leafs, which never re-enter this clause).
-compactType typeEnv vaenv (UnionType (Just (preds, _)) pos _)
-  | isPredsContradictory preds || predClassConjunctionEmpty preds = compactType typeEnv vaenv (UnionType Nothing pos [])
+compactType typeEnv vaenv (UnionType (Just (preds, _, _)) pos cs)
+  | isPredsContradictory preds || predClassConjunctionEmpty preds = compactType typeEnv vaenv (UnionType Nothing pos cs)
   where
     predClassConjunctionEmpty (PredsAnd ps) = length ps >= 2 && all isPredClassAtom ps && predsEmpty typeEnv vaenv (PredsAnd ps)
     predClassConjunctionEmpty _              = False
@@ -2824,10 +2912,10 @@ compactType typeEnv vaenv (UnionType (Just (preds, _)) pos _)
 -- parameterized-class pair — the difference @C[a] − C[b]@ when @a ⊆ b@ (which otherwise leaves an
 -- unreduced @C[a] ∧ ¬C[b]@ residue). Gated on a present negation so the common all-positive
 -- conjunctions never pay the 'predImplies' pass.
-compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, _)) pos _)
+compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, _, _)) pos cs)
   | any isNeg ps
   , or [ predImplies typeEnv vaenv (mkAnd rest) q | (PredsNot q, rest) <- picks ps ] =
-      compactType typeEnv vaenv (UnionType Nothing pos [])
+      compactType typeEnv vaenv (UnionType Nothing pos cs)
   where
     isNeg (PredsNot _) = True
     isNeg _            = False
@@ -2836,10 +2924,10 @@ compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, _)) pos _)
       where go _   []       = []
             go pre (x:post) = (x, pre ++ post) : go (pre ++ [x]) post
 -- Top component with empty neg and non-trivial preds
-compactType typeEnv vaenv t@(UnionType (Just (preds, negPartials)) posLeafs [])
+compactType typeEnv vaenv t@(UnionType (Just (preds, negPartials, [])) posLeafs [])
   | H.null negPartials && H.null posLeafs && preds /= PredsNone = case preds of
       (PredsNot (PredsOne (PredRel rp))) -> case expandRelPartial typeEnv vaenv rp of
-        (UnionType Nothing rp' []) -> UnionType (Just (PredsNone, rp')) H.empty []
+        (UnionType Nothing rp' []) -> UnionType (Just (PredsNone, rp', [])) H.empty []
         _               -> t
       -- ¬(contradictory) = PredsNone = everything → PTopType
       (PredsNot p) | isPredsContradictory p -> PTopType
@@ -2857,40 +2945,60 @@ compactType typeEnv vaenv t@(UnionType (Just (preds, negPartials)) posLeafs [])
 --    @Top(PredRel /Cons, {/Cons..})@ and @~/Cons ⊆ /Cons..@, so ∅ (without this the difference stays
 --    an unreduced symbolic subtraction). 'isSubtypeOfWithEnv' is sound (no false positives), so this
 --    never empties a genuinely inhabited residual.
-compactType typeEnv vaenv t@(UnionType (Just (preds, negPartials)) posLeafs negConsts)
+compactType typeEnv vaenv t@(UnionType (Just (preds, negPartials, negConsts)) posLeafs [])
   | H.null posLeafs && preds /= PredsNone
   , not (H.null negPartials) || not (null negConsts) =
       if not (H.null keptNegLeafs) && isSubtypeOfWithEnv typeEnv vaenv predUniverse (UnionType Nothing keptNegLeafs [])
         then BottomType
       else if keptNegLeafs == negPartials && keptNegConsts == negConsts
         then t
-      else compactType typeEnv vaenv $ UnionType (Just (preds, keptNegLeafs)) H.empty keptNegConsts
+      else compactType typeEnv vaenv $ UnionType (Just (preds, keptNegLeafs, keptNegConsts)) H.empty []
   where
     predUniverse  = TopType H.empty preds
     keptNegLeafs  = joinUnionType $ filter negLeafIntersects $ splitUnionType negPartials
     keptNegConsts = filter (\c -> constantInType typeEnv vaenv c predUniverse) negConsts
     negLeafIntersects p = not $ isBottomType $ intersectTypesEnv typeEnv vaenv (singletonType p) predUniverse
 -- ¬(contradictory) = everything: top component is U, simplify to PTopType
-compactType typeEnv vaenv (UnionType (Just (PredsNot p, negLeafs)) posLeafs cs)
-  | isPredsContradictory p = compactType typeEnv vaenv (UnionType (Just (PredsNone, negLeafs)) posLeafs cs)
+compactType typeEnv vaenv (UnionType (Just (PredsNot p, negLeafs, ncs)) posLeafs cs)
+  | isPredsContradictory p = compactType typeEnv vaenv (UnionType (Just (PredsNone, negLeafs, ncs)) posLeafs cs)
 -- Cancel pos/neg overlap: (T - neg) ∪ pos = (T - (neg∖pos)) ∪ (pos∖neg)
 -- e.g. (U - {X}) ∪ {X} = U
-compactType typeEnv vaenv (UnionType (Just (preds, negLeafs)) posLeafs cs)
+compactType typeEnv vaenv (UnionType (Just (preds, negLeafs, ncs)) posLeafs cs)
   | not (H.null posLeafs), not (H.null negLeafs)
   , let common = H.filter (not . S.null) $ H.intersectionWith S.intersection posLeafs negLeafs
   , not (H.null common) =
       let subtractCommon leafs = H.filter (not . S.null) $ H.differenceWith (\a b -> Just (S.difference a b)) leafs common
-      in compactType typeEnv vaenv $ UnionType (Just (preds, subtractCommon negLeafs)) (subtractCommon posLeafs) cs
+      in compactType typeEnv vaenv $ UnionType (Just (preds, subtractCommon negLeafs, ncs)) (subtractCommon posLeafs) cs
+-- Cancel constants across the positive and subtractive components:
+--  * a positive constant also excluded by the top (c ∈ negConsts) whose point lies in the
+--    predicated region (U − negLeafs) cancels out of BOTH lists ((U − … − {c}) ∪ {c} restores the
+--    point); if the point lies outside that region the exclusion is vacuous and drops while the
+--    positive listing survives;
+--  * a positive constant the top or the positive leafs already contain is redundant and drops.
+compactType typeEnv vaenv (UnionType (Just (preds, negLeafs, negConsts)) posLeafs posConsts)
+  | not (null posConsts)
+  , let (negConsts', posConsts') = foldr cancelConst (negConsts, []) posConsts
+  , (negConsts', posConsts') /= (negConsts, posConsts) =
+      compactType typeEnv vaenv $ UnionType (Just (preds, negLeafs, negConsts')) posLeafs posConsts'
+  where
+    predRegion = UnionType (Just (preds, negLeafs, [])) H.empty []
+    cancelConst c (ncs, pcs)
+      | c `elem` ncs = if constantInType typeEnv vaenv c predRegion
+                         then (L.delete c ncs, pcs)
+                         else (L.delete c ncs, c : pcs)
+      | constantInType typeEnv vaenv c (UnionType (Just (preds, negLeafs, ncs)) H.empty [])
+        || constantCoveredByLeafs c posLeafs = (ncs, pcs)
+      | otherwise = (ncs, c : pcs)
 -- PredsAnd: remove PredRel atoms dominated by a PredClass atom in the same conjunction.
 -- e.g. PredsAnd[PredClass /Boolean, PredRel Boolean] → PredsOne (PredClass /Boolean)
 -- Soundness: expandRelPartial r includes classPartial c in its expansion, so U_PredClass c ⊆ U_PredRel r
 -- when r's name path is a suffix of c's name path.
-compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials)) posLeafs cs)
+compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials, ncs)) posLeafs cs)
   | not (null predClassAtoms)
   , let simplified = filter (not . isDominatedByPredClass) ps
   , length simplified < length ps =
       -- Recurse: might simplify further (e.g. single-element PredsAnd → PredsOne)
-      compactType typeEnv vaenv $ UnionType (Just (mkAnd simplified, negPartials)) posLeafs cs
+      compactType typeEnv vaenv $ UnionType (Just (mkAnd simplified, negPartials, ncs)) posLeafs cs
   where
     predClassAtoms = [c | PredsOne (PredClass c) <- ps]
     -- A PredRel r is dominated if some PredClass c in the conjunction has r's path as a suffix
@@ -2904,11 +3012,11 @@ compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials)) posLeafs 
 -- parameterized @Ord[X] ∧ Eq[Y]@ would need @X ⊆ Y@, which the name-only edge does not check).
 -- Without this an element bound like @Cons[/T=(Ord∧Eq)]@ stays un-canonical and re-derives each
 -- epoch, blocking convergence. Positive-only complement of the negation-gated clause below.
-compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials)) posLeafs cs)
+compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials, ncs)) posLeafs cs)
   | length bareClasses >= 2
   , let simplified = filter (not . isSuperclassOfSibling) ps
   , length simplified < length ps =
-      compactType typeEnv vaenv $ UnionType (Just (mkAnd simplified, negPartials)) posLeafs cs
+      compactType typeEnv vaenv $ UnionType (Just (mkAnd simplified, negPartials, ncs)) posLeafs cs
   where
     bareClasses = [c | PredsOne (PredClass c) <- ps, plainPartial c]
     isSuperclassOfSibling (PredsOne (PredClass q))
@@ -2921,11 +3029,11 @@ compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials)) posLeafs 
 -- type accumulates when its constructor is a member of two related classes). Gated to conjunctions
 -- containing a 'PredsNot' (the disjunction/complement form) so the common atom-only conjunctions
 -- never pay the pairwise 'predImplies'.
-compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials)) posLeafs cs)
+compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials, ncs)) posLeafs cs)
   | any isPredsNotConjunct ps
   , let simplified = dropImpliedConjuncts ps
   , length simplified < length ps =
-      compactType typeEnv vaenv $ UnionType (Just (mkAnd simplified, negPartials)) posLeafs cs
+      compactType typeEnv vaenv $ UnionType (Just (mkAnd simplified, negPartials, ncs)) posLeafs cs
   where
     isPredsNotConjunct (PredsNot _) = True
     isPredsNotConjunct _            = False
@@ -2947,7 +3055,7 @@ compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials)) posLeafs 
 -- the solver converges — the mixed-form complement of 'foldRecursiveType', which folds pure
 -- positive unions. Candidates are name-gated to the declared constituents of the predicate's
 -- class atoms so unrelated leaves never pay the subtype check.
-compactType typeEnv vaenv (UnionType (Just topData@(preds, _)) pos cs)
+compactType typeEnv vaenv (UnionType (Just topData@(preds, _, _)) pos cs)
   | not (H.null pos)
   , not (S.null constituentNames)
   , ((_:_), kept) <- L.partition absorbable (splitUnionType pos) =
@@ -3131,8 +3239,8 @@ relPartialsIn PartialType{ptArgs, ptVars} = concatMap relPartialsInType (H.elems
 relPartialsInType :: Type -> [PartialType]
 relPartialsInType (UnionType mtop pos _) = topRels ++ concatMap relPartialsIn (splitUnionType pos)
   where topRels = case mtop of
-          Just (preds, _) -> predRelPartials preds
-          Nothing         -> []
+          Just (preds, _, _) -> predRelPartials preds
+          Nothing            -> []
 relPartialsInType _ = []
 
 predRelPartials :: TypePredicates -> [PartialType]
@@ -3157,41 +3265,25 @@ unionTypesWithEnv _ _ t1 t2 | t1 == t2 = t1
 unionTypesWithEnv typeEnv vaenv (TypeVar v _) t = unionTypesWithEnv typeEnv vaenv (vaenvLookup vaenv v) t
 unionTypesWithEnv typeEnv vaenv t v@TypeVar{} = unionTypesWithEnv typeEnv vaenv v t
 -- Structured union: separate handling for positive and top components.
--- Positive constants from Nothing side are checked against the top; if covered, dropped (already included).
+-- The outer posLeafs/posConsts of both sides always merge positively; a 'Just' top is carried
+-- SYMBOLICALLY (never expanded to its materialized members — for an unsealed class the expansion
+-- is a strictly smaller set, so expanding changes the union). 'compactType' canonicalises the
+-- result (dropping positive members the top already covers and cancelling re-added exclusions).
 -- Top components: same preds → neg leafs intersect; PredsNone ∪ anything → PredsNone with intersected negs;
 -- different preds → De Morgan normalization: p1∨p2 = ¬(¬p1∧¬p2) via predsNot/predsAnd (flat, depth 1).
-unionTypesWithEnv typeEnv vaenv (UnionType mTop1 pos1 cs1) (UnionType mTop2 pos2 cs2) =
+unionTypesWithEnv typeEnv vaenv t1@(UnionType mTop1 pos1 cs1) t2@(UnionType mTop2 pos2 cs2) =
   debugTrace typeEnv msg result
   where
     pos'  = unionPartialLeafs [pos1, pos2]
+    cs'   = L.nub (cs1 ++ cs2)
     result = case (mTop1, mTop2) of
       (Nothing, Nothing) ->
-        compactType typeEnv vaenv $ UnionType Nothing pos' (L.nub (cs1 ++ cs2))
-      (Nothing, Just (p2, n2)) ->
-        -- cs1 are positive constants (from Nothing side); cs2 are negative constants (excluded from top)
-        let notInTop = filter (\c -> not $ constantInType typeEnv vaenv c (UnionType (Just (p2, n2)) H.empty cs2)) cs1
-        in if null notInTop
-           then compactType typeEnv vaenv $ UnionType (Just (p2, n2)) pos' cs2
-           else -- Positive constants not covered by top: expand top to concrete Nothing form
-                let topExpanded = snd $ differenceTypeWithEnv typeEnv vaenv
-                                          (expandPredicates typeEnv vaenv p2)
-                                          (UnionType Nothing n2 [])
-                in unionTypesWithEnv typeEnv vaenv
-                     (UnionType Nothing pos1 cs1)
-                     (unionTypesWithEnv typeEnv vaenv topExpanded (UnionType Nothing pos2 []))
-      (Just (p1, n1), Nothing) ->
-        -- cs1 are negative constants (excluded from top); cs2 are positive constants (from Nothing side)
-        let notInTop = filter (\c -> not $ constantInType typeEnv vaenv c (UnionType (Just (p1, n1)) H.empty cs1)) cs2
-        in if null notInTop
-           then compactType typeEnv vaenv $ UnionType (Just (p1, n1)) pos' cs1
-           else -- Positive constants not covered by top: expand top to concrete Nothing form
-                let topExpanded = snd $ differenceTypeWithEnv typeEnv vaenv
-                                          (expandPredicates typeEnv vaenv p1)
-                                          (UnionType Nothing n1 [])
-                in unionTypesWithEnv typeEnv vaenv
-                     (unionTypesWithEnv typeEnv vaenv topExpanded (UnionType Nothing pos1 []))
-                     (UnionType Nothing pos2 cs2)
-      (Just (p1, n1), Just (p2, n2)) ->
+        compactType typeEnv vaenv $ UnionType Nothing pos' cs'
+      (Nothing, Just top2) ->
+        compactType typeEnv vaenv $ UnionType (Just top2) pos' cs'
+      (Just top1, Nothing) ->
+        compactType typeEnv vaenv $ UnionType (Just top1) pos' cs'
+      (Just (p1, n1, nc1), Just (p2, n2, nc2)) ->
         -- The union's predicate p1∨p2, kept syntactically stable across solver epochs: equal or
         -- one-sided-universal preds collapse directly, and when one predicate region implies the
         -- other the union is just the wider side (semantically equal to the De Morgan fallback,
@@ -3203,8 +3295,12 @@ unionTypesWithEnv typeEnv vaenv (UnionType mTop1 pos1 cs1) (UnionType mTop2 pos2
                    | predImplies typeEnv vaenv p1 p2 = p2
                    | predImplies typeEnv vaenv p2 p1 = p1
                    | otherwise = predsNot $ predsAnd (predsNot p1) (predsNot p2)
+            -- A constant stays excluded from the union only if NEITHER side contains it
+            -- ((U−nc1) ∪ (U−nc2) excludes only nc1 ∩ nc2; membership is checked against the
+            -- full side, so a constant one side re-adds positively is not excluded either)
+            nc' = filter (\c -> not (constantInType typeEnv vaenv c t1) && not (constantInType typeEnv vaenv c t2)) (L.nub (nc1 ++ nc2))
         in compactType typeEnv vaenv $
-             UnionType (Just (preds', snd $ intersectPartialLeafsWithVarEnv typeEnv vaenv n1 n2)) pos' (L.nub (cs1 ++ cs2))
+             UnionType (Just (preds', snd $ intersectPartialLeafsWithVarEnv typeEnv vaenv n1 n2, nc')) pos' cs'
     msg = printf "[UNION] %s ∪ %s = %s" (show $ UnionType mTop1 pos1 cs1) (show $ UnionType mTop2 pos2 cs2) (show result)
 
 unionTypes :: TypeGraph tg => TypeEnv tg -> Type -> Type -> Type
@@ -3411,12 +3507,12 @@ intersectTypesWithVarEnv typeEnv vaenv (UnionType (Just topData) pos cs) t2
           resolveNew | H.null newBindings = id
                      | otherwise = substituteKeep newBindings
       in (vaenv', unionTypesWithEnv typeEnv vaenv (resolveNew topResult) (resolveNew posResult))
-intersectTypesWithVarEnv typeEnv vaenv t1 t2@(UnionType (Just _) pos _)
-  | not (H.null pos) = intersectTypesWithVarEnv typeEnv vaenv t2 t1
--- Top ∩ Top → union excluded sets, predicates, and constants
-intersectTypesWithVarEnv typeEnv vaenv (UnionType (Just (ps1, np1)) (H.null -> True) cs1) (UnionType (Just (ps2, np2)) (H.null -> True) cs2) =
+intersectTypesWithVarEnv typeEnv vaenv t1 t2@(UnionType (Just _) pos cs)
+  | not (H.null pos) || not (null cs) = intersectTypesWithVarEnv typeEnv vaenv t2 t1
+-- Top ∩ Top → union excluded sets (leafs and constants) and merge predicates
+intersectTypesWithVarEnv typeEnv vaenv (UnionType (Just (ps1, np1, nc1)) (H.null -> True) []) (UnionType (Just (ps2, np2, nc2)) (H.null -> True) []) =
   let (vaenv', preds') = mergePredsAnd typeEnv vaenv ps1 ps2
-  in (vaenv', compactType typeEnv vaenv' $ UnionType (Just (preds', unionPartialLeafs [np1, np2])) H.empty (L.nub $ cs1 ++ cs2))
+  in (vaenv', compactType typeEnv vaenv' $ UnionType (Just (preds', unionPartialLeafs [np1, np2], L.nub $ nc1 ++ nc2)) H.empty [])
 intersectTypesWithVarEnv _ vaenv t1 t2 | t1 == t2 = (vaenv, t1)
 -- TypeVar: constrain in vaenv.  Treats 'TVVar' and 'TVArg' uniformly: both look up in vaenv,
 -- and an unknown key is recorded as a fresh constraint.  TVInt/TVExt is informational here:
@@ -3434,11 +3530,11 @@ intersectTypesWithVarEnv typeEnv vaenv tv@(TypeVar v _) t
         isSelfVar _   _                = False
 intersectTypesWithVarEnv typeEnv vaenv t tv@TypeVar{} = intersectTypesWithVarEnv typeEnv vaenv tv t
 -- PosPartials with constants ∩ Top: handle constant exclusion before leafs logic
-intersectTypesWithVarEnv typeEnv vaenv (UnionType Nothing posLeafs posConsts) t2@(UnionType (Just (preds, negLeafs)) (H.null -> True) negConsts)
+intersectTypesWithVarEnv typeEnv vaenv (UnionType Nothing posLeafs posConsts) t2@(UnionType (Just (preds, negLeafs, negConsts)) (H.null -> True) [])
   | not (null posConsts) || not (null negConsts) =
       let (vaenv', baseResult) = intersectTypesWithVarEnv typeEnv vaenv
                                    (UnionType Nothing posLeafs [])
-                                   (UnionType (Just (preds, negLeafs)) H.empty [])
+                                   (UnionType (Just (preds, negLeafs, [])) H.empty [])
           survivingConsts = filter (\c -> constantInType typeEnv vaenv c t2) posConsts
       in case (baseResult, survivingConsts) of
            (_, []) -> (vaenv', baseResult)
@@ -3448,11 +3544,11 @@ intersectTypesWithVarEnv typeEnv vaenv (UnionType Nothing posLeafs posConsts) t2
              in (vaenv', UnionType Nothing ls finalCs)
            _ -> (vaenv', baseResult)
 -- PosPartials ∩ Top(negLeafs, PredsNone) when negLeafs non-empty → subtract
-intersectTypesWithVarEnv typeEnv vaenv (UnionType Nothing posPartials []) (UnionType (Just (PredsNone, negPartials)) (H.null -> True) [])
+intersectTypesWithVarEnv typeEnv vaenv (UnionType Nothing posPartials []) (UnionType (Just (PredsNone, negPartials, [])) (H.null -> True) [])
   | not (H.null negPartials) =
       (vaenv, compactType typeEnv vaenv $ differencePartialLeafs typeEnv vaenv posPartials negPartials)
 -- PosPartials ∩ Top(_, preds) when negLeafs empty → expand/filter
-intersectTypesWithVarEnv typeEnv vaenv t1@(UnionType Nothing partials []) t2@(UnionType (Just (preds, negPartials)) (H.null -> True) _)
+intersectTypesWithVarEnv typeEnv vaenv t1@(UnionType Nothing partials []) t2@(UnionType (Just (preds, negPartials, [])) (H.null -> True) _)
   | H.null negPartials =
       case expandTypesWithNamesFull typeEnv vaenv t2 (H.keysSet partials) of
         -- When filteredLeafs is non-empty, use it directly regardless of hasOutside.
@@ -3470,21 +3566,21 @@ intersectTypesWithVarEnv typeEnv vaenv t1@(UnionType Nothing partials []) t2@(Un
           Nothing -> case preds of
             -- pp ∩ Top(¬inner, ∅) = pp - expand(inner within pp)
             PredsNot inner ->
-              let innerLeafs = expandTypeWithNames typeEnv vaenv (UnionType (Just (inner, H.empty)) H.empty []) (H.keysSet partials)
+              let innerLeafs = expandTypeWithNames typeEnv vaenv (UnionType (Just (inner, H.empty, [])) H.empty []) (H.keysSet partials)
               in (vaenv, compactType typeEnv vaenv $ differencePartialLeafs typeEnv vaenv partials innerLeafs)
             -- General: pp ∩ Top(preds, ∅) = pp ∩ expand(preds within pp)
             _ ->
-              let predsLeafs = expandTypeWithNames typeEnv vaenv (UnionType (Just (preds, H.empty)) H.empty []) (H.keysSet partials)
+              let predsLeafs = expandTypeWithNames typeEnv vaenv (UnionType (Just (preds, H.empty, [])) H.empty []) (H.keysSet partials)
               in intersectTypesWithVarEnv typeEnv vaenv t1 (UnionType Nothing predsLeafs [])
 -- PosPartials ∩ Top(preds, negLeafs) with both preds non-trivial and negLeafs non-empty.
 -- Split the top as Top(preds, ∅) ∩ Top(PredsNone, negLeafs) and intersect in sequence:
 -- (pos ∩ U_preds) - negLeafs. The first step routes to the negLeafs-empty clause above and the
 -- second to the PredsNone-subtract clause, both of which yield positive-partial forms, so this
 -- terminates. (Without this clause the pair falls through to the unhandled-case error below.)
-intersectTypesWithVarEnv typeEnv vaenv t1@(UnionType Nothing _ []) (UnionType (Just (preds, negPartials)) (H.null -> True) cs)
+intersectTypesWithVarEnv typeEnv vaenv t1@(UnionType Nothing _ []) (UnionType (Just (preds, negPartials, ncs)) (H.null -> True) [])
   | not (H.null negPartials) && preds /= PredsNone =
-      let (vaenv', inner) = intersectTypesWithVarEnv typeEnv vaenv t1 (UnionType (Just (preds, H.empty)) H.empty cs)
-      in intersectTypesWithVarEnv typeEnv vaenv' inner (UnionType (Just (PredsNone, negPartials)) H.empty [])
+      let (vaenv', inner) = intersectTypesWithVarEnv typeEnv vaenv t1 (UnionType (Just (preds, H.empty, ncs)) H.empty [])
+      in intersectTypesWithVarEnv typeEnv vaenv' inner (UnionType (Just (PredsNone, negPartials, [])) H.empty [])
 -- Top ∩ PosPartials → flip
 intersectTypesWithVarEnv typeEnv vaenv t1@(UnionType (Just _) (H.null -> True) _) t2@(UnionType Nothing _ _) =
   intersectTypesWithVarEnv typeEnv vaenv t2 t1
@@ -3640,29 +3736,23 @@ differenceTypeEnv typeEnv t1 t2 = snd $ differenceTypeWithEnv typeEnv H.empty t1
 
 -- | Complement of a type (¬t).
 complementTypeEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
--- ¬(PosPartials leafs consts): Top(leafs, PredsNone) with excluded constants
--- The [Constant] in Top represents constants excluded from the complement
-complementTypeEnv _ _ (UnionType Nothing leafs consts) = UnionType (Just (PredsNone, leafs)) H.empty consts
+-- ¬(PosPartials leafs consts): the universe minus those leafs and constants
+complementTypeEnv _ _ (UnionType Nothing leafs consts) = UnionType (Just (PredsNone, leafs, consts)) H.empty []
 -- ¬PTopType = BottomType
 complementTypeEnv _ _ PTopType = BottomType
--- ¬((top - {negConsts}) ∪ pos) = (¬top ∪ {negConsts}) ∩ ¬pos
--- cs are NEGATIVE constants (excluded from top), so they become POSITIVE in the complement
+-- ¬(top ∪ pos ∪ cs) = ¬top ∩ ¬(pos ∪ cs)
 complementTypeEnv typeEnv vaenv (UnionType (Just topData) pos cs)
   | not (H.null pos) || not (null cs) =
       intersectTypesEnv typeEnv vaenv
-        (unionTypesWithEnv typeEnv vaenv
-          (complementTypeEnv typeEnv vaenv (UnionType (Just topData) H.empty []))
-          (UnionType Nothing H.empty cs))
-        (complementTypeEnv typeEnv vaenv (UnionType Nothing pos []))
--- ¬(Top(neg, preds, consts)):
--- Top(neg, consts) = "universe minus neg minus consts"
--- so its complement = neg ∪ consts = PosPartials(neg, consts), unioned with ¬preds when present
-complementTypeEnv typeEnv vaenv (UnionType (Just (preds, negPartials)) (H.null -> True) negConsts)
+        (complementTypeEnv typeEnv vaenv (UnionType (Just topData) H.empty []))
+        (complementTypeEnv typeEnv vaenv (UnionType Nothing pos cs))
+-- ¬(U_preds − negPartials − negConsts) = ¬U_preds ∪ negPartials ∪ negConsts
+complementTypeEnv typeEnv vaenv (UnionType (Just (preds, negPartials, negConsts)) (H.null -> True) [])
   | H.null negPartials && null negConsts = notPreds
   | preds == PredsNone = UnionType Nothing negPartials negConsts
   | otherwise = unionTypesWithEnv typeEnv vaenv (UnionType Nothing negPartials negConsts) notPreds
   where
-    notPreds = UnionType (Just (predsNot preds, H.empty)) H.empty []
+    notPreds = UnionType (Just (predsNot preds, H.empty, [])) H.empty []
 complementTypeEnv typeEnv vaenv (TypeVar v _) = complementTypeEnv typeEnv vaenv (vaenvLookup vaenv v)
 complementTypeEnv _ _ t = error $ printf "complementTypeEnv: unhandled case %s" (show t)
 
@@ -3692,9 +3782,9 @@ setArgMode _ mode (UnionType Nothing leafs []) =
   UnionType Nothing (joinUnionType $ map (\p -> p{ptArgMode=mode}) $ splitUnionType leafs) []
 setArgMode vaenv mode (TypeVar v _) = setArgMode vaenv mode (fromJust $ H.lookup v vaenv)
 setArgMode _ _ PTopType = PTopType
-setArgMode _ mode (UnionType (Just (PredsOne (PredRel n), negPartials)) (H.null -> True) []) =
-  UnionType (Just (PredsOne $ PredRel n{ptArgMode=mode}, negPartials)) H.empty []
-setArgMode _ _ t@(UnionType (Just (PredsOne PredClass{}, _)) (H.null -> True) []) = t
+setArgMode _ mode (UnionType (Just (PredsOne (PredRel n), negPartials, [])) (H.null -> True) []) =
+  UnionType (Just (PredsOne $ PredRel n{ptArgMode=mode}, negPartials, [])) H.empty []
+setArgMode _ _ t@(UnionType (Just (PredsOne PredClass{}, _, [])) (H.null -> True) []) = t
 setArgMode _ _ t = error $ printf "Unimplemented setArgMode for %s" (show t)
 
 -- |
@@ -3726,7 +3816,7 @@ applyTypeVarOverrides :: H.HashMap TypeVarName Type -> Type -> Type
 applyTypeVarOverrides overrides t | H.null overrides = t
 applyTypeVarOverrides overrides (UnionType mNeg posLeafs consts) = UnionType mNeg' posLeafs' consts
   where
-    mNeg' = fmap (first (mapTypePreds (mapTypePred overridePartial))) mNeg
+    mNeg' = fmap (\(preds, nl, ncs) -> (mapTypePreds (mapTypePred overridePartial) preds, nl, ncs)) mNeg
     posLeafs' = joinUnionType $ map overridePartial $ splitUnionType posLeafs
     overridePartial p@PartialType{ptVars} = p{ptVars=H.mapWithKey (\k old -> H.lookupDefault old k overrides) ptVars}
 applyTypeVarOverrides overrides (TypeVar (TVApplied b ovr) loc) = TypeVar (TVApplied b (H.union overrides ovr)) loc
@@ -3765,8 +3855,8 @@ substituteTVExt vaenv (UnionType Nothing partials []) =
 -- kept the result abstract, so downstream completion widened the parameter to Top. Only vars that
 -- are actually bound in @vaenv@ are replaced; an external var absent from the env is *kept* (not
 -- dropped to Top), so a recursive predicate like @PredClass ConsList[/T=$_T]@ stays linked.
-substituteTVExt vaenv (UnionType (Just (preds, negLeafs)) posLeafs consts) =
-  UnionType (Just (mapTypePreds (mapTypePred (substitutePartialKeep vaenv)) preds, negLeafs)) posLeafs consts
+substituteTVExt vaenv (UnionType (Just (preds, negLeafs, negConsts)) posLeafs consts) =
+  UnionType (Just (mapTypePreds (mapTypePred (substitutePartialKeep vaenv)) preds, negLeafs, negConsts)) posLeafs consts
 substituteTVExt vaenv (TypeVar (TVApplied b overrides) loc) =
   applyTypeVarOverrides (fmap (substituteTVExt vaenv) overrides) (substituteTVExt vaenv (TypeVar b loc))
 substituteTVExt vaenv (TypeVar v _) = vaenvLookup vaenv v
@@ -3821,7 +3911,7 @@ typeTVExtVarRefs PTopType = S.empty
 typeTVExtVarRefs (UnionType mtop leafs _) = S.unions $ topRefs ++ map partialRefs (splitUnionType leafs)
   where
     topRefs = case mtop of
-      Just (preds, negLeafs) -> predsRefs preds : map partialRefs (splitUnionType negLeafs)
+      Just (preds, negLeafs, _) -> predsRefs preds : map partialRefs (splitUnionType negLeafs)
       Nothing                -> []
     predsRefs (PredsOne p')  = predRefs p'
     predsRefs (PredsAnd ps') = S.unions (map predsRefs ps')
@@ -3846,8 +3936,8 @@ substituteKeep vaenv t@(TypeVar v TVExt) = case H.lookup v vaenv of
 substituteKeep _     t@(TypeVar _ TVInt) = t
 substituteKeep vaenv (UnionType Nothing partials []) =
   UnionType Nothing (joinUnionType $ map (substitutePartialKeep vaenv) $ splitUnionType partials) []
-substituteKeep vaenv (UnionType (Just (preds, negLeafs)) posLeafs consts) =
-  UnionType (Just (mapTypePreds (mapTypePred (substitutePartialKeep vaenv)) preds, negLeafs)) posLeafs consts
+substituteKeep vaenv (UnionType (Just (preds, negLeafs, negConsts)) posLeafs consts) =
+  UnionType (Just (mapTypePreds (mapTypePred (substitutePartialKeep vaenv)) preds, negLeafs, negConsts)) posLeafs consts
 substituteKeep _     t                   = t
 
 -- | Resolve a recursive value's free element vars (@$_T@) throughout a type, both:
@@ -3881,8 +3971,8 @@ resolveTypeSelfRefs = go
       Just b | not (isTopT b) -> b
       _                       -> t
     go _   t                   = t
-    goTop env (preds, negLeafs) =
-      (mapTypePreds (mapTypePred (goLeaf env)) preds, joinUnionType $ map (goLeaf env) $ splitUnionType negLeafs)
+    goTop env (preds, negLeafs, ncs) =
+      (mapTypePreds (mapTypePred (goLeaf env)) preds, joinUnionType $ map (goLeaf env) $ splitUnionType negLeafs, ncs)
     goLeaf env p@PartialType{ptVars, ptArgs, ptPreds} = p{
         ptVars  = fmap (go env) ptVars,
         ptArgs  = fmap (go innerEnv) ptArgs,
@@ -3914,8 +4004,8 @@ relateArrowVars vaenv = go
     go (UnionType mtop pos consts) =
       UnionType (fmap goTop mtop) (joinUnionType $ map goLeaf $ splitUnionType pos) consts
     go t = t
-    goTop (preds, negLeafs) =
-      (mapTypePreds (mapTypePred goLeaf) preds, joinUnionType $ map goLeaf $ splitUnionType negLeafs)
+    goTop (preds, negLeafs, ncs) =
+      (mapTypePreds (mapTypePred goLeaf) preds, joinUnionType $ map goLeaf $ splitUnionType negLeafs, ncs)
     goLeaf p@PartialType{ptVars, ptArgs, ptPreds} = p{
         ptVars  = H.mapWithKey relateVar ptVars,
         ptArgs  = fmap go ptArgs,

@@ -295,16 +295,16 @@ deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) =
     -- member data leaves. Expansion only fires through the predicate path, so the class must stay a
     -- predicate (not be reduced to a bare leaf) for @Boolean@ → @{True, False}@ to happen.
     cleanDest t = case t of
-      UnionType (Just (preds, neg)) _ cs ->
-        UnionType Nothing (expandTypeWithNames typeEnv H.empty (UnionType (Just (preds, neg)) H.empty cs) teNames) []
+      UnionType (Just (preds, neg, ncs)) _ cs ->
+        UnionType Nothing (expandTypeWithNames typeEnv H.empty (UnionType (Just (preds, neg, ncs)) H.empty cs) teNames) []
       _ -> clearUnionTypePreds t
     -- Reduce a predicate operand TYPE to a value. The operands of a symbolic predicate are either
     -- constants (@UnionType Nothing _ [c]@), the @$this@ placeholder, or a nested relation/expr
     -- application carried as a @PredRel@\/@PredExpr@ singleton top — all routed to 'evalPredPartial'.
     evalPredType thisVal t = case t of
       UnionType Nothing _ (cst:_)                     -> return (constToVal cst)
-      UnionType (Just (PredsOne (PredRel p), _)) _ _  -> evalPredPartial thisVal p
-      UnionType (Just (PredsOne (PredExpr p), _)) _ _ -> evalPredPartial thisVal p
+      UnionType (Just (PredsOne (PredRel p), _, _)) _ _  -> evalPredPartial thisVal p
+      UnionType (Just (PredsOne (PredExpr p), _, _)) _ _ -> evalPredPartial thisVal p
       _ -> case maybeGetSingleton t of
         Just p  -> evalPredPartial thisVal p
         Nothing -> CErr [MkCNote $ GenCErr Nothing $ printf "Unsupported refinement predicate operand %s" (show t)]
@@ -324,8 +324,8 @@ deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) =
           tree <- buildRoot (evTbEnv env) inputE (getExprPartialType inputE) (funcRetDest nm)
           fst <$> runStateT (evalExpr tree) env
 
-    typePreds (UnionType (Just (preds, _)) _ _) = preds
-    typePreds _                                 = PredsNone
+    typePreds (UnionType (Just (preds, _, _)) _ _) = preds
+    typePreds _                                    = PredsNone
     predAtoms (PredsOne a)  = [a]
     predAtoms (PredsAnd ps) = concatMap predAtoms ps
     predAtoms (PredsNot p)  = predAtoms p

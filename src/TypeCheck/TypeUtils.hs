@@ -221,7 +221,7 @@ fnArgInputBound env callAct fnKey inKey = case callAct of
     -- @Functor[$T -> $_A]@ ⇒ [(T, A)], whether the bound is a predicate top or a positive
     -- class-named leaf.
     boundClassVarPtrs bound = concatMap fromPartial (case bound of
-      UnionType (Just (preds, _)) posLeafs _ -> predPartials preds ++ splitUnionType posLeafs
+      UnionType (Just (preds, _, _)) posLeafs _ -> predPartials preds ++ splitUnionType posLeafs
       UnionType Nothing posLeafs _           -> splitUnionType posLeafs
       _                                      -> [])
       where

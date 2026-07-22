@@ -59,10 +59,16 @@ genTypeFromExpr prgm (EWhere _ base cond) = do
   return $ partialAddPreds baseType (PredsOne $ PredExpr condType)
 genTypeFromExpr _ e = error $ printf "Unimplemented genTypeFromExpr for %s" (show e)
 
+-- | Generates a 'Type' from the program. Generated data partials are canonicalised with
+-- 'completeDataPartialsTop': a bare argument-less reference like @/Cons@ (exact mode, no fields)
+-- is an INCOMPLETE partial — every real call site in 'TypeCheck.Constrain'\/'TypeCheck.Decode'
+-- runs 'completeDataPartials' before handing a type to union\/intersect\/difference — so restore
+-- the declared fields (as ⊤) here, the same canonical form the pipeline uses.
 genType :: Prgm Expr () -> Gen Type
-genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
+genType prgm@(Prgm objMap _ _) = HG.choice gens >>= (return . completeDataPartialsTop typeEnv) >>= withRandomArgModes
   where
-    TypeEnv{teClassGraph=ClassGraph cg} = mkTypeEnv prgm
+    typeEnv = mkTypeEnv prgm
+    TypeEnv{teClassGraph=ClassGraph cg} = typeEnv
 
     -- Randomly assign a 'PtArgMode' to the generated partials, exercising the new
     -- lower\/upper-bound modes through the (precise) set operations. Only plain

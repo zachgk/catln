@@ -337,7 +337,7 @@ propParamClassCovariant gPrgm = property $ do
   let wider = unionTypes typeEnv a b
   let mkClassOver elemT =
         let cP = (partialVal "/TestParamClass"){ptVars = H.singleton (partialKey "T") elemT}
-        in UnionType (Just (PredsOne (PredClass cP), H.empty)) H.empty []
+        in UnionType (Just (PredsOne (PredClass cP), H.empty, [])) H.empty []
   let cNarrow = mkClassOver a
   let cWide = mkClassOver wider
   annotate $ printf "a = %s" (show a)
@@ -447,7 +447,7 @@ propParamClassWideNotNarrow ioPrgms = property $ do
   tKey <- case H.keys (ptVars clsPt) of
     (k:_) -> return k
     []    -> fail "ConsList class has no type parameter"
-  let clsOver elemT = UnionType (Just (PredsOne (PredClass clsPt{ptVars=H.singleton tKey elemT}), H.empty)) H.empty []
+  let clsOver elemT = UnionType (Just (PredsOne (PredClass clsPt{ptVars=H.singleton tKey elemT}), H.empty, [])) H.empty []
   let wide = clsOver PTopType
   let narrow = clsOver intT
   let bare = classPartial clsPt
@@ -485,7 +485,7 @@ propParamClassIntersectAbsorb ioPrgms = property $ do
   tKey <- case H.keys (ptVars clsPt) of
     (k:_) -> return k
     []    -> fail "ConsList class has no type parameter"
-  let clsOver elemT = UnionType (Just (PredsOne (PredClass clsPt{ptVars=H.singleton tKey elemT}), H.empty)) H.empty []
+  let clsOver elemT = UnionType (Just (PredsOne (PredClass clsPt{ptVars=H.singleton tKey elemT}), H.empty, [])) H.empty []
   -- The variable is deliberately NAMED like the class's own parameter key (an external @$_T@
   -- meeting a class whose parameter is also @/T@) — the shape a completed data field takes.
   let flexVar = TypeVar (TVVar tKey) TVExt
@@ -516,7 +516,7 @@ propParamClassIntersectAbsorb ioPrgms = property $ do
   lKey <- case H.keys (ptVars listPt) of
     (k:_) -> return k
     []    -> fail "List class has no type parameter"
-  let conj elemA elemB = UnionType (Just (predsAnd (PredsOne (PredClass clsPt{ptVars=H.singleton tKey elemA})) (PredsOne (PredClass listPt{ptVars=H.singleton lKey elemB})), H.empty)) H.empty []
+  let conj elemA elemB = UnionType (Just (predsAnd (PredsOne (PredClass clsPt{ptVars=H.singleton tKey elemA})) (PredsOne (PredClass listPt{ptVars=H.singleton lKey elemB})), H.empty, [])) H.empty []
   let flexConj = conj flexVar intT
   let narrowConj = conj intT intT
   let metConj = resolvedIntersect flexConj narrowConj
@@ -563,7 +563,7 @@ propConjMemberClassSubtype ioPrgms = property $ do
   -- value), the reading an authored @$_A@ has.
   let flexA = TypeVar (TVVar (partialKey "A")) TVExt
   let consListInt = consListPt{ptVars=H.singleton tKey intT}
-  let conjOver outer = UnionType (Just (predsAnd (PredsOne (PredClass outer)) (PredsOne (PredClass consListInt)), H.empty)) H.empty []
+  let conjOver outer = UnionType (Just (predsAnd (PredsOne (PredClass outer)) (PredsOne (PredClass consListInt)), H.empty, [])) H.empty []
   let conj = conjOver bagPt{ptVars=H.singleton bKey flexA}
   -- The same conjunction with the outer atom UNBOUND (a bare membership atom, the form a
   -- parameterless isa-entry produces).
