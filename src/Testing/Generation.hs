@@ -33,6 +33,20 @@ import           Syntax.Ct.Prgm          (RawExpr (RawCExpr), mkRawFileImport)
 import           Text.Printf
 import           Utils
 
+-- | A fixed pool of variable names shared by the type-var generators (and, later, a
+-- 'TypeVarArgEnv' generator), so a bound fraction of generated variables actually collide.
+varNamePool :: [Name]
+varNamePool = map mkName ["a", "b", "c"]
+
+-- | Bare type variables as direct inputs ('TVVar'\/'TVArg' × 'TVInt'\/'TVExt'). With no
+-- external env a variable's standalone reading is unconstrained, i.e. ⊤ ('vaenvLookup').
+genTypeVar :: Gen Type
+genTypeVar = do
+  n   <- HG.element varNamePool
+  aux <- HG.element [TVVar (partialKey n), TVArg (partialKey n)]
+  loc <- HG.element [TVInt, TVExt]
+  return $ TypeVar aux loc
+
 genTypeFromExpr :: Prgm Expr () -> Expr () -> Gen PartialType
 genTypeFromExpr _ (CExpr _ c) = return $ constantPartialType c
 genTypeFromExpr _ (Value _ n) = return $ partialVal n
@@ -91,8 +105,8 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
     withRandomArgModes t = return t
 
     gens = if graphEmpty cg
-      then [genBasic, genConst, genMultiConst]
-      else [genBasic, genCGOld, genCG, genCGRel, genObjM, genObj, genConst, genMultiConst, genPredShape, genMixed]
+      then [genBasic, genConst, genMultiConst, genTypeVar]
+      else [genBasic, genCGOld, genCG, genCGRel, genObjM, genObj, genConst, genMultiConst, genPredShape, genMixed, genTypeVar]
 
     -- Compound predicate formulae: conjunctions (and negated conjunctions) of PredClass/PredRel
     -- atoms drawn from the class graph. Exercises P∨¬P=⊤ / P∧¬P=∅ and the De Morgan handling of

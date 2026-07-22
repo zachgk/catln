@@ -1379,6 +1379,14 @@ predImpliesAtom typeEnv vaenv (PredExpr e1) (PredExpr e2) = isSubPartialOfWithEn
 -- (e.g. c is a subclass of the class that r names).
 predImpliesAtom typeEnv vaenv (PredClass c) (PredRel r)
   | relativeNameMatches (ptName r) (ptName c) = True
+  -- A declared subclass edge @every(c isa r)@ proves @hasClass c ⟹ isa r@: membership in class @c@
+  -- gives @isa c@ (the same-name route above), and the edge gives @isa c ⟹ isa r@. Sound in the open
+  -- world (a declared edge holds for every future member), so an UNSEALED empty class - an isa-only
+  -- @Lizard@ - still implies its declared superclass relation @~Animal@ WITHOUT enumeration, which the
+  -- gated 'satAtomImplies' below (rightly) refuses for an unenumerable open class. Mirrors the
+  -- PredRel/PredRel and PredRel/PredClass 'classDeclaredSubclassOf' fast paths; only @r@ need be plain
+  -- (a narrower element bound on @c@ only shrinks the left).
+  | plainPartial r && classDeclaredSubclassOf typeEnv (ptName c) (ptName r) = True
   | otherwise = satAtomImplies typeEnv vaenv True (SatClass c) (SatRel r)
 -- PredRel r implies PredClass c when every type matching r is a member of c.
 -- Fast path (mirrors the @PredClass c ⟹ PredRel r@ same-name case above): for the SAME plain class
@@ -2297,8 +2305,11 @@ satAtomImpliesDeclared typeEnv a1 a2 = case (a1, a2) of
   -- class must be PLAIN (an element bound would need a covariance check).
   (SatClass c1, SatClass c2) -> plainPartial c2
     && (ptName c1 == ptName c2 || classDeclaredSubclassOf typeEnv (ptName c1) (ptName c2))
-  -- hasClass C ⟹ isa R when R's name path is a suffix of C's ('predImpliesAtom' PredClass/PredRel).
-  (SatClass c, SatRel r) -> plainPartial r && relativeNameMatches (ptName r) (ptName c)
+  -- hasClass C ⟹ isa R when R's name path is a suffix of C's, or C is a declared subclass of R
+  -- (@hasClass C ⟹ isa C ⟹ isa R@) - the same declared-edge route 'predImpliesAtom' PredClass/PredRel
+  -- carries. Sound in the open world independent of the enumeration gate.
+  (SatClass c, SatRel r) -> plainPartial r
+    && (relativeNameMatches (ptName r) (ptName c) || classDeclaredSubclassOf typeEnv (ptName c) (ptName r))
   -- isa R ⟹ hasClass C for the same plain name (either absoluteness direction) or a declared
   -- edge ('predImpliesAtom' PredRel/PredClass fast path).
   (SatRel r, SatClass c) -> plainPartial r && plainPartial c
@@ -2389,19 +2400,26 @@ satGoal typeEnv vaenv gatePos hyps goal0
     checkCandLeaf r m = all (satAdmits typeEnv vaenv False hyps' mR) (sgPos r)
                      && all (satEscapes typeEnv vaenv False hyps' mR) (sgNeg r)
       where
-        -- Refine the witness by each co-occurring positive class it must ALSO satisfy: meeting a
+        -- Refine the witness by each co-occurring positive atom it must ALSO satisfy: meeting a
         -- @Cons@ witness with @Monad[Integer]@'s same-named member @Cons[Integer]@ pins its otherwise
         -- free element before the escape checks. Without this a @Cons[$_T]@ generated from @ConsList@
         -- spuriously escapes @DShow@ though every value satisfying @Monad[Integer] ∧ ConsList@ has
-        -- element Integer (a @ToString@). Only refine when the class has a member of the witness's own
-        -- name — an element-preserving membership, so the meet is a real pinning and never an
-        -- open-world emptiness conclusion (an unrelated class yields ∅, which is left as the witness).
+        -- element Integer (a @ToString@). Only refine when the meet is a SINGLE leaf of the witness's
+        -- own name — an element-preserving pinning, never an open-world emptiness conclusion (an
+        -- unrelated class\/leaf yields ∅ or a multi-leaf union, which is left as the witness for
+        -- 'satAdmits' to reject). Co-occurring positive LEAF atoms need the same meet: the generator
+        -- enumerates a witness from ONE leaf atom while 'satAdmits' only checks OVERLAP against the
+        -- others, so a witness broader than the true joint value (e.g. a @fluffy(this=Animal)@ chosen
+        -- for @fluffy(this=Fish) ∧ fluffy(this=Animal)@) would escape a negative the refined
+        -- (@this=Fish@) value cannot — a false SAT that breaks @A ⊆ A∪B@ (covariance).
         mR = foldl refineByPos m (sgPos r)
-        refineByPos acc (SatClass c) =
-          case snd $ intersectTypesWithVarEnv typeEnv vaenv (singletonType acc) (expandClassPartial typeEnv vaenv c) of
+        refineByPos acc (SatClass c) = refineMeet acc (expandClassPartial typeEnv vaenv c)
+        refineByPos acc (SatLeafs ls) = refineMeet acc (UnionType Nothing (joinUnionType ls) [])
+        refineByPos acc _ = acc
+        refineMeet acc other =
+          case snd $ intersectTypesWithVarEnv typeEnv vaenv (singletonType acc) other of
             UnionType Nothing leafs [] | [acc'] <- splitUnionType leafs, ptName acc' == ptName acc -> acc'
             _ -> acc
-        refineByPos acc _ = acc
 
 -- | Engine-backed emptiness of a predicate conjunction ('predsEmpty' fast path):
 -- @Just isEmpty@ when the predicates are within the decidable fragment.
@@ -3647,6 +3665,26 @@ intersectTypesWithVarEnv _ vaenv t PTopType = (vaenv, t)
 -- once the env is dropped (a self-difference @$a − $a = $a ∩ ¬$a@ then wrongly keeps the var).
 intersectTypesWithVarEnv _ vaenv _ BottomType = (vaenv, BottomType)
 intersectTypesWithVarEnv _ vaenv BottomType _ = (vaenv, BottomType)
+intersectTypesWithVarEnv _ vaenv t1 t2 | t1 == t2 = (vaenv, t1)
+-- TypeVar: constrain in vaenv.  Treats 'TVVar' and 'TVArg' uniformly: both look up in vaenv,
+-- and an unknown key is recorded as a fresh constraint.  TVInt/TVExt is informational here:
+-- a TVInt that reaches this top level was introduced as a fresh sentinel by an upstream
+-- caller (e.g. a constituent's prop ref); the old code's behavior is preserved.
+-- A binding equal to the var itself (a self-referential entry an unconstrained var may
+-- acquire) carries no constraint: treat it as absent and bind to @t@, rather than
+-- intersecting the binding with @t@ - which would re-enter this clause unchanged forever.
+-- Must precede the mixed-distribute clauses: the var's constraint is the WHOLE other
+-- operand; distributing @$a ∩ (top ∪ pos)@ would record @$a@ against each union ALTERNATIVE
+-- separately and the env merge would MEET them ('mergeVarEnvs'), narrowing the binding to
+-- @top ∩ pos@.
+intersectTypesWithVarEnv typeEnv vaenv tv@(TypeVar v _) t
+  | Just l <- H.lookup v vaenv, not (isSelfVar v l) =
+      let i = intersectTypesEnv typeEnv vaenv l t
+      in if isBottomType i then (vaenv, BottomType) else (H.insert v i vaenv, tv)
+  | otherwise = (H.insert v t vaenv, tv)
+  where isSelfVar var (TypeVar var' _) = var' == var
+        isSelfVar _   _                = False
+intersectTypesWithVarEnv typeEnv vaenv t tv@TypeVar{} = intersectTypesWithVarEnv typeEnv vaenv tv t
 -- Mixed type (both top and pos non-empty): distribute intersection over union
 -- (top ∪ pos) ∩ t = (top ∩ t) ∪ (pos ∩ t)
 intersectTypesWithVarEnv typeEnv vaenv (UnionType (Just topData) pos cs) t2
@@ -3670,22 +3708,6 @@ intersectTypesWithVarEnv typeEnv vaenv t1 t2@(UnionType (Just _) pos cs)
 intersectTypesWithVarEnv typeEnv vaenv (UnionType (Just (ps1, np1, nc1)) (H.null -> True) []) (UnionType (Just (ps2, np2, nc2)) (H.null -> True) []) =
   let (vaenv', preds') = mergePredsAnd typeEnv vaenv ps1 ps2
   in (vaenv', compactType typeEnv vaenv' $ UnionType (Just (preds', unionPartialLeafs [np1, np2], L.nub $ nc1 ++ nc2)) H.empty [])
-intersectTypesWithVarEnv _ vaenv t1 t2 | t1 == t2 = (vaenv, t1)
--- TypeVar: constrain in vaenv.  Treats 'TVVar' and 'TVArg' uniformly: both look up in vaenv,
--- and an unknown key is recorded as a fresh constraint.  TVInt/TVExt is informational here:
--- a TVInt that reaches this top level was introduced as a fresh sentinel by an upstream
--- caller (e.g. a constituent's prop ref); the old code's behavior is preserved.
--- A binding equal to the var itself (a self-referential entry an unconstrained var may
--- acquire) carries no constraint: treat it as absent and bind to @t@, rather than
--- intersecting the binding with @t@ - which would re-enter this clause unchanged forever.
-intersectTypesWithVarEnv typeEnv vaenv tv@(TypeVar v _) t
-  | Just l <- H.lookup v vaenv, not (isSelfVar v l) =
-      let i = intersectTypesEnv typeEnv vaenv l t
-      in if isBottomType i then (vaenv, BottomType) else (H.insert v i vaenv, tv)
-  | otherwise = (H.insert v t vaenv, tv)
-  where isSelfVar var (TypeVar var' _) = var' == var
-        isSelfVar _   _                = False
-intersectTypesWithVarEnv typeEnv vaenv t tv@TypeVar{} = intersectTypesWithVarEnv typeEnv vaenv tv t
 -- PosPartials with constants ∩ Top: handle constant exclusion before leafs logic
 intersectTypesWithVarEnv typeEnv vaenv (UnionType Nothing posLeafs posConsts) t2@(UnionType (Just (preds, negLeafs, negConsts)) (H.null -> True) [])
   | not (null posConsts) || not (null negConsts) =
@@ -3778,7 +3800,14 @@ intersectTypesEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Ty
 intersectTypesEnv typeEnv vaenv t1 t2 =
   let (vaenv', t) = intersectTypesWithVarEnv typeEnv vaenv t1 t2
       newBindings = H.filter (not . isTypeVar) $ H.difference vaenv' vaenv
-  in if H.null newBindings then t else substituteKeep newBindings t
+  in case t of
+      _ | H.null newBindings -> t
+      -- A meet returned as a bare top-level var IS that var's discovered binding — whatever
+      -- the var's loc. 'substituteKeep' would keep a 'TVInt' (inside a partial that names a
+      -- partial-scoped parameter), but at the RESULT's top level the var is this operation's
+      -- own operand and its standalone reading would wrongly widen to ⊤.
+      TypeVar v _ | Just b <- H.lookup v newBindings -> b
+      _ -> substituteKeep newBindings t
 
 -- | Takes the intersection of two 'Type' (∩).
 intersectTypes :: (TypeGraph tg) => TypeEnv tg -> Type -> Type -> Type
@@ -3888,8 +3917,10 @@ differenceTypeWithEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -
 differenceTypeWithEnv TypeEnv{teDebug=True} _ t1 t2 | trace (printf "[DIFF] %s - %s" (show t1) (show t2)) False = undefined
 differenceTypeWithEnv typeEnv vaenv t1 t2 = intersectTypesWithVarEnv typeEnv vaenv t1 (complementTypeEnv typeEnv vaenv t2)
 
+-- | The env-dropping difference: the same resolve-the-meet-back reading as 'intersectTypesEnv'
+-- (@$a − X@ discovers @$a ↦ ¬X@, which the standalone result must carry rather than the bare var).
 differenceTypeEnv :: (TypeGraph tg) => TypeEnv tg -> Type -> Type -> Type
-differenceTypeEnv typeEnv t1 t2 = snd $ differenceTypeWithEnv typeEnv H.empty t1 t2
+differenceTypeEnv typeEnv t1 t2 = intersectTypesEnv typeEnv H.empty t1 (complementTypeEnv typeEnv H.empty t2)
 
 -- | Complement of a type (¬t).
 complementTypeEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
