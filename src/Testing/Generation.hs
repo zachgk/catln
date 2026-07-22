@@ -92,7 +92,32 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
 
     gens = if graphEmpty cg
       then [genBasic, genConst, genMultiConst]
-      else [genBasic, genCGOld, genCG, genCGRel, genObjM, genObj, genConst, genMultiConst]
+      else [genBasic, genCGOld, genCG, genCGRel, genObjM, genObj, genConst, genMultiConst, genPredShape]
+
+    -- Compound predicate formulae: conjunctions (and negated conjunctions) of PredClass/PredRel
+    -- atoms drawn from the class graph. Exercises P∨¬P=⊤ / P∧¬P=∅ and the De Morgan handling of
+    -- the union/intersection/complement paths for non-atomic predicates.
+    --
+    -- Atom kinds mirror the compiler's name resolution ('resolveRelPartial'): a CLASS name
+    -- resolves to a 'PredClass' (or stays a 'PredRel' while relative), while a data-TYPE name in
+    -- type position resolves to a positive leaf - never a 'PredClass'. So 'PredClass' atoms are
+    -- generated only for class nodes; any node may appear as a 'PredRel'.
+    genPreds :: Gen TypePredicates
+    genPreds = do
+      atoms <- HG.list (linear 1 2) genAtom
+      HG.choice [ return $ foldr1 predsAnd (map PredsOne atoms)
+                , return $ predsNot $ foldr1 predsAnd (map PredsOne atoms) ]
+      where
+        genAtom = do
+          classNode <- HG.element $ graphToNodes cg
+          case snd3 classNode of
+            cls@PClassName{} -> do
+              let nm = fromPartialName cls
+              HG.element [PredClass (partialVal nm), PredRel (partialVal nm)]
+            t -> return $ PredRel (partialVal (fromPartialName t))
+
+    genPredShape :: Gen Type
+    genPredShape = TopType H.empty <$> genPreds
 
     -- Unions of several constants, and constants joined with a positive partial. Single-constant
     -- 'genConst' never exercises the multi-constant union paths or the constant-not-covered-by-top
