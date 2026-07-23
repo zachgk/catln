@@ -3449,13 +3449,26 @@ unionTypesWithEnv typeEnv vaenv t1@(UnionType mTop1 pos1 cs1) t2@(UnionType mTop
   where
     pos'  = unionPartialLeafs [pos1, pos2]
     cs'   = L.nub (cs1 ++ cs2)
+    -- The part of a set of negated (excluded) leafs that the OTHER operand does not re-add:
+    -- @(U − N) ∪ P = (U − (N − P)) ∪ P@, so a positive leaf covering part of an excluded region
+    -- folds that part out of the exclusion. A leaf−type difference is itself positive.
+    exclOutside negs other
+      | H.null negs = negs
+      | otherwise = case snd $ differenceTypeWithEnv typeEnv vaenv (UnionType Nothing negs []) other of
+          UnionType Nothing ls _ -> ls
+          d -> error $ printf "unionTypesWithEnv: non-positive neg-leaf difference %s" (show d)
     result = case (mTop1, mTop2) of
       (Nothing, Nothing) ->
         compactType typeEnv vaenv $ UnionType Nothing pos' cs'
-      (Nothing, Just top2) ->
-        compactType typeEnv vaenv $ UnionType (Just top2) pos' cs'
-      (Just top1, Nothing) ->
-        compactType typeEnv vaenv $ UnionType (Just top1) pos' cs'
+      -- Fold the Nothing side's positive leafs out of the Just side's negated leafs so the mixed
+      -- orders produce the SAME negLeafs as the (Just,Just) order below (which already subtracts via
+      -- 'exclOutside'). Without this @(⊤ − X) ∪ Y@ with @Y ⊆ X@ kept the unfolded negLeaf @X@ in one
+      -- association order and the folded @X − Y@ in another, breaking union commutativity
+      -- (isEqType cannot equate the two valid representations).
+      (Nothing, Just (p2, n2, nc2)) ->
+        compactType typeEnv vaenv $ UnionType (Just (p2, exclOutside n2 t1, nc2)) pos' cs'
+      (Just (p1, n1, nc1), Nothing) ->
+        compactType typeEnv vaenv $ UnionType (Just (p1, exclOutside n1 t2, nc1)) pos' cs'
       (Just (p1, n1, nc1), Just (p2, n2, nc2)) ->
         -- The union's predicate p1∨p2, kept syntactically stable across solver epochs: equal or
         -- one-sided-universal preds collapse directly, and when one predicate region implies the
@@ -3483,9 +3496,6 @@ unionTypesWithEnv typeEnv vaenv t1@(UnionType mTop1 pos1 cs1) t2@(UnionType mTop
             negLeafs'
               | p1 == p2 = snd $ intersectPartialLeafsWithVarEnv typeEnv vaenv n1 n2
               | otherwise = unionPartialLeafs [exclOutside n1 t2, exclOutside n2 t1]
-            exclOutside negs other = case snd $ differenceTypeWithEnv typeEnv vaenv (UnionType Nothing negs []) other of
-              UnionType Nothing ls _ -> ls
-              d -> error $ printf "unionTypesWithEnv: non-positive neg-leaf difference %s" (show d)
         in compactType typeEnv vaenv $
              UnionType (Just (preds', negLeafs', nc')) pos' cs'
     msg = printf "[UNION] %s ∪ %s = %s" (show $ UnionType mTop1 pos1 cs1) (show $ UnionType mTop2 pos2 cs2) (show result)
