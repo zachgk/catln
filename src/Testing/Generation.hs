@@ -47,6 +47,35 @@ genTypeVar = do
   loc <- HG.element [TVInt, TVExt]
   return $ TypeVar aux loc
 
+-- | A small external variable environment ('TypeVarArgEnv') mapping a subset of 'varNamePool'
+-- to concrete-ish types drawn from the program. Threading this through the @*WithEnv@ operations
+-- exercises 'vaenvLookup' (a bound variable reads as its value rather than ⊤), 'substituteTVExt'\/
+-- 'substituteKeep' (external variables inside partial slots — added by 'genWithTVExt' from the same
+-- pool — resolve), and 'applyTypeVarOverrides'.
+--
+-- Each pool name is bound (with ~2/3 probability, so unbound variables still occur and read as ⊤)
+-- under either a 'TVVar' or 'TVArg' key. The bound values are concrete-ish: drawn from 'genType' but
+-- never another bare variable (so the environment is acyclic — 'vaenvLookup' does no recursive
+-- resolution and a variable bound to another variable could loop the variable-rewriting clauses of
+-- the operations) and never ⊤ or ∅ (a variable bound to ⊤ is indistinguishable from an unbound one,
+-- and ∅ is not a value a program's type variable resolves to).
+genVaenv :: Prgm Expr () -> Gen TypeVarArgEnv
+genVaenv prgm = do
+  entries <- forM varNamePool $ \n -> do
+    bind <- HG.frequency [(2, return True), (1, return False)]
+    if not bind
+      then return Nothing
+      else do
+        aux <- HG.element [TVVar (partialKey n), TVArg (partialKey n)]
+        v   <- HG.filter concreteish (genType prgm)
+        return $ Just (aux, v)
+  return $ H.fromList $ catMaybes entries
+  where
+    concreteish TypeVar{}  = False
+    concreteish PTopType   = False
+    concreteish BottomType = False
+    concreteish _          = True
+
 genTypeFromExpr :: Prgm Expr () -> Expr () -> Gen PartialType
 genTypeFromExpr _ (CExpr _ c) = return $ constantPartialType c
 genTypeFromExpr _ (Value _ n) = return $ partialVal n
@@ -302,13 +331,16 @@ genPartialType prgm@(Prgm objMap _ _) = do
 
     -- | Wraps a base partial generator and randomly adds a 'TVExt'-tagged
     -- type variable to one of its 'ptVars'.  This exercises the external
-    -- variable resolution path in substitution/intersection.
+    -- variable resolution path in substitution/intersection. The external
+    -- variable name is drawn from 'varNamePool' (shared with 'genTypeVar' and
+    -- 'genVaenv') so a bound fraction of these slots actually resolve when a
+    -- generated 'TypeVarArgEnv' is threaded through the operations.
     genWithTVExt :: Gen PartialType -> Gen PartialType
     genWithTVExt baseGen = do
       base <- baseGen
       varName <- HG.string (linear 1 5) HG.lower
-      extName <- HG.string (linear 1 5) HG.lower
-      let extVar = TypeVar (TVVar (partialKey (mkName extName))) TVExt
+      extName <- HG.element varNamePool
+      let extVar = TypeVar (TVVar (partialKey extName)) TVExt
       return base{ptVars = H.insert (partialKey (mkName varName)) extVar (ptVars base)}
 
 genInputExpr :: Gen (Expr ())

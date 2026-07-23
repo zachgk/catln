@@ -44,24 +44,52 @@ ggPrgm prgms = HG.choice [genPremade, genPrgm]
       prgmName <- HG.element $ H.keys prgms
       return $ fromJust $ H.lookup prgmName prgms
 
+-- | Reads a whole-type bare variable ('TVVar'\/'TVArg', or a 'TVApplied' over one) to its value
+-- under the environment (an unbound one to ⊤). It deliberately does NOT descend into partials: a
+-- variable inside a partial's arg\/var slot is resolved correctly by the operations themselves as
+-- they thread the environment through each nested scope (a 'TVExt' slot reads the outer binding),
+-- whereas a bare top-level variable is the one shape the meet mishandles (see 'intersectR').
+readTopVar :: TypeVarArgEnv -> Type -> Type
+readTopVar env (TypeVar (TVApplied b ovr) loc) = applyTypeVarOverrides (fmap (readTopVar env) ovr) (readTopVar env (TypeVar b loc))
+readTopVar env (TypeVar v _)                    = vaenvLookup env v
+readTopVar _   t                                = t
+
+-- | Intersection for the property tests, threading a seed 'TypeVarArgEnv'. A bare top-level variable
+-- operand is read to its value first ('readTopVar'), because 'intersectTypesWithVarEnv' returns a
+-- variable meet as the bare VARIABLE while recording the narrowing in its (here discarded) env — the
+-- mergeVarEnvVal doctrine: @$a ∩ b@ keeps @$a@ symbolic and so reads standalone as @$a@, deliberately
+-- wider so a call-site lambda's parameter can be refined later ('FnInputBound'). The set-algebra laws
+-- are about denotations, so a top-level variable is read to its value first; nested variables are
+-- left for the meet, which resolves them exactly. Union, complement and the subtype\/equality checks
+-- resolve a bound variable inline (via 'vaenvLookup'), so they take the environment directly.
+intersectR :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Type
+intersectR typeEnv env a b = intersectTypesEnv typeEnv env (readTopVar env a) (readTopVar env b)
+
+-- | Difference threading a seed 'TypeVarArgEnv' (@a − b = a ∩ ¬b@). @complementTypeEnv@ resolves a
+-- bare bound @b@ inline, and a nested variable stays symbolic for the meet to resolve.
+diffR :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Type
+diffR typeEnv env a b = intersectR typeEnv env a (complementTypeEnv typeEnv env b)
+
 propCompactNoChanges :: IO GenPrgm -> Property
 propCompactNoChanges gPrgm = property $ do
   gPrgm' <- lift gPrgm
   prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
+  vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
-  let compacted = compactType typeEnv H.empty a
+  let compacted = compactType typeEnv vaenv a
   annotate $ printf "compacted = %s" (show compacted)
-  assert $ isEqType typeEnv a compacted
+  assert $ isEqTypeWithEnv typeEnv vaenv a compacted
 
 propCompactIdempotent :: IO GenPrgm -> Property
 propCompactIdempotent gPrgm = property $ do
   gPrgm' <- lift gPrgm
   prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
+  vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
-  let compact1 = compactType typeEnv H.empty a
-  let compact2 = compactType typeEnv H.empty compact1
+  let compact1 = compactType typeEnv vaenv a
+  let compact2 = compactType typeEnv vaenv compact1
   annotate $ printf "compact once to %s" (show compact1)
   annotate $ printf "compact twice to %s" (show compact2)
   compact1 === compact2
@@ -73,12 +101,13 @@ propSubtypeByUnion gPrgm = property $ do
   gPrgm' <- lift gPrgm
   prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
+  vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
-  let subtype = isSubtypeOf typeEnv a b
+  let subtype = isSubtypeOfWithEnv typeEnv vaenv a b
   annotate $ printf "subtype = %s" (show subtype)
-  let byUnion = isEqType typeEnv (unionTypes typeEnv a b) b
-  annotate $ printf "a∪b = %s" (show $ unionTypes typeEnv a b)
+  let byUnion = isEqTypeWithEnv typeEnv vaenv (unionTypesWithEnv typeEnv vaenv a b) b
+  annotate $ printf "a∪b = %s" (show $ unionTypesWithEnv typeEnv vaenv a b)
   annotate $ printf "byUnion = %s" (show byUnion)
   subtype === byUnion
 
@@ -87,12 +116,13 @@ propSubtypeByIntersection gPrgm = property $ do
   gPrgm' <- lift gPrgm
   prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
+  vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
-  let subtype = isSubtypeOf typeEnv a b
+  let subtype = isSubtypeOfWithEnv typeEnv vaenv a b
   annotate $ printf "subtype = %s" (show subtype)
-  let byIntersection = isEqType typeEnv (intersectTypes typeEnv a b) a
-  annotate $ printf "a∩b = %s" (show $ intersectTypes typeEnv a b)
+  let byIntersection = isEqTypeWithEnv typeEnv vaenv (intersectR typeEnv vaenv a b) a
+  annotate $ printf "a∩b = %s" (show $ intersectR typeEnv vaenv a b)
   annotate $ printf "byIntersection = %s" (show byIntersection)
   subtype === byIntersection
 
@@ -101,93 +131,100 @@ propUnionReflexive gPrgm = property $ do
   gPrgm' <- lift gPrgm
   prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
+  vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
-  assert $ isEqType typeEnv (unionTypes typeEnv a b) (unionTypes typeEnv b a)
+  assert $ isEqTypeWithEnv typeEnv vaenv (unionTypesWithEnv typeEnv vaenv a b) (unionTypesWithEnv typeEnv vaenv b a)
 
 propUnionCommutative :: IO GenPrgm -> Property
 propUnionCommutative gPrgm = property $ do
   gPrgm' <- lift gPrgm
   prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
+  vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
   c <- forAll $ genType prgm
-  assert $ isEqType typeEnv (unionAllTypes typeEnv [a, b, c]) (unionAllTypes typeEnv [c, b, a])
+  assert $ isEqTypeWithEnv typeEnv vaenv (unionAllTypesWithEnv typeEnv vaenv [a, b, c]) (unionAllTypesWithEnv typeEnv vaenv [c, b, a])
 
 propIntersectionReflexive :: IO GenPrgm -> Property
 propIntersectionReflexive gPrgm = property $ do
   gPrgm' <- lift gPrgm
   prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
+  vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
-  assert $ isEqType typeEnv (intersectTypes typeEnv a b) (intersectTypes typeEnv b a)
+  assert $ isEqTypeWithEnv typeEnv vaenv (intersectR typeEnv vaenv a b) (intersectR typeEnv vaenv b a)
 
 propIntersectionCommutative :: IO GenPrgm -> Property
 propIntersectionCommutative gPrgm = property $ do
   gPrgm' <- lift gPrgm
   prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
+  vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
   c <- forAll $ genType prgm
 
-  let abc = intersectAllTypes typeEnv [a, b, c]
+  let abc = foldr1 (intersectR typeEnv vaenv) [a, b, c]
   annotate $ printf "a∩b∩c = %s" (show abc)
 
-  let cba = intersectAllTypes typeEnv [c, b, a]
+  let cba = foldr1 (intersectR typeEnv vaenv) [c, b, a]
   annotate $ printf "c∩b∩a = %s" (show cba)
 
-  annotate $ printf "a∩b∩c ⊆ c∩b∩a = %s" (show $ isSubtypeOf typeEnv abc cba)
-  annotate $ printf "c∩b∩a ⊆ a∩b∩c = %s" (show $ isSubtypeOf typeEnv cba abc)
+  annotate $ printf "a∩b∩c ⊆ c∩b∩a = %s" (show $ isSubtypeOfWithEnv typeEnv vaenv abc cba)
+  annotate $ printf "c∩b∩a ⊆ a∩b∩c = %s" (show $ isSubtypeOfWithEnv typeEnv vaenv cba abc)
 
-  assert $ isEqType typeEnv abc cba
+  assert $ isEqTypeWithEnv typeEnv vaenv abc cba
 
 propIntersectionDistributesUnion :: IO GenPrgm -> Property
 propIntersectionDistributesUnion gPrgm = property $ do
   gPrgm' <- lift gPrgm
   prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
+  vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
   c <- forAll $ genType prgm
-  let f = intersectTypes typeEnv a (unionTypes typeEnv b c)
+  let f = intersectR typeEnv vaenv a (unionTypesWithEnv typeEnv vaenv b c)
   annotate $ printf "f = %s" (show f)
-  let d = unionTypes typeEnv (intersectTypes typeEnv a b) (intersectTypes typeEnv a c)
-  annotate $ printf "a∩b = %s" (show $ intersectTypes typeEnv a b)
-  annotate $ printf "a∩c = %s" (show $ intersectTypes typeEnv a c)
+  let d = unionTypesWithEnv typeEnv vaenv (intersectR typeEnv vaenv a b) (intersectR typeEnv vaenv a c)
+  annotate $ printf "a∩b = %s" (show $ intersectR typeEnv vaenv a b)
+  annotate $ printf "a∩c = %s" (show $ intersectR typeEnv vaenv a c)
   annotate $ printf "d = %s" (show d)
-  assert $ isEqType typeEnv f d
+  assert $ isEqTypeWithEnv typeEnv vaenv f d
 
 propUnionDistributesIntersection :: IO GenPrgm  -> Property
 propUnionDistributesIntersection gPrgm = property $ do
   gPrgm' <- lift gPrgm
   prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
+  vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
   c <- forAll $ genType prgm
-  let f = unionTypes typeEnv a (intersectTypes typeEnv b c)
+  let f = unionTypesWithEnv typeEnv vaenv a (intersectR typeEnv vaenv b c)
   annotate $ printf "f = %s" (show f)
-  let ab = unionTypes typeEnv a b
-  let ac = unionTypes typeEnv a c
+  let ab = unionTypesWithEnv typeEnv vaenv a b
+  let ac = unionTypesWithEnv typeEnv vaenv a c
   annotate $ printf "a∪b = %s" (show ab)
   annotate $ printf "a∪c = %s" (show ac)
-  let d = intersectTypes typeEnv ab ac
+  let d = intersectR typeEnv vaenv ab ac
   annotate $ printf "d = %s" (show d)
-  assert $ isEqType typeEnv f d
+  assert $ isEqTypeWithEnv typeEnv vaenv f d
 
 propDifferenceShrinks :: IO GenPrgm -> Property
 propDifferenceShrinks gPrgm = property $ do
   gPrgm' <- lift gPrgm
   prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
+  vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
   b <- forAll $ HG.choice [genType prgm, genRelatedType prgm a]
-  let diff' = differenceTypeEnv typeEnv a b
+  let diff' = diffR typeEnv vaenv a b
   annotate $ printf "diff' = %s" (show diff')
-  assert $ isSubtypeOf typeEnv diff' a
+  assert $ isSubtypeOfWithEnv typeEnv vaenv diff' a
 
 -- A∪A=U
 propUnionWithComplement :: IO GenPrgm -> Property
@@ -195,12 +232,13 @@ propUnionWithComplement gPrgm = property $ do
   gPrgm' <- lift gPrgm
   prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
+  vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
-  let a' = complementTypeEnv typeEnv H.empty a
+  let a' = complementTypeEnv typeEnv vaenv a
   annotate $ printf "a' = %s" (show a')
-  let combined = unionTypes typeEnv a a'
+  let combined = unionTypesWithEnv typeEnv vaenv a a'
   annotate $ printf "combined = %s" (show combined)
-  assert $ isEqType typeEnv combined PTopType
+  assert $ isEqTypeWithEnv typeEnv vaenv combined PTopType
 
 -- A∩A=∅
 propIntersectionWithComplement :: IO GenPrgm -> Property
@@ -208,12 +246,13 @@ propIntersectionWithComplement gPrgm = property $ do
   gPrgm' <- lift gPrgm
   prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
+  vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
-  let a' = complementTypeEnv typeEnv H.empty a
+  let a' = complementTypeEnv typeEnv vaenv a
   annotate $ printf "a' = %s" (show a')
-  let combined = intersectTypes typeEnv a a'
+  let combined = intersectR typeEnv vaenv a a'
   annotate $ printf "combined = %s" (show combined)
-  assert $ isEqType typeEnv combined BottomType
+  assert $ isEqTypeWithEnv typeEnv vaenv combined BottomType
 
 -- A^c^c=A
 propComplementInverse :: IO GenPrgm -> Property
@@ -221,12 +260,13 @@ propComplementInverse gPrgm = property $ do
   gPrgm' <- lift gPrgm
   prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
+  vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
-  let a' = complementTypeEnv typeEnv H.empty a
+  let a' = complementTypeEnv typeEnv vaenv a
   annotate $ printf "a' = %s" (show a')
-  let a'' = complementTypeEnv typeEnv H.empty a'
+  let a'' = complementTypeEnv typeEnv vaenv a'
   annotate $ printf "a'' = %s" (show a'')
-  assert $ isEqType typeEnv a a''
+  assert $ isEqTypeWithEnv typeEnv vaenv a a''
 
 -- A-A=∅
 propDifferenceIdentity :: IO GenPrgm -> Property
@@ -234,12 +274,13 @@ propDifferenceIdentity gPrgm = property $ do
   gPrgm' <- lift gPrgm
   prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
+  vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
-  let a' = complementTypeEnv typeEnv H.empty a
+  let a' = complementTypeEnv typeEnv vaenv a
   annotate $ printf "a' = %s" (show a')
-  let a'' = differenceTypeEnv typeEnv a a
+  let a'' = diffR typeEnv vaenv a a
   annotate $ printf "a-a = %s" (show a'')
-  assert $ isEqType typeEnv a'' BottomType
+  assert $ isEqTypeWithEnv typeEnv vaenv a'' BottomType
 
 -- A+B-A ⊆ B
 propDifferenceSubset :: IO GenPrgm -> Property
@@ -247,18 +288,19 @@ propDifferenceSubset gPrgm = property $ do
   gPrgm' <- lift gPrgm
   prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
+  vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
   b <- forAll $ HG.choice [genType prgm, genRelatedType prgm a]
-  let intersected = intersectTypes typeEnv a b
+  let intersected = intersectR typeEnv vaenv a b
   let overlapping = intersected /= BottomType
   annotate $ printf "does a overlaps b? %s" (show overlapping)
-  let union = unionTypes typeEnv a b
+  let union = unionTypesWithEnv typeEnv vaenv a b
   annotate $ printf "a + b = %s" (show union)
-  let sub = differenceTypeEnv typeEnv union a
+  let sub = diffR typeEnv vaenv union a
   annotate $ printf "a+b-a = %s" (show sub)
   if overlapping
-    then assert $ isSubtypeOf typeEnv sub b
-    else assert $ isEqType typeEnv sub b
+    then assert $ isSubtypeOfWithEnv typeEnv vaenv sub b
+    else assert $ isEqTypeWithEnv typeEnv vaenv sub b
 
 
 -- A∩B=A-(A-B)
@@ -267,15 +309,16 @@ propIntersectByDifference gPrgm = property $ do
   gPrgm' <- lift gPrgm
   prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
+  vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
   b <- forAll $ HG.choice [genType prgm, genRelatedType prgm a]
-  let intersect' = intersectTypes typeEnv a b
+  let intersect' = intersectR typeEnv vaenv a b
   annotate $ printf "intersect' = %s" (show intersect')
-  let subDiff' = differenceTypeEnv typeEnv a b
-  let diff' = differenceTypeEnv typeEnv a subDiff'
+  let subDiff' = diffR typeEnv vaenv a b
+  let diff' = diffR typeEnv vaenv a subDiff'
   annotate $ printf "a-b' = %s" (show subDiff')
   annotate $ printf "diff' = a-(a-b) = %s" (show diff')
-  assert $ isEqType typeEnv intersect' diff'
+  assert $ isEqTypeWithEnv typeEnv vaenv intersect' diff'
 
 -- A-B=A-(A∩B)
 propDifferenceByIntersection :: IO GenPrgm -> Property
@@ -283,15 +326,16 @@ propDifferenceByIntersection gPrgm = property $ do
   gPrgm' <- lift gPrgm
   prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
+  vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
   b <- forAll $ HG.choice [genType prgm, genRelatedType prgm a]
-  let diff' = differenceTypeEnv typeEnv a b
+  let diff' = diffR typeEnv vaenv a b
   annotate $ printf "diff' = %s" (show diff')
-  let subInter' = intersectTypes typeEnv a b
-  let withInter' = differenceTypeEnv typeEnv a subInter'
+  let subInter' = intersectR typeEnv vaenv a b
+  let withInter' = diffR typeEnv vaenv a subInter'
   annotate $ printf "a∩b' = %s" (show subInter')
   annotate $ printf "withInter' = a-(a∩b) = %s" (show withInter')
-  assert $ isEqType typeEnv diff' withInter'
+  assert $ isEqTypeWithEnv typeEnv vaenv diff' withInter'
 
 -- P[$T=(A+B)] should be recognized as equal to P[$T=A] + P[$T=B]
 propSubtypeUnionVarSplit :: IO GenPrgm -> Property

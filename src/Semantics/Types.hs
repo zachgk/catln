@@ -1366,8 +1366,15 @@ predImpliesAtom typeEnv vaenv (PredRel r1) (PredRel r2)
   -- class edges (@Ord isa Eq@) it targets - see 'classDeclaredSubclassOf'.
   | plainPartial r1 && plainPartial r2 && classDeclaredSubclassOf typeEnv (ptName r1) (ptName r2) = True
   -- Symbolic emptiness of @r1 ∧ ¬r2@ replaces expanding both relations (which for a recursive
-  -- parameterized class universe re-expands the element class combinatorially).
-  | otherwise = satAtomImplies typeEnv vaenv False (SatRel r1) (SatRel r2)
+  -- parameterized class universe re-expands the element class combinatorially). Gated open-world
+  -- ('gatePos'), like every other kind of implication here: @isa r1 ⟹ isa r2@ must NOT be proved by
+  -- enumerating an UNSEALED @r1@'s CURRENT members (@~List ⟹ ~Bag@ because List's only member so far
+  -- is a Bag member is broken by any future @isa List@ declaration). Deciding it True closed-world
+  -- while the gated 'predsEmpty' oracle refuses the same enumeration is an inconsistency that breaks
+  -- distributivity — @(~List ∩ ¬Bag)@ collapses to ∅ while the compound universe does not. A declared
+  -- @isa@ edge still implies (the 'classDeclaredSubclassOf' fast path above), and a SEALED @r1@ is
+  -- still enumerated (the gate only refuses an unsealed, non-'tePrgmEnv' class).
+  | otherwise = satAtomImplies typeEnv vaenv True (SatRel r1) (SatRel r2)
   where checkArg k = isSubtypeOfWithEnv typeEnv vaenv
                        (H.lookupDefault PTopType k (ptArgs r1))
                        (ptArgs r2 H.! k)
@@ -2776,10 +2783,15 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (preds, negLeafs, _)) (H.nu
   predsCovered
   where
    -- Symbolic decision first (emptiness of @(U_preds − negLeafs) ∧ ¬t2@ against the class
-   -- graph, ungated - subsuming the ungated 'predImpliesPartials'/'predsEmpty' routes below);
-   -- the materialized chain remains as the out-of-fragment fallback.
+   -- graph); the materialized chain remains as the out-of-fragment fallback. Gated open-world
+   -- ('gatePos' = 'True', matching 'predsEmptySymbolic' and the sealed-only 'predsCoveredExpand'
+   -- fallback below): an UNSEALED class in @preds@ must NOT be enumerated closed-world here, or the
+   -- cover proves @Top(Bag ∧ ¬Nil) ⊆ Cons@ (Bag's only non-Nil member so far IS a Cons) — broken by
+   -- any future @isa Bag@ declaration, and inconsistent with the open-world emptiness oracle, which
+   -- collapses @∀Bag ∩ (¬Nil − Cons)@ to ∅ while the union side keeps it (a difference-subset law
+   -- failure). In the closed-world coverage environment ('tePrgmEnv') the gate still enumerates.
    predsCovered = fromMaybe predsCoveredExpand
-     (typeCoveredSymbolic typeEnv vaenv False (UnionType (Just (preds, negLeafs, [])) H.empty []) t2)
+     (typeCoveredSymbolic typeEnv vaenv True (UnionType (Just (preds, negLeafs, [])) H.empty []) t2)
    predsCoveredExpand = case expandTypesWithNamesFull typeEnv vaenv t1 (H.keysSet superPartials) of
     (_, True)      | isPredsContradictory preds -> True
     (_, True)      | predImpliesPartials typeEnv vaenv preds superPartials -> True
@@ -3537,10 +3549,14 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
   -- A hoisted binding is stored in its canonical 'substituteTVExt' reading (the same one
   -- 'mergeVarEnvVal' gives every merged env binding), so a binding that only passed through
   -- ONE env is structurally comparable with one that met across several — and with the
-  -- difference side's 'resolveOwnScopeRefs' reading. A binding that IS a bare var is a
-  -- genuine link and stays symbolic (the reading would default it to ⊤).
+  -- difference side's 'resolveOwnScopeRefs' reading. It is read under the ambient @vaenv@ (as
+  -- 'resolveOwnScopeRefs' also is), so an external ('TVExt') reference NESTED in the binding
+  -- resolves to its ambient value rather than widening to ⊤ (@Cons[/T = #noCore[/a=$_a]]@ with
+  -- @$_a@ bound keeps @/a@ at its value); with no ambient binding this is identical to reading
+  -- under the empty env. A binding that IS a bare var is a genuine link and stays symbolic (the
+  -- reading would default an unbound one to ⊤).
   let canonBinding t@TypeVar{} = t
-      canonBinding t           = substituteTVExt H.empty t
+      canonBinding t           = substituteTVExt vaenv t
   let hoistFilter env = fmap canonBinding $ H.filterWithKey (\k v -> S.member k hoistNames && H.lookup k ambientVars /= Just v) $ fst $ splitVarArgEnv env
   let argsVarBindings = hoistFilter (mergeAllVarEnvs typeEnv argsVaenvs)
   let venvs' = mergeAllVarEnvs typeEnv [argsVarBindings, vars']
