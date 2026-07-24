@@ -2859,8 +2859,11 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing subPartials []) (UnionType N
     -- sub when the union of their values at that slot covers the sub's value there — e.g.
     -- @fluffy(∀Animal) ⊆ fluffy(Animal∧¬Fish) ∪ fluffy(∀Fish)@, the pair the exact union's
     -- negLeaf reduction produces alongside an untouched original. Erasing the slot to ⊤ on both
-    -- sides and requiring structural equality delimits the family exactly; the slot cover is
-    -- decided through the type-level union, so it is whatever the union algebra proves (sound).
+    -- sides delimits the family; the arg MODE is normalised out of that structural match and
+    -- handled by 'argModeCovers' instead — a super whose mode is WIDER than the sub's (e.g. the
+    -- @..@/'PtArgAny' leaf a difference leaves beside an exact one) still covers the sub's arg-sets
+    -- at the matching slot value, so excluding it on a mode mismatch would miss the joint cover.
+    -- The slot cover is decided through the type-level union, so it is whatever the algebra proves.
     coveredBySlotUnion sub sup =
       any (coverSlot ptArgs (\p m -> p{ptArgs=m})) (H.keys (ptArgs sub))
       || any (coverSlot ptVars (\p m -> p{ptVars=m})) (H.keys (ptVars sub))
@@ -2868,8 +2871,9 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing subPartials []) (UnionType N
         coverSlot get set k = case H.lookup k (get sub) of
           Nothing -> False
           Just sv ->
-            let erase p = set p (H.insert k PTopType (get p))
-                family = [v | supP <- sup, Just v <- [H.lookup k (get supP)], erase supP == erase sub]
+            let erase p = (set p (H.insert k PTopType (get p))){ptArgMode = PtArgExact}
+                family = [v | supP <- sup, Just v <- [H.lookup k (get supP)]
+                            , erase supP == erase sub, argModeCovers supP sub]
             in length family > 1 && isSubtypeOfWithEnv typeEnv vaenv sv (unionAllTypesWithEnv typeEnv vaenv family)
     msg = printf "[SUBTYPE] %s ⊆ %s = %s" (show $ UnionType Nothing subPartials []) (show $ UnionType Nothing superPartials []) (show result)
 -- partials ⊆ (superLeafs ∪ constants): constants in supertype don't help cover partials
