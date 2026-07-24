@@ -1355,11 +1355,17 @@ predImpliesAtom typeEnv vaenv (PredClass c1) (PredClass c2)
 -- gate reproduces the sealed/'tePrgmEnv' enumeration gate.
 predImpliesAtom typeEnv vaenv (PredClass c1) (PredClass c2) =
   satAtomImplies typeEnv vaenv True (SatClass c1) (SatClass c2)
--- PredRel: r1 implies r2 when r2's name path is a suffix of r1's (r2 is more general)
--- and r1's args are subtypes of r2's args. Otherwise fall back to expansion, which also
--- captures class-graph relationships between the names (e.g. ConsList isa List).
+-- PredRel: for the SAME relation entity (r2's name path is a suffix of r1's — one relation, spelled
+-- relatively) the implication is EXACTLY covariance of r1's args AND element vars into r2's, decided
+-- BOTH ways here. The 'ptVars' check mirrors the PredClass\/PredClass covariance above (an element
+-- bound sits in 'ptVars', not 'ptArgs'): a 'foldRecursiveType' result carries the joined element on
+-- the relation (@~ConsList[/T=⊤−#noCore]@), and covariance must decide @~ConsList[/T=⊤] ⟹
+-- ~ConsList[/T=⊤−#noCore]@ FALSE (@∀ConsList[⊤] ⊄ ∀ConsList[Integer]@) rather than fall through to the
+-- name-blind engine below, which reads @isa r ∧ ¬isa r@ (same name, differing element) as a
+-- contradiction and wrongly proves the implication. A DIFFERENT-named r2 (a superclass) still routes
+-- to the declared-edge\/engine cases.
 predImpliesAtom typeEnv vaenv (PredRel r1) (PredRel r2)
-  | relativeNameMatches (ptName r2) (ptName r1) && all checkArg (H.keys (ptArgs r2)) = True
+  | relativeNameMatches (ptName r2) (ptName r1) = all checkArg (H.keys (ptArgs r2)) && all checkVar (H.keys (ptVars r2))
   -- A declared subclass edge @every(r1 isa r2)@ proves @isa r1 ⟹ isa r2@ directly, avoiding the
   -- 'expandRelPartial' below (which unrolls r1's members and recurses through a recursive
   -- parameterized member). Restricted to plain (arg/var-free) relations, matching the nullary
@@ -1378,6 +1384,9 @@ predImpliesAtom typeEnv vaenv (PredRel r1) (PredRel r2)
   where checkArg k = isSubtypeOfWithEnv typeEnv vaenv
                        (H.lookupDefault PTopType k (ptArgs r1))
                        (ptArgs r2 H.! k)
+        checkVar k = isSubtypeOfWithEnv typeEnv vaenv
+                       (H.lookupDefault PTopType k (ptVars r1))
+                       (ptVars r2 H.! k)
 -- PredExpr: use structural partial comparison (equality-based simplifying assumption)
 predImpliesAtom typeEnv vaenv (PredExpr e1) (PredExpr e2) = isSubPartialOfWithEnv typeEnv vaenv e1 e2
 -- PredClass c implies PredRel r when r's name is a suffix of c's name (then
@@ -1975,9 +1984,13 @@ relSatCandidates typeEnv vaenv gatePos relPartial
     -- @DShow@ bound), mirroring the arg/type candidates above which already reuse @relPartial@.
     clsCands = [CandGoal (SatGoal [SatClass relPartial{ptName=n}] []) | n <- matchingClassNames]
 
--- | The classes a relative name matches (the class routes of a 'PredRel').
+-- | The classes a relative name matches (the class routes of a 'PredRel'). The relation's own type
+-- arguments/element vars are carried onto each class partial (@isa ConsList[/T=∀ToString]@ routes to
+-- @ConsList[/T=∀ToString]@, not a bare @ConsList@ whose Top element would ignore the bound), mirroring
+-- 'relSatCandidates.clsCands'. A bare relation (no vars/args) yields the same bare class partials as
+-- before, so only the element-bearing rel forms 'foldRecursiveType' produces are affected.
 relMatchingClasses :: TypeGraph tg => TypeEnv tg -> PartialType -> [PartialType]
-relMatchingClasses typeEnv relPartial = map partialVal (relativeNameFilter (ptName relPartial) (listClassNames typeEnv))
+relMatchingClasses typeEnv relPartial = [relPartial{ptName=n} | n <- relativeNameFilter (ptName relPartial) (listClassNames typeEnv)]
 
 -- | Whether a relation's /name route/ applies to a shape: the relative name matches AND the
 -- shape's name is a known type name. Parity with 'expandRelPartial', whose type candidates
@@ -3336,14 +3349,34 @@ settleSelfRefRedundant _ _ _ t = t
 -- constraint epoch (@ConsList ≡ Nil + Cons(tail=ConsList)@), producing syntactically
 -- distinct but semantically equal representations that never reach a fixpoint. Folding
 -- restores the finite @PredRel@ form so the solver converges.
+--
+-- With a NON-trivial joined element (@~ConsList[/T=⊤−#noCore]@ from differencing) the finite form is
+-- the class member EXPANSION (@Cons[/T=E](head=$T, tail=∀ConsList[/T=$T]) + Nil@) rather than the bare
+-- rel predicate: the element then rides on the members' own fields, where the covariance-aware leaf
+-- algebra reads it, instead of on a @PredRel@'s 'ptVars' — which 'expandRelPartial' and the
+-- symbolic engine ('relMatchingClasses' notwithstanding) do not covariance-check, so a folded
+-- @~ConsList[/T=E]@ subtrahend silently drops @E@ and empties a difference. The expansion is still
+-- finite (its recursive @tail@ is the @∀ConsList@ predicate, not an explicit unrolling), so
+-- convergence is preserved; the bare-element case keeps the minimal @~C@ predicate.
 foldRecursiveType :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
-foldRecursiveType typeEnv@TypeEnv{teClassGraph=ClassGraph cg} _vaenv t@(UnionType Nothing leafs [])
+foldRecursiveType typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv t@(UnionType Nothing leafs [])
   | length leafList > 1 -- only fold a genuine union; a single partial is already minimal
   , hasExplicitRecursion leafList -- only fold an over-unrolled form, never the canonical depth-1 expansion
+  , all leafExactlyMember leafList -- every leaf is exactly a member (see 'leafExactlyMember')
   , (relP:_) <- foldCandidates
-  = TopType H.empty (PredsOne (PredRel (withElem relP)))
+  = if H.null joinedVars
+      then TopType H.empty (PredsOne (PredRel (withElem relP)))
+      else expandClassPartial typeEnv vaenv (withElem relP)
   where
     leafList = splitUnionType leafs
+    -- Fold gate against NARROWING: the union folds to @~C@ only if it equals the class expansion
+    -- @U_C@, which requires each leaf to be exactly its member — an exact-mode partial. A leaf with
+    -- a non-vacuous @??@ mode ('ptArgLb'=False) also admits partial-application forms (a @Cons@
+    -- missing @head@\/@tail@), so it is strictly WIDER than the bare member and the union overshoots
+    -- @U_C@; folding to @~C@ would then drop those forms. 'normalizePtArgMode' first collapses a
+    -- vacuous @..@ (extra args allowed, but the member declares no larger arg-set) to exact, so a
+    -- real member-expansion leaf — always exact or vacuously widened — still folds.
+    leafExactlyMember l = ptArgMode (normalizePtArgMode typeEnv l) == PtArgExact
     tNames = leafNameSet t
     -- @t@ is an (over-)unrolling of a sealed class @C@ when its top-level constructor names
     -- are exactly @C@'s declared constituents (from @class(C,[..])@ in the class graph).
@@ -3355,14 +3388,16 @@ foldRecursiveType typeEnv@TypeEnv{teClassGraph=ClassGraph cg} _vaenv t@(UnionTyp
                          , sealed
                          , S.unions (map leafNameSet classTypes) == tNames
                          , leafsWithinMembers classTypes ]
-    -- Fold gate against WIDENING: a union leaf that carries an argument key NOT declared by its
-    -- class member, with a narrowing (non-⊤) value, is strictly smaller than the bare member — so
-    -- the union does not cover the class expansion @U_C@ and folding to @~C@ would widen it. Such
-    -- extraneous keys arise when an application's argument keys (e.g. @/l@\/@/r@ from @operator-@)
-    -- leak onto a primitive result leaf (@Integer(/r=Integer)@ from @5 - 2@), whose bare member
-    -- @Integer@ declares no fields. A genuine over-unrolling only carries the member's DECLARED
-    -- fields (a @Cons@'s @head@\/@tail@), so this never rejects a real recursive fold. ⊤-valued
-    -- extra keys do not narrow, so they are permitted.
+    -- Fold gate: each leaf must be EXACTLY its class member, so the union equals @U_C@. Two ways a
+    -- same-named leaf can differ from the member and make the union miss @U_C@:
+    --   * WIDENING — a key NOT declared by the member, with a narrowing (non-⊤) value, makes the leaf
+    --     strictly smaller than the bare member (@Integer(/r=Integer)@ from @5 - 2@, whose @Integer@
+    --     member declares no fields), so the union under-covers and folding to @~C@ would widen it.
+    --     ⊤-valued extra keys do not narrow and are permitted.
+    --   * INCOMPLETENESS — a leaf MISSING a declared member field (a bare @/Cons@ with arg-set @{}@, or
+    --     @Cons(head)@ without @tail@) is a partial-application form, DISJOINT from the field-complete
+    --     member, so folding the union to @~C@ would drop it. A genuine over-unrolling carries every
+    --     declared field (a @Cons@'s @head@ AND @tail@), so this never rejects a real recursive fold.
     leafsWithinMembers classTypes = all leafOk leafList
       where
         memberArgKeys = H.fromListWith S.union
@@ -3371,7 +3406,8 @@ foldRecursiveType typeEnv@TypeEnv{teClassGraph=ClassGraph cg} _vaenv t@(UnionTyp
         memberPartials _                   = []
         leafOk l =
           let declKeys = H.lookupDefault S.empty (ptName l) memberArgKeys
-          in null [() | (k, v) <- H.toList (ptArgs l), not (S.member k declKeys), v /= PTopType]
+          in declKeys `S.isSubsetOf` H.keysSet (ptArgs l) -- field-complete (no missing declared field)
+             && null [() | (k, v) <- H.toList (ptArgs l), not (S.member k declKeys), v /= PTopType]
     -- Prefer a 'PredRel' partial nested within @t@ (it carries the right type-var bindings,
     -- e.g. @ConsList[T=$_T]@); otherwise fall back to the bare class partial. This also
     -- catches recursions that bottom out in 'TopType' rather than an explicit @~C@.
@@ -3455,12 +3491,19 @@ unionTypesWithEnv typeEnv vaenv t1@(UnionType mTop1 pos1 cs1) t2@(UnionType mTop
     cs'   = L.nub (cs1 ++ cs2)
     -- The part of a set of negated (excluded) leafs that the OTHER operand does not re-add:
     -- @(U − N) ∪ P = (U − (N − P)) ∪ P@, so a positive leaf covering part of an excluded region
-    -- folds that part out of the exclusion. A leaf−type difference is itself positive.
+    -- folds that part out of the exclusion. Difference distributes over the union of negated leafs
+    -- (@(⋃ Nᵢ) − P = ⋃ (Nᵢ − P)@), so each leaf is subtracted SEPARATELY: differencing the negated
+    -- set as one union would let 'compactType' fold an over-unrolled recursive set (e.g. an unrolled
+    -- @ConsList@) to its @~C@ rel-form — a Just-top, not the leaf set the exclusion needs. A single
+    -- leaf never triggers that fold ('foldRecursiveType' needs >1 top-level leaf), so each per-leaf
+    -- difference stays positive.
     exclOutside negs other
       | H.null negs = negs
-      | otherwise = case snd $ differenceTypeWithEnv typeEnv vaenv (UnionType Nothing negs []) other of
-          UnionType Nothing ls _ -> ls
-          d -> error $ printf "unionTypesWithEnv: non-positive neg-leaf difference %s" (show d)
+      | otherwise = unionPartialLeafs
+          [ case snd $ differenceTypeWithEnv typeEnv vaenv (singletonType negLeaf) other of
+              UnionType Nothing ls _ -> ls
+              d -> error $ printf "unionTypesWithEnv: non-positive neg-leaf difference %s" (show d)
+          | negLeaf <- splitUnionType negs ]
     result = case (mTop1, mTop2) of
       (Nothing, Nothing) ->
         compactType typeEnv vaenv $ UnionType Nothing pos' cs'
@@ -3745,13 +3788,14 @@ intersectTypesWithVarEnv typeEnv vaenv (UnionType Nothing posLeafs posConsts) t2
                                    (UnionType Nothing posLeafs [])
                                    (UnionType (Just (preds, negLeafs, [])) H.empty [])
           survivingConsts = filter (\c -> constantInType typeEnv vaenv c t2) posConsts
-      in case (baseResult, survivingConsts) of
-           (_, []) -> (vaenv', baseResult)
-           (BottomType, cs) -> (vaenv', UnionType Nothing H.empty cs)
-           (UnionType Nothing ls [], cs) ->
-             let finalCs = filter (\c -> not $ constantCoveredByLeafs c ls) cs
-             in (vaenv', UnionType Nothing ls finalCs)
-           _ -> (vaenv', baseResult)
+      -- @(posLeafs ∪ posConsts) ∩ t2 = (posLeafs ∩ t2) ∪ (posConsts ∩ t2)@: rejoin the surviving
+      -- constants onto the leaf part. 'unionTypesWithEnv' handles every shape of @baseResult@ — it
+      -- drops a constant already covered by baseResult's leafs and folds it onto a Just-top's
+      -- positive constants when the leafs compacted to a rel-form (an over-unrolled recursive set),
+      -- which a bare @baseResult@ return would silently drop.
+      in if null survivingConsts
+           then (vaenv', baseResult)
+           else (vaenv', unionTypesWithEnv typeEnv vaenv' baseResult (UnionType Nothing H.empty survivingConsts))
 -- PosPartials ∩ Top(negLeafs, PredsNone) when negLeafs non-empty → subtract
 intersectTypesWithVarEnv typeEnv vaenv (UnionType Nothing posPartials []) (UnionType (Just (PredsNone, negPartials, [])) (H.null -> True) [])
   | not (H.null negPartials) =

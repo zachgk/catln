@@ -76,6 +76,21 @@ genVaenv prgm = do
     concreteish BottomType = False
     concreteish _          = True
 
+-- | Substitute every nested reference to a recursive class @cName@ (its class-predicate
+-- @∀cName@\/@~cName@ form, appearing as an argument or variable value) with @replacement@. Applied
+-- to a class's depth-1 member expansion with the expansion itself as @replacement@, this unrolls
+-- the recursion one level deeper — the shape a recursive class accretes per constraint epoch during
+-- solving (see 'Semantics.Types.foldRecursiveType').
+substRecRef :: TypeName -> Type -> Type -> Type
+substRecRef cName replacement = go
+  where
+    matchesC p = makeAbsoluteName (ptName p) == makeAbsoluteName cName
+    go (TopType _ (PredsOne (PredClass rp))) | matchesC rp = replacement
+    go (TopType _ (PredsOne (PredRel rp)))   | matchesC rp = replacement
+    go (UnionType m pos cs) = UnionType m (joinUnionType (map goLeaf (splitUnionType pos))) cs
+    go t = t
+    goLeaf p = p{ptArgs = fmap go (ptArgs p), ptVars = fmap go (ptVars p)}
+
 genTypeFromExpr :: Prgm Expr () -> Expr () -> Gen PartialType
 genTypeFromExpr _ (CExpr _ c) = return $ constantPartialType c
 genTypeFromExpr _ (Value _ n) = return $ partialVal n
@@ -109,7 +124,7 @@ genTypeFromExpr _ e = error $ printf "Unimplemented genTypeFromExpr for %s" (sho
 genType :: Prgm Expr () -> Gen Type
 genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
   where
-    TypeEnv{teClassGraph=ClassGraph cg} = mkTypeEnv prgm
+    typeEnv@TypeEnv{teClassGraph=ClassGraph cg} = mkTypeEnv prgm
 
     -- Randomly assign a 'PtArgMode' to the generated partials, exercising the new
     -- lower\/upper-bound modes through the (precise) set operations. Only plain
@@ -136,6 +151,33 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
     gens = if graphEmpty cg
       then [genBasic, genConst, genMultiConst, genTypeVar]
       else [genBasic, genCGOld, genCG, genCGRel, genObjM, genObj, genConst, genMultiConst, genPredShape, genMixed, genTypeVar]
+             ++ [genUnrolledRecursive | not (null recExpansions)]
+
+    -- Over-unrolled recursive class expansions. A sealed recursive class (e.g. @ConsList@) expands
+    -- to a depth-1 member union whose recursive field is the class-predicate form
+    -- (@Cons(tail=∀ConsList) + Nil@). During constraint solving that field accretes one explicit
+    -- member-union level per epoch, producing deeper unrollings
+    -- (@Cons(tail = Nil + Cons(tail=∀ConsList)) + Nil@) that are semantically equal but syntactically
+    -- distinct and never reach a fixpoint. 'Semantics.Types.compactType'\/'foldRecursiveType' fold
+    -- these back to the finite predicate form; generating them directly exercises that fold (its
+    -- 'hasExplicitRecursion' gate needs a leaf field to explicitly reference the class) and confirms
+    -- every law holds across the unrolled and folded representations.
+    recExpansions =
+      [ (ptName cpt, exp1)
+      | (CGClass (sealed, cpt, cts, _), _, _) <- graphToNodes cg
+      , sealed, not (null cts)
+      , let exp1 = expandClassPartial typeEnv H.empty cpt
+      , recursesExplicitly (ptName cpt) exp1 ]
+      where
+        recursesExplicitly cName exp1 = case substRecRef cName exp1 exp1 of
+          UnionType Nothing ls [] -> hasExplicitRecursion (splitUnionType ls)
+          _                       -> False
+
+    genUnrolledRecursive :: Gen Type
+    genUnrolledRecursive = do
+      (cName, exp1) <- HG.element recExpansions
+      depth <- HG.int (linear 1 2) -- unroll 1-2 extra levels → over-unrolled depth 2-3
+      return $ iterate (substRecRef cName exp1) exp1 !! depth
 
     -- Compound predicate formulae: conjunctions (and negated conjunctions) of PredClass/PredRel
     -- atoms drawn from the class graph. Exercises P∨¬P=⊤ / P∧¬P=∅ and the De Morgan handling of
