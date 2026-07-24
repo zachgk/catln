@@ -1233,7 +1233,14 @@ predImplies :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicates -
 -- Structural base cases
 predImplies _       _     _  PredsNone = True   -- anything ⊆ top
 predImplies _       _     p1 p2 | p1 == p2 = True  -- reflexivity
-predImplies _       _     PredsNone _ = False   -- top ⊄ anything specific
+-- @⊤ ⟹ p2@ iff p2 holds for every value, i.e. p2 is a TAUTOLOGY (its negation is unsatisfiable).
+-- Usually False (a proper predicate excludes something), but a @¬(unsatisfiable)@ universe — e.g.
+-- @¬(#noCore ∧ Cat)@ when no value is both — denotes ⊤, so @⊤ ⟹ it@. Deciding this through the
+-- 'predsEmpty' oracle (rather than a blanket False) keeps 'predImplies' consistent with 'compactType',
+-- which already reduces such a universe to 'PredsNone': without it a subtype whose rhs carries the
+-- un-reduced universe (@sub ⊆ Top(¬(#noCore∧Cat)) − …@) is wrongly refused. Sound — 'predsEmpty' is
+-- conservative-to-inhabited, so this only flips False→True when p2 is PROVABLY tautological.
+predImplies typeEnv vaenv PredsNone p2 = predsEmpty typeEnv vaenv (predsNot p2)
 -- Logical connectives
 predImplies typeEnv vaenv p1@(PredsAnd ps) p2      = any (\p -> predImplies typeEnv vaenv p p2) ps || allCheck || cancellationCheck || directContradictCheck || jointEmptyCheck
   -- if any conjunct alone implies p2, the intersection does too
@@ -2151,6 +2158,25 @@ partialUninhabitedByDecl typeEnv vaenv p@PartialType{ptName, ptArgs}
     clampEmpty v d | v == d = False
                    | otherwise = isBottomType (intersectTypesEnv typeEnv vaenv v (freeTVIntToTopDeep vaenv p d))
 
+-- | Whether a partial is uninhabited because one of its arg\/var SLOT VALUES is itself empty: no
+-- constructible value has an ∅-typed field or type-parameter (@Cons[/T=∅]@, @Data(field=∅)@ denote
+-- ∅). Each slot is read under the ambient env ('substituteTVExt' resolves a slot's own external
+-- variable — a @$_c@ bound to a semantically-empty @Top(#a ∧ #b)@) and compacted, so it recognises
+-- exactly what 'compactType' collapses. 'compactType' already reduces such a partial to ∅, but the
+-- standalone subtype\/emptiness path never re-compacts its inputs, so without this INTERSECTION (which
+-- keeps the slot symbolic) and DIFFERENCE (which resolves the variable to ∅) disagree on the
+-- partial's emptiness — breaking @a∩b = a−(a−b)@ when the intersection's result is denotationally ∅.
+partialHasEmptySlot :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> Bool
+partialHasEmptySlot typeEnv vaenv PartialType{ptVars, ptArgs} =
+  any slotEmpty (H.elems ptVars ++ H.elems ptArgs)
+  where slotEmpty v = isBottomType (compactType typeEnv vaenv (substituteTVExt vaenv v))
+
+-- | A partial that denotes ∅ for either reason: a field disjoint from its declared bound
+-- ('partialUninhabitedByDecl') or an intrinsically-empty slot value ('partialHasEmptySlot').
+partialUninhabited :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> Bool
+partialUninhabited typeEnv vaenv p =
+  partialUninhabitedByDecl typeEnv vaenv p || partialHasEmptySlot typeEnv vaenv p
+
 -- | Keyset coverage: every arg-set allowed by @sub@ is allowed by @sup@
 -- (the @negCoversAllPos@ reasoning of 'differencePartialLeafs').
 argModeCovers :: PartialType -> PartialType -> Bool
@@ -2360,14 +2386,31 @@ satGoal typeEnv vaenv gatePos hyps goal0
   -- A positive atom implying a negative one by declaration (@Fish ∧ ¬Animal@ under
   -- @every(Fish isa Animal)@) is contradictory in the open world, independent of the gate.
   | or [satAtomImpliesDeclared typeEnv p n | p <- sgPos goal, n <- sgNeg goal] = False
+  -- A negative atom that ALREADY denotes the whole universe (⊤) makes the goal UNSAT whatever the
+  -- positive constraints are: the value must AVOID that negative, but ⊤ leaves nowhere to go. The
+  -- canonical case is a sealed class with a bare type-variable member (@Option = [$_T, None]@): the
+  -- @$_T@ member admits EVERY value, enumerating as the trivially-satisfiable candidate
+  -- @SatGoal [] []@, so @∀Option ≡ ⊤@ and no value is @¬Option@. This decides both @⊤ ⊆ ∀Option@
+  -- (empty positive) and @∀Bag ⊆ ∀Option@ (positive @Bag@ that the open-world gate cannot itself
+  -- enumerate) — without it the generator path reads the goal as conservatively satisfiable and
+  -- reports the subtype False, breaking @a ⊆ b ⟺ a∪b = b@. Only a PROVABLY universal negative flips
+  -- to UNSAT; a proper (sub-⊤) negative leaves an escape route, so the conservative-to-SAT default
+  -- stands. Non-recursive (a nested universal-class member reads conservatively as an escape) —
+  -- sound, since the miss is toward SAT.
+  | any negAtomCoversUniverse (sgNeg goal) = False
   | otherwise = case sgPos goal of
-      [] -> True -- no positive constraint: the open universe escapes any finite negatives
+      [] -> True -- no positive constraint: the open universe escapes any finite proper negatives
       _  -> case chosenGen of
         Nothing         -> True -- no enumerable generator: conservative
         Just (_, cands) -> any checkCand cands
   where
     goal = satGoalUnifyPos vaenv (satGoalNorm goal0)
     hyps' = S.insert goal hyps
+
+    negAtomCoversUniverse (SatClass c) = maybe False (any candUniversal) (classSatCandidates typeEnv vaenv gatePos c)
+    negAtomCoversUniverse _            = False
+    candUniversal (CandGoal (SatGoal [] [])) = True
+    candUniversal _                          = False
 
     -- Prefer the most concrete generator: concrete leafs, then a class, then a relation. Among
     -- those, take the first that can actually ENUMERATE: a gated-open positive class yields no
@@ -2840,8 +2883,8 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing subPartials []) (UnionType N
     result = and (H.elems (H.mapWithKey subGroupCovered subsByName))
     subGroupCovered n subs = case H.lookup n supersByName of
       Just sups -> all (isSubPartial sups) subs
-      Nothing   -> all (partialUninhabitedByDecl typeEnv vaenv) subs
-    isSubPartial sup sub = directCheck || coveredByArgSets || coveredBySlotUnion sub sup || coveredBySplit (splitPartialByUnionVarArgs sub) || coveredBySplit (splitPartialByUnionVarArgs expandedSub) || partialUninhabitedByDecl typeEnv vaenv sub
+      Nothing   -> all (partialUninhabited typeEnv vaenv) subs
+    isSubPartial sup sub = directCheck || coveredByArgSets || coveredBySlotUnion sub sup || coveredBySplit (splitPartialByUnionVarArgs sub) || coveredBySplit (splitPartialByUnionVarArgs expandedSub) || partialUninhabited typeEnv vaenv sub
       where
         directCheck = any (isSubPartialOfWithEnv typeEnv vaenv sub) sup
         -- A moded sub leaf IS the union of its arg-set interval's exact pieces
@@ -2885,8 +2928,15 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing subPartials []) (UnionType N
           Nothing -> False
           Just sv ->
             let erase p = (set p (H.insert k PTopType (get p))){ptArgMode = PtArgExact}
+                -- Normalise both modes before 'argModeCovers': an exact super does not literally
+                -- cover a sub carrying a vacuous @..@\/'PtArgAny' (@subUb@=False) — even though that
+                -- @..@ admits no arg-set beyond the sub's own declared keys — so without this the
+                -- family is empty and the joint cover is missed (@fluffy(∀Animal).. ⊆ fluffy(∀Lizard)
+                -- ∪ fluffy(Animal∧¬Lizard)@ read False, the arg-mode-interval half of the same
+                -- normalisation every other sub-partial path already applies).
                 family = [v | supP <- sup, Just v <- [H.lookup k (get supP)]
-                            , erase supP == erase sub, argModeCovers supP sub]
+                            , erase supP == erase sub
+                            , argModeCovers (normalizePtArgMode typeEnv supP) (normalizePtArgMode typeEnv sub)]
             in length family > 1 && isSubtypeOfWithEnv typeEnv vaenv sv (unionAllTypesWithEnv typeEnv vaenv family)
     msg = printf "[SUBTYPE] %s ⊆ %s = %s" (show $ UnionType Nothing subPartials []) (show $ UnionType Nothing superPartials []) (show result)
 -- partials ⊆ (superLeafs ∪ constants): constants in supertype don't help cover partials
@@ -3382,12 +3432,14 @@ foldRecursiveType typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv t@(UnionType
     -- are exactly @C@'s declared constituents (from @class(C,[..])@ in the class graph).
     -- Sealed ⇒ @U_C@ is exactly that union, so folding is sound and independent of the
     -- open/closed-world setting. A structural name match sidesteps a deep 'isEqType', which
-    -- cannot prove @Nil+Cons(tail=Nil+Cons(..)) ≡ Nil+Cons(tail=~C)@.
+    -- cannot prove @Nil+Cons(tail=Nil+Cons(..)) ≡ Nil+Cons(tail=~C)@. 'leafsWithinMembers'
+    -- gives @t ⊆ U_C@ and 'leafsCoverMembers' the reverse @U_C ⊆ t@ — together @t ≡ U_C@.
     matchingClassNames = [ fromPartialName cKey
                          | (CGClass (sealed, _, classTypes, _), cKey, _) <- graphToNodes cg
                          , sealed
                          , S.unions (map leafNameSet classTypes) == tNames
-                         , leafsWithinMembers classTypes ]
+                         , leafsWithinMembers classTypes
+                         , leafsCoverMembers (fromPartialName cKey) classTypes ]
     -- Fold gate: each leaf must be EXACTLY its class member, so the union equals @U_C@. Two ways a
     -- same-named leaf can differ from the member and make the union miss @U_C@:
     --   * WIDENING — a key NOT declared by the member, with a narrowing (non-⊤) value, makes the leaf
@@ -3408,6 +3460,41 @@ foldRecursiveType typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv t@(UnionType
           let declKeys = H.lookupDefault S.empty (ptName l) memberArgKeys
           in declKeys `S.isSubsetOf` H.keysSet (ptArgs l) -- field-complete (no missing declared field)
              && null [() | (k, v) <- H.toList (ptArgs l), not (S.member k declKeys), v /= PTopType]
+    -- Coverage gate — the reverse of 'leafsWithinMembers': the union must EQUAL @U_C@, not merely
+    -- sit within it. A RECURSIVE member field (declared with the class's own type, e.g. @Cons@'s
+    -- @tail -> ∀ConsList@) must, in every union leaf, be a FULL reference to the class — the
+    -- @∀C@/@~C@ predicate, ⊤ (declaration-bounded ≡ @∀C@), or a nested union that itself covers
+    -- @U_C@. A leaf whose recursive field is a PROPER subset (e.g. @Cons(tail=Nil)@, produced when
+    -- a difference narrows the @tail@) leaves @U_C@ uncovered, so folding to @~C@ would WIDEN it
+    -- back to the whole class — the @a−b@ bug where @Cons(tail=Nil)+Nil@ (the empty\/1-element
+    -- lists) folded to @~ConsList@ (ALL lists). Element (non-recursive) fields are NOT checked here:
+    -- a narrowed element rides on 'joinedVars' into the folded @~C[/T=E]@. Purely structural (no
+    -- 'isSubtypeOf'): terminates on the finite value structure and never depends on the engine
+    -- proving a deep recursive equivalence, so it cannot silently disable a genuine fold.
+    leafsCoverMembers cName classTypes = covers leafList
+      where
+        memberNameSet = S.unions (map leafNameSet classTypes)
+        -- per member name, the arg keys whose DECLARED type references this class (the recursive fields)
+        recKeysByMember = H.fromListWith S.union
+          [ (ptName m, S.fromList [k | (k, fv) <- H.toList (ptArgs m), fieldRefsClass fv])
+          | ct <- classTypes, m <- memberPartials ct ]
+        memberPartials (UnionType _ pos _) = splitUnionType pos
+        memberPartials _                   = []
+        covers leaves = S.fromList (map ptName leaves) == memberNameSet && all leafCovers leaves
+        leafCovers l = all (\k -> fieldCovers (H.lookupDefault PTopType k (ptArgs l)))
+                           (S.toList (H.lookupDefault S.empty (ptName l) recKeysByMember))
+        fieldCovers PTopType                       = True -- ⊤ tail ≡ ∀C (declaration-bounded)
+        fieldCovers (UnionType Nothing pos [])     = covers (splitUnionType pos) -- nested explicit unrolling
+        fieldCovers (UnionType (Just (preds, negLeafs, [])) p [])
+          | H.null negLeafs && H.null p            = predsRefClass preds -- the ∀C / ~C predicate form
+        fieldCovers _                              = False
+        predsRefClass (PredsOne (PredClass c)) = relativeNameMatches (ptName c) cName
+        predsRefClass (PredsOne (PredRel r))   = relativeNameMatches (ptName r) cName
+        predsRefClass _                        = False
+        fieldRefsClass (UnionType (Just (preds, _, _)) pos _) = predsRefClass preds || anyMentions pos
+        fieldRefsClass (UnionType Nothing pos _)              = anyMentions pos
+        fieldRefsClass _                                      = False
+        anyMentions pos = any (\p -> relativeNameMatches (ptName p) cName) (splitUnionType pos)
     -- Prefer a 'PredRel' partial nested within @t@ (it carries the right type-var bindings,
     -- e.g. @ConsList[T=$_T]@); otherwise fall back to the bare class partial. This also
     -- catches recursions that bottom out in 'TopType' rather than an explicit @~C@.
