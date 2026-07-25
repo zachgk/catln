@@ -452,7 +452,10 @@ verifyScheme typeEnv vaenv Meta{getMetaDat=VarMetaDat _ _} (TypeCheckResult _ (S
     verifySchemeActLowers  = case act of
       TypeVar{} -> True
       _         -> isSubtypeOfWithEnv typeEnv vaenv act oldAct
-    verifyNoTypeVarLost = not (typeVarLost oldAct act)
+    -- The old side may predate scope normalization (an Encode-time preset holding a foreign
+    -- declaration's var spelling): read its out-of-scope vars as the ⊤ they denote before
+    -- comparing, so replacing such a spelling by ⊤ is not reported as a lost variable.
+    verifyNoTypeVarLost = not (typeVarLost (dropOutOfScopeTVExt vaenv oldAct) act)
     verifySchemeReqLowers  = isSubtypeOfWithEnv typeEnv vaenv req oldReq
     verifyCompacted = act == compactType typeEnv vaenv act
 verifyScheme _ _ _ _ _ = Nothing

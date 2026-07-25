@@ -16,7 +16,7 @@ module Semantics where
 
 import qualified Data.HashMap.Strict as H
 
-import           CtConstants         (operatorHasArrow)
+import           CtConstants         (builtinAnnotNames, operatorHasArrow)
 import           Data.Graph          (graphFromEdges)
 import qualified Data.HashSet        as S
 import           Data.Maybe
@@ -146,7 +146,10 @@ buildCtssConfig = unsafePerformIO $ do
 mkTypeEnv :: (ExprClass e, Show m, Show (e m), MetaDat m) => Prgm e m -> TypeEnv (ObjArrTypeGraph e m)
 mkTypeEnv (Prgm objMap classGraph _) = TypeEnv classGraph (ObjArrTypeGraph objMap) typeNames False defaultTypeEnvDebug False False (mkSatCache classGraph typeNames)
   where
-    typeNames = S.fromList $ map makeAbsoluteName $ concatMap getAllObjArrNames $ flatObjectMap objMap
+    -- The compiler-emitted annotation names ('builtinAnnotNames') are part of every program's
+    -- vocabulary: desugar injects uses of them (doc comments become @#md@, @>@ statements become
+    -- @#print@, ...) whether or not their compile.ct declarations are in the import closure.
+    typeNames = S.fromList $ map makeAbsoluteName $ map mkName builtinAnnotNames ++ concatMap getAllObjArrNames (flatObjectMap objMap)
 
 emptyMetaM :: (MetaDat m) => Meta m -> Meta m
 emptyMetaM m = emptyMetaN{getMetaPos=getMetaPos m}

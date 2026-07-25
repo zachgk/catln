@@ -17,10 +17,13 @@
 module TypeCheck.Constrain where
 
 import qualified Data.HashMap.Strict as H
+import qualified Data.HashSet        as S
+import           Data.List           (partition)
 import           Data.Maybe
 import qualified Data.Zip            as Z
 
 import           Control.Monad.State
+import           Semantics.TypeGraph (isSettledLeaf)
 import           Semantics.Types
 import           Text.Printf
 import           TypeCheck.Common
@@ -33,8 +36,15 @@ isSolved _                                 = False
 
 -- | Updates a 'VarMeta' point to a new 'Scheme' value
 setScheme :: FEnv -> VConstraint -> (RConstraint, RConstraint) -> VarMeta -> Scheme -> String -> FEnv
-setScheme env con (oldCon, newCon) p scheme baseMsg = setDescriptor env con p (checkScheme scheme) (msg "" "")
+setScheme env con (oldCon, newCon) p scheme baseMsg = setDescriptor env con p (checkScheme (fmap normalizeScope scheme)) (msg "" "")
   where
+    -- A stored point type may reference only variables its own constraint scope binds: nested
+    -- external spellings from foreign declarations denote ⊤ and are read as ⊤
+    -- ('dropOutOfScopeTVExt'), so denotationally-equal forms cannot flip between spellings
+    -- across epochs. In-scope variables (and bare top-level ones) stay symbolic.
+    scopeKeys = fmap (const PTopType) (constraintVarArgEnv con)
+    normalizeScope s@SType{stypeAct=act, stypeReq=req} =
+      s{stypeAct=dropOutOfScopeTVExt scopeKeys act, stypeReq=dropOutOfScopeTVExt scopeKeys req}
     -- checkScheme (TypeCheckResult _ (SType ub _ desc)) | containsBottomType ub = error $ msg desc $ printf "Actual type contains bottomType: %s" (show ub)
     checkScheme (TypeCheckResult notes (SType ub _ _ desc)) | containsBottomType ub = TypeCheckResE (mkTracedTypeCheckError env p (msg desc "Actual type contains bottomType") : notes)
     checkScheme (TypeCheckResult notes (SType _ req _ desc)) | containsBottomType req = TypeCheckResE (mkTracedTypeCheckError env p (msg desc "Required type contains bottomType") : notes)
@@ -184,8 +194,44 @@ computeConstraint FEnv{feTypeEnv, feCompletedAllObjsKey, feCompletedAllObjs} con
     -- meets only its name-matching objects, tightening the requirement's arg fields (e.g.
     -- @/f(/a=Top)@ narrows to @/f(/a=<declared>)@).
     boundUbReq = relaxRecursiveSelfArgs feTypeEnv $ unionTypes feTypeEnv (unionTypes feTypeEnv objMapBoundUb' (openClassPart feTypeEnv pReq)) argsBoundUb
+    reqVaenv = fmap (stypeReq . snd) vaenv
+    boundNames = case boundUbReq of
+      UnionType _ bLeafs _ -> map ptName $ splitUnionType bLeafs
+      _                    -> []
+    -- The universe bound is open-world on NAMES: a requirement leaf whose name matches no
+    -- object in the universe (a compiler annotation whose compile.ct declaration is not in
+    -- this import closure, or any name declared outside the current program) offers nothing
+    -- to tighten against, so it passes through unchanged rather than emptying the requirement.
+    -- A name the universe DOES know meets its name-matching objects as before.
+    nameKnown l = any (relativeNameMatches (ptName l)) boundNames
+    -- A bound object's arg type constrains what the term's argument SETTLES to. A requirement
+    -- argument still holding a raw applied form (an unrewritten call such as @fmap(...)@) is
+    -- not yet a settled value, so meeting it against the bound's settled-value arg type
+    -- (@#print@'s @p -> DShow@) would empty it spuriously — the raw form is bounded at its own
+    -- settling point ('isSubtypeUpToSettlingOf' is the checking-side analogue). Relax the
+    -- name-matching bound objects' arg slots to ⊤ at exactly those positions; settled
+    -- arguments still meet the declared arg types exactly.
+    argHasUnsettled t = case t of
+      UnionType _ ls _ -> any (not . isSettledLeaf feTypeEnv) (splitUnionType ls)
+      _                -> False
+    relaxBoundAtUnsettledArgs l@PartialType{ptArgs=lArgs} bound@(UnionType bTop bLeafs bConsts)
+      | S.null rawKeys = bound
+      | otherwise = UnionType bTop (joinUnionType (map relaxLeaf (splitUnionType bLeafs))) bConsts
+      where
+        rawKeys = S.fromList [k | (k, v) <- H.toList lArgs, argHasUnsettled v]
+        relaxLeaf b@PartialType{ptName=bn, ptArgs=bArgs}
+          | relativeNameMatches (ptName l) bn = b{ptArgs=H.mapWithKey (\k v -> if S.member k rawKeys then PTopType else v) bArgs}
+          | otherwise = b
+    relaxBoundAtUnsettledArgs _ bound = bound
     pReq' | pReq == PTopType = pReq
-          | otherwise        = snd $ intersectTypesWithVarEnv feTypeEnv (fmap (stypeReq . snd) vaenv) pReq boundUbReq
+          | otherwise        = case pReq of
+              UnionType mTop leafs consts ->
+                let (knownLeafs, unknownLeafs) = partition nameKnown (splitUnionType leafs)
+                    metKnown = [ snd $ intersectTypesWithVarEnv feTypeEnv reqVaenv (singletonType l) (relaxBoundAtUnsettledArgs l boundUbReq)
+                               | l <- knownLeafs ]
+                    metTopConsts = snd $ intersectTypesWithVarEnv feTypeEnv reqVaenv (UnionType mTop H.empty consts) boundUbReq
+                in unionAllTypes feTypeEnv (UnionType Nothing (joinUnionType unknownLeafs) [] : metTopConsts : metKnown)
+              _ -> snd $ intersectTypesWithVarEnv feTypeEnv reqVaenv pReq boundUbReq
 computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (NoReturnArg i p@SType{stypeAct=act@(UnionType Nothing _ _)})) = (True, con{conVaenv=updateCOVarArgEnvAct vaenv'' vaenv, conDat=NoReturnArg i p{stypeAct=act'}})
   where
     vaenv' = fmap (stypeAct . snd) vaenv

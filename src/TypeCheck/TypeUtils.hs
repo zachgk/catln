@@ -308,6 +308,15 @@ arrowConstrainUbs env con@Constraint{conVaenv} srcS@SType{stypeAct=TypeVar v _, 
       return (stypeAct srcS, srcReq, cdest, destRT)
 arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=src@(UnionType Nothing srcPartials consts), stypeReq=srcReq} SType{stypeAct=destAct, stypeReq=destReq} = do
   reachesEnv <- mkReachesEnv env con
+  -- Every operation that consults the type graph's OBJECT META TYPES (the reach union's
+  -- 'presentRawResult'/'typeGraphDeclaredResult', the requirement cut's re-query, settled-leaf
+  -- classification) must use the per-epoch reaches env — the same graph 'reachesPartials'
+  -- queries. The base 'feTypeEnv' was built from the PRE-typecheck program, whose object metas
+  -- are still unresolved (⊤): a query against it fires for everything, so a bare call form
+  -- would permanently absorb its declared result (e.g. @boolEq ∪ ∀Boolean@), which 'addArgToType'
+  -- then cannot apply an argument to. The set-algebra meets below keep 'feTypeEnv' — they read
+  -- only the class graph and structural arg keysets, which the two envs share.
+  let reachesTypeEnv = rTypeEnv reachesEnv
   let allPartials = splitUnionType srcPartials ++ map constantPartialType consts
   let reaches0 = reachesPartials reachesEnv allPartials
   let vaenv' = fmap (stypeAct . snd) conVaenv
@@ -328,12 +337,17 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
   let destIsArrowResult = case con of
         Constraint _ _ (ArrowTo 32 _ _) -> True
         _                               -> False
-  let destByGraph0 = unionReachesTree feTypeEnv vaenv' reaches0
+  -- A stored point type may reference only variables its own constraint scope binds: read the
+  -- graph presentation's out-of-scope external var spellings (source declarations' own
+  -- parameters) as the ⊤ they denote ('dropOutOfScopeTVExt'), so denotationally-equal forms
+  -- cannot flip between spellings across epochs.
+  let dropFree = dropOutOfScopeTVExt vaenv'
+  let destByGraph0 = dropFree $ unionReachesTree reachesTypeEnv vaenv' reaches0
   -- A Top reach carries no information yet (some arm is still unresolved): there is nothing
   -- to choose among, so the requirement cannot engage — forcing a choice there would derive
   -- a destination from the few arms that happen to have resolved, which is not an upper
   -- bound of the point's values and gets locked in by monotonicity.
-  let reqForcesChoice = destIsArrowResult && destReq /= PTopType && destByGraph0 /= PTopType && not (isSubtypeUpToSettlingOf feTypeEnv vaenv' destByGraph0 destReq)
+  let reqForcesChoice = destIsArrowResult && destReq /= PTopType && destByGraph0 /= PTopType && not (isSubtypeUpToSettlingOf reachesTypeEnv vaenv' destByGraph0 destReq)
   -- Resolve each operand's recursive self-refs before it feeds any intersection below
   -- ('resolveTypeSelfRefs'): a concrete @Cons[/T=Ord]@ leaf carrying an unresolved recursive
   -- tail top @ConsList[/T=$_T]@ reads that tail as Top, so meeting it re-derives the outer
@@ -344,8 +358,8 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
   let resolveSelf = if destIsArrowResult then resolveTypeSelfRefs H.empty else id
   let destActR = resolveSelf destAct
   let destBound = intersectTypesEnv feTypeEnv vaenv' destActR destReq
-  let reaches' = if reqForcesChoice then cutReachesTree feTypeEnv vaenv' destBound reaches0 else reaches0
-  let destByGraph = resolveSelf $ if reqForcesChoice then unionReachesTree feTypeEnv vaenv' reaches' else destByGraph0
+  let reaches' = if reqForcesChoice then cutReachesTree reachesTypeEnv vaenv' destBound reaches0 else reaches0
+  let destByGraph = resolveSelf $ if reqForcesChoice then unionReachesTree reachesTypeEnv vaenv' reaches' else destByGraph0
   -- An arrow dest carrying a symbolic external var (an instance arm constructing
   -- @Some[/T=$_T]@) meets the accumulated dest's bound in the intersection's returned env,
   -- while the type keeps the bare var — discarding the env would WIDEN the stored dest (the
@@ -361,7 +375,7 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
             -- a generic instance result impossible for this call) down to what is required. The
             -- raws are reattached STRUCTURALLY (a leaf-map union): an algebraic union with the
             -- settled part's predicate top would absorb them.
-            let (rawLeafs, settledLeafs) = partition (not . isSettledLeaf feTypeEnv) $ case destByGraph of
+            let (rawLeafs, settledLeafs) = partition (not . isSettledLeaf reachesTypeEnv) $ case destByGraph of
                   UnionType _ leafs _ -> splitUnionType leafs
                   _                   -> []
                 destByGraphSettled = case destByGraph of
@@ -383,7 +397,7 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
         | otherwise = intersectTypesWithVarEnv feTypeEnv vaenv' destBound destByGraph
   let newBindings = H.difference venv' vaenv'
   let resolveNew = if H.null newBindings then id else substituteKeep newBindings
-  let destFinal = compactType feTypeEnv vaenv' (resolveSelf (resolveNew dest'))
+  let destFinal = compactType feTypeEnv vaenv' (dropFree (resolveSelf (resolveNew dest')))
   -- Return-type direction: a declaration output that is a bare declared variable is determined
   -- by the call site's destination — bind it onto the call partial (see 'outVarBoundSrc').
   let srcBound = outVarBoundSrc env destFinal src

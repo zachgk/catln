@@ -4338,6 +4338,38 @@ resolveTypeSelfRefs = go
     isResolvable PTopType      = False
     isResolvable _             = True
 
+-- | Reads a type's NESTED out-of-scope external ('TVExt' 'TVVar') references as ⊤. A stored
+-- point type may reference only variables its own constraint scope binds: a graph-presented
+-- result carries the source declarations' own parameter spellings (@mmap@'s @$_A@, an
+-- instance's @$_T@), which are meaningless names in a foreign scope — each denotes ⊤ (an
+-- unbound var constrains nothing), yet keeping the NAME makes denotationally-equal forms
+-- compare unequal, so accumulations flip between spellings across epochs ('compactOverlapping'
+-- dedups an arbitrary one) and 'verifySchemeActLowers' reports a spurious grow. An IN-scope
+-- variable stays symbolic (the mergeVarEnvVal doctrine — its binding may still resolve), as
+-- does a bare top-level variable (same doctrine) and every 'TVArg'/'TVInt' reference (arg
+-- links and partial-local pointers are structural, not ambient names).
+dropOutOfScopeTVExt :: TypeVarArgEnv -> Type -> Type
+dropOutOfScopeTVExt vaenv = onType
+  where
+    onType (UnionType mtop pos consts) =
+      UnionType (fmap onTop mtop) (joinUnionType $ map onLeaf $ splitUnionType pos) consts
+    onType t = t -- a bare top-level variable stays symbolic
+    onTop (preds, negLeafs, ncs) =
+      (mapTypePreds (mapTypePred onLeaf) preds, joinUnionType $ map onLeaf $ splitUnionType negLeafs, ncs)
+    onLeaf p@PartialType{ptVars, ptArgs, ptPreds} = p{
+        ptVars  = fmap onSlot ptVars,
+        ptArgs  = fmap onSlot ptArgs,
+        ptPreds = mapTypePreds (mapTypePred onLeaf) ptPreds
+      }
+    onSlot t@(TypeVar v@(TVVar _) TVExt) | not (H.member v vaenv) = PTopType
+                                         | otherwise              = t
+    onSlot (TypeVar (TVApplied b ovr) loc) = case onSlot (TypeVar b loc) of
+      PTopType -> PTopType
+      base     -> applyTypeVarOverrides (fmap onSlot ovr) base
+    onSlot (UnionType mtop pos consts) =
+      UnionType (fmap onTop mtop) (joinUnionType $ map onLeaf $ splitUnionType pos) consts
+    onSlot t = t
+
 -- | Relate an arrow's declared result to the type variables the source bound. A method whose
 -- result is a class parameterized by the RECEIVER's own type — @:$T.eq[$T -> Eq] -> Eqv[$T]@ — loses
 -- that link at desugar: a bare @Eqv[$T]@ becomes @Eqv[/T=Top]@ (the var reads as the parameter NAME,
