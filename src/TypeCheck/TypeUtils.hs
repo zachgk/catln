@@ -414,7 +414,16 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
           , isSubtypeOfWithEnv feTypeEnv vaenv' (singletonType key) destFinal
             || reachesHasCutSubtypeOf feTypeEnv vaenv' subTree destFinal ]
         _ -> []
-  let viableComponents = UnionType Nothing (joinUnionType viableKeys) []
+  -- Each viable component is folded to its MET form (the union of @potentialSrc@ = src ∩
+  -- arrow-object over the arrows it triggers): the meet with a matched object's contract is
+  -- what binds the call's declared variables from its argument evidence (e.g.
+  -- @==(l=Integer, r=Integer)@ meeting @(l::$T == r::$T)[$T -> Eq]@ discovers @/T=Integer@,
+  -- which the class-method dispatch needs on the ACTUAL). A component no arrow accepts —
+  -- possible mid-epoch — keeps its bare form rather than emptying.
+  let viableMet key = case [ metSrc | (_, metSrc, _) <- typeGraphQueryWithReason reachesTypeEnv vaenv' key ] of
+        []   -> singletonType key
+        mets -> unionAllTypesWithEnv feTypeEnv vaenv' mets
+  let viableComponents = unionAllTypesWithEnv feTypeEnv vaenv' (map viableMet viableKeys)
   let reqVaenv = fmap (stypeReq . snd) conVaenv
   let narrowedAct = intersectTypesEnv feTypeEnv vaenv'   srcBound viableComponents
   let narrowedReq = intersectTypesEnv feTypeEnv reqVaenv srcReq   viableComponents
