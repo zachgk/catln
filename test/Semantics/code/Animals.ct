@@ -6,10 +6,12 @@ module(Data/Primitive)
 
   class(Boolean, [True, False])
 
+class(Vertebrate)
 class(Animal)
 class(Fish)
 class(Lizard)
 
+every(Animal, isa= [/Vertebrate])
 every(Fish, isa= [/Animal])
 every(Lizard, isa= [/Animal])
 

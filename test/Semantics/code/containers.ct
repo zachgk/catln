@@ -12,4 +12,10 @@ class(Bag[$T])
 
 every(ConsList[$T -> $_T], isa= [/Bag])
 
+class(Maybe[$T], [Some[$T -> $T](value -> $T), None])
+class(Option[$T], [$_T, None])
+
+data(Pair[$A, $B](first -> $A, second -> $B))
+data(Point(x -> Integer, y -> Integer))
+
 :List.length -> Integer

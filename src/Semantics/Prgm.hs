@@ -612,9 +612,29 @@ getRecursiveObjs oa@ObjArr{oaBasis, oaObj=Just objE} = objectMapFromList (oa : r
     toObjMapItem e = ObjArr (Just e) oaBasis Nothing [] Nothing
 getRecursiveObjs oa = error $ printf "getRecursiveObjs with no input expression: %s" (show oa)
 
+-- | The names an object DEFINES or DECLARES: its own object path plus the variables BOUND in its
+-- object pattern — argument names, type variables, and destructuring aliases (@head\@ah@ binds
+-- @ah@). These are all legitimate names in a term-rewriting language. What is NOT collected is
+-- USAGE: the matching CRITERIA on the value side of a pattern (the constructor\/field heads @Cons@,
+-- @head@ — references to existing names, not new bindings) and the arrow BODY (@this.eq.rel(..)@
+-- USES @rel@, it does not define it). Collecting those fabricates names for terms that name no
+-- object — a bare @rel@ absolutised to @/rel@ — polluting the type-name universe ('teNames').
+-- 'exprVarArgs' is exactly the binding classifier (it keys aliases\/args\/vars and never criteria),
+-- so the bound names come from it; the criteria and body are simply not traversed.
 getAllObjArrNames :: (ExprClass e, MetaDat m, Show m, Show (e m)) => ObjArr e m -> [Name]
-getAllObjArrNames ObjArr{oaObj, oaArr=Just (oaArrExpr, _)} = maybe [] getAllExprNames oaObj ++ maybe [] getAllExprNames oaArrExpr
-getAllObjArrNames ObjArr{oaObj, oaArr=Nothing} = maybe [] getAllExprNames oaObj
+getAllObjArrNames oa@ObjArr{oaObj} = oaObjPath oa : (maybe [] getAllExprNames oaObj ++ maybe [] boundNames oaObj)
+  where
+    -- The OBJECT pattern's names — its head plus every arg name recursed through
+    -- 'getAllExprNames'\/'exprAppliedArgs' — are all part of the DEFINITION: a parameter
+    -- (@tst(d= T(x))@'s @d@) or an entry point (@main{io->IO}@ desugared to
+    -- @ContextIn(value= main)@) is declared here, and its 'BoundedByKnown' relative bound (@~d@,
+    -- @~main@) resolves only if the name is in 'teNames'. The arrow BODY is intentionally NOT
+    -- traversed: a name USED there (@this.eq.rel@'s @rel@) must not mint an object. Aliases
+    -- ('exprVarArgs') are added on top — 'getAllExprNames' takes an alias's base, not its new name.
+    boundNames objE = mapMaybe varAuxName $ H.keys $ exprVarArgs objE
+    varAuxName (TVArg n)       = Just (pkName n)
+    varAuxName (TVVar n)       = Just (pkName n)
+    varAuxName (TVApplied b _) = varAuxName b
 
 getAllExprNames :: (ExprClass e, MetaDat m, Show m, Show (e m)) => e m -> [Name]
 getAllExprNames e = maybeToList (maybeExprPath e) ++ concatMap getAllObjArrNames (exprAppliedArgs e) ++ concatMap fromOrdVar (exprAppliedOrdVars e)

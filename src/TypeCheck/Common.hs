@@ -96,7 +96,7 @@ data ConstraintDat p
   | BoundedByKnown Int p Type -- ^ Both Actual and Req
   | BoundedByObjs Int p Type
   | NoReturnArg Int p
-  | EqReqAct Int p -- ^ Pull an input argument's actual down to its requirement (an input actually is only whatever it is required to be)
+  | EqReqAct Int p -- ^ An input argument's actual and requirement denote the same thing (an LHS input actually IS whatever it is required to be, and vice versa), so meet the two and set BOTH to @act ∩ req@.
   | ArrowTo Int p p -- ArrowTo src dest
   | PropEq Int (p, TypeVarAux) p -- ^ Both Actual and Req
   | FnInputBound Int (p, ArgName, ArgName) p -- ^ Actual only. @FnInputBound (call, fnArgKey, inputKey) input@ bounds a call-site lambda argument's input point by the matched declarations' input type for that position (see 'fnArgInputBound')

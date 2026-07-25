@@ -28,11 +28,9 @@ Prgm
                                 ( PredClass /Data/Algebra/PComparison
                                 , fromList []
                                 )
-                            ,
-                                ( /Data/Algebra/LessThan + /Data/Algebra/mkDivComparison
-                                    ( /aDivB=∀/Data/Primitive/Boolean
-                                    , /bDivA=∀/Data/Primitive/Boolean
-                                    ) + /Data/Algebra/Equal + /Data/Algebra/GreaterThan
+                            , /Data/Algebra/mkDivComparison
+                                ( /aDivB=∀/Data/Primitive/Boolean
+                                , /bDivA=∀/Data/Primitive/Boolean
                                 )
                             , []
                             ) = /Data/Algebra/mkDivComparison
@@ -93,9 +91,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/rel( Value /a )( Value /b )
-                            ( Value /this ->
-                                ( TopType | PredClass /Data/Algebra/Ordering[ /T=$/T ] && PredClass /Data/Algebra/Eqv[ /T=$/T ] )
-                            ) -> UnionType
+                            ( Value /this -> ∀/Data/Algebra/Ordering[ /T=$/T ] ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
@@ -474,14 +470,7 @@ Prgm
         , /Catln/#print
             ( Value /p ->
                 ( /Data/Primitive/True + /Data/Primitive/False + /Data/Algebra/isComparable( /this=∀/Data/Algebra/PComparison ) ) = /Data/Algebra/isComparable
-                ( Value /this -> UnionType
-                    ( Just
-                        ( PredClass /Data/Algebra/PComparison
-                        , fromList []
-                        )
-                    , ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
-                    , []
-                    ) = /Data/Algebra/pcompare
+                ( Value /this -> ∀/Data/Algebra/PComparison = /Data/Algebra/pcompare
                     ( Value /a -> /Data/Primitive/Integer = CInt 2 )
                     ( Value /b -> /Data/Primitive/Integer = CInt 6 )
                 )
@@ -490,14 +479,7 @@ Prgm
         , /Catln/#print
             ( Value /p ->
                 ( /Data/Primitive/True + /Data/Primitive/False + /Data/Algebra/isNoOrdering( /this=∀/Data/Algebra/PComparison ) ) = /Data/Algebra/isNoOrdering
-                ( Value /this -> UnionType
-                    ( Just
-                        ( PredClass /Data/Algebra/PComparison
-                        , fromList []
-                        )
-                    , ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
-                    , []
-                    ) = /Data/Algebra/pcompare
+                ( Value /this -> ∀/Data/Algebra/PComparison = /Data/Algebra/pcompare
                     ( Value /a -> /Data/Primitive/Integer = CInt 2 )
                     ( Value /b -> /Data/Primitive/Integer = CInt 3 )
                 )

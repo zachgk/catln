@@ -33,6 +33,64 @@ import           Syntax.Ct.Prgm          (RawExpr (RawCExpr), mkRawFileImport)
 import           Text.Printf
 import           Utils
 
+-- | A fixed pool of variable names shared by the type-var generators (and, later, a
+-- 'TypeVarArgEnv' generator), so a bound fraction of generated variables actually collide.
+varNamePool :: [Name]
+varNamePool = map mkName ["a", "b", "c"]
+
+-- | Bare type variables as direct inputs ('TVVar'\/'TVArg' × 'TVInt'\/'TVExt'). With no
+-- external env a variable's standalone reading is unconstrained, i.e. ⊤ ('vaenvLookup').
+genTypeVar :: Gen Type
+genTypeVar = do
+  n   <- HG.element varNamePool
+  aux <- HG.element [TVVar (partialKey n), TVArg (partialKey n)]
+  loc <- HG.element [TVInt, TVExt]
+  return $ TypeVar aux loc
+
+-- | A small external variable environment ('TypeVarArgEnv') mapping a subset of 'varNamePool'
+-- to concrete-ish types drawn from the program. Threading this through the @*WithEnv@ operations
+-- exercises 'vaenvLookup' (a bound variable reads as its value rather than ⊤), 'substituteTVExt'\/
+-- 'substituteKeep' (external variables inside partial slots — added by 'genWithTVExt' from the same
+-- pool — resolve), and 'applyTypeVarOverrides'.
+--
+-- Each pool name is bound (with ~2/3 probability, so unbound variables still occur and read as ⊤)
+-- under either a 'TVVar' or 'TVArg' key. The bound values are concrete-ish: drawn from 'genType' but
+-- never another bare variable (so the environment is acyclic — 'vaenvLookup' does no recursive
+-- resolution and a variable bound to another variable could loop the variable-rewriting clauses of
+-- the operations) and never ⊤ or ∅ (a variable bound to ⊤ is indistinguishable from an unbound one,
+-- and ∅ is not a value a program's type variable resolves to).
+genVaenv :: Prgm Expr () -> Gen TypeVarArgEnv
+genVaenv prgm = do
+  entries <- forM varNamePool $ \n -> do
+    bind <- HG.frequency [(2, return True), (1, return False)]
+    if not bind
+      then return Nothing
+      else do
+        aux <- HG.element [TVVar (partialKey n), TVArg (partialKey n)]
+        v   <- HG.filter concreteish (genType prgm)
+        return $ Just (aux, v)
+  return $ H.fromList $ catMaybes entries
+  where
+    concreteish TypeVar{}  = False
+    concreteish PTopType   = False
+    concreteish BottomType = False
+    concreteish _          = True
+
+-- | Substitute every nested reference to a recursive class @cName@ (its class-predicate
+-- @∀cName@\/@~cName@ form, appearing as an argument or variable value) with @replacement@. Applied
+-- to a class's depth-1 member expansion with the expansion itself as @replacement@, this unrolls
+-- the recursion one level deeper — the shape a recursive class accretes per constraint epoch during
+-- solving (see 'Semantics.Types.foldRecursiveType').
+substRecRef :: TypeName -> Type -> Type -> Type
+substRecRef cName replacement = go
+  where
+    matchesC p = makeAbsoluteName (ptName p) == makeAbsoluteName cName
+    go (TopType _ (PredsOne (PredClass rp))) | matchesC rp = replacement
+    go (TopType _ (PredsOne (PredRel rp)))   | matchesC rp = replacement
+    go (UnionType m pos cs) = UnionType m (joinUnionType (map goLeaf (splitUnionType pos))) cs
+    go t = t
+    goLeaf p = p{ptArgs = fmap go (ptArgs p), ptVars = fmap go (ptVars p)}
+
 genTypeFromExpr :: Prgm Expr () -> Expr () -> Gen PartialType
 genTypeFromExpr _ (CExpr _ c) = return $ constantPartialType c
 genTypeFromExpr _ (Value _ n) = return $ partialVal n
@@ -59,10 +117,14 @@ genTypeFromExpr prgm (EWhere _ base cond) = do
   return $ partialAddPreds baseType (PredsOne $ PredExpr condType)
 genTypeFromExpr _ e = error $ printf "Unimplemented genTypeFromExpr for %s" (show e)
 
+-- | Generates a 'Type' from the program. A bare argument-less reference like @/Cons@ (exact
+-- mode, no fields) is a legitimate standalone value — the partial-application form a @/Cons@
+-- has before its args are applied (arg-set @{}@, disjoint from the field forms) — and is
+-- generated as-is.
 genType :: Prgm Expr () -> Gen Type
 genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
   where
-    TypeEnv{teClassGraph=ClassGraph cg} = mkTypeEnv prgm
+    typeEnv@TypeEnv{teClassGraph=ClassGraph cg} = mkTypeEnv prgm
 
     -- Randomly assign a 'PtArgMode' to the generated partials, exercising the new
     -- lower\/upper-bound modes through the (precise) set operations. Only plain
@@ -87,8 +149,105 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
     withRandomArgModes t = return t
 
     gens = if graphEmpty cg
-      then [genBasic, genConst]
-      else [genBasic, genCGOld, genCG, genCGRel, genObjM, genObj, genConst]
+      then [genBasic, genConst, genMultiConst, genTypeVar]
+      else [genBasic, genCGOld, genCG, genCGRel, genObjM, genObj, genConst, genMultiConst, genPredShape, genMixed, genTypeVar]
+             ++ [genUnrolledRecursive | not (null recExpansions)]
+
+    -- Over-unrolled recursive class expansions. A sealed recursive class (e.g. @ConsList@) expands
+    -- to a depth-1 member union whose recursive field is the class-predicate form
+    -- (@Cons(tail=∀ConsList) + Nil@). During constraint solving that field accretes one explicit
+    -- member-union level per epoch, producing deeper unrollings
+    -- (@Cons(tail = Nil + Cons(tail=∀ConsList)) + Nil@) that are semantically equal but syntactically
+    -- distinct and never reach a fixpoint. 'Semantics.Types.compactType'\/'foldRecursiveType' fold
+    -- these back to the finite predicate form; generating them directly exercises that fold (its
+    -- 'hasExplicitRecursion' gate needs a leaf field to explicitly reference the class) and confirms
+    -- every law holds across the unrolled and folded representations.
+    recExpansions =
+      [ (ptName cpt, exp1)
+      | (CGClass (sealed, cpt, cts, _), _, _) <- graphToNodes cg
+      , sealed, not (null cts)
+      , let exp1 = expandClassPartial typeEnv H.empty cpt
+      , recursesExplicitly (ptName cpt) exp1 ]
+      where
+        recursesExplicitly cName exp1 = case substRecRef cName exp1 exp1 of
+          UnionType Nothing ls [] -> hasExplicitRecursion (splitUnionType ls)
+          _                       -> False
+
+    genUnrolledRecursive :: Gen Type
+    genUnrolledRecursive = do
+      (cName, exp1) <- HG.element recExpansions
+      depth <- HG.int (linear 1 2) -- unroll 1-2 extra levels → over-unrolled depth 2-3
+      return $ iterate (substRecRef cName exp1) exp1 !! depth
+
+    -- Compound predicate formulae: conjunctions (and negated conjunctions) of PredClass/PredRel
+    -- atoms drawn from the class graph. Exercises P∨¬P=⊤ / P∧¬P=∅ and the De Morgan handling of
+    -- the union/intersection/complement paths for non-atomic predicates.
+    --
+    -- Atom kinds mirror the compiler's name resolution ('resolveRelPartial'): a CLASS name
+    -- resolves to a 'PredClass' (or stays a 'PredRel' while relative), while a data-TYPE name in
+    -- type position resolves to a positive leaf - never a 'PredClass'. So 'PredClass' atoms are
+    -- generated only for class nodes; any node may appear as a 'PredRel'.
+    genPreds :: Gen TypePredicates
+    genPreds = do
+      atoms <- HG.list (linear 1 2) genAtom
+      HG.choice [ return $ foldr1 predsAnd (map PredsOne atoms)
+                , return $ predsNot $ foldr1 predsAnd (map PredsOne atoms) ]
+      where
+        genAtom = do
+          classNode <- HG.element $ graphToNodes cg
+          case snd3 classNode of
+            cls@PClassName{} -> do
+              let nm = fromPartialName cls
+              HG.element [PredClass (partialVal nm), PredRel (partialVal nm)]
+            t -> return $ PredRel (partialVal (fromPartialName t))
+
+    genPredShape :: Gen Type
+    genPredShape = TopType H.empty <$> genPreds
+
+    -- Mixed types as direct inputs: a subtractive 'Just'-top component (predicates, negative
+    -- leafs, negative constants) unioned with positive leafs and constants. These arise as
+    -- intermediate results of the set operations; generating them directly exercises the
+    -- mixed-distribute intersection, the mixed-left subtype branch, and the mixed
+    -- compactType\/complement clauses as top-level inputs.
+    genMixed :: Gen Type
+    genMixed = do
+      preds     <- HG.choice [genPreds, genPreds, return PredsNone]
+      negLeafs  <- HG.choice [return H.empty, leafsOf genObj]
+      negConsts <- HG.choice [return [], nubConsts <$> HG.list (linear 1 2) genConstant]
+      posLeafs  <- HG.choice [return H.empty, leafsOf genObj]
+      posConsts <- HG.choice [return [], nubConsts <$> HG.list (linear 1 2) genConstant]
+      if H.null posLeafs && H.null negLeafs && preds == PredsNone && null negConsts && null posConsts
+        then genCG
+        else return $ UnionType (Just (preds, negLeafs, negConsts)) posLeafs posConsts
+      where
+        nubConsts = foldr (\c acc -> if c `elem` acc then acc else c : acc) []
+        leafsOf g = do
+          t <- g
+          return $ case t of
+            UnionType Nothing ls [] -> ls
+            _                       -> H.empty
+
+    -- Unions of several constants, and constants joined with a positive partial. Single-constant
+    -- 'genConst' never exercises the multi-constant union paths or the constant-not-covered-by-top
+    -- expansion in 'unionTypesWithEnv'\/'intersectTypesWithVarEnv'.
+    genMultiConst :: Gen Type
+    genMultiConst = do
+      cs <- HG.list (linear 1 3) genConstant
+      leafs <- if nullObjectMap objMap then return H.empty else HG.choice [return H.empty, someLeafs]
+      return $ UnionType Nothing leafs (nubConsts cs)
+      where
+        nubConsts = foldr (\c acc -> if c `elem` acc then acc else c : acc) []
+        someLeafs = do
+          t <- genObj
+          return $ case t of
+            UnionType Nothing ls [] -> ls
+            _                       -> H.empty
+
+    genConstant :: Gen Constant
+    genConstant = HG.choice [ CInt <$> HG.integral (linear (-100) 100)
+                            , CFloat <$> HG.double (linearFrac (-100) 100)
+                            , CStr <$> HG.string (linear 0 5) HG.alpha
+                            , CChar <$> HG.unicode ]
 
     -- Find all functions with single argument having thisKey
     typePropFunctions = mapMaybe checkFunction $ flatObjectMap objMap
@@ -162,6 +321,35 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
           propType <- genTypeFromExpr prgm prop
           return $ partialAddPreds partial (PredsOne $ PredExpr propType)
 
+-- | Generates a type structurally RELATED to a given one. When the input is a positive-partial
+-- union, one leaf is mutated along a single dimension: its argument mode flipped among the three
+-- set-exact modes, or one declared field widened to ⊤ \/ narrowed to another type. Otherwise it
+-- falls back to an independent 'genType'.
+--
+-- Two independently generated types almost always carry different names and so are trivially
+-- disjoint; the difference and intersection then short-circuit before touching the per-field
+-- machinery. Drawing the second operand as a same-name single-field mutation instead forces the
+-- pair through 'subtractArg'\/'subtractVar', 'looseArgModeRejects' and 'argModeCovers' — the
+-- precise arg-set-interval reasoning that is otherwise never exercised.
+genRelatedType :: Prgm Expr () -> Type -> Gen Type
+genRelatedType prgm a = case a of
+  UnionType Nothing leafs [] | not (H.null leafs) -> do
+    p  <- HG.element (splitUnionType leafs)
+    p' <- mutate p
+    return $ completeDataPartialsTop (mkTypeEnv prgm) $ singletonType p'
+  _ -> genType prgm
+  where
+    -- the three modes that are exact under all set operations (see 'genType.withRandomArgModes')
+    safeModes = [PtArgExact, PtArgAny, PtArgMode False True]
+    mutate p = HG.choice $
+      [ do m <- HG.element safeModes
+           return p{ptArgMode = if H.null (ptArgs p) then m{ptArgLb=True} else m}
+      ] ++ [ mutateArg p | not (H.null (ptArgs p)) ]
+    mutateArg p = do
+      k       <- HG.element (H.keys (ptArgs p))
+      newVal  <- HG.choice [return PTopType, singletonType <$> genPartialType prgm]
+      return p{ptArgs = H.insert k newVal (ptArgs p)}
+
 genPartialType :: Prgm Expr () -> Gen PartialType
 genPartialType prgm@(Prgm objMap _ _) = do
   gen <- if graphEmpty cg
@@ -185,13 +373,16 @@ genPartialType prgm@(Prgm objMap _ _) = do
 
     -- | Wraps a base partial generator and randomly adds a 'TVExt'-tagged
     -- type variable to one of its 'ptVars'.  This exercises the external
-    -- variable resolution path in substitution/intersection.
+    -- variable resolution path in substitution/intersection. The external
+    -- variable name is drawn from 'varNamePool' (shared with 'genTypeVar' and
+    -- 'genVaenv') so a bound fraction of these slots actually resolve when a
+    -- generated 'TypeVarArgEnv' is threaded through the operations.
     genWithTVExt :: Gen PartialType -> Gen PartialType
     genWithTVExt baseGen = do
       base <- baseGen
       varName <- HG.string (linear 1 5) HG.lower
-      extName <- HG.string (linear 1 5) HG.lower
-      let extVar = TypeVar (TVVar (partialKey (mkName extName))) TVExt
+      extName <- HG.element varNamePool
+      let extVar = TypeVar (TVVar (partialKey extName)) TVExt
       return base{ptVars = H.insert (partialKey (mkName varName)) extVar (ptVars base)}
 
 genInputExpr :: Gen (Expr ())

@@ -284,7 +284,7 @@ buildCallTree env@TBEnv{tbTypeEnv} objSrcs visitedArrows (TypeVar v _) destType 
 -- represented as @UnionType (Just (PredRel Boolean, _)) [] []@) carries its members only in the
 -- predicate, so expand it to the member union and build from that. Without this it would yield an
 -- empty 'TCMatch' that no runtime value can satisfy.
-buildCallTree env@TBEnv{tbTypeEnv} os visitedArrows src@(UnionType (Just (preds, _)) srcLeafs consts) destType
+buildCallTree env@TBEnv{tbTypeEnv} os visitedArrows src@(UnionType (Just (preds, _, _)) srcLeafs consts) destType
   | null (splitUnionType srcLeafs) && null consts
   , let expanded = expandPredicates tbTypeEnv H.empty preds
   , expanded /= src =

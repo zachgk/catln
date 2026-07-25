@@ -229,8 +229,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/compare( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer )
-                            ( Value /this -> /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] ) -> UnionType
+                        [ /Data/Algebra/compare( Value /a )( Value /b )( Value /this -> /Data/Primitive/IntOrdering ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Algebra/Comparison
                                 , fromList []
@@ -243,8 +242,7 @@ Prgm
                             ) = /Data/Algebra/mkComparison
                             ( Value /lt -> ∀/Data/Primitive/Boolean = /Data/Primitive/intLt( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) )
                             ( Value /eq -> ∀/Data/Primitive/Boolean = /Data/Primitive/intEq( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) )
-                        , /Data/Algebra/compare( Value /a -> /Data/Primitive/Float )( Value /b -> /Data/Primitive/Float )
-                            ( Value /this -> /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] ) -> UnionType
+                        , /Data/Algebra/compare( Value /a )( Value /b )( Value /this -> /Data/Primitive/FloatOrdering ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Algebra/Comparison
                                 , fromList []
@@ -314,67 +312,48 @@ Prgm
                                 , fromList []
                                 )
                             ,
-                                ( /Data/Algebra/rel
-                                    ( /this=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Algebra/Eqv[ /T=TopType ]
-                                            , fromList []
-                                            )
-                                        ,
-                                            ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
-                                        , []
-                                        )
+                                ( /Data/strEqual
+                                    ( /r=TopType
+                                    , /l=TopType
+                                    ) + /Data/Algebra/rel
+                                    ( /this=∀/Data/Algebra/Eqv[ /T=TopType ]
                                     , /a=/Data/Primitive/Integer
                                     , /b=∀/Data/Algebra/Eq
+                                    ) + /Data/Primitive/boolEq
+                                    ( /r=TopType
+                                    , /l=TopType
                                     ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
-                                    ( /r=/Data/Primitive/Integer
-                                    , /l=/Data/Primitive/Integer
+                                    ( /r=TopType
+                                    , /l=TopType
                                     )
                                 )
                             , []
                             ) = /rel( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
-                            ( Value /this -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Algebra/Eqv[ /T=TopType ]
-                                    , fromList []
-                                    )
-                                ,
-                                    ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
-                                , []
-                                ) = /eq( Value /this -> TVArg /this = Value /this )
-                            )
+                            ( Value /this -> ∀/Data/Algebra/Eqv[ /T=TopType ] = /eq( Value /this -> TVArg /this = Value /this ) )
                         , /Data/Algebra/equal( Value /other -> ∀/Data/Algebra/Eq )( Value /this -> /Data/Primitive/Float ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
                                 )
                             ,
-                                ( /Data/Algebra/rel
-                                    ( /this=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Algebra/Eqv[ /T=TopType ]
-                                            , fromList []
-                                            )
-                                        ,
-                                            ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
-                                        , []
-                                        )
+                                ( /Data/strEqual
+                                    ( /r=TopType
+                                    , /l=TopType
+                                    ) + /Data/Algebra/rel
+                                    ( /this=∀/Data/Algebra/Eqv[ /T=TopType ]
                                     , /a=/Data/Primitive/Float
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison )
+                                    ) + /Data/Primitive/boolEq
+                                    ( /r=TopType
+                                    , /l=TopType
+                                    ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
+                                    ( /r=TopType
+                                    , /l=TopType
+                                    )
                                 )
                             , []
                             ) = /rel( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
-                            ( Value /this -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Algebra/Eqv[ /T=TopType ]
-                                    , fromList []
-                                    )
-                                ,
-                                    ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
-                                , []
-                                ) = /eq( Value /this -> TVArg /this = Value /this )
-                            )
+                            ( Value /this -> ∀/Data/Algebra/Eqv[ /T=TopType ] = /eq( Value /this -> TVArg /this = Value /this ) )
                         ]
                     }
                 )
@@ -643,15 +622,7 @@ Prgm
                     ( /r=/Data/String
                     , /l=/Data/String
                     ) + /Data/Primitive/True + /Data/Algebra/rel
-                    ( /this=UnionType
-                        ( Just
-                            ( PredClass /Data/Algebra/Eqv[ /T=TopType ]
-                            , fromList []
-                            )
-                        ,
-                            ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
-                        , []
-                        )
+                    ( /this=∀/Data/Algebra/Eqv[ /T=TopType ]
                     , /a=UnionType
                         ( Just
                             ( PredClass /Data/Primitive/Boolean
@@ -685,15 +656,7 @@ Prgm
                     ( /r=/Data/String
                     , /l=/Data/String
                     ) + /Data/Primitive/True + /Data/Algebra/rel
-                    ( /this=UnionType
-                        ( Just
-                            ( PredClass /Data/Algebra/Eqv[ /T=TopType ]
-                            , fromList []
-                            )
-                        ,
-                            ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
-                        , []
-                        )
+                    ( /this=∀/Data/Algebra/Eqv[ /T=TopType ]
                     , /a=UnionType
                         ( Just
                             ( PredClass /Data/Primitive/Boolean
