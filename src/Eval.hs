@@ -179,7 +179,7 @@ evalCallTree  m (TCMatch destType opts) = do
 evalCallTree v (TCSeq a b) = do
   v' <- evalCallTree v a
   evalCallTree v' b
-evalCallTree _ (TCCond _ []) = evalError "Found no matching conditions in evalTree"
+evalCallTree m (TCCond _ []) = evalError $ printf "Found no matching conditions in evalTree for val %s (val type %s)" (show m) (show $ getValPartialType m)
 evalCallTree m (TCCond resType ((cond, ifThenTree):restIfTrees)) = do
   Env{evTypeEnv} <- get
   -- The value's partial is tried in both slot conventions, like the 'TCMatch' branch above: a

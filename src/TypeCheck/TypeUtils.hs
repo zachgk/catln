@@ -26,7 +26,7 @@ import           Control.Monad.State
 import           CtConstants         (runtimeAnnot)
 import           Data.Bifunctor      (Bifunctor (bimap))
 import           Data.List           (find, intercalate, nub, partition)
-import           Data.Maybe          (mapMaybe)
+import           Data.Maybe          (isNothing, mapMaybe)
 import           Data.UUID           (nil)
 import           MapMeta
 import           Semantics
@@ -405,9 +405,28 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
         | destIsArrowResult = intersectTypesWithVarEnv feTypeEnv vaenv' destActR destByGraph
         -- A consumption point: the committed full-meet behavior.
         | otherwise = intersectTypesWithVarEnv feTypeEnv vaenv' destBound destByGraph
+  -- Settle-forcing requirement: a RAW leaf under an engaged requirement with a viable
+  -- compilation path to settled forms within it ('reachesTo') is REQUIRED to follow its
+  -- arrows — the destination holds only what the consumer receives, so the raw form is
+  -- dropped and the actual is settled-only. The requirement never constrains a raw leaf
+  -- directly (the 'isSubtypeUpToSettlingOf' doctrine): a direct membership test would be
+  -- answered SAT-conservatively ("could settle to a member") and keep the raw form. A raw
+  -- leaf with no viable path (or no engaged requirement) is kept: mid-solve its reach may
+  -- still be resolving, and dropping it would not be an upper bound of the point's values.
+  -- The drop is also skipped when it would empty the stored type (settled alternatives not
+  -- yet accumulated), which would poison the point to 'BottomType'.
+  let settleForced l = not (isSettledLeaf reachesTypeEnv l)
+                     && reachesTo reachesTypeEnv vaenv' (singletonType l) destBound
+  let dropSettleForcedRaws t@(UnionType dMTop dLeafs dConsts)
+        | destReq /= PTopType && not (isBottomType destBound) =
+            case partition settleForced (splitUnionType dLeafs) of
+              ([], _) -> t
+              (_, keptLs) | null keptLs && isNothing dMTop && null dConsts -> t
+                          | otherwise -> UnionType dMTop (joinUnionType keptLs) dConsts
+      dropSettleForcedRaws t = t
   let newBindings = H.difference venv' vaenv'
   let resolveNew = if H.null newBindings then id else substituteKeep newBindings
-  let destFinal = compactType feTypeEnv vaenv' (dropFree (resolveSelf (resolveNew dest')))
+  let destFinal = compactType feTypeEnv vaenv' (dropFree (resolveSelf (resolveNew (dropSettleForcedRaws dest'))))
   -- Return-type direction: a declaration output that is a bare declared variable is determined
   -- by the call site's destination — bind it onto the call partial (see 'outVarBoundSrc').
   let srcBound = outVarBoundSrc env destFinal src

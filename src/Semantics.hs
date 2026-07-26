@@ -19,6 +19,7 @@ import qualified Data.HashMap.Strict as H
 import           CtConstants         (builtinAnnotNames, operatorHasArrow)
 import           Data.Graph          (graphFromEdges)
 import qualified Data.HashSet        as S
+import           Data.List           (partition)
 import           Data.Maybe
 import           Semantics.Prgm
 import           Semantics.Types
@@ -230,8 +231,8 @@ arrowDestTypeBase resolveAppFields typeEnv src oa@ObjArr{oaArr=Just (oaArrExpr, 
       Nothing -> error $ printf "Non-singleton in arrowDestType"
     arrowDestTypeForVaenv vaenv = case oaArrExpr of
       -- _ | trace (printf "arrowDestType from %s with %s to %s.\n\t\tVanev: %s" (show src) (show oa) (show joined) (show vaenv)) False -> undefined
-      Just n | isJust (maybeExprPath n) -> maybe joinedResolved substitute (H.lookup (TVArg $ inExprSingleton n) vaenv)
-      _                              -> joinedResolved
+      Just n | isJust (maybeExprPath n) -> maybe joinedDispatch substitute (H.lookup (TVArg $ inExprSingleton n) vaenv)
+      _                              -> joinedDispatch
       where
         substitute = substituteTVExt vaenv
         expr' = fmap (substitute . getExprType) oaArrExpr
@@ -249,6 +250,22 @@ arrowDestTypeBase resolveAppFields typeEnv src oa@ObjArr{oaArr=Just (oaArrExpr, 
           Nothing -> False
         joinedResolved | isDataConstruction = applyResolvedFields typeEnv resolvedFields joined
                        | otherwise          = joined
+        -- DISPATCH ONLY ('arrowDestTypeDispatch'): the presented dest must be what the BUILT arm
+        -- returns. The arm's body compiles toward the arrow's result meta ('TreeBuild.buildArrow'),
+        -- so a body-meta leaf the graph can still rewrite (a raw applied term such as
+        -- @mkComparison(..)@ in a @compare@ arm) settles INSIDE the arm; presenting it raw would
+        -- make the caller's followup re-dispatch the already-settled result (applying
+        -- @mkComparison@'s value-pattern arms to @Equal@). Replace the raw leaves by the result
+        -- meta's presentation; settled leaves (data constructions, forwarded arguments) keep
+        -- their tighter per-call form. Typecheck-side queries ('arrowDestType') keep the raw
+        -- presentation — the reaches trees walk through it.
+        joinedDispatch
+          | resolveAppFields
+          , arr' /= PTopType
+          , UnionType mTop leafs consts <- joinedResolved
+          , (_:_, settledLs) <- partition (null . typeGraphData typeEnv . ptName) (splitUnionType leafs)
+          = unionTypes typeEnv (UnionType mTop (joinUnionType settledLs) consts) arr'
+          | otherwise = joinedResolved
         -- A definition body that constructs a value — @Cons(head=x)@ — stores its fields with the
         -- body's (abstract) argument types: @head@ becomes Top because @x@ is abstract in the body.
         -- At dispatch the vaenv binds the argument (@x=Integer@), so resolve each field whose value
