@@ -302,6 +302,17 @@ class TypeGraph tg where
   -- the destination type.
   typeGraphQueryWithReason :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> [(String, Type, Type)]
 
+  -- | Like 'typeGraphQueryWithReason' but WITHOUT the most-specific-promise pruning: every
+  -- arrow that accepts the source contributes. The pruning is a destination-side reaches
+  -- optimization (drop an abstract declaration's class-top result when a concrete definition
+  -- also triggers); the REQUIREMENT side instead unions @potentialSrc@ over ALL accepting
+  -- arrows — a dominated (wider-input) arrow still bounds what the source may be, and pruning
+  -- against a sibling whose object presentation is still transiently ⊤ mid-solve would
+  -- collapse the requirement to the one settled arm (e.g. @length@'s @Nil@ arm dominating a
+  -- not-yet-presented @Cons@ arm).
+  typeGraphQueryAllWithReason :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> [(String, Type, Type)]
+  typeGraphQueryAllWithReason = typeGraphQueryWithReason
+
   -- | Queries the type graph for possible conversions from a TopTypes PredExpr to the possible partialTypes that can contain the PredExpr
   typeGraphExpandPredExpr :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> Maybe [PartialType]
 
@@ -2666,7 +2677,13 @@ isSubPartialOfWithEnv typeEnv _ sub super
   , not (argModeCovers (normalizePtArgMode typeEnv super) (normalizePtArgMode typeEnv sub)) = False
 isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subArgs, ptPreds=subPreds} super@PartialType{ptVars=superVars, ptArgs=superArgs, ptPreds=superPreds} = debugTrace typeEnv msg result
   where
-    vaenv' = H.union vaenv (substituteTVExt vaenv <$> H.unionWith (intersectTypesEnv typeEnv vaenv) (ptVarArg super) (ptVarArg sub))
+    -- The partials' OWN var/arg slots take precedence over the ambient env (left-biased
+    -- union): a partial-local ('TVInt') reference inside a leaf names THAT leaf's var, and a
+    -- like-named var of the enclosing scope is a DIFFERENT var — an ambient @/T ↦ ∀Group@
+    -- (the surrounding law declaration's parameter) must not shadow a compared leaf's own
+    -- @[/T=∀Eq]@ when resolving its @$/T@ arg slots. Ambient bindings still resolve names
+    -- the leaves do not declare.
+    vaenv' = H.union (substituteTVExt vaenv <$> H.unionWith (intersectTypesEnv typeEnv vaenv) (ptVarArg super) (ptVarArg sub)) vaenv
     -- A sub-side FREE reference reads as ⊤ ('freeTVIntToTop'): it must not resolve through
     -- the shared env's like-named SUPER binding, which would narrow the sub's value set to
     -- the super's and wrongly prove e.g. @Cons(head=$/T) ⊆ Cons[/T=#noCore](head=#noCore)@.
@@ -2999,12 +3016,20 @@ compactJoinPartials typeEnv partials = joinUnionType $ concat $ H.elems $ fmap j
       Nothing     -> joinMatchArgPartialsAux curPartial toTrys (toTry:tried)
 
     -- if two partials differ by only one arg or var, joins them else Nothing
+    -- The join is exact only when the differing slot's union is itself exactly representable:
+    -- with a bare type-var on one side (a partial-local pointer such as @/m=$/M@ against a
+    -- concrete @/m=Cons(..)@), 'unionTypes' resolves the var through the (empty) env to ⊤,
+    -- so the joined leaf would be strictly WIDER than the two originals. Keep such leaves
+    -- separate instead — an unmerged union is always exact.
     tryJoin (PartialType name1 vars1 args1 PredsNone mode1) (PartialType _ vars2 args2 PredsNone _) = if numDifferences args1 args2 + numDifferences vars1 vars2 == 1
+         && all exactSlotJoin (differingPairs args1 args2 ++ differingPairs vars1 vars2)
       then Just $ PartialType name1 (joinMap vars1 vars2) (joinMap args1 args2) PredsNone mode1
       else Nothing
     tryJoin _ _ = Nothing
 
     numDifferences m1 m2 = sum $ fromEnum <$> H.intersectionWith (/=) m1 m2
+    differingPairs m1 m2 = filter (uncurry (/=)) $ H.elems $ H.intersectionWith (,) m1 m2
+    exactSlotJoin (v1, v2) = not (isTypeVar v1) && not (isTypeVar v2)
     joinMap = H.unionWith (unionTypes typeEnv)
 
 -- | Processes partials that have a 'PredClass' predicate. Takes an already-split list of
@@ -3659,15 +3684,17 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
   -- bottom: such an arg simply cannot be present. For a *required* arg (a lower-bounded side
   -- lists it) that makes the partial uninhabited; for an *optional* arg (a lower-unbounded mode)
   -- it just drops the arg, leaving the smaller arg-sets of the interval valid.
-  let argsMap = H.unionWith subUnion (fmap (vaenv,) aArgs) (fmap (vaenv,) bArgs)
+  -- A pointer occurrence's realizable value-set is bounded by its var's DECLARED bound (the
+  -- met var slot): @r -> $T@ under @[/T: ∀Eq]@ realizes @evidence ∩ ∀Eq@ — bare evidence would
+  -- DROP the declared requirement (@r=mempty@ giving @∀Monoid@ must store @∀Monoid ∩ ∀Eq@). A
+  -- var-valued slot (a flexible per-value pointer, 'subUnionVar') adds no bound.
+  let varBoundFor n = case H.lookup n vars' of
+        Just b | not (isTypeVar b) -> b
+        _                          -> PTopType
+  let argsMap = H.unionWith (subUnion varBoundFor) (fmap (vaenv,) aArgs) (fmap (vaenv,) bArgs)
   let args' = fmap snd argsMap
   let bottomKeys = H.keysSet $ H.filter (isBottomType . snd) argsMap
-  let argsVaenvs = map fst $ H.elems $ H.filter (not . isBottomType . snd) argsMap
-  -- The args' envs are seeded with the whole incoming vaenv, so they carry ambient bindings
-  -- (a caller's or an outer partial's vars) alongside the meets discovered here. Folding all
-  -- of that into the result's ptVars stamps foreign var slots onto every intersected partial
-  -- (e.g. an operator's /B appearing on a Cons leaf). An intersection may narrow the var
-  -- slots a partial declares; it must not invent new ones - so keep only the declared keys.
+  let liveArgsMap = H.filter (not . isBottomType . snd) argsMap
   -- The args' envs are seeded with the whole incoming vaenv, so they carry the caller's ambient
   -- bindings alongside the meets discovered here. The discovered bindings must be kept on the
   -- partial's ptVars - they are returned no other way, and they carry a callee's type-var
@@ -3676,20 +3703,37 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
   -- through unchanged is dropped: it lives in the caller's env, and stamping it onto every
   -- intersected partial invents foreign var slots (an operator's /B appearing on a Cons leaf).
   let ambientVars = fst $ splitVarArgEnv vaenv
-  -- Only a binding some arg value REFERENCES externally (@$_T@ — a declaration's passthrough,
-  -- e.g. @unwrap@'s @/b@ valued @Box[/T=$_T]@ meeting @Box[/T=Integer]@) may be kept: the
-  -- reference marks the name as belonging to THIS partial's scope. The arg meets also record
-  -- under names with no such reference — a nested partial's demoted local ('demoteTVExtVars')
-  -- resolving per value, or a class predicate's own var KEY (@∀Monad[/T=..]@ meeting a member
-  -- binds the class's @/T@) — and stamping those onto this partial captures a like-named var
-  -- of an unrelated scope (@operator==[$T]@ gaining @/T=Integer@ from its operand's element).
-  -- A partial-local ('TVInt') reference that is the arg's DIRECT value (a declaration's own
-  -- field pointer — @Id(/value=$T)@, @testFunctorIdentity(/x=$F)@) also names this partial's
-  -- scope; one nested inside an embedded partial (@/l=Cons[$T]@) names the inner partial's.
-  let ownRefNames t = typeTVExtVarRefs t `S.union` case t of
-        TypeVar (TVVar n) TVInt -> S.singleton n
-        _                       -> S.empty
-  let hoistNames = S.unions $ map ownRefNames (H.elems aArgs ++ H.elems bArgs)
+  -- Only a binding some arg value REFERENCES may be hoisted: the reference marks the name as
+  -- belonging to THIS partial's scope. The arg meets also record under names with no such
+  -- reference — a nested partial's demoted local ('demoteTVExtVars') resolving per value, or a
+  -- class predicate's own var KEY (@∀Monad[/T=..]@ meeting a member binds the class's @/T@) —
+  -- and stamping those onto this partial captures a like-named var of an unrelated scope
+  -- (@operator==[$T]@ gaining @/T=Integer@ from its operand's element).
+  --
+  -- HOW an arg references the name decides the set operation combining its discoveries:
+  --
+  --   * An external ('TVExt') reference NESTED in the value (@unwrap@'s @/b@ valued
+  --     @Box[/T=$_T]@) sits in a var slot: var application is EXACT, so every such occurrence
+  --     names the same binding and the discoveries MEET ('exactNamesAt').
+  --   * A partial-local ('TVInt') reference that is the arg's DIRECT value (a declaration's own
+  --     field pointer — @==(l=$T, r=$T)@, @Id(/value=$T)@) is a MEMBERSHIP position: it says
+  --     that argument's value is a member of @$T@, an existential LOWER bound on the var.
+  --     Discoveries therefore JOIN across occurrences — @==(l=True, r=False)@ binds
+  --     @/T=True∪False@, not the uninhabited @True∩False@ ('pointerNamesAt'). The join carries
+  --     information only once EVERY occurrence has resolved to evidence: an unresolved
+  --     occurrence contributes ⊤ (its future value is unbounded), which keeps the hoist
+  --     monotone as occurrences resolve one solver epoch at a time. The joined binding still
+  --     MEETS the var slot's declared bound (@/T: ∀Eq@) in the 'venvs'' merge below — the
+  --     upper-bound side. (Cross-element @==@ such as @5 == "hi"@ therefore passes inference
+  --     with @/T=Integer∪String@ and fails later at instance selection/TreeBuild; making it a
+  --     type error would need refinement-precise declarations like
+  --     @:$T.equal[$T -> Eq](other -> Eq) | $T.eq == other.eq@ — future type-system work.)
+  --
+  -- A 'TVInt' reference nested INSIDE an embedded partial (@/l=Cons[$T]@) names the inner
+  -- partial's scope and is not hoisted at all.
+  let origValuesAt k = mapMaybe (H.lookup k) [aArgs, bArgs]
+  let exactNamesAt k = S.unions $ map typeTVExtVarRefs $ origValuesAt k
+  let pointerNamesAt k = S.fromList [n | TypeVar (TVVar n) TVInt <- origValuesAt k]
   -- A hoisted binding is stored in its canonical 'substituteTVExt' reading (the same one
   -- 'mergeVarEnvVal' gives every merged env binding), so a binding that only passed through
   -- ONE env is structurally comparable with one that met across several — and with the
@@ -3701,8 +3745,31 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
   -- reading would default an unbound one to ⊤).
   let canonBinding t@TypeVar{} = t
       canonBinding t           = substituteTVExt vaenv t
-  let hoistFilter env = fmap canonBinding $ H.filterWithKey (\k v -> S.member k hoistNames && H.lookup k ambientVars /= Just v) $ fst $ splitVarArgEnv env
-  let argsVarBindings = hoistFilter (mergeAllVarEnvs typeEnv argsVaenvs)
+  let exactEnvAt k env = fmap canonBinding $ H.filterWithKey (\n v -> n `S.member` exactNamesAt k && H.lookup n ambientVars /= Just v) $ fst $ splitVarArgEnv env
+  -- What arg @k@'s meet discovered for name @n@: a fresh SETTLED env entry ('settledEvidence').
+  -- A var-valued or unsettled entry is a link or a still-rewritable term rather than evidence,
+  -- and an entry identical to the ambient one merely passed through — none resolves the
+  -- occurrence.
+  let discoveryAt k n = case H.lookup k liveArgsMap >>= H.lookup n . fst . splitVarArgEnv . fst of
+        Just v | H.lookup n ambientVars /= Just v && settledEvidence v -> Just $ canonBinding v
+        _ -> Nothing
+  -- The pointer join for an arg-set piece ranges over that piece's occurrences of the name:
+  -- an occurrence on an arg OUTSIDE the piece does not constrain it (the ∅ piece of
+  -- @Pair(first=$A, second=$B)??@ keeps @/A@ at its declared bound even when the @first@
+  -- piece's meet discovered a binding — 'bindingOptArgs' enumerates the pieces so each
+  -- carries exactly its own join). Within a piece, an occurrence present but UNRESOLVED
+  -- (including an argument the other side has not applied yet — a required key contributed
+  -- by the object alone) withholds the join, which keeps the piece's binding monotone as
+  -- the application completes.
+  let pointerJoinFor ks =
+        let ksL = S.toList ks
+            joinFor n = case mapM (`discoveryAt` n) (filter (\k -> n `S.member` pointerNamesAt k) ksL) of
+              Just vals | not (null vals) -> Just (n, unionAllTypes typeEnv vals)
+              _                           -> Nothing
+        in H.fromList $ mapMaybe joinFor $ S.toList $ S.unions $ map pointerNamesAt ksL
+  let exactEnvOf k = maybe H.empty (exactEnvAt k . fst) (H.lookup k liveArgsMap)
+  let hoistFor ks = mergeAllVarEnvs typeEnv $ pointerJoinFor ks : map exactEnvOf (S.toList ks)
+  let argsVarBindings = hoistFor $ H.keysSet liveArgsMap
   let venvs' = mergeAllVarEnvs typeEnv [argsVarBindings, vars']
   let preds' = predsAnd aPreds bPreds
   -- The two arg-sets each constrain the instance args to an interval over the
@@ -3722,9 +3789,8 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
   -- narrow the arg-sets missing the arg (e.g. @/T=#noCore@ from a @head@ meet constraining
   -- the argless piece). No single ptVars fits, so such an interval is enumerated with each
   -- arg-set carrying exactly the bindings ITS OWN args' meets discovered.
-  let liveArgEnvs = fmap fst $ H.filter (not . isBottomType . snd) argsMap
-  let bindingOptArgs = S.filter (\k -> not (H.null (hoistFilter (H.lookupDefault H.empty k liveArgEnvs)))) (capKeys `S.difference` reqKeys)
-  let venvsFor ks = mergeAllVarEnvs typeEnv [hoistFilter (mergeAllVarEnvs typeEnv [H.lookupDefault H.empty k liveArgEnvs | k <- S.toList ks]), vars']
+  let bindingOptArgs = S.filter (\k -> not (H.null (hoistFor (S.singleton k)))) (capKeys `S.difference` reqKeys)
+  let venvsFor ks = mergeAllVarEnvs typeEnv [hoistFor ks, vars']
   let mkPartialAt ks = PartialType name' (venvsFor ks) (restrict ks) preds' PtArgExact
   let partials'
         | not (S.null (reqKeys `S.intersection` bottomKeys)) = [] -- a required arg is uninhabited
@@ -3757,7 +3823,7 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
     -- like-named var of the enclosing scope is a DIFFERENT var. The meet is the other side.
     subUnionVar (aVaenv, TypeVar _ TVInt) (bVaenv, b) = (mergeAllVarEnvs typeEnv [aVaenv, bVaenv], b)
     subUnionVar (aVaenv, a) (bVaenv, TypeVar _ TVInt) = (mergeAllVarEnvs typeEnv [aVaenv, bVaenv], a)
-    subUnionVar a b = subUnion a b
+    subUnionVar a b = subUnion (const PTopType) a b
     -- Resolve the field meet's freshly-discovered CONCRETE bindings back into its TYPE (the same
     -- resolve-meets-back rule 'intersectTypesEnv' applies at the top level, hoisted into the
     -- recursive field meet). A recursive-tail field @tail -> ∀ConsList[/T=$_T]@ met with a concrete
@@ -3765,12 +3831,41 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
     -- taking @snd@ alone leaves the deep tail free, so it falls to the requirement's declared bound
     -- (@Ord@) — abstracting a concrete list's element at depth. Concrete-only, so a genuine var link
     -- (a polymorphic parameter tying positions together) is left as a var.
-    subUnion (aVaenv, a) (bVaenv, b) =
+    -- A bare partial-local ('TVInt') pointer as an ARG value is the declaration's own field
+    -- linkage (@l -> $T@). Like 'subUnionVar' for var slots, it must neither read nor record
+    -- the AMBIENT binding under its name — a like-named var of the enclosing scope is a
+    -- DIFFERENT var (the generic var clause of 'intersectTypesWithVarEnv' would meet the
+    -- evidence against the scope's binding and hide the discovery under the pre-existing
+    -- key). Its meet with the other side is that side clamped to the var's declared bound:
+    -- the slot keeps the occurrence's realizable set (@A∩B ⊆ A@ requires it even when the
+    -- var-level join withholds — @++(/l=Integer) ∩ ++[/T=∀Semigroup](/l=$/T, /r=$/T)@ must
+    -- keep @/l=Integer@, and a RAW applied value keeps its shapes with the bound's predicate
+    -- distributed onto them rather than reading as the bare bound). The clamped value is
+    -- recorded under the pointer's name for the pointer-occurrence join ('pointerJoinFor'),
+    -- which itself admits only settled evidence ('discoveryAt').
+    subUnion _ (aVaenv, a@(TypeVar (TVVar _) TVInt)) (bVaenv, b)
+      | a == b = (mergeAllVarEnvs typeEnv [aVaenv, bVaenv], a)
+    subUnion varBound (aVaenv, TypeVar (TVVar n) TVInt) (bVaenv, b)
+      | not (isTypeVar b), b /= PTopType = let ev = intersectTypes typeEnv b (varBound n)
+                                           in (H.insert (TVVar n) ev (mergeAllVarEnvs typeEnv [aVaenv, bVaenv]), ev)
+    subUnion varBound (aVaenv, a) (bVaenv, TypeVar (TVVar n) TVInt)
+      | not (isTypeVar a), a /= PTopType = let ev = intersectTypes typeEnv a (varBound n)
+                                           in (H.insert (TVVar n) ev (mergeAllVarEnvs typeEnv [aVaenv, bVaenv]), ev)
+    subUnion _ (aVaenv, a) (bVaenv, b) =
       let inEnv = mergeAllVarEnvs typeEnv [aVaenv, bVaenv]
           (outEnv, t) = intersectTypesWithVarEnv typeEnv inEnv a b
           newBindings = H.filter (not . isTypeVar) $ H.difference outEnv inEnv
       in (outEnv, if H.null newBindings then t else substituteKeep newBindings t)
     subValidate (vev, subTp) = if isBottomType subTp then Nothing else Just (vev, subTp)
+    -- Evidence a pointer occurrence can take: a SETTLED value type — every positive leaf is a
+    -- data value ('isSettledLeaf'), alongside constants and predicate tops, which are nominal.
+    -- A raw applied term (an unrewritten call the graph may still rewrite) is NOT evidence: it
+    -- is bounded at its own settling point, and folding it into a pointer slot or the pointer
+    -- join would store non-nominal shapes that read wider than the declared bound
+    -- ('verifySchemeReqLowers'). ⊤ carries no evidence either — the pointer stays.
+    settledEvidence PTopType = False
+    settledEvidence (UnionType _ leafs _) = all (not . null . typeGraphData typeEnv . ptName) (splitUnionType leafs)
+    settledEvidence _ = False
 
 intersectPartials :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> (TypeVarArgEnv, [PartialType])
 intersectPartials typeEnv vaenv a b = case intersectPartialsBase typeEnv vaenv a b of
@@ -4496,9 +4591,16 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
             _                                   -> Nothing
       let intersectedPartials sup@PartialType{ptVars=supVars} sub = case (slotOwnVar sup, typeGetAux propName sup) of
             (Just v, _) -> do
+              -- A pointer slot names a MEMBERSHIP position (@this -> $T@): a single
+              -- occurrence's evidence must NOT meet-narrow the var — a sibling occurrence may
+              -- still widen the witness (@:Some.equal(other= Nothing)@: narrowing @/T@ to
+              -- @Some@ from @this@ empties @other=Nothing@ at the next universe meet). The
+              -- var narrows only where EVERY occurrence is visible at once — the
+              -- pointer-occurrence join in 'intersectPartialsBase'. Here the child is just
+              -- clamped by the var's current bound and the parent stays untouched.
               let supVar = H.lookupDefault PTopType v supVars
               let newProp = intersectTypesEnv typeEnv vaenv supVar sub
-              Just (sup{ptVars=H.insert v (demoteTVExtVars newProp) supVars}, newProp)
+              Just (sup, newProp)
             (_, Just supProp) -> do
               -- Same-class predicate intersection ('mergePredsAnd') unifies e.g.
               -- @Functor[/T=$_A] ∧ Functor[/T=Integer]@ into @Functor[/T=$_A]@ while recording the
@@ -4538,9 +4640,10 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
           let vaenv' = H.insert v tp' vaenv
           let tp'' = substituteTVExt vaenv' tp'
           let updateSuperPartial p@PartialType{ptVars=pVars} = case (rawSlot propName p, typeGetAux propName p) of
-                -- Slot is an internal pointer: maintain the partial's own var, keep the pointer.
-                (Just (TypeVar (TVVar vn) TVInt), _) ->
-                  Just p{ptVars=H.insert vn (intersectTypes typeEnv (H.lookupDefault PTopType vn pVars) tp'') pVars}
+                -- Slot is an internal pointer: keep the pointer and leave the var untouched —
+                -- a single occurrence must not meet-narrow a membership var (see
+                -- 'intersectedPartials' above; the join in 'intersectPartialsBase' narrows it).
+                (Just (TypeVar (TVVar _) TVInt), _) -> Just p
                 (_, Nothing) -> Nothing
                 (_, Just supTp) | supTp == subType -> Just $ typeSetAux propName subType p
                 -- An unconstrained ARG slot whose sub is an EXTERNAL var naming one of this
@@ -4554,6 +4657,15 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
                 -- the external var (builtin @ContextIn[$V]@) would become a self-pointer
                 -- (@ptVars[V]=$V@) that diverges on resolution.
                 (_, Just PTopType) | TVArg _ <- propName, TypeVar (TVVar vn) TVExt <- subType, vn `H.member` pVars ->
+                  Just $ typeSetAux propName (TypeVar (TVVar vn) TVInt) p
+                -- A partial-internal ('TVInt') sub is BY DEFINITION a reference into this
+                -- object's own var scope — the desugared @(l :: $T == r :: $T)@ arg arrM is
+                -- @$/T@ — so store the pointer unconditionally (the var slot itself may only
+                -- arrive with a later VarApply merge; a pointer without its var reads ⊤ until
+                -- then). Falling through would store the var's resolved BOUND (@∀Eq@) and
+                -- sever the arg↔var linkage that lets call-site argument evidence bind the
+                -- object's var (@==(l=Integer,...)@ discovering @/T=Integer@ for dispatch).
+                (_, Just PTopType) | TVArg _ <- propName, TypeVar (TVVar vn) TVInt <- subType ->
                   Just $ typeSetAux propName (TypeVar (TVVar vn) TVInt) p
                 (_, Just supTp) -> Just $ typeSetAux propName (intersectTypes typeEnv supTp tp'') p
           let superType' = compactType typeEnv vaenv $ UnionType Nothing (joinUnionType $ mapMaybe updateSuperPartial $ splitUnionType supPartials) []

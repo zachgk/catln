@@ -263,9 +263,19 @@ outVarBoundSrc env dest@(UnionType Nothing destLeafs _) src@(UnionType Nothing s
       , TypeVar (TVVar vn) _ <- [getMetaType outM]
       , Just declObj <- [maybeGetSingleton (getMetaType (getExprMeta (oaObjExpr oa)))]
       , H.member vn (ptVars declObj)
+      -- Output-ONLY variables: with an argument occurrence of the same var (@mmap@'s
+      -- @m -> $M@), the output position is just one more membership occurrence — the
+      -- variable's witness is the occurrences' JOIN, and intersecting the destination alone
+      -- onto it (@/M=Nothing@ from the result) would empty the argument evidence
+      -- (@m=Some(..) ∩ Nothing = ∅@). Only a var with no argument occurrence (@pure@'s @$M@)
+      -- is determined by the destination.
+      , not (any (argRefsVar vn) (H.elems (ptArgs declObj)))
       -- Complete applications only: a partial application's ArrowTo destination is the
       -- further-applied call node, not the result the declaration's output variable stands for.
       , all (`H.member` ptArgs p) (H.keys (ptArgs declObj)) ]
+    argRefsVar vn (TypeVar (TVVar vn') _)               = vn' == vn
+    argRefsVar vn (TypeVar (TVApplied (TVVar vn') _) _) = vn' == vn
+    argRefsVar _ _                                      = False
 outVarBoundSrc _ _ src = src
 
 mkReachesEnv :: FEnv -> RConstraint -> TypeCheckResult (ReachesEnv (ObjArrTypeGraph Expr ()))
@@ -414,18 +424,26 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
           , isSubtypeOfWithEnv feTypeEnv vaenv' (singletonType key) destFinal
             || reachesHasCutSubtypeOf feTypeEnv vaenv' subTree destFinal ]
         _ -> []
-  -- Each viable component is folded to its MET form (the union of @potentialSrc@ = src ∩
-  -- arrow-object over the arrows it triggers): the meet with a matched object's contract is
-  -- what binds the call's declared variables from its argument evidence (e.g.
-  -- @==(l=Integer, r=Integer)@ meeting @(l::$T == r::$T)[$T -> Eq]@ discovers @/T=Integer@,
-  -- which the class-method dispatch needs on the ACTUAL). A component no arrow accepts —
-  -- possible mid-epoch — keeps its bare form rather than emptying.
-  let viableMet key = case [ metSrc | (_, metSrc, _) <- typeGraphQueryWithReason reachesTypeEnv vaenv' key ] of
+  -- The ACTUAL keeps the BARE viable keys: a stored actual shows what the call site itself
+  -- passed, and the bindings a meet with a matched object's contract discovers are per-use
+  -- derivations (TreeBuild re-derives them ephemerally against the pointer-linked objects).
+  -- The REQUIREMENT instead folds each viable component to its MET form (the union of
+  -- @potentialSrc@ = src ∩ arrow-object over the arrows it triggers): the meet with the
+  -- object's contract is what imposes the declaration's variable structure as a requirement
+  -- (e.g. @==(l=Integer, r=Integer)@ meeting @(l::$T == r::$T)[$T -> Eq]@ discovers
+  -- @/T=Integer@). A component no arrow accepts — possible mid-epoch — keeps its bare form
+  -- rather than emptying.
+  let viableBare = unionAllTypesWithEnv feTypeEnv vaenv' (map singletonType viableKeys)
+  -- The met union ranges over ALL accepting arrows ('typeGraphQueryAllWithReason'): the
+  -- most-specific-promise pruning is a destination-side reaches optimization, and pruning
+  -- against a sibling arm whose object presentation is still transiently ⊤ mid-solve would
+  -- collapse the requirement to the one settled arm (monotonically stuck thereafter).
+  let viableMet key = case [ metSrc | (_, metSrc, _) <- typeGraphQueryAllWithReason reachesTypeEnv vaenv' key ] of
         []   -> singletonType key
         mets -> unionAllTypesWithEnv feTypeEnv vaenv' mets
   let viableComponents = unionAllTypesWithEnv feTypeEnv vaenv' (map viableMet viableKeys)
   let reqVaenv = fmap (stypeReq . snd) conVaenv
-  let narrowedAct = intersectTypesEnv feTypeEnv vaenv'   srcBound viableComponents
+  let narrowedAct = intersectTypesEnv feTypeEnv vaenv'   srcBound viableBare
   let narrowedReq = intersectTypesEnv feTypeEnv reqVaenv srcReq   viableComponents
   -- Narrow act and req in lockstep so the deferred act⊆req check still holds at Decode, and each
   -- side only shrinks. First guard: never publish an empty viability (a transiently-incomplete

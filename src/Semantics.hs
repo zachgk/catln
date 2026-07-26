@@ -30,9 +30,13 @@ newtype ObjArrTypeGraph e m = ObjArrTypeGraph (ObjectMap e m)
   deriving (Show)
 instance Semigroup (ObjArrTypeGraph e m) where
   (ObjArrTypeGraph a) <> (ObjArrTypeGraph b) = ObjArrTypeGraph (a <> b)
-instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGraph e m) where
-  typeGraphQueryWithReason typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName} = concatMap tryTArrow $ mostSpecificPromises $ flatObjectMapItem $ H.lookupDefault mempty ptName tg
+-- | Shared body of 'typeGraphQueryWithReason' (@prune=True@) and
+-- 'typeGraphQueryAllWithReason' (@prune=False@ — every accepting arrow contributes).
+objArrGraphQuery :: (ExprClass e, MetaDat m, Show m, Show (e m)) => Bool -> TypeEnv (ObjArrTypeGraph e m) -> TypeVarArgEnv -> PartialType -> [(String, Type, Type)]
+objArrGraphQuery prune typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName} = concatMap tryTArrow $ promises $ flatObjectMapItem $ H.lookupDefault mempty ptName tg
     where
+      promises | prune     = mostSpecificPromises
+               | otherwise = filter accepts
       -- Each declaration/definition is a PROMISE: given an input of one type, an output of a certain
       -- type can be produced. Among the promises the source triggers, keep only the MOST HELPFUL — an
       -- arrow whose object (input type) is a strict SUPERTYPE of another triggered arrow's object is
@@ -66,6 +70,9 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
       joinPartialDestTypes [] = [BottomType]
       joinPartialDestTypes (pdt1:restPdt) = [unionTypes typeEnv pdt1Poss restPdt' | pdt1Poss <- pdt1, restPdt' <- joinPartialDestTypes restPdt]
 
+instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGraph e m) where
+  typeGraphQueryWithReason = objArrGraphQuery True
+  typeGraphQueryAllWithReason = objArrGraphQuery False
  -- TODO: Implement this to expand other PredExprs as well, and begin using the Nothing to represent having no meaningful way to break
   typeGraphExpandPredExpr typeEnv _vaenv partial | nameStr (ptName partial) == operatorHasArrow = Just $ map (\p -> p{ptPreds=PredsOne (PredExpr partial)}) $ topTypeAsPartials typeEnv
   typeGraphExpandPredExpr typeEnv _vaenv partial = Just $ map (\p -> p{ptPreds=PredsOne (PredExpr partial)}) $ topTypeAsPartials typeEnv
