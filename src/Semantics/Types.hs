@@ -1529,11 +1529,28 @@ expandTypesWithNamesFull typeEnv@TypeEnv{teNames} vaenv (TopType negPartials pre
           mapped = map expandPredsWithNamesFull negPs
           leafs = foldl (H.unionWith S.union) H.empty (map fst mapped)
       in (leafs, any snd mapped)
+    -- The arg-mode interval algebra cannot represent every residual (e.g. @n.. − n@ — "n with
+    -- a nonempty argument set" — for a name whose realizable argument sets are open-world),
+    -- and 'differencePartialLeafs' then leaves the universe leaf UNCHANGED: a wrong-side
+    -- approximation that would let a consumer read the un-subtracted name as the exact
+    -- complement, keeping a leaf the negated predicate excludes. Detect the silent no-op — a
+    -- name whose leafs survive identically although the subtracted side overlaps them — and
+    -- report the expansion as approximate-and-empty instead, so consumers fall to their
+    -- symbolic paths (which subtract the atom forms exactly).
     expandPredsWithNamesFull (PredsNot inner) =
       let (innerLeafs, _) = expandPredsWithNamesFull inner
       in case differencePartialLeafs typeEnv vaenv topFilteredLeafs innerLeafs of
-           UnionType Nothing result [] -> (result, hasUniverseOutside)
-           _                           -> (topFilteredLeafs, hasUniverseOutside)
+           UnionType Nothing result []
+             | not (any (subtractionNoOp result innerLeafs) (H.keys innerLeafs)) ->
+                 (result, hasUniverseOutside)
+             | otherwise -> (H.empty, True)
+           _ -> (topFilteredLeafs, hasUniverseOutside)
+      where
+        subtractionNoOp res inners n =
+          H.lookup n res == H.lookup n topFilteredLeafs
+            && not (isBottomType (intersectTypesEnv typeEnv vaenv
+                      (UnionType Nothing (H.filterWithKey (\k _ -> k == n) topFilteredLeafs) [])
+                      (UnionType Nothing (H.filterWithKey (\k _ -> k == n) inners) [])))
     expandPredsWithNamesFull (PredsOne (PredClass clss)) =
       expandClassPartialWithNamesFull typeEnv vaenv clss allowedNames
     expandPredsWithNamesFull (PredsOne (PredRel rel)) =
@@ -3863,8 +3880,21 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
     -- is bounded at its own settling point, and folding it into a pointer slot or the pointer
     -- join would store non-nominal shapes that read wider than the declared bound
     -- ('verifySchemeReqLowers'). ⊤ carries no evidence either — the pointer stays.
+    -- A RELATIVELY-spelled leaf resolves through the name universe first (an exact graph
+    -- lookup misses it): relative @#noCore@ with @/#noCore@ declared as data IS settled
+    -- evidence, and withholding its pointer join leaves the var vacuously ⊤ beside a settled
+    -- slot — a representation the difference side never produces, breaking A∩B = A−(A−B).
+    -- SOME matching name being declared data suffices: a name in the universe with no
+    -- declaration at all (a vocabulary-only entry such as the builtin annotation names) has
+    -- neither data nor arrows, so it contributes nothing rewritable.
     settledEvidence PTopType = False
-    settledEvidence (UnionType _ leafs _) = all (not . null . typeGraphData typeEnv . ptName) (splitUnionType leafs)
+    settledEvidence (UnionType _ leafs _) = all (leafSettled . ptName) (splitUnionType leafs)
+      where
+        TypeEnv{teNames=teNamesSE} = typeEnv
+        -- The universe scan runs only for a relatively-spelled name whose exact lookup missed;
+        -- an absolute name is already canonical and would only match itself.
+        leafSettled n = not (null (typeGraphData typeEnv n))
+          || (makeAbsoluteName n /= n && any (not . null . typeGraphData typeEnv) (relativeNameFilter n (S.toList teNamesSE)))
     settledEvidence _ = False
 
 intersectPartials :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> (TypeVarArgEnv, [PartialType])
