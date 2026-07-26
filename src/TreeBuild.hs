@@ -352,7 +352,7 @@ toTExpr env os (TupleApply m (bm, be) arg) = do
 -- (@Box(v= ..)@) as opposed to a function call.
 toTEObjArr :: TBEnv -> [ObjSrc] -> Bool -> Bool -> EObjArr -> CRes (ObjArr TExpr TBMetaDat)
 -- toTEObjArr _ os _ _ oa | trace (printf "toTEObjArr %s\n\twith %s" (show oa) (show os)) False = undefined
-toTEObjArr env@TBEnv{tbTypeEnv, tbResEnv} os inExpr inData oa@ObjArr{oaObj, oaAnnots, oaArr} = do
+toTEObjArr env@TBEnv{tbTypeEnv, tbResEnv} os inExpr _inData oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   oaObj' <- mapM (toTExpr env os) oaObj
   let os' = case oa of
         ObjArr{oaObj=Just{}, oaArr=Just (Just{}, _)} -> (getSingleton $ getExprType $ oaObjExpr oa, oa) : os
@@ -375,12 +375,22 @@ toTEObjArr env@TBEnv{tbTypeEnv, tbResEnv} os inExpr inData oa@ObjArr{oaObj, oaAn
     -- name-lookup pre-filter: only a leaf whose name has res-env arrows can be applied at all,
     -- so for any other meta the reduction is a no-op not worth computing (this runs on every
     -- eval tree rebuild).
-    let isComputedField = maybe False (not . null . exprAppliedArgs) arrExpr && inData
+    -- Under req-only 'BoundedByObjs' a consumer bound no longer drops the raw call partial
+    -- from ANY argument's inferred meta — every applied-term argument keeps its raw form
+    -- alongside the settled alternatives, not just data-construction fields. Build every such
+    -- argument toward what it settles to: the raw self-leaf in the dest would otherwise
+    -- short-circuit 'buildCallTree' to 'TCTId' and leak the unreduced tuple to the consumer
+    -- (@#assert(test= 2++3==5)@ receiving the @==@ 'TupleVal'). A bare value reference (no
+    -- applied arguments, e.g. @/Context(value= main)@) stays deferred as before.
+    let isAppliedTerm = maybe False (not . null . exprAppliedArgs) arrExpr
     let metaMightReduce = case getMetaType arrM of
-          UnionType Nothing leafs [] -> any (\PartialType{ptName} -> isJust (suffixLookupInDict ptName tbResEnv)) (splitUnionType leafs)
-          _                          -> False
-    let arrBuildM = if isLambda || (isComputedField && metaMightReduce)
-          then mWithType (reduceAppliedType tbTypeEnv H.empty (getMetaType arrM)) arrM
+          UnionType _ leafs _ -> any (\PartialType{ptName} -> isJust (suffixLookupInDict ptName tbResEnv)) (splitUnionType leafs)
+          _                   -> False
+    -- Root definition bodies included: their result meta keeps the body's raw form too, and
+    -- the eval-time lazy arm rebuild ('evalObjArrCaptured') evaluates the body tree directly
+    -- with no after-chain — an unreduced body tree returns the raw tuple as the arm's result.
+    let arrBuildM = if isLambda || (isAppliedTerm && metaMightReduce)
+          then mWithType (reduceAppliedTypeFix tbTypeEnv H.empty (getMetaType arrM)) arrM
           else arrM
     arrExpr' <- forM arrExpr $ \e ->
       toTExprDest env os' e arrBuildM

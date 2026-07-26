@@ -296,14 +296,39 @@ arrowDestTypeBase _ _ _ oa@ObjArr{oaArr=Nothing} = error $ printf "Unexpected ca
 -- application) is already a settled value and stays itself. Constant-carrying unions and
 -- predicate tops are returned unchanged.
 reduceAppliedType :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
-reduceAppliedType typeEnv vaenv t@(UnionType Nothing leafs []) = case splitUnionType leafs of
+-- A 'Just'-top component (a predicate region such as a dispatch meta's @∀Boolean@) already
+-- denotes settled values and is carried through unchanged; only the POSITIVE leaves are raw
+-- applied terms the graph may rewrite. Punting on the mixed shape would leave the raw self-leaf
+-- in a consumer's destination and short-circuit its build to 'TCTId'.
+reduceAppliedType typeEnv vaenv t@(UnionType mTop leafs consts) = case splitUnionType leafs of
   [] -> t
-  ls -> unionAllTypesWithEnv typeEnv vaenv (map reduceLeaf ls)
+  ls -> unionAllTypesWithEnv typeEnv vaenv (UnionType mTop H.empty consts : map reduceLeaf ls)
   where
     reduceLeaf l = case typeGraphQueryWithReason typeEnv vaenv l of
       []    -> singletonType l
       dests -> unionAllTypesWithEnv typeEnv vaenv (map (\(_, _, dest) -> dest) dests)
 reduceAppliedType _ _ t = t
+
+-- | 'reduceAppliedType' iterated to a FIXPOINT: an arrow's destination may itself carry the
+-- next call's raw form (@==@'s dest holds @equal(..)@ raw, whose dest holds the accessor's
+-- raw form, …), and a consumer building toward a one-step reduction still short-circuits at
+-- the second level. Each leaf NAME reduces at most once (visited set), so mutual recursion
+-- terminates and a recursive function's own raw form stays put after its first step.
+reduceAppliedTypeFix :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
+reduceAppliedTypeFix typeEnv vaenv = go S.empty
+  where
+    go seen t@(UnionType mTop leafs consts) =
+      let ls = splitUnionType leafs
+          reducible l = not (S.member (ptName l) seen) && not (null (typeGraphQueryWithReason typeEnv vaenv l))
+          todo = filter reducible ls
+          keep = filter (not . reducible) ls
+      in if null todo
+           then t
+           else
+             let seen' = foldr (S.insert . ptName) seen todo
+                 reduced = [ unionAllTypesWithEnv typeEnv vaenv [dest | (_, _, dest) <- typeGraphQueryWithReason typeEnv vaenv l] | l <- todo ]
+             in go seen' $ unionAllTypesWithEnv typeEnv vaenv (UnionType mTop (joinUnionType keep) consts : reduced)
+    go _ t = t
 
 -- | 'reduceAppliedType', additionally settling the field and parameter positions of a leaf no
 -- arrow accepts: a data construction storing a raw applied term (@Box[/v=/operator+(..)]@)
