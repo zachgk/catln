@@ -3763,13 +3763,17 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
   let canonBinding t@TypeVar{} = t
       canonBinding t           = substituteTVExt vaenv t
   let exactEnvAt k env = fmap canonBinding $ H.filterWithKey (\n v -> n `S.member` exactNamesAt k && H.lookup n ambientVars /= Just v) $ fst $ splitVarArgEnv env
-  -- What arg @k@'s meet discovered for name @n@: a fresh SETTLED env entry ('settledEvidence').
-  -- A var-valued or unsettled entry is a link or a still-rewritable term rather than evidence,
-  -- and an entry identical to the ambient one merely passed through — none resolves the
-  -- occurrence.
+  -- What arg @k@'s meet discovered for name @n@: a fresh env entry with actual content. ⊤
+  -- carries no information, a var-valued entry is a link rather than evidence, and an entry
+  -- identical to the ambient one merely passed through — none resolves the occurrence. Any
+  -- other value set is evidence: a function-typed value is as much a data object as declared
+  -- data (and declared data is as rewritable — arrows exist between data objects too), so
+  -- the algebra draws no distinction between them.
   let discoveryAt k n = case H.lookup k liveArgsMap >>= H.lookup n . fst . splitVarArgEnv . fst of
-        Just v | H.lookup n ambientVars /= Just v && settledEvidence v -> Just $ canonBinding v
-        _ -> Nothing
+        Just PTopType                             -> Nothing
+        Just TypeVar{}                            -> Nothing
+        Just v | H.lookup n ambientVars /= Just v -> Just $ canonBinding v
+        _                                         -> Nothing
   -- The pointer join for an arg-set piece ranges over that piece's occurrences of the name:
   -- an occurrence on an arg OUTSIDE the piece does not constrain it (the ∅ piece of
   -- @Pair(first=$A, second=$B)??@ keeps @/A@ at its declared bound even when the @first@
@@ -3858,8 +3862,8 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
     -- var-level join withholds — @++(/l=Integer) ∩ ++[/T=∀Semigroup](/l=$/T, /r=$/T)@ must
     -- keep @/l=Integer@, and a RAW applied value keeps its shapes with the bound's predicate
     -- distributed onto them rather than reading as the bare bound). The clamped value is
-    -- recorded under the pointer's name for the pointer-occurrence join ('pointerJoinFor'),
-    -- which itself admits only settled evidence ('discoveryAt').
+    -- recorded under the pointer's name for the pointer-occurrence join ('pointerJoinFor',
+    -- via 'discoveryAt').
     subUnion _ (aVaenv, a@(TypeVar (TVVar _) TVInt)) (bVaenv, b)
       | a == b = (mergeAllVarEnvs typeEnv [aVaenv, bVaenv], a)
     subUnion varBound (aVaenv, TypeVar (TVVar n) TVInt) (bVaenv, b)
@@ -3874,28 +3878,6 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
           newBindings = H.filter (not . isTypeVar) $ H.difference outEnv inEnv
       in (outEnv, if H.null newBindings then t else substituteKeep newBindings t)
     subValidate (vev, subTp) = if isBottomType subTp then Nothing else Just (vev, subTp)
-    -- Evidence a pointer occurrence can take: a SETTLED value type — every positive leaf is a
-    -- data value ('isSettledLeaf'), alongside constants and predicate tops, which are nominal.
-    -- A raw applied term (an unrewritten call the graph may still rewrite) is NOT evidence: it
-    -- is bounded at its own settling point, and folding it into a pointer slot or the pointer
-    -- join would store non-nominal shapes that read wider than the declared bound
-    -- ('verifySchemeReqLowers'). ⊤ carries no evidence either — the pointer stays.
-    -- A RELATIVELY-spelled leaf resolves through the name universe first (an exact graph
-    -- lookup misses it): relative @#noCore@ with @/#noCore@ declared as data IS settled
-    -- evidence, and withholding its pointer join leaves the var vacuously ⊤ beside a settled
-    -- slot — a representation the difference side never produces, breaking A∩B = A−(A−B).
-    -- SOME matching name being declared data suffices: a name in the universe with no
-    -- declaration at all (a vocabulary-only entry such as the builtin annotation names) has
-    -- neither data nor arrows, so it contributes nothing rewritable.
-    settledEvidence PTopType = False
-    settledEvidence (UnionType _ leafs _) = all (leafSettled . ptName) (splitUnionType leafs)
-      where
-        TypeEnv{teNames=teNamesSE} = typeEnv
-        -- The universe scan runs only for a relatively-spelled name whose exact lookup missed;
-        -- an absolute name is already canonical and would only match itself.
-        leafSettled n = not (null (typeGraphData typeEnv n))
-          || (makeAbsoluteName n /= n && any (not . null . typeGraphData typeEnv) (relativeNameFilter n (S.toList teNamesSE)))
-    settledEvidence _ = False
 
 intersectPartials :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> (TypeVarArgEnv, [PartialType])
 intersectPartials typeEnv vaenv a b = case intersectPartialsBase typeEnv vaenv a b of
