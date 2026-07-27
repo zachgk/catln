@@ -2148,21 +2148,25 @@ typeTVIntRefs _ = S.empty
 resolveOwnScopeRefs :: TypeVarArgEnv -> PartialType -> Type -> Type
 resolveOwnScopeRefs vaenv p = substituteTVExt (ptVarArg p `H.union` vaenv)
 
--- | 'freeTVIntToTop' applied DEEP: every partial-local reference the given partial does not bind
--- reads as ⊤ at ANY depth, including class-predicate parameters (@∀ConsList[/T=$/T]@ under a
--- partial with no @/T@ slot reads @∀ConsList[/T=⊤]@ — the union over all instantiations). Used to
--- instantiate a DECLARED field type under a specific partial: the template's free parameters must
--- NOT stay symbolic, lest they resolve through a like-named SUPER binding in a shared env during
--- a subtype check (the same leak 'freeTVIntToTop' guards against, at depth). A reference a NESTED
--- partial itself links is also widened — a sound over-approximation of the field's value set,
--- which for a clamp read only makes the check more conservative.
+-- | 'freeTVIntToTop' applied DEEP: every reference the given partial does not bind reads as ⊤
+-- at ANY depth, including class-predicate parameters (@∀ConsList[/T=$/T]@ under a partial with
+-- no @/T@ slot reads @∀ConsList[/T=⊤]@ — the union over all instantiations). Used to
+-- instantiate a DECLARED field type under a specific partial: the template's free parameters
+-- must NOT stay symbolic, lest they resolve through a like-named binding in a shared env
+-- during a subtype check (the same leak 'freeTVIntToTop' guards against, at depth). This
+-- covers EXTERNAL ('TVExt') template spellings too — a declaration's recursive tail is stored
+-- as @∀ConsList[/T=$_/T]@, and a symbolic @$_/T@ surviving instantiation is captured by a
+-- like-named binding of an ENCLOSING unrolling level (the outer cell's discovered @/T=Integer@
+-- making a nested cell's ⊤ head read Integer — a false-positive subset that froze deep list
+-- literals' element narrowing). A reference a NESTED partial itself links is also widened — a
+-- sound over-approximation of the field's value set, which for a clamp read only makes the
+-- check more conservative.
 freeTVIntToTopDeep :: TypeVarArgEnv -> PartialType -> Type -> Type
 freeTVIntToTopDeep vaenv p = go
   where
-    go t@(TypeVar v TVInt) | not (H.member v (ptVarArg p)), not (H.member v vaenv) = PTopType
-                           | otherwise = t
+    go t@(TypeVar v _) | not (H.member v (ptVarArg p)), not (H.member v vaenv) = PTopType
+                       | otherwise = t
     go (UnionType mtop pos consts) = UnionType (fmap goTop mtop) (goLeafs pos) consts
-    go t = t
     goTop (preds, negLeafs, ncs) = (mapTypePreds (mapTypePred goPartial) preds, goLeafs negLeafs, ncs)
     goLeafs = joinUnionType . map goPartial . splitUnionType
     goPartial pt = pt{ ptVars  = fmap go (ptVars pt)
