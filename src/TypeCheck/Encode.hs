@@ -223,6 +223,15 @@ nonLinearEqConstraints obj =
   , ((_, m1), (_, m2)) <- zip grp (tail grp)
   ]
 
+-- | An annotation is a root statement: nothing consumes it, so no 'ArrowTo' source position
+-- ever writes its requirement (application metas otherwise get their requirements from their
+-- consumers). An annotation's requirement is its own spelled annotation — seed the
+-- application meta with the annotation name's relation type, which 'BoundedByObjs' then
+-- narrows to the declared annotation object (e.g. @#assert(test -> Boolean)@), giving the
+-- argument slots their requirements through the usual arg projection ('PropEq').
+annotSeedConstraints :: [VExpr] -> [VConstraintDat]
+annotSeedConstraints = map (\a -> BoundedByKnown 46 (getExprMeta a) (relTypeAppliedVal (exprPath a)))
+
 fromObjArr :: EncodeState -> PObjArr -> StateT FEnv TypeCheckResult VObjArr
 fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   ObjArrTypeGraph (ObjectMap objTg) <- gets (teTypeGraph . feTypeEnv)
@@ -245,6 +254,7 @@ fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   modify $ addConstraints $ maybe [] nonLinearEqConstraints oaObj'
   modify startConstrainBlock
   oaAnnots' <- mapM (fromExpr est) oaAnnots
+  modify $ addConstraints $ annotSeedConstraints oaAnnots'
   oaArr' <- case oaArr of
     Nothing -> return Nothing
     Just (arrExpr, arrM) -> do
@@ -316,6 +326,7 @@ fromObjectMap oa@ObjArr{oaAnnots, oaObj=Just obj, oaArr} = do
 
   let est = EncodeOut (Just obj')
   oaAnnots' <- mapM (fromExpr est) oaAnnots
+  modify $ addConstraints $ annotSeedConstraints oaAnnots'
   oaArr' <- forM oaArr $ \(maybeArrE, arrM) -> do
     mUserReturn' <- fromMeta BAct est arrM (printf "Specified result from %s" (show $ exprPath obj'))
     case maybeArrE of
@@ -340,6 +351,7 @@ fromPrgm (Prgm objMap classGraph annots) = do
 
   modify startConstrainBlock
   annots' <- mapM (fromExpr (EncodeOut Nothing)) annots
+  modify $ addConstraints $ annotSeedConstraints annots'
   modify $ endConstraintBlock Nothing H.empty
 
   return (objMap', classGraph, annots')

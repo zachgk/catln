@@ -1113,6 +1113,12 @@ typeVal = singletonType . partialVal
 relTypeVal :: TypeName -> Type
 relTypeVal n = TopType H.empty (PredsOne (PredRel $ partialVal n))
 
+-- | Like 'relTypeVal' but admitting any arguments: the relation type of a name's APPLIED
+-- spellings as well as its bare value ('partialVal' alone is exactly-zero-args, which would
+-- exclude an applied form such as @#runtime(k=...)@ from the relation).
+relTypeAppliedVal :: TypeName -> Type
+relTypeAppliedVal n = TopType H.empty (PredsOne (PredRel (partialVal n){ptArgMode=PtArgAny}))
+
 -- | Relax an upper bound so an argument-less partial constrains only its name, but only
 -- where the bounded value already carries that name /with arguments/.
 --
@@ -4601,7 +4607,22 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
             (Just (TypeVar (TVVar v) TVInt), _) -> Just v
             (_, Just (TypeVar (TVVar v) TVInt)) -> Just v
             _                                   -> Nothing
-      let intersectedPartials sup@PartialType{ptVars=supVars} sub = case (slotOwnVar sup, typeGetAux propName sup) of
+      -- The resolving slot read, with an ABSENT arg slot read at its DECLARED bound rather
+      -- than the bare ⊤ fallback of 'typeGetArg'. The occurrence's realizable value-set is
+      -- declaration-bounded — no constructible value holds a field outside its declared type —
+      -- the same clamp the partial subtype applies through its declared-bound fallback. The
+      -- stored spellings @#assert..@ and @#assert(test=∀Boolean, msg=String)??@ denote the
+      -- SAME set (which is why a respelling never commits — 'eqScheme' reads it as a no-op),
+      -- so the projection must read the declared bound out of the name-only spelling itself
+      -- (an argument slot requirement, e.g. an annotation's @test -> ∀Boolean@, stays ⊤
+      -- otherwise). Free template parameters of the declared bound read ⊤ ('freeTVIntToTopDeep').
+      let slotRead sup = case (rawSlot propName sup, typeGetAux propName sup) of
+            (Nothing, Just supProp) | TVArg k <- propName ->
+              case [freeTVIntToTopDeep vaenv sup d | PartialType{ptArgs=dArgs} <- typeGraphData typeEnv (ptName sup), Just d <- [H.lookup k dArgs]] of
+                [] -> Just supProp
+                ds -> Just $ intersectTypesEnv typeEnv vaenv supProp (unionAllTypes typeEnv ds)
+            (_, r) -> r
+      let intersectedPartials sup@PartialType{ptVars=supVars} sub = case (slotOwnVar sup, slotRead sup) of
             (Just v, _) -> do
               -- A pointer slot names a MEMBERSHIP position (@this -> $T@): a single
               -- occurrence's evidence must NOT meet-narrow the var — a sibling occurrence may
@@ -4646,7 +4667,7 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
           -- than the existing binding, a monotonicity violation when this constraint's scope
           -- does not bind @$_T@). Resolve the meet's fresh discoveries back in, mirroring the
           -- prop intersection above ('intersectedPartials').
-          let (ivaenv, tp0) = intersectTypesWithVarEnv typeEnv vaenv (H.lookupDefault PTopType v vaenv) (unionAllTypesWithEnv typeEnv vaenv $ mapMaybe (typeGetAux propName) supPartialList)
+          let (ivaenv, tp0) = intersectTypesWithVarEnv typeEnv vaenv (H.lookupDefault PTopType v vaenv) (unionAllTypesWithEnv typeEnv vaenv $ mapMaybe slotRead supPartialList)
           let tpBindings = H.difference ivaenv vaenv
           let tp' = if H.null tpBindings then tp0 else substituteKeep tpBindings tp0
           let vaenv' = H.insert v tp' vaenv
@@ -4683,7 +4704,7 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
           let superType' = compactType typeEnv vaenv $ UnionType Nothing (joinUnionType $ mapMaybe updateSuperPartial $ splitUnionType supPartials) []
           (vaenv', superType', subType)
         PTopType -> do
-          let sub' = case mapMaybe (typeGetAux propName) supPartialList of
+          let sub' = case mapMaybe slotRead supPartialList of
                 []       -> PTopType
                 supProps -> compactType typeEnv vaenv $ unionAllTypes typeEnv supProps
           (vaenv, superType, sub')
