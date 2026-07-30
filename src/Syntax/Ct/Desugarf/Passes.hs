@@ -129,10 +129,12 @@ resolveRelativeNames fullPrgm@(Prgm fullPrgmObjMap _ _) (Prgm objMap (ClassGraph
 -- @class(TEqv[$T])@, desugars to a receiver typed as the bare class @∀TEqv@ (a class
 -- predicate with no type parameters). The method's @$T@ is then disconnected from the class
 -- parameter and floats to 'TopType'. This pass restores the link: for each method whose
--- @this@ receiver is a parameterized class, it fills the receiver's 'ptVars' with an identity
--- binding for every declared class parameter (@∀TEqv@ becomes @TEqv[T=$T]@). A method argument
--- that names @$T@ then shares the receiver's parameter variable, so an instance that binds it
--- concretely (@MyEqv isa TEqv[$T= Integer]@) flows that binding into the method's arguments.
+-- @this@ receiver is a parameterized class, it fills the receiver's 'ptVars' with a PARENT
+-- link for every declared class parameter (@∀TEqv@ becomes @TEqv[T=$_T]@ — the receiver
+-- partial's parameter names the method declaration's own @$T@, the scope surrounding the
+-- receiver spelling). A method argument that names @$T@ then shares the receiver's parameter
+-- variable, so an instance that binds it concretely (@MyEqv isa TEqv[$T= Integer]@) flows
+-- that binding into the method's arguments.
 --
 -- Parameters already present on the receiver (e.g. the explicit @:Result[$R, $E].default@ form)
 -- are left untouched, and receivers that are not parameterized classes are unchanged.
@@ -158,7 +160,7 @@ linkClassMethodReceivers (Prgm _ (ClassGraph fullCg) _) (Prgm (ObjectMap objMap)
     enrichReceiverType (TopType negPartials (PredsOne (PredClass p@PartialType{ptName, ptVars})))
       | Just (CGClass (_, PartialType{ptVars=classVarsDecl}, _, _)) <- graphLookup (PClassName ptName) fullCg
       , not (H.null classVarsDecl)
-      = TopType negPartials (PredsOne (PredClass p{ptVars=H.union ptVars (H.mapWithKey (\k _ -> TypeVar (TVVar k) TVInt) classVarsDecl)}))
+      = TopType negPartials (PredsOne (PredClass p{ptVars=H.union ptVars (H.mapWithKey (\k _ -> TypeVar (TVVar k) TVExt) classVarsDecl)}))
     enrichReceiverType t = t
 
 -- |

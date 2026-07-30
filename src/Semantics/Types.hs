@@ -1926,11 +1926,11 @@ classSatCandidates typeEnv vaenv gatePos PartialType{ptName, ptVars=classVarsP} 
         informativeVars = H.filter (/= PTopType) classVars
         substMemberVar (TypeVar (TVVar v) _) = case H.lookup v informativeVars of
           Just b  -> b
-          -- Keep the member's own parameter as a PARTIAL-LOCAL ('TVInt') variable: an
-          -- uninstantiated class parameter is flexible per value, and must not be captured
-          -- by a like-named binding in the ambient scope (declarations write it as @$_T@,
-          -- which is 'TVExt' and would otherwise resolve against the caller's environment).
-          Nothing -> TypeVar (TVVar v) TVInt
+          -- An uninstantiated class parameter is flexible per value — the ⊤ it denotes. The
+          -- class scope the @$_T@ spelling names is exiting here, and fabricating a
+          -- partial-local self-entry (@/T=$/T@) instead is a producer error form (a
+          -- parameter is a constant, another variable, or a parent link — never itself).
+          Nothing -> PTopType
         substMemberVar t = substituteVarsWithVarEnv informativeVars t
         -- The member leaves the class scope here, so its declared fields/preds are
         -- instantiated at expansion EXIT ('substitutePartialExit', as 'expandClassPartial'
@@ -3850,7 +3850,7 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
   let ambientVars = fst $ splitVarArgEnv vaenv
   -- Only a binding some arg value REFERENCES may be hoisted: the reference marks the name as
   -- belonging to THIS partial's scope. The arg meets also record under names with no such
-  -- reference — a nested partial's demoted local ('demoteTVExtVars') resolving per value, or a
+  -- reference — a nested partial's local var resolving per value, or a
   -- class predicate's own var KEY (@∀Monad[/T=..]@ meeting a member binds the class's @/T@) —
   -- and stamping those onto this partial captures a like-named var of an unrelated scope
   -- (@operator==[$T]@ gaining @/T=Integer@ from its operand's element).
@@ -3967,7 +3967,7 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
     -- intersectMap unions so that all typeVars from either a or b are kept
     intersectMapVars vev a b = traverse subValidate $ H.unionWith subUnionVar (fmap (vev,) a) (fmap (vev,) b)
     -- A bare partial-local ('TVInt') reference stored in a VAR slot is a pointer within the
-    -- partial itself (e.g. a demoted foreign arm's element var — see 'demoteTVExtVars'): it is
+    -- partial itself (a partial-local element var, flexible per value): it is
     -- flexible per value and must neither read nor record ambient bindings under its name — a
     -- like-named var of the enclosing scope is a DIFFERENT var. The meet is the other side.
     subUnionVar (aVaenv, TypeVar _ TVInt) (bVaenv, b) = (mergeAllVarEnvs typeEnv [aVaenv, bVaenv], b)
@@ -4467,29 +4467,6 @@ substitutePartialKeep vaenv partial@PartialType{ptVars, ptArgs, ptPreds} = parti
     ptVars' = fmap (substituteKeep vaenv) ptVars
     innerVaenv = joinVarArgEnv ptVars' H.empty
 
--- | Demotes every external ('TVExt') type-VARIABLE reference in a type to partial-local
--- ('TVInt'). Used when a type crosses a scope boundary INWARD — a point's type being written
--- into another partial's arg\/var slot ('updateTypeProp'). A @$_T@ in the written type referred
--- to the SOURCE point's scope (e.g. an instance arm's own element var, kept raw in the point's
--- union); inside the receiving partial that scope does not exist, and keeping the reference
--- external lets a like-named var of the RECEIVING scope capture it (a @pure@ arm's
--- @Cons[/T=$_T]@ stamping @/T=Integer@ onto an enclosing @operator==[$T]@ through the arg-meet
--- hoist of 'intersectPartialsBase'). Partial-local is exactly the remaining meaning: an element
--- instantiable per value, resolved only against its own partial. 'TVArg' references are left
--- untouched (pointer slots have their own machinery), as is everything under a 'Just' top's
--- predicates (a recursive @PredClass ConsList[/T=$_T]@ stays linked — see 'substitutePartialKeep').
-demoteTVExtVars :: Type -> Type
-demoteTVExtVars (TypeVar (TVVar n) TVExt) = TypeVar (TVVar n) TVInt
-demoteTVExtVars (UnionType Nothing partials consts) =
-  UnionType Nothing (joinUnionType $ map demotePartialTVExtVars $ splitUnionType partials) consts
-demoteTVExtVars t = t
-
-demotePartialTVExtVars :: PartialType -> PartialType
-demotePartialTVExtVars partial@PartialType{ptVars, ptArgs} = partial{
-    ptVars = fmap demoteTVExtVars ptVars,
-    ptArgs = fmap demoteTVExtVars ptArgs
-    }
-
 -- | The names of all external ('TVExt') type-VARIABLE references occurring anywhere in a type —
 -- var\/arg slot values of every positive and negative leaf, and predicate partials. Used by
 -- 'intersectPartialsBase' to decide which arg-meet discoveries genuinely belong to the
@@ -4813,9 +4790,10 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
       let rawSlot (TVVar k) p   = H.lookup k (ptVars p)
           rawSlot (TVArg k) p   = H.lookup k (ptArgs p)
           rawSlot TVApplied{} _ = Nothing
-      -- The value STORED into the slot is demoted ('demoteTVExtVars'): the sub's type crosses
-      -- into the sup partial's scope, where its external var references would be captured by
-      -- like-named sup vars. The value RETURNED to the sub point keeps its own scope's refs.
+      -- The value STORED into the slot exits the sub's scope: an external reference the
+      -- constraint scope does not bind names a scope that ceases to exist here and reads as
+      -- the ⊤ it denotes ('dropOutOfScopeTVExt'); an in-scope reference stays a link. The
+      -- value RETURNED to the sub point keeps its own scope's refs.
       -- The slot's partial-internal var, whether stored directly or read through the pointer.
       let slotOwnVar sup = case (rawSlot propName sup, typeGetAux propName sup) of
             (Just (TypeVar (TVVar v) TVInt), _) -> Just v
@@ -4867,7 +4845,7 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
                           | otherwise          = substituteKeep newBindings newProp0
               if isBottomType newProp
                 then Nothing
-                else Just (typeSetAux propName (demoteTVExtVars newProp) sup, newProp)
+                else Just (typeSetAux propName (dropOutOfScopeTVExt vaenv newProp) sup, newProp)
             (_, Nothing) -> Nothing
       case subType of
         UnionType Nothing subPartials [] -> do
