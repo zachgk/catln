@@ -1,7 +1,9 @@
 module Semantics.TypesTests where
 
 import           Common.TestCommon         (findCt)
+import           Control.Exception         (evaluate)
 import           Control.Monad
+import           Control.Monad.IO.Class    (MonadIO)
 import           Control.Monad.Trans       (lift)
 import           CRes
 import           CtService
@@ -15,6 +17,7 @@ import           MapMeta                   (clearMetaDat, mapMetaPrgm)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
+import           System.Timeout            (timeout)
 import           Test.Tasty
 import           Test.Tasty.Hedgehog       as HG
 import qualified Test.Tasty.Patterns.Types as TT
@@ -303,6 +306,18 @@ propDifferenceSubset gPrgm = property $ do
     else assert $ isEqTypeWithEnv typeEnv vaenv sub b
 
 
+-- | Deep-force a stage's result under a wall-clock budget: a case that exceeds it fails the
+-- property, so hedgehog SHRINKS toward a minimal pathological input (a livelocked op otherwise
+-- hangs the suite with no reported counterexample; deep-forcing via 'show' reaches every thunk).
+forceTimed :: (Show a, Monad m, MonadTest m, MonadIO m) => String -> a -> m ()
+forceTimed stage x = do
+  r <- evalIO $ timeout 5000000 (evaluate (length (show x)))
+  case r of
+    Just _  -> pure ()
+    Nothing -> do
+      footnote $ printf "TIMEOUT (5s) forcing stage: %s" stage
+      failure
+
 -- A∩B=A-(A-B)
 propIntersectByDifference :: IO GenPrgm -> Property
 propIntersectByDifference gPrgm = property $ do
@@ -313,11 +328,15 @@ propIntersectByDifference gPrgm = property $ do
   a <- forAll $ genType prgm
   b <- forAll $ HG.choice [genType prgm, genRelatedType prgm a]
   let intersect' = intersectR typeEnv vaenv a b
+  forceTimed "intersect a.b" intersect'
   annotate $ printf "intersect' = %s" (show intersect')
   let subDiff' = diffR typeEnv vaenv a b
+  forceTimed "a-b" subDiff'
   let diff' = diffR typeEnv vaenv a subDiff'
+  forceTimed "a-(a-b)" diff'
   annotate $ printf "a-b' = %s" (show subDiff')
   annotate $ printf "diff' = a-(a-b) = %s" (show diff')
+  forceTimed "isEq" (isEqTypeWithEnv typeEnv vaenv intersect' diff')
   assert $ isEqTypeWithEnv typeEnv vaenv intersect' diff'
 
 -- A-B=A-(A∩B)
