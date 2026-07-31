@@ -1617,9 +1617,13 @@ expandClassPartialWithNamesFull typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaen
         -- @ConsList[/T=$_T]@ - must receive this class's instantiated arguments before being
         -- re-expanded, or the nested member's element parameter stays the raw member variable
         -- (@$_T@) instead of the class argument (e.g. @Integer@). The sibling 'TypeVar' case below
-        -- already looks the argument up; this mirrors it for the nested-class form.
+        -- already looks the argument up; this mirrors it for the nested-class form. EXIT
+        -- substitution ('substituteExit'): the class scope the @$_T@ spelling names ceases to
+        -- exist here, so a ⊤-bound parameter substitutes the ⊤ it denotes — the keep-symbolic
+        -- variant would leak the dangling spelling into the re-expansion's 'classVarsP', where a
+        -- like-named enclosing scope later captures it.
         mapClassTypeWithNamesFull (TopType negPartials ps) =
-          expandTypesWithNamesFull typeEnv vaenv (substituteVarsWithVarEnv classVars (TopType negPartials ps)) allowedNames
+          expandTypesWithNamesFull typeEnv vaenv (substituteExit (joinVarArgEnv classVars H.empty) (TopType negPartials ps)) allowedNames
         mapClassTypeWithNamesFull (TypeVar (TVVar t) _) = case H.lookup t classVars of
           Just v  -> expandTypesWithNamesFull typeEnv vaenv (intersectTypesEnv typeEnv vaenv v (H.lookupDefault PTopType t classVars)) allowedNames
           Nothing -> error $ printf "Unknown var %s in expandPartial" (show t)
@@ -1668,7 +1672,10 @@ expandClassPartial typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv PartialType
           mapClassType (TypeVar (TVApplied t _) _) = error $ printf "Applied var %s found in expandPartial" (show t)
           mapClassType (UnionType Nothing p []) = UnionType Nothing (joinUnionType $ map mapClassPartial $ splitUnionType p) []
           mapClassType t@(UnionType Nothing _ _) = t
-          mapClassType t@(UnionType (Just _) _ _) = t
+          -- A class-typed member (@List@'s @∀ConsList[/T=$_T]@) exits the class scope here:
+          -- substitute its external references totally ('substituteExit'), or the dangling
+          -- spelling leaks and a like-named enclosing scope captures it.
+          mapClassType t@(UnionType (Just _) _ _) = substituteExit (joinVarArgEnv classVars H.empty) t
           expandNeg t@(UnionType (Just _) _ _) = t
           expandNeg (TypeVar tv _) = H.lookupDefault PTopType tv vaenv
           expandNeg t              = t
@@ -1918,7 +1925,14 @@ classSatCandidates typeEnv vaenv gatePos PartialType{ptName, ptVars=classVarsP} 
         -- @ConsList[/T=$_T]@ member) before enumerating it, mirroring 'mapClassPartial'/'substMemberVar'
         -- on the positive-partial members: otherwise the member's element parameter stays free and the
         -- enumeration widens it (@List[/T=Integer]@ would enumerate as @ConsList[/T=$_T]@).
-        candsOfType t = map CandGoal <$> typeSatDNF vaenv (substituteVarsWithVarEnv informativeVars t)
+        -- EXIT substitution ('substituteExit'): a ⊤-bound parameter substitutes the ⊤ it denotes.
+        -- Keeping the @$_T@ spelling instead (the informative-only variant) leaks it into the
+        -- recursive member query, whose own 'classVars' meet runs under the QUERY's ambient env —
+        -- a like-named ambient binding then captures the class-scope spelling and hardens the
+        -- member's element (@Cons[/T=⊤] ⊆ ∀List[/T=⊤]@ read False under an ambient @/T=∀Ord@).
+        -- Flexibility is NOT lost: each 'classSatCandidates' level re-derives it from its own
+        -- uninstantiated parameters ('substMemberVar's ⊤ path and the cover checks' free reads).
+        candsOfType t = map CandGoal <$> typeSatDNF vaenv (substituteExit (joinVarArgEnv classVars H.empty) t)
         -- Substitute only informative bindings: an uninstantiated parameter (bound to
         -- 'PTopType', the declaration default) leaves the member's own type variable in
         -- place, keeping it FLEXIBLE for the cover checks - parity with the enumeration
@@ -3694,8 +3708,8 @@ foldRecursiveType typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv t@(UnionType
           Nothing       -> True
           Just PTopType -> True
           Just v -> any (\dv -> readSlot l v == readSlot l dv) (H.lookupDefault [] (ptName l, k) memberDeclArgs)
-        readSlot l t@(TypeVar (TVVar n) TVInt) = maybe t resolveFlex (H.lookup n (ptVars l))
-        readSlot _ t = resolveFlex t
+        readSlot l sv@(TypeVar (TVVar n) TVInt) = maybe sv resolveFlex (H.lookup n (ptVars l))
+        readSlot _ sv = resolveFlex sv
         fieldCovers _ PTopType                 = True -- ⊤ tail ≡ ∀C[E-linked] (declaration-bounded)
         fieldCovers ownVars (UnionType Nothing pos []) = covers (Just ownVars) (splitUnionType pos) -- nested explicit unrolling
         fieldCovers ownVars (UnionType (Just (preds, negLeafs, [])) p [])
@@ -4720,48 +4734,57 @@ resolveTypeSelfRefs = go
 -- does a bare top-level variable (same doctrine) and every 'TVArg'/'TVInt' reference (arg
 -- links and partial-local pointers are structural, not ambient names).
 dropOutOfScopeTVExt :: TypeVarArgEnv -> Type -> Type
-dropOutOfScopeTVExt vaenv = onType
+dropOutOfScopeTVExt vaenv = onType (S.fromList (H.keys vaenv))
   where
-    onType (UnionType mtop pos consts) =
-      UnionType (fmap onTop mtop) (joinUnionType $ map onLeaf $ splitUnionType pos) consts
-    onType t = t -- a bare top-level variable stays symbolic
-    onTop (preds, negLeafs, ncs) =
-      (mapTypePreds (mapTypePred onLeaf) preds, joinUnionType $ map onLeaf $ splitUnionType negLeafs, ncs)
-    onLeaf p@PartialType{ptVars, ptArgs, ptPreds} = p{
-        ptVars  = fmap onSlot ptVars,
-        ptArgs  = fmap onSlot ptArgs,
-        ptPreds = mapTypePreds (mapTypePred onLeaf) ptPreds
+    onType sc (UnionType mtop pos consts) =
+      UnionType (fmap (onTop sc) mtop) (joinUnionType $ map (onLeaf sc) $ splitUnionType pos) consts
+    onType _ t = t -- a bare top-level variable stays symbolic
+    onTop sc (preds, negLeafs, ncs) =
+      (mapTypePreds (mapTypePred (onLeaf sc)) preds, joinUnionType $ map (onLeaf sc) $ splitUnionType negLeafs, ncs)
+    -- SCOPES NEST through partials: a spelling one level inside a partial's ARG slot references
+    -- that partial's own vars (@insertStep[/T=∀Ord](tail=∀ConsList[/T=$_/T])@'s @$_/T@ names the
+    -- insertStep partial's @/T@), so descending into args extends the in-scope set with the
+    -- partial's var names. The partial's own 'ptVars' VALUES still reference the scope
+    -- CONTAINING the partial and keep the un-extended set.
+    onLeaf sc p@PartialType{ptVars, ptArgs, ptPreds} = p{
+        ptVars  = fmap (onSlot sc) ptVars,
+        ptArgs  = fmap (onSlot sc') ptArgs,
+        ptPreds = mapTypePreds (mapTypePred (onLeaf sc')) ptPreds
       }
-    onSlot t@(TypeVar v@(TVVar _) TVExt) | not (H.member v vaenv) = PTopType
-                                         | otherwise              = t
-    onSlot (TypeVar (TVApplied b ovr) loc) = case onSlot (TypeVar b loc) of
+      where sc' = S.union sc (S.fromList (map TVVar (H.keys ptVars)))
+    onSlot sc t@(TypeVar v@(TVVar _) TVExt) | not (S.member v sc) = PTopType
+                                            | otherwise           = t
+    onSlot sc (TypeVar (TVApplied b ovr) loc) = case onSlot sc (TypeVar b loc) of
       PTopType -> PTopType
-      base     -> applyTypeVarOverrides (fmap onSlot ovr) base
-    onSlot (UnionType mtop pos consts) =
-      UnionType (fmap onTop mtop) (joinUnionType $ map onLeaf $ splitUnionType pos) consts
-    onSlot t = t
+      base     -> applyTypeVarOverrides (fmap (onSlot sc) ovr) base
+    onSlot sc (UnionType mtop pos consts) =
+      UnionType (fmap (onTop sc) mtop) (joinUnionType $ map (onLeaf sc) $ splitUnionType pos) consts
+    onSlot _ t = t
 
 -- | Whether 'dropOutOfScopeTVExt' would change the type: some NESTED external ('TVExt'
 -- 'TVVar') reference is not bound by the ambient env. A cheap early-exit scan so the common
 -- reference-free case pays no rewrite ('compactType' consults this on every union).
 hasOutOfScopeTVExt :: TypeVarArgEnv -> Type -> Bool
-hasOutOfScopeTVExt vaenv = onType
+hasOutOfScopeTVExt vaenv = onType (S.fromList (H.keys vaenv))
   where
-    onType (UnionType mtop pos _) = maybe False onTop mtop || any onLeaf (splitUnionType pos)
-    onType _ = False
-    onTop (preds, negLeafs, _) = predsHas preds || any onLeaf (splitUnionType negLeafs)
-    predsHas (PredsOne p)  = onLeaf (predPartial p)
-    predsHas (PredsAnd ps) = any predsHas ps
-    predsHas (PredsNot p)  = predsHas p
+    onType sc (UnionType mtop pos _) = maybe False (onTop sc) mtop || any (onLeaf sc) (splitUnionType pos)
+    onType _ _ = False
+    onTop sc (preds, negLeafs, _) = predsHas sc preds || any (onLeaf sc) (splitUnionType negLeafs)
+    predsHas sc (PredsOne p)  = onLeaf sc (predPartial p)
+    predsHas sc (PredsAnd ps) = any (predsHas sc) ps
+    predsHas sc (PredsNot p)  = predsHas sc p
     predPartial (PredExpr p)  = p
     predPartial (PredClass p) = p
     predPartial (PredRel p)   = p
-    onLeaf PartialType{ptVars, ptArgs, ptPreds} =
-      any onSlot (H.elems ptVars) || any onSlot (H.elems ptArgs) || predsHas ptPreds
-    onSlot (TypeVar v@(TVVar _) TVExt)   = not (H.member v vaenv)
-    onSlot (TypeVar (TVApplied b ovr) loc) = onSlot (TypeVar b loc) || any onSlot (H.elems ovr)
-    onSlot t@UnionType{}                 = onType t
-    onSlot _                             = False
+    -- Mirrors 'dropOutOfScopeTVExt': scopes nest through partials, so arg slots (and preds)
+    -- are scanned with the partial's own var names added to the in-scope set.
+    onLeaf sc PartialType{ptVars, ptArgs, ptPreds} =
+      any (onSlot sc) (H.elems ptVars) || any (onSlot sc') (H.elems ptArgs) || predsHas sc' ptPreds
+      where sc' = S.union sc (S.fromList (map TVVar (H.keys ptVars)))
+    onSlot sc (TypeVar v@(TVVar _) TVExt)   = not (S.member v sc)
+    onSlot sc (TypeVar (TVApplied b ovr) loc) = onSlot sc (TypeVar b loc) || any (onSlot sc) (H.elems ovr)
+    onSlot sc t@UnionType{}                 = onType sc t
+    onSlot _ _                              = False
 
 -- | Relate an arrow's declared result to the type variables the source bound. A method whose
 -- result is a class parameterized by the RECEIVER's own type — @:$T.eq[$T -> Eq] -> Eqv[$T]@ — loses
@@ -4934,7 +4957,11 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
                           | otherwise          = substituteKeep newBindings newProp0
               if isBottomType newProp
                 then Nothing
-                else Just (typeSetAux propName (dropOutOfScopeTVExt vaenv newProp) sup, newProp)
+                -- The stored value sits INSIDE @sup@'s scope (scopes nest through partials), so
+                -- the drop's in-scope set extends with @sup@'s own var names — a slot value
+                -- @∀ConsList[/T=$_/T]@ under @insertStep[/T=∀Ord]@ keeps its link. The value is
+                -- detached from @sup@ here, so the enclosing scope must be supplied explicitly.
+                else Just (typeSetAux propName (dropOutOfScopeTVExt (H.union (joinVarArgEnv supVars H.empty) vaenv) newProp) sup, newProp)
             (_, Nothing) -> Nothing
       case subType of
         UnionType Nothing subPartials [] -> do
