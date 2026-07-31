@@ -84,7 +84,7 @@ module(Data)
   > /Data/reversed(lst= [])
     >>> []
   # ## Sorting
-  sorted(lst -> /Data/List[$T -> /Data/Algebra/Ord]) -> /Data/List[$T -> /Data/Algebra/Ord]
+  sorted[$T -> /Data/Algebra/Ord](lst -> /Data/List[$T -> $_T]) -> /Data/List[$T -> $_T]
     # [sorted] returns the items of an [Ord] list in ascending order using insertion sort: it sorts
       the [tail], then [insert]s the [head] into the sorted result. [insert] walks the already
       sorted list and places [x] before the first item it is not greater than; [insertStep] carries
@@ -92,11 +92,11 @@ module(Data)
       [False].
   sorted(lst= Nil)= /Data/Nil
   sorted(lst= /Data/Cons[$T -> /Data/Algebra/Ord](head@h, tail@t)) =
-    insertStep[$T -> /Data/Algebra/Ord](before -> Boolean, x -> $T, head -> $T, tail -> ConsList[$T -> /Data/Algebra/Ord]) -> ConsList
-    insertStep(before= /Data/Primitive/True, x, head, tail)= /Data/Cons(head= x, tail= /Data/Cons(head= head, tail= tail))
-    insertStep(before= /Data/Primitive/False, x, head, tail)= /Data/Cons(head= head, tail= insert(x= x, lst= tail))
+    insertStep[$T -> /Data/Algebra/Ord](before -> Boolean, x -> $T, head -> $T, tail -> ConsList[$T -> /Data/Algebra/Ord]) -> ConsList[$T -> $_T]
+    insertStep[$T -> /Data/Algebra/Ord](before= /Data/Primitive/True, x, head, tail)= /Data/Cons(head= x, tail= /Data/Cons(head= head, tail= tail))
+    insertStep[$T -> /Data/Algebra/Ord](before= /Data/Primitive/False, x, head, tail)= /Data/Cons(head= head, tail= insert(x= x, lst= tail))
 
-    insert[$T -> /Data/Algebra/Ord](x -> $T, lst -> ConsList[$T -> /Data/Algebra/Ord]) -> ConsList
+    insert[$T -> /Data/Algebra/Ord](x -> $T, lst -> ConsList[$T -> /Data/Algebra/Ord]) -> ConsList[$T -> $_T]
     insert(x, lst= Nil)= /Data/Cons(head= x, tail= /Data/Nil)
     insert(x, lst= /Data/Cons[$T -> /Data/Algebra/Ord](head, tail))= insertStep(before= x.compareTo(other= head).isLessEq, x= x, head= head, tail= tail)
     insert(x= h, lst= sorted(lst= t))
