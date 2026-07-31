@@ -38,7 +38,6 @@ module(Data)
     # The [ContextIn] is used to represent an input state in a function.
   data(/ContextOut[$V](value -> $V, .._))
     # The [ContextOut] is used to represent an output state in a function.
-
   data(/main)
     # The program entry point. A [main{io -> IO}] definition desugars to a [ContextIn] wrapping the
     # [main] value, so [main] only ever appears value-side and would otherwise not be a declared
