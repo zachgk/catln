@@ -3161,6 +3161,50 @@ compactPartialsWithClassPred typeEnv vaenv partials = unionPartialLeafs $ map tr
           where
             (exprs', classes', rels') = splitPreds ps
 
+-- | Whether a type still carries unresolved bare-⊤ content: a bare ⊤ in the type itself, a
+-- var\/arg slot value at any depth, or a class\/rel\/expr predicate parameter. A type VARIABLE
+-- is a LINK covered by its binding, not an unknown — only bare ⊤ is unresolved content. A
+-- predicate-bounded top (@∀ConsList[/T=Integer]@) is determined by its predicates and counts
+-- only through a ⊤ inside them. Excluded (negated) leafs are not scanned — a ⊤ there bounds
+-- what the type is NOT and holds no unresolved content.
+typeContainsBareTop :: Type -> Bool
+typeContainsBareTop PTopType = True
+typeContainsBareTop (TypeVar _ _) = False
+typeContainsBareTop (UnionType mtop pos _) = topContains || any partialContains (splitUnionType pos)
+  where
+    topContains = case mtop of
+      Just (preds, _, _) -> predsContains preds
+      Nothing            -> False
+    predsContains (PredsOne p)  = partialContains (predPartial p)
+    predsContains (PredsAnd ps) = any predsContains ps
+    predsContains (PredsNot p)  = predsContains p
+    predPartial (PredExpr p')  = p'
+    predPartial (PredClass p') = p'
+    predPartial (PredRel p')   = p'
+    partialContains PartialType{ptVars, ptArgs, ptPreds} =
+      any typeContainsBareTop (H.elems ptVars ++ H.elems ptArgs) || predsContains ptPreds
+
+-- | Whether a var-binding STAMP on a partial's 'ptVars' is supported by every DECLARED
+-- occurrence of the variable: an argument whose declared type (data-graph template, or a
+-- nested spelling in the given slot spellings) externally references @n@ ties that slot's
+-- content to the var, so a binding stamped while such a slot's met value still carries
+-- bare-⊤ content claims resolution the content does not have (a deep literal's ⊤-headed
+-- tail reading as Integer-elemented through the instantiated declared bound — the false
+-- subset that froze deep literals). The join\/narrow is withheld until every occurrence's
+-- content supports it; unresolved content only disappears as values narrow, so the
+-- withhold is monotone, and the SAME rule gates the intersect's pointer-join and the
+-- difference's 'narrowPiece' — both sides spell the unsupported case identically, keeping
+-- @A∩B = A−(A−B)@. A vacuous occurrence (@Nil@ under @∀ConsList[/T=..]@) passes.
+varStampSupported :: TypeGraph tg => TypeEnv tg -> TypeName -> [H.HashMap ArgName Type] -> S.HashSet ArgName -> H.HashMap ArgName Type -> TypeVarAux -> Bool
+varStampSupported typeEnv name' spellings ks metArgs (TVVar n) = and
+  [ not (typeContainsBareTop v)
+  | k <- S.toList ks, occAt k, Just v <- [H.lookup k metArgs]]
+  where
+    occAt k = any (declRef k) (typeGraphData typeEnv name') || any (spellRef k) spellings
+    declRef k PartialType{ptArgs=dArgs} = maybe False (S.member n . typeTVExtVarRefs) (H.lookup k dArgs)
+    spellRef k sp = maybe False (S.member n . typeTVExtVarRefs) (H.lookup k sp)
+varStampSupported _ _ _ _ _ _ = True
+
 -- | Checks if a partial has predicates that turn the partial into a 'bottomType' (e.g. a partial with contradictory preds such as isClass A and not isClass A).
 -- Operates on a list of partials in the fused pipeline (no intermediate join); each partial is mapped/dropped independently.
 compactDisconnectedPreds :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> [PartialType] -> [PartialType]
@@ -3601,8 +3645,10 @@ foldRecursiveType typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv t@(UnionType
     -- @U_C@. A leaf whose recursive field is a PROPER subset (e.g. @Cons(tail=Nil)@, produced when
     -- a difference narrows the @tail@) leaves @U_C@ uncovered, so folding to @~C@ would WIDEN it
     -- back to the whole class — the @a−b@ bug where @Cons(tail=Nil)+Nil@ (the empty\/1-element
-    -- lists) folded to @~ConsList@ (ALL lists). Element (non-recursive) fields are NOT checked here:
-    -- a narrowed element rides on 'joinedVars' into the folded @~C[/T=E]@. Purely structural (no
+    -- lists) folded to @~ConsList@ (ALL lists). A narrowed non-recursive field VALUE is checked
+    -- the same way ('declFieldCovers'): a pointer-spelled element rides on 'joinedVars' into the
+    -- folded @~C[/T=E]@, but a directly narrowed value (@head=⊤−X@ from a difference, var still
+    -- ⊤) rides nothing and folding would widen it back. Purely structural (no
     -- 'isSubtypeOf'): terminates on the finite value structure and never depends on the engine
     -- proving a deep recursive equivalence, so it cannot silently disable a genuine fold.
     leafsCoverMembers cName classTypes = covers Nothing leafList
@@ -3612,6 +3658,10 @@ foldRecursiveType typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv t@(UnionType
         recKeysByMember = H.fromListWith S.union
           [ (ptName m, S.fromList [k | (k, fv) <- H.toList (ptArgs m), fieldRefsClass fv])
           | ct <- classTypes, m <- memberPartials ct ]
+        memberArgKeys = H.fromListWith S.union
+          [ (ptName m, H.keysSet (ptArgs m)) | ct <- classTypes, m <- memberPartials ct ]
+        memberDeclArgs = H.fromListWith (++)
+          [ ((ptName m, k), [dv]) | ct <- classTypes, m <- memberPartials ct, (k, dv) <- H.toList (ptArgs m) ]
         memberPartials (UnionType _ pos _) = splitUnionType pos
         memberPartials _                   = []
         -- @mExpect@ threads the ENCLOSING level's element bindings: the fold to @~C[E]@ claims
@@ -3624,6 +3674,19 @@ foldRecursiveType typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv t@(UnionType
         leafCovers mExpect l = maybe True (elemAgreesLeaf (ptVars l)) mExpect
                                && all (\k -> fieldCovers (ptVars l) (H.lookupDefault PTopType k (ptArgs l)))
                                       (S.toList (H.lookupDefault S.empty (ptName l) recKeysByMember))
+                               && all (declFieldCovers l)
+                                      (S.toList (H.lookupDefault S.empty (ptName l) memberArgKeys
+                                                 `S.difference` H.lookupDefault S.empty (ptName l) recKeysByMember))
+        -- A NON-recursive declared field's stored value must cover the member's: ⊤, or a value
+        -- whose reading under the leaf's own scope equals the declared spelling's reading (the
+        -- pointer @head=$/T@ and its bound element both qualify). A properly narrowed value
+        -- (@head=⊤−X@) makes the leaf a proper subset of its member — reject the fold.
+        declFieldCovers l k = case H.lookup k (ptArgs l) of
+          Nothing       -> True
+          Just PTopType -> True
+          Just v -> any (\dv -> readSlot l v == readSlot l dv) (H.lookupDefault [] (ptName l, k) memberDeclArgs)
+        readSlot l t@(TypeVar (TVVar n) TVInt) = maybe t resolveFlex (H.lookup n (ptVars l))
+        readSlot _ t = resolveFlex t
         fieldCovers _ PTopType                 = True -- ⊤ tail ≡ ∀C[E-linked] (declaration-bounded)
         fieldCovers ownVars (UnionType Nothing pos []) = covers (Just ownVars) (splitUnionType pos) -- nested explicit unrolling
         fieldCovers ownVars (UnionType (Just (preds, negLeafs, [])) p [])
@@ -3917,7 +3980,15 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
               _ -> Nothing
         in H.fromList $ mapMaybe joinFor $ S.toList $ S.unions $ map pointerNamesAt ksL
   let exactEnvOf k = maybe H.empty (exactEnvAt k . fst) (H.lookup k liveArgsMap)
-  let hoistFor ks = mergeAllVarEnvs typeEnv $ pointerJoinFor ks : map exactEnvOf (S.toList ks)
+  -- EVERY hoisted stamp — the pointer-occurrence join and the external-reference discoveries
+  -- alike — is gated on every DECLARED occurrence of the name supporting it
+  -- ('varStampSupported'): the declaration ties e.g. a recursive @tail@'s content to the var,
+  -- and stamping past unresolved content there is inexact (it launders the content's bare ⊤
+  -- into the binding's value through the instantiated declared bound — the deep-literal false
+  -- subset). The difference machinery obeys the same rule ('narrowPiece'), so both op
+  -- families spell the unsupported case identically.
+  let hoistFor ks = H.filterWithKey (\n _ -> varStampSupported typeEnv name' [aArgs, bArgs] ks args' (TVVar n)) $
+        mergeAllVarEnvs typeEnv $ pointerJoinFor ks : map exactEnvOf (S.toList ks)
   let argsVarBindings = hoistFor $ H.keysSet liveArgsMap
   let venvs' = mergeAllVarEnvs typeEnv [argsVarBindings, vars']
   let preds' = predsAnd aPreds bPreds
@@ -4289,14 +4360,23 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
         -- 'intersectTypesEnv'), so fold the discovered CONCRETE bindings onto the piece's
         -- DECLARED 'ptVars' (a name the partial does not declare is another scope's var and
         -- is dropped). A var slot narrowed to ∅ makes the escape piece uninhabited.
+        -- The stamp obeys the same occurrence-support rule as the intersect's pointer-join
+        -- ('varStampSupported'): a binding whose declared occurrences still hold bare-⊤
+        -- content is withheld from 'ptVars', and its narrowing stays ON the subtracted
+        -- slot instead (the bare pointer resolves to the discovered value) — the two op
+        -- families then spell the unsupported case identically, keeping @A∩B = A−(A−B)@.
         narrowPiece piece outEnv
           | H.null varBindings = Just piece
           | any isBottomType (H.elems vars') = Nothing
-          | otherwise = Just piece{ptVars=vars'}
+          | otherwise = Just piece{ptVars=vars', ptArgs=fmap resolveWithheld (ptArgs piece)}
           where
             newBindings = H.filter (not . isTypeVar) $ H.difference outEnv vaenv
             varBindings = H.filterWithKey (\k _ -> k `H.member` ptVars piece) $ fst $ splitVarArgEnv newBindings
-            vars' = H.unionWith (intersectTypesEnv typeEnv vaenv) (ptVars piece) varBindings
+            supported n = varStampSupported typeEnv (ptName piece) [ptArgs piece] (H.keysSet (ptArgs piece)) (ptArgs piece) (TVVar n)
+            (stamped, withheld) = (H.filterWithKey (\n _ -> supported n) varBindings, H.filterWithKey (\n _ -> not (supported n)) varBindings)
+            vars' = H.unionWith (intersectTypesEnv typeEnv vaenv) (ptVars piece) stamped
+            resolveWithheld t@(TypeVar (TVVar n) TVInt) = fromMaybe t (H.lookup n withheld)
+            resolveWithheld t = t
         -- Mirror 'subtractArg': skip a neg type-parameter the pos partial does not itself
         -- constrain. Defaulting a missing pos var to ⊤ and subtracting (⊤ − negVar) manufactured
         -- a spurious narrowed leaf — e.g. the universe @Cons{}@ minus the class member
