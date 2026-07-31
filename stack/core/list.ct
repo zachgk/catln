@@ -115,7 +115,7 @@ module(Data)
     rangeFrom(i -> Integer, stop -> Integer) -> /Data/List[$T -> Integer]
     rangeFrom(i, stop)= rangeStep(more= i < stop, i= i, stop= stop)
 
-    rangeStep(more -> Boolean, i -> Integer, stop -> Integer) -> /Data/List[$T -> Integer]
+    rangeStep(more -> Boolean, i -> Integer, stop -> Integer) -> ConsList[$T -> Integer]
     rangeStep(more= /Data/Primitive/False, i, stop)= /Data/Nil
     rangeStep(more= /Data/Primitive/True, i, stop)= /Data/Cons(head= i, tail= rangeFrom(i= i + 1, stop= stop))
 
