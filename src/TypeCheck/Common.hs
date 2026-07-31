@@ -439,6 +439,32 @@ typeVarBindingGained (UnionType _ oldLeafs _) (UnionType _ newLeafs _) =
     informative _ _                      = True
 typeVarBindingGained _ _ = False
 
+-- | Structurally detects whether @new@ strictly NARROWS a nested 'ptVars' dimension that @old@
+-- spells wider (e.g. under an outer @Cons[T=Integer]@, the declaration-clamped tail
+-- @Cons[T=∀Ord](head=$T, …)@ narrowing to @Cons[T=Integer](head=Integer, …)@). The two spellings
+-- denote the SAME set under declaration-boundedness — the outer binding already bounds the
+-- declaration-linked slot's content, so 'eqScheme' rightly judges the schemes equal — but the
+-- stored spelling is what every consumer reads, and the wide form freezes a deep element one
+-- level short (TreeBuild finds no arrows from it). A strictly-finer dimension must therefore
+-- commit. Gain-only like the neighboring rules: the reverse widening stays a no-op under the
+-- 'eqScheme' path, so the finer spelling is kept once found and there is no oscillation.
+-- Mirrors the matching discipline of 'typeVarLost' (single same-name partial on each side;
+-- nested positions compared only on shared keys). Var LINKS are skipped — only two resolved
+-- dimension values are compared.
+nestedVarNarrowed :: TypeGraph tg => TypeEnv tg -> Type -> Type -> Bool
+nestedVarNarrowed typeEnv (UnionType _ oldLeafs _) (UnionType _ newLeafs _) =
+  or [ partialNarrowed op np
+     | (name, [op]) <- H.toList (splitUnionTypeByName oldLeafs)
+     , Just [np] <- [H.lookup name (splitUnionTypeByName newLeafs)] ]
+  where
+    partialNarrowed op np =
+      or [ dimNarrowed ov nv | (k, ov) <- H.toList (ptVars op), Just nv <- [H.lookup k (ptVars np)] ]
+      || or [ nestedVarNarrowed typeEnv ov nv | (k, ov) <- H.toList (ptArgs op), Just nv <- [H.lookup k (ptArgs np)] ]
+    dimNarrowed ov@UnionType{} nv@UnionType{} =
+      isSubtypeOfWithEnv typeEnv H.empty nv ov && not (isSubtypeOfWithEnv typeEnv H.empty ov nv)
+    dimNarrowed _ _ = False
+nestedVarNarrowed _ _ _ = False
+
 -- This ensures schemes are correct
 -- It differs from Constrain.checkScheme because it checks for bugs in the internal compiler, not bugs in the user code
 verifyScheme :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> VarMeta -> Scheme -> Scheme -> Maybe String
@@ -505,6 +531,10 @@ setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch} con m@M
       -- Gain-only for the same convergence reason as above: dropping the binding later stays a
       -- no-op, so the resolved value is kept once found.
       (TypeCheckResult _ (SType a1 _ _ _), TypeCheckResult _ (SType a2 _ _ _)) | typeVarBindingGained a1 a2 -> True
+      -- STRICTLY NARROWING a nested 'ptVars' dimension (see 'nestedVarNarrowed') is a spelling
+      -- improvement of the same set that 'eqScheme' judges equal, but the finer spelling is what
+      -- consumers read — it must commit. Gain-only like the two rules above.
+      (TypeCheckResult _ (SType a1 _ _ _), TypeCheckResult _ (SType a2 _ _ _)) | nestedVarNarrowed feTypeEnv a1 a2 -> True
       _ ->  fromMaybe False $ tcreToMaybe $ do
         showVaenv <- vaenv
         return $ not (eqScheme env showVaenv scheme scheme')
