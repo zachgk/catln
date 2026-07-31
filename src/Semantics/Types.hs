@@ -2778,7 +2778,16 @@ isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subAr
     -- it through the shared @vaenv'@ would read the SUPER-met binding back and vacuously prove
     -- e.g. @Cons[/T=$/T](head=$/T) ⊆ Cons[/T=⊤−X](head=$/T)@ ('partialCoversSat'.'elemCovered'
     -- is the settled mirror of this rule).
-    hasAllVars sb sp = and $ H.elems $ H.intersectionWith varOk sb sp
+    -- The sub's var value is first read DECLARATION-BOUNDED through its pointer-declared
+    -- args: a field declared as the bare parameter (@head -> $T@) makes a value's @/T@ that
+    -- field's value, so @Cons[/T=⊤](head=W)@ and @Cons[/T=W](head=$/T)@ spell the same set
+    -- (a ??-interval piece and its enumerated difference form respell the same narrowing on
+    -- the slot vs the var dimension) and must compare equal.
+    subVarEff k v = foldr (intersectTypesEnv typeEnv vaenv) v
+      [ av | (ak, av) <- H.toList subArgs, not (isTypeVar av)
+           , dp <- typeGraphData typeEnv (ptName sub)
+           , Just (TypeVar (TVVar k') TVInt) <- [H.lookup ak (ptArgs dp)], k' == k ]
+    hasAllVars sb sp = and $ H.elems $ H.intersectionWith varOk (H.mapWithKey subVarEff sb) sp
     varOk PTopType _ | teArgModeProjection typeEnv = True
     varOk a b
       | not (teArgModeProjection typeEnv)
