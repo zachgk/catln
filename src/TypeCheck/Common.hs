@@ -465,6 +465,35 @@ nestedVarNarrowed typeEnv (UnionType _ oldLeafs _) (UnionType _ newLeafs _) =
     dimNarrowed _ _ = False
 nestedVarNarrowed _ _ _ = False
 
+-- | Structurally detects the settle machinery's respelling of a nested arg slot
+-- ('TypeCheck.TypeUtils.settlePropSlot' and the 'arrowConstrainUbs' settle-forcing) that
+-- 'eqScheme' judges equal: the slot's positive-leaf NAME SET strictly shrank — a
+-- settle-forced unsettled call form was dropped, invisible because the algebra answers its
+-- class membership SAT-conservatively (@tail=(∀List ∪ rangeFrom(..))@ ≡ @tail=∀List@). The
+-- settled spelling must commit: the stored spelling is what every consumer reads (the
+-- requirement side's declared-bound tighten rides the same store — a scheme commits whole).
+-- Deliberately ONLY the leaf-drop signature: a general strictly-narrower-spelling rule
+-- fires on the natural respelling churn of every epoch and the per-commit verification
+-- cost is measured intractable. Gain-only like the neighboring rules (re-adding a dropped
+-- leaf stays a no-op under the 'eqScheme' path), so there is no oscillation. Mirrors the
+-- matching discipline of 'typeVarLost' (single same-name partial on each side; shared keys
+-- only). Consulted only AFTER 'eqScheme' judged the schemes equal; identical spellings
+-- short-circuit before any walk.
+nestedSlotSettled :: TypeGraph tg => TypeEnv tg -> Type -> Type -> Bool
+nestedSlotSettled typeEnv (UnionType _ oldLeafs _) (UnionType _ newLeafs _) =
+  or [ partialSettled op np
+     | (name, [op]) <- H.toList (splitUnionTypeByName oldLeafs)
+     , Just [np] <- [H.lookup name (splitUnionTypeByName newLeafs)] ]
+  where
+    partialSettled op np =
+      or [ slotSettled ov nv | (k, ov) <- H.toList (ptArgs op), Just nv <- [H.lookup k (ptArgs np)] ]
+    slotSettled ov nv | ov == nv = False -- identical spellings cannot contain a respelling
+    slotSettled ov@(UnionType _ oLs _) nv@(UnionType _ nLs _) =
+      (H.keysSet nLs /= H.keysSet oLs && S.null (S.difference (H.keysSet nLs) (H.keysSet oLs)))
+      || nestedSlotSettled typeEnv ov nv
+    slotSettled _ _ = False
+nestedSlotSettled _ _ _ = False
+
 -- This ensures schemes are correct
 -- It differs from Constrain.checkScheme because it checks for bugs in the internal compiler, not bugs in the user code
 verifyScheme :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> VarMeta -> Scheme -> Scheme -> Maybe String
@@ -535,6 +564,14 @@ setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch} con m@M
       -- improvement of the same set that 'eqScheme' judges equal, but the finer spelling is what
       -- consumers read — it must commit. Gain-only like the two rules above.
       (TypeCheckResult _ (SType a1 _ _ _), TypeCheckResult _ (SType a2 _ _ _)) | nestedVarNarrowed feTypeEnv a1 a2 -> True
+      -- The settle machinery's leaf-drop respelling (see 'nestedSlotSettled') is checked
+      -- only when 'eqScheme' judged the schemes equal — the refusal path. The actual side
+      -- alone is inspected; the requirement side's tighten rides the same whole-scheme store.
+      (TypeCheckResult _ (SType a1 _ _ _), TypeCheckResult _ (SType a2 _ _ _)) ->
+        fromMaybe False $ tcreToMaybe $ do
+          showVaenv <- vaenv
+          return $ not (eqScheme env showVaenv scheme scheme')
+                 || (a1 /= a2 && nestedSlotSettled feTypeEnv a1 a2)
       _ ->  fromMaybe False $ tcreToMaybe $ do
         showVaenv <- vaenv
         return $ not (eqScheme env showVaenv scheme scheme')

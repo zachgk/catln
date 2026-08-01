@@ -26,7 +26,7 @@ import           Control.Monad.State
 import           CtConstants         (runtimeAnnot)
 import           Data.Bifunctor      (Bifunctor (bimap))
 import           Data.List           (find, intercalate, nub, partition)
-import           Data.Maybe          (isNothing, mapMaybe)
+import           Data.Maybe          (fromMaybe, isNothing, mapMaybe)
 import           Data.UUID           (nil)
 import           MapMeta
 import           Semantics
@@ -405,16 +405,31 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
         | destIsArrowResult = intersectTypesWithVarEnv feTypeEnv vaenv' destActR destByGraph
         -- A consumption point: the committed full-meet behavior.
         | otherwise = intersectTypesWithVarEnv feTypeEnv vaenv' destBound destByGraph
-  -- Settle-forcing requirement: a RAW leaf under an engaged requirement with a viable
-  -- compilation path to settled forms within it ('reachesTo') is REQUIRED to follow its
-  -- arrows — the destination holds only what the consumer receives, so the raw form is
-  -- dropped and the actual is settled-only. The requirement never constrains a raw leaf
-  -- directly (the 'isSubtypeUpToSettlingOf' doctrine): a direct membership test would be
-  -- answered SAT-conservatively ("could settle to a member") and keep the raw form. A raw
+  -- Settle-forcing requirement: a leaf the requirement does NOT admit as it stands
+  -- ('reqAdmitsLeaf' — the requirement is the boundary answering "must this settle now, or
+  -- is unsettled valid here"), with a viable compilation path to forms within the bound
+  -- ('reachesTo'), is REQUIRED to follow its arrows — the destination holds only what the
+  -- consumer receives, so the unadmitted form is dropped and the actual keeps the settled
+  -- remainder. The requirement never constrains such a leaf by plain membership (the
+  -- 'isSubtypeUpToSettlingOf' doctrine): the algebra answers class membership of an
+  -- unrewritten call SAT-conservatively ("could settle to a member") and would keep it. A
   -- leaf with no viable path (or no engaged requirement) is kept: mid-solve its reach may
   -- still be resolving, and dropping it would not be an upper bound of the point's values.
   -- The drop is also skipped when it would empty the stored type (settled alternatives not
   -- yet accumulated), which would poison the point to 'BottomType'.
+  -- Arrow-applicability first: settling is rewriting, so a leaf whose NAME no arrow can
+  -- accept never settles elsewhere — and 'reachesTo' alone cannot gate this, because its
+  -- required-node check counts a leaf already inside the bound as reaching by STAYING PUT
+  -- (a deep subtype per data literal per epoch). The probe is the bare name with open args
+  -- (no deep-argument intersects — a full-leaf query pays 'accepts' meets on every deep
+  -- operand); a name-level over-approximation only admits more leaves to the later gates.
+  -- TODO(admission): this gate should become the requirement-admission form used by
+  -- 'settlePropSlot' (drop iff an arrow applies, the requirement does not admit the form
+  -- as-is per 'reqAdmitsLeaf', and the reach is viable) — one criterion, no settled-name
+  -- class. The direct swap made a requirement's met call component LICENSE the dest's raw
+  -- leaf that this gate previously dropped, and the keep/re-drop disagreement with the
+  -- other writers oscillated past the 'runConstraints' limit (toString/++ family) — the
+  -- other writers must learn the admission rule in the same change.
   let settleForced l = not (isSettledLeaf reachesTypeEnv l)
                      && reachesTo reachesTypeEnv vaenv' (singletonType l) destBound
   let dropSettleForcedRaws t@(UnionType dMTop dLeafs dConsts)
@@ -477,3 +492,123 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
   -- (valid only against that epoch's requirement), while the stored tree is read downstream as
   -- the record of where the source can rewrite to.
   return (src', srcReq', destFinal, Just reaches0)
+
+-- | Whether a requirement admits a leaf AS IT STANDS — leaving it unsettled. The requirement
+-- is the boundary answering "must this settle now, or is unsettled valid here": an unsettled
+-- call form appearing IN the requirement licenses the matching unsettled form (leaving
+-- operations unsettled is what multi-level definitions and metaprogramming build on), while a
+-- class component is read by its DEFINITION — @∀ConsList@ is defined in terms of the settled
+-- @Cons@\/@Nil@ objects, so it admits those settled members and never an unrewritten call.
+-- Concretely the leaf is checked against the requirement's expansion restricted to the leaf's
+-- own name ('expandTypeWithNames'): a class component expands to its declared members (none
+-- of the leaf's name — not admitted), while a call-form component survives as itself. A
+-- candidate still carrying class predicates admits the leaf only when the predicates provably
+-- HOLD of it, which the engine answers conservatively-to-SAT (escape possible ⇒ not proven) —
+-- exactly the polarity admission needs. Deliberately NOT plain 'isSubtypeOfWithEnv' against
+-- the whole requirement: its class coverage reasons about what a term could settle TO, the
+-- direction 'reachesTo' owns.
+reqAdmitsLeaf :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> PartialType -> Bool
+reqAdmitsLeaf _ _ PTopType _ = True
+-- A var requirement resolves through the env; a self-referential entry (which an
+-- unconstrained var may acquire during intersection) carries no information and licenses
+-- like ⊤ — following it verbatim would recurse forever ('isSubtypeOfWithEnv' parity).
+reqAdmitsLeaf typeEnv vaenv (TypeVar v _) l = case vaenvLookup vaenv v of
+  TypeVar v' _ | v' == v -> True
+  looked                 -> reqAdmitsLeaf typeEnv vaenv looked l
+reqAdmitsLeaf typeEnv vaenv req l =
+  isSubtypeOfWithEnv typeEnv vaenv (singletonType l)
+    (UnionType Nothing (expandTypeWithNames typeEnv vaenv req (S.singleton (ptName l))) [])
+
+-- | Settle a construction slot at a 'PropEq' write — the slot-write mirror of
+-- 'arrowConstrainUbs''s settle-forcing. A 'PropEq' meet can never remove an unsettled call
+-- form once written into a slot (the algebra answers its class membership
+-- SAT-conservatively), so a definition body's early slot write (@tail = declared-top ∪
+-- rawRecursiveCall@) keeps that spelling forever even after the slot's requirement engages,
+-- and the dispatch presentation reads the stale form. Whether the form may stay unsettled is
+-- answered by the requirement boundary ('reqAdmitsLeaf'); here the requirement is the slot's
+-- own requirement MET WITH the field's declared bound (@Cons@'s @tail -> ConsList[$T -> $_T]@
+-- instantiated through the enclosing partial — the @ConsList@ definition is in terms of the
+-- settled @Cons@ object, so the declaration dictates a settled field). The bound is
+-- instantiated AT THIS SITE from 'typeGraphData' rather than pre-materialized into every
+-- stored requirement: an unconditional declared-bound meet on every requirement read re-runs
+-- a deep meet per epoch (its respelling never commits under 'eqScheme') and was measured
+-- intractable. Admission into the meet distributes (@l ⊆ A∩B ⟺ l ⊆ A ∧ l ⊆ B@), so the
+-- common path needs no deep meet at all. An unadmitted leaf settles only with a viable
+-- compilation path ('reachesTo') into the slot's actual∧required∧declared bound — the actual
+-- in the bound demands the leaf's settled alternatives are ALREADY accumulated in the slot
+-- (the alternatives-accumulated guard: @fmap@'s @Nil ∪ fmap(⊤,⊤)@ keeps its call form until
+-- the sub point delivers the settled top), and the drop never empties the stored slot. When
+-- the settle fires, the slot's stored requirement is tightened to its declared-bound meet
+-- (the settled spelling consumers read). Only 'TVArg' slots participate; pointer slots
+-- (partial-internal vars) are left to the var machinery.
+settlePropSlot :: FEnv -> TypeVarArgEnv -> TypeVarAux -> Type -> Type -> (Type, Type)
+settlePropSlot env@FEnv{feTypeEnv} vaenv propName@(TVArg k) superAct@(UnionType supMTop supLeafs supConsts) superReq@(UnionType reqMTop reqLeafs reqConsts) =
+  (superAct', superReq')
+  where
+    reachesTypeEnv = feReachesTypeEnv env
+    reqByName = splitUnionTypeByName reqLeafs
+
+    settlePartial :: PartialType -> (PartialType, Maybe PartialType, Bool)
+    settlePartial p = fromMaybe (p, Nothing, False) $ do
+      -- Fireable shape only: the stale family spelling is @declared-top ∪ rawCall@ — a slot
+      -- with no predicate-top component cannot fire (a call form's dests are never inside
+      -- its sibling leaves alone, and the bound includes the slot actual), so gate before
+      -- any graph or engine work.
+      UnionType aMTop@(Just _) aLeafs aConsts <- H.lookup k (ptArgs p)
+      let aLeafList = splitUnionType aLeafs
+      guard (not (null aLeafList))
+      [rp] <- H.lookup (ptName p) reqByName
+      slotReq <- typeGetAux propName rp
+      -- Engaged requirement only; a pointer-managed (var) slot is left to the var machinery.
+      guard (slotReq /= PTopType)
+      case slotReq of
+        TypeVar{} -> Nothing
+        _         -> return ()
+      let declBounds = [freeTVIntToTopDeep vaenv p d | PartialType{ptArgs=dArgs} <- typeGraphData feTypeEnv (ptName p), Just d <- [H.lookup k dArgs]]
+      -- DECLARATION-BOUNDED construction slots only (a data-graph declaration exists for
+      -- this field): the declared bound is what dictates settling (@Cons@'s tail is a
+      -- settled @ConsList@ by definition). An ordinary call-argument slot has no such
+      -- declaration and keeps its unsettled forms — they may be exactly what the
+      -- presentation and dispatch keying read. ANNOTATION argument slots (the parser's @#@
+      -- marker) are also excluded for now: their declarations reach 'typeGraphData' like
+      -- data, but settling e.g. @#print@'s argument drops many-leaf unions whose commit-time
+      -- verification ('verifyScheme' subtype + compact on the changed spelling) is measured
+      -- intractable — deferred until the print-presentation family needs it.
+      guard (not (null declBounds))
+      guard ('#' `notElem` nameStr (ptName p))
+      let declBoundU = unionAllTypesWithEnv feTypeEnv vaenv declBounds
+      let admitted l = reqAdmitsLeaf reachesTypeEnv vaenv slotReq l
+                     && reqAdmitsLeaf reachesTypeEnv vaenv declBoundU l
+      -- The settle bound (lazy — forced only when some leaf is not admitted).
+      let slotAct = UnionType aMTop aLeafs aConsts
+      let bound = intersectTypesEnv feTypeEnv vaenv (intersectTypesEnv feTypeEnv vaenv slotAct slotReq) declBoundU
+      -- Arrow-applicability first: settling is rewriting, so a leaf whose NAME no arrow can
+      -- accept never settles elsewhere — and 'reachesTo' alone cannot gate this, because
+      -- its required-node check counts a leaf already inside the bound as reaching by
+      -- STAYING PUT (a deep subtype against the forced bound per data literal per epoch).
+      -- The probe is the bare name with open args (no deep-argument intersects).
+      let settleForced l = not (null (typeGraphQueryAllWithReason reachesTypeEnv vaenv ((partialVal (ptName l)){ptArgMode=PtArgAny})))
+                         && not (admitted l)
+                         && not (isBottomType bound)
+                         && reachesTo reachesTypeEnv vaenv (singletonType l) bound
+      case partition settleForced aLeafList of
+        ([], _) -> Nothing
+        (_, keptLs)
+          | null keptLs && isNothing aMTop && null aConsts -> Nothing
+          | otherwise -> do
+              let slotAct' = UnionType aMTop (joinUnionType keptLs) aConsts
+              let p' = p{ptArgs=H.insert k slotAct' (ptArgs p)}
+              let rp' = case H.lookup k (ptArgs rp) of
+                    Just UnionType{} ->
+                      Just rp{ptArgs=H.insert k (compactType feTypeEnv vaenv (intersectTypesEnv feTypeEnv vaenv slotReq declBoundU)) (ptArgs rp)}
+                    _ -> Nothing
+              return (p', rp', True)
+
+    results = map settlePartial (splitUnionType supLeafs)
+    changed = or [c | (_, _, c) <- results]
+    superAct' | changed = compactType feTypeEnv vaenv (UnionType supMTop (joinUnionType [p | (p, _, _) <- results]) supConsts)
+              | otherwise = superAct
+    reqUpdates = H.fromList [(ptName rp, rp) | (_, Just rp, _) <- results]
+    superReq' | H.null reqUpdates = superReq
+              | otherwise = UnionType reqMTop (joinUnionType (map (\q -> fromMaybe q (H.lookup (ptName q) reqUpdates)) (splitUnionType reqLeafs))) reqConsts
+settlePropSlot _ _ _ superAct superReq = (superAct, superReq)

@@ -85,12 +85,15 @@ equalizeSTypes FEnv{feTypeEnv} vaenv (stype1@SType{stypeAct=act1, stypeReq=req1}
   (vaenv', stype1{stypeAct=actBoth, stypeReq=reqBoth}, stype2{stypeAct=actBoth, stypeReq=reqBoth})
 
 
--- | A helper for the 'PropEq' 'Constraint' that applies to both the actual and required types
+-- | A helper for the 'PropEq' 'Constraint' that applies to both the actual and required types.
+-- After the meets, the slot settle ('settlePropSlot') drops settle-forced unsettled forms from
+-- the super's actual slot and tightens its requirement slot to the declared-bound meet.
 updateSchemeProp :: FEnv -> STypeVarArgEnv -> SType -> TypeVarAux -> SType -> (STypeVarArgEnv, SType, SType)
-updateSchemeProp FEnv{feTypeEnv} vaenv super@SType{stypeAct=superAct, stypeReq=superReq} propName sub@SType{stypeAct=subAct, stypeReq=subReq} = (vaenv', super{stypeAct=superAct', stypeReq=superReq'}, sub{stypeAct=subAct', stypeReq=subReq'})
+updateSchemeProp env@FEnv{feTypeEnv} vaenv super@SType{stypeAct=superAct, stypeReq=superReq} propName sub@SType{stypeAct=subAct, stypeReq=subReq} = (vaenv', super{stypeAct=superAct'', stypeReq=superReq''}, sub{stypeAct=subAct', stypeReq=subReq'})
   where
     (actVaenv', superAct', subAct') = updateTypeProp feTypeEnv (fmap stypeAct vaenv) superAct propName subAct
     (reqVaenv', superReq', subReq') = updateTypeProp feTypeEnv (fmap stypeReq vaenv) superReq propName subReq
+    (superAct'', superReq'') = settlePropSlot env (fmap stypeAct vaenv) propName superAct' superReq'
     vaenv' = H.intersectionWith (\t s -> s{stypeReq=t}) reqVaenv' $ H.intersectionWith (\t s -> s{stypeAct=t}) actVaenv' vaenv
 
 -- | A helper for the 'AddArg' 'Constraint'
