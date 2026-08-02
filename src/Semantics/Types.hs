@@ -3544,7 +3544,7 @@ compactType typeEnv vaenv (UnionType Nothing partials consts) =
 -- otherwise only operates on the top level of a union, so without this a recursive type
 -- nested inside an argument (e.g. the @tail@ of a @Cons@) is never canonicalised.
 compactPartialArgs :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType
-compactPartialArgs typeEnv vaenv p = p
+compactPartialArgs typeEnv vaenv p = tightenDeclBoundedDims typeEnv p
   -- Self-ref capping is applied ONLY to type-VARIABLE slots ('ptVars'), never argument slots
   -- ('ptArgs'). A recursive value's structure lives in its ARGUMENTS — a @ConsList@'s @tail=ConsList@,
   -- a @reverseOnto@'s accumulator @acc@ — and is load-bearing. The spurious over-unrolling to cap is a
@@ -3562,6 +3562,118 @@ compactPartialArgs typeEnv vaenv p = p
   , ptVars = fmap (compactType typeEnv vaenv . settleSelfRefRedundant typeEnv vaenv pName) (ptVars p)
   }
   where pName = makeAbsoluteName (ptName p)
+
+-- | Canonical form: DECLARATION-BOUNDED DIM TIGHTENING. A data partial's type-variable dimension
+-- canonically absorbs what its declared occurrences already pin: a value spelled
+-- @Cons[/T=∀Ord](head=Integer, tail=Cons[/T=Integer](…))@ tightens its element dimension to
+-- @Integer@ — the stored bound met with the JOIN of the head content (a pointer occurrence
+-- @head -> $T@ in the data declaration) and the tail's element dimension (a linked occurrence
+-- @tail -> ConsList[$T -> $_T]@). The spellings denote the SAME set: a value matches through some
+-- instantiation @τ ⊆ dim@ admitting every occupant, each occupant lies inside its occurrence's
+-- contribution, so @τ@ met with the join still admits them all and no value is lost. The tightened
+-- dim is what every consumer reads — the wide spelling presented @sorted@'s result at @List[∀Ord]@
+-- (no DShow path) even though the argument content was fully @Integer@.
+--
+-- Without this the dimension STARVES: the intersect's binding discovery needs the pointer spelling
+-- (@head=$/T@) on one side of a meet, which is consumed the moment content lands there, so a dim
+-- inherited from a declared bound (@∀Ord@, @⊤@) can never narrow again no matter how precise the
+-- content becomes.
+--
+-- Strictly conservative — any gate failing keeps the dim unchanged:
+--   * exactly one data definition for the name, 'PtArgExact' value, and the dim spelled ⊤ or as a
+--     var-free union (a 'TypeVar' dim is a live link and is never touched);
+--   * every template argument either provably cannot reference the variable, or is a supported
+--     occurrence shape — the bare pointer @$T@ ('TVInt') or a pure class application linking
+--     @$_T@ ('TVExt') — with the value's content present (a missed occurrence would tighten below
+--     the true join, so anything else aborts);
+--   * contributions must be var-free, so the meet cannot depend on the ambient env and the
+--     canonical spelling is stable across op contexts; a pointer occurrence contributes its
+--     content verbatim, a linked occurrence contributes the content's linked dimension (∅ for a
+--     bare atom member — @Nil@ pins no elements);
+--   * the meet applies only when it genuinely narrows (the subtype guard), which also makes the
+--     rewrite idempotent: the tightened dim lies inside the join, so a second pass skips.
+tightenDeclBoundedDims :: TypeGraph tg => TypeEnv tg -> PartialType -> PartialType
+tightenDeclBoundedDims typeEnv p
+  | H.null (ptVars p) || ptArgMode p /= PtArgExact = p
+  | [tmpl] <- typeGraphData typeEnv (ptName p) = p{ptVars = H.mapWithKey (tightenDim tmpl) (ptVars p)}
+  | otherwise = p
+  where
+    tightenDim tmpl k d
+      | dimEligible d
+      , k `H.member` ptVars tmpl
+      , Just contribss <- mapM (occurrenceContrib k) (H.toList (ptArgs tmpl))
+      , contribs@(_:_) <- concat contribss
+      , let joined = unionAllTypes typeEnv contribs
+      , not (isSubtypeOfWithEnv typeEnv H.empty d joined)
+      = compactType typeEnv H.empty $ intersectTypesEnv typeEnv H.empty d joined
+      | otherwise = d
+
+    dimEligible PTopType      = True
+    dimEligible t@UnionType{} = not (typeHasVars t)
+    dimEligible _             = False
+
+    -- Contributions of one template argument: @Nothing@ aborts the dim's tightening entirely,
+    -- @Just []@ is a non-occurrence, @Just cs@ are the occurrence's element contributions.
+    occurrenceContrib k (argName, tmplVal) = case tmplVal of
+      TypeVar (TVVar k') TVInt | k' == k -> do
+        content <- H.lookup argName (ptArgs p)
+        if typeHasVars content then Nothing else Just [content]
+      TypeVar (TVVar k') TVExt | k' == k -> Nothing
+      TypeVar{} -> Just []
+      _ | Just links <- pureClassLinks k tmplVal ->
+            if null links
+              then Just []
+              else do
+                content <- H.lookup argName (ptArgs p)
+                mapM (`linkedContrib` content) links
+        | typeHasVars tmplVal -> Nothing -- may reference the variable in an unsupported shape
+        | otherwise -> Just []
+
+    -- @Just innerKeys@ when the template argument is a pure class application (@∀C[..]@ — a
+    -- predicate-only top with no args) whose parameters are @$_k@ links or var-free; the inner
+    -- keys name the class's own parameters where the content's dimension is read. @Nothing@ for
+    -- any other shape (the caller then decides by 'typeHasVars').
+    pureClassLinks k (UnionType (Just (PredsOne (PredClass q), negs, ncs)) pos consts)
+      | H.null negs, null ncs, H.null pos, null consts, H.null (ptArgs q)
+      , all linkOrClosed (H.elems (ptVars q))
+      = Just [k' | (k', TypeVar (TVVar kk) TVExt) <- H.toList (ptVars q), kk == k]
+      where linkOrClosed (TypeVar (TVVar _) TVExt) = True
+            linkOrClosed t                         = not (typeHasVars t)
+    pureClassLinks _ _ = Nothing
+
+    -- The element dimension a linked occurrence's content pins at the class parameter @innerK@:
+    -- the dim of every content leaf, or ∅ for a bare atom member (no parameters, no fields —
+    -- @Nil@ pins no elements). Any leaf whose dimension is absent-but-structured, var-carrying,
+    -- or any non-union content shape aborts.
+    linkedContrib innerK content = case content of
+      UnionType Nothing leafs [] ->
+        unionAllTypes typeEnv <$> mapM leafDim (splitUnionType leafs)
+      UnionType (Just (PredsOne (PredClass q), negs, ncs)) pos consts
+        | H.null negs, null ncs, H.null pos, null consts -> leafDim q
+      _ -> Nothing
+      where
+        leafDim l = case H.lookup innerK (ptVars l) of
+          Just e | not (typeHasVars e) -> Just e
+                 | otherwise -> Nothing
+          Nothing | H.null (ptVars l) && H.null (ptArgs l) -> Just BottomType
+                  | otherwise -> Nothing
+
+-- | Whether a type mentions any type variable anywhere (dims, args, predicates, exclusions).
+typeHasVars :: Type -> Bool
+typeHasVars TypeVar{} = True
+typeHasVars BottomType = False
+typeHasVars (UnionType mtop pos _) =
+  maybe False topHasVars mtop || any partialHasVars (splitUnionType pos)
+  where
+    topHasVars (preds, negs, _) = predsHasVars preds || any partialHasVars (splitUnionType negs)
+    predsHasVars (PredsOne pr) = predHasVars pr
+    predsHasVars (PredsAnd ps) = any predsHasVars ps
+    predsHasVars (PredsNot ps) = predsHasVars ps
+    predHasVars (PredExpr q)  = partialHasVars q
+    predHasVars (PredClass q) = partialHasVars q
+    predHasVars (PredRel q)   = partialHasVars q
+    partialHasVars PartialType{ptVars=vs, ptArgs=as, ptPreds=prs} =
+      any typeHasVars vs || any typeHasVars as || predsHasVars prs
 
 -- | Drop an over-unrolled DIRECT self-referential leaf from a partial's own nested argument\/variable
 -- union when its settled form is already covered by a non-self sibling. An arrow's raw applied form is
