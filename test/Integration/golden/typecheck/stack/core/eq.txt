@@ -9,40 +9,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator==( Value /l -> $/T )( Value /r -> $/T )[ /T : ∀/Data/Algebra/Eq ] -> UnionType
-                            ( Just
-                                ( PredClass /Data/Primitive/Boolean
-                                , fromList []
-                                )
-                            ,
-                                ( /Data/strEqual
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/rel
-                                    ( /this=∀/Data/Algebra/Eqv[ /T=TopType ]
-                                    , /a=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Primitive/Boolean
-                                            , fromList []
-                                            )
-                                        , ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float )
-                                        , []
-                                        )
-                                    , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Primitive/boolEq
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/equal
-                                    ( /this=∀/Data/Algebra/Eq
-                                    , /other=∀/Data/Algebra/Eq
-                                    )
-                                )
-                            , []
-                            ) = /equal( Value /other -> TVArg /r = Value /r )( Value /this -> TVArg /l = Value /l )
-                        ]
+                        [ /operator==( Value /l -> $/T )( Value /r -> $/T )[ /T : ∀/Data/Algebra/Eq ] -> ∀/Data/Primitive/Boolean = /equal( Value /other -> TVArg /r = Value /r )( Value /this -> TVArg /l = Value /l ) ]
                     }
                 )
             ,
@@ -95,22 +62,12 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Algebra/rel( Value /a -> $/T )( Value /b -> $/T )
-                            ( Value /this -> ∀/Data/Algebra/Eqv[ /T=$/T ] ) -> ∀/Data/Primitive/Boolean
+                            ( Value /this -> ∀/Data/Algebra/Eqv[ /T=TopType ] ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/rel( Value /a )( Value /b )( Value /this -> /Data/Algebra/IntEqExample ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Primitive/Boolean
-                                , fromList []
-                                )
-                            , /Data/Primitive/intEq
-                                ( /r=TopType
-                                , /l=TopType
-                                )
-                            , []
-                            ) = /Data/Primitive/intEq( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
+                        [ /Data/Algebra/rel( Value /a )( Value /b )( Value /this -> /Data/Algebra/IntEqExample ) -> ∀/Data/Primitive/Boolean = /Data/Primitive/intEq( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
                         , /Data/Algebra/rel( Value /a )( Value /b )( Value /this -> /Data/Algebra/AllEqv ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         ]
                     }
@@ -152,14 +109,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator!=( Value /l -> $/T )( Value /r -> $/T )[ /T : ∀/Data/Algebra/Eq ] -> UnionType
-                            ( Just
-                                ( PredClass /Data/Primitive/Boolean
-                                , fromList []
-                                )
-                            , /operator~( /a=∀/Data/Primitive/Boolean )
-                            , []
-                            ) = /operator~
+                        [ /operator!=( Value /l -> $/T )( Value /r -> $/T )[ /T : ∀/Data/Algebra/Eq ] -> ∀/Data/Primitive/Boolean = /operator~
                             ( Value /a -> ∀/Data/Primitive/Boolean = /operator==( Value /l -> TVArg /l = Value /l )( Value /r -> TVArg /r = Value /r ) )
                         ]
                     }
@@ -234,50 +184,24 @@ Prgm
             The simplest [Eqv] over [Integer] compares its values with the built-in integer equality;
             [AllEqv] relates every pair." )
         , /Catln/#print
-            ( Value /p ->
-                ( /Data/Primitive/True + /Data/Algebra/rel
-                    ( /this=/Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ]
-                    , /a=/Data/Primitive/Integer
-                    , /b=/Data/Primitive/Integer
-                    ) + /Data/Primitive/False + /Data/Primitive/intEq
-                    ( /r=/Data/Primitive/Integer
-                    , /l=/Data/Primitive/Integer
-                    )
-                ) = /rel
+            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /rel
                 ( Value /a -> /Data/Primitive/Integer = CInt 2 )
-                ( Value /b -> /Data/Primitive/Integer = CInt 2 )( Value /this -> /Data/Algebra/IntEqExample = Value /Data/Algebra/IntEqExample )
+                ( Value /b -> /Data/Primitive/Integer = CInt 2 )
+                ( Value /this -> /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] = Value /Data/Algebra/IntEqExample )
             )
             ( Value /result -> /Data/String = CStr "True" )
         , /Catln/#print
-            ( Value /p ->
-                ( /Data/Primitive/True + /Data/Algebra/rel
-                    ( /this=/Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ]
-                    , /a=/Data/Primitive/Integer
-                    , /b=/Data/Primitive/Integer
-                    ) + /Data/Primitive/False + /Data/Primitive/intEq
-                    ( /r=/Data/Primitive/Integer
-                    , /l=/Data/Primitive/Integer
-                    )
-                ) = /rel
+            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /rel
                 ( Value /a -> /Data/Primitive/Integer = CInt 2 )
-                ( Value /b -> /Data/Primitive/Integer = CInt 3 )( Value /this -> /Data/Algebra/IntEqExample = Value /Data/Algebra/IntEqExample )
+                ( Value /b -> /Data/Primitive/Integer = CInt 3 )
+                ( Value /this -> /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] = Value /Data/Algebra/IntEqExample )
             )
             ( Value /result -> /Data/String = CStr "False" )
         , /Catln/#print
-            ( Value /p -> UnionType
-                ( Just
-                    ( PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , /Data/Algebra/rel
-                    ( /this=/Data/Algebra/AllEqv
-                    , /a=/Data/Primitive/Integer
-                    , /b=/Data/Primitive/Integer
-                    )
-                , []
-                ) = /rel
+            ( Value /p -> ∀/Data/Primitive/Boolean = /rel
                 ( Value /a -> /Data/Primitive/Integer = CInt 2 )
-                ( Value /b -> /Data/Primitive/Integer = CInt 3 )( Value /this -> /Data/Algebra/AllEqv = Value /Data/Algebra/AllEqv )
+                ( Value /b -> /Data/Primitive/Integer = CInt 3 )
+                ( Value /this -> /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] = Value /Data/Algebra/AllEqv )
             )
             ( Value /result -> /Data/String = CStr "True" )
         , /Catln/#md

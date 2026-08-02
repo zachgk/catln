@@ -20,7 +20,7 @@ Prgm
                     , omiDefs =
                         [ /Catln/Doc/dshow( Value /s -> ∀/Catln/Doc/DShow ) -> TVArg /s = Value /s
                         , /Catln/Doc/dshow
-                            ( Value /s -> /Catln/#md( /text=/Data/String ) = /Catln/#md( Value /text -> /Data/String ) ) -> /Catln/Doc/Show/MD( /text=/Data/String ) = /Catln/Doc/Show/MD( Value /text -> TVArg /text = Value /text )
+                            ( Value /s -> /Catln/#md( /text=/Data/String ) = /Catln/#md( Value /text ) ) -> /Catln/Doc/Show/MD( /text=TopType ) = /Catln/Doc/Show/MD( Value /text -> TVArg /text = Value /text )
                         , /Catln/Doc/dshow
                             ( Value /s -> /Catln/#print( /p=TopType ) = /Catln/#print( Value /p ) ) -> TVArg /p = Value /p
                         , /Catln/Doc/dshow( Value /s -> /Catln/Doc/#listProgram = Value /Catln/Doc/#listProgram ) -> /Catln/Doc/Show/ListProgram = Value /Catln/Doc/Show/ListProgram

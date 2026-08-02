@@ -13,20 +13,21 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/bindap
-                            [ /M : ∀/Data/Monad[ /T=$_/A ] ]
-                            ( Value /m -> ∀/Data/Monad[ /T=$_/A ] )
-                            ( /fn( Value /v ) -> ∀/Data/Monad[ /T=$_/A ] ) -> UnionType
+                            [ /M : ∀/Data/Monad[ /T=TopType ] ]
+                            ( Value /m -> ∀/Data/Monad[ /T=TopType ] )
+                            ( /fn( Value /v ) -> ∀/Data/Monad[ /T=TopType ] ) -> UnionType
                             ( Just
-                                ( PredClass /Data/Monad[ /T=$_/A ]
+                                ( PredClass /Data/Monad[ /T=TopType ]
                                 , fromList []
+                                , []
                                 )
                             , /Data/mmap
-                                ( /fn( /v=TopType )=∀/Data/Monad[ /T=$_/A ]
-                                , /m=∀/Data/Monad[ /T=$_/A ]
+                                ( /fn( /v=TopType )=∀/Data/Monad[ /T=TopType ]
+                                , /m=∀/Data/Monad[ /T=TopType ]
                                 )
                             , []
                             ) = /Data/mmap( Value /m -> TVArg /m = Value /m )
-                            ( /fn( Value /v ) -> ∀/Data/Monad[ /T=$_/A ] = /fn( Value /v -> TVArg /v = Value /v ) )
+                            ( /fn( Value /v ) -> ∀/Data/Monad[ /T=TopType ] = /fn( Value /v -> TVArg /v = Value /v ) )
                         ]
                     }
                 )

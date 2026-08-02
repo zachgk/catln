@@ -37,18 +37,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/rel( Value /a )( Value /b )( Value /this -> /Data/StrEqv ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Primitive/Boolean
-                                , fromList []
-                                )
-                            , /Data/strEqual
-                                ( /r=TopType
-                                , /l=TopType
-                                )
-                            , []
-                            ) = /Data/strEqual( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
-                        ]
+                        [ /Data/Algebra/rel( Value /a )( Value /b )( Value /this -> /Data/StrEqv ) -> ∀/Data/Primitive/Boolean = /Data/strEqual( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) ]
                     }
                 )
             ,
@@ -68,30 +57,17 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/equal( Value /other -> ∀/Data/Algebra/Eq )( Value /this -> /Data/String ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Primitive/Boolean
-                                , fromList []
-                                )
-                            ,
-                                ( /Data/strEqual
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/rel
-                                    ( /this=∀/Data/Algebra/Eqv[ /T=TopType ]
-                                    , /a=/Data/String
-                                    , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Primitive/boolEq
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
-                                    ( /r=TopType
-                                    , /l=TopType
+                        [ /Data/Algebra/equal( Value /other -> ∀/Data/Algebra/Eq )( Value /this -> /Data/String ) -> ∀/Data/Primitive/Boolean = /rel( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
+                            ( Value /this -> UnionType
+                                ( Just
+                                    ( PredClass /Data/Algebra/Eqv[ /T=/Data/String ]
+                                    , fromList []
+                                    , []
                                     )
-                                )
-                            , []
-                            ) = /rel( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
-                            ( Value /this -> ∀/Data/Algebra/Eqv[ /T=TopType ] = /eq( Value /this -> TVArg /this = Value /this ) )
+                                , /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ]
+                                , []
+                                ) = /eq( Value /this -> TVArg /this = Value /this )
+                            )
                         ]
                     }
                 )
@@ -144,69 +120,13 @@ Prgm
             ( Value /text -> /Data/String = CStr "## Equality
             [String] is an [Eq] type: [StrEqv] wraps the primitive [strEqual], and [eq]/[equal] follow." )
         , /Catln/#print
-            ( Value /p ->
-                ( /operator==[ /T=∀/Data/Algebra/Eq ]
-                    ( /r=/Data/String
-                    , /l=/Data/String
-                    ) + /Data/strEqual
-                    ( /r=/Data/String
-                    , /l=/Data/String
-                    ) + /Data/Primitive/True + /Data/Algebra/rel
-                    ( /this=∀/Data/Algebra/Eqv[ /T=TopType ]
-                    , /a=UnionType
-                        ( Just
-                            ( PredClass /Data/Primitive/Boolean
-                            , fromList []
-                            )
-                        , ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float )
-                        , []
-                        )
-                    , /b=∀/Data/Algebra/Eq
-                    ) + /Data/Primitive/False + /Data/Primitive/boolEq
-                    ( /r=∀/Data/Primitive/Boolean
-                    , /l=∀/Data/Primitive/Boolean
-                    ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
-                    ( /r=/Data/Primitive/Integer
-                    , /l=/Data/Primitive/Integer
-                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
-                    ( /this=∀/Data/Algebra/Eq
-                    , /other=∀/Data/Algebra/Eq
-                    )
-                ) = /operator==
+            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /operator==
                 ( Value /l -> /Data/String = CStr "hi" )
                 ( Value /r -> /Data/String = CStr "hi" )
             )
             ( Value /result -> /Data/String = CStr "True" )
         , /Catln/#print
-            ( Value /p ->
-                ( /operator==[ /T=∀/Data/Algebra/Eq ]
-                    ( /r=/Data/String
-                    , /l=/Data/String
-                    ) + /Data/strEqual
-                    ( /r=/Data/String
-                    , /l=/Data/String
-                    ) + /Data/Primitive/True + /Data/Algebra/rel
-                    ( /this=∀/Data/Algebra/Eqv[ /T=TopType ]
-                    , /a=UnionType
-                        ( Just
-                            ( PredClass /Data/Primitive/Boolean
-                            , fromList []
-                            )
-                        , ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float )
-                        , []
-                        )
-                    , /b=∀/Data/Algebra/Eq
-                    ) + /Data/Primitive/False + /Data/Primitive/boolEq
-                    ( /r=∀/Data/Primitive/Boolean
-                    , /l=∀/Data/Primitive/Boolean
-                    ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
-                    ( /r=/Data/Primitive/Integer
-                    , /l=/Data/Primitive/Integer
-                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
-                    ( /this=∀/Data/Algebra/Eq
-                    , /other=∀/Data/Algebra/Eq
-                    )
-                ) = /operator==
+            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /operator==
                 ( Value /l -> /Data/String = CStr "hi" )
                 ( Value /r -> /Data/String = CStr "no" )
             )
@@ -218,17 +138,7 @@ Prgm
             (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
             yet dispatched by return type across multiple types, so only the [Semigroup] is declared.)" )
         , /Catln/#print
-            ( Value /p -> UnionType
-                ( Just
-                    ( PredClass /Data/Algebra/Semigroup
-                    , fromList []
-                    )
-                , /operator++
-                    ( /r=/Data/String
-                    , /l=/Data/String
-                    )
-                , []
-                ) = /operator++
+            ( Value /p -> /Data/String = /operator++
                 ( Value /l -> /Data/String = CStr "foo" )
                 ( Value /r -> /Data/String = CStr "bar" )
             )
