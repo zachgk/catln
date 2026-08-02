@@ -392,7 +392,16 @@ instance ExprClass Expr where
             = joinAllPossVarArgMetaWithSrc typeEnv $ map (exprVarArgsWithSrc typeEnv obj) $ splitUnionType srcArg
             | otherwise = case getMetaType arrM of
                 (TypeVar v _) -> [H.insertWith (mergeVarArgMetaWithSrcItem typeEnv) v ([(obj, arrM)], fromMaybe PTopType $ typeGetArgLoose structKey src) mainArg]
-                _ -> [mainArg]
+                -- A declared argument spelled as a class application linking the object's
+                -- variables (@lst -> List[/T=$_/T]@) BINDS those variables from the source
+                -- content's linked dimension (@lst=Cons[/T=Integer](…)@ binds @/T=Integer@) —
+                -- the argument position is a linked occurrence of the variable, so the content's
+                -- element evidence is the variable's per-call value. Without this only an
+                -- explicit application (@sorted[/T=Integer](…)@) could bind, and a declaration's
+                -- linked result (@-> List[/T=$_/T]@) always presented at the variable's declared
+                -- bound instead of the call's element type.
+                declT -> [foldr insertLinked mainArg (linkedDimBinds typeEnv declT (fromMaybe PTopType (typeGetArgLoose structKey src)))]
+                  where insertLinked (v, d) = H.insertWith (mergeVarArgMetaWithSrcItem typeEnv) v ([(obj, arrM)], d)
             where
               structKey = inExprSingleton obj
               -- For an alias destructure (@field@name@, e.g. @first@f@) the matched field is
@@ -433,6 +442,34 @@ instance ObjArrClass ObjArr where
       exprArg _ = error $ printf "Invalid oa %s" (show oa)
 
   getOaAnnots = oaAnnots
+
+-- | The variable bindings a declared argument's LINKED spelling extracts from the source
+-- content: for a declared type that is a pure class application whose parameters link the
+-- object's variables (@List[/T=$_/T]@ — 'TVExt'), each linked variable binds to the JOIN of the
+-- content's dimensions at the class parameter (@Cons[/T=Integer](…)@ yields @/T=Integer@; a bare
+-- atom member like @Nil@ pins nothing). Strictly conservative — the same projection discipline
+-- as the declaration-bounded dim tightening in "Semantics.Types": var-carrying dimensions,
+-- unknown content shapes, or a ⊤ join produce no binding (a ⊤ entry carries no information).
+linkedDimBinds :: (TypeGraph tg) => TypeEnv tg -> Type -> Type -> [(TypeVarAux, Type)]
+linkedDimBinds typeEnv declT content = case declT of
+  UnionType (Just (PredsOne (PredClass q), negs, [])) pos []
+    | H.null negs, H.null pos, H.null (ptArgs q)
+    -> [ (TVVar k, dim)
+       | (k', TypeVar (TVVar k) TVExt) <- H.toList (ptVars q)
+       , Just dim <- [contentDim k']
+       , dim /= PTopType ]
+  _ -> []
+  where
+    contentDim k' = case content of
+      UnionType Nothing leafs [] -> unionAllTypes typeEnv <$> mapM (leafDim k') (splitUnionType leafs)
+      UnionType (Just (PredsOne (PredClass q'), negs, [])) pos []
+        | H.null negs, H.null pos -> leafDim k' q'
+      _ -> Nothing
+    leafDim k' l = case H.lookup k' (ptVars l) of
+      Just e | not (typeHasVars e) -> Just e
+             | otherwise -> Nothing
+      Nothing | H.null (ptVars l) && H.null (ptArgs l) -> Just BottomType
+              | otherwise -> Nothing
 
 mergeVarArgMetaWithSrcItem :: (TypeGraph tg) => TypeEnv tg -> ([(Expr m, Meta m)], Type) -> ([(Expr m, Meta m)], Type) -> ([(Expr m, Meta m)], Type)
 mergeVarArgMetaWithSrcItem typeEnv (m1s, t1) (m2s, t2) = (m1s ++ m2s, intersectTypes typeEnv t1 t2)

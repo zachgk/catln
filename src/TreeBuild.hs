@@ -69,13 +69,13 @@ buildTBEnv primEnv prgm@Prgm{prgmObjMap} = baseEnv
 -- | However, it may also be necessary to use several arrows in sequence to go from src to dest
 -- | This will check if the single arrow is correct, or whether a sequence is required
 -- | It will then return all the ones that correctly go from src to dest (replacing them with the full sequence)
-arrowFollowup ::  TBEnv -> [ObjSrc] -> VisitedArrows -> PartialType -> Type -> (ResBuildEnvItem, Type) -> CRes ResBuildEnvItem
-arrowFollowup TBEnv{tbTypeEnv} os _ _ destType (item, newSrcType) | isSubtypeOfWithObjSrcs tbTypeEnv os newSrcType destType = return item
+arrowFollowup ::  TBEnv -> [ObjSrc] -> VisitedArrows -> Type -> PartialType -> Type -> (ResBuildEnvItem, Type) -> CRes ResBuildEnvItem
+arrowFollowup TBEnv{tbTypeEnv} os _ _ _ destType (item, newSrcType) | isSubtypeOfWithObjSrcs tbTypeEnv os newSrcType destType = return item
 -- envLookupTry _ _ _ srcType destType _ | trace (printf "envLookupTry from %s to %s" (show srcType) (show destType)) False = undefined
-arrowFollowup _ _ visitedArrows _ _ ((_, _, resArrow), _) | S.member resArrow visitedArrows = CErr [MkCNote $ BuildTreeCErr Nothing "Found cyclical use of function"]
-arrowFollowup _ _ _ _ _ (_, PTopType) = CErr [MkCNote $ BuildTreeCErr Nothing "Arrow has indeterminate return type"]
-arrowFollowup env objSrc visitedArrows srcType destType ((itemPartial, itemOa, resArrow), newSrcType) = do
-  afterArrow <- buildCallTree env objSrc' visitedArrows' newSrcType destType
+arrowFollowup _ _ visitedArrows _ _ _ ((_, _, resArrow), _) | S.member resArrow visitedArrows = CErr [MkCNote $ BuildTreeCErr Nothing "Found cyclical use of function"]
+arrowFollowup _ _ _ _ _ _ (_, PTopType) = CErr [MkCNote $ BuildTreeCErr Nothing "Arrow has indeterminate return type"]
+arrowFollowup env objSrc visitedArrows bound srcType destType ((itemPartial, itemOa, resArrow), newSrcType) = do
+  afterArrow <- buildCallTree env objSrc' visitedArrows' bound newSrcType destType
   let resArrow' = TCSeq resArrow afterArrow
   return (itemPartial, itemOa, resArrow')
   where
@@ -241,16 +241,57 @@ findResArrows TBEnv{tbResEnv, tbTypeEnv} os srcType@PartialType{ptName=srcName} 
     argArrows :: [ResBuildEnvItem]
     argArrows = map ((srcType, Nothing,) . (`TCArg` nameStr srcName) . snd) $ mapMaybe (H.lookup $ TVArg $ partialToKey srcType) $ exprVarArgsWithObjSrcs tbTypeEnv os
 
--- | Builds a call tree to convert something from the partial 'srcType' to 'destType'
-buildPartialCallTree :: TBEnv -> [ObjSrc] -> VisitedArrows -> PartialType -> Type -> CRes TCallTree
-buildPartialCallTree TBEnv{tbTypeEnv} os _ srcType destType | isSubtypeOfWithObjSrcs tbTypeEnv os (singletonType srcType) destType = return TCTId
-buildPartialCallTree env@TBEnv{tbTypeEnv} os visitedArrows srcType destType = do
+-- | Builds a call tree to convert something from the partial 'srcType' to 'destType'. The
+-- @bound@ is a sound upper bound on the runtime VALUE at this position (⊤ when unknown),
+-- carried down the rewrite chain — rewriting preserves the value, so a bound established at an
+-- outer call applies to every followup source below it.
+buildPartialCallTree :: TBEnv -> [ObjSrc] -> VisitedArrows -> Type -> PartialType -> Type -> CRes TCallTree
+buildPartialCallTree TBEnv{tbTypeEnv} os _ _ srcType destType | isSubtypeOfWithObjSrcs tbTypeEnv os (singletonType srcType) destType = return TCTId
+buildPartialCallTree env@TBEnv{tbTypeEnv} os visitedArrows bound srcType destType = do
   wrapCRes (printf "Failed to build arrow tree from %s to %s" (show srcType) (show destType)) $ do
     resArrows <- findResArrows env os srcType
     resArrows' <- sortArrows env resArrows
     resArrows'' <- handleElseArrows resArrows'
-    let resArrows''WithPostTypes = concatMap (\item@(_, _, resArrow) -> map (item,) $ resArrowDestType tbTypeEnv srcType resArrow) resArrows''
-    let followups = map (arrowFollowup env os visitedArrows srcType destType) resArrows''WithPostTypes
+    -- Refine the value bound with this call's declared result instantiated at this call
+    -- ('typeGraphDeclaredResult' — def ⊆ decl, and with the call's linked-variable bindings the
+    -- declared @List[/T=$_/T]@ reads e.g. @List[/T=Integer]@), then meet each arrow's presented
+    -- dest with it. Stored arm metas are materialized at module level (@insertStep(x=∀Ord…)@,
+    -- @Cons[/T=∀Ord](…)@), so without the meet a concrete call's followup (toward e.g. DShow)
+    -- works on the module-generic presentation and fails even though every value at this call
+    -- is concrete. ONLY the settled (data-defined) leaves are met: meeting a RAW call leaf
+    -- attaches the bound as a predicate, which lets the subtype cutoffs treat the still-unrewritten
+    -- call as already at the destination — the tree then stops rewriting and the unevaluated
+    -- call flows through as a runtime value. Raw leaves instead inherit the bound through the
+    -- followup recursion, where their own arrows' settled dests are met in turn.
+    let declBound = typeGraphDeclaredResult tbTypeEnv H.empty srcType
+        bound' = case (bound, declBound) of
+          (PTopType, d) -> d
+          (b, PTopType) -> b
+          (b, d)        -> intersectTypes tbTypeEnv b d
+        -- The meet must be against the bound's data-member EXPANSION: meeting a data leaf with
+        -- a class-TOP form only meets the dim and attaches the predicate, leaving materialized
+        -- module-level arg contents (@head=∀Ord@) unnarrowed — exactly what the membership
+        -- checks then read. Expanding materializes the member templates so the meet narrows the
+        -- contents (@head=Integer@); nested levels stay class-formed with the narrowed element
+        -- and are decided symbolically. The recursion steps through class-of-class members
+        -- (@List → ConsList → Cons/Nil@); the fuel bounds pathological mutual class tops.
+        expandToMembers fuel t
+          | fuel <= (0 :: Int) = t
+          | UnionType (Just (preds, negs, [])) pos [] <- t
+          , H.null pos, H.null negs
+          , let e = expandPredicates tbTypeEnv H.empty preds
+          , e /= t
+          = expandToMembers (fuel - 1) e
+          | otherwise = t
+        boundPost t
+          | bound' == PTopType || t == PTopType = t
+          | UnionType mTop leafs consts <- t =
+              let (raws, settled) = partition (null . typeGraphData tbTypeEnv . ptName) (splitUnionType leafs)
+                  metPart = intersectTypes tbTypeEnv (UnionType mTop (joinUnionType settled) consts) (expandToMembers 10 bound')
+              in unionTypes tbTypeEnv metPart (UnionType Nothing (joinUnionType raws) [])
+          | otherwise = t
+    let resArrows''WithPostTypes = concatMap (\item@(_, _, resArrow) -> map ((item,) . boundPost) $ resArrowDestType tbTypeEnv srcType resArrow) resArrows''
+    let followups = map (arrowFollowup env os visitedArrows bound' srcType destType) resArrows''WithPostTypes
     let resArrows''' = mapMaybe cresToMaybe followups
     -- When every candidate arrow's followup fails, 'joinArrowsWithCond' is handed an empty guard
     -- set and 'completeTreeSet' can only report a contentless "could not find enough arrows …
@@ -269,29 +310,31 @@ buildPartialCallTree env@TBEnv{tbTypeEnv} os visitedArrows srcType destType = do
       | reachesTo tbTypeEnv H.empty (singletonType srcType) destType = []
       | otherwise = [MkCNote $ BuildTreeCErr Nothing $ printf "The type %s does not reach the destination %s" (show srcType) (show destType)]
 
--- | Builds a call tree to convert something from 'srcType' to 'destType'
-buildCallTree :: TBEnv -> [ObjSrc] -> VisitedArrows -> Type -> Type -> CRes TCallTree
-buildCallTree TBEnv{tbTypeEnv} os _ srcType destType | isSubtypeOfWithObjSrcs tbTypeEnv os srcType destType = return TCTId
--- buildCallTree _ os _ srcType destType | trace (printf "buildCallTree from %s to %s\n\t\twith %s" (show srcType) (show destType) (show $ map fst os)) False = undefined
-buildCallTree _ _ _ _ PTopType = return TCTId
-buildCallTree _ _ _ PTopType _ = error $ printf "buildCallTree from top type"
-buildCallTree env@TBEnv{tbTypeEnv} objSrcs visitedArrows (TypeVar v _) destType = case exprVarArgsWithObjSrcs tbTypeEnv objSrcs of
+-- | Builds a call tree to convert something from 'srcType' to 'destType'. The @bound@ is a
+-- sound upper bound on the runtime value here, threaded down from outer calls
+-- (see 'buildPartialCallTree'); pass 'PTopType' at roots.
+buildCallTree :: TBEnv -> [ObjSrc] -> VisitedArrows -> Type -> Type -> Type -> CRes TCallTree
+buildCallTree TBEnv{tbTypeEnv} os _ _ srcType destType | isSubtypeOfWithObjSrcs tbTypeEnv os srcType destType = return TCTId
+-- buildCallTree _ os _ _ srcType destType | trace (printf "buildCallTree from %s to %s\n\t\twith %s" (show srcType) (show destType) (show $ map fst os)) False = undefined
+buildCallTree _ _ _ _ _ PTopType = return TCTId
+buildCallTree _ _ _ _ PTopType _ = error $ printf "buildCallTree from top type"
+buildCallTree env@TBEnv{tbTypeEnv} objSrcs visitedArrows bound (TypeVar v _) destType = case exprVarArgsWithObjSrcs tbTypeEnv objSrcs of
   [vaenv] -> case H.lookup v vaenv of
-    Just (_, srcType') -> buildCallTree env objSrcs visitedArrows srcType' destType
+    Just (_, srcType') -> buildCallTree env objSrcs visitedArrows bound srcType' destType
     Nothing -> error $ printf "Unknown TypeVar %s in buildCallTree" (show v)
   vaenvs -> error $ printf "Found unhandled zero or multiple vaenvs in builCallTree: %s" (show vaenvs)
 -- A source with no concrete leaves but a predicate top (a rel/class form such as @~Boolean@
 -- represented as @UnionType (Just (PredRel Boolean, _)) [] []@) carries its members only in the
 -- predicate, so expand it to the member union and build from that. Without this it would yield an
 -- empty 'TCMatch' that no runtime value can satisfy.
-buildCallTree env@TBEnv{tbTypeEnv} os visitedArrows src@(UnionType (Just (preds, _, _)) srcLeafs consts) destType
+buildCallTree env@TBEnv{tbTypeEnv} os visitedArrows bound src@(UnionType (Just (preds, _, _)) srcLeafs consts) destType
   | null (splitUnionType srcLeafs) && null consts
   , let expanded = expandPredicates tbTypeEnv H.empty preds
   , expanded /= src =
-      buildCallTree env os visitedArrows expanded destType
-buildCallTree env@TBEnv{tbTypeEnv} os visitedArrows (UnionType _ srcLeafs consts) destType = do
+      buildCallTree env os visitedArrows bound expanded destType
+buildCallTree env@TBEnv{tbTypeEnv} os visitedArrows bound (UnionType _ srcLeafs consts) destType = do
   let allPartials = splitUnionType srcLeafs ++ map constantPartialType consts
-  let tryBuilds = map (\srcPartial -> (srcPartial, buildPartialCallTree env os visitedArrows srcPartial destType)) allPartials
+  let tryBuilds = map (\srcPartial -> (srcPartial, buildPartialCallTree env os visitedArrows bound srcPartial destType)) allPartials
   -- The type checker keeps an applied term in both its raw and settled forms (@5 + 1@ is
   -- @(/operator+(..) + Integer)@), distributed into sibling container leaves
   -- (@Box[/v=/operator+(..)] + Box[/v=Integer]@). The raw leaf can fail to build: a settled
@@ -403,7 +446,7 @@ toTExprDest :: TBEnv -> [ObjSrc] -> Expr TBMetaDat -> EvalMeta -> CRes (TExpr TB
 toTExprDest env@TBEnv{tbTypeEnv} os e m = do
   e' <- toTExpr env os e
   let srcT = getMetaType $ getExprMeta e'
-  ct <- buildCallTree env os S.empty srcT (getMetaType m)
+  ct <- buildCallTree env os S.empty PTopType srcT (getMetaType m)
   -- A reference to an argument of the enclosing definition — bare (@= v@) or applied
   -- (@fn(v= x)@ where @fn@ is a parameter) — is unreduced. When the destination is generic
   -- the dest type is Top, so 'buildCallTree' short-circuits to 'TCTId' — but the argument

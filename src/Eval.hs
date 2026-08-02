@@ -171,7 +171,7 @@ evalCallTree  m (TCMatch destType opts) = do
     -- retry once; if the rebuild is not strictly more resolved, fall back to the original error.
     [] -> do
       Env{evTbEnv} <- get
-      case buildPartialCallTree evTbEnv [] S.empty (getValPartialType m) destType of
+      case buildPartialCallTree evTbEnv [] S.empty PTopType (getValPartialType m) destType of
         CRes _ rebuilt | rebuilt /= TCMatch destType opts ->
           withEvalPush ("rebuild match with val " ++ show m) $ evalCallTree m rebuilt
         _ -> evalError $ printf "Failed match in eval callTree: \n\tVal: %s \n\tVal type: %s\n\tOptions: %s" (show m) (show $ getValPartialType m) (show opts)
