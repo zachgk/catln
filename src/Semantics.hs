@@ -47,8 +47,36 @@ objArrGraphQuery prune typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg
       -- so the concrete rewrite is not absorbed by the declaration's class-top in the reaches union.
       -- Declarations and definitions compete on equal footing; specificity alone decides, and equally
       -- specific promises (e.g. a recursive function's own decl and def) are both kept.
-      mostSpecificPromises arrows = filter (\oa -> not (any (`strictlyDominates` oa) triggered)) triggered
-        where triggered = filter accepts arrows
+      --
+      -- Specificity may only choose among VALID promise sets, and a valid set must COVER the full
+      -- source: the reach union enumerates every form the term may take (an upper bound), so pruning
+      -- to promises that accept only part of the source writes an incomplete enumeration. For
+      -- @fmap(lst=⊤)@ the valid sets are the declaration alone or the Nil and Cons definition arms
+      -- together; the Nil arm alone is more specific but accepts only @lst=Nil@. Mid-inference a
+      -- definition arm whose object pattern has not yet resolved presents as ⊤ and is dominated
+      -- exactly like a declaration, so without the cover check its claim would be omitted from the
+      -- union — and monotonic narrowing makes the omission permanent. The check parallels
+      -- 'completeTreeSet' in "TreeBuild" with opposite polarity: dispatch must ERROR when coverage
+      -- fails, while a reach query instead DECLINES TO PRUNE (keeping every triggered promise is the
+      -- sound fallback for an upper bound).
+      mostSpecificPromises arrows
+        | length kept == length triggered || covered = kept
+        | otherwise = triggered
+        where
+          triggered = filter accepts arrows
+          kept = filter (\oa -> not (any (`strictlyDominates` oa) triggered)) triggered
+          -- What each kept promise accepts OF THIS SOURCE (the same intersect 'tryTArrow' performs).
+          keptSrcs = [intersectTypesEnv typeEnv vaenv (singletonType partial) (arrowObjType oa) | oa <- kept]
+          covered = materializedCovers || symbolicCovers
+          materializedCovers = isSubtypeOfWithEnv typeEnv vaenv (singletonType partial) (unionAllTypesWithEnv typeEnv vaenv keptSrcs)
+          -- The engine sees joint covers a leafwise subtype check cannot (e.g. Nil and Cons arms
+          -- jointly covering a class-typed argument); out of fragment the materialized check decides.
+          symbolicCovers = case traverse unionLeafs keptSrcs of
+            Just optss | dispatchInFragment partial && all dispatchInFragment (concat optss)
+              -> not (satLeafEscapesAll typeEnv vaenv S.empty partial (concat optss))
+            _ -> False
+          unionLeafs (UnionType Nothing leafs []) = Just (splitUnionType leafs)
+          unionLeafs _                            = Nothing
       accepts oa@ObjArr{oaArr=Just{}} = not $ isBottomType $ intersectTypesEnv typeEnv vaenv (singletonType partial) (arrowObjType oa)
       accepts _ = False
       arrowObjType oa = getMetaType $ getExprMeta $ oaObjExpr oa

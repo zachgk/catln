@@ -303,6 +303,24 @@ arrowConstrainUbs :: FEnv -> RConstraint -> SType -> SType -> TypeCheckResult (T
 -- @(srcAct', srcReq', destAct', reaches)@. Forward: derive the destination actual from what the
 -- source reaches (the arrows applicable to it), bounded by the destination's requirement. Reverse:
 -- narrow the source requirement to the components that actually reach that destination.
+--
+-- THE TWO INVARIANTS of type inference (Zach's ruling, 2026-08-01), and how a destination
+-- union is read under them:
+--
+--   1. Every scheme is an UPPER BOUND on the possible values of its point.
+--   2. Inference only ever NARROWS a scheme — each write reflects a more precise
+--      understanding of the same value ('verifyScheme' enforces this).
+--
+-- A destination union enumerates the FORMS the term may take: @Nil ∪ fmap(⊤,⊤)@ means the
+-- term is either the still-unevaluated call form @fmap(⊤,⊤)@ or one of the evaluated forms
+-- listed beside it. The unevaluated member does NOT stand for "whatever fmap may produce" —
+-- the evaluated members are the complete enumeration of what evaluation can yield, so
+-- @Nil ∪ fmap(⊤,⊤)@ asserts the call evaluates only to @Nil@. A forward write must therefore
+-- include EVERY applicable arrow's result (@Nil ∪ Cons(…) ∪ fmap(⊤,⊤)@) or not narrow at
+-- all: an incomplete enumeration violates invariant (1), and invariant (2) makes the damage
+-- permanent — later epochs intersect against the too-narrow bound, so an omitted
+-- alternative can never re-enter, and every consumer downstream reasons soundly from the
+-- wrong premise (a dropped call form, a missing dispatch arm, an eval failure).
 -- When the src is fully unresolved (Top) we cannot yet pick an arrow, so skip
 -- deriving the destination from the whole-universe reach. This avoids re-running
 -- the (expensive) universe 'reachesPartials' every epoch while the src stays Top;

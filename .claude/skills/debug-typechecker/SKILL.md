@@ -19,6 +19,32 @@ solves them in epochs. Most "wrong type" bugs are a point that ends up `TopType`
 Pipeline: Parser → Desugar → **TypeCheck** → TreeBuild → Eval. A type that is wrong after
 TypeCheck typically surfaces as a confusing error in TreeBuild or Eval.
 
+## 0. The two invariants — check every conclusion against them
+
+1. **Every scheme is an upper bound** on the possible values of its point. A stored ACT
+   that excludes a value the term can actually take is a bug at the *write that excluded
+   it*, not at the later constraint acting on the too-narrow type.
+2. **Inference only narrows.** Each epoch's write must be a subset of the previous value
+   (`verifyScheme` enforces this). So the FIRST too-narrow write is the root cause;
+   everything downstream is sound reasoning from a wrong premise, and no later epoch can
+   undo it — an omitted alternative dies in every later intersection.
+
+**How to read an ArrowTo destination union (raw call forms).** A union like
+`Nil ∪ fmap(⊤,⊤)` enumerates the *forms* the term may take: it is either the
+still-unevaluated call form `fmap(⊤,⊤)` or one of the evaluated forms listed beside it.
+The raw member does **not** mean "or whatever fmap produces" — the evaluated members are
+the complete enumeration of what evaluation can yield, so this type asserts the call
+evaluates only to `Nil`. This is the nuance in interpreting ArrowTo results in conjunction
+with the two invariants: a forward write must include every applicable arrow's result
+(`Nil ∪ Cons(…) ∪ fmap(⊤,⊤)`) or not narrow at all.
+
+Practical consequence for debugging: on a missing dispatch arm or "Failed match in eval
+callTree", walk the point's trace **backward** to the first write whose union omitted an
+alternative — that write is the bug. (Known instance: the type-graph query's
+most-specific-promise pruning can drop a definition arm whose object pattern is still
+unresolved (it presents ⊤ and looks like a generic declaration), so the reach union is
+written incomplete — see `mostSpecificPromises` in `src/Semantics.hs`.)
+
 ## 1. Reproduce minimally
 
 - Write the smallest standalone `.ct` that fails, importing core, with a `#test`/`#assert`:
