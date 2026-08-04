@@ -80,9 +80,9 @@ propCompactNoChanges gPrgm = property $ do
   let typeEnv = mkTypeEnv prgm
   vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
-  let compacted = compactType typeEnv vaenv a
+  compacted <- timed "compact a" $ compactType typeEnv vaenv a
   annotate $ printf "compacted = %s" (show compacted)
-  assert $ isEqTypeWithEnv typeEnv vaenv a compacted
+  assertTimed "a = compact a" $ isEqTypeWithEnv typeEnv vaenv a compacted
 
 propCompactIdempotent :: IO GenPrgm -> Property
 propCompactIdempotent gPrgm = property $ do
@@ -91,11 +91,11 @@ propCompactIdempotent gPrgm = property $ do
   let typeEnv = mkTypeEnv prgm
   vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
-  let compact1 = compactType typeEnv vaenv a
-  let compact2 = compactType typeEnv vaenv compact1
+  compact1 <- timed "compact a" $ compactType typeEnv vaenv a
+  compact2 <- timed "compact (compact a)" $ compactType typeEnv vaenv compact1
   annotate $ printf "compact once to %s" (show compact1)
   annotate $ printf "compact twice to %s" (show compact2)
-  compact1 === compact2
+  eqTimed "compact idempotent" compact1 compact2
 
 
 
@@ -107,12 +107,13 @@ propSubtypeByUnion gPrgm = property $ do
   vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
-  let subtype = isSubtypeOfWithEnv typeEnv vaenv a b
+  subtype <- timed "a ⊆ b" $ isSubtypeOfWithEnv typeEnv vaenv a b
   annotate $ printf "subtype = %s" (show subtype)
-  let byUnion = isEqTypeWithEnv typeEnv vaenv (unionTypesWithEnv typeEnv vaenv a b) b
-  annotate $ printf "a∪b = %s" (show $ unionTypesWithEnv typeEnv vaenv a b)
+  ab <- timed "a∪b" $ unionTypesWithEnv typeEnv vaenv a b
+  byUnion <- timed "a∪b = b" $ isEqTypeWithEnv typeEnv vaenv ab b
+  annotate $ printf "a∪b = %s" (show ab)
   annotate $ printf "byUnion = %s" (show byUnion)
-  subtype === byUnion
+  eqTimed "subtype by union" subtype byUnion
 
 propSubtypeByIntersection :: IO GenPrgm -> Property
 propSubtypeByIntersection gPrgm = property $ do
@@ -122,12 +123,13 @@ propSubtypeByIntersection gPrgm = property $ do
   vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
-  let subtype = isSubtypeOfWithEnv typeEnv vaenv a b
+  subtype <- timed "a ⊆ b" $ isSubtypeOfWithEnv typeEnv vaenv a b
   annotate $ printf "subtype = %s" (show subtype)
-  let byIntersection = isEqTypeWithEnv typeEnv vaenv (intersectR typeEnv vaenv a b) a
-  annotate $ printf "a∩b = %s" (show $ intersectR typeEnv vaenv a b)
+  ab <- timed "a∩b" $ intersectR typeEnv vaenv a b
+  byIntersection <- timed "a∩b = a" $ isEqTypeWithEnv typeEnv vaenv ab a
+  annotate $ printf "a∩b = %s" (show ab)
   annotate $ printf "byIntersection = %s" (show byIntersection)
-  subtype === byIntersection
+  eqTimed "subtype by intersection" subtype byIntersection
 
 propUnionReflexive :: IO GenPrgm -> Property
 propUnionReflexive gPrgm = property $ do
@@ -137,7 +139,9 @@ propUnionReflexive gPrgm = property $ do
   vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
-  assert $ isEqTypeWithEnv typeEnv vaenv (unionTypesWithEnv typeEnv vaenv a b) (unionTypesWithEnv typeEnv vaenv b a)
+  ab <- timed "a∪b" $ unionTypesWithEnv typeEnv vaenv a b
+  ba <- timed "b∪a" $ unionTypesWithEnv typeEnv vaenv b a
+  assertTimed "a∪b = b∪a" $ isEqTypeWithEnv typeEnv vaenv ab ba
 
 propUnionCommutative :: IO GenPrgm -> Property
 propUnionCommutative gPrgm = property $ do
@@ -148,7 +152,9 @@ propUnionCommutative gPrgm = property $ do
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
   c <- forAll $ genType prgm
-  assert $ isEqTypeWithEnv typeEnv vaenv (unionAllTypesWithEnv typeEnv vaenv [a, b, c]) (unionAllTypesWithEnv typeEnv vaenv [c, b, a])
+  abc <- timed "a∪b∪c" $ unionAllTypesWithEnv typeEnv vaenv [a, b, c]
+  cba <- timed "c∪b∪a" $ unionAllTypesWithEnv typeEnv vaenv [c, b, a]
+  assertTimed "a∪b∪c = c∪b∪a" $ isEqTypeWithEnv typeEnv vaenv abc cba
 
 propIntersectionReflexive :: IO GenPrgm -> Property
 propIntersectionReflexive gPrgm = property $ do
@@ -158,7 +164,9 @@ propIntersectionReflexive gPrgm = property $ do
   vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
-  assert $ isEqTypeWithEnv typeEnv vaenv (intersectR typeEnv vaenv a b) (intersectR typeEnv vaenv b a)
+  ab <- timed "a∩b" $ intersectR typeEnv vaenv a b
+  ba <- timed "b∩a" $ intersectR typeEnv vaenv b a
+  assertTimed "a∩b = b∩a" $ isEqTypeWithEnv typeEnv vaenv ab ba
 
 propIntersectionCommutative :: IO GenPrgm -> Property
 propIntersectionCommutative gPrgm = property $ do
@@ -170,16 +178,18 @@ propIntersectionCommutative gPrgm = property $ do
   b <- forAll $ genType prgm
   c <- forAll $ genType prgm
 
-  let abc = foldr1 (intersectR typeEnv vaenv) [a, b, c]
+  abc <- timed "a∩b∩c" $ foldr1 (intersectR typeEnv vaenv) [a, b, c]
   annotate $ printf "a∩b∩c = %s" (show abc)
 
-  let cba = foldr1 (intersectR typeEnv vaenv) [c, b, a]
+  cba <- timed "c∩b∩a" $ foldr1 (intersectR typeEnv vaenv) [c, b, a]
   annotate $ printf "c∩b∩a = %s" (show cba)
 
-  annotate $ printf "a∩b∩c ⊆ c∩b∩a = %s" (show $ isSubtypeOfWithEnv typeEnv vaenv abc cba)
-  annotate $ printf "c∩b∩a ⊆ a∩b∩c = %s" (show $ isSubtypeOfWithEnv typeEnv vaenv cba abc)
+  fwd <- timed "a∩b∩c ⊆ c∩b∩a" $ isSubtypeOfWithEnv typeEnv vaenv abc cba
+  bwd <- timed "c∩b∩a ⊆ a∩b∩c" $ isSubtypeOfWithEnv typeEnv vaenv cba abc
+  annotate $ printf "a∩b∩c ⊆ c∩b∩a = %s" (show fwd)
+  annotate $ printf "c∩b∩a ⊆ a∩b∩c = %s" (show bwd)
 
-  assert $ isEqTypeWithEnv typeEnv vaenv abc cba
+  assertTimed "a∩b∩c = c∩b∩a" $ isEqTypeWithEnv typeEnv vaenv abc cba
 
 propIntersectionDistributesUnion :: IO GenPrgm -> Property
 propIntersectionDistributesUnion gPrgm = property $ do
@@ -190,13 +200,16 @@ propIntersectionDistributesUnion gPrgm = property $ do
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
   c <- forAll $ genType prgm
-  let f = intersectR typeEnv vaenv a (unionTypesWithEnv typeEnv vaenv b c)
+  bc <- timed "b∪c" $ unionTypesWithEnv typeEnv vaenv b c
+  f <- timed "a∩(b∪c)" $ intersectR typeEnv vaenv a bc
   annotate $ printf "f = %s" (show f)
-  let d = unionTypesWithEnv typeEnv vaenv (intersectR typeEnv vaenv a b) (intersectR typeEnv vaenv a c)
-  annotate $ printf "a∩b = %s" (show $ intersectR typeEnv vaenv a b)
-  annotate $ printf "a∩c = %s" (show $ intersectR typeEnv vaenv a c)
+  ab <- timed "a∩b" $ intersectR typeEnv vaenv a b
+  ac <- timed "a∩c" $ intersectR typeEnv vaenv a c
+  d <- timed "(a∩b)∪(a∩c)" $ unionTypesWithEnv typeEnv vaenv ab ac
+  annotate $ printf "a∩b = %s" (show ab)
+  annotate $ printf "a∩c = %s" (show ac)
   annotate $ printf "d = %s" (show d)
-  assert $ isEqTypeWithEnv typeEnv vaenv f d
+  assertTimed "a∩(b∪c) = (a∩b)∪(a∩c)" $ isEqTypeWithEnv typeEnv vaenv f d
 
 propUnionDistributesIntersection :: IO GenPrgm  -> Property
 propUnionDistributesIntersection gPrgm = property $ do
@@ -207,15 +220,16 @@ propUnionDistributesIntersection gPrgm = property $ do
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
   c <- forAll $ genType prgm
-  let f = unionTypesWithEnv typeEnv vaenv a (intersectR typeEnv vaenv b c)
+  bc <- timed "b∩c" $ intersectR typeEnv vaenv b c
+  f <- timed "a∪(b∩c)" $ unionTypesWithEnv typeEnv vaenv a bc
   annotate $ printf "f = %s" (show f)
-  let ab = unionTypesWithEnv typeEnv vaenv a b
-  let ac = unionTypesWithEnv typeEnv vaenv a c
+  ab <- timed "a∪b" $ unionTypesWithEnv typeEnv vaenv a b
+  ac <- timed "a∪c" $ unionTypesWithEnv typeEnv vaenv a c
   annotate $ printf "a∪b = %s" (show ab)
   annotate $ printf "a∪c = %s" (show ac)
-  let d = intersectR typeEnv vaenv ab ac
+  d <- timed "(a∪b)∩(a∪c)" $ intersectR typeEnv vaenv ab ac
   annotate $ printf "d = %s" (show d)
-  assert $ isEqTypeWithEnv typeEnv vaenv f d
+  assertTimed "a∪(b∩c) = (a∪b)∩(a∪c)" $ isEqTypeWithEnv typeEnv vaenv f d
 
 propDifferenceShrinks :: IO GenPrgm -> Property
 propDifferenceShrinks gPrgm = property $ do
@@ -225,9 +239,9 @@ propDifferenceShrinks gPrgm = property $ do
   vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
   b <- forAll $ HG.choice [genType prgm, genRelatedType prgm a]
-  let diff' = diffR typeEnv vaenv a b
+  diff' <- timed "a-b" $ diffR typeEnv vaenv a b
   annotate $ printf "diff' = %s" (show diff')
-  assert $ isSubtypeOfWithEnv typeEnv vaenv diff' a
+  assertTimed "a-b ⊆ a" $ isSubtypeOfWithEnv typeEnv vaenv diff' a
 
 -- A∪A=U
 propUnionWithComplement :: IO GenPrgm -> Property
@@ -237,11 +251,11 @@ propUnionWithComplement gPrgm = property $ do
   let typeEnv = mkTypeEnv prgm
   vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
-  let a' = complementTypeEnv typeEnv vaenv a
+  a' <- timed "¬a" $ complementTypeEnv typeEnv vaenv a
   annotate $ printf "a' = %s" (show a')
-  let combined = unionTypesWithEnv typeEnv vaenv a a'
+  combined <- timed "a∪¬a" $ unionTypesWithEnv typeEnv vaenv a a'
   annotate $ printf "combined = %s" (show combined)
-  assert $ isEqTypeWithEnv typeEnv vaenv combined PTopType
+  assertTimed "a∪¬a = ⊤" $ isEqTypeWithEnv typeEnv vaenv combined PTopType
 
 -- A∩A=∅
 propIntersectionWithComplement :: IO GenPrgm -> Property
@@ -251,11 +265,11 @@ propIntersectionWithComplement gPrgm = property $ do
   let typeEnv = mkTypeEnv prgm
   vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
-  let a' = complementTypeEnv typeEnv vaenv a
+  a' <- timed "¬a" $ complementTypeEnv typeEnv vaenv a
   annotate $ printf "a' = %s" (show a')
-  let combined = intersectR typeEnv vaenv a a'
+  combined <- timed "a∩¬a" $ intersectR typeEnv vaenv a a'
   annotate $ printf "combined = %s" (show combined)
-  assert $ isEqTypeWithEnv typeEnv vaenv combined BottomType
+  assertTimed "a∩¬a = ∅" $ isEqTypeWithEnv typeEnv vaenv combined BottomType
 
 -- A^c^c=A
 propComplementInverse :: IO GenPrgm -> Property
@@ -265,11 +279,11 @@ propComplementInverse gPrgm = property $ do
   let typeEnv = mkTypeEnv prgm
   vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
-  let a' = complementTypeEnv typeEnv vaenv a
+  a' <- timed "¬a" $ complementTypeEnv typeEnv vaenv a
   annotate $ printf "a' = %s" (show a')
-  let a'' = complementTypeEnv typeEnv vaenv a'
+  a'' <- timed "¬¬a" $ complementTypeEnv typeEnv vaenv a'
   annotate $ printf "a'' = %s" (show a'')
-  assert $ isEqTypeWithEnv typeEnv vaenv a a''
+  assertTimed "¬¬a = a" $ isEqTypeWithEnv typeEnv vaenv a a''
 
 -- A-A=∅
 propDifferenceIdentity :: IO GenPrgm -> Property
@@ -279,11 +293,11 @@ propDifferenceIdentity gPrgm = property $ do
   let typeEnv = mkTypeEnv prgm
   vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
-  let a' = complementTypeEnv typeEnv vaenv a
+  a' <- timed "¬a" $ complementTypeEnv typeEnv vaenv a
   annotate $ printf "a' = %s" (show a')
-  let a'' = diffR typeEnv vaenv a a
+  a'' <- timed "a-a" $ diffR typeEnv vaenv a a
   annotate $ printf "a-a = %s" (show a'')
-  assert $ isEqTypeWithEnv typeEnv vaenv a'' BottomType
+  assertTimed "a-a = ∅" $ isEqTypeWithEnv typeEnv vaenv a'' BottomType
 
 -- A+B-A ⊆ B
 propDifferenceSubset :: IO GenPrgm -> Property
@@ -294,16 +308,16 @@ propDifferenceSubset gPrgm = property $ do
   vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
   b <- forAll $ HG.choice [genType prgm, genRelatedType prgm a]
-  let intersected = intersectR typeEnv vaenv a b
+  intersected <- timed "a∩b" $ intersectR typeEnv vaenv a b
   let overlapping = intersected /= BottomType
   annotate $ printf "does a overlaps b? %s" (show overlapping)
-  let union = unionTypesWithEnv typeEnv vaenv a b
+  union <- timed "a∪b" $ unionTypesWithEnv typeEnv vaenv a b
   annotate $ printf "a + b = %s" (show union)
-  let sub = diffR typeEnv vaenv union a
+  sub <- timed "a+b-a" $ diffR typeEnv vaenv union a
   annotate $ printf "a+b-a = %s" (show sub)
   if overlapping
-    then assert $ isSubtypeOfWithEnv typeEnv vaenv sub b
-    else assert $ isEqTypeWithEnv typeEnv vaenv sub b
+    then assertTimed "a+b-a ⊆ b" $ isSubtypeOfWithEnv typeEnv vaenv sub b
+    else assertTimed "a+b-a = b" $ isEqTypeWithEnv typeEnv vaenv sub b
 
 
 -- | Deep-force a stage's result under a wall-clock budget: a case that exceeds it fails the
@@ -317,6 +331,28 @@ forceTimed stage x = do
     Nothing -> do
       footnote $ printf "TIMEOUT (5s) forcing stage: %s" stage
       failure
+
+-- | 'forceTimed' that returns the value, for binding a stage's result:
+-- @v <- timed "a∩b" $ intersectR …@. EVERY property below routes its set operations through
+-- 'timed'\/'assertTimed'\/'eqTimed' rather than a bare @let@\/@assert@\/@===@, so a livelocked
+-- operation FAILS (and hedgehog shrinks it to a minimal reproducing input) instead of spinning
+-- forever with no counterexample. A silent livelock here once burned hours of wall clock: the
+-- suite pinned a core at multi-GB residency with nothing to debug, and even survived its own
+-- @timeout@ (SIGTERM is ignored while the RTS spins in a non-allocating loop — use
+-- @timeout -s KILL@ around the suite as a backstop).
+timed :: (Show a, Monad m, MonadTest m, MonadIO m) => String -> a -> m a
+timed stage x = forceTimed stage x >> return x
+
+-- | 'assert' under the force budget (see 'timed').
+assertTimed :: (Monad m, MonadTest m, MonadIO m) => String -> Bool -> m ()
+assertTimed stage b = forceTimed stage b >> assert b
+
+-- | '===' under the force budget on both sides (see 'timed').
+eqTimed :: (Eq a, Show a, Monad m, MonadTest m, MonadIO m) => String -> a -> a -> m ()
+eqTimed stage x y = do
+  forceTimed (stage ++ " lhs") x
+  forceTimed (stage ++ " rhs") y
+  x === y
 
 -- A∩B=A-(A-B)
 propIntersectByDifference :: IO GenPrgm -> Property
@@ -336,8 +372,7 @@ propIntersectByDifference gPrgm = property $ do
   forceTimed "a-(a-b)" diff'
   annotate $ printf "a-b' = %s" (show subDiff')
   annotate $ printf "diff' = a-(a-b) = %s" (show diff')
-  forceTimed "isEq" (isEqTypeWithEnv typeEnv vaenv intersect' diff')
-  assert $ isEqTypeWithEnv typeEnv vaenv intersect' diff'
+  assertTimed "a∩b = a-(a-b)" $ isEqTypeWithEnv typeEnv vaenv intersect' diff'
 
 -- A-B=A-(A∩B)
 propDifferenceByIntersection :: IO GenPrgm -> Property
@@ -348,13 +383,13 @@ propDifferenceByIntersection gPrgm = property $ do
   vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
   b <- forAll $ HG.choice [genType prgm, genRelatedType prgm a]
-  let diff' = diffR typeEnv vaenv a b
+  diff' <- timed "a-b" $ diffR typeEnv vaenv a b
   annotate $ printf "diff' = %s" (show diff')
-  let subInter' = intersectR typeEnv vaenv a b
-  let withInter' = diffR typeEnv vaenv a subInter'
+  subInter' <- timed "a∩b" $ intersectR typeEnv vaenv a b
+  withInter' <- timed "a-(a∩b)" $ diffR typeEnv vaenv a subInter'
   annotate $ printf "a∩b' = %s" (show subInter')
   annotate $ printf "withInter' = a-(a∩b) = %s" (show withInter')
-  assert $ isEqTypeWithEnv typeEnv vaenv diff' withInter'
+  assertTimed "a-b = a-(a∩b)" $ isEqTypeWithEnv typeEnv vaenv diff' withInter'
 
 -- P[$T=(A+B)] should be recognized as equal to P[$T=A] + P[$T=B]
 propSubtypeUnionVarSplit :: IO GenPrgm -> Property
@@ -384,7 +419,7 @@ propSubtypeUnionVarSplit gPrgm = property $ do
   annotate $ printf "split = %s" (show splitType)
 
   -- P[$T=(A+B)] should be equivalent to P[$T=A] + P[$T=B]
-  assert $ isEqType typeEnv joinedType splitType
+  assertTimed "P[A+B] = P[A]+P[B]" $ isEqType typeEnv joinedType splitType
 
 -- Parameterized-class covariance: for a class C parameterized by /T, the membership predicate is
 -- covariant in the element bound - @PredClass C[/T=a] ⊆ PredClass C[/T=b]@ whenever @a ⊆ b@ (a value
@@ -407,9 +442,10 @@ propParamClassCovariant gPrgm = property $ do
   annotate $ printf "a∪b = %s" (show wider)
   annotate $ printf "C[a] = %s" (show cNarrow)
   annotate $ printf "C[a∪b] = %s" (show cWide)
-  annotate $ printf "C[a] − C[a∪b] = %s" (show $ differenceTypeEnv typeEnv cNarrow cWide)
-  assert $ isSubtypeOf typeEnv cNarrow cWide
-  assert $ isEqType typeEnv (differenceTypeEnv typeEnv cNarrow cWide) BottomType
+  cDiff <- timed "C[a] − C[a∪b]" $ differenceTypeEnv typeEnv cNarrow cWide
+  annotate $ printf "C[a] − C[a∪b] = %s" (show cDiff)
+  assertTimed "C[a] ⊆ C[a∪b]" $ isSubtypeOf typeEnv cNarrow cWide
+  assertTimed "C[a] − C[a∪b] = ∅" $ isEqType typeEnv cDiff BottomType
 
 -- | Every leaf of a class's (materialized) member expansion is a subtype of the class — both
 -- as expanded (covers class-named members like @Nil@ reached through @Eq@'s @ConsList[Eq]@) and
@@ -435,8 +471,8 @@ propClassExpansionLeafSubtype gPrgm = property $ do
   annotate $ printf "class = %s" (show clsT)
   annotate $ printf "leaf = %s" (show leaf)
   annotate $ printf "erased = %s" (show erased)
-  assert $ isSubtypeOf typeEnv (singletonType leaf) clsT
-  assert $ isSubtypeOf typeEnv (singletonType erased) clsT
+  assertTimed "leaf ⊆ class" $ isSubtypeOf typeEnv (singletonType leaf) clsT
+  assertTimed "erased leaf ⊆ class" $ isSubtypeOf typeEnv (singletonType erased) clsT
 
 propClassGraphMatchesPredClass :: IO GenPrgm -> Property
 propClassGraphMatchesPredClass gPrgm = property $ do
@@ -475,12 +511,12 @@ propClassGraphMatchesPredClass gPrgm = property $ do
           -- Empty class should expand to classPlaceholder[$T = className]
           let expectedPlaceholder = singletonType $ classPlaceholderLeaf (fromPartialName className)
           annotate $ printf "Expected placeholder: %s" (show expectedPlaceholder)
-          assert $ isEqType typeEnv cls expectedPlaceholder
+          assertTimed "empty class = placeholder" $ isEqType typeEnv cls expectedPlaceholder
         _ -> do
           -- Non-empty class should equal the union of constituent types
-          let unionConstituents = unionAllTypes typeEnv constituentTypes
+          unionConstituents <- timed "union of constituents" $ unionAllTypes typeEnv constituentTypes
           annotate $ printf "Union of constituents: %s" (show unionConstituents)
-          assert $ isEqType typeEnv cls unionConstituents
+          assertTimed "class = union of constituents" $ isEqType typeEnv cls unionConstituents
 
     CGType -> discard
   where
@@ -520,12 +556,12 @@ propParamClassWideNotNarrow ioPrgms = property $ do
   annotate $ printf "bare = %s" (show bare)
   annotate $ printf "expanded = %s" (show expanded)
   -- Covariance holds upward: a narrower element bound is within the wider.
-  assert $ isSubtypeOf typeEnv narrow wide
+  assertTimed "narrow ⊆ wide" $ isSubtypeOf typeEnv narrow wide
   -- Soundness downward: the wide form contains values the narrow form excludes.
-  assert $ not (isSubtypeOf typeEnv wide narrow)
-  assert $ not (isSubtypeOf typeEnv bare narrow)
+  assertTimed "wide ⊄ narrow" $ not (isSubtypeOf typeEnv wide narrow)
+  assertTimed "bare ⊄ narrow" $ not (isSubtypeOf typeEnv bare narrow)
   -- The class's own member expansion (flexible parameters) stays within the class.
-  assert $ isSubtypeOf typeEnv expanded bare
+  assertTimed "expanded ⊆ bare" $ isSubtypeOf typeEnv expanded bare
 
 -- | Intersecting the same class over an unresolved element variable and over a concrete
 -- element must keep the concrete bound (@C[Ord] ⟹ C[$_T]@ by covariance with the unbound
@@ -562,14 +598,14 @@ propParamClassIntersectAbsorb ioPrgms = property $ do
         let (venv, t) = intersectTypesWithVarEnv typeEnv H.empty a b
             newBindings = H.filter (/= PTopType) venv
         in if H.null newBindings then t else substituteKeep newBindings t
-  let met = resolvedIntersect flexed narrow
+  met <- timed "flexed ∩ narrow" $ resolvedIntersect flexed narrow
   annotate $ printf "flexed = %s" (show flexed)
   annotate $ printf "narrow = %s" (show narrow)
   annotate $ printf "flexed ∩ narrow = %s" (show met)
   -- The meet must not widen: it stays within the concrete-bounded form.
-  assert $ isSubtypeOf typeEnv met narrow
+  assertTimed "met ⊆ narrow" $ isSubtypeOf typeEnv met narrow
   -- And the concrete-bounded form stays within the meet (the meet is exactly the narrow form).
-  assert $ isSubtypeOf typeEnv narrow met
+  assertTimed "narrow ⊆ met" $ isSubtypeOf typeEnv narrow met
   -- The same meet through a CONJUNCTION with a second class (the shape a completed data field
   -- takes: the field's class with an unresolved element ∧ a supertype class with the bound):
   -- @(ConsList[$_v] ∧ List[Int]) ∩ (ConsList[Int] ∧ List[Int])@ must also keep the bound.
@@ -582,12 +618,12 @@ propParamClassIntersectAbsorb ioPrgms = property $ do
   let conj elemA elemB = UnionType (Just (predsAnd (PredsOne (PredClass clsPt{ptVars=H.singleton tKey elemA})) (PredsOne (PredClass listPt{ptVars=H.singleton lKey elemB})), H.empty, [])) H.empty []
   let flexConj = conj flexVar intT
   let narrowConj = conj intT intT
-  let metConj = resolvedIntersect flexConj narrowConj
+  metConj <- timed "flexConj ∩ narrowConj" $ resolvedIntersect flexConj narrowConj
   annotate $ printf "flexConj = %s" (show flexConj)
   annotate $ printf "narrowConj = %s" (show narrowConj)
   annotate $ printf "flexConj ∩ narrowConj = %s" (show metConj)
-  assert $ isSubtypeOf typeEnv metConj narrowConj
-  assert $ isSubtypeOf typeEnv narrowConj metConj
+  assertTimed "metConj ⊆ narrowConj" $ isSubtypeOf typeEnv metConj narrowConj
+  assertTimed "narrowConj ⊆ metConj" $ isSubtypeOf typeEnv narrowConj metConj
 
 -- | A conjunction of a flexible-element outer class with a concrete-element member class
 -- stays within the member class's expansion: @Bag[$_A] ∧ ConsList[Integer] ⊆ ∀ConsList[Integer]@
@@ -631,12 +667,12 @@ propConjMemberClassSubtype ioPrgms = property $ do
   -- The same conjunction with the outer atom UNBOUND (a bare membership atom, the form a
   -- parameterless isa-entry produces).
   let conjBare = conjOver bagPt{ptVars=H.empty}
-  let narrowExpanded = expandClassPartial typeEnv H.empty consListInt
+  narrowExpanded <- timed "expand ConsList[Int]" $ expandClassPartial typeEnv H.empty consListInt
   annotate $ printf "conj = %s" (show conj)
   annotate $ printf "conjBare = %s" (show conjBare)
   annotate $ printf "narrowExpanded = %s" (show narrowExpanded)
-  assert $ isSubtypeOf typeEnv conj narrowExpanded
-  assert $ isSubtypeOf typeEnv conjBare narrowExpanded
+  assertTimed "conj ⊆ ConsList[Int]" $ isSubtypeOf typeEnv conj narrowExpanded
+  assertTimed "conjBare ⊆ ConsList[Int]" $ isSubtypeOf typeEnv conjBare narrowExpanded
 
 typeTests :: TestTree
 typeTests = withResource findPrgms (const $ pure ()) tests

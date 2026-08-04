@@ -108,6 +108,16 @@ xFmt prgmName = do
   let prgm' = formatRootPrgm rawPrgm
   lift $ writeFile prgmName prgm'
 
+-- | Builds the arrow trees ('TreeBuild') for every definition in a file and its imports, without
+-- running or evaluating anything. This is the stage between typechecking and evaluation, so it
+-- reports build errors that @catln run@ would only reach for the definitions it actually calls.
+xTBuild :: String -> CResT IO ()
+xTBuild prgmName = do
+  prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
+  ctss <- lift $ ctssBaseFiles buildCtssConfig [prgmName]
+  g <- ctssGetFrom ssfTBPrgm prgmName' ctss
+  lift $ putStrLn $ printf "Built arrow trees for %d programs" (length $ graphToNodes g)
+
 xTest :: String -> Bool -> CResT IO ()
 xTest prgmName update = do
   ctss <- lift $ ctssBaseFiles buildCtssConfig [prgmName]
@@ -216,6 +226,7 @@ exec (Fmt fname)                = xFmt fname
 exec (DepTree fname showCore)   = xDepTree fname showCore
 exec (TestFile fname update)    = xTest fname update
 exec (TypeTrace fname)          = xTypeTrace fname
+exec (TBuildFile fname)         = xTBuild fname
 
 data Command
   = BuildFile String String
@@ -227,6 +238,7 @@ data Command
   | DepTree String Bool
   | TestFile String Bool
   | TypeTrace String
+  | TBuildFile String
 
 cRun :: Parser Command
 cRun = RunFile
@@ -266,6 +278,10 @@ cTest = TestFile
   <$> argument str (metavar "FILE" <> help "The file to test")
   <*> switch (long "update" <> short 'u' <> help "Write #result goldens for #print statements instead of checking them")
 
+cTBuild :: Parser Command
+cTBuild = TBuildFile
+  <$> argument str (metavar "FILE" <> help "The file to build arrow trees for")
+
 cTypeTrace :: Parser Command
 cTypeTrace = TypeTrace
   <$> argument str (metavar "FILE" <> help "The file to trace type inference for")
@@ -294,4 +310,5 @@ main = do
       <> command "deptree" (info cDepTree (progDesc "Shows the dependency tree for a program"))
       <> command "test" (info cTest (progDesc "Runs all tests in a program"))
       <> command "typetrace" (info cTypeTrace (progDesc "Writes the type inference trace to the build directory"))
+      <> command "tbuild" (info cTBuild (progDesc "Builds the arrow trees for a program and its imports"))
                              )
