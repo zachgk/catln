@@ -3,7 +3,7 @@
  *
  * Prerequisites:
  *   Start the backend API server before running these tests:
- *     stack exec catln doc test/Integration/code/id.ct -- --api
+ *     stack exec catln doc test/Integration/code/id.ct -- --api --cached
  *   Or from stack repl:
  *     :l test/Spec
  *     testd

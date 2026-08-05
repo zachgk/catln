@@ -21,10 +21,14 @@ if lsof -ti ":${API_PORT}" > /dev/null 2>&1; then
   sleep 1
 fi
 
-# Start the Catln backend API server
+# Start the Catln backend API server.
+# --cached builds once at startup and serves from that build. Without it the live
+# provider re-runs ctssBuildAll on every request (see the TODO in mkLiveWDProvider),
+# costing ~60s per call and timing out every test. These tests only check the API
+# contract over a fixed file set, so live reloading buys nothing here.
 echo "Starting Catln backend on port ${API_PORT}..."
 cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
-stack run catln -- doc test/Integration/code/id.ct --api &
+stack run catln -- doc test/Integration/code/id.ct --api --cached &
 BACKEND_PID=$!
 
 # Wait for the backend to be ready
