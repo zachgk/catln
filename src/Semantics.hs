@@ -71,8 +71,15 @@ objArrGraphQuery prune typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg
           materializedCovers = isSubtypeOfWithEnv typeEnv vaenv (singletonType partial) (unionAllTypesWithEnv typeEnv vaenv keptSrcs)
           -- The engine sees joint covers a leafwise subtype check cannot (e.g. Nil and Cons arms
           -- jointly covering a class-typed argument); out of fragment the materialized check decides.
+          -- In-flight engine decision ('teInSatDecision', reachable via the in-decision
+          -- meets' 'compactType' → 'typeGraphQueryWithReason'): starting a fresh
+          -- empty-hypothesis 'satLeafEscapesAll' here is the nested-regress hazard. Demote
+          -- to cover-unproven — 'materializedCovers' still decides, and declining to prune
+          -- is the sound fallback above.
           symbolicCovers = case traverse unionLeafs keptSrcs of
-            Just optss | dispatchInFragment partial && all dispatchInFragment (concat optss)
+            Just optss
+              | teInSatDecision typeEnv -> debugTrace typeEnv "[SAT-DEMOTE:symbolicCovers]" False
+              | dispatchInFragment partial && all dispatchInFragment (concat optss)
               -> not (satLeafEscapesAll typeEnv vaenv S.empty partial (concat optss))
             _ -> False
           unionLeafs (UnionType Nothing leafs []) = Just (splitUnionType leafs)
@@ -180,7 +187,7 @@ buildCtssConfig = unsafePerformIO $ do
 {-# NOINLINE buildCtssConfig #-}
 
 mkTypeEnv :: (ExprClass e, Show m, Show (e m), MetaDat m) => Prgm e m -> TypeEnv (ObjArrTypeGraph e m)
-mkTypeEnv (Prgm objMap classGraph _) = TypeEnv classGraph (ObjArrTypeGraph objMap) typeNames False defaultTypeEnvDebug False False (mkSatCache classGraph typeNames)
+mkTypeEnv (Prgm objMap classGraph _) = TypeEnv classGraph (ObjArrTypeGraph objMap) typeNames False defaultTypeEnvDebug False False False (mkSatCache classGraph typeNames)
   where
     -- The compiler-emitted annotation names ('builtinAnnotNames') are part of every program's
     -- vocabulary: desugar injects uses of them (doc comments become @#md@, @>@ statements become

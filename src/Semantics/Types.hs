@@ -368,6 +368,19 @@ data TypeEnv tg = TypeEnv {
   -- where this looseness is semantically intended; left 'False' for the set-algebra so the
   -- property tests stay sound. See 'looseArgModeRejects'.
   teArgModeProjection :: Bool,
+  -- | When 'True', a symbolic satisfiability decision ('satGoal' \/ 'satLeafEscapesAll') is
+  -- in flight on this env: the decision roots set it for their entire bodies (and never read
+  -- it), and the algebra→engine entry points ('predsEmptySymbolic', 'typeCoveredSymbolic',
+  -- 'satAtomImplies', 'mostSpecificPromises') read it and answer their conservative
+  -- fail-to-prove polarity instead of starting a nested decision. Invariant: engine
+  -- decisions never nest — only completed, empty-hypothesis decisions may produce
+  -- UNSAT-derived facts (empty \/ implies \/ covered). A nested decision would re-enter with
+  -- an empty hypothesis stack and diverge on recursive class memberships (the
+  -- @every(ConsList[$T -> Eq], isa= [Eq])@ + Ord ring), while inheriting the ancestor stack
+  -- is unsound: the cycle guard's 'False' means "no finite witness along this derivation
+  -- path", which only sibling branches of the same enumeration make complete — a standalone
+  -- query has no siblings, so the guard's 'False' would become a free-standing false UNSAT.
+  teInSatDecision     :: Bool,
   -- | Global views of 'teClassGraph' and 'teNames' for the symbolic satisfiability engine
   -- (see the section "Symbolic class-predicate satisfiability"), built strictly at
   -- construction via 'mkSatCache'. Any construction or update that changes 'teClassGraph'
@@ -381,7 +394,7 @@ defaultTypeEnvDebug = False
 
 
 emptyTypeEnv' :: TypeEnv EmptyTypeGraph
-emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty False defaultTypeEnvDebug False False (mkSatCache mempty S.empty)
+emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty False defaultTypeEnvDebug False False False (mkSatCache mempty S.empty)
 
 -- | A class or type node within the 'ClassGraph'
 data CGNode
@@ -533,7 +546,7 @@ instance Monoid ClassGraph where
   mempty = ClassGraph $ graphFromEdges []
 
 instance (Semigroup tg) => Semigroup (TypeEnv tg) where
-  (TypeEnv cg1 tg1 n1 d1 dc1 pe1 ap1 _) <> (TypeEnv cg2 tg2 n2 d2 dc2 pe2 ap2 _) = TypeEnv cg' (tg1 <> tg2) n' (d1 || d2) (dc1 || dc2) (pe1 || pe2) (ap1 || ap2) (mkSatCache cg' n')
+  (TypeEnv cg1 tg1 n1 d1 dc1 pe1 ap1 is1 _) <> (TypeEnv cg2 tg2 n2 d2 dc2 pe2 ap2 is2 _) = TypeEnv cg' (tg1 <> tg2) n' (d1 || d2) (dc1 || dc2) (pe1 || pe2) (ap1 || ap2) (is1 || is2) (mkSatCache cg' n')
     where
       cg' = cg1 <> cg2
       n' = S.union n1 n2
@@ -2458,7 +2471,7 @@ satAtomImpliesDeclared typeEnv a1 a2 = case (a1, a2) of
 -- materialized algebra (whose gate sits at the outermost implication/re-expression decision
 -- while all downstream expansion is ungated).
 satGoal :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Bool -> SatHyps -> SatGoal -> Bool
-satGoal typeEnv vaenv gatePos hyps goal0
+satGoal typeEnv0 vaenv gatePos hyps goal0
   | goal `S.member` hyps = False -- recursive goal: no finite witness along this path
   -- @X ∧ ¬X@: an atom required positively and negatively at once is contradictory, whatever
   -- the atom means. The enumeration below cannot be trusted to detect this (a candidate on
@@ -2487,6 +2500,13 @@ satGoal typeEnv vaenv gatePos hyps goal0
         Nothing         -> True -- no enumerable generator: conservative
         Just (_, cands) -> any checkCand cands
   where
+    -- The decision root marks its entire body, guards included ('negAtomCoversUniverse'
+    -- runs algebra code): any algebra call reached from here — the witness-refinement meets
+    -- below, 'classSatCandidates'' class-var meet, 'expandClassPartial' — carries
+    -- 'teInSatDecision', so the algebra→engine entry points answer conservatively instead
+    -- of nesting a fresh empty-hypothesis decision. Never read here: internal engine
+    -- recursion stays hypothesis-guarded.
+    typeEnv = typeEnv0{teInSatDecision=True}
     goal = satGoalUnifyPos vaenv (satGoalNorm goal0)
     hyps' = S.insert goal hyps
 
@@ -2586,7 +2606,14 @@ satGoal typeEnv vaenv gatePos hyps goal0
 predsEmptySymbolic :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> TypePredicates -> Maybe Bool
 predsEmptySymbolic typeEnv vaenv preds = do
   goals <- predsSatDNF True preds
-  Just (not (any (satGoal typeEnv vaenv True S.empty) goals))
+  -- A decision is in flight ('teInSatDecision'): starting a fresh empty-hypothesis decision
+  -- here is the nested-regress hazard, and inheriting the ancestor stack would be a false
+  -- UNSAT. Demote to the fail-to-prove polarity (not provably empty — the 'predsEmpty'
+  -- catch-all). Only the in-fragment engine call demotes: the fragment parse above still
+  -- returns 'Nothing' out of fragment, so callers' materialized fallbacks are unchanged.
+  if teInSatDecision typeEnv
+    then debugTrace typeEnv (printf "[SAT-DEMOTE:predsEmpty] %s" (show preds)) (Just False)
+    else Just (not (any (satGoal typeEnv vaenv True S.empty) goals))
 
 -- | Engine-backed subtype: @Just (t1 ⊆ t2)@, decided as emptiness of @t1 ∧ ¬t2@, when both
 -- types are within the decidable fragment. 'gatePos' gates enumeration of t1's classes
@@ -2597,7 +2624,12 @@ typeCoveredSymbolic typeEnv vaenv gatePos t1 t2 = do
   d2 <- typeSatDNF vaenv t2
   negConj <- satDNFConj (map satGoalNegChoices d2)
   goals <- satDNFConj [d1, negConj]
-  Just (not (any (satGoal typeEnv vaenv gatePos S.empty) goals))
+  -- In-flight decision: demote to cover-unproven rather than nest a decision (see
+  -- 'teInSatDecision' and the 'predsEmptySymbolic' demotion). In-fragment only — the
+  -- fragment parse above still returns 'Nothing' out of fragment.
+  if teInSatDecision typeEnv
+    then debugTrace typeEnv (printf "[SAT-DEMOTE:typeCovered] %s <= %s" (show t1) (show t2)) (Just False)
+    else Just (not (any (satGoal typeEnv vaenv gatePos S.empty) goals))
 
 -- | Engine-backed implication between two class/relation atoms: @a1 ⟹ a2@ decided as emptiness
 -- of @a1 ∧ ¬a2@. 'gatePos' gates enumeration of a1's class (the open-world gate).
@@ -2609,6 +2641,11 @@ satAtomImplies typeEnv vaenv gatePos a1 a2
   | SatClass c1 <- a1
   , Just ClassSatInfo{csiSealed=sealed, csiTypes=[]} <- H.lookup (ptName c1) (scClasses (teSatCache typeEnv))
   , sealed || tePrgmEnv typeEnv = True
+  -- In-flight decision: only the engine-free declared-edge check ('satAtomImpliesDeclared'
+  -- is recursion-safe by construction), else implication unproven (see 'teInSatDecision').
+  | teInSatDecision typeEnv =
+      debugTrace typeEnv (printf "[SAT-DEMOTE:atomImplies] %s => %s" (show a1) (show a2))
+        (satAtomImpliesDeclared typeEnv a1 a2)
   | otherwise = not (satGoal typeEnv vaenv gatePos S.empty (SatGoal [a1] [a2]))
 
 -- | Whether a partial is within the fragment of the dispatch-coverage queries below
@@ -2640,7 +2677,7 @@ dispatchInFragment PartialType{ptVars, ptArgs, ptPreds} =
 -- towards 'True' (escape unproven ⇒ possibly escapes), the safe polarity for coverage
 -- (unproven cover ⇒ not covered).
 satLeafEscapesAll :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatHyps -> PartialType -> [PartialType] -> Bool
-satLeafEscapesAll typeEnv vaenv hyps m negs0
+satLeafEscapesAll typeEnv0 vaenv hyps m negs0
   | goal `S.member` hyps = False -- recursive goal: no finite witness along this path
   | any (\n -> partialCoversSat typeEnv vaenv False hyps' n m) negs = False
   | null negs = satGoal typeEnv vaenv False hyps (SatGoal [SatLeafs [m]] []) -- inhabited ⇒ escapes
@@ -2648,6 +2685,11 @@ satLeafEscapesAll typeEnv vaenv hyps m negs0
       []        -> True -- no discriminating position is refinable: conservative escape
       (cases:_) -> any (\m' -> satLeafEscapesAll typeEnv vaenv hyps' m' negs) cases
   where
+    -- Decision root: mark the entire body, exactly as in 'satGoal'. This root has its own
+    -- algebra re-entries that never pass through 'satGoal' ('classSatCandidates'' class-var
+    -- meet in 'enumAtom', and through it the 'compactType' → 'typeGraphQueryWithReason' →
+    -- 'mostSpecificPromises' route back to a fresh 'satLeafEscapesAll').
+    typeEnv = typeEnv0{teInSatDecision=True}
     negs = filter (partialsOverlapSat typeEnv vaenv False hyps m) negs0
     goal = satGoalNorm (SatGoal [SatLeafs [m]] [SatLeafs [n] | n <- negs])
     hyps' = S.insert goal hyps
