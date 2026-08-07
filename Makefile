@@ -40,10 +40,14 @@ webdocs-test:
 webdocs-test-integ:
 	cd webdocs && npm run test:integration:full
 
+# test/Integration/code is excluded until the CtService dep-scoping bug is fixed.
+# buildSCCPipeline passes ALL pages as external deps rather than the transitive
+# ones, so merging those 38 standalone programs collides on names they never
+# import from each other: abs, Nothing, and main (defined by 37 of the 38).
 .PHONY: webdocs-serve
 webdocs-serve:
 	cd webdocs && npm run build
-	stack run catln -- doc stack test/Integration/code docs
+	stack run catln -- doc stack docs
 
 .PHONY: errRepl
 errRepl:

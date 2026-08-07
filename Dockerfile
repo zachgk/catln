@@ -54,5 +54,9 @@ COPY --from=backend /usr/local/bin/catln /usr/local/bin/catln
 COPY --from=frontend /home/webdocs/dist /home/webdocs/dist
 COPY stack /root/.catln/stack
 
-CMD ["catln", "doc", "--cached", "/root/.catln/stack", "test/Integration/code", "docs"]
+# test/Integration/code is excluded until the CtService dep-scoping bug is fixed.
+# buildSCCPipeline passes ALL pages as external deps rather than the transitive
+# ones, so merging those 38 standalone programs collides on names they never
+# import from each other: abs, Nothing, and main (defined by 37 of the 38).
+CMD ["catln", "doc", "--cached", "/root/.catln/stack", "docs"]
 EXPOSE 8080
