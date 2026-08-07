@@ -674,6 +674,37 @@ propConjMemberClassSubtype ioPrgms = property $ do
   assertTimed "conj ⊆ ConsList[Int]" $ isSubtypeOf typeEnv conj narrowExpanded
   assertTimed "conjBare ⊆ ConsList[Int]" $ isSubtypeOf typeEnv conjBare narrowExpanded
 
+-- | The ¬-over-recursive-class meet terminates and stays exact — the minimal repro of the
+-- 2026-08 value-level livelock: @(⊤|¬EqCO) ∩ (Cons + Nil canonical expansion)@ diverged by
+-- materializing the negation into subtraction leafs that re-introduce it through the
+-- recursive @tail@ slot, bit-identically forever. The meet must instead attach the
+-- negation symbolically ('partialAddPreds'), drop the uninhabited @Nil{¬EqCO}@ (@Nil@ IS
+-- an @EqCO@ member through @every(ConsList[$T -> EqCO], isa= [EqCO])@), and the result
+-- must sit inside the positive operand, be disjoint from @∀EqCO@, and re-meet to itself.
+propNegRecursiveClassMeet :: IO Prgms -> Property
+propNegRecursiveClassMeet ioPrgms = property $ do
+  prgms <- lift ioPrgms
+  prgm <- case [v | (k, v) <- H.toList prgms, "recursiveClassBounds" `isInfixOf` k] of
+    (prgm:_) -> return prgm
+    []       -> fail "recursiveClassBounds.ct program not found"
+  let typeEnv@TypeEnv{teClassGraph=ClassGraph cgData} = mkTypeEnv prgm
+  eqCOPt <- case [cpt | (CGClass (_, cpt, _, _), _, _) <- graphToNodes cgData, "EqCO" `isInfixOf` nameStr (ptName cpt)] of
+    (cpt:_) -> return cpt
+    []      -> fail "EqCO class not found"
+  consListPt <- case [cpt | (CGClass (_, cpt, cts, _), _, _) <- graphToNodes cgData, "ConsList" `isInfixOf` nameStr (ptName cpt), not (null cts)] of
+    (cpt:_) -> return cpt{ptVars=H.empty}
+    []      -> fail "ConsList class not found"
+  let notEqCO = UnionType (Just (PredsNot (PredsOne (PredClass eqCOPt)), H.empty, [])) H.empty []
+  let eqCOTop = UnionType (Just (PredsOne (PredClass eqCOPt), H.empty, [])) H.empty []
+  let lists = expandClassPartial typeEnv H.empty consListPt
+  met <- timed "(⊤|¬EqCO) ∩ lists" $ intersectTypes typeEnv notEqCO lists
+  annotate $ printf "lists = %s" (show lists)
+  annotate $ printf "met = %s" (show met)
+  assertTimed "met ⊆ lists" $ isSubtypeOf typeEnv met lists
+  assertTimed "met ∩ ∀EqCO = ∅" $ isBottomType (intersectTypes typeEnv met eqCOTop)
+  met2 <- timed "re-meet" $ intersectTypes typeEnv notEqCO met
+  eqTimed "re-meet idempotent" met met2
+
 typeTests :: TestTree
 typeTests = withResource findPrgms (const $ pure ()) tests
   where
@@ -703,6 +734,7 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propParamClassWideNotNarrow" (withTests 1 $ propParamClassWideNotNarrow ioPrgms)
       , HG.testProperty "propParamClassIntersectAbsorb" (withTests 1 $ propParamClassIntersectAbsorb ioPrgms)
       , HG.testProperty "propConjMemberClassSubtype" (withTests 1 $ propConjMemberClassSubtype ioPrgms)
+      , HG.testProperty "propNegRecursiveClassMeet" (withTests 1 $ propNegRecursiveClassMeet ioPrgms)
                                         ]
       where gPrgm = ggPrgm <$> ioPrgms
     p prop = prop
