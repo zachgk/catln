@@ -3,13 +3,18 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { TocContext } from '../Common/Common'
+import { initVimMode } from 'monaco-vim'
 import DocsPage from '../DocsPage'
 import pageResponse from '../test/fixtures/page-response.json'
 
 vi.mock('@monaco-editor/react', () => ({
-  default: ({ value }) => (
-    <textarea data-testid="monaco-editor" defaultValue={value} />
-  )
+  default: ({ value, onMount }) => {
+    React.useEffect(() => {
+      onMount({ onDidDispose: () => {} })
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+    return <textarea data-testid="monaco-editor" defaultValue={value} />
+  }
 }))
 
 const theme = createTheme()
@@ -49,6 +54,11 @@ function Providers({ children }) {
 }
 
 describe('DocsPage', () => {
+  beforeEach(() => {
+    initVimMode.mockClear()
+    initVimMode.mockReturnValue({ dispose: vi.fn() })
+  })
+
   it('shows Loading then content', async () => {
     global.fetch = mockFetch()
 
@@ -124,6 +134,49 @@ describe('DocsPage', () => {
     expect(global.fetch).toHaveBeenCalledTimes(1)
     expect(global.fetch).toHaveBeenCalledWith('/api/page?prgmName=test%2Fmain.ct')
     expect(screen.getByTestId('monaco-editor')).toHaveValue('main = 42\n')
+  })
+
+  it('attaches vim mode to the editor with a status bar', async () => {
+    global.fetch = mockFetch()
+
+    render(<Providers><DocsPage prgmName="test%2Fmain.ct" /></Providers>)
+
+    await waitFor(() => {
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByLabelText('Edit'))
+
+    await waitFor(() => {
+      expect(initVimMode).toHaveBeenCalled()
+    })
+
+    expect(initVimMode).toHaveBeenCalledWith(
+      expect.anything(),
+      screen.getByTestId('vim-status-bar'),
+    )
+  })
+
+  it('disposes vim mode when leaving edit mode', async () => {
+    global.fetch = mockFetch()
+
+    render(<Providers><DocsPage prgmName="test%2Fmain.ct" /></Providers>)
+
+    await waitFor(() => {
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByLabelText('Edit'))
+    await waitFor(() => {
+      expect(initVimMode).toHaveBeenCalled()
+    })
+
+    const { dispose } = initVimMode.mock.results[0].value
+
+    fireEvent.click(screen.getByLabelText('View'))
+    await waitFor(() => {
+      expect(dispose).toHaveBeenCalled()
+    })
   })
 
   it('clicking view returns to AST view', async () => {

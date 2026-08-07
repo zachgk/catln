@@ -9,6 +9,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import Editor from '@monaco-editor/react';
+import {initVimMode} from 'monaco-vim';
 import {useNavigate} from 'react-router-dom';
 
 import {rawExprMeta, RawExpr, RawObjArr} from './Common/Syntax';
@@ -27,6 +28,12 @@ const useStyles = makeStyles({
   },
   noPlay: {
     marginLeft: '24px'
+  },
+  vimStatusBar: {
+    fontFamily: 'monospace',
+    fontSize: '13px',
+    padding: '2px 4px',
+    background: '#eee'
   }
 });
 
@@ -69,10 +76,12 @@ function DocsPage(props) {
   const [mode, setMode] = useState('view');
   const [editedSource, setEditedSource] = useState(null);
   const [editorInstance, setEditorInstance] = useState(null);
+  const classes = useStyles();
 
   // Map from zone id -> {root, observer, zone, line, naturalHeight, hidden}
   const viewZonesRef = useRef(new Map());
   const cursorListenerRef = useRef(null);
+  const vimStatusBarRef = useRef(null);
 
   const toggleMode = () => setMode(m => m === 'view' ? 'edit' : 'view');
 
@@ -101,6 +110,15 @@ function DocsPage(props) {
       }
     });
   };
+
+  // Attach vim keybindings for as long as the editor is mounted
+  useEffect(() => {
+    if (!editorInstance || mode !== 'edit' || !vimStatusBarRef.current) return;
+    const vimMode = initVimMode(editorInstance, vimStatusBarRef.current);
+    return () => {
+      try { vimMode.dispose(); } catch(e) {}
+    };
+  }, [editorInstance, mode]);
 
   // Add/remove ViewZones whenever the editor, mode, or data changes
   useEffect(() => {
@@ -193,15 +211,18 @@ function DocsPage(props) {
       ) : (
         <Loading status={apiResult}>
           {currentSource !== null && (
-            <Editor
-              height="80vh"
-              language="plaintext"
-              theme="vs"
-              value={currentSource}
-              onChange={value => setEditedSource(value)}
-              options={{ minimap: { enabled: false }, wordWrap: 'on', fontSize: 14 }}
-              onMount={handleEditorMount}
-            />
+            <div>
+              <Editor
+                height="80vh"
+                language="plaintext"
+                theme="vs"
+                value={currentSource}
+                onChange={value => setEditedSource(value)}
+                options={{ minimap: { enabled: false }, wordWrap: 'on', fontSize: 14 }}
+                onMount={handleEditorMount}
+              />
+              <div ref={vimStatusBarRef} className={classes.vimStatusBar} data-testid="vim-status-bar" />
+            </div>
           )}
         </Loading>
       )}
