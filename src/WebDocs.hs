@@ -14,11 +14,12 @@
 
 module WebDocs where
 
-import           Data.Aeson                    (ToJSON)
+import           Data.Aeson                    (ToJSON, Value, object, (.=))
 import           Web.Scotty
 
 import qualified Data.HashMap.Strict           as H
 import qualified Data.Text.Lazy                as T
+import           Data.Text.Lazy.Encoding       (decodeUtf8)
 import           GHC.Generics                  (Generic)
 import           Network.Wai.Middleware.Static
 
@@ -68,23 +69,40 @@ filterByType name (Prgm objMap (ClassGraph classGraph) _) = Prgm objMap' classGr
     objMap' = filterObjectMap (relativeNameMatches (mkName name) . oaObjPath) objMap
     classGraph' = ClassGraph $ graphFromEdges $ filter (\(_, n, subTypes) -> relativeNameMatches (mkName name) (fromPartialName n) || n `elem` subTypes) $ graphToNodes classGraph
 
-mkLiveWDProvider :: [String] -> IO (IO CTSS)
+-- | Both providers return the service handle alongside the per-request refresh action.
+-- The handle is needed by writes, which must not pay for the live provider's rebuild.
+mkLiveWDProvider :: [String] -> IO (CTSS, IO CTSS)
 mkLiveWDProvider baseFileNames = do
   ss <- ctssBaseFiles buildCtssConfig baseFileNames
   ctssBuildAll ss
-  return $ do
+  return (ss, do
     ctssRead ss
     ctssBuildAll ss -- TODO Remove when fixing incremental build
-    return ss
+    return ss)
 
-mkCacheWDProvider :: [String] -> IO (IO CTSS)
+mkCacheWDProvider :: [String] -> IO (CTSS, IO CTSS)
 mkCacheWDProvider baseFileNames = do
   ss <- ctssBaseFiles buildCtssConfig baseFileNames
   ctssBuildAll ss
-  return $ return ss
+  return (ss, return ss)
 
-docApiBase :: IO CTSS -> ScottyM ()
-docApiBase getProvider = do
+docApiBase :: Bool -> CTSS -> IO CTSS -> ScottyM ()
+docApiBase readonly ctss getProvider = do
+
+  get "/api/config" $
+    maybeJson (return (object ["readonly" .= readonly]) :: CRes Value)
+
+  -- Writes are rejected under --readonly so a shared server cannot be edited, no matter
+  -- what the client believes it is allowed to do.
+  post "/api/write" $ do
+    prgmName <- param "prgmName"
+    src <- body
+    resp <- liftAndCatchIO $ runCResT $ if readonly
+      then fail "Saving is disabled because the doc server is running with --readonly"
+      else do
+        prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
+        setSource ctss prgmName' (T.unpack $ decodeUtf8 src)
+    maybeJson resp
 
   get "/api/raw" $ do
     provider <- liftAndCatchIO getProvider
@@ -230,29 +248,29 @@ docApiBase getProvider = do
         fail $ printf "Could not build web page for %s.%s" prgmName fun
 
 
-docApi :: Bool -> [String] -> IO ()
-docApi cached baseFileNames = do
+docApi :: Bool -> Bool -> [String] -> IO ()
+docApi cached readonly baseFileNames = do
 
-  provider <- if cached
+  (ctss, provider) <- if cached
     then mkCacheWDProvider baseFileNames
     else mkLiveWDProvider baseFileNames
 
-  scotty 31204 $ docApiBase provider
+  scotty 31204 $ docApiBase readonly ctss provider
 
-docServe :: Bool -> [String] -> IO ()
-docServe cached baseFileNames = do
+docServe :: Bool -> Bool -> [String] -> IO ()
+docServe cached readonly baseFileNames = do
 
   let handleIndex p = case p of
         "" -> Just "index.html"
         _  -> Just p
 
-  provider <- if cached
+  (ctss, provider) <- if cached
     then mkCacheWDProvider baseFileNames
     else mkLiveWDProvider baseFileNames
 
   scotty 8080 $ do
 
-    docApiBase provider
+    docApiBase readonly ctss provider
 
     middleware $ staticPolicy (noDots >-> policy handleIndex >-> addBase "webdocs/dist")
 

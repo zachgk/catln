@@ -156,7 +156,7 @@ test :: IO ()
 test = defaultMain $ runTests False ["test/test.ct"]
 
 testd :: IO ()
-testd = docApi False ["test/test.ct"]
+testd = docApi False False ["test/test.ct"]
 
 runPyTest :: Bool -> IO CTSS -> String -> TestTree
 runPyTest = runTest
@@ -200,9 +200,9 @@ mtg = mtBase True
 mtd :: String -> IO ()
 mtd k = do
   fileName' <- mtFileName k
-  docApi False [fileName']
+  docApi False False [fileName']
 
 mtde :: String -> IO ()
 mtde k = do
   fileName' <- mtFileName k
-  docServe False [fileName']
+  docServe False False [fileName']

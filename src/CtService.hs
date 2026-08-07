@@ -292,6 +292,21 @@ getSource (CTSS ssmv) prgmName = do
     Just SSF{ssfSource=Nothing}  -> fail $ printf "No source text available for %s" (show prgmName)
     Nothing                      -> fail $ printf "Could not find %s" (show $ impRaw prgmName)
 
+-- | Overwrite the source file backing a page, then re-read so the change is picked up.
+-- Only pages already in the service graph with source text can be written, which confines
+-- writes to the files served by the doc roots.
+setSource :: CTSS -> FileImport -> String -> CResT IO ()
+setSource ctss@(CTSS ssmv) prgmName src = do
+  CTSSDat{ctssData} <- lift $ readMVar ssmv
+  case graphLookup prgmName ctssData of
+    Nothing -> fail $ printf "Could not find %s" (show $ impRaw prgmName)
+    Just SSF{ssfSource=Nothing} -> fail $ printf "No source text available for %s" (show prgmName)
+    Just SSF{ssfSource=Just _} -> case impDisp prgmName of
+      Nothing -> fail $ printf "No file path available for %s" (show prgmName)
+      Just filePath -> lift $ do
+        writeFile filePath src
+        ctssRead ctss
+
 -- This does not use ctssGet because it doesn't require building
 getRawPrgm :: CTSS -> CResT IO PPrgmGraphData
 getRawPrgm (CTSS ssmv) = do

@@ -18,7 +18,7 @@ import {
   Outlet
 } from "react-router-dom";
 
-import {useApi, TocContext} from './Common/Common';
+import {useApi, TocContext, ConfigContext} from './Common/Common';
 import {Value} from './Common/Value';
 import Docs from './Docs';
 import {AnnotPage} from './DocsPage';
@@ -27,6 +27,7 @@ import {AppBarSearch} from './Common/Values/Search';
 function Root() {
 
   let tocResult = useApi("/api/toc");
+  let configResult = useApi("/api/config");
   if (tocResult.isLoaded && Array.isArray(tocResult.data)) {
     let tocResultDataObj = {};
     tocResult.data.forEach(r => {
@@ -35,10 +36,12 @@ function Root() {
     tocResult.data = tocResultDataObj;
   }
   return (
-    <TocContext.Provider value={tocResult}>
-      <Header />
-      <Outlet />
-    </TocContext.Provider>
+    <ConfigContext.Provider value={configResult}>
+      <TocContext.Provider value={tocResult}>
+        <Header />
+        <Outlet />
+      </TocContext.Provider>
+    </ConfigContext.Provider>
   );
 }
 

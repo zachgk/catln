@@ -2,8 +2,11 @@
  * Integration tests that run against the real Catln Haskell backend.
  *
  * Prerequisites:
- *   Start the backend API server before running these tests:
+ *   Start the backend API servers before running these tests:
  *     stack exec catln doc test/Integration/code/id.ct -- --api --cached
+ *     stack exec catln doc test/Integration/code/id.ct -- --cached --readonly
+ *   The second serves the same API on the serve port (8080) and is only there to
+ *   check that --readonly refuses writes.
  *   Or from stack repl:
  *     :l test/Spec
  *     testd
@@ -13,11 +16,21 @@
  */
 
 const API_BASE = 'http://localhost:31204'
+const READONLY_API_BASE = 'http://localhost:8080'
 
-async function fetchApi(path) {
-  const res = await fetch(`${API_BASE}${path}`)
+async function fetchApi(path, base = API_BASE) {
+  const res = await fetch(`${base}${path}`)
   expect(res.status).toBe(200)
   return res.json()
+}
+
+// Returns the raw response: unlike the read endpoints, callers here assert on status.
+function writeApi(prgmName, source, base = API_BASE) {
+  return fetch(`${base}/api/write?prgmName=${encodeURIComponent(prgmName)}`, {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain'},
+    body: source,
+  })
 }
 
 describe('Backend API contract', () => {
@@ -88,6 +101,12 @@ describe('Backend API contract', () => {
     expect(data.contents).toHaveLength(2)
   })
 
+  it('/api/config reports a writable server', async () => {
+    const data = await fetchApi('/api/config')
+    expect(data.tag).toBe('Success')
+    expect(data.contents[0]).toEqual({readonly: false})
+  })
+
   it('CRes response structure is consistent', async () => {
     // Verify all endpoints follow the same {tag, contents} pattern
     const endpoints = ['/api/toc', '/api/desugar', '/api/typecheck']
@@ -98,5 +117,67 @@ describe('Backend API contract', () => {
       expect(data).toHaveProperty('contents')
       expect(['Success', 'ResFail']).toContain(data.tag)
     }
+  })
+
+  // Write tests come last: a successful write calls ctssRead, which invalidates every
+  // page (Meta's derived Eq includes a per-parse random UUID, so the unchanged-file
+  // check in buildSSF never matches), making the next page load pay a full rebuild.
+  describe('writes', () => {
+    async function idPageName(base = API_BASE) {
+      const toc = (await fetchApi('/api/toc', base)).contents[0]
+      const name = toc.map(t => t[0]).find(n => n.endsWith('/test/Integration/code/id.ct'))
+      expect(name).toBeDefined()
+      return name
+    }
+
+    it('refuses an existing file that is not a served page', async () => {
+      // ho.ct is a real file, but not reachable from the id.ct doc root
+      const outside = (await idPageName()).replace('/id.ct', '/ho.ct')
+      const res = await writeApi(outside, 'CORRUPTED')
+      expect(res.status).toBe(200)
+      expect((await res.json()).tag).toBe('ResFail')
+    })
+
+    it('refuses a path that does not exist', async () => {
+      const res = await writeApi('/does/not/exist.ct', 'main = 1\n')
+      expect(res.status).not.toBe(200)
+    })
+
+    it('--readonly reports readonly config and refuses writes', async () => {
+      const config = await fetchApi('/api/config', READONLY_API_BASE)
+      expect(config.tag).toBe('Success')
+      expect(config.contents[0]).toEqual({readonly: true})
+
+      const pageName = await idPageName(READONLY_API_BASE)
+      const res = await writeApi(pageName, 'main = 999\n', READONLY_API_BASE)
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.tag).toBe('ResFail')
+      expect(JSON.stringify(body.contents)).toContain('readonly')
+
+      // and the file is untouched
+      const after = (await fetchApi(`/api/page?prgmName=${encodeURIComponent(pageName)}`, READONLY_API_BASE))
+        .contents[0][1]
+      expect(after).not.toContain('main = 999')
+    })
+
+    // Generous timeout: the trailing read rebuilds every invalidated page.
+    it('round-trips a page source', async () => {
+      const pageName = await idPageName()
+
+      const original = (await fetchApi(`/api/page?prgmName=${encodeURIComponent(pageName)}`))
+        .contents[0][1]
+      expect(typeof original).toBe('string')
+
+      // Write the identical bytes back: exercises the whole write path without
+      // actually modifying the checked-in file.
+      const written = await writeApi(pageName, original)
+      expect(written.status).toBe(200)
+      expect((await written.json()).tag).toBe('Success')
+
+      const after = (await fetchApi(`/api/page?prgmName=${encodeURIComponent(pageName)}`))
+        .contents[0][1]
+      expect(after).toBe(original)
+    }, 180000)
   })
 })

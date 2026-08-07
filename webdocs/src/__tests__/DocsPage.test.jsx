@@ -1,19 +1,28 @@
 import React from 'react'
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
-import { TocContext } from '../Common/Common'
-import { initVimMode } from 'monaco-vim'
+import { TocContext, ConfigContext } from '../Common/Common'
+import { initVimMode, VimMode } from 'monaco-vim'
 import DocsPage from '../DocsPage'
 import pageResponse from '../test/fixtures/page-response.json'
 
+// Collects the keybindings DocsPage registers, so tests can fire Ctrl+S directly.
+const mocks = vi.hoisted(() => ({ commands: [] }))
+
 vi.mock('@monaco-editor/react', () => ({
-  default: ({ value, onMount }) => {
+  default: ({ value, onChange, onMount }) => {
     React.useEffect(() => {
-      onMount({ onDidDispose: () => {} })
+      onMount(
+        {
+          onDidDispose: () => {},
+          addCommand: (keybinding, handler) => mocks.commands.push({ keybinding, handler }),
+        },
+        { KeyMod: { CtrlCmd: 2048 }, KeyCode: { KeyS: 49 } },
+      )
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
-    return <textarea data-testid="monaco-editor" defaultValue={value} />
+    return <textarea data-testid="monaco-editor" value={value} onChange={e => onChange(e.target.value)} />
   }
 }))
 
@@ -25,8 +34,19 @@ const tocData = {
   notes: [],
 }
 
+const writableConfig = { isLoaded: true, data: { readonly: false }, notes: [] }
+
 function mockFetch(overrides = {}) {
-  return vi.fn((url) => {
+  return vi.fn((url, options) => {
+    if (url.startsWith('/api/write')) {
+      if (overrides.write) {
+        return overrides.write(url, options)
+      }
+      return Promise.resolve({
+        status: 200,
+        json: () => Promise.resolve({ tag: 'Success', contents: [[], []] }),
+      })
+    }
     if (url.startsWith('/api/page') && overrides.page) {
       return overrides.page(url)
     }
@@ -43,20 +63,41 @@ function mockFetch(overrides = {}) {
   })
 }
 
-function Providers({ children }) {
+function Providers({ children, config = writableConfig }) {
   return (
     <ThemeProvider theme={theme}>
-      <TocContext.Provider value={tocData}>
-        <MemoryRouter>{children}</MemoryRouter>
-      </TocContext.Provider>
+      <ConfigContext.Provider value={config}>
+        <TocContext.Provider value={tocData}>
+          <MemoryRouter>{children}</MemoryRouter>
+        </TocContext.Provider>
+      </ConfigContext.Provider>
     </ThemeProvider>
   )
 }
 
+// Renders, waits for the page load, switches to edit mode and types newSource.
+async function renderEditing(newSource, props = {}) {
+  render(<Providers {...props}><DocsPage prgmName="test%2Fmain.ct" /></Providers>)
+
+  await waitFor(() => {
+    expect(screen.queryByText('Loading...')).not.toBeInTheDocument()
+  })
+
+  fireEvent.click(screen.getByLabelText('Edit'))
+
+  await waitFor(() => {
+    expect(screen.getByTestId('monaco-editor')).toBeInTheDocument()
+  })
+
+  fireEvent.change(screen.getByTestId('monaco-editor'), { target: { value: newSource } })
+}
+
 describe('DocsPage', () => {
   beforeEach(() => {
+    mocks.commands.length = 0
     initVimMode.mockClear()
     initVimMode.mockReturnValue({ dispose: vi.fn() })
+    VimMode.Vim.defineEx.mockClear()
   })
 
   it('shows Loading then content', async () => {
@@ -225,5 +266,121 @@ describe('DocsPage', () => {
     })
 
     expect(screen.queryByTestId('monaco-editor')).not.toBeInTheDocument()
+  })
+
+  it('hides the edit toggle when the server is readonly', async () => {
+    global.fetch = mockFetch()
+
+    render(
+      <Providers config={{ isLoaded: true, data: { readonly: true }, notes: [] }}>
+        <DocsPage prgmName="test%2Fmain.ct" />
+      </Providers>
+    )
+
+    await waitFor(() => {
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument()
+    })
+
+    expect(screen.queryByLabelText('Edit')).not.toBeInTheDocument()
+  })
+
+  it('hides the edit toggle until the config has loaded', async () => {
+    global.fetch = mockFetch()
+
+    render(
+      <Providers config={{ isLoaded: false, data: null, notes: [] }}>
+        <DocsPage prgmName="test%2Fmain.ct" />
+      </Providers>
+    )
+
+    await waitFor(() => {
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument()
+    })
+
+    expect(screen.queryByLabelText('Edit')).not.toBeInTheDocument()
+  })
+
+  it('marks the buffer dirty once edited', async () => {
+    global.fetch = mockFetch()
+
+    await renderEditing('main = 43\n')
+
+    expect(screen.getByTestId('save-status')).toHaveTextContent('unsaved')
+  })
+
+  it('Ctrl+S posts the edited source and refetches the page', async () => {
+    global.fetch = mockFetch()
+
+    await renderEditing('main = 43\n')
+
+    expect(mocks.commands).toHaveLength(1)
+    await act(async () => { await mocks.commands[0].handler() })
+
+    expect(global.fetch).toHaveBeenCalledWith('/api/write?prgmName=test%2Fmain.ct', {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: 'main = 43\n',
+    })
+
+    // page load, write, then the post-save refetch
+    expect(global.fetch).toHaveBeenCalledTimes(3)
+    expect(global.fetch).toHaveBeenLastCalledWith('/api/page?prgmName=test%2Fmain.ct')
+    expect(screen.getByTestId('save-status')).toHaveTextContent('saved')
+  })
+
+  it('does not post when the buffer is unchanged', async () => {
+    global.fetch = mockFetch()
+
+    render(<Providers><DocsPage prgmName="test%2Fmain.ct" /></Providers>)
+    await waitFor(() => {
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByLabelText('Edit'))
+    await waitFor(() => {
+      expect(screen.getByTestId('monaco-editor')).toBeInTheDocument()
+    })
+
+    await act(async () => { await mocks.commands[0].handler() })
+
+    expect(global.fetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('surfaces a failed save and keeps the buffer dirty', async () => {
+    global.fetch = mockFetch({
+      write: () => Promise.resolve({
+        status: 200,
+        json: () => Promise.resolve({
+          tag: 'ResFail',
+          contents: [{ tp: 'CNoteError', msg: 'Saving is disabled because the doc server is running with --readonly' }],
+        }),
+      }),
+    })
+
+    await renderEditing('main = 43\n')
+    await act(async () => { await mocks.commands[0].handler() })
+
+    expect(screen.getByTestId('save-status')).toHaveTextContent('save failed: Saving is disabled')
+    // no refetch on failure
+    expect(global.fetch).toHaveBeenCalledTimes(2)
+
+    // still dirty, so a retry is possible
+    await act(async () => { await mocks.commands[0].handler() })
+    expect(global.fetch).toHaveBeenCalledTimes(3)
+  })
+
+  it('registers a vim :w ex-command that saves', async () => {
+    global.fetch = mockFetch()
+
+    await renderEditing('main = 43\n')
+
+    expect(VimMode.Vim.defineEx).toHaveBeenCalledWith('write', 'w', expect.any(Function))
+
+    const writeEx = VimMode.Vim.defineEx.mock.calls[0][2]
+    await act(async () => { await writeEx() })
+
+    expect(global.fetch).toHaveBeenCalledWith('/api/write?prgmName=test%2Fmain.ct', expect.objectContaining({
+      method: 'POST',
+      body: 'main = 43\n',
+    }))
   })
 })

@@ -10,9 +10,6 @@ RUN apt-get update && \
 # Fix for pandoc build https://stackoverflow.com/questions/63746826/what-might-cause-commitandreleasebuffer-invalid-argument-invalid-character
 ENV LANG=C.UTF-8
 
-# Disable edit mode
-ENV CATLN_WD_NOEDIT="true"
-
 WORKDIR /home
 
 # Setup haskell depdencies first for docker build cache
@@ -58,5 +55,6 @@ COPY stack /root/.catln/stack
 # buildSCCPipeline passes ALL pages as external deps rather than the transitive
 # ones, so merging those 38 standalone programs collides on names they never
 # import from each other: abs, Nothing, and main (defined by 37 of the 38).
-CMD ["catln", "doc", "--cached", "/root/.catln/stack", "docs"]
+# --readonly disables the editor's save endpoint so the shared docs site is immutable.
+CMD ["catln", "doc", "--cached", "--readonly", "/root/.catln/stack", "docs"]
 EXPOSE 8080

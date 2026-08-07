@@ -4,6 +4,7 @@ import '@testing-library/jest-dom'
 // and would pull the whole editor into jsdom. Stub it for every suite.
 vi.mock('monaco-vim', () => ({
   initVimMode: vi.fn(() => ({ dispose: vi.fn() })),
+  VimMode: { Vim: { defineEx: vi.fn() } },
 }))
 
 // Default fetch mock - tests override as needed

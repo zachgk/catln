@@ -42,12 +42,15 @@ const useStyles = makeStyles({
 });
 
 const TocContext = React.createContext({});
+const ConfigContext = React.createContext({});
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
-function useApi(path) {
+// reloadKey is optional. Changing it refetches the same path, which is how a save
+// picks up the rebuilt page.
+function useApi(path, reloadKey) {
   const [result, setResult] = useState({
     error: null,
     isLoaded: false,
@@ -98,7 +101,7 @@ function useApi(path) {
           });
         }
       );
-  }, [path]);
+  }, [path, reloadKey]);
   return result;
 }
 
@@ -375,6 +378,7 @@ function ReachesTreeNode(props) {
 
 export {
   TocContext,
+  ConfigContext,
   tagJoin,
   useQuery,
   useApi,

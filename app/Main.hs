@@ -81,10 +81,10 @@ xTypeTrace prgmName = do
     lift $ writeFile (traceDir ++ "/" ++ relPath) contents
   lift $ putStrLn $ printf "Wrote %d typetrace files to %s" (length files) traceDir
 
-xDoc :: [String] -> Bool -> Bool -> CResT IO ()
-xDoc prgmNames cached apiOnly = if apiOnly
-  then lift $ docApi cached prgmNames
-  else lift $ docServe cached prgmNames
+xDoc :: [String] -> Bool -> Bool -> Bool -> CResT IO ()
+xDoc prgmNames cached apiOnly readonly = if apiOnly
+  then lift $ docApi cached readonly prgmNames
+  else lift $ docServe cached readonly prgmNames
 
 xConvert :: String -> Maybe String -> CResT IO ()
 xConvert prgmName _outFname = do
@@ -230,22 +230,22 @@ xRefIndex prgmName showCore = do
     isCoreImport imp = "core" `isInfixOf` fromMaybe (show imp) (impDisp imp)
 
 exec :: Command -> CResT IO ()
-exec (RunFile file function)    = xRun file function
-exec (BuildFile file function)  = xBuild file function
-exec (Doc fname cached apiOnly) = xDoc fname cached apiOnly
-exec (Convert fname outFname)   = xConvert fname outFname
-exec CLsp                       = xLsp
-exec (Fmt fname)                = xFmt fname
-exec (DepTree fname showCore)   = xDepTree fname showCore
-exec (RefIndex fname showCore)  = xRefIndex fname showCore
-exec (TestFile fname update)    = xTest fname update
-exec (TypeTrace fname)          = xTypeTrace fname
-exec (TBuildFile fname)         = xTBuild fname
+exec (RunFile file function)             = xRun file function
+exec (BuildFile file function)           = xBuild file function
+exec (Doc fname cached apiOnly readonly) = xDoc fname cached apiOnly readonly
+exec (Convert fname outFname)            = xConvert fname outFname
+exec CLsp                                = xLsp
+exec (Fmt fname)                         = xFmt fname
+exec (DepTree fname showCore)            = xDepTree fname showCore
+exec (RefIndex fname showCore)           = xRefIndex fname showCore
+exec (TestFile fname update)             = xTest fname update
+exec (TypeTrace fname)                   = xTypeTrace fname
+exec (TBuildFile fname)                  = xTBuild fname
 
 data Command
   = BuildFile String String
   | RunFile String String
-  | Doc [String] Bool Bool
+  | Doc [String] Bool Bool Bool
   | Convert String (Maybe String)
   | CLsp
   | Fmt String
@@ -270,6 +270,7 @@ cDoc = Doc
   <$> some (argument str (metavar "FILES" <> help "The files to run"))
   <*> switch (long "cached" <> help "Cache results instead of reloading live (useful for serving rather than development)")
   <*> switch (long "api" <> help "Serve only the API rather than the pages too")
+  <*> switch (long "readonly" <> help "Disable saving edits from the webdocs editor")
 
 cConvert :: Parser Command
 cConvert = Convert

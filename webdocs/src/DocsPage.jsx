@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect, useRef, useContext} from 'react';
 import {createRoot} from 'react-dom/client';
 
 import makeStyles from '@mui/styles/makeStyles';
@@ -9,11 +9,11 @@ import EditIcon from '@mui/icons-material/Edit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import Editor from '@monaco-editor/react';
-import {initVimMode} from 'monaco-vim';
+import {initVimMode, VimMode} from 'monaco-vim';
 import {useNavigate} from 'react-router-dom';
 
 import {rawExprMeta, RawExpr, RawObjArr} from './Common/Syntax';
-import {useQuery, useApi, Loading, KeyWord, ReachesTree} from './Common/Common';
+import {useQuery, useApi, Loading, KeyWord, ReachesTree, ConfigContext} from './Common/Common';
 import {Value} from './Common/Value';
 
 const DEBUG_NO_EVAL = false;
@@ -29,15 +29,27 @@ const useStyles = makeStyles({
   noPlay: {
     marginLeft: '24px'
   },
-  vimStatusBar: {
+  // monaco-vim owns the contents of vimStatusBar, so the save status is a sibling
+  // inside statusRow rather than a child of it.
+  statusRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
     fontFamily: 'monospace',
     fontSize: '13px',
     padding: '2px 4px',
     background: '#eee'
+  },
+  vimStatusBar: {
+    flexGrow: 1
+  },
+  saveStatus: {
+    marginLeft: '1em',
+    whiteSpace: 'pre'
+  },
+  saveStatusError: {
+    color: 'darkred'
   }
 });
-
-const noEdit = import.meta.env.CATLN_WD_NOEDIT === 'true' || import.meta.env.CATLN_WD_NOEDIT === '1';
 
 // Walk statement trees and collect [{line, startLine, value}] for all expressions
 // that have a pre-computed annotation value in getMetaDat[2].
@@ -72,16 +84,23 @@ function extractLineValues(statementTrees) {
 function DocsPage(props) {
   const {prgmName} = props;
 
-  let apiResult = useApi(`/api/page?prgmName=${prgmName}`);
+  const [reloadKey, setReloadKey] = useState(0);
+  let apiResult = useApi(`/api/page?prgmName=${prgmName}`, reloadKey);
   const [mode, setMode] = useState('view');
   const [editedSource, setEditedSource] = useState(null);
   const [editorInstance, setEditorInstance] = useState(null);
+  const [lastSaved, setLastSaved] = useState(null);
+  const [saveState, setSaveState] = useState(null);
   const classes = useStyles();
+
+  const config = useContext(ConfigContext);
+  const canEdit = config.isLoaded && !config.data?.readonly;
 
   // Map from zone id -> {root, observer, zone, line, naturalHeight, hidden}
   const viewZonesRef = useRef(new Map());
   const cursorListenerRef = useRef(null);
   const vimStatusBarRef = useRef(null);
+  const saveRef = useRef(null);
 
   const toggleMode = () => setMode(m => m === 'view' ? 'edit' : 'view');
 
@@ -89,13 +108,44 @@ function DocsPage(props) {
   const prgmData = apiResult.data?.[0] ?? null;
   const sourceText = apiResult.data?.[1] ?? null;
   const currentSource = editedSource !== null ? editedSource : sourceText;
+  const isDirty = currentSource !== (lastSaved !== null ? lastSaved : sourceText);
 
-  // Reset edited source whenever the page changes
+  // Reset edit state whenever the page changes
   useEffect(() => {
     setEditedSource(null);
+    setLastSaved(null);
+    setSaveState(null);
   }, [prgmName]);
 
-  const handleEditorMount = (editor) => {
+  // Reassigned every render so the keybindings, which are registered once, always
+  // run against the current buffer.
+  saveRef.current = async () => {
+    if (!canEdit || !isDirty || currentSource === null) return;
+    const src = currentSource;
+    setSaveState({status: 'saving'});
+    try {
+      const res = await fetch(`/api/write?prgmName=${prgmName}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'text/plain'},
+        body: src
+      });
+      const json = await res.json();
+      if (res.status === 200 && json.tag === 'Success') {
+        setLastSaved(src);
+        setSaveState({status: 'saved'});
+        setReloadKey(k => k + 1); // refetch the page so notes and values reflect the save
+      } else {
+        const notes = json.tag === 'ResFail' ? json.contents : null;
+        const msg = notes?.map(n => n.msg).join('; ') || res.statusText || 'unknown error';
+        setSaveState({status: 'error', message: msg});
+      }
+    } catch (e) {
+      setSaveState({status: 'error', message: e.message});
+    }
+  };
+
+  const handleEditorMount = (editor, monaco) => {
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => saveRef.current?.());
     setEditorInstance(editor);
     editor.onDidDispose(() => {
       setEditorInstance(null);
@@ -111,10 +161,12 @@ function DocsPage(props) {
     });
   };
 
-  // Attach vim keybindings for as long as the editor is mounted
+  // Attach vim keybindings for as long as the editor is mounted. defineEx registers on
+  // the shared Vim singleton rather than this editor, so it dispatches through saveRef.
   useEffect(() => {
     if (!editorInstance || mode !== 'edit' || !vimStatusBarRef.current) return;
     const vimMode = initVimMode(editorInstance, vimStatusBarRef.current);
+    VimMode.Vim.defineEx('write', 'w', () => saveRef.current?.());
     return () => {
       try { vimMode.dispose(); } catch(e) {}
     };
@@ -197,7 +249,7 @@ function DocsPage(props) {
 
   return (
     <div>
-      {!noEdit && (
+      {canEdit && (
         <div style={{textAlign: 'right'}}>
           <IconButton onClick={toggleMode} size="small" aria-label={mode === 'view' ? 'Edit' : 'View'}>
             {mode === 'view' ? <EditIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
@@ -221,13 +273,40 @@ function DocsPage(props) {
                 options={{ minimap: { enabled: false }, wordWrap: 'on', fontSize: 14 }}
                 onMount={handleEditorMount}
               />
-              <div ref={vimStatusBarRef} className={classes.vimStatusBar} data-testid="vim-status-bar" />
+              <div className={classes.statusRow}>
+                <div ref={vimStatusBarRef} className={classes.vimStatusBar} data-testid="vim-status-bar" />
+                <SaveStatus saveState={saveState} isDirty={isDirty} />
+              </div>
             </div>
           )}
         </Loading>
       )}
     </div>
   );
+}
+
+function SaveStatus(props) {
+  const {saveState, isDirty} = props;
+  const classes = useStyles();
+
+  let text;
+  if (saveState?.status === 'error') {
+    text = `save failed: ${saveState.message}`;
+  } else if (saveState?.status === 'saving') {
+    text = 'saving…';
+  } else if (isDirty) {
+    text = '● unsaved — Ctrl+S or :w';
+  } else if (saveState?.status === 'saved') {
+    text = 'saved';
+  } else {
+    text = '';
+  }
+
+  const className = saveState?.status === 'error'
+    ? `${classes.saveStatus} ${classes.saveStatusError}`
+    : classes.saveStatus;
+
+  return <span className={className} data-testid="save-status">{text}</span>;
 }
 
 function AnnotPage() {
