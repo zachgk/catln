@@ -3412,10 +3412,37 @@ compactPartialLeafs typeEnv vaenv =
   -- otherwise survive on exactly the leafs this stage rewrites).
   . compactPartialsWithClassPred typeEnv vaenv
   . compactNegPredLeafs typeEnv vaenv
+  . compactModedPredLeafs typeEnv
   . compactDisconnectedPreds typeEnv vaenv
   . map compactOwnVarRefs
   . compactBottomType
   . splitUnionType
+
+-- | Splits a NON-exact-mode leaf carrying decidable predicate atoms into its
+-- 'ptIntervalArgKeys' exact pieces (predicates preserved on each piece). A moded leaf's
+-- predicate cannot be decided as a whole — @Cons(..)??@ spans arg-set pieces on both
+-- sides of a membership atom (the exact-args form IS a @ConsList@ member while the
+-- partial-application forms are NOT), so any whole-leaf decision ('compactNegPredLeafs',
+-- the class-pred expansion) over-keeps or over-drops some piece. Distributing the
+-- predicate over the interval is exact, and each exact piece is then decided by the
+-- per-leaf rules, reaching the same canonical form as the materialized-meet route. A
+-- leaf whose predicates hold only 'PredExpr' content is left moded: no rule can decide
+-- an expression predicate either way, so the undecomposed moded spelling stays canonical.
+compactModedPredLeafs :: TypeGraph tg => TypeEnv tg -> [PartialType] -> [PartialType]
+compactModedPredLeafs typeEnv = concatMap decompose
+  where
+    decompose p
+      | predsHasClassRelAtom (ptPreds p)
+      , p' <- normalizePtArgMode typeEnv p
+      , ptArgMode p' /= PtArgExact
+      , Just kss <- ptIntervalArgKeys typeEnv p'
+      = map (ptAtArgKeys p') kss
+      | otherwise = [p]
+    predsHasClassRelAtom (PredsOne (PredClass _)) = True
+    predsHasClassRelAtom (PredsOne (PredRel _))   = True
+    predsHasClassRelAtom (PredsOne (PredExpr _))  = False
+    predsHasClassRelAtom (PredsAnd ps)            = any predsHasClassRelAtom ps
+    predsHasClassRelAtom (PredsNot q)             = predsHasClassRelAtom q
 
 -- | Canonicalizes leafs carrying a NEGATED predicate conjunct (the symbolic refinement the
 -- ¬-over-recursive-class meet attaches — see 'intersectTypesWithVarEnv'). Each top-level
@@ -4640,6 +4667,23 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
         -- Uses the precise partial subtype (this env has 'teArgModeProjection' False).
         go p1 p2 | isSubPartialOfWithEnv typeEnv vaenv p1 p2 = []
         go p1 p2 | not (argModesOverlap p1 p2) = [p1]
+        -- A neg REFINED by predicates (@Cons(..)|¬EqC@, the ¬-over-recursive-class attach
+        -- spelling) excludes only the instances satisfying them; the clauses below read the
+        -- neg's args\/vars alone and would subtract the FULL bare neg. Exact decomposition:
+        -- @p1 − (p2' ∧ Q) = (p1 − p2') ∪ ((p1 ∩ p2') ∧ ¬Q)@ with @p2'@ the bare neg. The
+        -- overlap comes from 'intersectPartials' with its new env bindings resolved back
+        -- (the same env-dropping recipe as 'intersectTypesEnv', so both op families spell
+        -- the met pieces identically), and @¬Q@ attaches for the enclosing compact to
+        -- decide. The recursive @go@ runs on the PredsNone bare neg, so this clause cannot
+        -- re-enter.
+        go p1 p2 | ptPreds p2 /= PredsNone =
+          let p2' = p2{ptPreds=PredsNone}
+              (venv, overlapRaw) = intersectPartials typeEnv vaenv p1 p2'
+              newBindings = H.filter (not . isTypeVar) $ H.difference venv vaenv
+              overlap = case substituteKeep newBindings (UnionType Nothing (joinUnionType overlapRaw) []) of
+                UnionType Nothing ls [] -> splitUnionType ls
+                _                       -> overlapRaw
+          in go p1 p2' ++ map (`partialAddPreds` predsNot (ptPreds p2)) overlap
         go p1 p2 | argModeCovers p2 p1, ptArgLb (ptArgMode p1) = subtractElems p1 p2
         go p1 p2 | Just kss <- ptIntervalArgKeys typeEnv p1 = concatMap ((`go` p2) . ptAtArgKeys p1) kss
         go p1 _ = [p1]
