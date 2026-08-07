@@ -21,16 +21,40 @@ Prgm
                     }
                 )
             ,
-                ( "/abs.$2b7362"
+                ( "/abs"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /abs.$2b7362( Value /x -> /Data/Primitive/Integer )
-                            ( Value /$2b7362-arg= Hole TopType HoleActive Nothing@Value /Catln/Then ) -> TVArg /x = Value /x
-                        , /abs.$2b7362( Value /x -> /Data/Primitive/Integer )
-                            ( Value /$2b7362-arg= Hole TopType HoleActive Nothing@Value /Catln/Else ) ->
+                        [ /abs( Value /x -> /Data/Primitive/Integer ) ->
+                            ( /abs.$8209a9
+                                ( /x=/Data/Primitive/Integer
+                                , /$8209a9-arg=( /Catln/Else + /Catln/Then )
+                                ) + /operator*
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
+                            ) = /abs.$8209a9( Value /x -> TVArg /x = Value /x )
+                            ( Value /$8209a9-arg -> ( /Catln/Else + /Catln/Then ) = /Catln/ThenElse/fromBool
+                                ( Value /v -> ∀/Data/Primitive/Boolean = /operator>=( Value /l -> TVArg /x = Value /x )
+                                    ( Value /r -> /Data/Primitive/Integer = CInt 0 )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/abs.$8209a9"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /abs.$8209a9( Value /x -> /Data/Primitive/Integer )
+                            ( Value /$8209a9-arg= Hole TopType HoleActive Nothing@Value /Catln/Then ) -> TVArg /x = Value /x
+                        , /abs.$8209a9( Value /x -> /Data/Primitive/Integer )
+                            ( Value /$8209a9-arg= Hole TopType HoleActive Nothing@Value /Catln/Else ) ->
                             ( /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
@@ -39,32 +63,6 @@ Prgm
                             ( Value /l -> /Data/Primitive/Integer = /operator-
                                 ( Value /a -> /Data/Primitive/Integer = CInt 1 )
                             )( Value /r -> TVArg /x = Value /x )
-                        ]
-                    }
-                )
-            ,
-                ( "/abs"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /abs( Value /x -> /Data/Primitive/Integer ) ->
-                            ( /abs.$2b7362
-                                ( /x=/Data/Primitive/Integer
-                                , /$2b7362-arg=
-                                    ( /Catln/Else + /Catln/ThenElse/fromBool( /v=∀/Data/Primitive/Boolean ) + /Catln/Then )
-                                ) + /operator*
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer
-                            ) = /abs.$2b7362( Value /x -> TVArg /x = Value /x )
-                            ( Value /$2b7362-arg ->
-                                ( /Catln/Else + /Catln/ThenElse/fromBool( /v=∀/Data/Primitive/Boolean ) + /Catln/Then ) = /Catln/ThenElse/fromBool
-                                ( Value /v -> ∀/Data/Primitive/Boolean = /operator>=( Value /l -> TVArg /x = Value /x )
-                                    ( Value /r -> /Data/Primitive/Integer = CInt 0 )
-                                )
-                            )
                         ]
                     }
                 )

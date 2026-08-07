@@ -11,64 +11,42 @@ Prgm
                         [ /maybeBind
                             ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> UnionType
                             ( Just
-                                ( PredClass /Data/Monad[ /T=$_/A ] && PredClass /Data/Maybe
+                                ( PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Maybe[ /T=TopType ]
                                 , fromList []
+                                , []
                                 )
-                            ,
-                                ( /Data/append
-                                    ( /a=∀/Data/ConsList[ /T=$_/T ]
-                                    , /b=∀/Data/ConsList[ /T=$_/T ]
-                                    ) + /Data/bindap
-                                    [ /T=
-                                        ( /operator+
-                                            ( /r=/Data/Primitive/Integer
-                                            , /l=TopType
-                                            ) + /Data/Primitive/Integer
+                            , /Data/append
+                                ( /a=∀/Data/ConsList[ /T=TopType ]
+                                , /b=UnionType
+                                    ( Just
+                                        ( PredClass /Data/Monad[ /T=TopType ]
+                                        , fromList []
+                                        , []
                                         )
-                                    , /B=TopType
-                                    , /M=∀/Data/Monad[ /T=$_/A ]
-                                    , /A=TopType
-                                    ]
-                                    ( /fn( /v=TopType )=
-                                        ( /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) + /Data/Some
-                                            [ /T=/operator+
-                                                ( /r=/Data/Primitive/Integer
-                                                , /l=/Data/Primitive/Integer
-                                                )
-                                            ]
-                                            ( /value=/operator+
-                                                ( /r=/Data/Primitive/Integer
-                                                , /l=/Data/Primitive/Integer
-                                                )
-                                            )
+                                    , /Data/Cons[ /T=TopType ]
+                                        ( /head=$/T
+                                        , /tail=∀/Data/ConsList[ /T=TopType ]
                                         )
-                                    , /m=
-                                        ( TopType | PredClass /Data/Monad[ /T=$_/A ] && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] )
-                                    ) + /Data/mmap
-                                    [ /B=TopType
-                                    , /M=∀/Data/Monad[ /T=$_/A ]
-                                    , /A=TopType
-                                    ]
-                                    ( /fn( /v=TopType )=∀/Data/Monad[ /T=$_/A ]
-                                    , /m=∀/Data/Monad[ /T=$_/A ]
+                                    , []
                                     )
                                 )
                             , []
                             ) = /Data/bindap( Value /m -> TVArg /m = Value /m )
-                            ( /fn( Value /v -> /Data/Primitive/Integer ) ->
-                                ( /Data/Some
-                                    [ /T=/operator+
-                                        ( /r=/Data/Primitive/Integer
-                                        , /l=/Data/Primitive/Integer
-                                        )
-                                    ]
-                                    ( /value=/operator+
-                                        ( /r=/Data/Primitive/Integer
-                                        , /l=/Data/Primitive/Integer
-                                        )
-                                    ) + /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                                ) = /maybeBind.$71c85d( Value /m -> TVArg /m = Value /m )
-                                ( Value /$71c85d-arg -> TVArg /v = Value /v )
+                            ( /fn( Value /v ) -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /maybeBind.$b5054c( Value /m -> TVArg /m = Value /m )( Value /$b5054c-arg -> TVArg /v = Value /v ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/maybeBind.$b5054c"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /maybeBind.$b5054c
+                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value /$b5054c-arg@Value /x ) -> /Data/Some( /value=/Data/Primitive/Integer ) = /Data/Some
+                            ( Value /value -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /x = Value /x )
+                                ( Value /r -> /Data/Primitive/Integer = CInt 1 )
                             )
                         ]
                     }
@@ -81,39 +59,6 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
-                    }
-                )
-            ,
-                ( "/maybeBind.$71c85d"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /maybeBind.$71c85d
-                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
-                            ( Value /$71c85d-arg@Value /x -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) ) ->
-                            ( /Data/Some
-                                [ /T=/operator+
-                                    ( /r=/Data/Primitive/Integer
-                                    , /l=/Data/Primitive/Integer
-                                    )
-                                ]
-                                ( /value=/operator+
-                                    ( /r=/Data/Primitive/Integer
-                                    , /l=/Data/Primitive/Integer
-                                    )
-                                ) + /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                            ) = /Data/Some
-                            ( Value /value ->
-                                ( /operator+
-                                    ( /r=/Data/Primitive/Integer
-                                    , /l=/Data/Primitive/Integer
-                                    ) + /Data/Primitive/Integer
-                                ) = /operator+( Value /l -> TVArg /x = Value /x )
-                                ( Value /r -> /Data/Primitive/Integer = CInt 1 )
-                            )
-                        ]
                     }
                 )
             ]

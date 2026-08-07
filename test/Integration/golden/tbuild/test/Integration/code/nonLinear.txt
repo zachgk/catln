@@ -20,62 +20,11 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /diag( EAppArg Value /a@Value /x -> /Data/Primitive/Integer )( EAppArg Value /b@Value /x -> /Data/Primitive/Integer ) -> /Data/Primitive/True = Value /Data/Primitive/True
-                        , /diag( EAppArg Value /a -> /Data/Primitive/Integer )( EAppArg Value /b -> /Data/Primitive/Integer ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Primitive/Boolean
-                                , fromList []
-                                )
-                            ,
-                                ( /operator==[ /T=∀/Data/Algebra/Eq ]
-                                    ( /r=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Algebra/Eq
-                                            , fromList []
-                                            )
-                                        , /Data/Primitive/Integer
-                                        , []
-                                        )
-                                    , /l=∀/Data/Algebra/Eq
-                                    ) + /Data/strEqual
-                                    ( /r=/Data/String
-                                    , /l=/Data/String
-                                    ) + /Data/Algebra/rel
-                                    ( /this=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Algebra/Eqv[ /T=TopType ]
-                                            , fromList []
-                                            )
-                                        ,
-                                            ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
-                                        , []
-                                        )
-                                    , /a=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Primitive/Boolean
-                                            , fromList []
-                                            )
-                                        , ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float )
-                                        , []
-                                        )
-                                    , /b=∀/Data/Algebra/Eq
-                                    ) + /operator&&
-                                    ( /r=∀/Data/Primitive/Boolean
-                                    , /l=∀/Data/Primitive/Boolean
-                                    ) + /Data/Primitive/boolEq
-                                    ( /r=∀/Data/Primitive/Boolean
-                                    , /l=∀/Data/Primitive/Boolean
-                                    ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
-                                    ( /r=/Data/Primitive/Integer
-                                    , /l=/Data/Primitive/Integer
-                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
-                                    ( /this=∀/Data/Algebra/Eq
-                                    , /other=∀/Data/Algebra/Eq
-                                    )
-                                )
-                            , []
-                            ) = /operator==
-                            ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
-                            ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) )
+                        , /diag( EAppArg Value /a -> /Data/Primitive/Integer )( EAppArg Value /b -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean =
+                            ( /operator==
+                                ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
+                                ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) ) ↦ ∀/Data/Primitive/Boolean
+                            )
                         ]
                     }
                 )

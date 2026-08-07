@@ -12,65 +12,22 @@ Prgm
                     }
                 )
             ,
-                ( "/bindWithLocal.$71c85d.doubled"
+                ( "/bindWithLocal.$b5054c.doubled"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /bindWithLocal.$71c85d.doubled
-                            ( EAppArg Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
-                            ( EAppArg Value /x -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) ) ->
+                        [ /bindWithLocal.$b5054c.doubled
+                            ( EAppArg Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( EAppArg Value /x ) ->
                             ( /operator+
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                ) + /operator+
-                                ( /r=/Data/Primitive/Float
-                                , /l=/Data/Primitive/Float
+                                ( /r=TopType
+                                , /l=TopType
                                 ) + /Data/Primitive/Integer + /Data/Primitive/Float
-                            ) = /operator+
-                            ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-                            ( EAppArg Value /r -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-                        ]
-                    }
-                )
-            ,
-                ( "/bindWithLocal.$71c85d"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /bindWithLocal.$71c85d
-                            ( EAppArg Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
-                            ( EAppArg Value /$71c85d-arg@Value /x -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) ) ->
-                            ( /Data/Some
-                                [ /T=/operator+
-                                    ( /r=/Data/Primitive/Integer
-                                    , /l=/Data/Primitive/Integer
-                                    )
-                                ]
-                                ( /value=/operator+
-                                    ( /r=/Data/Primitive/Integer
-                                    , /l=/Data/Primitive/Integer
-                                    )
-                                ) + /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                            ) = /Data/Some
-                            ( EAppArg Value /value ->
-                                ( /operator+
-                                    ( /r=/Data/Primitive/Integer
-                                    , /l=/Data/Primitive/Integer
-                                    ) + /Data/Primitive/Integer
-                                ) =
-                                ( /operator+
-                                    ( EAppArg Value /l -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) =
-                                        ( /bindWithLocal.$71c85d.doubled
-                                            ( EAppArg Value /m -> TVArg /m = ( Value /m ↦ TVArg /m ) )
-                                            ( EAppArg Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) ) ↦ ( /Data/Primitive/Integer + /Data/Primitive/Float )
-                                        )
-                                    )
-                                    ( EAppArg Value /r -> /Data/Primitive/Integer = 1 ) ↦ /Data/Primitive/Integer
-                                )
+                            ) =
+                            ( /operator+
+                                ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                                ( EAppArg Value /r -> TVArg /x = ( Value /x ↦ TVArg /x ) ) ↦ ( /Data/Primitive/Integer + /Data/Primitive/Float )
                             )
                         ]
                     }
@@ -85,79 +42,72 @@ Prgm
                         [ /bindWithLocal
                             ( EAppArg Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> UnionType
                             ( Just
-                                ( PredClass /Data/Monad[ /T=$_/A ] && PredClass /Data/Maybe
+                                ( PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Maybe[ /T=TopType ]
                                 , fromList []
+                                , []
                                 )
-                            ,
-                                ( /Data/append
-                                    ( /a=∀/Data/ConsList[ /T=$_/T ]
-                                    , /b=∀/Data/ConsList[ /T=$_/T ]
-                                    ) + /Data/bindap
-                                    [ /T=
-                                        ( /operator+
-                                            ( /r=/Data/Primitive/Integer
-                                            , /l=TopType
-                                            ) + /Data/Primitive/Integer
+                            , /Data/append
+                                ( /a=∀/Data/ConsList[ /T=TopType ]
+                                , /b=UnionType
+                                    ( Just
+                                        ( PredClass /Data/Monad[ /T=TopType ]
+                                        , fromList []
+                                        , []
                                         )
-                                    , /B=TopType
-                                    , /M=∀/Data/Monad[ /T=$_/A ]
-                                    , /A=TopType
-                                    ]
-                                    ( /fn( /v=TopType )=
-                                        ( /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) + /Data/Some
-                                            [ /T=/operator+
-                                                ( /r=/Data/Primitive/Integer
-                                                , /l=/Data/Primitive/Integer
-                                                )
-                                            ]
-                                            ( /value=/operator+
-                                                ( /r=/Data/Primitive/Integer
-                                                , /l=/Data/Primitive/Integer
-                                                )
-                                            )
+                                    , /Data/Cons[ /T=TopType ]
+                                        ( /head=$/T
+                                        , /tail=∀/Data/ConsList[ /T=TopType ]
                                         )
-                                    , /m=
-                                        ( TopType | PredClass /Data/Monad[ /T=$_/A ] && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] )
-                                    ) + /Data/mmap
-                                    [ /B=TopType
-                                    , /M=∀/Data/Monad[ /T=$_/A ]
-                                    , /A=TopType
-                                    ]
-                                    ( /fn( /v=TopType )=∀/Data/Monad[ /T=$_/A ]
-                                    , /m=∀/Data/Monad[ /T=$_/A ]
+                                    , []
                                     )
                                 )
                             , []
-                            ) = /Data/bindap
-                            ( EAppArg Value /m -> TVArg /m = ( Value /m ↦ TVArg /m ) )
-                            ( EAppArg /fn( EAppArg Value /v -> /Data/Primitive/Integer ) ->
-                                ( /Data/Some
-                                    [ /T=/operator+
-                                        ( /r=/Data/Primitive/Integer
-                                        , /l=/Data/Primitive/Integer
-                                        )
-                                    ]
-                                    ( /value=/operator+
-                                        ( /r=/Data/Primitive/Integer
-                                        , /l=/Data/Primitive/Integer
-                                        )
-                                    ) + /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                                ) =
-                                ( /bindWithLocal.$71c85d
-                                    ( EAppArg Value /m -> TVArg /m = ( Value /m ↦ TVArg /m ) )
-                                    ( EAppArg Value /$71c85d-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) ) ↦
-                                    ( /Data/Some
-                                        [ /T=/operator+
-                                            ( /r=/Data/Primitive/Integer
-                                            , /l=/Data/Primitive/Integer
-                                            )
-                                        ]
-                                        ( /value=/operator+
-                                            ( /r=/Data/Primitive/Integer
-                                            , /l=/Data/Primitive/Integer
-                                            )
-                                        ) + /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                            ) =
+                            ( /Data/bindap
+                                ( EAppArg Value /m -> TVArg /m = ( Value /m ↦ TVArg /m ) )
+                                ( EAppArg /fn( EAppArg Value /v ) -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) =
+                                    ( /bindWithLocal.$b5054c
+                                        ( EAppArg Value /m -> TVArg /m = ( Value /m ↦ TVArg /m ) )
+                                        ( EAppArg Value /$b5054c-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) ) ↦ /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
                                     )
+                                ) ↦ UnionType
+                                ( Just
+                                    ( !
+                                        ( !
+                                            ( PredClass /Data/ConsList[ /T=TopType ] && PredClass /Data/Monad[ /T=TopType ] ) && !
+                                            ( PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Maybe[ /T=TopType ] )
+                                        )
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/Cons[ /T=TopType ]
+                                    ( /head=$/T
+                                    , /tail=∀/Data/ConsList[ /T=TopType ]
+                                    )
+                                , []
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/bindWithLocal.$b5054c"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /bindWithLocal.$b5054c
+                            ( EAppArg Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( EAppArg Value /$b5054c-arg@Value /x ) -> /Data/Some( /value=/Data/Primitive/Integer ) = /Data/Some
+                            ( EAppArg Value /value -> /Data/Primitive/Integer =
+                                ( /operator+
+                                    ( EAppArg Value /l -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) =
+                                        ( /bindWithLocal.$b5054c.doubled
+                                            ( EAppArg Value /m -> TVArg /m = ( Value /m ↦ TVArg /m ) )
+                                            ( EAppArg Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) ) ↦ ( /Data/Primitive/Integer + /Data/Primitive/Float )
+                                        )
+                                    )
+                                    ( EAppArg Value /r -> /Data/Primitive/Integer = 1 ) ↦ /Data/Primitive/Integer
                                 )
                             )
                         ]

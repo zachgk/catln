@@ -32,32 +32,34 @@ Prgm
                                 ( /this=/Catln/IO
                                 , /val=/Data/Primitive/Integer
                                 ) + /Catln/IO
-                            ) = /Catln/exit
-                            ( EAppArg Value /val -> /Data/Primitive/Integer =
-                                ( /operator-
-                                    ( EAppArg Value /l -> /Data/Primitive/Integer =
-                                        ( /len
-                                            ( EAppArg Value /this -> /IntCons
-                                                ( /head=/Data/Primitive/Integer
-                                                , /tail=/IntCons
+                            ) =
+                            ( /Catln/exit
+                                ( EAppArg Value /val -> /Data/Primitive/Integer =
+                                    ( /operator-
+                                        ( EAppArg Value /l -> /Data/Primitive/Integer =
+                                            ( /len
+                                                ( EAppArg Value /this -> /IntCons
                                                     ( /head=/Data/Primitive/Integer
-                                                    , /tail=/IntNil
-                                                    )
-                                                ) = /IntCons
-                                                ( EAppArg Value /head -> /Data/Primitive/Integer = 5 )
-                                                ( EAppArg Value /tail -> /IntCons
-                                                    ( /head=/Data/Primitive/Integer
-                                                    , /tail=/IntNil
+                                                    , /tail=/IntCons
+                                                        ( /head=/Data/Primitive/Integer
+                                                        , /tail=/IntNil
+                                                        )
                                                     ) = /IntCons
-                                                    ( EAppArg Value /head -> /Data/Primitive/Integer = 3 )( EAppArg Value /tail -> /IntNil = Value /IntNil )
-                                                )
-                                            ) ↦ /Data/Primitive/Integer
+                                                    ( EAppArg Value /head -> /Data/Primitive/Integer = 5 )
+                                                    ( EAppArg Value /tail -> /IntCons
+                                                        ( /head=TopType
+                                                        , /tail=/IntNil
+                                                        ) = /IntCons
+                                                        ( EAppArg Value /head -> /Data/Primitive/Integer = 3 )( EAppArg Value /tail -> /IntNil = Value /IntNil )
+                                                    )
+                                                ) ↦ /Data/Primitive/Integer
+                                            )
                                         )
+                                        ( EAppArg Value /r -> /Data/Primitive/Integer = 2 ) ↦ /Data/Primitive/Integer
                                     )
-                                    ( EAppArg Value /r -> /Data/Primitive/Integer = 2 ) ↦ /Data/Primitive/Integer
                                 )
+                                ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) ) ↦ /Catln/IO
                             )
-                            ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
                         ]
                     }
                 )
@@ -74,18 +76,15 @@ Prgm
                             ( EAppArg Value /this -> /IntCons
                                 ( /head=/Data/Primitive/Integer
                                 , /tail=∀/IntList
-                                ) = /IntCons( EAppArg Value /head -> /Data/Primitive/Integer )( EAppArg Value /tail -> ∀/IntList )
-                            ) ->
+                                ) = /IntCons( EAppArg Value /head )( EAppArg Value /tail -> ∀/IntList )
+                            ) -> /Data/Primitive/Integer =
                             ( /operator+
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer
-                            ) = /operator+
-                            ( EAppArg Value /l -> /Data/Primitive/Integer = 1 )
-                            ( EAppArg Value /r -> /Data/Primitive/Integer =
-                                ( /len
-                                    ( EAppArg Value /this -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) ) ↦ /Data/Primitive/Integer
-                                )
+                                ( EAppArg Value /l -> /Data/Primitive/Integer = 1 )
+                                ( EAppArg Value /r -> /Data/Primitive/Integer =
+                                    ( /len
+                                        ( EAppArg Value /this -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) ) ↦ /Data/Primitive/Integer
+                                    )
+                                ) ↦ /Data/Primitive/Integer
                             )
                         ]
                     }

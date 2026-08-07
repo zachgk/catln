@@ -9,12 +9,17 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ Value /main ->
-                            ( /Catln/www( /html=/Data/String ) + /Catln/CatlnResult
-                                ( /name=/Data/String
+                            ( /Catln/www( /html=TopType ) + /Catln/CatlnResult
+                                ( /name=TopType
                                 , /contents=/Data/String
                                 )
-                            ) = /Catln/www
-                            ( EAppArg Value /html -> /Data/String = "<html><body>web test</body></html>" )
+                            ) =
+                            ( /Catln/www
+                                ( EAppArg Value /html -> /Data/String = "<html><body>web test</body></html>" ) ↦ /Catln/CatlnResult
+                                ( /name=TopType
+                                , /contents=/Data/String
+                                )
+                            )
                         ]
                     }
                 )
@@ -27,11 +32,11 @@ Prgm
             It also prints the result of the build in an iframe." )
         , /Catln/#print
             ( EAppArg Value /p -> /Catln/CatlnResult
-                ( /name=/Data/String
+                ( /name=TopType
                 , /contents=/Data/String
                 ) =
                 ( Value /main ↦ /Catln/CatlnResult
-                    ( /name=/Data/String
+                    ( /name=TopType
                     , /contents=/Data/String
                     )
                 )

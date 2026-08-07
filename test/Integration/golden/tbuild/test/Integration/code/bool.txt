@@ -22,10 +22,12 @@ Prgm
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
+                                , []
                                 )
                             , /operator~( /a=/Data/Primitive/False )
                             , []
-                            ) = /operator~( EAppArg Value /a -> /Data/Primitive/False = Value /Data/Primitive/False )
+                            ) =
+                            ( /operator~( EAppArg Value /a -> /Data/Primitive/False = Value /Data/Primitive/False ) ↦ ∀/Data/Primitive/Boolean )
                         ]
                     }
                 )
@@ -40,13 +42,15 @@ Prgm
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
+                                , []
                                 )
                             , /operator||
                                 ( /r=/Data/Primitive/False
                                 , /l=/Data/Primitive/True
                                 )
                             , []
-                            ) = /operator||( EAppArg Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /r -> /Data/Primitive/False = Value /Data/Primitive/False )
+                            ) =
+                            ( /operator||( EAppArg Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /r -> /Data/Primitive/False = Value /Data/Primitive/False ) ↦ ∀/Data/Primitive/Boolean )
                         ]
                     }
                 )
@@ -61,13 +65,15 @@ Prgm
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
+                                , []
                                 )
                             , /operator&&
                                 ( /r=/Data/Primitive/True
                                 , /l=/Data/Primitive/True
                                 )
                             , []
-                            ) = /operator&&( EAppArg Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /r -> /Data/Primitive/True = Value /Data/Primitive/True )
+                            ) =
+                            ( /operator&&( EAppArg Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /r -> /Data/Primitive/True = Value /Data/Primitive/True ) ↦ ∀/Data/Primitive/Boolean )
                         ]
                     }
                 )

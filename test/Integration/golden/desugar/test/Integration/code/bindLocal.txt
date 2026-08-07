@@ -12,31 +12,14 @@ Prgm
                     }
                 )
             ,
-                ( "/bindWithLocal.$71c85d.doubled"
+                ( "/bindWithLocal.$b5054c.doubled"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ bindWithLocal.$71c85d.doubled
+                        [ bindWithLocal.$b5054c.doubled
                             ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value /x )= /operator+( Value /l= Value x )( Value /r= Value x )
-                        ]
-                    }
-                )
-            ,
-                ( "/bindWithLocal.$71c85d"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ bindWithLocal.$71c85d
-                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
-                            ( Value $71c85d-arg@Value x )= /Data/Some
-                            ( Value value= /operator+
-                                ( Value /l= bindWithLocal.$71c85d.doubled( Value /m= Value /m )( Value /x= Value /x ) )
-                                ( Value /r= CInt 1 )
-                            )
                         ]
                     }
                 )
@@ -49,8 +32,22 @@ Prgm
                     , omiDefs =
                         [ bindWithLocal
                             ( Value m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe = /Data/bindap( Value m= Value m )
-                            ( fn( Value v )= bindWithLocal.$71c85d( Value /m= Value /m )
-                                ( Value /$71c85d-arg= Value v )
+                            ( fn( Value v )= bindWithLocal.$b5054c( Value /m= Value /m )( Value /$b5054c-arg= Value v ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/bindWithLocal.$b5054c"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ bindWithLocal.$b5054c
+                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value $b5054c-arg@Value x )= /Data/Some
+                            ( Value value= /operator+
+                                ( Value /l= bindWithLocal.$b5054c.doubled( Value /m= Value /m )( Value /x= Value /x ) )
+                                ( Value /r= CInt 1 )
                             )
                         ]
                     }

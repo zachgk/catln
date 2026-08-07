@@ -44,7 +44,7 @@ Prgm
                                         ) = /IntCons
                                         ( Value /head -> /Data/Primitive/Integer = CInt 5 )
                                         ( Value /tail -> /IntCons
-                                            ( /head=/Data/Primitive/Integer
+                                            ( /head=TopType
                                             , /tail=/IntNil
                                             ) = /IntCons
                                             ( Value /head -> /Data/Primitive/Integer = CInt 3 )( Value /tail -> /IntNil = Value /IntNil )
@@ -69,13 +69,8 @@ Prgm
                             ( Value /this -> /IntCons
                                 ( /head=/Data/Primitive/Integer
                                 , /tail=∀/IntList
-                                ) = /IntCons( Value /head -> /Data/Primitive/Integer )( Value /tail -> ∀/IntList )
-                            ) ->
-                            ( /operator+
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer
-                            ) = /operator+
+                                ) = /IntCons( Value /head )( Value /tail -> ∀/IntList )
+                            ) -> /Data/Primitive/Integer = /operator+
                             ( Value /l -> /Data/Primitive/Integer = CInt 1 )
                             ( Value /r -> /Data/Primitive/Integer = /len( Value /this -> TVArg /tail = Value /tail ) )
                         ]

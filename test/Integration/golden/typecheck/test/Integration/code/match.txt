@@ -21,30 +21,6 @@ Prgm
                     }
                 )
             ,
-                ( "/abs.$fb881e"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /abs.$fb881e( Value /x -> /Data/Primitive/Integer )
-                            ( Value /$fb881e-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=( Value /l -> TVArg /x = Value /x )
-                                ( Value /r -> /Data/Primitive/Integer = CInt 0 )
-                            ) -> TVArg /x2 = Value /x2
-                        , /abs.$fb881e( Value /x -> /Data/Primitive/Integer )
-                            ( Value /$fb881e-arg -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = Hole ( /Data/Primitive/Integer + /Data/Primitive/Float ) HoleActive Nothing@Value /x2 ) ->
-                            ( /operator*
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer
-                            ) = /operator*( Value /l -> TVArg /x2 = Value /x2 )
-                            ( Value /r -> /Data/Primitive/Integer = /operator-
-                                ( Value /a -> /Data/Primitive/Integer = CInt 1 )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/abs"
                 , ObjectMapItem
                     { omiDecls = []
@@ -52,14 +28,37 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /abs( Value /x -> /Data/Primitive/Integer ) ->
-                            ( /abs.$fb881e
-                                ( /x=/Data/Primitive/Integer
-                                , /$fb881e-arg=/Data/Primitive/Integer
-                                ) + /operator*
+                            ( /operator*
                                 ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
+                                , /l=TopType
+                                ) + /Data/Primitive/Integer + /abs.$a26cc5
+                                ( /x=/Data/Primitive/Integer
+                                , /$a26cc5-arg=/Data/Primitive/Integer
+                                )
+                            ) = /abs.$a26cc5( Value /x -> TVArg /x = Value /x )( Value /$a26cc5-arg -> TVArg /x = Value /x )
+                        ]
+                    }
+                )
+            ,
+                ( "/abs.$a26cc5"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /abs.$a26cc5( Value /x -> /Data/Primitive/Integer )
+                            ( Value /$a26cc5-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=( Value /l -> TVArg /x = Value /x )
+                                ( Value /r -> /Data/Primitive/Integer = CInt 0 )
+                            ) -> TVArg /x2 = Value /x2
+                        , /abs.$a26cc5( Value /x -> /Data/Primitive/Integer )( Value /$a26cc5-arg= Hole TopType HoleActive Nothing@Value /x2 ) ->
+                            ( /operator*
+                                ( /r=/Data/Primitive/Integer
+                                , /l=TopType
                                 ) + /Data/Primitive/Integer
-                            ) = /abs.$fb881e( Value /x -> TVArg /x = Value /x )( Value /$fb881e-arg -> TVArg /x = Value /x )
+                            ) = /operator*( Value /l -> TVArg /x2 = Value /x2 )
+                            ( Value /r -> /Data/Primitive/Integer = /operator-
+                                ( Value /a -> /Data/Primitive/Integer = CInt 1 )
+                            )
                         ]
                     }
                 )

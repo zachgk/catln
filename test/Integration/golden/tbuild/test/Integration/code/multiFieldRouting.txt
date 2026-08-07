@@ -9,7 +9,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /unbox( EAppArg Value /b -> /Data/Primitive/Integer ) -> TVArg /b = ( Value /b ↦ TVArg /b ) ]
+                        [ /unbox( EAppArg Value /b -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = ( Value /b ↦ /Data/Primitive/Integer ) ]
                     }
                 )
             ,
@@ -48,19 +48,7 @@ Prgm
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs =
-                        [ /bothUnbox
-                            ( EAppArg Value /p -> /Pair
-                                [ /B=∀/Boxed
-                                , /A=∀/Boxed
-                                ]
-                                ( /first=∀/Boxed
-                                , /second=∀/Boxed
-                                ) = /Pair( EAppArg Value /first@Value /f -> ∀/Boxed )( EAppArg Value /second@Value /s -> ∀/Boxed )
-                            ) ->
-                            ( /unbox( /b=∀/Boxed ) + /Data/Primitive/Integer ) = /unbox
-                            ( EAppArg Value /b -> TVArg /f = ( Value /f ↦ TVArg /f ) )
-                        ]
+                    , omiDefs = []
                     }
                 )
             ]

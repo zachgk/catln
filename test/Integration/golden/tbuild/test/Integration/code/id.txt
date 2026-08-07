@@ -13,13 +13,15 @@ Prgm
                                 ( /this=/Catln/IO
                                 , /val=/Data/Primitive/Integer
                                 ) + /Catln/IO
-                            ) = /Catln/exit
-                            ( EAppArg Value /val -> /Data/Primitive/Integer =
-                                ( /id
-                                    ( EAppArg Value /x -> /Data/Primitive/Integer = 0 ) ↦ /Data/Primitive/Integer
+                            ) =
+                            ( /Catln/exit
+                                ( EAppArg Value /val -> /Data/Primitive/Integer =
+                                    ( /id
+                                        ( EAppArg Value /x -> /Data/Primitive/Integer = 0 ) ↦ /Data/Primitive/Integer
+                                    )
                                 )
+                                ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) ) ↦ /Catln/IO
                             )
-                            ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
                         ]
                     }
                 )

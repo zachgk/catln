@@ -12,6 +12,15 @@ Prgm
                     }
                 )
             ,
+                ( "/main"
+                , ObjectMapItem
+                    { omiDecls = [ Value /main ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/toString"
                 , ObjectMapItem
                     { omiDecls =
@@ -20,7 +29,7 @@ Prgm
                         [ /Data/toString( EAppArg Value /this -> /Data/Primitive/Integer ) -> /Data/String ]
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/toString( EAppArg Value /this -> /Data/String ) -> TVArg /this = ( Value /this ↦ TVArg /this ) ]
+                        [ /Data/toString( EAppArg Value /this -> /Data/String ) -> /Data/String = ( Value /this ↦ /Data/String ) ]
                     }
                 )
             ,
@@ -69,6 +78,7 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

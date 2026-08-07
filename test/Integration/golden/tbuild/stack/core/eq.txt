@@ -9,49 +9,11 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator==( EAppArg Value /l -> $/T )( EAppArg Value /r -> $/T )( EAppVar /T ∀/Data/Algebra/Eq ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Primitive/Boolean
-                                , fromList []
-                                )
-                            ,
-                                ( /Data/strEqual
-                                    ( /r=/Data/String
-                                    , /l=/Data/String
-                                    ) + /Data/Algebra/rel
-                                    ( /this=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Algebra/Eqv[ /T=TopType ]
-                                            , fromList []
-                                            )
-                                        ,
-                                            ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
-                                        , []
-                                        )
-                                    , /a=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Primitive/Boolean
-                                            , fromList []
-                                            )
-                                        , ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float )
-                                        , []
-                                        )
-                                    , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Primitive/boolEq
-                                    ( /r=∀/Data/Primitive/Boolean
-                                    , /l=∀/Data/Primitive/Boolean
-                                    ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
-                                    ( /r=/Data/Primitive/Integer
-                                    , /l=/Data/Primitive/Integer
-                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
-                                    ( /this=∀/Data/Algebra/Eq
-                                    , /other=∀/Data/Algebra/Eq
-                                    )
-                                )
-                            , []
-                            ) = /equal
-                            ( EAppArg Value /other -> TVArg /r = ( Value /r ↦ TVArg /r ) )
-                            ( EAppArg Value /this -> TVArg /l = ( Value /l ↦ TVArg /l ) )
+                        [ /operator==( EAppArg Value /l -> $/T )( EAppArg Value /r -> $/T )( EAppVar /T ∀/Data/Algebra/Eq ) -> ∀/Data/Primitive/Boolean =
+                            ( /equal
+                                ( EAppArg Value /other -> TVArg /r = ( Value /r ↦ TVArg /r ) )
+                                ( EAppArg Value /this -> TVArg /l = ( Value /l ↦ TVArg /l ) ) ↦ ∀/Data/Primitive/Boolean
+                            )
                         ]
                     }
                 )
@@ -105,27 +67,17 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Algebra/rel( EAppArg Value /a -> $/T )( EAppArg Value /b -> $/T )
-                            ( EAppArg Value /this -> ∀/Data/Algebra/Eqv[ /T=$/T ] ) -> ∀/Data/Primitive/Boolean
+                            ( EAppArg Value /this -> ∀/Data/Algebra/Eqv[ /T=TopType ] ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/rel( EAppArg Value /a -> /Data/Primitive/Integer )( EAppArg Value /b -> /Data/Primitive/Integer )
-                            ( EAppArg Value /this -> /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Primitive/Boolean
-                                , fromList []
-                                )
-                            , /Data/Primitive/intEq
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                )
-                            , []
-                            ) = /Data/Primitive/intEq
-                            ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
-                            ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) )
-                        , /Data/Algebra/rel( EAppArg Value /a )( EAppArg Value /b )
-                            ( EAppArg Value /this -> /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        [ /Data/Algebra/rel( EAppArg Value /a )( EAppArg Value /b )( EAppArg Value /this -> /Data/Algebra/IntEqExample ) -> ∀/Data/Primitive/Boolean =
+                            ( /Data/Primitive/intEq
+                                ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
+                                ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) ) ↦ ∀/Data/Primitive/Boolean
+                            )
+                        , /Data/Algebra/rel( EAppArg Value /a )( EAppArg Value /b )( EAppArg Value /this -> /Data/Algebra/AllEqv ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         ]
                     }
                 )
@@ -166,19 +118,14 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator!=( EAppArg Value /l -> $/T )( EAppArg Value /r -> $/T )( EAppVar /T ∀/Data/Algebra/Eq ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Primitive/Boolean
-                                , fromList []
-                                )
-                            , /operator~( /a=∀/Data/Primitive/Boolean )
-                            , []
-                            ) = /operator~
-                            ( EAppArg Value /a -> ∀/Data/Primitive/Boolean =
-                                ( /operator==
-                                    ( EAppArg Value /l -> TVArg /l = ( Value /l ↦ TVArg /l ) )
-                                    ( EAppArg Value /r -> TVArg /r = ( Value /r ↦ TVArg /r ) ) ↦ ∀/Data/Primitive/Boolean
-                                )
+                        [ /operator!=( EAppArg Value /l -> $/T )( EAppArg Value /r -> $/T )( EAppVar /T ∀/Data/Algebra/Eq ) -> ∀/Data/Primitive/Boolean =
+                            ( /operator~
+                                ( EAppArg Value /a -> ∀/Data/Primitive/Boolean =
+                                    ( /operator==
+                                        ( EAppArg Value /l -> TVArg /l = ( Value /l ↦ TVArg /l ) )
+                                        ( EAppArg Value /r -> TVArg /r = ( Value /r ↦ TVArg /r ) ) ↦ ∀/Data/Primitive/Boolean
+                                    )
+                                ) ↦ ∀/Data/Primitive/Boolean
                             )
                         ]
                     }
@@ -253,69 +200,25 @@ Prgm
             The simplest [Eqv] over [Integer] compares its values with the built-in integer equality;
             [AllEqv] relates every pair." )
         , /Catln/#print
-            ( EAppArg Value /p ->
-                ( /Data/Primitive/True + /Data/Algebra/rel
-                    ( /this=/Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ]
-                    , /a=/Data/Primitive/Integer
-                    , /b=/Data/Primitive/Integer
-                    ) + /Data/Primitive/False + /Data/Primitive/intEq
-                    ( /r=/Data/Primitive/Integer
-                    , /l=/Data/Primitive/Integer
-                    )
-                ) =
+            ( EAppArg Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                 ( /rel
                     ( EAppArg Value /a -> /Data/Primitive/Integer = 2 )
                     ( EAppArg Value /b -> /Data/Primitive/Integer = 2 )
-                    ( EAppArg Value /this -> /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] = Value /Data/Algebra/IntEqExample ) ↦ UnionType
-                    ( Just
-                        ( PredClass /Data/Primitive/Boolean
-                        , fromList []
-                        )
-                    , /Data/Primitive/intEq
-                        ( /r=/Data/Primitive/Integer
-                        , /l=/Data/Primitive/Integer
-                        )
-                    , []
-                    )
+                    ( EAppArg Value /this -> /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] = Value /Data/Algebra/IntEqExample ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
                 )
             )
             ( EAppArg Value /result -> /Data/String = "True" )
         , /Catln/#print
-            ( EAppArg Value /p ->
-                ( /Data/Primitive/True + /Data/Algebra/rel
-                    ( /this=/Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ]
-                    , /a=/Data/Primitive/Integer
-                    , /b=/Data/Primitive/Integer
-                    ) + /Data/Primitive/False + /Data/Primitive/intEq
-                    ( /r=/Data/Primitive/Integer
-                    , /l=/Data/Primitive/Integer
-                    )
-                ) =
+            ( EAppArg Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                 ( /rel
                     ( EAppArg Value /a -> /Data/Primitive/Integer = 2 )
                     ( EAppArg Value /b -> /Data/Primitive/Integer = 3 )
-                    ( EAppArg Value /this -> /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] = Value /Data/Algebra/IntEqExample ) ↦ UnionType
-                    ( Just
-                        ( PredClass /Data/Primitive/Boolean
-                        , fromList []
-                        )
-                    , /Data/Primitive/intEq
-                        ( /r=/Data/Primitive/Integer
-                        , /l=/Data/Primitive/Integer
-                        )
-                    , []
-                    )
+                    ( EAppArg Value /this -> /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] = Value /Data/Algebra/IntEqExample ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
                 )
             )
             ( EAppArg Value /result -> /Data/String = "False" )
         , /Catln/#print
-            ( EAppArg Value /p ->
-                ( /Data/Primitive/True + /Data/Algebra/rel
-                    ( /this=/Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ]
-                    , /a=/Data/Primitive/Integer
-                    , /b=/Data/Primitive/Integer
-                    ) + /Data/Primitive/False
-                ) =
+            ( EAppArg Value /p -> ∀/Data/Primitive/Boolean =
                 ( /rel
                     ( EAppArg Value /a -> /Data/Primitive/Integer = 2 )
                     ( EAppArg Value /b -> /Data/Primitive/Integer = 3 )

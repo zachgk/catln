@@ -10,22 +10,10 @@ Prgm
                     , omiDefs =
                         [ /llength( Value /this -> /Data/Nil = Value /Data/Nil ) -> /Data/Primitive/Integer = CInt 0
                         , /llength
-                            ( Value /this -> /Data/Cons[ /T=TopType ]
-                                ( /head=$/T
-                                , /tail=
-                                    ( /Data/Nil + /Data/Cons[ /T=$_/T ]
-                                        ( /head=$/T
-                                        , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                        )
-                                    )
-                                ) = /Data/Cons( Value /head )
-                                ( Value /tail ->
-                                    ( /Data/Nil + /Data/Cons[ /T=$_/T ]
-                                        ( /head=$/T
-                                        , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                        )
-                                    )
-                                )
+                            ( Value /this -> /Data/Cons
+                                ( /head=TopType
+                                , /tail=TopType
+                                ) = /Data/Cons( Value /head )( Value /tail )
                             ) ->
                             ( /operator+
                                 ( /r=/Data/Primitive/Integer
@@ -52,15 +40,15 @@ Prgm
                             ) = /Catln/exit
                             ( Value /val -> /Data/Primitive/Integer = /operator-
                                 ( Value /l -> /Data/Primitive/Integer = /llength
-                                    ( Value /this -> /Data/Cons[ /T=/Data/Primitive/Integer ]
+                                    ( Value /this -> /Data/Cons
                                         ( /head=/Data/Primitive/Integer
-                                        , /tail=/Data/Cons[ /T=/Data/Primitive/Integer ]
+                                        , /tail=/Data/Cons
                                             ( /head=/Data/Primitive/Integer
                                             , /tail=/Data/Nil
                                             )
                                         ) = /Data/Cons
                                         ( Value /head -> /Data/Primitive/Integer = CInt 5 )
-                                        ( Value /tail -> /Data/Cons[ /T=/Data/Primitive/Integer ]
+                                        ( Value /tail -> /Data/Cons
                                             ( /head=/Data/Primitive/Integer
                                             , /tail=/Data/Nil
                                             ) = /Data/Cons
