@@ -2636,7 +2636,16 @@ satGoal typeEnv0 vaenv gatePos hyps goal0
         mR = foldl refineByPos m (sgPos r)
         refineByPos acc (SatClass c) = refineMeet acc (expandClassPartial typeEnv vaenv c)
         refineByPos acc (SatLeafs ls) = refineMeet acc (UnionType Nothing (joinUnionType ls) [])
-        refineByPos acc _ = acc
+        -- A relation is satisfied through its name route OR a matching class (a disjunction),
+        -- so the witness may only be refined when a SINGLE route is available: name route
+        -- only (refine by the relation's shape at the witness's name — @~Cons[T=Eq](…)@
+        -- pins the witness's slots) or exactly one matching class with the name route
+        -- inapplicable. Refining through a live disjunction would over-constrain the
+        -- witness towards a false UNSAT.
+        refineByPos acc (SatRel r') = case (relNameAdmits typeEnv r' acc, relMatchingClasses typeEnv r') of
+          (True, [])   -> refineMeet acc (singletonType r'{ptName = ptName acc})
+          (False, [c]) -> refineMeet acc (expandClassPartial typeEnv vaenv c)
+          _            -> acc
         refineMeet acc other =
           case snd $ intersectTypesWithVarEnv typeEnv vaenv (singletonType acc) other of
             UnionType Nothing leafs [] | [acc'] <- splitUnionType leafs, ptName acc' == ptName acc -> acc'
@@ -2914,8 +2923,18 @@ isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subAr
       Just PTopType       -> True -- bound to Top: unconstrained, so still bindable per value
       _                   -> False
     flexibleVar _ = False
-    result = hasAll subArgs superArgs && hasAllPreds superPreds subPreds && hasAllVars subVars superVars
+    result = hasAll subArgs superArgs && predsOk && hasAllVars subVars superVars
     msg = printf "[SUBPARTIAL] %s ⊆ %s = %s" (show sub) (show super) (show result)
+
+    predsOk = hasAllPreds superPreds subPreds || leafCtxPredsCover
+    -- Leaf-contextual predicate implication: the formula-vs-formula oracle ('hasAllPreds')
+    -- is leaf-blind, but two spellings need only agree on THIS leaf's value set
+    -- (@¬~Cons[T=Eq](…)@ ⟺ @¬EqC@ on @Cons@-shaped values — the difference route's
+    -- symbolic-neg attach vs the meet route's class attach — while neither implies the
+    -- other universally). Decide coverage of the sub leaf (with its own predicates) by the
+    -- super's predicate universe symbolically; conservative 'False' stays the fallback.
+    leafCtxPredsCover = superPreds /= PredsNone
+      && fromMaybe False (typeCoveredSymbolic typeEnv vaenv' False (singletonType sub) (UnionType (Just (superPreds, H.empty, [])) H.empty []))
 
     hasAllPreds :: TypePredicates -> TypePredicates -> Bool
     hasAllPreds (PredsAnd subPs) supPs = all (`hasAllPreds` supPs) subPs
@@ -3274,33 +3293,38 @@ compactPartialsWithClassPred :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv ->
 compactPartialsWithClassPred typeEnv vaenv partials = unionPartialLeafs $ map tryAux partials
   where
     tryAux :: PartialType -> PartialLeafs
-    tryAux partial = case tryPredsToList (ptPreds partial) of
-      Just []    -> joinUnionType [partial]
-      Nothing    -> joinUnionType [partial]
-      Just preds -> aux (partial, preds)
-
-    aux :: (PartialType, [TypePredicate]) -> PartialLeafs
-    aux (partial, preds) = if null classPreds && null relPreds
+    -- Split the formula's TOP-LEVEL conjuncts: positive class/rel atoms are expanded and
+    -- intersected back in; everything else (expr atoms and ¬-conjuncts) stays attached on
+    -- the partial and rides through the meet. A ¬-conjunct no longer suppresses expansion
+    -- of its positive siblings — @Cons₂{¬EqC ∧ ~Cons}@ must reach the same ∅ the
+    -- association order @~Cons ∩ (Cons₂{¬EqC})@ computes, and @leaf{¬X ∧ EqC}@ the same
+    -- expanded @leafEqC{¬X}@ the meet route spells.
+    tryAux partial = if null classPreds && null relPreds
       then joinUnionType [partial]
       -- Expand the partial's own class/rel preds and intersect them back in.
       else asLeafs $ foldr1 (intersectTypesEnv typeEnv vaenv) (singletonType partial' : map (expandRelPartial typeEnv vaenv) relPreds ++ map (expandClassPartial typeEnv vaenv) classPreds)
       where
-        -- Take class preds out of partial
-        (exprPreds, classPreds, relPreds) = splitPreds preds
-        partial' = partial{ptPreds = PredsAnd $ map (PredsOne . PredExpr) exprPreds}
+        -- Take the positive class/rel atom conjuncts out of partial
+        (classPreds, relPreds, residConjs) = splitConjs (conjsOf (ptPreds partial))
+        partial' = partial{ptPreds = rebuildConjs residConjs}
 
         asLeafs (UnionType Nothing leafs []) = leafs
         asLeafs (UnionType (Just (_, negLeafs, _)) posLeafs []) = H.unionWith S.union negLeafs posLeafs  -- shouldn't normally occur
         asLeafs t = error $ printf "compactPartialsWithClassPred: unexpected type %s" (show t)
 
-        splitPreds :: [TypePredicate] -> ([PartialType], [PartialType], [PartialType])
-        splitPreds [] = ([], [], [])
-        splitPreds (p:ps) = case p of
-          PredExpr p'  -> (p':exprs', classes', rels')
-          PredClass p' -> (exprs', p':classes', rels')
-          PredRel p'   -> (exprs', classes', p':rels')
+        conjsOf (PredsAnd ps) = concatMap conjsOf ps
+        conjsOf q             = [q]
+        splitConjs :: [TypePredicates] -> ([PartialType], [PartialType], [TypePredicates])
+        splitConjs [] = ([], [], [])
+        splitConjs (q:qs) = case q of
+          PredsOne (PredClass p') -> (p':classes', rels', resid')
+          PredsOne (PredRel p')   -> (classes', p':rels', resid')
+          _                       -> (classes', rels', q:resid')
           where
-            (exprs', classes', rels') = splitPreds ps
+            (classes', rels', resid') = splitConjs qs
+        rebuildConjs []  = PredsNone
+        rebuildConjs [q] = q
+        rebuildConjs qs  = mkAnd qs
 
 -- | Whether a type still carries unresolved bare-⊤ content: a bare ⊤ in the type itself, a
 -- var\/arg slot value at any depth, or a class\/rel\/expr predicate parameter. A type VARIABLE
@@ -3438,11 +3462,15 @@ compactModedPredLeafs typeEnv = concatMap decompose
       , Just kss <- ptIntervalArgKeys typeEnv p'
       = map (ptAtArgKeys p') kss
       | otherwise = [p]
-    predsHasClassRelAtom (PredsOne (PredClass _)) = True
-    predsHasClassRelAtom (PredsOne (PredRel _))   = True
-    predsHasClassRelAtom (PredsOne (PredExpr _))  = False
-    predsHasClassRelAtom (PredsAnd ps)            = any predsHasClassRelAtom ps
-    predsHasClassRelAtom (PredsNot q)             = predsHasClassRelAtom q
+
+-- | Whether a predicate formula holds a class\/rel membership atom anywhere (the decidable
+-- fragment of the per-leaf predicate rules; a pure-'PredExpr' formula is undecidable either way).
+predsHasClassRelAtom :: TypePredicates -> Bool
+predsHasClassRelAtom (PredsOne (PredClass _)) = True
+predsHasClassRelAtom (PredsOne (PredRel _))   = True
+predsHasClassRelAtom (PredsOne (PredExpr _))  = False
+predsHasClassRelAtom (PredsAnd ps)            = any predsHasClassRelAtom ps
+predsHasClassRelAtom (PredsNot q)             = predsHasClassRelAtom q
 
 -- | Canonicalizes leafs carrying a NEGATED predicate conjunct (the symbolic refinement the
 -- ¬-over-recursive-class meet attaches — see 'intersectTypesWithVarEnv'). Each top-level
@@ -3459,30 +3487,82 @@ compactModedPredLeafs typeEnv = concatMap decompose
 -- POSITIVE-formula subtype\/meet machinery (one ¬-level is stripped per step, so a nested
 -- negation bottoms out at the formula's finite depth).
 compactNegPredLeafs :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> [PartialType] -> [PartialType]
-compactNegPredLeafs typeEnv vaenv = mapMaybe reduceLeaf
+compactNegPredLeafs typeEnv vaenv = mapMaybe (reduceNegPredLeaf typeEnv vaenv)
+
+-- | Truth value of a predicate subformula relative to one leaf: decided for every value of
+-- the leaf, decided for none, or left residual.
+data LeafPredSimp = LeafPredTrue | LeafPredFalse | LeafPredResid TypePredicates
+
+-- | The per-leaf reduction of 'compactNegPredLeafs': simplify the leaf's formula by deciding
+-- subformulas against the BARE leaf (sound at any depth and polarity — a decision holds for
+-- EVERY value of the leaf, so substituting the constant is pointwise-exact; the leaf's other
+-- refinements only shrink it):
+--
+--   * leaf ⊆ U_q ⟹ @q@ is 'True' of every leaf value — substitute truth
+--     (@Nil{¬EqC}@ when @Nil@ is an @EqC@ member reduces to 'False': drop the LEAF);
+--   * leaf ∩ U_q = ∅ ⟹ @q@ holds of no leaf value — substitute falsity
+--     (@Cons₂{¬EqC ∧ ~Cons}@: the argless-exact @~Cons@ is disjoint from the exact
+--     two-arg leaf, so the whole conjunction is 'False' and the leaf drops;
+--     @Cons₂{¬(EqC ∧ ¬~Integer)}@: @~Integer@ is 'False' on @Cons@ values, collapsing
+--     the formula to the meet route's @¬EqC@ spelling).
+--
+-- Decisions are attempted at each formula node holding a class\/rel atom (a pure-'PredExpr'
+-- subformula is undecidable either way — see 'compactDisconnectedPreds' on why membership
+-- emptiness does not apply to expression predicates); an undecided node recurses
+-- structurally. Only leafs with a ¬ somewhere are processed: positive-only formulas are the
+-- canonical domain of 'compactPartialsWithClassPred'. Both questions recurse only into
+-- POSITIVE-formula subtype\/meet machinery (one ¬-level is stripped per step, so a nested
+-- negation bottoms out at the formula's finite depth); without these reductions the two
+-- spellings of one set (bare vs vacuously-refined) split 'isEqType' and the
+-- distributivity\/bridge laws.
+reduceNegPredLeaf :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> PartialType -> Maybe PartialType
+reduceNegPredLeaf typeEnv vaenv p
+  | not (hasNegConj (ptPreds p)) = Just p
+  | otherwise = case simplify (ptPreds p) of
+      LeafPredFalse   -> Nothing
+      LeafPredTrue    -> Just p{ptPreds = PredsNone}
+      LeafPredResid f -> Just p{ptPreds = f}
   where
-    reduceLeaf :: PartialType -> Maybe PartialType
-    reduceLeaf p
-      | not (hasNegConj (ptPreds p)) = Just p
-      | otherwise = do
-          conjs' <- reduceConjs (conjsOf (ptPreds p))
-          return p{ptPreds = rebuildConjs conjs'}
-      where
-        bare = singletonType p{ptPreds=PredsNone}
-        qTop q = UnionType (Just (q, H.empty, [])) H.empty []
-        reduceConjs [] = Just []
-        reduceConjs (PredsNot q : rest)
-          | isSubtypeOfWithEnv typeEnv vaenv bare (qTop q) = Nothing
-          | isBottomType (intersectTypesEnv typeEnv vaenv bare (qTop q)) = reduceConjs rest
-        reduceConjs (c : rest) = (c :) <$> reduceConjs rest
-    hasNegConj = any isNeg . conjsOf
-      where isNeg (PredsNot _) = True
-            isNeg _            = False
-    conjsOf (PredsAnd ps) = concatMap conjsOf ps
-    conjsOf p             = [p]
+    bare = singletonType p{ptPreds=PredsNone}
+    qTop q = UnionType (Just (q, H.empty, [])) H.empty []
+    decide q
+      | not (predsHasClassRelAtom q) = Nothing
+      | isSubtypeOfWithEnv typeEnv vaenv bare (qTop q) = Just True
+      | isBottomType (intersectTypesEnv typeEnv vaenv bare (qTop q)) = Just False
+      | otherwise = Nothing
+    -- 'decide' is attempted only where the tested formula is ¬-SMALLER than the formula
+    -- being reduced: at atoms (a ¬-free test) and at each 'PredsNot' operand (one ¬-level
+    -- stripped) — the same well-founded descent the pre-generalization rule had. Deciding
+    -- the WHOLE formula at the root or an And node re-poses this same reduction from inside
+    -- its own test (the meet attaches the formula to the bare leaf and compacts it) — a
+    -- livelock, not just a cost.
+    simplify f@(PredsOne _)            = decideSimp f
+    simplify (PredsAnd ps)             = conjSimp (map simplify ps)
+    simplify (PredsNot q@(PredsOne _)) = negSimp (decideSimp q)
+    simplify (PredsNot q)              = negSimp $ case decide q of
+      Just True  -> LeafPredTrue
+      Just False -> LeafPredFalse
+      Nothing    -> simplify q
+    decideSimp q = case decide q of
+      Just True  -> LeafPredTrue
+      Just False -> LeafPredFalse
+      Nothing    -> LeafPredResid q
+    negSimp LeafPredTrue      = LeafPredFalse
+    negSimp LeafPredFalse     = LeafPredTrue
+    negSimp (LeafPredResid q) = LeafPredResid (predsNot q)
+    conjSimp rs
+      | any isFalseSimp rs = LeafPredFalse
+      | null resids        = LeafPredTrue
+      | otherwise          = LeafPredResid (rebuildConjs resids)
+      where resids = [q | LeafPredResid q <- rs]
+    isFalseSimp LeafPredFalse = True
+    isFalseSimp _             = False
+    hasNegConj (PredsAnd ps) = any hasNegConj ps
+    hasNegConj (PredsNot _)  = True
+    hasNegConj (PredsOne _)  = False
     rebuildConjs []  = PredsNone
-    rebuildConjs [p] = p
-    rebuildConjs ps  = mkAnd ps
+    rebuildConjs [q] = q
+    rebuildConjs qs  = mkAnd qs
 
 -- |
 -- Used to simplify and reduce the size of a 'Type'.
@@ -3541,6 +3621,35 @@ compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, _, _)) pos cs)
     picks = go []
       where go _   []       = []
             go pre (x:post) = (x, pre ++ post) : go (pre ++ [x]) post
+-- PredsAnd: unit propagation into a negated conjunct. Within @… ∧ r ∧ ¬(q₁ ∧ … ∧ qₙ)@ a
+-- sub-conjunct @qᵢ@ that itself appears as an ambient conjunct is 'True' throughout the
+-- region, so @¬(q₁ ∧ …)@ ≡ @¬(q₁ ∧ … without qᵢ)@ — exact pointwise. The @a−(a−b)@ chain
+-- builds exactly this shape: @¬E ∧ ¬(N ∧ ¬E)@ (complementing a difference re-imports the
+-- ambient refinement), which must reach the @¬E ∧ ¬N@ spelling the direct meet produces.
+-- Dropping ALL of a negation's sub-conjuncts cannot happen here: that requires the ambient
+-- to imply the whole negated formula, which the class-graph-unsatisfiable clause above
+-- already reduced to ∅. Placed BEFORE the exclusion-canonicalization clause below (which
+-- returns terminally for a no-change exclusion set and would strand tops that carry
+-- exclusions with an unpropagated formula).
+compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials, ncs)) posLeafs cs)
+  | any isNegConjunct ps
+  , let ps' = [unitProp x rest | (x, rest) <- conjPicks ps]
+  , ps' /= ps =
+      compactType typeEnv vaenv $ UnionType (Just (mkAnd ps', negPartials, ncs)) posLeafs cs
+  where
+    isNegConjunct (PredsNot _) = True
+    isNegConjunct _            = False
+    conjPicks = go []
+      where go _   []       = []
+            go pre (x:post) = (x, pre ++ post) : go (pre ++ [x]) post
+    unitProp (PredsNot q) ambient
+      | qs <- conjsOf q
+      , kept <- filter (`notElem` ambient) qs
+      , not (null kept)
+      , length kept < length qs = PredsNot (mkAnd kept)
+    unitProp x _ = x
+    conjsOf (PredsAnd xs) = concatMap conjsOf xs
+    conjsOf x             = [x]
 -- Pure ¬(single relation) top: re-express as the universe minus the relation's expansion.
 -- Matched on exactly this shape (no catch-all) so other pure-top predicates flow on to the
 -- ¬(unsatisfiable) and PredsAnd-simplification clauses below.
@@ -3671,6 +3780,37 @@ compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials, ncs)) posL
         go kept (q:rest)
           | any (\p -> p /= q && cheapImplies p q) (kept ++ rest) = go kept rest
           | otherwise = go (q:kept) rest
+-- Mixed Just-top + pos: strip a positive leaf's ¬Q conjunct made vacuous by the
+-- accompanying predicate top: @(U_P ∪ (leaf ∧ ¬Q ∧ rest)) = (U_P ∪ (leaf ∧ rest))@ when
+-- @Q ⟹ P@ and the top carries no exclusions — the leaf values satisfying @Q@ lie inside
+-- @U_P@ already, so refining them out of the leaf changes the union by nothing. The meet
+-- route builds exactly this form (@(a∪b) ∩ a@ distributes @a@'s ¬-refinement onto @b@'s
+-- leafs) while the union route keeps the bare leaf; stripping restores the union spelling.
+compactType typeEnv vaenv (UnionType (Just (preds, (H.null -> True), [])) pos cs)
+  | preds /= PredsNone
+  , not (H.null pos)
+  , let pos' = joinUnionType (map stripLeaf (splitUnionType pos))
+  , pos' /= pos =
+      compactType typeEnv vaenv $ UnionType (Just (preds, H.empty, [])) pos' cs
+  where
+    stripLeaf p = case filter (not . vacuousNeg p) (conjsOf (ptPreds p)) of
+      kept | length kept < length (conjsOf (ptPreds p)) -> p{ptPreds = rebuildConjs kept}
+      _    -> p
+    -- @¬Q@ is vacuous when @leaf ∧ Q ⊆ U_P@, i.e. @leaf ∧ Q ∧ ¬P = ∅@. The cheap
+    -- formula-level implication decides the syntactic cases; the meet-based emptiness is
+    -- the SAME nested (closed-world-over-current-members) decision the other association
+    -- orders reach when they drop the refinement inside their own meets — using the gated
+    -- 'predsEmpty' here instead would leave this route's spelling refined while the
+    -- other's is bare, splitting distributivity on interlocked open/sealed class pairs.
+    vacuousNeg p (PredsNot q) = q == preds || predImplies typeEnv vaenv q preds
+      || isBottomType (intersectTypesEnv typeEnv vaenv (singletonType p{ptPreds=PredsNone})
+                        (UnionType (Just (predsAnd q (predsNot preds), H.empty, [])) H.empty []))
+    vacuousNeg _ _            = False
+    conjsOf (PredsAnd xs) = concatMap conjsOf xs
+    conjsOf x             = [x]
+    rebuildConjs []  = PredsNone
+    rebuildConjs [q] = q
+    rebuildConjs qs  = mkAnd qs
 -- Mixed Just-top + pos: absorb a positive leaf that the predicate region already covers
 -- (@L ⊆ ∀preds − negs@ makes @L@ redundant in @(∀preds − negs) ∪ pos@). A recursive class
 -- re-expanded during solving accretes exactly this form one level deeper each epoch
@@ -4631,6 +4771,17 @@ intersectTypes typeEnv = intersectTypesEnv typeEnv H.empty
 differencePartialLeafs :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialLeafs -> PartialLeafs -> Type
 differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType Nothing (joinUnionTypeByName $ H.differenceWith differencePartials (splitUnionTypeByName posPartialLeafs) (splitUnionTypeByName negPartialLeafs)) []
   where
+    -- Whether an escape piece carries a ¬-over-recursive-class formula in a var/arg slot
+    -- (a top's predicates, or an attach-refined leaf, at any depth) — the spelling the
+    -- symbolic-attach clause of 'differencePartial' exists to avoid.
+    escapeHasRecNeg :: PartialType -> Bool
+    escapeHasRecNeg PartialType{ptVars, ptArgs} = any slotRecNeg (H.elems ptVars ++ H.elems ptArgs)
+      where
+        slotRecNeg (UnionType mTop pos _) =
+          maybe False (\(preds, negLeafs, _) -> predsHasRecNegAtom typeEnv preds || any leafRecNeg (splitUnionType negLeafs)) mTop
+          || any leafRecNeg (splitUnionType pos)
+        slotRecNeg _ = False
+        leafRecNeg p = predsHasRecNegAtom typeEnv (ptPreds p) || escapeHasRecNeg p
     differencePartials :: [PartialType] -> [PartialType] -> Maybe [PartialType]
     differencePartials poss negs = case concatMap (`differencePartialNegs` negs) poss of
       []  -> Nothing
@@ -4684,7 +4835,25 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
                 UnionType Nothing ls [] -> splitUnionType ls
                 _                       -> overlapRaw
           in go p1 p2' ++ map (`partialAddPreds` predsNot (ptPreds p2)) overlap
-        go p1 p2 | argModeCovers p2 p1, ptArgLb (ptArgMode p1) = subtractElems p1 p2
+        -- A subtraction whose per-slot escapes would carry a ¬-over-recursive-class formula
+        -- subtracts SYMBOLICALLY instead: attach @¬(PredRel neg)@. Such escapes put the
+        -- ¬-formula INTO var\/arg slots (@head=(⊤ | ¬EqC)@, @tail=…|¬ConsList[Eq]@) — a
+        -- spelling position the terminal-attach design never produces, which the meet
+        -- route's attach spelling ('partialAddPreds' @¬EqC@) cannot be compared against,
+        -- splitting the @A∩B = A−(A−B)@ \/ @A−B = A−(A∩B)@ bridges. The gate is decided on
+        -- the RESULT ('escapeHasRecNeg'): a neg merely referencing a recursive class often
+        -- subtracts cleanly (its slot differences resolve to plain types), and replacing
+        -- that decidable exact spelling with an opaque symbolic one breaks @A+B−A ⊆ B@-style
+        -- laws on unrelated inputs. @PredRel neg@ is exact on THIS leaf's value set: every
+        -- value here carries the shared name (the leafs subtract name-grouped), so the
+        -- relation's name route reduces to matching the neg's shape — guarded on the name
+        -- not doubling as a class name, where the relation's class route would widen the
+        -- excluded set.
+        go p1 p2 | argModeCovers p2 p1, ptArgLb (ptArgMode p1) =
+          let escapes = subtractElems p1 p2
+          in if ptName p2 `notElem` listClassNames typeEnv && any escapeHasRecNeg escapes
+               then [partialAddPreds p1 (predsNot (PredsOne (PredRel p2)))]
+               else escapes
         go p1 p2 | Just kss <- ptIntervalArgKeys typeEnv p1 = concatMap ((`go` p2) . ptAtArgKeys p1) kss
         go p1 _ = [p1]
 
