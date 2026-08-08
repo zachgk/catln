@@ -1,19 +1,19 @@
-import React from 'react';
+import React, {useMemo} from 'react';
 
-import {useApi, Loading} from '../Common';
 import {ShowList} from './ListProgram';
 
 function TypePage(props) {
-  const { name } = props;
-
-  let apiResult = useApi(`/api/type?type=${name}`);
+  // Both fields are required arguments of Show/TypePage, so a compiled value always carries the name
+  // it was filtered by and the listing for that name. Nothing is fetched: this is #listProgram
+  // narrowed to one type, and the compiler has already done the narrowing.
+  const name = props["/name"].contents;
+  const prgm = props["/prgm"];
+  const listed = useMemo(() => JSON.parse(prgm.contents), [prgm]);
 
   return (
     <div>
       <h2>{name}</h2>
-      <Loading status={apiResult}>
-        <ShowList data={apiResult.data}/>
-      </Loading>
+      <ShowList data={listed}/>
     </div>
   );
 }

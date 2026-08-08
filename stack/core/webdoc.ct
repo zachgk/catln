@@ -53,13 +53,24 @@ module(Catln/Doc)
 
     Show/ListProgram(prgm= listProgram(annot= s), mode= mode)
 
-  annot(#type)
+  annot(#type(name -> String))
 
-  data(Show/TypePage)
+  data(Show/TypePage(prgm -> String, name -> String))
+    # [Show/TypePage] lists the declarations and definitions of a single type or class. Like
+      [Show/ListProgram] it carries the listing it shows in [prgm], so the webdocs render the page
+      from the compiled value rather than asking the compiler for it over a separate route. The
+      [name] it was filtered by travels with it so the page can title itself.
 
   every(Show/TypePage.., isa= [/Catln/Doc/DShow])
 
-  dshow(s= #type)= Show/TypePage
+  dshow(s= #type(name)) =
+    filterProgram(annot) -> String
+      # [filterProgram] renders the declarations and definitions of [name] as JSON. It is
+        [listProgram] narrowed to one name, over the same program the annotation was evaluated
+        against.
+      #runtime("filterProgram")
+
+    Show/TypePage(prgm= filterProgram(annot= s), name= name)
 
   annot(#typeInfer)
 

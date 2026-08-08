@@ -26,7 +26,9 @@ Prgm
                         , /Catln/Doc/dshow
                             ( Value s= #listProgram( Value mode ) )= Show/ListProgram
                             ( Value prgm= listProgram( Value /mode= Value /mode )( Value annot= Value s ) )( Value mode= Value mode )
-                        , /Catln/Doc/dshow( Value s= Value #type )= Value Show/TypePage
+                        , /Catln/Doc/dshow
+                            ( Value s= #type( Value name ) )= Show/TypePage
+                            ( Value prgm= filterProgram( Value /name= Value /name )( Value annot= Value s ) )( Value name= Value name )
                         , /Catln/Doc/dshow( Value s= Value #typeInfer )= Value Show/TypeInfer
                         , /Catln/Doc/dshow( Value s= Value #debug )= Value Show/Debug
                         , /Catln/Doc/dshow( Value s= Value #build )= Value Show/BuildPage
@@ -64,7 +66,8 @@ Prgm
             ,
                 ( "/Catln/Doc/Show/TypePage"
                 , ObjectMapItem
-                    { omiDecls = [ Value /Catln/Doc/Show/TypePage ]
+                    { omiDecls =
+                        [ /Catln/Doc/Show/TypePage( Value /prgm -> /Data/String )( Value /name -> /Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -126,6 +129,16 @@ Prgm
                     }
                 )
             ,
+                ( "/dshow./Catln/Doc/filterProgram"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ dshow./Catln/Doc/filterProgram( Value /name )( Value annot ) -> /Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/dshow./Catln/Doc/listProgram"
                 , ObjectMapItem
                     { omiDecls = []
@@ -156,7 +169,8 @@ Prgm
             ,
                 ( "/Catln/Doc/#type"
                 , ObjectMapItem
-                    { omiDecls = [ Value /Catln/Doc/#type ]
+                    { omiDecls =
+                        [ /Catln/Doc/#type( Value /name -> /Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -166,6 +180,7 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

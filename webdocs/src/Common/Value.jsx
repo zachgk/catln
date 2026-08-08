@@ -35,7 +35,7 @@ function Value(props) {
     case "/Catln/Doc/Show/ListProgram":
       return <ListProgram {...val.args} update={update} />;
     case "/Catln/Doc/Show/TypePage":
-      return <TypePage {...val.args} update={update} />;
+      return <TypePage {...val.args} />;
     case "/Catln/Doc/Show/TypeInfer":
       return <TypeInfer {...val.args} update={update} />;
     case "/Catln/Doc/Show/Debug":

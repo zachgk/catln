@@ -20,15 +20,20 @@ module Eval.Runtime.WebDocs where
 import           CRes
 import           Data.Aeson          (ToJSON)
 import           Data.Aeson.Text     (encodeToLazyText)
+import           Data.Graph
 import qualified Data.HashMap.Strict as H
 import           Data.List           (sort)
 import qualified Data.Text.Lazy      as TL
 import           Eval.Common
+import           Semantics.Prgm
+import           Semantics.Types     (ClassGraph (..), fromPartialName, mkName,
+                                      relativeNameMatches)
 import           Text.Printf
+import           Utils
 
 -- | The primitives backing the @Catln/Doc@ display annotations.
 webDocsPrims :: [EPrim]
-webDocsPrims = [listProgram]
+webDocsPrims = [listProgram, filterProgram]
 
 -- | The argument of @/Catln/Doc/listProgram@ naming which stage to list, and the members of the
 -- @ListProgramMode@ enum it takes. @stack\/core\/webdoc.ct@ is the source of truth for these; a
@@ -63,5 +68,33 @@ listProgram = EEnvPrim "listProgram" prim
       Nothing -> Left $ printf "listProgram has no %s argument, only %s" listProgramModeArg (show $ sort $ H.keys args)
     fromStage (CRes _ prgm) = Right $ encodePrgm prgm
     fromStage (CErr notes)  = Left $ prettyCNotes notes
-    encodePrgm :: (ToJSON p) => p -> Val
-    encodePrgm = StrVal . TL.unpack . encodeToLazyText
+
+-- | The argument of @/Catln/Doc/filterProgram@ naming which type or class to keep.
+filterProgramNameArg :: String
+filterProgramNameArg = "/name"
+
+-- | Backs @/Catln/Doc/filterProgram@, the data carried by a @Show/TypePage@ page. It is
+-- 'listProgram' narrowed to one name: the same program, filtered to the declarations and definitions
+-- of a single type or class, rendered as JSON.
+--
+-- Only the typecheck stage is offered, because that is the stage the evaluation itself runs on and so
+-- the one readable straight off the 'TBEnv'. A type page has no stage selector to need the others.
+filterProgram :: EPrim
+filterProgram = EEnvPrim "filterProgram" prim
+  where
+    prim Env{evTbEnv=TBEnv{tbPrgm}} args = case H.lookup filterProgramNameArg args of
+      Just (StrVal name) -> Right $ encodePrgm $ filterByType name tbPrgm
+      Just v -> Left $ printf "filterProgram was given %s, which is not a String type name" (show v)
+      Nothing -> Left $ printf "filterProgram has no %s argument, only %s" filterProgramNameArg (show $ sort $ H.keys args)
+
+-- | Filters a program's object map and class map to only the declarations and definitions of a
+-- particular type or class name. It is polymorphic in the program because it reads only names, so it
+-- applies at whichever pipeline stage the caller holds.
+filterByType :: (ExprClass e, MetaDat m, Show m, Show (e m)) => String -> Prgm e m -> Prgm e m
+filterByType name (Prgm objMap (ClassGraph classGraph) _) = Prgm objMap' classGraph' []
+  where
+    objMap' = filterObjectMap (relativeNameMatches (mkName name) . oaObjPath) objMap
+    classGraph' = ClassGraph $ graphFromEdges $ filter (\(_, n, subTypes) -> relativeNameMatches (mkName name) (fromPartialName n) || n `elem` subTypes) $ graphToNodes classGraph
+
+encodePrgm :: (ToJSON p) => p -> Val
+encodePrgm = StrVal . TL.unpack . encodeToLazyText

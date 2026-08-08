@@ -140,6 +140,37 @@ describe('Backend API contract', () => {
     expect(tags.has('TCalls')).toBe(true)
   }, TREEBUILD_TIMEOUT)
 
+  // #type is #listProgram narrowed to one name. Like listProgram its primitive is only reachable
+  // through the doc pipeline, so this is the only automated check that the filtering happens in the
+  // compiler rather than in the page.
+  it('/api/annot filters the program to one name for #type', async () => {
+    const name = '/Catln/Doc/DShow'
+    const annot = `#type(name= "${name}")`
+    const data = await fetchApi(`/api/annot?annot=${encodeURIComponent(annot)}`)
+    expect(data.tag).toBe('Success')
+
+    const [, statements] = data.contents[0]
+    const [statement] = statements[0]
+    expect(statement.tag).toBe('RawAnnot')
+
+    const val = statement.contents.contents[0].getMetaDat[2]
+    expect(val.tag).toBe('TupleVal')
+    expect(val.name).toBe('/Catln/Doc/Show/TypePage')
+    // The name travels with the value, which is what the page titles itself from.
+    expect(val.args['/name'].contents).toBe(name)
+
+    expect(val.args['/prgm'].tag).toBe('StrVal')
+    const filtered = JSON.parse(val.args['/prgm'].contents)
+    expect(filtered).toHaveProperty('prgmObjMap')
+    expect(filtered).toHaveProperty('prgmCG')
+
+    // The point of the filter: strictly less than the whole program the same page would list.
+    const whole = await listProgram('/Catln/Doc/Typecheck')
+    const count = (p) => JSON.stringify(p.prgmObjMap).length
+    expect(count(filtered)).toBeGreaterThan(0)
+    expect(count(filtered)).toBeLessThan(count(whole))
+  })
+
   it('/api/page returns Success with prgm data and source text', async () => {
     // First get the TOC to find a valid page name
     const tocData = await fetchApi('/api/toc')

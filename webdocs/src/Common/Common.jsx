@@ -415,6 +415,12 @@ function PClassName(props) {
   return <PartialName name={{tag: "PClassName", contents: props.name}}/>;
 }
 
+// A type or class page is a #type annotation, so linking to one means asking the compiler to
+// evaluate that annotation rather than routing to a page that fetches for itself.
+function typeAnnotLink(name) {
+  return `/annot?annot=${encodeURIComponent(`#type(name= "${name}")`)}`;
+}
+
 function PartialName(props) {
   const {name} = props;
   const classes = useStyles();
@@ -427,11 +433,11 @@ function PartialName(props) {
     break;
   case "PTypeName":
     cls = classes.partialNameTp;
-    link = `/type/${encodeURIComponent(name.contents)}`;
+    link = typeAnnotLink(name.contents);
     break;
   case "PClassName":
     cls = classes.partialNameClass;
-    link = `/type/${encodeURIComponent(name.contents)}`;
+    link = typeAnnotLink(name.contents);
     break;
   default:
     console.error("Unknown partial name", name);

@@ -23,7 +23,6 @@ import           Data.Text.Lazy.Encoding       (decodeUtf8)
 import           GHC.Generics                  (Generic)
 import           Network.Wai.Middleware.Static
 
-import           Control.Monad
 import           Control.Monad.Trans           (lift)
 import           CRes
 import           CtService
@@ -35,7 +34,6 @@ import           MapMeta                       (addMetaID, interleaveMeta,
                                                 interleavePrgm, zip3MetaFun)
 import           Semantics                     (buildCtssConfig)
 import           Semantics.Prgm
-import           Semantics.Types
 import           Syntax.Ct.Desugarf            (desFinalPasses, desPrgm)
 import           Syntax.Ct.Desugarf.Expr       (desFileImport)
 import           Syntax.Ct.MapRawMeta          (mapMetaRawPrgm, mapMetaRawPrgmM)
@@ -49,7 +47,7 @@ import           Syntax.Parsers                (mkDesCanonicalImportStr)
 import           Text.Megaparsec               (errorBundlePretty, runParser)
 import           Text.Printf
 import           TypeCheck                     (typecheckPrgms)
-import           TypeCheck.Common              (TPrgm, filterTraceConstrain,
+import           TypeCheck.Common              (filterTraceConstrain,
                                                 flipTraceConstrain,
                                                 typeCheckToRes)
 import           Utils
@@ -61,13 +59,6 @@ data ResSuccess a n = Success a [n]
 maybeJson :: (ToJSON a) => CRes a -> ActionM ()
 maybeJson (CRes notes r) = json $ Success r notes
 maybeJson (CErr notes)   = json (ResFail notes :: ResSuccess () CNote)
-
--- | Filters a program's object map and class map to only highlight a particular type or class name
-filterByType :: String -> TPrgm -> TPrgm
-filterByType name (Prgm objMap (ClassGraph classGraph) _) = Prgm objMap' classGraph' []
-  where
-    objMap' = filterObjectMap (relativeNameMatches (mkName name) . oaObjPath) objMap
-    classGraph' = ClassGraph $ graphFromEdges $ filter (\(_, n, subTypes) -> relativeNameMatches (mkName name) (fromPartialName n) || n `elem` subTypes) $ graphToNodes classGraph
 
 -- | Both providers return the service handle alongside the per-request refresh action.
 -- The handle is needed by writes, which must not pay for the live provider's rebuild.
@@ -102,13 +93,6 @@ docApiBase readonly ctss getProvider = do
       else do
         prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
         setSource ctss prgmName' (T.unpack $ decodeUtf8 src)
-    maybeJson resp
-
-  get "/api/raw" $ do
-    provider <- liftAndCatchIO getProvider
-    resp <- liftAndCatchIO $ runCResT $ do
-      rawPrgms <- getRawPrgm provider
-      return $ graphToNodes rawPrgms
     maybeJson resp
 
   get "/api/toc" $ do
@@ -185,14 +169,6 @@ docApiBase readonly ctss getProvider = do
       return $ flipTraceConstrain $ filterTraceConstrain tr pnt
     maybeJson resp
 
-  get "/api/type" $ do
-    provider <- liftAndCatchIO getProvider
-    objName <- param "type"
-    resp <- liftAndCatchIO $ runCResT $ do
-      tprgm <- getTPrgmJoined provider
-      return $ filterByType objName tprgm
-    maybeJson resp
-
   get "/api/treebug" $ do
     provider <- liftAndCatchIO getProvider
     prgmName <- param "prgmName"
@@ -200,15 +176,6 @@ docApiBase readonly ctss getProvider = do
     resp <- liftAndCatchIO $ runCResT $ do
       prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
       getTreebug provider prgmName' fun
-    maybeJson resp
-
-  get "/api/eval" $ do
-    provider <- liftAndCatchIO getProvider
-    prgmName <- param "prgmName"
-    fun <- param "function" `rescue` (\_ -> return "main")
-    resp <- liftAndCatchIO $ runCResT $ do
-      prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
-      getEvaluated provider prgmName' fun
     maybeJson resp
 
   get "/api/evalBuild" $ do
@@ -219,21 +186,6 @@ docApiBase readonly ctss getProvider = do
       prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
       getEvalBuild provider prgmName' fun
     maybeJson resp
-
-  get "/api/web" $ do
-    provider <- liftAndCatchIO getProvider
-    prgmName <- param "prgmName"
-    fun <- param "function" `rescue` (\_ -> return "main")
-    maybeBuild <- liftAndCatchIO $ runCResT $ do
-      prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
-      getWeb provider prgmName' fun
-    case maybeBuild of
-      CRes notes build -> do
-        unless (null notes) $ liftAndCatchIO $ putStrLn $ prettyCNotes notes
-        html (T.pack build)
-      CErr notes -> do
-        unless (null notes) $ liftAndCatchIO $ putStrLn $ prettyCNotes notes
-        fail $ printf "Could not build web page for %s.%s" prgmName fun
 
 
 docApi :: Bool -> Bool -> [String] -> IO ()

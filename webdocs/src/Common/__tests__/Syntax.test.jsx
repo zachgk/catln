@@ -67,7 +67,7 @@ describe('RawExpr', () => {
     const expr = { tag: 'RawValue', contents: [baseMeta, '/Integer'] }
     const { container } = render(<Providers><RawExpr expr={expr} /></Providers>)
     expect(container.textContent).toBe('/Integer')
-    expect(container.querySelector('a')).toHaveAttribute('href', '/type/%2FInteger')
+    expect(container.querySelector('a')).toHaveAttribute('href', '/annot?annot=%23type(name%3D%20%22%2FInteger%22)')
   })
 
   it('renders RawHoleExpr as "_"', () => {

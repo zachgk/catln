@@ -35,7 +35,17 @@ Prgm
                                 )
                             )
                             ( EAppArg Value /mode -> TVArg /mode = ( Value /mode ↦ TVArg /mode ) )
-                        , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#type = Value /Catln/Doc/#type ) -> /Catln/Doc/Show/TypePage = Value /Catln/Doc/Show/TypePage
+                        , /Catln/Doc/dshow
+                            ( EAppArg Value /s -> /Catln/Doc/#type( /name=/Data/String ) = /Catln/Doc/#type( EAppArg Value /name -> /Data/String ) ) -> /Catln/Doc/Show/TypePage
+                            ( /name=/Data/String
+                            , /prgm=/Data/String
+                            ) = /Catln/Doc/Show/TypePage
+                            ( EAppArg Value /prgm -> /Data/String =
+                                ( /dshow./Catln/Doc/filterProgram
+                                    ( EAppArg Value /name -> TVArg /name = ( Value /name ↦ TVArg /name ) )( EAppArg Value /annot -> /s = Value /s ) ↦ /Data/String
+                                )
+                            )
+                            ( EAppArg Value /name -> TVArg /name = ( Value /name ↦ TVArg /name ) )
                         , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#typeInfer = Value /Catln/Doc/#typeInfer ) -> /Catln/Doc/Show/TypeInfer = Value /Catln/Doc/Show/TypeInfer
                         , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#debug = Value /Catln/Doc/#debug ) -> /Catln/Doc/Show/Debug = Value /Catln/Doc/Show/Debug
                         , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#build = Value /Catln/Doc/#build ) -> /Catln/Doc/Show/BuildPage = Value /Catln/Doc/Show/BuildPage
@@ -73,7 +83,8 @@ Prgm
             ,
                 ( "/Catln/Doc/Show/TypePage"
                 , ObjectMapItem
-                    { omiDecls = [ Value /Catln/Doc/Show/TypePage ]
+                    { omiDecls =
+                        [ /Catln/Doc/Show/TypePage( EAppArg Value /prgm -> /Data/String )( EAppArg Value /name -> /Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -135,6 +146,16 @@ Prgm
                     }
                 )
             ,
+                ( "/dshow./Catln/Doc/filterProgram"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /dshow./Catln/Doc/filterProgram( EAppArg Value /name )( EAppArg Value /annot ) -> /Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/dshow./Catln/Doc/listProgram"
                 , ObjectMapItem
                     { omiDecls = []
@@ -165,7 +186,8 @@ Prgm
             ,
                 ( "/Catln/Doc/#type"
                 , ObjectMapItem
-                    { omiDecls = [ Value /Catln/Doc/#type ]
+                    { omiDecls =
+                        [ /Catln/Doc/#type( EAppArg Value /name -> /Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -175,6 +197,7 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

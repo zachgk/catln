@@ -318,16 +318,16 @@ describe('Type', () => {
 // --- PartialName ---
 
 describe('PartialName', () => {
-  it('renders PTypeName as link to /type/...', () => {
+  it('renders PTypeName as a link to its #type annotation', () => {
     render(<Providers><PartialName name={{ tag: 'PTypeName', contents: '/Integer' }} /></Providers>)
     const link = screen.getByRole('link', { name: '/Integer' })
-    expect(link).toHaveAttribute('href', '/type/%2FInteger')
+    expect(link).toHaveAttribute('href', '/annot?annot=%23type(name%3D%20%22%2FInteger%22)')
   })
 
-  it('renders PClassName as link to /type/...', () => {
+  it('renders PClassName as a link to its #type annotation', () => {
     render(<Providers><PartialName name={{ tag: 'PClassName', contents: '/Show' }} /></Providers>)
     const link = screen.getByRole('link', { name: '/Show' })
-    expect(link).toHaveAttribute('href', '/type/%2FShow')
+    expect(link).toHaveAttribute('href', '/annot?annot=%23type(name%3D%20%22%2FShow%22)')
   })
 
   it('renders PRelativeName as link to /relative/...', () => {
