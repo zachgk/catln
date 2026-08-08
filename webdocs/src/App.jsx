@@ -17,7 +17,7 @@ import {
   Outlet
 } from "react-router-dom";
 
-import {useApi, TocContext, ConfigContext} from './Common/Common';
+import {useApi, TocContext, ConfigContext, annotLink} from './Common/Common';
 import Docs from './Docs';
 import {AnnotPage} from './DocsPage';
 import {AppBarSearch} from './Common/Values/Search';
@@ -49,7 +49,7 @@ function Header() {
       <Toolbar>
         <Typography variant="h6" color="inherit" noWrap>Catln WebDocs</Typography>
         <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-          <Link to="/list">
+          <Link to={annotLink("#listProgram(mode= /Catln/Doc/Typecheck)")}>
             <IconButton color="inherit" edge="end"><ViewList /></IconButton>
           </Link>
           <Link to="/docs">
@@ -69,7 +69,6 @@ const router = createBrowserRouter(
       <Route path="docs" element={<Docs />} />
       <Route path="docs/:prgmName" element={<Docs />} />
       <Route path="annot" element={<AnnotPage />} />
-      <Route path="list" element={<AnnotPage annot={"#listProgram(mode= /Catln/Doc/Typecheck)"} />} />
     </Route>
   )
 );

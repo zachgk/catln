@@ -313,8 +313,9 @@ function SaveStatus(props) {
   return <span className={className} data-testid="save-status">{text}</span>;
 }
 
-// Shows a single annotation compiled by the server to the value it displays as. The annotation
-// comes either from a route that names it (such as /list) or from the ?annot= query.
+// Shows a single annotation compiled by the server to the value it displays as. The annotation comes
+// either from the ?annot= query, or as a prop from a page embedding this one as a drill-down (such as
+// a single point of a type inference).
 //
 // An annotation is local to the program it is written in, so a prgmName says which program to
 // compile this one as though it belonged to. Without one it is compiled against every loaded file,
