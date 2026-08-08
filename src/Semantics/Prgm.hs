@@ -419,7 +419,18 @@ instance ExprClass Expr where
               patternHeadNamesArg argType = case maybeGetSingleton argType of
                 Just p  -> headName == makeAbsoluteName (ptName p)
                 Nothing -> False
-              mainArg = H.singleton (TVArg bindKey) ([(obj, arrM)], fromMaybe (getMetaType arrM) (typeGetArgLoose structKey src))
+              -- The declared-meta fallback must also cover a source slot that resolves to ⊤:
+              -- an upper-unbounded source ('typeGetArg' on a @..@-mode partial) reports an
+              -- absent argument as @Just ⊤@ ("may still be present"), which is no information —
+              -- while the value taking this arrow necessarily matches the object, so its
+              -- content lies within the declared meta (declaration-boundedness). Without this
+              -- the desugared @main@ wrapper's @TVArg /io@ return resolves to ⊤ against the
+              -- generic @/ContextIn[$V](value=$V)..@ hop and TreeBuild reports
+              -- "Arrow has indeterminate return type".
+              mainArg = H.singleton (TVArg bindKey) ([(obj, arrM)],
+                case typeGetArgLoose structKey src of
+                  Just t | t /= PTopType -> t
+                  _                      -> getMetaType arrM)
           fromArg (EAppVar vn vm) = [H.singleton (TVVar vn) ([(Value (emptyMetaT $ partialToTypeSingleton vn) (pkName vn), vm)], H.lookupDefault PTopType vn (ptVars src))]
           fromArg (EAppSpread s) = exprVarArgsWithSrc typeEnv s src
           fromArg oa = error $ printf "Invalid oa %s" (show oa)

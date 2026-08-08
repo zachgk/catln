@@ -2,6 +2,21 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+                            ( /f( /io=TopType ) + /Catln/IO ) =
+                            ( /f
+                                ( EAppArg Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) ) ↦ /Catln/IO
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/outerVar"
                 , ObjectMapItem
                     { omiDecls = []
