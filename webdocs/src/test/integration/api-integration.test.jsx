@@ -70,7 +70,8 @@ describe('Backend API contract', () => {
   })
 
   it('/api/annot compiles #listProgram to a Show/ListProgram carrying the program', async () => {
-    const data = await fetchApi(`/api/annot?annot=${encodeURIComponent('#listProgram')}`)
+    const annot = '#listProgram(mode= /Catln/Doc/Typecheck)'
+    const data = await fetchApi(`/api/annot?annot=${encodeURIComponent(annot)}`)
     expect(data.tag).toBe('Success')
 
     // The response is a one-statement raw program; the compiled value rides on the annotation
@@ -88,6 +89,19 @@ describe('Backend API contract', () => {
     const prgm = JSON.parse(val.args['/prgm'].contents)
     expect(prgm).toHaveProperty('prgmObjMap')
     expect(prgm).toHaveProperty('prgmCG')
+
+    // The mode travels with the value, which is what the page's stage selector reads.
+    expect(val.args['/mode'].name).toBe('/Catln/Doc/Typecheck')
+  })
+
+  it('/api/annot carries whichever ListProgramMode the annotation names', async () => {
+    const annot = '#listProgram(mode= /Catln/Doc/TreeBuild)'
+    const data = await fetchApi(`/api/annot?annot=${encodeURIComponent(annot)}`)
+    expect(data.tag).toBe('Success')
+
+    const [, statements] = data.contents[0]
+    const val = statements[0][0].contents.contents[0].getMetaDat[2]
+    expect(val.args['/mode'].name).toBe('/Catln/Doc/TreeBuild')
   })
 
   it('/api/page returns Success with prgm data and source text', async () => {

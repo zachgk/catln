@@ -12,8 +12,14 @@ import Debug from './Values/Debug';
 import TypePage from './Values/Type';
 import Build from './Values/Build';
 
+// A Value may be given an update function by whatever rendered it. Calling update(src) asks for
+// the expression this value was compiled from to be replaced by the Catln source src. What that
+// means is the caller's: an AnnotPage recompiles itself with the new annotation, and a docs page
+// will rewrite the expression in its source. A value with no update is simply not editable, so
+// every display component has to work without one.
 function Value(props) {
   let val = props.data;
+  const {update} = props;
   switch(val.tag) {
   case "IntVal":
   case "FloatVal":
@@ -25,16 +31,17 @@ function Value(props) {
       return <CatlnResult data={val}/>;
     case "/Catln/Doc/Show/MD":
       return <Comment comment={val.args["/text"].contents}/>;
+    // update is passed outside the spread because the spread is the value's own arg names.
     case "/Catln/Doc/Show/ListProgram":
-      return <ListProgram {...val.args} />;
+      return <ListProgram {...val.args} update={update} />;
     case "/Catln/Doc/Show/TypePage":
-      return <TypePage {...val.args} />;
+      return <TypePage {...val.args} update={update} />;
     case "/Catln/Doc/Show/TypeInfer":
-      return <TypeInfer {...val.args} />;
+      return <TypeInfer {...val.args} update={update} />;
     case "/Catln/Doc/Show/Debug":
-      return <Debug {...val.args} />;
+      return <Debug {...val.args} update={update} />;
     case "/Catln/Doc/Show/BuildPage":
-      return <Build {...val.args} />;
+      return <Build {...val.args} update={update} />;
     default:
       let showArgs = "";
       if(Object.keys(val.args).length > 0) {
@@ -59,11 +66,11 @@ function Value(props) {
   }
 }
 
-function tryValue(val) {
+function tryValue(val, update) {
   if (!val) {
     return null;
   }
-  return Value({data: val});
+  return Value({data: val, update});
 }
 
 function Comment(props) {

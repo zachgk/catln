@@ -55,6 +55,34 @@ describe('ListProgram', () => {
     })
   })
 
+  describe('with a mode named by the compiled Show/ListProgram', () => {
+    const modeVal = (name) => ({ tag: 'TupleVal', name, args: {} })
+
+    it('shows the annotation mode rather than a local default', async () => {
+      render(<Providers><ListProgram {...{ '/mode': modeVal('/Catln/Doc/TreeBuild') }} /></Providers>)
+
+      expect(screen.getByLabelText('TreeBuild')).toBeChecked()
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledWith('/api/treebuild')
+      })
+    })
+
+    it('toggling a radio updates the annotation instead of local state', async () => {
+      const update = vi.fn()
+      render(
+        <Providers>
+          <ListProgram {...{ '/mode': modeVal('/Catln/Doc/Typecheck') }} update={update} />
+        </Providers>
+      )
+
+      fireEvent.click(screen.getByLabelText('TreeBuild'))
+
+      expect(update).toHaveBeenCalledWith('#listProgram(mode= /Catln/Doc/TreeBuild)')
+      // The mode comes from the annotation, so nothing moves until the recompile arrives.
+      expect(screen.getByLabelText('List')).toBeChecked()
+    })
+  })
+
   describe('with a program carried by the compiled Show/ListProgram', () => {
     // The value's prgm arg holds the same program /api/typecheck returns, as a JSON string.
     const carried = { tag: 'StrVal', contents: JSON.stringify(typecheckResponse.contents[0]) }

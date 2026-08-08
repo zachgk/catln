@@ -29,23 +29,29 @@ module(Catln/Doc)
   dshow(s= #md(text))= Show/MD(text= text)
   dshow(s= #print(p))= p
 
-  annot(#listProgram)
+  class(ListProgramMode, [Desugar, Typecheck, TreeBuild])
+    # Which compiler stage a [#listProgram] lists: the program before typechecking, after
+      typechecking, or after tree building.
 
-  data(Show/ListProgram(prgm -> String))
+  annot(#listProgram(mode -> ListProgramMode))
+
+  data(Show/ListProgram(prgm -> String, mode -> ListProgramMode))
     # [Show/ListProgram] lists every declaration and definition of a program. It carries the
       program it lists in [prgm], so the webdocs render the page from the compiled value itself
-      rather than asking the compiler for it over a separate route.
+      rather than asking the compiler for it over a separate route. The [mode] it was listed for
+      travels with it, so the page's stage selector reads the annotation rather than holding its
+      own state.
 
   every(Show/ListProgram.., isa= [/Catln/Doc/DShow])
 
-  dshow(s= #listProgram) =
+  dshow(s= #listProgram(mode)) =
     listProgram(annot) -> String
       # [listProgram] renders the program being evaluated as JSON. The program is the one the
         annotation was evaluated against, so a [#listProgram] in a page lists that page and
         everything it reaches.
       #runtime("listProgram")
 
-    Show/ListProgram(prgm= listProgram(annot= s))
+    Show/ListProgram(prgm= listProgram(annot= s), mode= mode)
 
   annot(#type)
 

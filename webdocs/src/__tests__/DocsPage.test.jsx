@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { TocContext, ConfigContext } from '../Common/Common'
 import { initVimMode, VimMode } from 'monaco-vim'
-import DocsPage from '../DocsPage'
+import DocsPage, { AnnotPage } from '../DocsPage'
 import pageResponse from '../test/fixtures/page-response.json'
 
 // Collects the keybindings DocsPage registers, so tests can fire Ctrl+S directly.
@@ -382,5 +382,52 @@ describe('DocsPage', () => {
       method: 'POST',
       body: 'main = 43\n',
     }))
+  })
+})
+
+describe('AnnotPage', () => {
+  // What /api/annot returns: a one-statement program whose annotation carries the value the
+  // compiler evaluated it to, on the expression meta's third slot.
+  function annotResponse(modeName) {
+    const value = {
+      tag: 'TupleVal',
+      name: '/Catln/Doc/Show/ListProgram',
+      args: { '/mode': { tag: 'TupleVal', name: modeName, args: {} } },
+    }
+    const expr = {
+      tag: 'RawValue',
+      contents: [{ getMetaPos: null, getMetaDat: [null, null, value], getMetaID: 1 }, '#listProgram'],
+    }
+    return { tag: 'Success', contents: [[[], [[{ tag: 'RawAnnot', contents: expr }, []]]], []] }
+  }
+
+  beforeEach(() => {
+    global.fetch = vi.fn(url => Promise.resolve({
+      status: 200,
+      json: () => Promise.resolve(
+        url.startsWith('/api/annot')
+          ? annotResponse(url.includes('TreeBuild') ? '/Catln/Doc/TreeBuild' : '/Catln/Doc/Typecheck')
+          : { tag: 'Success', contents: [null, []] }
+      ),
+    }))
+  })
+
+  it('recompiles the annotation when the value updates it', async () => {
+    render(<Providers><AnnotPage annot="#listProgram(mode= /Catln/Doc/Typecheck)" /></Providers>)
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('List')).toBeChecked()
+    })
+
+    fireEvent.click(screen.getByLabelText('TreeBuild'))
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/annot?annot=%23listProgram(mode%3D%20%2FCatln%2FDoc%2FTreeBuild)')
+    })
+    // The radio follows the recompiled annotation, not a click on itself.
+    await waitFor(() => {
+      expect(screen.getByLabelText('TreeBuild')).toBeChecked()
+    })
   })
 })

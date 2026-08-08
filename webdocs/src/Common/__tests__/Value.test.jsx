@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { TocContext } from '../Common'
@@ -115,6 +115,32 @@ describe('CatlnResult via Value', () => {
   })
 })
 
+// The display components take update alongside the value's own args, which is what lets an
+// interactive one edit the expression it was compiled from.
+const listProgramVal = {
+  tag: 'TupleVal',
+  name: '/Catln/Doc/Show/ListProgram',
+  args: {
+    '/mode': { tag: 'TupleVal', name: '/Catln/Doc/Typecheck', args: {} },
+  },
+}
+
+describe('update forwarding', () => {
+  it('passes update to the value display component', () => {
+    const update = vi.fn()
+    render(<Providers><Value data={listProgramVal} update={update} /></Providers>)
+
+    fireEvent.click(screen.getByLabelText('TreeBuild'))
+
+    expect(update).toHaveBeenCalledWith('#listProgram(mode= /Catln/Doc/TreeBuild)')
+  })
+
+  it('renders without an update', () => {
+    render(<Providers><Value data={listProgramVal} /></Providers>)
+    expect(screen.getByLabelText('List')).toBeChecked()
+  })
+})
+
 describe('tryValue', () => {
   it('returns null for falsy input', () => {
     expect(tryValue(null)).toBeNull()
@@ -124,5 +150,14 @@ describe('tryValue', () => {
   it('returns rendered Value for valid data', () => {
     const result = tryValue({ tag: 'IntVal', contents: 7 })
     expect(result).not.toBeNull()
+  })
+
+  it('passes update through to the Value', () => {
+    const update = vi.fn()
+    render(<Providers>{tryValue(listProgramVal, update)}</Providers>)
+
+    fireEvent.click(screen.getByLabelText('No Typecheck'))
+
+    expect(update).toHaveBeenCalledWith('#listProgram(mode= /Catln/Doc/Desugar)')
   })
 })

@@ -311,29 +311,39 @@ function SaveStatus(props) {
 
 // Shows a single annotation compiled by the server to the value it displays as. The annotation
 // comes either from a route that names it (such as /list) or from the ?annot= query.
+//
+// The displayed value can edit the annotation it came from: update replaces the annotation
+// source, which refetches and so recompiles the page. useApi keeps the previous data while the
+// new annotation compiles, so the page updates in place rather than flashing back to "Loading".
 function AnnotPage(props) {
   const query = useQuery();
-  const annot = props.annot || query.get("annot");
+  const routeAnnot = props.annot || query.get("annot");
+  const [annot, setAnnot] = useState(routeAnnot);
   const prgmName = "";
+
+  // A new route or query replaces whatever the page edited its way to.
+  useEffect(() => {
+    setAnnot(routeAnnot);
+  }, [routeAnnot]);
 
   let apiResult = useApi(`/api/annot?annot=${encodeURIComponent(annot)}`);
 
   return (
     <Loading status={apiResult}>
-      <Main data={apiResult.data} prgmName={prgmName}/>
+      <Main data={apiResult.data} prgmName={prgmName} update={setAnnot}/>
     </Loading>
   );
 }
 
 function Main(props) {
-  const {data, prgmName} = props;
+  const {data, prgmName, update} = props;
   const [imports, statements] = data;
 
   return (
     <div>
       {imports.map((imp, ind) => <Import key={ind} imp={imp}/>)}
       <br/>
-      <Statements statements={statements} root={true} prgmName={prgmName} />
+      <Statements statements={statements} root={true} prgmName={prgmName} update={update} />
     </div>
   );
 }
@@ -347,17 +357,19 @@ function Import(props) {
 }
 
 function Statements(props) {
-  return props.statements.map((statement, index) => <StatementTree key={index} statementTree={statement} prgmName={props.prgmName} root={props.root} />);
+  return props.statements.map((statement, index) => <StatementTree key={index} statementTree={statement} prgmName={props.prgmName} root={props.root} update={props.update} />);
 }
 
 function StatementTree(props) {
-  const {statementTree, prgmName} = props;
+  const {statementTree, prgmName, update} = props;
   const [statement, subStatements] = statementTree;
   const classes = useStyles();
 
+  // The sub-statements do not inherit update: it names one expression to replace, and a nested
+  // statement is a different expression.
   return (
     <div>
-      <Statement statement={statement} prgmName={prgmName}/>
+      <Statement statement={statement} prgmName={prgmName} update={update}/>
       <div className={classes.indented}>
         {subStatements.map((subStatement, index) => <StatementTree key={index} statementTree={subStatement} prgmName={prgmName} />)}
       </div>
@@ -366,7 +378,7 @@ function StatementTree(props) {
 }
 
 function Statement(props) {
-  const {statement, prgmName} = props;
+  const {statement, prgmName, update} = props;
   const classes = useStyles();
 
   switch(statement.tag) {
@@ -399,7 +411,7 @@ function Statement(props) {
   case "RawAnnot":
     return (
       <div className={classes.noPlay}>
-        <RawExpr expr={statement.contents} />
+        <RawExpr expr={statement.contents} update={update} />
       </div>
     );
   default:

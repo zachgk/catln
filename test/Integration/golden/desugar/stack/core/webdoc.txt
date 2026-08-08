@@ -23,8 +23,9 @@ Prgm
                             ( Value s= #md( Value text ) )= Show/MD( Value text= Value text )
                         , /Catln/Doc/dshow
                             ( Value s= #print( Value p ) )= Value p
-                        , /Catln/Doc/dshow( Value s= Value #listProgram )= Show/ListProgram
-                            ( Value prgm= listProgram( Value annot= Value s ) )
+                        , /Catln/Doc/dshow
+                            ( Value s= #listProgram( Value mode ) )= Show/ListProgram
+                            ( Value prgm= listProgram( Value /mode= Value /mode )( Value annot= Value s ) )( Value mode= Value mode )
                         , /Catln/Doc/dshow( Value s= Value #type )= Value Show/TypePage
                         , /Catln/Doc/dshow( Value s= Value #typeInfer )= Value Show/TypeInfer
                         , /Catln/Doc/dshow( Value s= Value #debug )= Value Show/Debug
@@ -33,10 +34,28 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/Doc/TreeBuild"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/Doc/TreeBuild ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Doc/Show/ListProgram"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/Doc/Show/ListProgram( Value /prgm -> /Data/String ) ]
+                        [ /Catln/Doc/Show/ListProgram( Value /prgm -> /Data/String )( Value /mode -> ∀/Catln/Doc/ListProgramMode ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Doc/Desugar"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/Doc/Desugar ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -81,7 +100,8 @@ Prgm
             ,
                 ( "/Catln/Doc/#listProgram"
                 , ObjectMapItem
-                    { omiDecls = [ Value /Catln/Doc/#listProgram ]
+                    { omiDecls =
+                        [ /Catln/Doc/#listProgram( Value /mode -> ∀/Catln/Doc/ListProgramMode ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -110,7 +130,16 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ dshow./Catln/Doc/listProgram( Value annot ) -> /Data/String ]
+                        [ dshow./Catln/Doc/listProgram( Value /mode )( Value annot ) -> /Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Doc/Typecheck"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/Doc/Typecheck ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -149,6 +178,9 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGClass
             ( False
             , /Catln/Doc/DShow
@@ -169,6 +201,17 @@ Prgm
               visualization like [Show/MD]) is still printable, but only [ToString] values are compared
               against a print/result golden.      "
             )
+        , CGClass
+            ( True
+            , /Catln/Doc/ListProgramMode
+            ,
+                [ /Catln/Doc/Desugar
+                , /Catln/Doc/Typecheck
+                , /Catln/Doc/TreeBuild
+                ]
+            , Just "Which compiler stage a [#listProgram] lists: the program before typechecking, after
+              typechecking, or after tree building."
+            )
         ]
     , prgmAnnots =
         [ /Catln/#md
@@ -183,5 +226,8 @@ Prgm
             print statement accept any [ToString] type. A [DShow] value that is not [ToString] (a
             visualization like [Show/MD]) is still printable, but only [ToString] values are compared
             against a print/result golden." )
+        , /Catln/#md
+            ( Value /text= CStr "Which compiler stage a [#listProgram] lists: the program before typechecking, after
+            typechecking, or after tree building." )
         ]
     }

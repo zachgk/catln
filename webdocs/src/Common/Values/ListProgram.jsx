@@ -29,32 +29,42 @@ const useStyles = makeStyles({
   }
 });
 
-function ListProgram(props) {
-  const [mode, setMode] = useState("");
+// The members of the Catln ListProgramMode enum, which is what a #listProgram annotation names.
+// Each also names the route serving that stage, for as long as the annotation only carries one.
+const MODES = [
+  {name: "/Catln/Doc/Desugar", label: "No Typecheck", api: "/api/desugar"},
+  {name: "/Catln/Doc/Typecheck", label: "List", api: "/api/typecheck"},
+  {name: "/Catln/Doc/TreeBuild", label: "TreeBuild", api: "/api/treebuild"}
+];
+// The stage a Show/ListProgram carries in its prgm field, and so the one it can render directly.
+const CARRIED_MODE = "/Catln/Doc/Typecheck";
 
-  // A compiled Show/ListProgram carries the program it lists in its prgm field, so the default
-  // mode renders straight from the annotation value. The other modes show pipeline stages
-  // (desugar, tree build) that the annotation cannot carry, so those still fetch.
+function ListProgram(props) {
+  const {update} = props;
+
+  // The mode belongs to the annotation, so a compiled Show/ListProgram names it and toggling a
+  // radio recompiles the annotation through update. A value that carries no mode (a listing not
+  // produced by the annotation) keeps its selection here instead.
+  const annotMode = props["/mode"]?.name;
+  const [localMode, setLocalMode] = useState(annotMode || CARRIED_MODE);
+  const mode = annotMode || localMode;
+
+  // A compiled Show/ListProgram carries the program it lists in its prgm field, so that one mode
+  // renders straight from the annotation value. The other modes show pipeline stages (desugar,
+  // tree build) that the annotation cannot carry yet, so those still fetch.
   const carried = props["/prgm"];
   const carriedPrgm = useMemo(() => carried ? JSON.parse(carried.contents) : null, [carried]);
-  const useCarried = Boolean(carriedPrgm) && mode === "";
+  const useCarried = Boolean(carriedPrgm) && mode === CARRIED_MODE;
 
-  let dataPath;
-  switch(mode) {
-  case "noTypecheck":
-    dataPath = "/api/desugar";
-    break;
-  case "treeBuild":
-    dataPath = "/api/treebuild";
-    break;
-  default:
-    dataPath = "/api/typecheck";
-    break;
-  }
+  const dataPath = MODES.find(m => m.name === mode).api;
   let apiResult = useApi(useCarried ? null : dataPath);
 
-  let switchTypecheck = (event) => {
-    setMode(event.target.value);
+  let switchMode = (event) => {
+    if (update) {
+      update(`#listProgram(mode= ${event.target.value})`);
+    } else {
+      setLocalMode(event.target.value);
+    }
   };
 
   return (
@@ -62,10 +72,8 @@ function ListProgram(props) {
       <FormGroup row>
         <FormControlLabel
           control={
-            <RadioGroup aria-label="mode" defaultValue="" value={mode} onChange={switchTypecheck}>
-                    <FormControlLabel value="noTypecheck" control={<Radio />} label="No Typecheck" />
-                    <FormControlLabel value="" control={<Radio />} label="List" />
-                    <FormControlLabel value="treeBuild" control={<Radio />} label="TreeBuild" />
+            <RadioGroup aria-label="mode" value={mode} onChange={switchMode}>
+              {MODES.map(m => <FormControlLabel key={m.name} value={m.name} control={<Radio />} label={m.label} />)}
             </RadioGroup>
           }
         />

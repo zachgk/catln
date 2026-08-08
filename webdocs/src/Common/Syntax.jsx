@@ -53,10 +53,12 @@ function rawExprMeta(expr) {
 }
 
 function RawExpr(props) {
-  let {expr} = props;
+  let {expr, update} = props;
 
+  // update applies to this expression only, so it is not passed on to the nested RawExprs below:
+  // a sub-expression would need its own replacement target, which nothing tracks yet.
   let m = rawExprMeta(expr);
-  let fromVal = tryValue(m.getMetaDat[2]);
+  let fromVal = tryValue(m.getMetaDat[2], update);
   if (fromVal) {
     return fromVal;
   }
