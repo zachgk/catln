@@ -48,7 +48,6 @@ Prgm
                             ( EAppArg Value /name -> TVArg /name = ( Value /name ↦ TVArg /name ) )
                         , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#typeInfer = Value /Catln/Doc/#typeInfer ) -> /Catln/Doc/Show/TypeInfer = Value /Catln/Doc/Show/TypeInfer
                         , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#debug = Value /Catln/Doc/#debug ) -> /Catln/Doc/Show/Debug = Value /Catln/Doc/Show/Debug
-                        , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#build = Value /Catln/Doc/#build ) -> /Catln/Doc/Show/BuildPage = Value /Catln/Doc/Show/BuildPage
                         ]
                     }
                 )
@@ -109,15 +108,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Catln/Doc/#build"
-                , ObjectMapItem
-                    { omiDecls = [ Value /Catln/Doc/#build ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
                 ( "/Catln/Doc/#listProgram"
                 , ObjectMapItem
                     { omiDecls =
@@ -131,15 +121,6 @@ Prgm
                 ( "/Catln/Doc/#debug"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/Doc/#debug ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
-                ( "/Catln/Doc/Show/BuildPage"
-                , ObjectMapItem
-                    { omiDecls = [ Value /Catln/Doc/Show/BuildPage ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -211,8 +192,6 @@ Prgm
         , CGType
         , CGType
         , CGType
-        , CGType
-        , CGType
         , CGClass
             ( False
             , /Catln/Doc/DShow
@@ -225,13 +204,12 @@ Prgm
                 , /Catln/Doc/Show/TypePage..
                 , /Catln/Doc/Show/TypeInfer..
                 , /Catln/Doc/Show/Debug..
-                , /Catln/Doc/Show/BuildPage..
                 ]
             , Just "Represents objects which can be shown in the webdocs.   Every [/Data/ToString] value is displayable, so [ToString] is a subset of [DShow]: the
               webdocs render such a value through its [/Data/toString]. This is what lets a `> value`
               print statement accept any [ToString] type. A [DShow] value that is not [ToString] (a
               visualization like [Show/MD]) is still printable, but only [ToString] values are compared
-              against a print/result golden.      "
+              against a print/result golden.     "
             )
         , CGClass
             ( True

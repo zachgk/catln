@@ -10,7 +10,6 @@ import ListProgram from './Values/ListProgram';
 import TypeInfer from './Values/TypeInfer';
 import Debug from './Values/Debug';
 import TypePage from './Values/Type';
-import Build from './Values/Build';
 
 // A Value may be given an update function by whatever rendered it. Calling update(src) asks for
 // the expression this value was compiled from to be replaced by the Catln source src. What that
@@ -40,8 +39,6 @@ function Value(props) {
       return <TypeInfer {...val.args} update={update} />;
     case "/Catln/Doc/Show/Debug":
       return <Debug {...val.args} update={update} />;
-    case "/Catln/Doc/Show/BuildPage":
-      return <Build {...val.args} update={update} />;
     default:
       let showArgs = "";
       if(Object.keys(val.args).length > 0) {

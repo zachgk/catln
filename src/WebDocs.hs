@@ -178,15 +178,6 @@ docApiBase readonly ctss getProvider = do
       getTreebug provider prgmName' fun
     maybeJson resp
 
-  get "/api/evalBuild" $ do
-    provider <- liftAndCatchIO getProvider
-    prgmName <- param "prgmName"
-    fun <- param "function" `rescue` (\_ -> return "main")
-    resp <- liftAndCatchIO $ runCResT $ do
-      prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
-      getEvalBuild provider prgmName' fun
-    maybeJson resp
-
 
 docApi :: Bool -> Bool -> [String] -> IO ()
 docApi cached readonly baseFileNames = do

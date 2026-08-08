@@ -84,7 +84,6 @@ const router = createBrowserRouter(
       <Route path="list" element={<AnnotPage annot={"#listProgram(mode= /Catln/Doc/Typecheck)"} />} />
       <Route path="typeinfer/:prgmName" element={<ValuePage name={"/Catln/Doc/Show/TypeInfer"} />} />
       <Route path="debug/:prgmName/:fun" element={<ValuePage name={"/Catln/Doc/Show/Debug"} />} />
-      <Route path="build/:prgmName/:fun" element={<ValuePage name={"/Catln/Doc/Show/BuildPage"} />} />
     </Route>
   )
 );

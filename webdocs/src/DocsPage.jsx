@@ -452,7 +452,6 @@ function PlayButton(props) {
         open={open}
         onClose={handleClose}
       >
-        <MenuItem onClick={linkClose(`/build/${encodeURIComponent(prgmName)}/${fun}`)}>Build</MenuItem>
         <MenuItem onClick={linkClose(`/debug/${encodeURIComponent(prgmName)}/${fun}`)}>Debug</MenuItem>
       </Menu>
     </span>
