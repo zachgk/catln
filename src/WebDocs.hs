@@ -93,12 +93,6 @@ docApiBase readonly ctss getProvider = do
         setSource ctss prgmName' (T.unpack $ decodeUtf8 src)
     maybeJson resp
 
-  get "/api/toc" $ do
-    provider <- liftAndCatchIO getProvider
-    pages <- liftAndCatchIO $ ctssKeys provider
-    let resp = return $ zip (map impDisp pages) pages
-    maybeJson resp
-
   get "/api/page" $ do
     provider <- liftAndCatchIO getProvider
     prgmName <- param "prgmName"

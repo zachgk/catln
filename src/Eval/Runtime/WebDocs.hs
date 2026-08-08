@@ -13,6 +13,8 @@
 -- than by the webdocs web application fetching from a dedicated API
 -- route.
 --------------------------------------------------------------------
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric  #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
 module Eval.Runtime.WebDocs where
@@ -22,9 +24,12 @@ import           Data.Aeson          (ToJSON)
 import           Data.Aeson.Text     (encodeToLazyText)
 import           Data.Graph
 import qualified Data.HashMap.Strict as H
-import           Data.List           (sort)
+import           Data.List           (partition, sort, sortOn)
+import           Data.List.Split     (splitOn)
+import qualified Data.Map            as M
 import qualified Data.Text.Lazy      as TL
 import           Eval.Common
+import           GHC.Generics        (Generic)
 import           Semantics.Prgm
 import           Semantics.Types     (ClassGraph (..), fromPartialName, mkName,
                                       relativeNameMatches)
@@ -34,7 +39,7 @@ import           Utils
 
 -- | The primitives backing the @Catln/Doc@ display annotations.
 webDocsPrims :: [EPrim]
-webDocsPrims = [listProgram, filterProgram, typeInfer, typeInferPnt, debugger]
+webDocsPrims = [listProgram, filterProgram, typeInfer, typeInferPnt, debugger, sidebar]
 
 -- | The argument of @/Catln/Doc/listProgram@ naming which stage to list, and the members of the
 -- @ListProgramMode@ enum it takes. @stack\/core\/webdoc.ct@ is the source of truth for these; a
@@ -148,6 +153,57 @@ debugger = EEnvPrim "debugger" prim
         CErr notes -> Left $ prettyCNotes notes
       Just v -> Left $ printf "debugger was given %s, which is not a String function name" (show v)
       Nothing -> Left $ printf "debugger has no %s argument, only %s" debuggerFunArg (show $ sort $ H.keys args)
+
+-- | One entry of the page tree a @Show/Sidebar@ carries: a directory holding further entries, or a
+-- page to open. Both know the path they are at, which for a file is the name a page is asked for by,
+-- so the webdocs link and label the tree without reassembling either.
+data SidebarNode
+  = SidebarDir { sbName :: String, sbPath :: String, sbChildren :: [SidebarNode] }
+  -- | @sbDir@ is the directory the page was imported relative to, which is what a relative link
+  -- written in that page's documentation resolves against.
+  | SidebarFile { sbName :: String, sbPath :: String, sbDir :: Maybe FilePath }
+  deriving (Generic, ToJSON)
+
+-- | Backs @/Catln/Doc/sidebar@, the data carried by a @Show/Sidebar@ page. It renders the pages the
+-- evaluation covers as the tree of directories they sit in. Evaluated unscoped that is every page
+-- the doc server loaded, which is the navigation of the whole doc server; evaluated within a page it
+-- is that page and what it imports, the same scope every other annotation reports on.
+sidebar :: EPrim
+sidebar = EEnvPrim "sidebar" prim
+  where
+    prim Env{evStagePrgms=StagePrgms{spPages}} _ = case spPages of
+      CErr notes   -> Left $ prettyCNotes notes
+      CRes _ pages -> encodeJson <$> (sidebarLevel "" . map splitEntry =<< traverse pageEntry pages)
+    -- A page with no display path cannot be linked to, so it is reported rather than dropped from
+    -- the navigation, where it would read as a page the doc server does not hold.
+    pageEntry imp = case impDisp imp of
+      Just disp -> Right (disp, impDir imp)
+      Nothing -> Left $ printf "sidebar has no file path for %s, so it has no page to link to" (show imp)
+    splitEntry (disp, dir) = (splitOn "/" $ drop 1 disp, dir)
+
+-- | The page a directory of pages is entered through: importing a directory imports this file of it
+-- (see @Syntax.InferImport@), so it is the page a directory's entry in the navigation leads with.
+mainFileName :: String
+mainFileName = "main.ct"
+
+-- | Groups the pages under one directory by their next path component, a directory of pages
+-- becoming a node of its own that groups what is below it in turn.
+--
+-- Ordering is @main.ct@ first and then alphabetical, so a directory leads with its entry point. It
+-- is a total order over the names rather than the order the pages arrived in, since which page is
+-- built first says nothing about where it belongs in a navigation.
+sidebarLevel :: String -> [([String], Maybe FilePath)] -> Either String [SidebarNode]
+sidebarLevel prefix entries = traverse toNode $ sortOn (\(n, _) -> (n /= mainFileName, n)) $ M.toList grouped
+  where
+    grouped = M.fromListWith (++) [(n, [(rest, dir)]) | (n:rest, dir) <- entries]
+    toNode (n, subs) = case partition (null . fst) subs of
+      ([(_, dir)], []) -> Right $ SidebarFile n (subPath n) dir
+      -- A directory of pages is a page in its own right: importing a directory imports its
+      -- @main.ct@ through a program held under the directory's own path. That page is the directory
+      -- node, so it is not also listed as a file beside the files it holds.
+      (_, subDirs@(_:_)) -> SidebarDir n (subPath n) <$> sidebarLevel (subPath n) subDirs
+      _ -> Left $ printf "sidebar has more than one page displayed as %s" (subPath n)
+    subPath n = prefix ++ "/" ++ n
 
 encodeJson :: (ToJSON p) => p -> Val
 encodeJson = StrVal . TL.unpack . encodeToLazyText

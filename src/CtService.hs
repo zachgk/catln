@@ -237,6 +237,7 @@ buildSCCPipeline ctssData sccNamesSet sccNodes pages = do
                                                 (tbprgmGraphRes >>= prgmFromGraphData name)
                                                 typeInferred
                                                 (\fun -> evalDebugPrgm fun =<< prgmFromGraphData name tprgmGraph)
+                                                (return $ map snd3 $ graphToNodes pages)
       let annotsMap = H.fromList [(name, evalAnnots (stages name (CRes tcNotes (v, t))) name tprgmGraph)
                                  | ((_, v, t), (name, _)) <- zip tcResults namesAndDeps]
 
@@ -419,7 +420,7 @@ ctssStagePrgms ctss@(CTSS ssmv) = do
   ctssBuildAll ctss
   CTSSDat{ctssData} <- readMVar ssmv
   let ssfs = map fst3 $ graphToNodes ctssData
-  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) (notScoped "type inference to report on") (const $ notScoped "program to run")
+  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) (notScoped "type inference to report on") (const $ notScoped "program to run") (return $ map snd3 $ graphToNodes ctssData)
   where
     notScoped :: String -> CRes a
     notScoped what = CErr [MkCNote $ GenCErr Nothing $ "This evaluation is not scoped to a single page, so it has no " ++ what]
@@ -439,7 +440,7 @@ ctssStagePrgmsFrom ctss@(CTSS ssmv) prgmName = do
   -- Runs against the page's own typecheck program rather than the evaluation's, which for an
   -- annotation is that program joined with the synthetic one holding the annotation itself.
   let debugRun fun = evalDebugPrgm fun =<< joinedStage ssfTPrgm ssfs
-  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) typeInferred debugRun
+  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) typeInferred debugRun (return $ map snd3 $ graphToNodes reaches)
 
 -- | Joins one stage over a set of pages, left unforced. See 'ctssStagePrgms' for why it must stay a
 -- thunk.

@@ -110,6 +110,26 @@ module(Catln/Doc)
 
     Show/TypeInferPnt(trace= typeInferPnt(annot= s), pnt= pnt)
 
+  annot(#sidebar)
+
+  data(Show/Sidebar(pages -> String))
+    # [Show/Sidebar] shows the pages a doc server holds, as the tree of directories they sit in. It
+      carries that tree in [pages], so the webdocs render their navigation from the compiled value
+      rather than asking the compiler for it over a separate route. Unlike the pages above it is not
+      about the program it is evaluated against but about which pages there are to evaluate against
+      at all, so it is the one annotation meant to be evaluated unscoped.
+
+  every(Show/Sidebar.., isa= [/Catln/Doc/DShow])
+
+  dshow(s= #sidebar) =
+    sidebar(annot) -> String
+      # [sidebar] renders the pages the evaluation covers as a JSON tree: a node per directory and
+        per file, each carrying the path to link it by. Evaluated unscoped that is every page the
+        doc server loaded, which is what a navigation of the whole doc server wants.
+      #runtime("sidebar")
+
+    Show/Sidebar(pages= sidebar(annot= s))
+
   annot(#debugger(fun -> String))
 
   data(Show/Debugger(run -> String, fun -> String))

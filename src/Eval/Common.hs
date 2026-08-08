@@ -73,6 +73,11 @@ data StagePrgms = StagePrgms {
   -- have to call it. Like 'spTypeInfer' it is never joined across pages — a run needs one program
   -- with one entry point, and the union of every loaded page has as many @main@s as it has pages.
   , spDebugRun  :: String -> CRes DebugRun
+  -- | The pages the evaluation's program was assembled from. An 'Env' holds one flattened 'Prgm'
+  -- with no file identity left in it, so which files it came from is reachable no more than the
+  -- stages above are. It is the pages of whatever the evaluation was scoped to: every loaded page
+  -- when it was not scoped, which is what a navigation of the whole doc server asks for.
+  , spPages     :: CRes [FileImport]
   }
 
 -- | The stage programs for an evaluation whose caller did not supply any. Asking for one is then an
@@ -80,7 +85,7 @@ data StagePrgms = StagePrgms {
 -- no upstream artifacts to report on cannot answer, and reporting the wrong stage would be worse
 -- than failing.
 stagePrgmsUnavailable :: StagePrgms
-stagePrgmsUnavailable = StagePrgms unavailable unavailable unavailable (const unavailable)
+stagePrgmsUnavailable = StagePrgms unavailable unavailable unavailable (const unavailable) unavailable
   where
     unavailable :: CRes a
     unavailable = CErr [MkCNote $ GenCErr Nothing "This evaluation was not given the other pipeline stages of its program"]

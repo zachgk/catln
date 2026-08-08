@@ -24,7 +24,8 @@ free_port() {
   fi
 }
 
-# Waits for a backend to answer /api/toc, failing fast if it dies first.
+# Waits for a backend to answer, failing fast if it dies first. /api/config is the endpoint that
+# needs nothing built, so it answers as soon as the server is listening.
 await_backend() {
   local port=$1 pid=$2
   local waited=0
@@ -32,7 +33,7 @@ await_backend() {
   # so the previous 120s budget aborted at random and reported it as a backend failure.
   local max_wait=300
   echo "Waiting for backend on port ${port} to be ready..."
-  while ! curl -sf "http://localhost:${port}/api/toc" > /dev/null 2>&1; do
+  while ! curl -sf "http://localhost:${port}/api/config" > /dev/null 2>&1; do
     if ! kill -0 "$pid" 2>/dev/null; then
       echo "Backend on port ${port} exited unexpectedly."
       exit 1
@@ -47,26 +48,33 @@ await_backend() {
   echo "Backend on port ${port} ready after ${waited}s."
 }
 
-# Answering /api/toc does not mean the backend is warm. --cached forces the typecheck
+# Answering /api/config does not mean the backend is warm. --cached forces the typecheck
 # pipeline, but buildSCCPipeline leaves evalBuildAll (step 7) and evalAnnots (step 8) as
 # thunks, so the FIRST /api/page pays the tree building and annotation evaluation for that
 # page. Measured on a dev machine: 25s for the first load, 0s for every one after. Without
 # this the test that happens to make that first call eats the cost and blows the 15s default
 # timeout, which reads as a failure of whatever test ran first rather than a cold cache.
+#
+# The unscoped #sidebar is warmed first because it is what the app itself asks for first, and it
+# pays the same kind of cost over every loaded page rather than one. It also lists the pages, so
+# it is where the page to warm comes from.
 warm_backend() {
   local port=$1 page
-  page=$(curl -sf "http://localhost:${port}/api/toc" | node -e '
+  page=$(curl -sf "http://localhost:${port}/api/annot?annot=%23sidebar" | node -e '
     let s = ""
     process.stdin.on("data", d => s += d).on("end", () => {
-      const toc = JSON.parse(s).contents[0]
-      const name = toc.map(t => t[0]).find(n => n && n.endsWith("/test/Integration/code/id.ct"))
+      const res = JSON.parse(s)
+      if (res.tag !== "Success") return
+      const val = res.contents[0][1][0][0].contents.contents[0].getMetaDat[2]
+      const flatten = ns => ns.flatMap(n => n.tag === "SidebarDir" ? flatten(n.sbChildren) : [n.sbPath])
+      const name = flatten(JSON.parse(val.args["/pages"].contents)).find(n => n.endsWith("/test/Integration/code/id.ct"))
       if (name) process.stdout.write(encodeURIComponent(name))
     })')
   if [ -n "$page" ]; then
     curl -sf "http://localhost:${port}/api/page?prgmName=${page}" > /dev/null || true
     echo "Backend on port ${port} warmed."
   else
-    echo "Could not find id.ct in the port ${port} TOC; skipping warmup."
+    echo "Could not find id.ct in the port ${port} sidebar; skipping warmup."
   fi
 }
 

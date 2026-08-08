@@ -6,11 +6,17 @@ import { TocContext } from '../Common/Common'
 
 const theme = createTheme()
 
-export const mockTocData = [
-  ['test/main.ct', { prgmName: 'test/main.ct', displayName: 'main.ct' }],
-  ['test/utils.ct', { prgmName: 'test/utils.ct', displayName: 'utils.ct' }],
-  ['test/sub/nested.ct', { prgmName: 'test/sub/nested.ct', displayName: 'nested.ct' }],
-]
+// The shape TocContext actually holds: the pages of the sidebar's tree, keyed by the path a page is
+// asked for, in the order the sidebar shows them.
+export const mockTocData = {
+  isLoaded: true,
+  data: {
+    '/test/main.ct': { impDir: '/test' },
+    '/test/utils.ct': { impDir: '/test' },
+    '/test/sub/nested.ct': { impDir: '/test/sub' },
+  },
+  notes: [],
+}
 
 export function renderWithProviders(ui, options = {}) {
   const {

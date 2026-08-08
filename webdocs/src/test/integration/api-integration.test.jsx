@@ -34,19 +34,39 @@ function writeApi(prgmName, source, base = API_BASE) {
 }
 
 describe('Backend API contract', () => {
-  it('/api/toc returns Success with page entries', async () => {
-    const data = await fetchApi('/api/toc')
-    expect(data.tag).toBe('Success')
-    expect(data.contents).toHaveLength(2)
+  // The pages of the doc server are listed by an annotation rather than a route of their own, and
+  // unscoped, which is the only way to be asking about every page rather than about one.
+  it('/api/annot lists every page for an unscoped #sidebar', async () => {
+    const pages = await sidebarPages()
 
-    const [toc, notes] = data.contents
-    expect(Array.isArray(toc)).toBe(true)
-    expect(Array.isArray(notes)).toBe(true)
+    expect(pages.length).toBeGreaterThan(0)
+    for (const page of pages) {
+      expect(page.tag).toBe('SidebarFile')
+      expect(typeof page.sbPath).toBe('string')
+      // Every file is named by the path it is asked for, under the directory it sits in.
+      expect(page.sbPath.endsWith(`/${page.sbName}`)).toBe(true)
+    }
+    // The doc root and the stdlib it imports are both loaded pages, so both are listed.
+    expect(pages.map(p => p.sbPath).some(n => n.endsWith('/test/Integration/code/id.ct'))).toBe(true)
+    expect(pages.map(p => p.sbPath).some(n => n.endsWith('/stack/core/main.ct'))).toBe(true)
+  })
 
-    // TOC should have at least one page entry (each is a [path, importData] tuple)
-    expect(toc.length).toBeGreaterThan(0)
-    expect(toc[0]).toHaveLength(2)
-    expect(typeof toc[0][0]).toBe('string')
+  it('#sidebar leads a directory with the page it is entered through', async () => {
+    const val = await annotValue('#sidebar')
+    const tree = JSON.parse(val.args['/pages'].contents)
+
+    // A directory of pages is itself a page (importing it imports its main.ct), so it appears as
+    // the directory node holding those pages rather than as a file beside them.
+    const core = (function find(nodes) {
+      for (const node of nodes) {
+        if (node.tag !== 'SidebarDir') continue
+        if (node.sbPath.endsWith('/stack/core')) return node
+        const found = find(node.sbChildren)
+        if (found) return found
+      }
+    })(tree)
+    expect(core).toBeDefined()
+    expect(core.sbChildren[0].sbName).toBe('main.ct')
   })
 
   // The listProgram eval primitive is only reachable through the doc pipeline, so these are the
@@ -173,9 +193,9 @@ describe('Backend API contract', () => {
 
   // #typeInfer takes no arguments: like every annotation it reports on the program it is written
   // in. What names a page is the API call, so these also cover /api/annot's prgmName scoping.
-  async function annotValue(annot, prgmName) {
+  async function annotValue(annot, prgmName, base = API_BASE) {
     const scope = prgmName ? `&prgmName=${encodeURIComponent(prgmName)}` : ''
-    const data = await fetchApi(`/api/annot?annot=${encodeURIComponent(annot)}${scope}`)
+    const data = await fetchApi(`/api/annot?annot=${encodeURIComponent(annot)}${scope}`, base)
     if (data.tag !== 'Success') return data
 
     const [, statements] = data.contents[0]
@@ -184,9 +204,18 @@ describe('Backend API contract', () => {
     return statement.contents.contents[0].getMetaDat[2]
   }
 
+  // The pages the sidebar lists, flattened. #sidebar is the only listing of them, so this is also
+  // how the tests that need a page name find one.
+  async function sidebarPages(base = API_BASE) {
+    const val = await annotValue('#sidebar', undefined, base)
+    expect(val.name).toBe('/Catln/Doc/Show/Sidebar')
+    const flatten = (nodes) => nodes.flatMap(n => n.tag === 'SidebarDir' ? flatten(n.sbChildren) : [n])
+    return flatten(JSON.parse(val.args['/pages'].contents))
+  }
+
   async function idPageName(base = API_BASE) {
-    const toc = (await fetchApi('/api/toc', base)).contents[0]
-    const name = toc.map(t => t[0]).find(n => n.endsWith('/test/Integration/code/id.ct'))
+    const pages = await sidebarPages(base)
+    const name = pages.map(p => p.sbPath).find(n => n.endsWith('/test/Integration/code/id.ct'))
     expect(name).toBeDefined()
     return name
   }
@@ -270,13 +299,7 @@ describe('Backend API contract', () => {
   })
 
   it('/api/page returns Success with prgm data and source text', async () => {
-    // First get the TOC to find a valid page name
-    const tocData = await fetchApi('/api/toc')
-    const toc = tocData.contents[0]
-    expect(Array.isArray(toc)).toBe(true)
-    expect(toc.length).toBeGreaterThan(0)
-
-    const pageName = encodeURIComponent(toc[0][0])
+    const pageName = encodeURIComponent(await idPageName())
     const data = await fetchApi(`/api/page?prgmName=${pageName}`)
     expect(data.tag).toBe('Success')
     expect(data.contents).toHaveLength(2)
@@ -303,7 +326,7 @@ describe('Backend API contract', () => {
 
   it('CRes response structure is consistent', async () => {
     // Verify all endpoints follow the same {tag, contents} pattern
-    const endpoints = ['/api/toc', '/api/config']
+    const endpoints = ['/api/config', '/api/annot?annot=%23sidebar']
 
     for (const endpoint of endpoints) {
       const data = await fetchApi(endpoint)

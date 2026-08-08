@@ -50,6 +50,12 @@ const ConfigContext = React.createContext({});
 // page, which is what an annotation about the whole program wants.
 const PrgmNameContext = React.createContext("");
 
+// How the sidebar's page tree gets back out of the value that carries it. The tree is the compiled
+// #sidebar annotation, so it arrives deep inside a RawExpr like any other value, but it is also the
+// app's list of pages: the search box, the previous/next buttons and relative documentation links
+// all read it. The layout puts its setter here and the sidebar value publishes the tree it rendered.
+const SidebarContext = React.createContext(() => {});
+
 function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
@@ -519,6 +525,7 @@ export {
   TocContext,
   ConfigContext,
   PrgmNameContext,
+  SidebarContext,
   annotLink,
   tagJoin,
   useQuery,
