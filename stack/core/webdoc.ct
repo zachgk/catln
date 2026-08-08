@@ -74,11 +74,41 @@ module(Catln/Doc)
 
   annot(#typeInfer)
 
-  data(Show/TypeInfer)
+  data(Show/TypeInfer(constrain -> String))
+    # [Show/TypeInfer] shows how the program's types were inferred. It carries that program in
+      [constrain], with a type variable on every meta, so the webdocs render the page from the
+      compiled value rather than asking the compiler for it over a separate route.
 
   every(Show/TypeInfer.., isa= [/Catln/Doc/DShow])
 
-  dshow(s= #typeInfer)= Show/TypeInfer
+  dshow(s= #typeInfer) =
+    typeInfer(annot) -> String
+      # [typeInfer] renders the type inference of the program being evaluated as JSON, paired with
+        the notes its typecheck produced. Like [listProgram] it reports on whatever program the
+        annotation was evaluated against. The trace of how each point was solved is not included;
+        a point is asked for on its own through [#typeInferPnt].
+      #runtime("typeInfer")
+
+    Show/TypeInfer(constrain= typeInfer(annot= s))
+
+  annot(#typeInferPnt(pnt -> Integer))
+
+  data(Show/TypeInferPnt(trace -> String, pnt -> Integer))
+    # [Show/TypeInferPnt] shows how one point of the type inference was solved: the constraints
+      mentioning it, and what each epoch updated it to. It is the drill-down of a [Show/TypeInfer],
+      which is a program's worth of points, and so is shown embedded within one. The [pnt] it was
+      filtered by travels with it so the page can title itself.
+
+  every(Show/TypeInferPnt.., isa= [/Catln/Doc/DShow])
+
+  dshow(s= #typeInferPnt(pnt)) =
+    typeInferPnt(annot) -> String
+      # [typeInferPnt] renders the part of the same trace that touches [pnt] as JSON. Only that
+        part: the whole trace records every update of every point in every epoch, and would dwarf
+        the program it describes.
+      #runtime("typeInferPnt")
+
+    Show/TypeInferPnt(trace= typeInferPnt(annot= s), pnt= pnt)
 
   annot(#debug)
 

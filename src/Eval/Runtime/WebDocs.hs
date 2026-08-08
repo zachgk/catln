@@ -29,11 +29,12 @@ import           Semantics.Prgm
 import           Semantics.Types     (ClassGraph (..), fromPartialName, mkName,
                                       relativeNameMatches)
 import           Text.Printf
+import           TypeCheck.Common    (filterTraceConstrain, flipTraceConstrain)
 import           Utils
 
 -- | The primitives backing the @Catln/Doc@ display annotations.
 webDocsPrims :: [EPrim]
-webDocsPrims = [listProgram, filterProgram]
+webDocsPrims = [listProgram, filterProgram, typeInfer, typeInferPnt]
 
 -- | The argument of @/Catln/Doc/listProgram@ naming which stage to list, and the members of the
 -- @ListProgramMode@ enum it takes. @stack\/core\/webdoc.ct@ is the source of truth for these; a
@@ -62,11 +63,11 @@ listProgram = EEnvPrim "listProgram" prim
     prim Env{evTbEnv=TBEnv{tbPrgm}, evStagePrgms=StagePrgms{spDesPrgm, spTBPrgm}} args = case H.lookup listProgramModeArg args of
       Just (TupleVal mode _)
         | mode == desugarMode -> fromStage spDesPrgm
-        | mode == typecheckMode -> Right $ encodePrgm tbPrgm
+        | mode == typecheckMode -> Right $ encodeJson tbPrgm
         | mode == treeBuildMode -> fromStage spTBPrgm
       Just v -> Left $ printf "listProgram was given %s, which is not a ListProgramMode" (show v)
       Nothing -> Left $ printf "listProgram has no %s argument, only %s" listProgramModeArg (show $ sort $ H.keys args)
-    fromStage (CRes _ prgm) = Right $ encodePrgm prgm
+    fromStage (CRes _ prgm) = Right $ encodeJson prgm
     fromStage (CErr notes)  = Left $ prettyCNotes notes
 
 -- | The argument of @/Catln/Doc/filterProgram@ naming which type or class to keep.
@@ -83,7 +84,7 @@ filterProgram :: EPrim
 filterProgram = EEnvPrim "filterProgram" prim
   where
     prim Env{evTbEnv=TBEnv{tbPrgm}} args = case H.lookup filterProgramNameArg args of
-      Just (StrVal name) -> Right $ encodePrgm $ filterByType name tbPrgm
+      Just (StrVal name) -> Right $ encodeJson $ filterByType name tbPrgm
       Just v -> Left $ printf "filterProgram was given %s, which is not a String type name" (show v)
       Nothing -> Left $ printf "filterProgram has no %s argument, only %s" filterProgramNameArg (show $ sort $ H.keys args)
 
@@ -96,5 +97,35 @@ filterByType name (Prgm objMap (ClassGraph classGraph) _) = Prgm objMap' classGr
     objMap' = filterObjectMap (relativeNameMatches (mkName name) . oaObjPath) objMap
     classGraph' = ClassGraph $ graphFromEdges $ filter (\(_, n, subTypes) -> relativeNameMatches (mkName name) (fromPartialName n) || n `elem` subTypes) $ graphToNodes classGraph
 
-encodePrgm :: (ToJSON p) => p -> Val
-encodePrgm = StrVal . TL.unpack . encodeToLazyText
+-- | The argument of @/Catln/Doc/typeInferPnt@ naming which point of the trace to report on.
+typeInferPntArg :: String
+typeInferPntArg = "/pnt"
+
+-- | Backs @/Catln/Doc/typeInfer@, the data carried by a @Show/TypeInfer@ page. It renders the type
+-- inference of the program being evaluated as JSON: a type variable on every meta, paired with the
+-- notes its typecheck produced.
+--
+-- The trace itself is deliberately not included. It records every scheme update of every point in
+-- every epoch, so serializing it whole would dwarf the program it describes; a page reads one point
+-- at a time through 'typeInferPnt'.
+typeInfer :: EPrim
+typeInfer = EEnvPrim "typeInfer" prim
+  where
+    prim Env{evStagePrgms=StagePrgms{spTypeInfer}} _ = case spTypeInfer of
+      CRes notes (vprgm, _) -> Right $ encodeJson (vprgm, notes)
+      CErr notes            -> Left $ prettyCNotes notes
+
+-- | Backs @/Catln/Doc/typeInferPnt@, the data carried by a @Show/TypeInferPnt@ page. It renders the
+-- part of the same trace that touches a single point: the constraints mentioning it and, per epoch,
+-- the updates it received, flipped into the chronological order the page reads them in.
+typeInferPnt :: EPrim
+typeInferPnt = EEnvPrim "typeInferPnt" prim
+  where
+    prim Env{evStagePrgms=StagePrgms{spTypeInfer}} args = case (spTypeInfer, H.lookup typeInferPntArg args) of
+      (CErr notes, _) -> Left $ prettyCNotes notes
+      (CRes _ (_, trace), Just (IntVal pnt)) -> Right $ encodeJson $ flipTraceConstrain $ filterTraceConstrain trace (fromInteger pnt)
+      (_, Just v) -> Left $ printf "typeInferPnt was given %s, which is not an Integer point" (show v)
+      (_, Nothing) -> Left $ printf "typeInferPnt has no %s argument, only %s" typeInferPntArg (show $ sort $ H.keys args)
+
+encodeJson :: (ToJSON p) => p -> Val
+encodeJson = StrVal . TL.unpack . encodeToLazyText

@@ -7,7 +7,7 @@ import path from 'pathe';
 
 import {KeyWord, PTypeName, tagJoin, TocContext} from './Common';
 import ListProgram from './Values/ListProgram';
-import TypeInfer from './Values/TypeInfer';
+import TypeInfer, {TypeInferPnt} from './Values/TypeInfer';
 import Debug from './Values/Debug';
 import TypePage from './Values/Type';
 
@@ -36,7 +36,9 @@ function Value(props) {
     case "/Catln/Doc/Show/TypePage":
       return <TypePage {...val.args} />;
     case "/Catln/Doc/Show/TypeInfer":
-      return <TypeInfer {...val.args} update={update} />;
+      return <TypeInfer {...val.args} />;
+    case "/Catln/Doc/Show/TypeInferPnt":
+      return <TypeInferPnt {...val.args} />;
     case "/Catln/Doc/Show/Debug":
       return <Debug {...val.args} update={update} />;
     default:

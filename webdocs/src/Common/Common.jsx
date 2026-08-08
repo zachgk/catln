@@ -44,6 +44,12 @@ const useStyles = makeStyles({
 const TocContext = React.createContext({});
 const ConfigContext = React.createContext({});
 
+// The page an annotation is being evaluated with respect to. A Value is rendered from deep inside
+// RawExpr, which threads no page name, so a value that wants to ask the compiler a follow-up
+// question about the same page reads it from here. Empty means the evaluation was not scoped to a
+// page, which is what an annotation about the whole program wants.
+const PrgmNameContext = React.createContext("");
+
 function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
@@ -504,6 +510,7 @@ function ReachesTreeNode(props) {
 export {
   TocContext,
   ConfigContext,
+  PrgmNameContext,
   tagJoin,
   useQuery,
   useApi,

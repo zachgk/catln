@@ -46,7 +46,21 @@ Prgm
                                 )
                             )
                             ( EAppArg Value /name -> TVArg /name = ( Value /name ↦ TVArg /name ) )
-                        , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#typeInfer = Value /Catln/Doc/#typeInfer ) -> /Catln/Doc/Show/TypeInfer = Value /Catln/Doc/Show/TypeInfer
+                        , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#typeInfer = Value /Catln/Doc/#typeInfer ) -> /Catln/Doc/Show/TypeInfer( /constrain=/Data/String ) = /Catln/Doc/Show/TypeInfer
+                            ( EAppArg Value /constrain -> /Data/String =
+                                ( /dshow./Catln/Doc/typeInfer( EAppArg Value /annot -> /s = Value /s ) ↦ /Data/String )
+                            )
+                        , /Catln/Doc/dshow
+                            ( EAppArg Value /s -> /Catln/Doc/#typeInferPnt( /pnt=/Data/Primitive/Integer ) = /Catln/Doc/#typeInferPnt( EAppArg Value /pnt -> /Data/Primitive/Integer ) ) -> /Catln/Doc/Show/TypeInferPnt
+                            ( /pnt=/Data/Primitive/Integer
+                            , /trace=/Data/String
+                            ) = /Catln/Doc/Show/TypeInferPnt
+                            ( EAppArg Value /trace -> /Data/String =
+                                ( /dshow./Catln/Doc/typeInferPnt
+                                    ( EAppArg Value /pnt -> TVArg /pnt = ( Value /pnt ↦ TVArg /pnt ) )( EAppArg Value /annot -> /s = Value /s ) ↦ /Data/String
+                                )
+                            )
+                            ( EAppArg Value /pnt -> TVArg /pnt = ( Value /pnt ↦ TVArg /pnt ) )
                         , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#debug = Value /Catln/Doc/#debug ) -> /Catln/Doc/Show/Debug = Value /Catln/Doc/Show/Debug
                         ]
                     }
@@ -56,6 +70,16 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/Doc/TreeBuild ]
                     , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/dshow./Catln/Doc/typeInfer"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /dshow./Catln/Doc/typeInfer( EAppArg Value /annot ) -> /Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -90,6 +114,16 @@ Prgm
                     }
                 )
             ,
+                ( "/dshow./Catln/Doc/typeInferPnt"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /dshow./Catln/Doc/typeInferPnt( EAppArg Value /pnt )( EAppArg Value /annot ) -> /Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Doc/Show/Debug"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/Doc/Show/Debug ]
@@ -102,6 +136,16 @@ Prgm
                 ( "/Catln/Doc/#typeInfer"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/Doc/#typeInfer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Doc/Show/TypeInferPnt"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Doc/Show/TypeInferPnt( EAppArg Value /trace -> /Data/String )( EAppArg Value /pnt -> /Data/Primitive/Integer ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -121,6 +165,16 @@ Prgm
                 ( "/Catln/Doc/#debug"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/Doc/#debug ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Doc/#typeInferPnt"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Doc/#typeInferPnt( EAppArg Value /pnt -> /Data/Primitive/Integer ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -158,7 +212,8 @@ Prgm
             ,
                 ( "/Catln/Doc/Show/TypeInfer"
                 , ObjectMapItem
-                    { omiDecls = [ Value /Catln/Doc/Show/TypeInfer ]
+                    { omiDecls =
+                        [ /Catln/Doc/Show/TypeInfer( EAppArg Value /constrain -> /Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -192,6 +247,10 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGClass
             ( False
             , /Catln/Doc/DShow
@@ -203,13 +262,14 @@ Prgm
                 , /Catln/Doc/Show/ListProgram..
                 , /Catln/Doc/Show/TypePage..
                 , /Catln/Doc/Show/TypeInfer..
+                , /Catln/Doc/Show/TypeInferPnt..
                 , /Catln/Doc/Show/Debug..
                 ]
             , Just "Represents objects which can be shown in the webdocs.   Every [/Data/ToString] value is displayable, so [ToString] is a subset of [DShow]: the
               webdocs render such a value through its [/Data/toString]. This is what lets a `> value`
               print statement accept any [ToString] type. A [DShow] value that is not [ToString] (a
               visualization like [Show/MD]) is still printable, but only [ToString] values are compared
-              against a print/result golden.     "
+              against a print/result golden.      "
             )
         , CGClass
             ( True

@@ -231,15 +231,22 @@ buildSCCPipeline ctssData sccNamesSet sccNodes pages = do
       -- The other stages are scoped to the same files as the typecheck program the annotations are
       -- evaluated against, and stay unforced for the same reason the annotations do: a page that
       -- never reads a stage must not pay to build it.
-      let stages name = StagePrgms (prgmFromGraphData name desGraph)
-                                   (tbprgmGraphRes >>= prgmFromGraphData name)
-      let annotsMap = H.fromList [(name, evalAnnots (stages name) name tprgmGraph) | (name, _) <- namesAndDeps]
+      -- The type inference comes straight from step 5 rather than being reassembled: it is that
+      -- page's own typecheck result, which is the only scope where its point numbers mean anything.
+      let stages name typeInferred = StagePrgms (prgmFromGraphData name desGraph)
+                                                (tbprgmGraphRes >>= prgmFromGraphData name)
+                                                typeInferred
+      let annotsMap = H.fromList [(name, evalAnnots (stages name (CRes tcNotes (v, t))) name tprgmGraph)
+                                 | ((_, v, t), (name, _)) <- zip tcResults namesAndDeps]
 
       -- Step 9: Assemble updated SSFs
       let validUpdates = [(name, ssf{
               ssfBuilt = True,
               ssfDes = Just $ pure des,
-              ssfTPrgmWithTrace = Just $ pure tc,
+              -- Carries the notes but is deliberately not failOnErrorNotes: the whole point of
+              -- keeping the trace is to explain a program that failed to typecheck, and the notes
+              -- are what say why, so a type inference view needs both together.
+              ssfTPrgmWithTrace = Just $ CRes tcNotes tc,
               -- failOnErrorNotes so eval consumers (run/test/build) cleanly reject
               -- a type-erroneous program, while ssfTPrgmWithTrace still carries the trace.
               ssfTPrgm = Just $ failOnErrorNotes $ CRes tcNotes (fst3 tc),
@@ -405,11 +412,34 @@ getTBPrgm = ctssGet ssfTBPrgm
 -- It cannot go through 'ctssGetJoined': that runs in @CResT IO@ and so forces its result, and
 -- merely inspecting 'ssfTBPrgm' forces 'evalBuildAll' over every page. Keeping the join a thunk is
 -- what lets a caller that never reads a stage avoid building it.
+--
+-- There is no type inference to report here. Points are numbered per typecheck run, so the traces of
+-- every page joined together would be a set of colliding numbers rather than an answer; an
+-- evaluation that wants one has to name the page it is asking about ('ctssStagePrgmsFrom').
 ctssStagePrgms :: CTSS -> IO StagePrgms
 ctssStagePrgms ctss@(CTSS ssmv) = do
   ctssBuildAll ctss
   CTSSDat{ctssData} <- readMVar ssmv
   let ssfs = map fst3 $ graphToNodes ctssData
-  return $ StagePrgms (joined ssfDes ssfs) (joined ssfTBPrgm ssfs)
+  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) notScoped
   where
-    joined f ssfs = fmap mconcat $ sequence $ mapMaybe f ssfs
+    notScoped = CErr [MkCNote $ GenCErr Nothing "This evaluation is not scoped to a single page, so it has no type inference to report on"]
+
+-- | Like 'ctssStagePrgms' but for an evaluation scoped to one page: every stage covers that page and
+-- what it imports, and the type inference is that page's own, which is the only scope its points are
+-- numbered in.
+ctssStagePrgmsFrom :: CTSS -> FileImport -> IO StagePrgms
+ctssStagePrgmsFrom ctss@(CTSS ssmv) prgmName = do
+  ctssBuildFrom ctss prgmName
+  CTSSDat{ctssData} <- readMVar ssmv
+  let reaches = graphFilterReaches prgmName ctssData
+  let ssfs = map fst3 $ graphToNodes reaches
+  let typeInferred = do
+        (_, vprgm, trace) <- requireComputed $ ssfTPrgmWithTrace =<< graphLookup prgmName ctssData
+        return (vprgm, trace)
+  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) typeInferred
+
+-- | Joins one stage over a set of pages, left unforced. See 'ctssStagePrgms' for why it must stay a
+-- thunk.
+joinedStage :: (Monoid a) => (SSF -> Maybe (CRes a)) -> [SSF] -> CRes a
+joinedStage f ssfs = fmap mconcat $ sequence $ mapMaybe f ssfs

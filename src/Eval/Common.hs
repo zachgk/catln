@@ -37,6 +37,7 @@ import           Semantics.TypeGraph
 import           Semantics.Types
 import           Syntax.Ct.Parser.Syntax (DesPrgm)
 import           Text.Printf
+import           TypeCheck.Common        (TraceConstrain, VPrgm)
 import           Utils
 
 type EvalMetaDat = Maybe ReachesTree
@@ -54,11 +55,17 @@ type EPrgmGraphData = GraphData EPrgm FileImport
 -- a caller that has run those stages passes them here. This is what a primitive reporting on the
 -- program itself reads, in the same way 'evTbEnv' is read for the stage the evaluation runs on.
 --
--- Both are unforced: constructing an 'Env' must not compute a stage, since a caller pays only for
+-- All are unforced: constructing an 'Env' must not compute a stage, since a caller pays only for
 -- the ones something actually asks for. Forcing the tree build runs a whole 'Eval.evalBuildAll'.
 data StagePrgms = StagePrgms {
-    spDesPrgm :: CRes DesPrgm
-  , spTBPrgm  :: CRes (Prgm TExpr EvalMetaDat)
+    spDesPrgm   :: CRes DesPrgm
+  , spTBPrgm    :: CRes (Prgm TExpr EvalMetaDat)
+  -- | How the program's types were inferred: a type variable on every meta, and the trace of what
+  -- each epoch updated it to. Unlike the two stages above this is never joined across pages — a
+  -- typecheck numbers its points within the run that assigned them, so two pages' traces have
+  -- colliding point numbers and mean nothing merged together. An evaluation that is not scoped to
+  -- one page therefore has no type inference to report, rather than an amalgamated one.
+  , spTypeInfer :: CRes (VPrgm, TraceConstrain)
   }
 
 -- | The stage programs for an evaluation whose caller did not supply any. Asking for one is then an
@@ -66,8 +73,9 @@ data StagePrgms = StagePrgms {
 -- no upstream artifacts to report on cannot answer, and reporting the wrong stage would be worse
 -- than failing.
 stagePrgmsUnavailable :: StagePrgms
-stagePrgmsUnavailable = StagePrgms unavailable unavailable
+stagePrgmsUnavailable = StagePrgms unavailable unavailable unavailable
   where
+    unavailable :: CRes a
     unavailable = CErr [MkCNote $ GenCErr Nothing "This evaluation was not given the other pipeline stages of its program"]
 
 data EPrim

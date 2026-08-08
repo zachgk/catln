@@ -47,9 +47,7 @@ import           Syntax.Parsers                (mkDesCanonicalImportStr)
 import           Text.Megaparsec               (errorBundlePretty, runParser)
 import           Text.Printf
 import           TypeCheck                     (typecheckPrgms)
-import           TypeCheck.Common              (filterTraceConstrain,
-                                                flipTraceConstrain,
-                                                typeCheckToRes)
+import           TypeCheck.Common              (typeCheckToRes)
 import           Utils
 
 data ResSuccess a n = Success a [n]
@@ -128,10 +126,14 @@ docApiBase readonly ctss getProvider = do
   get "/api/annot" $ do
     provider <- liftAndCatchIO getProvider
     annot <- param "annot"
-    -- The synthetic <annot> program below depends on every loaded file, so the stages it can list
-    -- are joined over all of them. Its own contribution is the one annotation statement and no
-    -- declarations, which a listing does not show.
-    stages <- liftAndCatchIO $ ctssStagePrgms provider
+    -- An annotation is local to the program it is written in, so evaluating a free-standing one has
+    -- to say which program it is written in. Naming a page evaluates the annotation as though it sat
+    -- in that page: every stage reported about it, and the synthetic program's own dependencies,
+    -- narrow to that page and what it imports. Without a name the annotation is evaluated against
+    -- every loaded file, which is what a listing of the whole program wants.
+    scope <- fmap Just (param "prgmName") `rescue` (\_ -> return Nothing)
+    scope' <- liftAndCatchIO $ traverse (mkDesCanonicalImportStr buildCtssConfig) scope
+    stages <- liftAndCatchIO $ maybe (ctssStagePrgms provider) (ctssStagePrgmsFrom provider) scope'
     resp <- liftAndCatchIO $ runCResT $ do
       rawPrgm <- case runParser pExpr "<annot>" annot of
         Left err     -> fail $ show $ errorBundlePretty err
@@ -139,8 +141,8 @@ docApiBase readonly ctss getProvider = do
       rawPrgm' <- lift $ mapMetaRawPrgmM addMetaID rawPrgm
       (annotDesPrgm, annotPrgmName, _) <- asCResT $ desPrgm (rawPrgm', desFileImport $ mkRawFileImport $ RawValue emptyMetaN "<annot>", [])
       [annotDesPrgm'] <- desFinalPasses [(annotDesPrgm, [], [])]
-      tprgmsTrace <- getTPrgmWithTrace provider
-      tprgms <- getTPrgm provider
+      tprgmsTrace <- maybe (getTPrgmWithTrace provider) (\n -> ctssGetFrom ssfTPrgmWithTrace n provider) scope'
+      tprgms <- maybe (getTPrgm provider) (\n -> ctssGetFrom ssfTPrgm n provider) scope'
       let annotDeps = map snd3 $ graphToNodes tprgms
       [(annotTprgm, _, _)] <- asCResT $ typeCheckToRes $ typecheckPrgms [(annotDesPrgm', [], map fst3 $ graphToNodes tprgmsTrace)]
       let joinedTprgms = graphFromEdges ((annotTprgm, annotPrgmName, annotDeps) : graphToNodes tprgms)
@@ -148,25 +150,6 @@ docApiBase readonly ctss getProvider = do
       maybeAnnots <- asCResT $ evalAnnots stages annotPrgmName joinedTprgms
       let annots' = H.fromList $ map (first (getMetaID . getExprMeta)) maybeAnnots
       return $ mapMetaRawPrgm (zip3MetaFun (interleaveMeta $ interleavePrgm annotTprgm) (interleaveMeta targetModes) (interleaveMeta annots')) rawPrgm'
-    maybeJson resp
-
-  get "/api/constrain" $ do
-    provider <- liftAndCatchIO getProvider
-    prgmName <- param "prgmName"
-    resp <- liftAndCatchIO $ runCResT $ do
-      prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
-      (tprgm, vprgm, _tr) <- ctssLookupReq ssfTPrgmWithTrace prgmName' provider
-      return (tprgm, vprgm)
-    maybeJson resp
-
-  get "/api/constrain/pnt/:pnt" $ do
-    provider <- liftAndCatchIO getProvider
-    prgmName <- param "prgmName"
-    pnt <- param "pnt"
-    resp <- liftAndCatchIO $ runCResT $ do
-      prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
-      (_, _, tr) <- ctssLookupReq ssfTPrgmWithTrace prgmName' provider
-      return $ flipTraceConstrain $ filterTraceConstrain tr pnt
     maybeJson resp
 
   get "/api/treebug" $ do

@@ -1,11 +1,12 @@
-import React, {useContext, useState} from 'react';
+import React, {useContext, useMemo, useState} from 'react';
 
 import makeStyles from '@mui/styles/makeStyles';
 import Grid from '@mui/material/Grid2';
 import Tooltip from '@mui/material/Tooltip';
 
-import {useApi, tagJoin, Loading, Notes, Type, PartialKey, ReachesTree} from '../Common';
+import {tagJoin, Notes, Type, PartialKey, ReachesTree, PrgmNameContext} from '../Common';
 import {ObjMap} from './ListProgram';
+import {AnnotPage} from '../../DocsPage';
 
 const useStyles = makeStyles({
   holdSideBySide: {
@@ -17,51 +18,55 @@ const useStyles = makeStyles({
   }
 });
 
-const PrgmNameContext = React.createContext(undefined);
-const CurMetaContext = React.createContext(undefined);
+// Which point the trace pane is showing, and how to render a meta. Both are set by the TypeInfer
+// page and read by the point page embedded in it, which is a separately compiled annotation and so
+// reaches them by context rather than by props. A point page opened on its own gets neither: no
+// page to re-target, and no notes to highlight against.
+const CurMetaContext = React.createContext({curMeta: undefined, setCurMeta: () => {}});
+const MetaContext = React.createContext(undefined);
 
 function TypeInfer(props) {
-  const { prgmName } = props;
-  let apiResult = useApi(`/api/constrain?prgmName=${prgmName}`);
-
-  return (
-    <PrgmNameContext.Provider value={prgmName}>
-      <Loading status={apiResult}>
-        <Main data={apiResult.data} notes={apiResult.notes} />
-      </Loading>
-    </PrgmNameContext.Provider>
-  );
-}
-
-function Main(props) {
-  let {notes, data: [, prgm]} = props;
   const classes = useStyles();
+  const prgmName = useContext(PrgmNameContext);
   const [curMeta, setCurMeta] = useState(undefined);
 
-  var notesMap = {};
-  notes.forEach(note => {
-    if(note.id) {
-      let k = note.id;
-      if(k in notesMap) {
-        notesMap[k].push(note);
-      } else {
-        notesMap[k] = [note];
+  // The only field of Show/TypeInfer, so a compiled value always carries the program whose
+  // inference it shows, together with the notes that typecheck produced. Nothing is fetched: a
+  // point's trace is a second annotation about the same page, not a second route.
+  const constrain = props["/constrain"];
+  const [prgm, notes] = useMemo(() => JSON.parse(constrain.contents), [constrain]);
+
+  // The meta of an expression the typecheck complained about is highlighted, so the renderer is
+  // built from the notes. Memoised because it is a component identity: a fresh one every render
+  // would remount every meta, including those of the point page embedded below.
+  const Meta = useMemo(() => {
+    var notesMap = {};
+    notes.forEach(note => {
+      if(note.id) {
+        let k = note.id;
+        if(k in notesMap) {
+          notesMap[k].push(note);
+        } else {
+          notesMap[k] = [note];
+        }
       }
-    }
-  });
-  let Meta = VarMeta(notesMap);
+    });
+    return VarMeta(notesMap);
+  }, [notes]);
 
   return (
     <CurMetaContext.Provider value={{curMeta, setCurMeta}}>
-      <Notes notes={notes} noPosOnly />
-      <Grid container spacing={2} justify="center" className={classes.holdSideBySide}>
-        <Grid size={{xs:6}} className={classes.sideBySide}>
-          <ObjMap objMap={prgm[0]} Meta={Meta} showExprMetas />
+      <MetaContext.Provider value={Meta}>
+        <Notes notes={notes} noPosOnly />
+        <Grid container spacing={2} justify="center" className={classes.holdSideBySide}>
+          <Grid size={{xs:6}} className={classes.sideBySide}>
+            <ObjMap objMap={prgm[0]} Meta={Meta} showExprMetas />
+          </Grid>
+          <Grid size={{xs:6}} className={classes.sideBySide}>
+            <TraceEpochsArea prgmName={prgmName} />
+          </Grid>
         </Grid>
-        <Grid size={{xs:6}} className={classes.sideBySide}>
-          <TraceEpochsArea Meta={Meta} />
-        </Grid>
-      </Grid>
+      </MetaContext.Provider>
     </CurMetaContext.Provider>
   );
 }
@@ -97,42 +102,49 @@ let VarMeta = (notesMap) => (props) => {
   );
 };
 
+// The trace of the selected point is a second annotation about the same page, so the pane is
+// another AnnotPage rather than another fetch. Nothing is shown until a point is picked, because
+// there is no trace to ask for until then.
 function TraceEpochsArea(props) {
+  const {prgmName} = props;
   let { curMeta } = useContext(CurMetaContext);
 
   if (curMeta === undefined) {
     return "";
   } else {
-    return <TraceEpochs {...props} />;
+    return <AnnotPage prgmName={prgmName} annot={`#typeInferPnt(pnt= ${curMeta})`} />;
   }
 }
 
-function TraceEpochs(props) {
-  let {Meta} = props;
-  let { curMeta } = useContext(CurMetaContext);
-  let prgmName = useContext(PrgmNameContext);
+// Shows how one point was solved. Rendered from the value of a #typeInferPnt annotation, either
+// embedded in a TypeInfer page or on its own.
+function TypeInferPnt(props) {
+  const pnt = props["/pnt"].contents;
+  const trace = props["/trace"];
+  const traceData = useMemo(() => JSON.parse(trace.contents), [trace]);
 
-  let apiResult = useApi(`/api/constrain/pnt/${curMeta}?prgmName=${prgmName}`);
+  // The embedding page renders metas against its own notes; on its own there are none to
+  // highlight. Memoised because a fresh component identity would remount the whole trace.
+  const ctxMeta = useContext(MetaContext);
+  const Meta = useMemo(() => ctxMeta || VarMeta({}), [ctxMeta]);
+
   return (
     <div>
-      <h2>Pnt {curMeta}</h2>
-      <Loading status={apiResult}>
-        <Traces traceData={apiResult.data} Meta={Meta} />
-      </Loading>
+      <h2>Pnt {pnt}</h2>
+      <Traces traceData={traceData} Meta={Meta} pnt={pnt} />
     </div>
   );
 }
 
 function Traces(props) {
-  const {traceData, Meta} = props;
+  const {traceData, Meta, pnt} = props;
   const {tcEpochs, tcCons, tcAllObjs, tcInitial} = traceData;
-  let { curMeta } = useContext(CurMetaContext);
   let showInitial;
-  if (curMeta in tcInitial) {
+  if (pnt in tcInitial) {
     showInitial = (
       <div>
         <h3>Initial</h3>
-        <Scheme scheme={tcInitial[curMeta]} />
+        <Scheme scheme={tcInitial[pnt]} />
       </div>
     );
   }
@@ -275,3 +287,4 @@ function Pos(props) {
 }
 
 export default TypeInfer;
+export {TypeInferPnt};

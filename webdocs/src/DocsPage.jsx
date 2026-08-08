@@ -13,7 +13,7 @@ import {initVimMode, VimMode} from 'monaco-vim';
 import {useNavigate} from 'react-router-dom';
 
 import {rawExprMeta, RawExpr, RawObjArr} from './Common/Syntax';
-import {useQuery, useApi, Loading, KeyWord, ReachesTree, ConfigContext} from './Common/Common';
+import {useQuery, useApi, Loading, KeyWord, ReachesTree, ConfigContext, PrgmNameContext} from './Common/Common';
 import {Value} from './Common/Value';
 
 const DEBUG_NO_EVAL = false;
@@ -247,41 +247,45 @@ function DocsPage(props) {
     });
   }, [editorInstance, mode, prgmData]);
 
+  // An annotation written in this page's source is local to this page, so a value it displays can
+  // ask the compiler a follow-up question scoped the same way.
   return (
-    <div>
-      {canEdit && (
-        <div style={{textAlign: 'right'}}>
-          <IconButton onClick={toggleMode} size="small" aria-label={mode === 'view' ? 'Edit' : 'View'}>
-            {mode === 'view' ? <EditIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
-          </IconButton>
-        </div>
-      )}
-      {mode === 'view' ? (
-        <Loading status={apiResult}>
-          <Main data={prgmData} prgmName={prgmName}/>
-        </Loading>
-      ) : (
-        <Loading status={apiResult}>
-          {currentSource !== null && (
-            <div>
-              <Editor
-                height="80vh"
-                language="plaintext"
-                theme="vs"
-                value={currentSource}
-                onChange={value => setEditedSource(value)}
-                options={{ minimap: { enabled: false }, wordWrap: 'on', fontSize: 14 }}
-                onMount={handleEditorMount}
-              />
-              <div className={classes.statusRow}>
-                <div ref={vimStatusBarRef} className={classes.vimStatusBar} data-testid="vim-status-bar" />
-                <SaveStatus saveState={saveState} isDirty={isDirty} />
+    <PrgmNameContext.Provider value={prgmName}>
+      <div>
+        {canEdit && (
+          <div style={{textAlign: 'right'}}>
+            <IconButton onClick={toggleMode} size="small" aria-label={mode === 'view' ? 'Edit' : 'View'}>
+              {mode === 'view' ? <EditIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+            </IconButton>
+          </div>
+        )}
+        {mode === 'view' ? (
+          <Loading status={apiResult}>
+            <Main data={prgmData} prgmName={prgmName}/>
+          </Loading>
+        ) : (
+          <Loading status={apiResult}>
+            {currentSource !== null && (
+              <div>
+                <Editor
+                  height="80vh"
+                  language="plaintext"
+                  theme="vs"
+                  value={currentSource}
+                  onChange={value => setEditedSource(value)}
+                  options={{ minimap: { enabled: false }, wordWrap: 'on', fontSize: 14 }}
+                  onMount={handleEditorMount}
+                />
+                <div className={classes.statusRow}>
+                  <div ref={vimStatusBarRef} className={classes.vimStatusBar} data-testid="vim-status-bar" />
+                  <SaveStatus saveState={saveState} isDirty={isDirty} />
+                </div>
               </div>
-            </div>
-          )}
-        </Loading>
-      )}
-    </div>
+            )}
+          </Loading>
+        )}
+      </div>
+    </PrgmNameContext.Provider>
   );
 }
 
@@ -312,6 +316,10 @@ function SaveStatus(props) {
 // Shows a single annotation compiled by the server to the value it displays as. The annotation
 // comes either from a route that names it (such as /list) or from the ?annot= query.
 //
+// An annotation is local to the program it is written in, so a prgmName says which program to
+// compile this one as though it belonged to. Without one it is compiled against every loaded file,
+// which is what an annotation about the whole program wants.
+//
 // The displayed value can edit the annotation it came from: update replaces the annotation
 // source, which refetches and so recompiles the page. useApi keeps the previous data while the
 // new annotation compiles, so the page updates in place rather than flashing back to "Loading".
@@ -319,19 +327,22 @@ function AnnotPage(props) {
   const query = useQuery();
   const routeAnnot = props.annot || query.get("annot");
   const [annot, setAnnot] = useState(routeAnnot);
-  const prgmName = "";
+  const prgmName = props.prgmName ?? query.get("prgmName") ?? "";
 
   // A new route or query replaces whatever the page edited its way to.
   useEffect(() => {
     setAnnot(routeAnnot);
   }, [routeAnnot]);
 
-  let apiResult = useApi(`/api/annot?annot=${encodeURIComponent(annot)}`);
+  const scope = prgmName ? `&prgmName=${encodeURIComponent(prgmName)}` : "";
+  let apiResult = useApi(`/api/annot?annot=${encodeURIComponent(annot)}${scope}`);
 
   return (
-    <Loading status={apiResult}>
-      <Main data={apiResult.data} prgmName={prgmName} update={setAnnot}/>
-    </Loading>
+    <PrgmNameContext.Provider value={prgmName}>
+      <Loading status={apiResult}>
+        <Main data={apiResult.data} prgmName={prgmName} update={setAnnot}/>
+      </Loading>
+    </PrgmNameContext.Provider>
   );
 }
 

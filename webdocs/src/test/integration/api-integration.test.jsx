@@ -171,6 +171,80 @@ describe('Backend API contract', () => {
     expect(count(filtered)).toBeLessThan(count(whole))
   })
 
+  // #typeInfer takes no arguments: like every annotation it reports on the program it is written
+  // in. What names a page is the API call, so these also cover /api/annot's prgmName scoping.
+  async function annotValue(annot, prgmName) {
+    const scope = prgmName ? `&prgmName=${encodeURIComponent(prgmName)}` : ''
+    const data = await fetchApi(`/api/annot?annot=${encodeURIComponent(annot)}${scope}`)
+    if (data.tag !== 'Success') return data
+
+    const [, statements] = data.contents[0]
+    const [statement] = statements[0]
+    expect(statement.tag).toBe('RawAnnot')
+    return statement.contents.contents[0].getMetaDat[2]
+  }
+
+  async function idPageName(base = API_BASE) {
+    const toc = (await fetchApi('/api/toc', base)).contents[0]
+    const name = toc.map(t => t[0]).find(n => n.endsWith('/test/Integration/code/id.ct'))
+    expect(name).toBeDefined()
+    return name
+  }
+
+  it('/api/annot scopes #typeInfer to the page it names', async () => {
+    const page = await idPageName()
+    const val = await annotValue('#typeInfer', page)
+    expect(val.tag).toBe('TupleVal')
+    expect(val.name).toBe('/Catln/Doc/Show/TypeInfer')
+
+    const [prgm, notes] = JSON.parse(val.args['/constrain'].contents)
+    const [objMap] = prgm
+    expect(Array.isArray(notes)).toBe(true)
+
+    // The scoping is the point: this is id.ct's own inference, not every loaded page's joined.
+    // id.ct defines id, so that is present while the stdlib it imports is not.
+    expect(Object.keys(objMap)).toContain('/id')
+    expect(Object.keys(objMap).length).toBeLessThan(20)
+  })
+
+  it('/api/annot refuses #typeInfer with no page to be scoped to', async () => {
+    // Points are numbered per typecheck run, so there is no joined inference to fall back to.
+    // Failing is the correct answer, and a silent substitution would be the wrong one.
+    const data = await annotValue('#typeInfer')
+    expect(data.tag).toBe('ResFail')
+    expect(JSON.stringify(data.contents)).toContain('not scoped to a single page')
+  })
+
+  it('/api/annot narrows #typeInferPnt to one point of that page', async () => {
+    const page = await idPageName()
+    const whole = await annotValue('#typeInfer', page)
+    const [prgm] = JSON.parse(whole.args['/constrain'].contents)
+
+    // Every meta carries its point as getMetaDat[0]; take one the page actually inferred.
+    const pnts = new Set()
+    const walk = (o) => {
+      if (Array.isArray(o)) return o.forEach(walk)
+      if (o && typeof o === 'object') {
+        if (Array.isArray(o.getMetaDat) && typeof o.getMetaDat[0] === 'number') pnts.add(o.getMetaDat[0])
+        Object.values(o).forEach(walk)
+      }
+    }
+    walk(prgm[0])
+    expect(pnts.size).toBeGreaterThan(0)
+    const pnt = [...pnts].sort((a, b) => a - b)[0]
+
+    const val = await annotValue(`#typeInferPnt(pnt= ${pnt})`, page)
+    expect(val.name).toBe('/Catln/Doc/Show/TypeInferPnt')
+    // The point travels with the value, which is what the point page titles itself from.
+    expect(val.args['/pnt'].contents).toBe(pnt)
+
+    const trace = JSON.parse(val.args['/trace'].contents)
+    expect(trace).toHaveProperty('tcEpochs')
+    expect(trace).toHaveProperty('tcCons')
+    // Filtered to this point: its initial scheme is the only one kept.
+    expect(Object.keys(trace.tcInitial)).toEqual([String(pnt)])
+  })
+
   it('/api/page returns Success with prgm data and source text', async () => {
     // First get the TOC to find a valid page name
     const tocData = await fetchApi('/api/toc')
@@ -219,13 +293,6 @@ describe('Backend API contract', () => {
   // page (Meta's derived Eq includes a per-parse random UUID, so the unchanged-file
   // check in buildSSF never matches), making the next page load pay a full rebuild.
   describe('writes', () => {
-    async function idPageName(base = API_BASE) {
-      const toc = (await fetchApi('/api/toc', base)).contents[0]
-      const name = toc.map(t => t[0]).find(n => n.endsWith('/test/Integration/code/id.ct'))
-      expect(name).toBeDefined()
-      return name
-    }
-
     it('refuses an existing file that is not a served page', async () => {
       // ho.ct is a real file, but not reachable from the id.ct doc root
       const outside = (await idPageName()).replace('/id.ct', '/ho.ct')
