@@ -23,8 +23,9 @@ import qualified Data.HashSet            as S
 import           Data.List               (partition)
 import           Data.Maybe
 import           Eval                    (evalAnnots, evalBuild, evalBuildAll,
-                                          evalRun)
-import           Eval.Common             (EvalMetaDat, EvalResult, TExpr,
+                                          evalRun, prgmFromGraphData)
+import           Eval.Common             (EvalMetaDat, EvalResult,
+                                          StagePrgms (..), TExpr,
                                           Val (StrVal, TupleVal))
 import           Eval.Testing            (MockIO, evalPrints, evalRunMock,
                                           evalTest)
@@ -207,6 +208,18 @@ buildSCCPipeline ctssData sccNamesSet sccNodes pages = do
             ) (graphToNodes pages)
       let tprgmGraph = graphFromEdges (sccTPrgmNodes ++ depTPrgmNodes)
 
+      -- Step 6b: The same graph at the desugar stage. Eval cannot reach this stage on its own, so
+      -- it has to be assembled here to be handed to it, alongside the typecheck graph above.
+      let sccDesNodes = [(des, name, deps)
+            | (des, (name, deps)) <- zip finalDes namesAndDeps]
+      let depDesNodes = mapMaybe (\(_, name, deps) ->
+            if name `S.member` sccNamesSet then Nothing
+            else do
+              ssf <- graphLookup name ctssData
+              ssfDes ssf >>= cresToMaybe >>= \d -> Just (d, name, deps)
+            ) (graphToNodes pages)
+      let desGraph = graphFromEdges (sccDesNodes ++ depDesNodes)
+
       -- Step 7: Eval build all (processes SCC + deps, we extract SCC results).
       -- Tolerate failure: a type-erroneous program cannot build a tree, but we
       -- still want to cache the desugar/typecheck artifacts (including the trace)
@@ -214,8 +227,13 @@ buildSCCPipeline ctssData sccNamesSet sccNodes pages = do
       let tbprgmGraphRes = evalBuildAll tprgmGraph
 
       -- Step 8: Eval annotations per SCC file (kept lazy to match original behavior,
-      -- since evalAnnots may reference classes not in the class graph for #noCore files)
-      let annotsMap = H.fromList [(name, evalAnnots name tprgmGraph) | (name, _) <- namesAndDeps]
+      -- since evalAnnots may reference classes not in the class graph for #noCore files).
+      -- The other stages are scoped to the same files as the typecheck program the annotations are
+      -- evaluated against, and stay unforced for the same reason the annotations do: a page that
+      -- never reads a stage must not pay to build it.
+      let stages name = StagePrgms (prgmFromGraphData name desGraph)
+                                   (tbprgmGraphRes >>= prgmFromGraphData name)
+      let annotsMap = H.fromList [(name, evalAnnots (stages name) name tprgmGraph) | (name, _) <- namesAndDeps]
 
       -- Step 9: Assemble updated SSFs
       let validUpdates = [(name, ssf{
@@ -381,5 +399,17 @@ getTPrgmJoined = ctssGetJoined ssfTPrgm
 getTBPrgm :: CTSS -> CResT IO (GraphData TBPrgm FileImport)
 getTBPrgm = ctssGet ssfTBPrgm
 
-getTBPrgmJoined :: CTSS -> CResT IO TBPrgm
-getTBPrgmJoined = ctssGetJoined ssfTBPrgm
+-- | The desugar and tree build programs of every loaded page, joined and left unforced. This is the
+-- 'StagePrgms' for an evaluation that is not scoped to one page, and so reaches all of them.
+--
+-- It cannot go through 'ctssGetJoined': that runs in @CResT IO@ and so forces its result, and
+-- merely inspecting 'ssfTBPrgm' forces 'evalBuildAll' over every page. Keeping the join a thunk is
+-- what lets a caller that never reads a stage avoid building it.
+ctssStagePrgms :: CTSS -> IO StagePrgms
+ctssStagePrgms ctss@(CTSS ssmv) = do
+  ctssBuildAll ctss
+  CTSSDat{ctssData} <- readMVar ssmv
+  let ssfs = map fst3 $ graphToNodes ctssData
+  return $ StagePrgms (joined ssfDes ssfs) (joined ssfTBPrgm ssfs)
+  where
+    joined f ssfs = fmap mconcat $ sequence $ mapMaybe f ssfs

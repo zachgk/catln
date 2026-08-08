@@ -392,7 +392,10 @@ describe('AnnotPage', () => {
     const value = {
       tag: 'TupleVal',
       name: '/Catln/Doc/Show/ListProgram',
-      args: { '/mode': { tag: 'TupleVal', name: modeName, args: {} } },
+      args: {
+        '/mode': { tag: 'TupleVal', name: modeName, args: {} },
+        '/prgm': { tag: 'StrVal', contents: JSON.stringify({ prgmObjMap: {}, prgmCG: [{}, {}] }) },
+      },
     }
     const expr = {
       tag: 'RawValue',

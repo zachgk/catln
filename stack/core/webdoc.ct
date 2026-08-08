@@ -46,9 +46,9 @@ module(Catln/Doc)
 
   dshow(s= #listProgram(mode)) =
     listProgram(annot) -> String
-      # [listProgram] renders the program being evaluated as JSON. The program is the one the
-        annotation was evaluated against, so a [#listProgram] in a page lists that page and
-        everything it reaches.
+      # [listProgram] renders the program being evaluated as JSON, at the compiler stage its
+        [mode] names. The program is the one the annotation was evaluated against, so a
+        [#listProgram] in a page lists that page and everything it reaches, at every stage alike.
       #runtime("listProgram")
 
     Show/ListProgram(prgm= listProgram(annot= s), mode= mode)

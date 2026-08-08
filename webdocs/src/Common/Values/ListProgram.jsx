@@ -1,4 +1,4 @@
-import React, {useMemo, useState} from 'react';
+import React, {useMemo} from 'react';
 
 import makeStyles from '@mui/styles/makeStyles';
 import List from '@mui/material/List';
@@ -9,7 +9,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 
-import {useApi, tagJoin, Loading, PTypeName, PClassName, PartialType, Type} from '../Common';
+import {tagJoin, PTypeName, PClassName, PartialType, Type} from '../Common';
 import {ObjArr} from '../Semantics';
 
 const useStyles = makeStyles({
@@ -30,42 +30,27 @@ const useStyles = makeStyles({
 });
 
 // The members of the Catln ListProgramMode enum, which is what a #listProgram annotation names.
-// Each also names the route serving that stage, for as long as the annotation only carries one.
+// The compiler decides what each one lists; this only names the mode and labels it.
 const MODES = [
-  {name: "/Catln/Doc/Desugar", label: "No Typecheck", api: "/api/desugar"},
-  {name: "/Catln/Doc/Typecheck", label: "List", api: "/api/typecheck"},
-  {name: "/Catln/Doc/TreeBuild", label: "TreeBuild", api: "/api/treebuild"}
+  {name: "/Catln/Doc/Desugar", label: "No Typecheck"},
+  {name: "/Catln/Doc/Typecheck", label: "List"},
+  {name: "/Catln/Doc/TreeBuild", label: "TreeBuild"}
 ];
-// The stage a Show/ListProgram carries in its prgm field, and so the one it can render directly.
-const CARRIED_MODE = "/Catln/Doc/Typecheck";
 
 function ListProgram(props) {
   const {update} = props;
 
-  // The mode belongs to the annotation, so a compiled Show/ListProgram names it and toggling a
-  // radio recompiles the annotation through update. A value that carries no mode (a listing not
-  // produced by the annotation) keeps its selection here instead.
-  const annotMode = props["/mode"]?.name;
-  const [localMode, setLocalMode] = useState(annotMode || CARRIED_MODE);
-  const mode = annotMode || localMode;
+  // Both fields are required arguments of Show/ListProgram, so a compiled value always carries the
+  // mode it was listed for and the program listed at that mode. Nothing is fetched: switching mode
+  // means asking the compiler for a different annotation, not for a different route.
+  const mode = props["/mode"].name;
+  const prgm = props["/prgm"];
+  const listed = useMemo(() => JSON.parse(prgm.contents), [prgm]);
 
-  // A compiled Show/ListProgram carries the program it lists in its prgm field, so that one mode
-  // renders straight from the annotation value. The other modes show pipeline stages (desugar,
-  // tree build) that the annotation cannot carry yet, so those still fetch.
-  const carried = props["/prgm"];
-  const carriedPrgm = useMemo(() => carried ? JSON.parse(carried.contents) : null, [carried]);
-  const useCarried = Boolean(carriedPrgm) && mode === CARRIED_MODE;
-
-  const dataPath = MODES.find(m => m.name === mode).api;
-  let apiResult = useApi(useCarried ? null : dataPath);
-
-  let switchMode = (event) => {
-    if (update) {
-      update(`#listProgram(mode= ${event.target.value})`);
-    } else {
-      setLocalMode(event.target.value);
-    }
-  };
+  // Without an update there is nothing to rewrite, so the radios are disabled below and this never
+  // runs. They still show which mode the source named, which is also the right rendering for a
+  // source that cannot be edited at all, such as one served read-only.
+  let switchMode = (event) => update(`#listProgram(mode= ${event.target.value})`);
 
   return (
     <div>
@@ -73,16 +58,12 @@ function ListProgram(props) {
         <FormControlLabel
           control={
             <RadioGroup aria-label="mode" value={mode} onChange={switchMode}>
-              {MODES.map(m => <FormControlLabel key={m.name} value={m.name} control={<Radio />} label={m.label} />)}
+              {MODES.map(m => <FormControlLabel key={m.name} value={m.name} control={<Radio />} label={m.label} disabled={!update} />)}
             </RadioGroup>
           }
         />
       </FormGroup>
-      {useCarried
-        ? <ShowList data={carriedPrgm} />
-        : <Loading status={apiResult}>
-            <ShowList data={apiResult.data} />
-          </Loading>}
+      <ShowList data={listed} />
     </div>
   );
 }

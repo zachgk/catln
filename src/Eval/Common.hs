@@ -20,21 +20,22 @@
 module Eval.Common where
 
 import           Data.Hashable
-import qualified Data.HashMap.Strict as H
-import qualified Data.HashSet        as S
-import           Data.List           (intercalate)
-import qualified Data.Map            as Map
-import           GHC.Generics        (Generic)
+import qualified Data.HashMap.Strict     as H
+import qualified Data.HashSet            as S
+import           Data.List               (intercalate)
+import qualified Data.Map                as Map
+import           GHC.Generics            (Generic)
 
 import           Control.Monad.State
 import           CRes
-import           Data.Aeson          hiding (Object)
+import           Data.Aeson              hiding (Object)
 import           Data.IORef
 -- import qualified LLVM.AST            as AST
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.TypeGraph
 import           Semantics.Types
+import           Syntax.Ct.Parser.Syntax (DesPrgm)
 import           Text.Printf
 import           Utils
 
@@ -47,6 +48,27 @@ type EObjArr = ObjArr Expr EvalMetaDat
 type EObjectMap = ObjectMap Expr EvalMetaDat
 type EPrgm = Prgm Expr EvalMetaDat
 type EPrgmGraphData = GraphData EPrgm FileImport
+
+-- | The program being evaluated, at the pipeline stages the evaluation cannot reach on its own.
+-- Desugar is strictly upstream of eval and tree build is a separate pass, so an 'Env' holds neither;
+-- a caller that has run those stages passes them here. This is what a primitive reporting on the
+-- program itself reads, in the same way 'evTbEnv' is read for the stage the evaluation runs on.
+--
+-- Both are unforced: constructing an 'Env' must not compute a stage, since a caller pays only for
+-- the ones something actually asks for. Forcing the tree build runs a whole 'Eval.evalBuildAll'.
+data StagePrgms = StagePrgms {
+    spDesPrgm :: CRes DesPrgm
+  , spTBPrgm  :: CRes (Prgm TExpr EvalMetaDat)
+  }
+
+-- | The stage programs for an evaluation whose caller did not supply any. Asking for one is then an
+-- error rather than a silent substitution of the stage the evaluation does hold: an evaluation with
+-- no upstream artifacts to report on cannot answer, and reporting the wrong stage would be worse
+-- than failing.
+stagePrgmsUnavailable :: StagePrgms
+stagePrgmsUnavailable = StagePrgms unavailable unavailable
+  where
+    unavailable = CErr [MkCNote $ GenCErr Nothing "This evaluation was not given the other pipeline stages of its program"]
 
 data EPrim
   = EPrim String (H.HashMap String Val -> Either String Val)
@@ -83,6 +105,7 @@ data Env = Env { evObjMap        :: EObjectMap
                , evArgs          :: Args
                , evExEnv         :: ResExEnv
                , evTbEnv         :: TBEnv
+               , evStagePrgms    :: StagePrgms
                , evCallStack     :: [String]
                , evCoverage      :: H.HashMap EObjArr Int
                , evTreebugOpen   :: [EvalTreebugOpen]

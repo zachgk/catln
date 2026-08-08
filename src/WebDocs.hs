@@ -144,6 +144,10 @@ docApiBase readonly ctss getProvider = do
   get "/api/annot" $ do
     provider <- liftAndCatchIO getProvider
     annot <- param "annot"
+    -- The synthetic <annot> program below depends on every loaded file, so the stages it can list
+    -- are joined over all of them. Its own contribution is the one annotation statement and no
+    -- declarations, which a listing does not show.
+    stages <- liftAndCatchIO $ ctssStagePrgms provider
     resp <- liftAndCatchIO $ runCResT $ do
       rawPrgm <- case runParser pExpr "<annot>" annot of
         Left err     -> fail $ show $ errorBundlePretty err
@@ -157,15 +161,9 @@ docApiBase readonly ctss getProvider = do
       [(annotTprgm, _, _)] <- asCResT $ typeCheckToRes $ typecheckPrgms [(annotDesPrgm', [], map fst3 $ graphToNodes tprgmsTrace)]
       let joinedTprgms = graphFromEdges ((annotTprgm, annotPrgmName, annotDeps) : graphToNodes tprgms)
       let targetModes = evalAllTargetModes annotTprgm
-      maybeAnnots <- asCResT $ evalAnnots annotPrgmName joinedTprgms
+      maybeAnnots <- asCResT $ evalAnnots stages annotPrgmName joinedTprgms
       let annots' = H.fromList $ map (first (getMetaID . getExprMeta)) maybeAnnots
       return $ mapMetaRawPrgm (zip3MetaFun (interleaveMeta $ interleavePrgm annotTprgm) (interleaveMeta targetModes) (interleaveMeta annots')) rawPrgm'
-    maybeJson resp
-
-  get "/api/desugar" $ do
-    provider <- liftAndCatchIO getProvider
-    resp <- liftAndCatchIO $ runCResT $ do
-      ctssGetJoined ssfDes provider
     maybeJson resp
 
   get "/api/constrain" $ do
@@ -185,16 +183,6 @@ docApiBase readonly ctss getProvider = do
       prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
       (_, _, tr) <- ctssLookupReq ssfTPrgmWithTrace prgmName' provider
       return $ flipTraceConstrain $ filterTraceConstrain tr pnt
-    maybeJson resp
-
-  get "/api/typecheck" $ do
-    provider <- liftAndCatchIO getProvider
-    resp <- liftAndCatchIO $ runCResT $ getTPrgmJoined provider
-    maybeJson resp
-
-  get "/api/treebuild" $ do
-    provider <- liftAndCatchIO getProvider
-    resp <- liftAndCatchIO $ runCResT $ getTBPrgmJoined provider
     maybeJson resp
 
   get "/api/type" $ do

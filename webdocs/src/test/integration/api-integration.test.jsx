@@ -49,28 +49,10 @@ describe('Backend API contract', () => {
     expect(typeof toc[0][0]).toBe('string')
   })
 
-  it('/api/desugar returns Success with program data', async () => {
-    const data = await fetchApi('/api/desugar')
-    expect(data.tag).toBe('Success')
-    expect(data.contents).toHaveLength(2)
-
-    const [prgm] = data.contents
-    expect(prgm).toHaveProperty('prgmObjMap')
-    expect(typeof prgm.prgmObjMap).toBe('object')
-  })
-
-  it('/api/typecheck returns Success with typed program', async () => {
-    const data = await fetchApi('/api/typecheck')
-    expect(data.tag).toBe('Success')
-    expect(data.contents).toHaveLength(2)
-
-    const [prgm] = data.contents
-    expect(prgm).toHaveProperty('prgmObjMap')
-    expect(prgm).toHaveProperty('prgmCG')
-  })
-
-  it('/api/annot compiles #listProgram to a Show/ListProgram carrying the program', async () => {
-    const annot = '#listProgram(mode= /Catln/Doc/Typecheck)'
+  // The listProgram eval primitive is only reachable through the doc pipeline, so these are the
+  // only automated checks that a mode actually selects a different compiler stage.
+  async function listProgram(modeName) {
+    const annot = `#listProgram(mode= ${modeName})`
     const data = await fetchApi(`/api/annot?annot=${encodeURIComponent(annot)}`)
     expect(data.tag).toBe('Success')
 
@@ -83,26 +65,80 @@ describe('Backend API contract', () => {
     const val = statement.contents.contents[0].getMetaDat[2]
     expect(val.tag).toBe('TupleVal')
     expect(val.name).toBe('/Catln/Doc/Show/ListProgram')
+    // The mode travels with the value, which is what the page's stage selector reads.
+    expect(val.args['/mode'].name).toBe(modeName)
 
-    // The prgm field carries the same program shape /api/typecheck serves, as a JSON string.
     expect(val.args['/prgm'].tag).toBe('StrVal')
     const prgm = JSON.parse(val.args['/prgm'].contents)
     expect(prgm).toHaveProperty('prgmObjMap')
     expect(prgm).toHaveProperty('prgmCG')
+    return prgm
+  }
 
-    // The mode travels with the value, which is what the page's stage selector reads.
-    expect(val.args['/mode'].name).toBe('/Catln/Doc/Typecheck')
+  // Every {tag: ...} appearing anywhere under the object map.
+  function tagsIn(prgm) {
+    const tags = new Set()
+    const walk = (o) => {
+      if (Array.isArray(o)) return o.forEach(walk)
+      if (o && typeof o === 'object') {
+        if (typeof o.tag === 'string') tags.add(o.tag)
+        Object.values(o).forEach(walk)
+      }
+    }
+    walk(prgm.prgmObjMap)
+    return tags
+  }
+
+  // Whether any meta carries stage metadata. ParseMetaDat is (), which encodes as [].
+  function hasMetaDat(prgm) {
+    let found = false
+    const walk = (o) => {
+      if (found) return
+      if (Array.isArray(o)) return o.forEach(walk)
+      if (o && typeof o === 'object') {
+        if ('getMetaID' in o && o.getMetaDat !== null && !(Array.isArray(o.getMetaDat) && o.getMetaDat.length === 0)) {
+          found = true
+          return
+        }
+        Object.values(o).forEach(walk)
+      }
+    }
+    walk(prgm.prgmObjMap)
+    return found
+  }
+
+  it('/api/annot lists the typecheck stage for the Typecheck mode', async () => {
+    const prgm = await listProgram('/Catln/Doc/Typecheck')
+
+    // Typechecked expressions are still Exprs, but their metas now carry a reaches tree.
+    expect(tagsIn(prgm).has('TupleApply')).toBe(true)
+    expect(tagsIn(prgm).has('TCalls')).toBe(false)
+    expect(hasMetaDat(prgm)).toBe(true)
   })
 
-  it('/api/annot carries whichever ListProgramMode the annotation names', async () => {
-    const annot = '#listProgram(mode= /Catln/Doc/TreeBuild)'
-    const data = await fetchApi(`/api/annot?annot=${encodeURIComponent(annot)}`)
-    expect(data.tag).toBe('Success')
+  it('/api/annot lists the desugar stage for the Desugar mode', async () => {
+    const prgm = await listProgram('/Catln/Doc/Desugar')
 
-    const [, statements] = data.contents[0]
-    const val = statements[0][0].contents.contents[0].getMetaDat[2]
-    expect(val.args['/mode'].name).toBe('/Catln/Doc/TreeBuild')
+    // Same expression shape as the typecheck stage, but nothing has been inferred onto the metas.
+    expect(tagsIn(prgm).has('TupleApply')).toBe(true)
+    expect(tagsIn(prgm).has('TCalls')).toBe(false)
+    expect(hasMetaDat(prgm)).toBe(false)
   })
+
+  // TreeBuild is the expensive mode and needs more than the 15s default. It is the only request
+  // that forces evalBuildAll, and it carries the built stdlib as an escaped JSON string. Measured
+  // on a quiet dev machine against the id.ct doc root: 37MB, 9.0s on the first call and 6.1s once
+  // the build is cached, against 2.6s for Typecheck. This budget is that plus headroom.
+  const TREEBUILD_TIMEOUT = 60000
+
+  it('/api/annot lists the tree build stage for the TreeBuild mode', async () => {
+    const prgm = await listProgram('/Catln/Doc/TreeBuild')
+
+    // Tree building replaces Expr with TExpr and attaches the call trees.
+    const tags = tagsIn(prgm)
+    expect(tags.has('TTupleApply')).toBe(true)
+    expect(tags.has('TCalls')).toBe(true)
+  }, TREEBUILD_TIMEOUT)
 
   it('/api/page returns Success with prgm data and source text', async () => {
     // First get the TOC to find a valid page name
@@ -130,12 +166,6 @@ describe('Backend API contract', () => {
     expect(maybeSource === null || typeof maybeSource === 'string').toBe(true)
   })
 
-  it('/api/treebuild returns Success', async () => {
-    const data = await fetchApi('/api/treebuild')
-    expect(data.tag).toBe('Success')
-    expect(data.contents).toHaveLength(2)
-  })
-
   it('/api/config reports a writable server', async () => {
     const data = await fetchApi('/api/config')
     expect(data.tag).toBe('Success')
@@ -144,7 +174,7 @@ describe('Backend API contract', () => {
 
   it('CRes response structure is consistent', async () => {
     // Verify all endpoints follow the same {tag, contents} pattern
-    const endpoints = ['/api/toc', '/api/desugar', '/api/typecheck']
+    const endpoints = ['/api/toc', '/api/config']
 
     for (const endpoint of endpoints) {
       const data = await fetchApi(endpoint)

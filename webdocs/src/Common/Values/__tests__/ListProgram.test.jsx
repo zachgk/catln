@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import ListProgram from '../ListProgram'
@@ -15,95 +15,50 @@ function Providers({ children }) {
   )
 }
 
+// The args of a compiled Show/ListProgram: the mode the annotation named, and the program the
+// compiler listed at that mode as a JSON string.
+function listing(modeName) {
+  return {
+    '/mode': { tag: 'TupleVal', name: modeName, args: {} },
+    '/prgm': { tag: 'StrVal', contents: JSON.stringify(typecheckResponse.contents[0]) },
+  }
+}
+
 describe('ListProgram', () => {
   beforeEach(() => {
-    global.fetch = vi.fn((url) => {
-      return Promise.resolve({
-        status: 200,
-        json: () => Promise.resolve(typecheckResponse),
-      })
-    })
+    global.fetch = vi.fn(() => Promise.reject(new Error('ListProgram must not fetch')))
   })
 
-  it('default mode fetches /api/typecheck', async () => {
-    render(<Providers><ListProgram /></Providers>)
+  it.each([
+    ['/Catln/Doc/Desugar', 'No Typecheck'],
+    ['/Catln/Doc/Typecheck', 'List'],
+    ['/Catln/Doc/TreeBuild', 'TreeBuild'],
+  ])('renders the program carried for %s without fetching', (modeName, label) => {
+    render(<Providers><ListProgram {...listing(modeName)} update={vi.fn()} /></Providers>)
 
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/typecheck')
-    })
+    expect(screen.getByLabelText(label)).toBeChecked()
+    expect(screen.getByText('Types')).toBeInTheDocument()
+    expect(global.fetch).not.toHaveBeenCalled()
   })
 
-  it('selecting "No Typecheck" radio fetches /api/desugar', async () => {
-    render(<Providers><ListProgram /></Providers>)
+  it('toggling a radio asks for a recompile instead of moving local state', () => {
+    const update = vi.fn()
+    render(<Providers><ListProgram {...listing('/Catln/Doc/Typecheck')} update={update} /></Providers>)
 
-    const noTypecheckRadio = screen.getByLabelText('No Typecheck')
-    fireEvent.click(noTypecheckRadio)
+    fireEvent.click(screen.getByLabelText('TreeBuild'))
 
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/desugar')
-    })
+    expect(update).toHaveBeenCalledWith('#listProgram(mode= /Catln/Doc/TreeBuild)')
+    // The mode comes from the annotation, so nothing moves until the recompile arrives.
+    expect(screen.getByLabelText('List')).toBeChecked()
   })
 
-  it('selecting "TreeBuild" radio fetches /api/treebuild', async () => {
-    render(<Providers><ListProgram /></Providers>)
+  it('disables the radios when there is no update to make', () => {
+    render(<Providers><ListProgram {...listing('/Catln/Doc/Typecheck')} /></Providers>)
 
-    const treeBuildRadio = screen.getByLabelText('TreeBuild')
-    fireEvent.click(treeBuildRadio)
-
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/treebuild')
-    })
-  })
-
-  describe('with a mode named by the compiled Show/ListProgram', () => {
-    const modeVal = (name) => ({ tag: 'TupleVal', name, args: {} })
-
-    it('shows the annotation mode rather than a local default', async () => {
-      render(<Providers><ListProgram {...{ '/mode': modeVal('/Catln/Doc/TreeBuild') }} /></Providers>)
-
-      expect(screen.getByLabelText('TreeBuild')).toBeChecked()
-      await waitFor(() => {
-        expect(global.fetch).toHaveBeenCalledWith('/api/treebuild')
-      })
-    })
-
-    it('toggling a radio updates the annotation instead of local state', async () => {
-      const update = vi.fn()
-      render(
-        <Providers>
-          <ListProgram {...{ '/mode': modeVal('/Catln/Doc/Typecheck') }} update={update} />
-        </Providers>
-      )
-
-      fireEvent.click(screen.getByLabelText('TreeBuild'))
-
-      expect(update).toHaveBeenCalledWith('#listProgram(mode= /Catln/Doc/TreeBuild)')
-      // The mode comes from the annotation, so nothing moves until the recompile arrives.
-      expect(screen.getByLabelText('List')).toBeChecked()
-    })
-  })
-
-  describe('with a program carried by the compiled Show/ListProgram', () => {
-    // The value's prgm arg holds the same program /api/typecheck returns, as a JSON string.
-    const carried = { tag: 'StrVal', contents: JSON.stringify(typecheckResponse.contents[0]) }
-
-    it('renders the carried program without fetching', async () => {
-      render(<Providers><ListProgram {...{ '/prgm': carried }} /></Providers>)
-
-      await waitFor(() => {
-        expect(screen.getByText('Types')).toBeInTheDocument()
-      })
-      expect(global.fetch).not.toHaveBeenCalled()
-    })
-
-    it('still fetches for the pipeline-stage modes it cannot carry', async () => {
-      render(<Providers><ListProgram {...{ '/prgm': carried }} /></Providers>)
-
-      fireEvent.click(screen.getByLabelText('TreeBuild'))
-
-      await waitFor(() => {
-        expect(global.fetch).toHaveBeenCalledWith('/api/treebuild')
-      })
-    })
+    // Still shows which mode the source named, but the source cannot be rewritten from here.
+    expect(screen.getByLabelText('List')).toBeChecked()
+    for (const label of ['No Typecheck', 'List', 'TreeBuild']) {
+      expect(screen.getByLabelText(label)).toBeDisabled()
+    }
   })
 })

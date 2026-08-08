@@ -305,19 +305,29 @@ evalExpr (TCalls _ b callTree) = do
   evalCallTree b' callTree
 
 evalBaseEnv :: EPrgm -> Env
-evalBaseEnv prgm@Prgm{prgmObjMap} = Env {
+evalBaseEnv = evalBaseEnvStages stagePrgmsUnavailable
+
+-- | An 'Env' that can also report on the other pipeline stages of the program. Callers that ran
+-- those stages and kept them pass them here; 'evalBaseEnv' is the same thing for callers that did
+-- not, and reports them as unavailable rather than substituting the stage it holds.
+evalBaseEnvStages :: StagePrgms -> EPrgm -> Env
+evalBaseEnvStages stagePrgms prgm@Prgm{prgmObjMap} = Env {
         evObjMap = prgmObjMap,
         evTypeEnv = (mkTypeEnv prgm){teArgModeProjection=True},
         evArgs = H.empty,
         evExEnv = H.empty,
         evTbEnv = buildTBEnv primEnv prgm,
+        evStagePrgms = stagePrgms,
         evCallStack = [],
         evCoverage = H.empty,
         evTreebugOpen = [],
         evTreebugClosed = []
                 }
 
-prgmFromGraphData :: FileImport -> EPrgmGraphData -> CRes EPrgm
+-- | Flattens the program reachable from a file into one. It is polymorphic in the program because
+-- every pipeline stage holds one, and scoping a stage to a file has to mean the same thing at each:
+-- that file plus everything it imports.
+prgmFromGraphData :: (Monoid p) => FileImport -> GraphData p FileImport -> CRes p
 prgmFromGraphData prgmName (prgmGraph, nodeFromVertex, vertexFromKey) = case vertexFromKey prgmName of
   Just v -> return $ mconcat $ map (fst3 . nodeFromVertex) $ reachable prgmGraph v
   Nothing -> fail $ printf "Could not find prgm %s" (show prgmName)
@@ -406,10 +416,10 @@ evalDShowAnnot env@Env{evTbEnv, evTypeEnv} os annot0
     destType = classPartial $ partialVal "/Catln/Doc/DShow"
     destM = emptyMetaT destType
 
-evalAnnots :: FileImport -> EPrgmGraphData -> CRes [(EExpr, Val)]
-evalAnnots prgmName prgmGraphData = do
+evalAnnots :: StagePrgms -> FileImport -> EPrgmGraphData -> CRes [(EExpr, Val)]
+evalAnnots stagePrgms prgmName prgmGraphData = do
   prgm@(Prgm objMap _ globalAnnots) <- prgmFromGraphData prgmName prgmGraphData
-  let env = evalBaseEnv prgm
+  let env = evalBaseEnvStages stagePrgms prgm
   globalAnnots' <- buildAnnots env [] globalAnnots
   objMapAnnots' <- forM (flatObjectMap objMap) $ \oa -> do
     -- TODO Make this build annots within arguments
