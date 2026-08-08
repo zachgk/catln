@@ -13,7 +13,7 @@ import {initVimMode, VimMode} from 'monaco-vim';
 import {useNavigate} from 'react-router-dom';
 
 import {rawExprMeta, RawExpr, RawObjArr} from './Common/Syntax';
-import {useQuery, useApi, Loading, KeyWord, ReachesTree, ConfigContext, PrgmNameContext} from './Common/Common';
+import {useQuery, useApi, Loading, KeyWord, ReachesTree, ConfigContext, PrgmNameContext, annotLink} from './Common/Common';
 import {Value} from './Common/Value';
 
 const DEBUG_NO_EVAL = false;
@@ -398,7 +398,7 @@ function Statement(props) {
     if (md[1] && md[1].tag !== "NoEval") {
       return (
         <div>
-          <PlayButton prgmName={prgmName} fun={encodeURIComponent(md[1].contents)}/>
+          <PlayButton prgmName={prgmName} fun={md[1].contents}/>
           <RawObjArr roa={statement.contents} />
         </div>
       );
@@ -463,7 +463,7 @@ function PlayButton(props) {
         open={open}
         onClose={handleClose}
       >
-        <MenuItem onClick={linkClose(`/debug/${encodeURIComponent(prgmName)}/${fun}`)}>Debug</MenuItem>
+        <MenuItem onClick={linkClose(annotLink(`#debugger(fun= "${fun}")`, prgmName))}>Debug</MenuItem>
       </Menu>
     </span>
   );

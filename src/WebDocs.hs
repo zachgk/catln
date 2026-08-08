@@ -152,15 +152,6 @@ docApiBase readonly ctss getProvider = do
       return $ mapMetaRawPrgm (zip3MetaFun (interleaveMeta $ interleavePrgm annotTprgm) (interleaveMeta targetModes) (interleaveMeta annots')) rawPrgm'
     maybeJson resp
 
-  get "/api/treebug" $ do
-    provider <- liftAndCatchIO getProvider
-    prgmName <- param "prgmName"
-    fun <- param "function" `rescue` (\_ -> return "main")
-    resp <- liftAndCatchIO $ runCResT $ do
-      prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
-      getTreebug provider prgmName' fun
-    maybeJson resp
-
 
 docApi :: Bool -> Bool -> [String] -> IO ()
 docApi cached readonly baseFileNames = do

@@ -11,7 +11,6 @@ import {
   createBrowserRouter,
   createRoutesFromElements,
   Navigate,
-  useParams,
   Link,
   Route,
   RouterProvider,
@@ -19,7 +18,6 @@ import {
 } from "react-router-dom";
 
 import {useApi, TocContext, ConfigContext} from './Common/Common';
-import {Value} from './Common/Value';
 import Docs from './Docs';
 import {AnnotPage} from './DocsPage';
 import {AppBarSearch} from './Common/Values/Search';
@@ -64,16 +62,6 @@ function Header() {
   );
 }
 
-function ValuePage(props) {
-  const {name} = props;
-  let params = useParams();
-  let args = {};
-  for(var paramName in params) {
-    args[paramName] = decodeURIComponent(params[paramName]);
-  }
-  return <Value data={{tag: "TupleVal", name: name, args: args}}/>;
-}
-
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<Root />}>
@@ -82,7 +70,6 @@ const router = createBrowserRouter(
       <Route path="docs/:prgmName" element={<Docs />} />
       <Route path="annot" element={<AnnotPage />} />
       <Route path="list" element={<AnnotPage annot={"#listProgram(mode= /Catln/Doc/Typecheck)"} />} />
-      <Route path="debug/:prgmName/:fun" element={<ValuePage name={"/Catln/Doc/Show/Debug"} />} />
     </Route>
   )
 );

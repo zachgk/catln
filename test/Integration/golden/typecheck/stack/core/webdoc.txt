@@ -43,7 +43,12 @@ Prgm
                             , /trace=/Data/String
                             ) = /Catln/Doc/Show/TypeInferPnt
                             ( Value /trace -> /Data/String = /dshow./Catln/Doc/typeInferPnt( Value /pnt -> TVArg /pnt = Value /pnt )( Value /annot -> /s = Value /s ) )( Value /pnt -> TVArg /pnt = Value /pnt )
-                        , /Catln/Doc/dshow( Value /s -> /Catln/Doc/#debug = Value /Catln/Doc/#debug ) -> /Catln/Doc/Show/Debug = Value /Catln/Doc/Show/Debug
+                        , /Catln/Doc/dshow
+                            ( Value /s -> /Catln/Doc/#debugger( /fun=/Data/String ) = /Catln/Doc/#debugger( Value /fun -> /Data/String ) ) -> /Catln/Doc/Show/Debugger
+                            ( /fun=/Data/String
+                            , /run=/Data/String
+                            ) = /Catln/Doc/Show/Debugger
+                            ( Value /run -> /Data/String = /dshow./Catln/Doc/debugger( Value /fun -> TVArg /fun = Value /fun )( Value /annot -> /s = Value /s ) )( Value /fun -> TVArg /fun = Value /fun )
                         ]
                     }
                 )
@@ -106,10 +111,11 @@ Prgm
                     }
                 )
             ,
-                ( "/Catln/Doc/Show/Debug"
+                ( "/dshow./Catln/Doc/debugger"
                 , ObjectMapItem
-                    { omiDecls = [ Value /Catln/Doc/Show/Debug ]
-                    , omiRuntimeDecls = []
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /dshow./Catln/Doc/debugger( Value /fun )( Value /annot ) -> /Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -118,6 +124,16 @@ Prgm
                 ( "/Catln/Doc/#typeInfer"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/Doc/#typeInfer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Doc/#debugger"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Doc/#debugger( Value /fun -> /Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -134,19 +150,20 @@ Prgm
                     }
                 )
             ,
-                ( "/Catln/Doc/#listProgram"
+                ( "/Catln/Doc/Show/Debugger"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/Doc/#listProgram( Value /mode -> ∀/Catln/Doc/ListProgramMode ) ]
+                        [ /Catln/Doc/Show/Debugger( Value /run -> /Data/String )( Value /fun -> /Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
                 )
             ,
-                ( "/Catln/Doc/#debug"
+                ( "/Catln/Doc/#listProgram"
                 , ObjectMapItem
-                    { omiDecls = [ Value /Catln/Doc/#debug ]
+                    { omiDecls =
+                        [ /Catln/Doc/#listProgram( Value /mode -> ∀/Catln/Doc/ListProgramMode ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -233,6 +250,7 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
         , CGClass
             ( False
             , /Catln/Doc/DShow
@@ -245,7 +263,7 @@ Prgm
                 , /Catln/Doc/Show/TypePage..
                 , /Catln/Doc/Show/TypeInfer..
                 , /Catln/Doc/Show/TypeInferPnt..
-                , /Catln/Doc/Show/Debug..
+                , /Catln/Doc/Show/Debugger..
                 ]
             , Just "Represents objects which can be shown in the webdocs.   Every [/Data/ToString] value is displayable, so [ToString] is a subset of [DShow]: the
               webdocs render such a value through its [/Data/toString]. This is what lets a `> value`

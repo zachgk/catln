@@ -110,10 +110,21 @@ module(Catln/Doc)
 
     Show/TypeInferPnt(trace= typeInferPnt(annot= s), pnt= pnt)
 
-  annot(#debug)
+  annot(#debugger(fun -> String))
 
-  data(Show/Debug)
+  data(Show/Debugger(run -> String, fun -> String))
+    # [Show/Debugger] shows a run of one of the program's functions: what it evaluated, what it
+      printed, and what it exited with. It carries that run in [run], so the webdocs render the page
+      from the compiled value rather than asking the compiler for it over a separate route. The
+      [fun] it ran travels with it so the page can title itself.
 
-  every(Show/Debug.., isa= [/Catln/Doc/DShow])
+  every(Show/Debugger.., isa= [/Catln/Doc/DShow])
 
-  dshow(s= #debug)= Show/Debug
+  dshow(s= #debugger(fun)) =
+    debugger(annot) -> String
+      # [debugger] runs [fun] in the program being evaluated and renders the run as JSON. The
+        program's output is captured rather than printed, so showing a run inside a doc server does
+        not write the run's output to the server's own stdout.
+      #runtime("debugger")
+
+    Show/Debugger(run= debugger(annot= s), fun= fun)

@@ -421,10 +421,18 @@ function PClassName(props) {
   return <PartialName name={{tag: "PClassName", contents: props.name}}/>;
 }
 
+// Links to a page rendered by evaluating an annotation, rather than to a route that fetches for
+// itself. Naming a page scopes the evaluation to it, which is how an annotation that reports on
+// "the program it is in" is pointed at a particular one.
+function annotLink(annot, prgmName) {
+  const scope = prgmName ? `&prgmName=${encodeURIComponent(prgmName)}` : "";
+  return `/annot?annot=${encodeURIComponent(annot)}${scope}`;
+}
+
 // A type or class page is a #type annotation, so linking to one means asking the compiler to
 // evaluate that annotation rather than routing to a page that fetches for itself.
 function typeAnnotLink(name) {
-  return `/annot?annot=${encodeURIComponent(`#type(name= "${name}")`)}`;
+  return annotLink(`#type(name= "${name}")`);
 }
 
 function PartialName(props) {
@@ -511,6 +519,7 @@ export {
   TocContext,
   ConfigContext,
   PrgmNameContext,
+  annotLink,
   tagJoin,
   useQuery,
   useApi,

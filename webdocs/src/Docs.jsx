@@ -17,7 +17,7 @@ import {
   useNavigate
 } from 'react-router-dom';
 
-import {TocContext, Loading} from './Common/Common';
+import {TocContext, Loading, annotLink} from './Common/Common';
 import DocsPage from './DocsPage';
 
 const useStyles = makeStyles({
@@ -157,7 +157,7 @@ function TableOfContentsNodes(props) {
           <Link to={`/docs/${encodeURIComponent(tree.newFilePath)}`} className={classes.tocFileName}>
             {tree.key}
           </Link>
-          <FileMenu prgmName={encodeURIComponent(tree.newFilePath)}/>
+          <FileMenu prgmName={tree.newFilePath}/>
         </div>
       );
       return (
@@ -200,7 +200,7 @@ function FileMenu(props) {
         open={open}
         onClose={handleClose}
       >
-        <MenuItem onClick={linkClose(`/annot?annot=${encodeURIComponent("#typeInfer")}&prgmName=${prgmName}`)}>Type Inference</MenuItem>
+        <MenuItem onClick={linkClose(annotLink("#typeInfer", prgmName))}>Type Inference</MenuItem>
       </Menu>
     </span>
   );

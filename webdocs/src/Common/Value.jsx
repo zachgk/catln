@@ -8,7 +8,7 @@ import path from 'pathe';
 import {KeyWord, PTypeName, tagJoin, TocContext} from './Common';
 import ListProgram from './Values/ListProgram';
 import TypeInfer, {TypeInferPnt} from './Values/TypeInfer';
-import Debug from './Values/Debug';
+import Debugger from './Values/Debugger';
 import TypePage from './Values/Type';
 
 // A Value may be given an update function by whatever rendered it. Calling update(src) asks for
@@ -39,8 +39,8 @@ function Value(props) {
       return <TypeInfer {...val.args} />;
     case "/Catln/Doc/Show/TypeInferPnt":
       return <TypeInferPnt {...val.args} />;
-    case "/Catln/Doc/Show/Debug":
-      return <Debug {...val.args} update={update} />;
+    case "/Catln/Doc/Show/Debugger":
+      return <Debugger {...val.args} />;
     default:
       let showArgs = "";
       if(Object.keys(val.args).length > 0) {
@@ -55,7 +55,11 @@ function Value(props) {
 
       return <span>{val.name}{showArgs}</span>;
     }
+  // A run made for a debugger threads a mock IO handle so its output is captured rather than
+  // printed. That is a fact about who ran the program, not about the program, so the value the
+  // evaluation tree shows is the one the program sees: its IO.
   case "IOVal":
+  case "MockIOVal":
     return <span>IOVal</span>;
   case "NoVal":
     return <span>NoVal</span>;

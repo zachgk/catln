@@ -37,6 +37,7 @@ import           Semantics
 import           Semantics.TypeGraph (ReachesEnv (ReachesEnv),
                                       reachesHasCutSubtypeOf, reachesPartials,
                                       reachesTo)
+import           System.IO.Unsafe    (unsafePerformIO)
 import           Text.Printf
 import           TreeBuild
 import           Utils
@@ -430,11 +431,16 @@ evalAnnots stagePrgms prgmName prgmGraphData = do
       results <- forM annots $ \annot -> fmap (annot,) <$> evalDShowAnnot env os annot
       return $ catMaybes results
 
-evalRun :: String -> FileImport -> EPrgmGraphData -> CResT IO (Integer, EvalResult)
-evalRun function prgmName prgmGraphData = do
-  prgm <- asCResT $ prgmFromGraphData prgmName prgmGraphData
-  targetMode <- asCResT $ evalTargetMode function prgmName prgmGraphData
-  input <- case targetMode of
+-- | Builds a function of a program as a run and evaluates it, threading @ioVal@ as its @/io@ handle.
+-- That handle is the only difference between a real run and a mocked one: an 'IOVal' accumulates
+-- writes to stdout where a 'MockIOVal' accumulates writes to a buffer.
+--
+-- Everything here is pure. The program's accumulated IO action is returned unperformed alongside its
+-- exit code, so it is the caller that decides whether the run's effects happen at all — which is what
+-- lets a caller wanting only the evaluation tree take it without them.
+evalRunPrgm :: Val -> String -> EPrgm -> CRes (Integer, IO (), EvalResult)
+evalRunPrgm ioVal function prgm = do
+  input <- case evalPrgmTargetMode function prgm of
         EvalRunWithContext function' ->
           -- Case for eval Context(value=main, io=IO)
 
@@ -442,15 +448,49 @@ evalRun function prgmName prgmGraphData = do
         EvalRun function' ->
           -- Case for eval main
           return $ eVal function'
-        _ -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval could not find a function %s to run" (show function)]
+        _ -> CErr [MkCNote $ GenCErr Nothing $ printf "Eval could not find a function %s to run" (show function)]
   let src = getExprPartialType input
   let dest = ioType
-  (expr, env) <- asCResT $ evalBuildPrgm input src dest prgm
-  let env2 = evalSetArgs (H.singleton "/io" (IOVal 0 $ pure ())) env
-  (res, env') <- asCResT $ runStateT (evalExpr expr) env2
+  (expr, env) <- evalBuildPrgm input src dest prgm
+  let env2 = evalSetArgs (H.singleton "/io" ioVal) env
+  (res, env') <- runStateT (evalExpr expr) env2
   case res of
-    (IOVal r io) -> lift (io >> pure (r, evalResult env'))
-    _ -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval did not return an instance of IO \n\tInstead returned %s \n\t With expr %s" (show res) (show expr)]
+    (IOVal r io)       -> return (r, io, evalResult env')
+    (MockIOVal r io _) -> return (r, io, evalResult env')
+    _ -> CErr [MkCNote $ GenCErr Nothing $ printf "Eval did not return an instance of IO \n\tInstead returned %s \n\t With expr %s" (show res) (show expr)]
+
+evalRun :: String -> FileImport -> EPrgmGraphData -> CResT IO (Integer, EvalResult)
+evalRun function prgmName prgmGraphData = do
+  prgm <- asCResT $ prgmFromGraphData prgmName prgmGraphData
+  (r, io, res) <- asCResT $ evalRunPrgm (IOVal 0 $ pure ()) function prgm
+  lift (io >> pure (r, res))
+
+-- | Like 'evalRun' but captures the program's output into the given 'MockIO' buffer instead of
+-- writing it to real stdout.
+evalRunMock :: MockIO -> String -> FileImport -> EPrgmGraphData -> CResT IO (Integer, EvalResult)
+evalRunMock mockIO function prgmName prgmGraphData = do
+  prgm <- asCResT $ prgmFromGraphData prgmName prgmGraphData
+  (r, io, res) <- asCResT $ evalRunPrgm (MockIOVal 0 (pure ()) (mockIORef mockIO)) function prgm
+  lift (io >> pure (r, res))
+
+-- | Runs a function of a program for a debugger reporting on it: its exit code, its captured output,
+-- and the tree of what it evaluated.
+--
+-- The 'unsafePerformIO' is what lets a pure caller ask for this at all, and the mock is what makes
+-- that defensible: every effect is a 'modifyIORef' on a handle created in this call and dropped when
+-- it returns, so nothing outside can observe that the run happened. The same code over 'evalRun'
+-- would write the debugged program's output to the enclosing process's stdout and could block it
+-- forever in 'Eval.Runtime.ioInput' — effects a pure caller cannot be asked to tolerate.
+-- 'Eval.Runtime.ioInput' makes the same trade for the same reason.
+evalDebugPrgm :: String -> EPrgm -> CRes DebugRun
+evalDebugPrgm function prgm = unsafePerformIO $ do
+  mockIO <- newMockIO
+  case evalRunPrgm (MockIOVal 0 (pure ()) (mockIORef mockIO)) function prgm of
+    CErr notes -> return $ CErr notes
+    CRes notes (code, io, res) -> do
+      io
+      out <- getMockIOOutput mockIO
+      return $ CRes notes (DebugRun code out res)
 
 evalBuild :: String -> FileImport -> EPrgmGraphData -> CResT IO (Val, EvalResult)
 evalBuild function prgmName prgmGraphData = do

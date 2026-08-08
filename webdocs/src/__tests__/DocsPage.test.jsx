@@ -1,6 +1,6 @@
 import React from 'react'
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { TocContext, ConfigContext } from '../Common/Common'
 import { initVimMode, VimMode } from 'monaco-vim'
@@ -382,6 +382,40 @@ describe('DocsPage', () => {
       method: 'POST',
       body: 'main = 43\n',
     }))
+  })
+})
+
+describe('PlayButton', () => {
+  // The page fixture's one declaration is `main = 42`, whose meta carries an Eval mode, which is
+  // what makes the play button render at all.
+  const PAGE = '/test/main.ct'
+
+  function LocationDisplay() {
+    const location = useLocation()
+    return <div data-testid="location">{location.pathname + location.search}</div>
+  }
+
+  it('debugs the declaration as an annotation scoped to the page', async () => {
+    global.fetch = mockFetch()
+
+    render(
+      <Providers>
+        <DocsPage prgmName={PAGE} />
+        <LocationDisplay />
+      </Providers>
+    )
+
+    await waitFor(() => {
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByTestId('PlayArrowIcon'))
+    fireEvent.click(screen.getByText('Debug'))
+
+    // The only way to the debugger is this link, and what it names is an annotation evaluated
+    // against this page -- not a route that fetches a run for itself.
+    expect(decodeURIComponent(screen.getByTestId('location').textContent))
+      .toBe(`/annot?annot=#debugger(fun= "main")&prgmName=${PAGE}`)
   })
 })
 

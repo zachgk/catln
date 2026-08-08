@@ -245,6 +245,30 @@ describe('Backend API contract', () => {
     expect(Object.keys(trace.tcInitial)).toEqual([String(pnt)])
   })
 
+  it('/api/annot runs a function of the page #debugger names', async () => {
+    const page = await idPageName()
+    const val = await annotValue('#debugger(fun= "/main")', page)
+    expect(val.name).toBe('/Catln/Doc/Show/Debugger')
+    // The function travels with the value, which is what the page titles itself from.
+    expect(val.args['/fun'].contents).toBe('/main')
+
+    // id.ct is `main{io -> IO}= io.exit(val= id(x= 0))`, so it really is run: it exits 0 and its
+    // evaluation tree has the arrows it entered. Printing nothing, it captures no output -- which is
+    // the same buffer a printing program's output would land in instead of this server's stdout.
+    const run = JSON.parse(val.args['/run'].contents)
+    expect(run.drExit).toBe(0)
+    expect(run.drOutput).toBe('')
+    expect(run.drResult.erTreebug.length).toBeGreaterThan(0)
+  })
+
+  it('/api/annot refuses #debugger with no page to be scoped to', async () => {
+    // A run needs one program with one entry point; every loaded page joined has as many mains as
+    // it has pages, so there is nothing to fall back to.
+    const data = await annotValue('#debugger(fun= "/main")')
+    expect(data.tag).toBe('ResFail')
+    expect(JSON.stringify(data.contents)).toContain('not scoped to a single page')
+  })
+
   it('/api/page returns Success with prgm data and source text', async () => {
     // First get the TOC to find a valid page name
     const tocData = await fetchApi('/api/toc')

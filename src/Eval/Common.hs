@@ -66,6 +66,13 @@ data StagePrgms = StagePrgms {
   -- colliding point numbers and mean nothing merged together. An evaluation that is not scoped to
   -- one page therefore has no type inference to report, rather than an amalgamated one.
   , spTypeInfer :: CRes (VPrgm, TraceConstrain)
+  -- | Runs one of the program's functions, for a debugger reporting on what it evaluated. It is a
+  -- function rather than a value because which function to run is the annotation's argument, and it
+  -- is supplied from outside for the same reason the stages above are: an evaluation cannot run the
+  -- program it is itself part of, since the evaluator is downstream of the primitives that would
+  -- have to call it. Like 'spTypeInfer' it is never joined across pages — a run needs one program
+  -- with one entry point, and the union of every loaded page has as many @main@s as it has pages.
+  , spDebugRun  :: String -> CRes DebugRun
   }
 
 -- | The stage programs for an evaluation whose caller did not supply any. Asking for one is then an
@@ -73,7 +80,7 @@ data StagePrgms = StagePrgms {
 -- no upstream artifacts to report on cannot answer, and reporting the wrong stage would be worse
 -- than failing.
 stagePrgmsUnavailable :: StagePrgms
-stagePrgmsUnavailable = StagePrgms unavailable unavailable unavailable
+stagePrgmsUnavailable = StagePrgms unavailable unavailable unavailable (const unavailable)
   where
     unavailable :: CRes a
     unavailable = CErr [MkCNote $ GenCErr Nothing "This evaluation was not given the other pipeline stages of its program"]
@@ -123,6 +130,32 @@ data Env = Env { evObjMap        :: EObjectMap
 data EvalResult = EvalResult { erCoverage :: H.HashMap EObjArr Int
                              , erTreebug  :: [EvalTreebugClosed]
                              } deriving (Eq, Generic, ToJSON)
+
+-- | One debugger run of a program: what it exited with, what it printed, and the tree of what it
+-- evaluated. The output is captured through a 'MockIO' rather than written, so running a program to
+-- report on it does not print that program's output to the reporting process's own stdout.
+data DebugRun = DebugRun { drExit   :: Integer
+                         , drOutput :: String
+                         , drResult :: EvalResult
+                         } deriving (Eq, Generic, ToJSON)
+
+-- | A mock IO handle that captures printed lines in an internal buffer instead of writing to real
+-- stdout. It lives beside 'MockIOVal', the value that carries the same buffer through an evaluation.
+-- Create with 'newMockIO', pass to 'Eval.evalRunMock', then read captured output with
+-- 'getMockIOOutput'.
+newtype MockIO = MockIO (IORef [String])
+
+newMockIO :: IO MockIO
+newMockIO = MockIO <$> newIORef []
+
+-- | Returns all lines printed to the MockIO, joined with newlines
+-- (equivalent to what would have appeared on stdout).
+getMockIOOutput :: MockIO -> IO String
+getMockIOOutput (MockIO ref) = unlines . reverse <$> readIORef ref
+
+-- | The buffer a 'MockIO' captures into, for seeding an evaluation's 'MockIOVal'.
+mockIORef :: MockIO -> IORef [String]
+mockIORef (MockIO ref) = ref
 
 data Val
   = IntVal Integer

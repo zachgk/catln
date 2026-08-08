@@ -34,7 +34,7 @@ import           Utils
 
 -- | The primitives backing the @Catln/Doc@ display annotations.
 webDocsPrims :: [EPrim]
-webDocsPrims = [listProgram, filterProgram, typeInfer, typeInferPnt]
+webDocsPrims = [listProgram, filterProgram, typeInfer, typeInferPnt, debugger]
 
 -- | The argument of @/Catln/Doc/listProgram@ naming which stage to list, and the members of the
 -- @ListProgramMode@ enum it takes. @stack\/core\/webdoc.ct@ is the source of truth for these; a
@@ -126,6 +126,28 @@ typeInferPnt = EEnvPrim "typeInferPnt" prim
       (CRes _ (_, trace), Just (IntVal pnt)) -> Right $ encodeJson $ flipTraceConstrain $ filterTraceConstrain trace (fromInteger pnt)
       (_, Just v) -> Left $ printf "typeInferPnt was given %s, which is not an Integer point" (show v)
       (_, Nothing) -> Left $ printf "typeInferPnt has no %s argument, only %s" typeInferPntArg (show $ sort $ H.keys args)
+
+-- | The argument of @/Catln/Doc/debugger@ naming which function to run.
+debuggerFunArg :: String
+debuggerFunArg = "/fun"
+
+-- | Backs @/Catln/Doc/debugger@, the data carried by a @Show/Debugger@ page. It runs a function of
+-- the program being evaluated and renders that run as JSON: what it exited with, what it printed,
+-- and the tree of what it evaluated.
+--
+-- Unlike the prims above this one does not read an artifact, it asks for one to be produced, so it
+-- cannot compute its own answer: the evaluator is downstream of this module (@Eval@ imports
+-- @Eval.Runtime@ imports this), and reaching back up to it would be a module cycle. The run therefore
+-- arrives as a function on 'StagePrgms', supplied by whoever is above both.
+debugger :: EPrim
+debugger = EEnvPrim "debugger" prim
+  where
+    prim Env{evStagePrgms=StagePrgms{spDebugRun}} args = case H.lookup debuggerFunArg args of
+      Just (StrVal fun) -> case spDebugRun fun of
+        CRes _ run -> Right $ encodeJson run
+        CErr notes -> Left $ prettyCNotes notes
+      Just v -> Left $ printf "debugger was given %s, which is not a String function name" (show v)
+      Nothing -> Left $ printf "debugger has no %s argument, only %s" debuggerFunArg (show $ sort $ H.keys args)
 
 encodeJson :: (ToJSON p) => p -> Val
 encodeJson = StrVal . TL.unpack . encodeToLazyText

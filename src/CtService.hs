@@ -23,12 +23,11 @@ import qualified Data.HashSet            as S
 import           Data.List               (partition)
 import           Data.Maybe
 import           Eval                    (evalAnnots, evalBuild, evalBuildAll,
-                                          evalRun, prgmFromGraphData)
-import           Eval.Common             (EvalMetaDat, EvalResult,
-                                          StagePrgms (..), TExpr,
-                                          Val (StrVal, TupleVal))
-import           Eval.Testing            (MockIO, evalPrints, evalRunMock,
-                                          evalTest)
+                                          evalDebugPrgm, evalRun, evalRunMock,
+                                          prgmFromGraphData)
+import           Eval.Common             (EvalMetaDat, MockIO, StagePrgms (..),
+                                          TExpr, Val (StrVal, TupleVal))
+import           Eval.Testing            (evalPrints, evalTest)
 import           Semantics               (CTSSConfig)
 import           Semantics.Prgm
 import           Syntax.Ct.Desugarf      (desFinalPasses, desPrgm, validPrgm)
@@ -233,9 +232,11 @@ buildSCCPipeline ctssData sccNamesSet sccNodes pages = do
       -- never reads a stage must not pay to build it.
       -- The type inference comes straight from step 5 rather than being reassembled: it is that
       -- page's own typecheck result, which is the only scope where its point numbers mean anything.
+      -- The debug runner is scoped the same way, so a #debugger written in a file debugs that file.
       let stages name typeInferred = StagePrgms (prgmFromGraphData name desGraph)
                                                 (tbprgmGraphRes >>= prgmFromGraphData name)
                                                 typeInferred
+                                                (\fun -> evalDebugPrgm fun =<< prgmFromGraphData name tprgmGraph)
       let annotsMap = H.fromList [(name, evalAnnots (stages name (CRes tcNotes (v, t))) name tprgmGraph)
                                  | ((_, v, t), (name, _)) <- zip tcResults namesAndDeps]
 
@@ -344,11 +345,6 @@ getRawPrgmFrom prgmName (CTSS ssmv) = do
   CTSSDat{ctssData} <- lift $ readMVar ssmv
   asCResT $ mapMGraph ssfRaw (graphFilterReaches prgmName ctssData)
 
-getTreebug :: CTSS -> FileImport -> String -> CResT IO EvalResult
-getTreebug ctss prgmName fun = do
-  base <- ctssGetFrom ssfTPrgm prgmName ctss
-  snd <$> evalRun fun prgmName base
-
 getEvaluated :: CTSS -> FileImport -> String -> CResT IO Integer
 getEvaluated ctss prgmName fun = do
   base <- ctssGetFrom ssfTPrgm prgmName ctss
@@ -413,21 +409,24 @@ getTBPrgm = ctssGet ssfTBPrgm
 -- merely inspecting 'ssfTBPrgm' forces 'evalBuildAll' over every page. Keeping the join a thunk is
 -- what lets a caller that never reads a stage avoid building it.
 --
--- There is no type inference to report here. Points are numbered per typecheck run, so the traces of
--- every page joined together would be a set of colliding numbers rather than an answer; an
--- evaluation that wants one has to name the page it is asking about ('ctssStagePrgmsFrom').
+-- Neither the type inference nor a debug run is available here. Points are numbered per typecheck
+-- run, so the traces of every page joined together would be a set of colliding numbers rather than an
+-- answer, and a run needs one program with one entry point where the join has as many as it has
+-- pages. An evaluation that wants either has to name the page it is asking about
+-- ('ctssStagePrgmsFrom').
 ctssStagePrgms :: CTSS -> IO StagePrgms
 ctssStagePrgms ctss@(CTSS ssmv) = do
   ctssBuildAll ctss
   CTSSDat{ctssData} <- readMVar ssmv
   let ssfs = map fst3 $ graphToNodes ctssData
-  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) notScoped
+  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) (notScoped "type inference to report on") (const $ notScoped "program to run")
   where
-    notScoped = CErr [MkCNote $ GenCErr Nothing "This evaluation is not scoped to a single page, so it has no type inference to report on"]
+    notScoped :: String -> CRes a
+    notScoped what = CErr [MkCNote $ GenCErr Nothing $ "This evaluation is not scoped to a single page, so it has no " ++ what]
 
 -- | Like 'ctssStagePrgms' but for an evaluation scoped to one page: every stage covers that page and
--- what it imports, and the type inference is that page's own, which is the only scope its points are
--- numbered in.
+-- what it imports, the type inference is that page's own, which is the only scope its points are
+-- numbered in, and a debug run runs that page.
 ctssStagePrgmsFrom :: CTSS -> FileImport -> IO StagePrgms
 ctssStagePrgmsFrom ctss@(CTSS ssmv) prgmName = do
   ctssBuildFrom ctss prgmName
@@ -437,7 +436,10 @@ ctssStagePrgmsFrom ctss@(CTSS ssmv) prgmName = do
   let typeInferred = do
         (_, vprgm, trace) <- requireComputed $ ssfTPrgmWithTrace =<< graphLookup prgmName ctssData
         return (vprgm, trace)
-  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) typeInferred
+  -- Runs against the page's own typecheck program rather than the evaluation's, which for an
+  -- annotation is that program joined with the synthetic one holding the annotation itself.
+  let debugRun fun = evalDebugPrgm fun =<< joinedStage ssfTPrgm ssfs
+  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) typeInferred debugRun
 
 -- | Joins one stage over a set of pages, left unforced. See 'ctssStagePrgms' for why it must stay a
 -- thunk.
