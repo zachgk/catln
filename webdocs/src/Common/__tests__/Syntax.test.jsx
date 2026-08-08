@@ -16,7 +16,7 @@ function Providers({ children }) {
 
 const baseMeta = {
   getMetaPos: null,
-  getMetaType: { tag: 'TopType', contents: [{}, { tag: 'PredsAnd', contents: [] }] },
+  getMetaType: { tag: 'UnionType', contents: [[{ tag: 'PredsAnd', contents: [] }, {}], {}, []] },
   getMetaDat: [null, null, null],
   getMetaID: 1,
 }

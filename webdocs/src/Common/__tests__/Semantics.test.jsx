@@ -16,14 +16,14 @@ function Providers({ children }) {
 
 const baseMeta = {
   getMetaPos: null,
-  getMetaType: { tag: 'TopType', contents: [{}, { tag: 'PredsAnd', contents: [] }] },
+  getMetaType: { tag: 'UnionType', contents: [[{ tag: 'PredsAnd', contents: [] }, {}], {}, []] },
   getMetaDat: [null, null, null],
   getMetaID: 1,
 }
 
 const intMeta = {
   getMetaPos: null,
-  getMetaType: { tag: 'UnionType', contents: { '/Integer': [[[], [], { tag: 'PredsAnd', contents: [] }, { tag: 'PtArgExact' }]] } },
+  getMetaType: { tag: 'UnionType', contents: [null, { '/Integer': [[[], [], { tag: 'PredsAnd', contents: [] }, { ptArgLb: true, ptArgUb: true }]] }, []] },
   getMetaDat: [null, null, null],
   getMetaID: 2,
 }

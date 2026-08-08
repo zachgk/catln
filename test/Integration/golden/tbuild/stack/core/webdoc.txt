@@ -24,7 +24,10 @@ Prgm
                             ( EAppArg Value /text -> TVArg /text = ( Value /text ↦ TVArg /text ) )
                         , /Catln/Doc/dshow
                             ( EAppArg Value /s -> /Catln/#print( /p=TopType ) = /Catln/#print( EAppArg Value /p ) ) -> TVArg /p = ( Value /p ↦ TVArg /p )
-                        , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#listProgram = Value /Catln/Doc/#listProgram ) -> /Catln/Doc/Show/ListProgram = Value /Catln/Doc/Show/ListProgram
+                        , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#listProgram = Value /Catln/Doc/#listProgram ) -> /Catln/Doc/Show/ListProgram( /prgm=/Data/String ) = /Catln/Doc/Show/ListProgram
+                            ( EAppArg Value /prgm -> /Data/String =
+                                ( /dshow./Catln/Doc/listProgram( EAppArg Value /annot -> /s = Value /s ) ↦ /Data/String )
+                            )
                         , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#type = Value /Catln/Doc/#type ) -> /Catln/Doc/Show/TypePage = Value /Catln/Doc/Show/TypePage
                         , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#typeInfer = Value /Catln/Doc/#typeInfer ) -> /Catln/Doc/Show/TypeInfer = Value /Catln/Doc/Show/TypeInfer
                         , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#debug = Value /Catln/Doc/#debug ) -> /Catln/Doc/Show/Debug = Value /Catln/Doc/Show/Debug
@@ -35,7 +38,8 @@ Prgm
             ,
                 ( "/Catln/Doc/Show/ListProgram"
                 , ObjectMapItem
-                    { omiDecls = [ Value /Catln/Doc/Show/ListProgram ]
+                    { omiDecls =
+                        [ /Catln/Doc/Show/ListProgram( EAppArg Value /prgm -> /Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -105,6 +109,16 @@ Prgm
                     }
                 )
             ,
+                ( "/dshow./Catln/Doc/listProgram"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /dshow./Catln/Doc/listProgram( EAppArg Value /annot ) -> /Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Doc/Show/TypeInfer"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/Doc/Show/TypeInfer ]
@@ -126,6 +140,7 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

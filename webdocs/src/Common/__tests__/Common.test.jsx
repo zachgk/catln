@@ -43,30 +43,40 @@ describe('tagJoin', () => {
 
 // --- isTopType ---
 
+const predsNone = { tag: 'PredsAnd', contents: [] }
+const argExact = { ptArgLb: true, ptArgUb: true }
+const leaf = { '/Integer': [[[], [], predsNone, argExact]] }
+
 describe('isTopType', () => {
   it('returns true for bare TopType', () => {
-    const t = { tag: 'TopType', contents: [{}, { tag: 'PredsAnd', contents: [] }] }
+    const t = { tag: 'UnionType', contents: [[predsNone, {}], {}, []] }
     expect(isTopType(t)).toBe(true)
   })
 
-  it('returns false when topNeg is non-empty', () => {
-    const t = { tag: 'TopType', contents: [{ '/Integer': [[]] }, { tag: 'PredsAnd', contents: [] }] }
+  it('returns false when the negative partials are non-empty', () => {
+    const t = { tag: 'UnionType', contents: [[predsNone, leaf], {}, []] }
     expect(isTopType(t)).toBe(false)
   })
 
   it('returns false when preds are non-empty', () => {
-    const t = { tag: 'TopType', contents: [{}, { tag: 'PredsAnd', contents: [{ tag: 'PredsOne', contents: {} }] }] }
+    const preds = { tag: 'PredsAnd', contents: [{ tag: 'PredsOne', contents: {} }] }
+    const t = { tag: 'UnionType', contents: [[preds, {}], {}, []] }
     expect(isTopType(t)).toBe(false)
   })
 
   it('returns false for non-PredsAnd preds', () => {
-    const t = { tag: 'TopType', contents: [{}, { tag: 'PredsOne', contents: {} }] }
+    const t = { tag: 'UnionType', contents: [[{ tag: 'PredsOne', contents: {} }, {}], {}, []] }
     expect(isTopType(t)).toBe(false)
   })
 
-  it('returns false for non-TopType tags', () => {
+  it('returns false when there are partials or constants', () => {
+    expect(isTopType({ tag: 'UnionType', contents: [[predsNone, {}], leaf, []] })).toBe(false)
+    expect(isTopType({ tag: 'UnionType', contents: [[predsNone, {}], {}, [{ tag: 'CInt', contents: 5 }]] })).toBe(false)
+  })
+
+  it('returns false without a top part, and for other tags', () => {
+    expect(isTopType({ tag: 'UnionType', contents: [null, {}, []] })).toBe(false)
     expect(isTopType({ tag: 'TypeVar', contents: [] })).toBe(false)
-    expect(isTopType({ tag: 'UnionType', contents: {} })).toBe(false)
   })
 })
 
@@ -226,45 +236,82 @@ describe('Notes', () => {
 
 describe('Type', () => {
   it('renders empty string for bare TopType', () => {
-    const t = { tag: 'TopType', contents: [{}, { tag: 'PredsAnd', contents: [] }] }
+    const t = { tag: 'UnionType', contents: [[predsNone, {}], {}, []] }
     const { container } = render(<Providers><Type data={t} /></Providers>)
     expect(container.textContent).toBe('')
   })
 
-  it('renders "Any" with negation for TopType with topNeg', () => {
-    const t = {
-      tag: 'TopType',
-      contents: [
-        { '/Integer': [[[], [], { tag: 'PredsAnd', contents: [] }, { tag: 'PtArgExact' }]] },
-        { tag: 'PredsAnd', contents: [] },
-      ],
-    }
+  it('renders TopType with its negative partials', () => {
+    const t = { tag: 'UnionType', contents: [[predsNone, leaf], {}, []] }
     const { container } = render(<Providers><Type data={t} /></Providers>)
-    expect(container.textContent).toContain('Any')
+    expect(container.textContent).toContain('TopType')
+    expect(container.textContent).toContain('- ')
     expect(container.textContent).toContain('Integer')
   })
 
-  it('renders TypeVar with PartialKey', () => {
-    const t = {
-      tag: 'TypeVar',
-      contents: [{ contents: { pkName: 'a', pkArgs: [], pkVars: [] } }],
-    }
+  it('renders a lone class predicate as ∀', () => {
+    const cls = { ptName: '/Eq', ptVars: [], ptArgs: [], ptPreds: predsNone, ptArgMode: argExact }
+    const preds = { tag: 'PredsOne', contents: { tag: 'PredClass', contents: cls } }
+    const t = { tag: 'UnionType', contents: [[preds, {}], {}, []] }
     const { container } = render(<Providers><Type data={t} /></Providers>)
-    expect(container.textContent).toBe('a')
+    expect(container.textContent).toBe('∀/Eq')
   })
 
-  it('renders UnionType joined with " || "', () => {
+  const key = (name) => ({ pkName: name, pkArgs: [], pkVars: [] })
+
+  it('renders a TVVar by location', () => {
+    const int = { tag: 'TypeVar', contents: [{ tag: 'TVVar', contents: key('a') }, 'TVInt'] }
+    expect(render(<Providers><Type data={int} /></Providers>).container.textContent).toBe('$a')
+
+    const ext = { tag: 'TypeVar', contents: [{ tag: 'TVVar', contents: key('a') }, 'TVExt'] }
+    expect(render(<Providers><Type data={ext} /></Providers>).container.textContent).toBe('$_a')
+  })
+
+  it('renders a TVArg by location', () => {
+    const int = { tag: 'TypeVar', contents: [{ tag: 'TVArg', contents: key('v') }, 'TVInt'] }
+    expect(render(<Providers><Type data={int} /></Providers>).container.textContent).toBe('TVArg v')
+
+    const ext = { tag: 'TypeVar', contents: [{ tag: 'TVArg', contents: key('v') }, 'TVExt'] }
+    expect(render(<Providers><Type data={ext} /></Providers>).container.textContent).toBe('TVArg(ext) v')
+  })
+
+  it('renders a TVApplied with its overrides', () => {
+    const base = { tag: 'TVVar', contents: key('F') }
+    const t = {
+      tag: 'TypeVar',
+      contents: [
+        { tag: 'TVApplied', contents: [base, [[key('T'), { tag: 'UnionType', contents: [null, leaf, []] }]]] },
+        'TVInt',
+      ],
+    }
+    const { container } = render(<Providers><Type data={t} /></Providers>)
+    expect(container.textContent).toBe('$F[T=/Integer]')
+  })
+
+  it('renders several partials joined with " + " in parentheses', () => {
     const t = {
       tag: 'UnionType',
-      contents: {
-        '/Integer': [[[], [], { tag: 'PredsAnd', contents: [] }, { tag: 'PtArgExact' }]],
-        '/String': [[[], [], { tag: 'PredsAnd', contents: [] }, { tag: 'PtArgExact' }]],
-      },
+      contents: [
+        null,
+        {
+          '/Integer': [[[], [], predsNone, argExact]],
+          '/String': [[[], [], predsNone, argExact]],
+        },
+        [],
+      ],
     }
     const { container } = render(<Providers><Type data={t} /></Providers>)
     expect(container.textContent).toContain('Integer')
     expect(container.textContent).toContain('String')
-    expect(container.textContent).toContain(' || ')
+    expect(container.textContent).toContain(' + ')
+  })
+
+  it('renders a lone partial bare and no partials as ∅', () => {
+    const one = { tag: 'UnionType', contents: [null, leaf, []] }
+    expect(render(<Providers><Type data={one} /></Providers>).container.textContent).toBe('/Integer')
+
+    const none = { tag: 'UnionType', contents: [null, {}, []] }
+    expect(render(<Providers><Type data={none} /></Providers>).container.textContent).toBe('∅')
   })
 })
 

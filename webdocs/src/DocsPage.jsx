@@ -309,9 +309,11 @@ function SaveStatus(props) {
   return <span className={className} data-testid="save-status">{text}</span>;
 }
 
-function AnnotPage() {
+// Shows a single annotation compiled by the server to the value it displays as. The annotation
+// comes either from a route that names it (such as /list) or from the ?annot= query.
+function AnnotPage(props) {
   const query = useQuery();
-  const annot = query.get("annot");
+  const annot = props.annot || query.get("annot");
   const prgmName = "";
 
   let apiResult = useApi(`/api/annot?annot=${encodeURIComponent(annot)}`);

@@ -58,6 +58,11 @@ function useApi(path, reloadKey) {
     notes: []
   });
   useEffect(() => {
+    // A falsy path means the caller already has its data (such as a value that carries it) and
+    // has nothing to fetch.
+    if(!path) {
+      return;
+    }
     fetch(path)
       .then(res => {
         if(res.status !== 200) {
@@ -171,14 +176,22 @@ function PartialType(props) {
     );
   }
 
-  let showArgMode;
-  if (ptArgMode.tag === "PtArgAny") {
+  // showPtArgMode: (lb, ub) is (T,T) exactly the listed args, (T,F) extras allowed,
+  // (F,T) any subset, (F,F) unconstrained.
+  let showArgMode = "";
+  if (!ptArgMode.ptArgLb) {
+    showArgMode = ptArgMode.ptArgUb ? "??" : "..??";
+  } else if (!ptArgMode.ptArgUb) {
     showArgMode = "..";
   }
 
   let showPreds;
-  if (ptPreds.length > 0) {
-    console.error("Show type preds", ptPreds);
+  if (isPredsNone(ptPreds)) {
+    showPreds = "";
+  } else if (ptPreds.tag === "PredsOne") {
+    showPreds = <span> | <TypePredicate data={ptPreds.contents}/></span>;
+  } else {
+    showPreds = <span> | (<TypePredicates data={ptPreds}/>)</span>;
   }
 
   return (
@@ -224,11 +237,99 @@ function TypePredicates(props) {
   }
 }
 
-function isTopType(t) {
-  if (t.tag !== "TopType") return false;
+// PredsNone is the empty conjunction.
+function isPredsNone(preds) {
+  return preds.tag === "PredsAnd" && preds.contents.length === 0;
+}
 
-  const [topNeg, topPreds] = t.contents;
-  return Object.keys(topNeg).length === 0 && topPreds.tag === "PredsAnd" && topPreds.contents.length === 0;
+// tryPredsToList flattens a conjunction into its predicates, or gives null for any negation.
+function tryPredsToList(preds) {
+  switch(preds.tag) {
+  case "PredsOne":
+    return [preds.contents];
+  case "PredsAnd": {
+    let out = [];
+    for(const sub of preds.contents) {
+      const subList = tryPredsToList(sub);
+      if(subList === null) return null;
+      out = out.concat(subList);
+    }
+    return out;
+  }
+  default:
+    return null;
+  }
+}
+
+// The partials of a PartialLeafs map: a name maps to each option's [vars, args, preds, argMode].
+function partialLeafs(leafs) {
+  let partials = [];
+  Object.entries(leafs).forEach(([partialName, options]) => {
+    options.forEach((partialData, partialIndex) => {
+      let [partialVars, partialArgs, preds, argMode] = partialData;
+      let ptData = {ptName: partialName, ptVars: partialVars, ptArgs: partialArgs, ptPreds: preds, ptArgMode: argMode};
+      partials.push(<PartialType key={`${partialName}/${partialIndex}`} data={ptData}/>);
+    });
+  });
+  return partials;
+}
+
+// showJoinParts: no parts is the empty set, one shows bare, several are parenthesised.
+function joinParts(parts) {
+  if(parts.length === 0) return "∅";
+  if(parts.length === 1) return parts[0];
+  return <span>({tagJoin(parts, " + ")})</span>;
+}
+
+// Mirrors showTypeD's TypeVar cases. The aux is TVVar or TVArg over a PartialKey, or TVApplied
+// wrapping another aux with per-key overrides; the location is TVInt (internal) or TVExt.
+function TypeVarType(props) {
+  const [aux, loc] = props.data;
+  switch(aux.tag) {
+  case "TVVar":
+    return <TypeVar>{loc === "TVExt" ? "$_" : "$"}<PartialKey data={aux.contents}/></TypeVar>;
+  case "TVArg":
+    return <TypeVar>{loc === "TVExt" ? "TVArg(ext) " : "TVArg "}<PartialKey data={aux.contents}/></TypeVar>;
+  case "TVApplied": {
+    const [base, overrides] = aux.contents;
+    const showOverrides = tagJoin(overrides.map((ovr, index) =>
+      <span key={index}><PartialKey data={ovr[0]}/>=<Type data={ovr[1]}/></span>), ", ");
+    return <span><TypeVarType data={[base, loc]}/>[{showOverrides}]</span>;
+  }
+  default:
+    console.error("Unknown TypeVarAux", aux);
+    return "???";
+  }
+}
+
+function Constant(props) {
+  const {data} = props;
+  switch(data.tag) {
+  case "CStr":
+    return <span>{JSON.stringify(data.contents)}</span>;
+  case "CChar":
+    return <span>{`'${data.contents}'`}</span>;
+  case "CInt":
+  case "CFloat":
+    return <span>{String(data.contents)}</span>;
+  default:
+    console.error("Unknown Constant", data);
+    return "???";
+  }
+}
+
+// PTopType: the unconstrained top, with no predicates, negative partials, partials or constants.
+function isTopType(t) {
+  if (t.tag !== "UnionType") return false;
+
+  const [top, leafs, consts] = t.contents;
+  if (top === null) return false;
+
+  const [preds, negPartials] = top;
+  return isPredsNone(preds)
+    && Object.keys(negPartials).length === 0
+    && Object.keys(leafs).length === 0
+    && consts.length === 0;
 }
 
 function TypeWithPrefix(props) {
@@ -239,39 +340,57 @@ function TypeWithPrefix(props) {
   return <span>{prefix}<Type data={data}/></span>;
 }
 
+// Mirrors showTypeD in src/Semantics/Types.hs. A Type is
+// UnionType (Maybe (TypePredicates, PartialLeafs)) PartialLeafs [Constant]: an optional top part
+// (Top narrowed by predicates, less its negative partials), the positive partials, and the
+// constants. There is no separate TopType constructor.
 function Type(props) {
   let t = props.data;
   switch(t.tag) {
-  case "TopType":
-    const [topNeg, topPreds] = t.contents;
-    if (isTopType(t)) {
-      return "";
-    } else {
-      let showTopNeg;
-      if (Object.keys(topNeg).length !== 0) {
-        let n = {tag: "UnionType", contents: topNeg};
-        showTopNeg = <span> - <Type data={n}/></span>;
+  case "TypeVar":
+    return <TypeVarType data={t.contents}/>;
+  case "UnionType": {
+    const [top, leafs, consts] = t.contents;
+
+    if (top === null && consts.length === 0) {
+      return joinParts(partialLeafs(leafs));
+    }
+
+    if (top !== null && Object.keys(leafs).length === 0 && consts.length === 0) {
+      const [preds, negPartials] = top;
+
+      let showTop;
+      const predList = tryPredsToList(preds);
+      if (predList !== null && predList.length === 1 && predList[0].tag === "PredClass") {
+        showTop = <span>∀<PartialType data={predList[0].contents}/></span>;
+      } else if (predList !== null && predList.length === 1 && predList[0].tag === "PredRel") {
+        showTop = <span>~<PartialType data={predList[0].contents}/></span>;
+      } else if (predList !== null && predList.length === 0) {
+        // A bare top says nothing about the value, so the webdocs leave it out entirely.
+        if (Object.keys(negPartials).length === 0) {
+          return "";
+        }
+        showTop = "TopType";
+      } else {
+        showTop = <span>(TopType | <TypePredicates data={preds}/>)</span>;
       }
 
-      let showTopPreds;
-      if (topPreds.tag !== "PredsAnd" || topPreds.contents.length !== 0) {
-        showTopPreds = <span> | <TypePredicates data={topPreds}/></span>;
+      let showNeg;
+      if (Object.keys(negPartials).length !== 0) {
+        showNeg = <span> - {joinParts(partialLeafs(negPartials))}</span>;
       }
-      return <span>Any{showTopNeg}{showTopPreds}</span>;
+      return <span>{showTop}{showNeg}</span>;
     }
-  case "TypeVar":
-    return <TypeVar><PartialKey data={t.contents[0].contents} /></TypeVar>;
-  case "UnionType":
-    var partials = [];
-    Object.entries(t.contents).forEach(partialOptions => {
-      let [partialName, options] = partialOptions;
-      options.forEach((partialData, partialIndex) => {
-        let [partialVars, partialArgs, preds, argMode] = partialData;
-        let ptData = {ptName: partialName, ptVars: partialVars, ptArgs: partialArgs, ptPreds: preds, ptArgMode: argMode};
-        partials.push(<PartialType key={[partialName, partialIndex]} data={ptData}/>);
-      });
-    });
-    return tagJoin(partials, " || ");
+
+    // The mixed forms have no shorthand; showTypeD spells the three components out.
+    const showTopPart = top === null
+      ? "Nothing"
+      : <span>Just(<TypePredicates data={top[0]}/>, {joinParts(partialLeafs(top[1]))})</span>;
+    const showConsts = tagJoin(consts.map((c, index) => <Constant key={index} data={c}/>), ", ");
+    return (
+      <span>UnionType({showTopPart}, {joinParts(partialLeafs(leafs))}, [{showConsts}])</span>
+    );
+  }
   default:
     console.error("Unknown type", t);
     return "";

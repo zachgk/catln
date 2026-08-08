@@ -221,6 +221,13 @@ evalCallTree input (TCPrim oa (EPrim _ f)) = do
       Right val -> return val
       Left err  -> evalError err
     _                 -> evalError $ printf "Unexpected eval PrimArrow input %s to %s" (show input) (show oa)
+evalCallTree input (TCPrim oa (EEnvPrim _ f)) = do
+  env <- get
+  case input of
+    (TupleVal _ args) -> case f env args of
+      Right val -> return val
+      Left err  -> evalError err
+    _                 -> evalError $ printf "Unexpected eval PrimArrow input %s to %s" (show input) (show oa)
 evalCallTree _ TCMacro{} = evalError $ printf "Can't evaluate a macro - it should be removed during TreeBuild"
 
 -- | Checks the implicit equality of a non-linear pattern's shared argument positions. For an

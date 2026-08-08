@@ -28,7 +28,9 @@ free_port() {
 await_backend() {
   local port=$1 pid=$2
   local waited=0
-  local max_wait=120
+  # Startup compiles the whole stdlib. Measured across runs on one dev machine: 114-138s,
+  # so the previous 120s budget aborted at random and reported it as a backend failure.
+  local max_wait=300
   echo "Waiting for backend on port ${port} to be ready..."
   while ! curl -sf "http://localhost:${port}/api/toc" > /dev/null 2>&1; do
     if ! kill -0 "$pid" 2>/dev/null; then
@@ -45,6 +47,29 @@ await_backend() {
   echo "Backend on port ${port} ready after ${waited}s."
 }
 
+# Answering /api/toc does not mean the backend is warm. --cached forces the typecheck
+# pipeline, but buildSCCPipeline leaves evalBuildAll (step 7) and evalAnnots (step 8) as
+# thunks, so the FIRST /api/page pays the tree building and annotation evaluation for that
+# page. Measured on a dev machine: 25s for the first load, 0s for every one after. Without
+# this the test that happens to make that first call eats the cost and blows the 15s default
+# timeout, which reads as a failure of whatever test ran first rather than a cold cache.
+warm_backend() {
+  local port=$1 page
+  page=$(curl -sf "http://localhost:${port}/api/toc" | node -e '
+    let s = ""
+    process.stdin.on("data", d => s += d).on("end", () => {
+      const toc = JSON.parse(s).contents[0]
+      const name = toc.map(t => t[0]).find(n => n && n.endsWith("/test/Integration/code/id.ct"))
+      if (name) process.stdout.write(encodeURIComponent(name))
+    })')
+  if [ -n "$page" ]; then
+    curl -sf "http://localhost:${port}/api/page?prgmName=${page}" > /dev/null || true
+    echo "Backend on port ${port} warmed."
+  else
+    echo "Could not find id.ct in the port ${port} TOC; skipping warmup."
+  fi
+}
+
 free_port "$API_PORT"
 free_port "$READONLY_PORT"
 
@@ -59,6 +84,7 @@ echo "Starting Catln backend on port ${API_PORT}..."
 stack run catln -- doc test/Integration/code/id.ct --api --cached &
 BACKEND_PIDS+=($!)
 await_backend "$API_PORT" "${BACKEND_PIDS[0]}"
+warm_backend "$API_PORT"
 
 # A second, --readonly instance so the tests can check that writes are refused.
 # It has no --api flag because the port is only selectable that way; the serve port
@@ -68,6 +94,7 @@ echo "Starting readonly Catln backend on port ${READONLY_PORT}..."
 stack run catln -- doc test/Integration/code/id.ct --cached --readonly &
 BACKEND_PIDS+=($!)
 await_backend "$READONLY_PORT" "${BACKEND_PIDS[1]}"
+warm_backend "$READONLY_PORT"
 
 # Run integration tests
 cd webdocs

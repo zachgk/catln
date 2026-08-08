@@ -124,10 +124,11 @@ function TCallTree(props) {
   case "TCTId":
     return "TCTId";
   case "TCMatch":
+    // TCMatch carries its destination Type first, then the per-partial trees.
     return (
       <table>
         <tbody>
-          { tree.contents.map((mt, index) =>
+          { tree.contents[1].map((mt, index) =>
             <tr key={index}>
               <td><PartialType data={mt[0]}/></td>
               <td><TCallTree tree={mt[1]}/></td>

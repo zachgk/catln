@@ -54,4 +54,28 @@ describe('ListProgram', () => {
       expect(global.fetch).toHaveBeenCalledWith('/api/treebuild')
     })
   })
+
+  describe('with a program carried by the compiled Show/ListProgram', () => {
+    // The value's prgm arg holds the same program /api/typecheck returns, as a JSON string.
+    const carried = { tag: 'StrVal', contents: JSON.stringify(typecheckResponse.contents[0]) }
+
+    it('renders the carried program without fetching', async () => {
+      render(<Providers><ListProgram {...{ '/prgm': carried }} /></Providers>)
+
+      await waitFor(() => {
+        expect(screen.getByText('Types')).toBeInTheDocument()
+      })
+      expect(global.fetch).not.toHaveBeenCalled()
+    })
+
+    it('still fetches for the pipeline-stage modes it cannot carry', async () => {
+      render(<Providers><ListProgram {...{ '/prgm': carried }} /></Providers>)
+
+      fireEvent.click(screen.getByLabelText('TreeBuild'))
+
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledWith('/api/treebuild')
+      })
+    })
+  })
 })

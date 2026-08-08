@@ -48,17 +48,29 @@ type EObjectMap = ObjectMap Expr EvalMetaDat
 type EPrgm = Prgm Expr EvalMetaDat
 type EPrgmGraphData = GraphData EPrgm FileImport
 
-data EPrim = EPrim String (H.HashMap String Val -> Either String Val)
+data EPrim
+  = EPrim String (H.HashMap String Val -> Either String Val)
+  -- | A primitive that also reads the evaluation 'Env'. This is what a primitive reporting on the
+  -- program itself needs (the webdocs pages), since the program is only reachable through
+  -- @evTbEnv@. It must be a primitive rather than a 'MacroFunction' because a macro runs during
+  -- TreeBuild, which would bake the program into every built arm ('evalBuildAll') instead of
+  -- computing it per evaluation.
+  | EEnvPrim String (Env -> H.HashMap String Val -> Either String Val)
   deriving (Generic)
 
+ePrimName :: EPrim -> String
+ePrimName (EPrim n _)    = n
+ePrimName (EEnvPrim n _) = n
+
 instance Eq EPrim where
-  (EPrim k1 _) == (EPrim k2 _) = k1 == k2
+  a == b = ePrimName a == ePrimName b
 
 instance Hashable EPrim where
-  hashWithSalt s (EPrim k _) = s `hashWithSalt` k
+  hashWithSalt s p = s `hashWithSalt` ePrimName p
 
 instance ToJSON EPrim where
-  toJSON EPrim{} = object ["type".=("EPrim" :: String)]
+  toJSON EPrim{}    = object ["type".=("EPrim" :: String)]
+  toJSON EEnvPrim{} = object ["type".=("EEnvPrim" :: String)]
 
 
 type EvalTreebugOpen = AnyObjArr

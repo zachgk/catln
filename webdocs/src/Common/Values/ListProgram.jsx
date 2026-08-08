@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useMemo, useState} from 'react';
 
 import makeStyles from '@mui/styles/makeStyles';
 import List from '@mui/material/List';
@@ -29,8 +29,15 @@ const useStyles = makeStyles({
   }
 });
 
-function ListProgram() {
+function ListProgram(props) {
   const [mode, setMode] = useState("");
+
+  // A compiled Show/ListProgram carries the program it lists in its prgm field, so the default
+  // mode renders straight from the annotation value. The other modes show pipeline stages
+  // (desugar, tree build) that the annotation cannot carry, so those still fetch.
+  const carried = props["/prgm"];
+  const carriedPrgm = useMemo(() => carried ? JSON.parse(carried.contents) : null, [carried]);
+  const useCarried = Boolean(carriedPrgm) && mode === "";
 
   let dataPath;
   switch(mode) {
@@ -44,7 +51,7 @@ function ListProgram() {
     dataPath = "/api/typecheck";
     break;
   }
-  let apiResult = useApi(dataPath);
+  let apiResult = useApi(useCarried ? null : dataPath);
 
   let switchTypecheck = (event) => {
     setMode(event.target.value);
@@ -63,9 +70,11 @@ function ListProgram() {
           }
         />
       </FormGroup>
-      <Loading status={apiResult}>
-        <ShowList data={apiResult.data} />
-      </Loading>
+      {useCarried
+        ? <ShowList data={carriedPrgm} />
+        : <Loading status={apiResult}>
+            <ShowList data={apiResult.data} />
+          </Loading>}
     </div>
   );
 }
@@ -82,13 +91,19 @@ function ShowList(props) {
   );
 }
 
+// The objMap is keyed by type name, each holding an ObjectMapItem with the declarations,
+// runtime declarations, refinement declarations and definitions for that name.
 function ObjMap(props) {
+  const {objMap} = props;
   return (
     <List component="nav">
-      {props.objMap
-        .map((oa, objIndex) =>
-          <RootObjArr key={objIndex} oa={oa} Meta={props.Meta} showExprMetas={props.showExprMetas}/>
-      )}
+      {Object.keys(objMap).sort().flatMap(name => {
+        const {omiDecls, omiRuntimeDecls, omiRefineDecls, omiDefs} = objMap[name];
+        return [...omiDecls, ...omiRuntimeDecls, ...omiRefineDecls, ...omiDefs]
+          .map((oa, objIndex) =>
+            <RootObjArr key={`${name}/${objIndex}`} oa={oa} Meta={props.Meta} showExprMetas={props.showExprMetas}/>
+        );
+      })}
     </List>
   );
 }

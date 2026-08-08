@@ -69,6 +69,27 @@ describe('Backend API contract', () => {
     expect(prgm).toHaveProperty('prgmCG')
   })
 
+  it('/api/annot compiles #listProgram to a Show/ListProgram carrying the program', async () => {
+    const data = await fetchApi(`/api/annot?annot=${encodeURIComponent('#listProgram')}`)
+    expect(data.tag).toBe('Success')
+
+    // The response is a one-statement raw program; the compiled value rides on the annotation
+    // expression's meta as getMetaDat[2].
+    const [, statements] = data.contents[0]
+    const [statement] = statements[0]
+    expect(statement.tag).toBe('RawAnnot')
+
+    const val = statement.contents.contents[0].getMetaDat[2]
+    expect(val.tag).toBe('TupleVal')
+    expect(val.name).toBe('/Catln/Doc/Show/ListProgram')
+
+    // The prgm field carries the same program shape /api/typecheck serves, as a JSON string.
+    expect(val.args['/prgm'].tag).toBe('StrVal')
+    const prgm = JSON.parse(val.args['/prgm'].contents)
+    expect(prgm).toHaveProperty('prgmObjMap')
+    expect(prgm).toHaveProperty('prgmCG')
+  })
+
   it('/api/page returns Success with prgm data and source text', async () => {
     // First get the TOC to find a valid page name
     const tocData = await fetchApi('/api/toc')
@@ -161,7 +182,13 @@ describe('Backend API contract', () => {
       expect(after).not.toContain('main = 999')
     })
 
-    // Generous timeout: the trailing read rebuilds every invalidated page.
+    // The read after a write has to wait out a full cache restart, not just a page load. A
+    // successful write calls ctssRead, which invalidates every page, so the next read rebuilds
+    // the whole stdlib rather than serving from the cache. Measured on a quiet dev machine: the
+    // read is ~1s cached and ~170s after a write, so this budget is sized for the rebuild plus
+    // headroom for a loaded machine. Reduce it once a write only invalidates what it changed.
+    const CACHE_RESTART_TIMEOUT = 600000
+
     it('round-trips a page source', async () => {
       const pageName = await idPageName()
 
@@ -178,6 +205,6 @@ describe('Backend API contract', () => {
       const after = (await fetchApi(`/api/page?prgmName=${encodeURIComponent(pageName)}`))
         .contents[0][1]
       expect(after).toBe(original)
-    }, 180000)
+    }, CACHE_RESTART_TIMEOUT)
   })
 })

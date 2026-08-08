@@ -31,11 +31,21 @@ module(Catln/Doc)
 
   annot(#listProgram)
 
-  data(Show/ListProgram)
+  data(Show/ListProgram(prgm -> String))
+    # [Show/ListProgram] lists every declaration and definition of a program. It carries the
+      program it lists in [prgm], so the webdocs render the page from the compiled value itself
+      rather than asking the compiler for it over a separate route.
 
   every(Show/ListProgram.., isa= [/Catln/Doc/DShow])
 
-  dshow(s= #listProgram)= Show/ListProgram
+  dshow(s= #listProgram) =
+    listProgram(annot) -> String
+      # [listProgram] renders the program being evaluated as JSON. The program is the one the
+        annotation was evaluated against, so a [#listProgram] in a page lists that page and
+        everything it reaches.
+      #runtime("listProgram")
+
+    Show/ListProgram(prgm= listProgram(annot= s))
 
   annot(#type)
 

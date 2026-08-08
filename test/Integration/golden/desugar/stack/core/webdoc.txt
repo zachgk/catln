@@ -23,7 +23,8 @@ Prgm
                             ( Value s= #md( Value text ) )= Show/MD( Value text= Value text )
                         , /Catln/Doc/dshow
                             ( Value s= #print( Value p ) )= Value p
-                        , /Catln/Doc/dshow( Value s= Value #listProgram )= Value Show/ListProgram
+                        , /Catln/Doc/dshow( Value s= Value #listProgram )= Show/ListProgram
+                            ( Value prgm= listProgram( Value annot= Value s ) )
                         , /Catln/Doc/dshow( Value s= Value #type )= Value Show/TypePage
                         , /Catln/Doc/dshow( Value s= Value #typeInfer )= Value Show/TypeInfer
                         , /Catln/Doc/dshow( Value s= Value #debug )= Value Show/Debug
@@ -34,7 +35,8 @@ Prgm
             ,
                 ( "/Catln/Doc/Show/ListProgram"
                 , ObjectMapItem
-                    { omiDecls = [ Value /Catln/Doc/Show/ListProgram ]
+                    { omiDecls =
+                        [ /Catln/Doc/Show/ListProgram( Value /prgm -> /Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -104,6 +106,16 @@ Prgm
                     }
                 )
             ,
+                ( "/dshow./Catln/Doc/listProgram"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ dshow./Catln/Doc/listProgram( Value annot ) -> /Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Doc/Show/TypeInfer"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/Doc/Show/TypeInfer ]
@@ -125,6 +137,7 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType
