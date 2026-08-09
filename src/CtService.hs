@@ -23,8 +23,7 @@ import qualified Data.HashSet            as S
 import           Data.List               (partition)
 import           Data.Maybe
 import           Eval                    (evalAnnots, evalBuild, evalBuildAll,
-                                          evalDebugPrgm, evalRun, evalRunMock,
-                                          prgmFromGraphData)
+                                          evalDebugPrgm, evalRun, evalRunMock)
 import           Eval.Common             (EvalMetaDat, MockIO, StagePrgms (..),
                                           TExpr, Val (StrVal, TupleVal))
 import           Eval.Testing            (TestDesc, evalPrints, evalTest)
@@ -207,41 +206,13 @@ buildSCCPipeline ctssData sccNamesSet sccNodes pages = do
             ) (graphToNodes pages)
       let tprgmGraph = graphFromEdges (sccTPrgmNodes ++ depTPrgmNodes)
 
-      -- Step 6b: The same graph at the desugar stage. Eval cannot reach this stage on its own, so
-      -- it has to be assembled here to be handed to it, alongside the typecheck graph above.
-      let sccDesNodes = [(des, name, deps)
-            | (des, (name, deps)) <- zip finalDes namesAndDeps]
-      let depDesNodes = mapMaybe (\(_, name, deps) ->
-            if name `S.member` sccNamesSet then Nothing
-            else do
-              ssf <- graphLookup name ctssData
-              ssfDes ssf >>= cresToMaybe >>= \d -> Just (d, name, deps)
-            ) (graphToNodes pages)
-      let desGraph = graphFromEdges (sccDesNodes ++ depDesNodes)
-
       -- Step 7: Eval build all (processes SCC + deps, we extract SCC results).
       -- Tolerate failure: a type-erroneous program cannot build a tree, but we
       -- still want to cache the desugar/typecheck artifacts (including the trace)
       -- for tooling. Any eval-build error is deferred into ssfTBPrgm below.
       let tbprgmGraphRes = evalBuildAll tprgmGraph
 
-      -- Step 8: Eval annotations per SCC file (kept lazy to match original behavior,
-      -- since evalAnnots may reference classes not in the class graph for #noCore files).
-      -- The other stages are scoped to the same files as the typecheck program the annotations are
-      -- evaluated against, and stay unforced for the same reason the annotations do: a page that
-      -- never reads a stage must not pay to build it.
-      -- The type inference comes straight from step 5 rather than being reassembled: it is that
-      -- page's own typecheck result, which is the only scope where its point numbers mean anything.
-      -- The debug runner is scoped the same way, so a #debugger written in a file debugs that file.
-      let stages name typeInferred = StagePrgms (prgmFromGraphData name desGraph)
-                                                (tbprgmGraphRes >>= prgmFromGraphData name)
-                                                typeInferred
-                                                (\fun -> evalDebugPrgm fun =<< prgmFromGraphData name tprgmGraph)
-                                                (return $ map snd3 $ graphToNodes pages)
-      let annotsMap = H.fromList [(name, evalAnnots (stages name (CRes tcNotes (v, t))) name tprgmGraph)
-                                 | ((_, v, t), (name, _)) <- zip tcResults namesAndDeps]
-
-      -- Step 9: Assemble updated SSFs
+      -- Step 8: Assemble updated SSFs
       let validUpdates = [(name, ssf{
               ssfBuilt = True,
               ssfDes = Just $ pure des,
@@ -254,8 +225,7 @@ buildSCCPipeline ctssData sccNamesSet sccNodes pages = do
               ssfTPrgm = Just $ failOnErrorNotes $ CRes tcNotes (fst3 tc),
               ssfTBPrgm = case tbprgmGraphRes of
                 CRes _ g  -> fmap pure $ graphLookup name g
-                CErr errs -> Just $ CErr errs,
-              ssfAnnots = H.lookup name annotsMap
+                CErr errs -> Just $ CErr errs
             })
             | ((_, ssf, name, _), des, tc) <-
                 zip3 validRaws finalDes tcResults]
@@ -384,10 +354,45 @@ getPrintGoldens ctss = do
   base <- ctssGet ssfTPrgm ctss
   asCResT $ evalPrints $ mconcat $ map fst3 $ graphToNodes base
 
+-- | The annotations a page writes, evaluated to the values they display as.
+--
+-- They are evaluated when something asks to see them rather than when the page is built, so a build
+-- that displays nothing — a run, a compile, an editor session — does not pay for them. The result is
+-- kept on the page, so the second reader of a page gets the first reader's answer.
 getEvalAnnots :: CTSS -> FileImport -> CResT IO [(Expr EvalMetaDat, Val)]
 getEvalAnnots ctss prgmName = do
-  annotsGraph <- ctssGetFrom ssfAnnots prgmName ctss
-  return $ fromMaybe [] $ graphLookup prgmName annotsGraph
+  cached <- lift $ ctssCached ssfAnnots prgmName ctss
+  case cached of
+    Just annots -> asCResT annots
+    Nothing -> do
+      tprgms <- ctssGetFrom ssfTPrgm prgmName ctss
+      stages <- lift $ ctssStagePrgmsFrom ctss prgmName
+      let annots = evalAnnots stages prgmName tprgms
+      lift $ ctssStore prgmName (\ssf -> ssf{ssfAnnots = Just annots}) ctss
+      asCResT annots
+
+-- | Read a page's computed item, without building the page or computing anything.
+ctssCached :: (SSF -> Maybe (CRes a)) -> FileImport -> CTSS -> IO (Maybe (CRes a))
+ctssCached f prgmName (CTSS ssmv) = do
+  CTSSDat{ctssData} <- readMVar ssmv
+  return $ f =<< graphLookup prgmName ctssData
+
+-- | Keep a page's computed item on the page, for whoever asks for it next.
+--
+-- The page is read again under the lock rather than being written back from a copy captured before
+-- the computation: a page that was invalidated while its item was being computed is unbuilt again,
+-- and restoring it from a stale copy of itself would undo the invalidation. Two threads racing to
+-- compute the same item both store it, which is harmless — they computed it from the same built
+-- page, so they computed the same thing.
+--
+-- Whatever computes the item must do so OUTSIDE this lock. It is the same lock a build takes, and
+-- computing an item needs the page built.
+ctssStore :: FileImport -> (SSF -> SSF) -> CTSS -> IO ()
+ctssStore prgmName store (CTSS ssmv) = modifyMVar_ ssmv $ \ctssdat ->
+  return ctssdat{ctssData = fmapGraphWithKey keep (ctssData ctssdat)}
+  where
+    keep k ssf | k == prgmName && ssfBuilt ssf = store ssf
+               | otherwise = ssf
 
 getWeb :: CTSS -> FileImport -> String -> CResT IO String
 getWeb ctss prgmName fun = do
