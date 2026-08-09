@@ -117,7 +117,7 @@ module(Catln/Doc)
       carries that tree in [pages], so the webdocs render their navigation from the compiled value
       rather than asking the compiler for it over a separate route. Unlike the pages above it is not
       about the program it is evaluated against but about which pages there are to evaluate against
-      at all, so it is the one annotation meant to be evaluated unscoped.
+      at all, so, like [Show/Search] below, it is meant to be evaluated unscoped.
 
   every(Show/Sidebar.., isa= [/Catln/Doc/DShow])
 
@@ -129,6 +129,27 @@ module(Catln/Doc)
       #runtime("sidebar")
 
     Show/Sidebar(pages= sidebar(annot= s))
+
+  annot(#search)
+
+  data(Show/Search(pages -> String))
+    # [Show/Search] shows the pages a reader can look for, as the flat list of the paths they are
+      opened by. It carries that list in [pages], so the webdocs search from the compiled value
+      rather than from whichever navigation happens to be on screen. Like [Show/Sidebar] it is about
+      which pages there are rather than about the program it was evaluated against, so a search of
+      the whole doc server is evaluated unscoped; written in a page it searches what that page
+      reaches.
+
+  every(Show/Search.., isa= [/Catln/Doc/DShow])
+
+  dshow(s= #search) =
+    searchPages(annot) -> String
+      # [searchPages] renders the pages the evaluation covers as a JSON list of their paths. They
+        are the pages [sidebar] renders as a tree; a search box wants the flat list it matches
+        typing against rather than a navigation to walk.
+      #runtime("searchPages")
+
+    Show/Search(pages= searchPages(annot= s))
 
   annot(#debugger(fun -> String))
 

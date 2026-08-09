@@ -69,6 +69,28 @@ describe('Backend API contract', () => {
     expect(core.sbChildren[0].sbName).toBe('main.ct')
   })
 
+  // The search box gets its pages from an annotation of its own rather than from the sidebar's
+  // tree. They are two answers to the same question, so they are checked against each other here:
+  // the duplication is deliberate for the moment, and a divergence should be a reported fact.
+  it('/api/annot lists every page for an unscoped #search', async () => {
+    const val = await annotValue('#search')
+    expect(val.name).toBe('/Catln/Doc/Show/Search')
+
+    const pages = JSON.parse(val.args['/pages'].contents)
+    expect(pages.length).toBeGreaterThan(0)
+    expect(pages.every(p => typeof p === 'string')).toBe(true)
+    // Sorted, which is the order a box offers them in.
+    expect(pages).toEqual([...pages].sort())
+    // The doc root and the stdlib it imports are both loaded pages, so both can be searched for.
+    expect(pages.some(p => p.endsWith('/test/Integration/code/id.ct'))).toBe(true)
+    expect(pages.some(p => p.endsWith('/stack/core/main.ct'))).toBe(true)
+
+    // Every page the sidebar shows as a file is one the box can open. Containment rather than
+    // equality: a directory of pages is a page in its own right, so it is in the list while the
+    // sidebar shows it as the directory node holding those pages.
+    expect(pages).toEqual(expect.arrayContaining((await sidebarPages()).map(p => p.sbPath)))
+  })
+
   // The listProgram eval primitive is only reachable through the doc pipeline, so these are the
   // only automated checks that a mode actually selects a different compiler stage.
   async function listProgram(modeName) {

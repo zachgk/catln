@@ -45,6 +45,8 @@ Prgm
                             ( Value /trace -> /Data/String = /dshow./Catln/Doc/typeInferPnt( Value /pnt -> TVArg /pnt = Value /pnt )( Value /annot -> /s = Value /s ) )( Value /pnt -> TVArg /pnt = Value /pnt )
                         , /Catln/Doc/dshow( Value /s -> /Catln/Doc/#sidebar = Value /Catln/Doc/#sidebar ) -> /Catln/Doc/Show/Sidebar( /pages=/Data/String ) = /Catln/Doc/Show/Sidebar
                             ( Value /pages -> /Data/String = /dshow./Catln/Doc/sidebar( Value /annot -> /s = Value /s ) )
+                        , /Catln/Doc/dshow( Value /s -> /Catln/Doc/#search = Value /Catln/Doc/#search ) -> /Catln/Doc/Show/Search( /pages=/Data/String ) = /Catln/Doc/Show/Search
+                            ( Value /pages -> /Data/String = /dshow./Catln/Doc/searchPages( Value /annot -> /s = Value /s ) )
                         , /Catln/Doc/dshow
                             ( Value /s -> /Catln/Doc/#debugger( /fun=/Data/String ) = /Catln/Doc/#debugger( Value /fun -> /Data/String ) ) -> /Catln/Doc/Show/Debugger
                             ( /fun=/Data/String
@@ -59,6 +61,16 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/Doc/TreeBuild ]
                     , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/dshow./Catln/Doc/searchPages"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /dshow./Catln/Doc/searchPages( Value /annot ) -> /Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -161,6 +173,16 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/Doc/Show/Search"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Doc/Show/Search( Value /pages -> /Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Doc/Show/TypeInferPnt"
                 , ObjectMapItem
                     { omiDecls =
@@ -195,6 +217,15 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/Doc/Show/Sidebar( Value /pages -> /Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Doc/#search"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/Doc/#search ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -285,6 +316,9 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGClass
             ( False
             , /Catln/Doc/DShow
@@ -298,13 +332,14 @@ Prgm
                 , /Catln/Doc/Show/TypeInfer..
                 , /Catln/Doc/Show/TypeInferPnt..
                 , /Catln/Doc/Show/Sidebar..
+                , /Catln/Doc/Show/Search..
                 , /Catln/Doc/Show/Debugger..
                 ]
             , Just "Represents objects which can be shown in the webdocs.   Every [/Data/ToString] value is displayable, so [ToString] is a subset of [DShow]: the
               webdocs render such a value through its [/Data/toString]. This is what lets a `> value`
               print statement accept any [ToString] type. A [DShow] value that is not [ToString] (a
               visualization like [Show/MD]) is still printable, but only [ToString] values are compared
-              against a print/result golden.       "
+              against a print/result golden.        "
             )
         , CGClass
             ( True

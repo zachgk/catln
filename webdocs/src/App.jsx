@@ -59,7 +59,7 @@ function Root() {
           <Header sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
           <Box sx={{display: 'flex', alignItems: 'flex-start'}}>
             {/* Contracted the sidebar is zero width rather than unmounted: it still holds the page
-                list the search box and the previous/next buttons read. */}
+                list the previous/next buttons and relative documentation links read. */}
             <Box
               sx={{
                 width: sidebarOpen ? SIDEBAR_WIDTH : 0,

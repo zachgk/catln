@@ -13,7 +13,7 @@ import {initVimMode, VimMode} from 'monaco-vim';
 import {useNavigate} from 'react-router-dom';
 
 import {rawExprMeta, RawExpr, RawObjArr} from './Common/Syntax';
-import {useQuery, useApi, Loading, KeyWord, ReachesTree, ConfigContext, PrgmNameContext, annotLink} from './Common/Common';
+import {useQuery, useApi, Loading, KeyWord, ReachesTree, ConfigContext, PrgmNameContext, annotLink, annotApi} from './Common/Common';
 import {Value} from './Common/Value';
 
 const DEBUG_NO_EVAL = false;
@@ -335,8 +335,7 @@ function AnnotPage(props) {
     setAnnot(routeAnnot);
   }, [routeAnnot]);
 
-  const scope = prgmName ? `&prgmName=${encodeURIComponent(prgmName)}` : "";
-  let apiResult = useApi(`/api/annot?annot=${encodeURIComponent(annot)}${scope}`);
+  let apiResult = useApi(annotApi(annot, prgmName));
 
   return (
     <PrgmNameContext.Provider value={prgmName}>
@@ -345,6 +344,44 @@ function AnnotPage(props) {
       </Loading>
     </PrgmNameContext.Provider>
   );
+}
+
+// Shows only what an annotation compiled to, with none of the listing an AnnotPage puts around it
+// and nothing at all until it arrives. That is what an annotation shown as a control rather than as
+// a page wants: the navbar's search box has no room for a program listing, and a "Loading..." or a
+// block of compiler notes would be laid out as part of the navbar rather than reported anywhere.
+// The failure is logged instead, so a control that never appears is still explained.
+function AnnotValue(props) {
+  const {annot, prgmName = ""} = props;
+  const apiResult = useApi(annotApi(annot, prgmName));
+  const value = apiResult.data && annotStatementValue(apiResult.data);
+
+  useEffect(() => {
+    if (apiResult.isLoaded && !value) {
+      console.error("Annotation compiled to no value", annot, apiResult.error, apiResult.notes);
+    }
+  }, [annot, apiResult, value]);
+
+  if (!value) {
+    return null;
+  }
+  return (
+    <PrgmNameContext.Provider value={prgmName}>
+      <Value data={value} />
+    </PrgmNameContext.Provider>
+  );
+}
+
+// The value an annotation compiled to. /api/annot answers with a one-statement program whose
+// annotation expression carries it, in the same meta slot a page's own annotations arrive in.
+function annotStatementValue(data) {
+  const [, statements] = data;
+  const [statementTree] = statements;
+  if (!statementTree) {
+    return null;
+  }
+  const [statement] = statementTree;
+  return statement.tag === "RawAnnot" ? rawExprMeta(statement.contents).getMetaDat[2] : null;
 }
 
 function Main(props) {
@@ -472,4 +509,4 @@ function PlayButton(props) {
 
 
 export default DocsPage;
-export {AnnotPage};
+export {AnnotPage, AnnotValue};

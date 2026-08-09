@@ -52,8 +52,8 @@ const PrgmNameContext = React.createContext("");
 
 // How the sidebar's page tree gets back out of the value that carries it. The tree is the compiled
 // #sidebar annotation, so it arrives deep inside a RawExpr like any other value, but it is also the
-// app's list of pages: the search box, the previous/next buttons and relative documentation links
-// all read it. The layout puts its setter here and the sidebar value publishes the tree it rendered.
+// app's list of pages: the previous/next buttons and relative documentation links read it. The
+// layout puts its setter here and the sidebar value publishes the tree it rendered.
 const SidebarContext = React.createContext(() => {});
 
 function useQuery() {
@@ -435,6 +435,14 @@ function annotLink(annot, prgmName) {
   return `/annot?annot=${encodeURIComponent(annot)}${scope}`;
 }
 
+// The call that evaluates an annotation, which is what an annotLink route resolves to. It scopes
+// the same way: naming a page compiles the annotation as though it were written there, and no name
+// compiles it against every loaded file.
+function annotApi(annot, prgmName) {
+  const scope = prgmName ? `&prgmName=${encodeURIComponent(prgmName)}` : "";
+  return `/api/annot?annot=${encodeURIComponent(annot)}${scope}`;
+}
+
 // A type or class page is a #type annotation, so linking to one means asking the compiler to
 // evaluate that annotation rather than routing to a page that fetches for itself.
 function typeAnnotLink(name) {
@@ -527,6 +535,7 @@ export {
   PrgmNameContext,
   SidebarContext,
   annotLink,
+  annotApi,
   tagJoin,
   useQuery,
   useApi,

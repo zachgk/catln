@@ -39,7 +39,7 @@ import           Utils
 
 -- | The primitives backing the @Catln/Doc@ display annotations.
 webDocsPrims :: [EPrim]
-webDocsPrims = [listProgram, filterProgram, typeInfer, typeInferPnt, debugger, sidebar]
+webDocsPrims = [listProgram, filterProgram, typeInfer, typeInferPnt, debugger, sidebar, searchPages]
 
 -- | The argument of @/Catln/Doc/listProgram@ naming which stage to list, and the members of the
 -- @ListProgramMode@ enum it takes. @stack\/core\/webdoc.ct@ is the source of truth for these; a
@@ -204,6 +204,26 @@ sidebarLevel prefix entries = traverse toNode $ sortOn (\(n, _) -> (n /= mainFil
       (_, subDirs@(_:_)) -> SidebarDir n (subPath n) <$> sidebarLevel (subPath n) subDirs
       _ -> Left $ printf "sidebar has more than one page displayed as %s" (subPath n)
     subPath n = prefix ++ "/" ++ n
+
+-- | Backs @/Catln/Doc/searchPages@, the data carried by a @Show/Search@ page. It renders the pages
+-- the evaluation covers as the flat list of the paths they are asked for, sorted, which is the
+-- order a box offers them in.
+--
+-- These are the same pages 'sidebar' renders as a tree, read the same way off 'spPages'. A box
+-- matching typing against a list and a navigation being walked want different shapes of the same
+-- answer, and each page carries the shape it displays, so the two are rendered separately rather
+-- than one being derived from the other in the webdocs.
+searchPages :: EPrim
+searchPages = EEnvPrim "searchPages" prim
+  where
+    prim Env{evStagePrgms=StagePrgms{spPages}} _ = case spPages of
+      CErr notes   -> Left $ prettyCNotes notes
+      CRes _ pages -> encodeJson . sort <$> traverse pagePath pages
+    -- As in 'sidebar', a page with no display path cannot be opened, so it is reported rather than
+    -- dropped from the list, where it would read as a page the doc server does not hold.
+    pagePath imp = case impDisp imp of
+      Just disp -> Right disp
+      Nothing -> Left $ printf "searchPages has no file path for %s, so it has no page to open" (show imp)
 
 encodeJson :: (ToJSON p) => p -> Val
 encodeJson = StrVal . TL.unpack . encodeToLazyText

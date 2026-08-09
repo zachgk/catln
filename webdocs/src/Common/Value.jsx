@@ -11,6 +11,7 @@ import TypeInfer, {TypeInferPnt} from './Values/TypeInfer';
 import Debugger from './Values/Debugger';
 import TypePage from './Values/Type';
 import Sidebar from './Values/Sidebar';
+import Search from './Values/Search';
 
 // A Value may be given an update function by whatever rendered it. Calling update(src) asks for
 // the expression this value was compiled from to be replaced by the Catln source src. What that
@@ -44,6 +45,8 @@ function Value(props) {
       return <Debugger {...val.args} />;
     case "/Catln/Doc/Show/Sidebar":
       return <Sidebar {...val.args} />;
+    case "/Catln/Doc/Show/Search":
+      return <Search {...val.args} />;
     default:
       let showArgs = "";
       if(Object.keys(val.args).length > 0) {

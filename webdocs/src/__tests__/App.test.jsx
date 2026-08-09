@@ -9,10 +9,10 @@ import sidebarResponse from '../test/fixtures/sidebar-response.json'
 const theme = createTheme()
 
 // The one statement of an /api/annot response: the annotation, carrying its compiled value.
-function annotResponse(value) {
+function annotResponse(annot, value) {
   const expr = {
     tag: 'Value',
-    contents: [{ getMetaDat: [null, null, value], getMetaID: 'sidebar', getMetaPos: null, getMetaType: null }, '/Catln/Doc/#sidebar'],
+    contents: [{ getMetaDat: [null, null, value], getMetaID: annot, getMetaPos: null, getMetaType: null }, `/Catln/Doc/#${annot}`],
   }
   return { tag: 'Success', contents: [[[], [[{ tag: 'RawAnnot', contents: expr }, []]]], []] }
 }
@@ -21,6 +21,14 @@ const sidebarValue = {
   tag: 'TupleVal',
   name: '/Catln/Doc/Show/Sidebar',
   args: { '/pages': { tag: 'StrVal', contents: JSON.stringify(sidebarResponse) } },
+}
+
+// The navbar's box covers the same pages the sidebar shows, by an annotation of its own, so its
+// list is read off the same fixture.
+const searchValue = {
+  tag: 'TupleVal',
+  name: '/Catln/Doc/Show/Search',
+  args: { '/pages': { tag: 'StrVal', contents: JSON.stringify(flattenPages(sidebarResponse).map(([page]) => page)) } },
 }
 
 function renderRoot() {
@@ -39,18 +47,24 @@ describe('Root', () => {
   beforeEach(() => {
     global.fetch = vi.fn(url => Promise.resolve({
       status: 200,
-      json: () => Promise.resolve(url.startsWith('/api/annot')
-        ? annotResponse(sidebarValue)
-        : { tag: 'Success', contents: [{ readonly: false }, []] }),
+      json: () => Promise.resolve(annotFor(url) || { tag: 'Success', contents: [{ readonly: false }, []] }),
     }))
   })
 
-  it('asks for the sidebar without a page, so it lists every page', async () => {
+  function annotFor(url) {
+    if (url.startsWith('/api/annot?annot=%23sidebar')) return annotResponse('sidebar', sidebarValue)
+    if (url.startsWith('/api/annot?annot=%23search')) return annotResponse('search', searchValue)
+  }
+
+  // Both are about which pages there are rather than about one of them, which is what being asked
+  // for without a page means.
+  it('asks for the sidebar and the search box without a page, so both cover every page', async () => {
     renderRoot()
 
     await waitFor(() => expect(screen.getByText('test')).toBeInTheDocument())
     const annotCalls = global.fetch.mock.calls.map(c => c[0]).filter(u => u.startsWith('/api/annot'))
-    expect(annotCalls).toEqual(['/api/annot?annot=%23sidebar'])
+    // Sorted rather than in order: which mounts first is only where they sit in the layout.
+    expect([...annotCalls].sort()).toEqual(['/api/annot?annot=%23search', '/api/annot?annot=%23sidebar'])
   })
 
   it('gives back all of its width when the navbar control contracts it', async () => {

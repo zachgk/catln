@@ -1,14 +1,14 @@
-import React, {useState, useContext} from 'react';
+import React, {useState, useMemo} from 'react';
 
 import { styled, alpha } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
 import SearchIcon from '@mui/icons-material/Search';
-import {useNavigate} from 'react-router-dom';
+import {useNavigate, useInRouterContext} from 'react-router-dom';
 
-import {TocContext} from '../Common';
+import {AnnotValue} from '../../DocsPage';
 
-const Search = styled('div')(({ theme }) => ({
+const SearchPill = styled('div')(({ theme }) => ({
   position: 'relative',
   borderRadius: theme.shape.borderRadius,
   backgroundColor: alpha(theme.palette.common.white, 0.15),
@@ -48,15 +48,27 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
   },
 }));
 
-function AppBarSearch() {
-  const tocResult = useContext(TocContext);
+// The pages a search covers, as a box that opens the one that is picked. The list is the compiled
+// value of a #search annotation, so nothing is fetched here. Which pages those are is the
+// annotation's business: every page the doc server holds when it was evaluated unscoped, or the
+// pages one page reaches when it was written in that page.
+function Search(props) {
+  // The editor renders a page's values into monaco view zones, which are React roots of their own
+  // and so outside the router: useNavigate throws there, taking that root down with it. A box that
+  // cannot open what it finds is not a search box, so it is left out rather than shown and broken.
+  // Showing one there instead means giving the view zones the router, which is a change to how
+  // every value is rendered rather than to this one.
+  if (!useInRouterContext()) {
+    return null;
+  }
+  return <SearchBox pages={props["/pages"]} />;
+}
+
+function SearchBox(props) {
+  const {pages} = props;
+  const options = useMemo(() => JSON.parse(pages.contents), [pages]);
   const navigate = useNavigate();
   const [navValue, setNavValue] = useState('');
-
-  let fileOptions = [];
-  if (tocResult.isLoaded && tocResult.data) {
-    fileOptions = Object.keys(tocResult.data);
-  }
 
   const searchNavigate = (e, newValue) => {
     setNavValue('');
@@ -66,21 +78,36 @@ function AppBarSearch() {
     }
   };
 
+  // No id: a page may hold a search of its own beside this one, and MUI builds the listbox id and
+  // the aria references from it, so the two would collide. Left off, each box is given its own.
+  //
+  // Held at no selection: picking a page navigates to it rather than choosing it, so there is
+  // nothing for the box to still be holding afterwards. Left to select, the pick would be written
+  // back into the input and the box would sit there showing the page already being read.
   return (
-    <Search>
+    <SearchPill>
       <SearchIconWrapper>
         <SearchIcon />
       </SearchIconWrapper>
       <Autocomplete
-        id="navigation-portal"
-        options={fileOptions}
+        options={options}
+        value={null}
         inputValue={navValue}
         onInputChange={(e,v) => setNavValue(v)}
         onChange={searchNavigate}
         renderInput={(params) => <StyledTextField {...params} />}
       />
-    </Search>
+    </SearchPill>
   );
 }
 
+// The navbar's box, which is a #search annotation evaluated over every loaded page. Named with no
+// page on purpose, the same way the sidebar is: it searches every page the doc server holds, not
+// the ones one page reaches, and the empty name also stops it from inheriting the page an /annot
+// route is scoped to.
+function AppBarSearch() {
+  return <AnnotValue annot="#search" prgmName="" />;
+}
+
+export default Search;
 export {AppBarSearch};
