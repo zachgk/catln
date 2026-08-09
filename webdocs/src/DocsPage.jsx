@@ -2,6 +2,7 @@ import React, {useState, useEffect, useRef, useContext} from 'react';
 import {createRoot} from 'react-dom/client';
 
 import makeStyles from '@mui/styles/makeStyles';
+import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
@@ -10,10 +11,10 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import Editor from '@monaco-editor/react';
 import {initVimMode, VimMode} from 'monaco-vim';
-import {useNavigate} from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 
 import {rawExprMeta, RawExpr, RawObjArr} from './Common/Syntax';
-import {useQuery, useApi, Loading, KeyWord, ReachesTree, ConfigContext, PrgmNameContext, annotLink, annotApi} from './Common/Common';
+import {useQuery, useApi, Loading, KeyWord, ReachesTree, ConfigContext, PrgmNameContext, PageDirContext, annotLink, annotApi} from './Common/Common';
 import {Value} from './Common/Value';
 
 const DEBUG_NO_EVAL = false;
@@ -21,6 +22,12 @@ const DEBUG_NO_EVAL = false;
 const useStyles = makeStyles({
   indented: {
     marginLeft: '4em'
+  },
+  dirButtons: {
+    marginTop: '50px',
+    width: '100%',
+    display: 'flex',
+    justifyContent: 'space-evenly'
   },
   playIcon: {
     color: 'green',
@@ -104,9 +111,14 @@ function DocsPage(props) {
 
   const toggleMode = () => setMode(m => m === 'view' ? 'edit' : 'view');
 
-  // apiResult.data is [prgmData, maybeSource] from the combined endpoint
-  const prgmData = apiResult.data?.[0] ?? null;
-  const sourceText = apiResult.data?.[1] ?? null;
+  // The page, and what the server knows about where it sits: the pages either side of it in the
+  // order the navigation shows them, and the directory its documentation's relative links resolve
+  // against. Either neighbour is absent at the ends of that order.
+  const prgmData = apiResult.data?.pgPrgm ?? null;
+  const sourceText = apiResult.data?.pgSource ?? null;
+  const prevPage = apiResult.data?.pgPrev ?? null;
+  const nextPage = apiResult.data?.pgNext ?? null;
+  const pageDir = apiResult.data?.pgDir ?? "";
   const currentSource = editedSource !== null ? editedSource : sourceText;
   const isDirty = currentSource !== (lastSaved !== null ? lastSaved : sourceText);
 
@@ -248,44 +260,72 @@ function DocsPage(props) {
   }, [editorInstance, mode, prgmData]);
 
   // An annotation written in this page's source is local to this page, so a value it displays can
-  // ask the compiler a follow-up question scoped the same way.
+  // ask the compiler a follow-up question scoped the same way, and a relative link it displays
+  // resolves against the directory this page was imported relative to.
   return (
     <PrgmNameContext.Provider value={prgmName}>
-      <div>
-        {canEdit && (
-          <div style={{textAlign: 'right'}}>
-            <IconButton onClick={toggleMode} size="small" aria-label={mode === 'view' ? 'Edit' : 'View'}>
-              {mode === 'view' ? <EditIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
-            </IconButton>
-          </div>
-        )}
-        {mode === 'view' ? (
-          <Loading status={apiResult}>
-            <Main data={prgmData} prgmName={prgmName}/>
-          </Loading>
-        ) : (
-          <Loading status={apiResult}>
-            {currentSource !== null && (
-              <div>
-                <Editor
-                  height="80vh"
-                  language="plaintext"
-                  theme="vs"
-                  value={currentSource}
-                  onChange={value => setEditedSource(value)}
-                  options={{ minimap: { enabled: false }, wordWrap: 'on', fontSize: 14 }}
-                  onMount={handleEditorMount}
-                />
-                <div className={classes.statusRow}>
-                  <div ref={vimStatusBarRef} className={classes.vimStatusBar} data-testid="vim-status-bar" />
-                  <SaveStatus saveState={saveState} isDirty={isDirty} />
+      <PageDirContext.Provider value={pageDir}>
+        <div>
+          {canEdit && (
+            <div style={{textAlign: 'right'}}>
+              <IconButton onClick={toggleMode} size="small" aria-label={mode === 'view' ? 'Edit' : 'View'}>
+                {mode === 'view' ? <EditIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+              </IconButton>
+            </div>
+          )}
+          {mode === 'view' ? (
+            <Loading status={apiResult}>
+              <Main data={prgmData} prgmName={prgmName}/>
+            </Loading>
+          ) : (
+            <Loading status={apiResult}>
+              {currentSource !== null && (
+                <div>
+                  <Editor
+                    height="80vh"
+                    language="plaintext"
+                    theme="vs"
+                    value={currentSource}
+                    onChange={value => setEditedSource(value)}
+                    options={{ minimap: { enabled: false }, wordWrap: 'on', fontSize: 14 }}
+                    onMount={handleEditorMount}
+                  />
+                  <div className={classes.statusRow}>
+                    <div ref={vimStatusBarRef} className={classes.vimStatusBar} data-testid="vim-status-bar" />
+                    <SaveStatus saveState={saveState} isDirty={isDirty} />
+                  </div>
                 </div>
-              </div>
-            )}
-          </Loading>
-        )}
-      </div>
+              )}
+            </Loading>
+          )}
+          <PageNav prev={prevPage} next={nextPage} />
+        </div>
+      </PageDirContext.Provider>
     </PrgmNameContext.Provider>
+  );
+}
+
+// The pages either side of the one being read. They come with the page rather than being worked out
+// from a list of every page the doc server holds, so a page knows its own neighbours. Either side
+// may be missing: at the ends of the reading order there is no page to offer, and there is none at
+// all until the page arrives.
+function PageNav(props) {
+  const {prev, next} = props;
+  const classes = useStyles();
+
+  return (
+    <div className={classes.dirButtons}>
+      {prev && (
+        <Link to={`/docs/${encodeURIComponent(prev)}`}>
+          <Button variant="contained" color="primary">Previous</Button>
+        </Link>
+      )}
+      {next && (
+        <Link to={`/docs/${encodeURIComponent(next)}`}>
+          <Button variant="contained" color="primary">Next</Button>
+        </Link>
+      )}
+    </div>
   );
 }
 

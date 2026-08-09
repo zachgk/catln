@@ -56,25 +56,24 @@ await_backend() {
 # timeout, which reads as a failure of whatever test ran first rather than a cold cache.
 #
 # The unscoped #sidebar is warmed first because it is what the app itself asks for first, and it
-# pays the same kind of cost over every loaded page rather than one. It also lists the pages, so
-# it is where the page to warm comes from.
+# pays the same kind of cost over every loaded page rather than one. The page to warm is the one
+# the server says it opens at, which is the page the app loads next.
 warm_backend() {
   local port=$1 page
-  page=$(curl -sf "http://localhost:${port}/api/annot?annot=%23sidebar" | node -e '
+  curl -sf "http://localhost:${port}/api/annot?annot=%23sidebar" > /dev/null || true
+  page=$(curl -sf "http://localhost:${port}/api/config" | node -e '
     let s = ""
     process.stdin.on("data", d => s += d).on("end", () => {
       const res = JSON.parse(s)
       if (res.tag !== "Success") return
-      const val = res.contents[0][1][0][0].contents.contents[0].getMetaDat[2]
-      const flatten = ns => ns.flatMap(n => n.tag === "SidebarDir" ? flatten(n.sbChildren) : [n.sbPath])
-      const name = flatten(JSON.parse(val.args["/pages"].contents)).find(n => n.endsWith("/test/Integration/code/id.ct"))
-      if (name) process.stdout.write(encodeURIComponent(name))
+      const root = res.contents[0].rootPage
+      if (root) process.stdout.write(encodeURIComponent(root))
     })')
   if [ -n "$page" ]; then
     curl -sf "http://localhost:${port}/api/page?prgmName=${page}" > /dev/null || true
     echo "Backend on port ${port} warmed."
   else
-    echo "Could not find id.ct in the port ${port} sidebar; skipping warmup."
+    echo "The backend on port ${port} reports no page it opens at; skipping warmup."
   fi
 }
 

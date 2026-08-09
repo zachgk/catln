@@ -326,24 +326,48 @@ describe('Backend API contract', () => {
     expect(data.tag).toBe('Success')
     expect(data.contents).toHaveLength(2)
 
-    const [pageContent] = data.contents
-    // pageContent is [prgmData, maybeSource]
-    expect(Array.isArray(pageContent)).toBe(true)
-    expect(pageContent).toHaveLength(2)
+    const [page] = data.contents
+    // pgPrgm is [imports, statements]
+    expect(Array.isArray(page.pgPrgm)).toBe(true)
+    expect(page.pgPrgm).toHaveLength(2)
 
-    // prgmData is [imports, statements]
-    const [prgmData, maybeSource] = pageContent
-    expect(Array.isArray(prgmData)).toBe(true)
-    expect(prgmData).toHaveLength(2)
+    // pgSource is a string or null
+    expect(page.pgSource === null || typeof page.pgSource === 'string').toBe(true)
 
-    // maybeSource is a string or null
-    expect(maybeSource === null || typeof maybeSource === 'string').toBe(true)
+    // The directory the page was imported relative to, which its relative doc links resolve against
+    expect(await idPageName()).toBe(`${page.pgDir}/id.ct`)
   })
 
-  it('/api/config reports a writable server', async () => {
+  // The pages either side of one are the server's answer, and the sidebar is the server's other
+  // answer about the same order: a page's neighbours are the pages around it in the tree.
+  //
+  // Only the page the server opens at is warmed, and each page evaluates its own annotations on
+  // first load, so the three pages read here pay that cost rather than the default 15s budget.
+  it('/api/page names the pages either side of one, and the ends have none', async () => {
+    const order = (await sidebarPages()).map(p => p.sbPath)
+    expect(order.length).toBeGreaterThan(2)
+
+    const pageAt = async (name) =>
+      (await fetchApi(`/api/page?prgmName=${encodeURIComponent(name)}`)).contents[0]
+
+    const middle = await pageAt(order[1])
+    expect(middle.pgPrev).toBe(order[0])
+    expect(middle.pgNext).toBe(order[2])
+
+    const first = await pageAt(order[0])
+    expect(first.pgPrev).toBeNull()
+    expect(first.pgNext).toBe(order[1])
+
+    const last = await pageAt(order[order.length - 1])
+    expect(last.pgPrev).toBe(order[order.length - 2])
+    expect(last.pgNext).toBeNull()
+  }, 60000)
+
+  it('/api/config reports a writable server and the page it opens at', async () => {
     const data = await fetchApi('/api/config')
     expect(data.tag).toBe('Success')
-    expect(data.contents[0]).toEqual({readonly: false})
+    // The doc server was started with id.ct, so that is the page /docs lands on.
+    expect(data.contents[0]).toEqual({readonly: false, rootPage: await idPageName()})
   })
 
   it('CRes response structure is consistent', async () => {
@@ -378,7 +402,7 @@ describe('Backend API contract', () => {
     it('--readonly reports readonly config and refuses writes', async () => {
       const config = await fetchApi('/api/config', READONLY_API_BASE)
       expect(config.tag).toBe('Success')
-      expect(config.contents[0]).toEqual({readonly: true})
+      expect(config.contents[0].readonly).toBe(true)
 
       const pageName = await idPageName(READONLY_API_BASE)
       const res = await writeApi(pageName, 'main = 999\n', READONLY_API_BASE)
@@ -389,7 +413,7 @@ describe('Backend API contract', () => {
 
       // and the file is untouched
       const after = (await fetchApi(`/api/page?prgmName=${encodeURIComponent(pageName)}`, READONLY_API_BASE))
-        .contents[0][1]
+        .contents[0].pgSource
       expect(after).not.toContain('main = 999')
     })
 
@@ -404,7 +428,7 @@ describe('Backend API contract', () => {
       const pageName = await idPageName()
 
       const original = (await fetchApi(`/api/page?prgmName=${encodeURIComponent(pageName)}`))
-        .contents[0][1]
+        .contents[0].pgSource
       expect(typeof original).toBe('string')
 
       // Write the identical bytes back: exercises the whole write path without
@@ -414,7 +438,7 @@ describe('Backend API contract', () => {
       expect((await written.json()).tag).toBe('Success')
 
       const after = (await fetchApi(`/api/page?prgmName=${encodeURIComponent(pageName)}`))
-        .contents[0][1]
+        .contents[0].pgSource
       expect(after).toBe(original)
     }, CACHE_RESTART_TIMEOUT)
   })

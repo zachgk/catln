@@ -41,7 +41,6 @@ const useStyles = makeStyles({
   }
 });
 
-const TocContext = React.createContext({});
 const ConfigContext = React.createContext({});
 
 // The page an annotation is being evaluated with respect to. A Value is rendered from deep inside
@@ -50,11 +49,10 @@ const ConfigContext = React.createContext({});
 // page, which is what an annotation about the whole program wants.
 const PrgmNameContext = React.createContext("");
 
-// How the sidebar's page tree gets back out of the value that carries it. The tree is the compiled
-// #sidebar annotation, so it arrives deep inside a RawExpr like any other value, but it is also the
-// app's list of pages: the previous/next buttons and relative documentation links read it. The
-// layout puts its setter here and the sidebar value publishes the tree it rendered.
-const SidebarContext = React.createContext(() => {});
+// The directory the page being shown was imported relative to, which is what a relative link in its
+// documentation resolves against. It arrives with the page, so a value shown outside one -- an
+// annotation, an editor's view zone -- has no directory, and such a link is left as it was written.
+const PageDirContext = React.createContext("");
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -530,10 +528,9 @@ function ReachesTreeNode(props) {
 }
 
 export {
-  TocContext,
   ConfigContext,
   PrgmNameContext,
-  SidebarContext,
+  PageDirContext,
   annotLink,
   annotApi,
   tagJoin,

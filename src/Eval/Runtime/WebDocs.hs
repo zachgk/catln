@@ -173,7 +173,13 @@ sidebar = EEnvPrim "sidebar" prim
   where
     prim Env{evStagePrgms=StagePrgms{spPages}} _ = case spPages of
       CErr notes   -> Left $ prettyCNotes notes
-      CRes _ pages -> encodeJson <$> (sidebarLevel "" . map splitEntry =<< traverse pageEntry pages)
+      CRes _ pages -> encodeJson <$> sidebarNodes pages
+
+-- | The pages as the tree of directories they sit in, which is the shape a navigation of them is
+-- walked in.
+sidebarNodes :: [FileImport] -> Either String [SidebarNode]
+sidebarNodes pages = sidebarLevel "" . map splitEntry =<< traverse pageEntry pages
+  where
     -- A page with no display path cannot be linked to, so it is reported rather than dropped from
     -- the navigation, where it would read as a page the doc server does not hold.
     pageEntry imp = case impDisp imp of
@@ -204,6 +210,16 @@ sidebarLevel prefix entries = traverse toNode $ sortOn (\(n, _) -> (n /= mainFil
       (_, subDirs@(_:_)) -> SidebarDir n (subPath n) <$> sidebarLevel (subPath n) subDirs
       _ -> Left $ printf "sidebar has more than one page displayed as %s" (subPath n)
     subPath n = prefix ++ "/" ++ n
+
+-- | The pages in the order the navigation shows them, as the flat list of the paths it links to.
+-- This is the reading order the webdocs' previous/next buttons follow, so it is the tree's own order
+-- rather than a second one: a directory is recursed into rather than listed, which is how the
+-- navigation shows it.
+sidebarOrder :: [FileImport] -> Either String [String]
+sidebarOrder pages = concatMap pagePaths <$> sidebarNodes pages
+  where
+    pagePaths SidebarDir{sbChildren} = concatMap pagePaths sbChildren
+    pagePaths SidebarFile{sbPath}    = [sbPath]
 
 -- | Backs @/Catln/Doc/searchPages@, the data carried by a @Show/Search@ page. It renders the pages
 -- the evaluation covers as the flat list of the paths they are asked for, sorted, which is the

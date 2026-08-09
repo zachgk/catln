@@ -28,8 +28,10 @@ import           CRes
 import           CtService
 import           Data.Bifunctor                (Bifunctor (first))
 import           Data.Graph
+import           Data.Maybe                    (listToMaybe)
 import           Eval                          (evalAllTargetModes, evalAnnots,
                                                 prgmFromGraphData)
+import           Eval.Runtime.WebDocs          (sidebarOrder)
 import           MapMeta                       (addMetaID, interleaveMeta,
                                                 interleavePrgm, zip3MetaFun)
 import           Semantics                     (buildCtssConfig)
@@ -53,6 +55,29 @@ import           Utils
 data ResSuccess a n = Success a [n]
   | ResFail [n]
   deriving (Generic, ToJSON)
+
+-- | What @/api/page@ answers with: the page, and where it sits among the pages the doc server holds.
+-- The neighbours and the directory are the server's answers to questions the webdocs would otherwise
+-- answer by keeping their own copy of the page list.
+data PageResp p = PageResp {
+    pgPrgm   :: p
+  , pgSource :: Maybe String
+  -- | The pages either side of this one in the order the navigation shows them. Absent at the ends
+  -- of that order, where there is no page to offer.
+  , pgPrev   :: Maybe String
+  , pgNext   :: Maybe String
+  -- | The directory the page was imported relative to, which is what a relative link written in its
+  -- documentation resolves against.
+  , pgDir    :: Maybe FilePath
+  }
+  deriving (Generic, ToJSON)
+
+-- | The entries either side of one in a reading order. An entry at an end has nothing on that side,
+-- and so is answered with nothing rather than with the entry that wraps round to the other end.
+neighbours :: (Eq a) => a -> [a] -> (Maybe a, Maybe a)
+neighbours x xs = case break (== x) xs of
+  (before, _:after) -> (listToMaybe $ reverse before, listToMaybe after)
+  _                 -> (Nothing, Nothing)
 
 maybeJson :: (ToJSON a) => CRes a -> ActionM ()
 maybeJson (CRes notes r) = json $ Success r notes
@@ -78,8 +103,11 @@ mkCacheWDProvider baseFileNames = do
 docApiBase :: Bool -> CTSS -> IO CTSS -> ScottyM ()
 docApiBase readonly ctss getProvider = do
 
-  get "/api/config" $
-    maybeJson (return (object ["readonly" .= readonly]) :: CRes Value)
+  get "/api/config" $ do
+    -- The page the docs open at, which is the doc server's own answer rather than a page picked out
+    -- of a listing of all of them.
+    rootPage <- liftAndCatchIO $ ctssRootPage ctss
+    maybeJson (return (object ["readonly" .= readonly, "rootPage" .= rootPage]) :: CRes Value)
 
   -- Writes are rejected under --readonly so a shared server cannot be edited, no matter
   -- what the client believes it is allowed to do.
@@ -114,7 +142,15 @@ docApiBase readonly ctss getProvider = do
       let annots' = maybe H.empty (H.fromList . map (first (getMetaID . getExprMeta))) (cresToMaybe maybeAnnots)
       let prgm' = mapMetaRawPrgm (zip3MetaFun (interleaveMeta tprgm') (interleaveMeta targetModes) (interleaveMeta annots')) rawPrgm'
       maybeSource <- lift $ runCResT $ getSource provider prgmName'
-      return (prgm', cresToMaybe maybeSource)
+      -- The pages either side of this one travel with it, so a page knows where it sits without the
+      -- webdocs holding a list of every page to work it out from. A page the order cannot place is
+      -- reported rather than served as though it were an end of the order: 'sidebarOrder' fails only
+      -- when a page has no path to open it by or two pages share one, which is a doc server that
+      -- cannot be navigated at all.
+      pages <- lift $ ctssKeys provider
+      order <- either fail return $ sidebarOrder pages
+      let (prevPage, nextPage) = maybe (Nothing, Nothing) (`neighbours` order) (impDisp prgmName')
+      return $ PageResp prgm' (cresToMaybe maybeSource) prevPage nextPage (impDir prgmName')
     maybeJson resp
 
   get "/api/annot" $ do

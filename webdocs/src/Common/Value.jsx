@@ -2,10 +2,9 @@ import React, {useContext} from 'react';
 
 import ReactMarkdown, {defaultUrlTransform} from 'react-markdown';
 import SyntaxHighlighter from 'react-syntax-highlighter';
-import {useParams} from 'react-router-dom';
 import path from 'pathe';
 
-import {KeyWord, PTypeName, tagJoin, TocContext} from './Common';
+import {KeyWord, PTypeName, tagJoin, PageDirContext} from './Common';
 import ListProgram from './Values/ListProgram';
 import TypeInfer, {TypeInferPnt} from './Values/TypeInfer';
 import Debugger from './Values/Debugger';
@@ -84,8 +83,9 @@ function tryValue(val, update) {
 
 function Comment(props) {
   const {comment} = props;
-  const params = useParams();
-  const tocResult = useContext(TocContext);
+  // The directory this comment's page was imported relative to, which arrives with the page. A
+  // comment shown outside a page has none, and its relative links are left as they were written.
+  const pageDir = useContext(PageDirContext);
   // let {objNames, classToType} = useContext(ResMaps);
   // objNames = objNames || {};
   // classToType = classToType || {};
@@ -129,8 +129,8 @@ function Comment(props) {
   function transformLinkUri(href, children, title) {
     if(href.startsWith("catln://")) {
       return href;
-    } else if (!isUrl(href) && !path.isAbsolute(href) && "prgmName" in params) {
-      const p = path.join(tocResult.data[params.prgmName].impDir, href);
+    } else if (!isUrl(href) && !path.isAbsolute(href) && pageDir) {
+      const p = path.join(pageDir, href);
       return `/docs/${encodeURIComponent(p)}`;
     } else {
       return defaultUrlTransform(href, children, title);

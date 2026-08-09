@@ -2,23 +2,18 @@ import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
-import { TocContext } from '../Common'
+import { PageDirContext } from '../Common'
 import { Value, tryValue } from '../Value'
 
 const theme = createTheme()
 
-const tocData = {
-  isLoaded: true,
-  data: { 'test/main.ct': { impDir: '/test' } },
-  notes: [],
-}
-
-function Providers({ children }) {
+// dir is the directory the page being shown was imported relative to, which arrives with the page.
+function Providers({ children, dir = '' }) {
   return (
     <ThemeProvider theme={theme}>
-      <TocContext.Provider value={tocData}>
+      <PageDirContext.Provider value={dir}>
         <MemoryRouter>{children}</MemoryRouter>
-      </TocContext.Provider>
+      </PageDirContext.Provider>
     </ThemeProvider>
   )
 }
@@ -112,6 +107,34 @@ describe('CatlnResult via Value', () => {
     }
     const { container } = render(<Providers><Value data={val} /></Providers>)
     expect(container.querySelector('pre')).toHaveTextContent('plain text')
+  })
+})
+
+// A documentation comment is markdown, and a relative link in it is written relative to the page it
+// is on. Which directory that is comes with the page, so the link is resolved from what the server
+// said rather than from a listing of every page the app has.
+describe('documentation links', () => {
+  function md(text) {
+    return { tag: 'TupleVal', name: '/Catln/Doc/Show/MD', args: { '/text': { tag: 'StrVal', contents: text } } }
+  }
+
+  it('resolves a relative link against the page it is on', () => {
+    render(<Providers dir="/test/sub"><Value data={md('see [other](other.ct)')} /></Providers>)
+
+    expect(screen.getByText('other')).toHaveAttribute('href', '/docs/%2Ftest%2Fsub%2Fother.ct')
+  })
+
+  it('leaves a link alone where there is no page to resolve it against', () => {
+    render(<Providers><Value data={md('see [other](other.ct)')} /></Providers>)
+
+    expect(screen.getByText('other')).toHaveAttribute('href', 'other.ct')
+  })
+
+  it('leaves absolute links and urls alone', () => {
+    render(<Providers dir="/test/sub"><Value data={md('[a](/test/id.ct) [b](https://catln.dev)')} /></Providers>)
+
+    expect(screen.getByText('a')).toHaveAttribute('href', '/test/id.ct')
+    expect(screen.getByText('b')).toHaveAttribute('href', 'https://catln.dev')
   })
 })
 

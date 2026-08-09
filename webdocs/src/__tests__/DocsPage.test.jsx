@@ -2,7 +2,7 @@ import React from 'react'
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
-import { TocContext, ConfigContext } from '../Common/Common'
+import { ConfigContext } from '../Common/Common'
 import { initVimMode, VimMode } from 'monaco-vim'
 import DocsPage, { AnnotPage } from '../DocsPage'
 import pageResponse from '../test/fixtures/page-response.json'
@@ -28,13 +28,12 @@ vi.mock('@monaco-editor/react', () => ({
 
 const theme = createTheme()
 
-const tocData = {
-  isLoaded: true,
-  data: { '/test/main.ct': { impDir: '/test' } },
-  notes: [],
-}
-
 const writableConfig = { isLoaded: true, data: { readonly: false }, notes: [] }
+
+// A page response with some of what the server says about where the page sits replaced.
+function pageWith(nav) {
+  return { ...pageResponse, contents: [{ ...pageResponse.contents[0], ...nav }, []] }
+}
 
 function mockFetch(overrides = {}) {
   return vi.fn((url, options) => {
@@ -67,9 +66,7 @@ function Providers({ children, config = writableConfig }) {
   return (
     <ThemeProvider theme={theme}>
       <ConfigContext.Provider value={config}>
-        <TocContext.Provider value={tocData}>
-          <MemoryRouter>{children}</MemoryRouter>
-        </TocContext.Provider>
+        <MemoryRouter>{children}</MemoryRouter>
       </ConfigContext.Provider>
     </ThemeProvider>
   )
@@ -246,10 +243,7 @@ describe('DocsPage', () => {
     global.fetch = mockFetch({
       page: () => Promise.resolve({
         status: 200,
-        json: () => Promise.resolve({
-          tag: 'Success',
-          contents: [[pageResponse.contents[0][0], null], []],
-        }),
+        json: () => Promise.resolve(pageWith({ pgSource: null })),
       }),
     })
 
@@ -382,6 +376,52 @@ describe('DocsPage', () => {
       method: 'POST',
       body: 'main = 43\n',
     }))
+  })
+})
+
+// The pages either side of this one come with the page, so the buttons say what the server said
+// rather than what a list of every page held in the app works out.
+describe('page navigation', () => {
+  async function renderPage(nav) {
+    global.fetch = mockFetch({
+      page: () => Promise.resolve({ status: 200, json: () => Promise.resolve(pageWith(nav)) }),
+    })
+    render(<Providers><DocsPage prgmName="test%2Fmain.ct" /></Providers>)
+    await waitFor(() => {
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument()
+    })
+  }
+
+  it('opens the pages either side of the one being read', async () => {
+    await renderPage({ pgPrev: '/test/id.ct', pgNext: '/test/utils.ct' })
+
+    expect(screen.getByText('Previous').closest('a')).toHaveAttribute('href', '/docs/%2Ftest%2Fid.ct')
+    expect(screen.getByText('Next').closest('a')).toHaveAttribute('href', '/docs/%2Ftest%2Futils.ct')
+  })
+
+  it('offers only the side there is a page on', async () => {
+    await renderPage({ pgPrev: null, pgNext: '/test/utils.ct' })
+
+    expect(screen.queryByText('Previous')).not.toBeInTheDocument()
+    expect(screen.getByText('Next')).toBeInTheDocument()
+  })
+
+  it('offers nothing at the ends of the reading order', async () => {
+    await renderPage({ pgPrev: null, pgNext: null })
+
+    expect(screen.queryByText('Previous')).not.toBeInTheDocument()
+    expect(screen.queryByText('Next')).not.toBeInTheDocument()
+  })
+
+  // The buttons arrive with the page rather than ahead of it, so there is nothing to offer while it
+  // is still being compiled -- and nothing that could point at the wrong page's neighbours.
+  it('offers nothing while the page is loading', () => {
+    global.fetch = vi.fn(() => new Promise(() => {}))
+    render(<Providers><DocsPage prgmName="test%2Fmain.ct" /></Providers>)
+
+    expect(screen.getByText('Loading...')).toBeInTheDocument()
+    expect(screen.queryByText('Previous')).not.toBeInTheDocument()
+    expect(screen.queryByText('Next')).not.toBeInTheDocument()
   })
 })
 

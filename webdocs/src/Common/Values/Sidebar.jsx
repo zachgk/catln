@@ -1,4 +1,4 @@
-import React, {useState, useMemo, useEffect, useContext} from 'react';
+import React, {useState, useMemo, useEffect} from 'react';
 
 import makeStyles from '@mui/styles/makeStyles';
 import Menu from '@mui/material/Menu';
@@ -10,7 +10,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {Link, useLocation, useNavigate} from 'react-router-dom';
 
-import {SidebarContext, annotLink} from '../Common';
+import {annotLink} from '../Common';
 
 const useStyles = makeStyles({
   tocFileMain: {
@@ -35,16 +35,11 @@ const useStyles = makeStyles({
 });
 
 // The pages of the doc server, as the tree of directories they sit in. The tree is the compiled
-// value of a #sidebar annotation, so nothing is fetched here. It is also published back to the
-// layout, which is what makes it the app's page list rather than only this component's.
+// value of a #sidebar annotation, so nothing is fetched here, and nothing outside this component
+// reads it: every other part of the app that needs to know about a page is told by the server.
 function Sidebar(props) {
-  const setPageTree = useContext(SidebarContext);
   const pages = props["/pages"];
   const tree = useMemo(() => JSON.parse(pages.contents), [pages]);
-
-  useEffect(() => {
-    setPageTree(tree);
-  }, [tree, setPageTree]);
 
   // The tree lives in the layout route now, so it outlives navigating between pages and its
   // expansion is worth keeping. What the route decides is only that the page being read is

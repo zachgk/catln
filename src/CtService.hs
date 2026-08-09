@@ -277,6 +277,17 @@ ctssKeys (CTSS ssmv) = do
   CTSSDat{ctssData} <- readMVar ssmv
   return $ map snd3 $ graphToNodes ctssData
 
+-- | The page a service opens at: the first file it was started with. Which page that is, is the
+-- service's own knowledge, and a reader of it would otherwise have to guess it out of a list of
+-- every page. Resolved the same way a page asked for by name is, so it is a page that can be asked
+-- for; a service started with no files at all has none.
+ctssRootPage :: CTSS -> IO (Maybe String)
+ctssRootPage (CTSS ssmv) = do
+  CTSSDat{ctssConfig, ctssBaseFileNames} <- readMVar ssmv
+  case ctssBaseFileNames of
+    []       -> return Nothing
+    (name:_) -> impDisp <$> mkDesCanonicalImportStr ctssConfig name
+
 ctssGet :: (SSF -> Maybe (CRes a)) -> CTSS -> CResT IO (GraphData a FileImport)
 ctssGet f (CTSS ssmv) = do
   lift $ ctssBuildAll (CTSS ssmv)

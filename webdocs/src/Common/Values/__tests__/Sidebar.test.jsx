@@ -3,7 +3,6 @@ import { render, screen, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
-import { SidebarContext } from '../../Common'
 import Sidebar, { ancestorPaths, pageOf } from '../Sidebar'
 import sidebarResponse from '../../../test/fixtures/sidebar-response.json'
 
@@ -15,14 +14,12 @@ function sidebar(tree = sidebarResponse) {
 }
 
 // Rendered at the route a page is read at, which is what the tree opens itself to.
-function Providers({ children, at = '/docs/%2Ftest%2Fid.ct', setPageTree = () => {} }) {
+function Providers({ children, at = '/docs/%2Ftest%2Fid.ct' }) {
   return (
     <ThemeProvider theme={theme}>
-      <SidebarContext.Provider value={setPageTree}>
-        <MemoryRouter initialEntries={[at]}>
-          {children}
-        </MemoryRouter>
-      </SidebarContext.Provider>
+      <MemoryRouter initialEntries={[at]}>
+        {children}
+      </MemoryRouter>
     </ThemeProvider>
   )
 }
@@ -65,8 +62,8 @@ describe('Sidebar', () => {
     expect(screen.getByText('main.ct')).toBeInTheDocument()
   })
 
-  // The sidebar is mounted before the page is known: it appears when its own annotation arrives,
-  // which is the same moment the page list it carries lets /docs redirect to a page.
+  // The sidebar is mounted before the page is known: it sits in the layout, above the route that
+  // names one, and /docs redirects to a page only once the config it asks for has arrived.
   it('opens to the page once one is being read', async () => {
     const router = createMemoryRouter(
       [{path: '*', element: <Sidebar {...sidebar()} />}],
@@ -74,22 +71,13 @@ describe('Sidebar', () => {
     )
     render(
       <ThemeProvider theme={theme}>
-        <SidebarContext.Provider value={() => {}}>
-          <RouterProvider router={router} />
-        </SidebarContext.Provider>
+        <RouterProvider router={router} />
       </ThemeProvider>
     )
 
     expect(screen.queryByText('bool.ct')).not.toBeInTheDocument()
     await act(() => router.navigate('/docs/%2Fstack%2Fcore%2Fbool.ct'))
     expect(screen.getByText('bool.ct')).toBeInTheDocument()
-  })
-
-  it('publishes its tree, which is the page list the rest of the app reads', () => {
-    const setPageTree = vi.fn()
-    render(<Providers setPageTree={setPageTree}><Sidebar {...sidebar()} /></Providers>)
-
-    expect(setPageTree).toHaveBeenCalledWith(sidebarResponse)
   })
 })
 

@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider, createRoutesFromElements, Route } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
-import { Root, flattenPages } from '../App'
+import { Root } from '../App'
 import sidebarResponse from '../test/fixtures/sidebar-response.json'
 
 const theme = createTheme()
@@ -23,12 +23,18 @@ const sidebarValue = {
   args: { '/pages': { tag: 'StrVal', contents: JSON.stringify(sidebarResponse) } },
 }
 
-// The navbar's box covers the same pages the sidebar shows, by an annotation of its own, so its
-// list is read off the same fixture.
+// The navbar's box covers the same pages the sidebar shows, by an annotation of its own.
 const searchValue = {
   tag: 'TupleVal',
   name: '/Catln/Doc/Show/Search',
-  args: { '/pages': { tag: 'StrVal', contents: JSON.stringify(flattenPages(sidebarResponse).map(([page]) => page)) } },
+  args: {
+    '/pages': {
+      tag: 'StrVal',
+      contents: JSON.stringify([
+        '/stack/core/main.ct', '/stack/core/bool.ct', '/stack/core/webdoc.ct', '/test/id.ct',
+      ]),
+    },
+  },
 }
 
 function renderRoot() {
@@ -77,7 +83,7 @@ describe('Root', () => {
     await user.click(screen.getByLabelText('Hide sidebar'))
     expect(screen.getByTestId('sidebar')).toHaveStyle({ width: '0px' })
 
-    // Contracted it is still holding the page tree, which is the app's page list.
+    // Contracted rather than unmounted, so showing it again is not a recompile of its annotation.
     expect(screen.getByText('test')).toBeInTheDocument()
   })
 
@@ -92,16 +98,5 @@ describe('Root', () => {
     renderRoot()
     expect(screen.getByTestId('sidebar')).toHaveStyle({ width: '0px' })
     expect(screen.getByLabelText('Show sidebar')).toBeInTheDocument()
-  })
-})
-
-describe('flattenPages', () => {
-  it('reads the pages of a tree in the order it shows them', () => {
-    expect(flattenPages(sidebarResponse)).toEqual([
-      ['/stack/core/main.ct', { impDir: '/stack/core' }],
-      ['/stack/core/bool.ct', { impDir: '/stack/core' }],
-      ['/stack/core/webdoc.ct', { impDir: '/stack/core' }],
-      ['/test/id.ct', { impDir: '/test' }],
-    ])
   })
 })

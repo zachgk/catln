@@ -1,6 +1,6 @@
 import './App.css';
 
-import {useState, useMemo, useCallback} from 'react';
+import {useState, useCallback} from 'react';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
@@ -19,7 +19,7 @@ import {
   Outlet
 } from "react-router-dom";
 
-import {useApi, TocContext, ConfigContext, SidebarContext, annotLink} from './Common/Common';
+import {useApi, ConfigContext, annotLink} from './Common/Common';
 import Docs from './Docs';
 import {AnnotPage} from './DocsPage';
 import {AppBarSearch} from './Common/Values/Search';
@@ -32,9 +32,7 @@ function Root() {
   let configResult = useApi("/api/config");
 
   // The sidebar is one instance for the whole app rather than one per route, so it survives
-  // navigating between pages, and its contents are the compiled #sidebar annotation. The tree that
-  // annotation carries is published back here because it is the app's page list too.
-  const [pageTree, setPageTree] = useState(null);
+  // navigating between pages, and its contents are the compiled #sidebar annotation.
   const [sidebarOpen, setSidebarOpen] = useState(readSidebarOpen);
 
   const toggleSidebar = useCallback(() => {
@@ -44,54 +42,34 @@ function Root() {
     });
   }, []);
 
-  // Keyed by the path a page is asked for, which is how every reader of it looks a page up, and in
-  // the order the sidebar shows them, which is the order the previous/next buttons follow.
-  const tocResult = useMemo(() => ({
-    isLoaded: pageTree !== null,
-    data: pageTree && Object.fromEntries(flattenPages(pageTree)),
-    notes: []
-  }), [pageTree]);
-
   return (
     <ConfigContext.Provider value={configResult}>
-      <TocContext.Provider value={tocResult}>
-        <SidebarContext.Provider value={setPageTree}>
-          <Header sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
-          <Box sx={{display: 'flex', alignItems: 'flex-start'}}>
-            {/* Contracted the sidebar is zero width rather than unmounted: it still holds the page
-                list the previous/next buttons and relative documentation links read. */}
-            <Box
-              sx={{
-                width: sidebarOpen ? SIDEBAR_WIDTH : 0,
-                flexShrink: 0,
-                overflowX: 'hidden',
-                transition: 'width 0.2s',
-              }}
-              data-testid="sidebar"
-            >
-              <Box sx={{width: SIDEBAR_WIDTH}}>
-                {/* Named with no page on purpose: the sidebar lists every page the doc server
-                    holds, not the ones one page reaches. The empty name also stops it from
-                    inheriting the page an /annot route is scoped to. */}
-                <AnnotPage annot="#sidebar" prgmName="" />
-              </Box>
-            </Box>
-            <Box sx={{flexGrow: 1, minWidth: 0, p: 2}}>
-              <Outlet />
-            </Box>
+      <Header sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
+      <Box sx={{display: 'flex', alignItems: 'flex-start'}}>
+        {/* Contracted the sidebar is zero width rather than unmounted, so that showing it again is
+            not a recompile of its annotation, which covers every page the doc server holds. */}
+        <Box
+          sx={{
+            width: sidebarOpen ? SIDEBAR_WIDTH : 0,
+            flexShrink: 0,
+            overflowX: 'hidden',
+            transition: 'width 0.2s',
+          }}
+          data-testid="sidebar"
+        >
+          <Box sx={{width: SIDEBAR_WIDTH}}>
+            {/* Named with no page on purpose: the sidebar lists every page the doc server
+                holds, not the ones one page reaches. The empty name also stops it from
+                inheriting the page an /annot route is scoped to. */}
+            <AnnotPage annot="#sidebar" prgmName="" />
           </Box>
-        </SidebarContext.Provider>
-      </TocContext.Provider>
+        </Box>
+        <Box sx={{flexGrow: 1, minWidth: 0, p: 2}}>
+          <Outlet />
+        </Box>
+      </Box>
     </ConfigContext.Provider>
   );
-}
-
-// The files of a page tree, in the order the tree shows them, as the [path, page] entries the rest
-// of the app reads pages by.
-function flattenPages(nodes) {
-  return nodes.flatMap(node => node.tag === "SidebarDir"
-    ? flattenPages(node.sbChildren)
-    : [[node.sbPath, {impDir: node.sbDir}]]);
 }
 
 // Whether the sidebar was left open, so the choice survives a reload. Anything but an explicit
@@ -153,4 +131,4 @@ function App() {
 }
 
 export default App;
-export {Root, Header, flattenPages};
+export {Root, Header};
