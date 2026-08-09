@@ -339,6 +339,16 @@ class TypeGraph tg where
   typeGraphArgKeys :: TypeEnv tg -> TypeName -> Maybe [S.HashSet ArgName]
   typeGraphArgKeys _ _ = Nothing
 
+  -- | The input-type templates of a name's ARROW objects — the function-side complement of
+  -- 'typeGraphData'. A declaration's template carries the declared linkage between its args
+  -- and its type variables (@compareTo[$T -> Ord](this -> $T, other -> $T)@ ties both @this@
+  -- and @other@ to @$T@), which 'varStampSupported' consults to withhold a var-binding stamp
+  -- while a declared occurrence of the var has not been applied yet. Empty when the name has
+  -- no arrow objects (or their input presentations are still unresolved) — no withholding is
+  -- then possible from this source, which is the monotone-safe direction.
+  typeGraphArrowTemplates :: TypeEnv tg -> TypeName -> [PartialType]
+  typeGraphArrowTemplates _ _ = []
+
 data EmptyTypeGraph = EmptyTypeGraph
 instance Semigroup EmptyTypeGraph where
   _ <> _ = EmptyTypeGraph
@@ -3361,13 +3371,33 @@ typeContainsBareTop (UnionType mtop pos _) = topContains || any partialContains 
 -- difference's 'narrowPiece' — both sides spell the unsupported case identically, keeping
 -- @A∩B = A−(A−B)@. A vacuous occurrence (@Nil@ under @∀ConsList[/T=..]@) passes.
 varStampSupported :: TypeGraph tg => TypeEnv tg -> TypeName -> [H.HashMap ArgName Type] -> S.HashSet ArgName -> H.HashMap ArgName Type -> TypeVarAux -> Bool
-varStampSupported typeEnv name' spellings ks metArgs (TVVar n) = and
+varStampSupported typeEnv name' spellings ks metArgs (TVVar n) = declaredOccsPresent && and
   [ not (typeContainsBareTop v)
   | k <- S.toList ks, occAt k, Just v <- [H.lookup k metArgs]]
   where
     occAt k = any (declRef k) (typeGraphData typeEnv name') || any (spellRef k) spellings
     declRef k PartialType{ptArgs=dArgs} = maybe False (S.member n . typeTVExtVarRefs) (H.lookup k dArgs)
     spellRef k sp = maybe False (S.member n . typeTVExtVarRefs) (H.lookup k sp)
+    -- A declared DIRECT occurrence of the var (a template field pointer @this=$T@ — a
+    -- partial-local 'TVInt' value) that the application has NOT SUPPLIED YET cannot
+    -- contribute to the pointer JOIN, and its future value can force the binding WIDER
+    -- (the join polarity: direct occurrences are membership positions, lower bounds on
+    -- the var). A stamp taken from the present occurrences alone would be read downstream
+    -- as the var's exact upper bound and clamp the missing occurrence when it arrives
+    -- (@compareTo[$T -> Ord](this -> $T, other -> $T)@ partially applied at @other=Some@
+    -- must not record @/T=Some@ — the later @this=Nothing@ is emptied by
+    -- declaration-boundedness). So the stamp is withheld until every DIRECT occurrence
+    -- the name's templates tie to the var is present in the piece; absence only
+    -- disappears as the application completes, so the withhold is monotone, exactly like
+    -- the unresolved-content rule above. LINKED ('TVExt') occurrences are exempt — they
+    -- contribute by MEET ('exactEnvAt': "var application is EXACT"), and a missing meet
+    -- contributor only leaves the stamp WIDER, the sound direction — which also keeps an
+    -- arg-subset piece (@Cons(head=..)@ of a @??@-leaf, no @tail@ in its value-set)
+    -- stamping from its own args exactly as before. A name with no template knowledge
+    -- (open world, or presentations still resolving) withholds nothing.
+    declaredOccsPresent = all (`S.member` ks)
+      [ k | tmpl <- typeGraphData typeEnv name' ++ typeGraphArrowTemplates typeEnv name'
+          , (k, TypeVar (TVVar n') TVInt) <- H.toList (ptArgs tmpl), n' == n ]
 varStampSupported _ _ _ _ _ _ = True
 
 -- | Checks if a partial has predicates that turn the partial into a 'bottomType' (e.g. a partial with contradictory preds such as isClass A and not isClass A).
@@ -4442,11 +4472,31 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
   -- (including an argument the other side has not applied yet — a required key contributed
   -- by the object alone) withholds the join, which keeps the piece's binding monotone as
   -- the application completes.
+  -- A DIRECT declared occurrence whose slot already holds CONTENT is still an occurrence:
+  -- its pointer spelling (@this=$T@) was consumed by an earlier meet — one that correctly
+  -- withheld the stamp because the occurrence set was incomplete — so its contribution is
+  -- read from the content itself, exactly as 'tightenDeclBoundedDims' reads a data value's
+  -- occupants ("the pointer spelling ... is consumed the moment content lands there").
+  -- Without it the join ranges over the still-pointer-spelled occurrences alone and records
+  -- a partial join as the var's binding (@compareTo(this=Nothing, other=Some)@ stamping
+  -- @/T=Some@ from @other@ — the mixed-constructor collapse). Content that is ⊤-carrying or
+  -- var-carrying withholds the join (its future narrowing could widen the true join), the
+  -- same monotone-withhold as an unresolved pointer discovery. Only the templates' DIRECT
+  -- pointer occurrences read content this way: a LINKED occurrence (@tail -> ConsList[$T]@)
+  -- contributes through the external-reference env machinery ('exactEnvAt') as before.
+  let declTmpls = typeGraphData typeEnv name' ++ typeGraphArrowTemplates typeEnv name'
   let pointerJoinFor ks =
         let ksL = S.toList ks
-            joinFor n = case mapM (`discoveryAt` n) (filter (\k -> n `S.member` pointerNamesAt k) ksL) of
-              Just vals | not (null vals) -> Just (n, unionAllTypesWithEnv typeEnv vaenv vals)
-              _ -> Nothing
+            joinFor n =
+              let ptrKs = filter (\k -> n `S.member` pointerNamesAt k) ksL
+                  contentKs = [ k | tmpl <- declTmpls, (k, TypeVar (TVVar n') TVInt) <- H.toList (ptArgs tmpl)
+                              , n' == n, k `S.member` ks, k `notElem` ptrKs ]
+                  contentAt k = case fmap snd (H.lookup k liveArgsMap) of
+                    Just v | not (typeHasVars v), not (typeContainsBareTop v) -> Just v
+                    _                                                        -> Nothing
+              in case (mapM (`discoveryAt` n) ptrKs, mapM contentAt (L.nub contentKs)) of
+                (Just vals, Just cvals) | not (null (vals ++ cvals)) -> Just (n, unionAllTypesWithEnv typeEnv vaenv (vals ++ cvals))
+                _ -> Nothing
         in H.fromList $ mapMaybe joinFor $ S.toList $ S.unions $ map pointerNamesAt ksL
   let exactEnvOf k = maybe H.empty (exactEnvAt k . fst) (H.lookup k liveArgsMap)
   -- EVERY hoisted stamp — the pointer-occurrence join and the external-reference discoveries

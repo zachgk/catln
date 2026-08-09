@@ -122,6 +122,17 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
         _                         -> []
       dataPartials ObjArr{oaArr=Just{}} = []
 
+  -- The arrow-object complement of 'typeGraphData': input templates of declarations and
+  -- definition arms. A mid-solve object whose input presentation is not yet a plain leaf
+  -- union (e.g. still ⊤) contributes nothing — callers treat missing templates as
+  -- no-information, the monotone-safe direction.
+  typeGraphArrowTemplates TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name = concatMap arrowPartials $ flatObjectMapItem $ H.lookupDefault mempty name tg
+    where
+      arrowPartials oa@ObjArr{oaArr=Just{}} = case getMetaType $ getExprMeta $ oaObjExpr oa of
+        UnionType Nothing leafs _ -> splitUnionType leafs
+        _                         -> []
+      arrowPartials ObjArr{oaArr=Nothing} = []
+
   -- The arg keysets come from the object EXPRESSION structure ('exprAppliedArgs' /
   -- 'inExprSingleton' — the same keying every partial built from an expression uses), not
   -- the expression's meta type, which need not be resolved. A relatively-spelled name (a
