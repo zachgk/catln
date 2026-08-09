@@ -23,10 +23,14 @@ const FAILED = [
     trOwnerId: '1a0fc28c-0be2-4e0c-a3ae-e8d1824254a7',
     trKind: 'TestProperty',
     trPassed: false,
-    trCases: 1,
+    trCases: 2,
+    trInputs: ['/testAddIdentity(x= 7)', '/testAddIdentity(x= -1000)'],
     trNotes: 'Generated -1000\nFailed assertion',
   },
 ]
+
+// The definition every case in the fixture is a call of, which the case list is matched against.
+const TEST_NAME = testResponse[0].trName
 
 describe('Test', () => {
   beforeEach(() => {
@@ -44,25 +48,51 @@ describe('Test', () => {
     render(<Providers><Test {...test()} /></Providers>)
 
     // MUI keeps collapsed detail mounted but hidden, so presence is not the question — visibility is.
-    expect(screen.getByText(/\/testAddIdentity/)).not.toBeVisible()
+    expect(screen.getByText(new RegExp(`${TEST_NAME} \\(property test\\)`))).not.toBeVisible()
 
     await userEvent.click(screen.getByRole('button'))
-    expect(await screen.findByText(/\/testAddIdentity/)).toBeVisible()
+    expect(await screen.findByText(new RegExp(`${TEST_NAME} \\(property test\\)`))).toBeVisible()
+  })
+
+  it('lists every case that ran with the input it ran on', async () => {
+    render(<Providers><Test {...test()} /></Providers>)
+    await userEvent.click(screen.getByRole('button'))
+
+    // One entry per case the engine reported, not merely the count of them.
+    const inputs = testResponse[0].trInputs
+    const cases = await screen.findAllByText(new RegExp(`^${TEST_NAME}\\[`))
+    expect(cases).toHaveLength(inputs.length)
+    expect(cases[0]).toHaveTextContent(inputs[0])
+    // The two types this law was checked against, which is what a count alone cannot say.
+    expect(cases.filter(c => c.textContent.includes('/Data/String')).length).toBeGreaterThan(0)
+    expect(cases.filter(c => c.textContent.includes('/Data/Primitive/Integer')).length).toBeGreaterThan(0)
   })
 
   it('says how far a failing property got and what it found', async () => {
     render(<Providers><Test {...test(FAILED)} /></Providers>)
 
-    expect(screen.getByText(/✗ Test — failed after 1 cases/)).toBeInTheDocument()
+    expect(screen.getByText(/✗ Test — failed after 2 cases/)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button'))
     // The counterexample the engine shrank to, which is the whole reason to open this.
     expect(await screen.findByText(/Generated -1000/)).toBeVisible()
+    // The case it first failed on is the last one it ran, and is marked as such. It is a different
+    // value from the shrunk counterexample above.
+    expect(screen.getByText(/failed here/)).toBeVisible()
+    expect(screen.getByText(/x= 7/)).toBeVisible()
+  })
+
+  it('lists no cases for a test the engine generated nothing for', async () => {
+    const simple = [{...testResponse[0], trKind: 'TestSimple', trCases: null, trInputs: []}]
+    render(<Providers><Test {...test(simple)} /></Providers>)
+    await userEvent.click(screen.getByRole('button'))
+
+    expect(screen.queryAllByRole('listitem')).toHaveLength(1)
   })
 
   it('counts the tests when the definition has more than one', () => {
     const many = [
       { ...testResponse[0], trName: '/f', trPassed: true, trCases: 100 },
-      { ...testResponse[0], trName: '/f :: overlap-agreement', trKind: 'TestOverlapAgreement', trPassed: false, trCases: 4, trNotes: 'disagreed' },
+      { ...testResponse[0], trName: '/f :: overlap-agreement', trKind: 'TestOverlapAgreement', trPassed: false, trCases: 4, trInputs: ['/f(x= 1)', '/f(x= 2)', '/f(x= 3)', '/f(x= 4)'], trNotes: 'disagreed' },
     ]
     render(<Providers><Test {...test(many)} /></Providers>)
 
@@ -70,7 +100,7 @@ describe('Test', () => {
   })
 
   it('says a law checked against no instances ran no cases, rather than calling it checked', () => {
-    const vacuous = [{ ...testResponse[0], trPassed: true, trCases: 0 }]
+    const vacuous = [{ ...testResponse[0], trPassed: true, trCases: 0, trInputs: [] }]
     render(<Providers><Test {...test(vacuous)} /></Providers>)
 
     expect(screen.getByText(/✓ Test — passed with no cases to check/)).toBeInTheDocument()

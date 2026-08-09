@@ -62,15 +62,33 @@ function Test(props) {
   );
 }
 
-// One test of the run. A failure shows what it reported, which for a generated test is the
-// counterexample the test engine shrank to.
+// One test of the run, with every case it ran listed under it. The cases are shown without a further
+// click: what a passing test was actually checked against is the point of opening this, and a count
+// says nothing about it — a law checked against a hundred varied values and one checked against a
+// hundred copies of the same value both report a hundred cases.
+//
+// A failure shows what it reported, which for a generated test is the counterexample the test engine
+// shrank to. That is a different value from the last case listed, which is the input the test first
+// failed on, before any shrinking.
 function TestEntry({result}) {
+  const inputs = result.trInputs;
   return (
     <li>
       <span>
         {result.trPassed ? '✓' : '✗'} {result.trName} ({KINDS[result.trKind] || result.trKind}) — {caseSummary(result)}
       </span>
       {result.trNotes ? <pre>{result.trNotes}</pre> : null}
+      {inputs.length > 0 ? (
+        // Capped so that a hundred cases do not push the rest of the page out of the way.
+        <ol style={{maxHeight: '20em', overflowY: 'auto', overflowX: 'auto'}}>
+          {inputs.map((input, i) => (
+            <li key={i}>
+              <code>{input}</code>
+              {!result.trPassed && i === inputs.length - 1 ? ' — failed here' : null}
+            </li>
+          ))}
+        </ol>
+      ) : null}
     </li>
   );
 }
