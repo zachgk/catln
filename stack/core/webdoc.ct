@@ -151,6 +151,26 @@ module(Catln/Doc)
 
     Show/Search(pages= searchPages(annot= s))
 
+  data(Show/Test(run -> String))
+    # [Show/Test] shows how the tests of one definition ran: what each of them was, whether it
+      passed, and how many generated cases it got through. It carries that run in [run], so the
+      webdocs show a test's result beside the test itself rather than asking the compiler for it
+      over a separate route.
+      Unlike the displays above it has no annotation of its own. It is what [#test] shows: a [#test]
+      already marks a definition as a test, so the definitions it is written on are exactly the ones
+      with a run to show.
+
+  every(Show/Test.., isa= [/Catln/Doc/DShow])
+
+  dshow(s= #test) =
+    testRun(annot) -> String
+      # [testRun] renders the tests of the definition the annotation is written on as JSON. Of that
+        definition, not of the page: a [#test] marks one definition as a test, so it reports on that
+        one.
+      #runtime("testRun")
+
+    Show/Test(run= testRun(annot= s))
+
   annot(#debugger(fun -> String))
 
   data(Show/Debugger(run -> String, fun -> String))

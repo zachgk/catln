@@ -28,7 +28,8 @@ import           Control.Concurrent         (forkIO, killThread, newEmptyMVar,
 import           Control.Monad              (forM)
 import           Control.Monad.State        (runStateT)
 import           CtConstants
-import           Data.List                  (nub, nubBy, sortOn, tails)
+import           Data.List                  (intercalate, nub, nubBy, sortOn,
+                                             tails)
 import           Data.Maybe
 import           Data.UUID                  (UUID)
 import           Eval                       (evalBaseEnv, evalBuildPrgm,
@@ -38,7 +39,6 @@ import           Eval.Common
 import           Eval.ExprBuilder
 import qualified Hedgehog
 import qualified Hedgehog.Gen               as HG
-import qualified Hedgehog.Internal.Config
 import           Hedgehog.Internal.Property (propertyConfig, propertyTest)
 import           Hedgehog.Internal.Report   (Result (..), reportStatus)
 import qualified Hedgehog.Internal.Report
@@ -64,8 +64,7 @@ propTestTimeoutMicros = 10 * 1000 * 1000
 -- through, and, for a genuine failure, the rendered counterexample.
 --
 -- The render is carried rather than printed so that whoever asked for the run decides what becomes
--- of it — a command line prints it, a doc server shows it in the page. It is rendered without colour
--- for that reason: ANSI escapes belong on a terminal, not in the middle of a served value.
+-- of it — a command line prints it, a doc server shows it in the page.
 data PropOutcome = PropOutcome
   { poPassed :: Bool
   , poCases  :: Int
@@ -108,12 +107,25 @@ runPropQuietly gaveUpOk prop = do
   seed <- HedgehogSeed.random
   report <- checkReport (propertyConfig prop) 0 seed (propertyTest prop) (const (pure ()))
   let cases = fromIntegral $ Hedgehog.Internal.Report.reportTests report
-  case reportStatus report of
-    OK     -> return $ PropOutcome True cases Nothing
-    GaveUp -> return $ PropOutcome gaveUpOk cases Nothing
-    _      -> do
-      str <- Hedgehog.Internal.Report.renderResult Hedgehog.Internal.Config.DisableColor Nothing report
-      return $ PropOutcome False cases (Just str)
+  return $ case reportStatus report of
+    OK              -> PropOutcome True cases Nothing
+    GaveUp          -> PropOutcome gaveUpOk cases Nothing
+    Failed failure' -> PropOutcome False cases (Just $ renderFailure failure')
+
+-- | What a failed property found: the inputs the engine generated, and what the failure reported.
+--
+-- Hedgehog renders a failure by quoting the source around whatever line called it — which is THIS
+-- module, the compiler's own Haskell. A hundred lines of 'runPropertyTest' is not what failed; the
+-- Catln test is, and a report of it that points at the compiler reads as the compiler being at
+-- fault. So the report is assembled from what the engine actually found instead.
+renderFailure :: Hedgehog.Internal.Report.FailureReport -> String
+renderFailure failure' = intercalate "\n" $ filter (not . null) $ generated ++ footnotes ++ [message]
+  where
+    generated = case map Hedgehog.Internal.Report.failedValue (Hedgehog.Internal.Report.failureAnnotations failure') of
+      []     -> []
+      inputs -> ["Generated " ++ intercalate ", " inputs]
+    footnotes = Hedgehog.Internal.Report.failureFootnotes failure'
+    message = Hedgehog.Internal.Report.failureMessage failure'
 
 -- | How a test decides whether it passed. A test written in the program is an evaluation that must
 -- succeed; a test the engine generates inputs for is a property. They are distinguished rather than
@@ -149,12 +161,6 @@ runTestDesc TestDesc{tdName, tdOwner, tdOwnerId, tdKind, tdCheck} = finish <$> c
       -- every case it generated, which has no counterexample to render but is still a failure.
       | otherwise = (False, Just poCases, Just $ fromMaybe gaveUp poReport)
     gaveUp = "The test engine could not generate any usable input for this test"
-
--- | The identity of the definition a test was derived from: the meta of the arm's object, which is
--- what distinguishes one arm from its siblings (they all share the function's 'oaObjPath') and what
--- attributes the test to the page that wrote it.
-oaTestId :: EObjArr -> UUID
-oaTestId = getMetaID . getExprMeta . oaObjExpr
 
 -- | Derive a property test for every pair of evaluable same-name definitions whose domains
 -- overlap (their argument types intersect): on the overlap the two definitions must AGREE. A

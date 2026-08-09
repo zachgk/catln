@@ -39,7 +39,7 @@ import           Utils
 
 -- | The primitives backing the @Catln/Doc@ display annotations.
 webDocsPrims :: [EPrim]
-webDocsPrims = [listProgram, filterProgram, typeInfer, typeInferPnt, debugger, sidebar, searchPages]
+webDocsPrims = [listProgram, filterProgram, typeInfer, typeInferPnt, debugger, sidebar, searchPages, testRun]
 
 -- | The argument of @/Catln/Doc/listProgram@ naming which stage to list, and the members of the
 -- @ListProgramMode@ enum it takes. @stack\/core\/webdoc.ct@ is the source of truth for these; a
@@ -240,6 +240,25 @@ searchPages = EEnvPrim "searchPages" prim
     pagePath imp = case impDisp imp of
       Just disp -> Right disp
       Nothing -> Left $ printf "searchPages has no file path for %s, so it has no page to open" (show imp)
+
+-- | Backs @/Catln/Doc/testRun@, the data carried by a @Show/Test@ display. It renders the tests of
+-- the definition the annotation is written on as JSON: what each was, whether it passed, how many
+-- generated cases it got through, and what a failure reported.
+--
+-- Of that definition, not of the page: a @#test@ marks one definition as a test, so it reports on
+-- that one. An annotation written on nothing — a free-standing one asked for over the API — is not
+-- on a definition to report on, and says so rather than answering about some other one.
+--
+-- Like 'debugger' this is a run rather than an artifact, and running the tests is neither something
+-- an evaluation can do to itself nor something to do while merely displaying a page that has none.
+-- It therefore arrives already run, on 'StagePrgms', from whoever asked for the display.
+testRun :: EPrim
+testRun = EEnvPrim "testRun" prim
+  where
+    prim Env{evAnnotObj=Nothing} _ = Left "This #test is not written on a definition, so it has no test of one to report on"
+    prim Env{evAnnotObj=Just oa, evStagePrgms=StagePrgms{spTests}} _ = case spTests of
+      CErr notes -> Left $ prettyCNotes notes
+      CRes _ tests -> Right $ encodeJson $ filter ((== oaTestId oa) . trOwnerId) tests
 
 encodeJson :: (ToJSON p) => p -> Val
 encodeJson = StrVal . TL.unpack . encodeToLazyText

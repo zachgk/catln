@@ -28,9 +28,9 @@ import           Eval                    (evalAnnots, evalBuild, evalBuildAll,
                                           evalDebugPrgm, evalRun, evalRunMock)
 import           Eval.Common             (EvalMetaDat, MockIO, StagePrgms (..),
                                           TExpr, TestResult,
-                                          Val (StrVal, TupleVal))
+                                          Val (StrVal, TupleVal), oaTestId)
 import           Eval.Testing            (TestDesc (..), evalPrints, evalTest,
-                                          oaTestId, runTestDesc)
+                                          runTestDesc)
 import           Semantics               (CTSSConfig)
 import           Semantics.Annots        (hasAnnot)
 import           Semantics.Prgm
@@ -119,8 +119,8 @@ ctssClearInvalidations invalidations ss@CTSSDat{ctssData=(g, nodeFromVertex, ver
     maybeClear prgmName ssf
       | prgmName `elem` propagated = newSSF (ssfSource ssf) (ssfRaw ssf)
       | null invalidations = ssf
-      -- Which tests a page has, and what they find, is decided over every loaded page joined
-      -- together rather than over the page and its imports (see 'ctssTestsFrom'). Invalidation
+      -- Which tests a page has, and what they find, is decided over the whole program the page
+      -- belongs to rather than over the page and its imports (see 'ctssTestsFrom'). Invalidation
       -- walks the pages that DEPEND on the changed one, so it never reaches a page the change is
       -- downstream of — whose tests the change can still alter. Every page's tests are therefore
       -- dropped by any change at all, and re-run for whichever page is asked about next.

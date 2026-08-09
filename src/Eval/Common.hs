@@ -134,6 +134,13 @@ data Env = Env { evObjMap        :: EObjectMap
                , evExEnv         :: ResExEnv
                , evTbEnv         :: TBEnv
                , evStagePrgms    :: StagePrgms
+               -- | The definition an annotation being evaluated is written on, for a primitive
+               -- reporting on that definition. An annotation is local to the program it is written
+               -- in and to whatever it is written on, and only the second is otherwise lost: the
+               -- annotation is built as an expression of its own, with nothing left of what it
+               -- annotates. Nothing for a program's own annotation, which is written on the program
+               -- rather than on any definition of it.
+               , evAnnotObj      :: Maybe EObjArr
                , evCallStack     :: [String]
                , evCoverage      :: H.HashMap EObjArr Int
                , evTreebugOpen   :: [EvalTreebugOpen]
@@ -186,6 +193,12 @@ data TestResult = TestResult
     -- counterexample. Empty for a test that passed.
   , trNotes   :: Maybe String
   } deriving (Eq, Show, Generic, ToJSON)
+
+-- | The identity of the definition a test was derived from: the meta of the arm's object, which is
+-- what distinguishes one arm from its siblings (they all share the function's 'oaObjPath') and what
+-- attributes the test to the page that wrote it.
+oaTestId :: EObjArr -> UUID
+oaTestId = getMetaID . getExprMeta . oaObjExpr
 
 -- | A mock IO handle that captures printed lines in an internal buffer instead of writing to real
 -- stdout. It lives beside 'MockIOVal', the value that carries the same buffer through an evaluation.

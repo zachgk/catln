@@ -69,6 +69,10 @@ Prgm
                             ( EAppArg Value /pages -> /Data/String =
                                 ( /dshow./Catln/Doc/searchPages( EAppArg Value /annot -> /s = Value /s ) ↦ /Data/String )
                             )
+                        , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/#test = Value /Catln/#test ) -> /Catln/Doc/Show/Test( /run=/Data/String ) = /Catln/Doc/Show/Test
+                            ( EAppArg Value /run -> /Data/String =
+                                ( /dshow./Catln/Doc/testRun( EAppArg Value /annot -> /s = Value /s ) ↦ /Data/String )
+                            )
                         , /Catln/Doc/dshow
                             ( EAppArg Value /s -> /Catln/Doc/#debugger( /fun=/Data/String ) = /Catln/Doc/#debugger( EAppArg Value /fun -> /Data/String ) ) -> /Catln/Doc/Show/Debugger
                             ( /fun=/Data/String
@@ -136,6 +140,16 @@ Prgm
                 ( "/Catln/Doc/Desugar"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/Doc/Desugar ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Doc/Show/Test"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Doc/Show/Test( EAppArg Value /run -> /Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -235,6 +249,16 @@ Prgm
                     { omiDecls =
                         [ /Catln/Doc/#listProgram( EAppArg Value /mode -> ∀/Catln/Doc/ListProgramMode ) ]
                     , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/dshow./Catln/Doc/testRun"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /dshow./Catln/Doc/testRun( EAppArg Value /annot ) -> /Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -346,6 +370,8 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
         , CGClass
             ( False
             , /Catln/Doc/DShow
@@ -360,13 +386,14 @@ Prgm
                 , /Catln/Doc/Show/TypeInferPnt..
                 , /Catln/Doc/Show/Sidebar..
                 , /Catln/Doc/Show/Search..
+                , /Catln/Doc/Show/Test..
                 , /Catln/Doc/Show/Debugger..
                 ]
             , Just "Represents objects which can be shown in the webdocs.   Every [/Data/ToString] value is displayable, so [ToString] is a subset of [DShow]: the
               webdocs render such a value through its [/Data/toString]. This is what lets a `> value`
               print statement accept any [ToString] type. A [DShow] value that is not [ToString] (a
               visualization like [Show/MD]) is still printable, but only [ToString] values are compared
-              against a print/result golden.        "
+              against a print/result golden.         "
             )
         , CGClass
             ( True

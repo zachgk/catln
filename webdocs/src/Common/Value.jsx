@@ -11,6 +11,7 @@ import Debugger from './Values/Debugger';
 import TypePage from './Values/Type';
 import Sidebar from './Values/Sidebar';
 import Search from './Values/Search';
+import Test from './Values/Test';
 
 // A Value may be given an update function by whatever rendered it. Calling update(src) asks for
 // the expression this value was compiled from to be replaced by the Catln source src. What that
@@ -46,6 +47,8 @@ function Value(props) {
       return <Sidebar {...val.args} />;
     case "/Catln/Doc/Show/Search":
       return <Search {...val.args} />;
+    case "/Catln/Doc/Show/Test":
+      return <Test {...val.args} />;
     default:
       let showArgs = "";
       if(Object.keys(val.args).length > 0) {

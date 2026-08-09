@@ -60,6 +60,16 @@ Prgm
                     }
                 )
             ,
+                ( "/testAddIdentity"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ testAddIdentity( Value x -> /Data/Primitive/Integer )= CInt 0 ]
+                    }
+                )
+            ,
                 ( "/fSub"
                 , ObjectMapItem
                     { omiDecls = []
@@ -151,9 +161,14 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
             ( Value /text= CStr "Tests the various integer arithmetic operations" )
+        , /Catln/#md
+            ( Value /text= CStr "Adding zero leaves a number alone, whatever number it is. Written as a [#test] rather than an
+            [#assert] on a single value, so the test engine generates the inputs and the webdocs show how many
+            it got through." )
         ]
     }

@@ -319,6 +319,7 @@ evalBaseEnvStages stagePrgms prgm@Prgm{prgmObjMap} = Env {
         evExEnv = H.empty,
         evTbEnv = buildTBEnv primEnv prgm,
         evStagePrgms = stagePrgms,
+        evAnnotObj = Nothing,
         evCallStack = [],
         evCoverage = H.empty,
         evTreebugOpen = [],
@@ -356,7 +357,7 @@ evalBuildPrgm input srcType destType prgm = do
 -- @DShow@ class (the same path used to display @#print@ values in webdocs). Returns @Nothing@
 -- when the annotation cannot reach @DShow@ and so is not renderable.
 evalDShowAnnot :: Env -> [(PartialType, EObjArr)] -> EExpr -> CRes (Maybe Val)
-evalDShowAnnot env@Env{evTbEnv, evTypeEnv} os annot0
+evalDShowAnnot env0@Env{evTbEnv, evTypeEnv} os annot0
   | isPrint = do
       -- A @#print@ displays a runtime VALUE. Evaluate @p@ to its concrete value (built toward
       -- @DShow@, which certifies displayability and yields the value itself), then render THAT
@@ -379,6 +380,10 @@ evalDShowAnnot env@Env{evTbEnv, evTypeEnv} os annot0
       return (Just val)
   | otherwise = return Nothing
   where
+    -- The annotation is evaluated knowing what it is written on, which the expression built from it
+    -- no longer says. A primitive reporting on the annotated definition — a @#test@ showing that
+    -- test's run — has no other way to know which definition it is being asked about.
+    env = env0{evAnnotObj = listToMaybe (map snd os)}
     isPrint = nameStr (exprPath annot0) == printAnnot
     -- A #print's rendered value is its `p` argument, so render that directly. This is robust to
     -- the print also carrying a `result` golden (the 2-arg #print), which the bare
