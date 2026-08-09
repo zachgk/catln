@@ -417,9 +417,21 @@ evalDShowAnnot env@Env{evTbEnv, evTypeEnv} os annot0
     destType = classPartial $ partialVal "/Catln/Doc/DShow"
     destM = emptyMetaT destType
 
+-- | Evaluate the annotations a page WRITES, in the program that page COMPILES TO. The two scopes
+-- differ: the annotations are the page's own, while the environment they are evaluated in is the
+-- page joined with everything it imports, since that is the program they report on.
+--
+-- Only the page's own annotations, because an annotation belongs to the page it is written in. A
+-- reader of one page is shown that page's annotations; core's are shown when core is the page being
+-- read. Evaluating the imports' annotations too would compute a whole library's worth of values for
+-- every page, and then discard them — @WebDocs.docApiBase@ keys the results back onto the page's own
+-- source by meta ID, which no imported annotation can match.
 evalAnnots :: StagePrgms -> FileImport -> EPrgmGraphData -> CRes [(EExpr, Val)]
 evalAnnots stagePrgms prgmName prgmGraphData = do
-  prgm@(Prgm objMap _ globalAnnots) <- prgmFromGraphData prgmName prgmGraphData
+  prgm <- prgmFromGraphData prgmName prgmGraphData
+  Prgm objMap _ globalAnnots <- case graphLookup prgmName prgmGraphData of
+    Just own -> return own
+    Nothing  -> CErr [MkCNote $ GenCErr Nothing $ printf "Could not find the page %s to evaluate the annotations of" (show $ impRaw prgmName)]
   let env = evalBaseEnvStages stagePrgms prgm
   globalAnnots' <- buildAnnots env [] globalAnnots
   objMapAnnots' <- forM (flatObjectMap objMap) $ \oa -> do
