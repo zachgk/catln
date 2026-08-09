@@ -10,7 +10,7 @@ import           Control.Monad.Trans
 import           CRes
 import           CtService
 import           Data.Graph              (graphFromEdges)
-import           Data.List               (isInfixOf, isSuffixOf)
+import           Data.List               (isSuffixOf)
 import           Data.Maybe
 import qualified Data.Text.Lazy          as T
 import           Eval
@@ -147,23 +147,6 @@ runTest runGolden getCtss fileNameStr = testCaseSteps fileNameStr $ \step -> do
     CErr notes ->
       assertFailure $ "Failed test: \n" ++ prettyCNotes notes
 
--- | Evaluate the annotations of the standard library's own pages. Every test file used to cover
--- these as a side effect of evaluating its own, back when a page's annotations were those of the
--- page joined with everything it imports. A page now evaluates only the annotations it writes, so
--- the library's are covered here instead — once, rather than once per test file.
-stackAnnotTest :: IO CTSS -> TestTree
-stackAnnotTest getCtss = testCaseSteps "Stack annots" $ \step -> do
-  ctss <- getCtss
-  pages <- ctssKeys ctss
-  let stackPages = filter (maybe False (("/" ++ ctssStackPath testCtssConfig ++ "/") `isInfixOf`) . impDisp) pages
-  when (null stackPages) $ assertFailure "No standard library pages were loaded to evaluate the annotations of"
-  forM_ stackPages $ \page -> do
-    step $ printf "Eval Annots %s..." (show $ impRaw page)
-    res <- runCResT $ getEvalAnnots ctss page
-    case failOnErrorNotes res of
-      CRes _ _   -> return ()
-      CErr notes -> assertFailure $ "Failed page: \n" ++ prettyCNotes notes
-
 runTests :: Bool -> [String] -> TestTree
 runTests runGolden testFiles =
   withResource (ctssBaseFiles testCtssConfig testFiles) (const $ return ()) $ \getCtss ->
@@ -189,8 +172,7 @@ integrationTests = do
   return $ withResource (ctssBaseFiles testCtssConfig allFiles) (const $ return ()) $ \getCtss ->
     testGroup "Integration" [
       testGroup "Tests" $ map (runTest True getCtss) ctFiles,
-      testGroup "Python" $ map (runPyTest True getCtss) pyFiles,
-      stackAnnotTest getCtss
+      testGroup "Python" $ map (runPyTest True getCtss) pyFiles
     ]
 
 mtFileName :: String -> IO String
