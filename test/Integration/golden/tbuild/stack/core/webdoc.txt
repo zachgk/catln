@@ -20,7 +20,7 @@ Prgm
                     , omiDefs =
                         [ /Catln/Doc/dshow( EAppArg Value /s -> ∀/Catln/Doc/DShow ) -> TVArg /s = ( Value /s ↦ TVArg /s )
                         , /Catln/Doc/dshow
-                            ( EAppArg Value /s -> /Catln/#md( /text=/Data/String ) = /Catln/#md( EAppArg Value /text ) ) -> /Catln/Doc/Show/MD( /text=TopType ) = /Catln/Doc/Show/MD
+                            ( EAppArg Value /s -> /Catln/#md( /text=/Data/String ) = /Catln/#md( EAppArg Value /text -> /Data/String ) ) -> /Catln/Doc/Show/MD( /text=TopType ) = /Catln/Doc/Show/MD
                             ( EAppArg Value /text -> TVArg /text = ( Value /text ↦ TVArg /text ) )
                         , /Catln/Doc/dshow
                             ( EAppArg Value /s -> /Catln/#print( /p=TopType ) = /Catln/#print( EAppArg Value /p ) ) -> TVArg /p = ( Value /p ↦ TVArg /p )

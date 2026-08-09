@@ -25,24 +25,12 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Scratch/rel( Value /a -> $/T )( Value /b -> $/T )
-                            ( Value /this -> ∀/Scratch/TEqv[ /T=$/T ] ) -> ∀/Data/Primitive/Boolean
+                            ( Value /this -> ∀/Scratch/TEqv[ /T=TopType ] ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Scratch/rel( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer )
-                            ( Value /this -> /Scratch/MyEqv[ /T=TopType ] ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Primitive/Boolean
-                                , fromList []
-                                )
-                            , /Data/Primitive/intEq
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                )
-                            , []
-                            ) = /Data/Primitive/intEq( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
-                        ]
+                        [ /Scratch/rel( Value /a )( Value /b )( Value /this -> /Scratch/MyEqv ) -> ∀/Data/Primitive/Boolean = /Data/Primitive/intEq( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) ]
                     }
                 )
             ]

@@ -8,9 +8,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /to_oct( EAppArg Value /n -> /Data/Primitive/Integer ) ->
-                            ( /Data/String + /Python/Builtins/oct( /this=/Data/Primitive/Integer ) ) = /oct
-                            ( EAppArg Value /this -> TVArg /n = ( Value /n ↦ TVArg /n ) )
+                        [ /to_oct( EAppArg Value /n -> /Data/Primitive/Integer ) -> /Data/String =
+                            ( /oct
+                                ( EAppArg Value /this -> TVArg /n = ( Value /n ↦ TVArg /n ) ) ↦ /Data/String
+                            )
                         ]
                     }
                 )
@@ -21,9 +22,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /rounded( EAppArg Value /x -> /Data/Primitive/Float ) ->
-                            ( /Data/Primitive/round( /this=/Data/Primitive/Float ) + /Data/Primitive/Integer ) = /round
-                            ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                        [ /rounded( EAppArg Value /x -> /Data/Primitive/Float ) -> /Data/Primitive/Integer =
+                            ( /round
+                                ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) ) ↦ /Data/Primitive/Integer
+                            )
                         ]
                     }
                 )
@@ -34,9 +36,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /string_length( EAppArg Value /s -> /Data/String ) ->
-                            ( /Python/Builtins/length( /this=/Data/String ) + /Data/Primitive/Integer ) = /length
-                            ( EAppArg Value /this -> TVArg /s = ( Value /s ↦ TVArg /s ) )
+                        [ /string_length( EAppArg Value /s -> /Data/String ) -> /Data/Primitive/Integer =
+                            ( /length
+                                ( EAppArg Value /this -> TVArg /s = ( Value /s ↦ TVArg /s ) ) ↦ /Data/Primitive/Integer
+                            )
                         ]
                     }
                 )
@@ -47,14 +50,11 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /BIG ->
+                        [ Value /BIG -> /Data/Primitive/Integer =
                             ( /operator+
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer
-                            ) = /operator+
-                            ( EAppArg Value /l -> /Data/Primitive/Integer = ( Value /MAX_SIZE ↦ /Data/Primitive/Integer ) )
-                            ( EAppArg Value /r -> /Data/Primitive/Integer = ( Value /MAX_SIZE ↦ /Data/Primitive/Integer ) )
+                                ( EAppArg Value /l -> /Data/Primitive/Integer = ( Value /MAX_SIZE ↦ /Data/Primitive/Integer ) )
+                                ( EAppArg Value /r -> /Data/Primitive/Integer = ( Value /MAX_SIZE ↦ /Data/Primitive/Integer ) ) ↦ /Data/Primitive/Integer
+                            )
                         ]
                     }
                 )
@@ -65,28 +65,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /make_range( EAppArg Value /n -> /Data/Primitive/Integer ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/List[ /T=/Data/Primitive/Integer ]
-                                , fromList []
-                                )
-                            ,
-                                ( /Data/range( /stop=/Data/Primitive/Integer ) + /range./Data/rangeFrom
-                                    ( /stop=/Data/Primitive/Integer
-                                    , /i=/Data/Primitive/Integer
-                                    ) + /Data/Nil + /Data/Cons[ /T=/Data/Primitive/Integer ]
-                                    ( /head=/Data/Primitive/Integer
-                                    , /tail=
-                                        ( TopType | PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ] && PredClass /Data/List[ /T=/Data/Primitive/Integer ] )
-                                    ) + /range./Data/rangeStep
-                                    ( /stop=/Data/Primitive/Integer
-                                    , /more=∀/Data/Primitive/Boolean
-                                    , /i=/Data/Primitive/Integer
-                                    )
-                                )
-                            , []
-                            ) = /range
-                            ( EAppArg Value /stop -> TVArg /n = ( Value /n ↦ TVArg /n ) )
+                        [ /make_range( EAppArg Value /n -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Data/Primitive/Integer ] =
+                            ( /range
+                                ( EAppArg Value /stop -> TVArg /n = ( Value /n ↦ TVArg /n ) ) ↦ ∀/Data/List[ /T=/Data/Primitive/Integer ]
+                            )
                         ]
                     }
                 )
@@ -97,14 +79,11 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /power_f( EAppArg Value /base -> /Data/Primitive/Float )( EAppArg Value /exp -> /Data/Primitive/Float ) ->
-                            ( /Python/Builtins/pow
-                                ( /this=/Data/Primitive/Float
-                                , /exp=/Data/Primitive/Float
-                                ) + /Data/Primitive/Float
-                            ) = /pow
-                            ( EAppArg Value /this -> TVArg /base = ( Value /base ↦ TVArg /base ) )
-                            ( EAppArg Value /exp -> TVArg /exp = ( Value /exp ↦ TVArg /exp ) )
+                        [ /power_f( EAppArg Value /base -> /Data/Primitive/Float )( EAppArg Value /exp -> /Data/Primitive/Float ) -> /Data/Primitive/Float =
+                            ( /pow
+                                ( EAppArg Value /this -> TVArg /base = ( Value /base ↦ TVArg /base ) )
+                                ( EAppArg Value /exp -> TVArg /exp = ( Value /exp ↦ TVArg /exp ) ) ↦ /Data/Primitive/Float
+                            )
                         ]
                     }
                 )
@@ -115,30 +94,54 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /sort_list
-                            ( EAppArg Value /lst -> ∀/Data/List[ /T=∀/Data/Algebra/Ord ] ) -> UnionType
+                        [ /sort_list( EAppArg Value /lst -> ∀/Data/List ) -> UnionType
                             ( Just
                                 ( PredClass /Data/List[ /T=∀/Data/Algebra/Ord ]
                                 , fromList []
+                                , []
                                 )
-                            ,
-                                ( /sorted./Data/insertStep[ /T=∀/Data/Algebra/Ord ]
-                                    ( /head=∀/Data/Algebra/Ord
-                                    , /before=( /Data/Primitive/True + /Data/Primitive/False )
-                                    , /t=TopType
-                                    , /x=∀/Data/Algebra/Ord
-                                    , /tail=∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    , /h=TopType
-                                    ) + /Data/Nil + /Data/sorted( /lst=∀/Data/List ) + /sorted./Data/insert[ /T=∀/Data/Algebra/Ord ]
-                                    ( /t=∀/Data/List[ /T=∀/Data/Algebra/Ord ]
-                                    , /x=∀/Data/Algebra/Ord
-                                    , /lst=∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    , /h=∀/Data/Algebra/Ord
+                            , /Data/Cons[ /T=∀/Data/Algebra/Ord ]
+                                ( /head=∀/Data/Algebra/Ord
+                                , /tail=UnionType
+                                    ( Just
+                                        ( PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /Data/Cons[ /T=∀/Data/Algebra/Ord ]
+                                        ( /head=∀/Data/Algebra/Ord
+                                        , /tail=∀/Data/ConsList[ /T=TopType ]
+                                        )
+                                    , []
                                     )
                                 )
                             , []
-                            ) = /sorted
-                            ( EAppArg Value /lst -> TVArg /lst = ( Value /lst ↦ TVArg /lst ) )
+                            ) =
+                            ( /sorted
+                                ( EAppArg Value /lst -> TVArg /lst = ( Value /lst ↦ TVArg /lst ) ) ↦ UnionType
+                                ( Just
+                                    ( PredClass /Data/List[ /T=∀/Data/Algebra/Ord ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/Cons[ /T=∀/Data/Algebra/Ord ]
+                                    ( /head=∀/Data/Algebra/Ord
+                                    , /tail=UnionType
+                                        ( Just
+                                            ( PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                            , fromList []
+                                            , []
+                                            )
+                                        , /Data/Cons[ /T=∀/Data/Algebra/Ord ]
+                                            ( /head=∀/Data/Algebra/Ord
+                                            , /tail=∀/Data/ConsList[ /T=TopType ]
+                                            )
+                                        , []
+                                        )
+                                    )
+                                , []
+                                )
+                            )
                         ]
                     }
                 )
@@ -155,12 +158,14 @@ Prgm
                                 ( /this=/Catln/IO
                                 , /msg=/Data/String
                                 ) + /Catln/IO
-                            ) = /println
-                            ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
-                            ( EAppArg Value /msg -> /Data/String =
-                                ( /toString
-                                    ( EAppArg Value /this -> TVArg /msg = ( Value /msg ↦ TVArg /msg ) ) ↦ /Data/String
-                                )
+                            ) =
+                            ( /println
+                                ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
+                                ( EAppArg Value /msg -> /Data/String =
+                                    ( /toString
+                                        ( EAppArg Value /this -> TVArg /msg = ( Value /msg ↦ TVArg /msg ) ) ↦ /Data/String
+                                    )
+                                ) ↦ /Catln/IO
                             )
                         , /ContextIn
                             ( EAppArg Value /value -> /print_twice( /msg=/Data/String ) = /print_twice( EAppArg Value /msg -> /Data/String ) )( EAppArg Value /io -> /Catln/IO ) ->
@@ -168,33 +173,37 @@ Prgm
                                 ( /this=/Catln/IO
                                 , /msg=/Data/String
                                 ) + /Catln/IO
-                            ) = /println
-                            ( EAppArg Value /this -> /Catln/IO =
-                                ( /println
-                                    ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
-                                    ( EAppArg Value /msg -> /Data/String =
-                                        ( /toString
-                                            ( EAppArg Value /this -> TVArg /msg = ( Value /msg ↦ TVArg /msg ) ) ↦ /Data/String
-                                        )
-                                    ) ↦ /Catln/IO
+                            ) =
+                            ( /println
+                                ( EAppArg Value /this -> /Catln/IO =
+                                    ( /println
+                                        ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
+                                        ( EAppArg Value /msg -> /Data/String =
+                                            ( /toString
+                                                ( EAppArg Value /this -> TVArg /msg = ( Value /msg ↦ TVArg /msg ) ) ↦ /Data/String
+                                            )
+                                        ) ↦ /Catln/IO
+                                    )
                                 )
-                            )
-                            ( EAppArg Value /msg -> /Data/String =
-                                ( /toString
-                                    ( EAppArg Value /this -> TVArg /msg = ( Value /msg ↦ TVArg /msg ) ) ↦ /Data/String
-                                )
+                                ( EAppArg Value /msg -> /Data/String =
+                                    ( /toString
+                                        ( EAppArg Value /this -> TVArg /msg = ( Value /msg ↦ TVArg /msg ) ) ↦ /Data/String
+                                    )
+                                ) ↦ /Catln/IO
                             )
                         , /ContextIn( EAppArg Value /value -> /echo = Value /echo )( EAppArg Value /io -> /Catln/IO ) ->
                             ( /Catln/println
                                 ( /this=/Catln/IO
                                 , /msg=/Data/String
                                 ) + /Catln/IO
-                            ) = /println
-                            ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
-                            ( EAppArg Value /msg -> /Data/String =
-                                ( /toString
-                                    ( EAppArg Value /this -> /Data/String = """" ) ↦ /Data/String
-                                )
+                            ) =
+                            ( /println
+                                ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
+                                ( EAppArg Value /msg -> /Data/String =
+                                    ( /toString
+                                        ( EAppArg Value /this -> /Data/String = """" ) ↦ /Data/String
+                                    )
+                                ) ↦ /Catln/IO
                             )
                         , /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io )
                         ]
@@ -207,9 +216,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /to_float_from_int( EAppArg Value /x -> /Data/Primitive/Integer ) ->
-                            ( /Python/Builtins/toFloat( /this=/Data/Primitive/Integer ) + /Data/Primitive/Float ) = /toFloat
-                            ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                        [ /to_float_from_int( EAppArg Value /x -> /Data/Primitive/Integer ) -> /Data/Primitive/Float =
+                            ( /toFloat
+                                ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) ) ↦ /Data/Primitive/Float
+                            )
                         ]
                     }
                 )
@@ -220,14 +230,11 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /int_max( EAppArg Value /a -> /Data/Primitive/Integer )( EAppArg Value /b -> /Data/Primitive/Integer ) ->
-                            ( /Data/Primitive/Integer + /Python/Builtins/max
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                )
-                            ) = /max
-                            ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
-                            ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) )
+                        [ /int_max( EAppArg Value /a -> /Data/Primitive/Integer )( EAppArg Value /b -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer =
+                            ( /max
+                                ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
+                                ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) ) ↦ /Data/Primitive/Integer
+                            )
                         ]
                     }
                 )
@@ -238,14 +245,11 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /float_max( EAppArg Value /a -> /Data/Primitive/Float )( EAppArg Value /b -> /Data/Primitive/Float ) ->
-                            ( /Python/Builtins/max
-                                ( /r=/Data/Primitive/Float
-                                , /l=/Data/Primitive/Float
-                                ) + /Data/Primitive/Float
-                            ) = /max
-                            ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
-                            ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) )
+                        [ /float_max( EAppArg Value /a -> /Data/Primitive/Float )( EAppArg Value /b -> /Data/Primitive/Float ) -> /Data/Primitive/Float =
+                            ( /max
+                                ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
+                                ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) ) ↦ /Data/Primitive/Float
+                            )
                         ]
                     }
                 )
@@ -256,21 +260,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /any_true
-                            ( EAppArg Value /flags -> ∀/Data/List[ /T=∀/Data/Primitive/Boolean ] ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Primitive/Boolean
-                                , fromList []
-                                )
-                            ,
-                                ( /operator||
-                                    ( /r=∀/Data/Primitive/Boolean
-                                    , /l=∀/Data/Primitive/Boolean
-                                    ) + /Data/any( /lst=∀/Data/List )
-                                )
-                            , []
-                            ) = /any
-                            ( EAppArg Value /lst -> TVArg /flags = ( Value /flags ↦ TVArg /flags ) )
+                        [ /any_true( EAppArg Value /flags -> ∀/Data/List ) -> ∀/Data/Primitive/Boolean =
+                            ( /any
+                                ( EAppArg Value /lst -> TVArg /flags = ( Value /flags ↦ TVArg /flags ) ) ↦ ∀/Data/Primitive/Boolean
+                            )
                         ]
                     }
                 )
@@ -281,14 +274,11 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /square( EAppArg Value /x -> /Data/Primitive/Float ) ->
+                        [ /square( EAppArg Value /x -> /Data/Primitive/Float ) -> /Data/Primitive/Float =
                             ( /operator*
-                                ( /r=/Data/Primitive/Float
-                                , /l=/Data/Primitive/Float
-                                ) + /Data/Primitive/Float
-                            ) = /operator*
-                            ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-                            ( EAppArg Value /r -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                                ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                                ( EAppArg Value /r -> TVArg /x = ( Value /x ↦ TVArg /x ) ) ↦ /Data/Primitive/Float
+                            )
                         ]
                     }
                 )
@@ -299,9 +289,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /to_bin( EAppArg Value /n -> /Data/Primitive/Integer ) ->
-                            ( /Data/String + /Python/Builtins/bin( /this=/Data/Primitive/Integer ) ) = /bin
-                            ( EAppArg Value /this -> TVArg /n = ( Value /n ↦ TVArg /n ) )
+                        [ /to_bin( EAppArg Value /n -> /Data/Primitive/Integer ) -> /Data/String =
+                            ( /bin
+                                ( EAppArg Value /this -> TVArg /n = ( Value /n ↦ TVArg /n ) ) ↦ /Data/String
+                            )
                         ]
                     }
                 )
@@ -320,9 +311,16 @@ Prgm
                                 ( /x=/Data/Primitive/Integer
                                 , /y=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer
-                            ) = /add.result
-                            ( EAppArg Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-                            ( EAppArg Value /y -> TVArg /y = ( Value /y ↦ TVArg /y ) )
+                            ) =
+                            ( /add.result
+                                ( EAppArg Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                                ( EAppArg Value /y -> TVArg /y = ( Value /y ↦ TVArg /y ) ) ↦
+                                ( /operator+
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    ) + /Data/Primitive/Integer
+                                )
+                            )
                         ]
                     }
                 )
@@ -333,9 +331,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ceiled( EAppArg Value /x -> /Data/Primitive/Float ) ->
-                            ( /Data/Primitive/Integer + /Data/Primitive/ceil( /this=/Data/Primitive/Float ) ) = /ceil
-                            ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                        [ /ceiled( EAppArg Value /x -> /Data/Primitive/Float ) -> /Data/Primitive/Integer =
+                            ( /ceil
+                                ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) ) ↦ /Data/Primitive/Integer
+                            )
                         ]
                     }
                 )
@@ -356,14 +355,11 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /DOUBLE_PI ->
+                        [ Value /DOUBLE_PI -> /Data/Primitive/Float =
                             ( /operator*
-                                ( /r=/Data/Primitive/Float
-                                , /l=/Data/Primitive/Float
-                                ) + /Data/Primitive/Float
-                            ) = /operator*
-                            ( EAppArg Value /l -> /Data/Primitive/Float = ( Value /PI ↦ /Data/Primitive/Float ) )
-                            ( EAppArg Value /r -> /Data/Primitive/Float = 2.0 )
+                                ( EAppArg Value /l -> /Data/Primitive/Float = ( Value /PI ↦ /Data/Primitive/Float ) )
+                                ( EAppArg Value /r -> /Data/Primitive/Float = 2.0 ) ↦ /Data/Primitive/Float
+                            )
                         ]
                     }
                 )
@@ -374,14 +370,11 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /power( EAppArg Value /base -> /Data/Primitive/Integer )( EAppArg Value /exp -> /Data/Primitive/Integer ) ->
-                            ( /Python/Builtins/pow
-                                ( /this=/Data/Primitive/Integer
-                                , /exp=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer
-                            ) = /pow
-                            ( EAppArg Value /this -> TVArg /base = ( Value /base ↦ TVArg /base ) )
-                            ( EAppArg Value /exp -> TVArg /exp = ( Value /exp ↦ TVArg /exp ) )
+                        [ /power( EAppArg Value /base -> /Data/Primitive/Integer )( EAppArg Value /exp -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer =
+                            ( /pow
+                                ( EAppArg Value /this -> TVArg /base = ( Value /base ↦ TVArg /base ) )
+                                ( EAppArg Value /exp -> TVArg /exp = ( Value /exp ↦ TVArg /exp ) ) ↦ /Data/Primitive/Integer
+                            )
                         ]
                     }
                 )
@@ -392,14 +385,11 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /int_min( EAppArg Value /a -> /Data/Primitive/Integer )( EAppArg Value /b -> /Data/Primitive/Integer ) ->
-                            ( /Python/Builtins/min
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer
-                            ) = /min
-                            ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
-                            ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) )
+                        [ /int_min( EAppArg Value /a -> /Data/Primitive/Integer )( EAppArg Value /b -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer =
+                            ( /min
+                                ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
+                                ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) ) ↦ /Data/Primitive/Integer
+                            )
                         ]
                     }
                 )
@@ -410,15 +400,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /to_bool_from_int( EAppArg Value /x -> /Data/Primitive/Integer ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Primitive/Boolean
-                                , fromList []
-                                )
-                            , /Python/Builtins/toBool( /this=/Data/Primitive/Integer )
-                            , []
-                            ) = /toBool
-                            ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                        [ /to_bool_from_int( EAppArg Value /x -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean =
+                            ( /toBool
+                                ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) ) ↦ ∀/Data/Primitive/Boolean
+                            )
                         ]
                     }
                 )
@@ -439,14 +424,11 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /int_div( EAppArg Value /a -> /Data/Primitive/Integer )( EAppArg Value /b -> /Data/Primitive/Integer ) ->
+                        [ /int_div( EAppArg Value /a -> /Data/Primitive/Integer )( EAppArg Value /b -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer =
                             ( /operator//
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer
-                            ) = /operator//
-                            ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
-                            ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) )
+                                ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
+                                ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) ) ↦ /Data/Primitive/Integer
+                            )
                         ]
                     }
                 )
@@ -457,15 +439,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /sum_list
-                            ( EAppArg Value /nums -> ∀/Data/List[ /T=/Data/Primitive/Integer ] ) ->
-                            ( /Data/sum
-                                ( /lst=∀/Data/List[ /T=/Data/Primitive/Integer ] ) + /operator+
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer
-                            ) = /sum
-                            ( EAppArg Value /lst -> TVArg /nums = ( Value /nums ↦ TVArg /nums ) )
+                        [ /sum_list( EAppArg Value /nums -> ∀/Data/List ) -> /Data/Primitive/Integer =
+                            ( /sum
+                                ( EAppArg Value /lst -> TVArg /nums = ( Value /nums ↦ TVArg /nums ) ) ↦ /Data/Primitive/Integer
+                            )
                         ]
                     }
                 )
@@ -476,14 +453,11 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /float_min( EAppArg Value /a -> /Data/Primitive/Float )( EAppArg Value /b -> /Data/Primitive/Float ) ->
-                            ( /Python/Builtins/min
-                                ( /r=/Data/Primitive/Float
-                                , /l=/Data/Primitive/Float
-                                ) + /Data/Primitive/Float
-                            ) = /min
-                            ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
-                            ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) )
+                        [ /float_min( EAppArg Value /a -> /Data/Primitive/Float )( EAppArg Value /b -> /Data/Primitive/Float ) -> /Data/Primitive/Float =
+                            ( /min
+                                ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
+                                ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) ) ↦ /Data/Primitive/Float
+                            )
                         ]
                     }
                 )
@@ -494,15 +468,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /to_bool_from_float( EAppArg Value /x -> /Data/Primitive/Float ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Primitive/Boolean
-                                , fromList []
-                                )
-                            , /Python/Builtins/toBool( /this=/Data/Primitive/Float )
-                            , []
-                            ) = /toBool
-                            ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                        [ /to_bool_from_float( EAppArg Value /x -> /Data/Primitive/Float ) -> ∀/Data/Primitive/Boolean =
+                            ( /toBool
+                                ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) ) ↦ ∀/Data/Primitive/Boolean
+                            )
                         ]
                     }
                 )
@@ -513,9 +482,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /char_from_code( EAppArg Value /n -> /Data/Primitive/Integer ) ->
-                            ( /Data/String + /Python/Builtins/chr( /n=/Data/Primitive/Integer ) ) = /chr
-                            ( EAppArg Value /n -> TVArg /n = ( Value /n ↦ TVArg /n ) )
+                        [ /char_from_code( EAppArg Value /n -> /Data/Primitive/Integer ) -> /Data/String =
+                            ( /chr
+                                ( EAppArg Value /n -> TVArg /n = ( Value /n ↦ TVArg /n ) ) ↦ /Data/String
+                            )
                         ]
                     }
                 )
@@ -526,9 +496,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /code_from_char( EAppArg Value /c -> /Data/String ) ->
-                            ( /Python/Builtins/ord( /this=/Data/String ) + /Data/Primitive/Integer ) = /ord
-                            ( EAppArg Value /this -> TVArg /c = ( Value /c ↦ TVArg /c ) )
+                        [ /code_from_char( EAppArg Value /c -> /Data/String ) -> /Data/Primitive/Integer =
+                            ( /ord
+                                ( EAppArg Value /this -> TVArg /c = ( Value /c ↦ TVArg /c ) ) ↦ /Data/Primitive/Integer
+                            )
                         ]
                     }
                 )
@@ -539,14 +510,11 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /add.result( EAppArg Value /x -> /Data/Primitive/Integer )( EAppArg Value /y -> /Data/Primitive/Integer ) ->
+                        [ /add.result( EAppArg Value /x -> /Data/Primitive/Integer )( EAppArg Value /y -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer =
                             ( /operator+
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer
-                            ) = /operator+
-                            ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-                            ( EAppArg Value /r -> TVArg /y = ( Value /y ↦ TVArg /y ) )
+                                ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                                ( EAppArg Value /r -> TVArg /y = ( Value /y ↦ TVArg /y ) ) ↦ /Data/Primitive/Integer
+                            )
                         ]
                     }
                 )
@@ -557,14 +525,11 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /concat_strings( EAppArg Value /a -> /Data/String )( EAppArg Value /b -> /Data/String ) ->
+                        [ /concat_strings( EAppArg Value /a -> /Data/String )( EAppArg Value /b -> /Data/String ) -> /Data/String =
                             ( /operator+
-                                ( /r=/Data/String
-                                , /l=/Data/String
-                                ) + /Data/String
-                            ) = /operator+
-                            ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
-                            ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) )
+                                ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
+                                ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) ) ↦ /Data/String
+                            )
                         ]
                     }
                 )
@@ -575,9 +540,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /to_int_from_float( EAppArg Value /x -> /Data/Primitive/Float ) ->
-                            ( /Python/Builtins/toInt( /this=/Data/Primitive/Float ) + /Data/Primitive/Integer ) = /toInt
-                            ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                        [ /to_int_from_float( EAppArg Value /x -> /Data/Primitive/Float ) -> /Data/Primitive/Integer =
+                            ( /toInt
+                                ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) ) ↦ /Data/Primitive/Integer
+                            )
                         ]
                     }
                 )
@@ -592,21 +558,28 @@ Prgm
                             ( Just
                                 ( PredClass /Data/List
                                 , fromList []
+                                , []
                                 )
-                            ,
-                                ( /reversed./Data/reverseOnto
-                                    ( /acc=
-                                        ( /Data/Nil + /Data/Cons[ /T=TopType ]
-                                            ( /head=TopType
-                                            , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                            )
-                                        )
-                                    , /lst=∀/Data/ConsList
-                                    ) + /Data/reversed( /lst=∀/Data/List )
+                            , /Data/Cons[ /T=TopType ]
+                                ( /head=$/T
+                                , /tail=∀/Data/ConsList[ /T=TopType ]
                                 )
                             , []
-                            ) = /reversed
-                            ( EAppArg Value /lst -> TVArg /lst = ( Value /lst ↦ TVArg /lst ) )
+                            ) =
+                            ( /reversed
+                                ( EAppArg Value /lst -> TVArg /lst = ( Value /lst ↦ TVArg /lst ) ) ↦ UnionType
+                                ( Just
+                                    ( PredClass /Data/List
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/Cons[ /T=TopType ]
+                                    ( /head=$/T
+                                    , /tail=∀/Data/ConsList[ /T=TopType ]
+                                    )
+                                , []
+                                )
+                            )
                         ]
                     }
                 )
@@ -617,21 +590,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /all_true
-                            ( EAppArg Value /flags -> ∀/Data/List[ /T=∀/Data/Primitive/Boolean ] ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Primitive/Boolean
-                                , fromList []
-                                )
-                            ,
-                                ( /operator&&
-                                    ( /r=∀/Data/Primitive/Boolean
-                                    , /l=∀/Data/Primitive/Boolean
-                                    ) + /Data/all( /lst=∀/Data/List )
-                                )
-                            , []
-                            ) = /all
-                            ( EAppArg Value /lst -> TVArg /flags = ( Value /flags ↦ TVArg /flags ) )
+                        [ /all_true( EAppArg Value /flags -> ∀/Data/List ) -> ∀/Data/Primitive/Boolean =
+                            ( /all
+                                ( EAppArg Value /lst -> TVArg /flags = ( Value /flags ↦ TVArg /flags ) ) ↦ ∀/Data/Primitive/Boolean
+                            )
                         ]
                     }
                 )
@@ -642,9 +604,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /floored( EAppArg Value /x -> /Data/Primitive/Float ) ->
-                            ( /Data/Primitive/floor( /this=/Data/Primitive/Float ) + /Data/Primitive/Integer ) = /floor
-                            ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                        [ /floored( EAppArg Value /x -> /Data/Primitive/Float ) -> /Data/Primitive/Integer =
+                            ( /floor
+                                ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) ) ↦ /Data/Primitive/Integer
+                            )
                         ]
                     }
                 )
@@ -655,9 +618,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /to_hex( EAppArg Value /n -> /Data/Primitive/Integer ) ->
-                            ( /Data/String + /Python/Builtins/hex( /this=/Data/Primitive/Integer ) ) = /hex
-                            ( EAppArg Value /this -> TVArg /n = ( Value /n ↦ TVArg /n ) )
+                        [ /to_hex( EAppArg Value /n -> /Data/Primitive/Integer ) -> /Data/String =
+                            ( /hex
+                                ( EAppArg Value /this -> TVArg /n = ( Value /n ↦ TVArg /n ) ) ↦ /Data/String
+                            )
                         ]
                     }
                 )
@@ -678,9 +642,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /to_str_from_int( EAppArg Value /x -> /Data/Primitive/Integer ) ->
-                            ( /Data/toString[ /T=∀/Data/ToString ]( /this=/Data/Primitive/Integer ) + /Data/String ) = /toString
-                            ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                        [ /to_str_from_int( EAppArg Value /x -> /Data/Primitive/Integer ) -> /Data/String =
+                            ( /toString
+                                ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) ) ↦ /Data/String
+                            )
                         ]
                     }
                 )
@@ -691,9 +656,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /abs_int( EAppArg Value /x -> /Data/Primitive/Integer ) ->
-                            ( /Python/Builtins/abs( /this=/Data/Primitive/Integer ) + /Data/Primitive/Integer ) = /abs
-                            ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                        [ /abs_int( EAppArg Value /x -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer =
+                            ( /abs
+                                ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) ) ↦ /Data/Primitive/Integer
+                            )
                         ]
                     }
                 )
@@ -704,9 +670,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /abs_float( EAppArg Value /x -> /Data/Primitive/Float ) ->
-                            ( /Python/Builtins/abs( /this=/Data/Primitive/Float ) + /Data/Primitive/Float ) = /abs
-                            ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                        [ /abs_float( EAppArg Value /x -> /Data/Primitive/Float ) -> /Data/Primitive/Float =
+                            ( /abs
+                                ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) ) ↦ /Data/Primitive/Float
+                            )
                         ]
                     }
                 )
@@ -717,9 +684,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /to_str_from_float( EAppArg Value /x -> /Data/Primitive/Float ) ->
-                            ( /Python/Builtins/toString( /this=/Data/Primitive/Float ) + /Data/String ) = /toString
-                            ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                        [ /to_str_from_float( EAppArg Value /x -> /Data/Primitive/Float ) -> /Data/String =
+                            ( /toString
+                                ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) ) ↦ /Data/String
+                            )
                         ]
                     }
                 )

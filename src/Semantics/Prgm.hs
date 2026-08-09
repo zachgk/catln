@@ -685,9 +685,21 @@ getAllObjArrNames oa@ObjArr{oaObj} = oaObjPath oa : (maybe [] getAllExprNames oa
     varAuxName (TVApplied b _) = varAuxName b
 
 getAllExprNames :: (ExprClass e, MetaDat m, Show m, Show (e m)) => e m -> [Name]
-getAllExprNames e = maybeToList (maybeExprPath e) ++ concatMap getAllObjArrNames (exprAppliedArgs e) ++ concatMap fromOrdVar (exprAppliedOrdVars e)
+getAllExprNames e = maybeToList (maybeExprPath e) ++ concatMap argAllNames (exprAppliedArgs e) ++ concatMap fromOrdVar (exprAppliedOrdVars e)
   where
     fromOrdVar (v, _) = varNamesWithPrefix $ pkName v
+    -- An arg's value side introduces its HEAD name: the entry point @ContextIn(value= main)@
+    -- declares @main@ (a module-scoped @/Scratch/main@, a converted Python def's
+    -- @value= say_hello(msg -> String)@) right here — it appears nowhere else — and its
+    -- 'BoundedByKnown' relative bound (@~main@) resolves only if the name is in 'teNames'
+    -- (this generalizes the former @data(/main)@ workaround in @stack/core/data.ct@). A
+    -- matching-criterion head (@b= Box(v)@'s @Box@) is a reference to an existing name, so
+    -- collecting it is idempotent — the same holds for criteria heads in the arg-name
+    -- position (@unwrap(Box(v))@), which 'getAllObjArrNames' has always collected. Only the
+    -- head is taken; nested bindings remain 'boundNames'\/'exprVarArgs' territory.
+    argAllNames aoa = getAllObjArrNames aoa ++ argValueHeadName aoa
+    argValueHeadName ObjArr{oaArr=Just (Just ve, _)} = maybeToList (maybeExprPath ve)
+    argValueHeadName _                               = []
 
 -- | Updates the types based on the format as they are fixed for inputs (due to arrows this does not work for output expressions)
 exprPropagateTypes :: (MetaDat m, Show m) => Expr m -> Expr m
