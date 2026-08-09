@@ -26,8 +26,11 @@ import           Semantics.Types
 import           Control.Concurrent         (forkIO, killThread, newEmptyMVar,
                                              putMVar, takeMVar)
 import           Control.Monad              (forM)
+import           Control.Monad.IO.Class     (liftIO)
 import           Control.Monad.State        (runStateT)
 import           CtConstants
+import           Data.IORef                 (IORef, modifyIORef', newIORef,
+                                             readIORef)
 import           Data.List                  (intercalate, nub, nubBy, sortOn,
                                              tails)
 import           Data.Maybe
@@ -60,16 +63,24 @@ propTestIterations = 100
 propTestTimeoutMicros :: Int
 propTestTimeoutMicros = 10 * 1000 * 1000
 
--- | What running a Hedgehog property found: whether it passed, how many generated cases it got
--- through, and, for a genuine failure, the rendered counterexample.
+-- | What running a Hedgehog property found: whether it passed, the input of each generated case it
+-- got through, and, for a genuine failure, the rendered counterexample.
 --
 -- The render is carried rather than printed so that whoever asked for the run decides what becomes
 -- of it — a command line prints it, a doc server shows it in the page.
 data PropOutcome = PropOutcome
   { poPassed :: Bool
   , poCases  :: Int
+    -- | The input of each of those cases, in the order they ran. Counted separately from 'poCases',
+    -- which is what the engine itself reported running, so that the two can be compared rather than
+    -- one being taken on the other's word.
+  , poInputs :: [String]
   , poReport :: Maybe String
   }
+
+-- | Records the input one generated case is about to run on. A property is written as a function of
+-- this so that a run reports what it covered and not merely how much of it there was.
+type RecordCase = String -> Hedgehog.PropertyT IO ()
 
 -- | Run a Hedgehog property capped at both 'propTestIterations' variations and a
 -- 'propTestTimeoutMicros' wall-clock timeout. On timeout the property is judged on the variations
@@ -89,28 +100,40 @@ data PropOutcome = PropOutcome
 -- failure (the default for tests whose inputs should always generate), 'True' as a pass. The derived
 -- refinement tests pass 'True' because a pairing whose overlap cannot yet be generated (e.g. a
 -- @Cons@ value, which the generator discards) has simply found no counterexample.
-checkPropWithTimeout :: Bool -> Hedgehog.Property -> IO PropOutcome
-checkPropWithTimeout gaveUpOk prop = do
+checkPropWithTimeout :: Bool -> (RecordCase -> Hedgehog.Property) -> IO PropOutcome
+checkPropWithTimeout gaveUpOk mkProp = do
+  casesRef <- newIORef []
+  let record input = liftIO $ modifyIORef' casesRef (input :)
   resultVar <- newEmptyMVar
-  tid <- forkIO $ runPropQuietly gaveUpOk (Hedgehog.withTests propTestIterations prop) >>= putMVar resultVar
+  tid <- forkIO $ runPropQuietly gaveUpOk casesRef (Hedgehog.withTests propTestIterations (mkProp record)) >>= putMVar resultVar
   result <- timeout propTestTimeoutMicros (takeMVar resultVar)
   case result of
     Just outcome -> return outcome
-    -- The cases the killed worker had got through are not reported: the count lives in its report,
-    -- which is exactly what a timeout kill corrupts.
-    Nothing      -> killThread tid >> return (PropOutcome True 0 Nothing)
+    -- The cases the killed worker had got through are not reported: how many of them there were
+    -- lives in its report, which is exactly what a timeout kill corrupts, and the inputs it recorded
+    -- only mean anything alongside that count.
+    Nothing      -> killThread tid >> return (PropOutcome True 0 [] Nothing)
 
 -- | Run a Hedgehog property to completion without rendering any progress or result output,
 -- returning what it found. A no-op progress callback suppresses the live progress render.
-runPropQuietly :: Bool -> Hedgehog.Property -> IO PropOutcome
-runPropQuietly gaveUpOk prop = do
+--
+-- The inputs the property recorded are read back from 'casesRef' and cut to the number of cases the
+-- report counted. That cut is what separates the cases from the shrinking: Hedgehog forces one tree
+-- root per case, so a passing run records exactly one input per case, in order; a failing run then
+-- replays the body once per shrink candidate, and every one of those replays comes after the case
+-- that failed. Since a failure is reported as @tests + 1@, the counted cases are exactly the recorded
+-- inputs up to and including the one it failed on.
+runPropQuietly :: Bool -> IORef [String] -> Hedgehog.Property -> IO PropOutcome
+runPropQuietly gaveUpOk casesRef prop = do
   seed <- HedgehogSeed.random
   report <- checkReport (propertyConfig prop) 0 seed (propertyTest prop) (const (pure ()))
+  recorded <- reverse <$> readIORef casesRef
   let cases = fromIntegral $ Hedgehog.Internal.Report.reportTests report
+  let inputs = take cases recorded
   return $ case reportStatus report of
-    OK              -> PropOutcome True cases Nothing
-    GaveUp          -> PropOutcome gaveUpOk cases Nothing
-    Failed failure' -> PropOutcome False cases (Just $ renderFailure failure')
+    OK              -> PropOutcome True cases inputs Nothing
+    GaveUp          -> PropOutcome gaveUpOk cases inputs Nothing
+    Failed failure' -> PropOutcome False cases inputs (Just $ renderFailure failure')
 
 -- | What a failed property found: the inputs the engine generated, and what the failure reported.
 --
@@ -126,6 +149,27 @@ renderFailure failure' = intercalate "\n" $ filter (not . null) $ generated ++ f
       inputs -> ["Generated " ++ intercalate ", " inputs]
     footnotes = Hedgehog.Internal.Report.failureFootnotes failure'
     message = Hedgehog.Internal.Report.failureMessage failure'
+
+-- | A name that names something local — an argument, a type variable — as the program wrote it. The
+-- compiler stores every name absolute, so an argument written @a@ is stored @\/a@ and a type
+-- variable written @$T@ is stored @\/T@; neither spelling appears in any program, and @\/T@ reads as
+-- a module-level name rather than as the variable it is.
+showLocalName :: String -> String
+showLocalName n = case getPath n of
+  NPath True [seg] -> seg
+  _                -> n
+
+-- | Render a generated value as the input a case ran on, in the surface form the value was written
+-- in: @/Data/Some(value= 1)@.
+--
+-- 'Show' is not reused for this because it names the interpreter's own constructor (@TupleVal@),
+-- which tells a reader of the docs nothing about their test. Arguments are ordered by name rather
+-- than left in the map's hash order, so the same case reads the same way on every run.
+showTestInput :: Val -> String
+showTestInput (TupleVal name args)
+  | H.null args = name
+  | otherwise = printf "%s(%s)" name (intercalate ", " [printf "%s= %s" (showLocalName k) (showTestInput a) :: String | (k, a) <- sortOn fst (H.toList args)])
+showTestInput v = show v
 
 -- | How a test decides whether it passed. A test written in the program is an evaluation that must
 -- succeed; a test the engine generates inputs for is a property. They are distinguished rather than
@@ -152,14 +196,16 @@ runTestDesc TestDesc{tdName, tdOwner, tdOwnerId, tdKind, tdCheck} = finish <$> c
   EvalCheck action -> ofEval <$> runCResT action
   PropCheck run    -> ofProp <$> run
   where
-    finish (passed, cases, notes) = TestResult tdName tdOwner tdOwnerId tdKind passed cases notes
-    ofEval (CRes _ _)   = (True, Nothing, Nothing)
-    ofEval (CErr notes) = (False, Nothing, Just $ prettyCNotes notes)
-    ofProp PropOutcome{poPassed, poCases, poReport}
-      | poPassed = (True, Just poCases, Nothing)
+    finish (passed, cases, inputs, notes) = TestResult tdName tdOwner tdOwnerId tdKind passed cases inputs notes
+    -- An evaluation test is run once on the program as written, so it has no generated case to count
+    -- and no input to report.
+    ofEval (CRes _ _)   = (True, Nothing, [], Nothing)
+    ofEval (CErr notes) = (False, Nothing, [], Just $ prettyCNotes notes)
+    ofProp PropOutcome{poPassed, poCases, poInputs, poReport}
+      | poPassed = (True, Just poCases, poInputs, Nothing)
       -- A property fails either with a counterexample, which the report renders, or by discarding
       -- every case it generated, which has no counterexample to render but is still a failure.
-      | otherwise = (False, Just poCases, Just $ fromMaybe gaveUp poReport)
+      | otherwise = (False, Just poCases, poInputs, Just $ fromMaybe gaveUp poReport)
     gaveUp = "The test engine could not generate any usable input for this test"
 
 -- | Derive a property test for every pair of evaluable same-name definitions whose domains
@@ -244,8 +290,10 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
           let inputE = valToEExpr input
           tree <- buildRoot (evTbEnv env) inputE (getExprPartialType inputE) retDest
           fst <$> runStateT (evalExpr tree) env
-        prop = Hedgehog.property $ do
+        prop :: RecordCase -> Hedgehog.Property
+        prop record = Hedgehog.property $ do
           input <- Hedgehog.forAll genInput
+          record (showTestInput input)
           case (runClause envA input, runClause envB input) of
             (CRes _ va, CRes _ vb) -> case runStateT (evalValEq va vb) envA of
               CRes _ (True, _)  -> Hedgehog.success
@@ -402,8 +450,10 @@ deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) =
           let inputE = valToEExpr input
           tree <- buildRoot (evTbEnv env) inputE (getExprPartialType inputE) retDest
           fst <$> runStateT (evalExpr tree) env
-        prop = Hedgehog.property $ do
+        prop :: RecordCase -> Hedgehog.Property
+        prop record = Hedgehog.property $ do
           input <- Hedgehog.forAll genInput
+          record (showTestInput input)
           case runDef input of
             CRes _ outV -> case valMatchesType outV refRet of
               CRes _ True  -> Hedgehog.success
@@ -463,7 +513,19 @@ evalTest prgmGraphData = do
             , mp <- case mt of UnionType Nothing ls [] -> splitUnionType ls; _ -> []
             , ptName mp == instName ]
 
-          prop = Hedgehog.property $ do
+          -- The call a case ran on, written the way it would be called: the chosen type arguments
+          -- and the generated value arguments. Rendered from the pieces rather than from the built
+          -- expression below, whose 'Show' spells out every arrow's metadata. Value arguments are
+          -- ordered by name, like 'showTestInput' orders them: 'exprAppliedArgs' returns them in the
+          -- order they were applied, which is the reverse of the order they were written in.
+          showCase chosenTypes argNames argVals = printf "%s%s%s" testName typeArgs valArgs
+            where
+              typeArgs = concat [printf "[$%s= %s]" (showLocalName (nameStr (pkName vn))) (show ct) :: String | (vn, ct) <- zip (map fst typeVars) chosenTypes]
+              valArgs | null argVals = ""
+                      | otherwise = printf "(%s)" (intercalate ", " [printf "%s= %s" (showLocalName n) (showTestInput v) :: String | (n, v) <- sortOn fst (zip argNames argVals)]) :: String
+
+          prop :: RecordCase -> Hedgehog.Property
+          prop record = Hedgehog.property $ do
             -- For each type variable, choose a concrete PartialType
             chosenTypes <- mapM (\concretes ->
               if null concretes
@@ -505,6 +567,9 @@ evalTest prgmGraphData = do
                                (zip argNames argVals)
             let src = getExprPartialType input
 
+            -- After the last generator, so that a case the generators discard records nothing.
+            record (showCase chosenTypes argNames argVals)
+
             case evalBuildPrgm input src intType p of
               CErr notes -> Hedgehog.footnote (prettyCNotes notes) >> Hedgehog.failure
               CRes _ (expr, env) -> case runStateT (evalExpr expr) env of
@@ -517,7 +582,7 @@ evalTest prgmGraphData = do
           -- law's real instances are checked in the files that define them. It passes with no cases
           -- run, which is what says it was vacuous rather than checked.
           check
-            | any null concreteTypesPerVar = return $ PropOutcome True 0 Nothing
+            | any null concreteTypesPerVar = return $ PropOutcome True 0 [] Nothing
             | otherwise = checkPropWithTimeout False prop
       in TestDesc testName testName (oaTestId oa) TestProperty (PropCheck check)
 

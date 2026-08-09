@@ -189,6 +189,14 @@ data TestResult = TestResult
     -- | How many generated cases were run, for a test the engine generated inputs for. A test
     -- written without arguments is run once and has none.
   , trCases   :: Maybe Int
+    -- | The input each of those cases ran on, in the order they ran, as many entries as 'trCases'.
+    -- A count alone does not say what a passing test covered — a law checked against a hundred empty
+    -- strings and one checked against a hundred varied ones both report a hundred cases — so the
+    -- inputs are carried rather than counted. A test with nothing generated for it has none.
+    --
+    -- When the test failed, the last entry is the input it first failed on. That is not the same
+    -- value as the counterexample in 'trNotes', which is what the engine shrank that input down to.
+  , trInputs  :: [String]
     -- | What a failure reported: the notes it failed with, and for a generated test the rendered
     -- counterexample. Empty for a test that passed.
   , trNotes   :: Maybe String
