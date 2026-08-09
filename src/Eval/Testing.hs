@@ -28,8 +28,9 @@ import           Control.Concurrent         (forkIO, killThread, newEmptyMVar,
 import           Control.Monad              (forM)
 import           Control.Monad.State        (runStateT)
 import           CtConstants
-import           Data.List                  (nub, nubBy, tails)
+import           Data.List                  (nub, nubBy, sortOn, tails)
 import           Data.Maybe
+import           Data.UUID                  (UUID)
 import           Eval                       (evalBaseEnv, evalBuildPrgm,
                                              evalDShowAnnot, evalExpr,
                                              evalValEq)
@@ -59,48 +60,101 @@ propTestIterations = 100
 propTestTimeoutMicros :: Int
 propTestTimeoutMicros = 10 * 1000 * 1000
 
+-- | What running a Hedgehog property found: whether it passed, how many generated cases it got
+-- through, and, for a genuine failure, the rendered counterexample.
+--
+-- The render is carried rather than printed so that whoever asked for the run decides what becomes
+-- of it — a command line prints it, a doc server shows it in the page. It is rendered without colour
+-- for that reason: ANSI escapes belong on a terminal, not in the middle of a served value.
+data PropOutcome = PropOutcome
+  { poPassed :: Bool
+  , poCases  :: Int
+  , poReport :: Maybe String
+  }
+
 -- | Run a Hedgehog property capped at both 'propTestIterations' variations and a
--- 'propTestTimeoutMicros' wall-clock timeout, returning whether it passed. On timeout the
--- property is judged on the variations that completed within the window: the runner returns
--- 'False' as soon as it finds a failing case, so if the timeout elapses before a result is
--- produced, no counterexample was found among the completed variations and it counts as a
--- pass.
+-- 'propTestTimeoutMicros' wall-clock timeout. On timeout the property is judged on the variations
+-- that completed within the window: the runner returns a failure as soon as it finds a failing case,
+-- so if the timeout elapses before a result is produced, no counterexample was found among the
+-- completed variations and it counts as a pass.
 --
 -- The check runs in a worker thread while the timeout is applied to the main thread's wait
 -- for its result. On timeout the worker is killed; the 'ThreadKilled' delivered to it is
 -- caught inside Hedgehog's 'checkReport', which turns it into a spurious 'Failed' report.
--- To keep that from being printed, the worker only /produces/ the rendered failure text and
--- the main thread prints it — so a render reaches stdout only when the main thread actually
--- received a result, which never happens once the timeout has fired.
+-- The worker therefore only /produces/ the outcome and the main thread decides whether to keep it —
+-- so a rendered failure is kept only when the main thread actually received a result, which never
+-- happens once the timeout has fired. Nothing may report on the run except through this return
+-- value; a worker writing its findings out of band would resurrect exactly that spurious failure.
 --
 -- 'gaveUpOk' controls how an all-discards run (Hedgehog 'GaveUp') is judged: 'False' treats it as a
 -- failure (the default for tests whose inputs should always generate), 'True' as a pass. The derived
 -- refinement tests pass 'True' because a pairing whose overlap cannot yet be generated (e.g. a
 -- @Cons@ value, which the generator discards) has simply found no counterexample.
-checkPropWithTimeout :: Bool -> Hedgehog.Property -> IO Bool
+checkPropWithTimeout :: Bool -> Hedgehog.Property -> IO PropOutcome
 checkPropWithTimeout gaveUpOk prop = do
   resultVar <- newEmptyMVar
   tid <- forkIO $ runPropQuietly gaveUpOk (Hedgehog.withTests propTestIterations prop) >>= putMVar resultVar
   result <- timeout propTestTimeoutMicros (takeMVar resultVar)
   case result of
-    Just (ok, rendered) -> mapM_ putStrLn rendered >> return ok
-    Nothing             -> killThread tid >> return True
+    Just outcome -> return outcome
+    -- The cases the killed worker had got through are not reported: the count lives in its report,
+    -- which is exactly what a timeout kill corrupts.
+    Nothing      -> killThread tid >> return (PropOutcome True 0 Nothing)
 
 -- | Run a Hedgehog property to completion without rendering any progress or result output,
--- returning whether it passed and, for a genuine failure, the rendered report text to print.
--- The text is /returned rather than printed/ so its caller can drop it when the run was a
--- timeout kill (see 'checkPropWithTimeout'); a no-op progress callback likewise suppresses
--- the live progress render.
-runPropQuietly :: Bool -> Hedgehog.Property -> IO (Bool, Maybe String)
+-- returning what it found. A no-op progress callback suppresses the live progress render.
+runPropQuietly :: Bool -> Hedgehog.Property -> IO PropOutcome
 runPropQuietly gaveUpOk prop = do
   seed <- HedgehogSeed.random
   report <- checkReport (propertyConfig prop) 0 seed (propertyTest prop) (const (pure ()))
+  let cases = fromIntegral $ Hedgehog.Internal.Report.reportTests report
   case reportStatus report of
-    OK     -> return (True, Nothing)
-    GaveUp -> return (gaveUpOk, Nothing)
+    OK     -> return $ PropOutcome True cases Nothing
+    GaveUp -> return $ PropOutcome gaveUpOk cases Nothing
     _      -> do
-      str <- Hedgehog.Internal.Report.renderResult Hedgehog.Internal.Config.EnableColor Nothing report
-      return (False, Just str)
+      str <- Hedgehog.Internal.Report.renderResult Hedgehog.Internal.Config.DisableColor Nothing report
+      return $ PropOutcome False cases (Just str)
+
+-- | How a test decides whether it passed. A test written in the program is an evaluation that must
+-- succeed; a test the engine generates inputs for is a property. They are distinguished rather than
+-- collapsed into one because only a property has a number of cases to report, and only an evaluation
+-- reports its failure as compiler notes.
+data TestCheck
+  = EvalCheck (CResT IO Val)
+  | PropCheck (IO PropOutcome)
+
+-- | A test derived from a program, before it is run. 'evalTest' derives these; 'runTestDesc' turns
+-- one into the 'TestResult' that is cached, served and displayed.
+data TestDesc = TestDesc
+  { tdName    :: String
+  , tdOwner   :: String
+  , tdOwnerId :: UUID
+  , tdKind    :: TestKind
+  , tdCheck   :: TestCheck
+  }
+
+-- | Run one test to its result. A failing test is a result rather than an error, so a run of many
+-- tests reports all of them instead of stopping at the first.
+runTestDesc :: TestDesc -> IO TestResult
+runTestDesc TestDesc{tdName, tdOwner, tdOwnerId, tdKind, tdCheck} = finish <$> case tdCheck of
+  EvalCheck action -> ofEval <$> runCResT action
+  PropCheck run    -> ofProp <$> run
+  where
+    finish (passed, cases, notes) = TestResult tdName tdOwner tdOwnerId tdKind passed cases notes
+    ofEval (CRes _ _)   = (True, Nothing, Nothing)
+    ofEval (CErr notes) = (False, Nothing, Just $ prettyCNotes notes)
+    ofProp PropOutcome{poPassed, poCases, poReport}
+      | poPassed = (True, Just poCases, Nothing)
+      -- A property fails either with a counterexample, which the report renders, or by discarding
+      -- every case it generated, which has no counterexample to render but is still a failure.
+      | otherwise = (False, Just poCases, Just $ fromMaybe gaveUp poReport)
+    gaveUp = "The test engine could not generate any usable input for this test"
+
+-- | The identity of the definition a test was derived from: the meta of the arm's object, which is
+-- what distinguishes one arm from its siblings (they all share the function's 'oaObjPath') and what
+-- attributes the test to the page that wrote it.
+oaTestId :: EObjArr -> UUID
+oaTestId = getMetaID . getExprMeta . oaObjExpr
 
 -- | Derive a property test for every pair of evaluable same-name definitions whose domains
 -- overlap (their argument types intersect): on the overlap the two definitions must AGREE. A
@@ -110,11 +164,14 @@ runPropQuietly gaveUpOk prop = do
 -- isolation (bypassing dispatch, which would only ever run one of them) and the results compared
 -- through their 'Eq'. Inputs are generated in the overlap, with positions that a non-linear
 -- pattern ties together generated equal so the diagonal is actually exercised.
-deriveOverlapTests :: EPrgm -> [(String, CResT IO Val)]
+deriveOverlapTests :: EPrgm -> [TestDesc]
 deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
   [ mkOverlapTest omi oaA oaB dom
   | omi <- H.elems om
-  , let parts = filter evaluable (omiDefs omi ++ omiRuntimeDecls omi)
+  -- Ordered by where the arms were written, so which of a pair is @oaA@ — and so which page the
+  -- test belongs to — is the same on every run. The object map's own order is a hash order, which
+  -- would move a cross-file agreement test between the two files it pairs.
+  , let parts = sortOn (getMetaPos . getExprMeta . oaObjExpr) $ filter evaluable (omiDefs omi ++ omiRuntimeDecls omi)
   , (oaA, oaB) <- pairs parts
   , let dom = intersectTypes typeEnv (clauseDom oaA) (clauseDom oaB)
   , not (isBottomType dom)
@@ -144,7 +201,7 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
       Nothing             -> PTopType
     pairs xs = [(a, b) | (a:rest) <- tails xs, b <- rest]
 
-    mkOverlapTest omi oaA oaB dom = (testName, action)
+    mkOverlapTest omi oaA oaB dom = TestDesc testName (nameStr (oaObjPath oaA)) (oaTestId oaA) TestOverlapAgreement (PropCheck (checkPropWithTimeout False prop))
       where
         -- The function's declared return type (predicates cleared) is the destination to build each
         -- call against. It is narrower than a clause's inferred result, so the call's own type is not
@@ -191,11 +248,6 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
             (ra, rb) -> Hedgehog.footnote (printf "eval failed:\n  %s\n  %s" (errOf ra) (errOf rb)) >> Hedgehog.failure
         errOf (CErr ns) = prettyCNotes ns
         errOf _         = "ok"
-        action = CResT $ do
-          ok <- checkPropWithTimeout False prop
-          return $ if ok
-            then CRes [] (TupleVal "()" H.empty)
-            else CErr [MkCNote $ GenCErr Nothing $ printf "Overlap agreement test failed: %s" testName]
 
 -- | Derive a property test for every refinement declaration paired with an overlapping definition
 -- of the same object. A refinement declaration (a @#refine@ arrow) claims a narrowed return type;
@@ -204,7 +256,7 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
 -- concrete value, and assert that value matches the refinement's claimed return type (see
 -- 'valMatchesType'). For @:ConsList.length -> Integer_nonNeg #refine@ paired with @Nil.length= 0@
 -- this checks that the length of a @Nil@ is a non-negative integer.
-deriveRefinementTests :: EPrgm -> [(String, CResT IO Val)]
+deriveRefinementTests :: EPrgm -> [TestDesc]
 deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) =
   [ mkRefinementTest omi defOa dom refRet
   | omi <- H.elems om
@@ -317,7 +369,7 @@ deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) =
     isTrue (TupleVal n _) = n == truePrim
     isTrue _              = False
 
-    mkRefinementTest omi defOa dom refRet = (testName, action)
+    mkRefinementTest omi defOa dom refRet = TestDesc testName (nameStr (oaObjPath defOa)) (oaTestId defOa) TestRefinementAgreement (PropCheck (checkPropWithTimeout True prop))
       where
         testName = printf "%s :: refinement-agreement" (nameStr (oaObjPath defOa))
         -- Build the definition's call against the function's NOMINAL declared return (predicates
@@ -352,13 +404,8 @@ deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) =
               CRes _ False -> Hedgehog.footnote (printf "Refinement violated: %s on %s produced %s, not matching the claimed return %s" testName (show input) (show outV) (show refRet)) >> Hedgehog.failure
               CErr ns      -> Hedgehog.footnote (printf "Refinement predicate eval failed on %s = %s: %s" (show input) (show outV) (prettyCNotes ns)) >> Hedgehog.failure
             CErr ns -> Hedgehog.footnote (printf "eval failed: %s" (prettyCNotes ns)) >> Hedgehog.failure
-        action = CResT $ do
-          ok <- checkPropWithTimeout True prop
-          return $ if ok
-            then CRes [] (TupleVal "()" H.empty)
-            else CErr [MkCNote $ GenCErr Nothing $ printf "Refinement agreement test failed: %s" testName]
 
-evalTest :: EPrgmGraphData -> CRes [(String, CResT IO Val)]
+evalTest :: EPrgmGraphData -> CRes [TestDesc]
 evalTest prgmGraphData = do
   let prgm@(Prgm objMap _ _) = mconcat $ map fst3 $ graphToNodes prgmGraphData
   let testOAs = nubBy (\a b -> oaObjPath a == oaObjPath b) $ filter (\oa -> hasAnnot testAnnot oa || hasAnnot exampleAnnot oa) $ flatObjectMap objMap
@@ -377,7 +424,7 @@ evalTest prgmGraphData = do
             let src = getExprPartialType input
             (expr, env) <- evalBuildPrgm input src intType p
             fst <$> runStateT (evalExpr expr) env
-      in (testName, action)
+      in TestDesc testName testName (oaTestId oa) TestSimple (EvalCheck action)
 
     runPropertyTest p oa =
       let testName = nameStr (oaObjPath oa)
@@ -461,15 +508,12 @@ evalTest prgmGraphData = do
           -- A type variable with no concrete instances (an open class not yet inhabited in this
           -- file) makes the law vacuously true: there is nothing to quantify over, so pass without
           -- running the property (which would otherwise discard every case and report GaveUp). The
-          -- law's real instances are checked in the files that define them.
-          action
-            | any null concreteTypesPerVar = CResT $ return $ CRes [] (TupleVal "()" H.empty)
-            | otherwise = CResT $ do
-                ok <- checkPropWithTimeout False prop
-                return $ if ok
-                  then CRes [] (TupleVal "()" H.empty)
-                  else CErr [MkCNote $ GenCErr Nothing $ printf "Property test failed: %s" testName]
-      in (testName, action)
+          -- law's real instances are checked in the files that define them. It passes with no cases
+          -- run, which is what says it was vacuous rather than checked.
+          check
+            | any null concreteTypesPerVar = return $ PropOutcome True 0 Nothing
+            | otherwise = checkPropWithTimeout False prop
+      in TestDesc testName testName (oaTestId oa) TestProperty (PropCheck check)
 
 -- | All @#print@ annotations reachable in the program, each paired with the type-context (@os@)
 -- under which it must be built (mirrors the per-oa handling in 'Eval.evalAnnots').
@@ -517,17 +561,23 @@ evalPrints prgm = do
 -- @#print@ whose value renders to a string is checked against its stored @#result@ golden; one
 -- without a golden fails with a hint to run @catln test --update@. A @#print@ that renders to a
 -- non-string DShow value is skipped entirely (produces no test).
-derivePrintTests :: EPrgm -> [(String, CResT IO Val)]
+derivePrintTests :: EPrgm -> [TestDesc]
 derivePrintTests prgm = mapMaybe mkTest (collectPrintAnnots prgm)
   where
     env = evalBaseEnv prgm
     mkTest (os, annot) = case evalDShowAnnot env os annot of
-      CRes _ (Just (StrVal actual)) -> Just (testName, checkAction actual)
+      CRes _ (Just (StrVal actual)) -> Just (desc $ checkAction actual)
       CRes _ _                      -> Nothing
-      CErr notes                    -> Just (testName, CResT $ return $ CErr notes)
+      CErr notes                    -> Just (desc $ CResT $ return $ CErr notes)
       where
         crange = printRange annot
         testName = printf "%s :: print-golden" (maybe "<print>" showCodeRange crange)
+        -- A print inside a definition belongs to that definition; one written at the top of a file
+        -- belongs to the annotation itself, which is a statement of that file in its own right.
+        (owner, ownerId) = case os of
+          ((_, oa):_) -> (nameStr (oaObjPath oa), oaTestId oa)
+          []          -> (testName, getMetaID (getExprMeta annot))
+        desc = TestDesc testName owner ownerId TestPrintGolden . EvalCheck
         checkAction actual = asCResT $ case printResultArg annot of
           Nothing -> CErr [MkCNote $ GenCErr crange "Missing #result golden for print; run `catln test --update` to populate it"]
           Just golden

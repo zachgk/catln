@@ -28,7 +28,9 @@ import qualified Data.HashMap.Strict  as H
 import qualified Data.HashSet         as S
 import           Data.List            (isInfixOf, nub)
 import           Data.Maybe
-import           Eval.Common          (Val (StrVal, TupleVal))
+import           Eval.Common          (TestKind (TestPrintGolden),
+                                       TestResult (..), Val (StrVal, TupleVal))
+import           Eval.Testing         (TestDesc (..), runTestDesc)
 import           LSP                  (lspRun)
 import           System.Directory
 import           System.Exit          (exitFailure)
@@ -126,22 +128,18 @@ xTest prgmName update = do
   -- In update mode the print-golden checks are skipped (we are about to write the goldens, so
   -- they would otherwise fail as "missing"); every other test family still runs and is checked.
   let testDescs' = if update
-        then filter (not . (printGoldenMarker `isInfixOf`) . fst) testDescs
+        then filter ((/= TestPrintGolden) . tdKind) testDescs
         else testDescs
-  results <- forM testDescs' $ \(name, testAction) -> do
-    result <- lift $ runCResT testAction
-    return (name, result)
-  let failures = [(name, notes) | (name, CErr notes) <- results]
+  results <- lift $ mapM runTestDesc testDescs'
+  let failures = filter (not . trPassed) results
   let total = length results
   let passed = total - length failures
   lift $ putStrLn $ printf "Tests: %d/%d passed" passed total
-  forM_ failures $ \(name, notes) -> do
-    lift $ putStrLn $ printf "  FAIL: %s" name
-    lift $ putStrLn $ prettyCNotes notes
+  forM_ failures $ \result -> do
+    lift $ putStrLn $ printf "  FAIL: %s" (trName result)
+    lift $ mapM_ putStrLn (trNotes result)
   when update $ xTestWriteGoldens ctss
   unless (null failures) $ fail $ printf "%d test(s) failed" (length failures)
-  where
-    printGoldenMarker = ":: print-golden"
 
 -- | Evaluate every string-serializable @#print@ and write its value back into the @#result@ of the
 -- source file that contains it, reformatting each touched file (like @catln fmt@).

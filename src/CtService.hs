@@ -27,7 +27,7 @@ import           Eval                    (evalAnnots, evalBuild, evalBuildAll,
                                           prgmFromGraphData)
 import           Eval.Common             (EvalMetaDat, MockIO, StagePrgms (..),
                                           TExpr, Val (StrVal, TupleVal))
-import           Eval.Testing            (evalPrints, evalTest)
+import           Eval.Testing            (TestDesc, evalPrints, evalTest)
 import           Semantics               (CTSSConfig)
 import           Semantics.Prgm
 import           Syntax.Ct.Desugarf      (desFinalPasses, desPrgm, validPrgm)
@@ -372,7 +372,7 @@ getEvalBuild ctss prgmName fun = do
   base <- ctssGetFrom ssfTPrgm prgmName ctss
   fst <$> evalBuild fun prgmName base
 
-getTestResults :: CTSS -> CResT IO [(String, CResT IO Val)]
+getTestResults :: CTSS -> CResT IO [TestDesc]
 getTestResults ctss = do
   base <- ctssGet ssfTPrgm ctss
   asCResT $ evalTest base

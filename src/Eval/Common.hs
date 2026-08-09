@@ -30,6 +30,7 @@ import           Control.Monad.State
 import           CRes
 import           Data.Aeson              hiding (Object)
 import           Data.IORef
+import           Data.UUID               (UUID)
 -- import qualified LLVM.AST            as AST
 import           Semantics
 import           Semantics.Prgm
@@ -143,6 +144,41 @@ data DebugRun = DebugRun { drExit   :: Integer
                          , drOutput :: String
                          , drResult :: EvalResult
                          } deriving (Eq, Generic, ToJSON)
+
+-- | Which family of test a 'TestResult' came from. A @#test@ or @#example@ definition produces a
+-- 'TestSimple' when it takes no arguments and a 'TestProperty' when the test engine has to generate
+-- them; the other three are derived from the program rather than written in it.
+data TestKind
+  = TestSimple
+  | TestProperty
+  | TestOverlapAgreement
+  | TestRefinementAgreement
+  | TestPrintGolden
+  deriving (Eq, Show, Generic, ToJSON)
+
+-- | One test of a program, after it has been run: what it was derived from, whether it passed, and
+-- what it reported. This is the result rather than the check, so it can be cached, served, and
+-- displayed; the unrun form a test runner wants is @Eval.Testing.TestDesc@.
+--
+-- It lives here beside 'DebugRun' for the same reason that does: 'StagePrgms' carries it, and
+-- @Eval.Testing@ is downstream of this module.
+data TestResult = TestResult
+  { trName    :: String
+    -- | The definition the test was derived from, and the identity of the arm it was derived from.
+    -- A name alone does not identify an arm — a function's definitions all share its 'oaObjPath' —
+    -- so a display asking for one definition's tests matches on 'trOwnerId', which is that arm's own
+    -- meta. It is also what attributes a test to the page that wrote it.
+  , trOwner   :: String
+  , trOwnerId :: UUID
+  , trKind    :: TestKind
+  , trPassed  :: Bool
+    -- | How many generated cases were run, for a test the engine generated inputs for. A test
+    -- written without arguments is run once and has none.
+  , trCases   :: Maybe Int
+    -- | What a failure reported: the notes it failed with, and for a generated test the rendered
+    -- counterexample. Empty for a test that passed.
+  , trNotes   :: Maybe String
+  } deriving (Eq, Show, Generic, ToJSON)
 
 -- | A mock IO handle that captures printed lines in an internal buffer instead of writing to real
 -- stdout. It lives beside 'MockIOVal', the value that carries the same buffer through an evaluation.
