@@ -14,20 +14,25 @@
 module CtService where
 import           Control.Concurrent      (MVar, modifyMVar_, newMVar, readMVar,
                                           swapMVar)
-import           Control.Monad           (forM, forM_, unless)
+import           Control.Monad           (forM, forM_, unless, when)
 import           Control.Monad.Trans     (lift)
 import           CRes
+import           CtConstants             (testAnnot)
 import           Data.Graph
 import qualified Data.HashMap.Strict     as H
 import qualified Data.HashSet            as S
-import           Data.List               (partition)
+import           Data.List               (intercalate, partition)
 import           Data.Maybe
+import           Data.UUID               (UUID)
 import           Eval                    (evalAnnots, evalBuild, evalBuildAll,
                                           evalDebugPrgm, evalRun, evalRunMock)
 import           Eval.Common             (EvalMetaDat, MockIO, StagePrgms (..),
-                                          TExpr, Val (StrVal, TupleVal))
-import           Eval.Testing            (TestDesc, evalPrints, evalTest)
+                                          TExpr, TestResult,
+                                          Val (StrVal, TupleVal))
+import           Eval.Testing            (TestDesc (..), evalPrints, evalTest,
+                                          oaTestId, runTestDesc)
 import           Semantics               (CTSSConfig)
+import           Semantics.Annots        (hasAnnot)
 import           Semantics.Prgm
 import           Syntax.Ct.Desugarf      (desFinalPasses, desPrgm, validPrgm)
 import           Syntax.Ct.Parser.Syntax
@@ -58,7 +63,10 @@ data SSF = SSF {
   ssfTPrgmWithTrace :: Maybe (CRes (TPrgm, VPrgm, TraceConstrain)),
   ssfTPrgm          :: Maybe (CRes TPrgm),
   ssfTBPrgm         :: Maybe (CRes TBPrgm),
-  ssfAnnots         :: Maybe (CRes [(Expr EvalMetaDat, Val)])
+  ssfAnnots         :: Maybe (CRes [(Expr EvalMetaDat, Val)]),
+  -- | The tests this page wrote, run. Running a test is not part of building a page, so this is
+  -- filled in when something asks for it (see 'ctssTestsFrom') rather than by the pipeline.
+  ssfTests          :: Maybe (CRes [TestResult])
                }
 
 emptyCTSS :: CTSSConfig -> IO CTSS
@@ -67,7 +75,16 @@ emptyCTSS config = do
   return $ CTSS v
 
 newSSF :: Maybe String -> CRes (RawPrgm ParseMetaDat) -> SSF
-newSSF src rawPrgm = SSF src rawPrgm False Nothing Nothing Nothing Nothing Nothing
+newSSF src rawPrgm = SSF { ssfSource = src
+                         , ssfRaw = rawPrgm
+                         , ssfBuilt = False
+                         , ssfDes = Nothing
+                         , ssfTPrgmWithTrace = Nothing
+                         , ssfTPrgm = Nothing
+                         , ssfTBPrgm = Nothing
+                         , ssfAnnots = Nothing
+                         , ssfTests = Nothing
+                         }
 
 ctssSetFiles :: CTSS -> [String] -> IO ()
 ctssSetFiles (CTSS ssmv) baseFileNames = do
@@ -99,9 +116,15 @@ ctssClearInvalidations :: [FileImport] -> CTSSDat -> CTSSDat
 ctssClearInvalidations invalidations ss@CTSSDat{ctssData=(g, nodeFromVertex, vertexFromKey)} = ss{ctssData=fmapGraphWithKey maybeClear $ ctssData ss}
   where
     propagated = map (snd3 . nodeFromVertex) $ foldMap (foldMap (:[])) $ dfs (transposeG g) (mapMaybe vertexFromKey invalidations)
-    maybeClear prgmName ssf = if prgmName `elem` propagated
-      then newSSF (ssfSource ssf) (ssfRaw ssf)
-      else ssf
+    maybeClear prgmName ssf
+      | prgmName `elem` propagated = newSSF (ssfSource ssf) (ssfRaw ssf)
+      | null invalidations = ssf
+      -- Which tests a page has, and what they find, is decided over every loaded page joined
+      -- together rather than over the page and its imports (see 'ctssTestsFrom'). Invalidation
+      -- walks the pages that DEPEND on the changed one, so it never reaches a page the change is
+      -- downstream of — whose tests the change can still alter. Every page's tests are therefore
+      -- dropped by any change at all, and re-run for whichever page is asked about next.
+      | otherwise = ssf{ssfTests = Nothing}
 
 -- | Build pages incrementally, one SCC at a time.
 -- Each successfully built SCC is committed to the MVar independently,
@@ -347,6 +370,74 @@ getTestResults ctss = do
   base <- ctssGet ssfTPrgm ctss
   asCResT $ evalTest base
 
+-- | The tests a page wrote, run and kept.
+--
+-- Which tests exist at all is decided over the whole PROGRAM the page belongs to, NOT over the page
+-- and what it imports. A class law is checked against the instances of that class, and those live in
+-- the files that define them — which are downstream of the file stating the law. @/Data/Algebra@
+-- states that @++@ is associative and imports nothing that is a @Semigroup@; deriving its tests from
+-- what it can reach would leave the law quantifying over nothing and passing vacuously. Likewise an
+-- agreement test pairs two definitions of one function, which two unrelated files can each hold half
+-- of. See 'ctssTestPages' for what "the program the page belongs to" means.
+--
+-- Each derived test is then attributed to the page that wrote the definition it came from, and only
+-- that page's are run here. So the answer is the same set of tests @catln test@ runs on that program,
+-- sliced by who wrote them, and asking about one page costs that page's tests rather than every
+-- page's.
+ctssTestsFrom :: CTSS -> FileImport -> CResT IO [TestResult]
+ctssTestsFrom ctss prgmName = do
+  cached <- lift $ ctssCached ssfTests prgmName ctss
+  case cached of
+    Just tests -> asCResT tests
+    Nothing -> do
+      tprgms <- ctssTestPages ctss prgmName
+      descs <- asCResT $ evalTest tprgms
+      let owners = pageOwners tprgms
+      -- Every test comes from a definition and every definition was written in a page, so a test
+      -- that cannot be placed is reported rather than dropped — dropped, it would be a test that
+      -- belongs to no page and so is run by nobody.
+      case [tdName d | d <- descs, not (H.member (tdOwnerId d) owners)] of
+        []      -> return ()
+        orphans -> fail $ printf "Could not find the page that wrote %s" (intercalate ", " orphans)
+      results <- lift $ mapM runTestDesc [d | d <- descs, H.lookup (tdOwnerId d) owners == Just prgmName]
+      lift $ ctssStore prgmName (\ssf -> ssf{ssfTests = Just $ pure results}) ctss
+      return results
+
+-- | The pages a page's tests are decided over: every page reached by a file the service was asked to
+-- serve that reaches this page.
+--
+-- Not every loaded page. A service can be asked to serve several files that are separate programs —
+-- the integration tests load thirty of them — and a page belongs to the ones that reach it, not to
+-- the ones beside it. Joining programs that were never one is also what the compiler cannot yet do:
+-- @buildSCCPipeline@ offers every loaded page as an external dependency of every other, so an
+-- unrelated file's @abs@ collides with a test file's own.
+--
+-- Not just what the page imports either, which is the point of 'ctssTestsFrom' above. Asked to serve
+-- the standard library, the file it is asked for reaches every page of it, so a law stated in one
+-- file is checked against the instances defined in another.
+ctssTestPages :: CTSS -> FileImport -> CResT IO (GraphData TPrgm FileImport)
+ctssTestPages ctss@(CTSS ssmv) prgmName = do
+  CTSSDat{ctssConfig, ctssBaseFileNames, ctssData} <- lift $ readMVar ssmv
+  roots <- lift $ mapM (mkDesCanonicalImportStr ctssConfig) ctssBaseFileNames
+  let reaching = [root | root <- roots, isJust $ graphLookup prgmName $ graphFilterReaches root ctssData]
+  when (null reaching) $
+    fail $ printf "No file this service was asked to serve reaches %s, so it is in no program to take the tests of" (show $ impRaw prgmName)
+  mapM_ (lift . ctssBuildFrom ctss) reaching
+  CTSSDat{ctssData=built} <- lift $ readMVar ssmv
+  let scope = S.fromList $ concat [map snd3 $ graphToNodes $ graphFilterReaches root built | root <- reaching]
+  asCResT $ mapMGraph (requireComputed . ssfTPrgm) $ graphFromEdges
+    [node | node@(_, name, _) <- graphToNodes built, name `S.member` scope]
+
+-- | Which page each definition was written in, keyed the way a test names the definition it was
+-- derived from. A page's own program holds what that page wrote; the joined program the tests are
+-- derived over has lost which file anything came from.
+pageOwners :: GraphData TPrgm FileImport -> H.HashMap UUID FileImport
+pageOwners tprgms = H.fromList
+  [ (i, name)
+  | (Prgm objMap _ globalAnnots, name, _) <- graphToNodes tprgms
+  , i <- map oaTestId (flatObjectMap objMap) ++ map (getMetaID . getExprMeta) globalAnnots
+  ]
+
 -- | The freshly-evaluated golden values for every string-serializable @#print@ reachable from the
 -- loaded program, each keyed by the source range of its @p@ argument. Used by @catln test --update@.
 getPrintGoldens :: CTSS -> CResT IO [(CodeRangeDat, String)]
@@ -367,9 +458,24 @@ getEvalAnnots ctss prgmName = do
     Nothing -> do
       tprgms <- ctssGetFrom ssfTPrgm prgmName ctss
       stages <- lift $ ctssStagePrgmsFrom ctss prgmName
-      let annots = evalAnnots stages prgmName tprgms
+      -- A @#test@ displays the run of the test it marks, which is the one thing an evaluation
+      -- cannot work out for itself. The page's tests are run only when the page writes one, since
+      -- running them is work rather than a lookup and no other annotation reads them.
+      stages' <- if pageWritesATest prgmName tprgms
+        then (\tests -> stages{spTests = pure tests}) <$> ctssTestsFrom ctss prgmName
+        else return stages
+      let annots = evalAnnots stages' prgmName tprgms
       lift $ ctssStore prgmName (\ssf -> ssf{ssfAnnots = Just annots}) ctss
       asCResT annots
+
+-- | Whether a page marks any of its definitions as a test. A page that does not has no annotation
+-- that reads a test run, so it is not made to wait for one.
+pageWritesATest :: FileImport -> GraphData TPrgm FileImport -> Bool
+pageWritesATest prgmName tprgms = case graphLookup prgmName tprgms of
+  Just (Prgm objMap _ _) -> any (hasAnnot testAnnot) (flatObjectMap objMap)
+  -- A page that is not in its own program graph has no annotations either; 'evalAnnots' is what
+  -- reports that, rather than it being decided here.
+  Nothing                -> False
 
 -- | Read a page's computed item, without building the page or computing anything.
 ctssCached :: (SSF -> Maybe (CRes a)) -> FileImport -> CTSS -> IO (Maybe (CRes a))
@@ -436,7 +542,7 @@ ctssStagePrgms ctss@(CTSS ssmv) = do
   ctssBuildAll ctss
   CTSSDat{ctssData} <- readMVar ssmv
   let ssfs = map fst3 $ graphToNodes ctssData
-  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) (notScoped "type inference to report on") (const $ notScoped "program to run") (return $ map snd3 $ graphToNodes ctssData)
+  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) (notScoped "type inference to report on") (const $ notScoped "program to run") (return $ map snd3 $ graphToNodes ctssData) (notScoped "tests to report on")
   where
     notScoped :: String -> CRes a
     notScoped what = CErr [MkCNote $ GenCErr Nothing $ "This evaluation is not scoped to a single page, so it has no " ++ what]
@@ -456,7 +562,13 @@ ctssStagePrgmsFrom ctss@(CTSS ssmv) prgmName = do
   -- Runs against the page's own typecheck program rather than the evaluation's, which for an
   -- annotation is that program joined with the synthetic one holding the annotation itself.
   let debugRun fun = evalDebugPrgm fun =<< joinedStage ssfTPrgm ssfs
-  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) typeInferred debugRun (return $ map snd3 $ graphToNodes reaches)
+  -- No test run: unlike every stage here, one cannot be looked up — it has to be produced by
+  -- running the page's tests, which is the work an evaluation with nothing to report on them must
+  -- not be made to do. An evaluation that does have a test to report on is given one by whoever
+  -- asked for it (see 'getEvalAnnots').
+  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) typeInferred debugRun (return $ map snd3 $ graphToNodes reaches) notRun
+  where
+    notRun = CErr [MkCNote $ GenCErr Nothing "This evaluation was not given a run of the page's tests"]
 
 -- | Joins one stage over a set of pages, left unforced. See 'ctssStagePrgms' for why it must stay a
 -- thunk.

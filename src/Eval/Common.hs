@@ -79,6 +79,13 @@ data StagePrgms = StagePrgms {
   -- stages above are. It is the pages of whatever the evaluation was scoped to: every loaded page
   -- when it was not scoped, which is what a navigation of the whole doc server asks for.
   , spPages     :: CRes [FileImport]
+  -- | The tests of the page the evaluation is scoped to, already run. Unlike every stage above,
+  -- these are not an artifact of compiling a program but of running part of it, which needs IO — so
+  -- they cannot be produced from within an evaluation at all and arrive already run. They are
+  -- supplied only by an evaluation that has a test to report on, since running a page's tests is
+  -- work rather than a lookup, and are never joined across pages: a test belongs to the page that
+  -- wrote the definition it checks.
+  , spTests     :: CRes [TestResult]
   }
 
 -- | The stage programs for an evaluation whose caller did not supply any. Asking for one is then an
@@ -86,7 +93,7 @@ data StagePrgms = StagePrgms {
 -- no upstream artifacts to report on cannot answer, and reporting the wrong stage would be worse
 -- than failing.
 stagePrgmsUnavailable :: StagePrgms
-stagePrgmsUnavailable = StagePrgms unavailable unavailable unavailable (const unavailable) unavailable
+stagePrgmsUnavailable = StagePrgms unavailable unavailable unavailable (const unavailable) unavailable unavailable
   where
     unavailable :: CRes a
     unavailable = CErr [MkCNote $ GenCErr Nothing "This evaluation was not given the other pipeline stages of its program"]
