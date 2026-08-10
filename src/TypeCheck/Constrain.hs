@@ -18,6 +18,7 @@ module TypeCheck.Constrain where
 
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
+import qualified Data.IntMap.Strict  as IM
 import           Data.List           (partition)
 import           Data.Maybe
 import qualified Data.Zip            as Z
@@ -371,16 +372,39 @@ saveConstraint vals old new env = saveDat $ saveVaenv env
 -- This takes a constraint and tries to apply it in the environment.
 -- It will return the updated environment and a boolean that is true if the constraint is done.
 -- If it is done, it can be safely removed and no longer needs to be executed.
-executeConstraint :: VConstraint -> StateT FEnv TypeCheckResult Bool
-executeConstraint con = do
+executeConstraint :: Int -> VConstraint -> StateT FEnv TypeCheckResult Bool
+executeConstraint cid con = do
   modify $ startConstraint con
-  env <- get
+  env@FEnv{feEnvStamp} <- get
+  let conMemo = feConMemo env
   case stypeConstraint $ showCon env con of
     TypeCheckResE _ -> return True
     TypeCheckResult _ con' -> do
-      let (prune, con'') = computeConstraint env con'
-      modify $ saveConstraint con con' con''
-      return prune
+      -- Skip-if-unchanged: 'computeConstraint' is a pure function of the resolved view
+      -- @con'@ plus, for the kinds that read the per-epoch env caches, those caches
+      -- ('feReachesTypeEnv' for ArrowTo/PropEq/FnInputBound via 'mkReachesEnv' /
+      -- 'settlePropSlot' / 'fnArgInputBound'; the universe is already substituted INTO a
+      -- BoundedByObjs view by 'showCon', and 'feCompletedAllObjs' is an exact function of
+      -- it). An ArrowTo additionally resolves its 'conOs' object-side arg entries
+      -- ('conOaResolveKey'). When every component of that key equals the last execution's,
+      -- the recomputed stores would all be refused as unchanged by 'setScheme' — a provable
+      -- no-op, so skip the compute and save entirely and repeat the prune decision.
+      let stampKey = case conDat con of
+            ArrowTo{}      -> feEnvStamp
+            PropEq{}       -> feEnvStamp
+            FnInputBound{} -> feEnvStamp
+            _              -> 0
+      let oaKey = case conDat con of
+            ArrowTo{} -> conOaResolveKey env con
+            _         -> []
+      case IM.lookup cid conMemo of
+        Just (ConMemo memoStamp memoCon memoOa memoPrune)
+          | memoStamp == stampKey && memoCon == con' && memoOa == oaKey -> return memoPrune
+        _ -> do
+          let (prune, con'') = computeConstraint env con'
+          modify $ saveConstraint con con' con''
+          modify $ \e -> e{feConMemo = IM.insert cid (ConMemo stampKey con' oaKey prune) (feConMemo e)}
+          return prune
 
 -- |
 -- Applies the constraints continuously to update the environment.
@@ -388,14 +412,20 @@ executeConstraint con = do
 -- This function also accepts a limit 'Integer' to indicate a maximum number of times a constraint can be used.
 -- A 'TypeCheckError' will be thrown if it has not converged by the time the limit is reached.
 runConstraints :: Integer -> [VConstraint] -> StateT FEnv TypeCheckResult ()
-runConstraints _ [] = return ()
-runConstraints 0 _ = do
+runConstraints limit cons = do
+  -- Fresh skip-memo per constraint set: memo keys are positions in THIS list.
+  modify $ \e -> e{feConMemo = IM.empty}
+  runConstraintsIdx limit (zip [0..] cons)
+
+runConstraintsIdx :: Integer -> [(Int, VConstraint)] -> StateT FEnv TypeCheckResult ()
+runConstraintsIdx _ [] = return ()
+runConstraintsIdx 0 _ = do
   env@FEnv{feTrace, feUnionAllObjs} <- get
   -- _ <- trace (printf "Trace 908: %s" (show $ showTraceConstrainPnt env 908)) (return ())
   if (stypeAct <$> descriptor env feUnionAllObjs) == pure PTopType
     then lift $ TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit without determining the TopTop (unionAllObjs)"] ()
     else lift $ TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit with still changing constraints: \n\n%s" (show $ showTraceConstrainEpoch env $ head $ tail $ tcEpochs feTrace)] ()
-runConstraints limit cons = do
+runConstraintsIdx limit cons = do
   env <- get
   -- Compute the constraint-independent reaches type graph once for this epoch and cache it, so
   -- the (many) 'arrowConstrainUbs'/'mkReachesEnv' calls in this epoch reuse it instead of each
@@ -416,11 +446,19 @@ runConstraints limit cons = do
       -- in 'computeConstraint' is identical across all of them. Compute it once per epoch, keyed by the
       -- universe value @u@ so 'computeConstraint' can reuse it EXACTLY (only when its bound equals @u@).
       let u = maybe BottomType stypeAct $ tcreToMaybe $ descriptor env $ feUnionAllObjs env
-      let completedAllObjs = unionTypes (feTypeEnv env) u (completeDataPartials (feTypeEnv env) u)
-      modify $ \e -> e{feReachesTypeEnv = reachesTypeEnv, feCompletedAllObjsKey = u, feCompletedAllObjs = completedAllObjs}
-      constraintsToPrune <- mapM executeConstraint cons
+      -- The completion is an exact function of @u@: reuse last epoch's when @u@ is unchanged.
+      let uUnchanged = u == feCompletedAllObjsKey env
+      let completedAllObjs = if uUnchanged
+            then feCompletedAllObjs env
+            else unionTypes (feTypeEnv env) u (completeDataPartials (feTypeEnv env) u)
+      -- Bump the env stamp iff a per-epoch env input changed: constraint kinds that read
+      -- these caches only skip re-execution within an unchanged stamp (see 'feConMemo').
+      let envUnchanged = uUnchanged && teTypeGraph reachesTypeEnv == teTypeGraph (feReachesTypeEnv env)
+      modify $ \e -> e{feReachesTypeEnv = reachesTypeEnv, feCompletedAllObjsKey = u, feCompletedAllObjs = completedAllObjs,
+                       feEnvStamp = if envUnchanged then feEnvStamp e else feEnvStamp e + 1}
+      constraintsToPrune <- mapM (uncurry executeConstraint) cons
       updated <- gets feUpdatedDuringEpoch
-      let cons' = mapMaybe (\(con, shouldPrune) -> if shouldPrune then Nothing else Just con) $ zip cons constraintsToPrune
+      let cons' = mapMaybe (\(icon, shouldPrune) -> if shouldPrune then Nothing else Just icon) $ zip cons constraintsToPrune
       when updated $ do
         modify nextConstrainEpoch
-        runConstraints (limit - 1) cons'
+        runConstraintsIdx (limit - 1) cons'

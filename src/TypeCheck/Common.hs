@@ -80,8 +80,16 @@ data FEnv = FEnv { fePnts                :: IM.IntMap Scheme
                  , feCompletedAllObjsKey :: Type -- ^ The 'feUnionAllObjs' descriptor value from which 'feCompletedAllObjs' was built (recomputed each epoch). 'computeConstraint' uses the cache only when a 'BoundedByObjs' constraint's (showCon-substituted) bound equals this key, so the cache is an EXACT memo of the union+completion — no staleness. Initialized to 'BottomType'.
                  , feCompletedAllObjs    :: Type -- ^ Per-epoch cache of the completed @feUnionAllObjs@ bound (@unionTypes key (completeDataPartials key)@ for @key = feCompletedAllObjsKey@). Every 'BoundedByObjs' constraint is bounded by the same 'feUnionAllObjs' descriptor (substituted uniformly by 'showCon'), so this otherwise-identical union+completion is computed once per epoch and reused by every constraint whose bound matches the key. Initialized to 'PTopType' but never read until the first epoch populates it.
                  , feLocalDefNames       :: S.HashSet Name -- ^ Absolute names defined by the programs currently being encoded (not yet in 'feTypeEnv'\'s object map). Used to tell a destructuring binding variable from a reference to a same-batch definition.
+                 , feEnvStamp            :: Int -- ^ Version counter for the per-epoch env inputs ('feReachesTypeEnv' graph and 'feCompletedAllObjsKey' universe): bumped at each epoch start iff either differs from the previous epoch. Constraint kinds that read those env caches skip re-execution only within the same stamp (see 'feConMemo').
+                 , feConMemo             :: IM.IntMap ConMemo -- ^ Per-constraint memo of the last execution's resolved inputs, keyed by the constraint's position in the 'runConstraints' list. 'executeConstraint' skips 'computeConstraint'+'saveConstraint' when the constraint's resolved view (and, for env-reading kinds, the env stamp) is unchanged: a pure function of unchanged inputs recomputes the same stores, which 'setScheme' would refuse as unchanged — a provable no-op.
                  , feTrace               :: TraceConstrain
                  } deriving (Show)
+
+-- | A constraint's last-execution inputs and result: env stamp ('feEnvStamp'), the resolved
+-- constraint view ('showCon'+'stypeConstraint'), the resolved object-side arg entries an
+-- 'ArrowTo' additionally reads ('mkReachesEnv'), and the returned prune decision.
+data ConMemo = ConMemo Int RConstraint [(Maybe SExpr, Maybe ShowMeta)] Bool
+  deriving (Show)
 
 type UnionObj = (Pnt, Pnt) -- a union of all TypeObj for argument inference, union of all Object types for function limiting
 

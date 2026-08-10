@@ -77,6 +77,8 @@ makeBaseFEnv prgm = FEnv{
   feCompletedAllObjsKey = BottomType,
   feCompletedAllObjs = PTopType,
   feLocalDefNames = S.empty,
+  feEnvStamp = 0,
+  feConMemo = IM.empty,
   feTrace = mkTraceConstrain
   }
 

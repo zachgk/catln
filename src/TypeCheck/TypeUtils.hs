@@ -325,6 +325,16 @@ mkReachesEnv env (Constraint maybeConOa stypeVaenv _) = do
   let feTypeEnv' = feReachesTypeEnv env
   return $ ReachesEnv (argTypeEnv <> feTypeEnv') (fmap snd vaenv) S.empty
 
+-- | The resolved view of exactly the object-side arg entries 'mkReachesEnv' reads from a
+-- constraint's 'conOs' (each arg's in-expression and out meta, resolved through the current
+-- point schemes). These are the only per-execution inputs of an 'ArrowTo' beyond its own
+-- resolved constraint view, so they complete the skip-memo key ('feConMemo').
+conOaResolveKey :: FEnv -> VConstraint -> [(Maybe SExpr, Maybe ShowMeta)]
+conOaResolveKey env con =
+  [ (tcreToMaybe (showExpr env InputMeta inExpr), tcreToMaybe (showM env ArrMeta outM))
+  | oa <- conOs con
+  , (inExpr, outM) <- map head $ H.elems $ snd $ splitVarArgEnv $ exprVarArgs $ oaObjExpr oa ]
+
 arrowConstrainUbs :: FEnv -> RConstraint -> SType -> SType -> TypeCheckResult (Type, Type, Type, Maybe ReachesTree)
 -- Relates the source and destination of an arrow in both directions and returns
 -- @(srcAct', srcReq', destAct', reaches)@. Forward: derive the destination actual from what the

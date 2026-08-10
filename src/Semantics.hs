@@ -28,7 +28,7 @@ import           System.IO.Unsafe    (unsafePerformIO)
 import           Text.Printf
 
 newtype ObjArrTypeGraph e m = ObjArrTypeGraph (ObjectMap e m)
-  deriving (Show)
+  deriving (Eq, Show)
 instance Semigroup (ObjArrTypeGraph e m) where
   (ObjArrTypeGraph a) <> (ObjArrTypeGraph b) = ObjArrTypeGraph (a <> b)
 -- | Shared body of 'typeGraphQueryWithReason' (@prune=True@) and
