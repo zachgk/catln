@@ -1,0 +1,30 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+                            ( /Catln/exit
+                                ( /this=/Catln/IO
+                                , /val=/Data/Primitive/Integer
+                                ) + /Catln/IO
+                            ) = /Catln/exit
+                            ( EAppArg Value /val -> /Data/Primitive/Integer = 0 )
+                            ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG = [ CGType ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "Tests importing an Obsidian vault. Every note of the vault becomes a page of its own, at any
+            depth, and the vault's own .obsidian configuration is not read as notes." )
+        ]
+    }

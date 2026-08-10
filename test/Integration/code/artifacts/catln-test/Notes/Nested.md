@@ -1,0 +1,5 @@
+A note in a subfolder of the vault.
+
+It is here so that importing the vault has to descend a directory to find every note.
+
+Links back to [[Welcome]].

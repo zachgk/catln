@@ -1,0 +1,7 @@
+import "core"
+import obsidian("artifacts/catln-test")
+
+
+# Tests importing an Obsidian vault. Every note of the vault becomes a page of its own, at any
+  depth, and the vault's own .obsidian configuration is not read as notes.
+main{io -> IO}= io.exit(val= 0)

@@ -17,13 +17,18 @@ module Syntax.Parsers where
 
 import qualified Data.HashSet            as S
 
+import           Control.Applicative     ((<|>))
+import           Control.Monad           (join)
+import           Control.Monad.Identity  (Identity (..))
 import           Control.Monad.Trans
 import           CRes
 import           CtConstants             (noCoreAnnot)
 import           Data.Graph
 import qualified Data.HashMap.Strict     as H
 import           Data.List
-import           MapMeta                 (parseMetaIDScope)
+import           Data.Maybe              (listToMaybe, mapMaybe)
+import           MapMeta                 (MetaLocation (ImportMeta), mapMeta,
+                                          parseMetaIDScope)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
@@ -33,8 +38,10 @@ import           Syntax.Ct.MapRawMeta    (addRawPrgmMetaIDs)
 import           Syntax.Ct.Parser        (ctParser, ctxParser)
 import           Syntax.Ct.Prgm
 import           Syntax.Haskell.Parser   (hsParser)
-import           Syntax.InferImport      (dirParser, inferRawImportStr)
+import           Syntax.InferImport      (dirParser, findImportPath,
+                                          inferRawImportStr)
 import           Syntax.Md.Parser        (mdParser)
+import           Syntax.Obsidian.Parser  (obsidianParser)
 import           Syntax.Python.Parser    (pyParser)
 import           System.FilePath         (isAbsolute, joinPath, takeDirectory)
 import           Text.Printf
@@ -46,32 +53,74 @@ importParsers = H.fromList [
   ("ct", ctParser),
   ("ctx", ctxParser),
   ("md", mdParser),
+  ("obsidian", obsidianParser),
   ("haskell", hsParser),
   ("python", pyParser)
                              ]
+
+-- | The path an applied import names: its first positional argument.
+--
+-- Both argument shapes are read because an import is canonicalized before any desugar runs. A
+-- written @strategy("path")@ leaves its lone argument in 'roaObj' — 'Syntax.Ct.Parser.Expr.pArrowFull'
+-- makes a single expression an input, for the desugar to move to its proper place — while
+-- 'Syntax.Ct.Builder.applyRawArgs', which every inferred import is built with, puts it in 'roaArr'.
+-- A named argument keeps a 'RawValue' in 'roaObj', so it is not mistaken for the path.
+rawImportPath :: RawExpr () -> Maybe String
+rawImportPath e = listToMaybe $ mapMaybe argStr $ rawExprAppliedArgs e
+  where
+    argStr RawObjArr{roaObj=Nothing, roaArr=Just (Just (RawCExpr _ (CStr s)), _)} = Just s
+    argStr RawObjArr{roaObj=Just (RawCExpr _ (CStr s)), roaArr=Nothing}           = Just s
+    argStr _                                                                      = Nothing
+
+-- | Rewrites the path an applied import names, leaving the rest of it alone.
+--
+-- The other arguments are kept because a strategy reads them: @haskell@ takes the Stack root to
+-- resolve its module against, and whether the module was imported qualified. Matches the same two
+-- argument shapes 'rawImportPath' reads.
+setRawImportPath :: String -> RawExpr () -> RawExpr ()
+setRawImportPath name (RawTupleApply m be args) = RawTupleApply m be (aux args)
+  where
+    aux [] = []
+    aux ((spread, arg):rest) = case arg of
+      RawObjArr{roaObj=Nothing, roaArr=Just (Just (RawCExpr am (CStr _)), at)} ->
+        (spread, arg{roaArr=Just (Just (RawCExpr am (CStr name)), at)}) : rest
+      RawObjArr{roaObj=Just (RawCExpr am (CStr _)), roaArr=Nothing} ->
+        (spread, arg{roaObj=Just (RawCExpr am (CStr name))}) : rest
+      _ -> (spread, arg) : aux rest
+setRawImportPath _ e = e
 
 -- Processes an import, producing the rawImpAbs and rawImpDisp
 canonicalImport :: CTSSConfig -> Maybe FileImport -> RawFileImport -> IO FileImport
 canonicalImport config caller imp@AFileImport{impAbs=(RawCExpr _ (CStr name))} = do
   inferred <- inferRawImportStr config caller name
   canonicalImport config caller imp{impAbs=inferred}
-canonicalImport _ caller imp = case maybeExprPath $ impAbs imp of
+-- The metas are cleared because 'impAbs' is the identity of a page: 'AFileImport' compares by it and
+-- 'MapMeta.parseMetaIDScope' names a file's meta-id scope by it. A written @import strategy("path")@
+-- is the one import form which reaches here carrying the positions and types its parse gave it, and
+-- keeping those would make one file imported from two places into two pages holding the same meta
+-- ids. Every other import is built by 'Syntax.InferImport.inferRawImportStr' with empty metas
+-- already, so clearing them changes nothing.
+--
+-- The path is made absolute for the same reason, so that a page is the same page however it was
+-- named. An import which names nothing on disk is left as written rather than rejected: @haskell@
+-- takes a module name and resolves it itself, against the Stack project rather than the filesystem.
+--
+-- 'impRaw' is deliberately left alone. It is what 'Syntax.Ct.Formatter.formatImport' prints, so
+-- rewriting it would have the formatter replace what the file says with an absolute path.
+canonicalImport config caller imp = case maybeExprPath impAbs' of
   Nothing -> fail $ printf "Invalid import %s must be string or oject" (show imp)
   Just _ -> do
+    resolved <- join <$> mapM (findImportPath config caller) named'
+    let disp' = resolved <|> named'
     impDir' <- case (calledDir', disp') of
       (_, Just b) | isAbsolute b -> return $ Just $ takeDirectory b
       (Just a, Just b)           -> return $ Just $ takeDirectory $ joinPath [a, b]
       _                          -> return Nothing
-    return $ desFileImport $ imp{impDisp=disp', impCalledDir=calledDir', impDir=impDir'}
+    let impAbs'' = maybe impAbs' (`setRawImportPath` impAbs') resolved
+    return $ desFileImport $ imp{impAbs=impAbs'', impDisp=disp', impCalledDir=calledDir', impDir=impDir'}
   where
-    -- Extract the first positional argument as the display name
-    disp' = case rawExprAppliedArgs $ impAbs imp of
-      -- Single argument case (legacy)
-      [RawObjArr{roaArr=Just (Just (RawCExpr _ (CStr s)), _)}] -> Just s
-      -- Multi-argument case: extract first positional (Nothing key) argument
-      args -> case [s | RawObjArr{roaObj=Nothing, roaArr=Just (Just (RawCExpr _ (CStr s)), _)} <- args] of
-        (firstArg:_) -> Just firstArg
-        []           -> Nothing
+    impAbs' = mapMeta (\_ _ -> Identity emptyMetaN) ImportMeta $ impAbs imp
+    named' = rawImportPath impAbs'
     calledDir' = impDir =<< caller
 
 mkRawImportStr :: String -> RawFileImport
