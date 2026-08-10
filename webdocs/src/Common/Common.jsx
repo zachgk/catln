@@ -129,6 +129,11 @@ function Loading(props) {
     return <div>Loading...</div>;
   } else if (!data){
     return <div><Notes notes={notes} /></div>;
+  } else if (notes && notes.length > 0) {
+    // A request can succeed and still report failures: an annotation that could not be evaluated
+    // becomes an error note and the rest of the response is returned without it. Showing the notes
+    // above what did arrive is what keeps that partial answer from reading as a complete one.
+    return <div><Notes notes={notes} />{props.children}</div>;
   } else {
     return props.children;
   }

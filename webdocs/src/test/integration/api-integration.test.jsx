@@ -215,15 +215,25 @@ describe('Backend API contract', () => {
 
   // #typeInfer takes no arguments: like every annotation it reports on the program it is written
   // in. What names a page is the API call, so these also cover /api/annot's prgmName scoping.
-  async function annotValue(annot, prgmName, base = API_BASE) {
+  //
+  // An annotation that cannot be evaluated does not fail the request. It is reported as an error
+  // note and left out of the response, so a page whose other annotations worked is still shown
+  // them. What came back is therefore a value that may be absent beside the notes saying why.
+  async function annotResult(annot, prgmName, base = API_BASE) {
     const scope = prgmName ? `&prgmName=${encodeURIComponent(prgmName)}` : ''
     const data = await fetchApi(`/api/annot?annot=${encodeURIComponent(annot)}${scope}`, base)
-    if (data.tag !== 'Success') return data
+    if (data.tag !== 'Success') return {data, value: null, notes: data.contents}
 
-    const [, statements] = data.contents[0]
+    const [prgm, notes] = data.contents
+    const [, statements] = prgm
     const [statement] = statements[0]
     expect(statement.tag).toBe('RawAnnot')
-    return statement.contents.contents[0].getMetaDat[2]
+    return {data, value: statement.contents.contents[0].getMetaDat[2], notes}
+  }
+
+  async function annotValue(annot, prgmName, base = API_BASE) {
+    const {data, value} = await annotResult(annot, prgmName, base)
+    return data.tag === 'Success' ? value : data
   }
 
   // The pages the sidebar lists, flattened. #sidebar is the only listing of them, so this is also
@@ -258,12 +268,15 @@ describe('Backend API contract', () => {
     expect(Object.keys(objMap).length).toBeLessThan(20)
   })
 
-  it('/api/annot refuses #typeInfer with no page to be scoped to', async () => {
-    // Points are numbered per typecheck run, so there is no joined inference to fall back to.
-    // Failing is the correct answer, and a silent substitution would be the wrong one.
-    const data = await annotValue('#typeInfer')
-    expect(data.tag).toBe('ResFail')
-    expect(JSON.stringify(data.contents)).toContain('not scoped to a single page')
+  it('/api/annot reports #typeInfer with no page to be scoped to as an error note', async () => {
+    // Points are numbered per typecheck run, so there is no joined inference to fall back to, and a
+    // silent substitution would be the wrong answer. Saying so is not the same as refusing the
+    // request: the annotation is left out and the reason returned beside what did arrive.
+    const {data, value, notes} = await annotResult('#typeInfer')
+    expect(data.tag).toBe('Success')
+    expect(value).toBeNull()
+    expect(notes.some(n => n.tp === 'CNoteError')).toBe(true)
+    expect(JSON.stringify(notes)).toContain('not scoped to a single page')
   })
 
   it('/api/annot narrows #typeInferPnt to one point of that page', async () => {
@@ -312,12 +325,14 @@ describe('Backend API contract', () => {
     expect(run.drResult.erTreebug.length).toBeGreaterThan(0)
   })
 
-  it('/api/annot refuses #debugger with no page to be scoped to', async () => {
+  it('/api/annot reports #debugger with no page to be scoped to as an error note', async () => {
     // A run needs one program with one entry point; every loaded page joined has as many mains as
     // it has pages, so there is nothing to fall back to.
-    const data = await annotValue('#debugger(fun= "/main")')
-    expect(data.tag).toBe('ResFail')
-    expect(JSON.stringify(data.contents)).toContain('not scoped to a single page')
+    const {data, value, notes} = await annotResult('#debugger(fun= "/main")')
+    expect(data.tag).toBe('Success')
+    expect(value).toBeNull()
+    expect(notes.some(n => n.tp === 'CNoteError')).toBe(true)
+    expect(JSON.stringify(notes)).toContain('not scoped to a single page')
   })
 
   it('/api/page returns Success with prgm data and source text', async () => {

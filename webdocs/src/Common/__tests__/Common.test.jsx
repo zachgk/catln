@@ -194,6 +194,21 @@ describe('Loading', () => {
     )
     expect(screen.getByText('content here')).toBeInTheDocument()
   })
+
+  // A response that arrived with error notes is a partial answer, not a complete one: /api/annot
+  // reports an annotation it could not evaluate as a note and returns the rest. Showing only the
+  // rest would present it as though nothing had gone wrong.
+  it('shows Notes alongside the children when data arrives with notes', () => {
+    render(
+      <Providers>
+        <Loading status={{ isLoaded: true, data: { some: 'data' }, notes: [{ tp: 'CNoteError', msg: 'something failed' }] }}>
+          <div>content here</div>
+        </Loading>
+      </Providers>
+    )
+    expect(screen.getByText('something failed')).toBeInTheDocument()
+    expect(screen.getByText('content here')).toBeInTheDocument()
+  })
 })
 
 // --- Notes ---
