@@ -294,8 +294,17 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (EqReqAct i p@SType{st
     -- (@verifySchemeActLowers@). Resolving is exactly correct: the tail's element IS the enclosing
     -- element. 'substituteKeep' leaves any still-unresolved var symbolic.
     newBindings = H.difference ivaenv vaenv'
-    meet | H.null newBindings = meet0
-         | otherwise          = substituteKeep newBindings meet0
+    meet1 | H.null newBindings = meet0
+          | otherwise          = substituteKeep newBindings meet0
+    -- The meet can drop an EXTERNAL var spelling the actual carries at a nested slot to Top —
+    -- a declaration's implicit-through-usage element link (@b -> Box[$T -> $_T]@) is unbound in
+    -- the constraint's vaenv, so the meet reads it as the ⊤ it denotes and bakes ⊤ into the
+    -- slot. The spelling is the declaration's OWN cross-occurrence link (its result @-> $_T@
+    -- resolves through it at every call — 'arrowDestType' via 'exprVarArgsWithSrc'), so losing
+    -- it detaches the declared result from the argument for the rest of compilation. Restore
+    -- what the meet only widened, exactly as 'updateTypeProp' does on both its sides ("only a
+    -- loss to Top is reverted" — a resolution to a narrower type is kept).
+    meet = restoreLostTVExtVars actC meet1
 computeConstraint env con@(Constraint _ _ (ArrowTo i src dest)) = case arrowConstrainUbs env con src dest of
     TypeCheckResult _ (srcAct', srcReq', destAct', destRT') -> (False, con{conDat=ArrowTo i src{stypeAct=srcAct', stypeReq=srcReq'} dest{stypeAct=destAct', stypeTree=destRT'}})
     TypeCheckResE _ -> (True, con)

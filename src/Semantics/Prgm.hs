@@ -465,12 +465,22 @@ linkedDimBinds :: (TypeGraph tg) => TypeEnv tg -> Type -> Type -> [(TypeVarAux, 
 linkedDimBinds typeEnv declT content = case declT of
   UnionType (Just (PredsOne (PredClass q), negs, [])) pos []
     | H.null negs, H.null pos, H.null (ptArgs q)
-    -> [ (TVVar k, dim)
-       | (k', TypeVar (TVVar k) TVExt) <- H.toList (ptVars q)
-       , Just dim <- [contentDim k']
-       , dim /= PTopType ]
+    -> fromTemplate q
+  -- A declared DATA spelling whose parameters link the object's variables
+  -- (@b -> Box[$T -> $_T]@) binds them the same way as the class-application form: the
+  -- content's dimension at the parameter is the variable's per-call value
+  -- (@b= Box[/T=Integer](…)@ yields @/T=Integer@). Single-leaf declared spellings only —
+  -- the same strictly conservative projection.
+  UnionType Nothing declLeafs []
+    | [q] <- splitUnionType declLeafs
+    -> fromTemplate q
   _ -> []
   where
+    fromTemplate q =
+      [ (TVVar k, dim)
+      | (k', TypeVar (TVVar k) TVExt) <- H.toList (ptVars q)
+      , Just dim <- [contentDim k']
+      , dim /= PTopType ]
     contentDim k' = case content of
       UnionType Nothing leafs [] -> unionAllTypes typeEnv <$> mapM (leafDim k') (splitUnionType leafs)
       UnionType (Just (PredsOne (PredClass q'), negs, [])) pos []

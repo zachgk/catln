@@ -309,25 +309,9 @@ Prgm
                             ( /rel
                                 ( EAppArg Value /a -> TVArg /this = ( Value /this ↦ TVArg /this ) )
                                 ( EAppArg Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) )
-                                ( EAppArg Value /this -> UnionType
-                                    ( Just
-                                        ( PredClass /Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ]
-                                    , []
-                                    ) =
+                                ( EAppArg Value /this -> ∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ] =
                                     ( /eq
-                                        ( EAppArg Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) ) ↦ UnionType
-                                        ( Just
-                                            ( PredClass /Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ]
-                                        , []
-                                        )
+                                        ( EAppArg Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) ) ↦ ∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
                                     )
                                 ) ↦ ∀/Data/Primitive/Boolean
                             )
@@ -335,25 +319,9 @@ Prgm
                             ( /rel
                                 ( EAppArg Value /a -> TVArg /this = ( Value /this ↦ TVArg /this ) )
                                 ( EAppArg Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) )
-                                ( EAppArg Value /this -> UnionType
-                                    ( Just
-                                        ( PredClass /Data/Algebra/Eqv[ /T=/Data/Primitive/Float ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ]
-                                    , []
-                                    ) =
+                                ( EAppArg Value /this -> ∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Float ] =
                                     ( /eq
-                                        ( EAppArg Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) ) ↦ UnionType
-                                        ( Just
-                                            ( PredClass /Data/Algebra/Eqv[ /T=/Data/Primitive/Float ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ]
-                                        , []
-                                        )
+                                        ( EAppArg Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) ) ↦ ∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Float ]
                                     )
                                 ) ↦ ∀/Data/Primitive/Boolean
                             )
@@ -402,9 +370,11 @@ Prgm
                             ( /compare
                                 ( EAppArg Value /a -> TVArg /this = ( Value /this ↦ TVArg /this ) )
                                 ( EAppArg Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) )
-                                ( EAppArg Value /this -> ∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Integer ] =
+                                ( EAppArg Value /this ->
+                                    ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] ) =
                                     ( /ord
-                                        ( EAppArg Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) ) ↦ ∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Integer ]
+                                        ( EAppArg Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) ) ↦
+                                        ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
                                     )
                                 ) ↦ ∀/Data/Algebra/Comparison
                             )
@@ -412,9 +382,11 @@ Prgm
                             ( /compare
                                 ( EAppArg Value /a -> TVArg /this = ( Value /this ↦ TVArg /this ) )
                                 ( EAppArg Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) )
-                                ( EAppArg Value /this -> ∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Float ] =
+                                ( EAppArg Value /this ->
+                                    ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] ) =
                                     ( /ord
-                                        ( EAppArg Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) ) ↦ ∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Float ]
+                                        ( EAppArg Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) ) ↦
+                                        ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
                                     )
                                 ) ↦ ∀/Data/Algebra/Comparison
                             )

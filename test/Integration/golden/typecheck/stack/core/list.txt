@@ -105,12 +105,12 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/length
-                            ( Value /this -> ∀/Data/List[ /T=TopType ] ) -> /Data/Primitive/Integer
+                            ( Value /this -> ∀/Data/List[ /T=$_/T ] ) -> /Data/Primitive/Integer
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls =
                         [ /Data/length
-                            ( Value /this -> ∀/Data/List[ /T=TopType ] ) ->
+                            ( Value /this -> ∀/Data/List[ /T=$_/T ] ) ->
                             ( TopType | PredExpr /operator==
                                 ( /r=/Data/Primitive/True
                                 , /l=~nonNeg( /this=~/$this )
@@ -190,8 +190,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/append
-                            ( Value /a -> ∀/Data/ConsList[ /T=TopType ] )
-                            ( Value /b -> ∀/Data/ConsList[ /T=TopType ] ) -> ∀/Data/ConsList[ /T=$_/T ]
+                            ( Value /a -> ∀/Data/ConsList[ /T=$_/T ] )
+                            ( Value /b -> ∀/Data/ConsList[ /T=$_/T ] ) -> ∀/Data/ConsList[ /T=$_/T ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -1366,9 +1366,9 @@ Prgm
             ( Value /text -> /Data/String = CStr "[append] joins two lists end to end." )
         , /Catln/#print
             ( Value /p ->
-                ( /Data/Nil + /Data/Cons[ /T=TopType ]
-                    ( /head=$/T
-                    , /tail=∀/Data/ConsList[ /T=TopType ]
+                ( /Data/Nil + /Data/Cons[ /T=/Data/Primitive/Integer ]
+                    ( /head=/Data/Primitive/Integer
+                    , /tail=∀/Data/ConsList[ /T=/Data/Primitive/Integer ]
                     )
                 ) = /Data/append
                 ( Value /a -> /Data/Cons

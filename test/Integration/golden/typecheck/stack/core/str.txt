@@ -58,16 +58,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/equal( Value /other -> ∀/Data/Algebra/Eq )( Value /this -> /Data/String ) -> ∀/Data/Primitive/Boolean = /rel( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
-                            ( Value /this -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Algebra/Eqv[ /T=/Data/String ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ]
-                                , []
-                                ) = /eq( Value /this -> TVArg /this = Value /this )
-                            )
+                            ( Value /this -> ∀/Data/Algebra/Eqv[ /T=/Data/String ] = /eq( Value /this -> TVArg /this = Value /this ) )
                         ]
                     }
                 )

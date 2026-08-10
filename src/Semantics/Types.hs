@@ -5345,6 +5345,31 @@ hasOutOfScopeTVExt vaenv = onType (S.fromList (H.keys vaenv))
     onSlot sc t@UnionType{}                 = onType sc t
     onSlot _ _                              = False
 
+-- | The NESTED external ('TVExt' 'TVVar') references not bound by the ambient env — the vars
+-- 'dropOutOfScopeTVExt' would read as the ⊤ they denote. Same scope-nesting traversal as
+-- 'hasOutOfScopeTVExt'. Used to find an object's IMPLICIT type variables (externals introduced
+-- through usage in its annotations rather than an explicit application) so encode can register
+-- them in the object's own constraint scope.
+outOfScopeTVExtVars :: TypeVarArgEnv -> Type -> S.HashSet TypeVarAux
+outOfScopeTVExtVars vaenv = onType (S.fromList (H.keys vaenv))
+  where
+    onType sc (UnionType mtop pos _) = maybe S.empty (onTop sc) mtop <> S.unions (map (onLeaf sc) (splitUnionType pos))
+    onType _ _ = S.empty
+    onTop sc (preds, negLeafs, _) = predsVars sc preds <> S.unions (map (onLeaf sc) (splitUnionType negLeafs))
+    predsVars sc (PredsOne p)  = onLeaf sc (predPartial p)
+    predsVars sc (PredsAnd ps) = S.unions (map (predsVars sc) ps)
+    predsVars sc (PredsNot p)  = predsVars sc p
+    predPartial (PredExpr p)  = p
+    predPartial (PredClass p) = p
+    predPartial (PredRel p)   = p
+    onLeaf sc PartialType{ptVars, ptArgs, ptPreds} =
+      S.unions (map (onSlot sc) (H.elems ptVars)) <> S.unions (map (onSlot sc') (H.elems ptArgs)) <> predsVars sc' ptPreds
+      where sc' = S.union sc (S.fromList (map TVVar (H.keys ptVars)))
+    onSlot sc (TypeVar v@(TVVar _) TVExt) = if S.member v sc then S.empty else S.singleton v
+    onSlot sc (TypeVar (TVApplied b ovr) loc) = onSlot sc (TypeVar b loc) <> S.unions (map (onSlot sc) (H.elems ovr))
+    onSlot sc t@UnionType{} = onType sc t
+    onSlot _ _ = S.empty
+
 -- | Relate an arrow's declared result to the type variables the source bound. A method whose
 -- result is a class parameterized by the RECEIVER's own type — @:$T.eq[$T -> Eq] -> Eqv[$T]@ — loses
 -- that link at desugar: a bare @Eqv[$T]@ becomes @Eqv[/T=Top]@ (the var reads as the parameter NAME,

@@ -138,12 +138,12 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/length
-                            ( EAppArg Value /this -> ∀/Data/List[ /T=TopType ] ) -> /Data/Primitive/Integer
+                            ( EAppArg Value /this -> ∀/Data/List[ /T=$_/T ] ) -> /Data/Primitive/Integer
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls =
                         [ /Data/length
-                            ( EAppArg Value /this -> ∀/Data/List[ /T=TopType ] ) ->
+                            ( EAppArg Value /this -> ∀/Data/List[ /T=$_/T ] ) ->
                             ( TopType | PredExpr /operator==
                                 ( /r=/Data/Primitive/True
                                 , /l=~nonNeg( /this=~/$this )
@@ -252,8 +252,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/append
-                            ( EAppArg Value /a -> ∀/Data/ConsList[ /T=TopType ] )
-                            ( EAppArg Value /b -> ∀/Data/ConsList[ /T=TopType ] ) -> ∀/Data/ConsList[ /T=$_/T ]
+                            ( EAppArg Value /a -> ∀/Data/ConsList[ /T=$_/T ] )
+                            ( EAppArg Value /b -> ∀/Data/ConsList[ /T=$_/T ] ) -> ∀/Data/ConsList[ /T=$_/T ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -1704,9 +1704,9 @@ Prgm
             ( EAppArg Value /text -> /Data/String = "[append] joins two lists end to end." )
         , /Catln/#print
             ( EAppArg Value /p ->
-                ( /Data/Nil + /Data/Cons[ /T=TopType ]
-                    ( /head=$/T
-                    , /tail=∀/Data/ConsList[ /T=TopType ]
+                ( /Data/Nil + /Data/Cons[ /T=/Data/Primitive/Integer ]
+                    ( /head=/Data/Primitive/Integer
+                    , /tail=∀/Data/ConsList[ /T=/Data/Primitive/Integer ]
                     )
                 ) =
                 ( /Data/append
@@ -1722,9 +1722,9 @@ Prgm
                         ) = /Data/Cons
                         ( EAppArg Value /head -> /Data/Primitive/Integer = 2 )( EAppArg Value /tail -> /Data/Nil = Value /Data/Nil )
                     ) ↦
-                    ( /Data/Nil + /Data/Cons[ /T=TopType ]
-                        ( /head=$/T
-                        , /tail=∀/Data/ConsList[ /T=TopType ]
+                    ( /Data/Nil + /Data/Cons[ /T=/Data/Primitive/Integer ]
+                        ( /head=/Data/Primitive/Integer
+                        , /tail=∀/Data/ConsList[ /T=/Data/Primitive/Integer ]
                         )
                     )
                 )

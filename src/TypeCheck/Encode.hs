@@ -341,7 +341,24 @@ fromObjectMap oa@ObjArr{oaAnnots, oaObj=Just obj, oaArr} = do
       Nothing -> return (Nothing, mUserReturn')
   let oa' = oa{oaObj=Just obj', oaArr=oaArr', oaAnnots=oaAnnots'}
   modify $ fAddVTypeGraph oa'
-  modify $ endConstraintBlock (Just oa') (first getExprMeta . head <$> exprVarArgs obj')
+  -- The object's IMPLICIT type variables — external spellings introduced through usage in its
+  -- argument or result annotations (@unwrap(b -> Box[$T -> $_T]) -> $_T@) rather than by an
+  -- explicit application (@unwrap[$U]@, collected into the block vaenv by 'exprVarArgs') —
+  -- belong to the object's OWN scope: they are its cross-occurrence links, and the declared
+  -- result resolves through them at every call ('arrowDestType' via 'exprVarArgsWithSrc').
+  -- Register each with a fresh point so the scope normalization applied at every store
+  -- ('setScheme'/'dropOutOfScopeTVExt', which reads an UNREGISTERED external spelling as the ⊤
+  -- it denotes) keeps the object's own links symbolic instead of erasing them.
+  let explicitVaenv = first getExprMeta . head <$> exprVarArgs obj'
+  let annotTys = [getMetaType m | ObjArr{oaArr=Just (_, m)} <- exprAppliedArgs obj']
+              ++ [getMetaType m | (_, m) <- maybeToList oaArr']
+  let scopeBase = H.fromList [(k, PTopType) | k <- H.keys explicitVaenv]
+  let implicitVs = S.toList $ S.unions $ map (outOfScopeTVExtVars scopeBase) annotTys
+  implicitVaenv <- fmap H.fromList $ forM implicitVs $ \v -> do
+    p <- fresh $ TypeCheckResult [] $ SType PTopType PTopType Nothing $ printf "implicit object var %s in %s" (show v) (show $ exprPath obj')
+    let vm = Meta PTopType (getMetaPos $ getExprMeta obj') nil (mkVarMetaDat inEst p)
+    return (v, (vm, vm))
+  modify $ endConstraintBlock (Just oa') (H.union explicitVaenv implicitVaenv)
   return oa'
 fromObjectMap oa = error $ printf "Invalid oa in fromObjectMap %s" (show oa)
 

@@ -123,24 +123,51 @@ addInferArgToType env@FEnv{feTypeEnv} vaenv (UnionType Nothing partials []) = Ju
     partials' = map (addInferArgToPartial env vaenv) $ splitUnionType partials
 addInferArgToType _ _ _ = Nothing
 
+-- | Builds the candidate shapes for an 'AddInferArg' 'Constraint': for each arrow of the
+-- base's name, each arg the base does not yet apply is offered as the filled slot, and the
+-- destination keeps the union of candidates until inference selects one
+-- ('TypeCheck.Decode.toExpr''s @learnedArgName@ then requires a single survivor).
+-- Arrows are precedence-filtered like the object universe ('addUnionObjToEnv'): where a
+-- declaration exists (@[2,2]@) definition arrows (@[2,3]@) offer no candidates — in
+-- particular a bare destructuring definition (@unwrap(Box(v))= v@) is never a candidate
+-- for its own filled arg, which it cannot name by pointing at itself.
+-- Each candidate slot carries the arrow's spelled arg type — a phase-stable 'Meta'
+-- spelling, not a solving point's scheme — so a declaration contributes its declared
+-- content (@/b=/Box[/T=⊤](/v=⊤)@) rather than a @⊤@ placeholder (which nothing narrows on
+-- the actual side under the req-only architecture), while an unannotated definition arg
+-- still contributes @⊤@. Spellings referencing the arrow's own scope (external vars, a
+-- bare own-var annotation) read as the @⊤@ they denote here ('dropOutOfScopeTVExt').
 addInferArgToPartial :: FEnv -> TypeVarArgEnv -> PartialType -> Type
 addInferArgToPartial FEnv{feVTypeGraph=ObjectMap vtypeGraph, feTTypeGraph=ObjectMap ttypeGraph, feTypeEnv} _ partial@PartialType{ptName=name, ptArgs} = do
-  let vtypeArrows = H.lookupDefault mempty name vtypeGraph
-  let vTypes = tryOMI vtypeArrows
-
-  let ttypeArrows = H.lookupDefault mempty name ttypeGraph
-  let tTypes = tryOMI ttypeArrows
-
-  unionTypes feTypeEnv vTypes tTypes
+  let vtypeArrows = flatObjectMapItem $ H.lookupDefault mempty name vtypeGraph
+  let ttypeArrows = flatObjectMapItem $ H.lookupDefault mempty name ttypeGraph
+  case map objectPrecedence vtypeArrows ++ map objectPrecedence ttypeArrows of
+    [] -> BottomType
+    precs -> do
+      let bestPrec = minimum precs
+      let vTypes = tryArrows $ filter ((== bestPrec) . objectPrecedence) vtypeArrows
+      let tTypes = tryArrows $ filter ((== bestPrec) . objectPrecedence) ttypeArrows
+      unionTypes feTypeEnv vTypes tTypes
   where
-    tryOMI :: (MetaDat m, Show m) => ObjectMapItem Expr m -> Type
-    tryOMI omi = unionAllTypes feTypeEnv $ map tryArrow $ flatObjectMapItem omi
+    tryArrows :: (MetaDat m, Show m) => [ObjArr Expr m] -> Type
+    tryArrows = unionAllTypes feTypeEnv . map tryArrow
 
     tryArrow :: (MetaDat m, Show m) => ObjArr Expr m -> Type
-    tryArrow oa = if H.keysSet ptArgs `isSubsetOf` H.keysSet (exprAppliedArgsMap $ oaObjExpr oa)
-      then UnionType Nothing (joinUnionType $ map addArg $ S.toList $ S.difference (H.keysSet $ exprAppliedArgsMap $ oaObjExpr oa) (H.keysSet ptArgs)) []
+    tryArrow oa = if H.keysSet ptArgs `isSubsetOf` H.keysSet arrowArgs
+      then UnionType Nothing (joinUnionType $ map addArg $ H.toList $ H.difference arrowArgs ptArgs) []
       else BottomType
-    addArg arg = partial{ptArgs=H.insertWith (unionTypes feTypeEnv) arg PTopType ptArgs}
+      where arrowArgs = exprAppliedArgsMap $ oaObjExpr oa
+
+    addArg :: (MetaDat m, Show m) => (ArgName, Maybe (Meta m, Maybe (Expr m))) -> PartialType
+    addArg (arg, argVal) = partial{ptArgs=H.insert arg (spelledContent argVal) ptArgs}
+
+    -- The arrow's spelled type for the slot, with references out of the arrow's own scope
+    -- read as the ⊤ they denote here (a bare top-level var names the arrow's scope too).
+    spelledContent :: (MetaDat m, Show m) => Maybe (Meta m, Maybe (Expr m)) -> Type
+    spelledContent (Just (argM, _)) = case dropOutOfScopeTVExt H.empty (getMetaType argM) of
+      TypeVar{} -> PTopType
+      t         -> t
+    spelledContent Nothing = PTopType
 
 -- TODO Look into making this run every epoch rather than per call to mkReachesEnv
 buildTypeEnv :: FEnv -> TypeCheckResult FEnvTypeEnv

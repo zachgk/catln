@@ -66,25 +66,9 @@ Prgm
                             ( /rel
                                 ( EAppArg Value /a -> TVArg /this = ( Value /this ↦ TVArg /this ) )
                                 ( EAppArg Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) )
-                                ( EAppArg Value /this -> UnionType
-                                    ( Just
-                                        ( PredClass /Data/Algebra/Eqv[ /T=/Data/String ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ]
-                                    , []
-                                    ) =
+                                ( EAppArg Value /this -> ∀/Data/Algebra/Eqv[ /T=/Data/String ] =
                                     ( /eq
-                                        ( EAppArg Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) ) ↦ UnionType
-                                        ( Just
-                                            ( PredClass /Data/Algebra/Eqv[ /T=/Data/String ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ]
-                                        , []
-                                        )
+                                        ( EAppArg Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) ) ↦ ∀/Data/Algebra/Eqv[ /T=/Data/String ]
                                     )
                                 ) ↦ ∀/Data/Primitive/Boolean
                             )
