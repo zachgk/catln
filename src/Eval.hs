@@ -444,9 +444,17 @@ evalAnnots stagePrgms prgmName prgmGraphData = do
     buildAnnots env [(getExprPartialType $ oaObjExpr oa, oa)] (oaAnnots oa)
   return $ concat (globalAnnots' : objMapAnnots')
   where
+    -- Every annotation is evaluated on its own, so a failing one costs only itself: it becomes an
+    -- error note naming it, and the page's other annotations are still returned. This is what lets a
+    -- reader of a page with one broken annotation still be shown the rest of them. The failure is not
+    -- swallowed — it is reported as an error note, so a consumer that must reject any failure (the
+    -- integration tests, via 'failOnErrorNotes') still fails on it.
     buildAnnots env os annots = do
-      results <- forM annots $ \annot -> fmap (annot,) <$> evalDShowAnnot env os annot
+      results <- forM annots $ \annot -> case fmap (annot,) <$> evalDShowAnnot env os annot of
+        CRes notes r -> CRes notes r
+        CErr notes   -> CRes (annotFailedNote annot : notes) Nothing
       return $ catMaybes results
+    annotFailedNote annot = MkCNote $ GenCErr (getMetaPos $ getExprMeta annot) $ printf "Failed to evaluate the annotation %s" (show annot)
 
 -- | Builds a function of a program as a run and evaluates it, threading @ioVal@ as its @/io@ handle.
 -- That handle is the only difference between a real run and a mocked one: an 'IOVal' accumulates
