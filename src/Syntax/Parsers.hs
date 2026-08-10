@@ -23,13 +23,13 @@ import           CtConstants             (noCoreAnnot)
 import           Data.Graph
 import qualified Data.HashMap.Strict     as H
 import           Data.List
-import           MapMeta                 (addMetaID)
+import           MapMeta                 (parseMetaIDScope)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Builder
 import           Syntax.Ct.Desugarf.Expr (desFileImport)
-import           Syntax.Ct.MapRawMeta    (mapMetaRawPrgmM)
+import           Syntax.Ct.MapRawMeta    (addRawPrgmMetaIDs)
 import           Syntax.Ct.Parser        (ctParser, ctxParser)
 import           Syntax.Ct.Prgm
 import           Syntax.Haskell.Parser   (hsParser)
@@ -98,7 +98,7 @@ processParsed config imp (prgm@(RawPrgm prgmImports statements), extraImports, s
   extraImports' <- mapM (canonicalImport config (Just imp)) extraImports
   let totalImports = extraImports' ++ prgmImports''
   let prgm' = RawPrgm prgmImports' statements
-  prgm'' <- mapMetaRawPrgmM addMetaID prgm'
+  let prgm'' = addRawPrgmMetaIDs (parseMetaIDScope imp) prgm'
   return (((prgm'', src), imp, prgmImports''), totalImports)
   where
     name = case impAbs imp of

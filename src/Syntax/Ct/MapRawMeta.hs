@@ -15,6 +15,7 @@
 module Syntax.Ct.MapRawMeta where
 import           Control.Monad
 import           Control.Monad.Identity (Identity (runIdentity))
+import           Control.Monad.State    (evalState)
 import           Data.Maybe             (fromMaybe)
 import           MapMeta
 import           Syntax.Ct.Prgm
@@ -128,3 +129,8 @@ mapMetaRawPrgmM f (RawPrgm imports statementTrees) = do
 
 mapMetaRawPrgm :: MetaFun Identity a b -> RawPrgm a -> RawPrgm b
 mapMetaRawPrgm f p = runIdentity $ mapMetaRawPrgmM f p
+
+-- | Numbers every id-less meta of a raw program within one scope. The import list keeps its
+-- id-less metas, as 'mapMetaRawPrgmM' does not reach it.
+addRawPrgmMetaIDs :: MetaIDScope -> RawPrgm m -> RawPrgm m
+addRawPrgmMetaIDs scope prgm = evalState (mapMetaRawPrgmM addMetaID prgm) scope

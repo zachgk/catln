@@ -382,9 +382,6 @@ describe('Backend API contract', () => {
     }
   })
 
-  // Write tests come last: a successful write calls ctssRead, which invalidates every
-  // page (Meta's derived Eq includes a per-parse random UUID, so the unchanged-file
-  // check in buildSSF never matches), making the next page load pay a full rebuild.
   describe('writes', () => {
     it('refuses an existing file that is not a served page', async () => {
       // ho.ct is a real file, but not reachable from the id.ct doc root
@@ -417,13 +414,6 @@ describe('Backend API contract', () => {
       expect(after).not.toContain('main = 999')
     })
 
-    // The read after a write has to wait out a full cache restart, not just a page load. A
-    // successful write calls ctssRead, which invalidates every page, so the next read rebuilds
-    // the whole stdlib rather than serving from the cache. Measured on a quiet dev machine: the
-    // read is ~1s cached and ~170s after a write, so this budget is sized for the rebuild plus
-    // headroom for a loaded machine. Reduce it once a write only invalidates what it changed.
-    const CACHE_RESTART_TIMEOUT = 600000
-
     it('round-trips a page source', async () => {
       const pageName = await idPageName()
 
@@ -437,9 +427,14 @@ describe('Backend API contract', () => {
       expect(written.status).toBe(200)
       expect((await written.json()).tag).toBe('Success')
 
+      // A write re-reads every file the doc root reaches, but a file that has not changed now
+      // reads back as an equal program, so no page is invalidated and this is an ordinary cached
+      // page load. Measured on a quiet dev machine: 0.2s for the read, 0.1s for the write and 0.3s
+      // for the read after it, against the ~170s that read cost when a write rebuilt the stdlib.
+      // Comfortably inside the default budget, so this test needs none of its own.
       const after = (await fetchApi(`/api/page?prgmName=${encodeURIComponent(pageName)}`))
         .contents[0].pgSource
       expect(after).toBe(original)
-    }, CACHE_RESTART_TIMEOUT)
+    })
   })
 })

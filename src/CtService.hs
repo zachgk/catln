@@ -108,7 +108,10 @@ ctssRead (CTSS ssmv) = do
   return ()
   where
     buildSSF ctssData ((rawPrgm, src), prgmName, imports) = case graphLookup prgmName ctssData of
-      Just old@SSF{ssfRaw=CRes _ oldRaw} | oldRaw == rawPrgm -> ((old, prgmName, imports), Nothing)
+      -- A page which read back the same program keeps everything built from it, but takes the new
+      -- source text: a change the parse discards (trailing whitespace) leaves the program equal
+      -- while the file on disk is no longer the one the page last served.
+      Just old@SSF{ssfRaw=CRes _ oldRaw} | oldRaw == rawPrgm -> ((old{ssfSource=src}, prgmName, imports), Nothing)
       Just{} -> ((newSSF src $ pure rawPrgm, prgmName, imports), Just prgmName)
       Nothing -> ((newSSF src $ pure rawPrgm, prgmName, imports), Nothing)
 
@@ -200,7 +203,7 @@ buildSCCPipeline ctssData sccNamesSet sccNodes pages = do
             ) extDepNames
 
       -- Step 3: Run final desugar passes with SCC peers and external deps
-      let desNodesForFinal = [(des, peerDes, extDepDes)
+      let desNodesForFinal = [(des, name, peerDes, extDepDes)
             | (des, name, _) <- desResults
             , let peerDes = [d | (d, n, _) <- desResults, n /= name]]
       finalDes <- desFinalPasses desNodesForFinal

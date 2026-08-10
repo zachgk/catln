@@ -21,7 +21,6 @@ import           Data.Maybe
 import           Text.Printf
 
 import           Control.Monad                    (forM)
-import           Control.Monad.Trans
 import           CRes
 import           CtConstants
 import           Data.Bifunctor                   (first)
@@ -249,9 +248,11 @@ desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree state
     statements' <- mapM (desStatement (inheritModule, a':inheritAnnots)) subStatements
     return $ mconcat statements'
 
-desFinalPasses :: [(DesPrgm, [DesPrgm], [DesPrgm])] -> CResT IO [DesPrgm]
+-- | Each node carries the name of the page it came from, which names the scope that page's
+-- synthesized metas are numbered in (see 'MetaIDScope').
+desFinalPasses :: [(DesPrgm, FileImport, [DesPrgm], [DesPrgm])] -> CResT IO [DesPrgm]
 desFinalPasses nodesWithDeps = do
-  forM nodesWithDeps $ \(prgm1, sccPeerDeps, myExtDeps) -> do
+  forM nodesWithDeps $ \(prgm1, name, sccPeerDeps, myExtDeps) -> do
     let fullPrgm1 = mconcat ([prgm1] ++ sccPeerDeps ++ myExtDeps)
     let fullPrgm2 = removeClassInstanceObjects fullPrgm1 fullPrgm1
 
@@ -279,7 +280,7 @@ desFinalPasses nodesWithDeps = do
     -- Copy each declaration's (variable-free) return type onto its annotation-less definitions,
     -- so a def under a separate decl solves like an inline-annotated one.
     let prgm6 = seedDefResultTypes fullPrgm4 prgm5
-    lift $ mapMetaPrgmM addMetaID prgm6
+    return $ addPrgmMetaIDs (desugarMetaIDScope name) prgm6
 
 desPrgm :: (PPrgm, FileImport, [FileImport]) -> CRes (DesPrgm, FileImport, [FileImport])
 desPrgm (RawPrgm _ statements, name, imports) = do
@@ -299,5 +300,9 @@ desFiles :: PPrgmGraphData -> CResT IO DesPrgmGraphData
 desFiles prgms1 = do
   -- initial desugar
   prgms2 <- asCResT $ mapM desPrgm (filter (validPrgm . fst3) $ graphToNodes prgms1)
-  let prgms3 = graphFromEdges prgms2
-  mapGraphWithDeps desFinalPasses prgms3
+  -- Each node travels with its own key, which 'mapGraphWithDeps' does not pass on and
+  -- 'desFinalPasses' names its meta id scope by.
+  let prgms3 = fmapGraphWithKey (\name prgm -> (prgm, name)) $ graphFromEdges prgms2
+  mapGraphWithDeps (desFinalPasses . map withKey) prgms3
+  where
+    withKey ((prgm, name), sccPeerDeps, myExtDeps) = (prgm, name, map fst sccPeerDeps, myExtDeps)

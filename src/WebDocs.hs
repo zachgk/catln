@@ -32,13 +32,14 @@ import           Data.Maybe                    (listToMaybe)
 import           Eval                          (evalAllTargetModes, evalAnnots,
                                                 prgmFromGraphData)
 import           Eval.Runtime.WebDocs          (sidebarOrder)
-import           MapMeta                       (addMetaID, interleaveMeta,
-                                                interleavePrgm, zip3MetaFun)
+import           MapMeta                       (interleaveMeta, interleavePrgm,
+                                                parseMetaIDScope, zip3MetaFun)
 import           Semantics                     (buildCtssConfig)
 import           Semantics.Prgm
 import           Syntax.Ct.Desugarf            (desFinalPasses, desPrgm)
 import           Syntax.Ct.Desugarf.Expr       (desFileImport)
-import           Syntax.Ct.MapRawMeta          (mapMetaRawPrgm, mapMetaRawPrgmM)
+import           Syntax.Ct.MapRawMeta          (addRawPrgmMetaIDs,
+                                                mapMetaRawPrgm)
 import           Syntax.Ct.Parser.Expr         (pExpr)
 import           Syntax.Ct.Prgm                (RawExpr (RawValue),
                                                 RawPrgm (RawPrgm),
@@ -91,7 +92,7 @@ mkLiveWDProvider baseFileNames = do
   ctssBuildAll ss
   return (ss, do
     ctssRead ss
-    ctssBuildAll ss -- TODO Remove when fixing incremental build
+    ctssBuildAll ss -- builds whichever pages the read found a change in, and their dependents
     return ss)
 
 mkCacheWDProvider :: [String] -> IO (CTSS, IO CTSS)
@@ -168,9 +169,10 @@ docApiBase readonly ctss getProvider = do
       rawPrgm <- case runParser pExpr "<annot>" annot of
         Left err     -> fail $ show $ errorBundlePretty err
         Right parsed -> return (RawPrgm [] [RawStatementTree (RawAnnot parsed) []])
-      rawPrgm' <- lift $ mapMetaRawPrgmM addMetaID rawPrgm
-      (annotDesPrgm, annotPrgmName, _) <- asCResT $ desPrgm (rawPrgm', desFileImport $ mkRawFileImport $ RawValue emptyMetaN "<annot>", [])
-      [annotDesPrgm'] <- desFinalPasses [(annotDesPrgm, [], [])]
+      let annotName = desFileImport $ mkRawFileImport $ RawValue emptyMetaN "<annot>"
+      let rawPrgm' = addRawPrgmMetaIDs (parseMetaIDScope annotName) rawPrgm
+      (annotDesPrgm, annotPrgmName, _) <- asCResT $ desPrgm (rawPrgm', annotName, [])
+      [annotDesPrgm'] <- desFinalPasses [(annotDesPrgm, annotPrgmName, [], [])]
       tprgmsTrace <- maybe (getTPrgmWithTrace provider) (\n -> ctssGetFrom ssfTPrgmWithTrace n provider) scope'
       tprgms <- maybe (getTPrgm provider) (\n -> ctssGetFrom ssfTPrgm n provider) scope'
       let annotDeps = map snd3 $ graphToNodes tprgms

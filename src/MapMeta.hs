@@ -16,12 +16,17 @@ module MapMeta where
 
 import           Control.Monad
 import           Control.Monad.Identity
+import           Control.Monad.State        (State, evalState, get, put)
 import           Control.Monad.Trans.Writer (execWriter, tell)
+import qualified Data.ByteString            as B
+import qualified Data.ByteString.UTF8       as BSU
 import qualified Data.HashMap.Strict        as H
 import           Data.Maybe                 (fromMaybe)
 import qualified Data.UUID                  as UUID
-import qualified Data.UUID.V4               as UUID
+import qualified Data.UUID.V5               as UUID5
+import           Data.Word                  (Word64, Word8)
 import           Semantics.Prgm
+import           Text.Printf
 
 data MetaLocation
   = OutputMeta
@@ -70,12 +75,49 @@ interleavePrgm prgm = H.fromList $ execWriter $ mapMetaPrgmM f prgm
         tell [(getMetaID m, m)]
         return m
 
-addMetaID :: MetaFun IO m m
-addMetaID _ m = if UUID.null $ getMetaID m
-  then do
-    id' <- UUID.nextRandom
-    return m{getMetaID=id'}
-  else return m
+-- | The namespace every compiler-assigned meta id is generated in.
+metaIDNamespace :: UUID.UUID
+metaIDNamespace = UUID5.generateNamed UUID5.namespaceURL $ utf8Bytes "https://catln.dev/metaID"
+
+utf8Bytes :: String -> [Word8]
+utf8Bytes = B.unpack . BSU.fromString
+
+-- | Where a meta id comes from: the name of the pass handing ids out, and how many it has handed
+-- out so far.
+--
+-- Ids are derived from the scope rather than drawn at random so that reading a file which has not
+-- changed gives back a program /equal/ to the one read before it. 'Meta' compares by id, so a
+-- random id per read made every re-read of every page look like an edit, and rebuilt the whole
+-- program (see the @oldRaw == rawPrgm@ guard in 'CtService.ctssRead').
+--
+-- Two scopes must never share a name. Ids are compared across every page of a program
+-- ('CtService.pageOwners' keys the page which wrote each test by one), so a shared name would hand
+-- two pages the same ids and attribute one page's tests to the other.
+data MetaIDScope = MetaIDScope !String !Word64
+
+-- | The scope a file's parse numbers its metas in.
+--
+-- The import is named by its absolute expression, which is what 'AFileImport' compares by, so two
+-- distinct files cannot share a name. That holds because every 'impAbs' is rebuilt by
+-- 'Syntax.Parsers.canonicalImport' from an absolute path with position-less metas; an import form
+-- which kept its parsed positions would break it, giving two files written alike the same ids.
+parseMetaIDScope :: FileImport -> MetaIDScope
+parseMetaIDScope imp = MetaIDScope ("parse:" ++ show imp) 0
+
+-- | The scope a file's desugar numbers its metas in: the ones desugar synthesizes, as those
+-- carried over from the parse already hold an id. Distinct from 'parseMetaIDScope' so the two
+-- passes over one file cannot hand out the same id twice.
+desugarMetaIDScope :: FileImport -> MetaIDScope
+desugarMetaIDScope imp = MetaIDScope ("des:" ++ show imp) 0
+
+-- | Gives an id to a meta which has none, leaving one which already has an id alone. Both the
+-- parse and the desugar pass run over metas the other has already numbered.
+addMetaID :: MetaFun (State MetaIDScope) m m
+addMetaID _ m | not (UUID.null $ getMetaID m) = return m
+addMetaID _ m = do
+  MetaIDScope scope n <- get
+  put $ MetaIDScope scope (n + 1)
+  return m{getMetaID=UUID5.generateNamed metaIDNamespace $ utf8Bytes $ printf "%s#%d" scope n}
 
 zipMetaFun :: (Monad n) => MetaFun n a b -> MetaFun n a c -> MetaFun n a (b, c)
 zipMetaFun f1 f2 tp m@(Meta t p mid _) = do
@@ -186,6 +228,10 @@ mapMetaPrgmM f (Prgm objMap classGraph annots) = do
   objMap' <- mapMetaObjectMapM f objMap
   annots' <- mapM (mapMetaM f AnnotMeta) annots
   return $ Prgm objMap' classGraph annots'
+
+-- | Numbers every id-less meta of a program within one scope.
+addPrgmMetaIDs :: (MapMeta e) => MetaIDScope -> Prgm e m -> Prgm e m
+addPrgmMetaIDs scope prgm = evalState (mapMetaPrgmM addMetaID prgm) scope
 
 mapMeta :: (MapMeta m) => MetaFun Identity a b -> MetaLocation -> m a -> m b
 mapMeta f loc a = runIdentity $ mapMetaM f loc a
