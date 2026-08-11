@@ -1,0 +1,24 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/Data/Note/Page"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Page( EAppArg Value /title -> /Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        )
+    , prgmCG = [ CGType ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "# Notes
+            A note is a piece of writing that names itself and links to other notes. Each note is a page of
+            its own and each link between two notes is an import between their pages, so the graph a set of
+            notes forms is the import graph of the program they are read as." )
+        ]
+    }

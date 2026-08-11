@@ -41,7 +41,7 @@ import           Syntax.Haskell.Parser   (hsParser)
 import           Syntax.InferImport      (dirParser, findImportPath,
                                           inferRawImportStr)
 import           Syntax.Md.Parser        (mdParser)
-import           Syntax.Obsidian.Parser  (obsidianParser)
+import           Syntax.Obsidian.Parser  (obsidian, obsidianParser)
 import           Syntax.Python.Parser    (pyParser)
 import           System.FilePath         (isAbsolute, joinPath, takeDirectory)
 import           Text.Printf
@@ -53,7 +53,7 @@ importParsers = H.fromList [
   ("ct", ctParser),
   ("ctx", ctxParser),
   ("md", mdParser),
-  ("obsidian", obsidianParser),
+  (obsidian, obsidianParser),
   ("haskell", hsParser),
   ("python", pyParser)
                              ]
@@ -61,7 +61,7 @@ importParsers = H.fromList [
 -- | The path an applied import names: its first positional argument.
 --
 -- Both argument shapes are read because an import is canonicalized before any desugar runs. A
--- written @strategy("path")@ leaves its lone argument in 'roaObj' — 'Syntax.Ct.Parser.Expr.pArrowFull'
+-- written @parser("path")@ leaves its lone argument in 'roaObj' — 'Syntax.Ct.Parser.Expr.pArrowFull'
 -- makes a single expression an input, for the desugar to move to its proper place — while
 -- 'Syntax.Ct.Builder.applyRawArgs', which every inferred import is built with, puts it in 'roaArr'.
 -- A named argument keeps a 'RawValue' in 'roaObj', so it is not mistaken for the path.
@@ -74,7 +74,7 @@ rawImportPath e = listToMaybe $ mapMaybe argStr $ rawExprAppliedArgs e
 
 -- | Rewrites the path an applied import names, leaving the rest of it alone.
 --
--- The other arguments are kept because a strategy reads them: @haskell@ takes the Stack root to
+-- The other arguments are kept because a parser reads them: @haskell@ takes the Stack root to
 -- resolve its module against, and whether the module was imported qualified. Matches the same two
 -- argument shapes 'rawImportPath' reads.
 setRawImportPath :: String -> RawExpr () -> RawExpr ()
@@ -95,7 +95,7 @@ canonicalImport config caller imp@AFileImport{impAbs=(RawCExpr _ (CStr name))} =
   inferred <- inferRawImportStr config caller name
   canonicalImport config caller imp{impAbs=inferred}
 -- The metas are cleared because 'impAbs' is the identity of a page: 'AFileImport' compares by it and
--- 'MapMeta.parseMetaIDScope' names a file's meta-id scope by it. A written @import strategy("path")@
+-- 'MapMeta.parseMetaIDScope' names a file's meta-id scope by it. A written @import parser("path")@
 -- is the one import form which reaches here carrying the positions and types its parse gave it, and
 -- keeping those would make one file imported from two places into two pages holding the same meta
 -- ids. Every other import is built by 'Syntax.InferImport.inferRawImportStr' with empty metas

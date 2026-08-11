@@ -1,15 +1,26 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList [] )
-    , prgmCG = []
-    , prgmAnnots =
-        [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "This is your new *vault*.
-
-            Make a note of something, [[create a link]], or try [the Importer](https://help.obsidian.md/Plugins/Importer)!
-
-            When you're ready, delete this note and make the vault your own.
-
-            [[test link]]" )
-        ]
+        ( fromList
+            [
+                ( "/Data/Note/Page"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Page
+                            ( EAppArg Value /title -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Welcome" ]
+                                ) = "Welcome"
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        )
+    , prgmCG = [ CGType ]
+    , prgmAnnots = []
     }

@@ -12,7 +12,7 @@
 
 module Syntax.InferImport where
 import           Control.Monad
-import qualified Data.HashMap.Strict as H
+import qualified Data.HashMap.Strict    as H
 import           Data.List
 import           Data.List.Split
 import           Data.Maybe
@@ -21,18 +21,25 @@ import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Builder
 import           Syntax.Ct.Prgm
+import           Syntax.Obsidian.Parser (noteVault, obsidian)
 import           System.Directory
-import           System.FilePath     (isAbsolute, joinPath)
+import           System.FilePath        (isAbsolute, joinPath)
 import           Text.Printf
 
-fileExtensionParsers :: H.HashMap String (String -> RawExpr ())
+-- | The parser each file extension is read with, before where the file is is taken into account by
+-- 'inferFileParser'.
+fileExtensionParsers :: H.HashMap String String
 fileExtensionParsers = H.fromList [
-  ("ct", \n -> rawVal "ct" `applyRawArgs` [(Nothing, rawStr n)]),
-  ("ctx", \n -> rawVal "ctx" `applyRawArgs` [(Nothing, rawStr n)]),
-  ("md", \n -> rawVal "md" `applyRawArgs` [(Nothing, rawStr n)]),
-  ("hs", \n -> rawVal "haskell" `applyRawArgs` [(Nothing, rawStr n)]),
-  ("py", \n -> rawVal "python" `applyRawArgs` [(Nothing, rawStr n)])
+  ("ct", "ct"),
+  ("ctx", "ctx"),
+  ("md", "md"),
+  ("hs", "haskell"),
+  ("py", "python")
                              ]
+
+-- | Imports a path with a named parser, as an import naming its own parser is written.
+parserImport :: String -> FilePath -> RawExpr ()
+parserImport parser path = rawVal parser `applyRawArgs` [(Nothing, rawStr path)]
 
 isSupportedFileExtension :: String -> Bool
 isSupportedFileExtension fileName = any ((`isSuffixOf` fileName) . ('.':)) (H.keys fileExtensionParsers)
@@ -93,8 +100,8 @@ findImportPath config caller name = findExistingPath =<< importPathCandidates co
 
 -- | The absolute path an import names, failing when there is nothing there.
 --
--- Used for the inferred @import "name"@ form, which has nothing left to try: it picks its strategy
--- from what it finds at the path, so a path with nothing at it names no strategy either.
+-- Used for the inferred @import "name"@ form, which has nothing left to try: it picks its parser
+-- from what it finds at the path, so a path with nothing at it names no parser either.
 resolveImportPath :: CTSSConfig -> Maybe FileImport -> String -> IO FilePath
 resolveImportPath config caller name = do
   paths <- importPathCandidates config caller name
@@ -103,14 +110,31 @@ resolveImportPath config caller name = do
     Nothing -> fail $ printf "Could not find file or directory %s. Tried paths %s" name (show paths)
     Just name'' -> return name''
 
+-- | The parser a file is read with: the one its extension names, except that a markdown file within
+-- an Obsidian vault is a note of that vault rather than plain markdown.
+--
+-- A note has to be the same page however it is named — by the vault holding it, by another note
+-- linking to it, or by a reader asking the doc server for the path it is displayed at — and a page
+-- is identified by the import which names it. So which parser a note is read with cannot be left to
+-- whichever of those named it, and is decided here from where the file is instead.
+inferFileParser :: FilePath -> IO (Maybe String)
+inferFileParser path = case H.lookup ext fileExtensionParsers of
+  Just parser | ext == "md" -> do
+    vault <- noteVault path
+    return $ Just $ if isJust vault then obsidian else parser
+  parser -> return parser
+  where
+    ext = last $ splitOn "." path
+
 inferRawImportStr :: CTSSConfig -> Maybe FileImport -> String -> IO (RawExpr ())
 inferRawImportStr config caller name = do
   name' <- resolveImportPath config caller name
   isFile <- doesFileExist name'
   if isFile
     then do
-      case H.lookup (last $ splitOn "." name') fileExtensionParsers of
-        Just parser -> return $ parser name'
+      parser <- inferFileParser name'
+      case parser of
+        Just parser' -> return $ parserImport parser' name'
         Nothing -> fail $ printf "Unexpected file extension in import %s" name'
     else do
-      return (rawVal "dir" `applyRawArgs` [(Nothing, rawStr name')])
+      return $ parserImport "dir" name'

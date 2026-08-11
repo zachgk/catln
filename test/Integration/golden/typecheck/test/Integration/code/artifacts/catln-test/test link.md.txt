@@ -1,9 +1,26 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList [] )
-    , prgmCG = []
-    , prgmAnnots =
-        [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "" )
-        ]
+        ( fromList
+            [
+                ( "/Data/Note/Page"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Page
+                            ( Value /title -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "test link" ]
+                                ) = CStr "test link"
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        )
+    , prgmCG = [ CGType ]
+    , prgmAnnots = []
     }

@@ -60,6 +60,11 @@ mdAnnot, mdAnnotText :: String
 mdAnnot = "/Catln/#md"
 mdAnnotText = "text"
 
+-- | The type one note is read as, declared in @stack/core/note.ct@.
+notePagePath, notePageTitle :: String
+notePagePath = "/Data/Note/Page"
+notePageTitle = "title"
+
 printAnnot, printAnnotText, resultAnnotText :: String
 printAnnot = "/Catln/#print"
 printAnnotText = "p"

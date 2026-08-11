@@ -1,14 +1,26 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList [] )
-    , prgmCG = []
-    , prgmAnnots =
-        [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "A note in a subfolder of the vault.
-
-            It is here so that importing the vault has to descend a directory to find every note.
-
-            Links back to [[Welcome]].
-            " )
-        ]
+        ( fromList
+            [
+                ( "/Data/Note/Page"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Page
+                            ( EAppArg Value /title -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Nested" ]
+                                ) = "Nested"
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        )
+    , prgmCG = [ CGType ]
+    , prgmAnnots = []
     }

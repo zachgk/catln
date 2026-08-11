@@ -7,39 +7,123 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
--- This module is for importing an Obsidian vault.
+-- This module is for importing an Obsidian vault and the notes it holds.
 --------------------------------------------------------------------
 
 module Syntax.Obsidian.Parser where
 
-import           Data.List         (isPrefixOf, isSuffixOf, sort)
+import           Control.Applicative  ((<|>))
+import           CtConstants
+import           Data.Char            (isDigit, isSpace)
+import           Data.Foldable        (toList)
+import           Data.List            (intercalate, isPrefixOf, isSuffixOf, nub,
+                                       sort)
+import           Data.Maybe           (listToMaybe, mapMaybe)
+import qualified Data.Text            as T
 import           Semantics.Prgm
-import           Semantics.Types   (Constant (CStr))
+import           Semantics.Types      (Constant (CStr), mkName, partialKey)
 import           Syntax.Ct.Builder
 import           Syntax.Ct.Prgm
 import           System.Directory
-import           System.FilePath   ((</>))
+import           System.FilePath      (makeRelative, takeBaseName,
+                                       takeDirectory, (</>))
+import qualified Text.MMark           as MMark
+import           Text.MMark.Extension (Block (..), Bni, Inline (..), scanner)
 import           Text.Printf
 
--- | Imports an Obsidian vault as the notes it holds.
+-- | The name this parser is registered under in 'Syntax.Parsers.importParsers'.
 --
--- The vault is a page of its own whose program is empty, holding every note as an import. Each note
--- is then read by the markdown parser as its own page, so a note is the same page whether the vault
--- or the note itself was imported.
+-- Shared with the parser rather than written at the registration because a markdown file within a
+-- vault is inferred to be a note of it, by 'Syntax.InferImport.inferFileParser'.
+obsidian :: String
+obsidian = "obsidian"
+
+-- | The directory in which Obsidian keeps a vault's own configuration, and by which a vault is
+-- recognized.
+obsidianConfigDir :: FilePath
+obsidianConfigDir = ".obsidian"
+
+-- | Imports an Obsidian vault, or one note of one.
+--
+-- A vault is a page of its own whose program is empty, holding every note as an import. A note is a
+-- page holding a 'CtConstants.notePagePath' for itself, whose comment is the note as it was
+-- written, and importing each of the notes it links to. So the graph the notes of a vault form by
+-- linking to each other is the import graph of the pages they are read as.
+--
+-- Which of the two an import is comes from what its path names, a directory or a file, so that a
+-- vault and its notes are read by the one parser. Neither is named a vault by the import: a vault is
+-- the directory holding an 'obsidianConfigDir', as Obsidian itself decides it, and a note finds its
+-- own by looking upwards for one. Being able to answer that from the path alone is what lets
+-- 'Syntax.InferImport.inferFileParser' route a note here without being told to, which is in turn
+-- what makes a note the same page whether the vault, another note or a reader of the doc server
+-- named it.
 --
 -- Importing one directory as both a vault and a plain @dir@ makes two pages at the one display
 -- path. 'Eval.Runtime.WebDocs.sidebarLevel' shows a directory holding pages as a single node, so
 -- the two are shown as one; an empty one has no node to collapse into and is an error there.
 obsidianParser :: ImportParser
-obsidianParser imp = case exprAppliedArgs imp of
-  (ObjArr{oaArr=Just (Just (CExpr _ (CStr vault)), _)}:_impArgs) -> do
-    isDir <- doesDirectoryExist vault
-    if isDir
-      then do
-        notes <- vaultNotes vault
-        return (RawPrgm (map (mkRawFileImport . rawStr) notes) [], [], Nothing)
-      else fail $ printf "Could not find the Obsidian vault directory %s" vault
-  _ -> undefined
+obsidianParser imp = case [arg | arg@ObjArr{oaObj=Nothing} <- exprAppliedArgs imp] of
+  (ObjArr{oaArr=Just (Just (CExpr _ (CStr path)), _)}:_) -> do
+    isDir <- doesDirectoryExist path
+    isFile <- doesFileExist path
+    case (isDir, isFile) of
+      (True, _) -> do
+        isVault <- doesDirectoryExist $ path </> obsidianConfigDir
+        if isVault
+          then vaultPrgm path
+          else fail $ printf "The directory %s is not an Obsidian vault, as it holds no %s configuration" path obsidianConfigDir
+      (_, True) -> do
+        vault <- noteVault path
+        case vault of
+          Just vault' -> notePrgm vault' path
+          Nothing -> fail $ printf "The note %s is in no Obsidian vault, as no directory holding it holds an %s configuration" path obsidianConfigDir
+      _ -> fail $ printf "Could not find the Obsidian vault or note %s" path
+  _ -> fail $ printf "An obsidian import must name a vault directory or a note within one: %s" (show imp)
+
+-- | The vault a note sits in: the closest directory holding an 'obsidianConfigDir' at or above it.
+noteVault :: FilePath -> IO (Maybe FilePath)
+noteVault note = aux $ takeDirectory note
+  where
+    aux dir = do
+      isVault <- doesDirectoryExist $ dir </> obsidianConfigDir
+      case () of
+        _ | isVault                  -> return $ Just dir
+        _ | takeDirectory dir /= dir -> aux $ takeDirectory dir
+        _                            -> return Nothing
+
+-- | The page of a vault: every note it holds, as an import.
+--
+-- The notes are imported by their path alone, leaving 'Syntax.InferImport.inferFileParser' to
+-- read each one as the note of a vault it is, so that a note the vault imports and the same note a
+-- reader asks for by path are the one page.
+vaultPrgm :: FilePath -> ImportParseResult
+vaultPrgm vault = do
+  notes <- vaultNotes vault
+  return (RawPrgm (map (mkRawFileImport . rawStr) notes) [], [], Nothing)
+
+-- | The page of one note: what it is, and what it links to.
+--
+-- The vault is walked again here rather than by the vault page, because a note is a page whether it
+-- was reached through its vault or by a link from another note, and either way its links resolve
+-- against every note of the vault.
+notePrgm :: FilePath -> FilePath -> ImportParseResult
+notePrgm vault note = do
+  contents <- readFile note
+  notes <- vaultNotes vault
+  let linked = nub $ filter (/= note) $ mapMaybe (resolveWikiLink vault notes) $ wikiLinks note contents
+  return (RawPrgm (map (mkRawFileImport . rawStr) linked) [notePageStatement (takeBaseName note) contents], [], Just contents)
+
+-- | The note itself: the page it is, titled as it is linked to, holding what was written in it.
+--
+-- The writing is a comment inside the page rather than a field of it, so that a reader of the page
+-- reads the note. A comment written under a declaration becomes both its doc comment and a
+-- 'CtConstants.mdAnnot' annotation on it, which is the same annotation a whole markdown page is read
+-- as by 'Syntax.Md.Parser.mdParser' and which the webdocs already display.
+notePageStatement :: String -> String -> RawStatementTree RawExpr ()
+notePageStatement title contents = RawStatementTree (RawDeclStatement page) [RawStatementTree (RawAnnot (rawComment contents)) []]
+  where
+    page = RawObjArr (Just pageExpr) TypeObj Nothing [] Nothing Nothing
+    pageExpr = rawVal notePagePath `applyRawArgs` [(Just $ partialKey (mkName notePageTitle), rawStr title)]
 
 -- | The notes of a vault: every markdown file under it, at any depth.
 --
@@ -64,3 +148,134 @@ vaultNotes dir = do
         _ | isDir && not isLink                   -> vaultNotes path
         _ | not isDir && ".md" `isSuffixOf` entry -> return [path]
         _                                         -> return []
+
+-- | The wiki links a note writes, in the order it writes them.
+--
+-- A @[[wiki link]]@ is not markdown, and is not a link to the markdown parser either: it is a
+-- reference to a definition that a note never gives, which is an error rather than a link. So each
+-- one is taken out of the note and replaced by a placeholder before the note is parsed, and the
+-- links are read back out of the placeholders that survive into the parsed note's prose. What
+-- markdown is being parsed for is which of them are prose at all: a @[[link]]@ inside code is
+-- writing about a link rather than making one, and 'blockText' leaves code out.
+--
+-- A note whose markdown cannot be parsed has no links. It is still a page, holding what was written
+-- in it, so the vault it belongs to still reads. Reporting the parse failure rather than passing
+-- over it needs an import parser that can answer with notes, which is the TODO on
+-- 'Syntax.Parsers.readImport'.
+wikiLinks :: FilePath -> String -> [String]
+wikiLinks note contents = case MMark.parse note (T.pack masked) of
+  Left _    -> []
+  Right doc -> unmaskWikiLinks links $ intercalate "\n" $ map blockText $ reverse $ MMark.runScanner doc (scanner [] (flip (:)))
+  where
+    (masked, links) = maskWikiLinks contents
+
+-- | Replaces every wiki link of a note with a placeholder, answering the note and the links taken
+-- out of it.
+--
+-- The placeholder is written with characters from the private use area, which no markdown syntax
+-- gives a meaning to, so that a link target holding a @|@, a @*@ or a @#@ is neither read as
+-- markdown nor has to be escaped as though it were.
+--
+-- A wiki link is written on one line, so an unclosed @[[@ is left alone rather than swallowing the
+-- rest of the note.
+maskWikiLinks :: String -> (String, [String])
+maskWikiLinks = aux (0 :: Int)
+  where
+    aux _ [] = ([], [])
+    aux i s@(c:cs) = case wikiLinkAt s of
+      Just (link, rest) -> let (rest', links) = aux (i + 1) rest in (maskOpen : show i ++ maskClose : rest', link : links)
+      Nothing           -> let (cs', links) = aux i cs in (c : cs', links)
+
+    -- An embed @![[note]]@ shows another note within this one, which is a link to it
+    wikiLinkAt ('!':'[':'[':rest) = closedOnLine rest
+    wikiLinkAt ('[':'[':rest)     = closedOnLine rest
+    wikiLinkAt _                  = Nothing
+
+    closedOnLine s = do
+      (link, rest) <- splitOnFirst "]]" s
+      if '\n' `elem` link then Nothing else Just (link, rest)
+
+-- | Reads the links back out of the placeholders 'maskWikiLinks' left, in the order they are found.
+unmaskWikiLinks :: [String] -> String -> [String]
+unmaskWikiLinks links = aux
+  where
+    aux s = case dropWhile (/= maskOpen) s of
+      []       -> []
+      (_:rest) -> case span isDigit rest of
+        (i, c:rest') | c == maskClose, not (null i) -> maybe id (:) (lookup (read i) indexed) $ aux rest'
+        _                                           -> aux rest
+    indexed = zip [(0 :: Int) ..] links
+
+-- | The characters a masked wiki link is written between.
+maskOpen, maskClose :: Char
+maskOpen = '\xE000'
+maskClose = '\xE001'
+
+-- | Splits at the first occurrence of a separator, if there is one.
+splitOnFirst :: String -> String -> Maybe (String, String)
+splitOnFirst sep = aux ""
+  where
+    aux _ [] = Nothing
+    aux acc s@(c:rest)
+      | sep `isPrefixOf` s = Just (reverse acc, drop (length sep) s)
+      | otherwise = aux (c : acc) rest
+
+-- | The prose of a block: the text of it a reader reads.
+--
+-- Code is left out, as writing @[[a link]]@ inside code is writing about a link rather than making
+-- one. The blocks a block holds are walked here because 'MMark.runScanner' answers only the blocks
+-- of the note itself.
+blockText :: Bni -> String
+blockText ThematicBreak       = ""
+blockText (Heading1 is)       = inlinesText is
+blockText (Heading2 is)       = inlinesText is
+blockText (Heading3 is)       = inlinesText is
+blockText (Heading4 is)       = inlinesText is
+blockText (Heading5 is)       = inlinesText is
+blockText (Heading6 is)       = inlinesText is
+blockText (CodeBlock _ _)     = ""
+blockText (Naked is)          = inlinesText is
+blockText (Paragraph is)      = inlinesText is
+blockText (Blockquote bs)     = intercalate "\n" $ map blockText bs
+blockText (OrderedList _ bss) = intercalate "\n" $ map (intercalate "\n" . map blockText) $ toList bss
+blockText (UnorderedList bss) = intercalate "\n" $ map (intercalate "\n" . map blockText) $ toList bss
+blockText (Table _ rows)      = intercalate "\n" $ map inlinesText $ concatMap toList $ toList rows
+
+-- | The prose of a run of inline markdown. A link's own text is prose; the address it points at is
+-- not, and neither is code.
+inlinesText :: Foldable f => f Inline -> String
+inlinesText = concatMap inlineText . toList
+
+inlineText :: Inline -> String
+inlineText (Plain t)        = T.unpack t
+inlineText LineBreak        = "\n"
+inlineText (Emphasis is)    = inlinesText is
+inlineText (Strong is)      = inlinesText is
+inlineText (Strikeout is)   = inlinesText is
+inlineText (Subscript is)   = inlinesText is
+inlineText (Superscript is) = inlinesText is
+inlineText (CodeSpan _)     = ""
+inlineText (Link is _ _)    = inlinesText is
+inlineText (Image is _ _)   = inlinesText is
+
+-- | The note of a vault a wiki link points at, if the vault holds one.
+--
+-- A link names a note either by its path within the vault or by its name alone, with or without the
+-- markdown extension, and may go on to name a place within it and the words to show it as. A link
+-- naming no note at all is not an error: writing one is how a note yet to be written is planned,
+-- and Obsidian shows it as unresolved rather than refusing it.
+resolveWikiLink :: FilePath -> [FilePath] -> String -> Maybe FilePath
+resolveWikiLink vault notes link = case wikiLinkTarget link of
+  ""     -> Nothing -- A link naming only a place is within the note that wrote it
+  target -> listToMaybe (byPath target) <|> listToMaybe (byName target)
+  where
+    byPath target = [note | note <- notes, dropExtension' (makeRelative vault note) == dropExtension' target]
+    byName target = [note | note <- notes, takeBaseName note == dropExtension' target]
+    dropExtension' p = if ".md" `isSuffixOf` p then take (length p - 3) p else p
+
+-- | The note a wiki link names, without the place within it or the words it is shown as.
+wikiLinkTarget :: String -> String
+wikiLinkTarget = trim . takeWhile (/= '#') . takeWhile (/= '|')
+  where
+    trim = dropWhileEnd' . dropWhile isSpace
+    dropWhileEnd' = reverse . dropWhile isSpace . reverse

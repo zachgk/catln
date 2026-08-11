@@ -1,0 +1,12 @@
+import "core/str.ct"
+
+
+module(Data/Note)
+  # # Notes
+    A note is a piece of writing that names itself and links to other notes. Each note is a page of
+    its own and each link between two notes is an import between their pages, so the graph a set of
+    notes forms is the import graph of the program they are read as.
+  data(Page(title -> String))
+    # A [Page] is one note. It holds the [title] the note is known and linked by; the writing itself
+      is the comment inside the page rather than a field of it, so reading the page is reading the
+      note. Importing an Obsidian vault reads it as one [Page] per note of it.
