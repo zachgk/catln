@@ -600,6 +600,27 @@ oaObjExpr oa = error $ printf "oaObjExpr with no input expression: %s" (show oa)
 oaObjPath :: (MetaDat m, ExprClass e, Show m, Show (e m)) => ObjArr e m -> TypeName
 oaObjPath = exprPath . oaObjExpr
 
+-- | Whether a declaration declares a value rather than a type.
+--
+-- Both are written the same way and both are 'omiDecls' entries with no arrow, so the two are told
+-- apart by what their arguments are given: @Task(contents= "Read it", state= False)@ gives each of
+-- its arguments an expression and is the task it names, while @Task(contents -> String, state ->
+-- Boolean)@ gives each of them a type and is the declaration of what a task is.
+--
+-- An object applying no arguments at all gives nothing either way, and a bare name is only ever the
+-- declaration of a type, so it is not one. That matters: the standard library declares many of them
+-- and several are displayable, so reading a bare name as a value would have the compiler evaluate
+-- @String@, @True@ or @#typeInfer@ as though each were an instance of itself.
+isValueObjArr :: (MetaDat m, ExprClass e, Show m, Show (e m)) => ObjArr e m -> Bool
+isValueObjArr ObjArr{oaArr=Just _} = False
+isValueObjArr ObjArr{oaObj=Nothing} = False
+isValueObjArr oa = case exprAppliedArgs $ oaObjExpr oa of
+  []   -> False
+  args -> all givenAValue args
+  where
+    givenAValue ObjArr{oaArr=Just (Just _, _)} = True
+    givenAValue _                              = False
+
 getOaArrExpr :: (MetaDat m, ExprClass e, Show m, Show (e m)) => ObjArr e m -> e m
 getOaArrExpr ObjArr{oaArr=Just (Just e, _)} = e
 getOaArrExpr oa = error $ printf "oaArrExpr with no output expression: %s" (show oa)

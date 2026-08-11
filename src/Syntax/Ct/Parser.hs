@@ -99,8 +99,10 @@ contents p = do
   eof
   return r
 
+-- TODO Write a .ct file back with 'Syntax.Ct.Formatter.formatRootPrgm', which is already the
+-- program-to-text direction for this syntax.
 ctParser :: ImportParser
-ctParser imp = case exprAppliedArgs imp of
+ctParser = readOnlyParser $ \imp -> case exprAppliedArgs imp of
   [ObjArr{oaArr=Just (Just (CExpr _ (CStr fileName)), _)}] -> do
     fileContents <- readFile fileName
     case runParser (contents pPrgm) fileName fileContents of
@@ -108,9 +110,11 @@ ctParser imp = case exprAppliedArgs imp of
       Right prgm -> return (prgm, [], Just fileContents)
   _ -> undefined
 
+-- TODO Write a .ctx file back, once 'ctParser' can be written back: it is a .ct file with the one
+-- annotation this adds taken off again.
 ctxParser :: ImportParser
-ctxParser fileName = do
-  (prgm, extra, src) <- ctParser fileName
+ctxParser = readOnlyParser $ \fileName -> do
+  (prgm, extra, src) <- ipParse ctParser fileName
   return (annotate prgm, extra, src)
   where
     annotate (RawPrgm imports statements) = RawPrgm imports (RawStatementTree (RawAnnot (RawValue emptyMetaN (mkName ctxAnnot))) [] :statements)

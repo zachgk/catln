@@ -851,8 +851,11 @@ convertPyModule (PyModule stmts) =
 --------------------------------------------------------------------
 
 -- | The Python import parser, registered under the name "python".
+--
+-- TODO Write a Python module back. Nothing reads one back yet, and a module is read for what it
+-- declares rather than in full, so there is not enough of it in the program to write one.
 pyParser :: ImportParser
-pyParser imp = case [arg | arg@ObjArr{oaObj=Nothing} <- exprAppliedArgs imp] of
+pyParser = readOnlyParser $ \imp -> case [arg | arg@ObjArr{oaObj=Nothing} <- exprAppliedArgs imp] of
   (ObjArr{oaArr=Just (Just (CExpr _ (CStr filename)), _)}:_) -> do
     fileContents <- BS.readFile filename
     src <- readFile filename

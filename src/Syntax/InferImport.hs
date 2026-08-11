@@ -53,8 +53,10 @@ findExistingPath (p:ps) = do
     then Just <$> makeAbsolute p
     else findExistingPath ps
 
+-- A directory has no source text of its own to write back — the files in it are pages of their own,
+-- each written back by the parser which read it.
 dirParser :: ImportParser
-dirParser imp = case exprAppliedArgs imp of
+dirParser = readOnlyParser $ \imp -> case exprAppliedArgs imp of
   [ObjArr{oaArr=Just (Just (CExpr _ (CStr name)), _)}] -> do
     files <- listDirectory name
     files' <- forM files $ \file -> do

@@ -29,6 +29,7 @@ import           CtService
 import           Data.Bifunctor                (Bifunctor (first))
 import           Data.Graph
 import           Data.Maybe                    (listToMaybe)
+import           Data.UUID                     (fromText)
 import           Eval                          (evalAllTargetModes, evalAnnots,
                                                 prgmFromGraphData)
 import           Eval.Runtime.WebDocs          (sidebarOrder)
@@ -39,7 +40,7 @@ import           Semantics.Prgm
 import           Syntax.Ct.Desugarf            (desFinalPasses, desPrgm)
 import           Syntax.Ct.Desugarf.Expr       (desFileImport)
 import           Syntax.Ct.MapRawMeta          (addRawPrgmMetaIDs,
-                                                mapMetaRawPrgm)
+                                                mapMetaRawPrgm, replaceRawExpr)
 import           Syntax.Ct.Parser.Expr         (pExpr)
 import           Syntax.Ct.Prgm                (RawExpr (RawValue),
                                                 RawPrgm (RawPrgm),
@@ -120,6 +121,32 @@ docApiBase readonly ctss getProvider = do
       else do
         prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
         setSource ctss prgmName' (T.unpack $ decodeUtf8 src)
+    maybeJson resp
+
+  -- Replaces one expression of a page and saves the page back as the file it was read from. That is
+  -- what a value shown in the webdocs edits: it names the expression it was compiled from by its
+  -- meta id, and says what it should be as the Catln source of the new one. Writing the file is left
+  -- to the parser which read it, so a checkbox checked in an Obsidian note is written back as
+  -- markdown rather than as the program the note was read into.
+  --
+  -- Guarded by @--readonly@ and served off the handle rather than the provider for the same reasons
+  -- as @/api/write@.
+  post "/api/write-expr" $ do
+    prgmName <- param "prgmName"
+    metaID <- param "metaId"
+    src <- body
+    resp <- liftAndCatchIO $ runCResT $ if readonly
+      then fail "Saving is disabled because the doc server is running with --readonly"
+      else do
+        prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
+        metaID' <- maybe (fail $ printf "The expression id %s is not an id" (T.unpack metaID)) return $ fromText $ T.toStrict metaID
+        expr <- case runParser pExpr "<expr>" (T.unpack $ decodeUtf8 src) of
+          Left err     -> fail $ show $ errorBundlePretty err
+          Right parsed -> return parsed
+        rawPrgm <- getRawPrgmOf ctss prgmName'
+        case replaceRawExpr metaID' expr rawPrgm of
+          Nothing -> fail $ printf "The page %s holds no expression %s to replace" prgmName (T.unpack metaID)
+          Just rawPrgm' -> setRawPrgm ctss prgmName' rawPrgm'
     maybeJson resp
 
   get "/api/page" $ do

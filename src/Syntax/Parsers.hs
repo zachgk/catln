@@ -135,7 +135,22 @@ readImport imp = case maybeExprPath (impAbs imp) of
   Just impPath -> case H.lookup (nameStr impPath) importParsers of
     Nothing -> fail $ printf "No parser available for oject name in %s" (show imp)
     -- TODO Modify the ImportParseResult to CResT to report back parse errors
-    Just parser -> parser $ impAbs imp
+    Just parser -> ipParse parser $ impAbs imp
+
+-- | Writes a page back as the file it was read from, by the parser which read it.
+--
+-- The mirror of 'readImport', and it finds its parser the same way: by the name at the head of the
+-- import, which is what says the syntax the page is written in. A syntax with no reversion is
+-- reported rather than passed over, so that a page which cannot be saved says so instead of being
+-- saved as something else.
+unparseImport :: FileImport -> RawPrgm () -> CRes String
+unparseImport imp prgm = case maybeExprPath (impAbs imp) of
+  Nothing -> fail $ printf "Invalid import %s must be string or oject" (show imp)
+  Just impPath -> case H.lookup (nameStr impPath) importParsers of
+    Nothing -> fail $ printf "No parser available for oject name in %s" (show imp)
+    Just parser -> case ipUnparse parser prgm of
+      Just src -> return src
+      Nothing -> fail $ printf "The page %s can not be written back as %s" (show $ impRaw imp) (show $ nameStr impPath)
 
 processParsed :: CTSSConfig -> FileImport -> (RawPrgm (), [RawFileImport], Maybe String) -> IO (GraphNodes (RawPrgm (), Maybe String) FileImport, [FileImport])
 processParsed config imp (prgm@(RawPrgm prgmImports statements), extraImports, src) = do

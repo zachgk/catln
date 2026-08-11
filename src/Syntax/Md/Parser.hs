@@ -19,8 +19,9 @@ import           Syntax.Ct.Builder
 import           Syntax.Ct.Prgm
 import           System.Directory
 
+-- TODO Write a markdown file back as the text of the one annotation it is read as.
 mdParser :: ImportParser
-mdParser imp = case exprAppliedArgs imp of
+mdParser = readOnlyParser $ \imp -> case exprAppliedArgs imp of
   (ObjArr{oaArr=Just (Just (CExpr _ (CStr filename)), _)}:_impArgs) -> do
     isFile <- doesFileExist filename
     if isFile

@@ -18,10 +18,11 @@ import           Data.Char            (isDigit, isSpace)
 import           Data.Foldable        (toList)
 import           Data.List            (dropWhileEnd, intercalate, isPrefixOf,
                                        isSuffixOf, nub, sort)
-import           Data.Maybe           (isJust, listToMaybe, mapMaybe)
+import           Data.Maybe           (listToMaybe, mapMaybe)
 import qualified Data.Text            as T
 import           Semantics.Prgm
-import           Semantics.Types      (Constant (CStr), mkName, partialKey)
+import           Semantics.Types      (Constant (CStr), makeAbsoluteName,
+                                       mkName, partialKey)
 import           Syntax.Ct.Builder
 import           Syntax.Ct.Prgm
 import           System.Directory
@@ -43,6 +44,13 @@ obsidian = "obsidian"
 obsidianConfigDir :: FilePath
 obsidianConfigDir = ".obsidian"
 
+-- | Reads an Obsidian vault, and writes a note of one back.
+--
+-- Only a note is written back. A vault is a directory, whose notes are pages of their own and are
+-- each written back as themselves, so it has no source text of its own for a reversion to produce.
+obsidianParser :: ImportParser
+obsidianParser = ImportParser obsidianParse unparseNote
+
 -- | Imports an Obsidian vault, or one note of one.
 --
 -- A vault is a page of its own whose program is empty, holding every note as an import. A note is a
@@ -63,8 +71,8 @@ obsidianConfigDir = ".obsidian"
 -- Importing one directory as both a vault and a plain @dir@ makes two pages at the one display
 -- path. 'Eval.Runtime.WebDocs.sidebarLevel' shows a directory holding pages as a single node, so
 -- the two are shown as one; an empty one has no node to collapse into and is an error there.
-obsidianParser :: ImportParser
-obsidianParser imp = case [arg | arg@ObjArr{oaObj=Nothing} <- exprAppliedArgs imp] of
+obsidianParse :: Expr () -> ImportParseResult
+obsidianParse imp = case [arg | arg@ObjArr{oaObj=Nothing} <- exprAppliedArgs imp] of
   (ObjArr{oaArr=Just (Just (CExpr _ (CStr path)), _)}:_) -> do
     isDir <- doesDirectoryExist path
     isFile <- doesFileExist path
@@ -125,28 +133,109 @@ notePrgm vault note = do
 -- A task is a break in that writing: the comment ends where the checkbox was written, the task is
 -- declared in its place, and what follows goes on as another comment. So the page holds the tasks of
 -- the note in the order and the place they were written, and reading it is still reading the note.
--- Whatever is written under a checkbox is a comment inside its task, by the same reading that makes
--- the note a comment inside its page.
+-- What is written under a checkbox is written inside its task by the same reading that makes the
+-- note the writing inside its page — including a checkbox indented under it, which is a task of that
+-- task and is declared inside it.
 notePageStatement :: String -> String -> RawStatementTree RawExpr ()
 notePageStatement title contents = RawStatementTree (RawDeclStatement page) (map partStatement $ noteParts contents)
   where
     page = RawObjArr (Just pageExpr) TypeObj Nothing [] Nothing Nothing
     pageExpr = rawVal notePagePath `applyRawArgs` [(Just $ partialKey (mkName notePageTitle), rawStr title)]
 
-    partStatement (NoteWriting writing) = RawStatementTree (RawAnnot (rawComment writing)) []
-    partStatement (NoteTask says done under) = RawStatementTree (RawDeclStatement task) [RawStatementTree (RawAnnot (rawComment under)) [] | not (null under)]
-      where
-        task = RawObjArr (Just taskExpr) TypeObj Nothing [] Nothing Nothing
-        taskExpr = rawVal noteTaskPath `applyRawArgs` [
-          (Just $ partialKey (mkName noteTaskContents), rawStr says),
-          (Just $ partialKey (mkName noteTaskState), rawVal (if done then truePrim else falsePrim))
-                                                     ]
+partStatement :: NotePart -> RawStatementTree RawExpr ()
+partStatement (NoteWriting writing) = RawStatementTree (RawAnnot (rawComment writing)) []
+partStatement (NoteTask says done under) = RawStatementTree (RawDeclStatement task) (map partStatement under)
+  where
+    task = RawObjArr (Just taskExpr) TypeObj Nothing [] Nothing Nothing
+    taskExpr = rawVal noteTaskPath `applyRawArgs` [
+      (Just $ partialKey (mkName noteTaskContents), rawStr says),
+      (Just $ partialKey (mkName noteTaskState), rawVal (if done then truePrim else falsePrim))
+                                                 ]
+
+-- | Writes a note back as the markdown it was read from: the reversion of 'notePageStatement'.
+--
+-- The note is written out of the program rather than out of the file it was read from, so what it
+-- said survives and how it said it does not. Every checkbox is written with a @-@ marker however it
+-- was written, and every task is written at the depth it is declared at rather than the column it
+-- was found at. The writing between the tasks is written back as it was found, which is what leaves
+-- the rest of the note — its headings, its code, its links — alone.
+--
+-- A program which is not a note is written as nothing rather than as an empty note, so a page the
+-- reversion does not recognise is never written over.
+unparseNote :: RawPrgm () -> Maybe String
+unparseNote (RawPrgm _ [RawStatementTree (RawDeclStatement page) parts])
+  | Just pageExpr <- roaObj page, named notePagePath pageExpr = do
+      parts' <- mapM notePart parts
+      return $ unlines $ writeNoteParts parts'
+unparseNote _ = Nothing
+
+-- | The part of a note a statement of its page was read from, if it was read from one.
+notePart :: RawStatementTree RawExpr () -> Maybe NotePart
+notePart (RawStatementTree (RawAnnot annot) [])
+  | named mdAnnot annot = NoteWriting <$> rawArgStr mdAnnotText annot
+notePart (RawStatementTree (RawDeclStatement task) under)
+  | Just taskExpr <- roaObj task, named noteTaskPath taskExpr = do
+      says <- rawArgStr noteTaskContents taskExpr
+      done <- rawArgState taskExpr
+      NoteTask says done <$> mapM notePart under
+notePart _ = Nothing
+
+-- | Whether an expression is the value of the given name.
+--
+-- The names are compared as absolute ones, because whether a name is written absolute is a
+-- difference between how a page was written and how the desugar leaves it, not a difference in what
+-- is named. A page built by 'notePageStatement' names @\/contents@ where one parsed from the source
+-- an edit sent names @contents@, and they are the one argument.
+named :: String -> RawExpr () -> Bool
+named name e = fmap makeAbsoluteName (maybeExprPath e) == Just (makeAbsoluteName $ mkName name)
+
+-- | The expression a named argument of an applied expression is given, if it is given one.
+rawArg :: String -> RawExpr () -> Maybe (RawExpr ())
+rawArg name e = listToMaybe [v | RawObjArr{roaObj=Just o, roaArr=Just (Just v, _)} <- rawExprAppliedArgs e, named name o]
+
+-- | The string a named argument is given, if it is given one written out as a string.
+rawArgStr :: String -> RawExpr () -> Maybe String
+rawArgStr name e = case rawArg name e of
+  Just (RawCExpr _ (CStr s)) -> Just s
+  _                          -> Nothing
+
+-- | Whether a task's box is checked, read from the state it was declared with.
+rawArgState :: RawExpr () -> Maybe Bool
+rawArgState e = case rawArg noteTaskState e of
+  Just state | named truePrim state  -> Just True
+             | named falsePrim state -> Just False
+  _                                  -> Nothing
+
+-- | The lines a note's parts are written as.
+--
+-- A blank line goes between the writing of a note and a task of it, as the writing is a paragraph
+-- and a paragraph is written apart from what surrounds it. None goes between two tasks, which are
+-- items of the one list and are written one after another.
+writeNoteParts :: [NotePart] -> [String]
+writeNoteParts parts = concat $ zipWith separated (Nothing : map Just parts) parts
+  where
+    separated before part = ["" | maybe False (apartFrom part) before] ++ writeNotePart part
+    apartFrom NoteWriting{} _ = True
+    apartFrom _ NoteWriting{} = True
+    apartFrom _ _             = False
+
+-- | The lines one part of a note is written as: its writing as it was found, or its checkbox
+-- followed by whatever is written inside it, indented under it.
+writeNotePart :: NotePart -> [String]
+writeNotePart (NoteWriting writing) = lines writing
+writeNotePart (NoteTask says done under) = dropWhileEnd isSpace (box ++ says) : map indentLine (writeNoteParts under)
+  where
+    box = if done then "- [x] " else "- [ ] "
+    -- A blank line is written with nothing on it rather than with the indentation of the block it
+    -- sits in, so that writing a note back does not leave trailing spaces through it.
+    indentLine l = if isBlank l then l else "  " ++ l
 
 -- | What a note is written as: the writing of it, and the tasks that break the writing.
 data NotePart
   = NoteWriting String
-  -- | What the checkbox says, whether it is checked, and what is written under it.
-  | NoteTask String Bool String
+  -- | What the checkbox says, whether it is checked, and what is written under it — which is the
+  -- note again: the writing under the checkbox, and the checkboxes indented under it.
+  | NoteTask String Bool [NotePart]
   deriving (Eq, Show)
 
 -- | Breaks a note into the writing and the tasks it holds, in the order they were written.
@@ -160,34 +249,42 @@ data NotePart
 -- than making one, which is the reading 'blockText' already gives a wiki link inside code. The state
 -- of a fence is carried through what is written under a task as well, so that a block opened there
 -- is still open after it.
+--
+-- What is written under a checkbox is broken the same way, so the parts of a note are a tree: a task
+-- holds the writing under it and the tasks indented under it, each broken from the block as this
+-- breaks the note.
 noteParts :: String -> [NotePart]
-noteParts = go False [] . lines
+noteParts = noteLineParts . lines
+
+-- | 'noteParts' over lines, which is what the writing under a checkbox is already broken into.
+noteLineParts :: [String] -> [NotePart]
+noteLineParts = go False []
   where
     go _ acc [] = writingPart acc
     go inCode acc (l:ls)
       | isFence l = go (not inCode) (l:acc) ls
       | not inCode, Just (says, done) <- taskLine l = let (under, inCode', ls') = taskWriting (indentation l) inCode ls in
-          writingPart acc ++ (NoteTask says done under : go inCode' [] ls')
+          writingPart acc ++ (NoteTask says done (noteLineParts under) : go inCode' [] ls')
       | otherwise = go inCode (l:acc) ls
 
     writingPart acc = [NoteWriting writing | let writing = joinLines (reverse acc), not (null writing)]
 
 -- | What is written under a checkbox, where the note goes on, and whether that is inside a fence.
 --
--- A line is written within the task while it is indented deeper than the checkbox itself. A checkbox
--- indented deeper is a task of its own rather than writing about the one above it, as every checkbox
--- of a note is a task of it.
+-- A line is written within the task while it is indented deeper than the checkbox itself, whether it
+-- is a checkbox or not: a checkbox indented deeper is a task of the one above it, written under it as
+-- the writing under it is. A checkbox at the same indentation is the next task rather than part of
+-- this one, and ends the block.
 --
 -- What is found is written back out without the indentation it was written at, as markdown reads
 -- four spaces of indentation as code and what is written under a task is writing rather than code.
-taskWriting :: Int -> Bool -> [String] -> (String, Bool, [String])
-taskWriting ind inCode ls = (joinLines $ dedent within, inCode', rest)
+taskWriting :: Int -> Bool -> [String] -> ([String], Bool, [String])
+taskWriting ind inCode ls = (dedent within, inCode', rest)
   where
     (within, inCode', rest) = aux [] inCode ls
     aux acc code (l:ls')
-      | isBlank l || (not (isCheckbox code l) && indentation l > ind) = aux (l:acc) (if isFence l then not code else code) ls'
+      | isBlank l || indentation l > ind = aux (l:acc) (if isFence l then not code else code) ls'
     aux acc code ls' = (reverse acc, code, ls')
-    isCheckbox code l = not code && isJust (taskLine l)
 
 -- | What a checkbox line says and whether it is checked, if the line is a checkbox at all.
 --

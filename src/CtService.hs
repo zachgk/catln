@@ -326,6 +326,25 @@ getSource (CTSS ssmv) prgmName = do
     Just SSF{ssfSource=Nothing}  -> fail $ printf "No source text available for %s" (show prgmName)
     Nothing                      -> fail $ printf "Could not find %s" (show $ impRaw prgmName)
 
+-- | The parsed program of one page. Like 'getSource' this does not build, as the parse is what
+-- reading the page already produced.
+getRawPrgmOf :: CTSS -> FileImport -> CResT IO PPrgm
+getRawPrgmOf (CTSS ssmv) prgmName = do
+  CTSSDat{ctssData} <- lift $ readMVar ssmv
+  case graphLookup prgmName ctssData of
+    Just SSF{ssfRaw} -> asCResT ssfRaw
+    Nothing          -> fail $ printf "Could not find %s" (show $ impRaw prgmName)
+
+-- | Overwrite a page with a program, written back as the syntax the page is written in.
+--
+-- The reversion belongs to the parser which read the page, so a page whose syntax cannot be written
+-- back fails here rather than being written as something else. What it produces is the page's new
+-- source, so the write itself is 'setSource' and everything that guards a write guards this one too.
+setRawPrgm :: CTSS -> FileImport -> PPrgm -> CResT IO ()
+setRawPrgm ctss prgmName prgm = do
+  src <- asCResT $ unparseImport prgmName prgm
+  setSource ctss prgmName src
+
 -- | Overwrite the source file backing a page, then re-read so the change is picked up.
 -- Only pages already in the service graph with source text can be written, which confines
 -- writes to the files served by the doc roots.

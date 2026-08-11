@@ -1,5 +1,6 @@
 import "core/bool.ct"
 import "core/str.ct"
+import "core/webdoc.ct"
 
 
 module(Data/Note)
@@ -17,4 +18,11 @@ module(Data/Note)
       writing of the note holding it: the comment ends where the checkbox was written, the [Task] is
       declared in its place, and the writing goes on after it as another comment. So the tasks of a
       note are declared in the order and the place they were written, and whatever is written
-      indented under a checkbox is the comment inside its [Task].
+      indented under a checkbox is written inside its [Task] — the comment of it, and the checkboxes
+      indented under it, which are tasks of that task by the same reading.
+
+  every(Task.., isa= [/Catln/Doc/DShow])
+    # A task is shown in the webdocs as the task it is, rather than as the declaration it was read
+      into: a box to check and the writing beside it. It is the value itself that is shown, with no
+      display type standing in for it, which is what lets checking the box in a doc server write the
+      change back to the note the task was read from.

@@ -26,6 +26,15 @@ Prgm
     , prgmCG =
         [ CGType
         , CGType
+        , CGClass
+            ( False
+            , /Data/Note/Task
+            , [ /Data/Note/Task.. ]
+            , Just "A task is shown in the webdocs as the task it is, rather than as the declaration it was read
+              into: a box to check and the writing beside it. It is the value itself that is shown, with no
+              display type standing in for it, which is what lets checking the box in a doc server write the
+              change back to the note the task was read from."
+            )
         ]
     , prgmAnnots =
         [ /Catln/#md
@@ -33,5 +42,10 @@ Prgm
             A note is a piece of writing that names itself and links to other notes. Each note is a page of
             its own and each link between two notes is an import between their pages, so the graph a set of
             notes forms is the import graph of the program they are read as." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "A task is shown in the webdocs as the task it is, rather than as the declaration it was read
+            into: a box to check and the writing beside it. It is the value itself that is shown, with no
+            display type standing in for it, which is what lets checking the box in a doc server write the
+            change back to the note the task was read from." )
         ]
     }

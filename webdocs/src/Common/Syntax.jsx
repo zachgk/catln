@@ -5,10 +5,13 @@ import {KeyWord, PTypeName, isTopType, Type, tagJoin} from './Common';
 
 function RawObjArr(props) {
   const {roaObj, roaArr, roaDef} = props.roa;
+  const {updateExpr} = props;
 
+  // Only the object is given updateExpr. It is the declared thing, and so the part of a declaration
+  // that has a value to show and to edit; the arrow and the definition are how it is worked out.
   let showObj;
   if (roaObj) {
-    showObj = <RawExpr expr={roaObj} />;
+    showObj = <RawExpr expr={roaObj} updateExpr={updateExpr} />;
   }
 
   let showArr;
@@ -53,11 +56,13 @@ function rawExprMeta(expr) {
 }
 
 function RawExpr(props) {
-  let {expr, update} = props;
+  let {expr, updateExpr} = props;
 
-  // update applies to this expression only, so it is not passed on to the nested RawExprs below:
-  // a sub-expression would need its own replacement target, which nothing tracks yet.
+  // updateExpr replaces whichever expression is named, so this is where it becomes the one-argument
+  // update a value is given: this expression's id is what a value rendered here would be replacing.
+  // It is not passed on to the nested RawExprs below, which are not rendered as values of their own.
   let m = rawExprMeta(expr);
+  let update = updateExpr && (src => updateExpr(m.getMetaID, src));
   let fromVal = tryValue(m.getMetaDat[2], update);
   if (fromVal) {
     return fromVal;

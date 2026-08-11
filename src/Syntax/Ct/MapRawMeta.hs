@@ -17,7 +17,10 @@ import           Control.Monad
 import           Control.Monad.Identity (Identity (runIdentity))
 import           Control.Monad.State    (evalState)
 import           Data.Maybe             (fromMaybe)
+import           Data.UUID              (UUID)
 import           MapMeta
+import           Semantics.Prgm         (ExprClass (getExprMeta),
+                                         Meta (getMetaID))
 import           Syntax.Ct.Prgm
 
 instance MapMeta RawExpr where
@@ -134,3 +137,28 @@ mapMetaRawPrgm f p = runIdentity $ mapMetaRawPrgmM f p
 -- id-less metas, as 'mapMetaRawPrgmM' does not reach it.
 addRawPrgmMetaIDs :: MetaIDScope -> RawPrgm m -> RawPrgm m
 addRawPrgmMetaIDs scope prgm = evalState (mapMetaRawPrgmM addMetaID prgm) scope
+
+-- | Replaces the expression a meta id names, wherever the page declares or annotates it.
+--
+-- The statements of the page and no further, which is as far as an id can name an expression from
+-- outside the compiler: a page is shown statement by statement, and it is a statement's own
+-- expression that a reader of it can edit. An id which names nothing is answered with nothing, so
+-- asking to replace an expression which is not there is reported rather than saving the page
+-- unchanged.
+replaceRawExpr :: UUID -> RawExpr () -> RawPrgm () -> Maybe (RawPrgm ())
+replaceRawExpr metaID expr (RawPrgm imports statementTrees) = case unzip $ map replaceTree statementTrees of
+  (statementTrees', replaced) | or replaced -> Just (RawPrgm imports statementTrees')
+  _                                         -> Nothing
+  where
+    replaceTree (RawStatementTree s tree) = case (replaceStatement s, unzip $ map replaceTree tree) of
+      (Just s', (tree', _))        -> (RawStatementTree s' tree', True)
+      (Nothing, (tree', replaced)) -> (RawStatementTree s tree', or replaced)
+
+    replaceStatement (RawDeclStatement roa@RawObjArr{roaObj=Just o})
+      | names o = Just $ RawDeclStatement roa{roaObj=Just expr}
+    replaceStatement (RawBindStatement roa@RawObjArr{roaObj=Just o})
+      | names o = Just $ RawBindStatement roa{roaObj=Just expr}
+    replaceStatement (RawAnnot a) | names a = Just $ RawAnnot expr
+    replaceStatement _ = Nothing
+
+    names e = getMetaID (getExprMeta e) == metaID

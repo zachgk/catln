@@ -438,23 +438,34 @@ evalAnnots stagePrgms prgmName prgmGraphData = do
     Just own -> return own
     Nothing  -> CErr [MkCNote $ GenCErr Nothing $ printf "Could not find the page %s to evaluate the annotations of" (show $ impRaw prgmName)]
   let env = evalBaseEnvStages stagePrgms prgm
-  globalAnnots' <- buildAnnots env [] globalAnnots
+  globalAnnots' <- buildDisplays env [] "annotation" globalAnnots
   objMapAnnots' <- forM (flatObjectMap objMap) $ \oa -> do
+    let os = [(getExprPartialType $ oaObjExpr oa, oa)]
     -- TODO Make this build annots within arguments
-    buildAnnots env [(getExprPartialType $ oaObjExpr oa, oa)] (oaAnnots oa)
+    annots' <- buildDisplays env os "annotation" (oaAnnots oa)
+    -- A declaration of a value displays as the value it declares, which is what shows the task of
+    -- an Obsidian note as a task rather than as the syntax the note was read into. Only a value:
+    -- 'isValueObjArr' leaves out the declaration of a type, whose arguments are given types rather
+    -- than expressions. That distinction is the only guard there is, because 'evalExpr' meets an
+    -- argument with no expression with an @error@ rather than a 'CErr' — a failure this cannot
+    -- catch and turn into a note.
+    own <- if isValueObjArr oa then buildDisplays env os "declaration" [oaObjExpr oa] else return []
+    return (annots' ++ own)
   return $ concat (globalAnnots' : objMapAnnots')
   where
-    -- Every annotation is evaluated on its own, so a failing one costs only itself: it becomes an
+    -- Every expression is evaluated on its own, so a failing one costs only itself: it becomes an
     -- error note naming it, and the page's other annotations are still returned. This is what lets a
     -- reader of a page with one broken annotation still be shown the rest of them. The failure is not
     -- swallowed — it is reported as an error note, so a consumer that must reject any failure (the
     -- integration tests, via 'failOnErrorNotes') still fails on it.
-    buildAnnots env os annots = do
-      results <- forM annots $ \annot -> case fmap (annot,) <$> evalDShowAnnot env os annot of
+    buildDisplays :: Env -> [(PartialType, EObjArr)] -> String -> [EExpr] -> CRes [(EExpr, Val)]
+    buildDisplays env os what exprs = do
+      results <- forM exprs $ \e -> case fmap (e,) <$> evalDShowAnnot env os e of
         CRes notes r -> CRes notes r
-        CErr notes   -> CRes (annotFailedNote annot : notes) Nothing
+        CErr notes   -> CRes (displayFailedNote what e : notes) Nothing
       return $ catMaybes results
-    annotFailedNote annot = MkCNote $ GenCErr (getMetaPos $ getExprMeta annot) $ printf "Failed to evaluate the annotation %s" (show annot)
+    displayFailedNote :: String -> EExpr -> CNote
+    displayFailedNote what e = MkCNote $ GenCErr (getMetaPos $ getExprMeta e) $ printf "Failed to evaluate the %s %s" what (show e)
 
 -- | Builds a function of a program as a run and evaluates it, threading @ioVal@ as its @/io@ handle.
 -- That handle is the only difference between a real run and a mocked one: an 'IOVal' accumulates

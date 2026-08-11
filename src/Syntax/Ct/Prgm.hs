@@ -91,7 +91,26 @@ data ReplRes m
   deriving (Eq, Show)
 
 type ImportParseResult = IO (RawPrgm (), [RawFileImport], Maybe String)
-type ImportParser = Expr () -> ImportParseResult
+
+-- | How a file written in one syntax is read as a page, and written back as that syntax.
+--
+-- The two directions belong together because only the parser which read a file knows what its
+-- program means as that syntax. A syntax which cannot be written back says so by answering nothing,
+-- rather than by having no reversion at all, so that every syntax is asked the same question and a
+-- page which cannot be saved is reported rather than mistaken for one which can.
+data ImportParser = ImportParser {
+  -- | Reads the file an import names as the program it is.
+  ipParse   :: Expr () -> ImportParseResult,
+  -- | Writes a page back as the file it was read from, or nothing when that syntax has no reversion.
+  --
+  -- A reversion writes the program rather than the file: it may write back what the file said in a
+  -- form other than the one the file said it in.
+  ipUnparse :: RawPrgm () -> Maybe String
+                                 }
+
+-- | A parser which reads a syntax but cannot write it back.
+readOnlyParser :: (Expr () -> ImportParseResult) -> ImportParser
+readOnlyParser parse = ImportParser parse (const Nothing)
 
 instance ExprClass RawExpr where
   getExprMeta expr = case expr of

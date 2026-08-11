@@ -6,6 +6,7 @@ import { ConfigContext } from '../Common/Common'
 import { initVimMode, VimMode } from 'monaco-vim'
 import DocsPage, { AnnotPage } from '../DocsPage'
 import pageResponse from '../test/fixtures/page-response.json'
+import notePageResponse from '../test/fixtures/note-page-response.json'
 
 // Collects the keybindings DocsPage registers, so tests can fire Ctrl+S directly.
 const mocks = vi.hoisted(() => ({ commands: [] }))
@@ -456,6 +457,92 @@ describe('PlayButton', () => {
     // against this page -- not a route that fetches a run for itself.
     expect(decodeURIComponent(screen.getByTestId('location').textContent))
       .toBe(`/annot?annot=#debugger(fun= "main")&prgmName=${PAGE}`)
+  })
+})
+
+// A value shown on a page can edit the expression it was compiled from. The page names that
+// expression by its meta id and saves it back through the parser which read the file, which is what
+// makes a task of an Obsidian note a checkbox to check rather than a declaration to read.
+describe('editing a value on a page', () => {
+  const NOTE = 'vault%2FTasks.md'
+  const TASK_ID = '22222222-2222-5222-9222-222222222222'
+  const CHECKED = '/Data/Note/Task(contents= "Read it", state= /Data/Primitive/True)'
+
+  function noteFetch(overrides = {}) {
+    return mockFetch({ ...overrides, page: () => Promise.resolve({
+      status: 200,
+      json: () => Promise.resolve(notePageResponse),
+    }) })
+  }
+
+  async function renderNote(props = {}) {
+    render(<Providers {...props}><DocsPage prgmName={NOTE} /></Providers>)
+    await waitFor(() => {
+      expect(screen.getByRole('checkbox')).toBeInTheDocument()
+    })
+  }
+
+  // The task is a sub-statement of the page it is declared in, so this is also what proves an
+  // update reaches one.
+  it('writes the expression the value names back to the page', async () => {
+    global.fetch = noteFetch()
+
+    await renderNote()
+    fireEvent.click(screen.getByRole('checkbox'))
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        `/api/write-expr?prgmName=${NOTE}&metaId=${TASK_ID}`,
+        expect.objectContaining({ method: 'POST', body: CHECKED }),
+      )
+    })
+  })
+
+  it('reads the page again once the value is written', async () => {
+    global.fetch = noteFetch()
+
+    await renderNote()
+    const before = global.fetch.mock.calls.filter(([url]) => url.startsWith('/api/page')).length
+    fireEvent.click(screen.getByRole('checkbox'))
+
+    await waitFor(() => {
+      const after = global.fetch.mock.calls.filter(([url]) => url.startsWith('/api/page')).length
+      expect(after).toBe(before + 1)
+    })
+    expect(screen.getByTestId('save-status')).toHaveTextContent('saved')
+  })
+
+  it('reports a write the server refused', async () => {
+    global.fetch = noteFetch({
+      write: () => Promise.resolve({
+        status: 200,
+        json: () => Promise.resolve({
+          tag: 'ResFail',
+          contents: [{ tp: 'CNoteError', msg: 'The page can not be written back as obsidian' }],
+        }),
+      }),
+    })
+
+    await renderNote()
+    fireEvent.click(screen.getByRole('checkbox'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('save-status'))
+        .toHaveTextContent('save failed: The page can not be written back as obsidian')
+    })
+  })
+
+  // A doc server nobody may write to shows the task, and does not offer to change it.
+  it('shows the value but does not edit it when the server is readonly', async () => {
+    global.fetch = noteFetch()
+
+    await renderNote({ config: { isLoaded: true, data: { readonly: true }, notes: [] } })
+
+    expect(screen.getByRole('textbox')).toHaveValue('Read it')
+    expect(screen.getByRole('checkbox')).toBeDisabled()
+    fireEvent.click(screen.getByRole('checkbox'))
+    expect(global.fetch).not.toHaveBeenCalledWith(
+      expect.stringContaining('/api/write-expr'), expect.anything())
   })
 })
 

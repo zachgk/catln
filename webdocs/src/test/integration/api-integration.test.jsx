@@ -429,6 +429,85 @@ describe('Backend API contract', () => {
       expect(after).not.toContain('main = 999')
     })
 
+    // Replacing one expression of a page and saving the page back as the file it was read from.
+    // What the reversion writes is the parser's business, so what the endpoint answers for is which
+    // page, which expression, and whether that syntax can be written back at all.
+    describe('/api/write-expr', () => {
+      // The id of the first expression the page declares, which is one this page really holds. The
+      // page's own comment is a statement of it too, so the declarations are picked out rather than
+      // the first statement taken.
+      async function anExprId(base = API_BASE) {
+        const pageName = await idPageName(base)
+        const page = (await fetchApi(`/api/page?prgmName=${encodeURIComponent(pageName)}`, base)).contents[0]
+        const [, statements] = page.pgPrgm
+        const [statement] = statements
+          .map(([statement]) => statement)
+          .filter(statement => statement.tag === 'RawDeclStatement')
+        expect(statement).toBeDefined()
+        return [pageName, statement.contents.roaObj.contents[0].getMetaID]
+      }
+
+      function writeExpr(prgmName, metaId, source, base = API_BASE) {
+        return fetch(`${base}/api/write-expr?prgmName=${encodeURIComponent(prgmName)}&metaId=${encodeURIComponent(metaId)}`, {
+          method: 'POST',
+          headers: {'Content-Type': 'text/plain'},
+          body: source,
+        })
+      }
+
+      // A .ct page has no reversion yet, so saving one is refused rather than half-done. This is
+      // what a syntax without one answers, and it is the answer every syntax but a note gives.
+      it('refuses a page whose syntax cannot be written back', async () => {
+        const [pageName, metaId] = await anExprId()
+
+        const res = await writeExpr(pageName, metaId, 'main')
+        expect(res.status).toBe(200)
+        const body = await res.json()
+        expect(body.tag).toBe('ResFail')
+        expect(JSON.stringify(body.contents)).toContain('can not be written back')
+
+        // The page is left as it was, since the reversion failed before anything was written.
+        const after = (await fetchApi(`/api/page?prgmName=${encodeURIComponent(pageName)}`)).contents[0].pgSource
+        expect(after).toContain('id')
+      })
+
+      it('refuses an expression the page does not hold', async () => {
+        const pageName = await idPageName()
+
+        const res = await writeExpr(pageName, '00000000-0000-0000-0000-000000000001', 'main')
+        expect(res.status).toBe(200)
+        const body = await res.json()
+        expect(body.tag).toBe('ResFail')
+        expect(JSON.stringify(body.contents)).toContain('holds no expression')
+      })
+
+      it('refuses an id that is not an id', async () => {
+        const pageName = await idPageName()
+
+        const res = await writeExpr(pageName, 'not-an-id', 'main')
+        expect(res.status).toBe(200)
+        expect(JSON.stringify((await res.json()).contents)).toContain('is not an id')
+      })
+
+      it('refuses source it cannot parse', async () => {
+        const [pageName, metaId] = await anExprId()
+
+        const res = await writeExpr(pageName, metaId, '((((')
+        expect(res.status).toBe(200)
+        expect((await res.json()).tag).toBe('ResFail')
+      })
+
+      it('--readonly refuses an expression write', async () => {
+        const [pageName, metaId] = await anExprId(READONLY_API_BASE)
+
+        const res = await writeExpr(pageName, metaId, 'main', READONLY_API_BASE)
+        expect(res.status).toBe(200)
+        const body = await res.json()
+        expect(body.tag).toBe('ResFail')
+        expect(JSON.stringify(body.contents)).toContain('readonly')
+      })
+    })
+
     it('round-trips a page source', async () => {
       const pageName = await idPageName()
 

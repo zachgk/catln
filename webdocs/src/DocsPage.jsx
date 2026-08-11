@@ -156,6 +156,35 @@ function DocsPage(props) {
     }
   };
 
+  // Replaces one expression of the page and saves the page back as the file it was read from. This
+  // is what a value shown on the page edits: it says what its expression should now be, as Catln
+  // source, and the server writes the file in whatever syntax the page is written in. So checking a
+  // task of an Obsidian note writes markdown, without the page having to know that it is markdown.
+  //
+  // The save is reported where a save from the editor is reported, and the page is refetched after
+  // it so the value shows what the file now says rather than what was asked for.
+  const updateExpr = async (metaID, src) => {
+    setSaveState({status: 'saving'});
+    try {
+      const res = await fetch(`/api/write-expr?prgmName=${prgmName}&metaId=${metaID}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'text/plain'},
+        body: src
+      });
+      const json = await res.json();
+      if (res.status === 200 && json.tag === 'Success') {
+        setSaveState({status: 'saved'});
+        setReloadKey(k => k + 1);
+      } else {
+        const notes = json.tag === 'ResFail' ? json.contents : null;
+        const msg = notes?.map(n => n.msg).join('; ') || res.statusText || 'unknown error';
+        setSaveState({status: 'error', message: msg});
+      }
+    } catch (e) {
+      setSaveState({status: 'error', message: e.message});
+    }
+  };
+
   const handleEditorMount = (editor, monaco) => {
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => saveRef.current?.());
     setEditorInstance(editor);
@@ -268,6 +297,9 @@ function DocsPage(props) {
         <div>
           {canEdit && (
             <div style={{textAlign: 'right'}}>
+              {/* In edit mode the save status belongs to the buffer and sits in the editor's own
+                  status row, so it is shown here only while reading, where a value is what saves. */}
+              {mode === 'view' && <SaveStatus saveState={saveState} isDirty={false} />}
               <IconButton onClick={toggleMode} size="small" aria-label={mode === 'view' ? 'Edit' : 'View'}>
                 {mode === 'view' ? <EditIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
               </IconButton>
@@ -275,7 +307,7 @@ function DocsPage(props) {
           )}
           {mode === 'view' ? (
             <Loading status={apiResult}>
-              <Main data={prgmData} prgmName={prgmName}/>
+              <Main data={prgmData} prgmName={prgmName} updateExpr={canEdit ? updateExpr : undefined}/>
             </Loading>
           ) : (
             <Loading status={apiResult}>
@@ -361,9 +393,13 @@ function SaveStatus(props) {
 // compile this one as though it belonged to. Without one it is compiled against every loaded file,
 // which is what an annotation about the whole program wants.
 //
-// The displayed value can edit the annotation it came from: update replaces the annotation
+// The displayed value can edit the annotation it came from: updating replaces the annotation
 // source, which refetches and so recompiles the page. useApi keeps the previous data while the
 // new annotation compiles, so the page updates in place rather than flashing back to "Loading".
+//
+// Which expression is being replaced does not arise here, since the page is the one annotation, so
+// the id it is named by is passed over. Nothing is written: an annotation compiled from a query has
+// no file to be written back to.
 function AnnotPage(props) {
   const query = useQuery();
   const routeAnnot = props.annot || query.get("annot");
@@ -380,7 +416,7 @@ function AnnotPage(props) {
   return (
     <PrgmNameContext.Provider value={prgmName}>
       <Loading status={apiResult}>
-        <Main data={apiResult.data} prgmName={prgmName} update={setAnnot}/>
+        <Main data={apiResult.data} prgmName={prgmName} updateExpr={(_metaID, src) => setAnnot(src)}/>
       </Loading>
     </PrgmNameContext.Provider>
   );
@@ -425,14 +461,14 @@ function annotStatementValue(data) {
 }
 
 function Main(props) {
-  const {data, prgmName, update} = props;
+  const {data, prgmName, updateExpr} = props;
   const [imports, statements] = data;
 
   return (
     <div>
       {imports.map((imp, ind) => <Import key={ind} imp={imp}/>)}
       <br/>
-      <Statements statements={statements} root={true} prgmName={prgmName} update={update} />
+      <Statements statements={statements} root={true} prgmName={prgmName} updateExpr={updateExpr} />
     </div>
   );
 }
@@ -446,28 +482,29 @@ function Import(props) {
 }
 
 function Statements(props) {
-  return props.statements.map((statement, index) => <StatementTree key={index} statementTree={statement} prgmName={props.prgmName} root={props.root} update={props.update} />);
+  return props.statements.map((statement, index) => <StatementTree key={index} statementTree={statement} prgmName={props.prgmName} root={props.root} updateExpr={props.updateExpr} />);
 }
 
 function StatementTree(props) {
-  const {statementTree, prgmName, update} = props;
+  const {statementTree, prgmName, updateExpr} = props;
   const [statement, subStatements] = statementTree;
   const classes = useStyles();
 
-  // The sub-statements do not inherit update: it names one expression to replace, and a nested
-  // statement is a different expression.
+  // The sub-statements do inherit updateExpr, which names the expression it replaces rather than
+  // leaving it to be understood: a nested statement is a different expression, not an uneditable
+  // one. A note's tasks are sub-statements of the page they are declared in.
   return (
     <div>
-      <Statement statement={statement} prgmName={prgmName} update={update}/>
+      <Statement statement={statement} prgmName={prgmName} updateExpr={updateExpr}/>
       <div className={classes.indented}>
-        {subStatements.map((subStatement, index) => <StatementTree key={index} statementTree={subStatement} prgmName={prgmName} />)}
+        {subStatements.map((subStatement, index) => <StatementTree key={index} statementTree={subStatement} prgmName={prgmName} updateExpr={updateExpr} />)}
       </div>
     </div>
   );
 }
 
 function Statement(props) {
-  const {statement, prgmName, update} = props;
+  const {statement, prgmName, updateExpr} = props;
   const classes = useStyles();
 
   switch(statement.tag) {
@@ -477,7 +514,7 @@ function Statement(props) {
       return (
         <div>
           <PlayButton prgmName={prgmName} fun={md[1].contents}/>
-          <RawObjArr roa={statement.contents} />
+          <RawObjArr roa={statement.contents} updateExpr={updateExpr} />
         </div>
       );
     } else {
@@ -492,7 +529,7 @@ function Statement(props) {
       }
       return (
         <div className={classes.noPlay}>
-          <RawObjArr roa={statement.contents} />
+          <RawObjArr roa={statement.contents} updateExpr={updateExpr} />
           {showNoEval}
         </div>
       );
@@ -500,7 +537,7 @@ function Statement(props) {
   case "RawAnnot":
     return (
       <div className={classes.noPlay}>
-        <RawExpr expr={statement.contents} update={update} />
+        <RawExpr expr={statement.contents} updateExpr={updateExpr} />
       </div>
     );
   default:
