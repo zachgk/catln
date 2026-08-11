@@ -440,11 +440,15 @@ exprArgsWithVal (TupleApply _ (_, be) arg) val = H.union (exprArgsWithVal be val
     fromArg (EAppArg ObjArr{oaObj=Nothing, oaArr=Just (Just e, _)}) _ = exprArgsWithVal e val
     fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Nothing, _)}) (TupleVal _ tupleArgs) = case H.lookup (nameStr (exprPath obj)) tupleArgs of
       -- An alias destructure (@field@name@) is matched by the field (@exprPath obj@ follows the
-      -- base) and bound under the alias name (what the body references). It is ALSO bound under
-      -- the field name so a non-linear pattern's equality guard (@f(a@x, b@x)@) can still read
-      -- both original positions @a@ and @b@, which the shared alias @x@ alone would collapse.
+      -- base) and bound ONLY under the alias name (what the body references) — renaming to the
+      -- alias is precisely how a nested destructure avoids colliding with a same-named parameter
+      -- of the enclosing arm (e.g. @insert(m= Node(key@nk, ..), key, ..)@ where the node's own
+      -- @key@ must not shadow the arm's @key@ argument; the 'H.union' above is left-biased toward
+      -- the deeper destructure). The non-linear equality guard (@f(a@x, b@x)@) does not rely on a
+      -- bare-field binding here — 'evalNonLinearEq' reads the original positions straight from the
+      -- value's own tuple args.
       Just val' -> case obj of
-        AliasExpr _ aliasE -> H.fromList [(nameStr (exprPath obj), val'), (nameStr (exprPath aliasE), val')]
+        AliasExpr _ aliasE -> H.singleton (nameStr (exprPath aliasE)) val'
         _                  -> H.singleton (nameStr (exprPath obj)) val'
       Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)
     fromArg EAppVar{} _ = H.empty
@@ -467,12 +471,11 @@ texprArgsWithVal (TTupleApply _ (_, be) arg) val = H.union (texprArgsWithVal be 
       Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)
     fromArg (EAppArg ObjArr{oaObj=Nothing, oaArr=Just (Just e, _)}) _ = texprArgsWithVal e val
     fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Nothing, _)}) (TupleVal _ tupleArgs) = case H.lookup (nameStr (exprPath obj)) tupleArgs of
-      -- An alias destructure (@field@name@) is matched by the field (@exprPath obj@ follows the
-      -- base) and bound under the alias name (what the body references). It is ALSO bound under
-      -- the field name so a non-linear pattern's equality guard (@f(a@x, b@x)@) can still read
-      -- both original positions @a@ and @b@, which the shared alias @x@ alone would collapse.
+      -- Bound ONLY under the alias name, mirroring 'exprArgsWithVal' above (which carries the
+      -- full rationale) — the two paths are selected by 'buildArrArgs' on the same patterns, so
+      -- they must agree.
       Just val' -> case obj of
-        TAliasExpr _ aliasE -> H.fromList [(nameStr (exprPath obj), val'), (nameStr (exprPath aliasE), val')]
+        TAliasExpr _ aliasE -> H.singleton (nameStr (exprPath aliasE)) val'
         _                   -> H.singleton (nameStr (exprPath obj)) val'
       Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)
     fromArg EAppVar{} _ = H.empty
