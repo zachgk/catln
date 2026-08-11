@@ -1,0 +1,41 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/Data/Note/Task"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Task
+                            ( Value /contents= CStr "Read [[Welcome]]" )( Value /state= Value /Data/Primitive/False )
+                        , /Data/Note/Task
+                            ( Value /contents= CStr "Write this note" )( Value /state= Value /Data/Primitive/True )
+                        , /Data/Note/Task
+                            ( Value /contents= CStr "Plan the rest" )( Value /state= Value /Data/Primitive/False )
+                        , /Data/Note/Task
+                            ( Value /contents= CStr "A checkbox indented deeper is a task of its own" )( Value /state= Value /Data/Primitive/False )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Page"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Page
+                            ( Value /title= CStr "Tasks" )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots = []
+    }

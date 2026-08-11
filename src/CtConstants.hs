@@ -60,10 +60,14 @@ mdAnnot, mdAnnotText :: String
 mdAnnot = "/Catln/#md"
 mdAnnotText = "text"
 
--- | The type one note is read as, declared in @stack/core/note.ct@.
-notePagePath, notePageTitle :: String
+-- | The types one note is read as, declared in @stack/core/note.ct@. A note is a 'notePagePath'
+-- holding the writing of it, broken at each checkbox by a 'noteTaskPath'.
+notePagePath, notePageTitle, noteTaskPath, noteTaskContents, noteTaskState :: String
 notePagePath = "/Data/Note/Page"
 notePageTitle = "title"
+noteTaskPath = "/Data/Note/Task"
+noteTaskContents = "contents"
+noteTaskState = "state"
 
 printAnnot, printAnnotText, resultAnnotText :: String
 printAnnot = "/Catln/#print"

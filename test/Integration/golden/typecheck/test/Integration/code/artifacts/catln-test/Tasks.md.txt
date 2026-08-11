@@ -1,0 +1,71 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/Data/Note/Task"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Task
+                            ( Value /contents -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Read [[Welcome]]" ]
+                                ) = CStr "Read [[Welcome]]"
+                            )( Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
+                        , /Data/Note/Task
+                            ( Value /contents -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Write this note" ]
+                                ) = CStr "Write this note"
+                            )( Value /state -> /Data/Primitive/True = Value /Data/Primitive/True )
+                        , /Data/Note/Task
+                            ( Value /contents -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Plan the rest" ]
+                                ) = CStr "Plan the rest"
+                            )( Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
+                        , /Data/Note/Task
+                            ( Value /contents -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "A checkbox indented deeper is a task of its own" ]
+                                ) = CStr "A checkbox indented deeper is a task of its own"
+                            )( Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Page"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Page
+                            ( Value /title -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Tasks" ]
+                                ) = CStr "Tasks"
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots = []
+    }

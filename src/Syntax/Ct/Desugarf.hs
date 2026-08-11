@@ -25,6 +25,7 @@ import           CRes
 import           CtConstants
 import           Data.Bifunctor                   (first)
 import           Data.Graph                       hiding (path)
+import           Data.List                        (partition)
 import           MapMeta
 import           Semantics
 import           Semantics.Prgm
@@ -49,9 +50,16 @@ flattenNestedDeclarations statementEnv (roa@RawObjArr{roaObj=Just objExpression,
 
   let oa2 = (semiDesObjArr roa){oaAnnots=annots2, oaDoc=objDoc}
 
-  let (oa3, subDecls2) = scopeSubDeclFunNames oa2 subDecls
+  -- A type declared within a declaration is a type of the module it is written in rather than a
+  -- helper of the declaration, so it is neither renamed under the declaration's name nor given the
+  -- declaration's arguments. Only the sub functions are scoped and curried. What is left out is the
+  -- shape 'singletonObjectMap' reads as a type object: a 'TypeObj' with no arrow. Both halves of
+  -- that matter, as the continuation a bind desugars to is a 'TypeObj' /with/ an arrow and is a sub
+  -- function like any other.
+  let (subTypes, subFuns) = partition (\d -> oaBasis d == TypeObj && isNothing (oaArr d)) $ flatObjectMap subDecls
+  let (oa3, subDecls2) = scopeSubDeclFunNames oa2 (objectMapFromList subFuns)
   let (oa4, subDecls3) = currySubFunctions oa3 subDecls2
-  return (oa4, subDecls3)
+  return (oa4, subDecls3 <> objectMapFromList subTypes)
 flattenNestedDeclarations _ d = error $ printf "flattenNestedDeclarations without input expression: %s" (show d)
 
 data DOEValName = UseRelativeName | UseTypeName deriving (Eq, Show)

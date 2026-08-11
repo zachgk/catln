@@ -16,9 +16,9 @@ import           Control.Applicative  ((<|>))
 import           CtConstants
 import           Data.Char            (isDigit, isSpace)
 import           Data.Foldable        (toList)
-import           Data.List            (intercalate, isPrefixOf, isSuffixOf, nub,
-                                       sort)
-import           Data.Maybe           (listToMaybe, mapMaybe)
+import           Data.List            (dropWhileEnd, intercalate, isPrefixOf,
+                                       isSuffixOf, nub, sort)
+import           Data.Maybe           (isJust, listToMaybe, mapMaybe)
 import qualified Data.Text            as T
 import           Semantics.Prgm
 import           Semantics.Types      (Constant (CStr), mkName, partialKey)
@@ -48,7 +48,9 @@ obsidianConfigDir = ".obsidian"
 -- A vault is a page of its own whose program is empty, holding every note as an import. A note is a
 -- page holding a 'CtConstants.notePagePath' for itself, whose comment is the note as it was
 -- written, and importing each of the notes it links to. So the graph the notes of a vault form by
--- linking to each other is the import graph of the pages they are read as.
+-- linking to each other is the import graph of the pages they are read as. The one part of a note
+-- that says something the program can act on is a checkbox, which is read as a
+-- 'CtConstants.noteTaskPath' declared where it was written.
 --
 -- Which of the two an import is comes from what its path names, a directory or a file, so that a
 -- vault and its notes are read by the one parser. Neither is named a vault by the import: a vault is
@@ -119,11 +121,116 @@ notePrgm vault note = do
 -- reads the note. A comment written under a declaration becomes both its doc comment and a
 -- 'CtConstants.mdAnnot' annotation on it, which is the same annotation a whole markdown page is read
 -- as by 'Syntax.Md.Parser.mdParser' and which the webdocs already display.
+--
+-- A task is a break in that writing: the comment ends where the checkbox was written, the task is
+-- declared in its place, and what follows goes on as another comment. So the page holds the tasks of
+-- the note in the order and the place they were written, and reading it is still reading the note.
+-- Whatever is written under a checkbox is a comment inside its task, by the same reading that makes
+-- the note a comment inside its page.
 notePageStatement :: String -> String -> RawStatementTree RawExpr ()
-notePageStatement title contents = RawStatementTree (RawDeclStatement page) [RawStatementTree (RawAnnot (rawComment contents)) []]
+notePageStatement title contents = RawStatementTree (RawDeclStatement page) (map partStatement $ noteParts contents)
   where
     page = RawObjArr (Just pageExpr) TypeObj Nothing [] Nothing Nothing
     pageExpr = rawVal notePagePath `applyRawArgs` [(Just $ partialKey (mkName notePageTitle), rawStr title)]
+
+    partStatement (NoteWriting writing) = RawStatementTree (RawAnnot (rawComment writing)) []
+    partStatement (NoteTask says done under) = RawStatementTree (RawDeclStatement task) [RawStatementTree (RawAnnot (rawComment under)) [] | not (null under)]
+      where
+        task = RawObjArr (Just taskExpr) TypeObj Nothing [] Nothing Nothing
+        taskExpr = rawVal noteTaskPath `applyRawArgs` [
+          (Just $ partialKey (mkName noteTaskContents), rawStr says),
+          (Just $ partialKey (mkName noteTaskState), rawVal (if done then truePrim else falsePrim))
+                                                     ]
+
+-- | What a note is written as: the writing of it, and the tasks that break the writing.
+data NotePart
+  = NoteWriting String
+  -- | What the checkbox says, whether it is checked, and what is written under it.
+  | NoteTask String Bool String
+  deriving (Eq, Show)
+
+-- | Breaks a note into the writing and the tasks it holds, in the order they were written.
+--
+-- Writing that is only blank lines is left out, as two checkboxes written one after the other have
+-- nothing written between them, and the blank lines around a run of writing are dropped so that the
+-- comment is the writing itself. What is left is written as it was: the indentation of a line is
+-- markdown of its own and is not touched.
+--
+-- Code is passed over, as a checkbox written inside a fenced block is writing about a task rather
+-- than making one, which is the reading 'blockText' already gives a wiki link inside code. The state
+-- of a fence is carried through what is written under a task as well, so that a block opened there
+-- is still open after it.
+noteParts :: String -> [NotePart]
+noteParts = go False [] . lines
+  where
+    go _ acc [] = writingPart acc
+    go inCode acc (l:ls)
+      | isFence l = go (not inCode) (l:acc) ls
+      | not inCode, Just (says, done) <- taskLine l = let (under, inCode', ls') = taskWriting (indentation l) inCode ls in
+          writingPart acc ++ (NoteTask says done under : go inCode' [] ls')
+      | otherwise = go inCode (l:acc) ls
+
+    writingPart acc = [NoteWriting writing | let writing = joinLines (reverse acc), not (null writing)]
+
+-- | What is written under a checkbox, where the note goes on, and whether that is inside a fence.
+--
+-- A line is written within the task while it is indented deeper than the checkbox itself. A checkbox
+-- indented deeper is a task of its own rather than writing about the one above it, as every checkbox
+-- of a note is a task of it.
+--
+-- What is found is written back out without the indentation it was written at, as markdown reads
+-- four spaces of indentation as code and what is written under a task is writing rather than code.
+taskWriting :: Int -> Bool -> [String] -> (String, Bool, [String])
+taskWriting ind inCode ls = (joinLines $ dedent within, inCode', rest)
+  where
+    (within, inCode', rest) = aux [] inCode ls
+    aux acc code (l:ls')
+      | isBlank l || (not (isCheckbox code l) && indentation l > ind) = aux (l:acc) (if isFence l then not code else code) ls'
+    aux acc code ls' = (reverse acc, code, ls')
+    isCheckbox code l = not code && isJust (taskLine l)
+
+-- | What a checkbox line says and whether it is checked, if the line is a checkbox at all.
+--
+-- A checkbox is a list item whose writing begins with a box: @- [ ] a task@, @1. [x] a task done@.
+-- Obsidian writes a state of its own within the box as any one character, such as @[\/]@ for a task
+-- begun, so any character is a box. The checked one is @x@, as markdown itself reads it, and every
+-- other box, the empty one included, is unchecked.
+taskLine :: String -> Maybe (String, Bool)
+taskLine line = do
+  afterMarker <- listMarker $ dropWhile isSpace line
+  case afterMarker of
+    ('[':box:']':rest) | box /= ']', null rest || isSpace (head rest) -> Just (trim rest, box `elem` ['x', 'X'])
+    _ -> Nothing
+
+-- | What a list item is written after, if a line begins one: a bullet or a number, and the space it
+-- is followed by.
+listMarker :: String -> Maybe String
+listMarker (bullet:c:rest) | bullet `elem` ['-', '*', '+'], isSpace c = Just $ dropWhile isSpace rest
+listMarker s = case span isDigit s of
+  (digits, marker:c:rest) | not (null digits), marker `elem` ['.', ')'], isSpace c -> Just $ dropWhile isSpace rest
+  _ -> Nothing
+
+-- | The writing a run of lines is, without the blank lines around it.
+joinLines :: [String] -> String
+joinLines = intercalate "\n" . dropWhileEnd isBlank . dropWhile isBlank
+
+-- | Writes a run of lines without the indentation the whole of it was written at.
+dedent :: [String] -> [String]
+dedent ls = map (drop ind) ls
+  where
+    ind = minimum $ maxBound : map indentation (filter (not . isBlank) ls)
+
+-- | Whether a line opens or closes a fenced code block.
+isFence :: String -> Bool
+isFence l = any (`isPrefixOf` dropWhile isSpace l) ["```", "~~~"]
+
+-- | Whether a line is written on at all.
+isBlank :: String -> Bool
+isBlank = all isSpace
+
+-- | The width a line is written at.
+indentation :: String -> Int
+indentation = length . takeWhile isSpace
 
 -- | The notes of a vault: every markdown file under it, at any depth.
 --
@@ -167,7 +274,21 @@ wikiLinks note contents = case MMark.parse note (T.pack masked) of
   Left _    -> []
   Right doc -> unmaskWikiLinks links $ intercalate "\n" $ map blockText $ reverse $ MMark.runScanner doc (scanner [] (flip (:)))
   where
-    (masked, links) = maskWikiLinks contents
+    (masked, links) = maskWikiLinks $ unboxed contents
+
+-- | The note with the box of each checkbox taken out of it.
+--
+-- A box is a reference to a definition that a note never gives, which is exactly what a wiki link is
+-- to the markdown parser, so a note holding a single checkbox parses as no markdown at all and would
+-- be read as a note that links to nothing. A checkbox is written back as the list item it is,
+-- indented where it was and holding what it says, as what a checkbox says is writing of the note
+-- like any other.
+unboxed :: String -> String
+unboxed = intercalate "\n" . map aux . lines
+  where
+    aux l = case taskLine l of
+      Just (says, _) -> takeWhile isSpace l ++ "- " ++ says
+      Nothing        -> l
 
 -- | Replaces every wiki link of a note with a placeholder, answering the note and the links taken
 -- out of it.
@@ -276,6 +397,7 @@ resolveWikiLink vault notes link = case wikiLinkTarget link of
 -- | The note a wiki link names, without the place within it or the words it is shown as.
 wikiLinkTarget :: String -> String
 wikiLinkTarget = trim . takeWhile (/= '#') . takeWhile (/= '|')
-  where
-    trim = dropWhileEnd' . dropWhile isSpace
-    dropWhileEnd' = reverse . dropWhile isSpace . reverse
+
+-- | Text without the whitespace written around it.
+trim :: String -> String
+trim = dropWhileEnd isSpace . dropWhile isSpace

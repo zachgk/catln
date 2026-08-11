@@ -1,3 +1,4 @@
+import "core/bool.ct"
 import "core/str.ct"
 
 
@@ -10,3 +11,10 @@ module(Data/Note)
     # A [Page] is one note. It holds the [title] the note is known and linked by; the writing itself
       is the comment inside the page rather than a field of it, so reading the page is reading the
       note. Importing an Obsidian vault reads it as one [Page] per note of it.
+  data(Task(contents -> String, state -> Boolean))
+    # A [Task] is one thing to do, written in a note as a markdown checkbox. Its [contents] are what
+      the checkbox says and its [state] is whether the box is checked. A task is a break in the
+      writing of the note holding it: the comment ends where the checkbox was written, the [Task] is
+      declared in its place, and the writing goes on after it as another comment. So the tasks of a
+      note are declared in the order and the place they were written, and whatever is written
+      indented under a checkbox is the comment inside its [Task].

@@ -2,6 +2,16 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
+                ( "/Data/Note/Task"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Task( Value /contents -> /Data/String )( Value /state -> ∀/Data/Primitive/Boolean ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/Note/Page"
                 , ObjectMapItem
                     { omiDecls =
@@ -13,7 +23,10 @@ Prgm
                 )
             ]
         )
-    , prgmCG = [ CGType ]
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
     , prgmAnnots =
         [ /Catln/#md
             ( Value /text= CStr "# Notes
