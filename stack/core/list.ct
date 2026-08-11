@@ -9,8 +9,16 @@ module(Data)
     operations every list supports without fixing how the items are stored. Concrete list types
     implement it — this file provides the [ConsList], and a future [ArrayList] or [TreeList] would
     be another. Because [sum], [reversed], [sorted] and the rest are declared on [List] rather than
-    on one concrete type, every list type reuses those same declarations just by being a [List].
+    on one concrete type, every list type reuses those same declarations just by being a [List]. The
+    [List] interface lives here directly under [Data]; the [ConsList] implementation and the
+    operations all live in the [Data/List] namespace it opens.
   class(List[$T])
+
+# # The ConsList and the List operations
+  Everything else list-related lives in [module(Data/List)] — the namespace the [List] class opens —
+  so the [ConsList] type, its constructors [Cons]/[Nil], and every operation sit under [/Data/List]
+  rather than loose at the top of [/Data].
+module(Data/List)
   class(ConsList[$T], [Cons[$T -> $_T](head -> $T, tail -> ConsList[$T -> $_T]), Nil])
     # A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
       smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
@@ -27,7 +35,7 @@ module(Data)
     # The number of items in a list, found by walking to the end. It is declared on [List] (any
       list has a length) and implemented here for the [ConsList] constructors.
   :Nil.length= 0
-  /Data/Cons(head, tail).length= 1 + tail.length
+  Cons(head, tail).length= 1 + tail.length
   :/Data/List.length -> Integer_nonNeg
     # A length is never negative — a refinement the derived agreement tests check against the
       definition above.
@@ -40,32 +48,32 @@ module(Data)
     # [sum] adds up a list of [Integer]s. The empty list sums to zero; a non-empty list adds its
       [head] to the sum of its [tail].
   sum(lst= Nil)= 0
-  sum(lst= /Data/Cons[$T -> Integer](head, tail))= head + sum(lst= tail)
+  sum(lst= Cons[$T -> Integer](head, tail))= head + sum(lst= tail)
 
-  > /Data/sum(lst= [1, 2, 3])
+  > /Data/List/sum(lst= [1, 2, 3])
     >>> 6
-  > /Data/sum(lst= [])
+  > /Data/List/sum(lst= [])
     >>> 0
   # ## Universal and existential quantifiers
   all(lst -> /Data/List[$T -> Boolean]) -> Boolean
     # [all] is [True] when every element of a list of [Boolean]s is [True]. The empty list is
       vacuously [True], and each element is [and]ed with the result for the [tail].
   all(lst= Nil)= /Data/Primitive/True
-  all(lst= /Data/Cons[$T -> Boolean](head, tail))= head && all(lst= tail)
+  all(lst= Cons[$T -> Boolean](head, tail))= head && all(lst= tail)
 
-  > /Data/all(lst= [True, True])
+  > /Data/List/all(lst= [True, True])
     >>> True
-  > /Data/all(lst= [False])
+  > /Data/List/all(lst= [False])
     >>> False
   any(lst -> /Data/List[$T -> Boolean]) -> Boolean
     # [any] is [True] when at least one element is [True] — the mirror of [all], with [or] and a
       [False] base case for the empty list.
   any(lst= Nil)= /Data/Primitive/False
-  any(lst= /Data/Cons[$T -> Boolean](head, tail))= head || any(lst= tail)
+  any(lst= Cons[$T -> Boolean](head, tail))= head || any(lst= tail)
 
-  > /Data/any(lst= [True])
+  > /Data/List/any(lst= [True])
     >>> True
-  > /Data/any(lst= [False, False])
+  > /Data/List/any(lst= [False, False])
     >>> False
   # ## Reversing
   reversed(lst -> /Data/List) -> /Data/List
@@ -76,12 +84,12 @@ module(Data)
   reversed(lst) =
     reverseOnto(lst -> ConsList, acc -> ConsList) -> ConsList
     reverseOnto(lst= Nil, acc)= acc
-    reverseOnto(lst= /Data/Cons(head, tail), acc)= reverseOnto(lst= tail, acc= /Data/Cons(head= head, tail= acc))
-    reverseOnto(lst= lst, acc= /Data/Nil)
+    reverseOnto(lst= Cons(head, tail), acc)= reverseOnto(lst= tail, acc= Cons(head= head, tail= acc))
+    reverseOnto(lst= lst, acc= Nil)
 
-  > /Data/reversed(lst= [1, 2, 3])
+  > /Data/List/reversed(lst= [1, 2, 3])
     >>> [3, 2, 1]
-  > /Data/reversed(lst= [])
+  > /Data/List/reversed(lst= [])
     >>> []
   # ## Sorting
   sorted[$T -> /Data/Algebra/Ord](lst -> /Data/List[$T -> $_T]) -> /Data/List[$T -> $_T]
@@ -90,20 +98,20 @@ module(Data)
       sorted list and places [x] before the first item it is not greater than; [insertStep] carries
       the [x <= head] decision, splicing [x] in when [True] and recursing into the [tail] when
       [False].
-  sorted(lst= Nil)= /Data/Nil
-  sorted(lst= /Data/Cons[$T -> /Data/Algebra/Ord](head@h, tail@t)) =
+  sorted(lst= Nil)= Nil
+  sorted(lst= Cons[$T -> /Data/Algebra/Ord](head@h, tail@t)) =
     insertStep[$T -> /Data/Algebra/Ord](before -> Boolean, x -> $T, head -> $T, tail -> ConsList[$T -> /Data/Algebra/Ord]) -> ConsList[$T -> $_T]
-    insertStep[$T -> /Data/Algebra/Ord](before= /Data/Primitive/True, x, head, tail)= /Data/Cons(head= x, tail= /Data/Cons(head= head, tail= tail))
-    insertStep[$T -> /Data/Algebra/Ord](before= /Data/Primitive/False, x, head, tail)= /Data/Cons(head= head, tail= insert(x= x, lst= tail))
+    insertStep[$T -> /Data/Algebra/Ord](before= /Data/Primitive/True, x, head, tail)= Cons(head= x, tail= Cons(head= head, tail= tail))
+    insertStep[$T -> /Data/Algebra/Ord](before= /Data/Primitive/False, x, head, tail)= Cons(head= head, tail= insert(x= x, lst= tail))
 
     insert[$T -> /Data/Algebra/Ord](x -> $T, lst -> ConsList[$T -> /Data/Algebra/Ord]) -> ConsList[$T -> $_T]
-    insert(x, lst= Nil)= /Data/Cons(head= x, tail= /Data/Nil)
-    insert(x, lst= /Data/Cons[$T -> /Data/Algebra/Ord](head, tail))= insertStep(before= x.compareTo(other= head).isLessEq, x= x, head= head, tail= tail)
+    insert(x, lst= Nil)= Cons(head= x, tail= Nil)
+    insert(x, lst= Cons[$T -> /Data/Algebra/Ord](head, tail))= insertStep(before= x.compareTo(other= head).isLessEq, x= x, head= head, tail= tail)
     insert(x= h, lst= sorted(lst= t))
 
-  > /Data/sorted(lst= [3, 1, 2])
+  > /Data/List/sorted(lst= [3, 1, 2])
     >>> [1, 2, 3]
-  > /Data/sorted(lst= [5, 4, 4, 1])
+  > /Data/List/sorted(lst= [5, 4, 4, 1])
     >>> [1, 4, 4, 5]
   # ## Counting ranges
   range(stop -> Integer) -> /Data/List[$T -> Integer]
@@ -116,14 +124,14 @@ module(Data)
     rangeFrom(i, stop)= rangeStep(more= i < stop, i= i, stop= stop)
 
     rangeStep(more -> Boolean, i -> Integer, stop -> Integer) -> ConsList[$T -> Integer]
-    rangeStep(more= /Data/Primitive/False, i, stop)= /Data/Nil
-    rangeStep(more= /Data/Primitive/True, i, stop)= /Data/Cons(head= i, tail= rangeFrom(i= i + 1, stop= stop))
+    rangeStep(more= /Data/Primitive/False, i, stop)= Nil
+    rangeStep(more= /Data/Primitive/True, i, stop)= Cons(head= i, tail= rangeFrom(i= i + 1, stop= stop))
 
     rangeFrom(i= 0, stop= stop)
 
-  > /Data/range(stop= 3)
+  > /Data/List/range(stop= 3)
     >>> [0, 1, 2]
-  > /Data/range(stop= 0)
+  > /Data/List/range(stop= 0)
     >>> []
   # ## Rendering as text
   every(/Data/List[$T -> /Data/ToString], isa= [/Data/ToString])
@@ -132,14 +140,14 @@ module(Data)
       [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
       implement it.
 
-  :/Data/Nil.toString= "[]"
-  :/Data/Cons[$T -> /Data/ToString](head@h, tail@t).toString =
+  :Nil.toString= "[]"
+  :Cons[$T -> /Data/ToString](head@h, tail@t).toString =
     # [restToString] renders the items after the first, each with a leading ", " separator, so the
       opening item carries no comma and the commas fall between items. It destructures its own
       [head]/[tail], so the enclosing arm renames its fields to [h]/[t] to avoid the collision.
     restToString(lst -> ConsList[$T -> /Data/ToString]) -> String
     restToString(lst= Nil)= ""
-    restToString(lst= /Data/Cons[$T -> /Data/ToString](head, tail))= ", " ++ head.toString ++ restToString(lst= tail)
+    restToString(lst= Cons[$T -> /Data/ToString](head, tail))= ", " ++ head.toString ++ restToString(lst= tail)
 
     "[" ++ h.toString ++ restToString(lst= t) ++ "]"
 
@@ -154,23 +162,22 @@ module(Data)
   consThen(first= /Data/Algebra/LessThan, second)= /Data/Algebra/LessThan
   consThen(first= /Data/Algebra/GreaterThan, second)= /Data/Algebra/GreaterThan
 
-  # ## Functor
-  every(ConsList[$T -> $_T], isa= [/Data/Functor])
-    # A [ConsList] is a [Functor]: [fmap] applies a function to every element while preserving the
-      list's shape — same length, same order — so mapping [f] over [[1, 2, 3]] gives [[f 1, f 2, f
-      3]]. Lists are the canonical [Functor]; "map a function over a collection" is exactly the
-      operation [fmap] generalises. The instance itself lives in [module(Data/List)] below.
-
 # # ConsList Functor instance
+  A [ConsList] is a [Functor]: [fmap] applies a function to every element while preserving the
+  list's shape — same length, same order — so mapping [f] over [[1, 2, 3]] gives [[f 1, f 2, f 3]].
+  Lists are the canonical [Functor]; "map a function over a collection" is exactly the operation
+  [fmap] generalises.
+module(Data)
+  every(/Data/List/ConsList[$T -> $_T], isa= [/Data/Functor])
 module(Data/List)
-  # [fmap] over a [ConsList] rebuilds the list, applying [fn] to each [head]. This is the
-  # [ConsList] instance of the generic [fmap] declared over [Functor] in [Data]. It lives in its
-  # own module so the open [Functor] interface need not be totally covered while still resolving
-  # for [fmap] calls on a [ConsList].
-  /Data/fmap(lst= Nil, fn(v))= Nil
-  /Data/fmap(lst= /Data/Cons(head, tail), fn(v))= /Data/Cons(head= fn(v= head), tail= /Data/fmap(lst= tail, fn(v)= fn(v= v)))
+  # [fmap] over a [ConsList] rebuilds the list, applying [fn] to each [head]. This is the [ConsList]
+  # instance of the generic [fmap] declared over [Functor] in [Data/functor]. The instance is
+  # written under the declaration's absolute name so the open [Functor] interface need not be
+  # totally covered while still resolving for [fmap] calls on a [ConsList].
+  /Data/Functor/fmap(lst= Nil, fn(v))= Nil
+  /Data/Functor/fmap(lst= Cons(head, tail), fn(v))= Cons(head= fn(v= head), tail= /Data/Functor/fmap(lst= tail, fn(v)= fn(v= v)))
 
-  > /Data/fmap(lst= [1, 2, 3], fn(v)= v + 1)
+  > /Data/Functor/fmap(lst= [1, 2, 3], fn(v)= v + 1)
     >>> [2, 3, 4]
 
 # # ConsList Eq membership
@@ -181,12 +188,12 @@ module(Data/List)
   [a]`. The element bound `$T -> Eq` makes the membership conditional on the element being [Eq], so
   the head comparison on the elements typechecks.
 module(Data)
-  every(ConsList[$T -> /Data/Algebra/Eq], isa= [/Data/Algebra/Eq])
+  every(/Data/List/ConsList[$T -> /Data/Algebra/Eq], isa= [/Data/Algebra/Eq])
 module(Data/Algebra)
-  :/Data/Nil.equal(other= /Data/Nil)= True
-  :/Data/Nil.equal(other= /Data/Cons(head, tail))= False
-  :/Data/Cons(head, tail).equal(other= /Data/Nil)= False
-  :/Data/Cons[$T -> /Data/Algebra/Eq](head@ah, tail@at).equal(other= /Data/Cons(head@bh, tail@bt))= (ah == bh) && at.equal(other= bt)
+  :/Data/List/Nil.equal(other= /Data/List/Nil)= True
+  :/Data/List/Nil.equal(other= /Data/List/Cons(head, tail))= False
+  :/Data/List/Cons(head, tail).equal(other= /Data/List/Nil)= False
+  :/Data/List/Cons[$T -> /Data/Algebra/Eq](head@ah, tail@at).equal(other= /Data/List/Cons(head@bh, tail@bt))= (ah == bh) && at.equal(other= bt)
 module(Data/List)
   # Equal lists compare equal element-wise, and lists that differ in an element or in length do
   #   not. The element [Eq] dispatch is generic, so lists of [Integer], [Boolean], etc. all work.
@@ -203,12 +210,12 @@ module(Data/List)
   the tail's); the recursion runs through [tail.compareTo]. Mirrors the [Eq] membership above (and
   every [Ord] is an [Eq], which the [Eq] membership already supplies).
 module(Data)
-  every(ConsList[$T -> /Data/Algebra/Ord], isa= [/Data/Algebra/Ord])
+  every(/Data/List/ConsList[$T -> /Data/Algebra/Ord], isa= [/Data/Algebra/Ord])
 module(Data/Algebra)
-  :/Data/Nil.compareTo(other= /Data/Nil)= /Data/Algebra/Equal
-  :/Data/Nil.compareTo(other= /Data/Cons(head, tail))= /Data/Algebra/LessThan
-  :/Data/Cons(head, tail).compareTo(other= /Data/Nil)= /Data/Algebra/GreaterThan
-  :/Data/Cons[$T -> /Data/Algebra/Ord](head@ah, tail@at).compareTo(other= /Data/Cons(head@bh, tail@bt))= /Data/consThen(first= ah.compareTo(other= bh), second= at.compareTo(other= bt))
+  :/Data/List/Nil.compareTo(other= /Data/List/Nil)= /Data/Algebra/Equal
+  :/Data/List/Nil.compareTo(other= /Data/List/Cons(head, tail))= /Data/Algebra/LessThan
+  :/Data/List/Cons(head, tail).compareTo(other= /Data/List/Nil)= /Data/Algebra/GreaterThan
+  :/Data/List/Cons[$T -> /Data/Algebra/Ord](head@ah, tail@at).compareTo(other= /Data/List/Cons(head@bh, tail@bt))= /Data/List/consThen(first= ah.compareTo(other= bh), second= at.compareTo(other= bt))
 module(Data/List)
   # Lists order lexicographically: the first differing element decides, and a prefix is ordered
   #   before its extension ([Nil] before any [Cons]).
@@ -222,37 +229,37 @@ module(Data/List)
 # # ConsList Monad instance
   [mmap] over a [ConsList] is concatMap: the function returns a whole list for each element, and
   the results are appended in order.
-module(Data)
+module(Data/List)
   # [append] joins two lists in order — the recursive structural join (it recurses through itself
   # so the recursion stays a concrete arrow).
   append(a -> ConsList[$T -> $_T], b -> ConsList[$T -> $_T]) -> ConsList[$T -> $_T]
   append(a= Nil, b)= b
-  append(a= /Data/Cons(head, tail), b)= /Data/Cons(head= head, tail= append(a= tail, b= b))
-
-  every(ConsList[$T -> $_T], isa= [/Data/Monad])
+  append(a= Cons(head, tail), b)= Cons(head= head, tail= append(a= tail, b= b))
+module(Data)
+  every(/Data/List/ConsList[$T -> $_T], isa= [/Data/Monad])
 module(Data/List)
-  # The [ConsList] instance of the generic [mmap] declared over [Monad] in [Data]. Like the
-  # [fmap] instance above, it lives in its own module so the open [Monad] class is not
-  # required to be totally covered here.
-  /Data/mmap(m= Nil, fn(v))= Nil
-  /Data/mmap(m= /Data/Cons(head, tail), fn(v))= /Data/append(a= fn(v= head), b= /Data/mmap(m= tail, fn(v)= fn(v= v)))
+  # The [ConsList] instance of the generic [mmap] declared over [Monad] in [Data/monad]. Like the
+  # [fmap] instance above, it is written under the declaration's absolute name so the open [Monad]
+  # class is not required to be totally covered here.
+  /Data/Monad/mmap(m= Nil, fn(v))= Nil
+  /Data/Monad/mmap(m= Cons(head, tail), fn(v))= append(a= fn(v= head), b= /Data/Monad/mmap(m= tail, fn(v)= fn(v= v)))
 
   # [append] joins two lists end to end.
-  > /Data/append(a= [1], b= [2])
+  > /Data/List/append(a= [1], b= [2])
     >>> [1, 2]
   # [mmap] over a [ConsList] is concatMap: the function returns a whole list per element and the
   #   results are appended, so binding [[1]] to a function returning [[2]] yields [[2]], and binding
   #   the empty list yields the empty list.
-  > /Data/mmap(m= [1], fn(v)= [2])
+  > /Data/Monad/mmap(m= [1], fn(v)= [2])
     >>> [2]
-  > /Data/mmap(m= [], fn(v)= [v])
+  > /Data/Monad/mmap(m= [], fn(v)= [v])
     >>> []
   # [pure] for [ConsList] builds a singleton list; the call site's expected list type selects
   # this instance (return-type-directed dispatch — see [pure] in [Data/monad]).
-  /Data/pure[$M -> /Data/ConsList[$T -> $_T]](v)= /Data/Cons(head= v, tail= /Data/Nil)
+  /Data/Monad/pure[$M -> /Data/List/ConsList[$T -> $_T]](v)= Cons(head= v, tail= Nil)
 
-  pureConsInt(v -> Integer) -> /Data/Cons[$T -> Integer]
-  pureConsInt(v)= /Data/pure(v= v)
+  pureConsInt(v -> Integer) -> /Data/List/Cons[$T -> Integer]
+  pureConsInt(v)= /Data/Monad/pure(v= v)
 
   > pureConsInt(v= 1)
     >>> [1]

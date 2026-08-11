@@ -5,7 +5,7 @@ import "core"
 # when [mmap] is called from another module. A stack/core function can type-check in its own module
 # yet fail once imported, so this exercises the imported path end to end.
 main{io -> IO} =
-  #assert(test= /Data/mmap(m= /Data/Some(value= 5), fn(v)= /Data/Some(value= 6)) == /Data/Some(value= 6))
-  #assert(test= /Data/mmap(m= /Data/Some(value= 5), fn(v)= /Data/Nothing) == /Data/Nothing)
-  #assert(test= /Data/mmap(m= /Data/Nothing, fn(v)= /Data/Some(value= v)) == /Data/Nothing)
+  #assert(test= /Data/Monad/mmap(m= /Data/Maybe/Some(value= 5), fn(v)= /Data/Maybe/Some(value= 6)) == /Data/Maybe/Some(value= 6))
+  #assert(test= /Data/Monad/mmap(m= /Data/Maybe/Some(value= 5), fn(v)= /Data/Maybe/Nothing) == /Data/Maybe/Nothing)
+  #assert(test= /Data/Monad/mmap(m= /Data/Maybe/Nothing, fn(v)= /Data/Maybe/Some(value= v)) == /Data/Maybe/Nothing)
   io

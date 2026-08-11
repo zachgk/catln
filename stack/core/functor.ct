@@ -13,6 +13,10 @@ module(Data)
       It has a single operation [fmap] that applies a function to each element in the collection.
     # $F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]
 
+# # The fmap operation and laws
+  [fmap] and the [Functor] laws live in [module(Data/Functor)] — the namespace the [Functor] class
+  opens — so they sit under [/Data/Functor] rather than loose at the top of [/Data].
+module(Data/Functor)
   # [fmap] applies a function to every element of a [Functor], producing a new one of the
   # same kind. This is the generic interface declared over the [Functor] class; each
   # instance supplies its own definition in a separate module (so the open [Functor] class
@@ -28,7 +32,7 @@ module(Data)
     elements are [Eq] — so the mapped result can be compared with the original — at arbitrary
     members of that instance. Like the [Eqv] laws in [Data/Algebra/eq], it instantiates per
     file over the import graph, so each file defining an instance checks the law for it.
-  testFunctorIdentity[$F -> Functor[$T -> /Data/Algebra/Eq]](x -> $F) =
+  testFunctorIdentity[$F -> /Data/Functor[$T -> /Data/Algebra/Eq]](x -> $F) =
     #test
     #assert(test= fmap(lst= x, fn(v)= v) == x)
     0
@@ -39,7 +43,7 @@ module(Data)
     cannot yet relate. Checked against every [Functor] instance whose elements are
     [Integer] - so the increments apply - at arbitrary members of that instance,
     instantiating per file like the identity law above.
-  testFunctorComposition[$F -> Functor[$T -> /Data/Primitive/Integer]](x -> $F) =
+  testFunctorComposition[$F -> /Data/Functor[$T -> /Data/Primitive/Integer]](x -> $F) =
     #test
     #assert(test= fmap(lst= fmap(lst= x, fn(v)= v + 1), fn(v)= v + 1) == fmap(lst= x, fn(v)= (v + 1) + 1))
     0

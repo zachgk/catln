@@ -19,7 +19,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /mdbl( Value /v -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = Value /v
-                        , /mdbl( Value /v -> /Data/Primitive/Integer ) -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Some( Value /value -> TVArg /v = Value /v )
+                        , /mdbl( Value /v -> /Data/Primitive/Integer ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some( Value /value -> TVArg /v = Value /v )
                         ]
                     }
                 )

@@ -2,10 +2,10 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
-                ( "/Data/fmap"
+                ( "/Data/Functor/fmap"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/fmap( EAppVar /B TopType )( EAppVar /A TopType )
+                        [ /Data/Functor/fmap( EAppVar /B TopType )( EAppVar /A TopType )
                             ( EAppVar /F ∀/Data/Functor[ /T=$_/A ] )( EAppArg Value /lst -> $/F )
                             ( EAppArg /fn( EAppArg Value /v -> $_/A ) -> $_/B ) -> $/F[ /T=$_/B ]
                         ]
@@ -41,6 +41,10 @@ Prgm
             It has a single operation [fmap] that applies a function to each element in the collection." )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "# The fmap operation and laws
+            [fmap] and the [Functor] laws live in [module(Data/Functor)] — the namespace the [Functor] class
+            opens — so they sit under [/Data/Functor] rather than loose at the top of [/Data]." )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "[fmap] applies a function to every element of a [Functor], producing a new one of the" )
         , /Catln/#md

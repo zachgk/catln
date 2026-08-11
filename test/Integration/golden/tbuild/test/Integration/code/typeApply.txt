@@ -21,13 +21,13 @@ Prgm
                                 , fromList []
                                 , []
                                 )
-                            , /Data/fmap
+                            , /Data/Functor/fmap
                                 ( /fn( /v=TopType )=TopType
                                 , /lst=∀/Data/Functor[ /T=TopType ]
                                 )
                             , []
                             ) =
-                            ( /Data/fmap
+                            ( /Data/Functor/fmap
                                 ( EAppArg Value /lst -> TVArg /lst = ( Value /lst ↦ TVArg /lst ) )
                                 ( EAppArg /fn( EAppArg Value /v )=
                                     ( /fn
@@ -99,7 +99,7 @@ Prgm
                                     , []
                                     )
                                 ,
-                                    ( /Data/Nil + /Data/Cons
+                                    ( /Data/List/Nil + /Data/List/Cons
                                         ( /head=TopType
                                         , /tail=TopType
                                         )
@@ -182,7 +182,7 @@ Prgm
                                     , []
                                     )
                                 ,
-                                    ( /Data/Nil + /Data/Cons
+                                    ( /Data/List/Nil + /Data/List/Cons
                                         ( /head=TopType
                                         , /tail=TopType
                                         )

@@ -10,6 +10,10 @@ module(Data)
     # A [Monad] extends the container idea of a [Functor] with sequencing.
       Its single operation [mmap] chains a value-to-monad function across the elements it holds.
 
+# # The mmap and pure operations
+  [mmap] and [pure] live in [module(Data/Monad)] — the namespace the [Monad] class opens — so they
+  sit under [/Data/Monad] rather than loose at the top of [/Data].
+module(Data/Monad)
   # [mmap] is the generic monadic bind declared over the [Monad] class; each instance supplies
   # its own definition in a separate module (so the open [Monad] class is not required to be
   # totally covered here). It mirrors [fmap]'s shape, but where [fmap]'s function returns a bare

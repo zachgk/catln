@@ -21,12 +21,12 @@ Prgm
                                 , fromList []
                                 , []
                                 )
-                            , /Data/mmap
+                            , /Data/Monad/mmap
                                 ( /fn( /v=TopType )=∀/Data/Monad[ /T=TopType ]
                                 , /m=∀/Data/Monad[ /T=TopType ]
                                 )
                             , []
-                            ) = /Data/mmap
+                            ) = /Data/Monad/mmap
                             ( EAppArg Value /m -> TVArg /m = ( Value /m ↦ TVArg /m ) )
                             ( EAppArg /fn( EAppArg Value /v ) -> ∀/Data/Monad[ /T=TopType ] =
                                 ( /fn
@@ -71,6 +71,6 @@ Prgm
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "bindap[$F -> /Data/Functor[$T -> $_A], $A, $B](m -> $F, fn(v -> $_A) -> $_B) -> $F" )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "bindap[$F -> /Data/Functor[$T -> $_A]](m, fn(v))= /Data/fmap(lst= m, fn(v)= fn(v= v))" )
+            ( EAppArg Value /text -> /Data/String = "bindap[$F -> /Data/Functor[$T -> $_A]](m, fn(v))= /Data/Functor/fmap(lst= m, fn(v)= fn(v= v))" )
         ]
     }

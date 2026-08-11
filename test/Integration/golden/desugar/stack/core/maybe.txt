@@ -2,61 +2,76 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
-                ( "/Data/Some"
+                ( "/Data/Monad/pure"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Monad/pure
+                            [ /M : ∀/Data/Maybe[ /T=$_/T ] ]( Value v )= /Data/Maybe/Some( Value value= Value v )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Maybe/Nothing"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Maybe/Nothing ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Maybe/Some"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Some[ /T : TopType ]( Value /value -> $/T ) ]
+                        [ /Data/Maybe/Some[ /T : TopType ]( Value /value -> $/T ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
                 )
             ,
-                ( "/Data/pure"
+                ( "/Data/Monad/mmap"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/pure
-                            [ /M : ∀/Data/Maybe[ /T=$_/T ] ]( Value v )= /Data/Some( Value value= Value v )
+                        [ /Data/Monad/mmap( Value m= Value Nothing )
+                            ( fn( Value v ) )= Value Nothing
+                        , /Data/Monad/mmap
+                            ( Value m= /Data/Maybe/Some( Value value ) )
+                            ( fn( Value v ) )= fn( Value v= Value value )
                         ]
                     }
                 )
             ,
-                ( "/Data/fmap"
+                ( "/Data/Functor/fmap"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/fmap( Value lst= Value Nothing )
+                        [ /Data/Functor/fmap( Value lst= Value Nothing )
                             ( fn( Value v ) )= Value Nothing
-                        , /Data/fmap
-                            ( Value lst= /Data/Some( Value value ) )
-                            ( fn( Value v ) )= /Data/Some
+                        , /Data/Functor/fmap
+                            ( Value lst= /Data/Maybe/Some( Value value ) )
+                            ( fn( Value v ) )= /Data/Maybe/Some
                             ( Value value= fn( Value v= Value value ) )
                         ]
-                    }
-                )
-            ,
-                ( "/Data/Nothing"
-                , ObjectMapItem
-                    { omiDecls = [ Value /Data/Nothing ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
                     }
                 )
             ,
                 ( "/Data/Maybe/pureSomeInt"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Maybe/pureSomeInt( Value v -> /Data/Primitive/Integer ) -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) ]
+                        [ /Data/Maybe/pureSomeInt( Value v -> /Data/Primitive/Integer ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Maybe/pureSomeInt( Value v ) -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/pure( Value v= Value v ) ]
+                        [ /Data/Maybe/pureSomeInt( Value v ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Monad/pure( Value v= Value v ) ]
                     }
                 )
             ,
@@ -66,29 +81,14 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/equal( Value other= Value /Data/Nothing )( Value /this -> /Data/Nothing ) -> ∀/Data/Primitive/Boolean = Value True
+                        [ /Data/Algebra/equal( Value other= Value /Data/Maybe/Nothing )( Value /this -> /Data/Maybe/Nothing ) -> ∀/Data/Primitive/Boolean = Value True
                         , /Data/Algebra/equal
-                            ( Value other= /Data/Some( Value value ) )( Value /this -> /Data/Nothing ) -> ∀/Data/Primitive/Boolean = Value False
-                        , /Data/Algebra/equal( Value other= Value /Data/Nothing )
-                            ( Value /this= /Data/Some( Value value ) ) -> ∀/Data/Primitive/Boolean = Value False
+                            ( Value other= /Data/Maybe/Some( Value value ) )( Value /this -> /Data/Maybe/Nothing ) -> ∀/Data/Primitive/Boolean = Value False
+                        , /Data/Algebra/equal( Value other= Value /Data/Maybe/Nothing )
+                            ( Value /this= /Data/Maybe/Some( Value value ) ) -> ∀/Data/Primitive/Boolean = Value False
                         , /Data/Algebra/equal
-                            ( Value other= /Data/Some( Value value@Value bv ) )
-                            ( Value /this= /Data/Some[ /T : ∀/Data/Algebra/Eq ]( Value value@Value av ) ) -> ∀/Data/Primitive/Boolean = /operator==( Value /l= Value av )( Value /r= Value bv )
-                        ]
-                    }
-                )
-            ,
-                ( "/Data/mmap"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/mmap( Value m= Value Nothing )
-                            ( fn( Value v ) )= Value Nothing
-                        , /Data/mmap
-                            ( Value m= /Data/Some( Value value ) )
-                            ( fn( Value v ) )= fn( Value v= Value value )
+                            ( Value other= /Data/Maybe/Some( Value value@Value bv ) )
+                            ( Value /this= /Data/Maybe/Some[ /T : ∀/Data/Algebra/Eq ]( Value value@Value av ) ) -> ∀/Data/Primitive/Boolean = /operator==( Value /l= Value av )( Value /r= Value bv )
                         ]
                     }
                 )
@@ -99,14 +99,14 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/compareTo( Value other= Value /Data/Nothing )( Value /this -> /Data/Nothing ) -> ∀/Data/Algebra/Comparison = Value /Data/Algebra/Equal
+                        [ /Data/Algebra/compareTo( Value other= Value /Data/Maybe/Nothing )( Value /this -> /Data/Maybe/Nothing ) -> ∀/Data/Algebra/Comparison = Value /Data/Algebra/Equal
                         , /Data/Algebra/compareTo
-                            ( Value other= /Data/Some( Value value ) )( Value /this -> /Data/Nothing ) -> ∀/Data/Algebra/Comparison = Value /Data/Algebra/LessThan
-                        , /Data/Algebra/compareTo( Value other= Value /Data/Nothing )
-                            ( Value /this= /Data/Some( Value value ) ) -> ∀/Data/Algebra/Comparison = Value /Data/Algebra/GreaterThan
+                            ( Value other= /Data/Maybe/Some( Value value ) )( Value /this -> /Data/Maybe/Nothing ) -> ∀/Data/Algebra/Comparison = Value /Data/Algebra/LessThan
+                        , /Data/Algebra/compareTo( Value other= Value /Data/Maybe/Nothing )
+                            ( Value /this= /Data/Maybe/Some( Value value ) ) -> ∀/Data/Algebra/Comparison = Value /Data/Algebra/GreaterThan
                         , /Data/Algebra/compareTo
-                            ( Value other= /Data/Some( Value value@Value bv ) )
-                            ( Value /this= /Data/Some[ /T : ∀/Data/Algebra/Ord ]( Value value@Value av ) ) -> ∀/Data/Algebra/Comparison = compareTo( Value other= Value bv )( Value /this= Value av )
+                            ( Value other= /Data/Maybe/Some( Value value@Value bv ) )
+                            ( Value /this= /Data/Maybe/Some[ /T : ∀/Data/Algebra/Ord ]( Value value@Value av ) ) -> ∀/Data/Algebra/Comparison = compareTo( Value other= Value bv )( Value /this= Value av )
                         ]
                     }
                 )
@@ -146,8 +146,8 @@ Prgm
             ( True
             , /Data/Maybe[ /T=TopType ]
             ,
-                [ /Data/Some[ /T=$_/T ]( /value=$/T )
-                , /Data/Nothing
+                [ /Data/Maybe/Some[ /T=$_/T ]( /value=$/T )
+                , /Data/Maybe/Nothing
                 ]
             , Just "A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]."
             )
@@ -164,7 +164,8 @@ Prgm
             ( Value /text= CStr "# Maybe
             A [Maybe] holds either a single value ([Some]) or nothing ([Nothing]). Unlike a [ConsList] it is
             not recursive, so it is the simplest parameterized type on which to define structural equality
-            and ordering." )
+            and ordering. The [Some] and [Nothing] constructors are named into the [Maybe] namespace, so
+            they live at [/Data/Maybe/Some] and [/Data/Maybe/Nothing] rather than loose under [/Data]." )
         , /Catln/#md
             ( Value /text= CStr "A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]." )
         , /Catln/#md
@@ -175,20 +176,20 @@ Prgm
             ( Value /text= CStr "  checks both arms structurally." )
         , /Catln/#print
             ( Value /p= /operator==
-                ( Value /l= /Data/Some
+                ( Value /l= /Data/Maybe/Some
                     ( Value value= CInt 1 )
                 )
-                ( Value /r= /Data/Some
+                ( Value /r= /Data/Maybe/Some
                     ( Value value= CInt 1 )
                 )
             )
             ( Value /result= CStr "True" )
         , /Catln/#print
             ( Value /p= /operator==
-                ( Value /l= /Data/Some
+                ( Value /l= /Data/Maybe/Some
                     ( Value value= CInt 1 )
                 )
-                ( Value /r= /Data/Some
+                ( Value /r= /Data/Maybe/Some
                     ( Value value= CInt 2 )
                 )
             )
@@ -200,10 +201,10 @@ Prgm
         , /Catln/#print
             ( Value /p= isLess
                 ( Value /this= compareTo
-                    ( Value other= /Data/Some
+                    ( Value other= /Data/Maybe/Some
                         ( Value value= CInt 2 )
                     )
-                    ( Value /this= /Data/Some
+                    ( Value /this= /Data/Maybe/Some
                         ( Value value= CInt 1 )
                     )
                 )
@@ -212,10 +213,10 @@ Prgm
         , /Catln/#print
             ( Value /p= isEq
                 ( Value /this= compareTo
-                    ( Value other= /Data/Some
+                    ( Value other= /Data/Maybe/Some
                         ( Value value= CInt 2 )
                     )
-                    ( Value /this= /Data/Some
+                    ( Value /this= /Data/Maybe/Some
                         ( Value value= CInt 2 )
                     )
                 )
@@ -223,8 +224,8 @@ Prgm
             ( Value /result= CStr "True" )
         , /Catln/#print
             ( Value /p= isGreater
-                ( Value /this= compareTo( Value other= Value /Data/Nothing )
-                    ( Value /this= /Data/Some
+                ( Value /this= compareTo( Value other= Value /Data/Maybe/Nothing )
+                    ( Value /this= /Data/Maybe/Some
                         ( Value value= CInt 1 )
                     )
                 )
@@ -265,34 +266,34 @@ Prgm
             ( Value /text= CStr "  [Monad]; see the note in [Data/monad].)" )
         , /Catln/#print
             ( Value /p= /operator==
-                ( Value /l= mmap
-                    ( Value m= /Data/Some
+                ( Value /l= /Data/Monad/mmap
+                    ( Value m= /Data/Maybe/Some
                         ( Value value= CInt 5 )
                     )
-                    ( fn( Value v )= /Data/Some
+                    ( fn( Value v )= /Data/Maybe/Some
                         ( Value value= CInt 6 )
                     )
                 )
-                ( Value /r= /Data/Some
+                ( Value /r= /Data/Maybe/Some
                     ( Value value= CInt 6 )
                 )
             )
             ( Value /result= CStr "True" )
         , /Catln/#print
             ( Value /p= /operator==
-                ( Value /l= mmap
-                    ( Value m= /Data/Some
+                ( Value /l= /Data/Monad/mmap
+                    ( Value m= /Data/Maybe/Some
                         ( Value value= CInt 5 )
                     )
-                    ( fn( Value v )= Value /Data/Nothing )
-                )( Value /r= Value /Data/Nothing )
+                    ( fn( Value v )= Value /Data/Maybe/Nothing )
+                )( Value /r= Value /Data/Maybe/Nothing )
             )
             ( Value /result= CStr "True" )
         , /Catln/#print
             ( Value /p= /operator==
-                ( Value /l= mmap( Value m= Value /Data/Nothing )
-                    ( fn( Value v )= /Data/Some( Value value= Value v ) )
-                )( Value /r= Value /Data/Nothing )
+                ( Value /l= /Data/Monad/mmap( Value m= Value /Data/Maybe/Nothing )
+                    ( fn( Value v )= /Data/Maybe/Some( Value value= Value v ) )
+                )( Value /r= Value /Data/Maybe/Nothing )
             )
             ( Value /result= CStr "True" )
         , /Catln/#md
@@ -304,7 +305,7 @@ Prgm
                 ( Value /l= pureSomeInt
                     ( Value v= CInt 5 )
                 )
-                ( Value /r= /Data/Some
+                ( Value /r= /Data/Maybe/Some
                     ( Value value= CInt 5 )
                 )
             )

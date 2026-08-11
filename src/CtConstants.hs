@@ -150,8 +150,9 @@ macroThisKey = "/$this"
 classPlaceholderStr :: String
 classPlaceholderStr = "/Catln/classPlaceholder"
 
-ctListType, ctListCons, ctListConsHead, ctListConsTail :: String
+ctListType, ctListCons, ctListNil, ctListConsHead, ctListConsTail :: String
 ctListType = "List"
-ctListCons = "/Data/Cons"
+ctListCons = "/Data/List/Cons"
+ctListNil = "/Data/List/Nil"
 ctListConsHead = "head"
 ctListConsTail = "tail"

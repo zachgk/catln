@@ -14,7 +14,7 @@ Prgm
                     , omiDefs =
                         [ /Data/bindap
                             [ /M : ∀/Data/Monad[ /T=$_/A ] ]( Value m )
-                            ( fn( Value v ) )= /Data/mmap( Value m= Value m )
+                            ( fn( Value v ) )= /Data/Monad/mmap( Value m= Value m )
                             ( fn( Value v )= fn( Value v= Value v ) )
                         ]
                     }
@@ -54,6 +54,6 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "bindap[$F -> /Data/Functor[$T -> $_A], $A, $B](m -> $F, fn(v -> $_A) -> $_B) -> $F" )
         , /Catln/#md
-            ( Value /text= CStr "bindap[$F -> /Data/Functor[$T -> $_A]](m, fn(v))= /Data/fmap(lst= m, fn(v)= fn(v= v))" )
+            ( Value /text= CStr "bindap[$F -> /Data/Functor[$T -> $_A]](m, fn(v))= /Data/Functor/fmap(lst= m, fn(v)= fn(v= v))" )
         ]
     }

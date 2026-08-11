@@ -5,11 +5,11 @@ Prgm
                 ( "/pureMaybe"
                 , ObjectMapItem
                     { omiDecls =
-                        [ pureMaybe( Value v -> /Data/Primitive/Integer ) -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) ]
+                        [ pureMaybe( Value v -> /Data/Primitive/Integer ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ pureMaybe( Value v ) -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/pure( Value v= Value v ) ]
+                        [ pureMaybe( Value v ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Monad/pure( Value v= Value v ) ]
                     }
                 )
             ,
@@ -26,7 +26,7 @@ Prgm
                 ( "/pureList"
                 , ObjectMapItem
                     { omiDecls =
-                        [ pureList( Value v -> /Data/Primitive/Integer ) -> /Data/Cons[ /T=/Data/Primitive/Integer ]
+                        [ pureList( Value v -> /Data/Primitive/Integer ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
                             , /tail=TopType
                             )
@@ -34,10 +34,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ pureList( Value v ) -> /Data/Cons[ /T=/Data/Primitive/Integer ]
+                        [ pureList( Value v ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
                             , /tail=TopType
-                            ) = /Data/pure( Value v= Value v )
+                            ) = /Data/Monad/pure( Value v= Value v )
                         ]
                     }
                 )

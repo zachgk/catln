@@ -8,7 +8,7 @@ import "core"
 # An element-preserving map: [$_B] equals the input element, so the applied form claims the
 # same type the bare [$F] would.
 applyInc[$F -> /Data/Functor[$T -> $_A], $A, $B](lst -> $F, fn(v -> $_A) -> $_B) -> $F[$T -> $_B]
-applyInc[$F -> /Data/Functor[$T -> $_A]](lst, fn(v))= /Data/fmap(lst= lst, fn(v)= fn(v= v))
+applyInc[$F -> /Data/Functor[$T -> $_A]](lst, fn(v))= /Data/Functor/fmap(lst= lst, fn(v)= fn(v= v))
 
 incMaybe(m -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe[$T -> Integer] =
   applyInc(lst= m, fn(v)= v + 1)
@@ -19,8 +19,8 @@ strMaybe(m -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe[$T -> String] =
   applyInc(lst= m, fn(v)= v.toString)
 
 main{io -> IO} =
-  #assert(test= incMaybe(m= /Data/Some(value= 5)) == /Data/Some(value= 6))
-  #assert(test= incMaybe(m= /Data/Nothing) == /Data/Nothing)
-  #assert(test= strMaybe(m= /Data/Some(value= 5)) == /Data/Some(value= "5"))
-  #assert(test= strMaybe(m= /Data/Nothing) == /Data/Nothing)
+  #assert(test= incMaybe(m= /Data/Maybe/Some(value= 5)) == /Data/Maybe/Some(value= 6))
+  #assert(test= incMaybe(m= /Data/Maybe/Nothing) == /Data/Maybe/Nothing)
+  #assert(test= strMaybe(m= /Data/Maybe/Some(value= 5)) == /Data/Maybe/Some(value= "5"))
+  #assert(test= strMaybe(m= /Data/Maybe/Nothing) == /Data/Maybe/Nothing)
   io

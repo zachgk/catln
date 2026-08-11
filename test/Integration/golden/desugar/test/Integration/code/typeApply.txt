@@ -14,7 +14,7 @@ Prgm
                     , omiDefs =
                         [ applyInc
                             [ /F : ∀/Data/Functor[ /T=$_/A ] ]( Value lst )
-                            ( fn( Value v ) )= /Data/fmap( Value lst= Value lst )
+                            ( fn( Value v ) )= /Data/Functor/fmap( Value lst= Value lst )
                             ( fn( Value v )= fn( Value v= Value v ) )
                         ]
                     }

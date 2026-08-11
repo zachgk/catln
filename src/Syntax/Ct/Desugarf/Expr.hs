@@ -150,8 +150,8 @@ semiDesExpr sdm obj (RawMethod m base method) = (`setExprMeta` m) $ semiDesExpr 
     sdm' = case sdm of
       SDInput _ -> SDInput True
       _         -> sdm
-semiDesExpr sdm obj (RawList m []) = semiDesExpr sdm obj (RawValue m "/Data/Nil")
-semiDesExpr sdm obj (RawList m (l:ls)) = semiDesExpr sdm obj (RawValue m "/Data/Cons" `applyRawArgs` [(Just $ partialKey "head", l), (Just $ partialKey "tail", RawList (emptyMetaM m) ls)])
+semiDesExpr sdm obj (RawList m []) = semiDesExpr sdm obj (RawValue m (mkName ctListNil))
+semiDesExpr sdm obj (RawList m (l:ls)) = semiDesExpr sdm obj (RawValue m (mkName ctListCons) `applyRawArgs` [(Just $ partialKey (mkName ctListConsHead), l), (Just $ partialKey (mkName ctListConsTail), RawList (emptyMetaM m) ls)])
 semiDesExpr _ _ e = error $ printf "Not yet implemented semiDesExpr for %s" (show e)
 
 -- | Desugars a "TheExpr type" by applying the type to a default name

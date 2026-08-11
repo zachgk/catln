@@ -74,17 +74,17 @@ Prgm
                                 , fromList []
                                 , []
                                 )
-                            , /Data/Cons[ /T=∀/Data/Algebra/Ord ]
+                            , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                                 ( /head=∀/Data/Algebra/Ord
                                 , /tail=UnionType
                                     ( Just
-                                        ( PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                        ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                         , fromList []
                                         , []
                                         )
-                                    , /Data/Cons[ /T=∀/Data/Algebra/Ord ]
+                                    , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                                         ( /head=∀/Data/Algebra/Ord
-                                        , /tail=∀/Data/ConsList[ /T=TopType ]
+                                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                         )
                                     , []
                                     )
@@ -387,9 +387,9 @@ Prgm
                                 , fromList []
                                 , []
                                 )
-                            , /Data/Cons[ /T=TopType ]
+                            , /Data/List/Cons[ /T=TopType ]
                                 ( /head=$/T
-                                , /tail=∀/Data/ConsList[ /T=TopType ]
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                 )
                             , []
                             ) = /reversed( Value /lst -> TVArg /lst = Value /lst )

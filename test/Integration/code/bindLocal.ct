@@ -9,9 +9,9 @@ bindWithLocal(m -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe =
 
   doubled= x + x
 
-  /Data/Some(value= doubled + 1)
+  /Data/Maybe/Some(value= doubled + 1)
 
 main{io -> IO} =
-  #assert(test= bindWithLocal(m= /Data/Some(value= 5)) == /Data/Some(value= 11))
-  #assert(test= bindWithLocal(m= /Data/Nothing) == /Data/Nothing)
+  #assert(test= bindWithLocal(m= /Data/Maybe/Some(value= 5)) == /Data/Maybe/Some(value= 11))
+  #assert(test= bindWithLocal(m= /Data/Maybe/Nothing) == /Data/Maybe/Nothing)
   io

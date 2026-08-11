@@ -7,7 +7,7 @@ import "core"
   (the operand of `+`), so the compiler must select the Integer-returning definition. That gives
   `1 + 1 == 2`.
 mdbl(v -> Integer) -> Integer= v
-mdbl(v -> Integer) -> /Data/Maybe[$T -> Integer]= /Data/Some(value= v)
+mdbl(v -> Integer) -> /Data/Maybe[$T -> Integer]= /Data/Maybe/Some(value= v)
 
 main{io -> IO} =
   #assert(test= mdbl(v= 1) + 1 == 2)

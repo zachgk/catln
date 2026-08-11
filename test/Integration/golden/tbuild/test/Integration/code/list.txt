@@ -8,12 +8,12 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /llength( EAppArg Value /this -> /Data/Nil = Value /Data/Nil ) -> /Data/Primitive/Integer = 0
+                        [ /llength( EAppArg Value /this -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/Primitive/Integer = 0
                         , /llength
-                            ( EAppArg Value /this -> /Data/Cons
+                            ( EAppArg Value /this -> /Data/List/Cons
                                 ( /head=TopType
                                 , /tail=TopType
-                                ) = /Data/Cons( EAppArg Value /head )( EAppArg Value /tail )
+                                ) = /Data/List/Cons( EAppArg Value /head )( EAppArg Value /tail )
                             ) ->
                             ( /operator+
                                 ( /r=/Data/Primitive/Integer
@@ -49,19 +49,19 @@ Prgm
                                     ( /operator-
                                         ( EAppArg Value /l -> /Data/Primitive/Integer =
                                             ( /llength
-                                                ( EAppArg Value /this -> /Data/Cons
+                                                ( EAppArg Value /this -> /Data/List/Cons
                                                     ( /head=/Data/Primitive/Integer
-                                                    , /tail=/Data/Cons
+                                                    , /tail=/Data/List/Cons
                                                         ( /head=/Data/Primitive/Integer
-                                                        , /tail=/Data/Nil
+                                                        , /tail=/Data/List/Nil
                                                         )
-                                                    ) = /Data/Cons
+                                                    ) = /Data/List/Cons
                                                     ( EAppArg Value /head -> /Data/Primitive/Integer = 5 )
-                                                    ( EAppArg Value /tail -> /Data/Cons
+                                                    ( EAppArg Value /tail -> /Data/List/Cons
                                                         ( /head=/Data/Primitive/Integer
-                                                        , /tail=/Data/Nil
-                                                        ) = /Data/Cons
-                                                        ( EAppArg Value /head -> /Data/Primitive/Integer = 3 )( EAppArg Value /tail -> /Data/Nil = Value /Data/Nil )
+                                                        , /tail=/Data/List/Nil
+                                                        ) = /Data/List/Cons
+                                                        ( EAppArg Value /head -> /Data/Primitive/Integer = 3 )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                                                     )
                                                 ) ↦ /Data/Primitive/Integer
                                             )

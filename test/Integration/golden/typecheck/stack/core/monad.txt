@@ -2,10 +2,10 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
-                ( "/Data/pure"
+                ( "/Data/Monad/pure"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/pure[ /A : TopType ]
+                        [ /Data/Monad/pure[ /A : TopType ]
                             [ /M : ∀/Data/Monad[ /T=$_/A ] ]( Value /v -> $_/A ) -> $/M
                         ]
                     , omiRuntimeDecls = []
@@ -14,10 +14,10 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/mmap"
+                ( "/Data/Monad/mmap"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/mmap[ /B : TopType ][ /A : TopType ]
+                        [ /Data/Monad/mmap[ /B : TopType ][ /A : TopType ]
                             [ /M : ∀/Data/Monad[ /T=$_/A ] ]( Value /m -> $/M )
                             ( /fn( Value /v -> $_/A ) -> $/M ) -> $/M
                         ]
@@ -48,6 +48,10 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "A [Monad] extends the container idea of a [Functor] with sequencing.
             Its single operation [mmap] chains a value-to-monad function across the elements it holds." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "# The mmap and pure operations
+            [mmap] and [pure] live in [module(Data/Monad)] — the namespace the [Monad] class opens — so they
+            sit under [/Data/Monad] rather than loose at the top of [/Data]." )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "[mmap] is the generic monadic bind declared over the [Monad] class; each instance supplies" )
         , /Catln/#md

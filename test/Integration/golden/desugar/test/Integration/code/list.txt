@@ -26,10 +26,10 @@ Prgm
                         [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
                             ( Value val= /operator-
                                 ( Value /l= llength
-                                    ( Value /this= /Data/Cons
+                                    ( Value /this= /Data/List/Cons
                                         ( Value /head= CInt 5 )
-                                        ( Value /tail= /Data/Cons
-                                            ( Value /head= CInt 3 )( Value /tail= Value /Data/Nil )
+                                        ( Value /tail= /Data/List/Cons
+                                            ( Value /head= CInt 3 )( Value /tail= Value /Data/List/Nil )
                                         )
                                     )
                                 )

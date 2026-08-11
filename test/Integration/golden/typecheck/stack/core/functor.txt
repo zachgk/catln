@@ -2,22 +2,22 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
-                ( "/Data/testFunctorComposition"
+                ( "/Data/Functor/testFunctorComposition"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/testFunctorComposition
+                        [ /Data/Functor/testFunctorComposition
                             [ /F : ∀/Data/Functor[ /T=/Data/Primitive/Integer ] ]( Value /x -> $/F ) -> /Data/Primitive/Integer = CInt 0
                         ]
                     }
                 )
             ,
-                ( "/Data/fmap"
+                ( "/Data/Functor/fmap"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/fmap[ /B : TopType ][ /A : TopType ]
+                        [ /Data/Functor/fmap[ /B : TopType ][ /A : TopType ]
                             [ /F : ∀/Data/Functor[ /T=$_/A ] ]( Value /lst -> $/F )
                             ( /fn( Value /v -> $_/A ) -> $_/B ) -> $/F[ /T=$_/B ]
                         ]
@@ -27,13 +27,13 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/testFunctorIdentity"
+                ( "/Data/Functor/testFunctorIdentity"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/testFunctorIdentity
+                        [ /Data/Functor/testFunctorIdentity
                             [ /F : ∀/Data/Functor[ /T=∀/Data/Algebra/Eq ] ]( Value /x -> $/F ) -> /Data/Primitive/Integer = CInt 0
                         ]
                     }
@@ -65,6 +65,10 @@ Prgm
             It has a single operation [fmap] that applies a function to each element in the collection." )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "# The fmap operation and laws
+            [fmap] and the [Functor] laws live in [module(Data/Functor)] — the namespace the [Functor] class
+            opens — so they sit under [/Data/Functor] rather than loose at the top of [/Data]." )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "[fmap] applies a function to every element of a [Functor], producing a new one of the" )
         , /Catln/#md

@@ -5,13 +5,13 @@ Prgm
                 ( "/pureMaybe"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /pureMaybe( EAppArg Value /v -> /Data/Primitive/Integer ) -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) ]
+                        [ /pureMaybe( EAppArg Value /v -> /Data/Primitive/Integer ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /pureMaybe( EAppArg Value /v -> /Data/Primitive/Integer ) -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) =
-                            ( /Data/pure
-                                ( EAppArg Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) ) ↦ /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                        [ /pureMaybe( EAppArg Value /v -> /Data/Primitive/Integer ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) =
+                            ( /Data/Monad/pure
+                                ( EAppArg Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) ) ↦ /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
                             )
                         ]
                     }
@@ -30,7 +30,7 @@ Prgm
                 ( "/pureList"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /pureList( EAppArg Value /v -> /Data/Primitive/Integer ) -> /Data/Cons[ /T=/Data/Primitive/Integer ]
+                        [ /pureList( EAppArg Value /v -> /Data/Primitive/Integer ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
                             , /tail=TopType
                             )
@@ -38,14 +38,14 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /pureList( EAppArg Value /v -> /Data/Primitive/Integer ) -> /Data/Cons[ /T=/Data/Primitive/Integer ]
+                        [ /pureList( EAppArg Value /v -> /Data/Primitive/Integer ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
-                            , /tail=/Data/Nil
+                            , /tail=/Data/List/Nil
                             ) =
-                            ( /Data/pure
-                                ( EAppArg Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) ) ↦ /Data/Cons[ /T=/Data/Primitive/Integer ]
+                            ( /Data/Monad/pure
+                                ( EAppArg Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) ) ↦ /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                 ( /head=/Data/Primitive/Integer
-                                , /tail=/Data/Nil
+                                , /tail=/Data/List/Nil
                                 )
                             )
                         ]

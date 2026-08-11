@@ -21,12 +21,12 @@ Prgm
                                 , fromList []
                                 , []
                                 )
-                            , /Data/fmap
+                            , /Data/Functor/fmap
                                 ( /fn( /v=TopType )=TopType
                                 , /lst=∀/Data/Functor[ /T=TopType ]
                                 )
                             , []
-                            ) = /Data/fmap( Value /lst -> TVArg /lst = Value /lst )
+                            ) = /Data/Functor/fmap( Value /lst -> TVArg /lst = Value /lst )
                             ( /fn( Value /v )= /fn( Value /v -> TVArg /v = Value /v ) )
                         ]
                     }

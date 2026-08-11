@@ -17,7 +17,7 @@ module(Data)
   # [mmap] arm: a [Monad]. The continuation maps an element to a monad of the same kind; the result
   # is flattened back into one monad (the monadic bind).
   bindap[$M -> /Data/Monad[$T -> $_A], $A, $B](m -> $M, fn(v -> $_A) -> $M) -> $M
-  bindap[$M -> /Data/Monad[$T -> $_A]](m, fn(v))= /Data/mmap(m= m, fn(v)= fn(v= v))
+  bindap[$M -> /Data/Monad[$T -> $_A]](m, fn(v))= /Data/Monad/mmap(m= m, fn(v)= fn(v= v))
 
   # [ap] arm: a plain value. The continuation consumes the whole value (the [ap] behaviour, inlined —
   # routing through a second higher-order [ap] call would not propagate the return type).
@@ -26,4 +26,4 @@ module(Data)
   # [fmap] arm: a [Functor]. The continuation maps an element to a plain value; the result is a
   # container of the mapped elements.
   # bindap[$F -> /Data/Functor[$T -> $_A], $A, $B](m -> $F, fn(v -> $_A) -> $_B) -> $F
-  # bindap[$F -> /Data/Functor[$T -> $_A]](m, fn(v))= /Data/fmap(lst= m, fn(v)= fn(v= v))
+  # bindap[$F -> /Data/Functor[$T -> $_A]](m, fn(v))= /Data/Functor/fmap(lst= m, fn(v)= fn(v= v))

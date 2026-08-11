@@ -2,6 +2,15 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
+                ( "/Data/Maybe/Nothing"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Maybe/Nothing ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -36,17 +45,8 @@ Prgm
                     , omiDefs =
                         [ /defInt
                             ( EAppArg Value /x -> /Just( /val=/Data/Primitive/Integer ) = /Just( EAppArg Value /val -> /Data/Primitive/Integer ) ) -> TVArg /val = ( Value /val ↦ TVArg /val )
-                        , /defInt( EAppArg Value /x -> /Data/Nothing = Value /Data/Nothing ) -> /Data/Primitive/Integer = 0
+                        , /defInt( EAppArg Value /x -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing ) -> /Data/Primitive/Integer = 0
                         ]
-                    }
-                )
-            ,
-                ( "/Data/Nothing"
-                , ObjectMapItem
-                    { omiDecls = [ Value /Data/Nothing ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
                     }
                 )
             ,
@@ -71,7 +71,7 @@ Prgm
             , /Maybe[ /T=TopType ]
             ,
                 [ /Just[ /T=TopType ]( /val=$_/T )
-                , /Data/Nothing
+                , /Data/Maybe/Nothing
                 ]
             , Just ""
             )

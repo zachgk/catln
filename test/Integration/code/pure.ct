@@ -4,13 +4,13 @@ import "core"
 # Cross-module check that [pure] (declared over [Monad] in stack/core/monad.ct) dispatches by the
 # call site's expected type: the same call [pure(v= ...)] builds a [Some] or a singleton [Cons]
 # depending only on the caller's declared return type (return-type-directed dispatch).
-pureMaybe(v -> Integer) -> /Data/Some[$T -> Integer]
-pureMaybe(v)= /Data/pure(v= v)
+pureMaybe(v -> Integer) -> /Data/Maybe/Some[$T -> Integer]
+pureMaybe(v)= /Data/Monad/pure(v= v)
 
-pureList(v -> Integer) -> /Data/Cons[$T -> Integer]
-pureList(v)= /Data/pure(v= v)
+pureList(v -> Integer) -> /Data/List/Cons[$T -> Integer]
+pureList(v)= /Data/Monad/pure(v= v)
 
 main{io -> IO} =
-  #assert(test= pureMaybe(v= 5) == /Data/Some(value= 5))
-  #assert(test= pureList(v= 6) == /Data/Cons(head= 6, tail= /Data/Nil))
+  #assert(test= pureMaybe(v= 5) == /Data/Maybe/Some(value= 5))
+  #assert(test= pureList(v= 6) == /Data/List/Cons(head= 6, tail= /Data/List/Nil))
   io
