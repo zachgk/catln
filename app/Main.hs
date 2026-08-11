@@ -21,6 +21,7 @@ import           Syntax.Parsers       (canonicalImport, mkDesCanonicalImportStr,
 
 import           Control.Monad
 import           Control.Monad.Trans
+import           CtRef                (printRefIndex)
 import           CtService
 import           Data.Foldable        (foldlM)
 import qualified Data.HashMap.Strict  as H
@@ -35,7 +36,7 @@ import           Text.Megaparsec      (sourceName)
 import           Text.Printf
 import           TypeCheck.Common     (flipTraceConstrain)
 import           TypeCheck.TraceWrite (renderTypeTrace)
-import           Utils                (graphToNodes)
+import           Utils                (fst3, graphToNodes, snd3, treeBranch)
 import           WebDocs              (docApi, docServe)
 -- import Repl (repl)
 
@@ -210,11 +211,23 @@ xDepTree prgmName showCore = do
       where
         printDep :: H.HashMap FileImport [FileImport] -> String -> Int -> S.HashSet FileImport -> (Int, FileImport) -> IO (S.HashSet FileImport)
         printDep dm' pre totalDeps vis (idx, dep) = do
-          let isLast = idx == totalDeps
-          let connector = if isLast then "└── " else "├── "
-          let extension = if isLast then "    " else "│   "
+          let (connector, extension) = treeBranch (idx == totalDeps)
           putStrLn $ pre ++ connector ++ displayName dep
           printTree dm' (S.insert dep vis) (pre ++ extension) dep
+
+xRefIndex :: String -> Bool -> CResT IO ()
+xRefIndex prgmName showCore = do
+  -- Use the desugared program: object names are resolved to absolute namespaced paths and
+  -- source positions are preserved, without requiring the whole program to type-check.
+  ctss <- lift $ ctssBaseFiles buildCtssConfig [prgmName]
+  graph <- getPrgm ctss
+  let nodes = graphToNodes graph
+  -- Filter core at the file (node) level, mirroring xDepTree's isCoreDep.
+  let keptNodes = if showCore then nodes else filter (not . isCoreImport . snd3) nodes
+  lift $ printRefIndex $ mconcat $ map fst3 keptNodes
+  where
+    isCoreImport :: FileImport -> Bool
+    isCoreImport imp = "core" `isInfixOf` fromMaybe (show imp) (impDisp imp)
 
 exec :: Command -> CResT IO ()
 exec (RunFile file function)    = xRun file function
@@ -224,6 +237,7 @@ exec (Convert fname outFname)   = xConvert fname outFname
 exec CLsp                       = xLsp
 exec (Fmt fname)                = xFmt fname
 exec (DepTree fname showCore)   = xDepTree fname showCore
+exec (RefIndex fname showCore)  = xRefIndex fname showCore
 exec (TestFile fname update)    = xTest fname update
 exec (TypeTrace fname)          = xTypeTrace fname
 exec (TBuildFile fname)         = xTBuild fname
@@ -236,6 +250,7 @@ data Command
   | CLsp
   | Fmt String
   | DepTree String Bool
+  | RefIndex String Bool
   | TestFile String Bool
   | TypeTrace String
   | TBuildFile String
@@ -273,6 +288,17 @@ cDepTree = DepTree
   <$> argument str (metavar "FILE" <> help "The file to show dependency tree for")
   <*> switch (long "show-core" <> help "Show core library dependencies in the tree")
 
+cRefIndex :: Parser Command
+cRefIndex = RefIndex
+  <$> argument str (metavar "FILE" <> help "The file to index")
+  <*> switch (long "show-core" <> help "Include core library objects in the index")
+
+cRef :: Parser Command
+cRef = subparser (
+     command "index" (info cRefIndex (progDesc "Indexes all objects in a program as a namespace tree"))
+  <> command "deptree" (info cDepTree (progDesc "Shows the dependency tree for a program"))
+                 )
+
 cTest :: Parser Command
 cTest = TestFile
   <$> argument str (metavar "FILE" <> help "The file to test")
@@ -307,7 +333,7 @@ main = do
       <> command "convert" (info cConvert (progDesc "Converts code in one format to another"))
       <> command "lsp" (info cLsp (progDesc "Runs the language server"))
       <> command "fmt" (info cFmt (progDesc "Runs the Catln formatter for a program"))
-      <> command "deptree" (info cDepTree (progDesc "Shows the dependency tree for a program"))
+      <> command "ref" (info cRef (progDesc "Reference queries about a program"))
       <> command "test" (info cTest (progDesc "Runs all tests in a program"))
       <> command "typetrace" (info cTypeTrace (progDesc "Writes the type inference trace to the build directory"))
       <> command "tbuild" (info cTBuild (progDesc "Builds the arrow trees for a program and its imports"))

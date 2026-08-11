@@ -41,6 +41,12 @@ mapFst3 fn = fmap (\(a, b, c) -> (fn a, b, c))
 mapSnd3 :: (Functor f) => (b -> b') -> f (a, b, c) -> f (a, b', c)
 mapSnd3 fn = fmap (\(a, b, c) -> (a, fn b, c))
 
+-- | Box-drawing prefixes for one item in a printed tree, given whether it is the last of its
+-- siblings. Returns (connector shown before the item, extension prepended to its children).
+treeBranch :: Bool -> (String, String)
+treeBranch True  = ("└── ", "    ")
+treeBranch False = ("├── ", "│   ")
+
 mapMFst3 :: (Traversable t, Monad m) => (a -> m a') -> t (a, b, c) -> m (t (a', b, c))
 mapMFst3 f = mapM aux
   where aux (a, b, c) = do
