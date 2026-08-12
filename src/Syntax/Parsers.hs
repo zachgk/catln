@@ -26,7 +26,8 @@ import           CtConstants             (noCoreAnnot)
 import           Data.Graph
 import qualified Data.HashMap.Strict     as H
 import           Data.List
-import           Data.Maybe              (listToMaybe, mapMaybe)
+import           Data.Maybe              (fromMaybe, isJust, listToMaybe,
+                                          mapMaybe)
 import           MapMeta                 (MetaLocation (ImportMeta), mapMeta,
                                           parseMetaIDScope)
 import           Semantics
@@ -35,7 +36,8 @@ import           Semantics.Types
 import           Syntax.Ct.Builder
 import           Syntax.Ct.Desugarf.Expr (desFileImport)
 import           Syntax.Ct.MapRawMeta    (addRawPrgmMetaIDs)
-import           Syntax.Ct.Parser        (ctParser, ctxParser)
+import           Syntax.Ct.Parser        (contents, ctParser, ctxParser)
+import           Syntax.Ct.Parser.Expr   (term)
 import           Syntax.Ct.Prgm
 import           Syntax.Haskell.Parser   (hsParser)
 import           Syntax.InferImport      (dirParser, findImportPath,
@@ -44,6 +46,7 @@ import           Syntax.Md.Parser        (mdParser)
 import           Syntax.Obsidian.Parser  (obsidian, obsidianParser)
 import           Syntax.Python.Parser    (pyParser)
 import           System.FilePath         (isAbsolute, joinPath, takeDirectory)
+import           Text.Megaparsec         (runParser)
 import           Text.Printf
 import           Utils
 
@@ -123,8 +126,27 @@ canonicalImport config caller imp = case maybeExprPath impAbs' of
     named' = rawImportPath impAbs'
     calledDir' = impDir =<< caller
 
+-- | The import a name written outside a program means: an import expression, as it would be written
+-- after @import@ in one, or else the path of a file to be read with whichever parser suits it.
+--
+-- Both forms are what an @import@ statement itself accepts, and the expression is read with the
+-- parser that statement is read with, so a name given to the compiler and a name written in a
+-- program mean the same thing. Naming the parser is the only way to say which one a directory is
+-- read with: a path is guessed from what is on disk, and 'Syntax.InferImport.inferRawImportStr'
+-- guesses @dir@ for every directory, so an Obsidian vault has no path that names it as one.
+--
+-- A name is taken for an expression by its shape rather than by whether it parses, because a path
+-- parses too: @a\/b.ct@ is a value with a @.ct@ method suffix, and @core@ is a value. What is asked
+-- of it is what 'canonicalImport' and 'readImport' ask of an import — a head to name the parser by
+-- ('maybeExprPath') and a string argument to name the path by ('rawImportPath') — so a name is read
+-- as an import exactly when it is one. No path takes that shape without holding both a bracket and a
+-- quote.
 mkRawImportStr :: String -> RawFileImport
-mkRawImportStr = mkRawFileImport . rawStr
+mkRawImportStr name = mkRawFileImport $ fromMaybe (rawStr name) (importExpr name)
+  where
+    importExpr s = case runParser (contents term) "<import>" s of
+      Right e | isJust (maybeExprPath e), isJust (rawImportPath e) -> Just e
+      _                                                            -> Nothing
 
 mkDesCanonicalImportStr :: CTSSConfig -> String -> IO FileImport
 mkDesCanonicalImportStr config = canonicalImport config Nothing . mkRawImportStr

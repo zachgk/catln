@@ -109,7 +109,13 @@ xFmt prgmName = do
   imp <- lift $ canonicalImport buildCtssConfig Nothing $ mkRawImportStr prgmName
   (rawPrgm, _, _) <- lift $ readImport imp
   let prgm' = formatRootPrgm rawPrgm
-  lift $ writeFile prgmName prgm'
+  -- Written back to the file the import resolved to rather than to the name it was given by, which
+  -- is not always a path: an import may name its parser instead ('mkRawImportStr'), and writing to
+  -- that would make a file out of the import expression. A page with no file resolved is reported
+  -- rather than written somewhere.
+  case impDisp imp of
+    Just path -> lift $ writeFile path prgm'
+    Nothing   -> fail $ printf "Could not find a file to write the formatted %s back to" prgmName
 
 -- | Builds the arrow trees ('TreeBuild') for every definition in a file and its imports, without
 -- running or evaluating anything. This is the stage between typechecking and evaluation, so it
@@ -265,7 +271,7 @@ cBuild = BuildFile
 
 cDoc :: Parser Command
 cDoc = Doc
-  <$> some (argument str (metavar "FILES" <> help "The files to run"))
+  <$> some (argument str (metavar "FILES" <> help "The files to run, each a path or an import naming the parser to read it with. The second needs quoting from the shell: 'obsidian(\"vault\")'"))
   <*> switch (long "cached" <> help "Cache results instead of reloading live (useful for serving rather than development)")
   <*> switch (long "api" <> help "Serve only the API rather than the pages too")
   <*> switch (long "readonly" <> help "Disable saving edits from the webdocs editor")
