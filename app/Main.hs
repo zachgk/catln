@@ -300,8 +300,8 @@ cRefIndex = RefIndex
 
 cRef :: Parser Command
 cRef = subparser (
-     command "index" (info cRefIndex (progDesc "Indexes all objects in a program as a namespace tree"))
-  <> command "deptree" (info cDepTree (progDesc "Shows the dependency tree for a program"))
+     subCommand "index" "Indexes all objects in a program as a namespace tree" cRefIndex
+  <> subCommand "deptree" "Shows the dependency tree for a program" cDepTree
                  )
 
 cTest :: Parser Command
@@ -332,14 +332,23 @@ main = do
      <> progDesc "Executes Catln options"
      <> header "Catln Compiler" )
     mainCommands = subparser (
-         command "run" (info cRun (progDesc "Runs a program"))
-      <> command "build" (info cBuild (progDesc "Builds a program"))
-      <> command "doc" (info cDoc (progDesc "Runs webdocs for a program"))
-      <> command "convert" (info cConvert (progDesc "Converts code in one format to another"))
-      <> command "lsp" (info cLsp (progDesc "Runs the language server"))
-      <> command "fmt" (info cFmt (progDesc "Runs the Catln formatter for a program"))
-      <> command "ref" (info cRef (progDesc "Reference queries about a program"))
-      <> command "test" (info cTest (progDesc "Runs all tests in a program"))
-      <> command "typetrace" (info cTypeTrace (progDesc "Writes the type inference trace to the build directory"))
-      <> command "tbuild" (info cTBuild (progDesc "Builds the arrow trees for a program and its imports"))
+         subCommand "run" "Runs a program" cRun
+      <> subCommand "build" "Builds a program" cBuild
+      <> subCommand "doc" "Runs webdocs for a program" cDoc
+      <> subCommand "convert" "Converts code in one format to another" cConvert
+      <> subCommand "lsp" "Runs the language server" cLsp
+      <> subCommand "fmt" "Runs the Catln formatter for a program" cFmt
+      <> subCommand "ref" "Reference queries about a program" cRef
+      <> subCommand "test" "Runs all tests in a program" cTest
+      <> subCommand "typetrace" "Writes the type inference trace to the build directory" cTypeTrace
+      <> subCommand "tbuild" "Builds the arrow trees for a program and its imports" cTBuild
                              )
+
+-- | One command of the compiler, with the @--help@ describing it.
+--
+-- Help is a parser rather than a property of a program, so a command assembled without it does not
+-- merely lack its own help — it rejects @--help@ as an option it does not have, and every @help@
+-- written on its arguments is unreachable. Commands are built through here so that is not something
+-- each of them has to remember, and so a command added later has its help by being a command.
+subCommand :: String -> String -> Parser Command -> Mod CommandFields Command
+subCommand name desc parser = command name (info (parser <**> helper) (progDesc desc))
