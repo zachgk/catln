@@ -20,6 +20,7 @@
 module Eval.Runtime.WebDocs where
 
 import           CRes
+import           CtConstants         (noteTaskPath)
 import           Data.Aeson          (ToJSON)
 import           Data.Aeson.Text     (encodeToLazyText)
 import           Data.Graph
@@ -28,6 +29,7 @@ import           Data.List           (partition, sort, sortOn)
 import           Data.List.Split     (splitOn)
 import qualified Data.Map            as M
 import qualified Data.Text.Lazy      as TL
+import qualified Data.UUID           as UUID
 import           Eval.Common
 import           GHC.Generics        (Generic)
 import           Semantics.Prgm
@@ -39,7 +41,7 @@ import           Utils
 
 -- | The primitives backing the @Catln/Doc@ display annotations.
 webDocsPrims :: [EPrim]
-webDocsPrims = [listProgram, filterProgram, typeInfer, typeInferPnt, debugger, sidebar, searchPages, testRun]
+webDocsPrims = [listProgram, filterProgram, typeInfer, typeInferPnt, debugger, sidebar, searchPages, testRun, taskList]
 
 -- | The argument of @/Catln/Doc/listProgram@ naming which stage to list, and the members of the
 -- @ListProgramMode@ enum it takes. @stack\/core\/webdoc.ct@ is the source of truth for these; a
@@ -259,6 +261,59 @@ testRun = EEnvPrim "testRun" prim
     prim Env{evAnnotObj=Just oa, evStagePrgms=StagePrgms{spTests}} _ = case spTests of
       CErr notes -> Left $ prettyCNotes notes
       CRes _ tests -> Right $ encodeJson $ filter ((== oaTestId oa) . trOwnerId) tests
+
+-- | One task of one note, as the value it displays as and as the expression it was declared by.
+--
+-- A task shown on its own page is edited by replacing the expression it was compiled from, which the
+-- page it is shown on names. A task shown in a list of every note's tasks has no such page — the
+-- list is not the note — so it carries its own: 'ptPage' is the page the task was written in and
+-- 'ptExpr' the expression of it, which together are what @\/api\/write-expr@ replaces. So checking a
+-- box in a list of tasks writes the note the task came from rather than whatever is displaying it.
+--
+-- 'ptExpr' is the rendered form of the meta id rather than the id itself, since that is what a
+-- request naming the expression sends.
+data PageTask = PageTask { ptPage :: String
+                         , ptExpr :: String
+                         , ptTask :: Val
+                         } deriving (Generic, ToJSON)
+
+-- | Backs @/Data/Note/taskList@, the data carried by a @Show/TaskList@ display. It renders the tasks
+-- of the pages the evaluation covers as JSON: each the value the task displays as, beside the page it
+-- was written in and the expression it was declared by.
+--
+-- That a task is a @\/Data\/Note\/Task@ is known here and nowhere below. What the pipeline offers is
+-- the values a page declares of a type ('spPageValues'); which type is worth gathering, and what to
+-- make of the ones it finds, is this display's own business. So the compilation service stays a
+-- service for programs rather than one that knows what a note is.
+--
+-- Like 'sidebar' this reports on which pages there are rather than on the program it was evaluated
+-- against, so evaluated unscoped it is every task the doc server holds — the list of all of them,
+-- taken page by page in the order the pages are opened by.
+taskList :: EPrim
+taskList = EEnvPrim "taskList" prim
+  where
+    prim Env{evStagePrgms=StagePrgms{spPages, spPageValues}} _ = do
+      pages <- orNotes spPages
+      encodeJson . concat <$> traverse (pageTasks spPageValues) (sortOn impDisp pages)
+
+    pageTasks pageValues prgmName = do
+      tasks <- orNotes $ pageValues (mkName noteTaskPath) prgmName
+      case (tasks, impDisp prgmName) of
+        ([], _) -> return []
+        -- As in 'sidebar', a page with no display path is reported rather than dropped. Here it is a
+        -- task with no note to be written back to, which is worth saying rather than serving a list
+        -- that is quietly missing it.
+        (_, Nothing) -> Left $ printf "taskList has no file path for %s, so its tasks have no note to be written back to" (show prgmName)
+        (_, Just disp) -> return $ map (pageTask disp) tasks
+
+    pageTask disp (e, task) = PageTask disp (UUID.toString $ getMetaID $ getExprMeta e) task
+
+-- | A pipeline answer as a primitive's, whose failure is the notes that produced it. 'CRes.fromCRes'
+-- is the partial version of this, which a primitive must not use: a stage it was not given is a
+-- failure to report rather than one to crash on.
+orNotes :: CRes a -> Either String a
+orNotes (CRes _ r)   = Right r
+orNotes (CErr notes) = Left $ prettyCNotes notes
 
 encodeJson :: (ToJSON p) => p -> Val
 encodeJson = StrVal . TL.unpack . encodeToLazyText

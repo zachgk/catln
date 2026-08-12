@@ -21,11 +21,13 @@ import           CtConstants             (testAnnot)
 import           Data.Graph
 import qualified Data.HashMap.Strict     as H
 import qualified Data.HashSet            as S
-import           Data.List               (intercalate, partition)
+import           Data.List               (elemIndex, intercalate, partition,
+                                          sortOn)
 import           Data.Maybe
 import           Data.UUID               (UUID)
 import           Eval                    (evalAnnots, evalBuild, evalBuildAll,
-                                          evalDebugPrgm, evalRun, evalRunMock)
+                                          evalDebugPrgm, evalPageValues,
+                                          evalRun, evalRunMock)
 import           Eval.Common             (EvalMetaDat, MockIO, StagePrgms (..),
                                           TExpr, TestResult,
                                           Val (StrVal, TupleVal), oaTestId)
@@ -34,7 +36,9 @@ import           Eval.Testing            (TestDesc (..), evalPrints, evalTest,
 import           Semantics               (CTSSConfig)
 import           Semantics.Annots        (hasAnnot)
 import           Semantics.Prgm
+import           Semantics.Types         (Name)
 import           Syntax.Ct.Desugarf      (desFinalPasses, desPrgm, validPrgm)
+import           Syntax.Ct.MapRawMeta    (rawStatementExprIds)
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 import           Syntax.Parsers
@@ -564,7 +568,7 @@ ctssStagePrgms ctss@(CTSS ssmv) = do
   ctssBuildAll ctss
   CTSSDat{ctssData} <- readMVar ssmv
   let ssfs = map fst3 $ graphToNodes ctssData
-  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) (notScoped "type inference to report on") (const $ notScoped "program to run") (return $ map snd3 $ graphToNodes ctssData) (notScoped "tests to report on")
+  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) (notScoped "type inference to report on") (const $ notScoped "program to run") (return $ map snd3 $ graphToNodes ctssData) (notScoped "tests to report on") (pageValues ctssData)
   where
     notScoped :: String -> CRes a
     notScoped what = CErr [MkCNote $ GenCErr Nothing $ "This evaluation is not scoped to a single page, so it has no " ++ what]
@@ -588,9 +592,42 @@ ctssStagePrgmsFrom ctss@(CTSS ssmv) prgmName = do
   -- running the page's tests, which is the work an evaluation with nothing to report on them must
   -- not be made to do. An evaluation that does have a test to report on is given one by whoever
   -- asked for it (see 'getEvalAnnots').
-  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) typeInferred debugRun (return $ map snd3 $ graphToNodes reaches) notRun
+  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) typeInferred debugRun (return $ map snd3 $ graphToNodes reaches) notRun (pageValues reaches)
   where
     notRun = CErr [MkCNote $ GenCErr Nothing "This evaluation was not given a run of the page's tests"]
+
+-- | The values one page declares of one type, evaluated to the values they display as. This is the
+-- 'StagePrgms.spPageValues' of a set of pages: what a value gathered across pages means, without any
+-- notion of which type is worth gathering, which belongs to whatever is doing the gathering.
+--
+-- Ordered, which a program's declarations are not: they are held in a hash map, so one page's arrive
+-- in no order at all, and a declaration a syntax builds rather than parses carries no source
+-- position to be sorted by either (@Syntax.Ct.Builder@ builds it with an empty meta). They are put
+-- back into the order the page writes them, so what gathers them reads as the pages do rather than
+-- reshuffling itself between readings.
+--
+-- A page that was never built has nothing to report and is answered with nothing, as 'joinedStage'
+-- passes over such a page in the stages beside this one; a page that failed to build fails what
+-- asked. The graph is read once for whichever pages are asked about, since the answer is a field of
+-- one 'StagePrgms' rather than a call made afresh each time.
+pageValues :: GraphData SSF FileImport -> Name -> FileImport -> CRes [(Expr EvalMetaDat, Val)]
+pageValues graph = valuesOf
+  where
+    computed = graphFromEdges $ filter (isJust . ssfTPrgm . fst3) $ graphToNodes graph
+    tprgms = mapMGraph (requireComputed . ssfTPrgm) computed
+
+    valuesOf name prgmName = case graphLookup prgmName computed of
+      Nothing -> return []
+      Just ssf -> do
+        values <- evalPageValues name prgmName =<< tprgms
+        written <- rawStatementExprIds <$> ssfRaw ssf
+        return $ sortOn (writtenAt written . fst) values
+
+    -- A value the page does not write is one the page was rebuilt without, so it goes after the ones
+    -- it does rather than before them.
+    writtenAt written e = fromMaybe (length written) $ elemIndex (exprId e) written
+
+    exprId = getMetaID . getExprMeta
 
 -- | Joins one stage over a set of pages, left unforced. See 'ctssStagePrgms' for why it must stay a
 -- thunk.

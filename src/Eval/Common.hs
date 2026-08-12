@@ -59,33 +59,44 @@ type EPrgmGraphData = GraphData EPrgm FileImport
 -- All are unforced: constructing an 'Env' must not compute a stage, since a caller pays only for
 -- the ones something actually asks for. Forcing the tree build runs a whole 'Eval.evalBuildAll'.
 data StagePrgms = StagePrgms {
-    spDesPrgm   :: CRes DesPrgm
-  , spTBPrgm    :: CRes (Prgm TExpr EvalMetaDat)
+    spDesPrgm    :: CRes DesPrgm
+  , spTBPrgm     :: CRes (Prgm TExpr EvalMetaDat)
   -- | How the program's types were inferred: a type variable on every meta, and the trace of what
   -- each epoch updated it to. Unlike the two stages above this is never joined across pages — a
   -- typecheck numbers its points within the run that assigned them, so two pages' traces have
   -- colliding point numbers and mean nothing merged together. An evaluation that is not scoped to
   -- one page therefore has no type inference to report, rather than an amalgamated one.
-  , spTypeInfer :: CRes (VPrgm, TraceConstrain)
+  , spTypeInfer  :: CRes (VPrgm, TraceConstrain)
   -- | Runs one of the program's functions, for a debugger reporting on what it evaluated. It is a
   -- function rather than a value because which function to run is the annotation's argument, and it
   -- is supplied from outside for the same reason the stages above are: an evaluation cannot run the
   -- program it is itself part of, since the evaluator is downstream of the primitives that would
   -- have to call it. Like 'spTypeInfer' it is never joined across pages — a run needs one program
   -- with one entry point, and the union of every loaded page has as many @main@s as it has pages.
-  , spDebugRun  :: String -> CRes DebugRun
+  , spDebugRun   :: String -> CRes DebugRun
   -- | The pages the evaluation's program was assembled from. An 'Env' holds one flattened 'Prgm'
   -- with no file identity left in it, so which files it came from is reachable no more than the
   -- stages above are. It is the pages of whatever the evaluation was scoped to: every loaded page
   -- when it was not scoped, which is what a navigation of the whole doc server asks for.
-  , spPages     :: CRes [FileImport]
+  , spPages      :: CRes [FileImport]
   -- | The tests of the page the evaluation is scoped to, already run. Unlike every stage above,
   -- these are not an artifact of compiling a program but of running part of it, which needs IO — so
   -- they cannot be produced from within an evaluation at all and arrive already run. They are
   -- supplied only by an evaluation that has a test to report on, since running a page's tests is
   -- work rather than a lookup, and are never joined across pages: a test belongs to the page that
   -- wrote the definition it checks.
-  , spTests     :: CRes [TestResult]
+  , spTests      :: CRes [TestResult]
+  -- | The values one of the evaluation's pages declares of one type, evaluated to the values they
+  -- display as, in the order that page writes them. Like 'spPages' this is about the pages there are
+  -- rather than about the one program the evaluation runs on, and it takes the page as an argument
+  -- for the same reason 'spDebugRun' takes a function name: which page is being asked about is the
+  -- caller's question, not a property of the evaluation. An 'Env' holds one flattened 'Prgm' with no
+  -- file identity left in it, so a page other than the one being evaluated is reachable no more than
+  -- the stages above are.
+  --
+  -- Supplied from outside for the same reason 'spDebugRun' is: evaluating a page's declarations is
+  -- work for the evaluator, which is downstream of the primitives that would have to ask for it.
+  , spPageValues :: Name -> FileImport -> CRes [(EExpr, Val)]
   }
 
 -- | The stage programs for an evaluation whose caller did not supply any. Asking for one is then an
@@ -93,7 +104,7 @@ data StagePrgms = StagePrgms {
 -- no upstream artifacts to report on cannot answer, and reporting the wrong stage would be worse
 -- than failing.
 stagePrgmsUnavailable :: StagePrgms
-stagePrgmsUnavailable = StagePrgms unavailable unavailable unavailable (const unavailable) unavailable unavailable
+stagePrgmsUnavailable = StagePrgms unavailable unavailable unavailable (const unavailable) unavailable unavailable (\_ _ -> unavailable)
   where
     unavailable :: CRes a
     unavailable = CErr [MkCNote $ GenCErr Nothing "This evaluation was not given the other pipeline stages of its program"]

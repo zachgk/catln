@@ -3,7 +3,7 @@
  *
  * Prerequisites:
  *   Start the backend API servers before running these tests:
- *     stack exec catln doc test/Integration/code/id.ct -- --api --cached
+ *     stack exec catln doc test/Integration/code/id.ct test/Integration/code/obsidian.ct -- --api --cached
  *     stack exec catln doc test/Integration/code/id.ct -- --cached --readonly
  *   The second serves the same API on the serve port (8080) and is only there to
  *   check that --readonly refuses writes.
@@ -333,6 +333,96 @@ describe('Backend API contract', () => {
     expect(value).toBeNull()
     expect(notes.some(n => n.tp === 'CNoteError')).toBe(true)
     expect(JSON.stringify(notes)).toContain('not scoped to a single page')
+  })
+
+  // The tasks of every note the doc server holds, gathered into one list. Unscoped, which is the
+  // only way to be asking about every note rather than about one, and why the server is started with
+  // the Obsidian vault beside id.ct.
+  describe('#taskList', () => {
+    // The note the vault fixture writes its tasks in.
+    const NOTE = '/test/Integration/code/artifacts/catln-test/Tasks.md'
+    const FIRST = 'Read [[Welcome]]'
+
+    async function tasks() {
+      const val = await annotValue('#taskList')
+      expect(val.tag).toBe('TupleVal')
+      expect(val.name).toBe('/Data/Note/Show/TaskList')
+      return JSON.parse(val.args['/tasks'].contents)
+    }
+
+    function contentsOf(task) {
+      return task.ptTask.args['/contents'].contents
+    }
+
+    function isDone(task) {
+      return task.ptTask.args['/state'].name === '/Data/Primitive/True'
+    }
+
+    function taskSource(contents, done) {
+      return `/Data/Note/Task(contents= ${JSON.stringify(contents)}, state= /Data/Primitive/${done ? 'True' : 'False'})`
+    }
+
+    // Written by the page and expression the task carries, which for a list gathered across notes is
+    // the only thing naming where the edit goes.
+    function writeTask(task, source) {
+      return fetch(`${API_BASE}/api/write-expr?prgmName=${encodeURIComponent(task.ptPage)}&metaId=${encodeURIComponent(task.ptExpr)}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'text/plain'},
+        body: source,
+      })
+    }
+
+    it('lists the tasks of every note as the values they display as', async () => {
+      const found = await tasks()
+      expect(found.length).toBeGreaterThan(0)
+
+      for (const task of found) {
+        // Each entry is the task's own value, so a task in the list is shown by whatever shows a
+        // task rather than by the list re-rendering its fields.
+        expect(task.ptTask.tag).toBe('TupleVal')
+        expect(task.ptTask.name).toBe('/Data/Note/Task')
+        expect(typeof contentsOf(task)).toBe('string')
+        expect(['/Data/Primitive/True', '/Data/Primitive/False']).toContain(task.ptTask.args['/state'].name)
+        // Beside where it was written, which is what editing it in a list across notes needs.
+        expect(task.ptPage.endsWith('.md')).toBe(true)
+        expect(task.ptExpr).toMatch(/^[0-9a-f-]{36}$/)
+      }
+
+      // The vault's tasks in the order the note writes them, nested ones included and the one inside
+      // a code fence left out: a checkbox in a fence is writing about a task rather than making one.
+      const fromNote = found.filter(t => t.ptPage.endsWith(NOTE))
+      expect(fromNote.map(contentsOf)).toEqual([
+        FIRST,
+        'Write this note',
+        'Plan the rest',
+        'A checkbox indented deeper is a task of its own',
+      ])
+      expect(fromNote.map(isDone)).toEqual([false, true, false, false])
+    })
+
+    // The whole point of gathering them: a task is written back to the note it was read from, which
+    // is not the page whatever displays the list is on.
+    it('writes a task of the list back to the note it was read from', async () => {
+      const before = (await tasks()).find(t => contentsOf(t) === FIRST)
+      expect(before).toBeDefined()
+      expect(isDone(before)).toBe(false)
+
+      try {
+        const res = await writeTask(before, taskSource(FIRST, true))
+        expect(res.status).toBe(200)
+        expect((await res.json()).tag).toBe('Success')
+
+        // The note says so in markdown, which is the reversion the parser that read it wrote.
+        const page = await fetchApi(`/api/page?prgmName=${encodeURIComponent(before.ptPage)}`)
+        expect(page.contents[0].pgSource).toContain(`- [x] ${FIRST}`)
+
+        // And so does the list, which reads the notes again rather than remembering the write.
+        expect(isDone((await tasks()).find(t => contentsOf(t) === FIRST))).toBe(true)
+      } finally {
+        const now = (await tasks()).find(t => contentsOf(t) === FIRST)
+        if (now) await writeTask(now, taskSource(FIRST, false))
+      }
+    })
   })
 
   it('/api/page returns Success with prgm data and source text', async () => {

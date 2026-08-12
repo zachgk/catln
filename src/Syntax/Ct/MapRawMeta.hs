@@ -162,3 +162,22 @@ replaceRawExpr metaID expr (RawPrgm imports statementTrees) = case unzip $ map r
     replaceStatement _ = Nothing
 
     names e = getMetaID (getExprMeta e) == metaID
+
+-- | The ids of the expressions a page declares or annotates, in the order the page writes them.
+--
+-- The same statements 'replaceRawExpr' can replace, walked the same way, so an id here is one that
+-- can be written back. This is the only record there is of the order a page was written in: a
+-- program's declarations are held in a hash map, which has an order of its own, and an expression a
+-- syntax builds rather than parses (a task read from a note's checkbox) carries no source position to
+-- be sorted by either.
+rawStatementExprIds :: RawPrgm () -> [UUID]
+rawStatementExprIds (RawPrgm _ statementTrees) = concatMap treeIds statementTrees
+  where
+    treeIds (RawStatementTree s tree) = statementIds s ++ concatMap treeIds tree
+
+    statementIds (RawDeclStatement RawObjArr{roaObj=Just o}) = [exprId o]
+    statementIds (RawBindStatement RawObjArr{roaObj=Just o}) = [exprId o]
+    statementIds (RawAnnot a)                                = [exprId a]
+    statementIds _                                           = []
+
+    exprId = getMetaID . getExprMeta

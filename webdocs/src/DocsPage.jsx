@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef, useContext} from 'react';
+import React, {useState, useEffect, useRef, useContext, useCallback} from 'react';
 import {createRoot} from 'react-dom/client';
 
 import makeStyles from '@mui/styles/makeStyles';
@@ -14,7 +14,7 @@ import {initVimMode, VimMode} from 'monaco-vim';
 import {Link, useNavigate} from 'react-router-dom';
 
 import {rawExprMeta, RawExpr, RawObjArr} from './Common/Syntax';
-import {useQuery, useApi, Loading, KeyWord, ReachesTree, ConfigContext, PrgmNameContext, PageDirContext, annotLink, annotApi} from './Common/Common';
+import {useQuery, useApi, Loading, KeyWord, ReachesTree, ConfigContext, PrgmNameContext, PageDirContext, ReloadContext, annotLink, annotApi, writeExpr} from './Common/Common';
 import {Value} from './Common/Value';
 
 const DEBUG_NO_EVAL = false;
@@ -111,6 +111,10 @@ function DocsPage(props) {
 
   const toggleMode = () => setMode(m => m === 'view' ? 'edit' : 'view');
 
+  // Reading the page again is what a value shown on it does after writing to the compiler, so it is
+  // offered to every value rather than only to the ones this page hands an updateExpr to.
+  const reload = useCallback(() => setReloadKey(k => k + 1), []);
+
   // The page, and what the server knows about where it sits: the pages either side of it in the
   // order the navigation shows them, and the directory its documentation's relative links resolve
   // against. Either neighbour is absent at the ends of that order.
@@ -165,23 +169,12 @@ function DocsPage(props) {
   // it so the value shows what the file now says rather than what was asked for.
   const updateExpr = async (metaID, src) => {
     setSaveState({status: 'saving'});
-    try {
-      const res = await fetch(`/api/write-expr?prgmName=${prgmName}&metaId=${metaID}`, {
-        method: 'POST',
-        headers: {'Content-Type': 'text/plain'},
-        body: src
-      });
-      const json = await res.json();
-      if (res.status === 200 && json.tag === 'Success') {
-        setSaveState({status: 'saved'});
-        setReloadKey(k => k + 1);
-      } else {
-        const notes = json.tag === 'ResFail' ? json.contents : null;
-        const msg = notes?.map(n => n.msg).join('; ') || res.statusText || 'unknown error';
-        setSaveState({status: 'error', message: msg});
-      }
-    } catch (e) {
-      setSaveState({status: 'error', message: e.message});
+    const res = await writeExpr(prgmName, metaID, src);
+    if (res.ok) {
+      setSaveState({status: 'saved'});
+      setReloadKey(k => k + 1);
+    } else {
+      setSaveState({status: 'error', message: res.message});
     }
   };
 
@@ -294,6 +287,7 @@ function DocsPage(props) {
   return (
     <PrgmNameContext.Provider value={prgmName}>
       <PageDirContext.Provider value={pageDir}>
+       <ReloadContext.Provider value={reload}>
         <div>
           {canEdit && (
             <div style={{textAlign: 'right'}}>
@@ -332,6 +326,7 @@ function DocsPage(props) {
           )}
           <PageNav prev={prevPage} next={nextPage} />
         </div>
+       </ReloadContext.Provider>
       </PageDirContext.Provider>
     </PrgmNameContext.Provider>
   );
@@ -405,19 +400,27 @@ function AnnotPage(props) {
   const routeAnnot = props.annot || query.get("annot");
   const [annot, setAnnot] = useState(routeAnnot);
   const prgmName = props.prgmName ?? query.get("prgmName") ?? "";
+  const [reloadKey, setReloadKey] = useState(0);
 
   // A new route or query replaces whatever the page edited its way to.
   useEffect(() => {
     setAnnot(routeAnnot);
   }, [routeAnnot]);
 
-  let apiResult = useApi(annotApi(annot, prgmName));
+  // Compiling the annotation again, which is what a value that wrote to a file asks for: the
+  // annotation is unchanged but what it compiles to is not. A #taskList whose task was just checked
+  // is the case this exists for.
+  const reload = useCallback(() => setReloadKey(k => k + 1), []);
+
+  let apiResult = useApi(annotApi(annot, prgmName), reloadKey);
 
   return (
     <PrgmNameContext.Provider value={prgmName}>
-      <Loading status={apiResult}>
-        <Main data={apiResult.data} prgmName={prgmName} updateExpr={(_metaID, src) => setAnnot(src)}/>
-      </Loading>
+      <ReloadContext.Provider value={reload}>
+        <Loading status={apiResult}>
+          <Main data={apiResult.data} prgmName={prgmName} updateExpr={(_metaID, src) => setAnnot(src)}/>
+        </Loading>
+      </ReloadContext.Provider>
     </PrgmNameContext.Provider>
   );
 }

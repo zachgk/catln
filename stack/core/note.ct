@@ -26,3 +26,30 @@ module(Data/Note)
       into: a box to check and the writing beside it. It is the value itself that is shown, with no
       display type standing in for it, which is what lets checking the box in a doc server write the
       change back to the note the task was read from.
+
+  annot(#taskList)
+
+  data(Show/TaskList(tasks -> String))
+    # [Show/TaskList] shows the tasks of every note it covers as one list. It carries them in
+      [tasks], so the webdocs render the list from the compiled value rather than asking the compiler
+      for it over a separate route. Each entry is the [Task] value itself, beside the page it was
+      written in and the expression it was declared by. Those last two are what a list across notes
+      needs and a note's own page does not: a task shown on its page is edited by naming the
+      expression that page holds, where a task shown in a list has no such page, so it carries its
+      own. That is what lets checking a box in the list write the note the task was read from rather
+      than whatever is displaying it.
+      Like [/Catln/Doc/Show/Sidebar] it is about which pages there are rather than about the program
+      it is evaluated against, so the list of every task there is, is evaluated unscoped; written in
+      a page it lists the tasks of what that page reaches.
+
+  every(Show/TaskList.., isa= [/Catln/Doc/DShow])
+
+  /Catln/Doc/dshow(s= #taskList) =
+    taskList(annot) -> String
+      # [taskList] renders the tasks of the pages the evaluation covers as JSON, each beside the page
+        it was written in and the expression it was declared by. They are read exactly as a note's own
+        page reads them, so a task in this list and the same task shown on its page are one value,
+        shown one way, and edited by replacing one expression.
+      #runtime("taskList")
+
+    Show/TaskList(tasks= taskList(annot= s))

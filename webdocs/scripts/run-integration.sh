@@ -88,7 +88,10 @@ cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
 # costing ~60s per call and timing out every test. These tests only check the API
 # contract over a fixed file set, so live reloading buys nothing here.
 echo "Starting Catln backend on port ${API_PORT}..."
-stack run catln -- doc test/Integration/code/id.ct --api --cached &
+# obsidian.ct is loaded beside id.ct so the vault it imports is among the pages. It is what gives
+# the server notes, and so tasks, to answer a #taskList with; without it that annotation could only
+# be checked against a doc server with nothing to list.
+stack run catln -- doc test/Integration/code/id.ct test/Integration/code/obsidian.ct --api --cached &
 BACKEND_PIDS+=($!)
 await_backend "$API_PORT" "${BACKEND_PIDS[0]}"
 warm_backend "$API_PORT"

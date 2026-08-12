@@ -452,20 +452,52 @@ evalAnnots stagePrgms prgmName prgmGraphData = do
     own <- if isValueObjArr oa then buildDisplays env os "declaration" [oaObjExpr oa] else return []
     return (annots' ++ own)
   return $ concat (globalAnnots' : objMapAnnots')
+
+-- | Build and evaluate expressions to the values they display as.
+--
+-- Every expression is evaluated on its own, so a failing one costs only itself: it becomes an error
+-- note naming it, and the others are still returned. This is what lets a reader of a page with one
+-- broken annotation still be shown the rest of them. The failure is not swallowed — it is reported
+-- as an error note, so a consumer that must reject any failure (the integration tests, via
+-- 'failOnErrorNotes') still fails on it.
+buildDisplays :: Env -> [(PartialType, EObjArr)] -> String -> [EExpr] -> CRes [(EExpr, Val)]
+buildDisplays env os what exprs = do
+    results <- forM exprs $ \e -> case fmap (e,) <$> evalDShowAnnot env os e of
+      CRes notes r -> CRes notes r
+      CErr notes   -> CRes (displayFailedNote e : notes) Nothing
+    return $ catMaybes results
   where
-    -- Every expression is evaluated on its own, so a failing one costs only itself: it becomes an
-    -- error note naming it, and the page's other annotations are still returned. This is what lets a
-    -- reader of a page with one broken annotation still be shown the rest of them. The failure is not
-    -- swallowed — it is reported as an error note, so a consumer that must reject any failure (the
-    -- integration tests, via 'failOnErrorNotes') still fails on it.
-    buildDisplays :: Env -> [(PartialType, EObjArr)] -> String -> [EExpr] -> CRes [(EExpr, Val)]
-    buildDisplays env os what exprs = do
-      results <- forM exprs $ \e -> case fmap (e,) <$> evalDShowAnnot env os e of
-        CRes notes r -> CRes notes r
-        CErr notes   -> CRes (displayFailedNote what e : notes) Nothing
-      return $ catMaybes results
-    displayFailedNote :: String -> EExpr -> CNote
-    displayFailedNote what e = MkCNote $ GenCErr (getMetaPos $ getExprMeta e) $ printf "Failed to evaluate the %s %s" what (show e)
+    displayFailedNote e = MkCNote $ GenCErr (getMetaPos $ getExprMeta e) $ printf "Failed to evaluate the %s %s" what (show e)
+
+-- | Evaluate the values a page DECLARES of one type, in the program that page COMPILES TO. The
+-- scopes differ in the same way 'evalAnnots' describes: the declarations are the page's own, while
+-- the environment they are evaluated in is the page joined with everything it imports.
+--
+-- A value is evaluated exactly as it is when the page holding it is read — the value declaration
+-- path of 'evalAnnots' — so a value gathered from a page and the same value shown on that page are
+-- one value, displayed one way, and edited by replacing one expression.
+--
+-- Only that one type, and nothing a page merely annotates. Gathering one type of value across every
+-- page there is asks this of pages that declare none, and evaluating each of them whole would
+-- compute a doc server's worth of values to discard all but a few of them.
+evalPageValues :: Name -> FileImport -> EPrgmGraphData -> CRes [(EExpr, Val)]
+evalPageValues name prgmName prgmGraphData = do
+  Prgm objMap _ _ <- case graphLookup prgmName prgmGraphData of
+    Just own -> return own
+    Nothing  -> CErr [MkCNote $ GenCErr Nothing $ printf "Could not find the page %s to evaluate the declarations of" (show $ impRaw prgmName)]
+  case filter declaresOne (flatObjectMap objMap) of
+    -- A page that declares none is answered before anything is built, so asking every page of a doc
+    -- server about a type most of them never mention costs no evaluation environments.
+    [] -> return []
+    oas -> do
+      prgm <- prgmFromGraphData prgmName prgmGraphData
+      -- The stages are left unavailable: a declared value is the declaration itself and reports on
+      -- no other stage of the program. That is also what keeps an annotation which gathers such
+      -- values from re-entering the gathering, which is a stage supplied from outside.
+      let env = evalBaseEnvStages stagePrgmsUnavailable prgm
+      concat <$> forM oas (\oa -> buildDisplays env [(getExprPartialType $ oaObjExpr oa, oa)] "declaration" [oaObjExpr oa])
+  where
+    declaresOne oa = isValueObjArr oa && oaObjPath oa == name
 
 -- | Builds a function of a program as a run and evaluates it, threading @ioVal@ as its @/io@ handle.
 -- That handle is the only difference between a real run and a mocked one: an 'IOVal' accumulates

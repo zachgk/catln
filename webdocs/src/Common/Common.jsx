@@ -54,6 +54,13 @@ const PrgmNameContext = React.createContext("");
 // annotation, an editor's view zone -- has no directory, and such a link is left as it was written.
 const PageDirContext = React.createContext("");
 
+// Asks whatever is displaying a value to read itself again. A value that writes to the compiler is
+// showing what the compiler answered with, so after a write it is showing the answer to the question
+// before it; the display refetches rather than the value patching itself, so what is on screen is
+// always what the files now say. The default does nothing, for a value displayed by something with
+// nothing to refetch.
+const ReloadContext = React.createContext(() => {});
+
 function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
@@ -446,6 +453,32 @@ function annotApi(annot, prgmName) {
   return `/api/annot?annot=${encodeURIComponent(annot)}${scope}`;
 }
 
+// Replaces one expression of a page and saves the page back as the file it was read from. The page
+// is named per call rather than being the page doing the writing: a task shown in a list of every
+// note's tasks is written back to the note it was read from, which is not the page the list is on.
+//
+// The server writes the file in whatever syntax the page is written in, so checking a task of an
+// Obsidian note writes markdown without the caller having to know that it is markdown. Answers with
+// what to report rather than throwing, since a failed save is something to show beside the value
+// rather than an error to escape into the app.
+async function writeExpr(prgmName, metaID, src) {
+  try {
+    const res = await fetch(`/api/write-expr?prgmName=${encodeURIComponent(prgmName)}&metaId=${metaID}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'text/plain'},
+      body: src
+    });
+    const json = await res.json();
+    if (res.status === 200 && json.tag === 'Success') {
+      return {ok: true};
+    }
+    const notes = json.tag === 'ResFail' ? json.contents : null;
+    return {ok: false, message: notes?.map(n => n.msg).join('; ') || res.statusText || 'unknown error'};
+  } catch (e) {
+    return {ok: false, message: e.message};
+  }
+}
+
 // A type or class page is a #type annotation, so linking to one means asking the compiler to
 // evaluate that annotation rather than routing to a page that fetches for itself.
 function typeAnnotLink(name) {
@@ -536,8 +569,10 @@ export {
   ConfigContext,
   PrgmNameContext,
   PageDirContext,
+  ReloadContext,
   annotLink,
   annotApi,
+  writeExpr,
   tagJoin,
   useQuery,
   useApi,

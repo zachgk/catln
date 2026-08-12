@@ -464,7 +464,9 @@ describe('PlayButton', () => {
 // expression by its meta id and saves it back through the parser which read the file, which is what
 // makes a task of an Obsidian note a checkbox to check rather than a declaration to read.
 describe('editing a value on a page', () => {
-  const NOTE = 'vault%2FTasks.md'
+  // A page is named by the path it is opened at, which for a note is wherever the vault put it --
+  // spaces and all. So the name is encoded into the request rather than pasted into it.
+  const NOTE = '/vault/Read these/Tasks.md'
   const TASK_ID = '22222222-2222-5222-9222-222222222222'
   const CHECKED = '/Data/Note/Task(contents= "Read it", state= /Data/Primitive/True)'
 
@@ -492,7 +494,7 @@ describe('editing a value on a page', () => {
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
-        `/api/write-expr?prgmName=${NOTE}&metaId=${TASK_ID}`,
+        `/api/write-expr?prgmName=${encodeURIComponent(NOTE)}&metaId=${TASK_ID}`,
         expect.objectContaining({ method: 'POST', body: CHECKED }),
       )
     })

@@ -13,6 +13,7 @@ import Sidebar from './Values/Sidebar';
 import Search from './Values/Search';
 import Test from './Values/Test';
 import Task from './Values/Task';
+import TaskList from './Values/TaskList';
 
 // A Value may be given an update function by whatever rendered it. Calling update(src) asks for
 // the expression this value was compiled from to be replaced by the Catln source src. What that
@@ -54,6 +55,10 @@ function Value(props) {
     // it is the one value here that update edits into the page rather than into an annotation.
     case "/Data/Note/Task":
       return <Task {...val.args} update={update} />;
+    // A list of tasks gathered across notes. It gets no update: each of its rows is written back to
+    // the note that row came from, which the row carries and the list on this page does not know.
+    case "/Data/Note/Show/TaskList":
+      return <TaskList {...val.args} />;
     default:
       let showArgs = "";
       if(Object.keys(val.args).length > 0) {
