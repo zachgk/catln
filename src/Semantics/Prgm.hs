@@ -476,9 +476,17 @@ linkedDimBinds typeEnv declT content = case declT of
     -> fromTemplate q
   _ -> []
   where
+    -- The template's var-slot reference may be spelled 'TVExt' (@List[/T=$_/T]@) or 'TVInt'
+    -- (@Box[/T=$/U]@ from an explicit-parameter declaration @unwrap[$U](b -> Box[$T -> $U])@ —
+    -- the parser spells @$U@ 'TVInt' context-free, so the reference lands internal-spelled
+    -- inside the nested partial's slot). Both denote the declaring object's variable:
+    -- 'substituteTVExt' already reads a var-slot value against the ambient env regardless of
+    -- loc, so the linked-occurrence read here must bind under the same rule or the two
+    -- surfaces disagree (the explicit spelling's binding was silently dropped, leaving the
+    -- declaration route at ⊤ and the call unreduced at eval).
     fromTemplate q =
       [ (TVVar k, dim)
-      | (k', TypeVar (TVVar k) TVExt) <- H.toList (ptVars q)
+      | (k', TypeVar (TVVar k) _) <- H.toList (ptVars q)
       , Just dim <- [contentDim k']
       , dim /= PTopType ]
     contentDim k' = case content of
