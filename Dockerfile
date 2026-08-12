@@ -56,5 +56,5 @@ COPY stack /root/.catln/stack
 # ones, so merging those 38 standalone programs collides on names they never
 # import from each other: abs, Nothing, and main (defined by 37 of the 38).
 # --readonly disables the editor's save endpoint so the shared docs site is immutable.
-CMD ["catln", "doc", "--cached", "--readonly", "/root/.catln/stack", "docs"]
+CMD ["catln", "doc", "--readonly", "/root/.catln/stack", "docs"]
 EXPOSE 8080

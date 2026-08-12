@@ -3,8 +3,8 @@
  *
  * Prerequisites:
  *   Start the backend API servers before running these tests:
- *     stack exec catln doc test/Integration/code/id.ct test/Integration/code/obsidian.ct -- --api --cached
- *     stack exec catln doc test/Integration/code/id.ct -- --cached --readonly
+ *     stack exec catln doc test/Integration/code/id.ct test/Integration/code/obsidian.ct -- --api
+ *     stack exec catln doc test/Integration/code/id.ct -- --readonly
  *   The second serves the same API on the serve port (8080) and is only there to
  *   check that --readonly refuses writes.
  *   Or from stack repl:

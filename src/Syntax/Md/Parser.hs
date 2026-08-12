@@ -24,11 +24,14 @@ mdParser :: ImportParser
 mdParser = readOnlyParser $ \imp -> case exprAppliedArgs imp of
   (ObjArr{oaArr=Just (Just (CExpr _ (CStr filename)), _)}:_impArgs) -> do
     isFile <- doesFileExist filename
+    -- The file this read is a read of, whether it was there or not: a page read from a file which
+    -- does not exist is a page the file appearing has something to say to.
+    let reads' = Just [filename]
     if isFile
       then do
         str <- readFile filename
-        return (RawPrgm [] [RawStatementTree (RawAnnot (rawVal mdAnnot `applyRawArgs` [(Just $ partialKey (mkName mdAnnotText), RawCExpr emptyMetaN (CStr str))])) []], [], Just str)
-      else return (RawPrgm [] [], [], Nothing)
+        return $ ParsedImport (RawPrgm [] [RawStatementTree (RawAnnot (rawVal mdAnnot `applyRawArgs` [(Just $ partialKey (mkName mdAnnotText), RawCExpr emptyMetaN (CStr str))])) []]) [] (Just str) reads'
+      else return $ ParsedImport (RawPrgm [] []) [] Nothing reads'
   _ -> undefined
 
 

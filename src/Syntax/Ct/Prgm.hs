@@ -90,7 +90,26 @@ data ReplRes m
   | ReplErr ParseErrorRes
   deriving (Eq, Show)
 
-type ImportParseResult = IO (RawPrgm (), [RawFileImport], Maybe String)
+-- | What reading a file as a page produced, and what the reading read to produce it.
+data ParsedImport = ParsedImport {
+  piPrgm         :: RawPrgm (),
+  -- | Imports the parse found which the program does not itself write: the files of a directory,
+  -- the notes of an Obsidian vault.
+  piExtraImports :: [RawFileImport],
+  -- | The text the page was read from, where the page is one file and so has one to show.
+  piSource       :: Maybe String,
+  -- | Every path on disk this reading depended on: the files it read, and the directories whose
+  -- listing decided what the program holds. A page is read again exactly when one of these is
+  -- written to, so a path left out here is a page which goes stale, and a path put in needlessly is
+  -- a page read more often than it need be. A directory is written to when an entry is added to it,
+  -- removed from it or renamed within it, which is every way a listing of it can change.
+  --
+  -- 'Nothing' is a reading which cannot say what it read, and has its page read again every time
+  -- rather than have a change to it go unseen.
+  piReads        :: Maybe [FilePath]
+                                 }
+
+type ImportParseResult = IO ParsedImport
 
 -- | How a file written in one syntax is read as a page, and written back as that syntax.
 --

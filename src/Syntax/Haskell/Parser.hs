@@ -110,14 +110,20 @@ hsParser = readOnlyParser $ \imp -> case [arg | arg@ObjArr{oaObj=Nothing} <- exp
 
     isFile <- doesFileExist filename
 
-    actualFile <- if isFile
-      then return (Just filename)
+    -- The file read, alongside what this reading read. A module named by a path is read from that
+    -- path, whether or not anything is there. A module named by module name is resolved by asking
+    -- Stack itself — 'Syntax.Haskell.Stack.loadStackDependencyGraph' shells out to it — so what
+    -- that resolution read cannot be stated, and the page says so rather than claiming a read set
+    -- it does not have. Such a page is read again every time.
+    (actualFile, reads') <- if isFile
+      then return (Just filename, Just [filename])
       else case maybeStackRoot of
         Just stackRoot -> do
           -- Try to resolve module name using Stack
           stackInfo <- loadStackDependencyGraph stackRoot
-          resolveModuleInProject stackInfo filename
-        Nothing -> return Nothing
+          resolved <- resolveModuleInProject stackInfo filename
+          return (resolved, Nothing)
+        Nothing -> return (Nothing, Just [filename])
 
     case actualFile of
       Just file -> do
@@ -135,7 +141,7 @@ hsParser = readOnlyParser $ \imp -> case [arg | arg@ObjArr{oaObj=Nothing} <- exp
             case parsed of
               POk _ v -> do
                 let (prgm, imps) = convertModule flags exportAll stackRoot $ unLoc v
-                return (prgm, imps, Nothing)
+                return $ ParsedImport prgm imps Nothing reads'
               PFailed _pstate ->
                 -- TODO uncomment and fix this to show parse errors instead of silently returning an empty program
                 -- let realSpan = psRealSpan $ last_loc pstate
@@ -148,8 +154,8 @@ hsParser = readOnlyParser $ \imp -> case [arg | arg@ObjArr{oaObj=Nothing} <- exp
                 -- in fail errMsg
 
                 -- Return empty program on parse failure to skip unparseable files (e.g., files with CPP)
-                return (RawPrgm [] [], [], Nothing)
-      Nothing -> return (RawPrgm [] [], [], Nothing)
+                return $ ParsedImport (RawPrgm [] []) [] Nothing reads'
+      Nothing -> return $ ParsedImport (RawPrgm [] []) [] Nothing reads'
   _ -> undefined
 
   where

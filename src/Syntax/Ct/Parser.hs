@@ -107,15 +107,17 @@ ctParser = readOnlyParser $ \imp -> case exprAppliedArgs imp of
     fileContents <- readFile fileName
     case runParser (contents pPrgm) fileName fileContents of
       Left err   -> fail $ show $ errorBundlePretty err
-      Right prgm -> return (prgm, [], Just fileContents)
+      Right prgm -> return $ ParsedImport prgm [] (Just fileContents) (Just [fileName])
   _ -> undefined
 
 -- TODO Write a .ctx file back, once 'ctParser' can be written back: it is a .ct file with the one
 -- annotation this adds taken off again.
 ctxParser :: ImportParser
 ctxParser = readOnlyParser $ \fileName -> do
-  (prgm, extra, src) <- ipParse ctParser fileName
-  return (annotate prgm, extra, src)
+  -- Updated rather than rebuilt, so the file this read is a read of travels with it without being
+  -- named again here.
+  parsed <- ipParse ctParser fileName
+  return parsed{piPrgm = annotate (piPrgm parsed)}
   where
     annotate (RawPrgm imports statements) = RawPrgm imports (RawStatementTree (RawAnnot (RawValue emptyMetaN (mkName ctxAnnot))) [] :statements)
 

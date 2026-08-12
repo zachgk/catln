@@ -4,6 +4,7 @@ import           Integration.Integ
 import           Semantics.TypesTests     (typeTests)
 import           Stack.StackTests         (stackTests)
 import           Syntax.ObsidianTests     (obsidianTests)
+import           Syntax.RereadTests       (rereadTests)
 import           Syntax.SyntaxTests       (syntaxTests)
 import           Test.Tasty
 import           Typecheck.TypeCheckTests (typecheckTests)
@@ -13,5 +14,5 @@ main = do
   integrationTests' <- integrationTests
   syntaxTests' <- syntaxTests
   stackTests' <- stackTests
-  let catlnTests = testGroup "CatlnTests" [integrationTests', typeTests, typecheckTests, syntaxTests', stackTests', obsidianTests]
+  let catlnTests = testGroup "CatlnTests" [integrationTests', typeTests, typecheckTests, syntaxTests', stackTests', obsidianTests, rereadTests]
   defaultMain catlnTests

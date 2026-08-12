@@ -85,25 +85,21 @@ maybeJson :: (ToJSON a) => CRes a -> ActionM ()
 maybeJson (CRes notes r) = json $ Success r notes
 maybeJson (CErr notes)   = json (ResFail notes :: ResSuccess () CNote)
 
--- | Both providers return the service handle alongside the per-request refresh action.
--- The handle is needed by writes, which must not pay for the live provider's rebuild.
-mkLiveWDProvider :: [String] -> IO (CTSS, IO CTSS)
-mkLiveWDProvider baseFileNames = do
+-- | The service a doc server answers from: the files it was given, read, watched and built.
+--
+-- Watched because a doc server is read from over and over. Every request brings the service into
+-- line with the files first ('ctssRefresh'), which the watch makes cost what the change costs
+-- rather than what the program costs, so that the pages served are the files as they now are
+-- without every request re-reading every file to find out.
+mkDocService :: [String] -> IO CTSS
+mkDocService baseFileNames = do
   ss <- ctssBaseFiles buildCtssConfig baseFileNames
+  ctssWatch ss
   ctssBuildAll ss
-  return (ss, do
-    ctssRead ss
-    ctssBuildAll ss -- builds whichever pages the read found a change in, and their dependents
-    return ss)
+  return ss
 
-mkCacheWDProvider :: [String] -> IO (CTSS, IO CTSS)
-mkCacheWDProvider baseFileNames = do
-  ss <- ctssBaseFiles buildCtssConfig baseFileNames
-  ctssBuildAll ss
-  return (ss, return ss)
-
-docApiBase :: Bool -> CTSS -> IO CTSS -> ScottyM ()
-docApiBase readonly ctss getProvider = do
+docApiBase :: Bool -> CTSS -> ScottyM ()
+docApiBase readonly ctss = do
 
   get "/api/config" $ do
     -- The page the docs open at, which is the doc server's own answer rather than a page picked out
@@ -129,8 +125,7 @@ docApiBase readonly ctss getProvider = do
   -- to the parser which read it, so a checkbox checked in an Obsidian note is written back as
   -- markdown rather than as the program the note was read into.
   --
-  -- Guarded by @--readonly@ and served off the handle rather than the provider for the same reasons
-  -- as @/api/write@.
+  -- Guarded by @--readonly@ and does its own reading, for the same reasons as @/api/write@.
   post "/api/write-expr" $ do
     prgmName <- param "prgmName"
     metaID <- param "metaId"
@@ -150,12 +145,12 @@ docApiBase readonly ctss getProvider = do
     maybeJson resp
 
   get "/api/page" $ do
-    provider <- liftAndCatchIO getProvider
+    liftAndCatchIO $ ctssRefresh ctss
     prgmName <- param "prgmName"
     resp <- liftAndCatchIO $ runCResT $ do
       prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
-      rawPrgm' <- ctssLookupReq (Just . ssfRaw) prgmName' provider
-      tprgms <- getTPrgm provider
+      rawPrgm' <- ctssLookupReq (Just . ssfRaw) prgmName' ctss
+      tprgms <- getTPrgm ctss
       maybeTPrgmRes <- lift $ runCResT $ do
         case graphLookup prgmName' tprgms of
           Just tprgm -> do
@@ -164,25 +159,25 @@ docApiBase readonly ctss getProvider = do
           Nothing -> fail $ printf "Could not find typechecked program %s" (show prgmName)
       let maybeTPrgm = fmap fst maybeTPrgmRes
       let maybeTPrgmFull = fmap snd maybeTPrgmRes
-      maybeAnnots <- lift $ runCResT $ getEvalAnnots provider prgmName'
+      maybeAnnots <- lift $ runCResT $ getEvalAnnots ctss prgmName'
       let tprgm' = maybe H.empty interleavePrgm (cresToMaybe maybeTPrgm)
       let targetModes = maybe H.empty evalAllTargetModes (cresToMaybe maybeTPrgmFull)
       let annots' = maybe H.empty (H.fromList . map (first (getMetaID . getExprMeta))) (cresToMaybe maybeAnnots)
       let prgm' = mapMetaRawPrgm (zip3MetaFun (interleaveMeta tprgm') (interleaveMeta targetModes) (interleaveMeta annots')) rawPrgm'
-      maybeSource <- lift $ runCResT $ getSource provider prgmName'
+      maybeSource <- lift $ runCResT $ getSource ctss prgmName'
       -- The pages either side of this one travel with it, so a page knows where it sits without the
       -- webdocs holding a list of every page to work it out from. A page the order cannot place is
       -- reported rather than served as though it were an end of the order: 'sidebarOrder' fails only
       -- when a page has no path to open it by or two pages share one, which is a doc server that
       -- cannot be navigated at all.
-      pages <- lift $ ctssKeys provider
+      pages <- lift $ ctssKeys ctss
       order <- either fail return $ sidebarOrder pages
       let (prevPage, nextPage) = maybe (Nothing, Nothing) (`neighbours` order) (impDisp prgmName')
       return $ PageResp prgm' (cresToMaybe maybeSource) prevPage nextPage (impDir prgmName')
     maybeJson resp
 
   get "/api/annot" $ do
-    provider <- liftAndCatchIO getProvider
+    liftAndCatchIO $ ctssRefresh ctss
     annot <- param "annot"
     -- An annotation is local to the program it is written in, so evaluating a free-standing one has
     -- to say which program it is written in. Naming a page evaluates the annotation as though it sat
@@ -191,7 +186,7 @@ docApiBase readonly ctss getProvider = do
     -- every loaded file, which is what a listing of the whole program wants.
     scope <- fmap Just (param "prgmName") `rescue` (\_ -> return Nothing)
     scope' <- liftAndCatchIO $ traverse (mkDesCanonicalImportStr buildCtssConfig) scope
-    stages <- liftAndCatchIO $ maybe (ctssStagePrgms provider) (ctssStagePrgmsFrom provider) scope'
+    stages <- liftAndCatchIO $ maybe (ctssStagePrgms ctss) (ctssStagePrgmsFrom ctss) scope'
     resp <- liftAndCatchIO $ runCResT $ do
       rawPrgm <- case runParser pExpr "<annot>" annot of
         Left err     -> fail $ show $ errorBundlePretty err
@@ -200,8 +195,8 @@ docApiBase readonly ctss getProvider = do
       let rawPrgm' = addRawPrgmMetaIDs (parseMetaIDScope annotName) rawPrgm
       (annotDesPrgm, annotPrgmName, _) <- asCResT $ desPrgm (rawPrgm', annotName, [])
       [annotDesPrgm'] <- desFinalPasses [(annotDesPrgm, annotPrgmName, [], [])]
-      tprgmsTrace <- maybe (getTPrgmWithTrace provider) (\n -> ctssGetFrom ssfTPrgmWithTrace n provider) scope'
-      tprgms <- maybe (getTPrgm provider) (\n -> ctssGetFrom ssfTPrgm n provider) scope'
+      tprgmsTrace <- maybe (getTPrgmWithTrace ctss) (\n -> ctssGetFrom ssfTPrgmWithTrace n ctss) scope'
+      tprgms <- maybe (getTPrgm ctss) (\n -> ctssGetFrom ssfTPrgm n ctss) scope'
       let annotDeps = map snd3 $ graphToNodes tprgms
       [(annotTprgm, _, _)] <- asCResT $ typeCheckToRes $ typecheckPrgms [(annotDesPrgm', [], map fst3 $ graphToNodes tprgmsTrace)]
       let joinedTprgms = graphFromEdges ((annotTprgm, annotPrgmName, annotDeps) : graphToNodes tprgms)
@@ -212,29 +207,25 @@ docApiBase readonly ctss getProvider = do
     maybeJson resp
 
 
-docApi :: Bool -> Bool -> [String] -> IO ()
-docApi cached readonly baseFileNames = do
+docApi :: Bool -> [String] -> IO ()
+docApi readonly baseFileNames = do
 
-  (ctss, provider) <- if cached
-    then mkCacheWDProvider baseFileNames
-    else mkLiveWDProvider baseFileNames
+  ctss <- mkDocService baseFileNames
 
-  scotty 31204 $ docApiBase readonly ctss provider
+  scotty 31204 $ docApiBase readonly ctss
 
-docServe :: Bool -> Bool -> [String] -> IO ()
-docServe cached readonly baseFileNames = do
+docServe :: Bool -> [String] -> IO ()
+docServe readonly baseFileNames = do
 
   let handleIndex p = case p of
         "" -> Just "index.html"
         _  -> Just p
 
-  (ctss, provider) <- if cached
-    then mkCacheWDProvider baseFileNames
-    else mkLiveWDProvider baseFileNames
+  ctss <- mkDocService baseFileNames
 
   scotty 8080 $ do
 
-    docApiBase readonly ctss provider
+    docApiBase readonly ctss
 
     middleware $ staticPolicy (noDots >-> policy handleIndex >-> addBase "webdocs/dist")
 

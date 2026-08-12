@@ -13,7 +13,7 @@
 
 module CtService where
 import           Control.Concurrent      (MVar, modifyMVar_, newMVar, readMVar,
-                                          swapMVar)
+                                          withMVar)
 import           Control.Monad           (forM, forM_, unless, when)
 import           Control.Monad.Trans     (lift)
 import           CRes
@@ -33,6 +33,8 @@ import           Eval.Common             (EvalMetaDat, MockIO, StagePrgms (..),
                                           Val (StrVal, TupleVal), oaTestId)
 import           Eval.Testing            (TestDesc (..), evalPrints, evalTest,
                                           runTestDesc)
+import           FileWatch               (Watcher, allCovered, covered,
+                                          startWatcher, watchReads, withPending)
 import           Semantics               (CTSSConfig)
 import           Semantics.Annots        (hasAnnot)
 import           Semantics.Prgm
@@ -42,6 +44,7 @@ import           Syntax.Ct.MapRawMeta    (rawStatementExprIds)
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 import           Syntax.Parsers
+import           System.FilePath         (takeDirectory)
 import           Text.Printf
 import           TypeCheck               (typecheckPrgms)
 import           TypeCheck.Common        (TPrgm, TraceConstrain, VPrgm,
@@ -56,12 +59,28 @@ newtype CTSS = CTSS (MVar CTSSDat)
 data CTSSDat = CTSSDat {
   ctssConfig        :: CTSSConfig,
   ctssBaseFileNames :: [String],
-  ctssData          :: GraphData SSF FileImport
+  ctssData          :: GraphData SSF FileImport,
+  -- | A watch over the files the pages were read from, for a service read from over and over.
+  --
+  -- Without one a read looks at every file the service holds to find what changed, which costs what
+  -- the program is; with one it costs what the change is. Absent by default because a service read
+  -- once, or told what changed by whoever changed it, has nothing to gain from it.
+  ctssWatcher       :: Maybe Watcher,
+  -- | Held for a whole read, so that two reads cannot each take half of what has changed.
+  --
+  -- Not the lock the graph is behind: a read holding that one across its parsing would put every
+  -- read behind a build, which holds it for a whole SCC.
+  ctssReadLock      :: MVar ()
                                        }
 
 data SSF = SSF {
   ssfSource         :: Maybe String,
   ssfRaw            :: CRes (RawPrgm ParseMetaDat),
+  -- | What the read which produced this page left: the imports it walked on from, and when the
+  -- files it read were last written. Handed back to the next read, which gives this page back
+  -- untouched while those files are unchanged, so a page is parsed again only when something it was
+  -- read from has been written to.
+  ssfRead           :: ReadPage,
   ssfBuilt          :: Bool,
   ssfDes            :: Maybe (CRes (Prgm Expr ParseMetaDat)),
   ssfTPrgmWithTrace :: Maybe (CRes (TPrgm, VPrgm, TraceConstrain)),
@@ -75,20 +94,28 @@ data SSF = SSF {
 
 emptyCTSS :: CTSSConfig -> IO CTSS
 emptyCTSS config = do
-  v <- newMVar $ CTSSDat config [] (graphFromEdges [])
+  v <- newMVar =<< newCTSSDat config []
   return $ CTSS v
 
-newSSF :: Maybe String -> CRes (RawPrgm ParseMetaDat) -> SSF
-newSSF src rawPrgm = SSF { ssfSource = src
-                         , ssfRaw = rawPrgm
-                         , ssfBuilt = False
-                         , ssfDes = Nothing
-                         , ssfTPrgmWithTrace = Nothing
-                         , ssfTPrgm = Nothing
-                         , ssfTBPrgm = Nothing
-                         , ssfAnnots = Nothing
-                         , ssfTests = Nothing
-                         }
+newCTSSDat :: CTSSConfig -> [String] -> IO CTSSDat
+newCTSSDat config baseFileNames = CTSSDat config baseFileNames (graphFromEdges []) Nothing <$> newMVar ()
+
+-- | A page as a read of it left it, with nothing yet built from it.
+--
+-- The source and the program are taken from the read rather than given, so that what a page holds
+-- and what it was read from cannot come apart.
+newSSF :: ReadPage -> SSF
+newSSF rp = SSF { ssfSource = rpSource rp
+                , ssfRaw = pure (rpPrgm rp)
+                , ssfRead = rp
+                , ssfBuilt = False
+                , ssfDes = Nothing
+                , ssfTPrgmWithTrace = Nothing
+                , ssfTPrgm = Nothing
+                , ssfTBPrgm = Nothing
+                , ssfAnnots = Nothing
+                , ssfTests = Nothing
+                }
 
 ctssSetFiles :: CTSS -> [String] -> IO ()
 ctssSetFiles (CTSS ssmv) baseFileNames = do
@@ -97,34 +124,134 @@ ctssSetFiles (CTSS ssmv) baseFileNames = do
 
 ctssBaseFiles :: CTSSConfig -> [String] -> IO CTSS
 ctssBaseFiles config baseFileNames = do
-  v <- newMVar $ CTSSDat config baseFileNames (graphFromEdges [])
+  v <- newMVar =<< newCTSSDat config baseFileNames
   let ctss = CTSS v
   ctssRead ctss
   return ctss
 
+-- | Watch the files the service is read from, so that later reads read only what has changed.
+--
+-- For a service read from over and over, rather than read once and thrown away. Without it a read
+-- looks at every file the service holds, which is cheap next to reading them but is still work
+-- proportional to the program rather than to the change.
+ctssWatch :: CTSS -> IO ()
+ctssWatch ctss@(CTSS ssmv) = do
+  watcher <- startWatcher
+  modifyMVar_ ssmv $ \ss -> return ss{ctssWatcher=Just watcher}
+  -- The watches go on here rather than being left to the next read. A read only sees to them when
+  -- it read something, and the read after this one gives every page back — so leaving it to a read
+  -- would leave a service watching nothing, and answering forever with what it read once.
+  ctssRewatch ctss watcher
+
+-- | Read the files the service was given, and take up whatever they now say.
+--
+-- Only the pages whose files have been written to are read again; every other page is given back by
+-- 'readFiles' as the last read left it. A read therefore costs what has changed rather than what the
+-- program is, which is what lets a caller read as often as it likes instead of choosing between
+-- working from what it read once and re-reading everything to find out what it now says.
+--
+-- The files are read outside the lock and merged into the graph inside it, against the graph as it
+-- is by then rather than the one the read started from. Holding the lock across the read would put
+-- every read behind a build, which holds the same lock for a whole SCC; merging into the graph the
+-- read started from would throw away everything a build ('ctssBuildSCC') or a store ('ctssStore')
+-- committed while the read was parsing.
 ctssRead :: CTSS -> IO ()
-ctssRead (CTSS ssmv) = do
-  ss@CTSSDat{ctssConfig, ctssBaseFileNames, ctssData} <- readMVar ssmv
-  rawPrgms <- readFiles ctssConfig (map mkRawImportStr ctssBaseFileNames)
-  let (data', invalidations) = unzip $ map (buildSSF ctssData) $ graphToNodes rawPrgms
-  let ss' = ss{ctssData=graphFromEdges data'}
-  _ <- swapMVar ssmv $ ctssClearInvalidations (catMaybes invalidations) ss'
-  return ()
+ctssRead ctss@(CTSS ssmv) = do
+  CTSSDat{ctssConfig, ctssBaseFileNames, ctssData=before, ctssWatcher, ctssReadLock} <- readMVar ssmv
+  withMVar ctssReadLock $ \() -> withWritten ctssWatcher $ \written -> do
+    unchanged <- ctssUnchanged ctssWatcher written [(prgmName, ssfRead ssf) | (ssf, prgmName, _) <- graphToNodes before]
+    rawPrgms <- readFiles ctssConfig unchanged (map mkRawImportStr ctssBaseFileNames)
+    modifyMVar_ ssmv $ \ss -> do
+      let (data', invalidations) = unzip $ map (buildSSF (ctssData ss)) $ graphToNodes rawPrgms
+      return $ ctssClearInvalidations (catMaybes invalidations) ss{ctssData=graphFromEdges data'}
+    -- The watches only need seeing to where the read read something, since they are watches on what
+    -- the reads read. A read which gave every page back left every path it was watching for exactly
+    -- as it was, and gathering them up again to say so would be work for every path of every page,
+    -- to find nothing to do.
+    let read' = graphToNodes rawPrgms
+    let readNothing = length read' == H.size unchanged && all (\(_, prgmName, _) -> H.member prgmName unchanged) read'
+    unless readNothing $ forM_ ctssWatcher $ ctssRewatch ctss
   where
-    buildSSF ctssData ((rawPrgm, src), prgmName, imports) = case graphLookup prgmName ctssData of
+    buildSSF held (page, prgmName, imports) = case graphLookup prgmName held of
+      -- A page given back unread is the page already held, so there is nothing to compare it
+      -- against and nothing to invalidate. The comparison below walks the whole syntax tree, so a
+      -- read which read nothing would otherwise compare every page against itself.
+      --
+      -- Read times identify the read rather than the files: a page read again is timed afresh
+      -- before it is parsed, so times equal to the ones the page already holds are the very times
+      -- it was handed back with.
+      Just old | isJust (rpReads page), rpReads (ssfRead old) == rpReads page -> ((old, prgmName, imports), Nothing)
       -- A page which read back the same program keeps everything built from it, but takes the new
       -- source text: a change the parse discards (trailing whitespace) leaves the program equal
-      -- while the file on disk is no longer the one the page last served.
-      Just old@SSF{ssfRaw=CRes _ oldRaw} | oldRaw == rawPrgm -> ((old{ssfSource=src}, prgmName, imports), Nothing)
-      Just{} -> ((newSSF src $ pure rawPrgm, prgmName, imports), Just prgmName)
-      Nothing -> ((newSSF src $ pure rawPrgm, prgmName, imports), Nothing)
+      -- while the file on disk is no longer the one the page last served. It takes the new read
+      -- too, or a page written to without changing would be read again on every read forever.
+      Just old@SSF{ssfRaw=CRes _ oldRaw} | oldRaw == rpPrgm page -> ((old{ssfSource=rpSource page, ssfRead=page}, prgmName, imports), Nothing)
+      Just{} -> ((newSSF page, prgmName, imports), Just prgmName)
+      Nothing -> ((newSSF page, prgmName, imports), Nothing)
+
+-- | Act on the paths a watcher saw written, where there is one to have seen any.
+withWritten :: Maybe Watcher -> (S.HashSet FilePath -> IO a) -> IO a
+withWritten Nothing act        = act S.empty
+withWritten (Just watcher) act = withPending watcher act
+
+-- | The pages a read need not read again: those nothing they were read from has been written to.
+--
+-- A watched page is answered from what the watcher saw written, which costs nothing to ask. Every
+-- other page — one no watcher covers, or one whose read could not say what it read — is looked at
+-- instead, so that a page is given back only when something can say it is unchanged.
+ctssUnchanged :: Maybe Watcher -> S.HashSet FilePath -> [(FileImport, ReadPage)] -> IO (H.HashMap FileImport ReadPage)
+ctssUnchanged Nothing _ pages = unchangedPages pages
+ctssUnchanged (Just watcher) written pages = do
+  everyPath <- allCovered watcher
+  if S.null written && everyPath then return (H.fromList pages) else ctssUnchangedOf watcher written pages
+
+-- | 'ctssUnchanged' where something has been written to, or some path is one the watcher cannot
+-- answer for.
+--
+-- Split out because it asks its question of each path of each page, and a page may be read from as
+-- many paths as the program has pages — a page read from a directory listing is read from it
+-- however many other pages that listing holds. Asking that of every page every time would be the
+-- program squared, to find that nothing had changed; nothing having changed is answered whole
+-- instead, and this is reached only when something has.
+ctssUnchangedOf :: Watcher -> S.HashSet FilePath -> [(FileImport, ReadPage)] -> IO (H.HashMap FileImport ReadPage)
+ctssUnchangedOf watcher written pages = do
+  watched <- covered watcher
+  -- An entry appearing in a directory is a write to a path inside it, so a page read from a
+  -- directory's listing is one that a write to anything the directory holds has changed.
+  let touched = S.union written $ S.fromList $ map takeDirectory $ S.toList written
+  let isWatched page = maybe False (all ((`S.member` watched) . fst) . rtPaths) (rpReads page)
+  let (byWatch, byLook) = partition (isWatched . snd) pages
+  looked <- unchangedPages byLook
+  return $ H.union looked $ H.fromList $ filter (not . any (`S.member` touched) . readPaths . snd) byWatch
+
+-- | Watch the files the pages were read from, and look at whichever of them were read before there
+-- was a watch on them.
+--
+-- The pages read before their files were watched are the gap the watcher cannot close by itself: a
+-- write between the reading of a file and the watching of it is one no event will ever report.
+-- Every page is in that gap when a service first starts watching, and a page found in a directory
+-- nothing had been read from before is in it afterwards, so both are answered the same way — by
+-- looking, once, at the pages whose files have only now come to be watched.
+ctssRewatch :: CTSS -> Watcher -> IO ()
+ctssRewatch (CTSS ssmv) watcher = do
+  CTSSDat{ctssData} <- readMVar ssmv
+  before <- covered watcher
+  watchReads watcher $ concatMap (readPaths . ssfRead . fst3) $ graphToNodes ctssData
+  after <- covered watcher
+  let fresh = S.difference after before
+  unless (S.null fresh) $ forM_ (graphToNodes ctssData) $ \(ssf, prgmName, _) ->
+    when (any (`S.member` fresh) $ readPaths $ ssfRead ssf) $ do
+      current <- readTimeCurrent $ rpReads $ ssfRead ssf
+      unless current $ ctssStale (CTSS ssmv) prgmName
 
 ctssClearInvalidations :: [FileImport] -> CTSSDat -> CTSSDat
 ctssClearInvalidations invalidations ss@CTSSDat{ctssData=(g, nodeFromVertex, vertexFromKey)} = ss{ctssData=fmapGraphWithKey maybeClear $ ctssData ss}
   where
     propagated = map (snd3 . nodeFromVertex) $ foldMap (foldMap (:[])) $ dfs (transposeG g) (mapMaybe vertexFromKey invalidations)
     maybeClear prgmName ssf
-      | prgmName `elem` propagated = newSSF (ssfSource ssf) (ssfRaw ssf)
+      -- Rebuilt from the read the page already has: an invalidation drops what was built from a
+      -- page, not what the page was read from, so the next read still gives it back unread.
+      | prgmName `elem` propagated = newSSF (ssfRead ssf)
       | null invalidations = ssf
       -- Which tests a page has, and what they find, is decided over the whole program the page
       -- belongs to rather than over the page and its imports (see 'ctssTestsFrom'). Invalidation
@@ -272,6 +399,16 @@ ctssBuildAll ctss@(CTSS ssmv) = do
   CTSSDat{ctssData} <- readMVar ssmv
   ctssBuildPagesExact ctss ctssData
 
+-- | Bring the service into line with the files on disk: read whatever has changed, and build
+-- whatever that left unbuilt.
+--
+-- What to ask for before working from the service, where the files may have been written to since
+-- it was last read, so that what it holds is what the files now say.
+ctssRefresh :: CTSS -> IO ()
+ctssRefresh ctss = do
+  ctssRead ctss
+  ctssBuildAll ctss
+
 ctssKeys :: CTSS -> IO [FileImport]
 ctssKeys (CTSS ssmv) = do
   CTSSDat{ctssData} <- readMVar ssmv
@@ -362,6 +499,10 @@ setSource ctss@(CTSS ssmv) prgmName src = do
       Nothing -> fail $ printf "No file path available for %s" (show prgmName)
       Just filePath -> lift $ do
         writeFile filePath src
+        -- The page is read again because it was written, not because the file looks written. A
+        -- filesystem which keeps modification times to the second has nothing to show for a page
+        -- written and read within one, and the read would give back the page it already holds.
+        ctssStale ctss prgmName
         ctssRead ctss
 
 -- This does not use ctssGet because it doesn't require building
@@ -525,6 +666,17 @@ ctssStore prgmName store (CTSS ssmv) = modifyMVar_ ssmv $ \ctssdat ->
   where
     keep k ssf | k == prgmName && ssfBuilt ssf = store ssf
                | otherwise = ssf
+
+-- | Forget when a page's files were last written, so the next read reads it again.
+--
+-- What a page was read from is kept, so the read still knows which files to look at; only the claim
+-- that they are still as they were is dropped.
+ctssStale :: CTSS -> FileImport -> IO ()
+ctssStale (CTSS ssmv) prgmName = modifyMVar_ ssmv $ \ctssdat ->
+  return ctssdat{ctssData = fmapGraphWithKey forget (ctssData ctssdat)}
+  where
+    forget k ssf | k == prgmName = ssf{ssfRead = (ssfRead ssf){rpReads = Nothing}}
+                 | otherwise = ssf
 
 getWeb :: CTSS -> FileImport -> String -> CResT IO String
 getWeb ctss prgmName fun = do

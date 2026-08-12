@@ -48,7 +48,7 @@ await_backend() {
   echo "Backend on port ${port} ready after ${waited}s."
 }
 
-# Answering /api/config does not mean the backend is warm. --cached forces the typecheck
+# Answering /api/config does not mean the backend is warm. Starting up runs the typecheck
 # pipeline, but buildSCCPipeline leaves evalBuildAll (step 7) and evalAnnots (step 8) as
 # thunks, so the FIRST /api/page pays the tree building and annotation evaluation for that
 # page. Measured on a dev machine: 25s for the first load, 0s for every one after. Without
@@ -83,15 +83,14 @@ free_port "$READONLY_PORT"
 cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
 
 # Start the Catln backend API server.
-# --cached builds once at startup and serves from that build. Without it the live
-# provider re-runs ctssBuildAll on every request (see the TODO in mkLiveWDProvider),
-# costing ~60s per call and timing out every test. These tests only check the API
-# contract over a fixed file set, so live reloading buys nothing here.
+# The server watches the files it read and reads again only what has been written to, so a request
+# which changed nothing costs nothing to answer. It used to take a --cached flag to get that, at the
+# price of never noticing a file change at all.
 echo "Starting Catln backend on port ${API_PORT}..."
 # obsidian.ct is loaded beside id.ct so the vault it imports is among the pages. It is what gives
 # the server notes, and so tasks, to answer a #taskList with; without it that annotation could only
 # be checked against a doc server with nothing to list.
-stack run catln -- doc test/Integration/code/id.ct test/Integration/code/obsidian.ct --api --cached &
+stack run catln -- doc test/Integration/code/id.ct test/Integration/code/obsidian.ct --api &
 BACKEND_PIDS+=($!)
 await_backend "$API_PORT" "${BACKEND_PIDS[0]}"
 warm_backend "$API_PORT"
@@ -101,7 +100,7 @@ warm_backend "$API_PORT"
 # exposes the same API routes. Started only after the first is up, since two
 # concurrent stdlib compiles contend badly for CPU and memory.
 echo "Starting readonly Catln backend on port ${READONLY_PORT}..."
-stack run catln -- doc test/Integration/code/id.ct --cached --readonly &
+stack run catln -- doc test/Integration/code/id.ct --readonly &
 BACKEND_PIDS+=($!)
 await_backend "$READONLY_PORT" "${BACKEND_PIDS[1]}"
 warm_backend "$READONLY_PORT"

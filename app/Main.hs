@@ -12,8 +12,8 @@ import           Semantics.Prgm       (CodeRangeDat, FileImport, MetaDat,
 import           Semantics.Types      (mkName, nameStr, partialKey)
 import           Syntax.Ct.Builder    (applyRawArgs, rawStr, rawVal)
 import           Syntax.Ct.Formatter  (formatRootPrgm)
-import           Syntax.Ct.Prgm       (RawPrgm (..), RawStatement (..),
-                                       RawStatementTree (..),
+import           Syntax.Ct.Prgm       (ParsedImport (..), RawPrgm (..),
+                                       RawStatement (..), RawStatementTree (..),
                                        rawExprAppliedArgsMap)
 import           Syntax.Parsers       (canonicalImport, mkDesCanonicalImportStr,
                                        mkRawImportStr, parseFile, readFiles,
@@ -83,10 +83,10 @@ xTypeTrace prgmName = do
     lift $ writeFile (traceDir ++ "/" ++ relPath) contents
   lift $ putStrLn $ printf "Wrote %d typetrace files to %s" (length files) traceDir
 
-xDoc :: [String] -> Bool -> Bool -> Bool -> CResT IO ()
-xDoc prgmNames cached apiOnly readonly = if apiOnly
-  then lift $ docApi cached readonly prgmNames
-  else lift $ docServe cached readonly prgmNames
+xDoc :: [String] -> Bool -> Bool -> CResT IO ()
+xDoc prgmNames apiOnly readonly = if apiOnly
+  then lift $ docApi readonly prgmNames
+  else lift $ docServe readonly prgmNames
 
 xConvert :: String -> Maybe String -> CResT IO ()
 xConvert prgmName _outFname = do
@@ -107,7 +107,7 @@ xFmt prgmName = do
   -- pipeline: 'processParsed' injects an implicit @import "core"@ for compilation, and formatting
   -- that would write a duplicate @import "core"@ back into any file that already imports it.
   imp <- lift $ canonicalImport buildCtssConfig Nothing $ mkRawImportStr prgmName
-  (rawPrgm, _, _) <- lift $ readImport imp
+  ParsedImport{piPrgm=rawPrgm} <- lift $ readImport imp
   let prgm' = formatRootPrgm rawPrgm
   -- Written back to the file the import resolved to rather than to the name it was given by, which
   -- is not always a path: an import may name its parser instead ('mkRawImportStr'), and writing to
@@ -183,7 +183,8 @@ xDepTree prgmName showCore = do
   rootImp <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
 
   -- Build the full import graph
-  graphData <- lift $ readFiles buildCtssConfig [mkRawImportStr prgmName]
+  -- A one-shot read has nothing an earlier read left to give back.
+  graphData <- lift $ readFiles buildCtssConfig H.empty [mkRawImportStr prgmName]
   let nodes = graphToNodes graphData
 
   -- Build a lookup map from FileImport to its dependencies
@@ -234,22 +235,22 @@ xRefIndex prgmName showCore = do
     isCoreImport imp = "core" `isInfixOf` fromMaybe (show imp) (impDisp imp)
 
 exec :: Command -> CResT IO ()
-exec (RunFile file function)             = xRun file function
-exec (BuildFile file function)           = xBuild file function
-exec (Doc fname cached apiOnly readonly) = xDoc fname cached apiOnly readonly
-exec (Convert fname outFname)            = xConvert fname outFname
-exec CLsp                                = xLsp
-exec (Fmt fname)                         = xFmt fname
-exec (DepTree fname showCore)            = xDepTree fname showCore
-exec (RefIndex fname showCore)           = xRefIndex fname showCore
-exec (TestFile fname update)             = xTest fname update
-exec (TypeTrace fname)                   = xTypeTrace fname
-exec (TBuildFile fname)                  = xTBuild fname
+exec (RunFile file function)      = xRun file function
+exec (BuildFile file function)    = xBuild file function
+exec (Doc fname apiOnly readonly) = xDoc fname apiOnly readonly
+exec (Convert fname outFname)     = xConvert fname outFname
+exec CLsp                         = xLsp
+exec (Fmt fname)                  = xFmt fname
+exec (DepTree fname showCore)     = xDepTree fname showCore
+exec (RefIndex fname showCore)    = xRefIndex fname showCore
+exec (TestFile fname update)      = xTest fname update
+exec (TypeTrace fname)            = xTypeTrace fname
+exec (TBuildFile fname)           = xTBuild fname
 
 data Command
   = BuildFile String String
   | RunFile String String
-  | Doc [String] Bool Bool Bool
+  | Doc [String] Bool Bool
   | Convert String (Maybe String)
   | CLsp
   | Fmt String
@@ -272,7 +273,6 @@ cBuild = BuildFile
 cDoc :: Parser Command
 cDoc = Doc
   <$> some (argument str (metavar "FILES" <> help "The files to run, each a path or an import naming the parser to read it with. The second needs quoting from the shell: 'obsidian(\"vault\")'"))
-  <*> switch (long "cached" <> help "Cache results instead of reloading live (useful for serving rather than development)")
   <*> switch (long "api" <> help "Serve only the API rather than the pages too")
   <*> switch (long "readonly" <> help "Disable saving edits from the webdocs editor")
 

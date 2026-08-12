@@ -18,6 +18,7 @@ module Syntax.Parsers where
 import qualified Data.HashSet            as S
 
 import           Control.Applicative     ((<|>))
+import           Control.Exception       (IOException, try)
 import           Control.Monad           (join)
 import           Control.Monad.Identity  (Identity (..))
 import           Control.Monad.Trans
@@ -28,6 +29,7 @@ import qualified Data.HashMap.Strict     as H
 import           Data.List
 import           Data.Maybe              (fromMaybe, isJust, listToMaybe,
                                           mapMaybe)
+import           Data.Time.Clock         (UTCTime, getCurrentTime)
 import           MapMeta                 (MetaLocation (ImportMeta), mapMeta,
                                           parseMetaIDScope)
 import           Semantics
@@ -45,6 +47,7 @@ import           Syntax.InferImport      (dirParser, findImportPath,
 import           Syntax.Md.Parser        (mdParser)
 import           Syntax.Obsidian.Parser  (obsidian, obsidianParser)
 import           Syntax.Python.Parser    (pyParser)
+import           System.Directory        (getModificationTime)
 import           System.FilePath         (isAbsolute, joinPath, takeDirectory)
 import           Text.Megaparsec         (runParser)
 import           Text.Printf
@@ -174,8 +177,69 @@ unparseImport imp prgm = case maybeExprPath (impAbs imp) of
       Just src -> return src
       Nothing -> fail $ printf "The page %s can not be written back as %s" (show $ impRaw imp) (show $ nameStr impPath)
 
-processParsed :: CTSSConfig -> FileImport -> (RawPrgm (), [RawFileImport], Maybe String) -> IO (GraphNodes (RawPrgm (), Maybe String) FileImport, [FileImport])
-processParsed config imp (prgm@(RawPrgm prgmImports statements), extraImports, src) = do
+-- | When the files a page was read from were last written, as the read that read them found them.
+data ReadTime = ReadTime {
+  -- | When the read began.
+  --
+  -- A file written since then is not one these times can vouch for: the read may have read it
+  -- before the write, and a time taken after the read cannot tell the two apart. Such a file is
+  -- taken as changed, which costs one further read of the page and never a page left stale.
+  rtStarted :: UTCTime,
+  -- | When each path the read looked at was last written, and 'Nothing' where nothing was there. A
+  -- path which is still not there has not changed — a page read from a file yet to be written reads
+  -- back the same both times — so an absent path is recorded rather than passed over.
+  rtPaths   :: [(FilePath, Maybe UTCTime)]
+                         }
+  deriving (Eq, Show)
+
+-- | A page as a read of the files left it.
+--
+-- Held by whoever keeps the pages ('CtService.ssfRead') and handed back to the next 'readFiles',
+-- which gives the page back rather than reading its files again when nothing it was read from has
+-- been written to.
+--
+-- A page given back is given back whole, imports included, so an import is resolved where the page
+-- was read rather than at every read of it. A file appearing where an import used to resolve
+-- elsewhere is therefore not noticed until the page which writes that import is read again. The
+-- files a service was given are resolved afresh on every read, and a directory holding a new file
+-- is read again because the directory was written to, so this is confined to an @import@ written in
+-- a page whose own files have not changed.
+data ReadPage = ReadPage {
+  rpPrgm    :: RawPrgm (),
+  rpSource  :: Maybe String,
+  -- | The imports the page writes: its edges in the import graph.
+  rpImports :: [FileImport],
+  -- | Every import the read walked on from, 'rpImports' included. The two differ for 'dirParser'
+  -- and 'hsParser', which find imports the program does not write, so a page given back that
+  -- replayed only its edges would drop every file of a directory out of the graph.
+  rpVisits  :: [FileImport],
+  -- | 'Nothing' where nothing timed the read, which is a page that is always read again: either the
+  -- parser could not say what it read ('piReads') or the read was not one 'readFiles' made.
+  rpReads   :: Maybe ReadTime
+                         }
+
+-- | When a path was last written, or nothing where there is no path to have been written.
+modifiedAt :: FilePath -> IO (Maybe UTCTime)
+modifiedAt file = either (const Nothing) Just <$> (try (getModificationTime file) :: IO (Either IOException UTCTime))
+
+-- | Time the paths a read read, as of a read which began at the given time.
+readTime :: UTCTime -> Maybe [FilePath] -> IO (Maybe ReadTime)
+readTime started = traverse (fmap (ReadTime started) . mapM (\file -> (file,) <$> modifiedAt file))
+
+-- | Whether every path a page was read from is still as the read found it.
+readTimeCurrent :: Maybe ReadTime -> IO Bool
+readTimeCurrent Nothing = return False
+readTimeCurrent (Just ReadTime{rtStarted, rtPaths}) = aux rtPaths
+  where
+    aux [] = return True
+    aux ((file, was):rest) = do
+      now <- modifiedAt file
+      if now == was && maybe True (< rtStarted) now
+        then aux rest
+        else return False
+
+processParsed :: CTSSConfig -> FileImport -> ParsedImport -> IO ReadPage
+processParsed config imp ParsedImport{piPrgm=prgm@(RawPrgm prgmImports statements), piExtraImports=extraImports, piSource=src} = do
   let includeCore = not (rawPrgmHasAnnot prgm noCoreAnnot)
   let prgmImports' = if includeCore && not ("core" `isInfixOf` name)
       then mkRawFileImport (rawStr "core") : prgmImports
@@ -185,7 +249,7 @@ processParsed config imp (prgm@(RawPrgm prgmImports statements), extraImports, s
   let totalImports = extraImports' ++ prgmImports''
   let prgm' = RawPrgm prgmImports' statements
   let prgm'' = addRawPrgmMetaIDs (parseMetaIDScope imp) prgm'
-  return (((prgm'', src), imp, prgmImports''), totalImports)
+  return $ ReadPage prgm'' src prgmImports'' totalImports Nothing
   where
     name = case impAbs imp of
       CExpr _ (CStr n) -> n
@@ -196,23 +260,59 @@ parseFile :: CTSSConfig -> RawFileImport -> CResT IO (GraphNodes (RawPrgm ()) Fi
 parseFile config imp = do
   imp' <- lift $ canonicalImport config Nothing imp
   r <- lift $ readImport imp'
-  ((rawPrgm, _src), fi, deps) <- lift $ fst <$> processParsed config imp' r
-  return (rawPrgm, fi, deps)
+  page <- lift $ processParsed config imp' r
+  return (rpPrgm page, imp', rpImports page)
 
+-- | The paths a page was read from, or none at all where the read could not say what it read.
+readPaths :: ReadPage -> [FilePath]
+readPaths = maybe [] (map fst . rtPaths) . rpReads
+
+-- | The pages of an earlier read which need not be read again: those every path of which is still
+-- as that read found it.
+--
+-- What to hand the next 'readFiles', for a caller with no better way of knowing what changed than
+-- looking. A caller which is told what changed — by watching the files, or by having written them
+-- itself — knows without looking, and passes what it was told instead.
+unchangedPages :: [(FileImport, ReadPage)] -> IO (H.HashMap FileImport ReadPage)
+unchangedPages pages = H.fromList . map fst . filter snd <$> mapM keep pages
+  where
+    keep page = (page,) <$> readTimeCurrent (rpReads $ snd page)
+
+-- | The page an import names: the one the last read left, or the files read again.
+--
+-- The time is taken before the files are read rather than after them, so that a file written while
+-- it is being read is one the next read reads again. A time taken afterwards would say the read had
+-- seen the write when it may have happened first.
+readPage :: CTSSConfig -> H.HashMap FileImport ReadPage -> FileImport -> IO ReadPage
+readPage config prev imp = case H.lookup imp prev of
+  Just page -> return page
+  Nothing -> do
+    started <- getCurrentTime
+    parsed <- readImport imp
+    page <- processParsed config imp parsed
+    times <- readTime started (piReads parsed)
+    return page{rpReads = times}
+
+-- | Read the files an import names, and everything they import.
+--
+-- A page of @prev@ is given back as it is, without its files being read at all, and the read walks
+-- on through the imports it was left with. Which of them are still worth giving back is the
+-- caller's to decide, by whatever it knows about what has changed ('unchangedPages' looks, where
+-- there is nothing better), so that this reads what it is asked to read and no more.
+--
 -- TODO Change readImport, then make this return GraphData of CRes
-readFiles :: CTSSConfig -> [RawFileImport] -> IO (GraphData (RawPrgm (), Maybe String) FileImport)
-readFiles config initialImps = do
+readFiles :: CTSSConfig -> H.HashMap FileImport ReadPage -> [RawFileImport] -> IO (GraphData ReadPage FileImport)
+readFiles config prev initialImps = do
   initialImps' <- mapM (canonicalImport config Nothing) initialImps
   res <- aux [] S.empty initialImps'
   return $ graphFromEdges res
   where
-    aux :: [GraphNodes (RawPrgm (), Maybe String) FileImport] -> S.HashSet FileImport -> [FileImport] -> IO [GraphNodes (RawPrgm (), Maybe String) FileImport]
+    aux :: [GraphNodes ReadPage FileImport] -> S.HashSet FileImport -> [FileImport] -> IO [GraphNodes ReadPage FileImport]
     aux acc _ [] = return acc
     aux acc visited (nextToVisit:restToVisit) = do
       if S.member nextToVisit visited
         then aux acc visited restToVisit
         else do
-          r <- readImport nextToVisit
-          (newPrgm, newToVisit) <- processParsed config nextToVisit r
-          let restToVisit' = newToVisit ++ restToVisit
-          aux (newPrgm : acc) (S.insert nextToVisit visited) restToVisit'
+          page <- readPage config prev nextToVisit
+          let restToVisit' = rpVisits page ++ restToVisit
+          aux ((page, nextToVisit, rpImports page) : acc) (S.insert nextToVisit visited) restToVisit'
