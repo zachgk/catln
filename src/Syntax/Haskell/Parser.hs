@@ -116,14 +116,14 @@ hsParser = readOnlyParser $ \imp -> case [arg | arg@ObjArr{oaObj=Nothing} <- exp
     -- that resolution read cannot be stated, and the page says so rather than claiming a read set
     -- it does not have. Such a page is read again every time.
     (actualFile, reads') <- if isFile
-      then return (Just filename, Just [ReadAt filename])
+      then return (Just filename, Just [ReadFile filename])
       else case maybeStackRoot of
         Just stackRoot -> do
           -- Try to resolve module name using Stack
           stackInfo <- loadStackDependencyGraph stackRoot
           resolved <- resolveModuleInProject stackInfo filename
           return (resolved, Nothing)
-        Nothing -> return (Nothing, Just [ReadAt filename])
+        Nothing -> return (Nothing, Just [ReadFile filename])
 
     case actualFile of
       Just file -> do

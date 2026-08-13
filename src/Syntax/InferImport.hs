@@ -80,7 +80,7 @@ dirParser = readOnlyParser $ \imp -> case exprAppliedArgs imp of
     -- The directory alone, because everything read here is read out of its listing: which files it
     -- holds, which of those are directories of their own, and whether it holds a main.ct. A file in
     -- it changing is a change to that file's own page, not to this one.
-    return $ ParsedImport dirPrgm (map (mkRawFileImport . rawStr) $ catMaybes files') Nothing (Just [ReadAt name])
+    return $ ParsedImport dirPrgm (map (mkRawFileImport . rawStr) $ catMaybes files') Nothing (Just [ReadDir name])
   _ -> undefined
 
 -- | The places an import of @name@ could be: beside the file which wrote it, then in the standard

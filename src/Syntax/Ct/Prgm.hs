@@ -23,11 +23,13 @@ import qualified Data.HashMap.Strict as H
 import           GHC.Generics        (Generic)
 
 import           Data.Aeson          hiding (Object)
+import           Data.List           (isPrefixOf, stripPrefix)
 import           Data.Maybe          (fromJust, isJust, mapMaybe)
 import           Semantics
 import           Semantics.Annots    (isAnnot)
 import           Semantics.Prgm
 import           Semantics.Types
+import           System.FilePath     (splitDirectories, takeFileName)
 import           Text.Printf
 import           Utils
 
@@ -97,12 +99,47 @@ data ReplRes m
 -- what it holds against a whole tree ('Syntax.Obsidian.Parser.notePrgm' resolves a note's links
 -- against every note of its vault) would otherwise name every directory of that tree in every page
 -- read out of it, which is the tree named once for each page in it.
+--
+-- What was read is said apart from where it was, because the two are answered differently and only
+-- the reading knows which it did. A file is written to when its text changes; a directory when an
+-- entry appears in it, goes from it or is renamed within it. Nothing on disk tells them apart
+-- without being asked, so a reading which said only a path would have every reader of it ask —
+-- 'CtService.readPathWatches' would have to look at the disk to know what to watch.
 data ReadPath
-  -- | The path itself: a file whose text was read, or a directory whose listing was.
-  = ReadAt FilePath
-  -- | A directory and everything under it, at any depth.
-  | ReadUnder FilePath
+  -- | A file whose text was read.
+  = ReadFile FilePath
+  -- | A directory whose listing was read.
+  | ReadDir FilePath
+  -- | A directory and the listings under it, at any depth.
+  | ReadTree FilePath
   deriving (Eq, Ord, Show, Generic, Hashable)
+
+-- | Whether a reading of a tree walks into an entry named this.
+--
+-- One rule in one place because four readings must agree on it, and nothing but agreement makes
+-- them right: what a tree read walks ('Syntax.Obsidian.Parser.vaultNotes'), what timing a tree
+-- looks at ('Syntax.Parsers.treeWrittenAt'), what writing to a tree means ('readsUnder', through
+-- 'Syntax.Parsers.readPathWrittenIn'), and what a watch on a tree reports ('CtService.ctssWatch').
+-- A path one of them counts and another does not is at best a page read again for a change it never
+-- read, and at worst a page never read again for one it did.
+--
+-- Entries named with a leading dot are passed over. An Obsidian vault keeps its own configuration
+-- in one and rewrites it as the vault is used, which is not notes of the vault; a repository keeps
+-- its history in another.
+readsTreeEntry :: FilePath -> Bool
+readsTreeEntry entry = not $ "." `isPrefixOf` takeFileName entry
+
+-- | Whether a reading of the tree under a directory reads at a path.
+--
+-- Every part of the way down is asked, not just the last, because a reading walks: a directory it
+-- never walked into is one whose every entry it never saw.
+--
+-- Compared a directory at a time rather than as text, or a vault at @notes@ would be read from
+-- every write to a @notes-archive@ beside it.
+readsUnder :: FilePath -> FilePath -> Bool
+readsUnder dir path = case stripPrefix (splitDirectories dir) (splitDirectories path) of
+  Just under -> all readsTreeEntry under
+  Nothing    -> False
 
 -- | What reading a file as a page produced, and what the reading read to produce it.
 data ParsedImport = ParsedImport {

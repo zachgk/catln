@@ -112,7 +112,7 @@ noteVault note = aux $ takeDirectory note
 vaultPrgm :: FilePath -> ImportParseResult
 vaultPrgm vault = do
   notes <- vaultNotes vault
-  return $ ParsedImport (RawPrgm (map (mkRawFileImport . rawStr) notes) []) [] Nothing (Just [ReadUnder vault])
+  return $ ParsedImport (RawPrgm (map (mkRawFileImport . rawStr) notes) []) [] Nothing (Just [ReadTree vault])
 
 -- | The page of one note: what it is, and what it links to.
 --
@@ -130,7 +130,7 @@ notePrgm vault note = do
   contents <- readFile note
   notes <- vaultNotes vault
   let linked = nub $ filter (/= note) $ mapMaybe (resolveWikiLink vault notes) $ wikiLinks note contents
-  return $ ParsedImport (RawPrgm (map (mkRawFileImport . rawStr) linked) [notePageStatement (takeBaseName note) contents]) [] (Just contents) (Just [ReadAt note, ReadUnder vault])
+  return $ ParsedImport (RawPrgm (map (mkRawFileImport . rawStr) linked) [notePageStatement (takeBaseName note) contents]) [] (Just contents) (Just [ReadFile note, ReadTree vault])
 
 -- | The note itself: the page it is, titled as it is linked to, holding what was written in it.
 --
@@ -340,21 +340,18 @@ indentation = length . takeWhile isSpace
 
 -- | The notes of a vault: every markdown file under it, at any depth.
 --
--- Which pages are read from this is said by 'Syntax.Ct.Prgm.ReadUnder', so what is skipped here is
--- what a tree read from must skip too, or a page would be read again for a change it never read
--- ('Syntax.Parsers.treeWrittenAt').
+-- This is the reading a 'Syntax.Ct.Prgm.ReadTree' of the vault stands for, so what it walks into is
+-- 'Syntax.Ct.Prgm.readsTreeEntry' rather than a rule of its own — the whole point of that being one
+-- rule is that this is the reading everything else has to agree with. Directory symlinks are not
+-- followed, as a vault holding one that points at an ancestor would otherwise be walked forever.
 --
 -- Sorted, because 'listDirectory' answers in whatever order the filesystem holds it and the notes
 -- become the vault page's imports — a part of the program that re-reading an unchanged vault must
 -- reproduce, or 'CtService.ctssRead' takes every read for an edit and rebuilds the vault.
---
--- Entries named with a leading dot are skipped, which is what leaves out @.obsidian@: a vault's own
--- configuration is not notes of it. Directory symlinks are not followed either, as a vault holding
--- one that points at an ancestor would otherwise be walked forever.
 vaultNotes :: FilePath -> IO [FilePath]
 vaultNotes dir = do
   entries <- listDirectory dir
-  notes <- mapM aux $ sort $ filter (not . ("." `isPrefixOf`)) entries
+  notes <- mapM aux $ sort $ filter readsTreeEntry entries
   return $ concat notes
   where
     aux entry = do

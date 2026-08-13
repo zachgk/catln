@@ -26,7 +26,7 @@ mdParser = readOnlyParser $ \imp -> case exprAppliedArgs imp of
     isFile <- doesFileExist filename
     -- The file this read is a read of, whether it was there or not: a page read from a file which
     -- does not exist is a page the file appearing has something to say to.
-    let reads' = Just [ReadAt filename]
+    let reads' = Just [ReadFile filename]
     if isFile
       then do
         str <- readFile filename

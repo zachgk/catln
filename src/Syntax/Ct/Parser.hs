@@ -107,7 +107,7 @@ ctParser = readOnlyParser $ \imp -> case exprAppliedArgs imp of
     fileContents <- readFile fileName
     case runParser (contents pPrgm) fileName fileContents of
       Left err   -> fail $ show $ errorBundlePretty err
-      Right prgm -> return $ ParsedImport prgm [] (Just fileContents) (Just [ReadAt fileName])
+      Right prgm -> return $ ParsedImport prgm [] (Just fileContents) (Just [ReadFile fileName])
   _ -> undefined
 
 -- TODO Write a .ctx file back, once 'ctParser' can be written back: it is a .ct file with the one

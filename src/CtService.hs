@@ -33,7 +33,7 @@ import           Eval.Common             (EvalMetaDat, MockIO, StagePrgms (..),
                                           Val (StrVal, TupleVal), oaTestId)
 import           Eval.Testing            (TestDesc (..), evalPrints, evalTest,
                                           runTestDesc)
-import           FileWatch               (Watcher, allCovered, covered,
+import           FileWatch               (Watch, Watcher, allCovered, covered,
                                           startWatcher, watchReads, withPending)
 import           Semantics               (CTSSConfig)
 import           Semantics.Annots        (hasAnnot)
@@ -44,6 +44,7 @@ import           Syntax.Ct.MapRawMeta    (rawStatementExprIds)
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 import           Syntax.Parsers
+import           System.FilePath         (takeDirectory)
 import           Text.Printf
 import           TypeCheck               (typecheckPrgms)
 import           TypeCheck.Common        (TPrgm, TraceConstrain, VPrgm,
@@ -135,7 +136,11 @@ ctssBaseFiles config baseFileNames = do
 -- proportional to the program rather than to the change.
 ctssWatch :: CTSS -> IO ()
 ctssWatch ctss@(CTSS ssmv) = do
-  watcher <- startWatcher
+  -- A watch reaching under a directory reports whatever a reading of that tree would have read, so
+  -- that a path no reading reads is a path no read is woken for. Without it a vault open in Obsidian
+  -- reports a write every time its configuration is touched, and every read of the service goes the
+  -- long way round to find that nothing it holds has changed.
+  watcher <- startWatcher readsUnder
   modifyMVar_ ssmv $ \ss -> return ss{ctssWatcher=Just watcher}
   -- The watches go on here rather than being left to the next read. A read only sees to them when
   -- it read something, and the read after this one gives every page back — so leaving it to a read
@@ -215,15 +220,27 @@ ctssUnchanged (Just watcher) written pages = do
 ctssUnchangedOf :: Watcher -> S.HashSet FilePath -> [(FileImport, ReadPage)] -> IO (H.HashMap FileImport ReadPage)
 ctssUnchangedOf watcher written pages = do
   watched <- covered watcher
-  let isWatched page = maybe False (all ((`S.member` watched) . readPathWatch . fst) . rtPaths) (rpReads page)
+  let isWatched page = maybe False (all (all (`S.member` watched) . readPathWatches . fst) . rtPaths) (rpReads page)
   let (byWatch, byLook) = partition (isWatched . snd) pages
   looked <- unchangedPages byLook
   return $ H.union looked $ H.fromList $ filter (not . any (readPathWrittenIn written) . readPaths . snd) byWatch
 
--- | The watch it takes to notice a change to what a read read.
-readPathWatch :: ReadPath -> (FilePath, Bool)
-readPathWatch (ReadAt file)   = (file, False)
-readPathWatch (ReadUnder dir) = (dir, True)
+-- | The watches it takes to notice a change to what a read read.
+--
+-- A file needs the directory holding it, so that it being written to, appearing or going is seen. A
+-- directory needs itself, so that an entry appearing in it is seen — a listing is changed by what
+-- appears in it, which the directory holding it says nothing about — and the directory holding it,
+-- so that the directory itself going or being renamed is seen. A tree needs one watch reaching
+-- under it, which says all of that for every directory in it at once.
+--
+-- This is where what was read meets what is watched, and it is the only place the two vocabularies
+-- touch. Answering in whole directories rather than in the paths themselves is what lets the
+-- watcher de-duplicate: every note of an Obsidian vault reads the vault, so a vault of any size
+-- asks for the one watch on it however many notes it holds.
+readPathWatches :: ReadPath -> [Watch]
+readPathWatches (ReadFile file) = [(takeDirectory file, False)]
+readPathWatches (ReadDir dir)   = [(dir, False), (takeDirectory dir, False)]
+readPathWatches (ReadTree dir)  = [(dir, True), (takeDirectory dir, False)]
 
 -- | Watch the files the pages were read from, and look at whichever of them were read before there
 -- was a watch on them.
@@ -237,12 +254,12 @@ ctssRewatch :: CTSS -> Watcher -> IO ()
 ctssRewatch (CTSS ssmv) watcher = do
   CTSSDat{ctssData} <- readMVar ssmv
   before <- covered watcher
-  watchReads watcher $ map readPathWatch $ concatMap (readPaths . ssfRead . fst3) $ graphToNodes ctssData
+  watchReads watcher $ concatMap readPathWatches $ concatMap (readPaths . ssfRead . fst3) $ graphToNodes ctssData
   after <- covered watcher
   let fresh = S.difference after before
   unless (S.null fresh) $ do
     let freshly = [(prgmName, ssfRead ssf) | (ssf, prgmName, _) <- graphToNodes ctssData
-                                           , any ((`S.member` fresh) . readPathWatch) $ readPaths $ ssfRead ssf]
+                                           , any (any (`S.member` fresh) . readPathWatches) $ readPaths $ ssfRead ssf]
     current <- unchangedPages freshly
     forM_ freshly $ \(prgmName, _) -> unless (H.member prgmName current) $ ctssStale (CTSS ssmv) prgmName
 

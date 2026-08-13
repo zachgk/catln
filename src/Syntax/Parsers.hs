@@ -50,8 +50,7 @@ import           Syntax.Python.Parser    (pyParser)
 import           System.Directory        (doesDirectoryExist,
                                           getModificationTime, listDirectory,
                                           pathIsSymbolicLink)
-import           System.FilePath         (isAbsolute, joinPath, makeRelative,
-                                          splitDirectories, takeDirectory,
+import           System.FilePath         (isAbsolute, joinPath, takeDirectory,
                                           (</>))
 import           Text.Megaparsec         (runParser)
 import           Text.Printf
@@ -235,15 +234,15 @@ modifiedAt file = either (const Nothing) Just <$> (try (getModificationTime file
 -- write stamps its directory with the time it happened, which is later than any time already there,
 -- so the latest of them moves whenever the tree gains or loses anything.
 --
--- Entries named with a leading dot are passed over, and directory symlinks are not followed, which
--- is what the readings that walk trees do ('Syntax.Obsidian.Parser.vaultNotes'). A tree timed by
--- more than the reading walked is a page read again for a change it never read — an Obsidian vault
--- writes its own @.obsidian@ configuration as it is used, which is not notes of it.
+-- What is walked into is 'Syntax.Ct.Prgm.readsTreeEntry', and directory symlinks are not followed,
+-- which is what the readings that walk trees do ('Syntax.Obsidian.Parser.vaultNotes'). A tree timed
+-- by more than the reading walked is a page read again for a change it never read — an Obsidian
+-- vault writes its own @.obsidian@ configuration as it is used, which is not notes of it.
 treeWrittenAt :: FilePath -> IO (Maybe UTCTime)
 treeWrittenAt dir = do
   here <- modifiedAt dir
   entries <- either (const []) id <$> (try (listDirectory dir) :: IO (Either IOException [FilePath]))
-  under <- mapM aux $ filter (not . ("." `isPrefixOf`)) entries
+  under <- mapM aux $ filter readsTreeEntry entries
   return $ maximumMaybe $ catMaybes $ here : under
   where
     aux entry = do
@@ -255,9 +254,13 @@ treeWrittenAt dir = do
     maximumMaybe ts = Just $ maximum ts
 
 -- | When what a read read at a path was last written.
+--
+-- A directory is timed by itself rather than by what it holds, because its listing is what was read
+-- and a file already in it being edited leaves that listing as it was.
 readPathWrittenAt :: ReadPath -> IO (Maybe UTCTime)
-readPathWrittenAt (ReadAt file)   = modifiedAt file
-readPathWrittenAt (ReadUnder dir) = treeWrittenAt dir
+readPathWrittenAt (ReadFile file) = modifiedAt file
+readPathWrittenAt (ReadDir dir)   = modifiedAt dir
+readPathWrittenAt (ReadTree dir)  = treeWrittenAt dir
 
 -- | Time what a read read, as of a read which began at the given time.
 readTime :: UTCTime -> Maybe [ReadPath] -> IO (Maybe ReadTime)
@@ -278,13 +281,13 @@ readTimeCurrent times (Just ReadTime{rtStarted, rtPaths}) = all current rtPaths
 
 -- | Whether writing to any of these paths is writing to something a read read at this path.
 readPathWrittenIn :: S.HashSet FilePath -> ReadPath -> Bool
+-- The file itself, as its text is what was read.
+readPathWrittenIn written (ReadFile file) = S.member file written
 -- A directory is read for its listing, so an entry appearing in it or going from it is a write to
 -- it, and that entry is a path inside it.
-readPathWrittenIn written (ReadAt file) = S.member file written || any ((== file) . takeDirectory) written
--- Everything under the directory, at whatever depth, but not what a reading of a tree passes over.
-readPathWrittenIn written (ReadUnder dir) = any under written
-  where
-    under written' = dir `isPrefixOf` written' && not (any ("." `isPrefixOf`) (splitDirectories $ makeRelative dir written'))
+readPathWrittenIn written (ReadDir dir) = S.member dir written || any ((== dir) . takeDirectory) written
+-- Everything under the directory, at whatever depth, that a reading of the tree would have read.
+readPathWrittenIn written (ReadTree dir) = any (readsUnder dir) written
 
 processParsed :: CTSSConfig -> FileImport -> ParsedImport -> IO ReadPage
 processParsed config imp ParsedImport{piPrgm=prgm@(RawPrgm prgmImports statements), piExtraImports=extraImports, piSource=src} = do
