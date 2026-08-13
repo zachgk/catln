@@ -104,11 +104,29 @@ addArgToType _ _ (UnionType (Just _) _ _) _ = Nothing
 addArgToType env vaenv (TypeVar v _) newArg = case H.lookup v vaenv of
   Just t  -> addArgToType env vaenv t newArg
   Nothing -> error $ printf "Unknown type in addArgToType: %s" (show v)
-addArgToType FEnv{feTypeEnv} _ (UnionType Nothing partials []) newArg = Just $ unionAllTypes feTypeEnv $ mapMaybe fromPartial $ splitUnionType partials
+addArgToType FEnv{feTypeEnv} _ (UnionType Nothing partials []) newArg = Just $ unionAllTypes feTypeEnv $ map singletonType kept
   where
+    grafted = map fromPartial $ splitUnionType partials
+    -- An applied arg can REFUTE a name-ambiguity candidate: a relative reference expands to
+    -- every matching name (@insert@ ⇒ @/Data/Map/insert + /sorted./Data/List/insert@), and
+    -- the application then grafts its args onto every candidate — but no value of a name can
+    -- carry arg keys outside the name's declared arg-sets ('declaredArgKeys' — partial
+    -- application never adds args), so a candidate whose REQUIRED keyset (lower-bounded mode)
+    -- no declared arg-set covers admits no value. Keeping it rides every downstream ACT union:
+    -- convergence slows past the epoch budget and TreeBuild's followup chains fail on the
+    -- grafted form, silently dropping real dispatch arms ("Failed match in eval callTree").
+    -- ARROW-ONLY names only: a DATA-named leaf with extra keys is a legitimate raw
+    -- method-style form (@Integer(/r=Integer)@ from @5 - 2@), and an undeclared name is open
+    -- world. Purely structural (parse-time arg-name sets), so the decision is epoch-stable;
+    -- if every candidate would drop, keep them all (never publish an empty union).
+    argsRefuted p@PartialType{ptArgMode=PtArgMode lb _} =
+      lb && null (typeGraphData feTypeEnv (ptName p)) && not (relArgKeysFeasible feTypeEnv p (ptName p))
+    kept = case filter (not . argsRefuted) grafted of
+      [] -> grafted
+      ps -> ps
     fromPartial partial@PartialType{ptVars, ptArgs} = case newArg of
-      TVArg newArg' -> Just $ singletonType partial{ptArgs=H.insertWith (unionTypes feTypeEnv) newArg' PTopType ptArgs}
-      TVVar newArg' -> Just $ singletonType partial{ptVars=H.insertWith (unionTypes feTypeEnv) newArg' PTopType ptVars}
+      TVArg newArg' -> partial{ptArgs=H.insertWith (unionTypes feTypeEnv) newArg' PTopType ptArgs}
+      TVVar newArg' -> partial{ptVars=H.insertWith (unionTypes feTypeEnv) newArg' PTopType ptVars}
       TVApplied k _ -> error $ printf "Unexpected TVApplied %s used as an arg name in addArgToType" (show k)
 addArgToType _ _ _ _ = Nothing
 

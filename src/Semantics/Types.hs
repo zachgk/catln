@@ -1754,13 +1754,29 @@ expandClassPartial typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv PartialType
           mapClassPartial = substitutePartialExit (joinVarArgEnv classVars H.empty)
       r -> error $ printf "Unknown class %s in expandPartial. Found %s" (show className) (show r)
 
+-- | Whether a relative reference's applied arg keys are realizable under a candidate name:
+-- some declared arg-set of the name covers them ("every realizable arg-set is a subset of a
+-- declared one" — 'declaredArgKeys'; partial application never adds args). Grafting the
+-- reference's args onto every name-matched candidate otherwise fabricates uninhabitable
+-- forms: @insert(m=…, key=…, value=…)@ also matches list.ct's nested
+-- @/sorted./Data/List/insert@, whose objects declare only @(x, lst)@ — the grafted candidate
+-- admits no value, yet it rides every ACT union of the call from then on: convergence slows
+-- past the epoch budget, and TreeBuild's followup chains hit "Failed to find any arrows" on
+-- the grafted form and silently drop real dispatch arms ("Failed match in eval callTree").
+-- The check is purely structural (parse-time arg-name sets, never solving-state types), so
+-- it is stable across epochs; an undeclared name (open world) is never refused.
+relArgKeysFeasible :: TypeGraph tg => TypeEnv tg -> PartialType -> TypeName -> Bool
+relArgKeysFeasible typeEnv relPartial n = case declaredArgKeys typeEnv n of
+  Nothing  -> True
+  Just kss -> any (H.keysSet (ptArgs relPartial) `S.isSubsetOf`) kss
+
 expandRelPartial :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> Type
 expandRelPartial typeEnv@TypeEnv{teNames} vaenv relPartial = result
   where
     result = unionAllTypesWithEnv typeEnv vaenv (UnionType Nothing (joinUnionType fromArgs) [] : tpNames ++ clsNames)
     relName = ptName relPartial
     fromArgs = map (\n -> relPartial{ptName=n}) $ relativeNameFilter relName $ map pkName $ H.keys $ snd $ splitVarArgEnv vaenv
-    tpNames = map (\n -> singletonType relPartial{ptName=n}) $ relativeNameFilter relName $ S.toList teNames
+    tpNames = map (\n -> singletonType relPartial{ptName=n}) $ filter (relArgKeysFeasible typeEnv relPartial) $ relativeNameFilter relName $ S.toList teNames
     clsNames = map (setArgMode H.empty (ptArgMode relPartial) . classPartial . partialVal) $ relativeNameFilter relName $ listClassNames typeEnv
 
 -- ============================================================================
@@ -2116,7 +2132,10 @@ relSatCandidates typeEnv vaenv gatePos relPartial
       Just ClassSatInfo{csiSealed} -> not csiSealed
       Nothing                      -> True
     argCands = [CandLeaf relPartial{ptName=n} | n <- relativeNameFilter relName (map pkName (H.keys (snd (splitVarArgEnv vaenv))))]
-    tpCands = [CandLeaf relPartial{ptName=n} | n <- relativeNameFilter relName (scTypeNames (teSatCache typeEnv))]
+    -- Arg-keyset feasibility mirrors 'expandRelPartial': an uninhabitable grafted candidate
+    -- (keys no object of the name declares) admits nothing, so dropping it is sound in both
+    -- polarities and keeps the two surfaces in agreement.
+    tpCands = [CandLeaf relPartial{ptName=n} | n <- filter (relArgKeysFeasible typeEnv relPartial) (relativeNameFilter relName (scTypeNames (teSatCache typeEnv)))]
     -- Carry the relation's own type arguments onto the class candidate (@isa ConsList[/T=∀ToString]@
     -- ⇒ @ConsList[/T=∀ToString]@, not a bare @ConsList@ whose Top element would spuriously escape a
     -- @DShow@ bound), mirroring the arg/type candidates above which already reuse @relPartial@.
