@@ -44,7 +44,6 @@ import           Syntax.Ct.MapRawMeta    (rawStatementExprIds)
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 import           Syntax.Parsers
-import           System.FilePath         (takeDirectory)
 import           Text.Printf
 import           TypeCheck               (typecheckPrgms)
 import           TypeCheck.Common        (TPrgm, TraceConstrain, VPrgm,
@@ -216,13 +215,15 @@ ctssUnchanged (Just watcher) written pages = do
 ctssUnchangedOf :: Watcher -> S.HashSet FilePath -> [(FileImport, ReadPage)] -> IO (H.HashMap FileImport ReadPage)
 ctssUnchangedOf watcher written pages = do
   watched <- covered watcher
-  -- An entry appearing in a directory is a write to a path inside it, so a page read from a
-  -- directory's listing is one that a write to anything the directory holds has changed.
-  let touched = S.union written $ S.fromList $ map takeDirectory $ S.toList written
-  let isWatched page = maybe False (all ((`S.member` watched) . fst) . rtPaths) (rpReads page)
+  let isWatched page = maybe False (all ((`S.member` watched) . readPathWatch . fst) . rtPaths) (rpReads page)
   let (byWatch, byLook) = partition (isWatched . snd) pages
   looked <- unchangedPages byLook
-  return $ H.union looked $ H.fromList $ filter (not . any (`S.member` touched) . readPaths . snd) byWatch
+  return $ H.union looked $ H.fromList $ filter (not . any (readPathWrittenIn written) . readPaths . snd) byWatch
+
+-- | The watch it takes to notice a change to what a read read.
+readPathWatch :: ReadPath -> (FilePath, Bool)
+readPathWatch (ReadAt file)   = (file, False)
+readPathWatch (ReadUnder dir) = (dir, True)
 
 -- | Watch the files the pages were read from, and look at whichever of them were read before there
 -- was a watch on them.
@@ -236,13 +237,14 @@ ctssRewatch :: CTSS -> Watcher -> IO ()
 ctssRewatch (CTSS ssmv) watcher = do
   CTSSDat{ctssData} <- readMVar ssmv
   before <- covered watcher
-  watchReads watcher $ concatMap (readPaths . ssfRead . fst3) $ graphToNodes ctssData
+  watchReads watcher $ map readPathWatch $ concatMap (readPaths . ssfRead . fst3) $ graphToNodes ctssData
   after <- covered watcher
   let fresh = S.difference after before
-  unless (S.null fresh) $ forM_ (graphToNodes ctssData) $ \(ssf, prgmName, _) ->
-    when (any (`S.member` fresh) $ readPaths $ ssfRead ssf) $ do
-      current <- readTimeCurrent $ rpReads $ ssfRead ssf
-      unless current $ ctssStale (CTSS ssmv) prgmName
+  unless (S.null fresh) $ do
+    let freshly = [(prgmName, ssfRead ssf) | (ssf, prgmName, _) <- graphToNodes ctssData
+                                           , any ((`S.member` fresh) . readPathWatch) $ readPaths $ ssfRead ssf]
+    current <- unchangedPages freshly
+    forM_ freshly $ \(prgmName, _) -> unless (H.member prgmName current) $ ctssStale (CTSS ssmv) prgmName
 
 ctssClearInvalidations :: [FileImport] -> CTSSDat -> CTSSDat
 ctssClearInvalidations invalidations ss@CTSSDat{ctssData=(g, nodeFromVertex, vertexFromKey)} = ss{ctssData=fmapGraphWithKey maybeClear $ ctssData ss}

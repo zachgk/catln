@@ -90,6 +90,20 @@ data ReplRes m
   | ReplErr ParseErrorRes
   deriving (Eq, Show)
 
+-- | Something on disk a reading depended on.
+--
+-- A reading which walked a tree says so, rather than naming every directory it walked. Both are the
+-- same question — has anything the reading looked at been written to — but a reading which resolves
+-- what it holds against a whole tree ('Syntax.Obsidian.Parser.notePrgm' resolves a note's links
+-- against every note of its vault) would otherwise name every directory of that tree in every page
+-- read out of it, which is the tree named once for each page in it.
+data ReadPath
+  -- | The path itself: a file whose text was read, or a directory whose listing was.
+  = ReadAt FilePath
+  -- | A directory and everything under it, at any depth.
+  | ReadUnder FilePath
+  deriving (Eq, Ord, Show, Generic, Hashable)
+
 -- | What reading a file as a page produced, and what the reading read to produce it.
 data ParsedImport = ParsedImport {
   piPrgm         :: RawPrgm (),
@@ -98,15 +112,15 @@ data ParsedImport = ParsedImport {
   piExtraImports :: [RawFileImport],
   -- | The text the page was read from, where the page is one file and so has one to show.
   piSource       :: Maybe String,
-  -- | Every path on disk this reading depended on: the files it read, and the directories whose
-  -- listing decided what the program holds. A page is read again exactly when one of these is
-  -- written to, so a path left out here is a page which goes stale, and a path put in needlessly is
-  -- a page read more often than it need be. A directory is written to when an entry is added to it,
-  -- removed from it or renamed within it, which is every way a listing of it can change.
+  -- | Everything on disk this reading depended on: the files it read, and the directories and trees
+  -- whose listing decided what the program holds. A page is read again exactly when one of these is
+  -- written to, so one left out here is a page which goes stale, and one put in needlessly is a page
+  -- read more often than it need be. A directory is written to when an entry is added to it, removed
+  -- from it or renamed within it, which is every way a listing of it can change.
   --
   -- 'Nothing' is a reading which cannot say what it read, and has its page read again every time
   -- rather than have a change to it go unseen.
-  piReads        :: Maybe [FilePath]
+  piReads        :: Maybe [ReadPath]
                                  }
 
 type ImportParseResult = IO ParsedImport

@@ -142,5 +142,47 @@ testVault = testCase "a note added under a vault is found from a subdirectory of
   assertEqual "the notes of the vault were not read again"
     [dir, dir </> "One.md", dir </> "sub" </> "Two.md"] (readAgain dir first added)
 
+-- | A note is read from its own text and from which notes the vault holds, and writing to a note
+-- changes neither for any other note: a file being written to does not touch the directory holding
+-- it. So the note written to is read again and no other is.
+testNoteWritten :: TestTree
+testNoteWritten = testCase "a note written to is the only page read again" $ do
+  dir <- caseDir "note"
+  now <- getCurrentTime
+  createDirectoryIfMissing True (dir </> ".obsidian")
+  writeLater now (dir </> "One.md") "Links to [[Two]].\n"
+  writeLater now (dir </> "Two.md") "A note.\n"
+  setModificationTime dir now
+  let vault = "obsidian(\"" ++ dir ++ "\")"
+  first <- readOnce noPages vault
+  assertEqual "the read did not read the vault and both notes"
+    [dir, dir </> "One.md", dir </> "Two.md"] (pagesUnder dir first)
+
+  writeLater (addUTCTime 60 now) (dir </> "Two.md") "A note, written to.\n"
+  written <- readOnce first vault
+  assertEqual "the note written to was not the one page read again"
+    [dir </> "Two.md"] (readAgain dir first written)
+
+-- | A vault's own configuration is not notes of it, and Obsidian writes it as the vault is used. A
+-- page read from a tree is read from what a reading of that tree walks, so writing the
+-- configuration must read nothing again.
+testVaultConfig :: TestTree
+testVaultConfig = testCase "a vault's own configuration is not read from" $ do
+  dir <- caseDir "config"
+  now <- getCurrentTime
+  createDirectoryIfMissing True (dir </> ".obsidian")
+  writeLater now (dir </> "One.md") "A note.\n"
+  setModificationTime (dir </> ".obsidian") now
+  setModificationTime dir now
+  let vault = "obsidian(\"" ++ dir ++ "\")"
+  first <- readOnce noPages vault
+  assertEqual "the read did not read the vault and its note" [dir, dir </> "One.md"] (pagesUnder dir first)
+
+  let later = addUTCTime 60 now
+  writeLater later (dir </> ".obsidian" </> "workspace.json") "{}\n"
+  setModificationTime (dir </> ".obsidian") later
+  used <- readOnce first vault
+  assertEqual "writing the vault's configuration read a page again" [] (readAgain dir first used)
+
 rereadTests :: TestTree
-rereadTests = testGroup "Reread" [testWritten, testListed, testVault]
+rereadTests = testGroup "Reread" [testWritten, testListed, testVault, testNoteWritten, testVaultConfig]

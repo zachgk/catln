@@ -861,5 +861,5 @@ pyParser = readOnlyParser $ \imp -> case [arg | arg@ObjArr{oaObj=Nothing} <- exp
     src <- readFile filename
     pyMod <- parsePython fileContents
     let prgm = convertPyModule pyMod
-    return $ ParsedImport prgm [] (Just src) (Just [filename])
+    return $ ParsedImport prgm [] (Just src) (Just [ReadAt filename])
   _ -> undefined

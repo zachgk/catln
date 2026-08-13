@@ -27,8 +27,8 @@ import           CtConstants             (noCoreAnnot)
 import           Data.Graph
 import qualified Data.HashMap.Strict     as H
 import           Data.List
-import           Data.Maybe              (fromMaybe, isJust, listToMaybe,
-                                          mapMaybe)
+import           Data.Maybe              (catMaybes, fromMaybe, isJust,
+                                          listToMaybe, mapMaybe)
 import           Data.Time.Clock         (UTCTime, getCurrentTime)
 import           MapMeta                 (MetaLocation (ImportMeta), mapMeta,
                                           parseMetaIDScope)
@@ -47,8 +47,12 @@ import           Syntax.InferImport      (dirParser, findImportPath,
 import           Syntax.Md.Parser        (mdParser)
 import           Syntax.Obsidian.Parser  (obsidian, obsidianParser)
 import           Syntax.Python.Parser    (pyParser)
-import           System.Directory        (getModificationTime)
-import           System.FilePath         (isAbsolute, joinPath, takeDirectory)
+import           System.Directory        (doesDirectoryExist,
+                                          getModificationTime, listDirectory,
+                                          pathIsSymbolicLink)
+import           System.FilePath         (isAbsolute, joinPath, makeRelative,
+                                          splitDirectories, takeDirectory,
+                                          (</>))
 import           Text.Megaparsec         (runParser)
 import           Text.Printf
 import           Utils
@@ -185,10 +189,10 @@ data ReadTime = ReadTime {
   -- before the write, and a time taken after the read cannot tell the two apart. Such a file is
   -- taken as changed, which costs one further read of the page and never a page left stale.
   rtStarted :: UTCTime,
-  -- | When each path the read looked at was last written, and 'Nothing' where nothing was there. A
+  -- | When each thing the read looked at was last written, and 'Nothing' where nothing was there. A
   -- path which is still not there has not changed — a page read from a file yet to be written reads
   -- back the same both times — so an absent path is recorded rather than passed over.
-  rtPaths   :: [(FilePath, Maybe UTCTime)]
+  rtPaths   :: [(ReadPath, Maybe UTCTime)]
                          }
   deriving (Eq, Show)
 
@@ -222,21 +226,65 @@ data ReadPage = ReadPage {
 modifiedAt :: FilePath -> IO (Maybe UTCTime)
 modifiedAt file = either (const Nothing) Just <$> (try (getModificationTime file) :: IO (Either IOException UTCTime))
 
--- | Time the paths a read read, as of a read which began at the given time.
-readTime :: UTCTime -> Maybe [FilePath] -> IO (Maybe ReadTime)
-readTime started = traverse (fmap (ReadTime started) . mapM (\file -> (file,) <$> modifiedAt file))
-
--- | Whether every path a page was read from is still as the read found it.
-readTimeCurrent :: Maybe ReadTime -> IO Bool
-readTimeCurrent Nothing = return False
-readTimeCurrent (Just ReadTime{rtStarted, rtPaths}) = aux rtPaths
+-- | When anything under a directory was last added, removed or renamed: the latest of the times its
+-- directories were written to, at any depth.
+--
+-- A directory is written to when an entry appears in it, goes from it or is renamed within it, and
+-- not when a file already in it is edited — so this answers what a reading of a tree's listings
+-- depends on, and leaves what a reading of a file depends on to that file's own time. Every such
+-- write stamps its directory with the time it happened, which is later than any time already there,
+-- so the latest of them moves whenever the tree gains or loses anything.
+--
+-- Entries named with a leading dot are passed over, and directory symlinks are not followed, which
+-- is what the readings that walk trees do ('Syntax.Obsidian.Parser.vaultNotes'). A tree timed by
+-- more than the reading walked is a page read again for a change it never read — an Obsidian vault
+-- writes its own @.obsidian@ configuration as it is used, which is not notes of it.
+treeWrittenAt :: FilePath -> IO (Maybe UTCTime)
+treeWrittenAt dir = do
+  here <- modifiedAt dir
+  entries <- either (const []) id <$> (try (listDirectory dir) :: IO (Either IOException [FilePath]))
+  under <- mapM aux $ filter (not . ("." `isPrefixOf`)) entries
+  return $ maximumMaybe $ catMaybes $ here : under
   where
-    aux [] = return True
-    aux ((file, was):rest) = do
-      now <- modifiedAt file
-      if now == was && maybe True (< rtStarted) now
-        then aux rest
-        else return False
+    aux entry = do
+      let entryPath = dir </> entry
+      isDir <- doesDirectoryExist entryPath
+      isLink <- pathIsSymbolicLink entryPath
+      if isDir && not isLink then treeWrittenAt entryPath else return Nothing
+    maximumMaybe [] = Nothing
+    maximumMaybe ts = Just $ maximum ts
+
+-- | When what a read read at a path was last written.
+readPathWrittenAt :: ReadPath -> IO (Maybe UTCTime)
+readPathWrittenAt (ReadAt file)   = modifiedAt file
+readPathWrittenAt (ReadUnder dir) = treeWrittenAt dir
+
+-- | Time what a read read, as of a read which began at the given time.
+readTime :: UTCTime -> Maybe [ReadPath] -> IO (Maybe ReadTime)
+readTime started = traverse (fmap (ReadTime started) . mapM (\read' -> (read',) <$> readPathWrittenAt read'))
+
+-- | Whether everything a page was read from is still as the read found it, given the times things
+-- were last written at.
+--
+-- Pure, and given the times rather than looking them up, so that a path read by many pages is
+-- looked at once rather than once for each of them. A vault is read from by every note in it.
+readTimeCurrent :: H.HashMap ReadPath (Maybe UTCTime) -> Maybe ReadTime -> Bool
+readTimeCurrent _ Nothing = False
+readTimeCurrent times (Just ReadTime{rtStarted, rtPaths}) = all current rtPaths
+  where
+    current (read', was) = case H.lookup read' times of
+      Just now -> now == was && maybe True (< rtStarted) now
+      Nothing  -> False
+
+-- | Whether writing to any of these paths is writing to something a read read at this path.
+readPathWrittenIn :: S.HashSet FilePath -> ReadPath -> Bool
+-- A directory is read for its listing, so an entry appearing in it or going from it is a write to
+-- it, and that entry is a path inside it.
+readPathWrittenIn written (ReadAt file) = S.member file written || any ((== file) . takeDirectory) written
+-- Everything under the directory, at whatever depth, but not what a reading of a tree passes over.
+readPathWrittenIn written (ReadUnder dir) = any under written
+  where
+    under written' = dir `isPrefixOf` written' && not (any ("." `isPrefixOf`) (splitDirectories $ makeRelative dir written'))
 
 processParsed :: CTSSConfig -> FileImport -> ParsedImport -> IO ReadPage
 processParsed config imp ParsedImport{piPrgm=prgm@(RawPrgm prgmImports statements), piExtraImports=extraImports, piSource=src} = do
@@ -263,20 +311,25 @@ parseFile config imp = do
   page <- lift $ processParsed config imp' r
   return (rpPrgm page, imp', rpImports page)
 
--- | The paths a page was read from, or none at all where the read could not say what it read.
-readPaths :: ReadPage -> [FilePath]
+-- | What a page was read from, or nothing at all where the read could not say what it read.
+readPaths :: ReadPage -> [ReadPath]
 readPaths = maybe [] (map fst . rtPaths) . rpReads
 
--- | The pages of an earlier read which need not be read again: those every path of which is still
+-- | The pages of an earlier read which need not be read again: those everything of which is still
 -- as that read found it.
 --
 -- What to hand the next 'readFiles', for a caller with no better way of knowing what changed than
 -- looking. A caller which is told what changed — by watching the files, or by having written them
 -- itself — knows without looking, and passes what it was told instead.
+--
+-- Each distinct thing read is looked at once for all the pages that read it, rather than once for
+-- each: every note of an Obsidian vault is read from that vault, and walking it for each of them
+-- would be the vault walked once per note.
 unchangedPages :: [(FileImport, ReadPage)] -> IO (H.HashMap FileImport ReadPage)
-unchangedPages pages = H.fromList . map fst . filter snd <$> mapM keep pages
-  where
-    keep page = (page,) <$> readTimeCurrent (rpReads $ snd page)
+unchangedPages pages = do
+  let paths = S.toList $ S.fromList $ concatMap (readPaths . snd) pages
+  times <- H.fromList <$> mapM (\read' -> (read',) <$> readPathWrittenAt read') paths
+  return $ H.fromList [page | page <- pages, readTimeCurrent times (rpReads $ snd page)]
 
 -- | The page an import names: the one the last read left, or the files read again.
 --

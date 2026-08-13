@@ -106,13 +106,13 @@ noteVault note = aux $ takeDirectory note
 -- The notes are imported by their path alone, leaving 'Syntax.InferImport.inferFileParser' to
 -- read each one as the note of a vault it is, so that a note the vault imports and the same note a
 -- reader asks for by path are the one page.
--- The directories walked are what this page was read from, not the notes: which notes a vault holds
--- is read out of the listings, and a note's own writing says nothing about whether the vault holds
--- it. A note added anywhere under the vault is an entry written into one of these directories.
+-- The whole vault is what this page was read from, not the notes: which notes a vault holds is read
+-- out of the listings under it, and a note's own writing says nothing about whether the vault holds
+-- it. A note added anywhere under the vault is an entry written into one of those listings.
 vaultPrgm :: FilePath -> ImportParseResult
 vaultPrgm vault = do
-  (notes, dirs) <- vaultNotes vault
-  return $ ParsedImport (RawPrgm (map (mkRawFileImport . rawStr) notes) []) [] Nothing (Just dirs)
+  notes <- vaultNotes vault
+  return $ ParsedImport (RawPrgm (map (mkRawFileImport . rawStr) notes) []) [] Nothing (Just [ReadUnder vault])
 
 -- | The page of one note: what it is, and what it links to.
 --
@@ -120,16 +120,17 @@ vaultPrgm vault = do
 -- was reached through its vault or by a link from another note, and either way its links resolve
 -- against every note of the vault.
 --
--- Read from the note itself and from every directory of the vault, because both decide what the
--- page says: the note's writing is the page, and the listing is what its wiki links resolve
--- against. So a note added to the vault has every note read again, which is what it takes for a
--- link written to a note yet to exist to find it once it does.
+-- Read from the note itself and from the whole vault, because both decide what the page says: the
+-- note's writing is the page, and which notes the vault holds is what its wiki links resolve
+-- against. 'resolveWikiLink' matches a link by basename anywhere under the vault, so a note added
+-- three directories away can turn a link that resolved to nothing into an import — which is why the
+-- vault is read from as a tree rather than as the directory the note is in.
 notePrgm :: FilePath -> FilePath -> ImportParseResult
 notePrgm vault note = do
   contents <- readFile note
-  (notes, dirs) <- vaultNotes vault
+  notes <- vaultNotes vault
   let linked = nub $ filter (/= note) $ mapMaybe (resolveWikiLink vault notes) $ wikiLinks note contents
-  return $ ParsedImport (RawPrgm (map (mkRawFileImport . rawStr) linked) [notePageStatement (takeBaseName note) contents]) [] (Just contents) (Just $ note : dirs)
+  return $ ParsedImport (RawPrgm (map (mkRawFileImport . rawStr) linked) [notePageStatement (takeBaseName note) contents]) [] (Just contents) (Just [ReadAt note, ReadUnder vault])
 
 -- | The note itself: the page it is, titled as it is linked to, holding what was written in it.
 --
@@ -337,13 +338,11 @@ isBlank = all isSpace
 indentation :: String -> Int
 indentation = length . takeWhile isSpace
 
--- | The notes of a vault: every markdown file under it, at any depth, and the directories walked to
--- find them.
+-- | The notes of a vault: every markdown file under it, at any depth.
 --
--- The directories travel with the notes because they are what the answer was read out of, and a
--- page is read again only when a directory it was read from is written to
--- ('Syntax.Ct.Prgm.piReads'). A vault stamped by its own directory alone would not notice a note
--- added in a subdirectory of it, which does not touch the vault directory at all.
+-- Which pages are read from this is said by 'Syntax.Ct.Prgm.ReadUnder', so what is skipped here is
+-- what a tree read from must skip too, or a page would be read again for a change it never read
+-- ('Syntax.Parsers.treeWrittenAt').
 --
 -- Sorted, because 'listDirectory' answers in whatever order the filesystem holds it and the notes
 -- become the vault page's imports — a part of the program that re-reading an unchanged vault must
@@ -352,11 +351,11 @@ indentation = length . takeWhile isSpace
 -- Entries named with a leading dot are skipped, which is what leaves out @.obsidian@: a vault's own
 -- configuration is not notes of it. Directory symlinks are not followed either, as a vault holding
 -- one that points at an ancestor would otherwise be walked forever.
-vaultNotes :: FilePath -> IO ([FilePath], [FilePath])
+vaultNotes :: FilePath -> IO [FilePath]
 vaultNotes dir = do
   entries <- listDirectory dir
-  walked <- mapM aux $ sort $ filter (not . ("." `isPrefixOf`)) entries
-  return (concatMap fst walked, dir : concatMap snd walked)
+  notes <- mapM aux $ sort $ filter (not . ("." `isPrefixOf`)) entries
+  return $ concat notes
   where
     aux entry = do
       let path = dir </> entry
@@ -364,8 +363,8 @@ vaultNotes dir = do
       isLink <- pathIsSymbolicLink path
       case () of
         _ | isDir && not isLink                   -> vaultNotes path
-        _ | not isDir && ".md" `isSuffixOf` entry -> return ([path], [])
-        _                                         -> return ([], [])
+        _ | not isDir && ".md" `isSuffixOf` entry -> return [path]
+        _                                         -> return []
 
 -- | The wiki links a note writes, in the order it writes them.
 --
