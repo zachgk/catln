@@ -120,17 +120,30 @@ vaultPrgm vault = do
 -- was reached through its vault or by a link from another note, and either way its links resolve
 -- against every note of the vault.
 --
--- Read from the note itself and from the whole vault, because both decide what the page says: the
--- note's writing is the page, and which notes the vault holds is what its wiki links resolve
--- against. 'resolveWikiLink' matches a link by basename anywhere under the vault, so a note added
--- three directories away can turn a link that resolved to nothing into an import — which is why the
--- vault is read from as a tree rather than as the directory the note is in.
+-- Read from the note itself and from the notes it links to. Its own writing is the page, and a note
+-- it links to going away or moving is what makes the page's imports wrong: an import is replayed
+-- even where the page is given back unread ('Syntax.Parsers.readFiles'), so a note left importing a
+-- note that has been deleted is a read that fails rather than a link that dangles. Reading a note
+-- from the notes it links to is what has it read again in time to drop the import.
+--
+-- A linked note is read as a 'Syntax.Ct.Prgm.ReadExists' rather than a
+-- 'Syntax.Ct.Prgm.ReadFile', because nothing in it was read. What is in a linked note is that
+-- note's own page, so writing to it must read that page again and no other — otherwise a note
+-- linked to from a hundred notes is a hundred notes read again every time it is typed into.
+--
+-- NOT read from the vault, though the whole vault is what the links resolved against. A note added
+-- anywhere under the vault could turn a link that resolved to nothing into an import, and saying so
+-- would be every note of a vault read again for every note added to it — the cost of a change being
+-- the size of the vault rather than the size of the change. So a link that resolved to nothing is
+-- left resolving to nothing until the note writing it is read again for a reason of its own. A link
+-- that did resolve is watched through the note it resolved to, so deleting, moving or renaming that
+-- note is seen.
 notePrgm :: FilePath -> FilePath -> ImportParseResult
 notePrgm vault note = do
   contents <- readFile note
   notes <- vaultNotes vault
   let linked = nub $ filter (/= note) $ mapMaybe (resolveWikiLink vault notes) $ wikiLinks note contents
-  return $ ParsedImport (RawPrgm (map (mkRawFileImport . rawStr) linked) [notePageStatement (takeBaseName note) contents]) [] (Just contents) (Just [ReadFile note, ReadTree vault])
+  return $ ParsedImport (RawPrgm (map (mkRawFileImport . rawStr) linked) [notePageStatement (takeBaseName note) contents]) [] (Just contents) (Just $ ReadFile note : map ReadExists linked)
 
 -- | The note itself: the page it is, titled as it is linked to, holding what was written in it.
 --

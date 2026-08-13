@@ -258,9 +258,10 @@ treeWrittenAt dir = do
 -- A directory is timed by itself rather than by what it holds, because its listing is what was read
 -- and a file already in it being edited leaves that listing as it was.
 readPathWrittenAt :: ReadPath -> IO (Maybe UTCTime)
-readPathWrittenAt (ReadFile file) = modifiedAt file
-readPathWrittenAt (ReadDir dir)   = modifiedAt dir
-readPathWrittenAt (ReadTree dir)  = treeWrittenAt dir
+readPathWrittenAt (ReadFile file)   = modifiedAt file
+readPathWrittenAt (ReadExists file) = modifiedAt file
+readPathWrittenAt (ReadDir dir)     = modifiedAt dir
+readPathWrittenAt (ReadTree dir)    = treeWrittenAt dir
 
 -- | Time what a read read, as of a read which began at the given time.
 readTime :: UTCTime -> Maybe [ReadPath] -> IO (Maybe ReadTime)
@@ -276,16 +277,55 @@ readTimeCurrent _ Nothing = False
 readTimeCurrent times (Just ReadTime{rtStarted, rtPaths}) = all current rtPaths
   where
     current (read', was) = case H.lookup read' times of
-      Just now -> now == was && maybe True (< rtStarted) now
+      Just now -> readPathCurrent rtStarted read' was now
       Nothing  -> False
 
--- | Whether writing to any of these paths is writing to something a read read at this path.
+-- | Whether what a read found at one of the things it read is still what it would find, given when
+-- the read began, when that thing was last written as the read found it, and when it was last
+-- written now.
+--
+-- What counts as still is what was read there. A file whose text was read is as it was while it has
+-- not been written to at all. A file a read only found is as it was while it is still there, and
+-- writing to it is not a change to that — what is written in it belongs to its own page.
+--
+-- A file written since the read began is not one a read of its text can vouch for: the read may
+-- have read it before the write, and a time taken after the read cannot tell the two apart. Such a
+-- file is taken as changed, which costs one further read of the page and never a page left stale.
+-- A read which only found the file has nothing to vouch for, as no write to a file makes it a file
+-- which is not there.
+readPathCurrent :: UTCTime -> ReadPath -> Maybe UTCTime -> Maybe UTCTime -> Bool
+readPathCurrent _ ReadExists{} was now = isJust was == isJust now
+readPathCurrent started _ was now      = now == was && maybe True (< started) now
+
+-- | Whether any of these paths is this one, or a directory holding it at any depth.
+--
+-- A directory appearing, going or being renamed is a write to everything under it, and is reported
+-- as a write to that directory alone: nothing under it is written to in its own right, and yet
+-- every path under it names something else afterwards. Renaming a directory of an Obsidian vault is
+-- the case — the notes in it keep their text and their names, and a note linking into it is left
+-- importing a path which is no longer there.
+--
+-- Walked upwards rather than compared against each written path, because what has been written to
+-- is a set and how deep a path is, is not.
+writtenAbove :: S.HashSet FilePath -> FilePath -> Bool
+writtenAbove written entry
+  | S.member entry written = True
+  | otherwise              = up /= entry && writtenAbove written up
+  where up = takeDirectory entry
+
+-- | Whether writing to any of these paths could be writing to something a read read at this path.
+--
+-- Could, not did: what has been written to is a set of paths, and a path written to is a path
+-- created, changed, deleted or renamed all the same. Which of those it was is what
+-- 'readPathCurrent' decides, of the pages this reaches ('CtService.ctssUnchangedOf').
 readPathWrittenIn :: S.HashSet FilePath -> ReadPath -> Bool
 -- The file itself, as its text is what was read.
-readPathWrittenIn written (ReadFile file) = S.member file written
+readPathWrittenIn written (ReadFile file) = writtenAbove written file
+-- The file itself, as whether it is there is what was read.
+readPathWrittenIn written (ReadExists file) = writtenAbove written file
 -- A directory is read for its listing, so an entry appearing in it or going from it is a write to
 -- it, and that entry is a path inside it.
-readPathWrittenIn written (ReadDir dir) = S.member dir written || any ((== dir) . takeDirectory) written
+readPathWrittenIn written (ReadDir dir) = writtenAbove written dir || any ((== dir) . takeDirectory) written
 -- Everything under the directory, at whatever depth, that a reading of the tree would have read.
 readPathWrittenIn written (ReadTree dir) = any (readsUnder dir) written
 

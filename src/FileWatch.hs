@@ -106,16 +106,16 @@ answeredBy dirs (dir, under) = here || recursiveAbove (fmap fst . (`H.lookup` di
 -- read from only changes when the program does.
 watchReads :: Watcher -> [Watch] -> IO ()
 watchReads w asked = do
-  watching <- readIORef (wWatching w)
+  before <- readIORef (wWatching w)
   let wanted = S.fromList asked
-  unless (wanted == wAsked watching) $ do
+  unless (wanted == wAsked before) $ do
     -- A directory asked for both ways is watched once, reaching under it, and one asked for under a
     -- tree that is also asked for is not watched at all.
     let needed = H.fromListWith (||) (S.toList wanted)
     let dirs = H.filterWithKey (\dir _ -> not (recursiveAbove (`H.lookup` needed) dir)) needed
-    forM_ (H.toList $ wDirs watching) $ \(dir, (under, stop)) ->
+    forM_ (H.toList $ wDirs before) $ \(dir, (under, stop)) ->
       unless (H.lookup dir dirs == Just under) stop
-    let kept = H.filterWithKey (\dir (under, _) -> H.lookup dir dirs == Just under) (wDirs watching)
+    let kept = H.filterWithKey (\dir (under, _) -> H.lookup dir dirs == Just under) (wDirs before)
     started <- forM (H.toList $ H.difference dirs kept) $ \(dir, under) -> do
       -- A directory which cannot be watched is not an error to report: it leaves what was asked for
       -- out of 'wCovered', which has it looked at on every read instead. Slower, never stale.

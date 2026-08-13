@@ -95,19 +95,25 @@ data ReplRes m
 -- | Something on disk a reading depended on.
 --
 -- A reading which walked a tree says so, rather than naming every directory it walked. Both are the
--- same question — has anything the reading looked at been written to — but a reading which resolves
--- what it holds against a whole tree ('Syntax.Obsidian.Parser.notePrgm' resolves a note's links
--- against every note of its vault) would otherwise name every directory of that tree in every page
--- read out of it, which is the tree named once for each page in it.
+-- same question — has anything the reading looked at been written to — but a reading which holds
+-- what a whole tree holds ('Syntax.Obsidian.Parser.vaultPrgm' holds every note of a vault) would
+-- otherwise name every directory of that tree, which is a directory named once for each of them.
 --
 -- What was read is said apart from where it was, because the two are answered differently and only
--- the reading knows which it did. A file is written to when its text changes; a directory when an
--- entry appears in it, goes from it or is renamed within it. Nothing on disk tells them apart
--- without being asked, so a reading which said only a path would have every reader of it ask —
--- 'CtService.readPathWatches' would have to look at the disk to know what to watch.
+-- the reading knows which it did. A file is written to when its text changes; a file a reading only
+-- found is a different thing again, and stops being what the reading found only when it is no
+-- longer there; a directory is written to when an entry appears in it, goes from it or is renamed
+-- within it. Nothing on disk tells them apart without being asked, so a reading which said only a
+-- path would have every reader of it ask — 'CtService.readPathWatches' would have to look at the
+-- disk to know what to watch, and a note would be read again every time a note it links to was
+-- typed into.
 data ReadPath
   -- | A file whose text was read.
   = ReadFile FilePath
+  -- | A file a reading found without reading it, and would have done something else without.
+  -- 'Syntax.Obsidian.Parser.notePrgm' resolves each of a note's wiki links to a note of the vault
+  -- and imports it, which is a reading of that note's name and of nothing inside it.
+  | ReadExists FilePath
   -- | A directory whose listing was read.
   | ReadDir FilePath
   -- | A directory and the listings under it, at any depth.

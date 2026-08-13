@@ -11,15 +11,17 @@
 module Syntax.RereadTests where
 
 import           Data.Graph       (graphFromEdges)
+import qualified Data.HashSet     as S
 import           Data.List        (isPrefixOf, sort)
 import           Data.Time.Clock  (UTCTime, addUTCTime, getCurrentTime)
 import           Semantics        (testCtssConfig)
 import           Semantics.Prgm   (FileImport, impDisp)
 import           Syntax.Parsers   (ReadPage (..), mkRawImportStr, readFiles,
-                                   unchangedPages)
+                                   readPathWrittenIn, readPaths, unchangedPages)
 import           System.Directory (createDirectoryIfMissing,
                                    getTemporaryDirectory, removeFile,
-                                   removePathForcibly, setModificationTime)
+                                   removePathForcibly, renameFile,
+                                   setModificationTime)
 import           System.FilePath  ((</>))
 import           Test.Tasty
 import           Test.Tasty.HUnit
@@ -45,6 +47,34 @@ readAgain dir before now = sort [path | (page, name, _) <- graphToNodes now
                                       , maybe True (\was -> rpReads was /= rpReads page) (lookup name held)]
   where
     held = [(name, page) | (page, name, _) <- graphToNodes before]
+
+-- | What the page shown at a path imports, by the paths those pages are shown at.
+--
+-- Which imports a note has is what resolving its wiki links produced, so this is what the pages of
+-- a vault say about each other. Confined to one directory as 'pagesUnder' is, to leave the standard
+-- library out.
+importsUnder :: FilePath -> FilePath -> GraphData ReadPage FileImport -> [FilePath]
+importsUnder dir path pages = sort [imp | (page, name, _) <- graphToNodes pages
+                                        , impDisp name == Just path
+                                        , Just imp <- map impDisp (rpImports page)
+                                        , dir `isPrefixOf` imp]
+
+-- | The pages under a directory a write to these paths reaches.
+--
+-- A read which is TOLD what has been written to looks at the pages the write reached and gives back
+-- every other one untouched ('CtService.ctssUnchangedOf'), so this is the half of that decision the
+-- cases above cannot show: they run over a read which looks at everything, and 'readAgain' is the
+-- other half, what looking then decides. Reaching a page is not reading it again — a note written
+-- to reaches the notes linking it, and looking says none of them changed.
+--
+-- Worth asserting on its own because being told is strictly less than looking. A path written to is
+-- a path created, changed, deleted or renamed all the same, and a directory renamed is reported as
+-- the directory rather than as the notes under it.
+writtenTo :: FilePath -> [FilePath] -> GraphData ReadPage FileImport -> [FilePath]
+writtenTo dir written pages = sort [path | (page, name, _) <- graphToNodes pages
+                                         , Just path <- [impDisp name]
+                                         , dir `isPrefixOf` path
+                                         , any (readPathWrittenIn (S.fromList written)) (readPaths page)]
 
 -- | Read what a name reaches, giving back every page still as the last read left it.
 readOnce :: GraphData ReadPage FileImport -> String -> IO (GraphData ReadPage FileImport)
@@ -118,6 +148,10 @@ testListed = testCase "a file added to a directory is found, and one removed is 
 
 -- | A vault is read from every directory under it, which is the case a page timed by its own file
 -- alone could not see: a note added in a subdirectory does not touch the vault directory at all.
+--
+-- The vault is the only page read from all of that. A note is read from its own text and from the
+-- notes it links to, so a note added is the vault's business and not every note's — which is what
+-- makes a change to a vault cost the change rather than the vault.
 testVault :: TestTree
 testVault = testCase "a note added under a vault is found from a subdirectory of it" $ do
   dir <- caseDir "vault"
@@ -137,10 +171,123 @@ testVault = testCase "a note added under a vault is found from a subdirectory of
   added <- readOnce first vault
   assertEqual "the note added under the vault is not a page"
     [dir, dir </> "One.md", dir </> "sub" </> "Two.md"] (pagesUnder dir added)
-  -- Every note is read again, not only the new one: a note's links resolve against the whole vault
-  -- listing, which is what lets One.md's link to Two find it now that Two is written.
-  assertEqual "the notes of the vault were not read again"
-    [dir, dir </> "One.md", dir </> "sub" </> "Two.md"] (readAgain dir first added)
+  assertEqual "a note the added one is nothing to was read again"
+    [dir, dir </> "sub" </> "Two.md"] (readAgain dir first added)
+
+-- | The limitation the above buys: a note added does not resolve a link that already resolved to
+-- nothing, until the note writing that link is read again for a reason of its own.
+--
+-- Noticing it would be a note depending on every name it links to and cannot find, which can only
+-- be answered against the whole vault — the cost the reads are shaped to avoid. So it is taken as a
+-- limitation rather than paid for, and it is asserted here so that it stays a decision.
+testDanglingLink :: TestTree
+testDanglingLink = testCase "a note added does not resolve a link which already resolved to nothing" $ do
+  dir <- caseDir "dangling"
+  now <- getCurrentTime
+  createDirectoryIfMissing True (dir </> ".obsidian")
+  writeLater now (dir </> "One.md") "Links to [[Two]].\n"
+  setModificationTime dir now
+  let vault = "obsidian(\"" ++ dir ++ "\")"
+  first <- readOnce noPages vault
+  assertEqual "the link was resolved before the note it names was written" [] (importsUnder dir (dir </> "One.md") first)
+
+  let later = addUTCTime 60 now
+  writeLater later (dir </> "Two.md") "A note.\n"
+  setModificationTime dir later
+  added <- readOnce first vault
+  assertEqual "the note added is not a page" [dir, dir </> "One.md", dir </> "Two.md"] (pagesUnder dir added)
+  assertEqual "the dangling link was resolved without the note writing it being read again"
+    [] (importsUnder dir (dir </> "One.md") added)
+
+  writeLater (addUTCTime 120 now) (dir </> "One.md") "Links to [[Two]], still.\n"
+  written <- readOnce added vault
+  assertEqual "the note read again did not resolve its link"
+    [dir </> "Two.md"] (importsUnder dir (dir </> "One.md") written)
+
+-- | A note deleted is read again by the notes which link to it, which they must be: a page's
+-- imports are walked whether or not the page itself was read again, so a note left importing a note
+-- that is no longer there is a read which fails rather than a link which dangles.
+testNoteRemoved :: TestTree
+testNoteRemoved = testCase "a note deleted is read again by the notes which link to it" $ do
+  dir <- caseDir "removed-note"
+  now <- getCurrentTime
+  createDirectoryIfMissing True (dir </> ".obsidian")
+  writeLater now (dir </> "One.md") "Links to [[Two]].\n"
+  writeLater now (dir </> "Three.md") "A note which links to nothing.\n"
+  writeLater now (dir </> "Two.md") "A note.\n"
+  setModificationTime dir now
+  let vault = "obsidian(\"" ++ dir ++ "\")"
+  first <- readOnce noPages vault
+  assertEqual "the read did not read the vault and its notes"
+    [dir, dir </> "One.md", dir </> "Three.md", dir </> "Two.md"] (pagesUnder dir first)
+  assertEqual "the note's link was not resolved" [dir </> "Two.md"] (importsUnder dir (dir </> "One.md") first)
+
+  let later = addUTCTime 60 now
+  removeFile (dir </> "Two.md")
+  setModificationTime dir later
+  removed <- readOnce first vault
+  assertEqual "the note deleted is still a page"
+    [dir, dir </> "One.md", dir </> "Three.md"] (pagesUnder dir removed)
+  assertEqual "the note linking to the deleted one was not read again, or another note was"
+    [dir, dir </> "One.md"] (readAgain dir first removed)
+  assertEqual "the note linking to the deleted one still imports it"
+    [] (importsUnder dir (dir </> "One.md") removed)
+
+-- | A note moved is read again by the notes which link to it, as the path they import it by is no
+-- longer the path it is at. A note which links to neither is not.
+testNoteMoved :: TestTree
+testNoteMoved = testCase "a note moved is read again by the notes which link to it" $ do
+  dir <- caseDir "moved"
+  now <- getCurrentTime
+  createDirectoryIfMissing True (dir </> ".obsidian")
+  createDirectoryIfMissing True (dir </> "sub")
+  writeLater now (dir </> "One.md") "Links to [[Two]].\n"
+  writeLater now (dir </> "Three.md") "A note which links to nothing.\n"
+  writeLater now (dir </> "Two.md") "A note.\n"
+  setModificationTime (dir </> "sub") now
+  setModificationTime dir now
+  let vault = "obsidian(\"" ++ dir ++ "\")"
+  first <- readOnce noPages vault
+  assertEqual "the note's link was not resolved" [dir </> "Two.md"] (importsUnder dir (dir </> "One.md") first)
+
+  let later = addUTCTime 60 now
+  renameFile (dir </> "Two.md") (dir </> "sub" </> "Two.md")
+  setModificationTime (dir </> "sub" </> "Two.md") later
+  setModificationTime (dir </> "sub") later
+  setModificationTime dir later
+  moved <- readOnce first vault
+  assertEqual "the note moved is not a page where it was moved to"
+    [dir, dir </> "One.md", dir </> "Three.md", dir </> "sub" </> "Two.md"] (pagesUnder dir moved)
+  assertEqual "the note linking to the moved one was not read again, or another note was"
+    [dir, dir </> "One.md", dir </> "sub" </> "Two.md"] (readAgain dir first moved)
+  assertEqual "the note linking to the moved one does not import it where it now is"
+    [dir </> "sub" </> "Two.md"] (importsUnder dir (dir </> "One.md") moved)
+
+-- | Which pages a write reaches, for a read which is told what was written to rather than left to
+-- look. The case only this one can be given is the last, a directory renamed — the notes in it are
+-- written to as far as any reader of them is concerned, and yet nothing says so but the directory.
+testWrittenTo :: TestTree
+testWrittenTo = testCase "a write reaches the notes read from what was written to" $ do
+  dir <- caseDir "written-to"
+  now <- getCurrentTime
+  createDirectoryIfMissing True (dir </> ".obsidian")
+  createDirectoryIfMissing True (dir </> "sub")
+  writeLater now (dir </> "One.md") "Links to [[Two]].\n"
+  writeLater now (dir </> "Three.md") "A note which links to nothing.\n"
+  writeLater now (dir </> "sub" </> "Two.md") "A note.\n"
+  setModificationTime (dir </> "sub") now
+  setModificationTime dir now
+  let vault = "obsidian(\"" ++ dir ++ "\")"
+  pages <- readOnce noPages vault
+  assertEqual "the note's link was not resolved"
+    [dir </> "sub" </> "Two.md"] (importsUnder dir (dir </> "One.md") pages)
+
+  assertEqual "a write to a note does not reach the note which links it"
+    [dir, dir </> "One.md", dir </> "sub" </> "Two.md"] (writtenTo dir [dir </> "sub" </> "Two.md"] pages)
+  assertEqual "a write to a note reaches a note which does not link it"
+    [dir, dir </> "Three.md"] (writtenTo dir [dir </> "Three.md"] pages)
+  assertEqual "renaming the directory a note is in does not reach it or the note which links it"
+    [dir, dir </> "One.md", dir </> "sub" </> "Two.md"] (writtenTo dir [dir </> "sub"] pages)
 
 -- | A note is read from its own text and from which notes the vault holds, and writing to a note
 -- changes neither for any other note: a file being written to does not touch the directory holding
@@ -185,4 +332,4 @@ testVaultConfig = testCase "a vault's own configuration is not read from" $ do
   assertEqual "writing the vault's configuration read a page again" [] (readAgain dir first used)
 
 rereadTests :: TestTree
-rereadTests = testGroup "Reread" [testWritten, testListed, testVault, testNoteWritten, testVaultConfig]
+rereadTests = testGroup "Reread" [testWritten, testListed, testVault, testDanglingLink, testNoteRemoved, testNoteMoved, testNoteWritten, testVaultConfig, testWrittenTo]

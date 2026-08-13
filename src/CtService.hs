@@ -217,13 +217,20 @@ ctssUnchanged (Just watcher) written pages = do
 -- however many other pages that listing holds. Asking that of every page every time would be the
 -- program squared, to find that nothing had changed; nothing having changed is answered whole
 -- instead, and this is reached only when something has.
+--
+-- What the watcher says is which pages a write could have reached, not what it did to them: a note
+-- written to and a note deleted are the one event, and only the page which read that file's text
+-- is changed by the first. So the pages the write reached are looked at, which is exact and costs
+-- what the change is, and the pages it did not reach are given back without a syscall — which is
+-- the whole of the program but for the change.
 ctssUnchangedOf :: Watcher -> S.HashSet FilePath -> [(FileImport, ReadPage)] -> IO (H.HashMap FileImport ReadPage)
 ctssUnchangedOf watcher written pages = do
   watched <- covered watcher
   let isWatched page = maybe False (all (all (`S.member` watched) . readPathWatches . fst) . rtPaths) (rpReads page)
   let (byWatch, byLook) = partition (isWatched . snd) pages
-  looked <- unchangedPages byLook
-  return $ H.union looked $ H.fromList $ filter (not . any (readPathWrittenIn written) . readPaths . snd) byWatch
+  let (reached, untouched) = partition (any (readPathWrittenIn written) . readPaths . snd) byWatch
+  looked <- unchangedPages (byLook ++ reached)
+  return $ H.union looked $ H.fromList untouched
 
 -- | The watches it takes to notice a change to what a read read.
 --
@@ -238,9 +245,10 @@ ctssUnchangedOf watcher written pages = do
 -- watcher de-duplicate: every note of an Obsidian vault reads the vault, so a vault of any size
 -- asks for the one watch on it however many notes it holds.
 readPathWatches :: ReadPath -> [Watch]
-readPathWatches (ReadFile file) = [(takeDirectory file, False)]
-readPathWatches (ReadDir dir)   = [(dir, False), (takeDirectory dir, False)]
-readPathWatches (ReadTree dir)  = [(dir, True), (takeDirectory dir, False)]
+readPathWatches (ReadFile file)   = [(takeDirectory file, False)]
+readPathWatches (ReadExists file) = [(takeDirectory file, False)]
+readPathWatches (ReadDir dir)     = [(dir, False), (takeDirectory dir, False)]
+readPathWatches (ReadTree dir)    = [(dir, True), (takeDirectory dir, False)]
 
 -- | Watch the files the pages were read from, and look at whichever of them were read before there
 -- was a watch on them.
