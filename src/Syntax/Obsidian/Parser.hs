@@ -17,7 +17,7 @@ import           CtConstants
 import           Data.Char            (isDigit, isSpace)
 import           Data.Foldable        (toList)
 import           Data.List            (dropWhileEnd, intercalate, isPrefixOf,
-                                       isSuffixOf, nub, sort)
+                                       isSuffixOf, nub)
 import           Data.Maybe           (listToMaybe, mapMaybe)
 import qualified Data.Text            as T
 import           Semantics.Prgm
@@ -71,8 +71,8 @@ obsidianParser = ImportParser obsidianParse unparseNote
 -- Importing one directory as both a vault and a plain @dir@ makes two pages at the one display
 -- path. 'Eval.Runtime.WebDocs.sidebarLevel' shows a directory holding pages as a single node, so
 -- the two are shown as one; an empty one has no node to collapse into and is an error there.
-obsidianParse :: Expr () -> ImportParseResult
-obsidianParse imp = case [arg | arg@ObjArr{oaObj=Nothing} <- exprAppliedArgs imp] of
+obsidianParse :: ReadEnv -> Expr () -> ImportParseResult
+obsidianParse env imp = case [arg | arg@ObjArr{oaObj=Nothing} <- exprAppliedArgs imp] of
   (ObjArr{oaArr=Just (Just (CExpr _ (CStr path)), _)}:_) -> do
     isDir <- doesDirectoryExist path
     isFile <- doesFileExist path
@@ -80,12 +80,12 @@ obsidianParse imp = case [arg | arg@ObjArr{oaObj=Nothing} <- exprAppliedArgs imp
       (True, _) -> do
         isVault <- doesDirectoryExist $ path </> obsidianConfigDir
         if isVault
-          then vaultPrgm path
+          then vaultPrgm env path
           else fail $ printf "The directory %s is not an Obsidian vault, as it holds no %s configuration" path obsidianConfigDir
       (_, True) -> do
         vault <- noteVault path
         case vault of
-          Just vault' -> notePrgm vault' path
+          Just vault' -> notePrgm env vault' path
           Nothing -> fail $ printf "The note %s is in no Obsidian vault, as no directory holding it holds an %s configuration" path obsidianConfigDir
       _ -> fail $ printf "Could not find the Obsidian vault or note %s" path
   _ -> fail $ printf "An obsidian import must name a vault directory or a note within one: %s" (show imp)
@@ -109,16 +109,17 @@ noteVault note = aux $ takeDirectory note
 -- The whole vault is what this page was read from, not the notes: which notes a vault holds is read
 -- out of the listings under it, and a note's own writing says nothing about whether the vault holds
 -- it. A note added anywhere under the vault is an entry written into one of those listings.
-vaultPrgm :: FilePath -> ImportParseResult
-vaultPrgm vault = do
-  notes <- vaultNotes vault
+vaultPrgm :: ReadEnv -> FilePath -> ImportParseResult
+vaultPrgm env vault = do
+  notes <- vaultNotes env vault
   return $ ParsedImport (RawPrgm (map (mkRawFileImport . rawStr) notes) []) [] Nothing (Just [ReadTree vault])
 
 -- | The page of one note: what it is, and what it links to.
 --
--- The vault is walked again here rather than by the vault page, because a note is a page whether it
--- was reached through its vault or by a link from another note, and either way its links resolve
--- against every note of the vault.
+-- The vault is asked for here rather than left to the vault page, because a note is a page whether
+-- it was reached through its vault or by a link from another note, and either way its links resolve
+-- against every note of the vault. It is asked for and not walked: the read walks a tree once
+-- ('Syntax.Ct.Prgm.scanTree'), so a vault of a thousand notes is one walk rather than a thousand.
 --
 -- Read from the note itself and from the notes it links to. Its own writing is the page, and a note
 -- it links to going away or moving is what makes the page's imports wrong: an import is replayed
@@ -138,10 +139,10 @@ vaultPrgm vault = do
 -- left resolving to nothing until the note writing it is read again for a reason of its own. A link
 -- that did resolve is watched through the note it resolved to, so deleting, moving or renaming that
 -- note is seen.
-notePrgm :: FilePath -> FilePath -> ImportParseResult
-notePrgm vault note = do
+notePrgm :: ReadEnv -> FilePath -> FilePath -> ImportParseResult
+notePrgm env vault note = do
   contents <- readFile note
-  notes <- vaultNotes vault
+  notes <- vaultNotes env vault
   let linked = nub $ filter (/= note) $ mapMaybe (resolveWikiLink vault notes) $ wikiLinks note contents
   return $ ParsedImport (RawPrgm (map (mkRawFileImport . rawStr) linked) [notePageStatement (takeBaseName note) contents]) [] (Just contents) (Just $ ReadFile note : map ReadExists linked)
 
@@ -353,28 +354,15 @@ indentation = length . takeWhile isSpace
 
 -- | The notes of a vault: every markdown file under it, at any depth.
 --
--- This is the reading a 'Syntax.Ct.Prgm.ReadTree' of the vault stands for, so what it walks into is
--- 'Syntax.Ct.Prgm.readsTreeEntry' rather than a rule of its own — the whole point of that being one
--- rule is that this is the reading everything else has to agree with. Directory symlinks are not
--- followed, as a vault holding one that points at an ancestor would otherwise be walked forever.
+-- This is the reading a 'Syntax.Ct.Prgm.ReadTree' of the vault stands for, so it is the read's own
+-- walk of the tree ('Syntax.Ct.Prgm.scanTree') rather than a walk of its own — which is what has a
+-- vault walked once by a read rather than once by the vault page and once again by every note in
+-- it, and what makes what this reads and what a tree read is timed by the same thing rather than
+-- two things which have to agree.
 --
--- Sorted, because 'listDirectory' answers in whatever order the filesystem holds it and the notes
--- become the vault page's imports — a part of the program that re-reading an unchanged vault must
--- reproduce, or 'CtService.ctssRead' takes every read for an edit and rebuilds the vault.
-vaultNotes :: FilePath -> IO [FilePath]
-vaultNotes dir = do
-  entries <- listDirectory dir
-  notes <- mapM aux $ sort $ filter readsTreeEntry entries
-  return $ concat notes
-  where
-    aux entry = do
-      let path = dir </> entry
-      isDir <- doesDirectoryExist path
-      isLink <- pathIsSymbolicLink path
-      case () of
-        _ | isDir && not isLink                   -> vaultNotes path
-        _ | not isDir && ".md" `isSuffixOf` entry -> return [path]
-        _                                         -> return []
+-- Markdown alone, as a vault holds whatever else its owner keeps in it and only a note is a page.
+vaultNotes :: ReadEnv -> FilePath -> IO [FilePath]
+vaultNotes env dir = filter (".md" `isSuffixOf`) . tsFiles <$> scanTree env dir
 
 -- | The wiki links a note writes, in the order it writes them.
 --

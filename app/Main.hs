@@ -14,7 +14,7 @@ import           Syntax.Ct.Builder    (applyRawArgs, rawStr, rawVal)
 import           Syntax.Ct.Formatter  (formatRootPrgm)
 import           Syntax.Ct.Prgm       (ParsedImport (..), RawPrgm (..),
                                        RawStatement (..), RawStatementTree (..),
-                                       rawExprAppliedArgsMap)
+                                       newReadEnv, rawExprAppliedArgsMap)
 import           Syntax.Parsers       (canonicalImport, mkDesCanonicalImportStr,
                                        mkRawImportStr, parseFile, readFiles,
                                        readImport)
@@ -107,7 +107,8 @@ xFmt prgmName = do
   -- pipeline: 'processParsed' injects an implicit @import "core"@ for compilation, and formatting
   -- that would write a duplicate @import "core"@ back into any file that already imports it.
   imp <- lift $ canonicalImport buildCtssConfig Nothing $ mkRawImportStr prgmName
-  ParsedImport{piPrgm=rawPrgm} <- lift $ readImport imp
+  env <- lift newReadEnv
+  ParsedImport{piPrgm=rawPrgm} <- lift $ readImport env imp
   let prgm' = formatRootPrgm rawPrgm
   -- Written back to the file the import resolved to rather than to the name it was given by, which
   -- is not always a path: an import may name its parser instead ('mkRawImportStr'), and writing to

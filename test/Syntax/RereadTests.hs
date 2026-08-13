@@ -16,6 +16,7 @@ import           Data.List        (isPrefixOf, sort)
 import           Data.Time.Clock  (UTCTime, addUTCTime, getCurrentTime)
 import           Semantics        (testCtssConfig)
 import           Semantics.Prgm   (FileImport, impDisp)
+import           Syntax.Ct.Prgm   (newReadEnv, scanTree, tsFiles)
 import           Syntax.Parsers   (ReadPage (..), mkRawImportStr, readFiles,
                                    readPathWrittenIn, readPaths, unchangedPages)
 import           System.Directory (createDirectoryIfMissing,
@@ -263,6 +264,25 @@ testNoteMoved = testCase "a note moved is read again by the notes which link to 
   assertEqual "the note linking to the moved one does not import it where it now is"
     [dir </> "sub" </> "Two.md"] (importsUnder dir (dir </> "One.md") moved)
 
+-- | One read walks a tree once, however many pages are read out of it.
+--
+-- Asserted by changing the tree under the read, which is the only way sharing the walk can be seen
+-- from outside — and which is the same thing that makes it safe. What a page's parse resolved
+-- against and what its read records as having found are then the one walk, so a change the read did
+-- not see is one the NEXT read finds, rather than one recorded as though the read had seen it.
+testScanTreeOnce :: TestTree
+testScanTreeOnce = testCase "a read walks a tree once, however many pages are read out of it" $ do
+  dir <- caseDir "scan"
+  writeFile (dir </> "One.md") "A note.\n"
+  env <- newReadEnv
+  assertEqual "the walk did not find the note" [dir </> "One.md"] . tsFiles =<< scanTree env dir
+
+  writeFile (dir </> "Two.md") "Another note.\n"
+  assertEqual "the read walked the tree a second time" [dir </> "One.md"] . tsFiles =<< scanTree env dir
+  fresh <- newReadEnv
+  assertEqual "the next read did not walk the tree"
+    [dir </> "One.md", dir </> "Two.md"] . tsFiles =<< scanTree fresh dir
+
 -- | Which pages a write reaches, for a read which is told what was written to rather than left to
 -- look. The case only this one can be given is the last, a directory renamed — the notes in it are
 -- written to as far as any reader of them is concerned, and yet nothing says so but the directory.
@@ -332,4 +352,4 @@ testVaultConfig = testCase "a vault's own configuration is not read from" $ do
   assertEqual "writing the vault's configuration read a page again" [] (readAgain dir first used)
 
 rereadTests :: TestTree
-rereadTests = testGroup "Reread" [testWritten, testListed, testVault, testDanglingLink, testNoteRemoved, testNoteMoved, testNoteWritten, testVaultConfig, testWrittenTo]
+rereadTests = testGroup "Reread" [testWritten, testListed, testVault, testDanglingLink, testNoteRemoved, testNoteMoved, testNoteWritten, testVaultConfig, testScanTreeOnce, testWrittenTo]

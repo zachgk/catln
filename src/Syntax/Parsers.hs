@@ -27,8 +27,8 @@ import           CtConstants             (noCoreAnnot)
 import           Data.Graph
 import qualified Data.HashMap.Strict     as H
 import           Data.List
-import           Data.Maybe              (catMaybes, fromMaybe, isJust,
-                                          listToMaybe, mapMaybe)
+import           Data.Maybe              (fromMaybe, isJust, listToMaybe,
+                                          mapMaybe)
 import           Data.Time.Clock         (UTCTime, getCurrentTime)
 import           MapMeta                 (MetaLocation (ImportMeta), mapMeta,
                                           parseMetaIDScope)
@@ -47,11 +47,7 @@ import           Syntax.InferImport      (dirParser, findImportPath,
 import           Syntax.Md.Parser        (mdParser)
 import           Syntax.Obsidian.Parser  (obsidian, obsidianParser)
 import           Syntax.Python.Parser    (pyParser)
-import           System.Directory        (doesDirectoryExist,
-                                          getModificationTime, listDirectory,
-                                          pathIsSymbolicLink)
-import           System.FilePath         (isAbsolute, joinPath, takeDirectory,
-                                          (</>))
+import           System.FilePath         (isAbsolute, joinPath, takeDirectory)
 import           Text.Megaparsec         (runParser)
 import           Text.Printf
 import           Utils
@@ -157,13 +153,13 @@ mkRawImportStr name = mkRawFileImport $ fromMaybe (rawStr name) (importExpr name
 mkDesCanonicalImportStr :: CTSSConfig -> String -> IO FileImport
 mkDesCanonicalImportStr config = canonicalImport config Nothing . mkRawImportStr
 
-readImport :: FileImport -> ImportParseResult
-readImport imp = case maybeExprPath (impAbs imp) of
+readImport :: ReadEnv -> FileImport -> ImportParseResult
+readImport env imp = case maybeExprPath (impAbs imp) of
   Nothing -> fail $ printf "Invalid import %s must be string or oject" (show imp)
   Just impPath -> case H.lookup (nameStr impPath) importParsers of
     Nothing -> fail $ printf "No parser available for oject name in %s" (show imp)
     -- TODO Modify the ImportParseResult to CResT to report back parse errors
-    Just parser -> ipParse parser $ impAbs imp
+    Just parser -> ipParse parser env $ impAbs imp
 
 -- | Writes a page back as the file it was read from, by the parser which read it.
 --
@@ -221,51 +217,32 @@ data ReadPage = ReadPage {
   rpReads   :: Maybe ReadTime
                          }
 
--- | When a path was last written, or nothing where there is no path to have been written.
-modifiedAt :: FilePath -> IO (Maybe UTCTime)
-modifiedAt file = either (const Nothing) Just <$> (try (getModificationTime file) :: IO (Either IOException UTCTime))
-
--- | When anything under a directory was last added, removed or renamed: the latest of the times its
--- directories were written to, at any depth.
+-- | When anything under a directory was last added, removed or renamed, and 'Nothing' where the
+-- tree could not be walked at all.
 --
--- A directory is written to when an entry appears in it, goes from it or is renamed within it, and
--- not when a file already in it is edited — so this answers what a reading of a tree's listings
--- depends on, and leaves what a reading of a file depends on to that file's own time. Every such
--- write stamps its directory with the time it happened, which is later than any time already there,
--- so the latest of them moves whenever the tree gains or loses anything.
+-- This is the tree's own walk ('Syntax.Ct.Prgm.scanTree') asked for its times, so what a reading of
+-- a tree reads and what timing that reading looks at cannot come apart — a tree timed by more than
+-- the reading walked is a page read again for a change it never read.
 --
--- What is walked into is 'Syntax.Ct.Prgm.readsTreeEntry', and directory symlinks are not followed,
--- which is what the readings that walk trees do ('Syntax.Obsidian.Parser.vaultNotes'). A tree timed
--- by more than the reading walked is a page read again for a change it never read — an Obsidian
--- vault writes its own @.obsidian@ configuration as it is used, which is not notes of it.
-treeWrittenAt :: FilePath -> IO (Maybe UTCTime)
-treeWrittenAt dir = do
-  here <- modifiedAt dir
-  entries <- either (const []) id <$> (try (listDirectory dir) :: IO (Either IOException [FilePath]))
-  under <- mapM aux $ filter readsTreeEntry entries
-  return $ maximumMaybe $ catMaybes $ here : under
-  where
-    aux entry = do
-      let entryPath = dir </> entry
-      isDir <- doesDirectoryExist entryPath
-      isLink <- pathIsSymbolicLink entryPath
-      if isDir && not isLink then treeWrittenAt entryPath else return Nothing
-    maximumMaybe [] = Nothing
-    maximumMaybe ts = Just $ maximum ts
+-- A tree which cannot be walked is not an error here, though it is to whatever reads it: timing runs
+-- over what an earlier read recorded, and a directory since deleted must answer that something has
+-- changed rather than fail the read which asked.
+treeWrittenAt :: ReadEnv -> FilePath -> IO (Maybe UTCTime)
+treeWrittenAt env dir = either (const Nothing) tsWritten <$> (try (scanTree env dir) :: IO (Either IOException TreeScan))
 
 -- | When what a read read at a path was last written.
 --
 -- A directory is timed by itself rather than by what it holds, because its listing is what was read
 -- and a file already in it being edited leaves that listing as it was.
-readPathWrittenAt :: ReadPath -> IO (Maybe UTCTime)
-readPathWrittenAt (ReadFile file)   = modifiedAt file
-readPathWrittenAt (ReadExists file) = modifiedAt file
-readPathWrittenAt (ReadDir dir)     = modifiedAt dir
-readPathWrittenAt (ReadTree dir)    = treeWrittenAt dir
+readPathWrittenAt :: ReadEnv -> ReadPath -> IO (Maybe UTCTime)
+readPathWrittenAt _ (ReadFile file)   = modifiedAt file
+readPathWrittenAt _ (ReadExists file) = modifiedAt file
+readPathWrittenAt _ (ReadDir dir)     = modifiedAt dir
+readPathWrittenAt env (ReadTree dir)  = treeWrittenAt env dir
 
 -- | Time what a read read, as of a read which began at the given time.
-readTime :: UTCTime -> Maybe [ReadPath] -> IO (Maybe ReadTime)
-readTime started = traverse (fmap (ReadTime started) . mapM (\read' -> (read',) <$> readPathWrittenAt read'))
+readTime :: ReadEnv -> UTCTime -> Maybe [ReadPath] -> IO (Maybe ReadTime)
+readTime env started = traverse (fmap (ReadTime started) . mapM (\read' -> (read',) <$> readPathWrittenAt env read'))
 
 -- | Whether everything a page was read from is still as the read found it, given the times things
 -- were last written at.
@@ -349,8 +326,9 @@ processParsed config imp ParsedImport{piPrgm=prgm@(RawPrgm prgmImports statement
 
 parseFile :: CTSSConfig -> RawFileImport -> CResT IO (GraphNodes (RawPrgm ()) FileImport)
 parseFile config imp = do
+  env <- lift newReadEnv
   imp' <- lift $ canonicalImport config Nothing imp
-  r <- lift $ readImport imp'
+  r <- lift $ readImport env imp'
   page <- lift $ processParsed config imp' r
   return (rpPrgm page, imp', rpImports page)
 
@@ -370,8 +348,9 @@ readPaths = maybe [] (map fst . rtPaths) . rpReads
 -- would be the vault walked once per note.
 unchangedPages :: [(FileImport, ReadPage)] -> IO (H.HashMap FileImport ReadPage)
 unchangedPages pages = do
+  env <- newReadEnv
   let paths = S.toList $ S.fromList $ concatMap (readPaths . snd) pages
-  times <- H.fromList <$> mapM (\read' -> (read',) <$> readPathWrittenAt read') paths
+  times <- H.fromList <$> mapM (\read' -> (read',) <$> readPathWrittenAt env read') paths
   return $ H.fromList [page | page <- pages, readTimeCurrent times (rpReads $ snd page)]
 
 -- | The page an import names: the one the last read left, or the files read again.
@@ -379,14 +358,14 @@ unchangedPages pages = do
 -- The time is taken before the files are read rather than after them, so that a file written while
 -- it is being read is one the next read reads again. A time taken afterwards would say the read had
 -- seen the write when it may have happened first.
-readPage :: CTSSConfig -> H.HashMap FileImport ReadPage -> FileImport -> IO ReadPage
-readPage config prev imp = case H.lookup imp prev of
+readPage :: CTSSConfig -> ReadEnv -> H.HashMap FileImport ReadPage -> FileImport -> IO ReadPage
+readPage config env prev imp = case H.lookup imp prev of
   Just page -> return page
   Nothing -> do
     started <- getCurrentTime
-    parsed <- readImport imp
+    parsed <- readImport env imp
     page <- processParsed config imp parsed
-    times <- readTime started (piReads parsed)
+    times <- readTime env started (piReads parsed)
     return page{rpReads = times}
 
 -- | Read the files an import names, and everything they import.
@@ -399,16 +378,17 @@ readPage config prev imp = case H.lookup imp prev of
 -- TODO Change readImport, then make this return GraphData of CRes
 readFiles :: CTSSConfig -> H.HashMap FileImport ReadPage -> [RawFileImport] -> IO (GraphData ReadPage FileImport)
 readFiles config prev initialImps = do
+  env <- newReadEnv
   initialImps' <- mapM (canonicalImport config Nothing) initialImps
-  res <- aux [] S.empty initialImps'
+  res <- aux env [] S.empty initialImps'
   return $ graphFromEdges res
   where
-    aux :: [GraphNodes ReadPage FileImport] -> S.HashSet FileImport -> [FileImport] -> IO [GraphNodes ReadPage FileImport]
-    aux acc _ [] = return acc
-    aux acc visited (nextToVisit:restToVisit) = do
+    aux :: ReadEnv -> [GraphNodes ReadPage FileImport] -> S.HashSet FileImport -> [FileImport] -> IO [GraphNodes ReadPage FileImport]
+    aux _ acc _ [] = return acc
+    aux env acc visited (nextToVisit:restToVisit) = do
       if S.member nextToVisit visited
-        then aux acc visited restToVisit
+        then aux env acc visited restToVisit
         else do
-          page <- readPage config prev nextToVisit
+          page <- readPage config env prev nextToVisit
           let restToVisit' = rpVisits page ++ restToVisit
-          aux ((page, nextToVisit, rpImports page) : acc) (S.insert nextToVisit visited) restToVisit'
+          aux env ((page, nextToVisit, rpImports page) : acc) (S.insert nextToVisit visited) restToVisit'

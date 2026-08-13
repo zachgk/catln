@@ -102,7 +102,7 @@ contents p = do
 -- TODO Write a .ct file back with 'Syntax.Ct.Formatter.formatRootPrgm', which is already the
 -- program-to-text direction for this syntax.
 ctParser :: ImportParser
-ctParser = readOnlyParser $ \imp -> case exprAppliedArgs imp of
+ctParser = readOnlyParser $ \_ imp -> case exprAppliedArgs imp of
   [ObjArr{oaArr=Just (Just (CExpr _ (CStr fileName)), _)}] -> do
     fileContents <- readFile fileName
     case runParser (contents pPrgm) fileName fileContents of
@@ -113,10 +113,10 @@ ctParser = readOnlyParser $ \imp -> case exprAppliedArgs imp of
 -- TODO Write a .ctx file back, once 'ctParser' can be written back: it is a .ct file with the one
 -- annotation this adds taken off again.
 ctxParser :: ImportParser
-ctxParser = readOnlyParser $ \fileName -> do
+ctxParser = readOnlyParser $ \env fileName -> do
   -- Updated rather than rebuilt, so the file this read is a read of travels with it without being
   -- named again here.
-  parsed <- ipParse ctParser fileName
+  parsed <- ipParse ctParser env fileName
   return parsed{piPrgm = annotate (piPrgm parsed)}
   where
     annotate (RawPrgm imports statements) = RawPrgm imports (RawStatementTree (RawAnnot (RawValue emptyMetaN (mkName ctxAnnot))) [] :statements)

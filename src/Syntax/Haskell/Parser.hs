@@ -102,7 +102,7 @@ runParser flags filename str parser = unP parser parseState
 -- TODO Write a Haskell module back. Nothing reads one back yet, and a module is read for what it
 -- declares rather than in full, so there is not enough of it in the program to write one.
 hsParser :: ImportParser
-hsParser = readOnlyParser $ \imp -> case [arg | arg@ObjArr{oaObj=Nothing} <- exprAppliedArgs imp] of
+hsParser = readOnlyParser $ \_ imp -> case [arg | arg@ObjArr{oaObj=Nothing} <- exprAppliedArgs imp] of
   (ObjArr{oaArr=Just (Just (CExpr _ (CStr filename)), _)}:_) -> do
     -- Extract stackRoot and exportAll parameters from all arguments (including named ones)
     let maybeStackRoot = extractStackRoot (exprAppliedArgs imp)

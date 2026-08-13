@@ -22,14 +22,19 @@ import           Data.Hashable
 import qualified Data.HashMap.Strict as H
 import           GHC.Generics        (Generic)
 
+import           Control.Exception   (IOException, try)
 import           Data.Aeson          hiding (Object)
-import           Data.List           (isPrefixOf, stripPrefix)
-import           Data.Maybe          (fromJust, isJust, mapMaybe)
+import           Data.IORef          (IORef, modifyIORef', newIORef, readIORef)
+import           Data.List           (isPrefixOf, sort, stripPrefix)
+import           Data.Maybe          (catMaybes, fromJust, isJust, mapMaybe)
+import           Data.Time.Clock     (UTCTime)
 import           Semantics
 import           Semantics.Annots    (isAnnot)
 import           Semantics.Prgm
 import           Semantics.Types
-import           System.FilePath     (splitDirectories, takeFileName)
+import           System.Directory    (doesDirectoryExist, getModificationTime,
+                                      listDirectory, pathIsSymbolicLink)
+import           System.FilePath     (splitDirectories, takeFileName, (</>))
 import           Text.Printf
 import           Utils
 
@@ -122,12 +127,11 @@ data ReadPath
 
 -- | Whether a reading of a tree walks into an entry named this.
 --
--- One rule in one place because four readings must agree on it, and nothing but agreement makes
--- them right: what a tree read walks ('Syntax.Obsidian.Parser.vaultNotes'), what timing a tree
--- looks at ('Syntax.Parsers.treeWrittenAt'), what writing to a tree means ('readsUnder', through
--- 'Syntax.Parsers.readPathWrittenIn'), and what a watch on a tree reports ('CtService.ctssWatch').
--- A path one of them counts and another does not is at best a page read again for a change it never
--- read, and at worst a page never read again for one it did.
+-- One rule in one place because three things must agree on it, and nothing but agreement makes them
+-- right: what a tree read walks and is timed by ('walkTree', which is both), what writing to a tree
+-- means ('readsUnder', through 'Syntax.Parsers.readPathWrittenIn'), and what a watch on a tree
+-- reports ('CtService.ctssWatch'). A path one of them counts and another does not is at best a page
+-- read again for a change it never read, and at worst a page never read again for one it did.
 --
 -- Entries named with a leading dot are passed over. An Obsidian vault keeps its own configuration
 -- in one and rewrites it as the vault is used, which is not notes of the vault; a repository keeps
@@ -146,6 +150,79 @@ readsUnder :: FilePath -> FilePath -> Bool
 readsUnder dir path = case stripPrefix (splitDirectories dir) (splitDirectories path) of
   Just under -> all readsTreeEntry under
   Nothing    -> False
+
+-- | When a path was last written, or nothing where there is no path to have been written.
+modifiedAt :: FilePath -> IO (Maybe UTCTime)
+modifiedAt file = either (const Nothing) Just <$> (try (getModificationTime file) :: IO (Either IOException UTCTime))
+
+-- | What one walk of the tree under a directory found.
+data TreeScan = TreeScan {
+  -- | The files a reading of the tree reads, in the order it walks them.
+  tsFiles   :: [FilePath],
+  -- | When any of the directories it walked was last written to, and 'Nothing' where it walked
+  -- none. A directory is written to when an entry appears in it, goes from it or is renamed within
+  -- it, and not when a file already in it is edited, so this is when the tree last gained or lost
+  -- anything — which is what a reading of its listings depends on, and no more.
+  tsWritten :: Maybe UTCTime
+                         }
+
+-- | What a read has already found on disk, so that one read finds it once.
+--
+-- A read reads many pages out of the one tree. Every note of an Obsidian vault resolves its links
+-- against the notes of that vault, and the page which is the vault holds all of them, so a vault of
+-- a thousand notes would be walked a thousand and one times by a read which walked it for each.
+--
+-- Scoped to one read rather than kept between reads. What is on disk changes between reads, and
+-- deciding that it has is what 'ReadPath' and the times a read records already are; a cache which
+-- outlived a read would need to decide it a second way.
+newtype ReadEnv = ReadEnv (IORef (H.HashMap FilePath TreeScan))
+
+newReadEnv :: IO ReadEnv
+newReadEnv = ReadEnv <$> newIORef H.empty
+
+-- | The walk of the tree under a directory this read made, walking it if this read has not.
+--
+-- Only the directory asked about is kept, not every directory walked under it: what asks is a page
+-- read from a whole tree, and keeping each level would be the tree held once for every depth in it.
+scanTree :: ReadEnv -> FilePath -> IO TreeScan
+scanTree (ReadEnv scans) dir = do
+  found <- readIORef scans
+  case H.lookup dir found of
+    Just scan -> return scan
+    Nothing -> do
+      scan <- walkTree dir
+      modifyIORef' scans $ H.insert dir scan
+      return scan
+
+-- | The walk itself.
+--
+-- What is walked into is 'readsTreeEntry', and a symlinked directory is not walked at all: a tree
+-- holding one which points at a directory above it would otherwise be walked forever.
+--
+-- Sorted, because 'listDirectory' answers in whatever order the filesystem holds it and what this
+-- finds becomes the imports of the page read from the tree — a part of the program that re-reading
+-- an unchanged tree must reproduce, or every read takes itself for an edit.
+--
+-- A directory which cannot be listed is a failure rather than an empty directory, because a reading
+-- of a tree either read it or did not: a vault which quietly lost the notes under an unreadable
+-- directory would drop them from itself and break every link into them.
+walkTree :: FilePath -> IO TreeScan
+walkTree dir = do
+  here <- modifiedAt dir
+  entries <- listDirectory dir
+  under <- mapM aux $ sort $ filter readsTreeEntry entries
+  return $ TreeScan (concatMap tsFiles under) (latest $ here : map tsWritten under)
+  where
+    aux entry = do
+      let path = dir </> entry
+      isDir <- doesDirectoryExist path
+      isLink <- pathIsSymbolicLink path
+      if isDir
+        then if isLink then return (TreeScan [] Nothing) else walkTree path
+        else return $ TreeScan [path] Nothing
+    latest times = case catMaybes times of
+      [] -> Nothing
+      ts -> Just $ maximum ts
 
 -- | What reading a file as a page produced, and what the reading read to produce it.
 data ParsedImport = ParsedImport {
@@ -175,8 +252,9 @@ type ImportParseResult = IO ParsedImport
 -- rather than by having no reversion at all, so that every syntax is asked the same question and a
 -- page which cannot be saved is reported rather than mistaken for one which can.
 data ImportParser = ImportParser {
-  -- | Reads the file an import names as the program it is.
-  ipParse   :: Expr () -> ImportParseResult,
+  -- | Reads the file an import names as the program it is, out of what the read has already found
+  -- ('ReadEnv') — which is what keeps a read from walking one tree once for every page in it.
+  ipParse   :: ReadEnv -> Expr () -> ImportParseResult,
   -- | Writes a page back as the file it was read from, or nothing when that syntax has no reversion.
   --
   -- A reversion writes the program rather than the file: it may write back what the file said in a
@@ -185,7 +263,7 @@ data ImportParser = ImportParser {
                                  }
 
 -- | A parser which reads a syntax but cannot write it back.
-readOnlyParser :: (Expr () -> ImportParseResult) -> ImportParser
+readOnlyParser :: (ReadEnv -> Expr () -> ImportParseResult) -> ImportParser
 readOnlyParser parse = ImportParser parse (const Nothing)
 
 instance ExprClass RawExpr where
