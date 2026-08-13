@@ -21,9 +21,9 @@ import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Builder
 import           Syntax.Ct.Prgm
-import           Syntax.Obsidian.Parser (noteVault, obsidian)
+import           Syntax.Obsidian.Parser (noteVault, obsidian, obsidianConfigDir)
 import           System.Directory
-import           System.FilePath        (isAbsolute, joinPath)
+import           System.FilePath        (isAbsolute, joinPath, (</>))
 import           Text.Printf
 
 -- | The parser each file extension is read with, before where the file is is taken into account by
@@ -80,7 +80,7 @@ dirParser = readOnlyParser $ \_ imp -> case exprAppliedArgs imp of
     -- The directory alone, because everything read here is read out of its listing: which files it
     -- holds, which of those are directories of their own, and whether it holds a main.ct. A file in
     -- it changing is a change to that file's own page, not to this one.
-    return $ ParsedImport dirPrgm (map (mkRawFileImport . rawStr) $ catMaybes files') Nothing (Just [ReadDir name])
+    return $ ParsedImport (PageRead dirPrgm) (map (mkRawFileImport . rawStr) $ catMaybes files') Nothing (Just [ReadDir name])
   _ -> undefined
 
 -- | The places an import of @name@ could be: beside the file which wrote it, then in the standard
@@ -131,6 +131,19 @@ inferFileParser path = case H.lookup ext fileExtensionParsers of
   where
     ext = last $ splitOn "." path
 
+-- | The parser a directory is read with: a plain directory of the files in it, except that a
+-- directory holding an Obsidian configuration is the vault that makes it.
+--
+-- The same rule as 'inferFileParser' and for the same reason. A vault has to be the same page
+-- however it is named — by whoever started the compiler, or by a reader asking the doc server for
+-- the path it is displayed at — and a page is identified by the import which names it. Read as a
+-- plain directory it is a second page at the one display path, which is a doc server whose root
+-- page cannot be opened and whose navigation holds two entries for one thing.
+inferDirParser :: FilePath -> IO String
+inferDirParser path = do
+  isVault <- doesDirectoryExist $ path </> obsidianConfigDir
+  return $ if isVault then obsidian else "dir"
+
 inferRawImportStr :: CTSSConfig -> Maybe FileImport -> String -> IO (RawExpr ())
 inferRawImportStr config caller name = do
   name' <- resolveImportPath config caller name
@@ -142,4 +155,5 @@ inferRawImportStr config caller name = do
         Just parser' -> return $ parserImport parser' name'
         Nothing -> fail $ printf "Unexpected file extension in import %s" name'
     else do
-      return $ parserImport "dir" name'
+      parser <- inferDirParser name'
+      return $ parserImport parser name'
