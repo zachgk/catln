@@ -101,18 +101,28 @@ noteVault note = aux $ takeDirectory note
         _ | takeDirectory dir /= dir -> aux $ takeDirectory dir
         _                            -> return Nothing
 
--- | The page of a vault: every note it holds, as an import.
+-- | The page of a vault: every note it holds, as a page the read walks on to.
 --
--- The notes are imported by their path alone, leaving 'Syntax.InferImport.inferFileParser' to
--- read each one as the note of a vault it is, so that a note the vault imports and the same note a
+-- The notes are named by their path alone, leaving 'Syntax.InferImport.inferFileParser' to
+-- read each one as the note of a vault it is, so that a note the vault names and the same note a
 -- reader asks for by path are the one page.
+--
+-- They are named as imports the program does not itself write ('Syntax.Ct.Prgm.piExtraImports'),
+-- which is how 'Syntax.InferImport.dirParser' names the files of a directory. The read walks on to
+-- every one of them, so a vault of any size is still every note as a page of its own; what the
+-- vault does not have is an edge to each of them. A vault which imported its notes would be a page
+-- reaching the whole vault, and the doc server opens at the page it was given
+-- ('CtService.ctssRootPage') — so opening a vault would be compiling all of it, and no page of it
+-- could be compiled by itself. The notes are not a program the vault writes: the vault holds them,
+-- and each says what it imports by linking.
+--
 -- The whole vault is what this page was read from, not the notes: which notes a vault holds is read
 -- out of the listings under it, and a note's own writing says nothing about whether the vault holds
 -- it. A note added anywhere under the vault is an entry written into one of those listings.
 vaultPrgm :: ReadEnv -> FilePath -> ImportParseResult
 vaultPrgm env vault = do
   notes <- vaultNotes env vault
-  return $ ParsedImport (RawPrgm (map (mkRawFileImport . rawStr) notes) []) [] Nothing (Just [ReadTree vault])
+  return $ ParsedImport (RawPrgm [] []) (map (mkRawFileImport . rawStr) notes) Nothing (Just [ReadTree vault])
 
 -- | The page of one note: what it is, and what it links to.
 --

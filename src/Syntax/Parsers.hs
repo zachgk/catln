@@ -208,9 +208,10 @@ data ReadPage = ReadPage {
   rpSource  :: Maybe String,
   -- | The imports the page writes: its edges in the import graph.
   rpImports :: [FileImport],
-  -- | Every import the read walked on from, 'rpImports' included. The two differ for 'dirParser'
-  -- and 'hsParser', which find imports the program does not write, so a page given back that
-  -- replayed only its edges would drop every file of a directory out of the graph.
+  -- | Every import the read walked on from, 'rpImports' included. The two differ for 'dirParser',
+  -- 'hsParser' and 'Syntax.Obsidian.Parser.vaultPrgm', which find pages the program does not
+  -- import, so a page given back that replayed only its edges would drop every file of a directory,
+  -- and every note of a vault, out of the graph.
   rpVisits  :: [FileImport],
   -- | 'Nothing' where nothing timed the read, which is a page that is always read again: either the
   -- parser could not say what it read ('piReads') or the read was not one 'readFiles' made.
