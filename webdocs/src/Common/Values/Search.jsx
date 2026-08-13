@@ -1,4 +1,4 @@
-import React, {useState, useMemo} from 'react';
+import React, {useState, useMemo, useContext} from 'react';
 
 import { styled, alpha } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
@@ -7,6 +7,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import {useNavigate, useInRouterContext} from 'react-router-dom';
 
 import {AnnotValue} from '../../DocsPage';
+import {ConfigContext} from '../Common';
 
 const SearchPill = styled('div')(({ theme }) => ({
   position: 'relative',
@@ -101,12 +102,19 @@ function SearchBox(props) {
   );
 }
 
-// The navbar's box, which is a #search annotation evaluated over every loaded page. Named with no
-// page on purpose, the same way the sidebar is: it searches every page the doc server holds, not
-// the ones one page reaches, and the empty name also stops it from inheriting the page an /annot
-// route is scoped to.
+// The navbar's box, which is a #search annotation searching every page the doc server holds.
+//
+// Named with the page the docs open at, the same way the sidebar is and for the same reason: what
+// it lists does not depend on the page it is written in, and naming one is what keeps it from being
+// compiled against every page there is. Nothing is shown until the config says which page that is,
+// since being asked for with no page is what this exists to stop.
 function AppBarSearch() {
-  return <AnnotValue annot="#search" prgmName="" />;
+  const config = useContext(ConfigContext);
+  const rootPage = config.data?.rootPage;
+  if (!rootPage) {
+    return null;
+  }
+  return <AnnotValue annot="#search" prgmName={rootPage} />;
 }
 
 export default Search;

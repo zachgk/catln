@@ -31,6 +31,11 @@ function Root() {
 
   let configResult = useApi("/api/config");
 
+  // The page the docs open at, which is what the sidebar and the search box are compiled in. Not
+  // there until the config arrives, and they are not asked for until it is: asking without a page
+  // is asking for the annotation to be compiled against every page there is.
+  const rootPage = configResult.data?.rootPage;
+
   // The sidebar is one instance for the whole app rather than one per route, so it survives
   // navigating between pages, and its contents are the compiled #sidebar annotation.
   const [sidebarOpen, setSidebarOpen] = useState(readSidebarOpen);
@@ -58,10 +63,14 @@ function Root() {
           data-testid="sidebar"
         >
           <Box sx={{width: SIDEBAR_WIDTH}}>
-            {/* Named with no page on purpose: the sidebar lists every page the doc server
-                holds, not the ones one page reaches. The empty name also stops it from
-                inheriting the page an /annot route is scoped to. */}
-            <AnnotPage annot="#sidebar" prgmName="" />
+            {/* Named with the page the docs open at, though what it lists does not depend on it:
+                the sidebar lists every page the doc server holds whatever program it is written
+                in. Naming a page is what keeps it from being compiled against all of them, and
+                naming THIS one costs nothing, since it is the page the reader arrives at anyway.
+                It is constant across routes, so the sidebar is compiled once rather than again
+                for each page. Never left unnamed, which would have it inherit the page an /annot
+                route is scoped to. */}
+            {rootPage && <AnnotPage annot="#sidebar" prgmName={rootPage} />}
           </Box>
         </Box>
         <Box sx={{flexGrow: 1, minWidth: 0, p: 2}}>

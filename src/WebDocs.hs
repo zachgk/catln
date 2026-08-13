@@ -85,17 +85,20 @@ maybeJson :: (ToJSON a) => CRes a -> ActionM ()
 maybeJson (CRes notes r) = json $ Success r notes
 maybeJson (CErr notes)   = json (ResFail notes :: ResSuccess () CNote)
 
--- | The service a doc server answers from: the files it was given, read, watched and built.
+-- | The service a doc server answers from: the files it was given, read and watched.
 --
 -- Watched because a doc server is read from over and over. Every request brings the service into
--- line with the files first ('ctssRefresh'), which the watch makes cost what the change costs
+-- line with the files first ('ctssRead'), which the watch makes cost what the change costs
 -- rather than what the program costs, so that the pages served are the files as they now are
 -- without every request re-reading every file to find out.
+--
+-- Read but not built. What to build is what a request asks about, which the request says and this
+-- cannot: building everything here is a doc server which cannot answer at all until it has compiled
+-- every page it holds, however few of them the reader opens.
 mkDocService :: [String] -> IO CTSS
 mkDocService baseFileNames = do
   ss <- ctssBaseFiles buildCtssConfig baseFileNames
   ctssWatch ss
-  ctssBuildAll ss
   return ss
 
 docApiBase :: Bool -> CTSS -> ScottyM ()
@@ -145,13 +148,19 @@ docApiBase readonly ctss = do
     maybeJson resp
 
   get "/api/page" $ do
-    liftAndCatchIO $ ctssRefresh ctss
+    liftAndCatchIO $ ctssRead ctss
     prgmName <- param "prgmName"
     resp <- liftAndCatchIO $ runCResT $ do
       prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
       rawPrgm' <- ctssLookupReq (Just . ssfRaw) prgmName' ctss
-      tprgms <- getTPrgm ctss
       maybeTPrgmRes <- lift $ runCResT $ do
+        -- The page and what it imports, rather than every page the doc server holds. What a page
+        -- shows is compiled from the program the page is in, so the pages beside it are pages this
+        -- request would compile to show nothing of. Inside the inner run because it is now a
+        -- request which can fail: 'ctssGet' passes over a page it has not computed, where
+        -- 'ctssGetFrom' requires the ones it was asked for, and a page which cannot be compiled is
+        -- still a page to serve with its source and what it says.
+        tprgms <- ctssGetFrom ssfTPrgm prgmName' ctss
         case graphLookup prgmName' tprgms of
           Just tprgm -> do
             reachTprgms <- asCResT $ prgmFromGraphData prgmName' tprgms
@@ -177,7 +186,7 @@ docApiBase readonly ctss = do
     maybeJson resp
 
   get "/api/annot" $ do
-    liftAndCatchIO $ ctssRefresh ctss
+    liftAndCatchIO $ ctssRead ctss
     annot <- param "annot"
     -- An annotation is local to the program it is written in, so evaluating a free-standing one has
     -- to say which program it is written in. Naming a page evaluates the annotation as though it sat

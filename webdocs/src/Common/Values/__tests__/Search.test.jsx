@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import Search, { AppBarSearch } from '../Search'
+import { ConfigContext } from '../../Common'
 
 const theme = createTheme()
 
@@ -19,13 +20,19 @@ function LocationDisplay() {
   return <div data-testid="location">{location.pathname}</div>
 }
 
-function Providers({ children }) {
+// The page the doc server opens at. The box is compiled in it, so it has to be there before the box
+// asks for anything.
+const ROOT_PAGE = '/test/id.ct'
+
+function Providers({ children, config = { isLoaded: true, data: { rootPage: ROOT_PAGE } } }) {
   return (
     <ThemeProvider theme={theme}>
-      <MemoryRouter>
-        {children}
-        <LocationDisplay />
-      </MemoryRouter>
+      <ConfigContext.Provider value={config}>
+        <MemoryRouter>
+          {children}
+          <LocationDisplay />
+        </MemoryRouter>
+      </ConfigContext.Provider>
     </ThemeProvider>
   )
 }
@@ -87,12 +94,23 @@ describe('AppBarSearch', () => {
     global.fetch = vi.fn(() => Promise.resolve({ status: 200, json: () => Promise.resolve(json) }))
   }
 
-  it('asks for the search without a page, so it covers every page', async () => {
+  // What the box searches does not depend on the page it is compiled in -- it covers every page
+  // either way -- so it names one. Being asked for with no page is being compiled against every
+  // page there is, which for a control in the navbar is the whole doc server compiled to draw it.
+  it('asks for the search within the page the docs open at', async () => {
     mockAnnot(annotResponse(searchValue))
     render(<Providers><AppBarSearch /></Providers>)
 
     await screen.findByRole('combobox')
-    expect(global.fetch).toHaveBeenCalledWith('/api/annot?annot=%23search')
+    expect(global.fetch).toHaveBeenCalledWith(`/api/annot?annot=%23search&prgmName=${encodeURIComponent(ROOT_PAGE)}`)
+  })
+
+  it('asks for nothing before it knows the page the docs open at', async () => {
+    mockAnnot(annotResponse(searchValue))
+    render(<Providers config={{ isLoaded: false, data: null }}><AppBarSearch /></Providers>)
+
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
+    expect(global.fetch).not.toHaveBeenCalled()
   })
 
   // The box is a control in the navbar rather than a page of its own, so there is nowhere to report

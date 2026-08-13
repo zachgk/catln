@@ -49,11 +49,15 @@ function renderRoot() {
   return render(<ThemeProvider theme={theme}><RouterProvider router={router} /></ThemeProvider>)
 }
 
+// The page the doc server opens at. The sidebar and the search box are compiled in it, so it has to
+// be there before either is asked for.
+const ROOT_PAGE = '/test/id.ct'
+
 describe('Root', () => {
   beforeEach(() => {
     global.fetch = vi.fn(url => Promise.resolve({
       status: 200,
-      json: () => Promise.resolve(annotFor(url) || { tag: 'Success', contents: [{ readonly: false }, []] }),
+      json: () => Promise.resolve(annotFor(url) || { tag: 'Success', contents: [{ readonly: false, rootPage: ROOT_PAGE }, []] }),
     }))
   })
 
@@ -62,15 +66,34 @@ describe('Root', () => {
     if (url.startsWith('/api/annot?annot=%23search')) return annotResponse('search', searchValue)
   }
 
-  // Both are about which pages there are rather than about one of them, which is what being asked
-  // for without a page means.
-  it('asks for the sidebar and the search box without a page, so both cover every page', async () => {
+  // Both are about which pages there are rather than about one of them, and are answered that way
+  // whatever page they are written in. So both name one -- the page the docs open at -- and neither
+  // is ever asked for without a page, which is what asks for it to be compiled against every page
+  // there is.
+  it('asks for the sidebar and the search box within the page the docs open at', async () => {
     renderRoot()
 
     await waitFor(() => expect(screen.getByText('test')).toBeInTheDocument())
     const annotCalls = global.fetch.mock.calls.map(c => c[0]).filter(u => u.startsWith('/api/annot'))
+    const scope = `&prgmName=${encodeURIComponent(ROOT_PAGE)}`
     // Sorted rather than in order: which mounts first is only where they sit in the layout.
-    expect([...annotCalls].sort()).toEqual(['/api/annot?annot=%23search', '/api/annot?annot=%23sidebar'])
+    expect([...annotCalls].sort()).toEqual([
+      `/api/annot?annot=%23search${scope}`,
+      `/api/annot?annot=%23sidebar${scope}`,
+    ])
+  })
+
+  // The page is not there until the config says what it is, and asking without one is exactly what
+  // this exists to stop, so neither is asked for before then.
+  it('asks for neither before it knows the page the docs open at', async () => {
+    global.fetch = vi.fn(url => new Promise(resolve => {
+      if (url === '/api/config') return
+      resolve({ status: 200, json: () => Promise.resolve(annotFor(url)) })
+    }))
+    renderRoot()
+
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledWith('/api/config'))
+    expect(global.fetch.mock.calls.map(c => c[0]).filter(u => u.startsWith('/api/annot'))).toEqual([])
   })
 
   it('gives back all of its width when the navbar control contracts it', async () => {

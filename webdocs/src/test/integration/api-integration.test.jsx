@@ -51,6 +51,19 @@ describe('Backend API contract', () => {
     expect(pages.map(p => p.sbPath).some(n => n.endsWith('/stack/core/main.ct'))).toBe(true)
   })
 
+  // What the sidebar lists does not depend on the page it is compiled in. That is what lets the
+  // webdocs name a page and so keep a navigation from costing a compilation of everything it names:
+  // named with one page it still lists them all, including the ones that page does not import.
+  it('#sidebar lists every page when it is compiled within one', async () => {
+    const unscoped = (await sidebarPages()).map(p => p.sbPath)
+    const scoped = (await sidebarPages(API_BASE, await idPageName())).map(p => p.sbPath)
+
+    expect(scoped).toEqual(unscoped)
+    // id.ct imports nothing of the Obsidian vault the server was also given, so a listing of only
+    // what it reaches would have none of the vault's notes in it.
+    expect(scoped.some(p => p.includes('/artifacts/catln-test/'))).toBe(true)
+  })
+
   it('#sidebar leads a directory with the page it is entered through', async () => {
     const val = await annotValue('#sidebar')
     const tree = JSON.parse(val.args['/pages'].contents)
@@ -237,9 +250,10 @@ describe('Backend API contract', () => {
   }
 
   // The pages the sidebar lists, flattened. #sidebar is the only listing of them, so this is also
-  // how the tests that need a page name find one.
-  async function sidebarPages(base = API_BASE) {
-    const val = await annotValue('#sidebar', undefined, base)
+  // how the tests that need a page name find one. Takes a page to be compiled in, since what it
+  // lists is the same either way.
+  async function sidebarPages(base = API_BASE, prgmName = undefined) {
+    const val = await annotValue('#sidebar', prgmName, base)
     expect(val.name).toBe('/Catln/Doc/Show/Sidebar')
     const flatten = (nodes) => nodes.flatMap(n => n.tag === 'SidebarDir' ? flatten(n.sbChildren) : [n])
     return flatten(JSON.parse(val.args['/pages'].contents))

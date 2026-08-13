@@ -166,14 +166,18 @@ data SidebarNode
   | SidebarFile { sbName :: String, sbPath :: String, sbDir :: Maybe FilePath }
   deriving (Generic, ToJSON)
 
--- | Backs @/Catln/Doc/sidebar@, the data carried by a @Show/Sidebar@ page. It renders the pages the
--- evaluation covers as the tree of directories they sit in. Evaluated unscoped that is every page
--- the doc server loaded, which is the navigation of the whole doc server; evaluated within a page it
--- is that page and what it imports, the same scope every other annotation reports on.
+-- | Backs @/Catln/Doc/sidebar@, the data carried by a @Show/Sidebar@ page. It renders every page
+-- there is as the tree of directories they sit in.
+--
+-- Every page rather than the pages the evaluation covers ('spAllPages', not 'spPages'), so this
+-- answers the same wherever it is written. A navigation is for reaching the pages one has not
+-- reached, so a navigation of only what the page it sits on imports would offer nothing but where
+-- the reader already is. Reading it off the pages there are rather than off a compiled program is
+-- also what lets a doc server put a navigation up without compiling everything it names.
 sidebar :: EPrim
 sidebar = EEnvPrim "sidebar" prim
   where
-    prim Env{evStagePrgms=StagePrgms{spPages}} _ = case spPages of
+    prim Env{evStagePrgms=StagePrgms{spAllPages}} _ = case spAllPages of
       CErr notes   -> Left $ prettyCNotes notes
       CRes _ pages -> encodeJson <$> sidebarNodes pages
 
@@ -223,18 +227,19 @@ sidebarOrder pages = concatMap pagePaths <$> sidebarNodes pages
     pagePaths SidebarDir{sbChildren} = concatMap pagePaths sbChildren
     pagePaths SidebarFile{sbPath}    = [sbPath]
 
--- | Backs @/Catln/Doc/searchPages@, the data carried by a @Show/Search@ page. It renders the pages
--- the evaluation covers as the flat list of the paths they are asked for, sorted, which is the
--- order a box offers them in.
+-- | Backs @/Catln/Doc/searchPages@, the data carried by a @Show/Search@ page. It renders every page
+-- there is as the flat list of the paths they are asked for, sorted, which is the order a box offers
+-- them in.
 --
--- These are the same pages 'sidebar' renders as a tree, read the same way off 'spPages'. A box
+-- These are the same pages 'sidebar' renders as a tree, read the same way off 'spAllPages', and for
+-- the same reason: what is worth searching for is above all what one has not already got to. A box
 -- matching typing against a list and a navigation being walked want different shapes of the same
 -- answer, and each page carries the shape it displays, so the two are rendered separately rather
 -- than one being derived from the other in the webdocs.
 searchPages :: EPrim
 searchPages = EEnvPrim "searchPages" prim
   where
-    prim Env{evStagePrgms=StagePrgms{spPages}} _ = case spPages of
+    prim Env{evStagePrgms=StagePrgms{spAllPages}} _ = case spAllPages of
       CErr notes   -> Left $ prettyCNotes notes
       CRes _ pages -> encodeJson . sort <$> traverse pagePath pages
     -- As in 'sidebar', a page with no display path cannot be opened, so it is reported rather than

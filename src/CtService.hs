@@ -747,7 +747,8 @@ ctssStagePrgms ctss@(CTSS ssmv) = do
   ctssBuildAll ctss
   CTSSDat{ctssData} <- readMVar ssmv
   let ssfs = map fst3 $ graphToNodes ctssData
-  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) (notScoped "type inference to report on") (const $ notScoped "program to run") (return $ map snd3 $ graphToNodes ctssData) (notScoped "tests to report on") (pageValues ctssData)
+  let pages = return $ map snd3 $ graphToNodes ctssData
+  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) (notScoped "type inference to report on") (const $ notScoped "program to run") pages pages (notScoped "tests to report on") (pageValues ctssData)
   where
     notScoped :: String -> CRes a
     notScoped what = CErr [MkCNote $ GenCErr Nothing $ "This evaluation is not scoped to a single page, so it has no " ++ what]
@@ -771,7 +772,11 @@ ctssStagePrgmsFrom ctss@(CTSS ssmv) prgmName = do
   -- running the page's tests, which is the work an evaluation with nothing to report on them must
   -- not be made to do. An evaluation that does have a test to report on is given one by whoever
   -- asked for it (see 'getEvalAnnots').
-  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) typeInferred debugRun (return $ map snd3 $ graphToNodes reaches) notRun (pageValues reaches)
+  -- Every page the service holds rather than the ones this scope reaches, which is what makes an
+  -- annotation reporting on the pages there are answer the same wherever it is written. It is the
+  -- graph as it is, so nothing is built to produce it.
+  let allPages = return $ map snd3 $ graphToNodes ctssData
+  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) typeInferred debugRun (return $ map snd3 $ graphToNodes reaches) allPages notRun (pageValues reaches)
   where
     notRun = CErr [MkCNote $ GenCErr Nothing "This evaluation was not given a run of the page's tests"]
 

@@ -55,9 +55,12 @@ await_backend() {
 # this the test that happens to make that first call eats the cost and blows the 15s default
 # timeout, which reads as a failure of whatever test ran first rather than a cold cache.
 #
-# The unscoped #sidebar is warmed first because it is what the app itself asks for first, and it
-# pays the same kind of cost over every loaded page rather than one. The page to warm is the one
-# the server says it opens at, which is the page the app loads next.
+# The unscoped #sidebar is warmed first because it pays that cost over every loaded page rather
+# than over one, and the tests below ask for it that way. The app itself no longer does: it names
+# the page it opens at, since what a sidebar lists does not depend on the page it is compiled in
+# and naming one is what keeps a navigation from compiling everything it names. So this is warming
+# what the tests ask for, not what the app asks for. The page to warm is the one the server says it
+# opens at, which is the page the app loads first.
 warm_backend() {
   local port=$1 page
   curl -sf "http://localhost:${port}/api/annot?annot=%23sidebar" > /dev/null || true
