@@ -4417,18 +4417,28 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
   let varBoundFor n = case H.lookup n vars' of
         Just b | not (isTypeVar b) -> b
         _                          -> PTopType
-  let argsMap = H.unionWith (subUnion varBoundFor) (fmap (vaenv,) aArgs) (fmap (vaenv,) bArgs)
+  -- The nested arg meets run under the ambient env EXTENDED with this partial's own met var
+  -- bindings: a TVInt reference to THIS partial's parameter sitting inside a nested value
+  -- (@binsert[/MK=Integer](m= …Node[/K=$/MK]…)@ — the parser spells a declaration parameter's
+  -- nested occurrence 'TVInt' context-free) is resolvable only through the enclosing partial's
+  -- bindings, which the plain ambient env does not carry. Only concrete bindings ride along
+  -- (a var-valued or ⊤ slot adds no reading).
+  let deepVaenv = H.union (H.fromList [(TVVar n, v) | (n, v) <- H.toList vars', not (isTypeVar v), v /= PTopType]) vaenv
+  let argsMap = H.unionWith (subUnion varBoundFor) (fmap (deepVaenv,) aArgs) (fmap (deepVaenv,) bArgs)
   let args' = fmap snd argsMap
   let bottomKeys = H.keysSet $ H.filter (isBottomType . snd) argsMap
   let liveArgsMap = H.filter (not . isBottomType . snd) argsMap
-  -- The args' envs are seeded with the whole incoming vaenv, so they carry the caller's ambient
-  -- bindings alongside the meets discovered here. The discovered bindings must be kept on the
+  -- The args' envs are seeded with the whole incoming vaenv (extended with this partial's met
+  -- vars — 'deepVaenv'), so they carry the caller's ambient bindings alongside the meets
+  -- discovered here. The discovered bindings must be kept on the
   -- partial's ptVars - they are returned no other way, and they carry a callee's type-var
   -- resolution (@unwrap[/T=Integer]@ from meeting @/b@'s @Box[/T=$_/T]@ with @Box[/T=Integer]@,
   -- which later resolves the passthrough output @$_T@). An ambient binding that merely passed
   -- through unchanged is dropped: it lives in the caller's env, and stamping it onto every
   -- intersected partial invents foreign var slots (an operator's /B appearing on a Cons leaf).
-  let ambientVars = fst $ splitVarArgEnv vaenv
+  -- "Passed through" is judged against the SEED env ('deepVaenv'): the met-var extensions above
+  -- are seeded, not discovered, so they must not read as fresh discoveries here.
+  let ambientVars = fst $ splitVarArgEnv deepVaenv
   -- Only a binding some arg value REFERENCES may be hoisted: the reference marks the name as
   -- belonging to THIS partial's scope. The arg meets also record under names with no such
   -- reference — a nested partial's local var resolving per value, or a
@@ -4579,6 +4589,30 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
     -- partial itself (a partial-local element var, flexible per value): it is
     -- flexible per value and must neither read nor record ambient bindings under its name — a
     -- like-named var of the enclosing scope is a DIFFERENT var. The meet is the other side.
+    -- EXCEPT a name this partial does NOT declare: that is an ENCLOSING scope's parameter,
+    -- TVInt-spelled because the parser spells a bare @$U@ context-free (the scope axis lives in
+    -- the descent rule, not the leaf rule — see 'substituteTVExt'). Its ambient reading is the
+    -- slot's meaning: when the reading already lies within the other side, KEEP the symbolic
+    -- link (the frame-portable spelling — taking the other side would replace the call frame's
+    -- narrow reading with another frame's materialized bound, e.g. @Node[/K=$/MK]@ under
+    -- @MK↦Integer@ met with an arm-frame @Node[/K=∀Ord]@ must stay @$/MK@, not widen to @∀Ord@);
+    -- otherwise the meet of the reading with the other side. An unbound/⊤/var reading keeps the
+    -- flexible-local behavior.
+    declaredVarKeys = S.union (H.keysSet aVars) (H.keysSet bVars)
+    ambientReading n = case H.lookup (TVVar n) vaenv of
+      Just r | not (isTypeVar r), r /= PTopType -> Just r
+      _                                         -> Nothing
+    subUnionVar (aVaenv, a@(TypeVar (TVVar n) TVInt)) (bVaenv, b)
+      | not (S.member n declaredVarKeys)
+      , Just r <- ambientReading n
+      = let env = mergeAllVarEnvs typeEnv [aVaenv, bVaenv]
+        in if isSubtypeOfWithEnv typeEnv vaenv r b then (env, a) else (env, intersectTypesEnv typeEnv vaenv r b)
+    subUnionVar (aVaenv, a) (bVaenv, b@(TypeVar (TVVar n) TVInt))
+      | not (isTypeVar a)
+      , not (S.member n declaredVarKeys)
+      , Just r <- ambientReading n
+      = let env = mergeAllVarEnvs typeEnv [aVaenv, bVaenv]
+        in if isSubtypeOfWithEnv typeEnv vaenv r a then (env, b) else (env, intersectTypesEnv typeEnv vaenv r a)
     subUnionVar (aVaenv, TypeVar _ TVInt) (bVaenv, b) = (mergeAllVarEnvs typeEnv [aVaenv, bVaenv], b)
     subUnionVar (aVaenv, a) (bVaenv, TypeVar _ TVInt) = (mergeAllVarEnvs typeEnv [aVaenv, bVaenv], a)
     subUnionVar a b = subUnion (const PTopType) a b
