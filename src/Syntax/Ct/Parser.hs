@@ -107,7 +107,7 @@ ctParser = readOnlyParser $ \_ imp -> case exprAppliedArgs imp of
     fileContents <- readFile fileName
     case runParser (contents pPrgm) fileName fileContents of
       Left err   -> fail $ show $ errorBundlePretty err
-      Right prgm -> return $ ParsedImport prgm [] (Just fileContents) (Just [ReadFile fileName])
+      Right prgm -> return $ ParsedImport (PageRead prgm) [] (Just fileContents) (Just [ReadFile fileName])
   _ -> undefined
 
 -- TODO Write a .ctx file back, once 'ctParser' can be written back: it is a .ct file with the one
@@ -119,7 +119,10 @@ ctxParser = readOnlyParser $ \env fileName -> do
   parsed <- ipParse ctParser env fileName
   return parsed{piPrgm = annotate (piPrgm parsed)}
   where
-    annotate (RawPrgm imports statements) = RawPrgm imports (RawStatementTree (RawAnnot (RawValue emptyMetaN (mkName ctxAnnot))) [] :statements)
+    -- 'ctParser' reads the file, so its page is always read; a page with no program has no place to
+    -- put the annotation which makes it a .ctx.
+    annotate (PageRead (RawPrgm imports statements)) = PageRead $ RawPrgm imports (RawStatementTree (RawAnnot (RawValue emptyMetaN (mkName ctxAnnot))) [] :statements)
+    annotate deferred = deferred
 
 parseRepl :: String -> PReplRes
 parseRepl s = case runParser (contents p) "<repl>" s of

@@ -30,8 +30,8 @@ mdParser = readOnlyParser $ \_ imp -> case exprAppliedArgs imp of
     if isFile
       then do
         str <- readFile filename
-        return $ ParsedImport (RawPrgm [] [RawStatementTree (RawAnnot (rawVal mdAnnot `applyRawArgs` [(Just $ partialKey (mkName mdAnnotText), RawCExpr emptyMetaN (CStr str))])) []]) [] (Just str) reads'
-      else return $ ParsedImport (RawPrgm [] []) [] Nothing reads'
+        return $ ParsedImport (PageRead (RawPrgm [] [RawStatementTree (RawAnnot (rawVal mdAnnot `applyRawArgs` [(Just $ partialKey (mkName mdAnnotText), RawCExpr emptyMetaN (CStr str))])) []])) [] (Just str) reads'
+      else return $ ParsedImport (PageRead (RawPrgm [] [])) [] Nothing reads'
   _ -> undefined
 
 

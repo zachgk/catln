@@ -14,7 +14,8 @@ import           Syntax.Ct.Builder    (applyRawArgs, rawStr, rawVal)
 import           Syntax.Ct.Formatter  (formatRootPrgm)
 import           Syntax.Ct.Prgm       (ParsedImport (..), RawPrgm (..),
                                        RawStatement (..), RawStatementTree (..),
-                                       newReadEnv, rawExprAppliedArgsMap)
+                                       newReadEnv, pageParsePrgm,
+                                       rawExprAppliedArgsMap)
 import           Syntax.Parsers       (canonicalImport, mkDesCanonicalImportStr,
                                        mkRawImportStr, parseFile, readFiles,
                                        readImport)
@@ -108,7 +109,11 @@ xFmt prgmName = do
   -- that would write a duplicate @import "core"@ back into any file that already imports it.
   imp <- lift $ canonicalImport buildCtssConfig Nothing $ mkRawImportStr prgmName
   env <- lift newReadEnv
-  ParsedImport{piPrgm=rawPrgm} <- lift $ readImport env imp
+  ParsedImport{piPrgm=parsed} <- lift $ readImport env imp
+  -- A page with no program is a failure rather than an empty one, since what is written back here
+  -- goes over the file it was read from: formatting a page nothing read would empty it. The read
+  -- above reads every page in full ('newReadEnv'), so there is none to be had.
+  rawPrgm <- maybe (fail $ printf "The page %s was read without its program, so there is nothing to format" prgmName) return $ pageParsePrgm parsed
   let prgm' = formatRootPrgm rawPrgm
   -- Written back to the file the import resolved to rather than to the name it was given by, which
   -- is not always a path: an import may name its parser instead ('mkRawImportStr'), and writing to
@@ -184,8 +189,10 @@ xDepTree prgmName showCore = do
   rootImp <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
 
   -- Build the full import graph
-  -- A one-shot read has nothing an earlier read left to give back.
-  graphData <- lift $ readFiles buildCtssConfig H.empty [mkRawImportStr prgmName]
+  -- A one-shot read has nothing an earlier read left to give back. It reads no page in full
+  -- either: a tree of what imports what is the graph, which a page answered out of a record still
+  -- says.
+  graphData <- lift $ readFiles buildCtssConfig S.empty H.empty [mkRawImportStr prgmName]
   let nodes = graphToNodes graphData
 
   -- Build a lookup map from FileImport to its dependencies

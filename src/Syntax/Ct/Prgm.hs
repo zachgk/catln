@@ -19,22 +19,25 @@
 module Syntax.Ct.Prgm where
 
 import           Data.Hashable
-import qualified Data.HashMap.Strict as H
-import           GHC.Generics        (Generic)
+import qualified Data.HashMap.Strict   as H
+import           GHC.Generics          (Generic)
 
-import           Control.Exception   (IOException, try)
-import           Data.Aeson          hiding (Object)
-import           Data.IORef          (IORef, modifyIORef', newIORef, readIORef)
-import           Data.List           (isPrefixOf, sort, stripPrefix)
-import           Data.Maybe          (catMaybes, fromJust, isJust, mapMaybe)
-import           Data.Time.Clock     (UTCTime)
+import           Control.Exception     (IOException, try)
+import           Data.Aeson            hiding (Object)
+import qualified Data.HashSet          as S
+import           Data.IORef            (IORef, modifyIORef', newIORef,
+                                        readIORef)
+import           Data.List             (isPrefixOf, sort, stripPrefix)
+import           Data.Maybe            (catMaybes, fromJust, isJust, mapMaybe)
+import           Data.Time.Clock       (UTCTime)
 import           Semantics
-import           Semantics.Annots    (isAnnot)
+import           Semantics.Annots      (isAnnot)
 import           Semantics.Prgm
 import           Semantics.Types
-import           System.Directory    (doesDirectoryExist, getModificationTime,
-                                      listDirectory, pathIsSymbolicLink)
-import           System.FilePath     (splitDirectories, takeFileName, (</>))
+import           Syntax.Obsidian.Cache (ObsidianCache, newObsidianCache)
+import           System.Directory      (doesDirectoryExist, getModificationTime,
+                                        listDirectory, pathIsSymbolicLink)
+import           System.FilePath       (splitDirectories, takeFileName, (</>))
 import           Text.Printf
 import           Utils
 
@@ -166,26 +169,63 @@ data TreeScan = TreeScan {
   tsWritten :: Maybe UTCTime
                          }
 
--- | What a read has already found on disk, so that one read finds it once.
---
--- A read reads many pages out of the one tree. Every note of an Obsidian vault resolves its links
--- against the notes of that vault, and the page which is the vault holds all of them, so a vault of
--- a thousand notes would be walked a thousand and one times by a read which walked it for each.
---
--- Scoped to one read rather than kept between reads. What is on disk changes between reads, and
--- deciding that it has is what 'ReadPath' and the times a read records already are; a cache which
--- outlived a read would need to decide it a second way.
-newtype ReadEnv = ReadEnv (IORef (H.HashMap FilePath TreeScan))
+-- | What a read has already found on disk, so that one read finds it once, and what it may answer
+-- without looking at all.
+data ReadEnv = ReadEnv {
+  -- | The trees this read has walked.
+  --
+  -- A read reads many pages out of the one tree. Every note of an Obsidian vault resolves its links
+  -- against the notes of that vault, and the page which is the vault holds all of them, so a vault
+  -- of a thousand notes would be walked a thousand and one times by a read which walked it for
+  -- each.
+  --
+  -- Scoped to one read rather than kept between reads. What is on disk changes between reads, and
+  -- deciding that it has is what 'ReadPath' and the times a read records already are.
+  reScans         :: IORef (H.HashMap FilePath TreeScan),
+  -- | The files this read must read in full, whatever a parser has recorded of them.
+  --
+  -- What the reader wants, rather than anything about how a page is read: a caller which needs a
+  -- page's program says which pages, and gets those read and the rest answered as cheaply as they
+  -- can be. A read with nothing in it defers whatever it can, which is a read wanting the shape of
+  -- the program rather than the program.
+  reNeeded        :: S.HashSet FilePath,
+  -- | What an earlier run recorded of the Obsidian vaults this read reaches, and what this read has
+  -- to write back to them. Absent for a read which is to read every page it reaches.
+  --
+  -- Named for the one syntax which has such a record rather than being a table of them, because
+  -- what a second syntax wanting one would share with this is not yet known — see
+  -- 'Syntax.Obsidian.Cache'. It is here, and not inside that module, because a read reads many
+  -- notes of one vault and each would otherwise read that vault's record for itself: this is the
+  -- only thing a read has which lasts a whole read.
+  --
+  -- This is the cache 'reScans' above says a read does not keep between reads, and the difference
+  -- is that this one decides for itself whether it still holds ('Syntax.Obsidian.Cache.cachedNoteLinks')
+  -- rather than being trusted because a read is under way.
+  reObsidianCache :: Maybe ObsidianCache
+                       }
 
+-- | A read which reads every page it reaches, keeping and consulting no record.
 newReadEnv :: IO ReadEnv
-newReadEnv = ReadEnv <$> newIORef H.empty
+newReadEnv = newRecordedReadEnv Nothing S.empty
+
+-- | A read which may answer for a page out of what an earlier run recorded, but for the files
+-- named, which it reads in full.
+newRecordedReadEnv :: Maybe FilePath -> S.HashSet FilePath -> IO ReadEnv
+newRecordedReadEnv cacheRoot needed = do
+  scans <- newIORef H.empty
+  cache <- traverse newObsidianCache cacheRoot
+  return $ ReadEnv scans needed cache
+
+-- | Whether this read is to read a file in full rather than answer for it out of a record.
+readsInFull :: ReadEnv -> FilePath -> Bool
+readsInFull ReadEnv{reNeeded} file = S.member file reNeeded
 
 -- | The walk of the tree under a directory this read made, walking it if this read has not.
 --
 -- Only the directory asked about is kept, not every directory walked under it: what asks is a page
 -- read from a whole tree, and keeping each level would be the tree held once for every depth in it.
 scanTree :: ReadEnv -> FilePath -> IO TreeScan
-scanTree (ReadEnv scans) dir = do
+scanTree ReadEnv{reScans=scans} dir = do
   found <- readIORef scans
   case H.lookup dir found of
     Just scan -> return scan
@@ -224,9 +264,34 @@ walkTree dir = do
       [] -> Nothing
       ts -> Just $ maximum ts
 
+-- | What reading a page found it to be: the program it holds, or — where the reading was answered
+-- out of what an earlier one recorded — only the imports it writes.
+--
+-- A page read as its imports alone is a page in the graph, with its edges, whose program is yet to
+-- be read. That is what lets a reader take up the shape of a program without reading all of it, and
+-- read a page when something asks what is in it ('CtService.ctssLoad').
+--
+-- A syntax whose pages can write @#noCore@ cannot answer with 'PageDeferred'. Whether to give a
+-- page the standard library is read out of the program ('Syntax.Parsers.processParsed'), so a page
+-- whose program has not been read is given it — which is right for every page that does not turn it
+-- down, and is the whole of the standard library wrongly imported by one that does.
+data PageParse
+  = PageRead (RawPrgm ())
+  | PageDeferred [RawFileImport]
+
+-- | The imports a page writes, whether or not its program has been read.
+pageParseImports :: PageParse -> [RawFileImport]
+pageParseImports (PageRead (RawPrgm imports _)) = imports
+pageParseImports (PageDeferred imports)         = imports
+
+-- | The program a page holds, where it has been read.
+pageParsePrgm :: PageParse -> Maybe (RawPrgm ())
+pageParsePrgm (PageRead prgm) = Just prgm
+pageParsePrgm PageDeferred{}  = Nothing
+
 -- | What reading a file as a page produced, and what the reading read to produce it.
 data ParsedImport = ParsedImport {
-  piPrgm         :: RawPrgm (),
+  piPrgm         :: PageParse,
   -- | Imports the parse found which the program does not itself write: the files of a directory,
   -- the notes of an Obsidian vault.
   piExtraImports :: [RawFileImport],

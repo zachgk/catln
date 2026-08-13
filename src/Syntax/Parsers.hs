@@ -45,6 +45,7 @@ import           Syntax.Haskell.Parser   (hsParser)
 import           Syntax.InferImport      (dirParser, findImportPath,
                                           inferRawImportStr)
 import           Syntax.Md.Parser        (mdParser)
+import           Syntax.Obsidian.Cache   (flushObsidianCache)
 import           Syntax.Obsidian.Parser  (obsidian, obsidianParser)
 import           Syntax.Python.Parser    (pyParser)
 import           System.FilePath         (isAbsolute, joinPath, takeDirectory)
@@ -133,9 +134,10 @@ canonicalImport config caller imp = case maybeExprPath impAbs' of
 --
 -- Both forms are what an @import@ statement itself accepts, and the expression is read with the
 -- parser that statement is read with, so a name given to the compiler and a name written in a
--- program mean the same thing. Naming the parser is the only way to say which one a directory is
--- read with: a path is guessed from what is on disk, and 'Syntax.InferImport.inferRawImportStr'
--- guesses @dir@ for every directory, so an Obsidian vault has no path that names it as one.
+-- program mean the same thing. A path is guessed from what is on disk
+-- ('Syntax.InferImport.inferRawImportStr'), which is enough to name an Obsidian vault as one, since
+-- what makes a directory a vault is a directory inside it. Naming the parser says it outright, and
+-- is the only way to say which parser something is read with where what is on disk cannot.
 --
 -- A name is taken for an expression by its shape rather than by whether it parses, because a path
 -- parses too: @a\/b.ct@ is a value with a @.ct@ method suffix, and @core@ is a value. What is asked
@@ -204,7 +206,10 @@ data ReadTime = ReadTime {
 -- is read again because the directory was written to, so this is confined to an @import@ written in
 -- a page whose own files have not changed.
 data ReadPage = ReadPage {
-  rpPrgm    :: RawPrgm (),
+  -- | The program the page holds, or 'Nothing' for a page whose imports are known and whose program
+  -- has not been read ('Syntax.Ct.Prgm.PageDeferred'). Such a page is in the graph with its edges,
+  -- and is read when something asks what is in it ('CtService.ctssLoad').
+  rpPrgm    :: Maybe (RawPrgm ()),
   rpSource  :: Maybe String,
   -- | The imports the page writes: its edges in the import graph.
   rpImports :: [FileImport],
@@ -308,16 +313,20 @@ readPathWrittenIn written (ReadDir dir) = writtenAbove written dir || any ((== d
 readPathWrittenIn written (ReadTree dir) = any (readsUnder dir) written
 
 processParsed :: CTSSConfig -> FileImport -> ParsedImport -> IO ReadPage
-processParsed config imp ParsedImport{piPrgm=prgm@(RawPrgm prgmImports statements), piExtraImports=extraImports, piSource=src} = do
-  let includeCore = not (rawPrgmHasAnnot prgm noCoreAnnot)
+processParsed config imp ParsedImport{piPrgm=parse, piExtraImports=extraImports, piSource=src} = do
+  -- A page whose program has not been read is given the standard library, since whether to give it
+  -- is read out of the program. See 'Syntax.Ct.Prgm.PageParse' for why that is a limit on which
+  -- syntaxes may defer rather than a guess made here.
+  let includeCore = maybe True (\prgm -> not (rawPrgmHasAnnot prgm noCoreAnnot)) (pageParsePrgm parse)
+  let prgmImports = pageParseImports parse
   let prgmImports' = if includeCore && not ("core" `isInfixOf` name)
       then mkRawFileImport (rawStr "core") : prgmImports
       else prgmImports
   prgmImports'' <- mapM (canonicalImport config (Just imp)) prgmImports'
   extraImports' <- mapM (canonicalImport config (Just imp)) extraImports
   let totalImports = extraImports' ++ prgmImports''
-  let prgm' = RawPrgm prgmImports' statements
-  let prgm'' = addRawPrgmMetaIDs (parseMetaIDScope imp) prgm'
+  let prgm' = fmap (\(RawPrgm _ statements) -> RawPrgm prgmImports' statements) (pageParsePrgm parse)
+  let prgm'' = addRawPrgmMetaIDs (parseMetaIDScope imp) <$> prgm'
   return $ ReadPage prgm'' src prgmImports'' totalImports Nothing
   where
     name = case impAbs imp of
@@ -325,13 +334,21 @@ processParsed config imp ParsedImport{piPrgm=prgm@(RawPrgm prgmImports statement
       TupleApply _ _ (EAppArg ObjArr{oaArr=Just (Just (CExpr _ (CStr n)), _)}) -> n
       _ -> ""
 
+-- | Read one page, on its own and out of no record. What a caller which is to work with a page's
+-- program rather than with a graph of them wants: the formatter, and the goldens.
+--
+-- A page with no program is a failure rather than an empty one. Its 'ReadEnv' reads every page in
+-- full, so there is none to be had — but these callers write files back over the ones they read
+-- ('app/Main.hs'), and a page with no program written back is a file emptied.
 parseFile :: CTSSConfig -> RawFileImport -> CResT IO (GraphNodes (RawPrgm ()) FileImport)
 parseFile config imp = do
   env <- lift newReadEnv
   imp' <- lift $ canonicalImport config Nothing imp
   r <- lift $ readImport env imp'
   page <- lift $ processParsed config imp' r
-  return (rpPrgm page, imp', rpImports page)
+  case rpPrgm page of
+    Just prgm -> return (prgm, imp', rpImports page)
+    Nothing -> fail $ printf "The page %s was read without its program, so there is nothing to work with" (show $ impRaw imp')
 
 -- | What a page was read from, or nothing at all where the read could not say what it read.
 readPaths :: ReadPage -> [ReadPath]
@@ -376,12 +393,21 @@ readPage config env prev imp = case H.lookup imp prev of
 -- caller's to decide, by whatever it knows about what has changed ('unchangedPages' looks, where
 -- there is nothing better), so that this reads what it is asked to read and no more.
 --
+-- The files named are read in full; every other page a parser has a record of may be answered out
+-- of it, with its imports and without its program. What that leaves is a graph of every page with
+-- the programs of the ones asked for, which is what lets a service take up the shape of a program
+-- without reading all of it.
+--
+-- Whatever the read recorded is written back at the end rather than as it goes, so that a read
+-- which read nothing writes nothing.
+--
 -- TODO Change readImport, then make this return GraphData of CRes
-readFiles :: CTSSConfig -> H.HashMap FileImport ReadPage -> [RawFileImport] -> IO (GraphData ReadPage FileImport)
-readFiles config prev initialImps = do
-  env <- newReadEnv
+readFiles :: CTSSConfig -> S.HashSet FilePath -> H.HashMap FileImport ReadPage -> [RawFileImport] -> IO (GraphData ReadPage FileImport)
+readFiles config needed prev initialImps = do
+  env <- newRecordedReadEnv (ctssCachePath config) needed
   initialImps' <- mapM (canonicalImport config Nothing) initialImps
   res <- aux env [] S.empty initialImps'
+  mapM_ flushObsidianCache $ reObsidianCache env
   return $ graphFromEdges res
   where
     aux :: ReadEnv -> [GraphNodes ReadPage FileImport] -> S.HashSet FileImport -> [FileImport] -> IO [GraphNodes ReadPage FileImport]

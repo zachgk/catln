@@ -141,7 +141,7 @@ hsParser = readOnlyParser $ \_ imp -> case [arg | arg@ObjArr{oaObj=Nothing} <- e
             case parsed of
               POk _ v -> do
                 let (prgm, imps) = convertModule flags exportAll stackRoot $ unLoc v
-                return $ ParsedImport prgm imps Nothing reads'
+                return $ ParsedImport (PageRead prgm) imps Nothing reads'
               PFailed _pstate ->
                 -- TODO uncomment and fix this to show parse errors instead of silently returning an empty program
                 -- let realSpan = psRealSpan $ last_loc pstate
@@ -154,8 +154,8 @@ hsParser = readOnlyParser $ \_ imp -> case [arg | arg@ObjArr{oaObj=Nothing} <- e
                 -- in fail errMsg
 
                 -- Return empty program on parse failure to skip unparseable files (e.g., files with CPP)
-                return $ ParsedImport (RawPrgm [] []) [] Nothing reads'
-      Nothing -> return $ ParsedImport (RawPrgm [] []) [] Nothing reads'
+                return $ ParsedImport (PageRead (RawPrgm [] [])) [] Nothing reads'
+      Nothing -> return $ ParsedImport (PageRead (RawPrgm [] [])) [] Nothing reads'
   _ -> undefined
 
   where

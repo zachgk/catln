@@ -75,7 +75,10 @@ data CTSSDat = CTSSDat {
 
 data SSF = SSF {
   ssfSource         :: Maybe String,
-  ssfRaw            :: CRes (RawPrgm ParseMetaDat),
+  -- | The page's program, or 'Nothing' for a page whose imports are known and whose program has not
+  -- been read. Absent means the same here as it does in every field below it: not yet, ask and it
+  -- will be. What asks is 'ctssLoad', which every reader of this goes through.
+  ssfRaw            :: Maybe (CRes (RawPrgm ParseMetaDat)),
   -- | What the read which produced this page left: the imports it walked on from, and when the
   -- files it read were last written. Handed back to the next read, which gives this page back
   -- untouched while those files are unchanged, so a page is parsed again only when something it was
@@ -106,7 +109,7 @@ newCTSSDat config baseFileNames = CTSSDat config baseFileNames (graphFromEdges [
 -- and what it was read from cannot come apart.
 newSSF :: ReadPage -> SSF
 newSSF rp = SSF { ssfSource = rpSource rp
-                , ssfRaw = pure (rpPrgm rp)
+                , ssfRaw = pure <$> rpPrgm rp
                 , ssfRead = rp
                 , ssfBuilt = False
                 , ssfDes = Nothing
@@ -160,11 +163,29 @@ ctssWatch ctss@(CTSS ssmv) = do
 -- read started from would throw away everything a build ('ctssBuildSCC') or a store ('ctssStore')
 -- committed while the read was parsing.
 ctssRead :: CTSS -> IO ()
-ctssRead ctss@(CTSS ssmv) = do
+ctssRead ctss = ctssReadOf ctss []
+
+-- | 'ctssRead', additionally reading in full the programs of the pages named.
+--
+-- The pages named are dropped from what the read gives back, so they are read again, and named to
+-- the read as pages it must read in full, so a record of them is passed over. That is what turns a
+-- page held as its imports alone into a page held as its program.
+--
+-- Every page whose program the service ALREADY holds is named too, whoever asked. A page is read
+-- again only when something it was read from has changed, and a page which has changed must be read
+-- rather than answered for out of what was recorded of what it used to be. Without this the record
+-- would win over the change: 'buildSSF' below cannot match a program it holds against a read which
+-- brought none, so the page would be replaced by one with no program and everything built from it
+-- thrown away.
+ctssReadOf :: CTSS -> [FileImport] -> IO ()
+ctssReadOf ctss@(CTSS ssmv) load = do
   CTSSDat{ctssConfig, ctssBaseFileNames, ctssData=before, ctssWatcher, ctssReadLock} <- readMVar ssmv
   withMVar ctssReadLock $ \() -> withWritten ctssWatcher $ \written -> do
-    unchanged <- ctssUnchanged ctssWatcher written [(prgmName, ssfRead ssf) | (ssf, prgmName, _) <- graphToNodes before]
-    rawPrgms <- readFiles ctssConfig unchanged (map mkRawImportStr ctssBaseFileNames)
+    given <- ctssUnchanged ctssWatcher written [(prgmName, ssfRead ssf) | (ssf, prgmName, _) <- graphToNodes before]
+    let unchanged = foldr H.delete given load
+    let held = [prgmName | (ssf, prgmName, _) <- graphToNodes before, isJust (ssfRaw ssf)]
+    let needed = S.fromList $ mapMaybe impDisp $ load ++ held
+    rawPrgms <- readFiles ctssConfig needed unchanged (map mkRawImportStr ctssBaseFileNames)
     modifyMVar_ ssmv $ \ss -> do
       let (data', invalidations) = unzip $ map (buildSSF (ctssData ss)) $ graphToNodes rawPrgms
       return $ ctssClearInvalidations (catMaybes invalidations) ss{ctssData=graphFromEdges data'}
@@ -189,7 +210,12 @@ ctssRead ctss@(CTSS ssmv) = do
       -- source text: a change the parse discards (trailing whitespace) leaves the program equal
       -- while the file on disk is no longer the one the page last served. It takes the new read
       -- too, or a page written to without changing would be read again on every read forever.
-      Just old@SSF{ssfRaw=CRes _ oldRaw} | oldRaw == rpPrgm page -> ((old{ssfSource=rpSource page, ssfRead=page}, prgmName, imports), Nothing)
+      Just old@SSF{ssfRaw=Just (CRes _ oldRaw)} | Just oldRaw == rpPrgm page -> ((old{ssfSource=rpSource page, ssfRead=page}, prgmName, imports), Nothing)
+      -- A page still held as its imports alone, read again as its imports alone. Nothing was built
+      -- from it to invalidate and nothing about it has changed, so this is not a change — without
+      -- this arm every read of a page nothing has asked for yet would invalidate every page which
+      -- imports it.
+      Just old@SSF{ssfRaw=Nothing} | isNothing (rpPrgm page), rpImports (ssfRead old) == imports -> ((old{ssfRead=page}, prgmName, imports), Nothing)
       Just{} -> ((newSSF page, prgmName, imports), Just prgmName)
       Nothing -> ((newSSF page, prgmName, imports), Nothing)
 
@@ -336,7 +362,9 @@ buildSCCPipeline :: GraphData SSF FileImport -> S.HashSet FileImport
 buildSCCPipeline ctssData sccNamesSet sccNodes pages = do
   -- Get raw programs for all SCC members
   rawPrgms <- forM sccNodes $ \(ssf, name, deps) -> do
-    raw <- asCResT $ ssfRaw ssf
+    -- Read by whoever asked for the build ('ctssLoadOf'), so a page still unread here is a build of
+    -- a page nothing read rather than a page to build without its program.
+    raw <- asCResT $ requireComputed $ ssfRaw ssf
     return (raw, ssf, name, deps)
 
   -- Separate valid programs from ctx-annotated ones (which skip the pipeline)
@@ -416,13 +444,45 @@ buildSCCPipeline ctssData sccNamesSet sccNodes pages = do
 
       return $ H.fromList (validUpdates ++ invalidUpdates)
 
+-- | Read the programs of the pages a selection of the graph has left unread.
+--
+-- A read may leave a page as its imports alone, so a page held is not a page whose program is held.
+-- Whatever is to work with a page's program asks for it here first, and what it selects is what it
+-- is about to work with: a build of everything selects everything, and a build of one page selects
+-- what that page reaches.
+--
+-- Looped, because reading a page can add pages. A page answered out of a record names the imports
+-- that record holds; reading it afresh can name others, and those arrive unread in their turn and
+-- inside a selection which has only now grown to hold them. It ends because a page read stays read
+-- ('ctssReadOf'), so each turn reads at least one page which was not read before — and a page asked
+-- for which comes back unread is that promise broken, which is reported rather than looped on.
+ctssLoadOf :: CTSS -> (GraphData SSF FileImport -> [FileImport]) -> IO ()
+ctssLoadOf ctss@(CTSS ssmv) select = aux S.empty
+  where
+    aux asked = do
+      CTSSDat{ctssData} <- readMVar ssmv
+      let unread = [prgmName | prgmName <- select ctssData
+                             , maybe False (isNothing . ssfRaw) (graphLookup prgmName ctssData)]
+      unless (null unread) $ do
+        case filter (`S.member` asked) unread of
+          [] -> return ()
+          again -> fail $ printf "Asked for %s and was given them back unread" (intercalate ", " $ map (show . impRaw) again)
+        ctssReadOf ctss unread
+        aux $ S.union asked $ S.fromList unread
+
+-- | Read the programs of these pages, where a read has left them unread.
+ctssLoad :: CTSS -> [FileImport] -> IO ()
+ctssLoad ctss names = ctssLoadOf ctss (const names)
+
 ctssBuildFrom :: CTSS -> FileImport -> IO ()
 ctssBuildFrom ctss@(CTSS ssmv) src = do
+  ctssLoadOf ctss (map snd3 . graphToNodes . graphFilterReaches src)
   CTSSDat{ctssData} <- readMVar ssmv
   ctssBuildPagesExact ctss (graphFilterReaches src ctssData)
 
 ctssBuildAll :: CTSS -> IO ()
 ctssBuildAll ctss@(CTSS ssmv) = do
+  ctssLoadOf ctss (map snd3 . graphToNodes)
   CTSSDat{ctssData} <- readMVar ssmv
   ctssBuildPagesExact ctss ctssData
 
@@ -485,9 +545,11 @@ ctssLookupReq f k ctss = do
     Just v  -> return v
     Nothing -> fail $ printf "Could not find %s" (show $ impRaw k)
 
--- This does not use ctssGet because it doesn't require building
+-- This does not use ctssGet because it doesn't require building, though it does require reading:
+-- a page's source is what reading it produced.
 getSource :: CTSS -> FileImport -> CResT IO String
-getSource (CTSS ssmv) prgmName = do
+getSource ctss@(CTSS ssmv) prgmName = do
+  lift $ ctssLoad ctss [prgmName]
   CTSSDat{ctssData} <- lift $ readMVar ssmv
   case graphLookup prgmName ctssData of
     Just SSF{ssfSource=Just src} -> return src
@@ -497,10 +559,11 @@ getSource (CTSS ssmv) prgmName = do
 -- | The parsed program of one page. Like 'getSource' this does not build, as the parse is what
 -- reading the page already produced.
 getRawPrgmOf :: CTSS -> FileImport -> CResT IO PPrgm
-getRawPrgmOf (CTSS ssmv) prgmName = do
+getRawPrgmOf ctss@(CTSS ssmv) prgmName = do
+  lift $ ctssLoad ctss [prgmName]
   CTSSDat{ctssData} <- lift $ readMVar ssmv
   case graphLookup prgmName ctssData of
-    Just SSF{ssfRaw} -> asCResT ssfRaw
+    Just SSF{ssfRaw} -> asCResT $ requireComputed ssfRaw
     Nothing          -> fail $ printf "Could not find %s" (show $ impRaw prgmName)
 
 -- | Overwrite a page with a program, written back as the syntax the page is written in.
@@ -518,6 +581,9 @@ setRawPrgm ctss prgmName prgm = do
 -- writes to the files served by the doc roots.
 setSource :: CTSS -> FileImport -> String -> CResT IO ()
 setSource ctss@(CTSS ssmv) prgmName src = do
+  -- Read first, since a page yet to be read has no source either, and "no source text available"
+  -- means a page which is not one file to be written back rather than one not yet looked at.
+  lift $ ctssLoad ctss [prgmName]
   CTSSDat{ctssData} <- lift $ readMVar ssmv
   case graphLookup prgmName ctssData of
     Nothing -> fail $ printf "Could not find %s" (show $ impRaw prgmName)
@@ -529,20 +595,27 @@ setSource ctss@(CTSS ssmv) prgmName src = do
         -- The page is read again because it was written, not because the file looks written. A
         -- filesystem which keeps modification times to the second has nothing to show for a page
         -- written and read within one, and the read would give back the page it already holds.
+        --
+        -- Read in full for that same reason, rather than left to the read to decide. Whatever a
+        -- syntax recorded of this page is answered for by the same look at the same modification
+        -- time, so a read which decided for itself would answer with what the page said before it
+        -- was written -- which is the very thing dropping the read times is here to prevent.
         ctssStale ctss prgmName
-        ctssRead ctss
+        ctssReadOf ctss [prgmName]
 
 -- This does not use ctssGet because it doesn't require building
 getRawPrgm :: CTSS -> CResT IO PPrgmGraphData
-getRawPrgm (CTSS ssmv) = do
+getRawPrgm ctss@(CTSS ssmv) = do
+  lift $ ctssLoadOf ctss (map snd3 . graphToNodes)
   CTSSDat{ctssData} <- lift $ readMVar ssmv
-  asCResT $ mapMGraph ssfRaw ctssData
+  asCResT $ mapMGraph (requireComputed . ssfRaw) ctssData
 
 -- | Like getRawPrgm but only returns the subgraph reachable from a given file.
 getRawPrgmFrom :: FileImport -> CTSS -> CResT IO PPrgmGraphData
-getRawPrgmFrom prgmName (CTSS ssmv) = do
+getRawPrgmFrom prgmName ctss@(CTSS ssmv) = do
+  lift $ ctssLoadOf ctss (map snd3 . graphToNodes . graphFilterReaches prgmName)
   CTSSDat{ctssData} <- lift $ readMVar ssmv
-  asCResT $ mapMGraph ssfRaw (graphFilterReaches prgmName ctssData)
+  asCResT $ mapMGraph (requireComputed . ssfRaw) (graphFilterReaches prgmName ctssData)
 
 getEvaluated :: CTSS -> FileImport -> String -> CResT IO Integer
 getEvaluated ctss prgmName fun = do
@@ -800,11 +873,16 @@ pageValues graph = valuesOf
     computed = graphFromEdges $ filter (isJust . ssfTPrgm . fst3) $ graphToNodes graph
     tprgms = mapMGraph (requireComputed . ssfTPrgm) computed
 
-    valuesOf name prgmName = case graphLookup prgmName computed of
-      Nothing -> return []
-      Just ssf -> do
+    valuesOf name prgmName = case (graphLookup prgmName graph, graphLookup prgmName computed) of
+      -- A page which was built and has no typechecked program declares nothing to gather: a @ctx@
+      -- page is marked built while deliberately skipping the pipeline ('buildSCCPipeline').
+      (Just _, Nothing) -> return []
+      -- A page whose program was never read is not a page with nothing in it. Reported, so that a
+      -- gathering across pages is never quietly short of the ones nobody has looked at yet.
+      (Nothing, _) -> fail $ printf "The page %s has not been read, so what it declares is not known" (show $ impRaw prgmName)
+      (_, Just ssf) -> do
         values <- evalPageValues name prgmName =<< tprgms
-        written <- rawStatementExprIds <$> ssfRaw ssf
+        written <- rawStatementExprIds <$> requireComputed (ssfRaw ssf)
         return $ sortOn (writtenAt written . fst) values
 
     -- A value the page does not write is one the page was rebuilt without, so it goes after the ones

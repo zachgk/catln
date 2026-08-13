@@ -36,7 +36,6 @@ import           Syntax.Ct.Parser.Syntax       (PPrgm)
 import           Syntax.Parsers                (mkDesCanonicalImportStr)
 import           Text.Megaparsec               (SourcePos (sourceColumn),
                                                 sourceLine, unPos)
-import           Utils
 
 type ServeConfig = ()
 newtype ServeState = ServeState CTSS
@@ -86,8 +85,10 @@ handlers = mconcat
           prgmName = uriToFilePath uri
       ServeState ctss <- lift ask
       prgmNameRaw <- liftIO $ mkDesCanonicalImportStr buildCtssConfig (fromJust prgmName)
-      rawPrgms <- liftIO $ fmap cresToMaybe $ runCResT $ getRawPrgm ctss
-      let tokens = maybe [] prgmSemanticTokens (rawPrgms >>= graphLookup prgmNameRaw)
+      -- The one file being coloured, not every file the editor has open a page of. Asking for all
+      -- of them read all of them, to look one up and throw the rest away.
+      rawPrgm <- liftIO $ fmap cresToMaybe $ runCResT $ getRawPrgmOf ctss prgmNameRaw
+      let tokens = maybe [] prgmSemanticTokens rawPrgm
       case makeSemanticTokens defaultSemanticTokensLegend tokens of
         Right encoded -> do
           responder (Right $ InL encoded)

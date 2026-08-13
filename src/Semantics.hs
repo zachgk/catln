@@ -26,7 +26,8 @@ import           Data.List           (partition, sortOn)
 import           Data.Maybe
 import           Semantics.Prgm
 import           Semantics.Types
-import           System.Directory    (doesDirectoryExist)
+import           System.Directory    (doesDirectoryExist, getHomeDirectory)
+import           System.FilePath     (joinPath)
 import           System.IO.Unsafe    (unsafePerformIO)
 import           Text.Printf
 
@@ -265,13 +266,23 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
             , d <- arrowDestType typeEnv l oa ]
       declResultOfRawLeaves _ = []
 
-newtype CTSSConfig = CTSSConfig {
+data CTSSConfig = CTSSConfig {
   -- TODO Replace stack path with (CTSSStackConfig = CTSSStackTest | CTSSStackBuild DirString BranchString) when adding support for auto-downloading core
-  ctssStackPath :: String
+  ctssStackPath :: String,
+  -- | Where a syntax may keep what reading it found, for the next run to be answered out of, or
+  -- 'Nothing' for a compiler which reads every file it reaches.
+  --
+  -- Absent by default, and so for every test: a cache is about a program read over and over by a
+  -- reader who comes back to it, and a test which wrote into a shared one would be a test whose
+  -- answer depended on what had been run before it. A doc server is what has one.
+  --
+  -- Held here rather than found by whoever wants it, so that what a run caches is the run's own
+  -- setting and a test can be given a directory of its own.
+  ctssCachePath :: Maybe FilePath
                                 }
 
 testCtssConfig, buildCtssConfig :: CTSSConfig
-testCtssConfig = CTSSConfig "stack"
+testCtssConfig = CTSSConfig "stack" Nothing
 -- | The standard-library location used by the CLI/LSP/WebDocs. During development
 -- the compiler is run from a worktree (e.g. via @stack exec@) whose working directory
 -- contains a local @stack/@ standard library; prefer it so multiple worktrees can be
@@ -282,7 +293,13 @@ testCtssConfig = CTSSConfig "stack"
 buildCtssConfig = unsafePerformIO $ do
   let localPath = ctssStackPath testCtssConfig
   localExists <- doesDirectoryExist (localPath ++ "/core")
-  return $ if localExists then CTSSConfig localPath else CTSSConfig "~/.catln/stack"
+  -- Resolved here rather than kept as a @~@ path: nothing in "System.Directory" expands one, so a
+  -- @~@ handed to it makes a directory of that name wherever the compiler happens to be running.
+  -- The stack path beside it is left as written because its own resolution expands it
+  -- ('Syntax.InferImport.importPathCandidates').
+  home <- getHomeDirectory
+  let cachePath = joinPath [home, ".catln", "cache", "import"]
+  return $ CTSSConfig (if localExists then localPath else "~/.catln/stack") (Just cachePath)
 {-# NOINLINE buildCtssConfig #-}
 
 mkTypeEnv :: (ExprClass e, Show m, Show (e m), MetaDat m) => Prgm e m -> TypeEnv (ObjArrTypeGraph e m)

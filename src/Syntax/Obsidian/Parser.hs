@@ -12,24 +12,27 @@
 
 module Syntax.Obsidian.Parser where
 
-import           Control.Applicative  ((<|>))
+import           Control.Applicative   ((<|>))
+import           Control.Monad         (forM_)
 import           CtConstants
-import           Data.Char            (isDigit, isSpace)
-import           Data.Foldable        (toList)
-import           Data.List            (dropWhileEnd, intercalate, isPrefixOf,
-                                       isSuffixOf, nub)
-import           Data.Maybe           (listToMaybe, mapMaybe)
-import qualified Data.Text            as T
+import           Data.Char             (isDigit, isSpace)
+import           Data.Foldable         (toList)
+import           Data.List             (dropWhileEnd, intercalate, isPrefixOf,
+                                        isSuffixOf, nub)
+import           Data.Maybe            (listToMaybe, mapMaybe)
+import qualified Data.Text             as T
 import           Semantics.Prgm
-import           Semantics.Types      (Constant (CStr), makeAbsoluteName,
-                                       mkName, partialKey)
+import           Semantics.Types       (Constant (CStr), makeAbsoluteName,
+                                        mkName, partialKey)
 import           Syntax.Ct.Builder
 import           Syntax.Ct.Prgm
+import           Syntax.Obsidian.Cache (cachedNoteLinks, keepOnlyNotes,
+                                        recordNoteLinks)
 import           System.Directory
-import           System.FilePath      (makeRelative, takeBaseName,
-                                       takeDirectory, (</>))
-import qualified Text.MMark           as MMark
-import           Text.MMark.Extension (Block (..), Bni, Inline (..), scanner)
+import           System.FilePath       (makeRelative, takeBaseName,
+                                        takeDirectory, (</>))
+import qualified Text.MMark            as MMark
+import           Text.MMark.Extension  (Block (..), Bni, Inline (..), scanner)
 import           Text.Printf
 
 -- | The name this parser is registered under in 'Syntax.Parsers.importParsers'.
@@ -122,7 +125,10 @@ noteVault note = aux $ takeDirectory note
 vaultPrgm :: ReadEnv -> FilePath -> ImportParseResult
 vaultPrgm env vault = do
   notes <- vaultNotes env vault
-  return $ ParsedImport (RawPrgm [] []) (map (mkRawFileImport . rawStr) notes) Nothing (Just [ReadTree vault])
+  -- Which notes the vault holds is read here and nowhere else, so this is the one place a record
+  -- of the vault can be told that a note it holds something about is gone.
+  forM_ (reObsidianCache env) $ \cache -> keepOnlyNotes cache vault notes
+  return $ ParsedImport (PageRead (RawPrgm [] [])) (map (mkRawFileImport . rawStr) notes) Nothing (Just [ReadTree vault])
 
 -- | The page of one note: what it is, and what it links to.
 --
@@ -151,10 +157,31 @@ vaultPrgm env vault = do
 -- note is seen.
 notePrgm :: ReadEnv -> FilePath -> FilePath -> ImportParseResult
 notePrgm env vault note = do
-  contents <- readFile note
-  notes <- vaultNotes env vault
-  let linked = nub $ filter (/= note) $ mapMaybe (resolveWikiLink vault notes) $ wikiLinks note contents
-  return $ ParsedImport (RawPrgm (map (mkRawFileImport . rawStr) linked) [notePageStatement (takeBaseName note) contents]) [] (Just contents) (Just $ ReadFile note : map ReadExists linked)
+  recorded <- noteLinksRecorded env vault note
+  case recorded of
+    Just linked -> return $ ParsedImport (PageDeferred (imports linked)) [] Nothing (Just $ reads' linked)
+    Nothing -> do
+      contents <- readFile note
+      notes <- vaultNotes env vault
+      let linked = nub $ filter (/= note) $ mapMaybe (resolveWikiLink vault notes) $ wikiLinks note contents
+      forM_ (reObsidianCache env) $ \cache -> recordNoteLinks cache vault note linked
+      return $ ParsedImport (PageRead (RawPrgm (imports linked) [notePageStatement (takeBaseName note) contents])) [] (Just contents) (Just $ reads' linked)
+  where
+    imports = map (mkRawFileImport . rawStr)
+    reads' linked = ReadFile note : map ReadExists linked
+
+-- | The notes a note links to, as an earlier run recorded them, where this read will take them.
+--
+-- A read which says it must have this note in full is given nothing, so that whoever asked for the
+-- note's program gets the note read rather than its shape again. Everything else about whether a
+-- record still holds belongs to the record ('Syntax.Obsidian.Cache.cachedNoteLinks'); what is
+-- decided here is only whether this read is one to be answered that way at all.
+noteLinksRecorded :: ReadEnv -> FilePath -> FilePath -> IO (Maybe [FilePath])
+noteLinksRecorded env vault note
+  | readsInFull env note = return Nothing
+  | otherwise = case reObsidianCache env of
+      Nothing    -> return Nothing
+      Just cache -> cachedNoteLinks cache vault note
 
 -- | The note itself: the page it is, titled as it is linked to, holding what was written in it.
 --

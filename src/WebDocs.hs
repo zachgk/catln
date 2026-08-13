@@ -152,7 +152,7 @@ docApiBase readonly ctss = do
     prgmName <- param "prgmName"
     resp <- liftAndCatchIO $ runCResT $ do
       prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
-      rawPrgm' <- ctssLookupReq (Just . ssfRaw) prgmName' ctss
+      rawPrgm' <- ctssLookupReq ssfRaw prgmName' ctss
       maybeTPrgmRes <- lift $ runCResT $ do
         -- The page and what it imports, rather than every page the doc server holds. What a page
         -- shows is compiled from the program the page is in, so the pages beside it are pages this

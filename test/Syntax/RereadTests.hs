@@ -78,10 +78,14 @@ writtenTo dir written pages = sort [path | (page, name, _) <- graphToNodes pages
                                          , any (readPathWrittenIn (S.fromList written)) (readPaths page)]
 
 -- | Read what a name reaches, giving back every page still as the last read left it.
+--
+-- Reads every page it reads in full: 'testCtssConfig' keeps no record for a page to be answered
+-- out of, so there is none for a read to be told to pass over. What a record does to these cases is
+-- "Syntax.ObsidianCacheTests".
 readOnce :: GraphData ReadPage FileImport -> String -> IO (GraphData ReadPage FileImport)
 readOnce prev name = do
   unchanged <- unchangedPages [(prgmName, page) | (page, prgmName, _) <- graphToNodes prev]
-  readFiles testCtssConfig unchanged [mkRawImportStr name]
+  readFiles testCtssConfig S.empty unchanged [mkRawImportStr name]
 
 -- | No pages at all: a first read has nothing to give back.
 noPages :: GraphData ReadPage FileImport
