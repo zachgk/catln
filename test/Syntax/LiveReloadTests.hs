@@ -1,5 +1,5 @@
--- | Tests for a service read from by something that is watching rather than asking: which of the
--- things a reader has open a read reaches.
+-- | Tests for a doc service as its files change under it: which of the things a reader has open a
+-- read reaches, and what a reader is still shown once one of those files stops compiling.
 --
 -- The decision is the service's rather than the reader's, and it is made against the import graph. A
 -- page is shown from its own program and the programs it imports, so a write low in the standard
@@ -17,10 +17,12 @@ import           CRes                   (CNote (..), CNoteI (..), CRes (..),
 import           CtService              (CTSS (..), CTSSDat (..),
                                          ReadChange (..), SSF (..), Shown (..),
                                          changeReaches, ctssBaseFiles,
-                                         ctssEvaluableFrom, ctssFollow,
-                                         ctssFollowing, ctssGetFrom, ctssKeys,
-                                         ctssReadOf, ctssWatch, ctssWatchLive)
+                                         ctssCached, ctssEvaluableFrom,
+                                         ctssFollow, ctssFollowing, ctssGetFrom,
+                                         ctssKeys, ctssReadOf, ctssWatch,
+                                         ctssWatchLive)
 import           Data.List              (isPrefixOf, sort)
+import           Data.Maybe             (isJust, isNothing)
 import           Data.Time.Clock        (addUTCTime, getCurrentTime)
 import           Semantics              (testCtssConfig)
 import           Semantics.Prgm         (FileImport, impDisp)
@@ -248,6 +250,40 @@ testBrokenPageLeftOut = testCase "a page that does not typecheck is left out, an
         [dir </> "main.ct"] (sort [path | (_, name, _) <- graphToNodes graph
                                         , Just path <- [impDisp name], dir `isPrefixOf` path])
 
+-- | A page's annotations are dropped when a page appears, though nothing it imports changed.
+--
+-- An annotation is evaluated against which pages there are as well as against the program it is
+-- written in ('StagePrgms.spAllPages'), and the invalidation walk only reaches pages that import what
+-- changed. So a page carrying a navigation went on serving the navigation as it was when the page was
+-- built, and a page added never appeared on it — while the same annotation asked for on its own, which
+-- is not cached, listed it at once.
+testAnnotsFollowThePages :: TestTree
+testAnnotsFollowThePages = testCase "a page appearing drops the annotations of a page it is nothing to" $ do
+  dir <- caseDir "live-annots"
+  now <- getCurrentTime
+  writeLater now (dir </> "a.ct") "a = 1\n"
+  writeLater now (dir </> "b.ct") "b = 2\n"
+  setModificationTime dir now
+  ctss <- ctssBaseFiles testCtssConfig [dir]
+  a <- pageAt (dir </> "a.ct") ctss
+  seedBuilt ctss $ \_ ssf -> ssf{ssfBuilt = True, ssfAnnots = Just (pure [])}
+  assertBool "the annotations were not there to be dropped" . isJust =<< ctssCached ssfAnnots a ctss
+
+  -- Writing to one page must not cost another its annotations: nothing that one is evaluated against
+  -- has moved, and evaluating a page's annotations again is work.
+  writeLater (addUTCTime 60 now) (dir </> "b.ct") "b = 3\n"
+  _ <- ctssReadOf ctss []
+  assertBool "writing to one page dropped an unrelated page's annotations"
+    . isJust =<< ctssCached ssfAnnots a ctss
+
+  -- A page appearing changes which pages there are, which any annotation may be about.
+  let later = addUTCTime 120 now
+  writeLater later (dir </> "c.ct") "c = 3\n"
+  setModificationTime dir later
+  _ <- ctssReadOf ctss []
+  assertBool "a page appearing left an annotation cached from before it existed"
+    . isNothing =<< ctssCached ssfAnnots a ctss
+
 liveReloadTests :: TestTree
 liveReloadTests = testGroup "LiveReload" [
   testImporters,
@@ -255,5 +291,6 @@ liveReloadTests = testGroup "LiveReload" [
   testPageAdded,
   testFollowCloses,
   testWatchLive,
-  testBrokenPageLeftOut
+  testBrokenPageLeftOut,
+  testAnnotsFollowThePages
                                          ]

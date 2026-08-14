@@ -339,8 +339,10 @@ ctssReadOf ctss@(CTSS ssmv) load = do
     rawPrgms <- readFiles ctssConfig needed unchanged (map mkRawImportStr ctssBaseFileNames)
     change <- modifyMVar ssmv $ \ss -> do
       let (data', invalidations) = unzip $ map (buildSSF (ctssData ss)) $ graphToNodes rawPrgms
-      let (changed, ss') = ctssClearInvalidations (catMaybes invalidations) ss{ctssData=graphFromEdges data'}
-      return (ss', ReadChange changed (pageKeys (ctssData ss) /= pageKeys (ctssData ss')))
+      let read'' = graphFromEdges data'
+      let pagesChanged = pageKeys (ctssData ss) /= pageKeys read''
+      let (changed, ss') = ctssClearInvalidations pagesChanged (catMaybes invalidations) ss{ctssData=read''}
+      return (ss', ReadChange changed pagesChanged)
     -- The watches only need seeing to where the read read something, since they are watches on what
     -- the reads read. A read which gave every page back left every path it was watching for exactly
     -- as it was, and gathering them up again to say so would be work for every path of every page,
@@ -461,21 +463,41 @@ ctssRewatch (CTSS ssmv) watcher = do
 -- imports, so the pages which import a changed one are what 'transposeG' finds. Answered as well as
 -- acted on, because it is also what decides whether the change reaches anything a reader has open
 -- ('changeReaches'), and working it out a second time would be walking the graph a second time.
-ctssClearInvalidations :: [FileImport] -> CTSSDat -> (S.HashSet FileImport, CTSSDat)
-ctssClearInvalidations invalidations ss@CTSSDat{ctssData=(g, nodeFromVertex, vertexFromKey)} = (propagated, ss{ctssData=fmapGraphWithKey maybeClear $ ctssData ss})
+ctssClearInvalidations :: Bool -> [FileImport] -> CTSSDat -> (S.HashSet FileImport, CTSSDat)
+ctssClearInvalidations pagesChanged invalidations ss@CTSSDat{ctssData=(g, nodeFromVertex, vertexFromKey)} = (propagated, ss{ctssData=fmapGraphWithKey maybeClear $ ctssData ss})
   where
     propagated = S.fromList $ map (snd3 . nodeFromVertex) $ foldMap (foldMap (:[])) $ dfs (transposeG g) (mapMaybe vertexFromKey invalidations)
     maybeClear prgmName ssf
       -- Rebuilt from the read the page already has: an invalidation drops what was built from a
       -- page, not what the page was read from, so the next read still gives it back unread.
       | prgmName `S.member` propagated = newSSF (ssfRead ssf)
-      | null invalidations = ssf
+      | null invalidations && not pagesChanged = ssf
       -- Which tests a page has, and what they find, is decided over the whole program the page
       -- belongs to rather than over the page and its imports (see 'ctssTestsFrom'). Invalidation
       -- walks the pages that DEPEND on the changed one, so it never reaches a page the change is
       -- downstream of — whose tests the change can still alter. Every page's tests are therefore
       -- dropped by any change at all, and re-run for whichever page is asked about next.
-      | otherwise = ssf{ssfTests = Nothing}
+      | otherwise = ssf{ssfTests = Nothing, ssfAnnots = keptAnnots ssf}
+
+    -- | A page's annotations, where the change cannot have altered them.
+    --
+    -- An annotation is evaluated against the stages of the page's own program ('ctssStagePrgmsFrom'),
+    -- which the walk above covers, and against two things which reach past them: which pages there
+    -- are ('StagePrgms.spAllPages'), and the page's tests already run ('StagePrgms.spTests'). Both
+    -- can change without any page the annotation is compiled from being invalidated, and a cached
+    -- annotation is what 'getEvalAnnots' answers with before it looks at either — so the cache is
+    -- what has to be dropped.
+    --
+    -- Asked of each rather than dropped wholesale, because evaluating a page's annotations is work
+    -- and every change would otherwise cost it for every page: which pages there are changes only
+    -- when a page appears or goes, and a test run can only be read by a page which writes a test,
+    -- since 'getEvalAnnots' hands the run to no other page.
+    keptAnnots ssf
+      | pagesChanged      = Nothing
+      | writesATest ssf   = Nothing
+      | otherwise         = ssfAnnots ssf
+
+    writesATest ssf = maybe False prgmWritesATest (cresToMaybe =<< ssfTPrgm ssf)
 
 -- | Build pages incrementally, one SCC at a time.
 -- Each successfully built SCC is committed to the MVar independently,
@@ -941,11 +963,15 @@ getEvalAnnots ctss prgmName = do
 -- | Whether a page marks any of its definitions as a test. A page that does not has no annotation
 -- that reads a test run, so it is not made to wait for one.
 pageWritesATest :: FileImport -> GraphData TPrgm FileImport -> Bool
-pageWritesATest prgmName tprgms = case graphLookup prgmName tprgms of
-  Just (Prgm objMap _ _) -> any (hasAnnot testAnnot) (flatObjectMap objMap)
-  -- A page that is not in its own program graph has no annotations either; 'evalAnnots' is what
-  -- reports that, rather than it being decided here.
-  Nothing                -> False
+-- A page that is not in its own program graph has no annotations either; 'evalAnnots' is what
+-- reports that, rather than it being decided here.
+pageWritesATest prgmName tprgms = maybe False prgmWritesATest (graphLookup prgmName tprgms)
+
+-- | Whether a program marks any of its definitions as a test. What a page's own program says about
+-- itself, which is also what decides whether a change to anything at all can alter the page's
+-- annotations ('ctssClearInvalidations').
+prgmWritesATest :: TPrgm -> Bool
+prgmWritesATest (Prgm objMap _ _) = any (hasAnnot testAnnot) (flatObjectMap objMap)
 
 -- | Read a page's computed item, without building the page or computing anything.
 ctssCached :: (SSF -> Maybe (CRes a)) -> FileImport -> CTSS -> IO (Maybe (CRes a))
