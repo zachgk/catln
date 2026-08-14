@@ -65,15 +65,26 @@ function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
+// What an answer from the compiler means, whether it was asked for once or arrived down a stream of
+// them. Shared so that a display which follows its page and one which asks about it once cannot read
+// the same answer differently.
+function apiResult(res) {
+  switch(res.tag) {
+  case "Success":
+    return {isLoaded: true, data: res.contents[0], notes: res.contents[1]};
+  case "ResFail":
+    return {isLoaded: true, notes: res.contents};
+  default:
+    return {isLoaded: true, notes: [], error: "Unknown result type"};
+  }
+}
+
+const emptyResult = {error: null, isLoaded: false, data: null, notes: []};
+
 // reloadKey is optional. Changing it refetches the same path, which is how a save
 // picks up the rebuilt page.
 function useApi(path, reloadKey) {
-  const [result, setResult] = useState({
-    error: null,
-    isLoaded: false,
-    data: null,
-    notes: []
-  });
+  const [result, setResult] = useState(emptyResult);
   useEffect(() => {
     // A falsy path means the caller already has its data (such as a value that carries it) and
     // has nothing to fetch.
@@ -90,29 +101,7 @@ function useApi(path, reloadKey) {
       })
       .then(res => res.json())
       .then(
-        (res) => {
-          switch(res.tag) {
-          case "Success":
-            setResult({
-              isLoaded: true,
-              data: res.contents[0],
-              notes: res.contents[1]
-            });
-            break;
-          case "ResFail":
-            setResult({
-              isLoaded: true,
-              notes: res.contents
-            });
-            break;
-          default:
-            setResult({
-              isLoaded: true,
-              notes: [],
-              error: "Unknown result type"
-            });
-          }
-        },
+        (res) => setResult(apiResult(res)),
         // Note: it's important to handle errors here
         // instead of a catch() block so that we don't swallow
         // exceptions from actual bugs in components.
@@ -123,6 +112,40 @@ function useApi(path, reloadKey) {
           });
         }
       );
+  }, [path, reloadKey]);
+  return result;
+}
+
+// The same as useApi, but asked to keep answering: the server holds the question open and answers it
+// again whenever a file it was compiled from is written to.
+//
+// Which changes are worth answering again is the server's decision, not this one's. What a page is
+// compiled from is the whole graph of what it imports, so a write low in the standard library reaches
+// nearly every page there is — asking the server to say what changed would be asking it for a message
+// about the program in order to learn about the one page here. So the URL is the question, the server
+// keeps what it is a question about, and this only ever hears about this page.
+//
+// The previous answer stays on screen until the next one arrives, so a change to a page costs the
+// reader the wait for it to compile rather than the page going blank.
+function useLiveApi(path, reloadKey) {
+  const [result, setResult] = useState(emptyResult);
+  useEffect(() => {
+    if(!path) {
+      return;
+    }
+    const source = new EventSource(path);
+    source.onmessage = e => setResult(apiResult(JSON.parse(e.data)));
+    // A connection that drops is one the browser opens again by itself, and what comes back is the
+    // page as it now is. So a display with something on screen keeps it: a blink of "Error:" in
+    // place of the page, for a connection which is about to come back, is worse for the reader than
+    // the page being a moment out of date. A display which never got an answer has nothing to keep
+    // and says so, since a doc server that never answers is not something to wait at a blank page
+    // for.
+    source.onerror = () => setResult(r => r.isLoaded ? r
+      : {...r, isLoaded: true, error: new Error("The doc server is not answering")});
+    // Closed when the display goes, which is what takes it off the list of what the server is
+    // following: a question left open is one the server answers again on every change, for nobody.
+    return () => source.close();
   }, [path, reloadKey]);
   return result;
 }
@@ -576,6 +599,7 @@ export {
   tagJoin,
   useQuery,
   useApi,
+  useLiveApi,
   Loading,
   Notes,
   PartialKey,

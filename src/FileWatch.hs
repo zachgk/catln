@@ -16,10 +16,12 @@
 
 module FileWatch where
 
+import           Control.Concurrent     (threadDelay)
 import           Control.Concurrent.STM (TVar, atomically, modifyTVar',
-                                         newTVarIO, readTVar, writeTVar)
+                                         newTVarIO, readTVar, readTVarIO, retry,
+                                         writeTVar)
 import           Control.Exception      (SomeException, onException, try)
-import           Control.Monad          (forM, forM_, unless)
+import           Control.Monad          (forM, forM_, unless, when)
 import qualified Data.HashMap.Strict    as H
 import qualified Data.HashSet           as S
 import           Data.IORef             (IORef, newIORef, readIORef, writeIORef)
@@ -159,6 +161,28 @@ watching w = do
 -- path of every group to learn what this says in one.
 allCovered :: Watcher -> IO Bool
 allCovered w = (\seen -> S.size (wCovered seen) == S.size (wAsked seen)) <$> readIORef (wWatching w)
+
+-- | Wait until something has been written to, and then until the writing has stopped.
+--
+-- For a caller which acts on a change as it happens rather than the next time it is asked. Peeked
+-- rather than taken: what a written path means for a page is 'CtService.ctssReadOf's, and taking the
+-- paths is part of how it decides, so a wait which took them would be a change nothing acts on.
+--
+-- Settled first because one save is several writes — the file, a rename, the directory holding it —
+-- and whoever is waiting is served by one act over all of them rather than by three acts over one.
+-- The wait ends when the paths written to stop growing for the given delay, so a burst costs one
+-- delay however long it runs and a quiet filesystem costs one delay per change.
+awaitSettled :: Watcher -> Int -> IO ()
+awaitSettled w delay = do
+  atomically $ do
+    pending <- readTVar (wPending w)
+    when (S.null pending) retry
+  settle S.empty
+  where
+    settle seen = do
+      threadDelay delay
+      pending <- readTVarIO (wPending w)
+      unless (pending == seen) $ settle pending
 
 -- | Act on the paths written to since this was last asked, taking them out of the watcher.
 --

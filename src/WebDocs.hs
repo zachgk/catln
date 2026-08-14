@@ -14,15 +14,22 @@
 
 module WebDocs where
 
-import           Data.Aeson                    (ToJSON, Value, object, (.=))
+import           Data.Aeson                    (ToJSON, Value, encode, object,
+                                                (.=))
 import           Web.Scotty
 
+import           Data.ByteString.Builder       (lazyByteString)
+import qualified Data.ByteString.Lazy          as BL
 import qualified Data.HashMap.Strict           as H
 import qualified Data.Text.Lazy                as T
 import           Data.Text.Lazy.Encoding       (decodeUtf8)
 import           GHC.Generics                  (Generic)
 import           Network.Wai.Middleware.Static
 
+import           Control.Concurrent.STM        (STM, atomically, orElse,
+                                                readTVar, registerDelay, retry)
+import           Control.Exception             (SomeException, try)
+import           Control.Monad                 (unless, when)
 import           Control.Monad.Trans           (lift)
 import           CRes
 import           CtService
@@ -32,6 +39,7 @@ import           Data.Maybe                    (listToMaybe)
 import           Data.UUID                     (fromText)
 import           Eval                          (evalAllTargetModes, evalAnnots,
                                                 prgmFromGraphData)
+import           Eval.Common                   (EvalMode, Val)
 import           Eval.Runtime.WebDocs          (sidebarOrder)
 import           MapMeta                       (interleaveMeta, interleavePrgm,
                                                 parseMetaIDScope, zip3MetaFun)
@@ -51,12 +59,18 @@ import           Syntax.Parsers                (mkDesCanonicalImportStr)
 import           Text.Megaparsec               (errorBundlePretty, runParser)
 import           Text.Printf
 import           TypeCheck                     (typecheckPrgms)
-import           TypeCheck.Common              (typeCheckToRes)
+import           TypeCheck.Common              (TypedMeta, typeCheckToRes)
 import           Utils
 
 data ResSuccess a n = Success a [n]
   | ResFail [n]
   deriving (Generic, ToJSON)
+
+-- | A program as the webdocs show it: written as it was written, with what each stage made of each
+-- part of it hung off the part it was written as — the type that part was inferred to have, how it
+-- is to be evaluated, and the value it displays as. Each is absent for a part of the program the
+-- stage said nothing about, which for every one of them includes a program that failed to compile.
+type ShownPrgm = RawPrgm (Maybe TypedMeta, Maybe EvalMode, Maybe Val)
 
 -- | What @/api/page@ answers with: the page, and where it sits among the pages the doc server holds.
 -- The neighbours and the directory are the server's answers to questions the webdocs would otherwise
@@ -82,8 +96,145 @@ neighbours x xs = case break (== x) xs of
   _                 -> (Nothing, Nothing)
 
 maybeJson :: (ToJSON a) => CRes a -> ActionM ()
-maybeJson (CRes notes r) = json $ Success r notes
-maybeJson (CErr notes)   = json (ResFail notes :: ResSuccess () CNote)
+maybeJson res = do
+  setHeader "Content-Type" "application/json; charset=utf-8"
+  raw $ resBody res
+
+-- | What a request is answered with, as the bytes of it. The same for a request answered once and
+-- for every frame of one answered over and over, so what a reader who asked to be kept up to date
+-- is shown cannot come apart from what a reader who asked once is shown.
+resBody :: (ToJSON a) => CRes a -> BL.ByteString
+resBody (CRes notes r) = encode $ Success r notes
+resBody (CErr notes)   = encode (ResFail notes :: ResSuccess () CNote)
+
+-- | An exception thrown where an answer was expected, said as the answer.
+--
+-- For a stream, where letting one through is the connection dropping — which an @EventSource@ answers
+-- by opening another, so a page which cannot be compiled at all would be compiled again every few
+-- seconds forever. Said instead, which is also what a reader needs: what failed is the very thing
+-- they are looking at, and a request answered once already reports a build that failed this way.
+exceptionBody :: SomeException -> BL.ByteString
+exceptionBody e = encode (ResFail [MkCNote $ GenCErr Nothing (show e)] :: ResSuccess () CNote)
+
+-- | Answer with what is being shown, and go on answering it for a reader who asked to be kept up to
+-- date.
+--
+-- Which reads reach a display is decided here rather than told to the reader. What a change is
+-- depends on the whole import graph — a write low in the standard library invalidates nearly every
+-- page there is — while what a reader wants to hear about is the one thing in front of them. So the
+-- server is told what is being shown ('Shown') and answers with that, and a change to a page nobody
+-- has open crosses nothing.
+--
+-- Asked for by @Accept@, which is what a browser's @EventSource@ sends, so the same URL answers a
+-- reader who wants to be kept up to date and one who wants to be answered once.
+serve :: (ToJSON a) => CTSS -> Shown -> IO (CRes a) -> ActionM ()
+serve ctss shown compute = do
+  accept <- header "Accept"
+  if maybe False (T.isInfixOf eventStream) accept
+    then do
+      setHeader "Content-Type" eventStream
+      -- A frame is the answer of the moment, so an answer held from before the last change would be
+      -- the one thing a display which follows its page must not show.
+      setHeader "Cache-Control" "no-cache"
+      -- Followed before the first answer is computed, so a change arriving while it is being
+      -- computed is one the next wait ends on rather than one nothing hears about.
+      stream $ \write flush -> ctssFollow ctss shown $ \await -> do
+        let sending sent = do
+              res <- try (ctssRead ctss >> compute)
+              let answer = either exceptionBody resBody res
+              -- An answer the reader already has is not sent again. What a display is followed by is
+              -- what it is compiled FROM, which is more than what it SHOWS: a navigation is compiled
+              -- in the scope of a page, so every edit to that page reaches it, while which pages
+              -- there are — the whole of what it shows — has not changed. Nothing can tell those
+              -- apart ahead of the answer, since what an annotation reads is its own business, so
+              -- they are told apart by the answer itself.
+              when (Just answer /= sent) $ do
+                write $ "data: " <> lazyByteString answer <> "\n\n"
+                flush
+              -- A connection which has gone is found by writing to it, so something is written
+              -- whether or not anything has changed. An 'EventSource' passes over a comment frame,
+              -- which is what this is: it is here to fail rather than to be read.
+              untilChanged await keepAlive $ write ": \n\n" >> flush
+              sending (Just answer)
+        sending Nothing
+    else do
+      liftAndCatchIO $ ctssRead ctss
+      maybeJson =<< liftAndCatchIO compute
+  where
+    eventStream = "text/event-stream"
+    keepAlive = 30000000
+
+-- | Wait for a display to be reached, doing something every so often for as long as it is not.
+--
+-- The waiting and the timing out are one transaction, so a change arriving as the wait times out is
+-- either waited out or left for the next wait, and never both or neither.
+untilChanged :: STM () -> Int -> IO () -> IO ()
+untilChanged await every act = do
+  timer <- registerDelay every
+  timedOut <- atomically $ (await >> return False) `orElse` do
+    late <- readTVar timer
+    unless late retry
+    return True
+  when timedOut $ act >> untilChanged await every act
+
+-- | The page as it now is, ready to be shown. Lifted out of the request for it so that a reader
+-- following the page is shown the same thing, computed the same way, on every change to it.
+pageResp :: CTSS -> FileImport -> IO (CRes (PageResp ShownPrgm))
+pageResp ctss prgmName' = runCResT $ do
+  rawPrgm' <- ctssLookupReq ssfRaw prgmName' ctss
+  maybeTPrgmRes <- lift $ runCResT $ do
+    -- The page and what it imports, rather than every page the doc server holds. What a page
+    -- shows is compiled from the program the page is in, so the pages beside it are pages this
+    -- request would compile to show nothing of. Inside the inner run because it is now a
+    -- request which can fail: 'ctssGet' passes over a page it has not computed, where
+    -- 'ctssGetFrom' requires the ones it was asked for, and a page which cannot be compiled is
+    -- still a page to serve with its source and what it says.
+    tprgms <- ctssGetFrom ssfTPrgm prgmName' ctss
+    case graphLookup prgmName' tprgms of
+      Just tprgm -> do
+        reachTprgms <- asCResT $ prgmFromGraphData prgmName' tprgms
+        return (tprgm, reachTprgms)
+      Nothing -> fail $ printf "Could not find typechecked program %s" (show prgmName')
+  let maybeTPrgm = fmap fst maybeTPrgmRes
+  let maybeTPrgmFull = fmap snd maybeTPrgmRes
+  maybeAnnots <- lift $ runCResT $ getEvalAnnots ctss prgmName'
+  let tprgm' = maybe H.empty interleavePrgm (cresToMaybe maybeTPrgm)
+  let targetModes = maybe H.empty evalAllTargetModes (cresToMaybe maybeTPrgmFull)
+  let annots' = maybe H.empty (H.fromList . map (first (getMetaID . getExprMeta))) (cresToMaybe maybeAnnots)
+  let prgm' = mapMetaRawPrgm (zip3MetaFun (interleaveMeta tprgm') (interleaveMeta targetModes) (interleaveMeta annots')) rawPrgm'
+  maybeSource <- lift $ runCResT $ getSource ctss prgmName'
+  -- The pages either side of this one travel with it, so a page knows where it sits without the
+  -- webdocs holding a list of every page to work it out from. A page the order cannot place is
+  -- reported rather than served as though it were an end of the order: 'sidebarOrder' fails only
+  -- when a page has no path to open it by or two pages share one, which is a doc server that
+  -- cannot be navigated at all.
+  pages <- lift $ ctssKeys ctss
+  order <- either fail return $ sidebarOrder pages
+  let (prevPage, nextPage) = maybe (Nothing, Nothing) (`neighbours` order) (impDisp prgmName')
+  return $ PageResp prgm' (cresToMaybe maybeSource) prevPage nextPage (impDir prgmName')
+
+-- | The annotation as it now compiles, in the scope of the page it names. Lifted out of the request
+-- for it for the same reason as 'pageResp'.
+annotResp :: CTSS -> Maybe FileImport -> String -> IO (CRes ShownPrgm)
+annotResp ctss scope' annot = do
+  stages <- maybe (ctssStagePrgms ctss) (ctssStagePrgmsFrom ctss) scope'
+  runCResT $ do
+    rawPrgm <- case runParser pExpr "<annot>" annot of
+      Left err     -> fail $ show $ errorBundlePretty err
+      Right parsed -> return (RawPrgm [] [RawStatementTree (RawAnnot parsed) []])
+    let annotName = desFileImport $ mkRawFileImport $ RawValue emptyMetaN "<annot>"
+    let rawPrgm' = addRawPrgmMetaIDs (parseMetaIDScope annotName) rawPrgm
+    (annotDesPrgm, annotPrgmName, _) <- asCResT $ desPrgm (rawPrgm', annotName, [])
+    [annotDesPrgm'] <- desFinalPasses [(annotDesPrgm, annotPrgmName, [], [])]
+    tprgmsTrace <- maybe (getTPrgmWithTrace ctss) (\n -> ctssGetFrom ssfTPrgmWithTrace n ctss) scope'
+    tprgms <- maybe (getTPrgm ctss) (\n -> ctssGetFrom ssfTPrgm n ctss) scope'
+    let annotDeps = map snd3 $ graphToNodes tprgms
+    [(annotTprgm, _, _)] <- asCResT $ typeCheckToRes $ typecheckPrgms [(annotDesPrgm', [], map fst3 $ graphToNodes tprgmsTrace)]
+    let joinedTprgms = graphFromEdges ((annotTprgm, annotPrgmName, annotDeps) : graphToNodes tprgms)
+    let targetModes = evalAllTargetModes annotTprgm
+    maybeAnnots <- asCResT $ evalAnnots stages annotPrgmName joinedTprgms
+    let annots' = H.fromList $ map (first (getMetaID . getExprMeta)) maybeAnnots
+    return $ mapMetaRawPrgm (zip3MetaFun (interleaveMeta $ interleavePrgm annotTprgm) (interleaveMeta targetModes) (interleaveMeta annots')) rawPrgm'
 
 -- | The service a doc server answers from: the files it was given, read and watched.
 --
@@ -99,6 +250,10 @@ mkDocService :: [String] -> IO CTSS
 mkDocService baseFileNames = do
   ss <- ctssBaseFiles buildCtssConfig baseFileNames
   ctssWatch ss
+  -- Read when the files change, rather than when a request arrives. A reader following a page is not
+  -- making requests — that is what following is — so a service which only read when asked would go
+  -- on showing them a page whose file has been written to.
+  ctssWatchLive ss
   return ss
 
 docApiBase :: Bool -> CTSS -> ScottyM ()
@@ -147,46 +302,15 @@ docApiBase readonly ctss = do
           Just rawPrgm' -> setRawPrgm ctss prgmName' rawPrgm'
     maybeJson resp
 
+  -- A page is shown from its own program and the programs it imports, so a read of any of those
+  -- reaches it. It also names the pages either side of it in the order pages are read in, so a page
+  -- appearing or going reaches it too, which 'changeReaches' answers for everything alike.
   get "/api/page" $ do
-    liftAndCatchIO $ ctssRead ctss
     prgmName <- param "prgmName"
-    resp <- liftAndCatchIO $ runCResT $ do
-      prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
-      rawPrgm' <- ctssLookupReq ssfRaw prgmName' ctss
-      maybeTPrgmRes <- lift $ runCResT $ do
-        -- The page and what it imports, rather than every page the doc server holds. What a page
-        -- shows is compiled from the program the page is in, so the pages beside it are pages this
-        -- request would compile to show nothing of. Inside the inner run because it is now a
-        -- request which can fail: 'ctssGet' passes over a page it has not computed, where
-        -- 'ctssGetFrom' requires the ones it was asked for, and a page which cannot be compiled is
-        -- still a page to serve with its source and what it says.
-        tprgms <- ctssGetFrom ssfTPrgm prgmName' ctss
-        case graphLookup prgmName' tprgms of
-          Just tprgm -> do
-            reachTprgms <- asCResT $ prgmFromGraphData prgmName' tprgms
-            return (tprgm, reachTprgms)
-          Nothing -> fail $ printf "Could not find typechecked program %s" (show prgmName)
-      let maybeTPrgm = fmap fst maybeTPrgmRes
-      let maybeTPrgmFull = fmap snd maybeTPrgmRes
-      maybeAnnots <- lift $ runCResT $ getEvalAnnots ctss prgmName'
-      let tprgm' = maybe H.empty interleavePrgm (cresToMaybe maybeTPrgm)
-      let targetModes = maybe H.empty evalAllTargetModes (cresToMaybe maybeTPrgmFull)
-      let annots' = maybe H.empty (H.fromList . map (first (getMetaID . getExprMeta))) (cresToMaybe maybeAnnots)
-      let prgm' = mapMetaRawPrgm (zip3MetaFun (interleaveMeta tprgm') (interleaveMeta targetModes) (interleaveMeta annots')) rawPrgm'
-      maybeSource <- lift $ runCResT $ getSource ctss prgmName'
-      -- The pages either side of this one travel with it, so a page knows where it sits without the
-      -- webdocs holding a list of every page to work it out from. A page the order cannot place is
-      -- reported rather than served as though it were an end of the order: 'sidebarOrder' fails only
-      -- when a page has no path to open it by or two pages share one, which is a doc server that
-      -- cannot be navigated at all.
-      pages <- lift $ ctssKeys ctss
-      order <- either fail return $ sidebarOrder pages
-      let (prevPage, nextPage) = maybe (Nothing, Nothing) (`neighbours` order) (impDisp prgmName')
-      return $ PageResp prgm' (cresToMaybe maybeSource) prevPage nextPage (impDir prgmName')
-    maybeJson resp
+    prgmName' <- liftAndCatchIO $ mkDesCanonicalImportStr buildCtssConfig prgmName
+    serve ctss (Shown (Just prgmName')) (pageResp ctss prgmName')
 
   get "/api/annot" $ do
-    liftAndCatchIO $ ctssRead ctss
     annot <- param "annot"
     -- An annotation is local to the program it is written in, so evaluating a free-standing one has
     -- to say which program it is written in. Naming a page evaluates the annotation as though it sat
@@ -195,25 +319,8 @@ docApiBase readonly ctss = do
     -- every loaded file, which is what a listing of the whole program wants.
     scope <- fmap Just (param "prgmName") `rescue` (\_ -> return Nothing)
     scope' <- liftAndCatchIO $ traverse (mkDesCanonicalImportStr buildCtssConfig) scope
-    stages <- liftAndCatchIO $ maybe (ctssStagePrgms ctss) (ctssStagePrgmsFrom ctss) scope'
-    resp <- liftAndCatchIO $ runCResT $ do
-      rawPrgm <- case runParser pExpr "<annot>" annot of
-        Left err     -> fail $ show $ errorBundlePretty err
-        Right parsed -> return (RawPrgm [] [RawStatementTree (RawAnnot parsed) []])
-      let annotName = desFileImport $ mkRawFileImport $ RawValue emptyMetaN "<annot>"
-      let rawPrgm' = addRawPrgmMetaIDs (parseMetaIDScope annotName) rawPrgm
-      (annotDesPrgm, annotPrgmName, _) <- asCResT $ desPrgm (rawPrgm', annotName, [])
-      [annotDesPrgm'] <- desFinalPasses [(annotDesPrgm, annotPrgmName, [], [])]
-      tprgmsTrace <- maybe (getTPrgmWithTrace ctss) (\n -> ctssGetFrom ssfTPrgmWithTrace n ctss) scope'
-      tprgms <- maybe (getTPrgm ctss) (\n -> ctssGetFrom ssfTPrgm n ctss) scope'
-      let annotDeps = map snd3 $ graphToNodes tprgms
-      [(annotTprgm, _, _)] <- asCResT $ typeCheckToRes $ typecheckPrgms [(annotDesPrgm', [], map fst3 $ graphToNodes tprgmsTrace)]
-      let joinedTprgms = graphFromEdges ((annotTprgm, annotPrgmName, annotDeps) : graphToNodes tprgms)
-      let targetModes = evalAllTargetModes annotTprgm
-      maybeAnnots <- asCResT $ evalAnnots stages annotPrgmName joinedTprgms
-      let annots' = H.fromList $ map (first (getMetaID . getExprMeta)) maybeAnnots
-      return $ mapMetaRawPrgm (zip3MetaFun (interleaveMeta $ interleavePrgm annotTprgm) (interleaveMeta targetModes) (interleaveMeta annots')) rawPrgm'
-    maybeJson resp
+    -- Scoped to the page it names, or to every page there is where it names none.
+    serve ctss (Shown scope') (annotResp ctss scope' annot)
 
 
 docApi :: Bool -> [String] -> IO ()

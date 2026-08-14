@@ -14,7 +14,7 @@ import {initVimMode, VimMode} from 'monaco-vim';
 import {Link, useNavigate} from 'react-router-dom';
 
 import {rawExprMeta, RawExpr, RawObjArr} from './Common/Syntax';
-import {useQuery, useApi, Loading, KeyWord, ReachesTree, ConfigContext, PrgmNameContext, PageDirContext, ReloadContext, annotLink, annotApi, writeExpr} from './Common/Common';
+import {useQuery, useApi, useLiveApi, Loading, KeyWord, ReachesTree, ConfigContext, PrgmNameContext, PageDirContext, ReloadContext, annotLink, annotApi, writeExpr} from './Common/Common';
 import {Value} from './Common/Value';
 
 const DEBUG_NO_EVAL = false;
@@ -92,7 +92,10 @@ function DocsPage(props) {
   const {prgmName} = props;
 
   const [reloadKey, setReloadKey] = useState(0);
-  let apiResult = useApi(`/api/page?prgmName=${prgmName}`, reloadKey);
+  // Followed rather than asked about once: the server holds the question open and answers it again
+  // whenever the page, or a page it imports, is written to. A change to any other page is one the
+  // server never sends here, so the window a reader is reading is not disturbed by an edit elsewhere.
+  let apiResult = useLiveApi(`/api/page?prgmName=${prgmName}`, reloadKey);
   const [mode, setMode] = useState('view');
   const [editedSource, setEditedSource] = useState(null);
   const [editorInstance, setEditorInstance] = useState(null);
@@ -395,6 +398,13 @@ function SaveStatus(props) {
 // Which expression is being replaced does not arise here, since the page is the one annotation, so
 // the id it is named by is passed over. Nothing is written: an annotation compiled from a query has
 // no file to be written back to.
+//
+// A live annotation is followed rather than asked about once, so a navigation shows the pages there
+// now are. Only the annotations which are the whole of what is on screen take it -- the navigation
+// and the annotation route -- because following one holds a connection open for as long as it is
+// shown, and a browser allows six to a server. An annotation drilled into from inside a page is made
+// when a reader picks something and thrown away when they pick the next thing, so it is never shown
+// long enough to go stale.
 function AnnotPage(props) {
   const query = useQuery();
   const routeAnnot = props.annot || query.get("annot");
@@ -412,7 +422,12 @@ function AnnotPage(props) {
   // is the case this exists for.
   const reload = useCallback(() => setReloadKey(k => k + 1), []);
 
-  let apiResult = useApi(annotApi(annot, prgmName), reloadKey);
+  // Both are asked, one of them about nothing, because which one answers must not change how many
+  // hooks this renders. A hook given no path asks nothing and follows nothing.
+  const annotUrl = annotApi(annot, prgmName);
+  const asked = useApi(props.live ? null : annotUrl, reloadKey);
+  const followed = useLiveApi(props.live ? annotUrl : null, reloadKey);
+  let apiResult = props.live ? followed : asked;
 
   return (
     <PrgmNameContext.Provider value={prgmName}>

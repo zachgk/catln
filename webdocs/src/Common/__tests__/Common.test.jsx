@@ -6,6 +6,7 @@ import {
   tagJoin,
   isTopType,
   useApi,
+  useLiveApi,
   Loading,
   Notes,
   Type,
@@ -137,6 +138,92 @@ describe('useApi', () => {
     const { result } = renderHook(() => useApi('/api/test'), { wrapper: Providers })
     await waitFor(() => expect(result.current.isLoaded).toBe(true))
     expect(result.current.error).toBe('Unknown result type')
+  })
+})
+
+// A display which follows what it is showing, rather than asking about it once. The server holds the
+// question open and answers it again whenever a file the answer was compiled from is written to, so
+// what these cases drive is answers arriving without anything having asked for them.
+describe('useLiveApi', () => {
+  const success = data => ({ tag: 'Success', contents: [data, []] })
+
+  it('follows the path it was given, and stops when the display goes', async () => {
+    const { result, unmount } = renderHook(() => useLiveApi('/api/page?prgmName=a'), { wrapper: Providers })
+    await waitFor(() => expect(result.current.isLoaded).toBe(true))
+
+    const source = eventSourceFor('/api/page?prgmName=a')
+    expect(source).toBeTruthy()
+    expect(source.readyState).toBe(1)
+
+    // Closed when the display goes, which is what takes it off the list the server is following. One
+    // left open is a question the server answers again on every change, for nobody.
+    unmount()
+    expect(source.readyState).toBe(2)
+  })
+
+  it('takes an answer that arrives with nothing having asked', async () => {
+    global.fetch = vi.fn(() => Promise.resolve({ status: 200, json: () => Promise.resolve(success({ v: 'first' })) }))
+    const { result } = renderHook(() => useLiveApi('/api/page?prgmName=a'), { wrapper: Providers })
+    await waitFor(() => expect(result.current.data).toEqual({ v: 'first' }))
+
+    act(() => eventSourceFor('/api/page').frame(success({ v: 'second' })))
+    expect(result.current.data).toEqual({ v: 'second' })
+  })
+
+  it('shows the notes of a page that failed to compile, and keeps following it', async () => {
+    const { result } = renderHook(() => useLiveApi('/api/page?prgmName=a'), { wrapper: Providers })
+    await waitFor(() => expect(result.current.isLoaded).toBe(true))
+
+    // A page that will not compile is an ordinary answer carrying notes, not a connection that
+    // failed -- so it is shown, and the page is still followed for the edit which fixes it.
+    act(() => eventSourceFor('/api/page').frame({ tag: 'ResFail', contents: [{ tp: 'CNoteError', msg: 'nope' }] }))
+    expect(result.current.notes).toEqual([{ tp: 'CNoteError', msg: 'nope' }])
+    expect(eventSourceFor('/api/page').readyState).toBe(1)
+
+    act(() => eventSourceFor('/api/page').frame(success({ v: 'fixed' })))
+    expect(result.current.data).toEqual({ v: 'fixed' })
+    expect(result.current.notes).toEqual([])
+  })
+
+  it('keeps what is on screen when the connection drops, and takes the next answer', async () => {
+    const { result } = renderHook(() => useLiveApi('/api/page?prgmName=a'), { wrapper: Providers })
+    await waitFor(() => expect(result.current.isLoaded).toBe(true))
+    act(() => eventSourceFor('/api/page').frame(success({ v: 'shown' })))
+
+    // The browser opens the connection again by itself, so a page already on screen stays there
+    // rather than blinking to an error for a connection which is about to come back.
+    act(() => eventSourceFor('/api/page').fail())
+    expect(result.current.error).toBeFalsy()
+    expect(result.current.data).toEqual({ v: 'shown' })
+
+    act(() => eventSourceFor('/api/page').frame(success({ v: 'after' })))
+    expect(result.current.data).toEqual({ v: 'after' })
+  })
+
+  // The answer to a page a reader has left cannot land on the page they went to. Closing is what a
+  // display does when its path changes, and a closed connection hands over nothing -- so unlike a
+  // request asked once, whose answer arrives whenever it arrives, this cannot show the wrong page.
+  it('takes no answer meant for the page it has left', async () => {
+    const { result, rerender } = renderHook(({ path }) => useLiveApi(path), {
+      wrapper: Providers,
+      initialProps: { path: '/api/page?prgmName=a' },
+    })
+    await waitFor(() => expect(result.current.isLoaded).toBe(true))
+    const first = eventSourceFor('prgmName=a')
+
+    rerender({ path: '/api/page?prgmName=b' })
+    act(() => eventSourceFor('prgmName=b').frame(success({ v: 'b' })))
+    expect(result.current.data).toEqual({ v: 'b' })
+
+    // The page left over answers late. It was closed when the display moved, so nothing comes of it.
+    act(() => first.frame(success({ v: 'a, at last' })))
+    expect(result.current.data).toEqual({ v: 'b' })
+  })
+
+  it('follows nothing when there is no path', () => {
+    const { result } = renderHook(() => useLiveApi(null), { wrapper: Providers })
+    expect(result.current.isLoaded).toBe(false)
+    expect(eventSources()).toEqual([])
   })
 
   it('re-fetches when path changes', async () => {

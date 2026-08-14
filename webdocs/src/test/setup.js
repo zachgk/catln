@@ -25,6 +25,54 @@ beforeEach(() => {
   })
 })
 
+// jsdom has no EventSource, which is what a display that follows its page opens. Stubbed rather than
+// polyfilled: what the suites need is to answer one, so each stub records itself and hands over the
+// frames a test pushes into it. Fresh per test, since a source left open by one suite would be
+// answered by the next.
+class FakeEventSource {
+  constructor(url) {
+    this.url = url
+    this.readyState = 1
+    this.onmessage = null
+    this.onerror = null
+    openSources.push(this)
+    // The first frame is the answer a request asked once would have got, so it is taken from
+    // whatever the suite is answering requests with. A suite that mocks one URL therefore answers
+    // both the display that asks about it once and the display that follows it, and the cases about
+    // everything other than following need to know nothing about any of this.
+    Promise.resolve()
+      .then(() => global.fetch(url))
+      .then(res => {
+        if (res.status !== 200) {
+          throw new Error(res.statusText)
+        }
+        return res.json()
+      })
+      .then(res => this.frame(res), () => this.fail())
+  }
+  // A frame from the server: what one answer to the question this source asked looks like.
+  //
+  // A closed source hands over nothing, as a real one does not. That is what makes a display which
+  // follows its page immune to answers arriving out of order: closing is what a display does when it
+  // moves to another page, so the answer to the page it left cannot land on the page it went to.
+  frame(res) { if (this.readyState === 1) this.onmessage?.({data: JSON.stringify(res)}) }
+  // The doc server going away. The browser opens the connection again by itself, so this is only
+  // ever a report; a later frame is what takes it back.
+  fail() { if (this.readyState === 1) this.onerror?.({}) }
+  close() { this.readyState = 2 }
+}
+
+let openSources = []
+
+// The sources a test opened, and the one it opened for a given URL.
+global.eventSources = () => openSources
+global.eventSourceFor = url => openSources.filter(s => s.url.includes(url)).at(-1)
+
+beforeEach(() => {
+  openSources = []
+  global.EventSource = FakeEventSource
+})
+
 // Default fetch mock - tests override as needed
 global.fetch = vi.fn(() =>
   Promise.resolve({

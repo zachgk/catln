@@ -112,7 +112,12 @@ describe('DocsPage', () => {
     expect(global.fetch).toHaveBeenCalledWith('/api/page?prgmName=test%2Fmain.ct')
   })
 
-  it('shows error on failed fetch', async () => {
+  // A page is followed rather than asked about once, and a connection which fails says only that it
+  // failed -- there is no status behind it to report, and the browser opens another by itself. So a
+  // reader who never got the page is told the doc server is not answering. A page which failed to
+  // compile is not this: that comes back as an ordinary answer carrying notes, which is the case
+  // below.
+  it('reports a doc server that never answered', async () => {
     global.fetch = mockFetch({
       page: () => Promise.resolve({ status: 500, statusText: 'Server Error' }),
     })
@@ -120,7 +125,7 @@ describe('DocsPage', () => {
     render(<Providers><DocsPage prgmName="bad" /></Providers>)
 
     await waitFor(() => {
-      expect(screen.getByText('Error: Server Error')).toBeInTheDocument()
+      expect(screen.getByText('Error: The doc server is not answering')).toBeInTheDocument()
     })
   })
 

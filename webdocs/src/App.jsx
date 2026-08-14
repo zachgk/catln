@@ -69,8 +69,12 @@ function Root() {
                 naming THIS one costs nothing, since it is the page the reader arrives at anyway.
                 It is constant across routes, so the sidebar is compiled once rather than again
                 for each page. Never left unnamed, which would have it inherit the page an /annot
-                route is scoped to. */}
-            {rootPage && <AnnotPage annot="#sidebar" prgmName={rootPage} />}
+                route is scoped to.
+
+                Live, so that a page appearing or going shows here without the window beside it
+                moving. It is a separate question held open by the server, so a change to the page
+                being read reaches that page's own display and not this one. */}
+            {rootPage && <AnnotPage annot="#sidebar" prgmName={rootPage} live />}
           </Box>
         </Box>
         <Box sx={{flexGrow: 1, minWidth: 0, p: 2}}>
@@ -127,7 +131,8 @@ const router = createBrowserRouter(
       <Route path="" element={<Navigate to={"/docs"} />} />
       <Route path="docs" element={<Docs />} />
       <Route path="docs/:prgmName" element={<Docs />} />
-      <Route path="annot" element={<AnnotPage />} />
+      {/* Live, as it is the whole of what is on screen. */}
+      <Route path="annot" element={<AnnotPage live />} />
     </Route>
   )
 );

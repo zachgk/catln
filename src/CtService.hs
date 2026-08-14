@@ -12,9 +12,14 @@
 --------------------------------------------------------------------
 
 module CtService where
-import           Control.Concurrent      (MVar, modifyMVar_, newMVar, readMVar,
-                                          withMVar)
-import           Control.Monad           (forM, forM_, unless, when)
+import           Control.Concurrent      (MVar, forkIO, modifyMVar, modifyMVar_,
+                                          newMVar, readMVar, withMVar)
+import           Control.Concurrent.STM  (STM, TVar, atomically, modifyTVar',
+                                          newTVarIO, readTVar, readTVarIO,
+                                          retry, writeTVar)
+import           Control.Exception       (bracket)
+import           Control.Monad           (forM, forM_, forever, unless, void,
+                                          when)
 import           Control.Monad.Trans     (lift)
 import           CRes
 import           CtConstants             (testAnnot)
@@ -33,8 +38,9 @@ import           Eval.Common             (EvalMetaDat, MockIO, StagePrgms (..),
                                           Val (StrVal, TupleVal), oaTestId)
 import           Eval.Testing            (TestDesc (..), evalPrints, evalTest,
                                           runTestDesc)
-import           FileWatch               (Watch, Watcher, allCovered, covered,
-                                          startWatcher, watchReads, withPending)
+import           FileWatch               (Watch, Watcher, allCovered,
+                                          awaitSettled, covered, startWatcher,
+                                          watchReads, withPending)
 import           Semantics               (CTSSConfig)
 import           Semantics.Annots        (hasAnnot)
 import           Semantics.Prgm
@@ -70,8 +76,66 @@ data CTSSDat = CTSSDat {
   --
   -- Not the lock the graph is behind: a read holding that one across its parsing would put every
   -- read behind a build, which holds it for a whole SCC.
-  ctssReadLock      :: MVar ()
+  ctssReadLock      :: MVar (),
+  -- | What readers of the service have open, for a service read from by something which is watching
+  -- rather than asking.
+  ctssShown         :: TVar Displays
                                        }
+
+-- | What one thing a reader has open is compiled from, which is what decides whether a read reaches
+-- it.
+--
+-- Held by the service rather than worked out by whoever is showing it, because deciding it needs the
+-- import graph the change was computed in — and because what a reader is told has to be about the
+-- one thing in front of them rather than about the program. A write low in the standard library
+-- invalidates nearly every page there is, so a service which said what had changed would be sending
+-- a message about the whole program in order to say something about one page.
+newtype Shown = Shown {
+  -- | The page whose program it is compiled from, where it is compiled from one. What that page
+  -- imports comes with it: a page is shown from its own program and the programs it imports, which
+  -- is the closure 'ctssClearInvalidations' walks the other way. Nothing for something compiled
+  -- against every page there is.
+  shPage :: Maybe FileImport
+                      }
+
+-- | The displays readers have open, and how to wake each.
+data Displays = Displays {
+  -- | The number the next display opened is given. Numbered rather than keyed by what is shown,
+  -- because two readers looking at one page are two displays to wake, and one of them closing is not
+  -- the other closing.
+  dsNext :: Int,
+  -- | Each display, with the flag which says a read reached it.
+  dsOpen :: H.HashMap Int (Shown, TVar Bool)
+                         }
+
+-- | What a read changed.
+--
+-- It does not leave the service. It is the whole import graph's worth of consequence — a page low in
+-- the standard library carries almost every other page with it — and what a reader is told is
+-- whether it reached what they have open ('changeReaches').
+data ReadChange = ReadChange {
+  -- | The pages the read dropped built work from: those something they were read from was written
+  -- to, and every page which imports one of them at any depth.
+  rcChanged :: S.HashSet FileImport,
+  -- | Whether the pages there are have changed. Something shown from the pages there are is changed
+  -- by a page appearing or going without any page it is compiled from being invalidated.
+  rcPages   :: Bool
+                             }
+
+-- | Whether a read reaches what is being shown.
+--
+-- Everything shown is about which pages there are, whatever else it is about, so a page appearing or
+-- going reaches all of it: a navigation lists the pages, and a page names the pages either side of it
+-- in the order they are read in. That is a change no page it is compiled FROM was invalidated by,
+-- which is why it is asked separately.
+--
+-- Reaching a display is not the same as changing it. A page appearing between two others leaves every
+-- page but its neighbours saying exactly what it said, and whoever is answering says nothing where
+-- the answer has not changed ('WebDocs.serve') — which is decided by the answer rather than guessed
+-- at from here, since what a thing shows is its own business.
+changeReaches :: ReadChange -> Shown -> Bool
+changeReaches ReadChange{rcChanged, rcPages} Shown{shPage} =
+  rcPages || maybe (not $ S.null rcChanged) (`S.member` rcChanged) shPage
 
 data SSF = SSF {
   ssfSource         :: Maybe String,
@@ -101,7 +165,8 @@ emptyCTSS config = do
   return $ CTSS v
 
 newCTSSDat :: CTSSConfig -> [String] -> IO CTSSDat
-newCTSSDat config baseFileNames = CTSSDat config baseFileNames (graphFromEdges []) Nothing <$> newMVar ()
+newCTSSDat config baseFileNames = CTSSDat config baseFileNames (graphFromEdges []) Nothing
+  <$> newMVar () <*> newTVarIO (Displays 0 H.empty)
 
 -- | A page as a read of it left it, with nothing yet built from it.
 --
@@ -150,6 +215,92 @@ ctssWatch ctss@(CTSS ssmv) = do
   -- would leave a service watching nothing, and answering forever with what it read once.
   ctssRewatch ctss watcher
 
+-- | Read the service whenever a file it was read from is written to, and wake whatever that reached.
+--
+-- The reads are the reads a request makes; what this adds is who asks for them and when. A reader
+-- watching a page is not asking — that is what watching is — so without this a doc server holding a
+-- page nobody is clicking on never notices that the page has changed.
+--
+-- For a service that is watching ('ctssWatch'); there is nothing to wait on without a watcher, and
+-- a service told what changed by whoever changed it has nothing to wait for.
+ctssWatchLive :: CTSS -> IO ()
+ctssWatchLive ctss@(CTSS ssmv) = do
+  CTSSDat{ctssWatcher} <- readMVar ssmv
+  forM_ ctssWatcher $ \watcher -> void $ forkIO $ forever $ do
+    awaitSettled watcher settleDelay
+    readAll
+  where
+    -- What one save looks like from outside: the file, a rename, the directory holding it. A reader
+    -- is served by one reading of all of them rather than by three readings of one, so the reading
+    -- waits for the writing to stop before it starts.
+    settleDelay = 150000
+    -- Read until a read finds nothing. Watching a directory for the first time is what finds a page
+    -- written between being read and being watched, and 'ctssRewatch' leaves such a page stale
+    -- rather than read — it is the NEXT read that reads it. Reading once would leave those pages
+    -- until something asked, and for a reader who is watching rather than asking that is forever.
+    --
+    -- It ends because a read with nothing written to and every path watched gives every page back
+    -- ('ctssUnchanged'), which invalidates nothing, which is a read that found nothing.
+    readAll = do
+      change <- ctssReadOf ctss []
+      unless (S.null (rcChanged change) && not (rcPages change)) readAll
+
+-- | Follow what a display is shown from, for as long as it is open. What the action is given is a
+-- wait which ends when a read has reached the display.
+--
+-- Bracketed rather than opened and closed, so a reader closing a tab, a connection dropping and a
+-- handler failing all take the display off the list the same way. One left on it would be woken for
+-- nobody, forever.
+--
+-- The display is on the list before the action runs, so a change arriving between opening it and
+-- showing what it holds for the first time is one the next wait ends on, rather than one nothing
+-- ever hears about.
+--
+-- The wait is handed back unrun, so that whoever is waiting can wait for something else at the same
+-- time — a connection holds one of these open for as long as a reader is reading, and has its own
+-- reasons to stop waiting.
+ctssFollow :: CTSS -> Shown -> (STM () -> IO a) -> IO a
+ctssFollow (CTSS ssmv) shown act = do
+  CTSSDat{ctssShown} <- readMVar ssmv
+  bracket (open ctssShown) (close ctssShown) $ \(_, reached) -> act (await reached)
+  where
+    open displays = do
+      reached <- newTVarIO False
+      atomically $ do
+        Displays{dsNext, dsOpen} <- readTVar displays
+        writeTVar displays $ Displays (dsNext + 1) (H.insert dsNext (shown, reached) dsOpen)
+        return (dsNext, reached)
+    close displays (i, _) = atomically $ modifyTVar' displays $ \d -> d{dsOpen=H.delete i (dsOpen d)}
+    -- Taken rather than read, so a change is waited out once. A change arriving while whoever was
+    -- woken by the last one is still working is left set, so the next wait ends at once instead of
+    -- passing over it — showing what a page held two changes ago is the one thing a display which
+    -- follows its page must not do.
+    await reached = do
+      hit <- readTVar reached
+      unless hit retry
+      writeTVar reached False
+
+-- | How many displays are being followed.
+--
+-- Nothing acts on this — it is here to be asserted against. A display left on the list after it
+-- closed is woken for nobody, which shows in no other way than by being counted.
+ctssFollowing :: CTSS -> IO Int
+ctssFollowing (CTSS ssmv) = do
+  CTSSDat{ctssShown} <- readMVar ssmv
+  H.size . dsOpen <$> readTVarIO ctssShown
+
+-- | Wake every display a read reached.
+--
+-- Asked of the displays rather than of the pages: a change reaching a thousand pages nobody has open
+-- wakes nothing, and the work is what is being read rather than what has changed.
+ctssNotify :: CTSS -> ReadChange -> IO ()
+ctssNotify (CTSS ssmv) change = do
+  CTSSDat{ctssShown} <- readMVar ssmv
+  atomically $ do
+    Displays{dsOpen} <- readTVar ctssShown
+    forM_ (H.elems dsOpen) $ \(shown, reached) ->
+      when (changeReaches change shown) $ writeTVar reached True
+
 -- | Read the files the service was given, and take up whatever they now say.
 --
 -- Only the pages whose files have been written to are read again; every other page is given back by
@@ -163,7 +314,7 @@ ctssWatch ctss@(CTSS ssmv) = do
 -- read started from would throw away everything a build ('ctssBuildSCC') or a store ('ctssStore')
 -- committed while the read was parsing.
 ctssRead :: CTSS -> IO ()
-ctssRead ctss = ctssReadOf ctss []
+ctssRead ctss = void $ ctssReadOf ctss []
 
 -- | 'ctssRead', additionally reading in full the programs of the pages named.
 --
@@ -177,18 +328,19 @@ ctssRead ctss = ctssReadOf ctss []
 -- would win over the change: 'buildSSF' below cannot match a program it holds against a read which
 -- brought none, so the page would be replaced by one with no program and everything built from it
 -- thrown away.
-ctssReadOf :: CTSS -> [FileImport] -> IO ()
+ctssReadOf :: CTSS -> [FileImport] -> IO ReadChange
 ctssReadOf ctss@(CTSS ssmv) load = do
   CTSSDat{ctssConfig, ctssBaseFileNames, ctssData=before, ctssWatcher, ctssReadLock} <- readMVar ssmv
-  withMVar ctssReadLock $ \() -> withWritten ctssWatcher $ \written -> do
+  change <- withMVar ctssReadLock $ \() -> withWritten ctssWatcher $ \written -> do
     given <- ctssUnchanged ctssWatcher written [(prgmName, ssfRead ssf) | (ssf, prgmName, _) <- graphToNodes before]
     let unchanged = foldr H.delete given load
     let held = [prgmName | (ssf, prgmName, _) <- graphToNodes before, isJust (ssfRaw ssf)]
     let needed = S.fromList $ mapMaybe impDisp $ load ++ held
     rawPrgms <- readFiles ctssConfig needed unchanged (map mkRawImportStr ctssBaseFileNames)
-    modifyMVar_ ssmv $ \ss -> do
+    change <- modifyMVar ssmv $ \ss -> do
       let (data', invalidations) = unzip $ map (buildSSF (ctssData ss)) $ graphToNodes rawPrgms
-      return $ ctssClearInvalidations (catMaybes invalidations) ss{ctssData=graphFromEdges data'}
+      let (changed, ss') = ctssClearInvalidations (catMaybes invalidations) ss{ctssData=graphFromEdges data'}
+      return (ss', ReadChange changed (pageKeys (ctssData ss) /= pageKeys (ctssData ss')))
     -- The watches only need seeing to where the read read something, since they are watches on what
     -- the reads read. A read which gave every page back left every path it was watching for exactly
     -- as it was, and gathering them up again to say so would be work for every path of every page,
@@ -196,7 +348,13 @@ ctssReadOf ctss@(CTSS ssmv) load = do
     let read' = graphToNodes rawPrgms
     let readNothing = length read' == H.size unchanged && all (\(_, prgmName, _) -> H.member prgmName unchanged) read'
     unless readNothing $ forM_ ctssWatcher $ ctssRewatch ctss
+    return change
+  -- Outside the read, so that a reader woken by it can read the service without waiting on the read
+  -- that woke them, and so that a display failing to be woken is not a change put back as unread.
+  ctssNotify ctss change
+  return change
   where
+    pageKeys = S.fromList . map snd3 . graphToNodes
     buildSSF held (page, prgmName, imports) = case graphLookup prgmName held of
       -- A page given back unread is the page already held, so there is nothing to compare it
       -- against and nothing to invalidate. The comparison below walks the whole syntax tree, so a
@@ -297,14 +455,20 @@ ctssRewatch (CTSS ssmv) watcher = do
     current <- unchangedPages freshly
     forM_ freshly $ \(prgmName, _) -> unless (H.member prgmName current) $ ctssStale (CTSS ssmv) prgmName
 
-ctssClearInvalidations :: [FileImport] -> CTSSDat -> CTSSDat
-ctssClearInvalidations invalidations ss@CTSSDat{ctssData=(g, nodeFromVertex, vertexFromKey)} = ss{ctssData=fmapGraphWithKey maybeClear $ ctssData ss}
+-- | Drop what was built from the pages a change reached, and say which pages those were.
+--
+-- Which pages a change reached is the graph walked the other way: edges run from a page to its
+-- imports, so the pages which import a changed one are what 'transposeG' finds. Answered as well as
+-- acted on, because it is also what decides whether the change reaches anything a reader has open
+-- ('changeReaches'), and working it out a second time would be walking the graph a second time.
+ctssClearInvalidations :: [FileImport] -> CTSSDat -> (S.HashSet FileImport, CTSSDat)
+ctssClearInvalidations invalidations ss@CTSSDat{ctssData=(g, nodeFromVertex, vertexFromKey)} = (propagated, ss{ctssData=fmapGraphWithKey maybeClear $ ctssData ss})
   where
-    propagated = map (snd3 . nodeFromVertex) $ foldMap (foldMap (:[])) $ dfs (transposeG g) (mapMaybe vertexFromKey invalidations)
+    propagated = S.fromList $ map (snd3 . nodeFromVertex) $ foldMap (foldMap (:[])) $ dfs (transposeG g) (mapMaybe vertexFromKey invalidations)
     maybeClear prgmName ssf
       -- Rebuilt from the read the page already has: an invalidation drops what was built from a
       -- page, not what the page was read from, so the next read still gives it back unread.
-      | prgmName `elem` propagated = newSSF (ssfRead ssf)
+      | prgmName `S.member` propagated = newSSF (ssfRead ssf)
       | null invalidations = ssf
       -- Which tests a page has, and what they find, is decided over the whole program the page
       -- belongs to rather than over the page and its imports (see 'ctssTestsFrom'). Invalidation
@@ -467,7 +631,7 @@ ctssLoadOf ctss@(CTSS ssmv) select = aux S.empty
         case filter (`S.member` asked) unread of
           [] -> return ()
           again -> fail $ printf "Asked for %s and was given them back unread" (intercalate ", " $ map (show . impRaw) again)
-        ctssReadOf ctss unread
+        void $ ctssReadOf ctss unread
         aux $ S.union asked $ S.fromList unread
 
 -- | Read the programs of these pages, where a read has left them unread.
@@ -601,7 +765,7 @@ setSource ctss@(CTSS ssmv) prgmName src = do
         -- time, so a read which decided for itself would answer with what the page said before it
         -- was written -- which is the very thing dropping the read times is here to prevent.
         ctssStale ctss prgmName
-        ctssReadOf ctss [prgmName]
+        void $ ctssReadOf ctss [prgmName]
 
 -- This does not use ctssGet because it doesn't require building
 getRawPrgm :: CTSS -> CResT IO PPrgmGraphData

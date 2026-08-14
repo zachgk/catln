@@ -1,10 +1,12 @@
 import React from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider, createRoutesFromElements, Route } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { Root } from '../App'
+import DocsPage from '../DocsPage'
 import sidebarResponse from '../test/fixtures/sidebar-response.json'
+import pageResponse from '../test/fixtures/page-response.json'
 
 const theme = createTheme()
 
@@ -108,6 +110,54 @@ describe('Root', () => {
 
     // Contracted rather than unmounted, so showing it again is not a recompile of its annotation.
     expect(screen.getByText('test')).toBeInTheDocument()
+  })
+
+  // The sidebar and the window beside it are separate questions the server holds open, which is what
+  // makes them independent: a change reaching one is a change the server never sends to the other.
+  // A doc server which said what had changed and let the browser sort it out would have to be right
+  // about this in two places; here it can only be right or wrong in one.
+  it('follows the navigation and the page being read as two separate questions', async () => {
+    global.fetch = vi.fn(url => Promise.resolve({
+      status: 200,
+      json: () => Promise.resolve(url.startsWith('/api/page') ? pageResponse
+        : annotFor(url) || { tag: 'Success', contents: [{ readonly: false, rootPage: ROOT_PAGE }, []] }),
+    }))
+    const router = createMemoryRouter(
+      createRoutesFromElements(
+        <Route path="/" element={<Root />}>
+          <Route path="docs/:prgmName" element={<DocsPage prgmName="/test/id.ct" />} />
+        </Route>
+      ),
+      { initialEntries: ['/docs/%2Ftest%2Fid.ct'] }
+    )
+    render(<ThemeProvider theme={theme}><RouterProvider router={router} /></ThemeProvider>)
+
+    await waitFor(() => expect(screen.getByText('test')).toBeInTheDocument())
+    await waitFor(() => expect(eventSourceFor('/api/page')).toBeTruthy())
+
+    const nav = eventSourceFor('/api/annot?annot=%23sidebar')
+    const page = eventSourceFor('/api/page')
+    expect(nav).toBeTruthy()
+    expect(nav).not.toBe(page)
+
+    // A page appearing is a change to which pages there are, so the navigation is answered again.
+    // The window beside it is compiled from one page's program, which the new page is nothing to, so
+    // the server sends it nothing and it is not even re-rendered from a stale answer.
+    const grown = [...sidebarResponse, { tag: 'SidebarFile', sbName: 'new.ct', sbPath: '/new.ct', sbDir: '/' }]
+    act(() => nav.frame(annotResponse('sidebar', {
+      tag: 'TupleVal',
+      name: '/Catln/Doc/Show/Sidebar',
+      args: { '/pages': { tag: 'StrVal', contents: JSON.stringify(grown) } },
+    })))
+    await waitFor(() => expect(screen.getByText('new.ct')).toBeInTheDocument())
+    expect(eventSourceFor('/api/page')).toBe(page)
+    expect(page.readyState).toBe(1)
+
+    // And the other way round: the page being written to is answered again, and the navigation is
+    // left exactly as the reader had it.
+    act(() => page.frame(pageResponse))
+    expect(screen.getByText('new.ct')).toBeInTheDocument()
+    expect(eventSourceFor('/api/annot?annot=%23sidebar')).toBe(nav)
   })
 
   it('opens as it was left', async () => {
