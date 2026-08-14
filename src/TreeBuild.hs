@@ -50,11 +50,21 @@ leafsFromMeta m = error $ printf "leafFromMeta with invalid type: %s" (show m)
 buildTBEnv :: ResBuildPrims -> TBPrgm -> TBEnv
 buildTBEnv primEnv prgm@Prgm{prgmObjMap} = baseEnv
   where
-    baseEnv = TBEnv "" resEnv prgm (mkTypeEnv prgm){tePrgmEnv=True, teArgModeProjection=True}
+    baseEnv = TBEnv "" resEnv prgm (mkTypeEnv prgm){tePrgmEnv=True, teArgModeProjection=True} untyped
     resEnv = H.fromListWith (++) $ mapMaybe resFromArrow $ flatObjectMap prgmObjMap
 
+    -- | A definition with no type at all, which is what a definition that failed to typecheck leaves
+    -- behind: there is nothing to enumerate the leaves of, so there is no arrow to be called at.
+    isUntyped oa = getExprType (oaObjExpr oa) == PTopType
+    untyped = S.fromList [oaObjPath oa | oa@ObjArr{oaObj=Just{}} <- flatObjectMap prgmObjMap, isUntyped oa]
+
     resFromArrow oa@ObjArr{oaObj=Just{}, oaArr, oaAnnots} = case oaArr of
-      _ | getExprType (oaObjExpr oa) == PTopType -> error $ printf "buildTBEnv failed with a topType input in %s" (show oa)
+      -- Left out rather than raised on. A program is typechecked before it is built, so meeting one
+      -- of these means the type errors have already been reported and this is their consequence, not
+      -- a new failure to announce — and announcing it by raising took out the whole environment,
+      -- including every definition that was fine. So the environment is what could be built, and a
+      -- call that wanted this one is told in 'findResArrows' where the name is in hand.
+      _ | isUntyped oa -> Nothing
       Just (Just _, _) -> Just (oaObjPath oa, [(objLeaf, Just oa, TCObjArr oa) | objLeaf <- leafsFromMeta (getExprMeta $ oaObjExpr oa)])
       Just (Nothing, _) | isJust (getRuntimeAnnot oaAnnots) -> Just (oaObjPath oa, [(objLeaf, Just oa, usePrim oa $ H.lookup (mkName $ fromJust $ getRuntimeAnnot oaAnnots) primEnv) | objLeaf <- leafsFromMeta (getExprMeta $ oaObjExpr oa)])
       Just (Nothing, _) -> Nothing
@@ -227,8 +237,12 @@ sortArrows _ = return . uncurry (++) . partition isNonLinear
 
 -- | This will find a single arrow (from the objMap, primitives, macros, or args) from the src type
 findResArrows :: TBEnv -> [ObjSrc] -> PartialType -> CRes [ResBuildEnvItem]
-findResArrows TBEnv{tbResEnv, tbTypeEnv} os srcType@PartialType{ptName=srcName} = case argArrows ++ globalArrows of
+findResArrows TBEnv{tbResEnv, tbTypeEnv, tbUntyped} os srcType@PartialType{ptName=srcName} = case argArrows ++ globalArrows of
   arrows@(_:_) -> return arrows
+  -- Said as what it is. The definition is there in the program and has no type, so it was left out
+  -- of the environment ('buildTBEnv'); reporting that it could not be found would send whoever reads
+  -- this looking for a definition that is in front of them.
+  [] | S.member srcName tbUntyped -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Cannot call %s, which did not typecheck" (show srcType)]
   [] -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Failed to find any arrows from %s" (show srcType)]
   where
     globalArrows = case suffixLookupInDict srcName tbResEnv of
@@ -497,6 +511,17 @@ buildArrow env objPartial oa@ObjArr{oaAnnots, oaArr=Just (Just expr, am)} = do
 buildRootOA :: TBEnv -> EObjArr -> CRes (ObjArr TExpr TBMetaDat)
 buildRootOA env oa = do
   let env' = env{tbName = printf "root"}
+  -- A definition with no type has no source type to be built from. Reported rather than raised on,
+  -- for the reason 'buildTBEnv' leaves such a definition out: the type errors that produced it have
+  -- already been reported, and taking the whole build down over it loses every definition that was
+  -- fine along with it.
+  --
+  -- Only that one case is decided here, and the source type below is left exactly as lazy as it was.
+  -- Asking for it up front would decide it for EVERY definition, and a definition whose object is not
+  -- one single type -- which is a great many of them -- is built without its source type ever being
+  -- looked at. Forcing it turned all of those from built into dropped.
+  when (getExprType (oaObjExpr oa) == PTopType) $
+    CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Cannot build %s, which did not typecheck" (show $ oaObjPath oa)]
   let objSrc = (getSingleton $ getExprType $ oaObjExpr oa, oa)
   toTEObjArr env' [objSrc] False False oa
 

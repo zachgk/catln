@@ -413,6 +413,10 @@ data TBEnv = TBEnv {
   , tbResEnv  :: ResBuildEnv
   , tbPrgm    :: Prgm Expr EvalMetaDat
   , tbTypeEnv :: TypeEnv (ObjArrTypeGraph Expr EvalMetaDat)
+  -- | The definitions left out of 'tbResEnv' because they have no type to be called at, which is
+  -- what a definition that failed to typecheck leaves behind. Kept rather than forgotten so that a
+  -- call which cannot find one is told why, instead of being told only that nothing matched.
+  , tbUntyped :: S.HashSet TypeName
   }
 
 instance Eq MacroFunction where
