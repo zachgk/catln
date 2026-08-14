@@ -950,8 +950,21 @@ matchesNPath (NPath True rn) (NPath True n) = rn == n
 matchesNPath (NPath False rn) (NPath _ n)   = rn `L.isSuffixOf` n
 matchesNPath (NPath True _) (NPath False _) = False
 
+-- | Whether a name written relative to some scope names this one: a relative name matches an
+-- absolute name it is a path suffix of, broken at a path separator.
+--
+-- The anonymous type is named for having no name, so its name is the separator and nothing else, and
+-- it has no suffix to be matched by — it names only itself. Saying so is not a special case so much
+-- as the absence of one: every other name matches by the components after its last separator, and
+-- this name has none.
+--
+-- Without it the anonymous type is a suffix of every name whose own last component is empty, and one
+-- such name exists: integer division is written @//@, so 'CtConstants.operatorName' makes it
+-- @/operator//@ and the anonymous type @/@ is a suffix of that. The unit type was therefore the union
+-- of itself and integer division, which is not a single type — so asking what single type it is
+-- raised, and only nobody asking kept the standard library building.
 relativeNameMatches :: RelativeName -> Name -> Bool
-relativeNameMatches rn n = rn == n || ('/' : nameStr rn) `L.isSuffixOf` ('/' : nameStr n)
+relativeNameMatches rn n = rn == n || (nameStr rn `notElem` ["", "/"] && ('/' : nameStr rn) `L.isSuffixOf` ('/' : nameStr n))
 
 relativeNameFilter :: RelativeName -> [Name] -> [Name]
 relativeNameFilter rn = filter (relativeNameMatches rn)
