@@ -248,7 +248,7 @@ findResArrows TBEnv{tbResEnv, tbTypeEnv} os srcType@PartialType{ptName=srcName} 
 buildPartialCallTree :: TBEnv -> [ObjSrc] -> VisitedArrows -> Type -> PartialType -> Type -> CRes TCallTree
 buildPartialCallTree TBEnv{tbTypeEnv} os _ _ srcType destType | isSubtypeOfWithObjSrcs tbTypeEnv os (singletonType srcType) destType = return TCTId
 buildPartialCallTree env@TBEnv{tbTypeEnv} os visitedArrows bound srcType destType = do
-  wrapCRes (printf "Failed to build arrow tree from %s to %s" (show srcType) (show destType)) $ do
+  wrapCRes (printf "Failed to build arrow tree from %s to %s\n\t(bound: %s)\n\t(objSrcs: %s)" (show srcType) (show destType) (show bound) (show $ map fst os)) $ do
     resArrows <- findResArrows env os srcType
     resArrows' <- sortArrows env resArrows
     resArrows'' <- handleElseArrows resArrows'
