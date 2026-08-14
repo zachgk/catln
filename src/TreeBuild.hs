@@ -511,18 +511,17 @@ buildArrow env objPartial oa@ObjArr{oaAnnots, oaArr=Just (Just expr, am)} = do
 buildRootOA :: TBEnv -> EObjArr -> CRes (ObjArr TExpr TBMetaDat)
 buildRootOA env oa = do
   let env' = env{tbName = printf "root"}
-  -- A definition with no type has no source type to be built from. Reported rather than raised on,
-  -- for the reason 'buildTBEnv' leaves such a definition out: the type errors that produced it have
-  -- already been reported, and taking the whole build down over it loses every definition that was
-  -- fine along with it.
+  -- A definition is built from the one type its object has, which is asked for up front and reported
+  -- where there is none. A definition that has no single type is one that did not typecheck, so the
+  -- type errors have already been reported and this is their consequence rather than a new failure —
+  -- and reporting it keeps every definition that did typecheck, where raising loses all of them.
   --
-  -- Only that one case is decided here, and the source type below is left exactly as lazy as it was.
-  -- Asking for it up front would decide it for EVERY definition, and a definition whose object is not
-  -- one single type -- which is a great many of them -- is built without its source type ever being
-  -- looked at. Forcing it turned all of those from built into dropped.
-  when (getExprType (oaObjExpr oa) == PTopType) $
-    CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Cannot build %s, which did not typecheck" (show $ oaObjPath oa)]
-  let objSrc = (getSingleton $ getExprType $ oaObjExpr oa, oa)
+  -- Asked here rather than left to be raised on wherever it is first looked at. Whether it is looked
+  -- at depends on what the definition turns out to need, so leaving it to be raised on makes a
+  -- program build or die on the shape of its definitions, which is not something to leave to chance.
+  objSrc <- case maybeGetSingleton (getExprType $ oaObjExpr oa) of
+    Just objType -> return (objType, oa)
+    Nothing      -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Cannot build %s, whose object is not one type" (show $ oaObjPath oa)]
   toTEObjArr env' [objSrc] False False oa
 
 buildRoot :: TBEnv -> TBExpr -> PartialType -> Type -> CRes (TExpr TBMetaDat)
