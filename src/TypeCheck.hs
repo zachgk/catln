@@ -37,7 +37,12 @@ type FinalTypecheckTuplePrgm = (TPrgm, VPrgm, TraceConstrain)
 type TypecheckFileResult = H.HashMap FileImport (GraphNodes TypecheckTuplePrgm FileImport)
 
 runConstraintsLimit :: Integer
-runConstraintsLimit = 20
+-- Raised from 20: a name-ambiguous call (map.ct's @insert@ also matching list.ct's nested
+-- @/sorted./Data/List/insert@) is only disambiguated once the AddArg chain reaches the
+-- refuting graft (~epoch 8-14 — application chains propagate one ArrowTo level per epoch),
+-- so such programs legitimately converge in 21-25 epochs. The headroom is NOT for masking
+-- non-convergence: unbounded growth is a bug (and was fixed, not budgeted around).
+runConstraintsLimit = 25
 
 typecheckPrgmsSt :: [PPrgm] -> [TPrgm] -> StateT FEnv TypeCheckResult ([TPrgm], [VPrgm], TraceConstrain)
 typecheckPrgmsSt pprgms typechecked = do
