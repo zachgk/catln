@@ -692,6 +692,45 @@ ctssGetFrom f prgmName (CTSS ssmv) = do
 requireComputed :: Maybe (CRes r) -> CRes r
 requireComputed = fromMaybe (CErr [MkCNote $ GenCErr Nothing "Value not computed in catln service"])
 
+-- | The pages of a scope which can be evaluated: those whose programs typechecked, with why the rest
+-- could not carried as notes rather than failing the lot.
+--
+-- A page which did not typecheck has definitions carrying no type, and an environment cannot be
+-- built over one at all — 'TreeBuild.buildTBEnv' raises rather than reporting when it meets a
+-- definition typed 'PTopType'. That is what 'ssfTPrgm' failing such a page is guarding: an
+-- evaluation handed the whole scope does not report the type error, it dies on it.
+--
+-- So the pages which cannot be built are left out and said in the notes. What is evaluated is then
+-- what compiled: an annotation which reads none of the broken page — a navigation is about which
+-- pages there are and reads no program at all — answers exactly as it did before anything broke,
+-- one which reads it fails to find what it names, and either way the type errors are in the answer.
+-- Leaving them in would make every annotation in a doc server go out with the first page a reader
+-- breaks, which is the moment a doc server is most worth reading.
+ctssEvaluableFrom :: (SSF -> Maybe (CRes a)) -> Maybe FileImport -> CTSS -> CResT IO (GraphData a FileImport)
+ctssEvaluableFrom f scope ctss@(CTSS ssmv) = do
+  lift $ maybe (ctssBuildAll ctss) (ctssBuildFrom ctss) scope
+  CTSSDat{ctssData} <- lift $ readMVar ssmv
+  let inScope = graphToNodes $ maybe ctssData (`graphFilterReaches` ctssData) scope
+  -- An evaluation over every page passes over one nothing has computed and an evaluation scoped to a
+  -- page requires the pages it was asked for, which is the distinction 'ctssGet' and 'ctssGetFrom'
+  -- already draw. Kept, so that leaving out what cannot be built is the only thing that is new here.
+  let asked = maybe (filter (isJust . f . fst3) inScope) (const inScope) scope
+  -- Judged by 'ssfTPrgm', which is the stage that fails a page that did not typecheck, whatever
+  -- stage the caller is asking for: a page whose type check failed is one nothing downstream of it
+  -- can be built from either.
+  --
+  -- Only a page that FAILED, never one that was not computed. The two are different things and only
+  -- the first is understood here: a page nothing has built is a page this was asked about too early,
+  -- which 'requireComputed' below reports as it always did. Leaving it out instead would answer as
+  -- though the page held nothing.
+  let failedToTypecheck ssf = case ssfTPrgm ssf of
+        Just CErr{} -> True
+        _           -> False
+  let (broken, buildable) = partition (failedToTypecheck . fst3) asked
+  asCResT $ do
+    _ <- CRes (concatMap (getCNotes . requireComputed . ssfTPrgm . fst3) broken) ()
+    mapMGraph (requireComputed . f) (graphFromEdges buildable)
+
 ctssGetJoined :: (Monoid a) => (SSF -> Maybe (CRes a)) -> CTSS -> CResT IO a
 ctssGetJoined f ctss = do
   graph <- ctssGet f ctss

@@ -226,8 +226,15 @@ annotResp ctss scope' annot = do
     let rawPrgm' = addRawPrgmMetaIDs (parseMetaIDScope annotName) rawPrgm
     (annotDesPrgm, annotPrgmName, _) <- asCResT $ desPrgm (rawPrgm', annotName, [])
     [annotDesPrgm'] <- desFinalPasses [(annotDesPrgm, annotPrgmName, [], [])]
-    tprgmsTrace <- maybe (getTPrgmWithTrace ctss) (\n -> ctssGetFrom ssfTPrgmWithTrace n ctss) scope'
-    tprgms <- maybe (getTPrgm ctss) (\n -> ctssGetFrom ssfTPrgm n ctss) scope'
+    -- The pages of the scope which can be evaluated, with the rest reported rather than fatal. A
+    -- page which did not typecheck used to take every annotation in the scope out with it, including
+    -- a navigation that reads no program at all — see 'ctssEvaluableFrom' for why it cannot simply
+    -- be left in.
+    --
+    -- One fetch rather than two, so the program the annotation is checked against cannot be a
+    -- different one from the program it is evaluated in.
+    tprgmsTrace <- ctssEvaluableFrom ssfTPrgmWithTrace scope' ctss
+    let tprgms = fmapGraph fst3 tprgmsTrace
     let annotDeps = map snd3 $ graphToNodes tprgms
     [(annotTprgm, _, _)] <- asCResT $ typeCheckToRes $ typecheckPrgms [(annotDesPrgm', [], map fst3 $ graphToNodes tprgmsTrace)]
     let joinedTprgms = graphFromEdges ((annotTprgm, annotPrgmName, annotDeps) : graphToNodes tprgms)

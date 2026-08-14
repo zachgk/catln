@@ -9,12 +9,16 @@
 -- looking at one page not to be interrupted by a change to another.
 module Syntax.LiveReloadTests where
 
-import           Control.Concurrent     (threadDelay)
+import           Control.Concurrent     (modifyMVar_, threadDelay)
 import           Control.Concurrent.STM (STM, atomically, orElse)
 import           Control.Exception      (SomeException, try)
-import           CtService              (CTSS, ReadChange (..), Shown (..),
+import           CRes                   (CNote (..), CNoteI (..), CRes (..),
+                                         runCResT)
+import           CtService              (CTSS (..), CTSSDat (..),
+                                         ReadChange (..), SSF (..), Shown (..),
                                          changeReaches, ctssBaseFiles,
-                                         ctssFollow, ctssFollowing, ctssKeys,
+                                         ctssEvaluableFrom, ctssFollow,
+                                         ctssFollowing, ctssGetFrom, ctssKeys,
                                          ctssReadOf, ctssWatch, ctssWatchLive)
 import           Data.List              (isPrefixOf, sort)
 import           Data.Time.Clock        (addUTCTime, getCurrentTime)
@@ -25,6 +29,7 @@ import           System.Directory       (setModificationTime)
 import           System.FilePath        ((</>))
 import           Test.Tasty
 import           Test.Tasty.HUnit
+import           Utils                  (fmapGraphWithKey, graphToNodes)
 
 -- | The pages under a directory whose own display a read reaches, by the path each is shown at.
 --
@@ -197,11 +202,58 @@ testWatchLive = testCase "a write wakes a display with nothing having asked" $ d
     assertBool "the display was not woken by a write nothing asked about" =<< waitFor await
 
 
+-- | Stand in for a build having left these on the pages.
+--
+-- Written into the graph rather than built for real, because what the two cases below assert is what
+-- a CHANGE does to what a build left, and building the real thing costs either the standard library
+-- or -- for a page that does not typecheck -- minutes of the type checker hunting a name that is not
+-- there. That a real type error leaves 'ssfTPrgm' failed is 'buildSCCPipeline's doing and is asserted
+-- by every other test in this suite going through a real build.
+seedBuilt :: CTSS -> (FileImport -> SSF -> SSF) -> IO ()
+seedBuilt (CTSS ssmv) f = modifyMVar_ ssmv $ \d -> return d{ctssData = fmapGraphWithKey f (ctssData d)}
+
+-- | A page that stops compiling does not take the rest of the scope with it.
+--
+-- What made this matter: a navigation is about which pages there are and reads no program at all,
+-- yet a doc server answered it with the type errors of a page it says nothing about — so the moment
+-- a reader broke any file, the navigation went out. It cannot simply be left in either: an
+-- environment cannot be built over a definition that failed to typecheck at all
+-- ('TreeBuild.buildTBEnv' raises rather than reporting on one), which is what 'ssfTPrgm' failing
+-- such a page is guarding. So it is left out and said in the notes, which is what this asserts.
+testBrokenPageLeftOut :: TestTree
+testBrokenPageLeftOut = testCase "a page that does not typecheck is left out, and said in the notes" $ do
+  dir <- caseDir "live-broken"
+  now <- getCurrentTime
+  writeLater now (dir </> "main.ct") "import \"broken.ct\"\nok= 1\n"
+  writeLater now (dir </> "broken.ct") "broken= noSuchNameAnywhere\n"
+  ctss <- ctssBaseFiles testCtssConfig [dir </> "main.ct"]
+  main' <- pageAt (dir </> "main.ct") ctss
+  broken <- pageAt (dir </> "broken.ct") ctss
+  let note = MkCNote $ GenCErr Nothing "broken.ct does not typecheck"
+  seedBuilt ctss $ \name ssf -> ssf{ssfBuilt = True, ssfTPrgm = Just $
+    if name == broken then CErr [note] else pure mempty}
+
+  -- What the guard does on its own: the whole scope fails, so nothing in it can be evaluated.
+  guarded <- runCResT $ ctssGetFrom ssfTPrgm main' ctss
+  case guarded of
+    CRes _ _   -> assertFailure "the page which does not typecheck was offered to be evaluated"
+    CErr notes -> assertBool "the failure said nothing about why" (not $ null notes)
+
+  evaluable <- runCResT $ ctssEvaluableFrom ssfTPrgm (Just main') ctss
+  case evaluable of
+    CErr _ -> assertFailure "a page which does not typecheck failed the whole scope"
+    CRes notes graph -> do
+      assertBool "the type errors were dropped rather than carried as notes" (not $ null notes)
+      assertEqual "the scope is not the pages which compiled"
+        [dir </> "main.ct"] (sort [path | (_, name, _) <- graphToNodes graph
+                                        , Just path <- [impDisp name], dir `isPrefixOf` path])
+
 liveReloadTests :: TestTree
 liveReloadTests = testGroup "LiveReload" [
   testImporters,
   testUnchangedText,
   testPageAdded,
   testFollowCloses,
-  testWatchLive
+  testWatchLive,
+  testBrokenPageLeftOut
                                          ]
