@@ -2443,8 +2443,12 @@ partialCoversSat typeEnv vaenv gatePos hyps sup0 sub0 =
     -- self-entries) keep their partial-local reading.
     ambientRef p t@(TypeVar tv@(TVVar n) TVInt)
       | not (H.member n (ptVars p)) = case H.lookup tv vaenv of
-          Just b | b /= t -> b
-          _               -> t
+          -- Only a CONCRETE binding resolves: a ⊤-bound or var-valued entry leaves the
+          -- reference flexible (the TVExt rule's "bound to Top: unconstrained, so still
+          -- bindable per value"), so two frames' flexible spellings for the same dimension
+          -- still compare flexible-vs-flexible rather than ⊤-vs-var.
+          Just b | b /= PTopType, not (isTypeVar b) -> b
+          _                                         -> t
     ambientRef _ t = t
     -- Resolve a slot's SELF-referential recursion variable through its own partial's @ptVars@. A
     -- recursive field like @tail -> ConsList[/T=$_T]@ names the partial's own parameter @/T@ but is
@@ -2960,9 +2964,13 @@ isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subAr
           -- descent rule, not the leaf rule — see 'substituteTVExt'). It denotes the ambient
           -- binding (@Node2[/K=$/MK]@ under a declaration's @[/MK=∀Ord]@ means @/K=∀Ord@), so it
           -- must not read as a bindable-per-value local in 'flexibleVar' when the env binds it.
+          -- Only a CONCRETE binding resolves: a ⊤-bound or var-valued entry leaves the reference
+          -- flexible (mirroring the TVExt rule's "bound to Top: unconstrained, so still bindable
+          -- per value") — resolving ⊤ literally would flip the slot from flexible-var to a
+          -- non-var ⊤ and fail the flexible-vs-flexible guard against another frame's spelling.
           Nothing                        -> case H.lookup tv vaenv of
-            Just b | b /= t -> b
-            _               -> t
+            Just b | b /= PTopType, not (isTypeVar b) -> b
+            _                                         -> t
         step t = t
     flexibleVar (TypeVar _ TVInt) = True -- partial-local var: bindable per value
     flexibleVar (TypeVar v TVExt) = case H.lookup v vaenv of
@@ -4282,6 +4290,15 @@ foldRecursiveType _ _ t = t
 leafNameSet :: Type -> S.HashSet TypeName
 leafNameSet (UnionType _ pos _) = S.fromList $ map ptName $ splitUnionType pos
 leafNameSet _                   = S.empty
+
+-- | The single name every top-level leaf of a plain union shares, when there is exactly one
+-- (e.g. an application's resolved type after name-ambiguity pruning); 'Nothing' for an empty,
+-- mixed-name, predicate-topped, or non-union type.
+uniqueLeafName :: Type -> Maybe TypeName
+uniqueLeafName t@(UnionType Nothing _ _) = case S.toList (leafNameSet t) of
+  [n] -> Just n
+  _   -> Nothing
+uniqueLeafName _ = Nothing
 
 -- | True when the union is unrolled at least one extra level: some partial has, within its
 -- arguments, an /explicit/ (non-predicate) occurrence of a partial whose name is one of the

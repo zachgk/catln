@@ -271,7 +271,7 @@ evalExpr (TTupleApply _ (_, b) (EAppArg oa@ObjArr{oaObj=Just (TValue _ "/io"), o
     Just io -> return $ TupleVal n (H.insert (nameStr (oaObjPath oa)) io args)
     Nothing -> error $ printf "evalExpr with no io"
 evalExpr (TTupleApply _ (_, b) (EAppVar{})) = evalExpr b
-evalExpr (TTupleApply _ (_, b) (EAppArg oa)) = do
+evalExpr (TTupleApply m (_, b) (EAppArg oa)) = do
   (TupleVal n args) <- evalExpr b
   v <- case oaArr oa of
     Just (Just oaExpr, _) -> case oaObj oa of
@@ -282,7 +282,16 @@ evalExpr (TTupleApply _ (_, b) (EAppArg oa)) = do
       _ -> error $ printf "Unsupported eval argument of %s" (show oa)
     Just (Nothing, _) -> error $ printf "Missing arrExpr in evalExpr TupleApply with %s - %s" (show b) (show oa)
     Nothing -> error $ printf "Missing arrExpr in evalExpr TupleApply with %s - %s" (show b) (show oa)
-  return $ TupleVal n (H.insert (nameStr (oaObjPath oa)) v args)
+  -- A bare relative value's meta can be a NAME-AMBIGUITY union (@insert@ matching both
+  -- /Data/Map/insert and list.ct's nested /sorted./Data/List/insert — no args at the bare
+  -- value, so nothing refutes a candidate there) and its eval picks an arbitrary leaf. The
+  -- APPLICATION's meta is disambiguated (an applied arg the name's objects don't declare
+  -- prunes the candidate, 'addArgToType'), so each application level re-keys the tuple by
+  -- its own resolved name; a still-ambiguous or exotic meta keeps the base's name.
+  let n' = case uniqueLeafName (getMetaType m) of
+        Just nm -> nameStr nm
+        Nothing -> n
+  return $ TupleVal n' (H.insert (nameStr (oaObjPath oa)) v args)
 evalExpr (TTupleApply _ (_, _) (EAppSpread a)) = error $ printf "Not yet implemented evalExpr %s" (show a)
 evalExpr (TCalls _ b callTree) = do
   b' <- evalExpr b
