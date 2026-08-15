@@ -558,7 +558,34 @@ evalDebugPrgm function prgm = unsafePerformIO $ do
     CRes notes (code, io, res) -> do
       io
       out <- getMockIOOutput mockIO
-      return $ CRes notes (DebugRun code out res)
+      return $ CRes notes (DebugRun (Just code) out Nothing res)
+
+-- | Runs one expression of a program for a debugger reporting on it: the value it evaluated to, and
+-- the tree of what it evaluated on the way.
+--
+-- Unlike 'evalDebugPrgm' this is a plain 'CRes' with no 'unsafePerformIO' and no mock, because there
+-- is nothing here to capture. An expression is not given an @\/io@ handle the way 'evalRunPrgm' gives
+-- one to a program, so it cannot print, and an expression whose value /is/ an unperformed 'IOVal' is
+-- reported as that value rather than performed: running a page's effects because a reader opened a
+-- debugger on one of its expressions is not what was asked for.
+--
+-- Built exactly the way a @#print@'s @p@ is ('evalDShowAnnot'): toward @DShow@, and from no enclosing
+-- object. The destination is what makes the expression evaluate at all — a tree built toward the
+-- expression's own type has nothing to resolve and comes back as the unevaluated application it
+-- started as — and @DShow@ is the destination that says "a value that can be shown", which is what a
+-- debugger page has to have to show one.
+--
+-- The empty object context is not a simplification: an expression asked about over the API is written
+-- inside no definition, so there are no arguments of one for it to read. It is the context a global
+-- annotation is evaluated in, which is what this is. Building it this way is also why no source
+-- partial is needed, and so why 'getExprPartialType' — which raises on a type that is not exactly one,
+-- as a bare string literal's is not — is not on this path at all.
+evalDebugExprPrgm :: EExpr -> EPrgm -> CRes DebugRun
+evalDebugExprPrgm input prgm = do
+  let env@Env{evTbEnv} = evalBaseEnv prgm
+  tree <- toTExprDest evTbEnv [] input (emptyMetaT $ classPartial $ partialVal "/Catln/Doc/DShow")
+  (val, env') <- runStateT (evalExpr tree) env
+  return $ DebugRun Nothing "" (Just val) (evalResult env')
 
 evalBuild :: String -> FileImport -> EPrgmGraphData -> CResT IO (Val, EvalResult)
 evalBuild function prgmName prgmGraphData = do

@@ -31,26 +31,33 @@ import           Data.List               (elemIndex, intercalate, partition,
 import           Data.Maybe
 import           Data.UUID               (UUID)
 import           Eval                    (evalAnnots, evalBuild, evalBuildAll,
-                                          evalDebugPrgm, evalPageValues,
-                                          evalRun, evalRunMock)
-import           Eval.Common             (EvalMetaDat, MockIO, StagePrgms (..),
-                                          TExpr, TestResult,
+                                          evalDebugExprPrgm, evalDebugPrgm,
+                                          evalPageValues, evalRun, evalRunMock,
+                                          prgmFromGraphData)
+import           Eval.Common             (DebugRun, EvalMetaDat, MockIO,
+                                          StagePrgms (..), TExpr, TestResult,
                                           Val (StrVal, TupleVal), oaTestId)
 import           Eval.Testing            (TestDesc (..), evalPrints, evalTest,
                                           runTestDesc)
 import           FileWatch               (Watch, Watcher, allCovered,
                                           awaitSettled, covered, startWatcher,
                                           watchReads, withPending)
+import           MapMeta                 (parseMetaIDScope)
 import           Semantics               (CTSSConfig)
 import           Semantics.Annots        (hasAnnot)
 import           Semantics.Prgm
 import           Semantics.Types         (Name)
-import           Syntax.Ct.Desugarf      (desFinalPasses, desPrgm, validPrgm)
-import           Syntax.Ct.MapRawMeta    (rawStatementExprIds)
+import           Syntax.Ct.Desugarf      (desFinalPass, desFinalPasses, desPrgm,
+                                          validPrgm)
+import           Syntax.Ct.Desugarf.Expr (desFileImport)
+import           Syntax.Ct.MapRawMeta    (addRawPrgmMetaIDs,
+                                          rawStatementExprIds)
+import           Syntax.Ct.Parser.Expr   (pExpr)
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 import           Syntax.Parsers
 import           System.FilePath         (takeDirectory)
+import           Text.Megaparsec         (errorBundlePretty, runParser)
 import           Text.Printf
 import           TypeCheck               (typecheckPrgms)
 import           TypeCheck.Common        (TPrgm, TraceConstrain, VPrgm,
@@ -580,7 +587,7 @@ buildSCCPipeline ctssData sccNamesSet sccNodes pages = do
       let desNodesForFinal = [(des, name, peerDes, extDepDes)
             | (des, name, _) <- desResults
             , let peerDes = [d | (d, n, _) <- desResults, n /= name]]
-      finalDes <- desFinalPasses desNodesForFinal
+      let finalDes = desFinalPasses desNodesForFinal
 
       -- Step 4: Collect typechecked data from already-built dependencies
       let extDepTC = mapMaybe (\name ->
@@ -735,10 +742,23 @@ ctssEvaluableFrom f scope ctss@(CTSS ssmv) = do
   lift $ maybe (ctssBuildAll ctss) (ctssBuildFrom ctss) scope
   CTSSDat{ctssData} <- lift $ readMVar ssmv
   let inScope = graphToNodes $ maybe ctssData (`graphFilterReaches` ctssData) scope
+  asCResT $ evaluablePages f (isJust scope) inScope
+
+-- | The pure half of 'ctssEvaluableFrom': which of a set of pages already built can be evaluated,
+-- given the stage to read off each. 'ctssEvaluableFrom' is this plus the building and reading that
+-- produce that set; separate so that a caller which already holds the pages — the debugger's
+-- expression compile, 'debugExprRun', which runs inside an evaluation and so has no 'IO' — can ask
+-- the same question without asking for the same work again.
+--
+-- @scoped@ is whether the pages are the ones an evaluation was scoped to, which is what decides
+-- whether a page nothing has computed is an error or is simply not one of the pages being asked
+-- about.
+evaluablePages :: (SSF -> Maybe (CRes a)) -> Bool -> [(SSF, FileImport, [FileImport])] -> CRes (GraphData a FileImport)
+evaluablePages f scoped inScope = do
   -- An evaluation over every page passes over one nothing has computed and an evaluation scoped to a
   -- page requires the pages it was asked for, which is the distinction 'ctssGet' and 'ctssGetFrom'
   -- already draw. Kept, so that leaving out what cannot be built is the only thing that is new here.
-  let asked = maybe (filter (isJust . f . fst3) inScope) (const inScope) scope
+  let asked = if scoped then inScope else filter (isJust . f . fst3) inScope
   -- Judged by 'ssfTPrgm', which is the stage that fails a page that did not typecheck, whatever
   -- stage the caller is asking for: a page whose type check failed is one nothing downstream of it
   -- can be built from either.
@@ -751,9 +771,8 @@ ctssEvaluableFrom f scope ctss@(CTSS ssmv) = do
         Just CErr{} -> True
         _           -> False
   let (broken, buildable) = partition (failedToTypecheck . fst3) asked
-  asCResT $ do
-    _ <- CRes (concatMap (getCNotes . requireComputed . ssfTPrgm . fst3) broken) ()
-    mapMGraph (requireComputed . f) (graphFromEdges buildable)
+  _ <- CRes (concatMap (getCNotes . requireComputed . ssfTPrgm . fst3) broken) ()
+  mapMGraph (requireComputed . f) (graphFromEdges buildable)
 
 ctssGetJoined :: (Monoid a) => (SSF -> Maybe (CRes a)) -> CTSS -> CResT IO a
 ctssGetJoined f ctss = do
@@ -1044,7 +1063,9 @@ getTBPrgm = ctssGet ssfTBPrgm
 -- Neither the type inference nor a debug run is available here. Points are numbered per typecheck
 -- run, so the traces of every page joined together would be a set of colliding numbers rather than an
 -- answer, and a run needs one program with one entry point where the join has as many as it has
--- pages. An evaluation that wants either has to name the page it is asking about
+-- pages. Compiling an expression is out for the same reason a run is: an expression means what the
+-- page it is written in makes it mean, and the join of every page is not a page anything was written
+-- in. An evaluation that wants any of them has to name the page it is asking about
 -- ('ctssStagePrgmsFrom').
 ctssStagePrgms :: CTSS -> IO StagePrgms
 ctssStagePrgms ctss@(CTSS ssmv) = do
@@ -1052,7 +1073,7 @@ ctssStagePrgms ctss@(CTSS ssmv) = do
   CTSSDat{ctssData} <- readMVar ssmv
   let ssfs = map fst3 $ graphToNodes ctssData
   let pages = return $ map snd3 $ graphToNodes ctssData
-  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) (notScoped "type inference to report on") (const $ notScoped "program to run") pages pages (notScoped "tests to report on") (pageValues ctssData)
+  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) (notScoped "type inference to report on") (const $ notScoped "program to run") (const $ notScoped "expression to run") pages pages (notScoped "tests to report on") (pageValues ctssData)
   where
     notScoped :: String -> CRes a
     notScoped what = CErr [MkCNote $ GenCErr Nothing $ "This evaluation is not scoped to a single page, so it has no " ++ what]
@@ -1072,6 +1093,9 @@ ctssStagePrgmsFrom ctss@(CTSS ssmv) prgmName = do
   -- Runs against the page's own typecheck program rather than the evaluation's, which for an
   -- annotation is that program joined with the synthetic one holding the annotation itself.
   let debugRun fun = evalDebugPrgm fun =<< joinedStage ssfTPrgm ssfs
+  -- Against the pages of the scope rather than their joined program, since compiling the expression
+  -- typechecks it against them one by one, the way a page of the scope was itself typechecked.
+  let debugExpr = debugExprRun prgmName (graphToNodes reaches)
   -- No test run: unlike every stage here, one cannot be looked up — it has to be produced by
   -- running the page's tests, which is the work an evaluation with nothing to report on them must
   -- not be made to do. An evaluation that does have a test to report on is given one by whoever
@@ -1080,9 +1104,45 @@ ctssStagePrgmsFrom ctss@(CTSS ssmv) prgmName = do
   -- annotation reporting on the pages there are answer the same wherever it is written. It is the
   -- graph as it is, so nothing is built to produce it.
   let allPages = return $ map snd3 $ graphToNodes ctssData
-  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) typeInferred debugRun (return $ map snd3 $ graphToNodes reaches) allPages notRun (pageValues reaches)
+  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) typeInferred debugRun debugExpr (return $ map snd3 $ graphToNodes reaches) allPages notRun (pageValues reaches)
   where
     notRun = CErr [MkCNote $ GenCErr Nothing "This evaluation was not given a run of the page's tests"]
+
+-- | Compiles one expression, written as Catln source, as though it were a statement of a page, and
+-- runs it. This is 'StagePrgms.spDebugExpr' of a scope: the same compile an annotation asked for over
+-- @\/api\/annot@ gets ('WebDocs.annotResp'), with the expression run for its evaluation tree instead
+-- of displayed.
+--
+-- Compiled rather than looked up because the expressions worth debugging are largely ones the program
+-- does not contain: a test case's input was generated, and never existed as anything but the text of
+-- the call that ran. So the expression is compiled against the page the same way the page's own
+-- statements were, which is also what makes the names in it mean what they mean on that page.
+--
+-- Pure, so that it can be handed to an evaluation, which has no 'IO' to run: every step of the
+-- compile is a rewrite of a program that is already read and already built.
+debugExprRun :: FileImport -> [(SSF, FileImport, [FileImport])] -> String -> CRes DebugRun
+debugExprRun prgmName scopeNodes src = do
+  parsed <- case runParser pExpr "<debug>" src of
+    Left err     -> fail $ errorBundlePretty err
+    Right parsed -> return parsed
+  let rawPrgm = RawPrgm [] [RawStatementTree (RawAnnot parsed) []]
+  let exprName = desFileImport $ mkRawFileImport $ RawValue emptyMetaN "<debug>"
+  let rawPrgm' = addRawPrgmMetaIDs (parseMetaIDScope exprName) rawPrgm
+  (desP, desName, _) <- desPrgm (rawPrgm', exprName, [])
+  let desP' = desFinalPass (desP, desName, [], [])
+  tprgmsTrace <- evaluablePages ssfTPrgmWithTrace True scopeNodes
+  let deps = graphToNodes $ fmapGraph fst3 tprgmsTrace
+  (exprTprgm, _, _) <- case typeCheckToRes $ typecheckPrgms [(desP', [], map fst3 $ graphToNodes tprgmsTrace)] of
+    CErr notes   -> CErr notes
+    CRes _ []    -> fail $ printf "The debugger could not typecheck %s" src
+    CRes _ (t:_) -> return t
+  prgm <- prgmFromGraphData desName $ graphFromEdges ((exprTprgm, desName, map snd3 deps) : deps)
+  -- The one statement parsed above, now compiled. Read back off the program rather than kept from
+  -- before it, so what is run is what the whole pipeline produced.
+  expr <- case prgmAnnots exprTprgm of
+    [expr] -> return expr
+    exprs  -> fail $ printf "The debugger was given %d expressions to run in %s rather than one" (length exprs) (show prgmName)
+  evalDebugExprPrgm expr prgm
 
 -- | The values one page declares of one type, evaluated to the values they display as. This is the
 -- 'StagePrgms.spPageValues' of a set of pages: what a value gathered across pages means, without any

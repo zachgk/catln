@@ -1,8 +1,10 @@
 import React from 'react'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import Test from '../Test'
+import { PrgmNameContext } from '../../Common'
 import testResponse from '../../../test/fixtures/test-response.json'
 
 const theme = createTheme()
@@ -12,8 +14,23 @@ function test(results = testResponse) {
   return { '/run': { tag: 'StrVal', contents: JSON.stringify(results) } }
 }
 
+const PAGE = '/stack/core/algebra.ct'
+
+function LocationDisplay() {
+  const location = useLocation()
+  return <div data-testid="location">{location.pathname + location.search}</div>
+}
+
+// A router because each case offers a debugger, which navigates; a page name because that debugger
+// is asked for in the scope of the page the test was written on.
 function Providers({ children }) {
-  return <ThemeProvider theme={theme}>{children}</ThemeProvider>
+  return (
+    <MemoryRouter>
+      <ThemeProvider theme={theme}>
+        <PrgmNameContext.Provider value={PAGE}>{children}</PrgmNameContext.Provider>
+      </ThemeProvider>
+    </MemoryRouter>
+  )
 }
 
 const FAILED = [
@@ -110,5 +127,49 @@ describe('Test', () => {
     render(<Providers><Test {...test([])} /></Providers>)
 
     expect(screen.getByText(/no test of this definition was run/)).toBeInTheDocument()
+  })
+
+  // A case that has already run is the one thing a reader can ask to see run again. The engine
+  // generated it under a seed that is not kept, so the text of the call it ran is the only handle
+  // on that case there is -- which is what the debugger is given.
+  describe('debugging one case', () => {
+    async function caseMenu(results, index) {
+      render(
+        <Providers>
+          <Test {...test(results)} />
+          <LocationDisplay />
+        </Providers>
+      )
+      await userEvent.click(screen.getByRole('button'))
+      const cases = screen.getAllByText(new RegExp(`^${results[0].trName.replace(/[/]/g, '\\/')}[[(]`))
+      fireEvent.contextMenu(cases[index])
+      return results[0].trInputs[index]
+    }
+
+    it('offers a debugger of the case a passing test ran on', async () => {
+      const input = await caseMenu(testResponse, 0)
+
+      fireEvent.click(screen.getByText('Debugger'))
+      expect(decodeURIComponent(screen.getByTestId('location').textContent))
+        .toBe(`/annot?annot=#debugExpr(expr= ${JSON.stringify(input)})&prgmName=${PAGE}`)
+    })
+
+    // Not only the case a failure stopped on: what a passing law was actually checked against is
+    // exactly what is worth looking into when it passed for a reason you did not expect.
+    it('offers one for every case, not only the first', async () => {
+      const input = await caseMenu(testResponse, 3)
+
+      fireEvent.click(screen.getByText('Debugger'))
+      expect(decodeURIComponent(screen.getByTestId('location').textContent))
+        .toBe(`/annot?annot=#debugExpr(expr= ${JSON.stringify(input)})&prgmName=${PAGE}`)
+    })
+
+    it('offers one for the case a failing test stopped on', async () => {
+      const input = await caseMenu(FAILED, FAILED[0].trInputs.length - 1)
+
+      fireEvent.click(screen.getByText('Debugger'))
+      expect(decodeURIComponent(screen.getByTestId('location').textContent))
+        .toBe(`/annot?annot=#debugExpr(expr= ${JSON.stringify(input)})&prgmName=${PAGE}`)
+    })
   })
 })

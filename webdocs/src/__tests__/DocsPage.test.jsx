@@ -178,7 +178,7 @@ describe('DocsPage', () => {
     // Only one fetch call — the combined /api/page endpoint
     expect(global.fetch).toHaveBeenCalledTimes(1)
     expect(global.fetch).toHaveBeenCalledWith('/api/page?prgmName=test%2Fmain.ct')
-    expect(screen.getByTestId('monaco-editor')).toHaveValue('main = 42\n')
+    expect(screen.getByTestId('monaco-editor')).toHaveValue('main = 42\n> "hello world"\n')
   })
 
   it('attaches vim mode to the editor with a status bar', async () => {
@@ -463,6 +463,47 @@ describe('PlayButton', () => {
     // against this page -- not a route that fetches a run for itself.
     expect(decodeURIComponent(screen.getByTestId('location').textContent))
       .toBe(`/annot?annot=#debugger(fun= "main")&prgmName=${PAGE}`)
+  })
+
+  // A print is shown as the value it printed, so the computation behind it is nowhere on screen to
+  // click. The page carries that computation's source, which is what makes a debugger of it
+  // offerable at all -- see printSources in WebDocs.hs.
+  it('debugs the computation a print shows the result of', async () => {
+    global.fetch = mockFetch()
+
+    render(
+      <Providers>
+        <DocsPage prgmName={PAGE} />
+        <LocationDisplay />
+      </Providers>
+    )
+
+    await waitFor(() => {
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument()
+    })
+
+    fireEvent.contextMenu(screen.getByText('hello world'))
+    fireEvent.click(screen.getByText('Debugger'))
+
+    // The print's computation, not the value it rendered to: `"hello world"` is the expression, and
+    // `hello world` is what it printed.
+    expect(decodeURIComponent(screen.getByTestId('location').textContent))
+      .toBe(`/annot?annot=#debugExpr(expr= "\\"hello world\\"")&prgmName=${PAGE}`)
+  })
+
+  it('offers no debugger on an annotation that is not a print', async () => {
+    global.fetch = mockFetch()
+
+    render(<Providers><DocsPage prgmName={PAGE} /></Providers>)
+
+    await waitFor(() => {
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument()
+    })
+
+    // The declaration beside the print carries no print source, so right-clicking it offers the
+    // browser's own menu rather than one item that could only fail.
+    fireEvent.contextMenu(screen.getByText('main'))
+    expect(screen.queryByText('Debugger')).not.toBeInTheDocument()
   })
 })
 

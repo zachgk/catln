@@ -14,7 +14,7 @@ function Debugger(props) {
 
   // The run rides on the compiled value, so nothing is fetched. It was made under a mock IO handle,
   // which is why the output below is here to show rather than on the doc server's own stdout.
-  const {drExit, drOutput, drResult} = useMemo(() => JSON.parse(run.contents), [run]);
+  const {drExit, drOutput, drValue, drResult} = useMemo(() => JSON.parse(run.contents), [run]);
 
   // An empty tree means the run never entered an arrow, which a program that failed before its first
   // call can do. Say so rather than rendering an undefined node.
@@ -28,9 +28,21 @@ function Debugger(props) {
           <TreebugNode data={root} />
         </SimpleTreeView>
       ) : <p>Evaluated no arrows.</p>}
-      <h3>Output</h3>
-      {drOutput ? <pre>{drOutput}</pre> : <p>Printed nothing.</p>}
-      <p>Exited with {drExit}.</p>
+      {/* What the run ended with, which is not the same question for the two kinds of run. An
+          expression was run for its value and was given no IO handle to print with, so it has
+          neither output nor an exit code to report. */}
+      {drValue ? (
+        <>
+          <h3>Value</h3>
+          <Value data={drValue} />
+        </>
+      ) : (
+        <>
+          <h3>Output</h3>
+          {drOutput ? <pre>{drOutput}</pre> : <p>Printed nothing.</p>}
+          <p>Exited with {drExit}.</p>
+        </>
+      )}
     </div>
   );
 }

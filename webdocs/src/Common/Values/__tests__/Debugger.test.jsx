@@ -60,12 +60,29 @@ describe('Debugger', () => {
   })
 
   it('says so when the run printed nothing and entered no arrow', () => {
-    const empty = { drExit: 1, drOutput: '', drResult: { erCoverage: {}, erTreebug: [] } }
+    const empty = { drExit: 1, drOutput: '', drValue: null, drResult: { erCoverage: {}, erTreebug: [] } }
     render(<Providers><Debugger {...debug(empty)} /></Providers>)
 
     expect(screen.getByText(/Evaluated no arrows/)).toBeInTheDocument()
     expect(screen.getByText(/Printed nothing/)).toBeInTheDocument()
     expect(screen.getByText(/Exited with 1/)).toBeInTheDocument()
     expect(screen.queryByRole('treeitem')).not.toBeInTheDocument()
+  })
+
+  // A run of one expression (#debugExpr) rather than of a program: it was given no IO handle to
+  // print with, so what it ended with is a value and there is no exit code to report.
+  it('shows the value an expression run produced instead of an exit code', () => {
+    const expr = {
+      drExit: null,
+      drOutput: '',
+      drValue: { tag: 'IntVal', contents: 3 },
+      drResult: { erCoverage: {}, erTreebug: [] },
+    }
+    render(<Providers><Debugger {...debug(expr)} /></Providers>)
+
+    expect(screen.getByRole('heading', { name: 'Value' })).toBeInTheDocument()
+    expect(screen.getByText('3')).toBeInTheDocument()
+    expect(screen.queryByText(/Exited with/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Printed nothing/)).not.toBeInTheDocument()
   })
 })

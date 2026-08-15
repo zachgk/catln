@@ -5,6 +5,8 @@ import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
+import DebuggerMenu from '../DebuggerMenu';
+
 // What each family of test is called here. The keys are the compiler's TestKind, which says whether
 // a test was written in the program or derived from it. A kind that is not one of these is shown
 // under its own name rather than hidden, so a family added to the compiler reads as unfamiliar
@@ -82,8 +84,10 @@ function TestEntry({result}) {
         // Capped so that a hundred cases do not push the rest of the page out of the way.
         <ol style={{maxHeight: '20em', overflowY: 'auto', overflowX: 'auto'}}>
           {inputs.map((input, i) => (
+            // Every case, not only the one a failure stopped on: a case that passed is worth
+            // debugging too, since a law can pass on an input for the wrong reason.
             <li key={i}>
-              <code>{input}</code>
+              <DebuggerMenu expr={input}><code>{input}</code></DebuggerMenu>
               {!result.trPassed && i === inputs.length - 1 ? ' — failed here' : null}
             </li>
           ))}

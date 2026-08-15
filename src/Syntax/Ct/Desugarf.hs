@@ -20,7 +20,6 @@ import qualified Data.HashMap.Strict              as H
 import           Data.Maybe
 import           Text.Printf
 
-import           Control.Monad                    (forM)
 import           CRes
 import           CtConstants
 import           Data.Bifunctor                   (first)
@@ -258,37 +257,43 @@ desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree state
 
 -- | Each node carries the name of the page it came from, which names the scope that page's
 -- synthesized metas are numbered in (see 'MetaIDScope').
-desFinalPasses :: [(DesPrgm, FileImport, [DesPrgm], [DesPrgm])] -> CResT IO [DesPrgm]
-desFinalPasses nodesWithDeps = do
-  forM nodesWithDeps $ \(prgm1, name, sccPeerDeps, myExtDeps) -> do
-    let fullPrgm1 = mconcat ([prgm1] ++ sccPeerDeps ++ myExtDeps)
-    let fullPrgm2 = removeClassInstanceObjects fullPrgm1 fullPrgm1
+desFinalPasses :: [(DesPrgm, FileImport, [DesPrgm], [DesPrgm])] -> [DesPrgm]
+desFinalPasses = map desFinalPass
+
+-- | One node's final passes. Rewriting a program is all this does — it reads no file and asks
+-- nothing of the world — so it is a function rather than an action, which is what lets a caller
+-- holding only the programs (such as the debugger's expression compile, @CtService.debugExprRun@)
+-- run it without an 'IO' to run it in.
+desFinalPass :: (DesPrgm, FileImport, [DesPrgm], [DesPrgm]) -> DesPrgm
+desFinalPass (prgm1, name, sccPeerDeps, myExtDeps) = addPrgmMetaIDs (desugarMetaIDScope name) prgm6
+  where
+    fullPrgm1 = mconcat ([prgm1] ++ sccPeerDeps ++ myExtDeps)
+    fullPrgm2 = removeClassInstanceObjects fullPrgm1 fullPrgm1
 
     -- Run removeClassInstanceObjects
-    let prgm2 = removeClassInstanceObjects fullPrgm1 prgm1
+    prgm2 = removeClassInstanceObjects fullPrgm1 prgm1
 
     -- Run resolveRelativeNames pass
-    let prgm3 = resolveRelativeNames fullPrgm2 prgm2
+    prgm3 = resolveRelativeNames fullPrgm2 prgm2
 
     -- Expose each class's type parameters on the receivers of its methods, using the fully
     -- resolved class graph (so a method's @$T@ ties to the class parameter it is declared over).
-    let fullPrgm3 = resolveRelativeNames fullPrgm2 fullPrgm2
+    fullPrgm3 = resolveRelativeNames fullPrgm2 fullPrgm2
 
     -- Redirect a receiver-method instance defined in a module other than the one declaring the
     -- method (e.g. @:Integer.eq@ in @Data/Primitive@) onto the imported declaration it implements.
-    let prgm3b = reassignImportedMethodDefs fullPrgm3 prgm3
+    prgm3b = reassignImportedMethodDefs fullPrgm3 prgm3
 
-    let prgm4 = linkClassMethodReceivers fullPrgm3 prgm3b
+    prgm4 = linkClassMethodReceivers fullPrgm3 prgm3b
 
     -- Complete authored type annotations with their declared data fields, so a bare data-type
     -- reference (e.g. @[$M -> BoxA]@) denotes the full type rather than the 0-arg partial.
-    let fullPrgm4 = completeAnnotationTypes fullPrgm3 fullPrgm3
-    let prgm5 = completeAnnotationTypes fullPrgm3 prgm4
+    fullPrgm4 = completeAnnotationTypes fullPrgm3 fullPrgm3
+    prgm5 = completeAnnotationTypes fullPrgm3 prgm4
 
     -- Copy each declaration's (variable-free) return type onto its annotation-less definitions,
     -- so a def under a separate decl solves like an inline-annotated one.
-    let prgm6 = seedDefResultTypes fullPrgm4 prgm5
-    return $ addPrgmMetaIDs (desugarMetaIDScope name) prgm6
+    prgm6 = seedDefResultTypes fullPrgm4 prgm5
 
 desPrgm :: (PPrgm, FileImport, [FileImport]) -> CRes (DesPrgm, FileImport, [FileImport])
 desPrgm (RawPrgm _ statements, name, imports) = do
@@ -311,6 +316,6 @@ desFiles prgms1 = do
   -- Each node travels with its own key, which 'mapGraphWithDeps' does not pass on and
   -- 'desFinalPasses' names its meta id scope by.
   let prgms3 = fmapGraphWithKey (\name prgm -> (prgm, name)) $ graphFromEdges prgms2
-  mapGraphWithDeps (desFinalPasses . map withKey) prgms3
+  mapGraphWithDeps (return . desFinalPasses . map withKey) prgms3
   where
     withKey ((prgm, name), sccPeerDeps, myExtDeps) = (prgm, name, map fst sccPeerDeps, myExtDeps)

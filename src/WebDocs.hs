@@ -32,29 +32,34 @@ import           Control.Exception             (SomeException, try)
 import           Control.Monad                 (unless, when)
 import           Control.Monad.Trans           (lift)
 import           CRes
+import           CtConstants                   (printAnnot, printAnnotText)
 import           CtService
 import           Data.Bifunctor                (Bifunctor (first))
 import           Data.Graph
 import           Data.Maybe                    (listToMaybe)
-import           Data.UUID                     (fromText)
+import           Data.UUID                     (UUID, fromText)
 import           Eval                          (evalAllTargetModes, evalAnnots,
                                                 prgmFromGraphData)
 import           Eval.Common                   (EvalMode, Val)
 import           Eval.Runtime.WebDocs          (sidebarOrder)
 import           MapMeta                       (interleaveMeta, interleavePrgm,
-                                                parseMetaIDScope, zip3MetaFun)
+                                                parseMetaIDScope, zip4MetaFun)
 import           Semantics                     (buildCtssConfig)
 import           Semantics.Prgm
-import           Syntax.Ct.Desugarf            (desFinalPasses, desPrgm)
+import           Semantics.Types               (mkName, nameStr, partialKey)
+import           Syntax.Ct.Desugarf            (desFinalPass, desPrgm)
 import           Syntax.Ct.Desugarf.Expr       (desFileImport)
+import           Syntax.Ct.Formatter           (formatExpr)
 import           Syntax.Ct.MapRawMeta          (addRawPrgmMetaIDs,
                                                 mapMetaRawPrgm, replaceRawExpr)
 import           Syntax.Ct.Parser.Expr         (pExpr)
+import           Syntax.Ct.Parser.Syntax       (ParseMetaDat)
 import           Syntax.Ct.Prgm                (RawExpr (RawValue),
                                                 RawPrgm (RawPrgm),
                                                 RawStatement (RawAnnot),
                                                 RawStatementTree (RawStatementTree),
-                                                mkRawFileImport)
+                                                mkRawFileImport,
+                                                rawExprAppliedArgsMap)
 import           Syntax.Parsers                (mkDesCanonicalImportStr)
 import           Text.Megaparsec               (errorBundlePretty, runParser)
 import           Text.Printf
@@ -68,9 +73,11 @@ data ResSuccess a n = Success a [n]
 
 -- | A program as the webdocs show it: written as it was written, with what each stage made of each
 -- part of it hung off the part it was written as — the type that part was inferred to have, how it
--- is to be evaluated, and the value it displays as. Each is absent for a part of the program the
--- stage said nothing about, which for every one of them includes a program that failed to compile.
-type ShownPrgm = RawPrgm (Maybe TypedMeta, Maybe EvalMode, Maybe Val)
+-- is to be evaluated, the value it displays as, and the source of the computation a @#print@ shows
+-- the result of (see 'printSources'). Each is absent for a part of the program the stage said
+-- nothing about, which for every one of them includes a program that failed to compile, and for the
+-- last of them includes every statement that is not a print.
+type ShownPrgm = RawPrgm (Maybe TypedMeta, Maybe EvalMode, Maybe Val, Maybe String)
 
 -- | What @/api/page@ answers with: the page, and where it sits among the pages the doc server holds.
 -- The neighbours and the directory are the server's answers to questions the webdocs would otherwise
@@ -201,7 +208,7 @@ pageResp ctss prgmName' = runCResT $ do
   let tprgm' = maybe H.empty interleavePrgm (cresToMaybe maybeTPrgm)
   let targetModes = maybe H.empty evalAllTargetModes (cresToMaybe maybeTPrgmFull)
   let annots' = maybe H.empty (H.fromList . map (first (getMetaID . getExprMeta))) (cresToMaybe maybeAnnots)
-  let prgm' = mapMetaRawPrgm (zip3MetaFun (interleaveMeta tprgm') (interleaveMeta targetModes) (interleaveMeta annots')) rawPrgm'
+  let prgm' = mapMetaRawPrgm (zip4MetaFun (interleaveMeta tprgm') (interleaveMeta targetModes) (interleaveMeta annots') (interleaveMeta $ printSources rawPrgm')) rawPrgm'
   maybeSource <- lift $ runCResT $ getSource ctss prgmName'
   -- The pages either side of this one travel with it, so a page knows where it sits without the
   -- webdocs holding a list of every page to work it out from. A page the order cannot place is
@@ -225,7 +232,7 @@ annotResp ctss scope' annot = do
     let annotName = desFileImport $ mkRawFileImport $ RawValue emptyMetaN "<annot>"
     let rawPrgm' = addRawPrgmMetaIDs (parseMetaIDScope annotName) rawPrgm
     (annotDesPrgm, annotPrgmName, _) <- asCResT $ desPrgm (rawPrgm', annotName, [])
-    [annotDesPrgm'] <- desFinalPasses [(annotDesPrgm, annotPrgmName, [], [])]
+    let annotDesPrgm' = desFinalPass (annotDesPrgm, annotPrgmName, [], [])
     -- The pages of the scope which can be evaluated, with the rest reported rather than fatal. A
     -- page which did not typecheck used to take every annotation in the scope out with it, including
     -- a navigation that reads no program at all — see 'ctssEvaluableFrom' for why it cannot simply
@@ -241,7 +248,33 @@ annotResp ctss scope' annot = do
     let targetModes = evalAllTargetModes annotTprgm
     maybeAnnots <- asCResT $ evalAnnots stages annotPrgmName joinedTprgms
     let annots' = H.fromList $ map (first (getMetaID . getExprMeta)) maybeAnnots
-    return $ mapMetaRawPrgm (zip3MetaFun (interleaveMeta $ interleavePrgm annotTprgm) (interleaveMeta targetModes) (interleaveMeta annots')) rawPrgm'
+    return $ mapMetaRawPrgm (zip4MetaFun (interleaveMeta $ interleavePrgm annotTprgm) (interleaveMeta targetModes) (interleaveMeta annots') (interleaveMeta $ printSources rawPrgm')) rawPrgm'
+
+-- | The computation each @#print@ of a program displays the result of, as the source it was written
+-- as, keyed by the annotation it belongs to.
+--
+-- Carried with the page because a print is shown as the value it printed and nothing else — the
+-- expression that produced it is not on screen to point at, and a reader wanting to debug that
+-- computation has nothing to name it by. The webdocs cannot work it out either: an operator apply
+-- carries no source position of its own (see @Syntax.Ct.Parser.Expr.mkOp2@), so a print's span
+-- cannot be recovered from the page's text, and a prefix operator would silently come back without
+-- its operator. So the compiler renders it, through the same 'formatExpr' that writes the page back
+-- out when it is formatted.
+--
+-- Only prints, which is why it is a map rather than a fourth thing every meta carries: an annotation
+-- that shows what it was written as is already readable on the page.
+printSources :: RawPrgm ParseMetaDat -> H.HashMap UUID String
+printSources (RawPrgm _ statements) = H.fromList $ concatMap ofTree statements
+  where
+    ofTree (RawStatementTree statement subStatements) = ofStatement statement ++ concatMap ofTree subStatements
+    -- Matched against the absolute name, which is what the @> @ a print is written as parses to
+    -- (see @Syntax.Ct.Parser.pPrintStatement@), and what 'Syntax.Ct.Formatter' matches to write it
+    -- back out.
+    ofStatement (RawAnnot annot) | nameStr (exprPath annot) == printAnnot =
+      case H.lookup (partialKey (mkName printAnnotText)) $ rawExprAppliedArgsMap annot of
+        Just (Just (_, Just p)) -> [(getMetaID $ getExprMeta annot, formatExpr p)]
+        _                       -> []
+    ofStatement _ = []
 
 -- | The service a doc server answers from: the files it was given, read and watched.
 --

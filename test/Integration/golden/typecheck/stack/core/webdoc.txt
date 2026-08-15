@@ -57,6 +57,12 @@ Prgm
                             , /run=/Data/String
                             ) = /Catln/Doc/Show/Debugger
                             ( Value /run -> /Data/String = /dshow./Catln/Doc/debugger( Value /fun -> TVArg /fun = Value /fun )( Value /annot -> /s = Value /s ) )( Value /fun -> TVArg /fun = Value /fun )
+                        , /Catln/Doc/dshow
+                            ( Value /s -> /Catln/Doc/#debugExpr( /expr=/Data/String ) = /Catln/Doc/#debugExpr( Value /expr -> /Data/String ) ) -> /Catln/Doc/Show/Debugger
+                            ( /fun=/Data/String
+                            , /run=/Data/String
+                            ) = /Catln/Doc/Show/Debugger
+                            ( Value /run -> /Data/String = /dshow./Catln/Doc/debugExpr( Value /expr -> TVArg /expr = Value /expr )( Value /annot -> /s = Value /s ) )( Value /fun -> TVArg /expr = Value /expr )
                         ]
                     }
                 )
@@ -95,6 +101,16 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /dshow./Catln/Doc/typeInfer( Value /annot ) -> /Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/dshow./Catln/Doc/debugExpr"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /dshow./Catln/Doc/debugExpr( Value /expr )( Value /annot ) -> /Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -181,6 +197,16 @@ Prgm
                 ( "/Catln/Doc/#typeInfer"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/Doc/#typeInfer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Doc/#debugExpr"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Doc/#debugExpr( Value /expr -> /Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -338,6 +364,8 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType

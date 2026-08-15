@@ -74,6 +74,19 @@ data StagePrgms = StagePrgms {
   -- have to call it. Like 'spTypeInfer' it is never joined across pages — a run needs one program
   -- with one entry point, and the union of every loaded page has as many @main@s as it has pages.
   , spDebugRun   :: String -> CRes DebugRun
+  -- | Compiles one expression, written as Catln source, as though it were a statement of the page
+  -- being evaluated, and runs it for a debugger reporting on what it evaluated.
+  --
+  -- A source string rather than a name because what is worth debugging is often something no
+  -- definition names: the computation a @#print@ shows the result of, or the one generated input a
+  -- test case ran on. A generated input in particular exists nowhere in the program — the test
+  -- engine made it up, under a seed that is not kept — so the text of the call it ran is the only
+  -- handle on that case there is.
+  --
+  -- Supplied from outside for the reasons 'spDebugRun' is, and one more: compiling an expression
+  -- against the page is the whole of the work here, and the stages that would be compiled against
+  -- are the ones above.
+  , spDebugExpr  :: String -> CRes DebugRun
   -- | The pages the evaluation's program was assembled from. An 'Env' holds one flattened 'Prgm'
   -- with no file identity left in it, so which files it came from is reachable no more than the
   -- stages above are. It is the pages of whatever the evaluation was scoped to, so it goes with the
@@ -117,7 +130,7 @@ data StagePrgms = StagePrgms {
 -- no upstream artifacts to report on cannot answer, and reporting the wrong stage would be worse
 -- than failing.
 stagePrgmsUnavailable :: StagePrgms
-stagePrgmsUnavailable = StagePrgms unavailable unavailable unavailable (const unavailable) unavailable unavailable unavailable (\_ _ -> unavailable)
+stagePrgmsUnavailable = StagePrgms unavailable unavailable unavailable (const unavailable) (const unavailable) unavailable unavailable unavailable (\_ _ -> unavailable)
   where
     unavailable :: CRes a
     unavailable = CErr [MkCNote $ GenCErr Nothing "This evaluation was not given the other pipeline stages of its program"]
@@ -175,11 +188,19 @@ data EvalResult = EvalResult { erCoverage :: H.HashMap EObjArr Int
                              , erTreebug  :: [EvalTreebugClosed]
                              } deriving (Eq, Generic, ToJSON)
 
--- | One debugger run of a program: what it exited with, what it printed, and the tree of what it
--- evaluated. The output is captured through a 'MockIO' rather than written, so running a program to
--- report on it does not print that program's output to the reporting process's own stdout.
-data DebugRun = DebugRun { drExit   :: Integer
+-- | One debugger run, and the tree of what it evaluated. The output is captured through a 'MockIO'
+-- rather than written, so running a program to report on it does not print that program's output to
+-- the reporting process's own stdout.
+--
+-- What a run /ends with/ depends on what was run, so exactly one of 'drExit' and 'drValue' is set. A
+-- program is run for its effects and ends by exiting, having printed; an expression is run for its
+-- value and is given no @\/io@ handle to print with, so it has neither output nor an exit code. They
+-- are two fields rather than one because the two are not the same answer rendered differently: a
+-- reader of a program run wants to know it exited 0, and a reader of an expression run wants the
+-- value, and neither reads as the other.
+data DebugRun = DebugRun { drExit   :: Maybe Integer
                          , drOutput :: String
+                         , drValue  :: Maybe Val
                          , drResult :: EvalResult
                          } deriving (Eq, Generic, ToJSON)
 

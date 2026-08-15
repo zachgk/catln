@@ -349,6 +349,53 @@ describe('Backend API contract', () => {
     expect(JSON.stringify(notes)).toContain('not scoped to a single page')
   })
 
+  // #debugExpr runs an expression rather than a named entry point, which is what lets a reader debug
+  // something the program does not contain: the computation a #print shows the result of, or the one
+  // generated call a test case ran on.
+  describe('#debugExpr', () => {
+    it('compiles and runs an expression in the scope of the page', async () => {
+      const page = await idPageName()
+      const val = await annotValue('#debugExpr(expr= "id(x= 3)")', page)
+      expect(val.name).toBe('/Catln/Doc/Show/Debugger')
+      // What was run travels with the value, as a function name does for #debugger.
+      expect(val.args['/fun'].contents).toBe('id(x= 3)')
+
+      // `id` is a definition of id.ct, so the expression means what it means on that page, and
+      // really is run: it evaluates to 3 through an arrow the tree records. An expression is given
+      // no /io handle, so it has no exit code and nothing to have printed.
+      const run = JSON.parse(val.args['/run'].contents)
+      expect(run.drExit).toBeNull()
+      expect(run.drValue).toEqual({tag: 'IntVal', contents: 3})
+      expect(run.drResult.erTreebug.length).toBeGreaterThan(0)
+    })
+
+    it('runs a bare literal, which names no definition at all', async () => {
+      const page = await idPageName()
+      const val = await annotValue('#debugExpr(expr= "\\"hi\\"")', page)
+      const run = JSON.parse(val.args['/run'].contents)
+      expect(run.drValue).toEqual({tag: 'StrVal', contents: 'hi'})
+    })
+
+    it('reports an expression it cannot read as an error note rather than failing the request', async () => {
+      // A generated test input is rendered from a value, and not every value renders as something
+      // that can be read back. The reader is told which expression could not be read.
+      const page = await idPageName()
+      const {data, value, notes} = await annotResult('#debugExpr(expr= "id(x=")', page)
+      expect(data.tag).toBe('Success')
+      expect(value).toBeNull()
+      expect(notes.some(n => n.tp === 'CNoteError')).toBe(true)
+    })
+
+    it('reports #debugExpr with no page to be scoped to as an error note', async () => {
+      // An expression means what the page it is written in makes it mean, and the join of every
+      // page is not a page anything was written in.
+      const {data, value, notes} = await annotResult('#debugExpr(expr= "id(x= 3)")')
+      expect(data.tag).toBe('Success')
+      expect(value).toBeNull()
+      expect(JSON.stringify(notes)).toContain('not scoped to a single page')
+    })
+  })
+
   // The tasks of every note the doc server holds, gathered into one list. Unscoped, which is the
   // only way to be asking about every note rather than about one, and why the server is started with
   // the Obsidian vault beside id.ct.

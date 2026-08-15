@@ -41,7 +41,7 @@ import           Utils
 
 -- | The primitives backing the @Catln/Doc@ display annotations.
 webDocsPrims :: [EPrim]
-webDocsPrims = [listProgram, filterProgram, typeInfer, typeInferPnt, debugger, sidebar, searchPages, testRun, taskList]
+webDocsPrims = [listProgram, filterProgram, typeInfer, typeInferPnt, debugger, debugExpr, sidebar, searchPages, testRun, taskList]
 
 -- | The argument of @/Catln/Doc/listProgram@ naming which stage to list, and the members of the
 -- @ListProgramMode@ enum it takes. @stack\/core\/webdoc.ct@ is the source of truth for these; a
@@ -155,6 +155,27 @@ debugger = EEnvPrim "debugger" prim
         CErr notes -> Left $ prettyCNotes notes
       Just v -> Left $ printf "debugger was given %s, which is not a String function name" (show v)
       Nothing -> Left $ printf "debugger has no %s argument, only %s" debuggerFunArg (show $ sort $ H.keys args)
+
+-- | The argument of @/Catln/Doc/debugExpr@ holding the expression to run, as its source.
+debugExprArg :: String
+debugExprArg = "/expr"
+
+-- | Backs @/Catln/Doc/debugExpr@, the data carried by a @Show/Debugger@ page of one expression. It
+-- compiles the expression as though it were written in the page being evaluated, runs it, and
+-- renders the run as JSON.
+--
+-- Like 'debugger' it asks for an artifact to be produced rather than reading one, and for the same
+-- reason cannot produce it here: compiling and evaluating are both downstream of this module. The
+-- run arrives as a function on 'StagePrgms'.
+debugExpr :: EPrim
+debugExpr = EEnvPrim "debugExpr" prim
+  where
+    prim Env{evStagePrgms=StagePrgms{spDebugExpr}} args = case H.lookup debugExprArg args of
+      Just (StrVal expr) -> case spDebugExpr expr of
+        CRes _ run -> Right $ encodeJson run
+        CErr notes -> Left $ prettyCNotes notes
+      Just v -> Left $ printf "debugExpr was given %s, which is not a String expression" (show v)
+      Nothing -> Left $ printf "debugExpr has no %s argument, only %s" debugExprArg (show $ sort $ H.keys args)
 
 -- | One entry of the page tree a @Show/Sidebar@ carries: a directory holding further entries, or a
 -- page to open. Both know the path they are at, which for a file is the name a page is asked for by,

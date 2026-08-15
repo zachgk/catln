@@ -198,6 +198,9 @@ module(Catln/Doc)
       printed, and what it exited with. It carries that run in [run], so the webdocs render the page
       from the compiled value rather than asking the compiler for it over a separate route. The
       [fun] it ran travels with it so the page can title itself.
+      It shows a run of a single expression ([#debugExpr]) just as well, since what distinguishes
+      the two is what the run ended with rather than how it is read, and [run] carries that. So
+      [fun] is what was run, which for an expression is the expression itself.
 
   every(Show/Debugger.., isa= [/Catln/Doc/DShow])
 
@@ -209,3 +212,19 @@ module(Catln/Doc)
       #runtime("debugger")
 
     Show/Debugger(run= debugger(annot= s), fun= fun)
+
+  annot(#debugExpr(expr -> String))
+
+  dshow(s= #debugExpr(expr)) =
+    debugExpr(annot) -> String
+      # [debugExpr] compiles [expr] as though it were written in the page being evaluated, runs it,
+        and renders the run as JSON. An expression rather than a function name, which is what
+        [#debugger] takes: what a reader wants to debug is often something that no definition names
+        — the computation a [#print] displays the result of, or the one generated input a test case
+        ran on. Neither exists in the program as a name to run.
+        Its own annotation rather than a second form of [#debugger] because the two run different
+        things in different ways, and an annotation whose meaning turns on which argument was given
+        reads as one thing that sometimes does another.
+      #runtime("debugExpr")
+
+    Show/Debugger(run= debugExpr(annot= s), fun= expr)

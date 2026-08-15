@@ -16,6 +16,7 @@ import {Link, useNavigate} from 'react-router-dom';
 import {rawExprMeta, RawExpr, RawObjArr} from './Common/Syntax';
 import {useQuery, useApi, useLiveApi, Loading, KeyWord, ReachesTree, ConfigContext, PrgmNameContext, PageDirContext, ReloadContext, annotLink, annotApi, writeExpr} from './Common/Common';
 import {Value} from './Common/Value';
+import DebuggerMenu from './Common/DebuggerMenu';
 import {OverlaySplit, overlayValueUrl} from './Common/Values/Overlay';
 
 const DEBUG_NO_EVAL = false;
@@ -598,9 +599,14 @@ function Statement(props) {
       );
     }
   case "RawAnnot":
+    // A print is shown as the value it printed, so what it computed is nowhere on screen to click.
+    // The page carries that computation's source (getMetaDat[3], set only for a print), which is
+    // what the debugger is asked for. An annotation that is not a print has none and offers no menu.
     return (
       <div className={classes.noPlay}>
-        <RawExpr expr={statement.contents} updateExpr={updateExpr} />
+        <DebuggerMenu expr={rawExprMeta(statement.contents).getMetaDat[3]}>
+          <RawExpr expr={statement.contents} updateExpr={updateExpr} />
+        </DebuggerMenu>
       </div>
     );
   default:
