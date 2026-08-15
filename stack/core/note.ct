@@ -11,7 +11,9 @@ module(Data/Note)
   data(Page(title -> String))
     # A [Page] is one note. It holds the [title] the note is known and linked by; the writing itself
       is the comment inside the page rather than a field of it, so reading the page is reading the
-      note. Importing an Obsidian vault reads it as one [Page] per note of it.
+      note. Importing an Obsidian vault reads it as one [Page] per note of it, and a note which
+      opens with a block of properties holds it as a [#properties] of the page rather than as
+      writing of it.
   data(Task(contents -> String, state -> Boolean))
     # A [Task] is one thing to do, written in a note as a markdown checkbox. Its [contents] are what
       the checkbox says and its [state] is whether the box is checked. A task is a break in the
@@ -53,3 +55,20 @@ module(Data/Note)
       #runtime("taskList")
 
     Show/TaskList(tasks= taskList(annot= s))
+
+  annot(#properties(text -> String))
+
+  data(Show/Properties(text -> String))
+    # [Show/Properties] shows the properties a note opens with: the block of @key: value@ lines
+      written above the writing, as the table it reads as. It carries that block as the [text] it
+      was written as rather than as the properties read out of it, because writing the note back
+      writes the block again — reading it apart into fields here would be reading it apart in the
+      one place that has to give it back exactly as it was found.
+      A block naming a page on the web is read as a [/Catln/Doc/#overlay] of it as well, which is
+      the page the note is written over. That is a second reading of the same block, made where
+      the note is read rather than here: this shows what the note says, and the overlay is what
+      the note says it is about.
+
+  every(Show/Properties.., isa= [/Catln/Doc/DShow])
+
+  /Catln/Doc/dshow(s= #properties(text))= Show/Properties(text= text)

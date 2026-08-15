@@ -16,6 +16,7 @@ import {Link, useNavigate} from 'react-router-dom';
 import {rawExprMeta, RawExpr, RawObjArr} from './Common/Syntax';
 import {useQuery, useApi, useLiveApi, Loading, KeyWord, ReachesTree, ConfigContext, PrgmNameContext, PageDirContext, ReloadContext, annotLink, annotApi, writeExpr} from './Common/Common';
 import {Value} from './Common/Value';
+import {OverlaySplit, overlayValueUrl} from './Common/Values/Overlay';
 
 const DEBUG_NO_EVAL = false;
 
@@ -55,29 +56,37 @@ const useStyles = makeStyles({
   },
   saveStatusError: {
     color: 'darkred'
+  },
+  // On a page written over another one the editor is given the pane rather than a height of its
+  // own, and the status row keeps the bottom of it.
+  editorFilling: {
+    display: 'flex',
+    flexDirection: 'column',
+    flexGrow: 1,
+    minHeight: 0
+  },
+  editorPane: {
+    flexGrow: 1,
+    minHeight: 0
   }
 });
 
-// Walk statement trees and collect [{line, startLine, value}] for all expressions
-// that have a pre-computed annotation value in getMetaDat[2].
-// line: the afterLineNumber for the ViewZone (last content line)
-// startLine: the first line of the annotation (for cursor-based hiding)
-function extractLineValues(statementTrees) {
+// Every value the compiler hung off a statement of a page, beside where the page writes it, in the
+// order the page writes them. What a page says about itself is read from here rather than from a
+// walk of its own, so a page is walked once however many of its values are wanted.
+function statementValues(statementTrees) {
   const values = [];
 
   function walkStatementTree(statementTree) {
     const [statement, subStatements] = statementTree;
 
-    if (statement.tag === "RawDeclStatement") {
-      const objMeta = rawExprMeta(statement.contents.roaObj);
-      const pos = objMeta.getMetaPos;
-      if (pos && objMeta.getMetaDat[2]) {
-        values.push({line: pos[1].line, startLine: pos[0].line, value: objMeta.getMetaDat[2]});
-      }
-    } else if (statement.tag === "RawAnnot") {
-      const m = rawExprMeta(statement.contents);
-      if (m.getMetaPos && m.getMetaDat[2]) {
-        values.push({line: m.getMetaPos[1].line, startLine: m.getMetaPos[0].line, value: m.getMetaDat[2]});
+    const expr = statement.tag === "RawDeclStatement" ? statement.contents.roaObj
+               : statement.tag === "RawAnnot" ? statement.contents
+               : null;
+    if (expr) {
+      const m = rawExprMeta(expr);
+      if (m.getMetaDat[2]) {
+        values.push({pos: m.getMetaPos, value: m.getMetaDat[2]});
       }
     }
 
@@ -86,6 +95,25 @@ function extractLineValues(statementTrees) {
 
   statementTrees.forEach(walkStatementTree);
   return values;
+}
+
+// Collect [{line, startLine, value}] for all expressions that have a pre-computed annotation value.
+// line: the afterLineNumber for the ViewZone (last content line)
+// startLine: the first line of the annotation (for cursor-based hiding)
+//
+// A zone hangs off a line, so only a value the page was parsed for has one. What a syntax builds
+// rather than parses -- a note's writing, its tasks, its properties -- carries no position and gets
+// no zone.
+function extractLineValues(statementTrees) {
+  return statementValues(statementTrees)
+    .filter(({pos}) => pos)
+    .map(({pos, value}) => ({line: pos[1].line, startLine: pos[0].line, value}));
+}
+
+// The page this page is written over, if it says it is written over one. The first it names: a page
+// is laid out around one other page, so a page writing two overlays has to be read as one of them.
+function overlayUrl(statementTrees) {
+  return statementValues(statementTrees).map(({value}) => overlayValueUrl(value)).find(Boolean) ?? null;
 }
 
 function DocsPage(props) {
@@ -284,6 +312,47 @@ function DocsPage(props) {
     });
   }, [editorInstance, mode, prgmData]);
 
+  // The page this one is written over, which is a shape to lay the page out in rather than a value
+  // to show in the flow of it. The annotation naming it still shows where it was written, as the
+  // address it names; the frame is here.
+  const overlay = prgmData ? overlayUrl(prgmData[1]) : null;
+
+  // What the page shows of itself, with the mode it is being read or written in already settled. It
+  // is settled before the layout so that, on a page written over another one, the frame is a
+  // sibling which does not change when this does: reading, writing and saving all leave the framed
+  // page mounted, holding its scrolling and its session while notes are written against it.
+  const shown = mode === 'view' ? (
+    <Loading status={apiResult}>
+      <Main data={prgmData} prgmName={prgmName} updateExpr={canEdit ? updateExpr : undefined}/>
+    </Loading>
+  ) : (
+    <Loading status={apiResult}>
+      {currentSource !== null && (
+        <div className={overlay ? classes.editorFilling : undefined}>
+          <div className={overlay ? classes.editorPane : undefined}>
+            <Editor
+              // Inside a pane the editor fills it, which is the pane the divider is sizing. On a
+              // page with no overlay nothing is sizing it, so it keeps the height it always had.
+              height={overlay ? "100%" : "80vh"}
+              language="plaintext"
+              theme="vs"
+              value={currentSource}
+              onChange={value => setEditedSource(value)}
+              // Monaco does not watch the size of what holds it, so without this it keeps the size
+              // it was laid out at and the divider moves the pane out from under it.
+              options={{ minimap: { enabled: false }, wordWrap: 'on', fontSize: 14, automaticLayout: true }}
+              onMount={handleEditorMount}
+            />
+          </div>
+          <div className={classes.statusRow}>
+            <div ref={vimStatusBarRef} className={classes.vimStatusBar} data-testid="vim-status-bar" />
+            <SaveStatus saveState={saveState} isDirty={isDirty} />
+          </div>
+        </div>
+      )}
+    </Loading>
+  );
+
   // An annotation written in this page's source is local to this page, so a value it displays can
   // ask the compiler a follow-up question scoped the same way, and a relative link it displays
   // resolves against the directory this page was imported relative to.
@@ -302,31 +371,7 @@ function DocsPage(props) {
               </IconButton>
             </div>
           )}
-          {mode === 'view' ? (
-            <Loading status={apiResult}>
-              <Main data={prgmData} prgmName={prgmName} updateExpr={canEdit ? updateExpr : undefined}/>
-            </Loading>
-          ) : (
-            <Loading status={apiResult}>
-              {currentSource !== null && (
-                <div>
-                  <Editor
-                    height="80vh"
-                    language="plaintext"
-                    theme="vs"
-                    value={currentSource}
-                    onChange={value => setEditedSource(value)}
-                    options={{ minimap: { enabled: false }, wordWrap: 'on', fontSize: 14 }}
-                    onMount={handleEditorMount}
-                  />
-                  <div className={classes.statusRow}>
-                    <div ref={vimStatusBarRef} className={classes.vimStatusBar} data-testid="vim-status-bar" />
-                    <SaveStatus saveState={saveState} isDirty={isDirty} />
-                  </div>
-                </div>
-              )}
-            </Loading>
-          )}
+          {overlay ? <OverlaySplit url={overlay}>{shown}</OverlaySplit> : shown}
           <PageNav prev={prevPage} next={nextPage} />
         </div>
        </ReloadContext.Provider>

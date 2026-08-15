@@ -12,6 +12,9 @@ Prgm
                             ( EAppArg Value /tasks -> /Data/String =
                                 ( /Catln/Doc/dshow./Data/Note/taskList( EAppArg Value /annot -> /s = Value /s ) ↦ /Data/String )
                             )
+                        , /Catln/Doc/dshow
+                            ( EAppArg Value /s -> /Data/Note/#properties( /text=/Data/String ) = /Data/Note/#properties( EAppArg Value /text -> /Data/String ) ) -> /Data/Note/Show/Properties( /text=/Data/String ) = /Data/Note/Show/Properties
+                            ( EAppArg Value /text -> TVArg /text = ( Value /text ↦ TVArg /text ) )
                         ]
                     }
                 )
@@ -31,6 +34,26 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Catln/Doc/dshow./Data/Note/taskList( EAppArg Value /annot ) -> /Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Show/Properties"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Show/Properties( EAppArg Value /text -> /Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/#properties"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/#properties( EAppArg Value /text -> /Data/String ) ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -73,17 +96,20 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
         , CGClass
             ( False
             , /Data/Note/Task
             ,
                 [ /Data/Note/Task..
                 , /Data/Note/Show/TaskList..
+                , /Data/Note/Show/Properties..
                 ]
             , Just "A task is shown in the webdocs as the task it is, rather than as the declaration it was read
               into: a box to check and the writing beside it. It is the value itself that is shown, with no
               display type standing in for it, which is what lets checking the box in a doc server write the
-              change back to the note the task was read from. "
+              change back to the note the task was read from.  "
             )
         ]
     , prgmAnnots =

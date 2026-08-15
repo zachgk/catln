@@ -29,6 +29,26 @@ module(Catln/Doc)
   dshow(s= #md(text))= Show/MD(text= text)
   dshow(s= #print(p))= p
 
+  annot(#overlay(url -> String))
+
+  data(Show/Overlay(url -> String))
+    # [Show/Overlay] shows a page written over another one: the writing of the page carrying it
+      above, and the page at [url] below. It carries the address alone, because what is at the
+      other end is not the doc server's to compile, to hold, or to answer for — the browser
+      fetches it itself, from whoever serves it. So this is the one display that says where to
+      look rather than what was found there, and the one the webdocs read as a shape to lay a page
+      out in rather than as a value to show in the flow of it.
+      A site may refuse to be shown inside another page, and refuses in a header the page framing
+      it is not allowed to read. So the address is shown as a link wherever it appears, and the
+      annotation itself displays as that link rather than as a frame of its own: the frame belongs
+      to the page laying itself out around it, so a page carrying an overlay is one frame and one
+      link rather than two frames, and a reader is never left with a blank frame and no way
+      through to what it was for.
+
+  every(Show/Overlay.., isa= [/Catln/Doc/DShow])
+
+  dshow(s= #overlay(url))= Show/Overlay(url= url)
+
   class(ListProgramMode, [Desugar, Typecheck, TreeBuild])
     # Which compiler stage a [#listProgram] lists: the program before typechecking, after
       typechecking, or after tree building.

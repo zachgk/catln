@@ -7,6 +7,7 @@ import { initVimMode, VimMode } from 'monaco-vim'
 import DocsPage, { AnnotPage } from '../DocsPage'
 import pageResponse from '../test/fixtures/page-response.json'
 import notePageResponse from '../test/fixtures/note-page-response.json'
+import overlayNotePageResponse from '../test/fixtures/overlay-note-page-response.json'
 
 // Collects the keybindings DocsPage registers, so tests can fire Ctrl+S directly.
 const mocks = vi.hoisted(() => ({ commands: [] }))
@@ -553,6 +554,92 @@ describe('editing a value on a page', () => {
   })
 })
 
+// A page which says it is written over another one is laid out around it: the writing above, the
+// page it is written over below. The page here is an Obsidian note, which is where an overlay comes
+// from without anyone writing one -- read out of the properties the note opens with.
+describe('a page written over another page', () => {
+  const NOTE = '/vault/Overlay.md'
+  const URL = 'https://catln.dev'
+
+  function overlayFetch() {
+    return mockFetch({ page: () => Promise.resolve({
+      status: 200,
+      json: () => Promise.resolve(overlayNotePageResponse),
+    }) })
+  }
+
+  async function renderOverlay() {
+    render(<Providers><DocsPage prgmName={NOTE} /></Providers>)
+    await waitFor(() => {
+      expect(screen.getByTestId('overlay-split')).toBeInTheDocument()
+    })
+  }
+
+  beforeEach(() => {
+    window.localStorage.clear()
+  })
+
+  it('frames the page the note is written over', async () => {
+    global.fetch = overlayFetch()
+
+    await renderOverlay()
+
+    expect(screen.getByTitle(`Overlay of ${URL}`)).toHaveAttribute('src', URL)
+    expect(screen.getByRole('rowheader', { name: 'url' })).toBeInTheDocument()
+  })
+
+  // The annotation is a statement of the page as well as the shape the page is laid out in, so it
+  // is shown twice -- but only one of the two is a frame.
+  it('frames it once, though the annotation is shown in the writing too', async () => {
+    global.fetch = overlayFetch()
+
+    const { container } = render(<Providers><DocsPage prgmName={NOTE} /></Providers>)
+    await waitFor(() => {
+      expect(screen.getByTestId('overlay-split')).toBeInTheDocument()
+    })
+
+    expect(container.querySelectorAll('iframe')).toHaveLength(1)
+    expect(screen.getAllByRole('link', { name: URL }).length).toBeGreaterThan(0)
+  })
+
+  // The point of settling the mode before the layout: the frame is a sibling of the writing rather
+  // than a part of it, so writing notes against a page does not reload the page they are about.
+  it('keeps the very same frame when the writing is opened for editing', async () => {
+    global.fetch = overlayFetch()
+
+    await renderOverlay()
+    const framed = screen.getByTitle(`Overlay of ${URL}`)
+
+    fireEvent.click(screen.getByLabelText('Edit'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('monaco-editor')).toBeInTheDocument()
+    })
+    expect(screen.getByTitle(`Overlay of ${URL}`)).toBe(framed)
+  })
+
+  it('opens the divider where the reader last left it', async () => {
+    window.localStorage.setItem('catln.webdocs.overlaySplit', '0.7')
+    global.fetch = overlayFetch()
+
+    await renderOverlay()
+
+    expect(screen.getByRole('separator')).toHaveAttribute('aria-valuenow', '70')
+  })
+
+  it('lays out a page which is written over nothing as it always was', async () => {
+    global.fetch = mockFetch()
+
+    const { container } = render(<Providers><DocsPage prgmName="test%2Fmain.ct" /></Providers>)
+    await waitFor(() => {
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument()
+    })
+
+    expect(screen.queryByTestId('overlay-split')).not.toBeInTheDocument()
+    expect(container.querySelector('iframe')).toBeNull()
+  })
+})
+
 describe('AnnotPage', () => {
   // What /api/annot returns: a one-statement program whose annotation carries the value the
   // compiler evaluated it to, on the expression meta's third slot.
@@ -600,5 +687,34 @@ describe('AnnotPage', () => {
     await waitFor(() => {
       expect(screen.getByLabelText('TreeBuild')).toBeChecked()
     })
+  })
+
+  // An annotation asked for on its own is shown as what it compiled to. An overlay compiled on its
+  // own has no writing to be written over anything, so there is nothing to lay out around a frame
+  // and what it names is shown as the address it is.
+  it('shows an overlay asked for on its own as the address it names', async () => {
+    const value = {
+      tag: 'TupleVal',
+      name: '/Catln/Doc/Show/Overlay',
+      args: { '/url': { tag: 'StrVal', contents: 'https://catln.dev' } },
+    }
+    const expr = {
+      tag: 'RawValue',
+      contents: [{ getMetaPos: null, getMetaDat: [null, null, value], getMetaID: 1 }, '#overlay'],
+    }
+    global.fetch = vi.fn(() => Promise.resolve({
+      status: 200,
+      json: () => Promise.resolve({ tag: 'Success', contents: [[[], [[{ tag: 'RawAnnot', contents: expr }, []]]], []] }),
+    }))
+
+    const { container } = render(
+      <Providers><AnnotPage annot={'#overlay(url= "https://catln.dev")'} /></Providers>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: 'https://catln.dev' })).toBeInTheDocument()
+    })
+    expect(container.querySelector('iframe')).toBeNull()
+    expect(screen.queryByTestId('overlay-split')).not.toBeInTheDocument()
   })
 })

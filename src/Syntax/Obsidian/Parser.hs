@@ -17,9 +17,10 @@ import           Control.Monad         (forM_)
 import           CtConstants
 import           Data.Char             (isDigit, isSpace)
 import           Data.Foldable         (toList)
-import           Data.List             (dropWhileEnd, intercalate, isPrefixOf,
-                                        isSuffixOf, nub)
-import           Data.Maybe            (listToMaybe, mapMaybe)
+import           Data.List             (dropWhileEnd, intercalate, isInfixOf,
+                                        isPrefixOf, isSuffixOf, nub,
+                                        stripPrefix)
+import           Data.Maybe            (listToMaybe, mapMaybe, maybeToList)
 import qualified Data.Text             as T
 import           Semantics.Prgm
 import           Semantics.Types       (Constant (CStr), makeAbsoluteName,
@@ -223,13 +224,25 @@ noteReads note linked = ReadFile note : map ReadExists linked
 -- note the writing inside its page — including a checkbox indented under it, which is a task of that
 -- task and is declared inside it.
 notePageStatement :: String -> String -> RawStatementTree RawExpr ()
-notePageStatement title contents = RawStatementTree (RawDeclStatement page) (map partStatement $ noteParts contents)
+notePageStatement title contents = RawStatementTree (RawDeclStatement page) (concatMap partStatements $ noteParts contents)
   where
     page = RawObjArr (Just pageExpr) TypeObj Nothing [] Nothing Nothing
     pageExpr = rawVal notePagePath `applyRawArgs` [(Just $ partialKey (mkName notePageTitle), rawStr title)]
 
+-- | The statements one part of a note is read as: what the part says, and what the page says
+-- because of it.
+--
+-- Only the properties say anything about the page. A page on the web named in them is the page
+-- this note is written over, which is a reading of the note rather than a part of it, so it is a
+-- statement of its own standing beside the properties it was read out of — where the note writes
+-- them, as a task is declared where the note writes its checkbox.
+partStatements :: NotePart -> [RawStatementTree RawExpr ()]
+partStatements part@(NoteFrontmatter properties) = partStatement part : map overlayStatement (maybeToList $ frontmatterUrl properties)
+partStatements part = [partStatement part]
+
 partStatement :: NotePart -> RawStatementTree RawExpr ()
 partStatement (NoteWriting writing) = RawStatementTree (RawAnnot (rawComment writing)) []
+partStatement (NoteFrontmatter properties) = RawStatementTree (RawAnnot (rawProperties properties)) []
 partStatement (NoteTask says done under) = RawStatementTree (RawDeclStatement task) (map partStatement under)
   where
     task = RawObjArr (Just taskExpr) TypeObj Nothing [] Nothing Nothing
@@ -237,6 +250,16 @@ partStatement (NoteTask says done under) = RawStatementTree (RawDeclStatement ta
       (Just $ partialKey (mkName noteTaskContents), rawStr says),
       (Just $ partialKey (mkName noteTaskState), rawVal (if done then truePrim else falsePrim))
                                                  ]
+
+-- | The page a note is written over, as the statement saying so.
+overlayStatement :: String -> RawStatementTree RawExpr ()
+overlayStatement url = RawStatementTree (RawAnnot (rawOverlay url)) []
+
+-- | The properties a note opens with, and the page it is written over, as the annotations the
+-- webdocs show them as.
+rawProperties, rawOverlay :: String -> RawExpr ()
+rawProperties properties = rawVal notePropertiesAnnot `applyRawArgs` [(Just $ partialKey (mkName notePropertiesAnnotText), rawStr properties)]
+rawOverlay url = rawVal overlayAnnot `applyRawArgs` [(Just $ partialKey (mkName overlayAnnotUrl), rawStr url)]
 
 -- | Writes a note back as the markdown it was read from: the reversion of 'notePageStatement'.
 --
@@ -251,14 +274,26 @@ partStatement (NoteTask says done under) = RawStatementTree (RawDeclStatement ta
 unparseNote :: RawPrgm () -> Maybe String
 unparseNote (RawPrgm _ [RawStatementTree (RawDeclStatement page) parts])
   | Just pageExpr <- roaObj page, named notePagePath pageExpr = do
-      parts' <- mapM notePart parts
+      parts' <- mapM notePart $ filter (not . derivedStatement) parts
       return $ unlines $ writeNoteParts parts'
 unparseNote _ = Nothing
+
+-- | Whether a statement of a note's page was derived from the note rather than read out of it.
+--
+-- A derived statement is written back as nothing, because what it was derived from is written back
+-- as itself: the overlay is the address the note's properties name, and writing the note back
+-- writes those properties. It is passed over here rather than met by 'notePart', which answers
+-- Nothing for a statement it does not know — and a Nothing is a page which cannot be written back
+-- at all ('Syntax.Parsers.unparseImport'), so a note would become unsaveable by naming a page.
+derivedStatement :: RawStatementTree RawExpr () -> Bool
+derivedStatement (RawStatementTree (RawAnnot annot) []) = named overlayAnnot annot
+derivedStatement _                                      = False
 
 -- | The part of a note a statement of its page was read from, if it was read from one.
 notePart :: RawStatementTree RawExpr () -> Maybe NotePart
 notePart (RawStatementTree (RawAnnot annot) [])
   | named mdAnnot annot = NoteWriting <$> rawArgStr mdAnnotText annot
+  | named notePropertiesAnnot annot = NoteFrontmatter <$> rawArgStr notePropertiesAnnotText annot
 notePart (RawStatementTree (RawDeclStatement task) under)
   | Just taskExpr <- roaObj task, named noteTaskPath taskExpr = do
       says <- rawArgStr noteTaskContents taskExpr
@@ -301,14 +336,21 @@ writeNoteParts :: [NotePart] -> [String]
 writeNoteParts parts = concat $ zipWith separated (Nothing : map Just parts) parts
   where
     separated before part = ["" | maybe False (apartFrom part) before] ++ writeNotePart part
-    apartFrom NoteWriting{} _ = True
-    apartFrom _ NoteWriting{} = True
-    apartFrom _ _             = False
+    apartFrom NoteWriting{} _     = True
+    apartFrom _ NoteWriting{}     = True
+    -- The properties are a block of their own and the note begins after them, which is how
+    -- Obsidian writes one: a blank line follows them whether the note goes on in writing or in a
+    -- checkbox.
+    apartFrom _ NoteFrontmatter{} = True
+    apartFrom _ _                 = False
 
 -- | The lines one part of a note is written as: its writing as it was found, or its checkbox
 -- followed by whatever is written inside it, indented under it.
 writeNotePart :: NotePart -> [String]
 writeNotePart (NoteWriting writing) = lines writing
+-- The delimiters are written again rather than carried, so a block written between more of them
+-- than it needs is written back between two.
+writeNotePart (NoteFrontmatter properties) = "---" : lines properties ++ ["---"]
 writeNotePart (NoteTask says done under) = dropWhileEnd isSpace (box ++ says) : map indentLine (writeNoteParts under)
   where
     box = if done then "- [x] " else "- [ ] "
@@ -322,6 +364,11 @@ data NotePart
   -- | What the checkbox says, whether it is checked, and what is written under it — which is the
   -- note again: the writing under the checkbox, and the checkboxes indented under it.
   | NoteTask String Bool [NotePart]
+  -- | The properties a note opens with, as the lines they are written between the @---@ as. The
+  -- delimiters are the shape of the block rather than anything it says, so they are written again
+  -- rather than carried; everything between them is carried exactly as it was found, because the
+  -- one place that has to give the block back as it was is the one writing the note back.
+  | NoteFrontmatter String
   deriving (Eq, Show)
 
 -- | Breaks a note into the writing and the tasks it holds, in the order they were written.
@@ -339,8 +386,111 @@ data NotePart
 -- What is written under a checkbox is broken the same way, so the parts of a note are a tree: a task
 -- holds the writing under it and the tasks indented under it, each broken from the block as this
 -- breaks the note.
+--
+-- The properties a note opens with are broken off first and only here, not in 'noteLineParts': a
+-- note opens with them at most once, and a @---@ written anywhere else — under a checkbox included
+-- — is a rule of the writing rather than the edge of a block of properties.
 noteParts :: String -> [NotePart]
-noteParts = noteLineParts . lines
+noteParts contents = case splitFrontmatter (lines contents) of
+  Just (properties, rest) -> NoteFrontmatter (intercalate "\n" properties) : noteLineParts rest
+  Nothing                 -> noteLineParts (lines contents)
+
+-- | The properties a note opens with and the note written after them, if it opens with a block of
+-- them at all.
+--
+-- Only at the very start, and only closed: that is where Obsidian writes a block of properties and
+-- how it recognises one, so a note opening with a rule it never closes is a note whose first line
+-- is a rule rather than a note which is all properties.
+splitFrontmatter :: [String] -> Maybe ([String], [String])
+splitFrontmatter (l:ls)
+  | isPropertiesFence l
+  , (properties, _:rest) <- break isPropertiesFence ls = Just (properties, rest)
+splitFrontmatter _ = Nothing
+
+-- | Whether a line is the edge of a block of properties.
+isPropertiesFence :: String -> Bool
+isPropertiesFence = ("---" ==) . dropWhileEnd isSpace
+
+-- | The properties a note names the page it is written over by, in the order they are looked for.
+--
+-- @url@ is what the property is called when a note is written about a page; @roam_refs@ is what an
+-- import from Roam Research leaves behind.
+overlayKeys :: [String]
+overlayKeys = ["url", "roam_refs"]
+
+-- | The page a note is written over, out of the properties it opens with, if they name one.
+--
+-- A property naming no page on the web is passed over rather than taken as the answer, so a note
+-- whose @url@ is a title and whose @roam_refs@ is an address is written over the address.
+frontmatterUrl :: String -> Maybe String
+frontmatterUrl properties = listToMaybe $ mapMaybe addressAt overlayKeys
+  where
+    addressAt key = webAddress . unwrapValue . firstEntry =<< frontmatterValue key properties
+
+-- | The value a block of properties gives a key, if it gives it one.
+--
+-- Read as the lines it is written as rather than as YAML, because the one thing read out of the
+-- block is a value written on the line of its key — and reading only that much is what leaves the
+-- block a piece of text to be written back exactly as it was found. The key is read where it
+-- starts its line, as a key indented under another is a part of that one rather than a property of
+-- the note.
+frontmatterValue :: String -> String -> Maybe String
+frontmatterValue key properties = listToMaybe [trim v | l <- lines properties, Just v <- [stripPrefix (key ++ ":") l]]
+
+-- | What a value writes between the bracket it opens with and the bracket closing it, if it opens
+-- with one which closes at its end.
+--
+-- A list is written between brackets and so is a wiki link, and either may hold the other. What is
+-- not written in a pair at all is neither: @[a] and [b]@ opens and ends with a bracket without the
+-- first one being closed by the last.
+bracketedBody :: String -> Maybe String
+bracketedBody ('[':rest) = aux (1 :: Int) "" rest
+  where
+    aux _ _ []       = Nothing
+    aux 1 acc "]"    = Just (reverse acc)
+    aux 1 _ (']':_)  = Nothing -- The bracket it opened with closes before its end
+    aux d acc (c:cs) = aux (depth c d) (c:acc) cs
+    depth '[' d = d + 1
+    depth ']' d = d - 1
+    depth _ d   = d
+bracketedBody _ = Nothing
+
+-- | The first of the entries a value writes, which for a value written on its own is that value.
+--
+-- The entries of a list are written apart by commas, and are read at the depth the brackets put
+-- them at rather than at every comma: a wiki link written as an entry is written between brackets
+-- of its own, and a comma inside one is part of what that entry names.
+firstEntry :: String -> String
+firstEntry v = case bracketedBody (trim v) of
+  Just entries -> trim $ untilEntryEnds entries
+  Nothing      -> trim v
+  where
+    untilEntryEnds = aux (0 :: Int)
+      where
+        aux _ []      = []
+        aux 0 (',':_) = []
+        aux d (c:cs)  = c : aux (depth c d) cs
+        depth '[' d = d + 1
+        depth ']' d = d - 1
+        depth _ d   = d
+
+-- | A value as it was meant rather than as it was written: without the quotes it was written in and
+-- without the brackets it was written between.
+--
+-- A wiki link is written between two brackets, and a value read out of a list may still be written
+-- between its own, so each pair is taken off in turn.
+unwrapValue :: String -> String
+unwrapValue = unwrapBrackets . unquote . trim
+  where
+    unquote s@(c:_) | c `elem` ['"', '\''], length s > 1, [c] `isSuffixOf` s = init (tail s)
+    unquote s = s
+    unwrapBrackets s = maybe s unwrapBrackets (bracketedBody s)
+
+-- | Whether what a property names is a page on the web, which is the one thing a note can be
+-- written over. A property naming another note, or naming a title, names nothing there is to show
+-- beside the writing.
+webAddress :: String -> Maybe String
+webAddress v = if "://" `isInfixOf` v then Just v else Nothing
 
 -- | 'noteParts' over lines, which is what the writing under a checkbox is already broken into.
 noteLineParts :: [String] -> [NotePart]

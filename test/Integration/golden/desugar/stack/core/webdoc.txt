@@ -24,6 +24,8 @@ Prgm
                         , /Catln/Doc/dshow
                             ( Value s= #print( Value p ) )= Value p
                         , /Catln/Doc/dshow
+                            ( Value s= #overlay( Value url ) )= Show/Overlay( Value url= Value url )
+                        , /Catln/Doc/dshow
                             ( Value s= #listProgram( Value mode ) )= Show/ListProgram
                             ( Value prgm= listProgram( Value /mode= Value /mode )( Value annot= Value s ) )( Value mode= Value mode )
                         , /Catln/Doc/dshow
@@ -81,6 +83,16 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ dshow./Catln/Doc/typeInfer( Value annot ) -> /Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Doc/Show/Overlay"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Doc/Show/Overlay( Value /url -> /Data/String ) ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -281,6 +293,16 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/Doc/#overlay"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Doc/#overlay( Value /url -> /Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Doc/Show/TypeInfer"
                 , ObjectMapItem
                     { omiDecls =
@@ -331,6 +353,8 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
         , CGClass
             ( False
             , /Catln/Doc/DShow
@@ -339,6 +363,7 @@ Prgm
                 , /Catln/CatlnResult..
                 , ∀/Data/ToString
                 , /Catln/Doc/Show/MD..
+                , /Catln/Doc/Show/Overlay..
                 , /Catln/Doc/Show/ListProgram..
                 , /Catln/Doc/Show/TypePage..
                 , /Catln/Doc/Show/TypeInfer..
@@ -352,7 +377,7 @@ Prgm
               webdocs render such a value through its [/Data/toString]. This is what lets a `> value`
               print statement accept any [ToString] type. A [DShow] value that is not [ToString] (a
               visualization like [Show/MD]) is still printable, but only [ToString] values are compared
-              against a print/result golden.         "
+              against a print/result golden.          "
             )
         , CGClass
             ( True

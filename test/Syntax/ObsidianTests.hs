@@ -7,9 +7,13 @@
 -- broken, and what it is written back as.
 module Syntax.ObsidianTests where
 
-import           Syntax.Ct.Prgm         (RawPrgm (RawPrgm))
-import           Syntax.Obsidian.Parser (NotePart (..), notePageStatement,
-                                         noteParts, unparseNote, wikiLinks)
+import           CtConstants            (overlayAnnot, overlayAnnotUrl)
+import           Syntax.Ct.Prgm         (RawPrgm (RawPrgm),
+                                         RawStatement (RawAnnot),
+                                         RawStatementTree (RawStatementTree))
+import           Syntax.Obsidian.Parser (NotePart (..), frontmatterUrl, named,
+                                         notePageStatement, noteParts,
+                                         rawArgStr, unparseNote, wikiLinks)
 import           Test.Tasty
 import           Test.Tasty.HUnit       (assertEqual, testCase)
 
@@ -143,6 +147,181 @@ testRewriteOnlyNotes :: TestTree
 testRewriteOnlyNotes = testCase "a page which is not a note is not written back" $
   assertEqual "" Nothing $ unparseNote $ RawPrgm [] []
 
+-- | The properties a note opens with are a part of their own rather than writing of it, so that
+-- what they say can be read without reading the writing apart.
+testFrontmatterPart :: TestTree
+testFrontmatterPart = testCase "a note opening with properties holds them as a part of their own" $
+  assertEqual "" [NoteFrontmatter "url: https://example.com", NoteWriting "The note."] $ noteParts $ unlines [
+    "---",
+    "url: https://example.com",
+    "---",
+    "",
+    "The note."
+                                                                                                            ]
+
+-- | A block is the properties of a note only where Obsidian writes one: at the very start, and
+-- closed. Anywhere else a @---@ is a rule of the writing, and the writing is where it belongs.
+testFrontmatterOnlyAtTheStart :: TestTree
+testFrontmatterOnlyAtTheStart = testGroup "a --- which does not open a closed block at the start is writing" [
+  testCase "unclosed" $ assertEqual "" [NoteWriting "---\nurl: https://example.com"] $ noteParts $ unlines [
+      "---",
+      "url: https://example.com"
+                                                                                                           ],
+  testCase "after the first line" $ assertEqual "" [NoteWriting "The note.\n\n---\nurl: https://example.com\n---"] $ noteParts $ unlines [
+      "The note.",
+      "",
+      "---",
+      "url: https://example.com",
+      "---"
+                                                                                                                                        ],
+  testCase "under a task" $ assertEqual "" [NoteTask "Read it" False [NoteWriting "---\nurl: https://example.com\n---"]] $ noteParts $ unlines [
+      "- [ ] Read it",
+      "  ---",
+      "  url: https://example.com",
+      "  ---"
+                                                                                                                                              ]
+                                                                                                             ]
+
+-- | The block is carried as it was found rather than read apart, because the one place which has to
+-- give it back exactly as it was written is the one writing the note back.
+testFrontmatterVerbatim :: TestTree
+testFrontmatterVerbatim = testCase "the properties are carried as they were written" $
+  assertEqual "" [NoteFrontmatter written, NoteWriting "The note."] $ noteParts $ unlines [
+    "---",
+    "tags:",
+    "  - reading",
+    "  - web",
+    "",
+    "title: A title: with a colon in it",
+    "---",
+    "",
+    "The note."
+                                                                                          ]
+  where
+    written = "tags:\n  - reading\n  - web\n\ntitle: A title: with a colon in it"
+
+-- | Which property names the page a note is written over, and what counts as naming one.
+testFrontmatterUrl :: TestTree
+testFrontmatterUrl = testGroup "the page a note's properties name" [
+  names "url" (Just "https://example.com") "url: https://example.com",
+  names "a quoted url" (Just "https://example.com") "url: \"https://example.com\"",
+  names "roam_refs alone" (Just "https://example.com") "roam_refs: https://example.com",
+  names "url before roam_refs" (Just "https://first.com") "url: https://first.com\nroam_refs: https://second.com",
+  -- A url naming no page on the web is passed over rather than taken as the answer, which is what
+  -- "falling back" to roam_refs means when both are written.
+  names "a url which is not an address" (Just "https://example.com") "url: A book I am reading\nroam_refs: https://example.com",
+  names "the first entry of a list" (Just "https://first.com") "roam_refs: [https://first.com, https://second.com]",
+  -- A note is written over a page on the web. A reference to another note is a link between two
+  -- pages of the doc server, which is not something to frame beneath the writing.
+  names "a quoted wiki link" Nothing "roam_refs: \"[[Another note]]\"",
+  names "a bare wiki link" Nothing "roam_refs: [[Another note]]",
+  names "a wiki link written first in a list" Nothing "roam_refs: [[[Another note]], https://example.com]",
+  names "no property naming a page" Nothing "tags: reading",
+  -- A key indented under another is a part of that one rather than a property of the note.
+  names "a url indented under another property" Nothing "source:\n  url: https://example.com"
+                                                                   ]
+  where
+    names what expected properties = testCase what $ assertEqual "" expected $ frontmatterUrl properties
+
+-- | The page a note is written over is a reading of its properties rather than a part of the note,
+-- so the page holds it as a statement of its own beside them.
+testOverlayStatement :: TestTree
+testOverlayStatement = testGroup "the page a note is written over is declared beside its properties" [
+  testCase "when the properties name one" $ assertEqual "" [Just "https://example.com"] $ overlaysOf $ unlines [
+      "---",
+      "url: https://example.com",
+      "---",
+      "",
+      "The note."
+                                                                                                               ],
+  testCase "and not when they do not" $ assertEqual "" [] $ overlaysOf $ unlines [
+      "---",
+      "tags: reading",
+      "---",
+      "",
+      "The note."
+                                                                                 ],
+  testCase "and not when there are no properties" $ assertEqual "" [] $ overlaysOf "The note.\n"
+                                                                                                     ]
+  where
+    overlaysOf note = case notePageStatement "A note" note of
+      RawStatementTree _ parts -> [rawArgStr overlayAnnotUrl annot | RawStatementTree (RawAnnot annot) [] <- parts, named overlayAnnot annot]
+
+-- | The properties are written back between the delimiters they were found between, and the note
+-- begins after them.
+testRewriteFrontmatter :: TestTree
+testRewriteFrontmatter = testCase "a note is written back with the properties it opened with" $
+  assertEqual "" (Just note) (rewrite note)
+  where
+    note = unlines [
+      "---",
+      "tags:",
+      "  - reading",
+      "title: A note about a page",
+      "---",
+      "",
+      "The note.",
+      "",
+      "- [ ] Read it"
+                   ]
+
+-- | The regression this exists for: the page a note is written over is a statement the note itself
+-- never wrote, and a statement the reversion does not know is a note which cannot be saved at all
+-- ('Syntax.Parsers.unparseImport'). So naming a page must not cost a note its saving.
+testRewriteWithOverlay :: TestTree
+testRewriteWithOverlay = testCase "naming a page to be written over does not stop a note being written back" $
+  assertEqual "" (Just note) (rewrite note)
+  where
+    note = unlines [
+      "---",
+      "url: https://example.com",
+      "---",
+      "",
+      "Notes written over a page.",
+      "",
+      "- [x] Read it"
+                   ]
+
+-- | Writing the properties back is writing what they said, so writing back what was already written
+-- back writes the same thing again — including the blank line the note begins after.
+testRewriteFrontmatterIdempotent :: TestTree
+testRewriteFrontmatterIdempotent = testCase "writing a note's properties back twice writes them the same way" $
+  assertEqual "" (rewrite note) (rewrite =<< rewrite note)
+  where
+    note = unlines [
+      "---",
+      "url: https://example.com",
+      "---",
+      "- [ ] A checkbox written straight after the properties"
+                   ]
+
+-- | Which links a note holding properties has. The links are read from the whole of the note, which
+-- the properties are read out of separately, so breaking them off must not have cost the note any
+-- link it had.
+--
+-- A link written in a property is not one of them, and was not one before the properties were read
+-- as properties: the markdown a note's links are read out of reads a @---@ block as a rule and a
+-- heading rather than as prose, and 'blockText' reads the prose. That is worth pinning rather than
+-- fixing here — reading a property's links would be a reading of properties, which is what
+-- 'frontmatterUrl' does for the one property that names a page.
+testLinksInProperties :: TestTree
+testLinksInProperties = testGroup "the links of a note which opens with properties" [
+  testCase "are the links written in the writing" $ assertEqual "" ["Nested"] $ wikiLinks "note" $ unlines [
+      "---",
+      "related: \"[[Welcome]]\"",
+      "---",
+      "",
+      "Links to [[Nested]]."
+                                                                                                           ],
+  testCase "and not the links written in the properties" $ assertEqual "" [] $ wikiLinks "note" $ unlines [
+      "---",
+      "related: \"[[Welcome]]\"",
+      "---",
+      "",
+      "The note."
+                                                                                                          ]
+                                                                                    ]
+
 obsidianTests :: TestTree
 obsidianTests = testGroup "ObsidianTests" [
   testLinksThroughTask,
@@ -153,5 +332,14 @@ obsidianTests = testGroup "ObsidianTests" [
   testRewrite,
   testRewriteNormalizes,
   testRewriteIdempotent,
-  testRewriteOnlyNotes
+  testRewriteOnlyNotes,
+  testFrontmatterPart,
+  testFrontmatterOnlyAtTheStart,
+  testFrontmatterVerbatim,
+  testFrontmatterUrl,
+  testOverlayStatement,
+  testRewriteFrontmatter,
+  testRewriteWithOverlay,
+  testRewriteFrontmatterIdempotent,
+  testLinksInProperties
                                           ]

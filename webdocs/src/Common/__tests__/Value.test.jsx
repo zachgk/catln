@@ -138,6 +138,34 @@ describe('documentation links', () => {
   })
 })
 
+describe('note and overlay values', () => {
+  // An overlay dispatches to the link rather than to a frame: the frame belongs to whatever is
+  // laying the page out around it, so this and the layout are one frame and one link.
+  it('shows an overlay as the address it names, and not as a frame', () => {
+    const val = {
+      tag: 'TupleVal',
+      name: '/Catln/Doc/Show/Overlay',
+      args: { '/url': { tag: 'StrVal', contents: 'https://example.com' } },
+    }
+    const { container } = render(<Providers><Value data={val} /></Providers>)
+
+    expect(screen.getByRole('link', { name: 'https://example.com' })).toBeInTheDocument()
+    expect(container.querySelector('iframe')).toBeNull()
+  })
+
+  it('shows the properties a note opens with as a table', () => {
+    const val = {
+      tag: 'TupleVal',
+      name: '/Data/Note/Show/Properties',
+      args: { '/text': { tag: 'StrVal', contents: 'title: A page' } },
+    }
+    render(<Providers><Value data={val} /></Providers>)
+
+    expect(screen.getByRole('rowheader', { name: 'title' })).toBeInTheDocument()
+    expect(screen.getByText('A page')).toBeInTheDocument()
+  })
+})
+
 // The display components take update alongside the value's own args, which is what lets an
 // interactive one edit the expression it was compiled from.
 const listProgramVal = {

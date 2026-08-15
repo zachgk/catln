@@ -10,6 +10,8 @@ Prgm
                     , omiDefs =
                         [ /Catln/Doc/dshow( Value s= Value #taskList )= Show/TaskList
                             ( Value tasks= taskList( Value annot= Value s ) )
+                        , /Catln/Doc/dshow
+                            ( Value s= #properties( Value text ) )= Show/Properties( Value text= Value text )
                         ]
                     }
                 )
@@ -29,6 +31,26 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Catln/Doc/dshow./Data/Note/taskList( Value annot ) -> /Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Show/Properties"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Show/Properties( Value /text -> /Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/#properties"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/#properties( Value /text -> /Data/String ) ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -71,17 +93,20 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
         , CGClass
             ( False
             , /Data/Note/Task
             ,
                 [ /Data/Note/Task..
                 , /Data/Note/Show/TaskList..
+                , /Data/Note/Show/Properties..
                 ]
             , Just "A task is shown in the webdocs as the task it is, rather than as the declaration it was read
               into: a box to check and the writing beside it. It is the value itself that is shown, with no
               display type standing in for it, which is what lets checking the box in a doc server write the
-              change back to the note the task was read from. "
+              change back to the note the task was read from.  "
             )
         ]
     , prgmAnnots =

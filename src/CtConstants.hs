@@ -60,14 +60,23 @@ mdAnnot, mdAnnotText :: String
 mdAnnot = "/Catln/#md"
 mdAnnotText = "text"
 
+-- | The page a page is written over, declared in @stack/core/webdoc.ct@. A page carrying one is
+-- shown with the page at 'overlayAnnotUrl' beneath its own writing.
+overlayAnnot, overlayAnnotUrl :: String
+overlayAnnot = "/Catln/Doc/#overlay"
+overlayAnnotUrl = "url"
+
 -- | The types one note is read as, declared in @stack/core/note.ct@. A note is a 'notePagePath'
--- holding the writing of it, broken at each checkbox by a 'noteTaskPath'.
-notePagePath, notePageTitle, noteTaskPath, noteTaskContents, noteTaskState :: String
+-- holding the writing of it, opened by the 'notePropertiesAnnot' its frontmatter is read as and
+-- broken at each checkbox by a 'noteTaskPath'.
+notePagePath, notePageTitle, noteTaskPath, noteTaskContents, noteTaskState, notePropertiesAnnot, notePropertiesAnnotText :: String
 notePagePath = "/Data/Note/Page"
 notePageTitle = "title"
 noteTaskPath = "/Data/Note/Task"
 noteTaskContents = "contents"
 noteTaskState = "state"
+notePropertiesAnnot = "/Data/Note/#properties"
+notePropertiesAnnotText = "text"
 
 printAnnot, printAnnotText, resultAnnotText :: String
 printAnnot = "/Catln/#print"

@@ -25,6 +25,9 @@ Prgm
                         , /Catln/Doc/dshow
                             ( EAppArg Value /s -> /Catln/#print( /p=TopType ) = /Catln/#print( EAppArg Value /p ) ) -> TVArg /p = ( Value /p ↦ TVArg /p )
                         , /Catln/Doc/dshow
+                            ( EAppArg Value /s -> /Catln/Doc/#overlay( /url=/Data/String ) = /Catln/Doc/#overlay( EAppArg Value /url -> /Data/String ) ) -> /Catln/Doc/Show/Overlay( /url=/Data/String ) = /Catln/Doc/Show/Overlay
+                            ( EAppArg Value /url -> TVArg /url = ( Value /url ↦ TVArg /url ) )
+                        , /Catln/Doc/dshow
                             ( EAppArg Value /s -> /Catln/Doc/#listProgram( /mode=∀/Catln/Doc/ListProgramMode ) = /Catln/Doc/#listProgram( EAppArg Value /mode -> ∀/Catln/Doc/ListProgramMode ) ) -> /Catln/Doc/Show/ListProgram
                             ( /prgm=/Data/String
                             , /mode=∀/Catln/Doc/ListProgramMode
@@ -122,6 +125,16 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /dshow./Catln/Doc/typeInfer( EAppArg Value /annot ) -> /Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Doc/Show/Overlay"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Doc/Show/Overlay( EAppArg Value /url -> /Data/String ) ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -322,6 +335,16 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/Doc/#overlay"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Doc/#overlay( EAppArg Value /url -> /Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Doc/Show/TypeInfer"
                 , ObjectMapItem
                     { omiDecls =
@@ -372,6 +395,8 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
         , CGClass
             ( False
             , /Catln/Doc/DShow
@@ -380,6 +405,7 @@ Prgm
                 , /Catln/CatlnResult..
                 , ∀/Data/ToString
                 , /Catln/Doc/Show/MD..
+                , /Catln/Doc/Show/Overlay..
                 , /Catln/Doc/Show/ListProgram..
                 , /Catln/Doc/Show/TypePage..
                 , /Catln/Doc/Show/TypeInfer..
@@ -393,7 +419,7 @@ Prgm
               webdocs render such a value through its [/Data/toString]. This is what lets a `> value`
               print statement accept any [ToString] type. A [DShow] value that is not [ToString] (a
               visualization like [Show/MD]) is still printable, but only [ToString] values are compared
-              against a print/result golden.         "
+              against a print/result golden.          "
             )
         , CGClass
             ( True

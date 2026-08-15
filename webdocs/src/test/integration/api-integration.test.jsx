@@ -439,6 +439,108 @@ describe('Backend API contract', () => {
     })
   })
 
+  // A note which opens with properties naming a page on the web is written over that page. The
+  // properties are read into a display of their own, and the address they name into an overlay
+  // beside them -- neither of which the note itself wrote.
+  describe('a note written over a page', () => {
+    const NOTE = '/test/Integration/code/artifacts/catln-test/Overlay.md'
+    const URL = 'https://catln.dev'
+    const TASK = 'Finish reading the page these notes are written over'
+
+    async function notePage() {
+      const found = (await sidebarPages()).map(p => p.sbPath).find(p => p.endsWith(NOTE))
+      expect(found).toBeDefined()
+      return found
+    }
+
+    // The metas of every statement of the page, at any depth: a note's own statements are declared
+    // inside the page it is read as.
+    function statementMetas(statementTrees, found = []) {
+      for (const [statement, subStatements] of statementTrees) {
+        const expr = statement.tag === 'RawDeclStatement' ? statement.contents.roaObj
+                   : statement.tag === 'RawAnnot' ? statement.contents
+                   : null
+        const meta = expr?.contents?.[0]
+        if (meta?.getMetaDat) found.push(meta)
+        statementMetas(subStatements, found)
+      }
+      return found
+    }
+
+    // The metas of the declarations alone, which is where a note's tasks are.
+    function declMetas(statementTrees, found = []) {
+      for (const [statement, subStatements] of statementTrees) {
+        if (statement.tag === 'RawDeclStatement') {
+          const meta = statement.contents.roaObj?.contents?.[0]
+          if (meta?.getMetaDat) found.push(meta)
+        }
+        declMetas(subStatements, found)
+      }
+      return found
+    }
+
+    function pageValues(statementTrees) {
+      return statementMetas(statementTrees).map(m => m.getMetaDat[2]).filter(Boolean)
+    }
+
+    async function valuesOfNote() {
+      const page = (await fetchApi(`/api/page?prgmName=${encodeURIComponent(await notePage())}`)).contents[0]
+      return {values: pageValues(page.pgPrgm[1]), source: page.pgSource}
+    }
+
+    it('reads its properties and the page it is written over out of the one block', async () => {
+      const {values} = await valuesOfNote()
+
+      const properties = values.find(v => v.name === '/Data/Note/Show/Properties')
+      expect(properties).toBeDefined()
+      // Carried as the block was written rather than as the properties read out of it, because the
+      // note is written back from that same text.
+      expect(properties.args['/text'].contents).toContain(`url: ${URL}`)
+      expect(properties.args['/text'].contents).toContain('- reading')
+
+      const overlay = values.find(v => v.name === '/Catln/Doc/Show/Overlay')
+      expect(overlay).toBeDefined()
+      expect(overlay.args['/url'].contents).toBe(URL)
+    })
+
+    // The overlay is a statement the note never wrote, and a statement the reversion does not know
+    // is a note that cannot be saved at all. So this is the proof that naming a page to be written
+    // over does not cost the note its saving -- and that the properties survive the save.
+    it('is still written back with its properties when one of its tasks is checked', async () => {
+      const page = await notePage()
+
+      // The expression the note's task was declared by, which is what an edit of it names.
+      const taskMetaId = async () => {
+        const statements = (await fetchApi(`/api/page?prgmName=${encodeURIComponent(page)}`)).contents[0].pgPrgm[1]
+        const found = declMetas(statements).find(m => m.getMetaDat[2]?.args?.['/contents']?.contents === TASK)
+        expect(found).toBeDefined()
+        return found.getMetaID
+      }
+
+      const check = async done => fetch(
+        `${API_BASE}/api/write-expr?prgmName=${encodeURIComponent(page)}&metaId=${encodeURIComponent(await taskMetaId())}`, {
+          method: 'POST',
+          headers: {'Content-Type': 'text/plain'},
+          body: `/Data/Note/Task(contents= ${JSON.stringify(TASK)}, state= /Data/Primitive/${done ? 'True' : 'False'})`,
+        })
+
+      try {
+        const res = await check(true)
+        expect(res.status).toBe(200)
+        expect((await res.json()).tag).toBe('Success')
+
+        const {source} = await valuesOfNote()
+        // Written back as the note it was: opening with its properties, and now saying the box is
+        // checked.
+        expect(source.startsWith('---\n')).toBe(true)
+        expect(source).toContain(`url: ${URL}`)
+        expect(source).toContain(`- [x] ${TASK}`)
+      } finally {
+        await check(false)
+      }
+    })
+  })
+
   it('/api/page returns Success with prgm data and source text', async () => {
     const pageName = encodeURIComponent(await idPageName())
     const data = await fetchApi(`/api/page?prgmName=${pageName}`)
