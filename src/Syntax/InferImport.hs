@@ -56,32 +56,44 @@ findExistingPath (p:ps) = do
 -- A directory has no source text of its own to write back — the files in it are pages of their own,
 -- each written back by the parser which read it.
 dirParser :: ImportParser
-dirParser = readOnlyParser $ \_ imp -> case exprAppliedArgs imp of
-  [ObjArr{oaArr=Just (Just (CExpr _ (CStr name)), _)}] -> do
-    files <- listDirectory name
-    files' <- forM files $ \file -> do
-      let file' = name ++ "/" ++ file
-      isF <- doesFileExist file'
-      isD <- doesDirectoryExist file'
-      case (isF, isD) of
-        (True, False) -> if not ("." `isPrefixOf` file) && isSupportedFileExtension file'
-          then return (Just file')
-          else return Nothing
-        (False, True) -> return (Just file')
-        _ -> error $ printf "Found non-file or directory: %s" file'
+dirParser = readOnlyParser (withDirPath dirPreload) (withDirPath dirParse)
 
-    -- Main program
-    let mainPath = name ++ "/main.ct"
-    mainExists <- doesFileExist mainPath
-    let dirPrgm = if mainExists
-          then RawPrgm [mkRawFileImport $ rawStr mainPath] []
-          else RawPrgm [] []
+-- | The directory an import of one names.
+withDirPath :: (FilePath -> IO a) -> ReadEnv -> Expr () -> IO a
+withDirPath act _ imp = case exprAppliedArgs imp of
+  [ObjArr{oaArr=Just (Just (CExpr _ (CStr name)), _)}] -> act name
+  _                                                    -> undefined
 
-    -- The directory alone, because everything read here is read out of its listing: which files it
-    -- holds, which of those are directories of their own, and whether it holds a main.ct. A file in
-    -- it changing is a change to that file's own page, not to this one.
-    return $ ParsedImport (PageRead dirPrgm) (map (mkRawFileImport . rawStr) $ catMaybes files') Nothing (Just [ReadDir name])
-  _ -> undefined
+-- | The page of a directory: the main program it holds, where it holds one.
+--
+-- The directory alone, because everything read here is read out of its listing: which files it
+-- holds, which of those are directories of their own, and whether it holds a main.ct. A file in it
+-- changing is a change to that file's own page, not to this one.
+dirParse :: FilePath -> ImportParseResult
+dirParse name = do
+  let mainPath = name ++ "/main.ct"
+  mainExists <- doesFileExist mainPath
+  let dirPrgm = if mainExists
+        then RawPrgm [mkRawFileImport $ rawStr mainPath] []
+        else RawPrgm [] []
+  return $ ParsedImport dirPrgm Nothing (Just [ReadDir name])
+
+-- | That page, and every file and directory in it as a page the read walks on to.
+dirPreload :: FilePath -> ImportPreloadResult
+dirPreload name = do
+  files <- listDirectory name
+  files' <- forM files $ \file -> do
+    let file' = name ++ "/" ++ file
+    isF <- doesFileExist file'
+    isD <- doesDirectoryExist file'
+    case (isF, isD) of
+      (True, False) -> if not ("." `isPrefixOf` file) && isSupportedFileExtension file'
+        then return (Just file')
+        else return Nothing
+      (False, True) -> return (Just file')
+      _ -> error $ printf "Found non-file or directory: %s" file'
+  parsed <- dirParse name
+  return (eagerPreload parsed){plExtraImports = map (mkRawFileImport . rawStr) $ catMaybes files'}
 
 -- | The places an import of @name@ could be: beside the file which wrote it, then in the standard
 -- library.

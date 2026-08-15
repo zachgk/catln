@@ -155,28 +155,42 @@ mkRawImportStr name = mkRawFileImport $ fromMaybe (rawStr name) (importExpr name
 mkDesCanonicalImportStr :: CTSSConfig -> String -> IO FileImport
 mkDesCanonicalImportStr config = canonicalImport config Nothing . mkRawImportStr
 
-readImport :: ReadEnv -> FileImport -> ImportParseResult
-readImport env imp = case maybeExprPath (impAbs imp) of
+-- | The syntax a page is written in, and the parser which reads it.
+--
+-- The syntax is the name at the head of the import, which is what says it. Asked the one way by
+-- everything which reads or writes a page, so that a page is read and written back by the one
+-- parser.
+importParser :: MonadFail m => FileImport -> m (String, ImportParser)
+importParser imp = case maybeExprPath (impAbs imp) of
   Nothing -> fail $ printf "Invalid import %s must be string or oject" (show imp)
   Just impPath -> case H.lookup (nameStr impPath) importParsers of
-    Nothing -> fail $ printf "No parser available for oject name in %s" (show imp)
-    -- TODO Modify the ImportParseResult to CResT to report back parse errors
-    Just parser -> ipParse parser env $ impAbs imp
+    Nothing     -> fail $ printf "No parser available for oject name in %s" (show imp)
+    Just parser -> return (nameStr impPath, parser)
+
+-- | Reads where the page an import names sits in the import graph.
+-- TODO Modify the ImportPreloadResult to CResT to report back parse errors
+preloadImport :: ReadEnv -> FileImport -> ImportPreloadResult
+preloadImport env imp = do
+  (_, parser) <- importParser imp
+  ipPreload parser env $ impAbs imp
+
+-- | Reads the page an import names as the program it holds.
+-- TODO Modify the ImportParseResult to CResT to report back parse errors
+parseImport :: ReadEnv -> FileImport -> ImportParseResult
+parseImport env imp = do
+  (_, parser) <- importParser imp
+  ipParse parser env $ impAbs imp
 
 -- | Writes a page back as the file it was read from, by the parser which read it.
 --
--- The mirror of 'readImport', and it finds its parser the same way: by the name at the head of the
--- import, which is what says the syntax the page is written in. A syntax with no reversion is
--- reported rather than passed over, so that a page which cannot be saved says so instead of being
--- saved as something else.
+-- The mirror of 'parseImport'. A syntax with no reversion is reported rather than passed over, so
+-- that a page which cannot be saved says so instead of being saved as something else.
 unparseImport :: FileImport -> RawPrgm () -> CRes String
-unparseImport imp prgm = case maybeExprPath (impAbs imp) of
-  Nothing -> fail $ printf "Invalid import %s must be string or oject" (show imp)
-  Just impPath -> case H.lookup (nameStr impPath) importParsers of
-    Nothing -> fail $ printf "No parser available for oject name in %s" (show imp)
-    Just parser -> case ipUnparse parser prgm of
-      Just src -> return src
-      Nothing -> fail $ printf "The page %s can not be written back as %s" (show $ impRaw imp) (show $ nameStr impPath)
+unparseImport imp prgm = do
+  (syntax, parser) <- importParser imp
+  case ipUnparse parser prgm of
+    Just src -> return src
+    Nothing  -> fail $ printf "The page %s can not be written back as %s" (show $ impRaw imp) (show syntax)
 
 -- | When the files a page was read from were last written, as the read that read them found them.
 data ReadTime = ReadTime {
@@ -207,21 +221,26 @@ data ReadTime = ReadTime {
 -- a page whose own files have not changed.
 data ReadPage = ReadPage {
   -- | The program the page holds, or 'Nothing' for a page whose imports are known and whose program
-  -- has not been read ('Syntax.Ct.Prgm.PageDeferred'). Such a page is in the graph with its edges,
-  -- and is read when something asks what is in it ('CtService.ctssLoad').
+  -- has not been read ('Syntax.Ct.Prgm.plParsed'). Such a page is in the graph with its edges, and
+  -- is read the rest of the way when something asks what is in it ('CtService.ctssLoad').
   rpPrgm    :: Maybe (RawPrgm ()),
   rpSource  :: Maybe String,
   -- | The imports the page writes: its edges in the import graph.
   rpImports :: [FileImport],
-  -- | Every import the read walked on from, 'rpImports' included. The two differ for 'dirParser',
-  -- 'hsParser' and 'Syntax.Obsidian.Parser.vaultPrgm', which find pages the program does not
-  -- import, so a page given back that replayed only its edges would drop every file of a directory,
+  -- | Pages the read found which the page does not import ('Syntax.Ct.Prgm.plExtraImports'): the
+  -- files of a directory, the notes of a vault. The read walks on to these as well as to the
+  -- edges, so a page given back that replayed only its edges would drop every file of a directory,
   -- and every note of a vault, out of the graph.
-  rpVisits  :: [FileImport],
+  rpExtras  :: [FileImport],
   -- | 'Nothing' where nothing timed the read, which is a page that is always read again: either the
-  -- parser could not say what it read ('piReads') or the read was not one 'readFiles' made.
+  -- parser could not say what it read ('Syntax.Ct.Prgm.ReadPaths') or the read was not one
+  -- 'readFiles' made.
   rpReads   :: Maybe ReadTime
                          }
+
+-- | Every page the read walks on to from this one.
+readPageVisits :: ReadPage -> [FileImport]
+readPageVisits page = rpExtras page ++ rpImports page
 
 -- | When anything under a directory was last added, removed or renamed, and 'Nothing' where the
 -- tree could not be walked at all.
@@ -312,43 +331,53 @@ readPathWrittenIn written (ReadDir dir) = writtenAbove written dir || any ((== d
 -- Everything under the directory, at whatever depth, that a reading of the tree would have read.
 readPathWrittenIn written (ReadTree dir) = any (readsUnder dir) written
 
-processParsed :: CTSSConfig -> FileImport -> ParsedImport -> IO ReadPage
-processParsed config imp ParsedImport{piPrgm=parse, piExtraImports=extraImports, piSource=src} = do
-  -- A page whose program has not been read is given the standard library, since whether to give it
-  -- is read out of the program. See 'Syntax.Ct.Prgm.PageParse' for why that is a limit on which
-  -- syntaxes may defer rather than a guess made here.
-  let includeCore = maybe True (\prgm -> not (rawPrgmHasAnnot prgm noCoreAnnot)) (pageParsePrgm parse)
-  let prgmImports = pageParseImports parse
-  let prgmImports' = if includeCore && not ("core" `isInfixOf` name)
-      then mkRawFileImport (rawStr "core") : prgmImports
-      else prgmImports
-  prgmImports'' <- mapM (canonicalImport config (Just imp)) prgmImports'
-  extraImports' <- mapM (canonicalImport config (Just imp)) extraImports
-  let totalImports = extraImports' ++ prgmImports''
-  let prgm' = fmap (\(RawPrgm _ statements) -> RawPrgm prgmImports' statements) (pageParsePrgm parse)
-  let prgm'' = addRawPrgmMetaIDs (parseMetaIDScope imp) <$> prgm'
-  return $ ReadPage prgm'' src prgmImports'' totalImports Nothing
+-- | The imports a page holds: the ones the read found it writes, and the standard library unless
+-- the page turns it down or is part of it.
+--
+-- A page whose program has not been read is given the standard library, since whether to give it is
+-- read out of the program. See 'Syntax.Ct.Prgm.plParsed' for why that is a limit on which syntaxes
+-- may leave a page unread rather than a guess made here.
+pageImports :: FileImport -> Maybe (RawPrgm ()) -> [RawFileImport] -> [RawFileImport]
+pageImports imp prgm imports
+  | includeCore && not ("core" `isInfixOf` name) = mkRawFileImport (rawStr "core") : imports
+  | otherwise = imports
   where
+    includeCore = maybe True (\prgm' -> not (rawPrgmHasAnnot prgm' noCoreAnnot)) prgm
     name = case impAbs imp of
       CExpr _ (CStr n) -> n
       TupleApply _ _ (EAppArg ObjArr{oaArr=Just (Just (CExpr _ (CStr n)), _)}) -> n
       _ -> ""
 
--- | Read one page, on its own and out of no record. What a caller which is to work with a page's
--- program rather than with a graph of them wants: the formatter, and the goldens.
---
--- A page with no program is a failure rather than an empty one. Its 'ReadEnv' reads every page in
--- full, so there is none to be had — but these callers write files back over the ones they read
--- ('app/Main.hs'), and a page with no program written back is a file emptied.
+-- | The program as the page holds it: writing the page's imports rather than its own, and with its
+-- meta ids named for the page.
+pagePrgm :: FileImport -> [RawFileImport] -> RawPrgm () -> RawPrgm ()
+pagePrgm imp imports (RawPrgm _ statements) = addRawPrgmMetaIDs (parseMetaIDScope imp) $ RawPrgm imports statements
+
+-- | The page a preload found: where it sits in the graph, and the program it holds where the
+-- preload had to read it.
+preloadPage :: CTSSConfig -> FileImport -> PreloadImport -> IO ReadPage
+preloadPage config imp PreloadImport{plImports, plExtraImports, plParsed} = do
+  let imports = pageImports imp (piPrgm <$> plParsed) plImports
+  imports' <- mapM (canonicalImport config (Just imp)) imports
+  extras' <- mapM (canonicalImport config (Just imp)) plExtraImports
+  return $ ReadPage (pagePrgm imp imports . piPrgm <$> plParsed) (piSource =<< plParsed) imports' extras' Nothing
+
+-- | What a parse gives a page: the program as the page holds it, and the edges that program writes.
+parsedPage :: CTSSConfig -> FileImport -> ParsedImport -> IO (RawPrgm (), [FileImport])
+parsedPage config imp ParsedImport{piPrgm=prgm@(RawPrgm rawImports _)} = do
+  let imports = pageImports imp (Just prgm) rawImports
+  imports' <- mapM (canonicalImport config (Just imp)) imports
+  return (pagePrgm imp imports prgm, imports')
+
+-- | Read one page as its program, on its own and out of no record. What a caller which is to work
+-- with a page's program rather than with a graph of them wants: the formatter, and the goldens.
 parseFile :: CTSSConfig -> RawFileImport -> CResT IO (GraphNodes (RawPrgm ()) FileImport)
-parseFile config imp = do
-  env <- lift newReadEnv
-  imp' <- lift $ canonicalImport config Nothing imp
-  r <- lift $ readImport env imp'
-  page <- lift $ processParsed config imp' r
-  case rpPrgm page of
-    Just prgm -> return (prgm, imp', rpImports page)
-    Nothing -> fail $ printf "The page %s was read without its program, so there is nothing to work with" (show $ impRaw imp')
+parseFile config imp = lift $ do
+  env <- newReadEnv
+  imp' <- canonicalImport config Nothing imp
+  parsed <- parseImport env imp'
+  (prgm, imports) <- parsedPage config imp' parsed
+  return (prgm, imp', imports)
 
 -- | What a page was read from, or nothing at all where the read could not say what it read.
 readPaths :: ReadPage -> [ReadPath]
@@ -371,40 +400,54 @@ unchangedPages pages = do
   times <- H.fromList <$> mapM (\read' -> (read',) <$> readPathWrittenAt env read') paths
   return $ H.fromList [page | page <- pages, readTimeCurrent times (rpReads $ snd page)]
 
--- | The page an import names: the one the last read left, or the files read again.
+-- | The page an import names: the one the last read left, or the files read again, and its program
+-- read where this read is one to have it.
+--
+-- A page left by an earlier read is read the rest of the way in place rather than from the start,
+-- since where it sits in the graph is already known and nothing it was read from has changed.
 --
 -- The time is taken before the files are read rather than after them, so that a file written while
 -- it is being read is one the next read reads again. A time taken afterwards would say the read had
 -- seen the write when it may have happened first.
-readPage :: CTSSConfig -> ReadEnv -> H.HashMap FileImport ReadPage -> FileImport -> IO ReadPage
-readPage config env prev imp = case H.lookup imp prev of
-  Just page -> return page
+readPage :: CTSSConfig -> ReadEnv -> S.HashSet FileImport -> H.HashMap FileImport ReadPage -> FileImport -> IO ReadPage
+readPage config env inFull prev imp = case H.lookup imp prev of
+  Just page -> readOn page
   Nothing -> do
     started <- getCurrentTime
-    parsed <- readImport env imp
-    page <- processParsed config imp parsed
-    times <- readTime env started (piReads parsed)
-    return page{rpReads = times}
+    preloaded <- preloadImport env imp
+    page <- preloadPage config imp preloaded
+    times <- readTime env started (plReads preloaded)
+    readOn page{rpReads = times}
+  where
+    readOn page
+      | isJust (rpPrgm page) || not (S.member imp inFull) = return page
+      | otherwise = do
+          started <- getCurrentTime
+          parsed <- parseImport env imp
+          (prgm, imports) <- parsedPage config imp parsed
+          times <- readTime env started (piReads parsed)
+          return page{rpPrgm=Just prgm, rpSource=piSource parsed, rpImports=imports, rpReads=times}
 
 -- | Read the files an import names, and everything they import.
 --
--- A page of @prev@ is given back as it is, without its files being read at all, and the read walks
--- on through the imports it was left with. Which of them are still worth giving back is the
--- caller's to decide, by whatever it knows about what has changed ('unchangedPages' looks, where
--- there is nothing better), so that this reads what it is asked to read and no more.
+-- A page of @prev@ is given back as it is, its files read again only where it is one of the pages
+-- named and its program has yet to be read, and the read walks on through the imports it was left
+-- with. Which of them are still worth giving back is the caller's to decide, by whatever it knows
+-- about what has changed ('unchangedPages' looks, where there is nothing better), so that this
+-- reads what it is asked to read and no more.
 --
--- The files named are read in full; every other page a parser has a record of may be answered out
--- of it, with its imports and without its program. What that leaves is a graph of every page with
--- the programs of the ones asked for, which is what lets a service take up the shape of a program
--- without reading all of it.
+-- The pages named are read as their programs; every other page a parser can place in the graph
+-- without reading is left with its imports and without its program. What that leaves is a graph of
+-- every page with the programs of the ones asked for, which is what lets a service take up the
+-- shape of a program without reading all of it.
 --
 -- Whatever the read recorded is written back at the end rather than as it goes, so that a read
 -- which read nothing writes nothing.
 --
--- TODO Change readImport, then make this return GraphData of CRes
-readFiles :: CTSSConfig -> S.HashSet FilePath -> H.HashMap FileImport ReadPage -> [RawFileImport] -> IO (GraphData ReadPage FileImport)
-readFiles config needed prev initialImps = do
-  env <- newRecordedReadEnv (ctssCachePath config) needed
+-- TODO Change preloadImport and parseImport, then make this return GraphData of CRes
+readFiles :: CTSSConfig -> S.HashSet FileImport -> H.HashMap FileImport ReadPage -> [RawFileImport] -> IO (GraphData ReadPage FileImport)
+readFiles config inFull prev initialImps = do
+  env <- newRecordedReadEnv (ctssCachePath config)
   initialImps' <- mapM (canonicalImport config Nothing) initialImps
   res <- aux env [] S.empty initialImps'
   mapM_ flushObsidianCache $ reObsidianCache env
@@ -416,6 +459,6 @@ readFiles config needed prev initialImps = do
       if S.member nextToVisit visited
         then aux env acc visited restToVisit
         else do
-          page <- readPage config env prev nextToVisit
-          let restToVisit' = rpVisits page ++ restToVisit
+          page <- readPage config env inFull prev nextToVisit
+          let restToVisit' = readPageVisits page ++ restToVisit
           aux env ((page, nextToVisit, rpImports page) : acc) (S.insert nextToVisit visited) restToVisit'

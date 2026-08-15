@@ -70,7 +70,11 @@ writeNote at path src = do
 readVault :: CTSSConfig -> [FilePath] -> GraphData ReadPage FileImport -> FilePath -> IO (GraphData ReadPage FileImport)
 readVault config needed prev vault = do
   unchanged <- unchangedPages [(prgmName, page) | (page, prgmName, _) <- graphToNodes prev]
-  readFiles config (S.fromList needed) unchanged [mkRawImportStr $ "obsidian(\"" ++ vault ++ "\")"]
+  -- The notes are named to the read as the pages they are, which is what a caller asking for a page
+  -- holds ('CtService.ctssReadOf'), rather than as the paths they are shown at: a page is the import
+  -- which names it, and two pages can be shown at the one path.
+  inFull <- mapM (mkDesCanonicalImportStr config) needed
+  readFiles config (S.fromList inFull) unchanged [mkRawImportStr $ "obsidian(\"" ++ vault ++ "\")"]
 
 -- | A first run has nothing an earlier one left to give back.
 noPages :: GraphData ReadPage FileImport

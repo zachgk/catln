@@ -24,7 +24,6 @@ import           GHC.Generics          (Generic)
 
 import           Control.Exception     (IOException, try)
 import           Data.Aeson            hiding (Object)
-import qualified Data.HashSet          as S
 import           Data.IORef            (IORef, modifyIORef', newIORef,
                                         readIORef)
 import           Data.List             (isPrefixOf, sort, stripPrefix)
@@ -182,13 +181,6 @@ data ReadEnv = ReadEnv {
   -- Scoped to one read rather than kept between reads. What is on disk changes between reads, and
   -- deciding that it has is what 'ReadPath' and the times a read records already are.
   reScans         :: IORef (H.HashMap FilePath TreeScan),
-  -- | The files this read must read in full, whatever a parser has recorded of them.
-  --
-  -- What the reader wants, rather than anything about how a page is read: a caller which needs a
-  -- page's program says which pages, and gets those read and the rest answered as cheaply as they
-  -- can be. A read with nothing in it defers whatever it can, which is a read wanting the shape of
-  -- the program rather than the program.
-  reNeeded        :: S.HashSet FilePath,
   -- | What an earlier run recorded of the Obsidian vaults this read reaches, and what this read has
   -- to write back to them. Absent for a read which is to read every page it reaches.
   --
@@ -206,19 +198,14 @@ data ReadEnv = ReadEnv {
 
 -- | A read which reads every page it reaches, keeping and consulting no record.
 newReadEnv :: IO ReadEnv
-newReadEnv = newRecordedReadEnv Nothing S.empty
+newReadEnv = newRecordedReadEnv Nothing
 
--- | A read which may answer for a page out of what an earlier run recorded, but for the files
--- named, which it reads in full.
-newRecordedReadEnv :: Maybe FilePath -> S.HashSet FilePath -> IO ReadEnv
-newRecordedReadEnv cacheRoot needed = do
+-- | A read which may answer for a page out of what an earlier run recorded.
+newRecordedReadEnv :: Maybe FilePath -> IO ReadEnv
+newRecordedReadEnv cacheRoot = do
   scans <- newIORef H.empty
   cache <- traverse newObsidianCache cacheRoot
-  return $ ReadEnv scans needed cache
-
--- | Whether this read is to read a file in full rather than answer for it out of a record.
-readsInFull :: ReadEnv -> FilePath -> Bool
-readsInFull ReadEnv{reNeeded} file = S.member file reNeeded
+  return $ ReadEnv scans cache
 
 -- | The walk of the tree under a directory this read made, walking it if this read has not.
 --
@@ -264,61 +251,66 @@ walkTree dir = do
       [] -> Nothing
       ts -> Just $ maximum ts
 
--- | What reading a page found it to be: the program it holds, or — where the reading was answered
--- out of what an earlier one recorded — only the imports it writes.
+-- | Everything on disk a reading depended on: the files it read, and the directories and trees
+-- whose listing decided what it found. A page is read again exactly when one of these is written
+-- to, so one left out is a page which goes stale, and one put in needlessly is a page read more
+-- often than it need be. A directory is written to when an entry is added to it, removed from it or
+-- renamed within it, which is every way a listing of it can change.
 --
--- A page read as its imports alone is a page in the graph, with its edges, whose program is yet to
--- be read. That is what lets a reader take up the shape of a program without reading all of it, and
--- read a page when something asks what is in it ('CtService.ctssLoad').
---
--- A syntax whose pages can write @#noCore@ cannot answer with 'PageDeferred'. Whether to give a
--- page the standard library is read out of the program ('Syntax.Parsers.processParsed'), so a page
--- whose program has not been read is given it — which is right for every page that does not turn it
--- down, and is the whole of the standard library wrongly imported by one that does.
-data PageParse
-  = PageRead (RawPrgm ())
-  | PageDeferred [RawFileImport]
+-- 'Nothing' is a reading which cannot say what it read, and has its page read again every time
+-- rather than have a change to it go unseen.
+type ReadPaths = Maybe [ReadPath]
 
--- | The imports a page writes, whether or not its program has been read.
-pageParseImports :: PageParse -> [RawFileImport]
-pageParseImports (PageRead (RawPrgm imports _)) = imports
-pageParseImports (PageDeferred imports)         = imports
-
--- | The program a page holds, where it has been read.
-pageParsePrgm :: PageParse -> Maybe (RawPrgm ())
-pageParsePrgm (PageRead prgm) = Just prgm
-pageParsePrgm PageDeferred{}  = Nothing
-
--- | What reading a file as a page produced, and what the reading read to produce it.
+-- | A page read to the program it holds.
 data ParsedImport = ParsedImport {
-  piPrgm         :: PageParse,
-  -- | Imports the parse found which the program does not itself write: the files of a directory,
-  -- the notes of an Obsidian vault.
-  piExtraImports :: [RawFileImport],
+  piPrgm   :: RawPrgm (),
   -- | The text the page was read from, where the page is one file and so has one to show.
-  piSource       :: Maybe String,
-  -- | Everything on disk this reading depended on: the files it read, and the directories and trees
-  -- whose listing decided what the program holds. A page is read again exactly when one of these is
-  -- written to, so one left out here is a page which goes stale, and one put in needlessly is a page
-  -- read more often than it need be. A directory is written to when an entry is added to it, removed
-  -- from it or renamed within it, which is every way a listing of it can change.
-  --
-  -- 'Nothing' is a reading which cannot say what it read, and has its page read again every time
-  -- rather than have a change to it go unseen.
-  piReads        :: Maybe [ReadPath]
+  piSource :: Maybe String,
+  piReads  :: ReadPaths
                                  }
 
+-- | Where a page sits in the import graph, and the program it holds where reading it was the only
+-- way to say.
+data PreloadImport = PreloadImport {
+  -- | The imports the page writes: its edges in the graph.
+  plImports      :: [RawFileImport],
+  -- | Pages the reading found which the program does not itself import: the files of a directory,
+  -- the notes of an Obsidian vault.
+  plExtraImports :: [RawFileImport],
+  -- | The program, where the only way to say what the page imports was to read it.
+  --
+  -- A syntax which answers 'Nothing' leaves its page in the graph with its edges and without its
+  -- program, to be read the rest of the way when something asks what is in it
+  -- ('CtService.ctssLoad'). That is what lets a reader take up the shape of a program without
+  -- reading all of it.
+  --
+  -- A syntax whose pages can write @#noCore@ must not answer 'Nothing'. Whether to give a page the
+  -- standard library is read out of the program ('Syntax.Parsers.pageImports'), so a page whose
+  -- program has not been read is given it — which is right for every page that does not turn it
+  -- down, and is the whole of the standard library wrongly imported by one that does.
+  plParsed       :: Maybe ParsedImport,
+  plReads        :: ReadPaths
+                                   }
+
 type ImportParseResult = IO ParsedImport
+type ImportPreloadResult = IO PreloadImport
 
 -- | How a file written in one syntax is read as a page, and written back as that syntax.
 --
--- The two directions belong together because only the parser which read a file knows what its
--- program means as that syntax. A syntax which cannot be written back says so by answering nothing,
--- rather than by having no reversion at all, so that every syntax is asked the same question and a
--- page which cannot be saved is reported rather than mistaken for one which can.
+-- The directions belong together because only the parser which read a file knows what its program
+-- means as that syntax. A syntax which cannot be written back says so by answering nothing, rather
+-- than by having no reversion at all, so that every syntax is asked the same question and a page
+-- which cannot be saved is reported rather than mistaken for one which can.
+--
+-- Reading is asked as two questions rather than one, because a reader wants the answers at
+-- different times: where every page sits in the graph, and then what is in the pages it goes on to
+-- work with. Both are asked out of what the read has already found ('ReadEnv'), which is what keeps
+-- a read from walking one tree once for every page in it.
 data ImportParser = ImportParser {
-  -- | Reads the file an import names as the program it is, out of what the read has already found
-  -- ('ReadEnv') — which is what keeps a read from walking one tree once for every page in it.
+  -- | Reads what the file an import names says about the shape of the program: what it imports, and
+  -- what else it brings in.
+  ipPreload :: ReadEnv -> Expr () -> ImportPreloadResult,
+  -- | Reads the file an import names as the program it is.
   ipParse   :: ReadEnv -> Expr () -> ImportParseResult,
   -- | Writes a page back as the file it was read from, or nothing when that syntax has no reversion.
   --
@@ -327,9 +319,18 @@ data ImportParser = ImportParser {
   ipUnparse :: RawPrgm () -> Maybe String
                                  }
 
+-- | The preload of a syntax which can say what a page imports only by reading it: the one read
+-- answers both questions, so the program it produced is handed on rather than read for again.
+eagerPreload :: ParsedImport -> PreloadImport
+eagerPreload parsed@ParsedImport{piPrgm=RawPrgm imports _, piReads} = PreloadImport imports [] (Just parsed) piReads
+
 -- | A parser which reads a syntax but cannot write it back.
-readOnlyParser :: (ReadEnv -> Expr () -> ImportParseResult) -> ImportParser
-readOnlyParser parse = ImportParser parse (const Nothing)
+readOnlyParser :: (ReadEnv -> Expr () -> ImportPreloadResult) -> (ReadEnv -> Expr () -> ImportParseResult) -> ImportParser
+readOnlyParser preload parse = ImportParser preload parse (const Nothing)
+
+-- | A read-only parser whose preload is its parse ('eagerPreload').
+eagerParser :: (ReadEnv -> Expr () -> ImportParseResult) -> ImportParser
+eagerParser parse = readOnlyParser (\env imp -> eagerPreload <$> parse env imp) parse
 
 instance ExprClass RawExpr where
   getExprMeta expr = case expr of

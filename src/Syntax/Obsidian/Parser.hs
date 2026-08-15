@@ -47,14 +47,7 @@ obsidian = "obsidian"
 obsidianConfigDir :: FilePath
 obsidianConfigDir = ".obsidian"
 
--- | Reads an Obsidian vault, and writes a note of one back.
---
--- Only a note is written back. A vault is a directory, whose notes are pages of their own and are
--- each written back as themselves, so it has no source text of its own for a reversion to produce.
-obsidianParser :: ImportParser
-obsidianParser = ImportParser obsidianParse unparseNote
-
--- | Imports an Obsidian vault, or one note of one.
+-- | Reads an Obsidian vault, or one note of one, and writes a note back.
 --
 -- A vault is a page of its own whose program is empty, holding every note as an import. A note is a
 -- page holding a 'CtConstants.notePagePath' for itself, whose comment is the note as it was
@@ -63,10 +56,21 @@ obsidianParser = ImportParser obsidianParse unparseNote
 -- that says something the program can act on is a checkbox, which is read as a
 -- 'CtConstants.noteTaskPath' declared where it was written.
 --
--- Which of the two an import is comes from what its path names, a directory or a file, so that a
--- vault and its notes are read by the one parser. Neither is named a vault by the import: a vault is
--- the directory holding an 'obsidianConfigDir', as Obsidian itself decides it, and a note finds its
--- own by looking upwards for one. Being able to answer that from the path alone is what lets
+-- Only a note is written back. A vault is a directory, whose notes are pages of their own and are
+-- each written back as themselves, so it has no source text of its own for a reversion to produce.
+obsidianParser :: ImportParser
+obsidianParser = ImportParser obsidianPreload obsidianParse unparseNote
+
+-- | Which of the two an obsidian import names: a vault, or a note and the vault holding it.
+data ObsidianImport
+  = ObsidianVault FilePath
+  | ObsidianNote FilePath FilePath
+
+-- | Which of the two an import names, which comes from what its path names, a directory or a file,
+-- so that a vault and its notes are read by the one parser. Neither is named a vault by the import:
+-- a vault is the directory holding an 'obsidianConfigDir', as Obsidian itself decides it, and a note
+-- finds its own by looking upwards for one. Being able to answer that from the path alone is what
+-- lets
 -- 'Syntax.InferImport.inferFileParser' route a note here without being told to, which is in turn
 -- what makes a note the same page whether the vault, another note or a reader of the doc server
 -- named it.
@@ -74,8 +78,8 @@ obsidianParser = ImportParser obsidianParse unparseNote
 -- Importing one directory as both a vault and a plain @dir@ makes two pages at the one display
 -- path. 'Eval.Runtime.WebDocs.sidebarLevel' shows a directory holding pages as a single node, so
 -- the two are shown as one; an empty one has no node to collapse into and is an error there.
-obsidianParse :: ReadEnv -> Expr () -> ImportParseResult
-obsidianParse env imp = case [arg | arg@ObjArr{oaObj=Nothing} <- exprAppliedArgs imp] of
+obsidianImport :: Expr () -> IO ObsidianImport
+obsidianImport imp = case [arg | arg@ObjArr{oaObj=Nothing} <- exprAppliedArgs imp] of
   (ObjArr{oaArr=Just (Just (CExpr _ (CStr path)), _)}:_) -> do
     isDir <- doesDirectoryExist path
     isFile <- doesFileExist path
@@ -83,15 +87,29 @@ obsidianParse env imp = case [arg | arg@ObjArr{oaObj=Nothing} <- exprAppliedArgs
       (True, _) -> do
         isVault <- doesDirectoryExist $ path </> obsidianConfigDir
         if isVault
-          then vaultPrgm env path
+          then return $ ObsidianVault path
           else fail $ printf "The directory %s is not an Obsidian vault, as it holds no %s configuration" path obsidianConfigDir
       (_, True) -> do
         vault <- noteVault path
         case vault of
-          Just vault' -> notePrgm env vault' path
+          Just vault' -> return $ ObsidianNote vault' path
           Nothing -> fail $ printf "The note %s is in no Obsidian vault, as no directory holding it holds an %s configuration" path obsidianConfigDir
       _ -> fail $ printf "Could not find the Obsidian vault or note %s" path
   _ -> fail $ printf "An obsidian import must name a vault directory or a note within one: %s" (show imp)
+
+obsidianPreload :: ReadEnv -> Expr () -> ImportPreloadResult
+obsidianPreload env imp = do
+  imp' <- obsidianImport imp
+  case imp' of
+    ObsidianVault vault     -> vaultPreload env vault
+    ObsidianNote vault note -> notePreload env vault note
+
+obsidianParse :: ReadEnv -> Expr () -> ImportParseResult
+obsidianParse env imp = do
+  imp' <- obsidianImport imp
+  case imp' of
+    ObsidianVault vault     -> return $ vaultPrgm vault
+    ObsidianNote vault note -> noteParse env vault note
 
 -- | The vault a note sits in: the closest directory holding an 'obsidianConfigDir' at or above it.
 noteVault :: FilePath -> IO (Maybe FilePath)
@@ -104,7 +122,8 @@ noteVault note = aux $ takeDirectory note
         _ | takeDirectory dir /= dir -> aux $ takeDirectory dir
         _                            -> return Nothing
 
--- | The page of a vault: every note it holds, as a page the read walks on to.
+-- | The page of a vault, which is empty: what a vault holds is its notes, and each of them is a
+-- page of its own ('vaultPreload').
 --
 -- The notes are named by their path alone, leaving 'Syntax.InferImport.inferFileParser' to
 -- read each one as the note of a vault it is, so that a note the vault names and the same note a
@@ -122,13 +141,17 @@ noteVault note = aux $ takeDirectory note
 -- The whole vault is what this page was read from, not the notes: which notes a vault holds is read
 -- out of the listings under it, and a note's own writing says nothing about whether the vault holds
 -- it. A note added anywhere under the vault is an entry written into one of those listings.
-vaultPrgm :: ReadEnv -> FilePath -> ImportParseResult
-vaultPrgm env vault = do
+vaultPrgm :: FilePath -> ParsedImport
+vaultPrgm vault = ParsedImport (RawPrgm [] []) Nothing (Just [ReadTree vault])
+
+-- | That page, and every note of the vault as a page the read walks on to.
+vaultPreload :: ReadEnv -> FilePath -> ImportPreloadResult
+vaultPreload env vault = do
   notes <- vaultNotes env vault
   -- Which notes the vault holds is read here and nowhere else, so this is the one place a record
   -- of the vault can be told that a note it holds something about is gone.
   forM_ (reObsidianCache env) $ \cache -> keepOnlyNotes cache vault notes
-  return $ ParsedImport (PageRead (RawPrgm [] [])) (map (mkRawFileImport . rawStr) notes) Nothing (Just [ReadTree vault])
+  return (eagerPreload $ vaultPrgm vault){plExtraImports = map (mkRawFileImport . rawStr) notes}
 
 -- | The page of one note: what it is, and what it links to.
 --
@@ -136,17 +159,45 @@ vaultPrgm env vault = do
 -- it was reached through its vault or by a link from another note, and either way its links resolve
 -- against every note of the vault. It is asked for and not walked: the read walks a tree once
 -- ('Syntax.Ct.Prgm.scanTree'), so a vault of a thousand notes is one walk rather than a thousand.
+noteParse :: ReadEnv -> FilePath -> FilePath -> ImportParseResult
+noteParse env vault note = do
+  contents <- readFile note
+  notes <- vaultNotes env vault
+  let linked = nub $ filter (/= note) $ mapMaybe (resolveWikiLink vault notes) $ wikiLinks note contents
+  forM_ (reObsidianCache env) $ \cache -> recordNoteLinks cache vault note linked
+  return $ ParsedImport (RawPrgm (noteImports linked) [notePageStatement (takeBaseName note) contents]) (Just contents) (Just $ noteReads note linked)
+
+-- | Where a note sits in the graph: the notes it links to, out of what an earlier run recorded of
+-- it, and out of the note itself where there is no record of it to take them from.
 --
--- Read from the note itself and from the notes it links to. Its own writing is the page, and a note
--- it links to going away or moving is what makes the page's imports wrong: an import is replayed
--- even where the page is given back unread ('Syntax.Parsers.readFiles'), so a note left importing a
--- note that has been deleted is a read that fails rather than a link that dangles. Reading a note
--- from the notes it links to is what has it read again in time to drop the import.
+-- Whether a record still holds belongs to the record itself
+-- ('Syntax.Obsidian.Cache.cachedNoteLinks'). This is the one syntax which can say where a page sits
+-- without reading it, so it is the one whose pages are left to be read the rest of the way.
+notePreload :: ReadEnv -> FilePath -> FilePath -> ImportPreloadResult
+notePreload env vault note = do
+  recorded <- case reObsidianCache env of
+    Nothing    -> return Nothing
+    Just cache -> cachedNoteLinks cache vault note
+  case recorded of
+    Just linked -> return $ PreloadImport (noteImports linked) [] Nothing (Just $ noteReads note linked)
+    Nothing     -> eagerPreload <$> noteParse env vault note
+
+-- | A note's links, as the imports of the page it is read as.
+noteImports :: [FilePath] -> [RawFileImport]
+noteImports = map (mkRawFileImport . rawStr)
+
+-- | What reading a note reads: the note itself, and the notes it links to.
 --
--- A linked note is read as a 'Syntax.Ct.Prgm.ReadExists' rather than a
--- 'Syntax.Ct.Prgm.ReadFile', because nothing in it was read. What is in a linked note is that
--- note's own page, so writing to it must read that page again and no other — otherwise a note
--- linked to from a hundred notes is a hundred notes read again every time it is typed into.
+-- Its own writing is the page, and a note it links to going away or moving is what makes the page's
+-- imports wrong: an import is replayed even where the page is given back unread
+-- ('Syntax.Parsers.readFiles'), so a note left importing a note that has been deleted is a read that
+-- fails rather than a link that dangles. Reading a note from the notes it links to is what has it
+-- read again in time to drop the import.
+--
+-- A linked note is read as a 'Syntax.Ct.Prgm.ReadExists' rather than a 'Syntax.Ct.Prgm.ReadFile',
+-- because nothing in it was read. What is in a linked note is that note's own page, so writing to it
+-- must read that page again and no other — otherwise a note linked to from a hundred notes is a
+-- hundred notes read again every time it is typed into.
 --
 -- NOT read from the vault, though the whole vault is what the links resolved against. A note added
 -- anywhere under the vault could turn a link that resolved to nothing into an import, and saying so
@@ -155,33 +206,8 @@ vaultPrgm env vault = do
 -- left resolving to nothing until the note writing it is read again for a reason of its own. A link
 -- that did resolve is watched through the note it resolved to, so deleting, moving or renaming that
 -- note is seen.
-notePrgm :: ReadEnv -> FilePath -> FilePath -> ImportParseResult
-notePrgm env vault note = do
-  recorded <- noteLinksRecorded env vault note
-  case recorded of
-    Just linked -> return $ ParsedImport (PageDeferred (imports linked)) [] Nothing (Just $ reads' linked)
-    Nothing -> do
-      contents <- readFile note
-      notes <- vaultNotes env vault
-      let linked = nub $ filter (/= note) $ mapMaybe (resolveWikiLink vault notes) $ wikiLinks note contents
-      forM_ (reObsidianCache env) $ \cache -> recordNoteLinks cache vault note linked
-      return $ ParsedImport (PageRead (RawPrgm (imports linked) [notePageStatement (takeBaseName note) contents])) [] (Just contents) (Just $ reads' linked)
-  where
-    imports = map (mkRawFileImport . rawStr)
-    reads' linked = ReadFile note : map ReadExists linked
-
--- | The notes a note links to, as an earlier run recorded them, where this read will take them.
---
--- A read which says it must have this note in full is given nothing, so that whoever asked for the
--- note's program gets the note read rather than its shape again. Everything else about whether a
--- record still holds belongs to the record ('Syntax.Obsidian.Cache.cachedNoteLinks'); what is
--- decided here is only whether this read is one to be answered that way at all.
-noteLinksRecorded :: ReadEnv -> FilePath -> FilePath -> IO (Maybe [FilePath])
-noteLinksRecorded env vault note
-  | readsInFull env note = return Nothing
-  | otherwise = case reObsidianCache env of
-      Nothing    -> return Nothing
-      Just cache -> cachedNoteLinks cache vault note
+noteReads :: FilePath -> [FilePath] -> [ReadPath]
+noteReads note linked = ReadFile note : map ReadExists linked
 
 -- | The note itself: the page it is, titled as it is linked to, holding what was written in it.
 --

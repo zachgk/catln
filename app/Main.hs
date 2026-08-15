@@ -14,11 +14,10 @@ import           Syntax.Ct.Builder    (applyRawArgs, rawStr, rawVal)
 import           Syntax.Ct.Formatter  (formatRootPrgm)
 import           Syntax.Ct.Prgm       (ParsedImport (..), RawPrgm (..),
                                        RawStatement (..), RawStatementTree (..),
-                                       newReadEnv, pageParsePrgm,
-                                       rawExprAppliedArgsMap)
+                                       newReadEnv, rawExprAppliedArgsMap)
 import           Syntax.Parsers       (canonicalImport, mkDesCanonicalImportStr,
-                                       mkRawImportStr, parseFile, readFiles,
-                                       readImport)
+                                       mkRawImportStr, parseFile, parseImport,
+                                       readFiles)
 
 import           Control.Monad
 import           Control.Monad.Trans
@@ -105,15 +104,12 @@ xLsp = do
 xFmt :: String -> CResT IO ()
 xFmt prgmName = do
   -- Format the RAW parsed program (the source as written), NOT the result of the full parse
-  -- pipeline: 'processParsed' injects an implicit @import "core"@ for compilation, and formatting
-  -- that would write a duplicate @import "core"@ back into any file that already imports it.
+  -- pipeline: 'Syntax.Parsers.pageImports' injects an implicit @import "core"@ for compilation, and
+  -- formatting that would write a duplicate @import "core"@ back into any file that already imports
+  -- it.
   imp <- lift $ canonicalImport buildCtssConfig Nothing $ mkRawImportStr prgmName
   env <- lift newReadEnv
-  ParsedImport{piPrgm=parsed} <- lift $ readImport env imp
-  -- A page with no program is a failure rather than an empty one, since what is written back here
-  -- goes over the file it was read from: formatting a page nothing read would empty it. The read
-  -- above reads every page in full ('newReadEnv'), so there is none to be had.
-  rawPrgm <- maybe (fail $ printf "The page %s was read without its program, so there is nothing to format" prgmName) return $ pageParsePrgm parsed
+  ParsedImport{piPrgm=rawPrgm} <- lift $ parseImport env imp
   let prgm' = formatRootPrgm rawPrgm
   -- Written back to the file the import resolved to rather than to the name it was given by, which
   -- is not always a path: an import may name its parser instead ('mkRawImportStr'), and writing to

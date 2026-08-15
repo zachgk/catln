@@ -102,7 +102,7 @@ runParser flags filename str parser = unP parser parseState
 -- TODO Write a Haskell module back. Nothing reads one back yet, and a module is read for what it
 -- declares rather than in full, so there is not enough of it in the program to write one.
 hsParser :: ImportParser
-hsParser = readOnlyParser $ \_ imp -> case [arg | arg@ObjArr{oaObj=Nothing} <- exprAppliedArgs imp] of
+hsParser = eagerParser $ \_ imp -> case [arg | arg@ObjArr{oaObj=Nothing} <- exprAppliedArgs imp] of
   (ObjArr{oaArr=Just (Just (CExpr _ (CStr filename)), _)}:_) -> do
     -- Extract stackRoot and exportAll parameters from all arguments (including named ones)
     let maybeStackRoot = extractStackRoot (exprAppliedArgs imp)
@@ -139,9 +139,7 @@ hsParser = readOnlyParser $ \_ imp -> case [arg | arg@ObjArr{oaObj=Nothing} <- e
           Just flags -> do
             let parsed = runParser flags file str parseModule
             case parsed of
-              POk _ v -> do
-                let (prgm, imps) = convertModule flags exportAll stackRoot $ unLoc v
-                return $ ParsedImport (PageRead prgm) imps Nothing reads'
+              POk _ v -> return $ ParsedImport (convertModule flags exportAll stackRoot $ unLoc v) Nothing reads'
               PFailed _pstate ->
                 -- TODO uncomment and fix this to show parse errors instead of silently returning an empty program
                 -- let realSpan = psRealSpan $ last_loc pstate
@@ -154,8 +152,8 @@ hsParser = readOnlyParser $ \_ imp -> case [arg | arg@ObjArr{oaObj=Nothing} <- e
                 -- in fail errMsg
 
                 -- Return empty program on parse failure to skip unparseable files (e.g., files with CPP)
-                return $ ParsedImport (PageRead (RawPrgm [] [])) [] Nothing reads'
-      Nothing -> return $ ParsedImport (PageRead (RawPrgm [] [])) [] Nothing reads'
+                return $ ParsedImport (RawPrgm [] []) Nothing reads'
+      Nothing -> return $ ParsedImport (RawPrgm [] []) Nothing reads'
   _ -> undefined
 
   where

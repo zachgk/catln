@@ -102,27 +102,24 @@ contents p = do
 -- TODO Write a .ct file back with 'Syntax.Ct.Formatter.formatRootPrgm', which is already the
 -- program-to-text direction for this syntax.
 ctParser :: ImportParser
-ctParser = readOnlyParser $ \_ imp -> case exprAppliedArgs imp of
+ctParser = eagerParser $ \_ imp -> case exprAppliedArgs imp of
   [ObjArr{oaArr=Just (Just (CExpr _ (CStr fileName)), _)}] -> do
     fileContents <- readFile fileName
     case runParser (contents pPrgm) fileName fileContents of
       Left err   -> fail $ show $ errorBundlePretty err
-      Right prgm -> return $ ParsedImport (PageRead prgm) [] (Just fileContents) (Just [ReadFile fileName])
+      Right prgm -> return $ ParsedImport prgm (Just fileContents) (Just [ReadFile fileName])
   _ -> undefined
 
 -- TODO Write a .ctx file back, once 'ctParser' can be written back: it is a .ct file with the one
 -- annotation this adds taken off again.
 ctxParser :: ImportParser
-ctxParser = readOnlyParser $ \env fileName -> do
+ctxParser = eagerParser $ \env fileName -> do
   -- Updated rather than rebuilt, so the file this read is a read of travels with it without being
   -- named again here.
   parsed <- ipParse ctParser env fileName
   return parsed{piPrgm = annotate (piPrgm parsed)}
   where
-    -- 'ctParser' reads the file, so its page is always read; a page with no program has no place to
-    -- put the annotation which makes it a .ctx.
-    annotate (PageRead (RawPrgm imports statements)) = PageRead $ RawPrgm imports (RawStatementTree (RawAnnot (RawValue emptyMetaN (mkName ctxAnnot))) [] :statements)
-    annotate deferred = deferred
+    annotate (RawPrgm imports statements) = RawPrgm imports (RawStatementTree (RawAnnot (RawValue emptyMetaN (mkName ctxAnnot))) [] :statements)
 
 parseRepl :: String -> PReplRes
 parseRepl s = case runParser (contents p) "<repl>" s of

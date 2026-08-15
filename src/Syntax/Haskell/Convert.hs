@@ -635,16 +635,16 @@ convertIE _ IEDoc{} = []
 convertIE _ IEDocNamed{} = []
 
 -- https://hackage.haskell.org/package/ghc-lib-parser-9.4.8.20231111/docs/GHC-Hs.html
-convertModule :: DynFlags -> Bool -> Maybe FilePath -> HsModule -> (RawPrgm (), [RawFileImport])
+convertModule :: DynFlags -> Bool -> Maybe FilePath -> HsModule -> RawPrgm ()
 -- Module with no exports - convert everything
 convertModule flags _ maybeStackRoot (HsModule _ _ (Just name) Nothing imports decls Nothing Nothing) =
-  (RawPrgm (map (convertImport flags maybeStackRoot . unLoc) imports) [RawStatementTree (rawModule ("/Haskell/M/" ++ moduleNameSlashes (unLoc name))) (concatMap (convertDecl flags . unLoc) decls)], [])
+  RawPrgm (map (convertImport flags maybeStackRoot . unLoc) imports) [RawStatementTree (rawModule ("/Haskell/M/" ++ moduleNameSlashes (unLoc name))) (concatMap (convertDecl flags . unLoc) decls)]
 -- Module with exports and exportAll=True - convert everything, ignore exports
 convertModule flags True maybeStackRoot (HsModule _ _ (Just name) (Just _) imports decls Nothing Nothing) =
-  (RawPrgm (map (convertImport flags maybeStackRoot . unLoc) imports) [RawStatementTree (rawModule ("/Haskell/M/" ++ moduleNameSlashes (unLoc name))) (concatMap (convertDecl flags . unLoc) decls)], [])
+  RawPrgm (map (convertImport flags maybeStackRoot . unLoc) imports) [RawStatementTree (rawModule ("/Haskell/M/" ++ moduleNameSlashes (unLoc name))) (concatMap (convertDecl flags . unLoc) decls)]
 -- Module with exports and exportAll=False - create re-export file
 convertModule flags False maybeStackRoot (HsModule _ _ (Just name) (Just exports) _imports _decls Nothing Nothing) =
-  (RawPrgm [fullModuleImport] (map mkEximportStatement exportNames), [])
+  RawPrgm [fullModuleImport] (map mkEximportStatement exportNames)
   where
     moduleName = moduleNameSlashes (unLoc name)
     -- Create import for the full module with exportAll=True

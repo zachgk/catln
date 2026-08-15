@@ -21,7 +21,7 @@ import           System.Directory
 
 -- TODO Write a markdown file back as the text of the one annotation it is read as.
 mdParser :: ImportParser
-mdParser = readOnlyParser $ \_ imp -> case exprAppliedArgs imp of
+mdParser = eagerParser $ \_ imp -> case exprAppliedArgs imp of
   (ObjArr{oaArr=Just (Just (CExpr _ (CStr filename)), _)}:_impArgs) -> do
     isFile <- doesFileExist filename
     -- The file this read is a read of, whether it was there or not: a page read from a file which
@@ -30,8 +30,8 @@ mdParser = readOnlyParser $ \_ imp -> case exprAppliedArgs imp of
     if isFile
       then do
         str <- readFile filename
-        return $ ParsedImport (PageRead (RawPrgm [] [RawStatementTree (RawAnnot (rawVal mdAnnot `applyRawArgs` [(Just $ partialKey (mkName mdAnnotText), RawCExpr emptyMetaN (CStr str))])) []])) [] (Just str) reads'
-      else return $ ParsedImport (PageRead (RawPrgm [] [])) [] Nothing reads'
+        return $ ParsedImport (RawPrgm [] [RawStatementTree (RawAnnot (rawVal mdAnnot `applyRawArgs` [(Just $ partialKey (mkName mdAnnotText), RawCExpr emptyMetaN (CStr str))])) []]) (Just str) reads'
+      else return $ ParsedImport (RawPrgm [] []) Nothing reads'
   _ -> undefined
 
 

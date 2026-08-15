@@ -335,7 +335,7 @@ ctssReadOf ctss@(CTSS ssmv) load = do
     given <- ctssUnchanged ctssWatcher written [(prgmName, ssfRead ssf) | (ssf, prgmName, _) <- graphToNodes before]
     let unchanged = foldr H.delete given load
     let held = [prgmName | (ssf, prgmName, _) <- graphToNodes before, isJust (ssfRaw ssf)]
-    let needed = S.fromList $ mapMaybe impDisp $ load ++ held
+    let needed = S.fromList $ load ++ held
     rawPrgms <- readFiles ctssConfig needed unchanged (map mkRawImportStr ctssBaseFileNames)
     change <- modifyMVar ssmv $ \ss -> do
       let (data', invalidations) = unzip $ map (buildSSF (ctssData ss)) $ graphToNodes rawPrgms
