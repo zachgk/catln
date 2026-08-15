@@ -318,25 +318,23 @@ ctssRead ctss = void $ ctssReadOf ctss []
 
 -- | 'ctssRead', additionally reading in full the programs of the pages named.
 --
--- The pages named are dropped from what the read gives back, so they are read again, and named to
--- the read as pages it must read in full, so a record of them is passed over. That is what turns a
--- page held as its imports alone into a page held as its program.
+-- The pages named are named to the read as pages it must have in full. A page it gives back as its
+-- imports alone is read the rest of the way where it was named ('Syntax.Parsers.readPage'), which
+-- is what turns a page held as its imports alone into a page held as its program, and a page whose
+-- program it gives back is given back with it rather than read for a second time.
 --
--- Every page whose program the service ALREADY holds is named too, whoever asked. A page is read
--- again only when something it was read from has changed, and a page which has changed must be read
--- rather than answered for out of what was recorded of what it used to be. Without this the record
--- would win over the change: 'buildSSF' below cannot match a program it holds against a read which
--- brought none, so the page would be replaced by one with no program and everything built from it
--- thrown away.
+-- Every page whose program the service ALREADY holds is named too, whoever asked. Such a page may
+-- be read again for a reason of its own — it has changed, or 'ctssStale' has had it forgotten — and
+-- a read of it which brought only its imports would lose the program the service holds: 'buildSSF'
+-- below cannot match a program it holds against a read which brought none, so the page would be
+-- replaced by one with no program and everything built from it thrown away.
 ctssReadOf :: CTSS -> [FileImport] -> IO ReadChange
 ctssReadOf ctss@(CTSS ssmv) load = do
   CTSSDat{ctssConfig, ctssBaseFileNames, ctssData=before, ctssWatcher, ctssReadLock} <- readMVar ssmv
   change <- withMVar ctssReadLock $ \() -> withWritten ctssWatcher $ \written -> do
-    given <- ctssUnchanged ctssWatcher written [(prgmName, ssfRead ssf) | (ssf, prgmName, _) <- graphToNodes before]
-    let unchanged = foldr H.delete given load
+    unchanged <- ctssUnchanged ctssWatcher written [(prgmName, ssfRead ssf) | (ssf, prgmName, _) <- graphToNodes before]
     let held = [prgmName | (ssf, prgmName, _) <- graphToNodes before, isJust (ssfRaw ssf)]
-    let needed = S.fromList $ load ++ held
-    rawPrgms <- readFiles ctssConfig needed unchanged (map mkRawImportStr ctssBaseFileNames)
+    rawPrgms <- readFiles ctssConfig (S.fromList $ load ++ held) unchanged (map mkRawImportStr ctssBaseFileNames)
     change <- modifyMVar ssmv $ \ss -> do
       let (data', invalidations) = unzip $ map (buildSSF (ctssData ss)) $ graphToNodes rawPrgms
       let read'' = graphFromEdges data'
@@ -346,9 +344,13 @@ ctssReadOf ctss@(CTSS ssmv) load = do
     -- The watches only need seeing to where the read read something, since they are watches on what
     -- the reads read. A read which gave every page back left every path it was watching for exactly
     -- as it was, and gathering them up again to say so would be work for every path of every page,
-    -- to find nothing to do.
+    -- to find nothing to do. A read with pages asked of it is not one of those: a page given back
+    -- as its imports alone is read the rest of the way where it was asked for, which is a read of a
+    -- page the read also gave back. Taken as having read something whenever anything was asked of
+    -- it, rather than by looking for which of them were read the rest of the way, since seeing to
+    -- watches that were already seen to costs a set difference and finds nothing.
     let read' = graphToNodes rawPrgms
-    let readNothing = length read' == H.size unchanged && all (\(_, prgmName, _) -> H.member prgmName unchanged) read'
+    let readNothing = null load && length read' == H.size unchanged && all (\(_, prgmName, _) -> H.member prgmName unchanged) read'
     unless readNothing $ forM_ ctssWatcher $ ctssRewatch ctss
     return change
   -- Outside the read, so that a reader woken by it can read the service without waiting on the read
