@@ -1,5 +1,6 @@
 import React from 'react'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import Debugger from '../Debugger'
@@ -60,13 +61,45 @@ describe('Debugger', () => {
   })
 
   it('says so when the run printed nothing and entered no arrow', () => {
-    const empty = { drExit: 1, drOutput: '', drValue: null, drResult: { erCoverage: {}, erTreebug: [] } }
+    const empty = { drExit: 1, drOutput: '', drValue: null, drResult: { erCoverage: {}, erTreebug: [], erDebugs: [] } }
     render(<Providers><Debugger {...debug(empty)} /></Providers>)
 
     expect(screen.getByText(/Evaluated no arrows/)).toBeInTheDocument()
     expect(screen.getByText(/Printed nothing/)).toBeInTheDocument()
+    expect(screen.getByText(/Recorded nothing/)).toBeInTheDocument()
     expect(screen.getByText(/Exited with 1/)).toBeInTheDocument()
     expect(screen.queryByRole('treeitem')).not.toBeInTheDocument()
+  })
+
+  // The #debug records of the run, which is the other direction through it: the tree says what was
+  // evaluated, and these say what a value was at a point the program named.
+  it('lists what the run recorded, in the order it recorded them', () => {
+    render(<Providers><Debugger {...debug()} /></Providers>)
+
+    // Written on greet as `#debug(d= name)` then `#debug(d= "greeting")`, so they read down the
+    // definition rather than back up it.
+    const records = screen.getAllByRole('listitem')
+    expect(records).toHaveLength(2)
+    expect(records[0]).toHaveTextContent('scratch-debugger.ct:5')
+    expect(records[0]).toHaveTextContent('world')
+    expect(records[1]).toHaveTextContent('scratch-debugger.ct:6')
+    expect(records[1]).toHaveTextContent('greeting')
+  })
+
+  it('reveals the call a record was recorded in', async () => {
+    const user = userEvent.setup()
+    render(<Providers><Debugger {...debug()} /></Providers>)
+
+    // Only the root is on screen to begin with: the call the records came from is inside it, which
+    // is the whole reason a record leads anywhere rather than naming a node the reader must find.
+    expect(screen.getAllByRole('treeitem')).toHaveLength(1)
+
+    const record = screen.getAllByRole('listitem')[0]
+    await user.click(within(record).getByRole('button'))
+
+    const items = screen.getAllByRole('treeitem')
+    expect(items).toHaveLength(2)
+    expect(items[1]).toHaveAttribute('aria-selected', 'true')
   })
 
   // A run of one expression (#debugExpr) rather than of a program: it was given no IO handle to
@@ -76,7 +109,7 @@ describe('Debugger', () => {
       drExit: null,
       drOutput: '',
       drValue: { tag: 'IntVal', contents: 3 },
-      drResult: { erCoverage: {}, erTreebug: [] },
+      drResult: { erCoverage: {}, erTreebug: [], erDebugs: [] },
     }
     render(<Providers><Debugger {...debug(expr)} /></Providers>)
 

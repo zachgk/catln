@@ -207,11 +207,17 @@ nestedDeclPreprocessor (oa, subStatements) = pure . DPPStatements <$> aux [] sub
     oaReturnMeta = case roaArr oa of
       Just (_, retM) -> retM
       Nothing        -> Nothing
+    -- The statements kept are accumulated by consing, so what has been kept is in the reverse of
+    -- the order it was written and is reversed back at each point it is used. A declaration
+    -- carries its statements in the order they were written for the same reason it carries them at
+    -- all: they are read as a body, and something reporting on them one at a time reports on them
+    -- in that order. A @#debug@ of each step of a computation is the clearest case — read back to
+    -- front it is not a trace of the computation but a list of the same values.
     aux :: [PStatementTree] -> [PStatementTree] -> CRes [PStatementTree]
-    aux accStmts [RawStatementTree (RawDeclStatement RawObjArr{roaObj=Just e, roaArr=Nothing}) []] = return [RawStatementTree (RawDeclStatement oa{roaArr=Just (Just e, Nothing)}) accStmts] -- expr statement
+    aux accStmts [RawStatementTree (RawDeclStatement RawObjArr{roaObj=Just e, roaArr=Nothing}) []] = return [RawStatementTree (RawDeclStatement oa{roaArr=Just (Just e, Nothing)}) (reverse accStmts)] -- expr statement
     aux accStmts (s@(RawStatementTree RawDeclStatement{} _) : restStmt) = aux (s:accStmts) restStmt
     aux accStmts (s@(RawStatementTree RawAnnot{} _) : restStmt) = aux (s:accStmts) restStmt
-    aux accStmts [] = return [RawStatementTree (RawDeclStatement oa{roaArr=Just (Just rawAnon, Nothing)}) accStmts]
+    aux accStmts [] = return [RawStatementTree (RawDeclStatement oa{roaArr=Just (Just rawAnon, Nothing)}) (reverse accStmts)]
     aux accStmts (RawStatementTree (RawBindStatement roa@RawObjArr{roaObj=Just objExpr, roaArr=Just (Just arrExpr, _)}) []:restStmt) =
       -- Desugar @x <- m@ followed by the rest of the body to @bindap(m= m, fn(v)= cont(x= v))@, where
       -- @cont@ is a fresh sub function whose body is the remaining statements. Routing the
@@ -220,7 +226,7 @@ nestedDeclPreprocessor (oa, subStatements) = pure . DPPStatements <$> aux [] sub
       -- are preprocessed recursively as @cont@'s own sub statements. The bind's own pattern (@objExpr@,
       -- e.g. @x@) becomes @cont@'s parameter, and @bindap@'s @fn@ lambda simply passes the bound
       -- element to it.
-      return [RawStatementTree (RawDeclStatement oa{roaArr=Just (Just bindapCall, oaReturnMeta)}) (accStmts ++ [contDef])]
+      return [RawStatementTree (RawDeclStatement oa{roaArr=Just (Just bindapCall, oaReturnMeta)}) (reverse accStmts ++ [contDef])]
       where
         contName = "$" ++ take 6 (printf "%08x" (hash roa))
         contArgName = contName ++ "-arg"

@@ -1,0 +1,47 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= inc
+                                ( Value x= /operator-
+                                    ( Value /a= CInt 1 )
+                                )
+                            )( Value /this= Value io )
+                        ]
+                    }
+                )
+            ,
+                ( "/inc"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ inc( Value x -> /Data/Primitive/Integer )= /operator+( Value /l= Value x )
+                            ( Value /r= CInt 1 )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "Tests the [#debug] annotation, which records its value every time the definition it is written on
+            is evaluated.
+            Two of them on one definition, one on an argument and one on a computed expression. The computed
+            one is what checks that a record is placed by the annotation it was written as: an operator apply
+            carries no source position of its own, so a record placed by the expression inside the annotation
+            would have nowhere to say it came from." )
+        ]
+    }

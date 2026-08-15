@@ -83,6 +83,14 @@ printAnnot = "/Catln/#print"
 printAnnotText = "p"
 resultAnnotText = "result"
 
+-- | The value a run records as it reaches it, declared in @stack/core/compile.ct@. Unlike the
+-- annotations above, 'debugAnnotArg' names an argument of the annotation once it has been
+-- EVALUATED, so it is the runtime argument key (leading @\/@) rather than the name a partial key is
+-- built from — as 'assertTestStr' is.
+debugAnnot, debugAnnotArg :: String
+debugAnnot = "/Catln/#debug"
+debugAnnotArg = "/d"
+
 ctxAnnot :: String
 ctxAnnot = "/Catln/#ctx"
 

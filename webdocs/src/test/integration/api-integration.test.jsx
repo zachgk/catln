@@ -3,7 +3,7 @@
  *
  * Prerequisites:
  *   Start the backend API servers before running these tests:
- *     stack exec catln doc test/Integration/code/id.ct test/Integration/code/obsidian.ct -- --api
+ *     stack exec catln doc test/Integration/code/id.ct test/Integration/code/obsidian.ct test/Integration/code/debug.ct -- --api
  *     stack exec catln doc test/Integration/code/id.ct -- --readonly
  *   The second serves the same API on the serve port (8080) and is only there to
  *   check that --readonly refuses writes.
@@ -260,8 +260,12 @@ describe('Backend API contract', () => {
   }
 
   async function idPageName(base = API_BASE) {
+    return pageNameEnding('/test/Integration/code/id.ct', base)
+  }
+
+  async function pageNameEnding(suffix, base = API_BASE) {
     const pages = await sidebarPages(base)
-    const name = pages.map(p => p.sbPath).find(n => n.endsWith('/test/Integration/code/id.ct'))
+    const name = pages.map(p => p.sbPath).find(n => n.endsWith(suffix))
     expect(name).toBeDefined()
     return name
   }
@@ -337,6 +341,35 @@ describe('Backend API contract', () => {
     expect(run.drExit).toBe(0)
     expect(run.drOutput).toBe('')
     expect(run.drResult.erTreebug.length).toBeGreaterThan(0)
+    // id.ct writes no #debug, so the run recorded none. An empty list rather than a missing one:
+    // the page shows the records of every run, and one that recorded nothing says so.
+    expect(run.drResult.erDebugs).toEqual([])
+  })
+
+  // A run's #debug records, which is what the annotation exists for: nothing reads them within the
+  // program, so a run is the only thing that can be asked for them.
+  it('/api/annot reports the #debug records of the run it makes', async () => {
+    const page = await pageNameEnding('/test/Integration/code/debug.ct')
+    const val = await annotValue('#debugger(fun= "/main")', page)
+    const run = JSON.parse(val.args['/run'].contents)
+    expect(run.drExit).toBe(0)
+
+    // debug.ct writes `#debug(d= x)` then `#debug(d= x + 1)` on `inc`, which main calls with -1.
+    // They come back in the order they were written, which is what makes the list a trace of the
+    // run rather than a set of the values it happened to record.
+    expect(run.drResult.erDebugs.map(d => d.edValue)).toEqual([
+      {tag: 'IntVal', contents: -1},
+      {tag: 'IntVal', contents: 0},
+    ])
+    expect(run.drResult.erDebugs.map(d => d.edPos[0].line)).toEqual([11, 12])
+    expect(run.drResult.erDebugs.every(d => d.edPos[0].name.endsWith('/debug.ct'))).toBe(true)
+
+    // Each names the call it was recorded in, which is a node of the tree beside it -- a definition
+    // called twice records twice, and a record has to say which of the two it came from.
+    const nodes = new Set()
+    const collect = ([, , , children, id]) => { nodes.add(id); children.forEach(collect) }
+    run.drResult.erTreebug.forEach(collect)
+    expect(run.drResult.erDebugs.every(d => nodes.has(d.edNode))).toBe(true)
   })
 
   it('/api/annot reports #debugger with no page to be scoped to as an error note', async () => {

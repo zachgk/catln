@@ -56,6 +56,19 @@ module(Catln)
   annot(#print(p -> DShow, result -> String))
     # The [#print] can also include a [result] holding the expected serialized value of [p].
       It is written and checked as a golden test by [catln test]; use [catln test --update] to populate it.
+  annot(#debug(d -> DShow))
+    # [#debug] records [d] every time the definition it is written on is evaluated.
+      It is the same idea as a [#print] aimed at a different reader. A [#print] is a value shown to
+      whoever opens the page, computed once for the page and displayed there; a [#debug] is a value
+      shown to whoever is watching a run, computed as often as the run reaches it. So it is written
+      on a definition and fires per call, the way an [#assert] does, and displays nothing on the page
+      it is written in.
+      The records of a run are collected into one list, in the order they were recorded, however many
+      definitions and however many calls they came from. That order is what makes them readable as a
+      trace of the run rather than as a set of unrelated values, and it is why they are one list
+      rather than one list per definition.
+      What reads that list is up to whoever asked for the run. The debugger shows it beside the tree
+      of what the run evaluated, each record pointing at the call it was recorded in.
   annot(#test)
     # [#test] is used to mark that a function or value is a test.
       All tests are treated as private and are not expected to be called.

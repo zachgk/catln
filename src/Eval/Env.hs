@@ -19,7 +19,6 @@ import qualified Data.HashMap.Strict as H
 
 import           Control.Monad.State
 import           CRes
-import           Data.Hashable
 import           Eval.Common
 import           Semantics.Prgm
 import           Semantics.Types
@@ -28,10 +27,11 @@ import           TreeBuild           (buildArrow)
 
 evalStartEArrow :: PartialType -> AnyObjArr -> Args -> StateT Env CRes (TExpr EvalMetaDat, [TExpr EvalMetaDat], Args)
 evalStartEArrow srcType oa newArgs = do
-  env@Env{evExEnv, evTbEnv, evArgs, evCoverage, evTreebugOpen} <- get
+  env@Env{evExEnv, evTbEnv, evArgs, evCoverage, evTreebugOpen, evTreebugNextId} <- get
   let env' = env{
                 evArgs=newArgs
-                , evTreebugOpen = oa : evTreebugOpen
+                , evTreebugOpen = (show evTreebugNextId, oa) : evTreebugOpen
+                , evTreebugNextId = evTreebugNextId + 1
                 }
   case oa of
     Right oa' -> do
@@ -54,13 +54,24 @@ evalStartEArrow srcType oa newArgs = do
 
 evalEndEArrow :: Val -> Val -> Args -> Env -> Env
 evalEndEArrow _ _ _ Env{evTreebugOpen} | null evTreebugOpen = error $ printf "Tried to evalEndEArrow with an empty treebug open"
-evalEndEArrow input val newArgs env@Env{evTreebugOpen, evTreebugClosed, evCallStack} = env {
+evalEndEArrow input val newArgs env@Env{evTreebugOpen, evTreebugClosed} = env {
   evTreebugOpen = tail evTreebugOpen,
-  evTreebugClosed = pure $ (\oa -> EvalTreebugClosed oa input val evTreebugClosed closedId) (head evTreebugOpen),
+  evTreebugClosed = pure $ (\(closedId, oa) -> EvalTreebugClosed oa input val evTreebugClosed closedId) (head evTreebugOpen),
   evArgs = newArgs
                                                             }
-  where
-    closedId = take 10 (printf "%08x" (hash (evTreebugOpen, evTreebugClosed, evCallStack)))
+
+-- | Records a @#debug@ against the arrow the evaluation is currently inside.
+--
+-- The innermost open arrow, because that is the definition the annotation is written on: an
+-- annotation is evaluated by 'Eval.evalObjArrCaptured' between the arrow being entered and its body
+-- being run, so there is always one open. That is stated rather than worked around, as
+-- 'evalEndEArrow' states it: a record with no call to belong to would be a broken evaluation rather
+-- than a record to place somewhere else.
+evalRecordDebug :: CodeRange -> Val -> Env -> Env
+evalRecordDebug _ _ Env{evTreebugOpen} | null evTreebugOpen = error $ printf "Tried to record a #debug with an empty treebug open"
+evalRecordDebug pos val env@Env{evTreebugOpen, evDebugs} = env {
+  evDebugs = EvalDebug pos val (fst $ head evTreebugOpen) : evDebugs
+                                                               }
 
 evalError :: String -> StateT Env CRes v
 evalError msg = do
@@ -86,4 +97,4 @@ withEvalPush c f = do
   return res
 
 evalResult :: Env -> EvalResult
-evalResult Env{evCoverage, evTreebugClosed} = EvalResult evCoverage evTreebugClosed
+evalResult Env{evCoverage, evTreebugClosed, evDebugs} = EvalResult evCoverage evTreebugClosed (reverse evDebugs)

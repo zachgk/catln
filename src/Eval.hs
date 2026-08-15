@@ -96,16 +96,27 @@ evalAllTargetModes prgm@Prgm{prgmObjMap} = H.fromList $ mapMaybe targetMode $ fl
       _ -> Just (getMetaID $ getExprMeta $ oaObjExpr oa, evalPrgmTargetMode (nameStr (oaObjPath oa)) prgm)
 
 -- | evaluate annotations such as assertions that require compiler verification
-evalCompAnnot :: Val -> StateT Env CRes ()
+--
+-- The annotation is taken as well as the value it evaluated to, because an annotation reporting on
+-- where it is written cannot be told that from its value: an evaluated annotation is a tuple of what
+-- its arguments came to, with nothing left of the expression it was.
+evalCompAnnot :: TExpr EvalMetaDat -> Val -> StateT Env CRes ()
 
-evalCompAnnot (TupleVal n args) | n == assertStr = case (H.lookup assertTestStr args, H.lookup assertMsgStr args) of
+evalCompAnnot _ (TupleVal n args) | n == assertStr = case (H.lookup assertTestStr args, H.lookup assertMsgStr args) of
   (Just b, Just (StrVal _)) | b == true -> return ()
   (Just b, Just (StrVal msg)) | b == false -> lift $ CErr [MkCNote $ AssertCErr msg]
   (Just b, Nothing) | b == true -> return ()
   (Just b, Nothing) | b == false -> lift $ CErr [MkCNote $ AssertCErr "Failed assertion"]
   _ -> evalError $ printf "Invalid assertion with unexpected args %s" (show args)
-evalCompAnnot TupleVal{} = return ()
-evalCompAnnot _ = evalError "Eval: Invalid compiler annotation type"
+-- A @#debug@ records its argument against the call it was reached in. The position is the
+-- annotation's own rather than its argument's, since an operator apply carries none (see
+-- 'EvalDebug'), and it is read here rather than at the tree built from it because that tree is what
+-- the argument evaluates through and says nothing about where it was written.
+evalCompAnnot annot (TupleVal n args) | n == debugAnnot = case H.lookup debugAnnotArg args of
+  Just v -> modify $ evalRecordDebug (getMetaPos $ getExprMeta annot) v
+  Nothing -> evalError $ printf "Invalid debug with unexpected args %s" (show args)
+evalCompAnnot _ TupleVal{} = return ()
+evalCompAnnot _ _ = evalError "Eval: Invalid compiler annotation type"
 
 evalGuards :: Env -> Val -> EObjArr -> CRes (Bool, Env)
 evalGuards = undefined
@@ -130,7 +141,7 @@ evalObjArrCaptured captured input oa = do
   (resArrowTree, compAnnots, oldArgs) <- evalStartEArrow (getValPartialTypeOut input) oa newArrArgs
   forM_ compAnnots $ \compAnnot -> do
             compAnnot' <- withEvalPush (printf "annot %s" (show compAnnot)) $ evalExpr compAnnot
-            evalCompAnnot compAnnot'
+            evalCompAnnot compAnnot compAnnot'
   res <- withEvalPush (printf "ResEArrow %s" (show oa)) $ evalExpr resArrowTree
   modify $ evalEndEArrow input res oldArgs
   return res
@@ -323,7 +334,9 @@ evalBaseEnvStages stagePrgms prgm@Prgm{prgmObjMap} = Env {
         evCallStack = [],
         evCoverage = H.empty,
         evTreebugOpen = [],
-        evTreebugClosed = []
+        evTreebugClosed = [],
+        evTreebugNextId = 0,
+        evDebugs = []
                 }
 
 -- | Flattens the program reachable from a file into one. It is polymorphic in the program because

@@ -122,6 +122,16 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/#debug"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/#debug( EAppArg Value /d -> ∀/Catln/Doc/DShow ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/#assert"
                 , ObjectMapItem
                     { omiDecls =
@@ -248,6 +258,7 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

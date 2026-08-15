@@ -160,7 +160,12 @@ instance ToJSON EPrim where
   toJSON EEnvPrim{} = object ["type".=("EEnvPrim" :: String)]
 
 
-type EvalTreebugOpen = AnyObjArr
+-- | An arrow the evaluation is inside, and the id of the node it will close as. The id is assigned
+-- when the arrow is ENTERED rather than derived when it closes, because what wants to name a node is
+-- inside it at the time: a @#debug@ recorded partway through a call has to say which call it came
+-- from, and the state a closing node is identified from does not exist yet.
+type EvalTreebugOpen = (String, AnyObjArr)
+
 data EvalTreebugClosed = EvalTreebugClosed AnyObjArr Val Val [EvalTreebugClosed] String
   deriving (Eq, Generic, Hashable, ToJSON)
 
@@ -182,10 +187,39 @@ data Env = Env { evObjMap        :: EObjectMap
                , evCoverage      :: H.HashMap EObjArr Int
                , evTreebugOpen   :: [EvalTreebugOpen]
                , evTreebugClosed :: [EvalTreebugClosed]
+               -- | The next id to give an arrow being entered. A counter rather than something
+               -- derived from the arrow, since the same definition is entered as many times as it is
+               -- called and each of those is a different node of the tree.
+               , evTreebugNextId :: Int
+               -- | Every @#debug@ the run has recorded so far, most recent first. Unlike
+               -- 'evTreebugClosed', which is replaced by each arrow that closes over it, this only
+               -- ever grows: what a reader of a run wants is every value it recorded, in the order
+               -- it recorded them, however many calls of however many definitions they came from.
+               , evDebugs        :: [EvalDebug]
                }
+
+-- | One @#debug@ of a run: where it is written, what it evaluated to there, and which node of the
+-- evaluation tree it was recorded in.
+--
+-- Where it is written rather than what was written: an expression is rendered back out by
+-- 'Syntax.Ct.Formatter.formatExpr', which takes the parsed form, and by the time an annotation is
+-- being evaluated the parsed form is several stages upstream. The position is on the annotation
+-- itself rather than on its argument, which matters for an argument that is an operator apply:
+-- @Syntax.Ct.Parser.Expr.mkOp2@ builds one with an empty meta, so @#debug(d= x + 1)@ has a position
+-- for the annotation and none for the @x + 1@ inside it.
+--
+-- 'edNode' is the id the enclosing arrow was given when it was entered, so a reader following a
+-- record arrives at the call it came from rather than at the definition, which every call of it
+-- shares.
+data EvalDebug = EvalDebug { edPos   :: CodeRange
+                           , edValue :: Val
+                           , edNode  :: String
+                           } deriving (Eq, Generic, ToJSON)
 
 data EvalResult = EvalResult { erCoverage :: H.HashMap EObjArr Int
                              , erTreebug  :: [EvalTreebugClosed]
+                             -- | The run's @#debug@ records, in the order they were recorded.
+                             , erDebugs   :: [EvalDebug]
                              } deriving (Eq, Generic, ToJSON)
 
 -- | One debugger run, and the tree of what it evaluated. The output is captured through a 'MockIO'
