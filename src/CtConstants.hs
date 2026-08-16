@@ -74,13 +74,33 @@ overlayAnnotUrl = "url"
 -- that gathers or displays one: a value is declared as the member it is, so what looks for a task
 -- looks for the members by name. Which reading a checkbox gets is
 -- 'Syntax.Obsidian.Parser.partStatement', out of what the vault is set to.
-notePagePath, notePageTitle, noteTaskPath, noteSimpleTaskPath, noteTaskContents, noteTaskState, notePropertiesAnnot, notePropertiesAnnotText :: String
+notePagePath, notePageTitle, noteTaskPath, noteSimpleTaskPath, noteObsidianTaskPath, noteTaskContents, noteTaskState, notePropertiesAnnot, notePropertiesAnnotText :: String
 notePagePath = "/Data/Note/Page"
 notePageTitle = "title"
 noteTaskPath = "/Data/Note/Task"
 noteSimpleTaskPath = "/Data/Note/Task/Simple"
+noteObsidianTaskPath = "/Data/Note/Task/Obsidian"
 noteTaskContents = "contents"
 noteTaskState = "state"
+
+-- | The fields of a 'noteObsidianTaskPath', beside the 'noteTaskContents' it shares with the plain
+-- reading. Only the few worth naming are fields; the rest travel together in 'noteTaskRest' as
+-- JSON, for the reason the type's own comment gives.
+noteTaskSymbol, noteTaskStatusType, noteTaskDescription, noteTaskPriority, noteTaskScheduled, noteTaskDue, noteTaskRecurrence, noteTaskRest :: String
+noteTaskSymbol = "symbol"
+noteTaskStatusType = "statusType"
+noteTaskDescription = "description"
+noteTaskPriority = "priority"
+noteTaskScheduled = "scheduled"
+noteTaskDue = "due"
+noteTaskRecurrence = "recurrence"
+noteTaskRest = "rest"
+
+-- | The members of the two classes those fields are typed by, which are the plugin's own seven
+-- kinds of status and six priorities.
+noteStatusTypePath, notePriorityPath :: String
+noteStatusTypePath = "/Data/Note/StatusType"
+notePriorityPath = "/Data/Note/Priority"
 notePropertiesAnnot = "/Data/Note/#properties"
 notePropertiesAnnotText = "text"
 
@@ -188,3 +208,10 @@ ctListCons = "/Data/List/Cons"
 ctListNil = "/Data/List/Nil"
 ctListConsHead = "head"
 ctListConsTail = "tail"
+
+-- | The two arms of a @\/Data\/Maybe@, for building one where a value may be absent — as a date a
+-- task has or has not got is.
+ctMaybeSome, ctMaybeSomeValue, ctMaybeNothing :: String
+ctMaybeSome = "/Data/Some"
+ctMaybeSomeValue = "value"
+ctMaybeNothing = "/Data/Nothing"

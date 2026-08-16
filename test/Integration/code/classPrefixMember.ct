@@ -18,14 +18,17 @@ import "core"
 class(Item)
 
 data(Item/Simple(x -> Integer))
+
 every(Item/Simple.., isa= [/Item])
 
 data(Item/Fancy(x -> Integer, y -> Integer))
+
 every(Item/Fancy.., isa= [/Item])
 
 # The values a page of such members declares, written out and never defined — the shape a note's
   page holds a checkbox as.
 /Item/Simple(x= 1)
+
 /Item/Fancy(x= 1, y= 2)
 
 class(Thing, [Thing/Simple(x -> Integer), Thing/Fancy(x -> Integer, y -> Integer)])
@@ -41,7 +44,6 @@ class(Thing, [Thing/Simple(x -> Integer), Thing/Fancy(x -> Integer, y -> Integer
   >>> 3
 > /Thing/Fancy(x= 3, y= 4).total
   >>> 7
-
 main{io -> IO} =
   #assert(test= /Thing/Simple(x= 3).total == 3)
   #assert(test= /Thing/Fancy(x= 3, y= 4).total == 7)

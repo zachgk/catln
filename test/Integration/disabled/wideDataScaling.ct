@@ -1,0 +1,35 @@
+import "core"
+
+
+# DISABLED — a compiler gap, kept as the repro of it.
+  Typechecking a data type costs steeply in how WIDE it is, and next to nothing in how many values
+  of it are declared. Measured with @catln test@, every field a plain [/Data/Primitive/String],
+  against a file which only imports the standard library and takes 311 seconds:
+    12 fields, 1 value    — passes
+    14 fields, 1 value    — 362s, +51s over the baseline
+    16 fields, 1 value    — still running after 8 minutes
+    18 fields, 1 value    — fails: "Reached runConstraints limit with still changing constraints"
+     2 fields, 10 values  — 333s, +22s
+     9 fields, 10 values  — 313s, +2s
+    12 fields, 10 values  — 366s, +55s
+  So a note holding many checkboxes costs almost nothing for holding them, and a checkbox carrying
+  many fields costs a great deal for carrying them. Ten values of a nine-field type are free; one
+  value of an eighteen-field type cannot be compiled at all.
+  The limit reached at 18 is @runConstraintsLimit@ in @src/TypeCheck.hs@, which is 20. Raising it
+  would not be a fix: 16 fields is already minutes of work for a declaration that says nothing, so
+  the limit is what the cost runs into rather than what the cost is.
+  Grouping the fields into smaller types does NOT avoid it, because a field whose type is another
+  data type widens that type's own fields to TopType and the intersection is then empty —
+  "Actual type contains bottomType", which is the gap @bareDataDeclaration.ct@ holds. So a wide type
+  cannot be made narrow by nesting, today.
+  This is reached by reading an Obsidian vault whose Tasks plugin is on: a checkbox there carries a
+  status, a description, tags, a priority, six dates, a recurrence, an action on completion, an id,
+  the ids it waits on and a block link — eighteen fields, which is exactly the shape below. What
+  [/Data/Note/Task/Obsidian] carries instead is the few of those worth naming and the rest as one
+  string, and the comment there says so and points back here.
+data(Wide(a -> String, b -> String, c -> String, d -> String, e -> String, f -> String, g -> String, h -> String, i -> String, j -> String, k -> String, l -> String, m -> String, n -> String, o -> String, p -> String, q -> String, r -> String))
+every(Wide.., isa= [/Catln/Doc/DShow])
+
+/Wide(a= "1", b= "2", c= "3", d= "4", e= "5", f= "6", g= "7", h= "8", i= "9", j= "10", k= "11", l= "12", m= "13", n= "14", o= "15", p= "16", q= "17", r= "18")
+
+main{io -> IO}= io.exit(val= 0)

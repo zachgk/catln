@@ -20,7 +20,7 @@
 module Eval.Runtime.WebDocs where
 
 import           CRes
-import           CtConstants         (noteSimpleTaskPath)
+import           CtConstants         (noteObsidianTaskPath, noteSimpleTaskPath)
 import           Data.Aeson          (ToJSON)
 import           Data.Aeson.Text     (encodeToLazyText)
 import           Data.Graph
@@ -329,7 +329,7 @@ taskList = EEnvPrim "taskList" prim
       encodeJson . concat <$> traverse (pageTasks spPageValues) (sortOn impDisp pages)
 
     pageTasks pageValues prgmName = do
-      tasks <- orNotes $ pageValues (map mkName [noteSimpleTaskPath]) prgmName
+      tasks <- orNotes $ pageValues (map mkName [noteSimpleTaskPath, noteObsidianTaskPath]) prgmName
       case (tasks, impDisp prgmName) of
         ([], _) -> return []
         -- As in 'sidebar', a page with no display path is reported rather than dropped. Here it is a

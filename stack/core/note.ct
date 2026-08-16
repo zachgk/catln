@@ -1,4 +1,5 @@
 import "core/bool.ct"
+import "core/maybe.ct"
 import "core/str.ct"
 import "core/webdoc.ct"
 
@@ -14,6 +15,7 @@ module(Data/Note)
       note. Importing an Obsidian vault reads it as one [Page] per note of it, and a note which
       opens with a block of properties holds it as a [#properties] of the page rather than as
       writing of it.
+
   class(Task)
     # A [Task] is one thing to do, written in a note as a markdown checkbox. A task is a break in
       the writing of the note holding it: the comment ends where the checkbox was written, the task
@@ -38,6 +40,55 @@ module(Data/Note)
       into: a box to check and the writing beside it. It is the value itself that is shown, with no
       display type standing in for it, which is what lets checking the box in a doc server write the
       change back to the note the task was read from.
+
+  class(StatusType, [StatusType/Todo, StatusType/Done, StatusType/InProgress, StatusType/OnHold, StatusType/Cancelled, StatusType/NonTask, StatusType/Empty])
+    # Which kind of status the character in a box is, as the Obsidian Tasks plugin names the seven
+      of them. Which character is which kind is the vault's to say and not markdown's: a vault may
+      write @[/]@ for a task begun and @[-]@ for one dropped, and only the vault's own settings say
+      so. So a box is read as the character it was written with and the kind that character is, and
+      the kind is the reading.
+  class(Priority, [Priority/Highest, Priority/High, Priority/Medium, Priority/None, Priority/Low, Priority/Lowest])
+    # How urgent a task is, as the plugin's six priorities. [Priority/None] is written between
+      medium and low rather than at either end, because that is where a task nobody gave a priority
+      to sorts among ones somebody did.
+
+  data(Task/Obsidian(contents -> String, symbol -> String, statusType -> StatusType, description -> String, priority -> Priority, scheduled -> /Data/Maybe[$T -> String], due -> /Data/Maybe[$T -> String], recurrence -> /Data/Maybe[$T -> String], rest -> String))
+    # A [Task/Obsidian] is a checkbox in a vault running the Obsidian Tasks plugin, which writes a
+      task's dates, priority, recurrence and links into the line beside the box.
+      It carries that line as [contents], exactly as it was written, and everything else beside it
+      as a reading of it — the same shape [Show/Properties] takes, and for the same reason: the one
+      place that has to give the line back exactly as it was found is the one writing the note back,
+      so reading it apart here must not be the only reading there is. Writing the note back writes
+      [symbol] and [contents] and nothing else, so a line carrying something this does not yet read
+      is written back carrying it.
+      [symbol] is the character in the box as it was written and [statusType] is which of the seven
+      kinds that character is. There is no [state] beside them: whether the box is done is
+      [statusType] being [StatusType/Done], and carrying it twice would be two readings of one box
+      which could disagree. The character is carried as well as the kind because writing the note
+      back writes the character, and a vault may name several characters of the one kind — so the
+      kind cannot say which of them this box wore.
+      [description] is what the line says once the plugin's own writing is off it, which no reader
+      can work out without knowing what the vault is set to — so it is carried rather than left to
+      be derived. The tags stay in it, as the plugin leaves them there.
+      The dates are carried as the @YYYY-MM-DD@ strings they were written as. Catln has no date to
+      read them into, and inventing one here would be inventing it for the whole language rather
+      than for a note.
+      TODO Only a few of the fields a task carries are named here. The rest — the created and start
+      dates, the done and cancelled dates, the tags apart from the description, the action on
+      completion, the id, the ids it waits on, and the block link — are read exactly as these are
+      and are carried together in [rest] as JSON, which is what [Show/TaskList] does with a whole
+      list of tasks and what [Show/Properties] does with a block of properties. That is not because
+      they are worth less. It is because a data type of eighteen fields cannot be typechecked at
+      all: sixteen takes minutes and eighteen reaches the constraint limit, while ten values of a
+      nine-field type cost nothing over declaring none. The measurements and the repro are in
+      @test/Integration/disabled/wideDataScaling.ct@. When a wide type costs what a narrow one
+      does, each of those should be a field here like the ones above.
+      The done and the cancelled date are one thing among those, not two: a task is done or it is
+      cancelled and never both, and [statusType] already says which of the two a task with such a
+      date is.
+
+  every(Task/Obsidian.., isa= [/Data/Note/Task])
+  every(Task/Obsidian.., isa= [/Catln/Doc/DShow])
 
   annot(#taskList)
 

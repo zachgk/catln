@@ -12,32 +12,43 @@
 
 module Syntax.Obsidian.Parser where
 
-import           Control.Applicative   ((<|>))
-import           Control.Monad         (forM_)
+import           Control.Applicative      ((<|>))
+import           Control.Monad            (forM_)
 import           CtConstants
-import           Data.Char             (isDigit, isSpace)
-import           Data.Foldable         (toList)
-import qualified Data.HashMap.Strict   as H
-import           Data.IORef            (IORef, modifyIORef', newIORef,
-                                        readIORef)
-import           Data.List             (dropWhileEnd, intercalate, isInfixOf,
-                                        isPrefixOf, isSuffixOf, nub,
-                                        stripPrefix)
-import           Data.Maybe            (listToMaybe, mapMaybe, maybeToList)
-import qualified Data.Text             as T
+import           Data.Aeson               (object, (.=))
+import qualified Data.Aeson               as A
+import           Data.Char                (isDigit, isSpace)
+import           Data.Foldable            (toList)
+import qualified Data.HashMap.Strict      as H
+import           Data.IORef               (IORef, modifyIORef', newIORef,
+                                           readIORef)
+import           Data.List                (dropWhileEnd, intercalate, isInfixOf,
+                                           isPrefixOf, isSuffixOf, nub,
+                                           stripPrefix)
+import           Data.Maybe               (listToMaybe, mapMaybe, maybeToList)
+import qualified Data.Text                as T
+import qualified Data.Text.Lazy           as TL
+import qualified Data.Text.Lazy.Encoding  as TLE
 import           Semantics.Prgm
-import           Semantics.Types       (Constant (CStr), makeAbsoluteName,
-                                        mkName, partialKey)
+import           Semantics.Types          (Constant (CStr), makeAbsoluteName,
+                                           mkName, partialKey)
 import           Syntax.Ct.Builder
 import           Syntax.Ct.Prgm
-import           Syntax.Obsidian.Cache (ObsidianCache, cachedNoteLinks,
-                                        flushObsidianCache, keepOnlyNotes,
-                                        newObsidianCache, recordNoteLinks)
+import           Syntax.Obsidian.Cache    (ObsidianCache, cachedNoteLinks,
+                                           flushObsidianCache, keepOnlyNotes,
+                                           newObsidianCache, recordNoteLinks)
+import           Syntax.Obsidian.Settings (StatusKind (..), TaskSettings,
+                                           TaskStatus (..), readTaskSettings,
+                                           statusFor, taskSettingsFiles, tsKind,
+                                           tsName)
+import           Syntax.Obsidian.Task     (ObsidianTask (..), TaskPriority (..),
+                                           obsidianTask)
 import           System.Directory
-import           System.FilePath       (makeRelative, takeBaseName,
-                                        takeDirectory, (</>))
-import qualified Text.MMark            as MMark
-import           Text.MMark.Extension  (Block (..), Bni, Inline (..), scanner)
+import           System.FilePath          (makeRelative, takeBaseName,
+                                           takeDirectory, (</>))
+import qualified Text.MMark               as MMark
+import           Text.MMark.Extension     (Block (..), Bni, Inline (..),
+                                           scanner)
 import           Text.Printf
 
 -- | The name this parser is registered under in 'Syntax.Parsers.importSyntaxes'.
@@ -76,6 +87,13 @@ data ObsidianReader = ObsidianReader {
   -- Per read rather than per note, because every note of a vault resolves against the same notes;
   -- and per read rather than kept, because what a vault holds is whatever a walk of it found.
   orIndexes :: IORef (H.HashMap FilePath VaultIndex),
+  -- | What each vault this read has reached says about the Obsidian Tasks plugin, and nothing where
+  -- it does not run it.
+  --
+  -- Per read and per vault for the reason 'orIndexes' is: every note of a vault is read by the same
+  -- settings, so a vault whose settings were read for each of them would read one small file once
+  -- for every note in it.
+  orTasks   :: IORef (H.HashMap FilePath (Maybe TaskSettings)),
   -- | What an earlier run recorded of the vaults this read reaches, and what this read has to write
   -- back to them. Absent for a read which is to read every note it reaches.
   --
@@ -91,8 +109,9 @@ data ObsidianReader = ObsidianReader {
 newObsidianReader :: ReadEnv -> IO ImportReader
 newObsidianReader env = do
   indexes <- newIORef H.empty
+  tasks <- newIORef H.empty
   cache <- traverse newObsidianCache (reCacheRoot env)
-  let reader = ObsidianReader env indexes cache
+  let reader = ObsidianReader env indexes tasks cache
   return $ ImportReader (obsidianPreload reader) (obsidianParse reader) (mapM_ flushObsidianCache cache)
 
 -- | Which of the two an obsidian import names: a vault, or a note and the vault holding it.
@@ -198,9 +217,10 @@ noteParse :: ObsidianReader -> FilePath -> FilePath -> ImportParseResult
 noteParse reader vault note = do
   contents <- readFile note
   index <- vaultIndex reader vault
+  settings <- vaultTaskSettings reader vault
   let linked = nub $ filter (/= note) $ mapMaybe (resolveWikiLink index) $ wikiLinks note contents
   forM_ (orCache reader) $ \cache -> recordNoteLinks cache vault note linked
-  return $ ParsedImport (RawPrgm (noteImports linked) [notePageStatement (takeBaseName note) contents]) (Just contents) (Just $ noteReads note linked)
+  return $ ParsedImport (RawPrgm (noteImports linked) [notePageStatement settings (takeBaseName note) contents]) (Just contents) (Just $ noteReads vault note linked)
 
 -- | Where a note sits in the graph: the notes it links to, out of what an earlier run recorded of
 -- it, and out of the note itself where there is no record of it to take them from.
@@ -214,7 +234,7 @@ notePreload reader vault note = do
     Nothing    -> return Nothing
     Just cache -> cachedNoteLinks cache vault note
   case recorded of
-    Just linked -> return $ PreloadImport (noteImports linked) [] Nothing (Just $ noteReads note linked)
+    Just linked -> return $ PreloadImport (noteImports linked) [] Nothing (Just $ noteReads vault note linked)
     Nothing     -> eagerPreload <$> noteParse reader vault note
 
 -- | A note's links, as the imports of the page it is read as.
@@ -234,6 +254,12 @@ noteImports = map (mkRawFileImport . rawStr)
 -- must read that page again and no other — otherwise a note linked to from a hundred notes is a
 -- hundred notes read again every time it is typed into.
 --
+-- The vault's own Tasks settings are read as well, whether or not they are there. They decide what
+-- every checkbox of the note is read as, so a note read before the plugin was turned on is a note
+-- read wrongly afterwards; naming them here is what has the note read again when they change. They
+-- are named as files rather than reached through the vault because a reading of a tree walks past a
+-- dotted entry, and Obsidian keeps them in one.
+--
 -- NOT read from the vault, though the whole vault is what the links resolved against. A note added
 -- anywhere under the vault could turn a link that resolved to nothing into an import, and saying so
 -- would be every note of a vault read again for every note added to it — the cost of a change being
@@ -241,8 +267,8 @@ noteImports = map (mkRawFileImport . rawStr)
 -- left resolving to nothing until the note writing it is read again for a reason of its own. A link
 -- that did resolve is watched through the note it resolved to, so deleting, moving or renaming that
 -- note is seen.
-noteReads :: FilePath -> [FilePath] -> [ReadPath]
-noteReads note linked = ReadFile note : map ReadExists linked
+noteReads :: FilePath -> FilePath -> [FilePath] -> [ReadPath]
+noteReads vault note linked = ReadFile note : map ReadFile (taskSettingsFiles vault) ++ map ReadExists linked
 
 -- | The note itself: the page it is, titled as it is linked to, holding what was written in it.
 --
@@ -257,8 +283,13 @@ noteReads note linked = ReadFile note : map ReadExists linked
 -- What is written under a checkbox is written inside its task by the same reading that makes the
 -- note the writing inside its page — including a checkbox indented under it, which is a task of that
 -- task and is declared inside it.
-notePageStatement :: String -> String -> RawStatementTree RawExpr ()
-notePageStatement title contents = RawStatementTree (RawDeclStatement page) (concatMap partStatements $ noteParts contents)
+--
+-- Which of its two readings a checkbox gets is decided here, out of what the vault holding the note
+-- is set to, and nowhere else. That is why the settings are carried all the way down here rather
+-- than looked at where a line is broken off: breaking a note into its parts is markdown's business
+-- and is the same in every vault, where what a checkbox MEANS is the vault's.
+notePageStatement :: Maybe TaskSettings -> String -> String -> RawStatementTree RawExpr ()
+notePageStatement settings title contents = RawStatementTree (RawDeclStatement page) (concatMap (partStatements settings) $ noteParts contents)
   where
     page = RawObjArr (Just pageExpr) TypeObj Nothing [] Nothing Nothing
     pageExpr = rawVal notePagePath `applyRawArgs` [(Just $ partialKey (mkName notePageTitle), rawStr title)]
@@ -270,20 +301,92 @@ notePageStatement title contents = RawStatementTree (RawDeclStatement page) (con
 -- this note is written over, which is a reading of the note rather than a part of it, so it is a
 -- statement of its own standing beside the properties it was read out of — where the note writes
 -- them, as a task is declared where the note writes its checkbox.
-partStatements :: NotePart -> [RawStatementTree RawExpr ()]
-partStatements part@(NoteFrontmatter properties) = partStatement part : map overlayStatement (maybeToList $ frontmatterUrl properties)
-partStatements part = [partStatement part]
+partStatements :: Maybe TaskSettings -> NotePart -> [RawStatementTree RawExpr ()]
+partStatements settings part@(NoteFrontmatter properties) = partStatement settings part : map overlayStatement (maybeToList $ frontmatterUrl properties)
+partStatements settings part = [partStatement settings part]
 
-partStatement :: NotePart -> RawStatementTree RawExpr ()
-partStatement (NoteWriting writing) = RawStatementTree (RawAnnot (rawComment writing)) []
-partStatement (NoteFrontmatter properties) = RawStatementTree (RawAnnot (rawProperties properties)) []
-partStatement (NoteTask says done under) = RawStatementTree (RawDeclStatement task) (map partStatement under)
+-- | The statement one part of a note is declared by.
+--
+-- A checkbox is read as the reading its vault gives it. A vault running the Obsidian Tasks plugin
+-- gives it 'CtConstants.noteObsidianTaskPath', with what the plugin wrote into the line read out of
+-- it; every other vault gives it 'CtConstants.noteSimpleTaskPath', which is the box and what it
+-- says. A vault which runs the plugin and asks that every task carry a word gives a line not
+-- carrying that word the plain reading too — such a line is a checkbox of the note rather than a
+-- task the plugin manages, and it is still a checkbox.
+partStatement :: Maybe TaskSettings -> NotePart -> RawStatementTree RawExpr ()
+partStatement _ (NoteWriting writing) = RawStatementTree (RawAnnot (rawComment writing)) []
+partStatement _ (NoteFrontmatter properties) = RawStatementTree (RawAnnot (rawProperties properties)) []
+partStatement settings (NoteTask symbol says under) = RawStatementTree (RawDeclStatement task) (map (partStatement settings) under)
   where
     task = RawObjArr (Just taskExpr) TypeObj Nothing [] Nothing Nothing
-    taskExpr = rawVal noteSimpleTaskPath `applyRawArgs` [
-      (Just $ partialKey (mkName noteTaskContents), rawStr says),
-      (Just $ partialKey (mkName noteTaskState), rawVal (if done then truePrim else falsePrim))
-                                                 ]
+    taskExpr = case settings of
+      Just settings' | Just read' <- obsidianTask settings' says -> obsidianTaskExpr (statusFor settings' symbol) symbol read'
+      _ -> simpleTaskExpr
+
+    simpleTaskExpr = rawVal noteSimpleTaskPath `applyRawArgs` [
+      (Just $ partialKey (mkName noteTaskContents), rawStr (trim says)),
+      (Just $ partialKey (mkName noteTaskState), rawVal (if symbol `elem` ["x", "X"] then truePrim else falsePrim))
+                                                              ]
+
+-- | A checkbox of a vault running the Obsidian Tasks plugin, as the value it is declared as.
+--
+-- The line is carried whole in 'CtConstants.noteTaskContents' and the few fields worth naming are
+-- named beside it; everything else the line said travels in 'CtConstants.noteTaskRest' as JSON. The
+-- type's own comment in @stack\/core\/note.ct@ says why it is split that way and what would undo the
+-- split.
+obsidianTaskExpr :: TaskStatus -> String -> ObsidianTask -> RawExpr ()
+obsidianTaskExpr status symbol task = rawVal noteObsidianTaskPath `applyRawArgs` [
+  (Just $ partialKey (mkName noteTaskContents), rawStr (otContents task)),
+  (Just $ partialKey (mkName noteTaskSymbol), rawStr symbol),
+  (Just $ partialKey (mkName noteTaskStatusType), rawVal (statusTypeMember (tsKind status))),
+  (Just $ partialKey (mkName noteTaskDescription), rawStr (otDescription task)),
+  (Just $ partialKey (mkName noteTaskPriority), rawVal (priorityMember (otPriority task))),
+  (Just $ partialKey (mkName noteTaskScheduled), rawMaybeStr (otScheduled task)),
+  (Just $ partialKey (mkName noteTaskDue), rawMaybeStr (otDue task)),
+  (Just $ partialKey (mkName noteTaskRecurrence), rawMaybeStr (otRecurrence task)),
+  (Just $ partialKey (mkName noteTaskRest), rawStr (taskRestJson status task))
+                                                                                 ]
+
+-- | A value which may be absent, as the arm of a @\/Data\/Maybe@ it is.
+rawMaybeStr :: Maybe String -> RawExpr ()
+rawMaybeStr Nothing = rawVal ctMaybeNothing
+rawMaybeStr (Just v) = rawVal ctMaybeSome `applyRawArgs` [(Just $ partialKey (mkName ctMaybeSomeValue), rawStr v)]
+
+-- | The member of @\/Data\/Note\/StatusType@ a kind of status is.
+statusTypeMember :: StatusKind -> String
+statusTypeMember KTodo       = noteStatusTypePath ++ "/Todo"
+statusTypeMember KDone       = noteStatusTypePath ++ "/Done"
+statusTypeMember KInProgress = noteStatusTypePath ++ "/InProgress"
+statusTypeMember KOnHold     = noteStatusTypePath ++ "/OnHold"
+statusTypeMember KCancelled  = noteStatusTypePath ++ "/Cancelled"
+statusTypeMember KNonTask    = noteStatusTypePath ++ "/NonTask"
+statusTypeMember KEmpty      = noteStatusTypePath ++ "/Empty"
+
+-- | The member of @\/Data\/Note\/Priority@ a priority is.
+priorityMember :: TaskPriority -> String
+priorityMember PHighest = notePriorityPath ++ "/Highest"
+priorityMember PHigh    = notePriorityPath ++ "/High"
+priorityMember PMedium  = notePriorityPath ++ "/Medium"
+priorityMember PNone    = notePriorityPath ++ "/None"
+priorityMember PLow     = notePriorityPath ++ "/Low"
+priorityMember PLowest  = notePriorityPath ++ "/Lowest"
+
+-- | Everything a task said that is not a field of its own, as JSON.
+--
+-- Only what the task carries is written, so a plain checkbox's is @{}@ rather than a row of nulls.
+-- The done and the cancelled date are the one entry: a task is done or it is cancelled and never
+-- both, and the status says which of the two a task with such a date is.
+taskRestJson :: TaskStatus -> ObsidianTask -> String
+taskRestJson status task = TL.unpack $ TLE.decodeUtf8 $ A.encode $ object $ ("statusName" .= tsName status) : concat [
+  ["tags" .= otTags task | not (null (otTags task))],
+  ["dependsOn" .= otDependsOn task | not (null (otDependsOn task))],
+  ["created" .= v | Just v <- [otCreated task]],
+  ["start" .= v | Just v <- [otStart task]],
+  ["statusDate" .= v | Just v <- [otDone task <|> otCancelled task]],
+  ["onCompletion" .= v | Just v <- [otOnCompletion task]],
+  ["id" .= v | Just v <- [otTaskId task]],
+  ["blockLink" .= v | Just v <- [otBlockLink task]]
+                                                                                                                    ]
 
 -- | The page a note is written over, as the statement saying so.
 overlayStatement :: String -> RawStatementTree RawExpr ()
@@ -332,7 +435,15 @@ notePart (RawStatementTree (RawDeclStatement task) under)
   | Just taskExpr <- roaObj task, named noteSimpleTaskPath taskExpr = do
       says <- rawArgStr noteTaskContents taskExpr
       done <- rawArgState taskExpr
-      NoteTask says done <$> mapM notePart under
+      NoteTask (if done then "x" else " ") says <$> mapM notePart under
+  -- A task the plugin manages is written back from the two things it was read with and from none of
+  -- the readings beside them: the character in its box, and the line as it was written. That is what
+  -- has a line carrying something this cannot yet read written back carrying it, and it is why
+  -- reading a line apart never has to be undone.
+  | Just taskExpr <- roaObj task, named noteObsidianTaskPath taskExpr = do
+      says <- rawArgStr noteTaskContents taskExpr
+      symbol <- rawArgStr noteTaskSymbol taskExpr
+      NoteTask symbol says <$> mapM notePart under
 notePart _ = Nothing
 
 -- | Whether an expression is the value of the given name.
@@ -385,9 +496,9 @@ writeNotePart (NoteWriting writing) = lines writing
 -- The delimiters are written again rather than carried, so a block written between more of them
 -- than it needs is written back between two.
 writeNotePart (NoteFrontmatter properties) = "---" : lines properties ++ ["---"]
-writeNotePart (NoteTask says done under) = dropWhileEnd isSpace (box ++ says) : map indentLine (writeNoteParts under)
+writeNotePart (NoteTask symbol says under) = dropWhileEnd isSpace (box ++ says) : map indentLine (writeNoteParts under)
   where
-    box = if done then "- [x] " else "- [ ] "
+    box = "- [" ++ symbol ++ "] "
     -- A blank line is written with nothing on it rather than with the indentation of the block it
     -- sits in, so that writing a note back does not leave trailing spaces through it.
     indentLine l = if isBlank l then l else "  " ++ l
@@ -395,9 +506,15 @@ writeNotePart (NoteTask says done under) = dropWhileEnd isSpace (box ++ says) : 
 -- | What a note is written as: the writing of it, and the tasks that break the writing.
 data NotePart
   = NoteWriting String
-  -- | What the checkbox says, whether it is checked, and what is written under it — which is the
-  -- note again: the writing under the checkbox, and the checkboxes indented under it.
-  | NoteTask String Bool [NotePart]
+  -- | The character written in the box, what the checkbox says after it, and what is written under
+  -- it — which is the note again: the writing under the checkbox, and the checkboxes indented under
+  -- it.
+  --
+  -- The character rather than whether it is checked, because which characters mean what is the
+  -- vault's to say: a vault running the Obsidian Tasks plugin may write @[\/]@ for a task begun and
+  -- @[-]@ for one dropped, and markdown knows neither. What the character means is worked out where
+  -- the vault's settings are known ('partStatement'); what is written here is what was written.
+  | NoteTask String String [NotePart]
   -- | The properties a note opens with, as the lines they are written between the @---@ as. The
   -- delimiters are the shape of the block rather than anything it says, so they are written again
   -- rather than carried; everything between them is carried exactly as it was found, because the
@@ -533,8 +650,8 @@ noteLineParts = go False []
     go _ acc [] = writingPart acc
     go inCode acc (l:ls)
       | isFence l = go (not inCode) (l:acc) ls
-      | not inCode, Just (says, done) <- taskLine l = let (under, inCode', ls') = taskWriting (indentation l) inCode ls in
-          writingPart acc ++ (NoteTask says done (noteLineParts under) : go inCode' [] ls')
+      | not inCode, Just (symbol, says) <- taskLine l = let (under, inCode', ls') = taskWriting (indentation l) inCode ls in
+          writingPart acc ++ (NoteTask symbol says (noteLineParts under) : go inCode' [] ls')
       | otherwise = go inCode (l:acc) ls
 
     writingPart acc = [NoteWriting writing | let writing = joinLines (reverse acc), not (null writing)]
@@ -556,17 +673,23 @@ taskWriting ind inCode ls = (dedent within, inCode', rest)
       | isBlank l || indentation l > ind = aux (l:acc) (if isFence l then not code else code) ls'
     aux acc code ls' = (reverse acc, code, ls')
 
--- | What a checkbox line says and whether it is checked, if the line is a checkbox at all.
+-- | The character in a checkbox's box and what the line says after it, if the line is a checkbox at
+-- all.
 --
 -- A checkbox is a list item whose writing begins with a box: @- [ ] a task@, @1. [x] a task done@.
--- Obsidian writes a state of its own within the box as any one character, such as @[\/]@ for a task
--- begun, so any character is a box. The checked one is @x@, as markdown itself reads it, and every
--- other box, the empty one included, is unchecked.
-taskLine :: String -> Maybe (String, Bool)
+-- Obsidian writes a status of its own within the box as any one character, such as @[\/]@ for a task
+-- begun, so any character is a box and the character is answered rather than read here.
+--
+-- Exactly one space is dropped after the box, and nothing is dropped from the end. What follows the
+-- box is what the note wrote there, and a note running the Tasks plugin is written back from it
+-- unchanged — so a line written with two spaces after its box keeps the second one. The space at the
+-- end is dropped where the line is written back ('writeNotePart') rather than here, since trailing
+-- space is not something a note means to say.
+taskLine :: String -> Maybe (String, String)
 taskLine line = do
   afterMarker <- listMarker $ dropWhile isSpace line
   case afterMarker of
-    ('[':box:']':rest) | box /= ']', null rest || isSpace (head rest) -> Just (trim rest, box `elem` ['x', 'X'])
+    ('[':box:']':rest) | box /= ']', null rest || isSpace (head rest) -> Just ([box], drop 1 rest)
     _ -> Nothing
 
 -- | What a list item is written after, if a line begins one: a bullet or a number, and the space it
@@ -627,6 +750,21 @@ vaultIndex reader vault = do
       modifyIORef' (orIndexes reader) $ H.insert vault index
       return index
 
+-- | What a vault says about the Obsidian Tasks plugin, reading it if this read has not.
+--
+-- Kept for the read the same way and for the same reason as 'vaultIndex': every note of a vault is
+-- read by the same settings, so a vault asked for each of them would read one small file once for
+-- every note in it.
+vaultTaskSettings :: ObsidianReader -> FilePath -> IO (Maybe TaskSettings)
+vaultTaskSettings reader vault = do
+  found <- readIORef (orTasks reader)
+  case H.lookup vault found of
+    Just settings -> return settings
+    Nothing -> do
+      settings <- readTaskSettings vault
+      modifyIORef' (orTasks reader) $ H.insert vault settings
+      return settings
+
 -- | The wiki links a note writes, in the order it writes them.
 --
 -- A @[[wiki link]]@ is not markdown, and is not a link to the markdown parser either: it is a
@@ -658,7 +796,7 @@ unboxed :: String -> String
 unboxed = intercalate "\n" . map aux . lines
   where
     aux l = case taskLine l of
-      Just (says, _) -> takeWhile isSpace l ++ "- " ++ says
+      Just (_, says) -> takeWhile isSpace l ++ "- " ++ says
       Nothing        -> l
 
 -- | Replaces every wiki link of a note with a placeholder, answering the note and the links taken

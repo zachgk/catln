@@ -13,6 +13,7 @@ import Sidebar from './Values/Sidebar';
 import Search from './Values/Search';
 import Test from './Values/Test';
 import Task from './Values/Task';
+import ObsidianTask from './Values/ObsidianTask';
 import TaskList from './Values/TaskList';
 import Overlay from './Values/Overlay';
 import Properties from './Values/Properties';
@@ -55,8 +56,13 @@ function Value(props) {
       return <Test {...val.args} />;
     // A task is not a display standing in for something else, it is the value the note declares. So
     // it is the one value here that update edits into the page rather than into an annotation.
-    case "/Data/Note/Task":
+    case "/Data/Note/Task/Simple":
       return <Task {...val.args} update={update} />;
+    // The same checkbox in a vault running the Obsidian Tasks plugin, read apart into the fields the
+    // plugin wrote into the line. No update: reading a line apart is what the importer does, and
+    // writing one back from its parts is not something it can do yet.
+    case "/Data/Note/Task/Obsidian":
+      return <ObsidianTask {...val.args} />;
     // A list of tasks gathered across notes. It gets no update: each of its rows is written back to
     // the note that row came from, which the row carries and the list on this page does not know.
     case "/Data/Note/Show/TaskList":

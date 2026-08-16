@@ -1,0 +1,38 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+                            ( /Catln/exit
+                                ( /this=/Catln/IO
+                                , /val=/Data/Primitive/Integer
+                                ) + /Catln/IO
+                            ) = /Catln/exit
+                            ( EAppArg Value /val -> /Data/Primitive/Integer = 0 )
+                            ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG = [ CGType ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "Tests importing an Obsidian vault which runs the Tasks community plugin. Every checkbox of such a
+            vault is read as a /Data/Note/Task/Obsidian, holding the line as it was written and the plugin's
+            own writing read out of it, where a checkbox of the vault beside this one — artifacts/catln-test,
+            which runs no plugin — is read as a /Data/Note/Task/Simple.
+            The note is named as well as the vault, for the reason obsidian.ct names its notes: a vault does
+            not import the notes it holds, so a golden test walking out from here would reach the vault and
+            stop.
+            A vault can only be set one way, so what a vault set some other way reads as — a global filter,
+            the dataview notation, a status the vault named itself — is covered by ObsidianTaskTests rather
+            than by a fixture for each." )
+        ]
+    }

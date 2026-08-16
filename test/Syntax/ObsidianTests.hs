@@ -7,16 +7,19 @@
 -- broken, and what it is written back as.
 module Syntax.ObsidianTests where
 
-import           CtConstants            (overlayAnnot, overlayAnnotUrl)
-import           Syntax.Ct.Prgm         (RawPrgm (RawPrgm),
-                                         RawStatement (RawAnnot),
-                                         RawStatementTree (RawStatementTree))
-import           Syntax.Obsidian.Parser (NotePart (..), frontmatterUrl,
-                                         mkVaultIndex, named, notePageStatement,
-                                         noteParts, rawArgStr, resolveWikiLink,
-                                         unparseNote, wikiLinks)
+import           CtConstants              (overlayAnnot, overlayAnnotUrl)
+import           Syntax.Ct.Prgm           (RawPrgm (RawPrgm),
+                                           RawStatement (RawAnnot),
+                                           RawStatementTree (RawStatementTree))
+import           Syntax.Obsidian.Parser   (NotePart (..), frontmatterUrl,
+                                           mkVaultIndex, named,
+                                           notePageStatement, noteParts,
+                                           rawArgStr, resolveWikiLink,
+                                           unparseNote, wikiLinks)
+import           Syntax.Obsidian.Settings (TaskSettings (..),
+                                           defaultTaskSettings)
 import           Test.Tasty
-import           Test.Tasty.HUnit       (assertEqual, testCase)
+import           Test.Tasty.HUnit         (assertEqual, testCase)
 
 -- | A checkbox is a reference to a definition the note never gives, exactly as a wiki link is, so a
 -- note holding one used to parse as no markdown at all and to link to nothing at all.
@@ -47,8 +50,8 @@ testNoteParts :: TestTree
 testNoteParts = testCase "a note is broken at each of its checkboxes" $
   assertEqual "" [
     NoteWriting "A note.",
-    NoteTask "Read it" False [],
-    NoteTask "Write it" True [NoteWriting "Which is written\n\nunder the task."],
+    NoteTask " " "Read it" [],
+    NoteTask "x" "Write it" [NoteWriting "Which is written\n\nunder the task."],
     NoteWriting "The note again."
                  ] $ noteParts $ unlines [
     "A note.",
@@ -66,7 +69,7 @@ testNoteParts = testCase "a note is broken at each of its checkboxes" $
 -- is, so it is a task of that task rather than one of the note beside it.
 testNestedTask :: TestTree
 testNestedTask = testCase "a checkbox written under a checkbox is a task of it" $
-  assertEqual "" [NoteTask "Plan it" False [NoteTask "A step of the plan" False []]] $ noteParts $ unlines [
+  assertEqual "" [NoteTask " " "Plan it" [NoteTask " " "A step of the plan" []]] $ noteParts $ unlines [
     "- [ ] Plan it",
     "  - [ ] A step of the plan"
                                                                                                           ]
@@ -74,14 +77,20 @@ testNestedTask = testCase "a checkbox written under a checkbox is a task of it" 
 -- | A checkbox is a list item, and a list is written with numbers as readily as with bullets.
 testNumberedTask :: TestTree
 testNumberedTask = testCase "a numbered checkbox is a task" $
-  assertEqual "" [NoteTask "Read it" False [], NoteTask "Write it" True []] $ noteParts $ unlines [
+  assertEqual "" [NoteTask " " "Read it" [], NoteTask "x" "Write it" []] $ noteParts $ unlines [
     "1. [ ] Read it",
     "2) [x] Write it"
                                                                                                  ]
 
--- | A note written back out of the page it was read as.
+-- | A note written back out of the page it was read as, in a vault running no Tasks plugin.
 rewrite :: String -> Maybe String
-rewrite note = unparseNote $ RawPrgm [] [notePageStatement "A note" note]
+rewrite = rewriteWith Nothing
+
+-- | The same, in a vault set however the settings say. Every case below reads a note of a vault
+-- running no plugin, because how a checkbox of a vault running one is read is
+-- 'Syntax.ObsidianTaskTests' and what a note holding one is written back as is 'testRewriteTasks'.
+rewriteWith :: Maybe TaskSettings -> String -> Maybe String
+rewriteWith settings note = unparseNote $ RawPrgm [] [notePageStatement settings "A note" note]
 
 -- | The whole of the reversion on a note holding every shape at once: writing before and after the
 -- tasks, a checked box and an unchecked one, writing under a task, a task under a task, and a
@@ -175,7 +184,7 @@ testFrontmatterOnlyAtTheStart = testGroup "a --- which does not open a closed bl
       "url: https://example.com",
       "---"
                                                                                                                                         ],
-  testCase "under a task" $ assertEqual "" [NoteTask "Read it" False [NoteWriting "---\nurl: https://example.com\n---"]] $ noteParts $ unlines [
+  testCase "under a task" $ assertEqual "" [NoteTask " " "Read it" [NoteWriting "---\nurl: https://example.com\n---"]] $ noteParts $ unlines [
       "- [ ] Read it",
       "  ---",
       "  url: https://example.com",
@@ -245,7 +254,7 @@ testOverlayStatement = testGroup "the page a note is written over is declared be
   testCase "and not when there are no properties" $ assertEqual "" [] $ overlaysOf "The note.\n"
                                                                                                      ]
   where
-    overlaysOf note = case notePageStatement "A note" note of
+    overlaysOf note = case notePageStatement Nothing "A note" note of
       RawStatementTree _ parts -> [rawArgStr overlayAnnotUrl annot | RawStatementTree (RawAnnot annot) [] <- parts, named overlayAnnot annot]
 
 -- | The properties are written back between the delimiters they were found between, and the note
@@ -372,6 +381,41 @@ testResolveWikiLink = testGroup "the note a wiki link names" [
                                                              ]
   where resolve notes link = resolveWikiLink (mkVaultIndex "/v" notes) link
 
+-- | A note of a vault running the Tasks plugin is written back exactly as it was found — the
+-- character in every box, every mark the plugin wrote, and a block link at the end of a line.
+--
+-- This is the whole point of a task carrying the line it was read from. Everything the plugin wrote
+-- has been read apart into fields by this point, and none of those fields is consulted here: the
+-- note is written back from the box and the line, so a line carrying something the reading does not
+-- yet know is carried through it untouched.
+testRewriteTasks :: TestTree
+testRewriteTasks = testCase "a note of tasks the plugin manages is written back as it was found" $
+  assertEqual "" (Just note) (rewriteWith (Just defaultTaskSettings) note)
+  where
+    note = unlines [
+      "- [ ] Read the note",
+      "- [x] Write this note \x2705 2026-01-05",
+      "- [/] Plan the rest",
+      "- [-] Drop the old plan \x274C 2026-01-06",
+      "- [ ] Ship it #work \x23EB \x1F4C5 2026-01-04",
+      "- [ ] Answer the question \x23F3 2026-01-03 \x1F53D ^answer-it",
+      "- [ ] Book \x1F4C5 lunch"
+                   ]
+
+-- | And a note the plugin does not manage every line of. A vault asking that every task carry a word
+-- reads the lines not carrying it as plain checkboxes, and those are written back the way a plain
+-- checkbox is — so one note writes back through both readings at once.
+testRewriteMixedTasks :: TestTree
+testRewriteMixedTasks = testCase "a note read through both readings is written back through both" $
+  assertEqual "" (Just note) (rewriteWith (Just filtered) note)
+  where
+    filtered = defaultTaskSettings{tstGlobalFilter = "#task"}
+    note = unlines [
+      "- [ ] #task Ship it \x1F4C5 2026-01-04",
+      "- [x] Buy milk",
+      "- [ ] #task Plan the rest"
+                   ]
+
 obsidianTests :: TestTree
 obsidianTests = testGroup "ObsidianTests" [
   testLinksThroughTask,
@@ -392,5 +436,7 @@ obsidianTests = testGroup "ObsidianTests" [
   testRewriteWithOverlay,
   testRewriteFrontmatterIdempotent,
   testLinksInProperties,
-  testResolveWikiLink
+  testResolveWikiLink,
+  testRewriteTasks,
+  testRewriteMixedTasks
                                           ]

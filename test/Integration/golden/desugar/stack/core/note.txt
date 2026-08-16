@@ -2,6 +2,15 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
+                ( "/Data/Note/Priority/Medium"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Note/Priority/Medium ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Doc/dshow"
                 , ObjectMapItem
                     { omiDecls = []
@@ -16,6 +25,56 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Note/StatusType/Todo"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Note/StatusType/Todo ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/StatusType/InProgress"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Note/StatusType/InProgress ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Priority/None"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Note/Priority/None ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Task/Obsidian"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Task/Obsidian( Value /contents -> /Data/String )( Value /symbol -> /Data/String )( Value /statusType -> ∀/Data/Note/StatusType )( Value /description -> /Data/String )( Value /priority -> ∀/Data/Note/Priority )
+                            ( Value /scheduled -> ∀/Data/Maybe[ /T=/Data/String ] )
+                            ( Value /due -> ∀/Data/Maybe[ /T=/Data/String ] )
+                            ( Value /recurrence -> ∀/Data/Maybe[ /T=/Data/String ] )( Value /rest -> /Data/String )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/StatusType/NonTask"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Note/StatusType/NonTask ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Doc/dshow./Data/Note/taskList"
                 , ObjectMapItem
                     { omiDecls = []
@@ -26,10 +85,28 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Note/StatusType/OnHold"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Note/StatusType/OnHold ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/Note/Show/Properties"
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/Show/Properties( Value /text -> /Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/StatusType/Cancelled"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Note/StatusType/Cancelled ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -46,10 +123,28 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Note/Priority/Highest"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Note/Priority/Highest ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/Note/Task/Simple"
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/Task/Simple( Value /contents -> /Data/String )( Value /state -> ∀/Data/Primitive/Boolean ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Priority/High"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Note/Priority/High ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -75,10 +170,46 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Note/StatusType/Done"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Note/StatusType/Done ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Priority/Low"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Note/Priority/Low ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/Note/Page"
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/Page( Value /title -> /Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/StatusType/Empty"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Note/StatusType/Empty ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Priority/Lowest"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Note/Priority/Lowest ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -95,23 +226,74 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGClass
             ( False
             , /Data/Note/Task/Simple
             ,
                 [ /Data/Note/Task/Simple..
+                , /Data/Note/Task/Obsidian..
                 , /Data/Note/Show/TaskList..
                 , /Data/Note/Show/Properties..
                 ]
             , Just "A task is shown in the webdocs as the task it is, rather than as the declaration it was read
               into: a box to check and the writing beside it. It is the value itself that is shown, with no
               display type standing in for it, which is what lets checking the box in a doc server write the
-              change back to the note the task was read from.  "
+              change back to the note the task was read from.   "
+            )
+        , CGClass
+            ( True
+            , /Data/Note/Priority
+            ,
+                [ /Data/Note/Priority/Highest
+                , /Data/Note/Priority/High
+                , /Data/Note/Priority/Medium
+                , /Data/Note/Priority/None
+                , /Data/Note/Priority/Low
+                , /Data/Note/Priority/Lowest
+                ]
+            , Just "How urgent a task is, as the plugin's six priorities. [Priority/None] is written between
+              medium and low rather than at either end, because that is where a task nobody gave a priority
+              to sorts among ones somebody did."
+            )
+        , CGClass
+            ( True
+            , /Data/Note/StatusType
+            ,
+                [ /Data/Note/StatusType/Todo
+                , /Data/Note/StatusType/Done
+                , /Data/Note/StatusType/InProgress
+                , /Data/Note/StatusType/OnHold
+                , /Data/Note/StatusType/Cancelled
+                , /Data/Note/StatusType/NonTask
+                , /Data/Note/StatusType/Empty
+                ]
+            , Just "Which kind of status the character in a box is, as the Obsidian Tasks plugin names the seven
+              of them. Which character is which kind is the vault's to say and not markdown's: a vault may
+              write @[/]@ for a task begun and @[-]@ for one dropped, and only the vault's own settings say
+              so. So a box is read as the character it was written with and the kind that character is, and
+              the kind is the reading."
             )
         , CGClass
             ( False
             , /Data/Note/Task
-            , [ /Data/Note/Task/Simple.. ]
+            ,
+                [ /Data/Note/Task/Simple..
+                , /Data/Note/Task/Obsidian..
+                ]
             , Just "A [Task] is one thing to do, written in a note as a markdown checkbox. A task is a break in
               the writing of the note holding it: the comment ends where the checkbox was written, the task
               is declared in its place, and the writing goes on after it as another comment. So the tasks of
@@ -121,7 +303,7 @@ Prgm
               Which of its readings a checkbox gets is decided by the vault it was written in rather than by
               the checkbox. A vault running the Obsidian Tasks plugin writes dates, priorities and links
               into the line beside the box, and reading such a line as though it were only a line would read
-              the plugin's writing as writing of the note. "
+              the plugin's writing as writing of the note.  "
             )
         ]
     , prgmAnnots =
@@ -146,5 +328,15 @@ Prgm
             into: a box to check and the writing beside it. It is the value itself that is shown, with no
             display type standing in for it, which is what lets checking the box in a doc server write the
             change back to the note the task was read from." )
+        , /Catln/#md
+            ( Value /text= CStr "Which kind of status the character in a box is, as the Obsidian Tasks plugin names the seven
+            of them. Which character is which kind is the vault's to say and not markdown's: a vault may
+            write @[/]@ for a task begun and @[-]@ for one dropped, and only the vault's own settings say
+            so. So a box is read as the character it was written with and the kind that character is, and
+            the kind is the reading." )
+        , /Catln/#md
+            ( Value /text= CStr "How urgent a task is, as the plugin's six priorities. [Priority/None] is written between
+            medium and low rather than at either end, because that is where a task nobody gave a priority
+            to sorts among ones somebody did." )
         ]
     }

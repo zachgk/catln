@@ -1,0 +1,398 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/Data/Note/Task/Obsidian"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Task/Obsidian
+                            ( Value /contents -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Read the note" ]
+                                ) = CStr "Read the note"
+                            )
+                            ( Value /symbol -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr " " ]
+                                ) = CStr " "
+                            )( Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
+                            ( Value /description -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Read the note" ]
+                                ) = CStr "Read the note"
+                            )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( Value /due -> /Data/Nothing = Value /Data/Nothing )( Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                            ( Value /rest -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "{"statusName":"Todo"}" ]
+                                ) = CStr "{"statusName":"Todo"}"
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Write this note ✅ 2026-01-05" ]
+                                ) = CStr "Write this note ✅ 2026-01-05"
+                            )
+                            ( Value /symbol -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "x" ]
+                                ) = CStr "x"
+                            )( Value /statusType -> /Data/Note/StatusType/Done = Value /Data/Note/StatusType/Done )
+                            ( Value /description -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Write this note" ]
+                                ) = CStr "Write this note"
+                            )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( Value /due -> /Data/Nothing = Value /Data/Nothing )( Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                            ( Value /rest -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "{"statusDate":"2026-01-05","statusName":"Done"}" ]
+                                ) = CStr "{"statusDate":"2026-01-05","statusName":"Done"}"
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Plan the rest" ]
+                                ) = CStr "Plan the rest"
+                            )
+                            ( Value /symbol -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "/" ]
+                                ) = CStr "/"
+                            )( Value /statusType -> /Data/Note/StatusType/InProgress = Value /Data/Note/StatusType/InProgress )
+                            ( Value /description -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Plan the rest" ]
+                                ) = CStr "Plan the rest"
+                            )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( Value /due -> /Data/Nothing = Value /Data/Nothing )( Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                            ( Value /rest -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "{"statusName":"In Progress"}" ]
+                                ) = CStr "{"statusName":"In Progress"}"
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Drop the old plan ❌ 2026-01-06" ]
+                                ) = CStr "Drop the old plan ❌ 2026-01-06"
+                            )
+                            ( Value /symbol -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "-" ]
+                                ) = CStr "-"
+                            )( Value /statusType -> /Data/Note/StatusType/Cancelled = Value /Data/Note/StatusType/Cancelled )
+                            ( Value /description -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Drop the old plan" ]
+                                ) = CStr "Drop the old plan"
+                            )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( Value /due -> /Data/Nothing = Value /Data/Nothing )( Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                            ( Value /rest -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "{"statusDate":"2026-01-06","statusName":"Cancelled"}" ]
+                                ) = CStr "{"statusDate":"2026-01-06","statusName":"Cancelled"}"
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Ship it #work ⏫ 📅 2026-01-04" ]
+                                ) = CStr "Ship it #work ⏫ 📅 2026-01-04"
+                            )
+                            ( Value /symbol -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr " " ]
+                                ) = CStr " "
+                            )( Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
+                            ( Value /description -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Ship it #work" ]
+                                ) = CStr "Ship it #work"
+                            )( Value /priority -> /Data/Note/Priority/High = Value /Data/Note/Priority/High )( Value /scheduled -> /Data/Nothing = Value /Data/Nothing )
+                            ( Value /due -> /Data/Some
+                                [ /T=UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr "2026-01-04" ]
+                                    )
+                                ]
+                                ( /value=UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr "2026-01-04" ]
+                                    )
+                                ) = /Data/Some
+                                ( Value /value -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr "2026-01-04" ]
+                                    ) = CStr "2026-01-04"
+                                )
+                            )( Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                            ( Value /rest -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "{"statusName":"Todo","tags":["#work"]}" ]
+                                ) = CStr "{"statusName":"Todo","tags":["#work"]}"
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Water the plants 🔁 every week 🛫 2026-01-02" ]
+                                ) = CStr "Water the plants 🔁 every week 🛫 2026-01-02"
+                            )
+                            ( Value /symbol -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr " " ]
+                                ) = CStr " "
+                            )( Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
+                            ( Value /description -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Water the plants" ]
+                                ) = CStr "Water the plants"
+                            )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( Value /due -> /Data/Nothing = Value /Data/Nothing )
+                            ( Value /recurrence -> /Data/Some
+                                [ /T=UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr "every week" ]
+                                    )
+                                ]
+                                ( /value=UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr "every week" ]
+                                    )
+                                ) = /Data/Some
+                                ( Value /value -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr "every week" ]
+                                    ) = CStr "every week"
+                                )
+                            )
+                            ( Value /rest -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "{"start":"2026-01-02","statusName":"Todo"}" ]
+                                ) = CStr "{"start":"2026-01-02","statusName":"Todo"}"
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Do this first 🆔 dcf64c 🏁 delete" ]
+                                ) = CStr "Do this first 🆔 dcf64c 🏁 delete"
+                            )
+                            ( Value /symbol -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr " " ]
+                                ) = CStr " "
+                            )( Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
+                            ( Value /description -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Do this first" ]
+                                ) = CStr "Do this first"
+                            )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( Value /due -> /Data/Nothing = Value /Data/Nothing )( Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                            ( Value /rest -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "{"id":"dcf64c","onCompletion":"delete","statusName":"Todo"}" ]
+                                ) = CStr "{"id":"dcf64c","onCompletion":"delete","statusName":"Todo"}"
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Do this after ⛔ dcf64c, 0h17ye ➕ 2026-01-01" ]
+                                ) = CStr "Do this after ⛔ dcf64c, 0h17ye ➕ 2026-01-01"
+                            )
+                            ( Value /symbol -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr " " ]
+                                ) = CStr " "
+                            )( Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
+                            ( Value /description -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Do this after" ]
+                                ) = CStr "Do this after"
+                            )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( Value /due -> /Data/Nothing = Value /Data/Nothing )( Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                            ( Value /rest -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "{"created":"2026-01-01","dependsOn":["dcf64c","0h17ye"],"statusName":"Todo"}" ]
+                                ) = CStr "{"created":"2026-01-01","dependsOn":["dcf64c","0h17ye"],"statusName":"Todo"}"
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Answer the question ⏳ 2026-01-03 🔽 ^answer-it" ]
+                                ) = CStr "Answer the question ⏳ 2026-01-03 🔽 ^answer-it"
+                            )
+                            ( Value /symbol -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr " " ]
+                                ) = CStr " "
+                            )( Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
+                            ( Value /description -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Answer the question" ]
+                                ) = CStr "Answer the question"
+                            )( Value /priority -> /Data/Note/Priority/Low = Value /Data/Note/Priority/Low )
+                            ( Value /scheduled -> /Data/Some
+                                [ /T=UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr "2026-01-03" ]
+                                    )
+                                ]
+                                ( /value=UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr "2026-01-03" ]
+                                    )
+                                ) = /Data/Some
+                                ( Value /value -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr "2026-01-03" ]
+                                    ) = CStr "2026-01-03"
+                                )
+                            )( Value /due -> /Data/Nothing = Value /Data/Nothing )( Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                            ( Value /rest -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "{"blockLink":"answer-it","statusName":"Todo"}" ]
+                                ) = CStr "{"blockLink":"answer-it","statusName":"Todo"}"
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( Value /contents -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Book 📅 lunch" ]
+                                ) = CStr "Book 📅 lunch"
+                            )
+                            ( Value /symbol -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr " " ]
+                                ) = CStr " "
+                            )( Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
+                            ( Value /description -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Book 📅 lunch" ]
+                                ) = CStr "Book 📅 lunch"
+                            )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( Value /due -> /Data/Nothing = Value /Data/Nothing )( Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                            ( Value /rest -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "{"statusName":"Todo"}" ]
+                                ) = CStr "{"statusName":"Todo"}"
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Page"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Page
+                            ( Value /title -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Tasks" ]
+                                ) = CStr "Tasks"
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots = []
+    }
