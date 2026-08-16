@@ -1,0 +1,33 @@
+import "core"
+
+
+# DISABLED — a compiler gap, kept as the repro of it.
+  A class may list its members by name, and those members may be declared apart from it. Where such
+  a member carries fields, the class does not seal over them: a method declared on the class is
+  compared against members with no fields at all, so the definitions covering each member never
+  cover the class.
+    Unfulfilled Declaration for /total:
+      Declaration input type: /total(/this=∀/Thing)
+      Definition input type:  /total(/this=(/Thing/Fancy(/x=Integer, /y=Integer)
+                                          + /Thing/Simple(/x=Integer)))
+      Undefined part: /total(/this=∀/Thing - (/Thing/Fancy(...) + /Thing/Simple(...)))
+  Writing the same members inline in the class, with their fields, works — that is what
+  @test/Integration/code/classPrefixMember.ct@ holds. So it is listing a member BY NAME that loses
+  its fields, and a field-less member listed by name is fine, which is why [/Data/PComparison] in
+  @stack/core/ord.ct@ carries [isNoOrdering] without trouble.
+  Note that this error is raised only where a program is taken all the way through typechecking and
+  its notes are failed on, as @test/Integration/Integ.hs@ does. @catln test@ answers that the file's
+  own tests all passed, so a repro run that way looks green.
+class(Thing, [Thing/Simple, Thing/Fancy])
+
+data(Thing/Simple(x -> Integer))
+data(Thing/Fancy(x -> Integer, y -> Integer))
+
+:/Thing.total -> Integer
+:/Thing/Simple(x).total= x
+:/Thing/Fancy(x, y).total= x + y
+
+main{io -> IO} =
+  #assert(test= /Thing/Simple(x= 3).total == 3)
+  #assert(test= /Thing/Fancy(x= 3, y= 4).total == 7)
+  io

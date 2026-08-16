@@ -1,0 +1,27 @@
+import "core"
+
+
+# The shape a note's page is, with the fields a task carries.
+  [/Data/Note/Page] holds a declaration for each checkbox of the note: a value written out and
+  nothing else — no arrow, no definition, gathered by the name it was declared as. The two repros
+  beside this one reach a [/Data/Maybe] field and a list field one at a time; this is both of them
+  at once, on the one type.
+  Not nested under a page here, though a note nests its checkboxes under one: a declaration written
+  under another inherits its path, so at the root of a program the two names run together, where a
+  note's do not because they are written in a module. That a note's tasks nest correctly is already
+  held by the goldens @obsidian.ct@ reads.
+  One tag rather than several, because a field holding two or more does not typecheck — see
+  @test/Integration/disabled/listFieldMultiple.ct@.
+data(Noted(name -> String, tags -> /Data/List[$T -> String], due -> /Data/Maybe[$T -> String]))
+
+# Shown as the value it is, with no display type standing in for it, as a task is.
+every(Noted.., isa= [/Catln/Doc/DShow])
+
+/Noted(name= "has both", tags= ["x"], due= /Data/Some(value= "2026-01-01"))
+/Noted(name= "has neither", tags= [], due= /Data/Nothing)
+
+# Printed so that the values are evaluated and not only built.
+> /Noted(name= "has both", tags= ["x"], due= /Data/Some(value= "2026-01-01"))
+> /Noted(name= "has neither", tags= [], due= /Data/Nothing)
+
+main{io -> IO}= io.exit(val= 0)

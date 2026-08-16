@@ -1,0 +1,113 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+                            ( /Catln/exit
+                                ( /this=/Catln/IO
+                                , /val=/Data/Primitive/Integer
+                                ) + /Catln/IO
+                            ) = /Catln/exit
+                            ( EAppArg Value /val -> /Data/Primitive/Integer = 0 )
+                            ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Dated"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Dated( EAppArg Value /name -> /Data/String )
+                            ( EAppArg Value /due -> ∀/Data/Maybe[ /T=/Data/String ] )
+                        , /Dated
+                            ( EAppArg Value /name -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "has one" ]
+                                ) = "has one"
+                            )
+                            ( EAppArg Value /due -> /Data/Some
+                                [ /T=UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr "2026-01-01" ]
+                                    )
+                                ]
+                                ( /value=UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr "2026-01-01" ]
+                                    )
+                                ) = /Data/Some
+                                ( EAppArg Value /value -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr "2026-01-01" ]
+                                    ) = "2026-01-01"
+                                )
+                            )
+                        , /Dated
+                            ( EAppArg Value /name -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "has none" ]
+                                ) = "has none"
+                            )( EAppArg Value /due -> /Data/Nothing = Value /Data/Nothing )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Dated
+            , [ /Dated.. ]
+            , Just ""
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "A field of a data type may be a [/Data/Maybe] of a concrete element.
+            A task read out of an Obsidian note has a due date or it has none, and having none is the
+            [/Data/Nothing] arm rather than an empty string standing in for one. So a field has to be able to
+            hold a [/Data/Maybe], which nothing in the checked standard library does — [/Data/Maybe] is used
+            there only as what a function takes and answers with.
+            Written as values declared and never defined, since that is the whole of what a note does with
+            such a field: a checkbox is read into a declaration, and what reads the fields back out is the
+            webdocs reading the evaluated value rather than anything written in Catln. Reading a field back
+            in Catln is a gap of its own — see @test/Integration/disabled/bareDataDeclaration.ct@." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "Shown as the value it is, with no display type standing in for it, as a task is." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "Printed so that the values are evaluated and not only built." )
+        , /Catln/#print
+            ( EAppArg Value /p -> ∀/Catln/Doc/DShow = /Dated
+                ( EAppArg Value /name -> /Data/String = "has one" )
+                ( EAppArg Value /due -> /Data/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Some
+                    ( EAppArg Value /value -> /Data/String = "2026-01-01" )
+                )
+            )
+        , /Catln/#print
+            ( EAppArg Value /p -> ∀/Catln/Doc/DShow = /Dated
+                ( EAppArg Value /name -> /Data/String = "has none" )( EAppArg Value /due -> /Data/Nothing = Value /Data/Nothing )
+            )
+        ]
+    }

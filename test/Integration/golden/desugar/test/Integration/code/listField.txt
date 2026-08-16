@@ -1,0 +1,113 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= CInt 0 )( Value /this= Value io )
+                        ]
+                    }
+                )
+            ,
+                ( "/Tagged"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Tagged( Value /name -> /Data/String )
+                            ( Value /tags -> ∀/Data/List[ /T=/Data/String ] )
+                        , /Tagged
+                            ( Value name= CStr "none" )( Value tags= Value /Data/Nil )
+                        , /Tagged
+                            ( Value name= CStr "one" )
+                            ( Value tags= /Data/Cons
+                                ( Value /head= CStr "x" )( Value /tail= Value /Data/Nil )
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/ConsTagged"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ ConsTagged( Value /name -> /Data/String )
+                            ( Value /tags -> ∀/Data/ConsList[ /T=/Data/String ] )
+                        , /ConsTagged
+                            ( Value name= CStr "none" )( Value tags= Value /Data/Nil )
+                        , /ConsTagged
+                            ( Value name= CStr "one" )
+                            ( Value tags= /Data/Cons
+                                ( Value /head= CStr "x" )( Value /tail= Value /Data/Nil )
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Tagged
+            ,
+                [ /Tagged..
+                , /ConsTagged..
+                ]
+            , Just " "
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "A field of a data type may hold a list of a concrete element.
+            The tags of a task read out of an Obsidian note are a list of strings rather than the run of text
+            they were written as. Nothing in the checked standard library gives a list-typed field to anything
+            but a list: the only one there is the [tail] a [/Data/Cons] holds, which is the list itself.
+            Written twice over, against the [/Data/List] interface and against the [/Data/ConsList] the
+            bracket literal builds, so that a failure says which of the two it is rather than only that a list
+            in a field did not work. And written as values declared and never defined, for the reason
+            [/Dated] is in @maybeField.ct@.
+            A field holding TWO OR MORE does not typecheck — see
+            @test/Integration/disabled/listFieldMultiple.ct@, which holds the signature and the boundary. So
+            what is checked here is a field with nothing in it and a field with one thing in it, which is as
+            far as a list field reaches today." )
+        , /Catln/#md
+            ( Value /text= CStr "Shown as the values they are, with no display type standing in for them, as a task is." )
+        , /Catln/#md
+            ( Value /text= CStr "Printed so that the values are evaluated and not only built." )
+        , /Catln/#print
+            ( Value /p= /Tagged
+                ( Value name= CStr "none" )( Value tags= Value /Data/Nil )
+            )
+        , /Catln/#print
+            ( Value /p= /Tagged
+                ( Value name= CStr "one" )
+                ( Value tags= /Data/Cons
+                    ( Value /head= CStr "x" )( Value /tail= Value /Data/Nil )
+                )
+            )
+        , /Catln/#print
+            ( Value /p= /ConsTagged
+                ( Value name= CStr "none" )( Value tags= Value /Data/Nil )
+            )
+        , /Catln/#print
+            ( Value /p= /ConsTagged
+                ( Value name= CStr "one" )
+                ( Value tags= /Data/Cons
+                    ( Value /head= CStr "x" )( Value /tail= Value /Data/Nil )
+                )
+            )
+        ]
+    }

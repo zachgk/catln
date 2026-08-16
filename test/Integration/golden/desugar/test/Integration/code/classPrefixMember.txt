@@ -1,0 +1,144 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/Thing/Fancy"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Thing/Fancy( Value /x -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
+                    }
+                )
+            ,
+                ( "/Item/Simple"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Item/Simple( Value /x -> /Data/Primitive/Integer )
+                        , /Item/Simple
+                            ( Value x= CInt 1 )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Item/Fancy"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Item/Fancy( Value /x -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer )
+                        , /Item/Fancy
+                            ( Value x= CInt 1 )
+                            ( Value y= CInt 2 )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Thing/Simple"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Thing/Simple( Value /x -> /Data/Primitive/Integer ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/total"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ total( Value /this -> ∀/Thing ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ total
+                            ( Value /this= /Thing/Simple( Value x ) ) -> /Data/Primitive/Integer = Value x
+                        , total
+                            ( Value /this= /Thing/Fancy( Value x )( Value y ) ) -> /Data/Primitive/Integer = /operator+( Value /l= Value x )( Value /r= Value y )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Item
+            ,
+                [ /Item/Simple..
+                , /Item/Fancy..
+                ]
+            , Just "  "
+            )
+        , CGClass
+            ( True
+            , /Thing
+            ,
+                [ /Thing/Simple( /x=/Data/Primitive/Integer )
+                , /Thing/Fancy
+                    ( /x=/Data/Primitive/Integer
+                    , /y=/Data/Primitive/Integer
+                    )
+                ]
+            , Just ""
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "A class's name may be a prefix of its members' names.
+            A note's checkbox is read as one of two things, and the two are named under the name of the class
+            they are both members of, so that what a checkbox is read as is one name with two readings under
+            it rather than two unrelated names. That makes the class name a strict prefix of every member
+            name, which nothing else in the checked standard library does — and a relative name is matched by
+            its suffix, so a member named under its own class is exactly the case where the two could be taken
+            for each other.
+            Written in both of the forms a class is written in: [/Item], joined to member by member as a note
+            joins its readings to [/Catln/Doc/DShow], and [/Thing], which lists its members and so can carry a
+            method every member answers.
+            [/Thing] lists its members with their fields written out, which is the only way a class carrying a
+            method may list them — a class listing members declared apart from it does not seal over their
+            fields, and the method is then never covered. See
+            @test/Integration/disabled/classMemberByName.ct@." )
+        , /Catln/#md
+            ( Value /text= CStr "The values a page of such members declares, written out and never defined — the shape a note's
+            page holds a checkbox as." )
+        , /Catln/#print
+            ( Value /p= total
+                ( Value /this= /Thing/Simple
+                    ( Value x= CInt 3 )
+                )
+            )
+            ( Value /result= CStr "3" )
+        , /Catln/#print
+            ( Value /p= total
+                ( Value /this= /Thing/Fancy
+                    ( Value x= CInt 3 )
+                    ( Value y= CInt 4 )
+                )
+            )
+            ( Value /result= CStr "7" )
+        ]
+    }
