@@ -48,7 +48,19 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /make_range( Value /n -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Data/Primitive/Integer ] = /range( Value /stop -> TVArg /n = Value /n ) ]
+                        [ /make_range( Value /n -> /Data/Primitive/Integer ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/List[ /T=/Data/Primitive/Integer ]
+                                , fromList []
+                                , []
+                                )
+                            , /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                ( /head=/Data/Primitive/Integer
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                                )
+                            , []
+                            ) = /range( Value /stop -> TVArg /n = Value /n )
+                        ]
                     }
                 )
             ,

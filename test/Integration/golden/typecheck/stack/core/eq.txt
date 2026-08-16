@@ -184,14 +184,14 @@ Prgm
             The simplest [Eqv] over [Integer] compares its values with the built-in integer equality;
             [AllEqv] relates every pair." )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /rel
+            ( Value /p -> ∀/Data/Primitive/Boolean = /rel
                 ( Value /a -> /Data/Primitive/Integer = CInt 2 )
                 ( Value /b -> /Data/Primitive/Integer = CInt 2 )
                 ( Value /this -> /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] = Value /Data/Algebra/IntEqExample )
             )
             ( Value /result -> /Data/String = CStr "True" )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /rel
+            ( Value /p -> ∀/Data/Primitive/Boolean = /rel
                 ( Value /a -> /Data/Primitive/Integer = CInt 2 )
                 ( Value /b -> /Data/Primitive/Integer = CInt 3 )
                 ( Value /this -> /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] = Value /Data/Algebra/IntEqExample )

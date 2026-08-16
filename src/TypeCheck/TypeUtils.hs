@@ -26,7 +26,7 @@ import           Control.Monad.State
 import           CtConstants         (runtimeAnnot)
 import           Data.Bifunctor      (Bifunctor (bimap))
 import           Data.List           (find, intercalate, nub, partition)
-import           Data.Maybe          (fromMaybe, isNothing, mapMaybe)
+import           Data.Maybe          (fromMaybe, isJust, isNothing, mapMaybe)
 import           Data.UUID           (nil)
 import           MapMeta
 import           Semantics
@@ -371,7 +371,7 @@ arrowConstrainUbs env con@Constraint{conVaenv} srcS@SType{stypeAct=TypeVar v _, 
     _ -> do
       (_, _, cdest, destRT) <- arrowConstrainUbs env con srcS{stypeAct=srcv} destS
       return (stypeAct srcS, srcReq, cdest, destRT)
-arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=src@(UnionType Nothing srcPartials consts), stypeReq=srcReq} SType{stypeAct=destAct, stypeReq=destReq} = do
+arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=src@(UnionType Nothing srcPartials consts), stypeReq=srcReq} SType{stypeAct=destAct, stypeReq=destReq, stypeReqDecl=destReqDecl} = do
   reachesEnv <- mkReachesEnv env con
   -- Every operation that consults the type graph's OBJECT META TYPES (the reach union's
   -- 'presentRawResult'/'typeGraphDeclaredResult', the requirement cut's re-query, settled-leaf
@@ -460,35 +460,47 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
         | destIsArrowResult = intersectTypesWithVarEnv feTypeEnv vaenv' destActR destByGraph
         -- A consumption point: the committed full-meet behavior.
         | otherwise = intersectTypesWithVarEnv feTypeEnv vaenv' destBound destByGraph
-  -- Settle-forcing requirement: a leaf the requirement does NOT admit as it stands
-  -- ('reqAdmitsLeaf' — the requirement is the boundary answering "must this settle now, or
-  -- is unsettled valid here"), with a viable compilation path to forms within the bound
-  -- ('reachesTo'), is REQUIRED to follow its arrows — the destination holds only what the
-  -- consumer receives, so the unadmitted form is dropped and the actual keeps the settled
-  -- remainder. The requirement never constrains such a leaf by plain membership (the
-  -- 'isSubtypeUpToSettlingOf' doctrine): the algebra answers class membership of an
-  -- unrewritten call SAT-conservatively ("could settle to a member") and would keep it. A
-  -- leaf with no viable path (or no engaged requirement) is kept: mid-solve its reach may
+  -- Settle-forcing requirement: a FORM the DECL-ORIGIN requirement REFUSES ('reqAdmitsForm'
+  -- against 'stypeReqDecl' — the unified admission rule; the declaration boundary answers
+  -- "must this settle now, or may it settle later"), with a viable compilation path to forms
+  -- within the bound ('reachesTo'), is REQUIRED to follow its arrows — the destination holds
+  -- only what the consumer receives, so the refused form is dropped and the actual keeps the
+  -- settled remainder. The accumulated 'stypeReq' is NOT consulted here: its reverse-direction
+  -- content includes the source's own met forms (the contract-discovery echo), and a form's
+  -- own echo would license the form itself (the toString/@++@ self-licensing divergence; a
+  -- nullary form like @mempty@ shows no structural test can separate echo from license). A
+  -- form with no viable path (or no engaged decl requirement) is kept: mid-solve its reach may
   -- still be resolving, and dropping it would not be an upper bound of the point's values.
   -- The drop is also skipped when it would empty the stored type (settled alternatives not
   -- yet accumulated), which would poison the point to 'BottomType'.
-  -- Arrow-applicability first: settling is rewriting, so a leaf whose NAME no arrow can
-  -- accept never settles elsewhere — and 'reachesTo' alone cannot gate this, because its
-  -- required-node check counts a leaf already inside the bound as reaching by STAYING PUT
-  -- (a deep subtype per data literal per epoch). The probe is the bare name with open args
-  -- (no deep-argument intersects — a full-leaf query pays 'accepts' meets on every deep
-  -- operand); a name-level over-approximation only admits more leaves to the later gates.
-  -- TODO(admission): this gate should become the requirement-admission form used by
-  -- 'settlePropSlot' (drop iff an arrow applies, the requirement does not admit the form
-  -- as-is per 'reqAdmitsLeaf', and the reach is viable) — one criterion, no settled-name
-  -- class. The direct swap made a requirement's met call component LICENSE the dest's raw
-  -- leaf that this gate previously dropped, and the keep/re-drop disagreement with the
-  -- other writers oscillated past the 'runConstraints' limit (toString/++ family) — the
-  -- other writers must learn the admission rule in the same change.
-  let settleForced l = not (isSettledLeaf reachesTypeEnv l)
+  -- Arrow-applicability first (as 'settlePropSlot'): settling is rewriting, so a form whose
+  -- NAME no arrow can accept can never settle elsewhere and is never dropped — its refusal
+  -- surfaces as an error at Decode instead. The probe is the bare name with open args (no
+  -- deep-argument intersects); a name-level over-approximation only admits more leaves to
+  -- the later gates. This retires the TODO(admission) that lived here: all the
+  -- settle-forcing writers ('dropSettleForcedRaws', the stay-put viability/met forms below,
+  -- and 'settlePropSlot') consult the ONE criterion in the same change.
+  -- DEFERRAL NEEDS A CONSUMER (Zach's ruling, 2026-08-16): deferring a rewritable form is
+  -- meaningful only while some arrow can still act on it — its own arrows at its rewrite
+  -- frontier, or an arrow whose declared INPUT spells the unsettled form
+  -- ('feInputArrowNames'). The frontier spans the whole application PLUMBING: an Arrow
+  -- result (dispatch keying reads those raws deliberately) and the base/builder links
+  -- (ArrowTo 7 — the raw form there IS the call being assembled; forcing it empties the
+  -- base to ⊥). Only an ARGUMENT-ARM destination (ArrowTo 10/15 — the value passed INTO
+  -- another call) is past the frontier: a form there that no arrow input accepts is forced
+  -- to settle through its direct arrows NOW even where no declaration engages — otherwise
+  -- it rides (through var-linked dims) into values no arrow can ever act on ("no arrows
+  -- from Some[/T=raw ∪ …]" at TreeBuild).
+  let destIsArgArm = case con of
+        Constraint _ _ (ArrowTo 10 _ _) -> True
+        Constraint _ _ (ArrowTo 15 _ _) -> True
+        _                               -> False
+  let settleForced l = not (null (typeGraphQueryAllWithReason reachesTypeEnv vaenv' ((partialVal (ptName l)){ptArgMode=PtArgAny})))
+                     && (not (reqAdmitsForm reachesTypeEnv vaenv' destReqDecl l)
+                          || (destIsArgArm && not (S.member (ptName l) (feInputArrowNames env))))
                      && reachesTo reachesTypeEnv vaenv' (singletonType l) destBound
   let dropSettleForcedRaws t@(UnionType dMTop dLeafs dConsts)
-        | destReq /= PTopType && not (isBottomType destBound) =
+        | (destReqDecl /= PTopType || destIsArgArm) && not (isBottomType destBound) =
             case partition settleForced (splitUnionType dLeafs) of
               ([], _) -> t
               (_, keptLs) | null keptLs && isNothing dMTop && null dConsts -> t
@@ -506,12 +518,63 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
   -- singleton is within 'destFinal', or (following intermediate arrows) its reach subtree can be
   -- cut to within 'destFinal'. This is the per-child test 'reachesHasCutSubtypeOf' already uses, so
   -- a source that reaches the destination only through a further arrow still counts as viable.
+  -- A component also reaches the destination by STAYING PUT — a power of the term-rewriting
+  -- language: settling may happen later through multi-level function rules, and the
+  -- destination's DECL-ORIGIN requirement is what decides whether it must happen NOW (the
+  -- 'reqAdmitsForm' rule). The requirement decides at the level of the FORM: when its own
+  -- expansion restricted to the component's name still contains that form (a data member, or
+  -- a matching unsettled form the declaration licenses), the component may stay, and its
+  -- stay-put contribution is the PORTION of its values the destination admits (the meet — a
+  -- module-generic @Node(value=⊤, ..)@ against a refined slot keeps the refined portion). A
+  -- form the declaration refuses outright must settle through its arrows, exactly the
+  -- settle-forcing doctrine. No settled/raw distinction is made: an unsettled call form is a
+  -- valid data object like a constructed one. Without stay-put, a component that neither
+  -- subtypes the destination nor follows arrows (the rebuilt @Node(value=⊤, ..)@ of an
+  -- instance arm's body — data has no arrows) was silently neither narrowed nor errored, and
+  -- TreeBuild later failed the same conversion. Consulting the DECL channel (never the
+  -- accumulated requirement) is what makes this safe: 'narrowedReq' below writes the
+  -- source's own met forms into 'stypeReq' (contract discovery), and admission reading that
+  -- channel would license the very forms the machinery wrote — the self-licensing loop.
+  -- Stay-put requires an ENGAGED declaration: a ⊤ decl requirement means no declaration
+  -- decides at this destination — nothing licenses rewriting the source requirement toward
+  -- the destination's accumulated content, so the reverse direction keeps its master
+  -- behavior (arrow mets or bare forms). Without this gate, every undeclared consumption
+  -- point contributes @key ∩ destFinal@ where 'destFinal' includes the accumulated
+  -- requirement — re-injecting the previous epoch's met forms one nesting level deeper
+  -- (measured: the toString/@++@ family diverges to the 'runConstraints' limit).
+  let declEngaged = case destReqDecl of
+        PTopType -> False
+        TypeVar v _ -> case vaenvLookup vaenv' v of
+          PTopType               -> False
+          TypeVar v' _ | v' == v -> False
+          _                      -> True
+        _ -> True
+  let stayPutMet key
+        | declEngaged
+        , reqAdmitsForm reachesTypeEnv vaenv' destReqDecl key =
+            -- A key already WITHIN the destination stays with its own spelling: the meet
+            -- would only respell it with the destination frame's materializations
+            -- (@head=$/T@ resolved per call becoming a module-frame @head=∀Ord@), which
+            -- downstream per-call reads can no longer resolve. Only a genuinely wide key
+            -- contributes its met (narrowed) portion.
+            if isSubtypeOfWithEnv feTypeEnv vaenv' (singletonType key) destFinal
+              then Just (singletonType key)
+              else case intersectTypesEnv feTypeEnv vaenv' (singletonType key) destFinal of
+                met | isBottomType met -> Nothing
+                    -- A TypeVar meet is a symbolic LINK (the destination is a bare variable
+                    -- slot, e.g. an argument reference's @TVArg@ point), not a value-set
+                    -- portion — storing it in the requirement would replace a concrete
+                    -- spelling with a var that reads ⊤.
+                    | isTypeVar met    -> Nothing
+                    | otherwise        -> Just met
+        | otherwise = Nothing
   let viableKeys = case reaches' of
         ReachesPartialTree children ->
           [ key
           | (key, subTree) <- H.toList children
           , isSubtypeOfWithEnv feTypeEnv vaenv' (singletonType key) destFinal
-            || reachesHasCutSubtypeOf feTypeEnv vaenv' subTree destFinal ]
+            || reachesHasCutSubtypeOf feTypeEnv vaenv' subTree destFinal
+            || isJust (stayPutMet key) ]
         _ -> []
   -- The ACTUAL keeps the BARE viable keys: a stored actual shows what the call site itself
   -- passed, and the bindings a meet with a matched object's contract discovers are per-use
@@ -527,9 +590,30 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
   -- most-specific-promise pruning is a destination-side reaches optimization, and pruning
   -- against a sibling arm whose object presentation is still transiently ⊤ mid-solve would
   -- collapse the requirement to the one settled arm (monotonically stuck thereafter).
-  let viableMet key = case [ metSrc | (_, metSrc, _) <- typeGraphQueryAllWithReason reachesTypeEnv vaenv' key ] of
-        []   -> singletonType key
-        mets -> unionAllTypesWithEnv feTypeEnv vaenv' mets
+  -- A component's met form unions its STAY-PUT portion (its meet with the destination — see
+  -- 'stayPutMet' above) with the met forms of the arrows it triggers: the value either
+  -- already lies in the destination or rewrites toward it. A component with neither (no
+  -- admitted portion, no accepting arrow — possible mid-epoch) keeps its bare form.
+  -- The two sides combine STRUCTURALLY (a leaf-map merge, the same mechanism the
+  -- requirement-forced choice above uses to reattach raw leaves): an algebraic union would
+  -- let normalization absorb the arrow mets' member templates
+  -- (@Cons[/T=⊤](head=$/T, tail=∀ConsList)@ — whose pointer-occurrence reads narrow the
+  -- element per level from the content) into a stay-put class-pred, erasing the pointers so
+  -- the element sticks at its class bound (@/T=∀Ord@ where the content is @Integer@).
+  let structUnion a b = case (a, b) of
+        (UnionType Nothing aLs [], UnionType mt bLs cs) -> UnionType mt (H.unionWith S.union aLs bLs) cs
+        (UnionType mt aLs cs, UnionType Nothing bLs []) -> UnionType mt (H.unionWith S.union aLs bLs) cs
+        _ -> unionTypesWithEnv feTypeEnv vaenv' a b
+  let viableMet key =
+        let arrowMets = [ metSrc | (_, metSrc, _) <- typeGraphQueryAllWithReason reachesTypeEnv vaenv' key ]
+            arrowMet = case arrowMets of
+              []   -> Nothing
+              mets -> Just (unionAllTypesWithEnv feTypeEnv vaenv' mets)
+        in case (stayPutMet key, arrowMet) of
+             (Nothing, Nothing) -> singletonType key
+             (Just sp, Nothing) -> sp
+             (Nothing, Just am) -> am
+             (Just sp, Just am) -> structUnion am sp
   let viableComponents = unionAllTypesWithEnv feTypeEnv vaenv' (map viableMet viableKeys)
   let reqVaenv = fmap (stypeReq . snd) conVaenv
   let narrowedAct = intersectTypesEnv feTypeEnv vaenv'   srcBound viableBare
@@ -548,31 +632,37 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
   -- the record of where the source can rewrite to.
   return (src', srcReq', destFinal, Just reaches0)
 
--- | Whether a requirement admits a leaf AS IT STANDS — leaving it unsettled. The requirement
--- is the boundary answering "must this settle now, or is unsettled valid here": an unsettled
--- call form appearing IN the requirement licenses the matching unsettled form (leaving
--- operations unsettled is what multi-level definitions and metaprogramming build on), while a
--- class component is read by its DEFINITION — @∀ConsList@ is defined in terms of the settled
--- @Cons@\/@Nil@ objects, so it admits those settled members and never an unrewritten call.
--- Concretely the leaf is checked against the requirement's expansion restricted to the leaf's
--- own name ('expandTypeWithNames'): a class component expands to its declared members (none
--- of the leaf's name — not admitted), while a call-form component survives as itself. A
--- candidate still carrying class predicates admits the leaf only when the predicates provably
--- HOLD of it, which the engine answers conservatively-to-SAT (escape possible ⇒ not proven) —
--- exactly the polarity admission needs. Deliberately NOT plain 'isSubtypeOfWithEnv' against
--- the whole requirement: its class coverage reasons about what a term could settle TO, the
--- direction 'reachesTo' owns.
-reqAdmitsLeaf :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> PartialType -> Bool
-reqAdmitsLeaf _ _ PTopType _ = True
+-- | THE UNIFIED ADMISSION RULE (Zach's ruling, 2026-08-14): the requirement is the boundary
+-- answering "must this form settle NOW, or may it settle LATER" — settling later through
+-- multi-level function rules is a core power of the term-rewriting language, and an
+-- unsettled call form is a valid data object like any other (no settled/raw category test
+-- appears anywhere in this rule). Admission is decided at the level of the FORM: the
+-- requirement's expansion RESTRICTED TO THE FORM'S NAME must be non-empty. A class
+-- component expands to its declared members and never an unrewritten call (@∀ConsList@
+-- admits @Cons@/@Nil@), so a raw call against a settled requirement is refused — the
+-- settle-forcing doctrine, expressed by the expansion. The VALUE portion that survives an
+-- admission is each consumer's own meet against its own bound (the stay-put portion in
+-- 'arrowConstrainUbs', the slot bound in 'settlePropSlot'); the earlier as-is subtype test
+-- (@reqAdmitsLeaf@) wrongly refused a wide data form (@Node(value=⊤, ..)@ against its
+-- Eq-refined member expansion) whose narrowed portion is exactly the point.
+-- The requirement consulted is always the DECL-ORIGIN channel ('stypeReqDecl' or a
+-- site-derived declared bound), never the accumulated 'stypeReq': the accumulated channel
+-- carries the reverse direction's echo of a point's own met forms, and a form's own echo
+-- licensing the form is the self-licensing loop (one nesting level per epoch in the
+-- toString/@++@ family; nullary forms like @mempty@ prove no structural cap can fix it).
+-- Every settle-forcing writer consults THIS function — one criterion (see the retired
+-- TODO(admission)): 'arrowConstrainUbs' (stay-put viability/met forms and
+-- 'dropSettleForcedRaws') and 'settlePropSlot'.
+reqAdmitsForm :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> PartialType -> Bool
+reqAdmitsForm _ _ PTopType _ = True
 -- A var requirement resolves through the env; a self-referential entry (which an
 -- unconstrained var may acquire during intersection) carries no information and licenses
 -- like ⊤ — following it verbatim would recurse forever ('isSubtypeOfWithEnv' parity).
-reqAdmitsLeaf typeEnv vaenv (TypeVar v _) l = case vaenvLookup vaenv v of
+reqAdmitsForm typeEnv vaenv (TypeVar v _) l = case vaenvLookup vaenv v of
   TypeVar v' _ | v' == v -> True
-  looked                 -> reqAdmitsLeaf typeEnv vaenv looked l
-reqAdmitsLeaf typeEnv vaenv req l =
-  isSubtypeOfWithEnv typeEnv vaenv (singletonType l)
-    (UnionType Nothing (expandTypeWithNames typeEnv vaenv req (S.singleton (ptName l))) [])
+  looked                 -> reqAdmitsForm typeEnv vaenv looked l
+reqAdmitsForm typeEnv vaenv req l =
+  not $ null $ splitUnionType $ expandTypeWithNames typeEnv vaenv req (S.singleton (ptName l))
 
 -- | Settle a construction slot at a 'PropEq' write — the slot-write mirror of
 -- 'arrowConstrainUbs''s settle-forcing. A 'PropEq' meet can never remove an unsettled call
@@ -580,8 +670,8 @@ reqAdmitsLeaf typeEnv vaenv req l =
 -- SAT-conservatively), so a definition body's early slot write (@tail = declared-top ∪
 -- rawRecursiveCall@) keeps that spelling forever even after the slot's requirement engages,
 -- and the dispatch presentation reads the stale form. Whether the form may stay unsettled is
--- answered by the requirement boundary ('reqAdmitsLeaf'); here the requirement is the slot's
--- own requirement MET WITH the field's declared bound (@Cons@'s @tail -> ConsList[$T -> $_T]@
+-- answered by the requirement boundary ('reqAdmitsForm'); here the requirement is the slot's
+-- own DECL-ORIGIN requirement MET WITH the field's declared bound (@Cons@'s @tail -> ConsList[$T -> $_T]@
 -- instantiated through the enclosing partial — the @ConsList@ definition is in terms of the
 -- settled @Cons@ object, so the declaration dictates a settled field). The bound is
 -- instantiated AT THIS SITE from 'typeGraphData' rather than pre-materialized into every
@@ -611,13 +701,22 @@ settlePropSlot env@FEnv{feTypeEnv} vaenv propName@(TVArg k) superAct@(UnionType 
 
     settlePartial :: PartialType -> (PartialType, Maybe PartialType, Maybe PartialType, Bool)
     settlePartial p = fromMaybe (p, Nothing, Nothing, False) $ do
-      -- Fireable shape only: the stale family spelling is @declared-top ∪ rawCall@ — a slot
-      -- with no predicate-top component cannot fire (a call form's dests are never inside
-      -- its sibling leaves alone, and the bound includes the slot actual), so gate before
-      -- any graph or engine work.
-      UnionType aMTop@(Just _) aLeafs aConsts <- H.lookup k (ptArgs p)
+      -- Fireable shapes: the stale family spelling is @declared-top ∪ rawCall@, and — now
+      -- that arm-level forcing follows the DECL channel and no longer prunes every
+      -- accumulated raw at undeclared arms — also a PLAIN positive union whose settled
+      -- alternatives sit among the sibling leaves (@rawCall ∪ String ∪ Integer@): there the
+      -- bound (slot actual ∩ requirement ∩ declared) contains the settled siblings, so the
+      -- drop is exactly the alternatives-accumulated settle. The never-empty guard below
+      -- refuses a drop that would empty a top-less slot.
+      UnionType aMTop aLeafs aConsts <- H.lookup k (ptArgs p)
       let aLeafList = splitUnionType aLeafs
       guard (not (null aLeafList))
+      -- Only a REWRITABLE leaf (an unsettled name — one the graph may still rewrite) can be
+      -- settle-forced, so a slot holding only settled data content skips ALL of the work
+      -- below (declared-bound meets, arrow probes, reach queries, commit-time
+      -- verification) before any graph or engine call. This is the cheap membership check
+      -- ('isSettledLeaf'), not the per-leaf arrow probe 'settleForced' still applies.
+      guard (any (not . isSettledLeaf reachesTypeEnv) aLeafList)
       [rp] <- H.lookup (ptName p) reqByName
       slotReq <- typeGetAux propName rp
       -- Engaged requirement only; a pointer-managed (var) slot is left to the var machinery.
@@ -625,7 +724,41 @@ settlePropSlot env@FEnv{feTypeEnv} vaenv propName@(TVArg k) superAct@(UnionType 
       case slotReq of
         TypeVar{} -> Nothing
         _         -> return ()
-      let declBounds = [freeTVIntToTopDeep vaenv p d | PartialType{ptArgs=dArgs} <- typeGraphData feTypeEnv (ptName p), Just d <- [H.lookup k dArgs]]
+      -- Declared bounds come from BOTH declaration families: data-definition objects
+      -- ('typeGraphData' — construction slots) AND arrow-object input templates
+      -- ('typeGraphArrowTemplates' — call-argument slots, e.g. @operator++@'s declared
+      -- operand @$T@ under @[$T -> Semigroup]@). The arrow templates are the decl-side
+      -- analogue of the reverse direction's contract discovery: the same declared contract,
+      -- taken from the declaration's SPELLING rather than from the source's met forms, so
+      -- admission stays origin-pure. Without them, call slots have no declared boundary and
+      -- the raw operand forms of a nested call chain are never pruned — the slot's leaf args
+      -- and its operand's union embed each other one level deeper per epoch (the
+      -- toString/@++@ family diverges to the 'runConstraints' limit).
+      -- A ⊤ TEMPLATE slot contributes nothing rather than widening the union to ⊤: a
+      -- declaration's var-typed slot (@l -> $T@ under @[$T -> Semigroup]@) currently
+      -- PRESENTS as ⊤ in the base-env object map (the declared-var erasure family — see the
+      -- bare-arg gap), and a ⊤ contribution would swallow the concrete instance templates
+      -- (@Integer@/@String@) and neutralize the bound. The union of the remaining templates
+      -- is the realizable declared bound (a slot value must fit SOME arrow's declared
+      -- input). Data-side contributions keep their current semantics unchanged.
+      -- A VAR-TYPED template slot (@equal[$T -> Eq](this -> $T, other -> $T)@) resolves
+      -- through the template's OWN ptVars to the var's declared bound (@∀Eq@) — the spelled
+      -- declared linkage, exactly what 'varStampSupported' reads from these templates. A
+      -- plain 'freeTVIntToTopDeep' would read the free @$T@ as ⊤ and lose the bound.
+      -- Arrow templates are read from the PER-EPOCH reaches env, not the base 'feTypeEnv':
+      -- the base env's object metas for the CURRENT program are still unresolved (⊤ — see
+      -- the env-choice doctrine in 'arrowConstrainUbs'), so same-program declarations would
+      -- present no templates and their call slots would never force. Data spellings are
+      -- parse-stable and keep the base env.
+      let dataBounds = [freeTVIntToTopDeep vaenv p d | PartialType{ptArgs=dArgs} <- typeGraphData feTypeEnv (ptName p), Just d <- [H.lookup k dArgs]]
+      let declBounds = dataBounds
+                    ++ [b | PartialType{ptArgs=dArgs, ptVars=dVars} <- typeGraphArrowTemplates reachesTypeEnv (ptName p)
+                          , Just d0 <- [H.lookup k dArgs]
+                          , let d = case d0 of
+                                  TypeVar (TVVar vn) _ | Just vb <- H.lookup vn dVars -> vb
+                                  _                                                  -> d0
+                          , let b = freeTVIntToTopDeep vaenv p d
+                          , b /= PTopType]
       -- DECLARATION-BOUNDED construction slots only (a data-graph declaration exists for
       -- this field): the declared bound is what dictates settling (@Cons@'s tail is a
       -- settled @ConsList@ by definition). An ordinary call-argument slot has no such
@@ -638,8 +771,32 @@ settlePropSlot env@FEnv{feTypeEnv} vaenv propName@(TVArg k) superAct@(UnionType 
       guard (not (null declBounds))
       guard ('#' `notElem` nameStr (ptName p))
       let declBoundU = unionAllTypesWithEnv feTypeEnv vaenv declBounds
-      let admitted l = reqAdmitsLeaf reachesTypeEnv vaenv slotReq l
-                     && reqAdmitsLeaf reachesTypeEnv vaenv declBoundU l
+      -- The unified admission rule ('reqAdmitsForm'), distributed over the DECL-ORIGIN slot
+      -- requirement and the declared bound (form present in the meet ⟸ present in both — the
+      -- keep-safe direction). The accumulated 'slotReq' still gates ENGAGEMENT above (the
+      -- settle machinery only runs where a requirement engaged), but admission itself never
+      -- consults it: its reverse-direction met forms would license the very forms they echo.
+      let slotDeclReq = fromMaybe PTopType $ do
+            [rdp] <- H.lookup (ptName p) declReqByName
+            typeGetAux propName rdp
+      -- DEFERRAL NEEDS A CONSUMER (Zach's ruling, 2026-08-16): deferring a rewritable form
+      -- is meaningful only while some arrow can still ACT on the deferred form — its own
+      -- arrows at its rewrite frontier, or an arrow whose declared INPUT spells the
+      -- unsettled form. A DATA-declared field is where deferral dies: data has no arrows,
+      -- and once a raw form is embedded in a constructed value's field no arrow path leads
+      -- back to it (TreeBuild later finds "no arrows from Some[/T=raw ∪ …]"). So at a
+      -- data-declared slot a ⊤-resolved field bound (@Some@'s @value -> $T@ with free @$T@)
+      -- means "settled content, element unconstrained" — it does NOT license unsettled
+      -- forms; only a field whose declared bound literally SPELLS the form admits it (the
+      -- metaprogramming license). Call-argument slots keep ⊤-licenses: their values remain
+      -- at positions arrows can consume.
+      let admittedAtDataField l = case declBoundU of
+            PTopType -> False
+            _        -> reqAdmitsForm reachesTypeEnv vaenv declBoundU l
+      let admitted l | not (null dataBounds) = reqAdmitsForm reachesTypeEnv vaenv slotDeclReq l
+                                             && admittedAtDataField l
+                     | otherwise = reqAdmitsForm reachesTypeEnv vaenv slotDeclReq l
+                                 && reqAdmitsForm reachesTypeEnv vaenv declBoundU l
       -- The settle bound (lazy — forced only when some leaf is not admitted).
       let slotAct = UnionType aMTop aLeafs aConsts
       let bound = intersectTypesEnv feTypeEnv vaenv (intersectTypesEnv feTypeEnv vaenv slotAct slotReq) declBoundU
@@ -659,14 +816,25 @@ settlePropSlot env@FEnv{feTypeEnv} vaenv propName@(TVArg k) superAct@(UnionType 
           | otherwise -> do
               let slotAct' = UnionType aMTop (joinUnionType keptLs) aConsts
               let p' = p{ptArgs=H.insert k slotAct' (ptArgs p)}
+              -- The tighten never commits a respell that LOSES a type-var spelling the slot
+              -- carried (@∀Map[/K=$/MK, /V=$/MV]@ meeting a declared bound whose frame reads
+              -- the pointers as ⊤ would store @∀Map[/K=⊤, /V=⊤]@) — the same 'typeVarLost'
+              -- discipline the reverse narrowing applies; the pointer spelling is what
+              -- downstream per-call reads resolve.
+              let tightenSlot cur = do
+                    let t = compactType feTypeEnv vaenv (intersectTypesEnv feTypeEnv vaenv cur declBoundU)
+                    guard (not (typeVarLost cur t))
+                    return t
               let rp' = case H.lookup k (ptArgs rp) of
-                    Just UnionType{} ->
-                      Just rp{ptArgs=H.insert k (compactType feTypeEnv vaenv (intersectTypesEnv feTypeEnv vaenv slotReq declBoundU)) (ptArgs rp)}
+                    Just UnionType{} -> do
+                      t <- tightenSlot slotReq
+                      Just rp{ptArgs=H.insert k t (ptArgs rp)}
                     _ -> Nothing
               let rdp' = case H.lookup (ptName p) declReqByName of
                     Just [rdp] -> case H.lookup k (ptArgs rdp) of
-                      Just slotDeclReq@UnionType{} ->
-                        Just rdp{ptArgs=H.insert k (compactType feTypeEnv vaenv (intersectTypesEnv feTypeEnv vaenv slotDeclReq declBoundU)) (ptArgs rdp)}
+                      Just slotDeclCur@UnionType{} -> do
+                        t <- tightenSlot slotDeclCur
+                        Just rdp{ptArgs=H.insert k t (ptArgs rdp)}
                       _ -> Nothing
                     _ -> Nothing
               return (p', rp', rdp', True)

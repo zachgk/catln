@@ -111,13 +111,13 @@ Prgm
             ( Value /text -> /Data/String = CStr "## Equality
             [String] is an [Eq] type: [StrEqv] wraps the primitive [strEqual], and [eq]/[equal] follow." )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /operator==
+            ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
                 ( Value /l -> /Data/String = CStr "hi" )
                 ( Value /r -> /Data/String = CStr "hi" )
             )
             ( Value /result -> /Data/String = CStr "True" )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /operator==
+            ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
                 ( Value /l -> /Data/String = CStr "hi" )
                 ( Value /r -> /Data/String = CStr "no" )
             )

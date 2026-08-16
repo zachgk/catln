@@ -30,13 +30,13 @@ Prgm
                         [ /abs( Value /x -> /Data/Primitive/Integer ) ->
                             ( /abs.$8209a9
                                 ( /x=/Data/Primitive/Integer
-                                , /$8209a9-arg=( /Catln/Else + /Catln/Then )
+                                , /$8209a9-arg=∀/Catln/ThenElse
                                 ) + /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer
                             ) = /abs.$8209a9( Value /x -> TVArg /x = Value /x )
-                            ( Value /$8209a9-arg -> ( /Catln/Else + /Catln/Then ) = /Catln/ThenElse/fromBool
+                            ( Value /$8209a9-arg -> ∀/Catln/ThenElse = /Catln/ThenElse/fromBool
                                 ( Value /v -> ∀/Data/Primitive/Boolean = /operator>=( Value /l -> TVArg /x = Value /x )
                                     ( Value /r -> /Data/Primitive/Integer = CInt 0 )
                                 )

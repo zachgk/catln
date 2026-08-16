@@ -40,9 +40,19 @@ toMeta  m@(Meta pt pos mid _) = do
       -- 'verifyScheme's 'verifySchemeActLowers'. The requirement constrains what a term settles
       -- to, so raw applied leaves (a body's unrewritten call, kept alongside the settled forms
       -- for eval's dispatch keying) are exempt ('isSubtypeUpToSettlingOf').
+      -- Both schemes are UPPER BOUNDS on the point's values, and under req-only
+      -- 'BoundedByObjs' the REQUIREMENT can legitimately be the tighter one (a
+      -- module-generic definition-body actual against a slot-refined requirement), so plain
+      -- containment is too strict. The invariant that must hold per enumerated FORM is
+      -- compatibility: every actual leaf must be ABLE to satisfy the requirement (a non-⊥
+      -- meet — the portion the requirement admits, which is also what the stored meta below
+      -- carries onward). A leaf meeting to ⊥ (an @Integer ∪ String@ actual against an
+      -- @Integer@ requirement flags the @String@ form) is the genuine error.
+      let leafCompatibleWithReq l = not $ isBottomType $ intersectTypes feTypeEnv (singletonType l) req
       let actSatisfiesReq = case ub of
             TypeVar{} -> True
-            _         -> isSubtypeUpToSettlingOf feTypeEnv H.empty ub req
+            _ | isSubtypeUpToSettlingOf feTypeEnv H.empty ub req -> True
+            UnionType _ leafs _ -> all leafCompatibleWithReq (splitUnionType leafs)
       let notes' = if actSatisfiesReq
             then notes
             else GenTypeCheckError (clearMetaDat ArrMeta m) (printf "Actual type %s is not a subtype of the required type %s" (show ub) (show req)) : notes
@@ -62,7 +72,28 @@ toMeta  m@(Meta pt pos mid _) = do
                    t | null rawLeafs -> t
                      | otherwise -> unionTypes feTypeEnv (UnionType Nothing (joinUnionType rawLeafs) []) t
             _ -> intersectTypes feTypeEnv ub pt
-      lift $ TypeCheckResult notes' $ Meta ubMet pos mid rt
+      -- Materialize the REQUIREMENT into the stored meta, REFINING each actual leaf in place
+      -- and never multiplying the enumeration: the meta's union is eval/TreeBuild's
+      -- enumeration of the FORMS the term may take, while the requirement's same-name
+      -- alternatives are a disjunction of candidate contracts (the reverse arrow direction's
+      -- all-accepting-arrows union) — a general @act ∩ req@ crosses the two and manufactures
+      -- instantiated alternatives the term never enumerates (a ⊤-fielded raw @operator+@ met
+      -- with the Float instance's contract), which downstream per-leaf tree builds must then
+      -- handle and cannot. A leaf's meet is adopted only when it is a genuine refinement — a
+      -- single leaf of the same form, narrower content (the module-generic
+      -- @Node(value=⊤, ..)@ against its slot-refined requirement) — and kept as-is otherwise;
+      -- which forms exist is inference's decision, not Decode's. Uniform over the union: no
+      -- settled/raw distinction.
+      let refineLeafByReq l = case intersectTypes feTypeEnv (singletonType l) req of
+            UnionType Nothing ls [] -> case splitUnionType ls of
+              [l'] | ptName l' == ptName l -> l'
+              _                            -> l
+            _ -> l
+      let ubMetReq = case ubMet of
+            UnionType mTop leafs consts | req /= PTopType, not (isTypeVar req) ->
+              UnionType mTop (joinUnionType (map refineLeafByReq (splitUnionType leafs))) consts
+            _ -> ubMet
+      lift $ TypeCheckResult notes' $ Meta ubMetReq pos mid rt
     TypeCheckResE notes -> lift $ TypeCheckResult notes (Meta BottomType pos mid Nothing)
 
 member :: Name -> [Name] -> Bool

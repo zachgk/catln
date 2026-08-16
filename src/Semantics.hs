@@ -106,6 +106,24 @@ objArrGraphQuery prune typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg
       joinPartialDestTypes [] = [BottomType]
       joinPartialDestTypes (pdt1:restPdt) = [unionTypes typeEnv pdt1Poss restPdt' | pdt1Poss <- pdt1, restPdt' <- joinPartialDestTypes restPdt]
 
+-- | The input templates an arrow object presents (see 'typeGraphArrowTemplates').
+-- A hole-spelled declaration (@(_ :: $T ++ _ :: $T)[$T -> Semigroup]@) presents its
+-- slots as ⊤ in the top meta while the arg ObjArrs still carry the spelled types
+-- (@Value /l -> $/T@). Enrich exactly those lost slots from the args' own spelled
+-- metas — the declared linkage the template exists to expose. A slot the top meta
+-- already presents (or a genuinely ⊤-spelled arg) is untouched.
+oaInputTemplates :: (ExprClass e, MetaDat m, Show m, Show (e m)) => ObjArr e m -> [PartialType]
+oaInputTemplates oa@ObjArr{oaArr=Just{}} = case getMetaType $ getExprMeta $ oaObjExpr oa of
+  UnionType Nothing leafs _ -> map enrich $ splitUnionType leafs
+  _                         -> []
+  where
+    argSpellings = H.fromList [ (inExprSingleton (oaObjExpr argOa), getMetaType argM)
+                              | argOa@ObjArr{oaArr=Just (_, argM)} <- exprAppliedArgs (oaObjExpr oa) ]
+    enrich p = p{ptArgs=H.mapWithKey enrichSlot (ptArgs p)}
+    enrichSlot slotK PTopType = H.lookupDefault PTopType slotK argSpellings
+    enrichSlot _ v            = v
+oaInputTemplates ObjArr{oaArr=Nothing} = []
+
 instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGraph e m) where
   typeGraphQueryWithReason = objArrGraphQuery True
   typeGraphQueryAllWithReason = objArrGraphQuery False
@@ -125,13 +143,22 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
   -- The arrow-object complement of 'typeGraphData': input templates of declarations and
   -- definition arms. A mid-solve object whose input presentation is not yet a plain leaf
   -- union (e.g. still ⊤) contributes nothing — callers treat missing templates as
-  -- no-information, the monotone-safe direction.
-  typeGraphArrowTemplates TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name = concatMap arrowPartials $ flatObjectMapItem $ H.lookupDefault mempty name tg
+  -- no-information, the monotone-safe direction. A relatively-spelled name (a call's
+  -- @/operator++@ against a module-keyed @/Data/…/operator++@ objMap entry) matches by
+  -- 'relativeNameFilter', the same fallback 'typeGraphArgKeys' uses.
+  typeGraphArrowTemplates TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name = case H.lookup name tg of
+    Just item -> itemTemplates item
+    Nothing -> case relativeNameFilter name (H.keys tg) of
+      []    -> []
+      names -> concatMap (itemTemplates . (tg H.!)) names
     where
-      arrowPartials oa@ObjArr{oaArr=Just{}} = case getMetaType $ getExprMeta $ oaObjExpr oa of
-        UnionType Nothing leafs _ -> splitUnionType leafs
-        _                         -> []
-      arrowPartials ObjArr{oaArr=Nothing} = []
+      itemTemplates = concatMap oaInputTemplates . flatObjectMapItem
+
+  typeGraphInputEmbeddedNames TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} =
+    S.unions [ S.unions (map leafNameSet (H.elems (ptArgs tmpl)))
+             | item <- H.elems tg
+             , oa <- flatObjectMapItem item
+             , tmpl <- oaInputTemplates oa ]
 
   -- The arg keysets come from the object EXPRESSION structure ('exprAppliedArgs' /
   -- 'inExprSingleton' — the same keying every partial built from an expression uses), not

@@ -15,25 +15,25 @@ Prgm
                                 , []
                                 )
                             ,
-                                ( /operator==
+                                ( /operator==[ /T=∀/Data/Algebra/Eq ]
                                     ( /r=∀/Data/Algebra/Eq
                                     , /l=∀/Data/Algebra/Eq
                                     ) + /Data/strEqual
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/rel
+                                    ( /r=/Data/String
+                                    , /l=/Data/String
+                                    ) + /Data/Algebra/rel[ /T=∀/Data/Primitive/Boolean ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
                                     , /a=∀/Data/Primitive/Boolean
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel
+                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Integer ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
                                     , /a=/Data/Primitive/Integer
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel
+                                    ) + /Data/Algebra/rel[ /T=/Data/String ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/String ]
                                     , /a=/Data/String
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel
+                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Float ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Float ]
                                     , /a=/Data/Primitive/Float
                                     , /b=∀/Data/Algebra/Eq
@@ -41,12 +41,13 @@ Prgm
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
                                     ) + /Data/Primitive/boolEq
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/equal
+                                    ( /r=∀/Data/Primitive/Boolean
+                                    , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Algebra/isEq
+                                    ( /this=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) ) + /Data/Primitive/intEq
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
                                     ( /this=∀/Data/Algebra/Eq
                                     , /other=∀/Data/Algebra/Eq
                                     )
@@ -75,25 +76,25 @@ Prgm
                                 , []
                                 )
                             ,
-                                ( /operator==
+                                ( /operator==[ /T=∀/Data/Algebra/Eq ]
                                     ( /r=∀/Data/Algebra/Eq
                                     , /l=∀/Data/Algebra/Eq
                                     ) + /Data/strEqual
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/rel
+                                    ( /r=/Data/String
+                                    , /l=/Data/String
+                                    ) + /Data/Algebra/rel[ /T=∀/Data/Primitive/Boolean ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
                                     , /a=∀/Data/Primitive/Boolean
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel
+                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Integer ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
                                     , /a=/Data/Primitive/Integer
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel
+                                    ) + /Data/Algebra/rel[ /T=/Data/String ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/String ]
                                     , /a=/Data/String
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel
+                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Float ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Float ]
                                     , /a=/Data/Primitive/Float
                                     , /b=∀/Data/Algebra/Eq
@@ -101,12 +102,13 @@ Prgm
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
                                     ) + /Data/Primitive/boolEq
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/equal
+                                    ( /r=∀/Data/Primitive/Boolean
+                                    , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Algebra/isEq
+                                    ( /this=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) ) + /Data/Primitive/intEq
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
                                     ( /this=∀/Data/Algebra/Eq
                                     , /other=∀/Data/Algebra/Eq
                                     )
@@ -145,25 +147,25 @@ Prgm
                                 , []
                                 )
                             ,
-                                ( /operator==
+                                ( /operator==[ /T=∀/Data/Algebra/Eq ]
                                     ( /r=∀/Data/Algebra/Eq
                                     , /l=∀/Data/Algebra/Eq
                                     ) + /Data/strEqual
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/rel
+                                    ( /r=/Data/String
+                                    , /l=/Data/String
+                                    ) + /Data/Algebra/rel[ /T=∀/Data/Primitive/Boolean ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
                                     , /a=∀/Data/Primitive/Boolean
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel
+                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Integer ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
                                     , /a=/Data/Primitive/Integer
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel
+                                    ) + /Data/Algebra/rel[ /T=/Data/String ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/String ]
                                     , /a=/Data/String
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel
+                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Float ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Float ]
                                     , /a=/Data/Primitive/Float
                                     , /b=∀/Data/Algebra/Eq
@@ -171,12 +173,13 @@ Prgm
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
                                     ) + /Data/Primitive/boolEq
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/equal
+                                    ( /r=∀/Data/Primitive/Boolean
+                                    , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Algebra/isEq
+                                    ( /this=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) ) + /Data/Primitive/intEq
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
                                     ( /this=∀/Data/Algebra/Eq
                                     , /other=∀/Data/Algebra/Eq
                                     )
@@ -205,25 +208,25 @@ Prgm
                                 , []
                                 )
                             ,
-                                ( /operator==
+                                ( /operator==[ /T=∀/Data/Algebra/Eq ]
                                     ( /r=∀/Data/Algebra/Eq
                                     , /l=∀/Data/Algebra/Eq
                                     ) + /Data/strEqual
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/rel
+                                    ( /r=/Data/String
+                                    , /l=/Data/String
+                                    ) + /Data/Algebra/rel[ /T=∀/Data/Primitive/Boolean ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
                                     , /a=∀/Data/Primitive/Boolean
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel
+                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Integer ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
                                     , /a=/Data/Primitive/Integer
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel
+                                    ) + /Data/Algebra/rel[ /T=/Data/String ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/String ]
                                     , /a=/Data/String
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel
+                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Float ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Float ]
                                     , /a=/Data/Primitive/Float
                                     , /b=∀/Data/Algebra/Eq
@@ -231,12 +234,13 @@ Prgm
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
                                     ) + /Data/Primitive/boolEq
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/equal
+                                    ( /r=∀/Data/Primitive/Boolean
+                                    , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Algebra/isEq
+                                    ( /this=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) ) + /Data/Primitive/intEq
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
                                     ( /this=∀/Data/Algebra/Eq
                                     , /other=∀/Data/Algebra/Eq
                                     )
@@ -265,25 +269,25 @@ Prgm
                                 , []
                                 )
                             ,
-                                ( /operator==
+                                ( /operator==[ /T=∀/Data/Algebra/Eq ]
                                     ( /r=∀/Data/Algebra/Eq
                                     , /l=∀/Data/Algebra/Eq
                                     ) + /Data/strEqual
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/rel
+                                    ( /r=/Data/String
+                                    , /l=/Data/String
+                                    ) + /Data/Algebra/rel[ /T=∀/Data/Primitive/Boolean ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
                                     , /a=∀/Data/Primitive/Boolean
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel
+                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Integer ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
                                     , /a=/Data/Primitive/Integer
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel
+                                    ) + /Data/Algebra/rel[ /T=/Data/String ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/String ]
                                     , /a=/Data/String
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel
+                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Float ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Float ]
                                     , /a=/Data/Primitive/Float
                                     , /b=∀/Data/Algebra/Eq
@@ -291,12 +295,13 @@ Prgm
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
                                     ) + /Data/Primitive/boolEq
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/equal
+                                    ( /r=∀/Data/Primitive/Boolean
+                                    , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Algebra/isEq
+                                    ( /this=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) ) + /Data/Primitive/intEq
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
                                     ( /this=∀/Data/Algebra/Eq
                                     , /other=∀/Data/Algebra/Eq
                                     )
@@ -325,25 +330,25 @@ Prgm
                                 , []
                                 )
                             ,
-                                ( /operator==
+                                ( /operator==[ /T=∀/Data/Algebra/Eq ]
                                     ( /r=∀/Data/Algebra/Eq
                                     , /l=∀/Data/Algebra/Eq
                                     ) + /Data/strEqual
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/rel
+                                    ( /r=/Data/String
+                                    , /l=/Data/String
+                                    ) + /Data/Algebra/rel[ /T=∀/Data/Primitive/Boolean ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
                                     , /a=∀/Data/Primitive/Boolean
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel
+                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Integer ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
                                     , /a=/Data/Primitive/Integer
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel
+                                    ) + /Data/Algebra/rel[ /T=/Data/String ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/String ]
                                     , /a=/Data/String
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel
+                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Float ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Float ]
                                     , /a=/Data/Primitive/Float
                                     , /b=∀/Data/Algebra/Eq
@@ -351,12 +356,13 @@ Prgm
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
                                     ) + /Data/Primitive/boolEq
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/equal
+                                    ( /r=∀/Data/Primitive/Boolean
+                                    , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Algebra/isEq
+                                    ( /this=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) ) + /Data/Primitive/intEq
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
                                     ( /this=∀/Data/Algebra/Eq
                                     , /other=∀/Data/Algebra/Eq
                                     )
@@ -385,25 +391,25 @@ Prgm
                                 , []
                                 )
                             ,
-                                ( /operator==
+                                ( /operator==[ /T=∀/Data/Algebra/Eq ]
                                     ( /r=∀/Data/Algebra/Eq
                                     , /l=∀/Data/Algebra/Eq
                                     ) + /Data/strEqual
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/rel
+                                    ( /r=/Data/String
+                                    , /l=/Data/String
+                                    ) + /Data/Algebra/rel[ /T=∀/Data/Primitive/Boolean ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
                                     , /a=∀/Data/Primitive/Boolean
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel
+                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Integer ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
                                     , /a=/Data/Primitive/Integer
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel
+                                    ) + /Data/Algebra/rel[ /T=/Data/String ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/String ]
                                     , /a=/Data/String
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel
+                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Float ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Float ]
                                     , /a=/Data/Primitive/Float
                                     , /b=∀/Data/Algebra/Eq
@@ -411,12 +417,13 @@ Prgm
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
                                     ) + /Data/Primitive/boolEq
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/equal
+                                    ( /r=∀/Data/Primitive/Boolean
+                                    , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Algebra/isEq
+                                    ( /this=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) ) + /Data/Primitive/intEq
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
                                     ( /this=∀/Data/Algebra/Eq
                                     , /other=∀/Data/Algebra/Eq
                                     )
@@ -445,25 +452,25 @@ Prgm
                                 , []
                                 )
                             ,
-                                ( /operator==
+                                ( /operator==[ /T=∀/Data/Algebra/Eq ]
                                     ( /r=∀/Data/Algebra/Eq
                                     , /l=∀/Data/Algebra/Eq
                                     ) + /Data/strEqual
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/rel
+                                    ( /r=/Data/String
+                                    , /l=/Data/String
+                                    ) + /Data/Algebra/rel[ /T=∀/Data/Primitive/Boolean ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
                                     , /a=∀/Data/Primitive/Boolean
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel
+                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Integer ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
                                     , /a=/Data/Primitive/Integer
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel
+                                    ) + /Data/Algebra/rel[ /T=/Data/String ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/String ]
                                     , /a=/Data/String
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel
+                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Float ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Float ]
                                     , /a=/Data/Primitive/Float
                                     , /b=∀/Data/Algebra/Eq
@@ -471,12 +478,13 @@ Prgm
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
                                     ) + /Data/Primitive/boolEq
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
-                                    ( /r=TopType
-                                    , /l=TopType
-                                    ) + /Data/Algebra/equal
+                                    ( /r=∀/Data/Primitive/Boolean
+                                    , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Algebra/isEq
+                                    ( /this=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) ) + /Data/Primitive/intEq
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
                                     ( /this=∀/Data/Algebra/Eq
                                     , /other=∀/Data/Algebra/Eq
                                     )

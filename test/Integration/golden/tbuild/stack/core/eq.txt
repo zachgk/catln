@@ -200,20 +200,20 @@ Prgm
             The simplest [Eqv] over [Integer] compares its values with the built-in integer equality;
             [AllEqv] relates every pair." )
         , /Catln/#print
-            ( EAppArg Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+            ( EAppArg Value /p -> ∀/Data/Primitive/Boolean =
                 ( /rel
                     ( EAppArg Value /a -> /Data/Primitive/Integer = 2 )
                     ( EAppArg Value /b -> /Data/Primitive/Integer = 2 )
-                    ( EAppArg Value /this -> /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] = Value /Data/Algebra/IntEqExample ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                    ( EAppArg Value /this -> /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] = Value /Data/Algebra/IntEqExample ) ↦ ∀/Data/Primitive/Boolean
                 )
             )
             ( EAppArg Value /result -> /Data/String = "True" )
         , /Catln/#print
-            ( EAppArg Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+            ( EAppArg Value /p -> ∀/Data/Primitive/Boolean =
                 ( /rel
                     ( EAppArg Value /a -> /Data/Primitive/Integer = 2 )
                     ( EAppArg Value /b -> /Data/Primitive/Integer = 3 )
-                    ( EAppArg Value /this -> /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] = Value /Data/Algebra/IntEqExample ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                    ( EAppArg Value /this -> /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] = Value /Data/Algebra/IntEqExample ) ↦ ∀/Data/Primitive/Boolean
                 )
             )
             ( EAppArg Value /result -> /Data/String = "False" )

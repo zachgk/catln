@@ -43,8 +43,14 @@ Prgm
                                 , []
                                 )
                             , /Data/List/append
-                                ( /a=∀/Data/List/ConsList[ /T=TopType ]
-                                , /b=∀/Data/Monad[ /T=TopType ]
+                                ( /a=
+                                    ( /Data/List/Nil + /Data/List/Cons[ /T=TopType ]
+                                        ( /head=TopType
+                                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                        )
+                                    )
+                                , /b=
+                                    ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ] )
                                 )
                             , []
                             ) = /Data/bindap( Value /m -> TVArg /m = Value /m )

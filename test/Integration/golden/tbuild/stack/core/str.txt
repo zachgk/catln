@@ -124,18 +124,18 @@ Prgm
             ( EAppArg Value /text -> /Data/String = "## Equality
             [String] is an [Eq] type: [StrEqv] wraps the primitive [strEqual], and [eq]/[equal] follow." )
         , /Catln/#print
-            ( EAppArg Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+            ( EAppArg Value /p -> ∀/Data/Primitive/Boolean =
                 ( /operator==
                     ( EAppArg Value /l -> /Data/String = "hi" )
-                    ( EAppArg Value /r -> /Data/String = "hi" ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                    ( EAppArg Value /r -> /Data/String = "hi" ) ↦ ∀/Data/Primitive/Boolean
                 )
             )
             ( EAppArg Value /result -> /Data/String = "True" )
         , /Catln/#print
-            ( EAppArg Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
+            ( EAppArg Value /p -> ∀/Data/Primitive/Boolean =
                 ( /operator==
                     ( EAppArg Value /l -> /Data/String = "hi" )
-                    ( EAppArg Value /r -> /Data/String = "no" ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
+                    ( EAppArg Value /r -> /Data/String = "no" ) ↦ ∀/Data/Primitive/Boolean
                 )
             )
             ( EAppArg Value /result -> /Data/String = "False" )

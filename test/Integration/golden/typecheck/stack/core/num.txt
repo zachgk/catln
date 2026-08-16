@@ -319,11 +319,11 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/compareTo( Value /other -> ∀/Data/Algebra/Ord )( Value /this -> /Data/Primitive/Integer ) -> ∀/Data/Algebra/Comparison = /compare( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
+                        [ /Data/Algebra/compareTo( Value /other -> ∀/Data/Algebra/Ord )( Value /this -> /Data/Primitive/Integer ) -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /compare( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
                             ( Value /this ->
                                 ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] ) = /ord( Value /this -> TVArg /this = Value /this )
                             )
-                        , /Data/Algebra/compareTo( Value /other -> ∀/Data/Algebra/Ord )( Value /this -> /Data/Primitive/Float ) -> ∀/Data/Algebra/Comparison = /compare( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
+                        , /Data/Algebra/compareTo( Value /other -> ∀/Data/Algebra/Ord )( Value /this -> /Data/Primitive/Float ) -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /compare( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
                             ( Value /this ->
                                 ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] ) = /ord( Value /this -> TVArg /this = Value /this )
                             )
@@ -475,13 +475,13 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "  same ordering (an [Ordering] is an [Eqv], so it doubles as the canonical equivalence)." )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /operator==
+            ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
                 ( Value /l -> /Data/Primitive/Integer = CInt 2 )
                 ( Value /r -> /Data/Primitive/Integer = CInt 2 )
             )
             ( Value /result -> /Data/String = CStr "True" )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /operator==
+            ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
                 ( Value /l -> /Data/Primitive/Integer = CInt 2 )
                 ( Value /r -> /Data/Primitive/Integer = CInt 3 )
             )

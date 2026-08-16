@@ -254,13 +254,13 @@ Prgm
             ( EAppArg Value /text -> /Data/String = "## Equality
             [Boolean] is an [Eq] type: [BoolEqv] wraps the primitive [boolEq], and [eq]/[equal] follow." )
         , /Catln/#print
-            ( EAppArg Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
-                ( /operator==( EAppArg Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /r -> /Data/Primitive/True = Value /Data/Primitive/True ) ↦ ( /Data/Primitive/True + /Data/Primitive/False ) )
+            ( EAppArg Value /p -> ∀/Data/Primitive/Boolean =
+                ( /operator==( EAppArg Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /r -> /Data/Primitive/True = Value /Data/Primitive/True ) ↦ ∀/Data/Primitive/Boolean )
             )
             ( EAppArg Value /result -> /Data/String = "True" )
         , /Catln/#print
-            ( EAppArg Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
-                ( /operator==( EAppArg Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /r -> /Data/Primitive/False = Value /Data/Primitive/False ) ↦ ( /Data/Primitive/True + /Data/Primitive/False ) )
+            ( EAppArg Value /p -> ∀/Data/Primitive/Boolean =
+                ( /operator==( EAppArg Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /r -> /Data/Primitive/False = Value /Data/Primitive/False ) ↦ ∀/Data/Primitive/Boolean )
             )
             ( EAppArg Value /result -> /Data/String = "False" )
         , /Catln/#md

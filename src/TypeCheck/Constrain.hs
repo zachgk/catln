@@ -101,13 +101,27 @@ updateSchemeProp :: FEnv -> STypeVarArgEnv -> SType -> TypeVarAux -> SType -> (S
 updateSchemeProp env@FEnv{feTypeEnv} vaenv super@SType{stypeAct=superAct, stypeReq=superReq, stypeReqDecl=superReqDecl} propName sub@SType{stypeAct=subAct, stypeReq=subReq, stypeReqDecl=subReqDecl} = (vaenv', super{stypeAct=superAct'', stypeReq=superReq'', stypeReqDecl=superReqDecl''}, sub{stypeAct=subAct', stypeReq=subReq', stypeReqDecl=subReqDecl'})
   where
     (actVaenv', superAct', subAct') = updateTypeProp feTypeEnv (fmap stypeAct vaenv) superAct propName subAct
-    (reqVaenv', superReq', subReq') = updateTypeProp feTypeEnv (fmap stypeReq vaenv) superReq propName subReq
+    -- A requirement-side projection never commits a respell that LOSES a type-var spelling
+    -- (@∀Map[/K=$/MK, /V=$/MV]@ meeting a sub whose frame reads the pointers as ⊤ would
+    -- store @∀Map[/K=⊤, /V=⊤]@ — read WIDER, failing 'verifySchemeReqLowers'): the same
+    -- 'typeVarLost' guard the reverse narrowing applies. The refused projection re-runs next
+    -- epoch once the sub's spelling resolves; the actual side is untouched (its meets only
+    -- gain spellings here).
+    (reqVaenv', superReq'0, subReq'0) = updateTypeProp feTypeEnv (fmap stypeReq vaenv) superReq propName subReq
+    superReq' | typeVarLost superReq superReq'0 = superReq
+              | otherwise                       = superReq'0
+    subReq' | typeVarLost subReq subReq'0 = subReq
+            | otherwise                   = subReq'0
     -- The slot projection is a spelled-structure relation, so the decl channel flows through it
     -- too — this is how a pattern's declared field content reaches a binding variable's point.
     -- Fully-inert channel (both sides ⊤) skips the projection outright.
-    (declVaenv', superReqDecl', subReqDecl')
+    (declVaenv', superReqDecl'0, subReqDecl'0)
       | superReqDecl == PTopType && subReqDecl == PTopType = (fmap stypeReqDecl vaenv, superReqDecl, subReqDecl)
       | otherwise = updateTypeProp feTypeEnv (fmap stypeReqDecl vaenv) superReqDecl propName subReqDecl
+    superReqDecl' | typeVarLost superReqDecl superReqDecl'0 = superReqDecl
+                  | otherwise                               = superReqDecl'0
+    subReqDecl' | typeVarLost subReqDecl subReqDecl'0 = subReqDecl
+                | otherwise                           = subReqDecl'0
     (superAct'', superReq'', superReqDecl'') = settlePropSlot env (fmap stypeAct vaenv) propName superAct' superReq' superReqDecl'
     vaenv' = H.intersectionWith (\t s -> s{stypeReqDecl=t}) declVaenv' $ H.intersectionWith (\t s -> s{stypeReq=t}) reqVaenv' $ H.intersectionWith (\t s -> s{stypeAct=t}) actVaenv' vaenv
 
@@ -512,7 +526,11 @@ runConstraintsIdx limit cons = do
       -- Bump the env stamp iff a per-epoch env input changed: constraint kinds that read
       -- these caches only skip re-execution within an unchanged stamp (see 'feConMemo').
       let envUnchanged = uUnchanged && teTypeGraph reachesTypeEnv == teTypeGraph (feReachesTypeEnv env)
+      -- The input-arrow name set is a pure function of the reaches graph: reuse it within an
+      -- unchanged env, recompute otherwise (same policy as the completed-universe cache).
+      let inputArrowNames = if envUnchanged then feInputArrowNames env else typeGraphInputEmbeddedNames reachesTypeEnv
       modify $ \e -> e{feReachesTypeEnv = reachesTypeEnv, feCompletedAllObjsKey = u, feCompletedAllObjs = completedAllObjs,
+                       feInputArrowNames = inputArrowNames,
                        feEnvStamp = if envUnchanged then feEnvStamp e else feEnvStamp e + 1}
       constraintsToPrune <- mapM (uncurry executeConstraint) cons
       updated <- gets feUpdatedDuringEpoch

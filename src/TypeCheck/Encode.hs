@@ -76,6 +76,7 @@ makeBaseFEnv prgm = FEnv{
   feReachesTypeEnv = mkTypeEnv prgm,
   feCompletedAllObjsKey = BottomType,
   feCompletedAllObjs = PTopType,
+  feInputArrowNames = S.empty,
   feLocalDefNames = S.empty,
   feEnvStamp = 0,
   feConMemo = IM.empty,

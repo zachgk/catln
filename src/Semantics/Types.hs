@@ -349,6 +349,15 @@ class TypeGraph tg where
   typeGraphArrowTemplates :: TypeEnv tg -> TypeName -> [PartialType]
   typeGraphArrowTemplates _ _ = []
 
+  -- | Every type name that appears EMBEDDED (as a positive leaf) inside some arrow object's
+  -- input argument spelling — the set of forms some arrow's input can accept UNSETTLED.
+  -- Deferring a rewritable form is meaningful only while some arrow can still act on the
+  -- deferred form; a name absent from this set has no input arrow anywhere, so once its
+  -- value leaves its own rewrite frontier nothing can ever consume the unsettled form and
+  -- it might as well settle through its direct arrows now.
+  typeGraphInputEmbeddedNames :: TypeEnv tg -> S.HashSet TypeName
+  typeGraphInputEmbeddedNames _ = S.empty
+
 data EmptyTypeGraph = EmptyTypeGraph
 instance Semigroup EmptyTypeGraph where
   _ <> _ = EmptyTypeGraph
