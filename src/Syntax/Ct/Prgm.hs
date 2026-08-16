@@ -297,26 +297,55 @@ type ImportPreloadResult = IO PreloadImport
 
 -- | How a file written in one syntax is read as a page, and written back as that syntax.
 --
--- The directions belong together because only the parser which read a file knows what its program
+-- The directions belong together because only the syntax which read a file knows what its program
 -- means as that syntax. A syntax which cannot be written back says so by answering nothing, rather
 -- than by having no reversion at all, so that every syntax is asked the same question and a page
 -- which cannot be saved is reported rather than mistaken for one which can.
 --
--- Reading is asked as two questions rather than one, because a reader wants the answers at
--- different times: where every page sits in the graph, and then what is in the pages it goes on to
--- work with. Both are asked out of what the read has already found ('ReadEnv'), which is what keeps
--- a read from walking one tree once for every page in it.
-data ImportParser = ImportParser {
-  -- | Reads what the file an import names says about the shape of the program: what it imports, and
-  -- what else it brings in.
-  ipPreload :: ReadEnv -> Expr () -> ImportPreloadResult,
-  -- | Reads the file an import names as the program it is.
-  ipParse   :: ReadEnv -> Expr () -> ImportParseResult,
+-- Reading is asked of a reader made for one read ('ImportReader') rather than of the syntax itself,
+-- because reading one page is never the whole of what a read of that syntax does. A syntax which
+-- resolves a page against everything beside it works that out once for the read and answers each
+-- page out of it; a syntax which keeps a record between runs holds that record open for the read
+-- and writes it back at the end. Neither has anywhere to put such a thing when every page is read
+-- by a function of the page alone, and handing every syntax a bag of whatever any of them might
+-- want makes what one syntax needs into something all of them carry.
+--
+-- Writing back is asked of the syntax rather than of a reader, because it happens outside any read:
+-- a page is written back out of the program something is already holding, with nothing to be found
+-- on disk and nothing to record.
+data ImportSyntax = ImportSyntax {
+  -- | Makes the reader one read reads this syntax with.
+  --
+  -- Must be cheap and must look at nothing. A read is begun for every request a doc server answers,
+  -- and a reader is made for every syntax whether or not the read reaches a page written in it. A
+  -- syntax with something expensive to work out works it out when a page first needs it and keeps
+  -- it, as 'scanTree' does, rather than when its reader is made.
+  isReader  :: ReadEnv -> IO ImportReader,
   -- | Writes a page back as the file it was read from, or nothing when that syntax has no reversion.
   --
   -- A reversion writes the program rather than the file: it may write back what the file said in a
   -- form other than the one the file said it in.
-  ipUnparse :: RawPrgm () -> Maybe String
+  isUnparse :: RawPrgm () -> Maybe String
+                                 }
+
+-- | One read's reading of one syntax, holding whatever that syntax keeps for the length of a read.
+--
+-- Reading is asked as two questions rather than one, because a reader wants the answers at
+-- different times: where every page sits in the graph, and then what is in the pages it goes on to
+-- work with.
+data ImportReader = ImportReader {
+  -- | Reads what the file an import names says about the shape of the program: what it imports, and
+  -- what else it brings in.
+  irPreload :: Expr () -> ImportPreloadResult,
+  -- | Reads the file an import names as the program it is.
+  irParse   :: Expr () -> ImportParseResult,
+  -- | What the syntax has to write back now the read is over, and nothing for a syntax which
+  -- records nothing.
+  --
+  -- At the end rather than as the read goes, so that a read which read nothing writes nothing. Not
+  -- run for a read which failed part way: a record written out of a read that stopped halfway is a
+  -- record of a program nobody read.
+  irFinish  :: IO ()
                                  }
 
 -- | The preload of a syntax which can say what a page imports only by reading it: the one read
@@ -324,13 +353,18 @@ data ImportParser = ImportParser {
 eagerPreload :: ParsedImport -> PreloadImport
 eagerPreload parsed@ParsedImport{piPrgm=RawPrgm imports _, piReads} = PreloadImport imports [] (Just parsed) piReads
 
--- | A parser which reads a syntax but cannot write it back.
-readOnlyParser :: (ReadEnv -> Expr () -> ImportPreloadResult) -> (ReadEnv -> Expr () -> ImportParseResult) -> ImportParser
-readOnlyParser preload parse = ImportParser preload parse (const Nothing)
+-- | A syntax which needs nothing of a read at all: its pages are read out of the files they name
+-- and out of nothing else, so the reader made for each read is the same reader every time.
+statelessSyntax :: (Expr () -> ImportPreloadResult) -> (Expr () -> ImportParseResult) -> (RawPrgm () -> Maybe String) -> ImportSyntax
+statelessSyntax preload parse unparse = ImportSyntax (const $ return $ ImportReader preload parse (return ())) unparse
 
--- | A read-only parser whose preload is its parse ('eagerPreload').
-eagerParser :: (ReadEnv -> Expr () -> ImportParseResult) -> ImportParser
-eagerParser parse = readOnlyParser (\env imp -> eagerPreload <$> parse env imp) parse
+-- | A syntax which needs nothing of a read and which cannot be written back.
+readOnlySyntax :: (Expr () -> ImportPreloadResult) -> (Expr () -> ImportParseResult) -> ImportSyntax
+readOnlySyntax preload parse = statelessSyntax preload parse (const Nothing)
+
+-- | A read-only stateless syntax whose preload is its parse ('eagerPreload').
+eagerSyntax :: (Expr () -> ImportParseResult) -> ImportSyntax
+eagerSyntax parse = readOnlySyntax (fmap eagerPreload . parse) parse
 
 instance ExprClass RawExpr where
   getExprMeta expr = case expr of

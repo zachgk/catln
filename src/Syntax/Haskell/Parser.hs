@@ -12,6 +12,8 @@
 --------------------------------------------------------------------
 
 module Syntax.Haskell.Parser where
+import qualified Data.HashMap.Strict      as H
+import           Data.IORef
 import           GHC.Data.FastString
 import           GHC.Data.StringBuffer
 import           GHC.Driver.Config.Parser (initParserOpts)
@@ -30,7 +32,8 @@ import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Prgm
 import           Syntax.Haskell.Convert   (convertModule)
-import           Syntax.Haskell.Stack     (loadStackDependencyGraph,
+import           Syntax.Haskell.Stack     (StackProjectInfo,
+                                           loadStackDependencyGraph,
                                            resolveModuleInProject)
 import           System.Directory         (doesFileExist)
 import           System.FilePath          (takeDirectory, (</>))
@@ -101,8 +104,43 @@ runParser flags filename str parser = unP parser parseState
 
 -- TODO Write a Haskell module back. Nothing reads one back yet, and a module is read for what it
 -- declares rather than in full, so there is not enough of it in the program to write one.
-hsParser :: ImportParser
-hsParser = eagerParser $ \_ imp -> case [arg | arg@ObjArr{oaObj=Nothing} <- exprAppliedArgs imp] of
+hsSyntax :: ImportSyntax
+hsSyntax = ImportSyntax newHaskellReader (const Nothing)
+
+-- | The reader one read reads Haskell modules with.
+newHaskellReader :: ReadEnv -> IO ImportReader
+newHaskellReader _ = do
+  reader <- HaskellReader <$> newIORef H.empty
+  let parse = hsParse reader
+  return $ ImportReader (fmap eagerPreload . parse) parse (return ())
+
+-- | What one read has found of the Stack projects the modules it reads belong to.
+--
+-- A module named by module name rather than by path is resolved by asking Stack itself, which
+-- 'Syntax.Haskell.Stack.loadStackDependencyGraph' does by running it. That is a process started and
+-- waited on, and every module of one project asks the same question of it, so a read of a project's
+-- modules would start one Stack per module to be told the same thing each time.
+--
+-- Keyed by the project's root, since that is what the answer is about. Per read rather than kept
+-- between reads, for the reason 'Syntax.Ct.Prgm.reScans' gives: what is on disk changes between
+-- reads, and a read is the span over which it is taken not to.
+newtype HaskellReader = HaskellReader {
+  hrProjects :: IORef (H.HashMap FilePath StackProjectInfo)
+                                      }
+
+-- | The Stack project rooted here, as this read found it, asking Stack if this read has not.
+readStackProject :: HaskellReader -> FilePath -> IO StackProjectInfo
+readStackProject HaskellReader{hrProjects} stackRoot = do
+  found <- readIORef hrProjects
+  case H.lookup stackRoot found of
+    Just info -> return info
+    Nothing -> do
+      info <- loadStackDependencyGraph stackRoot
+      modifyIORef' hrProjects $ H.insert stackRoot info
+      return info
+
+hsParse :: HaskellReader -> Expr () -> ImportParseResult
+hsParse reader imp = case [arg | arg@ObjArr{oaObj=Nothing} <- exprAppliedArgs imp] of
   (ObjArr{oaArr=Just (Just (CExpr _ (CStr filename)), _)}:_) -> do
     -- Extract stackRoot and exportAll parameters from all arguments (including named ones)
     let maybeStackRoot = extractStackRoot (exprAppliedArgs imp)
@@ -119,8 +157,8 @@ hsParser = eagerParser $ \_ imp -> case [arg | arg@ObjArr{oaObj=Nothing} <- expr
       then return (Just filename, Just [ReadFile filename])
       else case maybeStackRoot of
         Just stackRoot -> do
-          -- Try to resolve module name using Stack
-          stackInfo <- loadStackDependencyGraph stackRoot
+          -- Try to resolve module name using Stack, out of what this read has already asked it
+          stackInfo <- readStackProject reader stackRoot
           resolved <- resolveModuleInProject stackInfo filename
           return (resolved, Nothing)
         Nothing -> return (Nothing, Just [ReadFile filename])

@@ -38,30 +38,29 @@ import           Semantics.Types
 import           Syntax.Ct.Builder
 import           Syntax.Ct.Desugarf.Expr (desFileImport)
 import           Syntax.Ct.MapRawMeta    (addRawPrgmMetaIDs)
-import           Syntax.Ct.Parser        (contents, ctParser, ctxParser)
+import           Syntax.Ct.Parser        (contents, ctSyntax, ctxSyntax)
 import           Syntax.Ct.Parser.Expr   (term)
 import           Syntax.Ct.Prgm
-import           Syntax.Haskell.Parser   (hsParser)
-import           Syntax.InferImport      (dirParser, findImportPath,
+import           Syntax.Haskell.Parser   (hsSyntax)
+import           Syntax.InferImport      (dirSyntax, findImportPath,
                                           inferRawImportStr)
-import           Syntax.Md.Parser        (mdParser)
-import           Syntax.Obsidian.Cache   (flushObsidianCache)
-import           Syntax.Obsidian.Parser  (obsidian, obsidianParser)
-import           Syntax.Python.Parser    (pyParser)
+import           Syntax.Md.Parser        (mdSyntax)
+import           Syntax.Obsidian.Parser  (obsidian, obsidianSyntax)
+import           Syntax.Python.Parser    (pySyntax)
 import           System.FilePath         (isAbsolute, joinPath, takeDirectory)
 import           Text.Megaparsec         (runParser)
 import           Text.Printf
 import           Utils
 
-importParsers :: H.HashMap String ImportParser
-importParsers = H.fromList [
-  ("dir", dirParser),
-  ("ct", ctParser),
-  ("ctx", ctxParser),
-  ("md", mdParser),
-  (obsidian, obsidianParser),
-  ("haskell", hsParser),
-  ("python", pyParser)
+importSyntaxes :: H.HashMap String ImportSyntax
+importSyntaxes = H.fromList [
+  ("dir", dirSyntax),
+  ("ct", ctSyntax),
+  ("ctx", ctxSyntax),
+  ("md", mdSyntax),
+  (obsidian, obsidianSyntax),
+  ("haskell", hsSyntax),
+  ("python", pySyntax)
                              ]
 
 -- | The path an applied import names: its first positional argument.
@@ -155,40 +154,94 @@ mkRawImportStr name = mkRawFileImport $ fromMaybe (rawStr name) (importExpr name
 mkDesCanonicalImportStr :: CTSSConfig -> String -> IO FileImport
 mkDesCanonicalImportStr config = canonicalImport config Nothing . mkRawImportStr
 
--- | The syntax a page is written in, and the parser which reads it.
+-- | The syntax a page is written in, and how that syntax is read and written back.
 --
 -- The syntax is the name at the head of the import, which is what says it. Asked the one way by
 -- everything which reads or writes a page, so that a page is read and written back by the one
--- parser.
-importParser :: MonadFail m => FileImport -> m (String, ImportParser)
-importParser imp = case maybeExprPath (impAbs imp) of
+-- syntax.
+importSyntax :: MonadFail m => FileImport -> m (String, ImportSyntax)
+importSyntax imp = case maybeExprPath (impAbs imp) of
   Nothing -> fail $ printf "Invalid import %s must be string or oject" (show imp)
-  Just impPath -> case H.lookup (nameStr impPath) importParsers of
+  Just impPath -> case H.lookup (nameStr impPath) importSyntaxes of
     Nothing     -> fail $ printf "No parser available for oject name in %s" (show imp)
-    Just parser -> return (nameStr impPath, parser)
+    Just syntax -> return (nameStr impPath, syntax)
+
+-- | What one read reads with: what it has already found on disk, and the reader it reads each
+-- syntax with.
+--
+-- Apart from 'ReadEnv' because the two are wanted apart. A caller which looks at when files were
+-- written and parses nothing ('unchangedPages') has no business making readers, and a syntax being
+-- given the read's own findings is not the same thing as a syntax keeping findings of its own.
+data Reading = Reading {
+  rdEnv     :: ReadEnv,
+  -- | Keyed as 'importSyntaxes' is and built from it, so a syntax an import can name is a reader
+  -- here exactly when it is a syntax there.
+  rdReaders :: H.HashMap String ImportReader
+                       }
+
+-- | The readers a read is about to read with, one for each syntax there is.
+--
+-- Made when the read begins rather than when a page of that syntax is first reached. Making one
+-- costs nothing ('Syntax.Ct.Prgm.isReader' says so), and making them all up front is what makes
+-- finishing them all a thing 'finishReading' can do: a read whose readers appeared as pages were
+-- reached would write back whatever the pages it happened to reach had made, which is a record that
+-- depends on the order a graph was walked in.
+newReading :: Maybe FilePath -> IO Reading
+newReading cacheRoot = do
+  env <- newRecordedReadEnv cacheRoot
+  Reading env <$> traverse (`isReader` env) importSyntaxes
+
+-- | Writes back whatever the read has left each syntax with. See 'Syntax.Ct.Prgm.irFinish' for why
+-- a read which failed part way must not reach this.
+finishReading :: Reading -> IO ()
+finishReading = mapM_ irFinish . rdReaders
+
+-- | The reader this read reads the syntax an import names with.
+importReader :: MonadFail m => Reading -> FileImport -> m ImportReader
+importReader reading imp = do
+  (syntax, _) <- importSyntax imp
+  case H.lookup syntax (rdReaders reading) of
+    Just reader -> return reader
+    Nothing     -> fail $ printf "The read holds no reader for the syntax %s of %s" (show syntax) (show imp)
 
 -- | Reads where the page an import names sits in the import graph.
 -- TODO Modify the ImportPreloadResult to CResT to report back parse errors
-preloadImport :: ReadEnv -> FileImport -> ImportPreloadResult
-preloadImport env imp = do
-  (_, parser) <- importParser imp
-  ipPreload parser env $ impAbs imp
+preloadImport :: Reading -> FileImport -> ImportPreloadResult
+preloadImport reading imp = do
+  reader <- importReader reading imp
+  irPreload reader $ impAbs imp
 
 -- | Reads the page an import names as the program it holds.
 -- TODO Modify the ImportParseResult to CResT to report back parse errors
-parseImport :: ReadEnv -> FileImport -> ImportParseResult
-parseImport env imp = do
-  (_, parser) <- importParser imp
-  ipParse parser env $ impAbs imp
+parseImport :: Reading -> FileImport -> ImportParseResult
+parseImport reading imp = do
+  reader <- importReader reading imp
+  irParse reader $ impAbs imp
 
--- | Writes a page back as the file it was read from, by the parser which read it.
+-- | Reads one page as the program it holds, on its own and out of no record.
+--
+-- Out of no record whatever the caller is otherwise configured with. A caller which wants one page
+-- wants what that page says now, where a record is a thing a read of a whole program is answered
+-- faster by. The formatter is the case: it writes the page back afterwards, and writing back what a
+-- record said rather than what the file says would be a formatter which undoes edits.
+parseImportAlone :: FileImport -> IO ParsedImport
+parseImportAlone imp = do
+  reading <- newReading Nothing
+  parsed <- parseImport reading imp
+  finishReading reading
+  return parsed
+
+-- | Writes a page back as the file it was read from, by the syntax which read it.
 --
 -- The mirror of 'parseImport'. A syntax with no reversion is reported rather than passed over, so
 -- that a page which cannot be saved says so instead of being saved as something else.
+--
+-- Asked of the syntax rather than of a read's reader, because writing a page back happens outside
+-- any read: what is written is the program the caller is holding.
 unparseImport :: FileImport -> RawPrgm () -> CRes String
 unparseImport imp prgm = do
-  (syntax, parser) <- importParser imp
-  case ipUnparse parser prgm of
+  (syntax, syntax') <- importSyntax imp
+  case isUnparse syntax' prgm of
     Just src -> return src
     Nothing  -> fail $ printf "The page %s can not be written back as %s" (show $ impRaw imp) (show syntax)
 
@@ -373,9 +426,8 @@ parsedPage config imp ParsedImport{piPrgm=prgm@(RawPrgm rawImports _)} = do
 -- with a page's program rather than with a graph of them wants: the formatter, and the goldens.
 parseFile :: CTSSConfig -> RawFileImport -> CResT IO (GraphNodes (RawPrgm ()) FileImport)
 parseFile config imp = lift $ do
-  env <- newReadEnv
   imp' <- canonicalImport config Nothing imp
-  parsed <- parseImport env imp'
+  parsed <- parseImportAlone imp'
   (prgm, imports) <- parsedPage config imp' parsed
   return (prgm, imp', imports)
 
@@ -409,23 +461,23 @@ unchangedPages pages = do
 -- The time is taken before the files are read rather than after them, so that a file written while
 -- it is being read is one the next read reads again. A time taken afterwards would say the read had
 -- seen the write when it may have happened first.
-readPage :: CTSSConfig -> ReadEnv -> S.HashSet FileImport -> H.HashMap FileImport ReadPage -> FileImport -> IO ReadPage
-readPage config env inFull prev imp = case H.lookup imp prev of
+readPage :: CTSSConfig -> Reading -> S.HashSet FileImport -> H.HashMap FileImport ReadPage -> FileImport -> IO ReadPage
+readPage config reading inFull prev imp = case H.lookup imp prev of
   Just page -> readOn page
   Nothing -> do
     started <- getCurrentTime
-    preloaded <- preloadImport env imp
+    preloaded <- preloadImport reading imp
     page <- preloadPage config imp preloaded
-    times <- readTime env started (plReads preloaded)
+    times <- readTime (rdEnv reading) started (plReads preloaded)
     readOn page{rpReads = times}
   where
     readOn page
       | isJust (rpPrgm page) || not (S.member imp inFull) = return page
       | otherwise = do
           started <- getCurrentTime
-          parsed <- parseImport env imp
+          parsed <- parseImport reading imp
           (prgm, imports) <- parsedPage config imp parsed
-          times <- readTime env started (piReads parsed)
+          times <- readTime (rdEnv reading) started (piReads parsed)
           return page{rpPrgm=Just prgm, rpSource=piSource parsed, rpImports=imports, rpReads=times}
 
 -- | Read the files an import names, and everything they import.
@@ -447,18 +499,18 @@ readPage config env inFull prev imp = case H.lookup imp prev of
 -- TODO Change preloadImport and parseImport, then make this return GraphData of CRes
 readFiles :: CTSSConfig -> S.HashSet FileImport -> H.HashMap FileImport ReadPage -> [RawFileImport] -> IO (GraphData ReadPage FileImport)
 readFiles config inFull prev initialImps = do
-  env <- newRecordedReadEnv (ctssCachePath config)
+  reading <- newReading (ctssCachePath config)
   initialImps' <- mapM (canonicalImport config Nothing) initialImps
-  res <- aux env [] S.empty initialImps'
-  mapM_ flushObsidianCache $ reObsidianCache env
+  res <- aux reading [] S.empty initialImps'
+  finishReading reading
   return $ graphFromEdges res
   where
-    aux :: ReadEnv -> [GraphNodes ReadPage FileImport] -> S.HashSet FileImport -> [FileImport] -> IO [GraphNodes ReadPage FileImport]
+    aux :: Reading -> [GraphNodes ReadPage FileImport] -> S.HashSet FileImport -> [FileImport] -> IO [GraphNodes ReadPage FileImport]
     aux _ acc _ [] = return acc
-    aux env acc visited (nextToVisit:restToVisit) = do
+    aux reading acc visited (nextToVisit:restToVisit) = do
       if S.member nextToVisit visited
-        then aux env acc visited restToVisit
+        then aux reading acc visited restToVisit
         else do
-          page <- readPage config env inFull prev nextToVisit
+          page <- readPage config reading inFull prev nextToVisit
           let restToVisit' = readPageVisits page ++ restToVisit
-          aux env ((page, nextToVisit, rpImports page) : acc) (S.insert nextToVisit visited) restToVisit'
+          aux reading ((page, nextToVisit, rpImports page) : acc) (S.insert nextToVisit visited) restToVisit'

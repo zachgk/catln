@@ -847,15 +847,15 @@ convertPyModule (PyModule stmts) =
     isImport _                  = False
 
 --------------------------------------------------------------------
--- Top-level ImportParser
+-- Top-level ImportSyntax
 --------------------------------------------------------------------
 
 -- | The Python import parser, registered under the name "python".
 --
 -- TODO Write a Python module back. Nothing reads one back yet, and a module is read for what it
 -- declares rather than in full, so there is not enough of it in the program to write one.
-pyParser :: ImportParser
-pyParser = eagerParser $ \_ imp -> case [arg | arg@ObjArr{oaObj=Nothing} <- exprAppliedArgs imp] of
+pySyntax :: ImportSyntax
+pySyntax = eagerSyntax $ \imp -> case [arg | arg@ObjArr{oaObj=Nothing} <- exprAppliedArgs imp] of
   (ObjArr{oaArr=Just (Just (CExpr _ (CStr filename)), _)}:_) -> do
     fileContents <- BS.readFile filename
     src <- readFile filename

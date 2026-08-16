@@ -14,10 +14,10 @@ import           Syntax.Ct.Builder    (applyRawArgs, rawStr, rawVal)
 import           Syntax.Ct.Formatter  (formatRootPrgm)
 import           Syntax.Ct.Prgm       (ParsedImport (..), RawPrgm (..),
                                        RawStatement (..), RawStatementTree (..),
-                                       newReadEnv, rawExprAppliedArgsMap)
+                                       rawExprAppliedArgsMap)
 import           Syntax.Parsers       (canonicalImport, mkDesCanonicalImportStr,
-                                       mkRawImportStr, parseFile, parseImport,
-                                       readFiles)
+                                       mkRawImportStr, parseFile,
+                                       parseImportAlone, readFiles)
 
 import           Control.Monad
 import           Control.Monad.Trans
@@ -108,8 +108,7 @@ xFmt prgmName = do
   -- formatting that would write a duplicate @import "core"@ back into any file that already imports
   -- it.
   imp <- lift $ canonicalImport buildCtssConfig Nothing $ mkRawImportStr prgmName
-  env <- lift newReadEnv
-  ParsedImport{piPrgm=rawPrgm} <- lift $ parseImport env imp
+  ParsedImport{piPrgm=rawPrgm} <- lift $ parseImportAlone imp
   let prgm' = formatRootPrgm rawPrgm
   -- Written back to the file the import resolved to rather than to the name it was given by, which
   -- is not always a path: an import may name its parser instead ('mkRawImportStr'), and writing to

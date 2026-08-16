@@ -54,13 +54,13 @@ findExistingPath (p:ps) = do
     else findExistingPath ps
 
 -- A directory has no source text of its own to write back — the files in it are pages of their own,
--- each written back by the parser which read it.
-dirParser :: ImportParser
-dirParser = readOnlyParser (withDirPath dirPreload) (withDirPath dirParse)
+-- each written back by the syntax which read it.
+dirSyntax :: ImportSyntax
+dirSyntax = readOnlySyntax (withDirPath dirPreload) (withDirPath dirParse)
 
 -- | The directory an import of one names.
-withDirPath :: (FilePath -> IO a) -> ReadEnv -> Expr () -> IO a
-withDirPath act _ imp = case exprAppliedArgs imp of
+withDirPath :: (FilePath -> IO a) -> Expr () -> IO a
+withDirPath act imp = case exprAppliedArgs imp of
   [ObjArr{oaArr=Just (Just (CExpr _ (CStr name)), _)}] -> act name
   _                                                    -> undefined
 
@@ -110,7 +110,7 @@ importPathCandidates config caller name = do
 -- | The absolute path an import names, or 'Nothing' when it names nothing that is there.
 --
 -- Not every import names a path: @haskell@ takes a module name, which it resolves itself against
--- the Stack project it belongs to (see 'Syntax.Haskell.Parser.hsParser'). So this answers whether
+-- the Stack project it belongs to (see 'Syntax.Haskell.Parser.hsSyntax'). So this answers whether
 -- an import can be resolved rather than insisting that it must be.
 findImportPath :: CTSSConfig -> Maybe FileImport -> String -> IO (Maybe FilePath)
 findImportPath config caller name = findExistingPath =<< importPathCandidates config caller name

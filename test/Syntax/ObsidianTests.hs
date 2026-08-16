@@ -13,7 +13,8 @@ import           Syntax.Ct.Prgm         (RawPrgm (RawPrgm),
                                          RawStatementTree (RawStatementTree))
 import           Syntax.Obsidian.Parser (NotePart (..), frontmatterUrl, named,
                                          notePageStatement, noteParts,
-                                         rawArgStr, unparseNote, wikiLinks)
+                                         rawArgStr, resolveWikiLink,
+                                         unparseNote, wikiLinks)
 import           Test.Tasty
 import           Test.Tasty.HUnit       (assertEqual, testCase)
 
@@ -322,6 +323,55 @@ testLinksInProperties = testGroup "the links of a note which opens with properti
                                                                                                           ]
                                                                                     ]
 
+-- | The note a wiki link names, out of the notes a vault holds.
+--
+-- Written against the notes in the order a walk of the vault finds them, because which note a link
+-- names where two could answer is decided by that order and by nothing else. The walk is sorted
+-- ('Syntax.Ct.Prgm.walkTree'), so which one that is, is a property of the vault rather than of the
+-- order a filesystem happened to answer a listing in.
+--
+-- No vault on disk: what a link resolves to is decided by the note paths alone, so a test which
+-- made files would be testing the walk as well and would say less about either.
+testResolveWikiLink :: TestTree
+testResolveWikiLink = testGroup "the note a wiki link names" [
+  testCase "is found by its name, wherever it is written" $
+    assertEqual "" (Just "/v/sub/Two.md") $ resolve ["/v/One.md", "/v/sub/Two.md"] "Two",
+  testCase "is found by its path within the vault" $
+    assertEqual "" (Just "/v/sub/Two.md") $ resolve ["/v/One.md", "/v/sub/Two.md"] "sub/Two",
+  testCase "is found with the markdown extension written out" $
+    assertEqual "" (Just "/v/sub/Two.md") $ resolve ["/v/sub/Two.md"] "Two.md",
+  testCase "is found by a path with the markdown extension written out" $
+    assertEqual "" (Just "/v/sub/Two.md") $ resolve ["/v/sub/Two.md"] "sub/Two.md",
+  -- Both readings answer here, with different notes, so this says which is asked first rather than
+  -- only that one of them works.
+  testCase "is the one its path names before the one its name names" $
+    assertEqual "" (Just "/v/a/b.md") $ resolve ["/v/b.md", "/v/a/b.md"] "a/b",
+  -- Both notes are written under a directory, so that neither is named by its path alone and the
+  -- reading by name is what answers. A note at the top of the vault is named by its path as well as
+  -- by its name, and would be answered with whichever way round the two were written.
+  --
+  -- The pair is what makes this a test of "the first the walk found wins" rather than of "this
+  -- particular note wins".
+  testCase "is the first of two of the name the walk found" $
+    assertEqual "" (Just "/v/a/One.md") $ resolve ["/v/a/One.md", "/v/b/One.md"] "One",
+  testCase "is the first of two of the name the walk found, the other way round" $
+    assertEqual "" (Just "/v/b/One.md") $ resolve ["/v/b/One.md", "/v/a/One.md"] "One",
+  testCase "is nothing for a link naming only a place, which is within the note writing it" $
+    assertEqual "" Nothing $ resolve ["/v/One.md"] "#Heading",
+  testCase "is nothing for a link naming only the words to show it as" $
+    assertEqual "" Nothing $ resolve ["/v/One.md"] "|shown as",
+  testCase "is found past the place and the words a link goes on to name" $
+    assertEqual "" (Just "/v/sub/Two.md") $ resolve ["/v/sub/Two.md"] "Two#Section|shown as",
+  -- Writing a link to a note yet to be written is how one is planned, so this is not an error.
+  testCase "is nothing where the vault holds no such note" $
+    assertEqual "" Nothing $ resolve ["/v/One.md"] "Three",
+  -- Only the markdown extension is dropped, and not whatever extension a name happens to end with:
+  -- filing this note under "Version 1" would file it under a name no link writes.
+  testCase "is found where its name ends in something which is not the markdown extension" $
+    assertEqual "" (Just "/v/Version 1.2.md") $ resolve ["/v/Version 1.2.md"] "Version 1.2"
+                                                             ]
+  where resolve notes link = resolveWikiLink "/v" notes link
+
 obsidianTests :: TestTree
 obsidianTests = testGroup "ObsidianTests" [
   testLinksThroughTask,
@@ -341,5 +391,6 @@ obsidianTests = testGroup "ObsidianTests" [
   testRewriteFrontmatter,
   testRewriteWithOverlay,
   testRewriteFrontmatterIdempotent,
-  testLinksInProperties
+  testLinksInProperties,
+  testResolveWikiLink
                                           ]

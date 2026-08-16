@@ -20,8 +20,8 @@ import           Syntax.Ct.Prgm
 import           System.Directory
 
 -- TODO Write a markdown file back as the text of the one annotation it is read as.
-mdParser :: ImportParser
-mdParser = eagerParser $ \_ imp -> case exprAppliedArgs imp of
+mdSyntax :: ImportSyntax
+mdSyntax = eagerSyntax $ \imp -> case exprAppliedArgs imp of
   (ObjArr{oaArr=Just (Just (CExpr _ (CStr filename)), _)}:_impArgs) -> do
     isFile <- doesFileExist filename
     -- The file this read is a read of, whether it was there or not: a page read from a file which

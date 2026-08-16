@@ -101,8 +101,8 @@ contents p = do
 
 -- TODO Write a .ct file back with 'Syntax.Ct.Formatter.formatRootPrgm', which is already the
 -- program-to-text direction for this syntax.
-ctParser :: ImportParser
-ctParser = eagerParser $ \_ imp -> case exprAppliedArgs imp of
+ctSyntax :: ImportSyntax
+ctSyntax = eagerSyntax $ \imp -> case exprAppliedArgs imp of
   [ObjArr{oaArr=Just (Just (CExpr _ (CStr fileName)), _)}] -> do
     fileContents <- readFile fileName
     case runParser (contents pPrgm) fileName fileContents of
@@ -110,15 +110,28 @@ ctParser = eagerParser $ \_ imp -> case exprAppliedArgs imp of
       Right prgm -> return $ ParsedImport prgm (Just fileContents) (Just [ReadFile fileName])
   _ -> undefined
 
--- TODO Write a .ctx file back, once 'ctParser' can be written back: it is a .ct file with the one
+-- | A .ctx file is a .ct file with one annotation added, so it is read by a reader of those and
+-- added to.
+--
+-- The reader it reads through is one it made rather than the one the read holds under @ct@: a
+-- syntax which is another syntax added to is a syntax in its own right, and what the two share is
+-- what the read gave both of them ('Syntax.Ct.Prgm.ReadEnv'). Asking the read for another syntax's
+-- reader would make the table of syntaxes something a syntax reads out of while it is being built.
+--
+-- Whatever the inner reader has to write back is passed on rather than dropped, so that a syntax
+-- read through is finished by the read which read through it.
+--
+-- TODO Write a .ctx file back, once 'ctSyntax' can be written back: it is a .ct file with the one
 -- annotation this adds taken off again.
-ctxParser :: ImportParser
-ctxParser = eagerParser $ \env fileName -> do
-  -- Updated rather than rebuilt, so the file this read is a read of travels with it without being
-  -- named again here.
-  parsed <- ipParse ctParser env fileName
-  return parsed{piPrgm = annotate (piPrgm parsed)}
+ctxSyntax :: ImportSyntax
+ctxSyntax = ImportSyntax reader (const Nothing)
   where
+    reader env = do
+      ct <- isReader ctSyntax env
+      -- Updated rather than rebuilt, so the file this read is a read of travels with it without
+      -- being named again here.
+      let ctxParse fileName = (\parsed -> parsed{piPrgm = annotate (piPrgm parsed)}) <$> irParse ct fileName
+      return $ ImportReader (fmap eagerPreload . ctxParse) ctxParse (irFinish ct)
     annotate (RawPrgm imports statements) = RawPrgm imports (RawStatementTree (RawAnnot (RawValue emptyMetaN (mkName ctxAnnot))) [] :statements)
 
 parseRepl :: String -> PReplRes
