@@ -30,7 +30,8 @@ import           Control.Monad.Trans.Writer (execWriter, tell)
 import           CRes
 import           Data.Aeson                 (ToJSON, toJSON)
 import           Data.Maybe                 (catMaybes, fromJust, fromMaybe,
-                                             listToMaybe, mapMaybe, maybeToList)
+                                             isJust, listToMaybe, mapMaybe,
+                                             maybeToList)
 import           Data.String.Builder        (literal)
 import           MapMeta                    (MetaType (ArrMeta), clearMetaDat)
 import           Semantics
@@ -53,11 +54,23 @@ data TypeCheckError
 -- | SType actual required (description in type)
 -- Contains what the type actually is, and what the requirements are (both upper bounds)
 -- Covered by the relationship that the actual should be a subset of the required
+--
+-- 'stypeReqDecl' is the ORIGIN-SEPARATED sub-requirement: only content whose provenance is a
+-- spelled type (a declared return, an annotation, a declared field bound, a pattern spelling)
+-- is ever met into it. The accumulated 'stypeReq' additionally receives requirement content
+-- derived from the point's own actual — 'arrowConstrainUbs'\'s reverse narrowing writes the
+-- source's own met forms back as its requirement (the contract-discovery mechanism), and
+-- 'EqReqAct' meets the actual into the requirement. Those echoes are load-bearing for
+-- contract discovery and arrow choice, but they must not answer the ADMISSION question
+-- ("may this form stay unsettled here?"): a form's own echo would license the form itself.
+-- The decl channel is the requirement admission consults; like 'stypeReq' it only narrows,
+-- and it is usually WIDER than 'stypeReq' (⊤ wherever no declaration engages — no forcing).
 data SType = SType {
-  stypeAct  :: !Type,
-  stypeReq  :: !Type,
-  stypeTree :: !(Maybe ReachesTree),
-  stypeDesc :: !String
+  stypeAct     :: !Type,
+  stypeReq     :: !Type,
+  stypeReqDecl :: !Type,
+  stypeTree    :: !(Maybe ReachesTree),
+  stypeDesc    :: !String
                    }
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 type Scheme = TypeCheckResult SType
@@ -290,7 +303,14 @@ instance CNoteTC TypeCheckError where
   showRecursiveCNote _ n = literal $ show n
 
 instance Show SType where
-  show (SType act req _ desc) = printf "{%s :: ACT %s; REQ  %s}" desc (show act) (show req)
+  show (SType act req reqDecl _ desc) = printf "{%s :: ACT %s; REQ  %s%s}" desc (show act) (show req) declSuffix
+    where
+      -- The decl channel is ⊤ at most points (no declaration engages); print it only when
+      -- it carries information so traces and errors stay readable.
+      declSuffix :: String
+      declSuffix = case reqDecl of
+        PTopType -> ""
+        _        -> printf "; DECL %s" (show reqDecl)
 
 instance (Show p) => Show (ConstraintDat p) where
   show (EqualsKnown i s t) = printf "%s %d==_Known %s" (show s) i (show t)
@@ -337,8 +357,14 @@ typeCheckToRes tc = case tc of
   TypeCheckResult notes res -> CRes (map MkCNote notes) res
   TypeCheckResE notes       -> CErr (map MkCNote notes)
 
+-- | NOTE: deliberately compares only the actual and accumulated-requirement channels. The
+-- decl channel ('stypeReqDecl') is excluded: including it makes decl-only narrowings force
+-- whole-scheme commits, which drag along act/req RESPELLINGS this equality deliberately
+-- refuses (the spelling-stability doctrine of 'setDescriptor'\'s refusal path) — measured as
+-- template erasure (@tail=∀ConsList[/T=⊤]@) across core/list.ct. Decl-only progress commits
+-- through its own dedicated path in 'setDescriptor' instead.
 eqScheme :: FEnv -> TypeVarArgEnv -> Scheme -> Scheme -> Bool
-eqScheme FEnv{feTypeEnv} vaenv (TypeCheckResult _ (SType ub1 lb1 _ _)) (TypeCheckResult _ (SType ub2 lb2 _ _)) = isEqTypeWithEnv feTypeEnv vaenv ub1 ub2 && isEqTypeWithEnv feTypeEnv vaenv lb1 lb2
+eqScheme FEnv{feTypeEnv} vaenv (TypeCheckResult _ (SType ub1 lb1 _ _ _)) (TypeCheckResult _ (SType ub2 lb2 _ _ _)) = isEqTypeWithEnv feTypeEnv vaenv ub1 ub2 && isEqTypeWithEnv feTypeEnv vaenv lb1 lb2
 eqScheme _ _ a b = a == b
 
 getStypeActReq :: SchemeActReq -> SType -> Type
@@ -505,10 +531,11 @@ nestedSlotSettled _ _ _ = False
 -- This ensures schemes are correct
 -- It differs from Constrain.checkScheme because it checks for bugs in the internal compiler, not bugs in the user code
 verifyScheme :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> VarMeta -> Scheme -> Scheme -> Maybe String
-verifyScheme typeEnv vaenv Meta{getMetaDat=VarMetaDat _ _} (TypeCheckResult _ (SType oldAct oldReq _ _)) (TypeCheckResult _ (SType act req _ _)) = listToMaybe $ catMaybes [
+verifyScheme typeEnv vaenv Meta{getMetaDat=VarMetaDat _ _} (TypeCheckResult _ (SType oldAct oldReq oldReqDecl _ _)) (TypeCheckResult _ (SType act req reqDecl _ _)) = listToMaybe $ catMaybes [
   if verifySchemeActLowers then Nothing else Just (printf "verifySchemeActLowers\n\t\tGrows by: %s" (show $ differenceTypeWithEnv typeEnv vaenv act oldAct)),
   if verifyNoTypeVarLost then Nothing else Just (printf "verifyNoTypeVarLost\n\t\tLost a TypeVar going from %s to %s" (show oldAct) (show act)),
   if verifySchemeReqLowers then Nothing else Just "verifySchemeReqLowers",
+  if verifySchemeReqDeclLowers then Nothing else Just "verifySchemeReqDeclLowers",
   if verifyCompacted then Nothing else Just (printf "verifyCompacted\n\t\tCan be compacted to %s" (show $ compactType typeEnv vaenv act))
   ]
   where
@@ -520,6 +547,7 @@ verifyScheme typeEnv vaenv Meta{getMetaDat=VarMetaDat _ _} (TypeCheckResult _ (S
     -- comparing, so replacing such a spelling by ⊤ is not reported as a lost variable.
     verifyNoTypeVarLost = not (typeVarLost (dropOutOfScopeTVExt vaenv oldAct) act)
     verifySchemeReqLowers  = isSubtypeOfWithEnv typeEnv vaenv req oldReq
+    verifySchemeReqDeclLowers = isSubtypeOfWithEnv typeEnv vaenv reqDecl oldReqDecl
     verifyCompacted = act == compactType typeEnv vaenv act
 verifyScheme _ _ _ _ _ = Nothing
 
@@ -531,7 +559,7 @@ descriptorPnt FEnv{fePnts} p = fePnts IM.! p
 descriptor :: FEnv -> VarMeta -> Scheme
 descriptor env m = case getPnt m of
   Just p  -> descriptorPnt env p
-  Nothing -> pure (SType (getMetaType m) (getMetaType m) Nothing "noPnt descriptor")
+  Nothing -> pure (SType (getMetaType m) (getMetaType m) (getMetaType m) Nothing "noPnt descriptor")
 
 equivalent :: FEnv -> VarMeta -> VarMeta -> Bool
 equivalent env m1 m2 = descriptor env m1 == descriptor env m2
@@ -547,7 +575,7 @@ fresh  scheme = do
 
 setDescriptor :: FEnv -> VConstraint -> VarMeta -> Scheme -> String -> FEnv
 setDescriptor env _ Meta{getMetaDat=VarMetaDat Nothing _} _ _ = env
-setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch} con m@Meta{getMetaDat=VarMetaDat (Just p) _} scheme' msg = env{fePnts = pnts', feTrace = feTrace', feUpdatedDuringEpoch = feUpdatedDuringEpoch || schemeChanged}
+setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch} con m@Meta{getMetaDat=VarMetaDat (Just p) _} scheme' msg = env{fePnts = pnts', feTrace = feTrace', feUpdatedDuringEpoch = feUpdatedDuringEpoch || schemeChanged || isJust declOnlyCommit}
   where
     scheme = descriptor env m
     vaenv = fmap stypeAct <$> mapM (descriptor env) (constraintVarArgEnv con)
@@ -561,21 +589,21 @@ setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch} con m@M
       -- link never lands. Only a gain is flagged, not a loss: a loss stays a no-op (skipped by the
       -- 'eqScheme' path below), so once set the variable is not widened back to Top — which both
       -- keeps the information and avoids a set/lose oscillation that would never converge.
-      (TypeCheckResult _ (SType a1 _ _ _), TypeCheckResult _ (SType a2 _ _ _)) | typeVarLost a2 a1 -> True
+      (TypeCheckResult _ (SType a1 _ _ _ _), TypeCheckResult _ (SType a2 _ _ _ _)) | typeVarLost a2 a1 -> True
       -- GAINING a 'ptVars' binding (@new@ resolves an enclosing partial's variable that @old@
       -- does not mention, e.g. @cmap(…)@ → @cmap[A=Integer](…)@) is likewise invisible to
       -- 'eqScheme' (only shared keys are compared) yet is a real narrowing that must commit.
       -- Gain-only for the same convergence reason as above: dropping the binding later stays a
       -- no-op, so the resolved value is kept once found.
-      (TypeCheckResult _ (SType a1 _ _ _), TypeCheckResult _ (SType a2 _ _ _)) | typeVarBindingGained a1 a2 -> True
+      (TypeCheckResult _ (SType a1 _ _ _ _), TypeCheckResult _ (SType a2 _ _ _ _)) | typeVarBindingGained a1 a2 -> True
       -- STRICTLY NARROWING a nested 'ptVars' dimension (see 'nestedVarNarrowed') is a spelling
       -- improvement of the same set that 'eqScheme' judges equal, but the finer spelling is what
       -- consumers read — it must commit. Gain-only like the two rules above.
-      (TypeCheckResult _ (SType a1 _ _ _), TypeCheckResult _ (SType a2 _ _ _)) | nestedVarNarrowed feTypeEnv a1 a2 -> True
+      (TypeCheckResult _ (SType a1 _ _ _ _), TypeCheckResult _ (SType a2 _ _ _ _)) | nestedVarNarrowed feTypeEnv a1 a2 -> True
       -- The settle machinery's leaf-drop respelling (see 'nestedSlotSettled') is checked
       -- only when 'eqScheme' judged the schemes equal — the refusal path. The actual side
       -- alone is inspected; the requirement side's tighten rides the same whole-scheme store.
-      (TypeCheckResult _ (SType a1 _ _ _), TypeCheckResult _ (SType a2 _ _ _)) ->
+      (TypeCheckResult _ (SType a1 _ _ _ _), TypeCheckResult _ (SType a2 _ _ _ _)) ->
         fromMaybe False $ tcreToMaybe $ do
           showVaenv <- vaenv
           return $ not (eqScheme env showVaenv scheme scheme')
@@ -588,10 +616,32 @@ setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch} con m@M
       -- Just failVerification -> error $ printf "Scheme failed verification %s\n\t\tDuring typechecking of %s:\n\t\t New Scheme: %s \n\t\t Old Scheme: %s\n\t\t Obj: %s\n\t\t Con: %s" failVerification msg (show scheme') (show scheme) (show m) (show con)
       Just failVerification -> TypeCheckResE [GenTypeCheckError (clearMetaDat ArrMeta m) $ printf "Scheme failed verification %s\n\t\tDuring typechecking of %s:\n\t\t New Scheme: %s \n\t\t Old Scheme: %s\n\t\t Obj: %s\n\t\t Con: %s" failVerification msg (show scheme') (show scheme) (show m) (show con)]
       Nothing -> scheme'
-    pnts' = if schemeChanged then IM.insert p scheme'' fePnts else fePnts -- Only update if changed to avoid meaningless updates
-    feTrace' = if schemeChanged
-      then traceConstrainChange feTrace p scheme''
-      else feTrace
+    -- The decl channel ('stypeReqDecl') commits through its OWN path. When the act/req sides
+    -- are judged unchanged, the store is refused above — deliberately: the refusal path is
+    -- what keeps act/req spellings stable across epochs (see 'nestedSlotSettled'). A decl
+    -- narrowing arriving on such a store must still land, but carrying the OLD act/req values
+    -- — including the decl channel in 'eqScheme' instead made decl progress force
+    -- whole-scheme commits whose act/req respellings the refusal path exists to block
+    -- (measured: member-template erasure, @tail=∀ConsList[/T=⊤]@, across core/list.ct).
+    -- Verification for this path is the decl monotonicity check alone: the act/req values
+    -- are the already-stored ones (re-verifying them would also spuriously fire
+    -- 'verifyCompacted' on never-verified seed presets).
+    declOnlyCommit = case (scheme, scheme') of
+      _ | schemeChanged -> Nothing
+      (TypeCheckResult _ old@SType{stypeReqDecl=dOld}, TypeCheckResult notes SType{stypeReqDecl=dNew}) ->
+        case tcreToMaybe vaenv of
+          Just showVaenv
+            | isEqTypeWithEnv feTypeEnv showVaenv dOld dNew -> Nothing
+            | isSubtypeOfWithEnv feTypeEnv showVaenv dNew dOld -> Just (TypeCheckResult notes old{stypeReqDecl=dNew})
+            | otherwise -> Just (TypeCheckResE [GenTypeCheckError (clearMetaDat ArrMeta m) $ printf "Scheme failed verification verifySchemeReqDeclLowers (decl-only commit)\n\t\tDuring typechecking of %s:\n\t\t New Scheme: %s \n\t\t Old Scheme: %s\n\t\t Obj: %s\n\t\t Con: %s" msg (show scheme') (show scheme) (show m) (show con)])
+          Nothing -> Nothing
+      _ -> Nothing
+    pnts' | schemeChanged = IM.insert p scheme'' fePnts -- Only update if changed to avoid meaningless updates
+          | Just declScheme <- declOnlyCommit = IM.insert p declScheme fePnts
+          | otherwise = fePnts
+    feTrace' | schemeChanged = traceConstrainChange feTrace p scheme''
+             | Just declScheme <- declOnlyCommit = traceConstrainChange feTrace p declScheme
+             | otherwise = feTrace
 
 pointUb :: FEnv -> VarMeta -> TypeCheckResult Type
 pointUb env p = stypeAct <$> descriptor env p

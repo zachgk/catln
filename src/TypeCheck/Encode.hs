@@ -89,10 +89,12 @@ mkVarMetaDat EncodeIn p        = VarMetaDat (Just p) Nothing
 fromMeta :: TypeBound -> EncodeState -> PreMeta -> String -> StateT FEnv TypeCheckResult VarMeta
 fromMeta bound est m description  = do
   let tp = getMetaType m
+  -- A requirement-seeded preset is declaration-origin by construction (a declared return, an
+  -- annotation spelling), so it also seeds the origin-pure decl channel ('stypeReqDecl').
   p <- case bound of
-        BAct    -> fresh (TypeCheckResult [] $ SType tp PTopType Nothing description)
-        BReq    -> fresh (TypeCheckResult [] $ SType PTopType tp Nothing description)
-        BActReq -> fresh (TypeCheckResult [] $ SType tp tp Nothing description)
+        BAct    -> fresh (TypeCheckResult [] $ SType tp PTopType PTopType Nothing description)
+        BReq    -> fresh (TypeCheckResult [] $ SType PTopType tp tp Nothing description)
+        BActReq -> fresh (TypeCheckResult [] $ SType tp tp tp Nothing description)
   return (mapMetaDat (\_ -> mkVarMetaDat est p) m)
 
 fromExpr :: EncodeState -> PExpr -> StateT FEnv TypeCheckResult VExpr
@@ -123,7 +125,7 @@ fromExpr est (EWhere m base cond) = do
         EncodeIn -> EncodeOut Nothing
         _        -> est
   cond' <- fromExpr condEst cond
-  bool <- fresh $ TypeCheckResult [] $ SType PTopType boolType Nothing "ifGuardBool"
+  bool <- fresh $ TypeCheckResult [] $ SType PTopType boolType boolType Nothing "ifGuardBool"
   let bool' = Meta boolType (getMetaPos $ getExprMeta cond) nil (mkVarMetaDat est bool)
   modify $ addConstraints [ArrowTo 30 (getExprMeta cond') bool', ConWhere 30 (getExprMeta base') (getExprMeta cond') m']
   return $ EWhere m' base' cond'
@@ -357,7 +359,7 @@ fromObjectMap oa@ObjArr{oaAnnots, oaObj=Just obj, oaArr} = do
   let scopeBase = H.fromList [(k, PTopType) | k <- H.keys explicitVaenv]
   let implicitVs = S.toList $ S.unions $ map (outOfScopeTVExtVars scopeBase) annotTys
   implicitVaenv <- fmap H.fromList $ forM implicitVs $ \v -> do
-    p <- fresh $ TypeCheckResult [] $ SType PTopType PTopType Nothing $ printf "implicit object var %s in %s" (show v) (show $ exprPath obj')
+    p <- fresh $ TypeCheckResult [] $ SType PTopType PTopType PTopType Nothing $ printf "implicit object var %s in %s" (show v) (show $ exprPath obj')
     let vm = Meta PTopType (getMetaPos $ getExprMeta obj') nil (mkVarMetaDat inEst p)
     return (v, (vm, vm))
   modify $ endConstraintBlock (Just oa') (H.union explicitVaenv implicitVaenv)

@@ -87,15 +87,15 @@ addUnionObjToEnv vobjMap tobjMap = do
   let tobjMetas = map (getMetaType . getExprMeta . oaObjExpr) $ flatObjectMap tobjs'
 
   -- Builds vars to use for union and union powerset
-  unionAllObjs <- fresh $ TypeCheckResult [] $ SType PTopType PTopType Nothing "unionAllObjs"
-  unionAllObjsPs <- fresh $ TypeCheckResult [] $ SType PTopType PTopType Nothing "unionAllObjsPs"
+  unionAllObjs <- fresh $ TypeCheckResult [] $ SType PTopType PTopType PTopType Nothing "unionAllObjs"
+  unionAllObjsPs <- fresh $ TypeCheckResult [] $ SType PTopType PTopType PTopType Nothing "unionAllObjsPs"
 
   let mkVarMeta p = Meta PTopType Nothing nil (VarMetaDat (Just p) Nothing)
 
   -- Build a variable to store union of tobjs
   let typecheckedAllType = unionAllTypes feTypeEnv $ filter (not . isTypeVar) tobjMetas
   when (typecheckedAllType == PTopType) $ fail $ printf "Failed to deteremine dependency TopType. Found undetermined dependent objects: \n\t%s" (intercalate "\n\t" $ map (show . snd) $ filter ((==) PTopType . fst) $ zip tobjMetas $ flatObjectMap tobjs')
-  typecheckedAllObjs <- fresh $ TypeCheckResult [] $ SType typecheckedAllType PTopType Nothing "typecheckedAll"
+  typecheckedAllObjs <- fresh $ TypeCheckResult [] $ SType typecheckedAllType PTopType PTopType Nothing "typecheckedAll"
   let typecheckedAllObjs' = mkVarMeta typecheckedAllObjs
 
   -- Builds metas to use for union and union powerset
@@ -596,15 +596,21 @@ reqAdmitsLeaf typeEnv vaenv req l =
 -- the settle fires, the slot's stored requirement is tightened to its declared-bound meet
 -- (the settled spelling consumers read). Only 'TVArg' slots participate; pointer slots
 -- (partial-internal vars) are left to the var machinery.
-settlePropSlot :: FEnv -> TypeVarArgEnv -> TypeVarAux -> Type -> Type -> (Type, Type)
-settlePropSlot env@FEnv{feTypeEnv} vaenv propName@(TVArg k) superAct@(UnionType supMTop supLeafs supConsts) superReq@(UnionType reqMTop reqLeafs reqConsts) =
-  (superAct', superReq')
+settlePropSlot :: FEnv -> TypeVarArgEnv -> TypeVarAux -> Type -> Type -> Type -> (Type, Type, Type)
+settlePropSlot env@FEnv{feTypeEnv} vaenv propName@(TVArg k) superAct@(UnionType supMTop supLeafs supConsts) superReq@(UnionType reqMTop reqLeafs reqConsts) superReqDecl =
+  (superAct', superReq', superReqDecl')
   where
     reachesTypeEnv = feReachesTypeEnv env
     reqByName = splitUnionTypeByName reqLeafs
+    -- The decl-origin requirement channel ('stypeReqDecl') receives the same declared-bound
+    -- tighten when the settle fires: 'declBoundU' is instantiated from 'typeGraphData' at this
+    -- site, so it is decl-origin by construction and the write preserves the channel's purity.
+    declReqByName = case superReqDecl of
+      UnionType _ dLeafs _ -> splitUnionTypeByName dLeafs
+      _                    -> H.empty
 
-    settlePartial :: PartialType -> (PartialType, Maybe PartialType, Bool)
-    settlePartial p = fromMaybe (p, Nothing, False) $ do
+    settlePartial :: PartialType -> (PartialType, Maybe PartialType, Maybe PartialType, Bool)
+    settlePartial p = fromMaybe (p, Nothing, Nothing, False) $ do
       -- Fireable shape only: the stale family spelling is @declared-top ∪ rawCall@ — a slot
       -- with no predicate-top component cannot fire (a call form's dests are never inside
       -- its sibling leaves alone, and the bound includes the slot actual), so gate before
@@ -657,13 +663,24 @@ settlePropSlot env@FEnv{feTypeEnv} vaenv propName@(TVArg k) superAct@(UnionType 
                     Just UnionType{} ->
                       Just rp{ptArgs=H.insert k (compactType feTypeEnv vaenv (intersectTypesEnv feTypeEnv vaenv slotReq declBoundU)) (ptArgs rp)}
                     _ -> Nothing
-              return (p', rp', True)
+              let rdp' = case H.lookup (ptName p) declReqByName of
+                    Just [rdp] -> case H.lookup k (ptArgs rdp) of
+                      Just slotDeclReq@UnionType{} ->
+                        Just rdp{ptArgs=H.insert k (compactType feTypeEnv vaenv (intersectTypesEnv feTypeEnv vaenv slotDeclReq declBoundU)) (ptArgs rdp)}
+                      _ -> Nothing
+                    _ -> Nothing
+              return (p', rp', rdp', True)
 
     results = map settlePartial (splitUnionType supLeafs)
-    changed = or [c | (_, _, c) <- results]
-    superAct' | changed = compactType feTypeEnv vaenv (UnionType supMTop (joinUnionType [p | (p, _, _) <- results]) supConsts)
+    changed = or [c | (_, _, _, c) <- results]
+    superAct' | changed = compactType feTypeEnv vaenv (UnionType supMTop (joinUnionType [p | (p, _, _, _) <- results]) supConsts)
               | otherwise = superAct
-    reqUpdates = H.fromList [(ptName rp, rp) | (_, Just rp, _) <- results]
+    reqUpdates = H.fromList [(ptName rp, rp) | (_, Just rp, _, _) <- results]
     superReq' | H.null reqUpdates = superReq
               | otherwise = UnionType reqMTop (joinUnionType (map (\q -> fromMaybe q (H.lookup (ptName q) reqUpdates)) (splitUnionType reqLeafs))) reqConsts
-settlePropSlot _ _ _ superAct superReq = (superAct, superReq)
+    declUpdates = H.fromList [(ptName rdp, rdp) | (_, _, Just rdp, _) <- results]
+    superReqDecl' = case superReqDecl of
+      UnionType dMTop dLeafs dConsts | not (H.null declUpdates) ->
+        UnionType dMTop (joinUnionType (map (\q -> fromMaybe q (H.lookup (ptName q) declUpdates)) (splitUnionType dLeafs))) dConsts
+      _ -> superReqDecl
+settlePropSlot _ _ _ superAct superReq superReqDecl = (superAct, superReq, superReqDecl)
