@@ -20,7 +20,7 @@
 module Eval.Runtime.WebDocs where
 
 import           CRes
-import           CtConstants         (noteTaskPath)
+import           CtConstants         (noteSimpleTaskPath)
 import           Data.Aeson          (ToJSON)
 import           Data.Aeson.Text     (encodeToLazyText)
 import           Data.Graph
@@ -308,9 +308,15 @@ data PageTask = PageTask { ptPage :: String
 -- was written in and the expression it was declared by.
 --
 -- That a task is a @\/Data\/Note\/Task@ is known here and nowhere below. What the pipeline offers is
--- the values a page declares of a type ('spPageValues'); which type is worth gathering, and what to
--- make of the ones it finds, is this display's own business. So the compilation service stays a
+-- the values a page declares of a type ('spPageValues'); which types are worth gathering, and what
+-- to make of the ones it finds, is this display's own business. So the compilation service stays a
 -- service for programs rather than one that knows what a note is.
+--
+-- The members of that class are named rather than the class itself, because a value is declared as
+-- the member it is and what the pipeline offers is values by the path they were declared at. Naming
+-- the class instead would be asking the evaluator which types are members of it, which is the type
+-- environment's to answer and not this side's. They are named together in the one call so that a
+-- note mixing the two readings gives its tasks back in the order it wrote them.
 --
 -- Like 'sidebar' this reports on which pages there are rather than on the program it was evaluated
 -- against, so evaluated unscoped it is every task the doc server holds — the list of all of them,
@@ -323,7 +329,7 @@ taskList = EEnvPrim "taskList" prim
       encodeJson . concat <$> traverse (pageTasks spPageValues) (sortOn impDisp pages)
 
     pageTasks pageValues prgmName = do
-      tasks <- orNotes $ pageValues (mkName noteTaskPath) prgmName
+      tasks <- orNotes $ pageValues (map mkName [noteSimpleTaskPath]) prgmName
       case (tasks, impDisp prgmName) of
         ([], _) -> return []
         -- As in 'sidebar', a page with no display path is reported rather than dropped. Here it is a

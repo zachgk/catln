@@ -490,11 +490,14 @@ buildDisplays env os what exprs = do
 -- path of 'evalAnnots' — so a value gathered from a page and the same value shown on that page are
 -- one value, displayed one way, and edited by replacing one expression.
 --
--- Only that one type, and nothing a page merely annotates. Gathering one type of value across every
--- page there is asks this of pages that declare none, and evaluating each of them whole would
+-- Only the types asked for, and nothing a page merely annotates. Gathering a type of value across
+-- every page there is asks this of pages that declare none, and evaluating each of them whole would
 -- compute a doc server's worth of values to discard all but a few of them.
-evalPageValues :: Name -> FileImport -> EPrgmGraphData -> CRes [(EExpr, Val)]
-evalPageValues name prgmName prgmGraphData = do
+--
+-- Several types at once rather than one at a time, so that what comes back is in the order the page
+-- wrote it however many types were asked for. Two gatherings joined would be two runs of that order.
+evalPageValues :: [Name] -> FileImport -> EPrgmGraphData -> CRes [(EExpr, Val)]
+evalPageValues names prgmName prgmGraphData = do
   Prgm objMap _ _ <- case graphLookup prgmName prgmGraphData of
     Just own -> return own
     Nothing  -> CErr [MkCNote $ GenCErr Nothing $ printf "Could not find the page %s to evaluate the declarations of" (show $ impRaw prgmName)]
@@ -510,7 +513,7 @@ evalPageValues name prgmName prgmGraphData = do
       let env = evalBaseEnvStages stagePrgmsUnavailable prgm
       concat <$> forM oas (\oa -> buildDisplays env [(getExprPartialType $ oaObjExpr oa, oa)] "declaration" [oaObjExpr oa])
   where
-    declaresOne oa = isValueObjArr oa && oaObjPath oa == name
+    declaresOne oa = isValueObjArr oa && oaObjPath oa `elem` names
 
 -- | Builds a function of a program as a run and evaluates it, threading @ioVal@ as its @/io@ handle.
 -- That handle is the only difference between a real run and a mocked one: an 'IOVal' accumulates

@@ -122,7 +122,12 @@ data StagePrgms = StagePrgms {
   --
   -- Supplied from outside for the same reason 'spDebugRun' is: evaluating a page's declarations is
   -- work for the evaluator, which is downstream of the primitives that would have to ask for it.
-  , spPageValues :: Name -> FileImport -> CRes [(EExpr, Val)]
+  --
+  -- Asked for several types at once rather than one at a time, because what is gathered comes back
+  -- in the order the page wrote it and two gatherings joined would be two runs of that order rather
+  -- than one. A checkbox is read as one of the members of @\/Data\/Note\/Task@, so a note mixing
+  -- them asked for a member at a time would answer with its tasks sorted by which reading each got.
+  , spPageValues :: [Name] -> FileImport -> CRes [(EExpr, Val)]
   }
 
 -- | The stage programs for an evaluation whose caller did not supply any. Asking for one is then an

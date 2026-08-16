@@ -280,7 +280,7 @@ partStatement (NoteFrontmatter properties) = RawStatementTree (RawAnnot (rawProp
 partStatement (NoteTask says done under) = RawStatementTree (RawDeclStatement task) (map partStatement under)
   where
     task = RawObjArr (Just taskExpr) TypeObj Nothing [] Nothing Nothing
-    taskExpr = rawVal noteTaskPath `applyRawArgs` [
+    taskExpr = rawVal noteSimpleTaskPath `applyRawArgs` [
       (Just $ partialKey (mkName noteTaskContents), rawStr says),
       (Just $ partialKey (mkName noteTaskState), rawVal (if done then truePrim else falsePrim))
                                                  ]
@@ -329,7 +329,7 @@ notePart (RawStatementTree (RawAnnot annot) [])
   | named mdAnnot annot = NoteWriting <$> rawArgStr mdAnnotText annot
   | named notePropertiesAnnot annot = NoteFrontmatter <$> rawArgStr notePropertiesAnnotText annot
 notePart (RawStatementTree (RawDeclStatement task) under)
-  | Just taskExpr <- roaObj task, named noteTaskPath taskExpr = do
+  | Just taskExpr <- roaObj task, named noteSimpleTaskPath taskExpr = do
       says <- rawArgStr noteTaskContents taskExpr
       done <- rawArgState taskExpr
       NoteTask says done <$> mapM notePart under

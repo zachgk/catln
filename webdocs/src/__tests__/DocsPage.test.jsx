@@ -515,7 +515,7 @@ describe('editing a value on a page', () => {
   // spaces and all. So the name is encoded into the request rather than pasted into it.
   const NOTE = '/vault/Read these/Tasks.md'
   const TASK_ID = '22222222-2222-5222-9222-222222222222'
-  const CHECKED = '/Data/Note/Task(contents= "Read it", state= /Data/Primitive/True)'
+  const CHECKED = '/Data/Note/Task/Simple(contents= "Read it", state= /Data/Primitive/True)'
 
   function noteFetch(overrides = {}) {
     return mockFetch({ ...overrides, page: () => Promise.resolve({

@@ -2,10 +2,10 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
-                ( "/Data/Note/Task"
+                ( "/Data/Note/Task/Simple"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Note/Task
+                        [ /Data/Note/Task/Simple
                             ( Value /contents -> UnionType
                                 ( Nothing
                                 , ∅
@@ -13,7 +13,7 @@ Prgm
                                     [ CStr "Read [[Welcome]]" ]
                                 ) = CStr "Read [[Welcome]]"
                             )( Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
-                        , /Data/Note/Task
+                        , /Data/Note/Task/Simple
                             ( Value /contents -> UnionType
                                 ( Nothing
                                 , ∅
@@ -21,7 +21,7 @@ Prgm
                                     [ CStr "Write this note" ]
                                 ) = CStr "Write this note"
                             )( Value /state -> /Data/Primitive/True = Value /Data/Primitive/True )
-                        , /Data/Note/Task
+                        , /Data/Note/Task/Simple
                             ( Value /contents -> UnionType
                                 ( Nothing
                                 , ∅
@@ -29,7 +29,7 @@ Prgm
                                     [ CStr "Plan the rest" ]
                                 ) = CStr "Plan the rest"
                             )( Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
-                        , /Data/Note/Task
+                        , /Data/Note/Task/Simple
                             ( Value /contents -> UnionType
                                 ( Nothing
                                 , ∅

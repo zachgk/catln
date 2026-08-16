@@ -1,0 +1,47 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/Data/Note/Task/Simple"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Task/Simple
+                            ( EAppArg Value /contents -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Finish reading the page these notes are written over" ]
+                                ) = "Finish reading the page these notes are written over"
+                            )( EAppArg Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Page"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Page
+                            ( EAppArg Value /title -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "Overlay" ]
+                                ) = "Overlay"
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots = []
+    }

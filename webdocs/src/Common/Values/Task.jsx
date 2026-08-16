@@ -27,7 +27,7 @@ const useStyles = makeStyles({
 // replaces the declaration with, so it has to name the type absolutely: it is parsed on its own
 // rather than in the note it came from.
 function taskSource(contents, done) {
-  return `/Data/Note/Task(contents= ${JSON.stringify(contents)}, state= ${done ? TRUE : FALSE})`;
+  return `/Data/Note/Task/Simple(contents= ${JSON.stringify(contents)}, state= ${done ? TRUE : FALSE})`;
 }
 
 // One task of a note, as the checkbox it was written as. Editing it rewrites the declaration it was

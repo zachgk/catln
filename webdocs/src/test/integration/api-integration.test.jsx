@@ -453,7 +453,7 @@ describe('Backend API contract', () => {
     }
 
     function taskSource(contents, done) {
-      return `/Data/Note/Task(contents= ${JSON.stringify(contents)}, state= /Data/Primitive/${done ? 'True' : 'False'})`
+      return `/Data/Note/Task/Simple(contents= ${JSON.stringify(contents)}, state= /Data/Primitive/${done ? 'True' : 'False'})`
     }
 
     // Written by the page and expression the task carries, which for a list gathered across notes is
@@ -474,7 +474,7 @@ describe('Backend API contract', () => {
         // Each entry is the task's own value, so a task in the list is shown by whatever shows a
         // task rather than by the list re-rendering its fields.
         expect(task.ptTask.tag).toBe('TupleVal')
-        expect(task.ptTask.name).toBe('/Data/Note/Task')
+        expect(task.ptTask.name).toBe('/Data/Note/Task/Simple')
         expect(typeof contentsOf(task)).toBe('string')
         expect(['/Data/Primitive/True', '/Data/Primitive/False']).toContain(task.ptTask.args['/state'].name)
         // Beside where it was written, which is what editing it in a list across notes needs.
@@ -601,7 +601,7 @@ describe('Backend API contract', () => {
         `${API_BASE}/api/write-expr?prgmName=${encodeURIComponent(page)}&metaId=${encodeURIComponent(await taskMetaId())}`, {
           method: 'POST',
           headers: {'Content-Type': 'text/plain'},
-          body: `/Data/Note/Task(contents= ${JSON.stringify(TASK)}, state= /Data/Primitive/${done ? 'True' : 'False'})`,
+          body: `/Data/Note/Task/Simple(contents= ${JSON.stringify(TASK)}, state= /Data/Primitive/${done ? 'True' : 'False'})`,
         })
 
       try {

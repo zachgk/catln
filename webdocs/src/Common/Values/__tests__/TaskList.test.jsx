@@ -20,7 +20,7 @@ function entry(id, contents, done, page = NOTE) {
     ptPage: page,
     ptTask: {
       tag: 'TupleVal',
-      name: '/Data/Note/Task',
+      name: '/Data/Note/Task/Simple',
       args: {
         '/contents': { tag: 'StrVal', contents },
         '/state': { tag: 'TupleVal', name: done ? '/Data/Primitive/True' : '/Data/Primitive/False', args: {} },
@@ -91,7 +91,7 @@ describe('TaskList', () => {
     const [url, options] = global.fetch.mock.calls[0]
     expect(url).toBe(`/api/write-expr?prgmName=${encodeURIComponent(OTHER_NOTE)}&metaId=id-2`)
     expect(options.method).toBe('POST')
-    expect(options.body).toBe('/Data/Note/Task(contents= "Plan it", state= /Data/Primitive/True)')
+    expect(options.body).toBe('/Data/Note/Task/Simple(contents= "Plan it", state= /Data/Primitive/True)')
   })
 
   it('reads the display again once the note has been written', async () => {

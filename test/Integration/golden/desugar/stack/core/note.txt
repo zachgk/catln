@@ -16,16 +16,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/Note/Task"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/Note/Task( Value /contents -> /Data/String )( Value /state -> ∀/Data/Primitive/Boolean ) ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
                 ( "/Catln/Doc/dshow./Data/Note/taskList"
                 , ObjectMapItem
                     { omiDecls = []
@@ -50,6 +40,16 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/#properties( Value /text -> /Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Task/Simple"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Task/Simple( Value /contents -> /Data/String )( Value /state -> ∀/Data/Primitive/Boolean ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -97,9 +97,9 @@ Prgm
         , CGType
         , CGClass
             ( False
-            , /Data/Note/Task
+            , /Data/Note/Task/Simple
             ,
-                [ /Data/Note/Task..
+                [ /Data/Note/Task/Simple..
                 , /Data/Note/Show/TaskList..
                 , /Data/Note/Show/Properties..
                 ]
@@ -108,6 +108,21 @@ Prgm
               display type standing in for it, which is what lets checking the box in a doc server write the
               change back to the note the task was read from.  "
             )
+        , CGClass
+            ( False
+            , /Data/Note/Task
+            , [ /Data/Note/Task/Simple.. ]
+            , Just "A [Task] is one thing to do, written in a note as a markdown checkbox. A task is a break in
+              the writing of the note holding it: the comment ends where the checkbox was written, the task
+              is declared in its place, and the writing goes on after it as another comment. So the tasks of
+              a note are declared in the order and the place they were written, and whatever is written
+              indented under a checkbox is written inside its task — the comment of it, and the checkboxes
+              indented under it, which are tasks of that task by the same reading.
+              Which of its readings a checkbox gets is decided by the vault it was written in rather than by
+              the checkbox. A vault running the Obsidian Tasks plugin writes dates, priorities and links
+              into the line beside the box, and reading such a line as though it were only a line would read
+              the plugin's writing as writing of the note. "
+            )
         ]
     , prgmAnnots =
         [ /Catln/#md
@@ -115,6 +130,17 @@ Prgm
             A note is a piece of writing that names itself and links to other notes. Each note is a page of
             its own and each link between two notes is an import between their pages, so the graph a set of
             notes forms is the import graph of the program they are read as." )
+        , /Catln/#md
+            ( Value /text= CStr "A [Task] is one thing to do, written in a note as a markdown checkbox. A task is a break in
+            the writing of the note holding it: the comment ends where the checkbox was written, the task
+            is declared in its place, and the writing goes on after it as another comment. So the tasks of
+            a note are declared in the order and the place they were written, and whatever is written
+            indented under a checkbox is written inside its task — the comment of it, and the checkboxes
+            indented under it, which are tasks of that task by the same reading.
+            Which of its readings a checkbox gets is decided by the vault it was written in rather than by
+            the checkbox. A vault running the Obsidian Tasks plugin writes dates, priorities and links
+            into the line beside the box, and reading such a line as though it were only a line would read
+            the plugin's writing as writing of the note." )
         , /Catln/#md
             ( Value /text= CStr "A task is shown in the webdocs as the task it is, rather than as the declaration it was read
             into: a box to check and the writing beside it. It is the value itself that is shown, with no

@@ -6,7 +6,7 @@ import Task from '../Task'
 
 const theme = createTheme()
 
-// The args of a compiled /Data/Note/Task: what the checkbox says, and whether it is checked. A task
+// The args of a compiled /Data/Note/Task/Simple: what the checkbox says, and whether it is checked. A task
 // is the value the note declares rather than a display standing in for one, so these are the fields
 // of the type itself.
 function task(contents = 'Read it', done = false) {
@@ -40,7 +40,7 @@ describe('Task', () => {
 
     await userEvent.click(screen.getByRole('checkbox'))
 
-    expect(update).toHaveBeenCalledWith('/Data/Note/Task(contents= "Read it", state= /Data/Primitive/True)')
+    expect(update).toHaveBeenCalledWith('/Data/Note/Task/Simple(contents= "Read it", state= /Data/Primitive/True)')
   })
 
   it('unchecking the box declares the task with the other state', async () => {
@@ -49,7 +49,7 @@ describe('Task', () => {
 
     await userEvent.click(screen.getByRole('checkbox'))
 
-    expect(update).toHaveBeenCalledWith('/Data/Note/Task(contents= "Read it", state= /Data/Primitive/False)')
+    expect(update).toHaveBeenCalledWith('/Data/Note/Task/Simple(contents= "Read it", state= /Data/Primitive/False)')
   })
 
   // Typing is not the edit — finishing with the box is. Otherwise every keystroke would write the
@@ -72,7 +72,7 @@ describe('Task', () => {
     await userEvent.tab()
 
     expect(update).toHaveBeenCalledTimes(1)
-    expect(update).toHaveBeenCalledWith('/Data/Note/Task(contents= "Read it again", state= /Data/Primitive/True)')
+    expect(update).toHaveBeenCalledWith('/Data/Note/Task/Simple(contents= "Read it again", state= /Data/Primitive/True)')
   })
 
   it('writes the contents when the edit is entered', async () => {
@@ -81,7 +81,7 @@ describe('Task', () => {
 
     await userEvent.type(screen.getByRole('textbox'), ' again{Enter}')
 
-    expect(update).toHaveBeenCalledWith('/Data/Note/Task(contents= "Read it again", state= /Data/Primitive/False)')
+    expect(update).toHaveBeenCalledWith('/Data/Note/Task/Simple(contents= "Read it again", state= /Data/Primitive/False)')
   })
 
   it('does not write contents that were not changed', async () => {
@@ -129,6 +129,6 @@ describe('Task', () => {
 
     await userEvent.type(screen.getByRole('textbox'), ' "it"{Enter}')
 
-    expect(update).toHaveBeenCalledWith('/Data/Note/Task(contents= "Read \\"it\\"", state= /Data/Primitive/False)')
+    expect(update).toHaveBeenCalledWith('/Data/Note/Task/Simple(contents= "Read \\"it\\"", state= /Data/Primitive/False)')
   })
 })

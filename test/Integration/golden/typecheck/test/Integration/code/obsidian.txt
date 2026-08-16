@@ -24,6 +24,11 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( Value /text -> /Data/String = CStr "Tests importing an Obsidian vault. Every note of the vault becomes a page of its own, at any
-            depth, and the vault's own .obsidian configuration is not read as notes." )
+            depth, and the vault's own .obsidian configuration is not read as notes.
+            The notes are named here as well as the vault, and that is what gives them goldens. A vault does
+            not import its notes — it holds them, and each says for itself what it links to — so the pages of
+            a vault are not reachable from the page the vault is, and a golden test walking out from this file
+            reaches the vault and stops. The two named here reach the rest of the vault by linking, so what
+            every note of it is read as is written down and compared rather than left to be taken on trust." )
         ]
     }

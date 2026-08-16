@@ -68,11 +68,17 @@ overlayAnnotUrl = "url"
 
 -- | The types one note is read as, declared in @stack/core/note.ct@. A note is a 'notePagePath'
 -- holding the writing of it, opened by the 'notePropertiesAnnot' its frontmatter is read as and
--- broken at each checkbox by a 'noteTaskPath'.
-notePagePath, notePageTitle, noteTaskPath, noteTaskContents, noteTaskState, notePropertiesAnnot, notePropertiesAnnotText :: String
+-- broken at each checkbox by a member of 'noteTaskPath'.
+--
+-- 'noteTaskPath' is the class the readings of a checkbox are members of, and is named by nothing
+-- that gathers or displays one: a value is declared as the member it is, so what looks for a task
+-- looks for the members by name. Which reading a checkbox gets is
+-- 'Syntax.Obsidian.Parser.partStatement', out of what the vault is set to.
+notePagePath, notePageTitle, noteTaskPath, noteSimpleTaskPath, noteTaskContents, noteTaskState, notePropertiesAnnot, notePropertiesAnnotText :: String
 notePagePath = "/Data/Note/Page"
 notePageTitle = "title"
 noteTaskPath = "/Data/Note/Task"
+noteSimpleTaskPath = "/Data/Note/Task/Simple"
 noteTaskContents = "contents"
 noteTaskState = "state"
 notePropertiesAnnot = "/Data/Note/#properties"

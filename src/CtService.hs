@@ -1158,13 +1158,16 @@ debugExprRun prgmName scopeNodes src = do
 -- passes over such a page in the stages beside this one; a page that failed to build fails what
 -- asked. The graph is read once for whichever pages are asked about, since the answer is a field of
 -- one 'StagePrgms' rather than a call made afresh each time.
-pageValues :: GraphData SSF FileImport -> Name -> FileImport -> CRes [(Expr EvalMetaDat, Val)]
+--
+-- Every type asked about is gathered in the one pass, and the order below is what makes that matter:
+-- asking twice and joining the answers would be two runs of the page's order rather than one.
+pageValues :: GraphData SSF FileImport -> [Name] -> FileImport -> CRes [(Expr EvalMetaDat, Val)]
 pageValues graph = valuesOf
   where
     computed = graphFromEdges $ filter (isJust . ssfTPrgm . fst3) $ graphToNodes graph
     tprgms = mapMGraph (requireComputed . ssfTPrgm) computed
 
-    valuesOf name prgmName = case (graphLookup prgmName graph, graphLookup prgmName computed) of
+    valuesOf names prgmName = case (graphLookup prgmName graph, graphLookup prgmName computed) of
       -- A page which was built and has no typechecked program declares nothing to gather: a @ctx@
       -- page is marked built while deliberately skipping the pipeline ('buildSCCPipeline').
       (Just _, Nothing) -> return []
@@ -1172,7 +1175,7 @@ pageValues graph = valuesOf
       -- gathering across pages is never quietly short of the ones nobody has looked at yet.
       (Nothing, _) -> fail $ printf "The page %s has not been read, so what it declares is not known" (show $ impRaw prgmName)
       (_, Just ssf) -> do
-        values <- evalPageValues name prgmName =<< tprgms
+        values <- evalPageValues names prgmName =<< tprgms
         written <- rawStatementExprIds <$> requireComputed (ssfRaw ssf)
         return $ sortOn (writtenAt written . fst) values
 
