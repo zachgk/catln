@@ -10,11 +10,16 @@
 -- This module records what reading the notes of an Obsidian vault found, so that a later run is
 -- answered out of it rather than by reading them all again.
 --
--- What a note costs to read is not its text. Resolving one wiki link scans every note of the vault
--- ('Syntax.Obsidian.Parser.resolveWikiLink'), so reading a vault of a thousand notes resolves a
--- thousand notes' links against a thousand notes — before any of them has been parsed as markdown.
--- All that a reader of one note needs out of all that is which notes it links to, which is what
--- this keeps.
+-- What a note costs to read is its text: it is read off disk and parsed as markdown, to find the
+-- links written in its prose and not in its code. All that a reader of one note needs out of all
+-- that is which notes it links to, which is what this keeps — so a vault of a thousand notes opened
+-- again is a thousand files looked at rather than a thousand files read and parsed.
+--
+-- Resolving those links against the vault is not what this saves any more. That once scanned every
+-- note of the vault for every link, so a vault of a thousand notes cost a million comparisons of a
+-- path before any note had been parsed; it is now a lookup in an index the read builds once
+-- ('Syntax.Obsidian.Parser.vaultIndex'). Which is worth saying because it was the reason this was
+-- written, and a record kept for a cost that has gone would be a record worth dropping.
 --
 -- This is deliberately the Obsidian importer's own cache, and NOT a general mechanism for import
 -- caching. A vault is a directory of peers whose members are found by walking it, and whether a

@@ -11,9 +11,9 @@ import           CtConstants            (overlayAnnot, overlayAnnotUrl)
 import           Syntax.Ct.Prgm         (RawPrgm (RawPrgm),
                                          RawStatement (RawAnnot),
                                          RawStatementTree (RawStatementTree))
-import           Syntax.Obsidian.Parser (NotePart (..), frontmatterUrl, named,
-                                         notePageStatement, noteParts,
-                                         rawArgStr, resolveWikiLink,
+import           Syntax.Obsidian.Parser (NotePart (..), frontmatterUrl,
+                                         mkVaultIndex, named, notePageStatement,
+                                         noteParts, rawArgStr, resolveWikiLink,
                                          unparseNote, wikiLinks)
 import           Test.Tasty
 import           Test.Tasty.HUnit       (assertEqual, testCase)
@@ -370,7 +370,7 @@ testResolveWikiLink = testGroup "the note a wiki link names" [
   testCase "is found where its name ends in something which is not the markdown extension" $
     assertEqual "" (Just "/v/Version 1.2.md") $ resolve ["/v/Version 1.2.md"] "Version 1.2"
                                                              ]
-  where resolve notes link = resolveWikiLink "/v" notes link
+  where resolve notes link = resolveWikiLink (mkVaultIndex "/v" notes) link
 
 obsidianTests :: TestTree
 obsidianTests = testGroup "ObsidianTests" [

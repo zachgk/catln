@@ -19,24 +19,22 @@
 module Syntax.Ct.Prgm where
 
 import           Data.Hashable
-import qualified Data.HashMap.Strict   as H
-import           GHC.Generics          (Generic)
+import qualified Data.HashMap.Strict as H
+import           GHC.Generics        (Generic)
 
-import           Control.Exception     (IOException, try)
-import           Data.Aeson            hiding (Object)
-import           Data.IORef            (IORef, modifyIORef', newIORef,
-                                        readIORef)
-import           Data.List             (isPrefixOf, sort, stripPrefix)
-import           Data.Maybe            (catMaybes, fromJust, isJust, mapMaybe)
-import           Data.Time.Clock       (UTCTime)
+import           Control.Exception   (IOException, try)
+import           Data.Aeson          hiding (Object)
+import           Data.IORef          (IORef, modifyIORef', newIORef, readIORef)
+import           Data.List           (isPrefixOf, sort, stripPrefix)
+import           Data.Maybe          (catMaybes, fromJust, isJust, mapMaybe)
+import           Data.Time.Clock     (UTCTime)
 import           Semantics
-import           Semantics.Annots      (isAnnot)
+import           Semantics.Annots    (isAnnot)
 import           Semantics.Prgm
 import           Semantics.Types
-import           Syntax.Obsidian.Cache (ObsidianCache, newObsidianCache)
-import           System.Directory      (doesDirectoryExist, getModificationTime,
-                                        listDirectory, pathIsSymbolicLink)
-import           System.FilePath       (splitDirectories, takeFileName, (</>))
+import           System.Directory    (doesDirectoryExist, getModificationTime,
+                                      listDirectory, pathIsSymbolicLink)
+import           System.FilePath     (splitDirectories, takeFileName, (</>))
 import           Text.Printf
 import           Utils
 
@@ -168,8 +166,13 @@ data TreeScan = TreeScan {
   tsWritten :: Maybe UTCTime
                          }
 
--- | What a read has already found on disk, so that one read finds it once, and what it may answer
--- without looking at all.
+-- | What a read gives every syntax it reads with: what it has already found on disk, and where a
+-- syntax which keeps a record between runs may keep one.
+--
+-- Everything here is shared, either because more than one syntax could want it or because two
+-- things which want it must be given the one answer. What only one syntax wants belongs to that
+-- syntax's reader ('ImportReader'), which is why the record of Obsidian vaults is no longer named
+-- here.
 data ReadEnv = ReadEnv {
   -- | The trees this read has walked.
   --
@@ -178,22 +181,23 @@ data ReadEnv = ReadEnv {
   -- of a thousand notes would be walked a thousand and one times by a read which walked it for
   -- each.
   --
+  -- Shared rather than held by the syntax which reads the notes, because two things read it: what a
+  -- vault holds ('Syntax.Obsidian.Parser.vaultNotes'), and when a tree was last written to
+  -- ('Syntax.Parsers.treeWrittenAt'). A syntax walking for itself would be a read whose links
+  -- resolved against one walk and whose page was timed by another, and a note appearing between the
+  -- two would be recorded as seen by a read which never read it — a page that goes stale, rather
+  -- than a tree walked twice.
+  --
   -- Scoped to one read rather than kept between reads. What is on disk changes between reads, and
   -- deciding that it has is what 'ReadPath' and the times a read records already are.
-  reScans         :: IORef (H.HashMap FilePath TreeScan),
-  -- | What an earlier run recorded of the Obsidian vaults this read reaches, and what this read has
-  -- to write back to them. Absent for a read which is to read every page it reaches.
+  reScans     :: IORef (H.HashMap FilePath TreeScan),
+  -- | Where a syntax which can answer for a page out of what an earlier run recorded keeps that
+  -- record, and 'Nothing' for a read which is to read every page it reaches.
   --
-  -- Named for the one syntax which has such a record rather than being a table of them, because
-  -- what a second syntax wanting one would share with this is not yet known — see
-  -- 'Syntax.Obsidian.Cache'. It is here, and not inside that module, because a read reads many
-  -- notes of one vault and each would otherwise read that vault's record for itself: this is the
-  -- only thing a read has which lasts a whole read.
-  --
-  -- This is the cache 'reScans' above says a read does not keep between reads, and the difference
-  -- is that this one decides for itself whether it still holds ('Syntax.Obsidian.Cache.cachedNoteLinks')
-  -- rather than being trusted because a read is under way.
-  reObsidianCache :: Maybe ObsidianCache
+  -- The root alone. What is written under it, whether anything is, and whether what is written
+  -- still holds are the syntax's own — see 'Syntax.Obsidian.Cache', which is one syntax's record
+  -- and not a table of everyone's.
+  reCacheRoot :: Maybe FilePath
                        }
 
 -- | A read which reads every page it reaches, keeping and consulting no record.
@@ -204,8 +208,7 @@ newReadEnv = newRecordedReadEnv Nothing
 newRecordedReadEnv :: Maybe FilePath -> IO ReadEnv
 newRecordedReadEnv cacheRoot = do
   scans <- newIORef H.empty
-  cache <- traverse newObsidianCache cacheRoot
-  return $ ReadEnv scans cache
+  return $ ReadEnv scans cacheRoot
 
 -- | The walk of the tree under a directory this read made, walking it if this read has not.
 --

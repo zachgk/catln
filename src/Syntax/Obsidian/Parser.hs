@@ -17,6 +17,9 @@ import           Control.Monad         (forM_)
 import           CtConstants
 import           Data.Char             (isDigit, isSpace)
 import           Data.Foldable         (toList)
+import qualified Data.HashMap.Strict   as H
+import           Data.IORef            (IORef, modifyIORef', newIORef,
+                                        readIORef)
 import           Data.List             (dropWhileEnd, intercalate, isInfixOf,
                                         isPrefixOf, isSuffixOf, nub,
                                         stripPrefix)
@@ -29,7 +32,7 @@ import           Syntax.Ct.Builder
 import           Syntax.Ct.Prgm
 import           Syntax.Obsidian.Cache (ObsidianCache, cachedNoteLinks,
                                         flushObsidianCache, keepOnlyNotes,
-                                        recordNoteLinks)
+                                        newObsidianCache, recordNoteLinks)
 import           System.Directory
 import           System.FilePath       (makeRelative, takeBaseName,
                                         takeDirectory, (</>))
@@ -67,20 +70,30 @@ obsidianSyntax = ImportSyntax newObsidianReader unparseNote
 data ObsidianReader = ObsidianReader {
   -- | The read's own walks of the trees it has walked. A vault's notes are the markdown files one
   -- of those walks found, and that same walk is what times the vault's page — see 'vaultNotes'.
-  orEnv   :: ReadEnv,
+  orEnv     :: ReadEnv,
+  -- | Where each vault this read has resolved a link against has its notes looked up.
+  --
+  -- Per read rather than per note, because every note of a vault resolves against the same notes;
+  -- and per read rather than kept, because what a vault holds is whatever a walk of it found.
+  orIndexes :: IORef (H.HashMap FilePath VaultIndex),
   -- | What an earlier run recorded of the vaults this read reaches, and what this read has to write
   -- back to them. Absent for a read which is to read every note it reaches.
   --
   -- Held for the whole read because a read reads many notes of one vault, and each of them would
-  -- otherwise read that vault's record from disk for itself.
-  orCache :: Maybe ObsidianCache
+  -- otherwise read that vault's record from disk for itself. This is the record 'orIndexes' above
+  -- says a read does not keep between reads, and the difference is that this one decides for itself
+  -- whether it still holds ('Syntax.Obsidian.Cache.cachedNoteLinks') rather than being trusted
+  -- because a read is under way.
+  orCache   :: Maybe ObsidianCache
                                      }
 
 -- | The reader one read reads Obsidian vaults with.
 newObsidianReader :: ReadEnv -> IO ImportReader
 newObsidianReader env = do
-  let reader = ObsidianReader env (reObsidianCache env)
-  return $ ImportReader (obsidianPreload reader) (obsidianParse reader) (mapM_ flushObsidianCache $ orCache reader)
+  indexes <- newIORef H.empty
+  cache <- traverse newObsidianCache (reCacheRoot env)
+  let reader = ObsidianReader env indexes cache
+  return $ ImportReader (obsidianPreload reader) (obsidianParse reader) (mapM_ flushObsidianCache cache)
 
 -- | Which of the two an obsidian import names: a vault, or a note and the vault holding it.
 data ObsidianImport
@@ -178,13 +191,14 @@ vaultPreload reader vault = do
 --
 -- The vault is asked for here rather than left to the vault page, because a note is a page whether
 -- it was reached through its vault or by a link from another note, and either way its links resolve
--- against every note of the vault. It is asked for and not walked: the read walks a tree once
--- ('Syntax.Ct.Prgm.scanTree'), so a vault of a thousand notes is one walk rather than a thousand.
+-- against every note of the vault. It is asked for and neither walked nor indexed: the read walks a
+-- tree once ('Syntax.Ct.Prgm.scanTree') and indexes a vault once ('vaultIndex'), so a vault of a
+-- thousand notes is one walk and one index rather than a thousand of each.
 noteParse :: ObsidianReader -> FilePath -> FilePath -> ImportParseResult
 noteParse reader vault note = do
   contents <- readFile note
-  notes <- vaultNotes reader vault
-  let linked = nub $ filter (/= note) $ mapMaybe (resolveWikiLink vault notes) $ wikiLinks note contents
+  index <- vaultIndex reader vault
+  let linked = nub $ filter (/= note) $ mapMaybe (resolveWikiLink index) $ wikiLinks note contents
   forM_ (orCache reader) $ \cache -> recordNoteLinks cache vault note linked
   return $ ParsedImport (RawPrgm (noteImports linked) [notePageStatement (takeBaseName note) contents]) (Just contents) (Just $ noteReads note linked)
 
@@ -597,6 +611,22 @@ indentation = length . takeWhile isSpace
 vaultNotes :: ObsidianReader -> FilePath -> IO [FilePath]
 vaultNotes reader dir = filter (".md" `isSuffixOf`) . tsFiles <$> scanTree (orEnv reader) dir
 
+-- | Where the notes of a vault are looked up by what a link may name them by, indexing them if this
+-- read has not.
+--
+-- Kept for the read the same way and for the same reason as the walk it is built out of
+-- ('Syntax.Ct.Prgm.scanTree'): every note of a vault resolves its links against the same notes, so
+-- a vault indexed for each of them would be indexed once for every note in it.
+vaultIndex :: ObsidianReader -> FilePath -> IO VaultIndex
+vaultIndex reader vault = do
+  found <- readIORef (orIndexes reader)
+  case H.lookup vault found of
+    Just index -> return index
+    Nothing -> do
+      index <- mkVaultIndex vault <$> vaultNotes reader vault
+      modifyIORef' (orIndexes reader) $ H.insert vault index
+      return index
+
 -- | The wiki links a note writes, in the order it writes them.
 --
 -- A @[[wiki link]]@ is not markdown, and is not a link to the markdown parser either: it is a
@@ -720,20 +750,57 @@ inlineText (CodeSpan _)     = ""
 inlineText (Link is _ _)    = inlinesText is
 inlineText (Image is _ _)   = inlinesText is
 
+-- | Where a link written in a note finds the note it names.
+--
+-- Every note of the vault under the path it sits at within the vault, and every note under its name
+-- alone, each written as a link may write it: without the markdown extension, since a link may
+-- write it or leave it out. Two of them rather than one, because a link naming a path is a
+-- different thing from a link naming a name, and the first is asked before the second.
+--
+-- Built once for a vault by the read that reads it, and that is the whole reason it exists. A link
+-- resolved by walking the notes costs the size of the vault, so a vault of a thousand notes writing
+-- ten links each walks ten million notes — and what the walking does at each of them is
+-- 'makeRelative' over a path, which is not a comparison ten million of go unnoticed. Here it is one
+-- 'makeRelative' for each note, once, and a lookup for each link.
+data VaultIndex = VaultIndex {
+  viByPath :: H.HashMap FilePath FilePath,
+  viByName :: H.HashMap FilePath FilePath
+                             }
+
+-- | That index, out of the notes a walk of the vault found, in the order it walked them.
+--
+-- Where two notes are written at the one key the first the walk found wins, which is the note a
+-- reading that took the first match while walking them in order already answered with. The walk is
+-- sorted ('Syntax.Ct.Prgm.walkTree'), so which of them that is, is a property of the vault rather
+-- than of the order a filesystem happened to answer a listing in.
+mkVaultIndex :: FilePath -> [FilePath] -> VaultIndex
+mkVaultIndex vault notes = VaultIndex
+  (firstWins [(dropMdExtension (makeRelative vault note), note) | note <- notes])
+  (firstWins [(takeBaseName note, note) | note <- notes])
+  where
+    -- 'H.fromListWith' reads the list from the front and gives its function the value being added
+    -- and the value already held, so keeping the one already held keeps the note found first.
+    firstWins :: [(FilePath, FilePath)] -> H.HashMap FilePath FilePath
+    firstWins = H.fromListWith (\_new old -> old)
+
 -- | The note of a vault a wiki link points at, if the vault holds one.
 --
 -- A link names a note either by its path within the vault or by its name alone, with or without the
 -- markdown extension, and may go on to name a place within it and the words to show it as. A link
 -- naming no note at all is not an error: writing one is how a note yet to be written is planned,
 -- and Obsidian shows it as unresolved rather than refusing it.
-resolveWikiLink :: FilePath -> [FilePath] -> String -> Maybe FilePath
-resolveWikiLink vault notes link = case wikiLinkTarget link of
+resolveWikiLink :: VaultIndex -> String -> Maybe FilePath
+resolveWikiLink VaultIndex{viByPath, viByName} link = case wikiLinkTarget link of
   ""     -> Nothing -- A link naming only a place is within the note that wrote it
-  target -> listToMaybe (byPath target) <|> listToMaybe (byName target)
-  where
-    byPath target = [note | note <- notes, dropExtension' (makeRelative vault note) == dropExtension' target]
-    byName target = [note | note <- notes, takeBaseName note == dropExtension' target]
-    dropExtension' p = if ".md" `isSuffixOf` p then take (length p - 3) p else p
+  target -> H.lookup (dropMdExtension target) viByPath <|> H.lookup (dropMdExtension target) viByName
+
+-- | A path without the markdown extension, where it is written with one.
+--
+-- That extension alone, and not whatever extension a name happens to end with: a note called
+-- @Version 1.2@ is a note whose name ends in @.2@, and dropping that would file it under a name no
+-- link writes.
+dropMdExtension :: FilePath -> FilePath
+dropMdExtension p = if ".md" `isSuffixOf` p then take (length p - 3) p else p
 
 -- | The note a wiki link names, without the place within it or the words it is shown as.
 wikiLinkTarget :: String -> String
