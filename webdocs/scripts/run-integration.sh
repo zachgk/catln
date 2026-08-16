@@ -93,10 +93,14 @@ echo "Starting Catln backend on port ${API_PORT}..."
 # obsidian.ct is loaded beside id.ct so the vault it imports is among the pages. It is what gives
 # the server notes, and so tasks, to answer a #taskList with; without it that annotation could only
 # be checked against a doc server with nothing to list.
+# obsidianTasks.ct is loaded for the vault beside it, which runs the Obsidian Tasks plugin. Its
+# checkboxes are read as the other member of /Data/Note/Task, so the two together are what has
+# #taskList gather a class's members rather than one type -- which it does in one pass, and only a
+# server holding both kinds can show that it does.
 # debug.ct is loaded for the same kind of reason: it is the page that writes a #debug, so it is what
 # gives a debugger run any records to report. id.ct is left as it is, since what a run of a page with
 # no #debug reports is also worth checking and is what every other page here is.
-stack run catln -- doc test/Integration/code/id.ct test/Integration/code/obsidian.ct test/Integration/code/debug.ct --api &
+stack run catln -- doc test/Integration/code/id.ct test/Integration/code/obsidian.ct test/Integration/code/obsidianTasks.ct test/Integration/code/debug.ct --api &
 BACKEND_PIDS+=($!)
 await_backend "$API_PORT" "${BACKEND_PIDS[0]}"
 warm_backend "$API_PORT"

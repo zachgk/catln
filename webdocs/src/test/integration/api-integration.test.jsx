@@ -3,7 +3,7 @@
  *
  * Prerequisites:
  *   Start the backend API servers before running these tests:
- *     stack exec catln doc test/Integration/code/id.ct test/Integration/code/obsidian.ct test/Integration/code/debug.ct -- --api
+ *     stack exec catln doc test/Integration/code/id.ct test/Integration/code/obsidian.ct test/Integration/code/obsidianTasks.ct test/Integration/code/debug.ct -- --api
  *     stack exec catln doc test/Integration/code/id.ct -- --readonly
  *   The second serves the same API on the serve port (8080) and is only there to
  *   check that --readonly refuses writes.
@@ -433,9 +433,29 @@ describe('Backend API contract', () => {
   // only way to be asking about every note rather than about one, and why the server is started with
   // the Obsidian vault beside id.ct.
   describe('#taskList', () => {
-    // The note the vault fixture writes its tasks in.
+    // The note the vault fixture writes its tasks in, and the note of the vault beside it which
+    // runs the Obsidian Tasks plugin. The two are read as the two members of /Data/Note/Task, so a
+    // list holding both is what shows that the gather is of a class rather than of one type.
     const NOTE = '/test/Integration/code/artifacts/catln-test/Tasks.md'
     const FIRST = 'Read [[Welcome]]'
+    const TASKS_NOTE = '/test/Integration/code/artifacts/catln-tasks/Tasks.md'
+
+    const SIMPLE = '/Data/Note/Task/Simple'
+    const OBSIDIAN = '/Data/Note/Task/Obsidian'
+
+    function isSimple(task) {
+      return task.ptTask.name === SIMPLE
+    }
+
+    // Everything a task said that is not a field of its own, which it carries as JSON.
+    function restOf(task) {
+      return JSON.parse(task.ptTask.args['/rest'].contents)
+    }
+
+    // A /Data/Maybe as the value it holds, or null where it holds none.
+    function some(value) {
+      return value.name === '/Data/Some' ? value.args['/value'].contents : null
+    }
 
     async function tasks() {
       const val = await annotValue('#taskList')
@@ -474,13 +494,24 @@ describe('Backend API contract', () => {
         // Each entry is the task's own value, so a task in the list is shown by whatever shows a
         // task rather than by the list re-rendering its fields.
         expect(task.ptTask.tag).toBe('TupleVal')
-        expect(task.ptTask.name).toBe('/Data/Note/Task/Simple')
+        // Either reading of a checkbox, since which one a note gets is its vault's to decide.
+        expect([SIMPLE, OBSIDIAN]).toContain(task.ptTask.name)
         expect(typeof contentsOf(task)).toBe('string')
-        expect(['/Data/Primitive/True', '/Data/Primitive/False']).toContain(task.ptTask.args['/state'].name)
         // Beside where it was written, which is what editing it in a list across notes needs.
         expect(task.ptPage.endsWith('.md')).toBe(true)
         expect(task.ptExpr).toMatch(/^[0-9a-f-]{36}$/)
       }
+
+      // Whether the box is checked is a field of the plain reading alone. The other says it with a
+      // status, because which character in a box means done is its vault's to name.
+      for (const task of found.filter(isSimple)) {
+        expect(['/Data/Primitive/True', '/Data/Primitive/False']).toContain(task.ptTask.args['/state'].name)
+      }
+
+      // Both readings are in the one list, which is the whole of what gathering a class's members
+      // rather than one type buys.
+      expect(found.some(isSimple)).toBe(true)
+      expect(found.some(t => !isSimple(t))).toBe(true)
 
       // The vault's tasks in the order the note writes them, nested ones included and the one inside
       // a code fence left out: a checkbox in a fence is writing about a task rather than making one.
@@ -492,6 +523,59 @@ describe('Backend API contract', () => {
         'A checkbox indented deeper is a task of its own',
       ])
       expect(fromNote.map(isDone)).toEqual([false, true, false, false])
+    })
+
+    // What the other reading carries, once the whole pipeline has run rather than the line parser
+    // alone: the vault's settings read off disk, a checkbox read by them, the value compiled, and
+    // the list gathered out of the compiled page.
+    it('reads the tasks of a vault running the plugin as the plugin writes them', async () => {
+      const found = await tasks()
+      const fromNote = found.filter(t => t.ptPage.endsWith(TASKS_NOTE))
+      expect(fromNote.length).toBeGreaterThan(0)
+      for (const task of fromNote) {
+        expect(task.ptTask.name).toBe(OBSIDIAN)
+      }
+
+      // In the order the note writes them, which is what gathering both readings in one pass keeps.
+      expect(fromNote.map(t => t.ptTask.args['/description'].contents)).toEqual([
+        'Read the note',
+        'Write this note',
+        'Plan the rest',
+        'Drop the old plan',
+        'Ship it #work',
+        'Water the plants',
+        'Do this first',
+        'Do this after',
+        'Answer the question',
+        'Book \u{1F4C5} lunch',
+      ])
+
+      // A status the vault named itself, which markdown knows nothing about.
+      const begun = fromNote.find(t => t.ptTask.args['/description'].contents === 'Plan the rest')
+      expect(begun.ptTask.args['/symbol'].contents).toBe('/')
+      expect(begun.ptTask.args['/statusType'].name).toBe('/Data/Note/StatusType/InProgress')
+      expect(restOf(begun).statusName).toBe('In Progress')
+
+      // The fields the plugin wrote into the line, whether they are fields of the value or ride in
+      // the JSON beside them.
+      const ship = fromNote.find(t => t.ptTask.args['/description'].contents === 'Ship it #work')
+      expect(contentsOf(ship)).toBe('Ship it #work \u{23EB} \u{1F4C5} 2026-01-04')
+      expect(some(ship.ptTask.args['/due'])).toBe('2026-01-04')
+      expect(ship.ptTask.args['/priority'].name).toBe('/Data/Note/Priority/High')
+      expect(restOf(ship).tags).toEqual(['#work'])
+
+      const waits = fromNote.find(t => t.ptTask.args['/description'].contents === 'Do this after')
+      expect(restOf(waits).dependsOn).toEqual(['dcf64c', '0h17ye'])
+      expect(restOf(waits).created).toBe('2026-01-01')
+
+      // The date a task was finished, which is one field for done and cancelled alike.
+      const written = fromNote.find(t => t.ptTask.args['/description'].contents === 'Write this note')
+      expect(written.ptTask.args['/statusType'].name).toBe('/Data/Note/StatusType/Done')
+      expect(restOf(written).statusDate).toBe('2026-01-05')
+
+      // A mark with nothing it names after it is writing, which is why a line is read from its end.
+      const lunch = fromNote.find(t => t.ptTask.args['/description'].contents.startsWith('Book'))
+      expect(some(lunch.ptTask.args['/due'])).toBeNull()
     })
 
     // The whole point of gathering them: a task is written back to the note it was read from, which

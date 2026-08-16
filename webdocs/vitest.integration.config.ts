@@ -8,6 +8,13 @@ export default mergeConfig(viteConfig, defineConfig({
     globals: true,
     css: true,
     include: ['src/test/integration/**/*.test.{js,jsx,ts,tsx}'],
-    testTimeout: 15000,
+    // These run against a real compiler rather than a stub, so a case is as slow as compiling
+    // whatever the doc server holds. What it holds grows: `buildSCCPipeline` offers every loaded
+    // page as an external dependency of every other (see the comment on `ctssTestPages` in
+    // `src/CtService.hs`), so serving one more program makes every request slower, not just the
+    // requests about that program. A case which writes a file and reads it back pays that twice.
+    // Raised from 15s when the vault running the Obsidian Tasks plugin was added beside the one
+    // that does not; three of the write-and-read-back cases were then finishing just over 15s.
+    testTimeout: 30000,
   },
 }))
