@@ -22,6 +22,7 @@ import "core"
   the field was declared to hold — so the bound on the field is not reaching the nested cons, and
   what reaches it instead is the element type worked out one level up.
 data(Tagged(name -> String, tags -> /Data/List[$T -> String]))
+
 every(Tagged.., isa= [/Catln/Doc/DShow])
 
 /Tagged(name= "two of the same", tags= ["x", "x"])

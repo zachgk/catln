@@ -62,7 +62,6 @@ pPrintStatement = do
       annot = rawVal printAnnot `applyRawArgs` (baseArg : resultArg)
   return $ RawStatementTree (RawAnnot annot) []
   where
-    takeLine = takeWhileP (Just "character") (/= '\n')
     pResultLine = do
       _ <- string ">>>"
       _ <- optional (char ' ')

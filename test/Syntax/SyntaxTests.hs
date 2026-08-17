@@ -82,17 +82,65 @@ testImportStr = testGroup "ImportStrTests" [
     pathCase name = testCase name $
       assertEqual "" (rawStr name) (impAbs $ mkRawImportStr name)
 
+-- | A comment is markdown, and markdown says with indentation what a nested list, a continued item
+-- or an indented block is. So the writing under a comment keeps how it was laid out within itself,
+-- rather than every line of it having to sit at the indentation of the first.
+testCommentIndent :: TestTree
+testCommentIndent = testGroup "CommentIndentTests" [
+    testCase "the writing under a comment keeps how it was indented within itself" $ roundTrips [
+      "# A comment."
+    , "  Its writing, at the indentation the writing begins at."
+    , "    A line indented within that writing, as a nested list item is."
+    , "      And a line indented within that one."
+    , "  Back where the writing began."
+    , "main= 1"
+    ]
+
+  , testCase "a comment with nothing under it is the line it was written on" $ roundTrips [
+      "# A comment."
+    , "main= 1"
+    ]
+
+  -- The writing begins where its first line does, so a line to the left of that is out of it. Being
+  -- still to the right of the @#@ it is not out of the comment either, which is nowhere to be.
+  , testCase "a line dedented out of the writing but not out of the comment is an error" $
+      case parsed [
+          "#   A comment indented well past its own writing."
+        , "   Its writing."
+        , "  A line dedented out of that writing."
+        , "main= 1"
+        ] of
+        Left _  -> return ()
+        Right f -> assertFailure $ printf "a comment indented out of its own writing was read, as:\n%s" f
+  ]
+  where
+    parsed ls = let src = unlines ls in
+      case runParser (contents pPrgm) "<comment>" src of
+        Left err -> Left (show err)
+        Right p  -> Right (formatRootPrgm p)
+    -- Written back out as it was written, which is what @make ctformat@ asks of every file: what the
+    -- parser keeps of the writing and what the formatter writes of it have to be the same thing.
+    roundTrips ls = case parsed ls of
+      Left err -> assertFailure err
+      Right f  -> assertEqual "formatting a comment gave back different writing" ls (lines f)
+
 syntaxTests :: IO TestTree
 syntaxTests = do
   -- TODO: Add hs prgmDirs
   -- let prgmDirs = [(".ct",  "test/Integration/code/"), (".ct", "stack/core/"), (".hs", "src/")]
-  let prgmDirs = [(".ct",  "test/Integration/code/"), (".ct", "stack/core/")]
+  --
+  -- The disabled programs are read too. They are not compiled — each is the repro of a gap that
+  -- stops it — but they are still written in Catln and are still formatted by @make ctformat@, and
+  -- what nothing reads is what quietly stops parsing: four of them had, and were found by the
+  -- formatter rather than here.
+  let prgmDirs = [(".ct",  "test/Integration/code/"), (".ct", "test/Integration/disabled/"), (".ct", "stack/core/")]
   prgms <- mapM findPrgms prgmDirs
   let allPrgms = concatMap H.toList prgms
   return $ testGroup "SyntaxTests" [
       testGroup "FormatTests" (map testPrgm allPrgms)
     , testGroup "ReparseTests" (map testReparse allPrgms)
     , testImportStr
+    , testCommentIndent
     ]
 
 main :: IO ()
