@@ -26,15 +26,22 @@ import           Data.Aeson.Text     (encodeToLazyText)
 import           Data.Char           (toLower)
 import           Data.Graph
 import qualified Data.HashMap.Strict as H
-import           Data.List           (isInfixOf, partition, sort, sortOn)
+import           Data.List           (intercalate, isInfixOf, partition, sort,
+                                      sortOn)
 import           Data.List.Split     (splitOn)
 import qualified Data.Map            as M
+import           Data.Maybe          (mapMaybe)
 import qualified Data.Text.Lazy      as TL
 import qualified Data.UUID           as UUID
 import           Eval.Common
 import           GHC.Generics        (Generic)
 import           Semantics.Prgm
-import           Semantics.Types     (ClassGraph (..), fromPartialName, mkName,
+import           Semantics.Types     (ArgName, ClassGraph (..),
+                                      ClassSatInfo (..), PartialType (..),
+                                      SatCache (..), Type, TypeEnv (..),
+                                      TypeGraph (..), TypeName, fromPartialName,
+                                      maybeGetClassSingleton, maybeGetSingleton,
+                                      mkName, nameStr, pkName,
                                       relativeNameMatches)
 import           Text.Printf
 import           TypeCheck.Common    (filterTraceConstrain, flipTraceConstrain)
@@ -42,7 +49,7 @@ import           Utils
 
 -- | The primitives backing the @Catln/Doc@ display annotations.
 webDocsPrims :: [EPrim]
-webDocsPrims = [listProgram, filterProgram, typeInfer, typeInferPnt, debugger, debugExpr, sidebar, searchPagesFor, testRun, taskList]
+webDocsPrims = [listProgram, filterProgram, typeInfer, typeInferPnt, debugger, debugExpr, sidebar, searchPagesFor, docPagesFor, testRun, taskList]
 
 -- | The argument of @/Catln/Doc/listProgram@ naming which stage to list, and the members of the
 -- @ListProgramMode@ enum it takes. @stack\/core\/webdoc.ct@ is the source of truth for these; a
@@ -278,16 +285,125 @@ searchPagesFor = EEnvPrim "searchPagesFor" prim
       (Nothing, _) -> Left $ printf "searchPagesFor has no %s argument, only %s" searchQueryArg (show $ sort $ H.keys args)
       (Just v, _) | not (isStr v) -> Left $ printf "searchPagesFor was given %s, which is not a String query" (show v)
       (_, CErr notes) -> Left $ prettyCNotes notes
-      (Just (StrVal query), CRes _ pages) -> encodeJson . sort . filter (matches query) <$> traverse pagePath pages
+      (Just (StrVal query), CRes _ pages) -> encodeJson . sort . filter (matchesQuery query) <$> traverse pagePath pages
       _ -> Left "searchPagesFor could not read the query it was given"
     isStr StrVal{} = True
     isStr _        = False
-    matches query disp = map toLower query `isInfixOf` map toLower disp
     -- As in 'sidebar', a page with no display path cannot be opened, so it is reported rather than
     -- dropped from the list, where it would read as a page the doc server does not hold.
     pagePath imp = case impDisp imp of
       Just disp -> Right disp
       Nothing -> Left $ printf "searchPagesFor has no file path for %s, so it has no page to open" (show imp)
+
+-- | Whether what a reader typed holds of what they are being offered: without regard to case, and
+-- anywhere within it rather than at its start, since a path is looked for by the name at its end as
+-- often as by the directory at its front.
+--
+-- Shared by the searches rather than written once each, so that a box offering pages and pages to
+-- run in one list narrows both by the same rule. Two copies would drift, and a reader would see one
+-- section answer a query the other ignored.
+matchesQuery :: String -> String -> Bool
+matchesQuery query offered = map toLower query `isInfixOf` map toLower offered
+
+-- | The class an annotation is marked as a member of, in @stack\/core\/webdoc.ct@, to be offered as
+-- a page of its own.
+docPageClassName :: TypeName
+docPageClassName = mkName "/Catln/Doc/DocPage"
+
+-- | The argument of @/Catln/Doc/docPagesFor@ holding what was typed to search for. The same argument
+-- as 'searchPagesFor' takes, because it is the same typing: one box asks both.
+docPagesQueryArg :: String
+docPagesQueryArg = searchQueryArg
+
+-- | One page a reader can ask for by name. 'dpAnnot' is the annotation that produces it, written
+-- with absolute names so it means the same evaluated anywhere — it is what a link is built from, and
+-- so is source the reader could equally have written themselves. 'dpLabel' is that source with its
+-- values shortened to the names they are declared by, which is how a reader picks one.
+data DocPageEntry = DocPageEntry {
+    dpAnnot :: String,
+    dpLabel :: String
+  } deriving (Show, Generic, ToJSON)
+
+-- | Backs @/Catln/Doc/docPagesFor@, the data carried by a @Show/DocPages@ display. It renders the
+-- annotations that are pages in their own right, and that hold the query, as a JSON list of the
+-- source to run and the label to offer it under.
+--
+-- Which annotations those are is read off the program rather than listed here: an annotation is one
+-- by being marked @isa DocPage@ where it is declared, so adding a display to @webdoc.ct@ makes it
+-- findable by marking it and nothing else. This is the same reason 'listProgram' takes its stage as
+-- an enum member rather than a string — what there is to ask for is the program's to say.
+--
+-- An empty query holds of everything, so a box that has not been typed into is offered every page
+-- there is to run. Unlike 'searchPagesFor' that is a handful of entries rather than the doc server's
+-- whole listing, which is why this one is asked before anything is typed and that one is not.
+docPagesFor :: EPrim
+docPagesFor = EEnvPrim "docPagesFor" prim
+  where
+    prim Env{evTypeEnv} args = case H.lookup docPagesQueryArg args of
+      Just (StrVal query) -> Right $ encodeJson $ filter (offered query) $ allDocPages evTypeEnv
+      Just v -> Left $ printf "docPagesFor was given %s, which is not a String query" (show v)
+      Nothing -> Left $ printf "docPagesFor has no %s argument, only %s" docPagesQueryArg (show $ sort $ H.keys args)
+    -- Matched against both, since the two differ only in how much of a value's name is written and a
+    -- reader may have typed either the module it is in or the name it is picked by.
+    offered query DocPageEntry{dpAnnot, dpLabel} = matchesQuery query dpAnnot || matchesQuery query dpLabel
+
+-- | Every page the marked annotations offer, sorted, which is the order a box offers them in.
+allDocPages :: (TypeGraph tg) => TypeEnv tg -> [DocPageEntry]
+allDocPages typeEnv = sortOn dpAnnot $ concatMap (annotDocPages typeEnv) (docPageAnnots typeEnv)
+
+-- | The annotations marked as pages of their own.
+docPageAnnots :: (TypeGraph tg) => TypeEnv tg -> [TypeName]
+docPageAnnots typeEnv = case H.lookup docPageClassName (scClasses (teSatCache typeEnv)) of
+  Just ClassSatInfo{csiTypes} -> mapMaybe (fmap ptName . maybeGetSingleton) csiTypes
+  -- A program that declared no such class marked no annotations with it, which is no pages rather
+  -- than an error: the class lives in webdoc.ct, and a program is not required to reach it.
+  Nothing                     -> []
+
+-- | The pages one annotation offers: the one it is where it takes no arguments, and one per
+-- combination of its arguments' members where it takes only arguments whose values can be named.
+--
+-- None at all where any argument cannot be, which falls out rather than being tested for — an
+-- argument with no members to offer is an empty product. An annotation taking a [String] names
+-- something only the reader knows (a type to filter to, a function to run), so there is no list of
+-- what to offer, and it is left to the places that ask for that name.
+--
+-- Over every declaration of the name, since one annotation may be declared at more than one arity —
+-- @#assert@ is, with and without its message — and each arity is its own thing to offer.
+annotDocPages :: (TypeGraph tg) => TypeEnv tg -> TypeName -> [DocPageEntry]
+annotDocPages typeEnv annotName = do
+  PartialType{ptArgs} <- typeGraphData typeEnv annotName
+  -- Sorted by name so that an annotation of two arguments is written the one way, rather than in
+  -- whichever order the arguments happened to hash into.
+  binds <- traverse argBinds $ sortOn (nameStr . pkName . fst) $ H.toList ptArgs
+  return $ DocPageEntry (written nameStr binds) (written lastNamePart binds)
+  where
+    argBinds (argName, argType) = [(argName, member) | member <- sealedMembers typeEnv argType]
+    written :: (TypeName -> String) -> [(ArgName, TypeName)] -> String
+    written _ [] = lastNamePart annotName
+    written shorten binds = printf "%s(%s)" (lastNamePart annotName) (intercalate ", " $ map (writtenArg shorten) binds)
+    writtenArg :: (TypeName -> String) -> (ArgName, TypeName) -> String
+    -- The argument names are absolute, and an argument is written by the name it is declared under.
+    writtenArg shorten (argName, member) = printf "%s= %s" (drop 1 $ nameStr $ pkName argName) (shorten member)
+
+-- | The members a sealed class names, and none for anything else.
+--
+-- Sealed because that is what makes the members the whole of what there is: an open class may be
+-- joined by a type in a program that has not been read yet, so what it could be offered as is not
+-- something to answer now. This is why @#print(p -> DShow)@ contributes nothing though [DShow] is a
+-- class — it is open, and every displayable type there will ever be belongs to it.
+--
+-- A member carrying fields of its own is left out for the same reason a [String] argument is: it is
+-- a shape to fill in rather than a value to pick.
+sealedMembers :: (TypeGraph tg) => TypeEnv tg -> Type -> [TypeName]
+sealedMembers typeEnv argType = case maybeGetClassSingleton argType of
+  Just cls | Just ClassSatInfo{csiSealed=True, csiTypes} <- H.lookup (ptName cls) (scClasses (teSatCache typeEnv))
+             -> [ptName member | Just member <- map maybeGetSingleton csiTypes, H.null (ptArgs member)]
+  _ -> []
+
+-- | A name as it reads where the module it is in is not in question, which is the part after its
+-- last separator.
+lastNamePart :: TypeName -> String
+lastNamePart = last . splitOn "/" . nameStr
 
 -- | Backs @/Catln/Doc/testRun@, the data carried by a @Show/Test@ display. It renders the tests of
 -- the definition the annotation is written on as JSON: what each was, whether it passed, how many

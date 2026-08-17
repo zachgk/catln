@@ -59,13 +59,23 @@ describe('Root', () => {
   //
   // And it is the only annotation the layout asks for: the navbar's search box is a box until it is
   // typed into, so drawing the navbar no longer compiles a listing of every page to fill one.
+  //
+  // The box does ask for one thing before being typed into -- the annotations that are pages of their
+  // own -- because that is the section a reader cannot find by typing: they would have to already
+  // know what to type. It is a handful of entries rather than the doc server's listing, which is what
+  // the search itself still waits for a query to avoid sending.
   it('asks for the sidebar within the page the docs open at, and for nothing else', async () => {
     renderRoot()
 
     await waitFor(() => expect(screen.getByText('test')).toBeInTheDocument())
     const annotCalls = global.fetch.mock.calls.map(c => c[0]).filter(u => u.startsWith('/api/annot'))
     expect(annotCalls).toEqual([`/api/annot?annot=%23sidebar&prgmName=${encodeURIComponent(ROOT_PAGE)}`])
-    expect(global.fetch.mock.calls.map(c => c[0]).filter(u => u.startsWith('/api/call'))).toEqual([])
+
+    const callUrls = global.fetch.mock.calls.map(c => c[0]).filter(u => u.startsWith('/api/call'))
+    const args = encodeURIComponent(JSON.stringify({ query: '' }))
+    expect(callUrls).toEqual([
+      `/api/call?fun=${encodeURIComponent('/Catln/Doc/docPages')}&args=${args}&prgmName=${encodeURIComponent(ROOT_PAGE)}`,
+    ])
   })
 
   // The page is not there until the config says what it is, and asking without one is exactly what

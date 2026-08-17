@@ -142,6 +142,70 @@ describe('Backend API contract', () => {
     expect(await searchPages('WEBDOC')).toEqual(await searchPages('webdoc'))
   })
 
+  async function docPages(query, prgmName) {
+    const data = await fetchApi(callApiUrl('/Catln/Doc/docPages', {query}, prgmName))
+    expect(data.tag).toBe('Success')
+    const [val] = data.contents
+    expect(val.name).toBe('/Catln/Doc/Show/DocPages')
+    return JSON.parse(val.args['/pages'].contents)
+  }
+
+  // The annotations that are pages of their own are read off the program rather than listed in the
+  // webdocs, so what a box offers is what stack/core/webdoc.ct marks. This is that list, and the rule
+  // deciding it: an annotation is offered once per combination of argument values the compiler can
+  // name, and not at all where an argument names something only the reader knows.
+  it('/api/call lists the annotations marked as pages of their own', async () => {
+    const pages = await docPages('')
+    const annots = pages.map(p => p.dpAnnot)
+
+    // Taking a sealed class, so one page per member of it, written absolutely so that running it
+    // does not depend on what the page it is run against happens to name.
+    expect(annots).toEqual([
+      '#listProgram(mode= /Catln/Doc/Desugar)',
+      '#listProgram(mode= /Catln/Doc/TreeBuild)',
+      '#listProgram(mode= /Catln/Doc/Typecheck)',
+    ])
+    // Offered under the name the member is picked by rather than the one it is run under.
+    expect(pages.find(p => p.dpAnnot === '#listProgram(mode= /Catln/Doc/Typecheck)').dpLabel)
+      .toBe('#listProgram(mode= Typecheck)')
+
+    // Sorted, which is the order a box offers them in. Asserted apart from the list above so that a
+    // list which grows is still held to being offered in an order.
+    expect(annots).toEqual([...annots].sort())
+  })
+
+  // What is not offered, and the two different reasons: unmarked, and marked but with nothing to
+  // offer. The list above says the same by being exhaustive; these say which rule left each out, so
+  // that marking an annotation and getting nothing is told apart from not marking it.
+  it('/api/call offers no annotation that is not a page, and none it cannot name a value for', async () => {
+    const annots = (await docPages('')).map(p => p.dpAnnot)
+
+    // Unmarked: a display of whatever it is written on, or of the doc server's own furniture, or of
+    // one program rather than of the pages there are.
+    for (const unmarked of ['#print', '#md', '#test', '#sidebar', '#search', '#typeInfer']) {
+      expect(annots.some(a => a.startsWith(unmarked))).toBe(false)
+    }
+
+    // Would still be offered nothing if marked, since a String names something only the reader
+    // knows: there is no list of type names or function names to pick from.
+    for (const unnameable of ['#type(', '#debugger', '#debugExpr', '#typeInferPnt', '#overlay']) {
+      expect(annots.some(a => a.startsWith(unnameable))).toBe(false)
+    }
+  })
+
+  // Narrowed by the compiler, the same way and by the same rule the pages are, so a box narrowing
+  // both sections at once cannot answer one query two ways.
+  it('/api/call narrows the annotation pages by what was typed', async () => {
+    // Narrowed by the argument's value, not only by the annotation's name, which is what makes the
+    // three stages of a #listProgram three pages to a reader rather than one repeated.
+    const matched = await docPages('typecheck')
+    expect(matched.map(p => p.dpAnnot)).toEqual(['#listProgram(mode= /Catln/Doc/Typecheck)'])
+    expect(matched.length).toBeLessThan((await docPages('')).length)
+
+    expect(await docPages('TYPECHECK')).toEqual(matched)
+    expect(await docPages('nosuchpage')).toEqual([])
+  })
+
   // Naming a page is what keeps a call from compiling every page there is. It does not narrow what a
   // search finds: the pages there are do not depend on the page a search is called in.
   it('/api/call searches the same pages whichever page it is called in', async () => {

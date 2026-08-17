@@ -10,22 +10,48 @@ const theme = createTheme()
 
 const PAGES = ['/stack/core/main.ct', '/test/id.ct', '/test/utils.ct']
 
+// The annotations that are pages of their own, as the compiler enumerates them: what to run, and
+// what to offer it as. These are the entries stack/core/webdoc.ct actually marks, so a case here
+// narrows the same strings a reader would be offered — the box does not care which they are, but a
+// fixture naming an annotation that is not offered would claim it was.
+const DOC_PAGES = [
+  { dpAnnot: '#listProgram(mode= /Catln/Doc/Desugar)', dpLabel: '#listProgram(mode= Desugar)' },
+  { dpAnnot: '#listProgram(mode= /Catln/Doc/Typecheck)', dpLabel: '#listProgram(mode= Typecheck)' },
+]
+
 // The args of a compiled Show/Search: the pages it covers, as a JSON string.
 function search(pages = PAGES) {
   return { '/pages': { tag: 'StrVal', contents: JSON.stringify(pages) } }
 }
 
-// What /api/call answers a search with: the Show/Search the compiler evaluated it to.
+// The args of a compiled Show/DocPages, which carries its list the same way.
+function docPages(entries = DOC_PAGES) {
+  return { '/pages': { tag: 'StrVal', contents: JSON.stringify(entries) } }
+}
+
+// What /api/call answers with: the value the compiler evaluated the call to.
+function valueResponse(name, args) {
+  return { tag: 'Success', contents: [{ tag: 'TupleVal', name, args }, []] }
+}
+
 function callResponse(pages) {
-  return {
-    tag: 'Success',
-    contents: [{ tag: 'TupleVal', name: '/Catln/Doc/Show/Search', args: search(pages) }, []],
-  }
+  return valueResponse('/Catln/Doc/Show/Search', search(pages))
+}
+
+function docPagesResponse(entries) {
+  return valueResponse('/Catln/Doc/Show/DocPages', docPages(entries))
 }
 
 function LocationDisplay() {
   const location = useLocation()
-  return <div data-testid="location">{location.pathname}</div>
+  return (
+    <>
+      <div data-testid="location">{location.pathname}</div>
+      {/* An annotation page is named by its query rather than by its path, so a case saying which
+          page a pick opened has to be able to read it. */}
+      <div data-testid="search">{location.search}</div>
+    </>
+  )
 }
 
 // The page the doc server opens at. A search is called in it, so it has to be there before the box
@@ -33,20 +59,32 @@ function LocationDisplay() {
 const ROOT_PAGE = '/test/id.ct'
 
 const SEARCH_FUN = '/Catln/Doc/searchWebdocs'
+const DOC_PAGES_FUN = '/Catln/Doc/docPages'
 
-// The call a box makes for what has been typed into it.
-function searchUrl(query, prgmName = ROOT_PAGE) {
+function callUrl(fun, query, prgmName = ROOT_PAGE) {
   const args = encodeURIComponent(JSON.stringify({ query }))
-  return `/api/call?fun=${encodeURIComponent(SEARCH_FUN)}&args=${args}&prgmName=${encodeURIComponent(prgmName)}`
+  return `/api/call?fun=${encodeURIComponent(fun)}&args=${args}&prgmName=${encodeURIComponent(prgmName)}`
 }
 
-// Answers every search with the pages whose path holds the query, which is what the compiler's own
-// searchPagesFor does. Recorded, so a case can say how many searches a burst of typing became.
-function mockSearch(pages = PAGES) {
+// The calls a box makes for what has been typed into it: one for the pages that are files, one for
+// the pages that are annotations.
+const searchUrl = (query, prgmName) => callUrl(SEARCH_FUN, query, prgmName)
+const docPagesUrl = (query, prgmName) => callUrl(DOC_PAGES_FUN, query, prgmName)
+
+const funOf = (url) => decodeURIComponent(url.split('fun=')[1].split('&')[0])
+const queryOf = (url) => JSON.parse(decodeURIComponent(url.split('args=')[1].split('&')[0])).query
+
+// Answers each of the box's two calls the way the compiler does: the pages whose path holds the
+// query, and the annotation pages whose label holds it. Recorded, so a case can say how many calls a
+// burst of typing became, and which of the two it was.
+function mockBox({ pages = PAGES, annots = DOC_PAGES } = {}) {
   global.fetch = vi.fn((url) => {
-    const { query } = JSON.parse(decodeURIComponent(url.split('args=')[1].split('&')[0]))
-    const matched = pages.filter(p => p.toLowerCase().includes(query.toLowerCase()))
-    return Promise.resolve({ status: 200, json: () => Promise.resolve(callResponse(matched)) })
+    const query = queryOf(url)
+    const holds = (s) => s.toLowerCase().includes(query.toLowerCase())
+    const res = funOf(url) === DOC_PAGES_FUN
+      ? docPagesResponse(annots.filter(e => holds(e.dpLabel)))
+      : callResponse(pages.filter(holds))
+    return Promise.resolve({ status: 200, json: () => Promise.resolve(res) })
   })
 }
 
@@ -64,7 +102,7 @@ function Providers({ children, config = { isLoaded: true, data: { rootPage: ROOT
 }
 
 describe('Search', () => {
-  beforeEach(() => mockSearch())
+  beforeEach(() => mockBox())
 
   // The search is done by the compiler over the pages it holds, so what crosses is what matched
   // rather than every page there is. The box says what was typed and shows what it is answered with.
@@ -86,9 +124,11 @@ describe('Search', () => {
   // whatever it found by rules of its own.
   it('offers what it was answered with even where it does not read as a match', async () => {
     const user = userEvent.setup()
-    global.fetch = vi.fn(() => Promise.resolve({
+    global.fetch = vi.fn((url) => Promise.resolve({
       status: 200,
-      json: () => Promise.resolve(callResponse(['/test/somewhere/else.ct'])),
+      json: () => Promise.resolve(funOf(url) === DOC_PAGES_FUN
+        ? docPagesResponse([])
+        : callResponse(['/test/somewhere/else.ct'])),
     }))
     render(<Providers><Search {...search()} /></Providers>)
 
@@ -145,9 +185,11 @@ describe('Search', () => {
   // which for a #search is every page. So a search written in a page shows that page's pages at once
   // rather than after a call.
   //
-  // And asks for nothing to do it: a box nobody has typed into is every page there is, so asking
-  // would be the doc server's whole list crossing to draw a control nobody has used.
-  it('starts from the pages the value it was rendered from carried, asking for nothing', async () => {
+  // And asks for no pages to do it: a box nobody has typed into matches every page there is, so
+  // asking would be the doc server's whole list crossing to draw a control nobody has used. The
+  // annotations it does ask for are a handful of entries, and are the one thing a reader cannot
+  // search for without being shown that it is there.
+  it('starts from the pages the value it was rendered from carried, asking for no more', async () => {
     const user = userEvent.setup()
     render(<Providers><Search {...search()} /></Providers>)
 
@@ -156,7 +198,72 @@ describe('Search', () => {
     const listbox = await screen.findByRole('listbox')
     expect(within(listbox).getByText('/stack/core/main.ct')).toBeInTheDocument()
     expect(within(listbox).getByText('/test/id.ct')).toBeInTheDocument()
-    expect(global.fetch).not.toHaveBeenCalled()
+    expect(global.fetch.mock.calls.map(([url]) => url)).toEqual([docPagesUrl('')])
+  })
+
+  // A reader cannot search for a page they do not know is there, and an annotation is not a file to
+  // come across. So these are offered before anything is typed, which is the whole of what the
+  // section is for.
+  it('offers the pages that are annotations before anything is typed', async () => {
+    const user = userEvent.setup()
+    render(<Providers><Search {...search()} /></Providers>)
+
+    await user.click(screen.getByRole('combobox'))
+
+    const listbox = await screen.findByRole('listbox')
+    expect(await within(listbox).findByText('#listProgram(mode= Typecheck)')).toBeInTheDocument()
+    expect(within(listbox).getByText('#listProgram(mode= Desugar)')).toBeInTheDocument()
+  })
+
+  // The two are different kinds of thing to open, asked for separately and answered separately, so a
+  // reader picking one is told which they are picking.
+  it('draws the two kinds under their own headings', async () => {
+    const user = userEvent.setup()
+    mockBox({ pages: ['/stack/core/typecheck.ct', '/test/id.ct'] })
+    render(<Providers><Search {...search()} /></Providers>)
+
+    await user.type(screen.getByRole('combobox'), 'typecheck')
+
+    // Both sections are answered separately, so both are waited for.
+    const listbox = await screen.findByRole('listbox')
+    await waitFor(() => expect(within(listbox).getByText('#listProgram(mode= Typecheck)')).toBeInTheDocument())
+    await waitFor(() => expect(within(listbox).getByText('/stack/core/typecheck.ct')).toBeInTheDocument())
+    expect(within(listbox).getByText('Annotations')).toBeInTheDocument()
+    expect(within(listbox).getByText('Pages')).toBeInTheDocument()
+    // Narrowed within the section too, not merely present: the other entry does not hold the query.
+    expect(within(listbox).queryByText('#listProgram(mode= Desugar)')).not.toBeInTheDocument()
+  })
+
+  // A heading over nothing reads as a section that failed to load rather than as one nothing matched.
+  it('draws no heading for a kind nothing matched', async () => {
+    const user = userEvent.setup()
+    render(<Providers><Search {...search()} /></Providers>)
+
+    await user.type(screen.getByRole('combobox'), 'utils')
+
+    // The section is drawn from what was last answered until the next answer arrives, the same way
+    // the pages are, so that neither empties under a reader between two letters. What is waited for
+    // here is that answer.
+    const listbox = await screen.findByRole('listbox')
+    await waitFor(() => expect(within(listbox).getByText('/test/utils.ct')).toBeInTheDocument())
+    await waitFor(() => expect(within(listbox).queryByText('Annotations')).not.toBeInTheDocument())
+    expect(within(listbox).getByText('Pages')).toBeInTheDocument()
+  })
+
+  // An annotation is run rather than read, so it opens the page that evaluating it produces. Named
+  // with no page, which is what makes it mean the same wherever it was picked from.
+  it('runs the annotation that is picked', async () => {
+    const user = userEvent.setup()
+    render(<Providers><Search {...search()} /></Providers>)
+
+    const input = screen.getByRole('combobox')
+    await user.click(input)
+    await user.click(await screen.findByText('#listProgram(mode= Typecheck)'))
+
+    expect(screen.getByTestId('location').textContent).toBe('/annot')
+    expect(decodeURIComponent(screen.getByTestId('search').textContent))
+      .toBe('?annot=#listProgram(mode= /Catln/Doc/Typecheck)')
+    expect(input).toHaveValue('')
   })
 
   // Nothing is being searched for, so what was last found is not what is on offer.
@@ -184,7 +291,7 @@ describe('Search', () => {
 })
 
 describe('AppBarSearch', () => {
-  beforeEach(() => mockSearch())
+  beforeEach(() => mockBox())
 
   // What the box searches does not depend on the page it is called in -- it covers every page either
   // way -- so it names one. Being asked for with no page is being compiled against every page there
@@ -197,6 +304,23 @@ describe('AppBarSearch', () => {
 
     await waitFor(() => expect(global.fetch).toHaveBeenCalledWith(searchUrl('utils')))
     expect(await screen.findByText('/test/utils.ct')).toBeInTheDocument()
+  })
+
+  // The navbar's box carries no list to start from, so before this it offered nothing at all until
+  // something was typed. What a reader has not got to is exactly what is worth offering, and an
+  // annotation page is not something they can come across by reading.
+  it('offers the pages that are annotations before anything is typed', async () => {
+    const user = userEvent.setup()
+    render(<Providers><AppBarSearch /></Providers>)
+
+    await user.click(screen.getByRole('combobox'))
+
+    const listbox = await screen.findByRole('listbox')
+    expect(await within(listbox).findByText('#listProgram(mode= Typecheck)')).toBeInTheDocument()
+    expect(within(listbox).getByText('Annotations')).toBeInTheDocument()
+    // Nothing has been typed, so there is nothing to have found among the pages.
+    expect(within(listbox).queryByText('Pages')).not.toBeInTheDocument()
+    expect(global.fetch.mock.calls.map(([url]) => url)).toEqual([docPagesUrl('')])
   })
 
   // The box is a control in the navbar, so it is there to be typed into from the start. What it has

@@ -7,6 +7,25 @@ module(Catln/Doc)
     These include the ones
   class(DShow)
     # Represents objects which can be shown in the webdocs.
+  class(DocPage)
+    # Marks an annotation as one the webdocs offer as a page of its own, rather than one only written
+      into a program beside the thing it is about. A reader is offered these by name — in the search
+      box, without having to know they exist — so what is marked here is what there is to find, and
+      an annotation added below is found by marking it and nothing else.
+      What is left unmarked is as much of what this says as what is marked, since a reader offered a
+      page they have no use for is a reader reading past it. Three kinds are left out. A display of
+      whatever it is written on ([#md], [#print], [#test]) is not a page but part of one, and has
+      nothing to show asked for on its own. A display of the doc server's own furniture ([#sidebar],
+      [#search]) is already on the reader's screen, so offering it in the box it is drawn in says
+      nothing. And a page about one program rather than about the pages there are ([#typeInfer]) has
+      to be pointed at that program to mean anything, so it belongs where a page is already in hand
+      rather than in a box offering the same thing wherever it is opened from.
+      Membership says the annotation is a page, not that it can be written with no argument. What can
+      be offered without a reader typing anything is worked out from the declaration: an annotation
+      taking no arguments is offered once, and one whose arguments are all sealed classes is offered
+      once per combination of their members. An annotation taking a [String] — a type name, a
+      function to run — names something only the reader knows, so marking it offers nothing until
+      there is somewhere to type that in.
 
   dshow(s -> DShow)= s
     # [dshow] resolves a value or annotation to its [DShow] display form. The identity arm passes a
@@ -53,7 +72,12 @@ module(Catln/Doc)
     # Which compiler stage a [#listProgram] lists: the program before typechecking, after
       typechecking, or after tree building.
 
-  annot(#listProgram(mode -> ListProgramMode))
+  annot(#listProgram(mode -> ListProgramMode), isa= [/Catln/Doc/DocPage])
+    # Offered as a page per [ListProgramMode], since the mode is the whole of what it takes and the
+      class names every one there is.
+      The class is named absolutely, as every [isa] in this file is. A relative name here is not
+      resolved: the extends list is keyed into the class graph as it is written, so @DocPage@ becomes
+      a second class of that name beside this one rather than a reference to it.
 
   data(Show/ListProgram(prgm -> String, mode -> ListProgramMode))
     # [Show/ListProgram] lists every declaration and definition of a program. It carries the
@@ -177,6 +201,36 @@ module(Catln/Doc)
     Show/Search(pages= searchPagesFor(query= query))
 
   dshow(s= #search)= searchWebdocs(query= "")
+
+  data(Show/DocPages(pages -> String))
+    # [Show/DocPages] shows the annotations that are pages in their own right — the ones marked
+      [DocPage] — as the list a reader picks one from. It carries that list in [pages], each entry
+      the source to run and the label to offer it under.
+      Like [Show/Search] it is about what there is to ask for rather than about the program it was
+      evaluated against. Unlike it, what there is comes from the program rather than from which files
+      were read: an annotation is a page by being marked as one where it is declared, so this answers
+      about whichever program it is evaluated against and is asked of the whole doc server the same
+      way a search is.
+
+  every(Show/DocPages.., isa= [/Catln/Doc/DShow])
+
+  docPages(query -> String) -> DShow =
+    # [docPages] is the pages that are annotations rather than files: those whose source or label
+      [query] matches, as the list that opens the one that is picked. A function rather than an
+      annotation for the reason [searchWebdocs] is one — the webdocs call it as the reader types,
+      passing what they have typed.
+      An empty [query] matches every one, which is what a box that has not been typed into offers.
+      That is a handful of entries rather than every page there is, which is why a box asks this
+      before anything is typed and asks [searchWebdocs] only once something has been.
+    docPagesFor(query -> String) -> String
+      # [docPagesFor] renders the annotations marked [DocPage] whose source or label holds [query] as
+        a JSON list of what to run and what to call it. An annotation taking no arguments is one
+        entry; one taking only arguments whose values a sealed class names is an entry per
+        combination of them, which is how the three stages of a [#listProgram] are three pages; one
+        taking a value only the reader knows is none, since there is no list to offer.
+      #runtime("docPagesFor")
+
+    Show/DocPages(pages= docPagesFor(query= query))
 
   data(Show/Test(run -> String))
     # [Show/Test] shows how the tests of one definition ran: what each of them was, whether it
