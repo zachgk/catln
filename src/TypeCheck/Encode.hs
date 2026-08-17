@@ -237,6 +237,20 @@ nonLinearEqConstraints obj =
 annotSeedConstraints :: [VExpr] -> [VConstraintDat]
 annotSeedConstraints = map (\a -> BoundedByKnown 46 (getExprMeta a) (relTypeAppliedVal (exprPath a)))
 
+-- | Each destructured argument's binder ADDITIONALLY reads its slot from the COMPLETE
+-- object form — the spine's outermost meta. The object universe only enriches the
+-- full-arity form (a partial application's arg keyset matches no declared object, so
+-- 'BoundedByObjs'\/'AddArg' completion deliver declared content only at the outermost
+-- layer), while the per-layer 'PropEq' emitted where each arg is APPLIED reads the
+-- still-⊤ inner layer for every arg but the last: the binders starve
+-- (@Node(left, key, value, right)@ resolves only @right@), the definition body reads ⊤
+-- args, and the constructed value fails TreeBuild against its declared slots — the
+-- curried-layer starvation behind the order-independent @==@ examples.
+topArgPropEqs :: VExpr -> [VConstraintDat]
+topArgPropEqs obj' =
+  [ PropEq 47 (getExprMeta obj', TVArg $ inExprSingleton nObj) nArrM
+  | ObjArr{oaObj=Just nObj, oaArr=Just (_, nArrM)} <- exprAppliedArgs obj' ]
+
 fromObjArr :: EncodeState -> PObjArr -> StateT FEnv TypeCheckResult VObjArr
 fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   ObjArrTypeGraph (ObjectMap objTg) <- gets (teTypeGraph . feTypeEnv)
@@ -254,6 +268,7 @@ fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   oaObj' <- case oaObj of
     Just inExpr -> do
       inExpr' <- fromExpr (asEncodeIn est) inExpr
+      modify $ addConstraints $ topArgPropEqs inExpr'
       return $ Just inExpr'
     Nothing -> return Nothing
   modify $ addConstraints $ maybe [] nonLinearEqConstraints oaObj'
@@ -285,6 +300,12 @@ fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
         Just argExpr -> do
           arrM' <- fromMeta BAct est arrM $ printf "oa arrM %s" (show oa)
           argExpr' <- fromExpr est argExpr
+          -- An In-mode destructure in ARG-VALUE position (@this= Node(left, ..)@,
+          -- @m= Node(left, key@nk, ..)@) is an object spine too — its binders need the
+          -- complete-form links just like a definition object's.
+          case est of
+            EncodeIn -> modify $ addConstraints $ topArgPropEqs argExpr'
+            _        -> return ()
           return $ Just (Just argExpr', arrM')
         Nothing -> do
           arrM' <- fromMeta BAct est arrM $ printf "oa arrM %s" (show oa)
@@ -326,6 +347,7 @@ fromObjectMap oa@ObjArr{oaAnnots, oaObj=Just obj, oaArr} = do
   modify startConstrainBlock
   obj' <- fromExpr inEst obj
   modify $ addConstraints $ nonLinearEqConstraints obj'
+  modify $ addConstraints $ topArgPropEqs obj'
   -- The input arguments' 'EqReqAct' constraints (tying each arg's actual down to its requirement)
   -- are emitted per-argument in 'fromExpr' (the Tuple-arg handling), covering every argument form.
 

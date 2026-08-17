@@ -56,7 +56,7 @@ Prgm
                                 ]
                                 ( /first=∀/Boxed
                                 , /second=∀/Boxed
-                                ) = /Pair( EAppArg Value /first@Value /f )( EAppArg Value /second@Value /s -> ∀/Boxed )
+                                ) = /Pair( EAppArg Value /first@Value /f -> ∀/Boxed )( EAppArg Value /second@Value /s -> ∀/Boxed )
                             ) -> /Data/Primitive/Integer =
                             ( /unbox
                                 ( EAppArg Value /b -> TVArg /f = ( Value /f ↦ TVArg /f ) ) ↦ /Data/Primitive/Integer

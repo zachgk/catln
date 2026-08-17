@@ -500,6 +500,62 @@ nestedVarNarrowed typeEnv (UnionType _ oldLeafs _) (UnionType _ newLeafs _) =
     dimNarrowed _ _ = False
 nestedVarNarrowed _ _ _ = False
 
+-- | Structurally detects a nested arg slot going from ⊤ to spelled content
+-- (@Node[..](left=⊤)@ → @Node[..](left=∀BinTree[..])@). Under declaration-boundedness the
+-- two spellings denote the same set — an absent\/⊤ arg slot reads at its declared bound,
+-- so 'eqScheme' rightly judges the schemes equal — but the stored ⊤ freezes the spelling
+-- every consumer reads: binder projections deliver ⊤, the definition body constructs
+-- ⊤-slotted values, and eval-time TreeBuild (whose concrete 'ObjSrc' frame resolves the
+-- destination's vars) finds no arrows from the starved form. Without this rule the
+-- enrichment committing was a convergence-order lottery: it lands only when it arrives in
+-- the same write as a genuine change (the full-arity completion at the epoch the universe
+-- happens to resolve), and is refused as a pure respelling ever after. ⊤→content ONLY —
+-- pure syntax, no subtype calls (the general narrower-spelling rule is measured
+-- intractable, see 'nestedSlotSettled'); a bare var link is not content (gaining one is
+-- 'typeVarBindingGained''s rule). Gain-only like the neighboring rules (a content→⊤ write
+-- stays a no-op under the 'eqScheme' path), so the filled spelling is kept once found and
+-- there is no oscillation.
+-- | Whether @x@ IS @d@ with some positions still ⊤ — the lossless-adoption guard for the
+-- decl-harmonize in 'setDescriptor': same union top\/constants, same single leaf per name,
+-- same var\/arg keysets, and every non-⊤ position of @x@ literally equal to @d@'s (⊤
+-- positions may take @d@'s content, recursively). Purely syntactic — no set-algebra
+-- judges, whose conservative answers lose content (see the harmonize comment).
+slotFillAdopt :: Type -> Type -> Bool
+slotFillAdopt x d | x == d = True
+slotFillAdopt (UnionType xt xLs xCs) (UnionType dt dLs dCs) =
+  xt == dt && xCs == dCs
+    && H.keysSet xByName == H.keysSet dByName
+    && and [ ok | (n, xps) <- H.toList xByName
+           , let ok = case (xps, H.lookup n dByName) of
+                   ([xp], Just [dp]) -> partialAdopt xp dp
+                   _                 -> False ]
+  where
+    xByName = splitUnionTypeByName xLs
+    dByName = splitUnionTypeByName dLs
+    partialAdopt xp dp =
+      ptArgMode xp == ptArgMode dp && ptPreds xp == ptPreds dp
+        && H.keysSet (ptVars xp) == H.keysSet (ptVars dp)
+        && H.keysSet (ptArgs xp) == H.keysSet (ptArgs dp)
+        && and [ fillOk v (H.lookupDefault PTopType k (ptVars dp)) | (k, v) <- H.toList (ptVars xp) ]
+        && and [ fillOk v (H.lookupDefault PTopType k (ptArgs dp)) | (k, v) <- H.toList (ptArgs xp) ]
+    fillOk PTopType _ = True
+    fillOk v dv       = v == dv || slotFillAdopt v dv
+slotFillAdopt _ _ = False
+
+nestedSlotFilled :: Type -> Type -> Bool
+nestedSlotFilled (UnionType _ oldLeafs _) (UnionType _ newLeafs _) =
+  or [ partialFilled op np
+     | (name, [op]) <- H.toList (splitUnionTypeByName oldLeafs)
+     , Just [np] <- [H.lookup name (splitUnionTypeByName newLeafs)] ]
+  where
+    partialFilled op np =
+      or [ slotFilled ov nv | (k, ov) <- H.toList (ptArgs op), Just nv <- [H.lookup k (ptArgs np)] ]
+    slotFilled ov nv | ov == nv = False
+    slotFilled PTopType TypeVar{} = False
+    slotFilled PTopType _         = True
+    slotFilled ov nv              = nestedSlotFilled ov nv
+nestedSlotFilled _ _ = False
+
 -- | Structurally detects the settle machinery's respelling of a nested arg slot
 -- ('TypeCheck.TypeUtils.settlePropSlot' and the 'arrowConstrainUbs' settle-forcing) that
 -- 'eqScheme' judges equal: the slot's positive-leaf NAME SET strictly shrank — a
@@ -601,6 +657,10 @@ setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch} con m@M
       -- improvement of the same set that 'eqScheme' judges equal, but the finer spelling is what
       -- consumers read — it must commit. Gain-only like the two rules above.
       (TypeCheckResult _ (SType a1 _ _ _ _), TypeCheckResult _ (SType a2 _ _ _ _)) | nestedVarNarrowed feTypeEnv a1 a2 -> True
+      -- FILLING a ⊤ arg slot with its spelled content (see 'nestedSlotFilled') is likewise a
+      -- spelling improvement of the same declaration-bounded set that must commit — the ⊤
+      -- spelling starves every consumer downstream. Gain-only like its neighbors.
+      (TypeCheckResult _ (SType a1 _ _ _ _), TypeCheckResult _ (SType a2 _ _ _ _)) | nestedSlotFilled a1 a2 -> True
       -- The settle machinery's leaf-drop respelling (see 'nestedSlotSettled') is checked
       -- only when 'eqScheme' judged the schemes equal — the refusal path. The actual side
       -- alone is inspected; the requirement side's tighten rides the same whole-scheme store.
@@ -633,7 +693,26 @@ setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch} con m@M
         case tcreToMaybe vaenv of
           Just showVaenv
             | isEqTypeWithEnv feTypeEnv showVaenv dOld dNew -> Nothing
-            | isSubtypeOfWithEnv feTypeEnv showVaenv dNew dOld -> Just (TypeCheckResult notes old{stypeReqDecl=dNew})
+            | isSubtypeOfWithEnv feTypeEnv showVaenv dNew dOld ->
+                -- HARMONIZE a channel that IS the arriving decl with some positions still
+                -- ⊤ by adopting the decl's spelling verbatim ('slotFillAdopt'): a
+                -- ⊤-slotted @Node[..](left=⊤)@ and the decl's @Node[..](left=∀BinTree[..])@
+                -- denote the same declaration-bounded set, but the ⊤ spelling is what
+                -- every consumer reads (binder projections deliver ⊤, the body constructs
+                -- starved values, eval-time TreeBuild finds no arrows from them) — and no
+                -- other write ever respells it: the enrichment previously committed only
+                -- when it rode the same epoch as a genuine change (a convergence-order
+                -- lottery). The guard must be SYNTACTIC and lossless — adoption fires only
+                -- when every non-⊤ position already equals the decl's, so nothing can be
+                -- dropped or widened. Both semantic guards failed here: an @x ∩ decl@ meet
+                -- manufactures artifact spellings (a member template with its inner dim
+                -- eroded to ⊤ escapes the definition⊆declaration judge — core/list.ct's
+                -- restToString), and an 'isEqTypeWithEnv' gate answers class membership
+                -- SAT-conservatively (@∀List ∪ raw@ ≡ @∀List@), silently dropping raw
+                -- alternatives (measured: 9 failures incl. testFunctorIdentity).
+                let harmonize x | slotFillAdopt x dNew = dNew
+                                | otherwise = x
+                in Just (TypeCheckResult notes old{stypeReqDecl=dNew, stypeAct=harmonize (stypeAct old), stypeReq=harmonize (stypeReq old)})
             | otherwise -> Just (TypeCheckResE [GenTypeCheckError (clearMetaDat ArrMeta m) $ printf "Scheme failed verification verifySchemeReqDeclLowers (decl-only commit)\n\t\tDuring typechecking of %s:\n\t\t New Scheme: %s \n\t\t Old Scheme: %s\n\t\t Obj: %s\n\t\t Con: %s" msg (show scheme') (show scheme) (show m) (show con)])
           Nothing -> Nothing
       _ -> Nothing

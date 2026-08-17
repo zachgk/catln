@@ -41,17 +41,17 @@ Prgm
                         [ /strMaybe
                             ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> UnionType
                             ( Just
-                                ( PredClass /Data/Functor[ /T=/Data/String ] && PredClass /Data/Maybe[ /T=/Data/String ]
+                                ( PredClass /Data/Functor[ /T=∀/Data/Algebra/Semigroup ] && PredClass /Data/Maybe[ /T=∀/Data/Algebra/Semigroup ]
                                 , fromList []
                                 , []
                                 )
                             , /applyInc
-                                ( /fn( /v=TopType )=/Data/String
+                                ( /fn( /v=TopType )=∀/Data/Algebra/Semigroup
                                 , /lst=∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
                                 )
                             , []
                             ) = /applyInc( Value /lst -> TVArg /m = Value /m )
-                            ( /fn( Value /v ) -> /Data/String = /Data/toString( Value /this -> TVArg /v = Value /v ) )
+                            ( /fn( Value /v ) -> ∀/Data/Algebra/Semigroup = /Data/toString( Value /this -> TVArg /v = Value /v ) )
                         ]
                     }
                 )

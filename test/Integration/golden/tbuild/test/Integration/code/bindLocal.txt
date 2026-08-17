@@ -53,8 +53,7 @@ Prgm
                                         , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                         )
                                     )
-                                , /b=
-                                    ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ] )
+                                , /b=∀/Data/List/ConsList[ /T=TopType ]
                                 )
                             , []
                             ) =
@@ -69,7 +68,7 @@ Prgm
                                 ( Just
                                     ( !
                                         ( !
-                                            ( PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ] ) && !
+                                            ( PredClass /Data/List/ConsList[ /T=TopType ] ) && !
                                             ( PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Maybe[ /T=TopType ] )
                                         )
                                     , fromList []
@@ -77,7 +76,7 @@ Prgm
                                     )
                                 , /Data/List/Cons[ /T=TopType ]
                                     ( /head=TopType
-                                    , /tail=TopType
+                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                     )
                                 , []
                                 )
