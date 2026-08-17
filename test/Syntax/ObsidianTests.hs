@@ -7,7 +7,11 @@
 -- broken, and what it is written back as.
 module Syntax.ObsidianTests where
 
-import           CtConstants              (overlayAnnot, overlayAnnotUrl)
+import           CtConstants              (mdAnnot, mdAnnotText, overlayAnnot,
+                                           overlayAnnotUrl)
+import           Data.List                (intercalate)
+import           Data.Maybe               (maybeToList)
+import           Semantics                (testCtssConfig)
 import           Syntax.Ct.Prgm           (RawPrgm (RawPrgm),
                                            RawStatement (RawAnnot),
                                            RawStatementTree (RawStatementTree))
@@ -15,9 +19,15 @@ import           Syntax.Obsidian.Parser   (NotePart (..), frontmatterUrl,
                                            mkVaultIndex, named,
                                            notePageStatement, noteParts,
                                            rawArgStr, resolveWikiLink,
-                                           unparseNote, wikiLinks)
+                                           restoreWikiLinks, unparseNote,
+                                           wikiHref, wikiLinks)
 import           Syntax.Obsidian.Settings (TaskSettings (..),
                                            defaultTaskSettings)
+import           Syntax.Parsers           (mkDesCanonicalImportStr, pageLinkDir)
+import           System.Directory         (createDirectoryIfMissing,
+                                           getTemporaryDirectory,
+                                           removePathForcibly)
+import           System.FilePath          ((</>))
 import           Test.Tasty
 import           Test.Tasty.HUnit         (assertEqual, testCase)
 
@@ -82,6 +92,18 @@ testNumberedTask = testCase "a numbered checkbox is a task" $
     "2) [x] Write it"
                                                                                                  ]
 
+-- | The vault every note below is read as a note of, at the paths a walk of it would find them.
+--
+-- One note at the top of the vault, one within a folder of it so that a link may name it by two
+-- names, and one whose name holds a space so that the address a link is written as has to escape
+-- one. No vault on disk: what a link resolves to is decided by the note paths alone.
+vault :: [FilePath]
+vault = ["/v/Welcome.md", "/v/Notes/Nested.md", "/v/test link.md"]
+
+-- | Where a wiki link written in a note of that vault points.
+vaultHref :: String -> Maybe String
+vaultHref = wikiHref "/v" (mkVaultIndex "/v" vault)
+
 -- | A note written back out of the page it was read as, in a vault running no Tasks plugin.
 rewrite :: String -> Maybe String
 rewrite = rewriteWith Nothing
@@ -90,7 +112,20 @@ rewrite = rewriteWith Nothing
 -- running no plugin, because how a checkbox of a vault running one is read is
 -- 'Syntax.ObsidianTaskTests' and what a note holding one is written back as is 'testRewriteTasks'.
 rewriteWith :: Maybe TaskSettings -> String -> Maybe String
-rewriteWith settings note = unparseNote $ RawPrgm [] [notePageStatement settings "A note" note]
+rewriteWith settings note = unparseNote $ RawPrgm [] [notePageStatement settings vaultHref "A note" note]
+
+-- | The writing of a note as its page holds it: the comments its runs of writing are read as, at
+-- whatever depth they are written, since the writing under a checkbox is writing of the note too.
+--
+-- Read out of the page rather than from 'Syntax.Obsidian.Parser.embedWikiLinks' directly, so that
+-- what is tested is what a reader of the page sees rather than a function the page might not be
+-- using.
+writingOf :: String -> [String]
+writingOf note = aux [notePageStatement Nothing vaultHref "A note" note]
+  where
+    aux trees = concat [written tree ++ aux under | tree@(RawStatementTree _ under) <- trees]
+    written (RawStatementTree (RawAnnot annot) []) | named mdAnnot annot = maybeToList $ rawArgStr mdAnnotText annot
+    written _ = []
 
 -- | The whole of the reversion on a note holding every shape at once: writing before and after the
 -- tasks, a checked box and an unchecked one, writing under a task, a task under a task, and a
@@ -254,7 +289,7 @@ testOverlayStatement = testGroup "the page a note is written over is declared be
   testCase "and not when there are no properties" $ assertEqual "" [] $ overlaysOf "The note.\n"
                                                                                                      ]
   where
-    overlaysOf note = case notePageStatement Nothing "A note" note of
+    overlaysOf note = case notePageStatement Nothing vaultHref "A note" note of
       RawStatementTree _ parts -> [rawArgStr overlayAnnotUrl annot | RawStatementTree (RawAnnot annot) [] <- parts, named overlayAnnot annot]
 
 -- | The properties are written back between the delimiters they were found between, and the note
@@ -381,6 +416,152 @@ testResolveWikiLink = testGroup "the note a wiki link names" [
                                                              ]
   where resolve notes link = resolveWikiLink (mkVaultIndex "/v" notes) link
 
+-- | The writing of a note holds its wiki links as the links they are: a link naming a note of the
+-- vault is the markdown link to the page that note is read as, which is a link the webdocs already
+-- follow.
+--
+-- The address is the note's path within the vault however the link named the note, since that is the
+-- one spelling the writing can be read back as a wiki link from ('wikiHref').
+testEmbedWikiLinks :: TestTree
+testEmbedWikiLinks = testGroup "a wiki link is written as the link to the note it names" [
+  embeds "naming a note by its name" "Links to [[Welcome]]." "Links to [Welcome](Welcome.md).",
+  embeds "naming a note by its path within the vault" "Links to [[Notes/Nested]]." "Links to [Notes/Nested](Notes/Nested.md).",
+  embeds "naming a note in a folder by its name alone" "Links to [[Nested]]." "Links to [Nested](Notes/Nested.md).",
+  embeds "naming the words to show it as" "Links to [[Welcome|the first note]]." "Links to [the first note](Welcome.md).",
+  embeds "naming a place within a note" "Links to [[Welcome#Getting started]]." "Links to [Welcome#Getting started](Welcome.md#Getting%20started).",
+  -- Both the address and the words have a character in them a markdown link cannot hold as it is.
+  embeds "naming a note whose name holds a space" "Links to [[test link]]." "Links to [test link](test%20link.md).",
+  -- Writing a link to a note yet to be written is how one is planned, and Obsidian shows it as
+  -- unresolved rather than refusing it, so it stays the writing it was.
+  embeds "naming no note of the vault" "Links to [[create a link]]." "Links to [[create a link]].",
+  embeds "written more than once on a line" "[[Welcome]] and [[Nested]]." "[Welcome](Welcome.md) and [Nested](Notes/Nested.md).",
+  -- An embed shows the note it names within this one, which a link cannot do.
+  embeds "which is an embed" "Shows ![[Welcome]] within it." "Shows ![[Welcome]] within it.",
+  testCase "and not one written inside code" $
+    assertEqual "" [intercalate "\n" ["Links to [Welcome](Welcome.md).", "", "```", "Not [[Nested]].", "```"]] $ writingOf $ unlines [
+      "Links to [[Welcome]].",
+      "",
+      "```",
+      "Not [[Nested]].",
+      "```"
+                                                                                                                          ],
+  -- A task carries the line it was written as and is shown as the words of it rather than as
+  -- markdown, so a link written on a checkbox line is not writing this rewrites.
+  testCase "and not one written on a checkbox line" $
+    assertEqual "" (Just "- [ ] Read [[Welcome]]\n") $ rewrite "- [ ] Read [[Welcome]]\n",
+  -- The writing under a checkbox is writing of the note like any other.
+  testCase "including one written under a checkbox" $
+    assertEqual "" ["Which is in [Welcome](Welcome.md)."] $ writingOf "- [ ] Read it\n  Which is in [[Welcome]].\n"
+                                                                                        ]
+  where
+    -- Trailing newline dropped, as the writing of a note is the writing itself ('noteParts').
+    embeds what note expected = testCase what $ assertEqual "" [expected] $ writingOf note
+
+-- | And the reversion: a link to a note of the vault is written back as the wiki link it was read
+-- from, so a note read and saved unchanged leaves the file as it was.
+--
+-- Only a link naming a markdown file by a path of its own, which is what 'wikiHref' writes and what
+-- a note of a vault names another note by. Everything else a note may link to is left alone.
+testRestoreWikiLinks :: TestTree
+testRestoreWikiLinks = testGroup "a link to a note is written back as a wiki link" [
+  restores "naming it by the vault's path for it" "Links to [Welcome](Welcome.md)." "Links to [[Welcome]].",
+  restores "naming a place within it" "Links to [Welcome#Getting started](Welcome.md#Getting%20started)." "Links to [[Welcome#Getting started]].",
+  restores "naming a note whose name holds a space" "Links to [test link](test%20link.md)." "Links to [[test link]].",
+  -- The words are kept as the link's alias wherever they are not already what it names, which is
+  -- what happens to a link a note wrote naming a note in a folder by its name alone.
+  restores "shown as words of its own" "Links to [Nested](Notes/Nested.md)." "Links to [[Notes/Nested|Nested]].",
+  restores "on the web" "Try [the Importer](https://example.com/Importer)." "Try [the Importer](https://example.com/Importer).",
+  restores "naming a file from the root of the filesystem" "See [a](/elsewhere/Other.md)." "See [a](/elsewhere/Other.md).",
+  restores "naming something which is not a note" "See [a](other.ct)." "See [a](other.ct).",
+  restores "written inside code" "```\nSee [a](Welcome.md).\n```" "```\nSee [a](Welcome.md).\n```"
+                                                                                  ]
+  where restores what written expected = testCase what $ assertEqual "" expected $ restoreWikiLinks written
+
+-- | The round trip the two of them make: a note holding every shape of link at once is read as its
+-- page and written back as the note it was read from.
+--
+-- A link naming a note by a name which is not the vault's path for it is written back naming that
+-- path, and shown as the words it named. It points at the note it always pointed at and is shown as
+-- the words it was always shown as; what it does not keep is the spelling, which is what
+-- 'unparseNote' says of a note's writing generally.
+testRewriteLinks :: TestTree
+testRewriteLinks = testCase "a note of links is written back as the note it was read from" $
+  assertEqual "" (Just written) (rewrite note)
+  where
+    note = unlines [
+      "Links to [[Welcome]], [[Notes/Nested]] and [[test link]].",
+      "",
+      "Naming a place within one, [[Welcome#Getting started]], and words of its own,",
+      "[[Welcome|the first note]].",
+      "",
+      "A note yet to be written, [[create a link]], and a note named by its name alone,",
+      "[[Nested]].",
+      "",
+      "Shows ![[Welcome]] within it, and [the Importer](https://example.com/Importer).",
+      "",
+      "```",
+      "Not [[Nested]].",
+      "```"
+                   ]
+    written = unlines [
+      "Links to [[Welcome]], [[Notes/Nested]] and [[test link]].",
+      "",
+      "Naming a place within one, [[Welcome#Getting started]], and words of its own,",
+      "[[Welcome|the first note]].",
+      "",
+      "A note yet to be written, [[create a link]], and a note named by its name alone,",
+      "[[Notes/Nested|Nested]].",
+      "",
+      "Shows ![[Welcome]] within it, and [the Importer](https://example.com/Importer).",
+      "",
+      "```",
+      "Not [[Nested]].",
+      "```"
+                      ]
+
+-- | Writing a note back is writing what it says, so a note already written the way the reversion
+-- writes it is written back exactly as it was — links included.
+testRewriteLinksIdempotent :: TestTree
+testRewriteLinksIdempotent = testCase "writing a note of links back twice writes it the same way" $
+  assertEqual "" (rewrite note) (rewrite =<< rewrite note)
+  where
+    note = unlines [
+      "Links to [[Nested]] and [[Welcome#Getting started]].",
+      "",
+      "- [ ] Read [[Welcome]]",
+      "  Which is in [[test link]]."
+                   ]
+
+-- | Where a relative link written in a page's documentation resolves, which for a note is the vault
+-- holding it and for everything else is the directory the page sits in.
+--
+-- This is the whole of what the rest of the compiler knows about a vault. A note names another note
+-- by that note's path within the vault ('Syntax.Obsidian.Parser.wikiHref'), so a note whose links
+-- resolved against its own folder would follow every link written in a subfolder to the wrong place.
+--
+-- The one case here that makes files, because a vault is a directory holding a directory and nothing
+-- but the filesystem can answer whether one is. The rest of this module decides what a link means
+-- from the note paths alone, which says more about either.
+--
+-- The program written inside the vault is the point of the second case rather than a curiosity:
+-- someone may keep one there, and what makes a page a note is the syntax which read it, not where
+-- the file happens to sit. Both files are written in the same folder so the two answers differ.
+testPageLinkDir :: TestTree
+testPageLinkDir = testCase "a note's links resolve against its vault, and a program's against its folder" $ do
+  tmp <- getTemporaryDirectory
+  let dir = tmp </> "catln-obsidian-links"
+  removePathForcibly dir
+  createDirectoryIfMissing True (dir </> ".obsidian")
+  createDirectoryIfMissing True (dir </> "Notes")
+  writeFile (dir </> "Notes" </> "Nested.md") "A note.\n"
+  writeFile (dir </> "Notes" </> "prog.ct") "main = 42\n"
+
+  note <- mkDesCanonicalImportStr testCtssConfig (dir </> "Notes" </> "Nested.md")
+  assertEqual "the note" (Just dir) =<< pageLinkDir note
+
+  prgm <- mkDesCanonicalImportStr testCtssConfig (dir </> "Notes" </> "prog.ct")
+  assertEqual "the program beside it" (Just (dir </> "Notes")) =<< pageLinkDir prgm
+
 -- | A note of a vault running the Tasks plugin is written back exactly as it was found — the
 -- character in every box, every mark the plugin wrote, and a block link at the end of a line.
 --
@@ -437,6 +618,11 @@ obsidianTests = testGroup "ObsidianTests" [
   testRewriteFrontmatterIdempotent,
   testLinksInProperties,
   testResolveWikiLink,
+  testEmbedWikiLinks,
+  testRestoreWikiLinks,
+  testPageLinkDir,
+  testRewriteLinks,
+  testRewriteLinksIdempotent,
   testRewriteTasks,
   testRewriteMixedTasks
                                           ]

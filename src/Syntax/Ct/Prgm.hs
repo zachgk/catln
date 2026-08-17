@@ -328,7 +328,13 @@ data ImportSyntax = ImportSyntax {
   --
   -- A reversion writes the program rather than the file: it may write back what the file said in a
   -- form other than the one the file said it in.
-  isUnparse :: RawPrgm () -> Maybe String
+  isUnparse :: RawPrgm () -> Maybe String,
+  -- | The directory a relative link written in a page's documentation resolves against.
+  --
+  -- The directory the page was imported relative to for nearly every syntax ('importedLinkDir'), and
+  -- asked of the syntax rather than taken as that, because a syntax whose pages name each other by
+  -- where they sit within something larger resolves a link against that larger thing.
+  isLinkDir :: FileImport -> IO (Maybe FilePath)
                                  }
 
 -- | One read's reading of one syntax, holding whatever that syntax keeps for the length of a read.
@@ -359,7 +365,13 @@ eagerPreload parsed@ParsedImport{piPrgm=RawPrgm imports _, piReads} = PreloadImp
 -- | A syntax which needs nothing of a read at all: its pages are read out of the files they name
 -- and out of nothing else, so the reader made for each read is the same reader every time.
 statelessSyntax :: (Expr () -> ImportPreloadResult) -> (Expr () -> ImportParseResult) -> (RawPrgm () -> Maybe String) -> ImportSyntax
-statelessSyntax preload parse unparse = ImportSyntax (const $ return $ ImportReader preload parse (return ())) unparse
+statelessSyntax preload parse unparse = ImportSyntax (const $ return $ ImportReader preload parse (return ())) unparse importedLinkDir
+
+-- | Where a relative link resolves for a syntax whose pages are read from the directory they sit in,
+-- which is the directory they sit in. Every syntax but the one which reads a page out of a
+-- collection of them.
+importedLinkDir :: FileImport -> IO (Maybe FilePath)
+importedLinkDir = return . impDir
 
 -- | A syntax which needs nothing of a read and which cannot be written back.
 readOnlySyntax :: (Expr () -> ImportPreloadResult) -> (Expr () -> ImportParseResult) -> ImportSyntax

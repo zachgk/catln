@@ -159,7 +159,7 @@ function Comment(props) {
     if(href.startsWith("catln://")) {
       return href;
     } else if (!isUrl(href) && !path.isAbsolute(href) && pageDir) {
-      const p = path.join(pageDir, href);
+      const p = path.join(pageDir, linkPath(href));
       return `/docs/${encodeURIComponent(p)}`;
     } else {
       return defaultUrlTransform(href, children, title);
@@ -175,6 +175,21 @@ function isUrl(str) {
     return true;
   } catch {
     return false;
+  }
+}
+
+// The path a link's address names. A file's name may hold a space, which an address cannot, so such
+// a name is written escaped and this reads it back. An address which does not decode was never
+// escaped -- a page may hold a per cent sign written as itself -- and names the path it already is.
+//
+// The place within a page an address goes on to name is dropped rather than carried: a page is shown
+// as the one run of markdown it is, with no heading to arrive at.
+function linkPath(href) {
+  const address = href.split("#")[0];
+  try {
+    return decodeURIComponent(address);
+  } catch {
+    return address;
   }
 }
 

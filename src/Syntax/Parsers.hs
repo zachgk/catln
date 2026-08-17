@@ -245,6 +245,18 @@ unparseImport imp prgm = do
     Just src -> return src
     Nothing  -> fail $ printf "The page %s can not be written back as %s" (show $ impRaw imp) (show syntax)
 
+-- | The directory a relative link written in a page's documentation resolves against.
+--
+-- Asked of the syntax which read the page, as 'unparseImport' asks it how to write the page back and
+-- for the same reason: where a page's links resolve is a property of the syntax that read it, and a
+-- caller which wants to show a page has no business knowing which syntaxes there are. A page whose
+-- syntax cannot be named is answered with the directory it was imported relative to, which is what
+-- every syntax but one answers anyway ('Syntax.Ct.Prgm.importedLinkDir').
+pageLinkDir :: FileImport -> IO (Maybe FilePath)
+pageLinkDir imp = case importSyntax imp of
+  Just (_, syntax) -> isLinkDir syntax imp
+  Nothing          -> return $ impDir imp
+
 -- | When the files a page was read from were last written, as the read that read them found them.
 data ReadTime = ReadTime {
   -- | When the read began.

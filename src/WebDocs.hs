@@ -60,7 +60,8 @@ import           Syntax.Ct.Prgm                (RawExpr (RawValue),
                                                 RawStatementTree (RawStatementTree),
                                                 mkRawFileImport,
                                                 rawExprAppliedArgsMap)
-import           Syntax.Parsers                (mkDesCanonicalImportStr)
+import           Syntax.Parsers                (mkDesCanonicalImportStr,
+                                                pageLinkDir)
 import           Text.Megaparsec               (errorBundlePretty, runParser)
 import           Text.Printf
 import           TypeCheck                     (typecheckPrgms)
@@ -89,8 +90,12 @@ data PageResp p = PageResp {
   -- of that order, where there is no page to offer.
   , pgPrev   :: Maybe String
   , pgNext   :: Maybe String
-  -- | The directory the page was imported relative to, which is what a relative link written in its
-  -- documentation resolves against.
+  -- | The directory a relative link written in the page's documentation resolves against.
+  --
+  -- The directory the page was imported relative to for nearly every page, and whatever the syntax
+  -- which read the page says instead ('Syntax.Parsers.pageLinkDir') — a note of an Obsidian vault
+  -- names another note by that note's path within the vault, so a note's links resolve against the
+  -- vault rather than against the folder it sits in.
   , pgDir    :: Maybe FilePath
   }
   deriving (Generic, ToJSON)
@@ -218,7 +223,8 @@ pageResp ctss prgmName' = runCResT $ do
   pages <- lift $ ctssKeys ctss
   order <- either fail return $ sidebarOrder pages
   let (prevPage, nextPage) = maybe (Nothing, Nothing) (`neighbours` order) (impDisp prgmName')
-  return $ PageResp prgm' (cresToMaybe maybeSource) prevPage nextPage (impDir prgmName')
+  linkDir <- lift $ pageLinkDir prgmName'
+  return $ PageResp prgm' (cresToMaybe maybeSource) prevPage nextPage linkDir
 
 -- | The annotation as it now compiles, in the scope of the page it names. Lifted out of the request
 -- for it for the same reason as 'pageResp'.

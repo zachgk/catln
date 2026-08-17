@@ -13,19 +13,21 @@
 module Syntax.Obsidian.Parser where
 
 import           Control.Applicative      ((<|>))
-import           Control.Monad            (forM_)
+import           Control.Monad            (forM_, guard)
 import           CtConstants
 import           Data.Aeson               (object, (.=))
 import qualified Data.Aeson               as A
 import           Data.Char                (isDigit, isSpace)
 import           Data.Foldable            (toList)
 import qualified Data.HashMap.Strict      as H
+import qualified Data.IntSet              as IS
 import           Data.IORef               (IORef, modifyIORef', newIORef,
                                            readIORef)
 import           Data.List                (dropWhileEnd, intercalate, isInfixOf,
                                            isPrefixOf, isSuffixOf, nub,
                                            stripPrefix)
-import           Data.Maybe               (listToMaybe, mapMaybe, maybeToList)
+import           Data.Maybe               (fromMaybe, isNothing, listToMaybe,
+                                           mapMaybe, maybeToList)
 import qualified Data.Text                as T
 import qualified Data.Text.Lazy           as TL
 import qualified Data.Text.Lazy.Encoding  as TLE
@@ -75,7 +77,23 @@ obsidianConfigDir = ".obsidian"
 -- Only a note is written back. A vault is a directory, whose notes are pages of their own and are
 -- each written back as themselves, so it has no source text of its own for a reversion to produce.
 obsidianSyntax :: ImportSyntax
-obsidianSyntax = ImportSyntax newObsidianReader unparseNote
+obsidianSyntax = ImportSyntax newObsidianReader unparseNote noteLinkDir
+
+-- | Where a relative link written in a note resolves: the vault holding it.
+--
+-- A note names another note of its vault by that note's path within the vault, which is how Obsidian
+-- names one and is what 'wikiHref' writes a link as — so a link written in a note resolves against
+-- the vault rather than against the folder the note sits in. That is the whole of what the rest of
+-- the compiler has to know about a vault to show a note's links, and it is answered here so that
+-- nothing outside this module has to know what a vault is.
+--
+-- A page under no vault is answered with the directory it was imported relative to, as any other
+-- page is. That is a vault's own page, which is not a note of anything and has no writing to hold a
+-- link.
+noteLinkDir :: FileImport -> IO (Maybe FilePath)
+noteLinkDir imp = case impDisp imp of
+  Nothing   -> return $ impDir imp
+  Just page -> (<|> impDir imp) <$> noteVault page
 
 -- | What one read has found of the Obsidian vaults it reads.
 data ObsidianReader = ObsidianReader {
@@ -220,7 +238,7 @@ noteParse reader vault note = do
   settings <- vaultTaskSettings reader vault
   let linked = nub $ filter (/= note) $ mapMaybe (resolveWikiLink index) $ wikiLinks note contents
   forM_ (orCache reader) $ \cache -> recordNoteLinks cache vault note linked
-  return $ ParsedImport (RawPrgm (noteImports linked) [notePageStatement settings (takeBaseName note) contents]) (Just contents) (Just $ noteReads vault note linked)
+  return $ ParsedImport (RawPrgm (noteImports linked) [notePageStatement settings (wikiHref vault index) (takeBaseName note) contents]) (Just contents) (Just $ noteReads vault note linked)
 
 -- | Where a note sits in the graph: the notes it links to, out of what an earlier run recorded of
 -- it, and out of the note itself where there is no record of it to take them from.
@@ -288,8 +306,12 @@ noteReads vault note linked = ReadFile note : map ReadFile (taskSettingsFiles va
 -- is set to, and nowhere else. That is why the settings are carried all the way down here rather
 -- than looked at where a line is broken off: breaking a note into its parts is markdown's business
 -- and is the same in every vault, where what a checkbox MEANS is the vault's.
-notePageStatement :: Maybe TaskSettings -> String -> String -> RawStatementTree RawExpr ()
-notePageStatement settings title contents = RawStatementTree (RawDeclStatement page) (concatMap (partStatements settings) $ noteParts contents)
+--
+-- Where a wiki link points is carried down the same way and for the same reason. Which note a link
+-- names is the vault's to say, and it is said once for the vault ('wikiHref') rather than worked out
+-- again wherever a link happens to be written.
+notePageStatement :: Maybe TaskSettings -> (String -> Maybe String) -> String -> String -> RawStatementTree RawExpr ()
+notePageStatement settings href title contents = RawStatementTree (RawDeclStatement page) (concatMap (partStatements settings href) $ noteParts contents)
   where
     page = RawObjArr (Just pageExpr) TypeObj Nothing [] Nothing Nothing
     pageExpr = rawVal notePagePath `applyRawArgs` [(Just $ partialKey (mkName notePageTitle), rawStr title)]
@@ -301,9 +323,9 @@ notePageStatement settings title contents = RawStatementTree (RawDeclStatement p
 -- this note is written over, which is a reading of the note rather than a part of it, so it is a
 -- statement of its own standing beside the properties it was read out of — where the note writes
 -- them, as a task is declared where the note writes its checkbox.
-partStatements :: Maybe TaskSettings -> NotePart -> [RawStatementTree RawExpr ()]
-partStatements settings part@(NoteFrontmatter properties) = partStatement settings part : map overlayStatement (maybeToList $ frontmatterUrl properties)
-partStatements settings part = [partStatement settings part]
+partStatements :: Maybe TaskSettings -> (String -> Maybe String) -> NotePart -> [RawStatementTree RawExpr ()]
+partStatements settings href part@(NoteFrontmatter properties) = partStatement settings href part : map overlayStatement (maybeToList $ frontmatterUrl properties)
+partStatements settings href part = [partStatement settings href part]
 
 -- | The statement one part of a note is declared by.
 --
@@ -313,10 +335,17 @@ partStatements settings part = [partStatement settings part]
 -- says. A vault which runs the plugin and asks that every task carry a word gives a line not
 -- carrying that word the plain reading too — such a line is a checkbox of the note rather than a
 -- task the plugin manages, and it is still a checkbox.
-partStatement :: Maybe TaskSettings -> NotePart -> RawStatementTree RawExpr ()
-partStatement _ (NoteWriting writing) = RawStatementTree (RawAnnot (rawComment writing)) []
-partStatement _ (NoteFrontmatter properties) = RawStatementTree (RawAnnot (rawProperties properties)) []
-partStatement settings (NoteTask symbol says under) = RawStatementTree (RawDeclStatement task) (map (partStatement settings) under)
+--
+-- The wiki links of a note are written as the links they are here, where a run of its writing is
+-- read as the comment holding it, and only here. A run of writing is a piece of markdown of its own
+-- — 'noteParts' has already broken the note at its checkboxes and carried the state of a fence
+-- across the breaks — so it is markdown that can be read for its links by itself. What is left out
+-- by that falls out rather than being said: a link written on a checkbox line is not in any run of
+-- writing, and a task carries the line it was written as, so it is left as it was written.
+partStatement :: Maybe TaskSettings -> (String -> Maybe String) -> NotePart -> RawStatementTree RawExpr ()
+partStatement _ href (NoteWriting writing) = RawStatementTree (RawAnnot (rawComment (embedWikiLinks href writing))) []
+partStatement _ _ (NoteFrontmatter properties) = RawStatementTree (RawAnnot (rawProperties properties)) []
+partStatement settings href (NoteTask symbol says under) = RawStatementTree (RawDeclStatement task) (map (partStatement settings href) under)
   where
     task = RawObjArr (Just taskExpr) TypeObj Nothing [] Nothing Nothing
     taskExpr = case settings of
@@ -427,9 +456,14 @@ derivedStatement (RawStatementTree (RawAnnot annot) []) = named overlayAnnot ann
 derivedStatement _                                      = False
 
 -- | The part of a note a statement of its page was read from, if it was read from one.
+--
+-- The links of a run of writing are written back as the wiki links they were read from, which is
+-- the reversion of what 'partStatement' does to them. It is done from the writing alone, with
+-- neither the note nor its vault to hand, and 'wikiHref' writes an address that can be read that
+-- way for exactly that reason.
 notePart :: RawStatementTree RawExpr () -> Maybe NotePart
 notePart (RawStatementTree (RawAnnot annot) [])
-  | named mdAnnot annot = NoteWriting <$> rawArgStr mdAnnotText annot
+  | named mdAnnot annot = NoteWriting . restoreWikiLinks <$> rawArgStr mdAnnotText annot
   | named notePropertiesAnnot annot = NoteFrontmatter <$> rawArgStr notePropertiesAnnotText annot
 notePart (RawStatementTree (RawDeclStatement task) under)
   | Just taskExpr <- roaObj task, named noteSimpleTaskPath taskExpr = do
@@ -767,23 +801,108 @@ vaultTaskSettings reader vault = do
 
 -- | The wiki links a note writes, in the order it writes them.
 --
--- A @[[wiki link]]@ is not markdown, and is not a link to the markdown parser either: it is a
--- reference to a definition that a note never gives, which is an error rather than a link. So each
--- one is taken out of the note and replaced by a placeholder before the note is parsed, and the
--- links are read back out of the placeholders that survive into the parsed note's prose. What
--- markdown is being parsed for is which of them are prose at all: a @[[link]]@ inside code is
--- writing about a link rather than making one, and 'blockText' leaves code out.
---
 -- A note whose markdown cannot be parsed has no links. It is still a page, holding what was written
 -- in it, so the vault it belongs to still reads. Reporting the parse failure rather than passing
 -- over it needs an import parser that can answer with notes, which is the TODO on
 -- 'Syntax.Parsers.readImport'.
 wikiLinks :: FilePath -> String -> [String]
-wikiLinks note contents = case MMark.parse note (T.pack masked) of
-  Left _    -> []
-  Right doc -> unmaskWikiLinks links $ intercalate "\n" $ map blockText $ reverse $ MMark.runScanner doc (scanner [] (flip (:)))
+wikiLinks note contents = [wikiLinkText found | (i, found) <- zip [0 ..] (occurrences wikiLinkAt contents), i `IS.member` prose]
   where
-    (masked, links) = maskWikiLinks $ unboxed contents
+    prose = proseOccurrences wikiLinkAt note contents
+
+-- | The writing of a note with each wiki link naming a note of its vault written as the markdown
+-- link to the page that note is read as.
+--
+-- Only the links a reader reads are written. A wiki link inside code is writing about a link rather
+-- than making one, and one naming no note of the vault is a note yet to be written, which Obsidian
+-- shows as unresolved rather than as a link. Both are left exactly as they were written, and so are
+-- written back as themselves.
+--
+-- An embed @![[note]]@ is left alone as well. It shows the note it names within the note writing it,
+-- which a link cannot do, so writing it as one would have the note say something else the next time
+-- it was saved. It is still a link for the import it makes.
+embedWikiLinks :: (String -> Maybe String) -> String -> String
+embedWikiLinks href writing = rewriteOccurrences wikiLinkAt written writing
+  where
+    prose = proseOccurrences wikiLinkAt noteSource writing
+    written i found = do
+      guard $ i `IS.member` prose && not (wikiLinkEmbed found)
+      address <- href $ wikiLinkText found
+      return $ printf "[%s](%s)" (escapeShown $ wikiLinkShown $ wikiLinkText found) address
+
+-- | The writing of a note with each markdown link naming another note of its vault written back as
+-- the wiki link it was read from: the reversion of 'embedWikiLinks'.
+--
+-- A link naming a markdown file by a path of its own is such a link, because that is what
+-- 'wikiHref' writes it as. So a markdown link written by hand to a note of the vault is written back
+-- as a wiki link, which says the same thing in the way the vault says it.
+--
+-- The words the link is shown as are written as the wiki link's alias, and left out where they are
+-- already what the link names — so a link a note wrote naming a note of the vault by that vault's
+-- path for it is written back exactly as it was written.
+restoreWikiLinks :: String -> String
+restoreWikiLinks writing = rewriteOccurrences mdLinkAt written writing
+  where
+    prose = proseOccurrences mdLinkAt noteSource writing
+    written i found = do
+      guard $ i `IS.member` prose
+      (shown, address, _) <- mdLink found
+      target <- wikiTarget address
+      let shown' = unescapeShown shown
+      return $ printf "[[%s]]" (if shown' == target then target else target ++ "|" ++ shown')
+
+-- | The name the writing of a note is reported by where its markdown cannot be parsed.
+--
+-- Nothing is reported: writing whose markdown cannot be parsed is writing that holds no links, as
+-- 'wikiLinks' says of a whole note. What is named here is therefore never shown, and the writing is
+-- a part of a note rather than a file of its own to name.
+noteSource :: FilePath
+noteSource = "<note>"
+
+-- | Every occurrence of a token written in a note, in the order they are written.
+occurrences :: (String -> Maybe (String, String)) -> String -> [String]
+occurrences at = aux
+  where
+    aux [] = []
+    aux s@(_:cs) = case at s of
+      Just (found, rest) -> found : aux rest
+      Nothing            -> aux cs
+
+-- | The note with each occurrence of a token written as whatever it is to be written as, given which
+-- occurrence it is and what was written there. An occurrence answered nothing for is left exactly as
+-- it was written.
+rewriteOccurrences :: (String -> Maybe (String, String)) -> (Int -> String -> Maybe String) -> String -> String
+rewriteOccurrences at write = aux 0
+  where
+    aux _ [] = []
+    aux i s@(c:cs) = case at s of
+      Just (found, rest) -> fromMaybe found (write i found) ++ aux (i + 1) rest
+      Nothing            -> c : aux i cs
+
+-- | Which occurrences of a token written in a note are prose of it rather than code in it.
+--
+-- Neither token this is asked about is markdown the parser will hand back. A @[[wiki link]]@ is a
+-- reference to a definition that a note never gives, which is an error rather than a link, and a
+-- markdown link is handed back without the address it points at ('inlineText'). So each occurrence
+-- is taken out of the note and replaced by a placeholder before the note is parsed, and the ones
+-- that survive into the parsed note's prose are the ones a reader reads. What markdown is being
+-- parsed for is which of them are prose at all: a token written inside code is writing about one
+-- rather than being one, and 'blockText' leaves code out.
+--
+-- Whatever wiki links are left after that are taken out as well, without being counted. A wiki link
+-- is what breaks the parse in the first place, and the note being asked about markdown links still
+-- holds every wiki link that named no note of the vault — so a note planning one note yet to be
+-- written would be a note none of whose links could be read at all.
+--
+-- The boxes are taken out after the tokens rather than before them, so that a box written inside a
+-- token is not read as a checkbox of the note.
+proseOccurrences :: (String -> Maybe (String, String)) -> FilePath -> String -> IS.IntSet
+proseOccurrences at note contents = case MMark.parse note (T.pack $ unboxed masked') of
+  Left _    -> IS.empty
+  Right doc -> IS.fromList $ maskedIndices $ intercalate "\n" $ map blockText $ reverse $ MMark.runScanner doc (scanner [] (flip (:)))
+  where
+    masked = rewriteOccurrences at (\i _ -> Just (maskOpen : show i ++ [maskClose])) contents
+    masked' = rewriteOccurrences wikiLinkAt (\_ _ -> Just [maskPlain]) masked
 
 -- | The note with the box of each checkbox taken out of it.
 --
@@ -799,53 +918,85 @@ unboxed = intercalate "\n" . map aux . lines
       Just (_, says) -> takeWhile isSpace l ++ "- " ++ says
       Nothing        -> l
 
--- | Replaces every wiki link of a note with a placeholder, answering the note and the links taken
--- out of it.
+-- | Reads the occurrences back out of the placeholders 'proseOccurrences' left, in the order they
+-- are found.
+maskedIndices :: String -> [Int]
+maskedIndices s = case dropWhile (/= maskOpen) s of
+  []       -> []
+  (_:rest) -> case span isDigit rest of
+    (i, c:rest') | c == maskClose, not (null i) -> read i : maskedIndices rest'
+    _                                           -> maskedIndices rest
+
+-- | The characters a masked occurrence is written between, and the one a masked occurrence that is
+-- not being counted is written as.
 --
--- The placeholder is written with characters from the private use area, which no markdown syntax
--- gives a meaning to, so that a link target holding a @|@, a @*@ or a @#@ is neither read as
--- markdown nor has to be escaped as though it were.
---
--- A wiki link is written on one line, so an unclosed @[[@ is left alone rather than swallowing the
--- rest of the note.
-maskWikiLinks :: String -> (String, [String])
-maskWikiLinks = aux (0 :: Int)
-  where
-    aux _ [] = ([], [])
-    aux i s@(c:cs) = case wikiLinkAt s of
-      Just (link, rest) -> let (rest', links) = aux (i + 1) rest in (maskOpen : show i ++ maskClose : rest', link : links)
-      Nothing           -> let (cs', links) = aux i cs in (c : cs', links)
-
-    -- An embed @![[note]]@ shows another note within this one, which is a link to it
-    wikiLinkAt ('!':'[':'[':rest) = closedOnLine rest
-    wikiLinkAt ('[':'[':rest)     = closedOnLine rest
-    wikiLinkAt _                  = Nothing
-
-    closedOnLine s = do
-      (link, rest) <- splitOnFirst "]]" s
-      if '\n' `elem` link then Nothing else Just (link, rest)
-
--- | Reads the links back out of the placeholders 'maskWikiLinks' left, in the order they are found.
-unmaskWikiLinks :: [String] -> String -> [String]
-unmaskWikiLinks links = aux
-  where
-    aux s = case dropWhile (/= maskOpen) s of
-      []       -> []
-      (_:rest) -> case span isDigit rest of
-        (i, c:rest') | c == maskClose, not (null i) -> maybe id (:) (lookup (read i) indexed) $ aux rest'
-        _                                           -> aux rest
-    indexed = zip [(0 :: Int) ..] links
-
--- | The characters a masked wiki link is written between.
-maskOpen, maskClose :: Char
+-- From the private use area, which no markdown syntax gives a meaning to, so that a wiki link
+-- holding a @|@, a @*@ or a @#@ is neither read as markdown nor has to be escaped as though it were.
+maskOpen, maskClose, maskPlain :: Char
 maskOpen = '\xE000'
 maskClose = '\xE001'
+maskPlain = '\xE002'
 
--- | Splits at the first occurrence of a separator, if there is one.
-splitOnFirst :: String -> String -> Maybe (String, String)
-splitOnFirst sep = aux ""
+-- | A wiki link written at the start of a string, as the whole of what was written and what follows
+-- it.
+--
+-- An embed @![[note]]@ shows another note within this one, which is a link to it.
+wikiLinkAt :: String -> Maybe (String, String)
+wikiLinkAt s = case s of
+  ('!':'[':'[':rest) -> closed "![[" rest
+  ('[':'[':rest)     -> closed "[[" rest
+  _                  -> Nothing
   where
-    aux _ [] = Nothing
+    closed opened rest = do
+      (link, after) <- splitOnFirstInLine "]]" rest
+      return (opened ++ link ++ "]]", after)
+
+-- | What a wiki link names, out of the whole of what was written: the text between the brackets.
+wikiLinkText :: String -> String
+wikiLinkText found = take (length inner - 4) $ drop 2 inner
+  where inner = fromMaybe found $ stripPrefix "!" found
+
+-- | Whether a wiki link is an embed, which shows the note it names within the note writing it.
+wikiLinkEmbed :: String -> Bool
+wikiLinkEmbed = isPrefixOf "!"
+
+-- | The words a markdown link written at the start of a string is shown as, the address it points
+-- at, and what follows it.
+--
+-- The words are read to the first bracket which is not escaped, which is the bracket 'escapeShown'
+-- escapes so that they can be.
+mdLink :: String -> Maybe (String, String, String)
+mdLink ('[':rest) = do
+  (shown, afterShown) <- untilClosed "" rest
+  afterOpened <- stripPrefix "(" afterShown
+  (address, after) <- splitOnFirstInLine ")" afterOpened
+  return (shown, address, after)
+  where
+    untilClosed _ []         = Nothing
+    untilClosed _ ('\n':_)   = Nothing
+    untilClosed acc ('\\':c:cs) | c `elem` escapedShown = untilClosed (c : '\\' : acc) cs
+    untilClosed acc (']':cs) = Just (reverse acc, cs)
+    untilClosed acc (c:cs)   = untilClosed (c:acc) cs
+mdLink _ = Nothing
+
+-- | A markdown link written at the start of a string, as the whole of what was written and what
+-- follows it.
+mdLinkAt :: String -> Maybe (String, String)
+mdLinkAt s = do
+  (shown, address, after) <- mdLink s
+  return (printf "[%s](%s)" shown address, after)
+
+-- | Splits at the first occurrence of a separator written on the same line, if there is one.
+--
+-- On the same line because everything read this way is written on one: a wiki link, and the words
+-- and the address of a markdown link. Stopping there is also what keeps a bracket which opens
+-- nothing from being read to the end of the note, so a note full of brackets costs its length rather
+-- than the square of it.
+splitOnFirstInLine :: String -> String -> Maybe (String, String)
+splitOnFirstInLine sep = aux ""
+  where
+    aux _ []       = Nothing
+    aux _ ('\n':_) = Nothing
     aux acc s@(c:rest)
       | sep `isPrefixOf` s = Just (reverse acc, drop (length sep) s)
       | otherwise = aux (c : acc) rest
@@ -943,6 +1094,93 @@ dropMdExtension p = if ".md" `isSuffixOf` p then take (length p - 3) p else p
 -- | The note a wiki link names, without the place within it or the words it is shown as.
 wikiLinkTarget :: String -> String
 wikiLinkTarget = trim . takeWhile (/= '#') . takeWhile (/= '|')
+
+-- | The place within a note a wiki link names, and nothing where it names the note alone.
+wikiLinkAnchor :: String -> String
+wikiLinkAnchor = trim . drop 1 . dropWhile (/= '#') . takeWhile (/= '|')
+
+-- | The words a wiki link is shown as: the ones written after the @|@, and what it names where none
+-- are written. This is what Obsidian shows a link as.
+wikiLinkShown :: String -> String
+wikiLinkShown link = trim $ maybe link snd $ splitOnFirstInLine "|" link
+
+-- | The address a wiki link is written as, where it names a note of the vault: the path of that note
+-- within the vault, and the place within it where it names one.
+--
+-- Within the vault rather than within the note writing it, because writing a note back has only that
+-- note's own writing to work from — it knows neither which note it is nor which vault holds it
+-- ('unparseNote') — and a path from the vault is the one thing that can be read back as a wiki link
+-- without knowing either. It is also the very path the vault is indexed by ('mkVaultIndex'), so the
+-- address a link is written as is the name it resolved by.
+wikiHref :: FilePath -> VaultIndex -> String -> Maybe String
+wikiHref vault index link = do
+  target <- resolveWikiLink index link
+  return $ escapeHref (makeRelative vault target) ++ anchor
+  where
+    anchor = case wikiLinkAnchor link of
+      ""    -> ""
+      place -> '#' : escapeHref place
+
+-- | The note and the place within it a markdown address names, written as a wiki link names them,
+-- where it names a note of the vault at all.
+--
+-- A markdown file named by a path of its own is such an address, because that is what 'wikiHref'
+-- writes. An address on the web, and one naming a file from the root of the filesystem rather than
+-- from the vault, name something which is not a note of the vault and are left alone.
+wikiTarget :: String -> Maybe String
+wikiTarget address = do
+  guard $ isNothing $ webAddress address
+  let (named', anchor) = break (== '#') address
+  let path' = unescapeHref named'
+  guard $ ".md" `isSuffixOf` path' && not ("/" `isPrefixOf` path')
+  let target = dropMdExtension path'
+  guard $ not $ null target
+  return $ target ++ if null anchor then "" else '#' : unescapeHref (drop 1 anchor)
+
+-- | A path written as the address of a markdown link, with the characters which would end that
+-- address, or be read as the place within it, written as the escapes markdown reads them back from.
+--
+-- These are the escapes Obsidian itself writes when it writes a link as a markdown one, so a note
+-- naming a note whose name holds a space is written the way that vault's own editor writes it.
+escapeHref :: String -> String
+escapeHref = concatMap aux
+  where
+    aux c | c `elem` (" ()<>#%" :: String) = printf "%%%02X" (fromEnum c)
+          | otherwise                      = [c]
+
+-- | The path an escaped address names.
+unescapeHref :: String -> String
+unescapeHref ('%':a:b:rest) | Just c <- hexPair a b = c : unescapeHref rest
+unescapeHref (c:rest)                               = c : unescapeHref rest
+unescapeHref []                                     = []
+
+-- | The character a pair of hexadecimal digits names, where the two of them name one.
+hexPair :: Char -> Char -> Maybe Char
+hexPair a b = do
+  a' <- digit a
+  b' <- digit b
+  return $ toEnum $ a' * 16 + b'
+  where
+    digit c | isDigit c                     = Just $ fromEnum c - fromEnum '0'
+            | c `elem` ("abcdef" :: String) = Just $ fromEnum c - fromEnum 'a' + 10
+            | c `elem` ("ABCDEF" :: String) = Just $ fromEnum c - fromEnum 'A' + 10
+            | otherwise                     = Nothing
+
+-- | Text written as the words a markdown link is shown as, with the brackets which would end them
+-- escaped.
+escapeShown :: String -> String
+escapeShown = concatMap (\c -> if c `elem` escapedShown then ['\\', c] else [c])
+
+-- | The words an escaped run of them says.
+unescapeShown :: String -> String
+unescapeShown ('\\':c:rest) | c `elem` escapedShown = c : unescapeShown rest
+unescapeShown (c:rest)                              = c : unescapeShown rest
+unescapeShown []                                    = []
+
+-- | The characters written after a backslash within the words a markdown link is shown as: the
+-- brackets which would end them, and the backslash which escapes those.
+escapedShown :: String
+escapedShown = "[]\\"
 
 -- | Text without the whitespace written around it.
 trim :: String -> String

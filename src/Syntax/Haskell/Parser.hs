@@ -105,7 +105,7 @@ runParser flags filename str parser = unP parser parseState
 -- TODO Write a Haskell module back. Nothing reads one back yet, and a module is read for what it
 -- declares rather than in full, so there is not enough of it in the program to write one.
 hsSyntax :: ImportSyntax
-hsSyntax = ImportSyntax newHaskellReader (const Nothing)
+hsSyntax = ImportSyntax newHaskellReader (const Nothing) importedLinkDir
 
 -- | The reader one read reads Haskell modules with.
 newHaskellReader :: ReadEnv -> IO ImportReader

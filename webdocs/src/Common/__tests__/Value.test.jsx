@@ -136,6 +136,27 @@ describe('documentation links', () => {
     expect(screen.getByText('a')).toHaveAttribute('href', '/test/id.ct')
     expect(screen.getByText('b')).toHaveAttribute('href', 'https://catln.dev')
   })
+
+  it('resolves a link written down into a folder', () => {
+    render(<Providers dir="/test"><Value data={md('see [Notes/Nested](Notes/Nested.md)')} /></Providers>)
+
+    expect(screen.getByText('Notes/Nested')).toHaveAttribute('href', '/docs/%2Ftest%2FNotes%2FNested.md')
+  })
+
+  // A file's name may hold a space, which an address cannot, so such a name is written escaped.
+  it('resolves an address escaping a name which holds a space', () => {
+    render(<Providers dir="/test"><Value data={md('see [test link](test%20link.md)')} /></Providers>)
+
+    expect(screen.getByText('test link')).toHaveAttribute('href', '/docs/%2Ftest%2Ftest%20link.md')
+  })
+
+  // A page is shown as the one run of markdown it is, with no heading to arrive at, so the place
+  // within a page an address goes on to name is dropped rather than carried into the route.
+  it('drops the place within a page an address names', () => {
+    render(<Providers dir="/test"><Value data={md('see [Welcome#Getting started](Welcome.md#Getting%20started)')} /></Providers>)
+
+    expect(screen.getByText('Welcome#Getting started')).toHaveAttribute('href', '/docs/%2Ftest%2FWelcome.md')
+  })
 })
 
 describe('note and overlay values', () => {

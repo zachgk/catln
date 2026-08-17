@@ -311,7 +311,10 @@ Prgm
             ( Value /text= CStr "# Notes
             A note is a piece of writing that names itself and links to other notes. Each note is a page of
             its own and each link between two notes is an import between their pages, so the graph a set of
-            notes forms is the import graph of the program they are read as." )
+            notes forms is the import graph of the program they are read as.
+            A link is also a link in the writing. Where a note names another note of the same collection,
+            the writing holds the link to the page that note is read as, so reading a note is a way of
+            reaching the notes it names." )
         , /Catln/#md
             ( Value /text= CStr "A [Task] is one thing to do, written in a note as a markdown checkbox. A task is a break in
             the writing of the note holding it: the comment ends where the checkbox was written, the task
