@@ -1,0 +1,1357 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/Data/Map/maybeContains"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/maybeContains
+                            ( Value /r -> ∀/Data/Maybe[ /T=$_/V ] ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Map/maybeContains( Value /r -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/Map/maybeContains
+                            ( Value /r -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( Value /value ) ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Map/getStep"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/getStep[ /MV : TopType ][ /MK : ∀/Data/Algebra/Ord ]( Value /cmp -> ∀/Data/Algebra/Comparison )( Value /key -> $/MK )
+                            ( Value /left -> ∀/Data/Map/BinTree
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ]
+                            )( Value /value -> $/MV )
+                            ( Value /right -> ∀/Data/Map/BinTree
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ]
+                            ) -> ∀/Data/Maybe[ /T=$/MV ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Map/getStep( Value /cmp -> /Data/Algebra/Equal = Value /Data/Algebra/Equal )( Value /key -> ∀/Data/Algebra/Ord )
+                            ( Value /left -> ∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=$/MV
+                                ]
+                            )( Value /value )
+                            ( Value /right -> ∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=$/MV
+                                ]
+                            ) -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( Value /value -> TVArg /value = Value /value )
+                        , /Data/Map/getStep( Value /cmp -> /Data/Algebra/LessThan = Value /Data/Algebra/LessThan )( Value /key -> ∀/Data/Algebra/Ord )
+                            ( Value /left -> ∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=$/MV
+                                ]
+                            )( Value /value )
+                            ( Value /right -> ∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=$/MV
+                                ]
+                            ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Maybe[ /T=$/MV ]
+                                , fromList []
+                                , []
+                                )
+                            ,
+                                ( /Data/Map/getStep
+                                    ( /value=TopType
+                                    , /key=∀/Data/Algebra/Ord
+                                    , /cmp=∀/Data/Algebra/Comparison
+                                    , /right=∀/Data/Map/BinTree
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=$/MV
+                                        ]
+                                    , /left=∀/Data/Map/BinTree
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=$/MV
+                                        ]
+                                    ) + /Data/Maybe/Some[ /T=TopType ]( /value=$/T ) + /Data/Map/get
+                                    ( /m=∀/Data/Map/BinTree
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=$/MV
+                                        ]
+                                    , /key=∀/Data/Algebra/Ord
+                                    )
+                                )
+                            , []
+                            ) = /Data/Map/get( Value /m -> TVArg /left = Value /left )( Value /key -> TVArg /key = Value /key )
+                        , /Data/Map/getStep( Value /cmp -> /Data/Algebra/GreaterThan = Value /Data/Algebra/GreaterThan )( Value /key -> ∀/Data/Algebra/Ord )
+                            ( Value /left -> ∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=$/MV
+                                ]
+                            )( Value /value )
+                            ( Value /right -> ∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=$/MV
+                                ]
+                            ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Maybe[ /T=$/MV ]
+                                , fromList []
+                                , []
+                                )
+                            ,
+                                ( /Data/Map/getStep
+                                    ( /value=TopType
+                                    , /key=∀/Data/Algebra/Ord
+                                    , /cmp=∀/Data/Algebra/Comparison
+                                    , /right=∀/Data/Map/BinTree
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=$/MV
+                                        ]
+                                    , /left=∀/Data/Map/BinTree
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=$/MV
+                                        ]
+                                    ) + /Data/Maybe/Some[ /T=TopType ]( /value=$/T ) + /Data/Map/get
+                                    ( /m=∀/Data/Map/BinTree
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=$/MV
+                                        ]
+                                    , /key=∀/Data/Algebra/Ord
+                                    )
+                                )
+                            , []
+                            ) = /Data/Map/get( Value /m -> TVArg /right = Value /right )( Value /key -> TVArg /key = Value /key )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Map/containedIn"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/containedIn[ /MV : ∀/Data/Algebra/Eq ][ /MK : ∀/Data/Algebra/Ord ]
+                            ( Value /a -> ∀/Data/Map/BinTree
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ]
+                            )
+                            ( Value /b -> ∀/Data/Map/BinTree
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ]
+                            ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Map/containedIn( Value /a -> /Data/Map/Leaf = Value /Data/Map/Leaf )
+                            ( Value /b -> ∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=∀/Data/Algebra/Eq
+                                ]
+                            ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /Data/Map/containedIn
+                            ( Value /a -> /Data/Map/Node
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=∀/Data/Algebra/Eq
+                                ]
+                                ( /value=$/V
+                                , /key=$/K
+                                , /right=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=∀/Data/Algebra/Eq
+                                    ]
+                                , /left=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=∀/Data/Algebra/Eq
+                                    ]
+                                ) = /Data/Map/Node
+                                ( Value /left -> ∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=∀/Data/Algebra/Eq
+                                    ]
+                                )( Value /key -> ∀/Data/Algebra/Ord )( Value /value -> ∀/Data/Algebra/Eq )
+                                ( Value /right -> ∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=∀/Data/Algebra/Eq
+                                    ]
+                                )
+                            )
+                            ( Value /b -> ∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=∀/Data/Algebra/Eq
+                                ]
+                            ) -> ∀/Data/Primitive/Boolean = /operator&&
+                            ( Value /l -> ∀/Data/Primitive/Boolean = /operator&&
+                                ( Value /l -> ∀/Data/Primitive/Boolean = /operator==
+                                    ( Value /l -> UnionType
+                                        ( Just
+                                            ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq
+                                            , fromList []
+                                            , []
+                                            )
+                                        , /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T )
+                                        , []
+                                        ) = /Data/Map/get( Value /m -> TVArg /b = Value /b )( Value /key -> TVArg /key = Value /key )
+                                    )
+                                    ( Value /r -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) = /Data/Maybe/Some( Value /value -> TVArg /value = Value /value ) )
+                                )
+                                ( Value /r -> ∀/Data/Primitive/Boolean = /Data/Map/containedIn( Value /a -> TVArg /left = Value /left )( Value /b -> TVArg /b = Value /b ) )
+                            )
+                            ( Value /r -> ∀/Data/Primitive/Boolean = /Data/Map/containedIn( Value /a -> TVArg /right = Value /right )( Value /b -> TVArg /b = Value /b ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Map/containsKey"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/containsKey[ /MV : TopType ][ /MK : ∀/Data/Algebra/Ord ]
+                            ( Value /m -> ∀/Data/Map
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ]
+                            )( Value /key -> $/MK ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Map/containsKey
+                            ( Value /m -> ∀/Data/Map
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=$/MV
+                                ]
+                            )( Value /key -> ∀/Data/Algebra/Ord ) -> ∀/Data/Primitive/Boolean = /Data/Map/maybeContains
+                            ( Value /r -> ∀/Data/Maybe[ /T=TopType ] = /Data/Map/get( Value /m -> TVArg /m = Value /m )( Value /key -> TVArg /key = Value /key ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Map/insertStep"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/insertStep[ /MV : TopType ][ /MK : ∀/Data/Algebra/Ord ]( Value /cmp -> ∀/Data/Algebra/Comparison )
+                            ( Value /left -> ∀/Data/Map/BinTree
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ]
+                            )( Value /nk -> $/MK )( Value /nv -> $/MV )
+                            ( Value /right -> ∀/Data/Map/BinTree
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ]
+                            )( Value /key -> $/MK )( Value /value -> $/MV ) -> ∀/Data/Map/BinTree
+                            [ /K=$/MK
+                            , /V=$/MV
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Map/insertStep( Value /cmp -> /Data/Algebra/Equal = Value /Data/Algebra/Equal )
+                            ( Value /left -> ∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=$/MV
+                                ]
+                            )( Value /nk -> ∀/Data/Algebra/Ord )( Value /nv )
+                            ( Value /right -> ∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=$/MV
+                                ]
+                            )( Value /key -> ∀/Data/Algebra/Ord )( Value /value ) -> /Data/Map/Node
+                            ( /value=TopType
+                            , /key=∀/Data/Algebra/Ord
+                            , /right=∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=$/MV
+                                ]
+                            , /left=∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=$/MV
+                                ]
+                            ) = /Data/Map/Node( Value /left -> TVArg /left = Value /left )( Value /key -> TVArg /nk = Value /nk )( Value /value -> TVArg /value = Value /value )( Value /right -> TVArg /right = Value /right )
+                        , /Data/Map/insertStep( Value /cmp -> /Data/Algebra/LessThan = Value /Data/Algebra/LessThan )
+                            ( Value /left -> ∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=$/MV
+                                ]
+                            )( Value /nk -> ∀/Data/Algebra/Ord )( Value /nv )
+                            ( Value /right -> ∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=$/MV
+                                ]
+                            )( Value /key -> ∀/Data/Algebra/Ord )( Value /value ) -> /Data/Map/Node
+                            ( /value=TopType
+                            , /key=∀/Data/Algebra/Ord
+                            , /right=∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=$/MV
+                                ]
+                            , /left=∀/Data/Map/BinTree
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ]
+                            ) = /Data/Map/Node
+                            ( Value /left -> ∀/Data/Map/BinTree
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ] = /insert( Value /m -> TVArg /left = Value /left )( Value /key -> TVArg /key = Value /key )( Value /value -> TVArg /value = Value /value )
+                            )( Value /key -> TVArg /nk = Value /nk )( Value /value -> TVArg /nv = Value /nv )( Value /right -> TVArg /right = Value /right )
+                        , /Data/Map/insertStep( Value /cmp -> /Data/Algebra/GreaterThan = Value /Data/Algebra/GreaterThan )
+                            ( Value /left -> ∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=$/MV
+                                ]
+                            )( Value /nk -> ∀/Data/Algebra/Ord )( Value /nv )
+                            ( Value /right -> ∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=$/MV
+                                ]
+                            )( Value /key -> ∀/Data/Algebra/Ord )( Value /value ) -> /Data/Map/Node
+                            ( /value=TopType
+                            , /key=∀/Data/Algebra/Ord
+                            , /right=∀/Data/Map/BinTree
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ]
+                            , /left=∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=$/MV
+                                ]
+                            ) = /Data/Map/Node( Value /left -> TVArg /left = Value /left )( Value /key -> TVArg /nk = Value /nk )( Value /value -> TVArg /nv = Value /nv )
+                            ( Value /right -> ∀/Data/Map/BinTree
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ] = /insert( Value /m -> TVArg /right = Value /right )( Value /key -> TVArg /key = Value /key )( Value /value -> TVArg /value = Value /value )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Map/Node"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/Node[ /V : TopType ][ /K : TopType ]
+                            ( Value /left -> ∀/Data/Map/BinTree
+                                [ /K=$_/K
+                                , /V=$_/V
+                                ]
+                            )( Value /key -> $/K )( Value /value -> $/V )
+                            ( Value /right -> ∀/Data/Map/BinTree
+                                [ /K=$_/K
+                                , /V=$_/V
+                                ]
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Map/keys"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/keys
+                            ( Value /m -> ∀/Data/Map
+                                [ /K=$_/K
+                                , /V=$_/V
+                                ]
+                            ) -> ∀/Data/List[ /T=$_/K ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Map/keys( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf ) -> /Data/List/Nil = Value /Data/List/Nil
+                        , /Data/Map/keys
+                            ( Value /m -> /Data/Map/Node
+                                ( /value=TopType
+                                , /key=TopType
+                                , /right=TopType
+                                , /left=TopType
+                                ) = /Data/Map/Node( Value /left )( Value /key )( Value /value )( Value /right )
+                            ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/List/ConsList[ /T=TopType ]
+                                , fromList []
+                                , []
+                                )
+                            ,
+                                ( /Data/List/append
+                                    ( /a=UnionType
+                                        ( Just
+                                            ( PredClass /Data/List[ /T=TopType ]
+                                            , fromList []
+                                            , []
+                                            )
+                                        , /Data/List/Cons[ /T=TopType ]
+                                            ( /head=$/T
+                                            , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                            )
+                                        , []
+                                        )
+                                    , /b=/Data/List/Cons[ /T=TopType ]
+                                        ( /head=$/T
+                                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                        )
+                                    ) + /Data/List/Cons[ /T=TopType ]
+                                    ( /head=$/T
+                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                    )
+                                )
+                            , []
+                            ) = /Data/List/append
+                            ( Value /a -> UnionType
+                                ( Just
+                                    ( PredClass /Data/List[ /T=TopType ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/List/Cons[ /T=TopType ]
+                                    ( /head=$/T
+                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                    )
+                                , []
+                                ) = /Data/Map/keys( Value /m -> TVArg /left = Value /left )
+                            )
+                            ( Value /b -> /Data/List/Cons[ /T=TopType ]
+                                ( /head=$/T
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                ) = /Data/List/Cons( Value /head -> TVArg /key = Value /key )
+                                ( Value /tail -> UnionType
+                                    ( Just
+                                        ( PredClass /Data/List[ /T=TopType ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /Data/List/Cons[ /T=TopType ]
+                                        ( /head=$/T
+                                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                        )
+                                    , []
+                                    ) = /Data/Map/keys( Value /m -> TVArg /right = Value /right )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Map/get"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/get[ /MV : TopType ][ /MK : ∀/Data/Algebra/Ord ]
+                            ( Value /m -> ∀/Data/Map
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ]
+                            )( Value /key -> $/MK ) -> ∀/Data/Maybe[ /T=$/MV ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Map/get( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf )( Value /key -> ∀/Data/Algebra/Ord ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
+                        , /Data/Map/get
+                            ( Value /m -> /Data/Map/Node
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=TopType
+                                ]
+                                ( /value=$/V
+                                , /key=$/K
+                                , /right=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=$/MV
+                                    ]
+                                , /left=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=$/MV
+                                    ]
+                                ) = /Data/Map/Node
+                                ( Value /left -> ∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=$/MV
+                                    ]
+                                )( Value /key@Value /nk -> ∀/Data/Algebra/Ord )( Value /value )
+                                ( Value /right -> ∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=$/MV
+                                    ]
+                                )
+                            )( Value /key -> ∀/Data/Algebra/Ord ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Maybe[ /T=$/MV ]
+                                , fromList []
+                                , []
+                                )
+                            ,
+                                ( /Data/Map/getStep
+                                    ( /value=TopType
+                                    , /key=∀/Data/Algebra/Ord
+                                    , /cmp=∀/Data/Algebra/Comparison
+                                    , /right=∀/Data/Map/BinTree
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=$/MV
+                                        ]
+                                    , /left=∀/Data/Map/BinTree
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=$/MV
+                                        ]
+                                    ) + /Data/Maybe/Some[ /T=TopType ]( /value=$/T ) + /Data/Map/get
+                                    ( /m=∀/Data/Map/BinTree
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=$/MV
+                                        ]
+                                    , /key=∀/Data/Algebra/Ord
+                                    )
+                                )
+                            , []
+                            ) = /Data/Map/getStep
+                            ( Value /cmp -> ∀/Data/Algebra/Comparison = /Data/Algebra/compareTo( Value /other -> TVArg /nk = Value /nk )( Value /this -> TVArg /key = Value /key ) )( Value /key -> TVArg /key = Value /key )( Value /left -> TVArg /left = Value /left )( Value /value -> TVArg /value = Value /value )( Value /right -> TVArg /right = Value /right )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Map/size"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/size
+                            ( Value /m -> ∀/Data/Map
+                                [ /K=$_/K
+                                , /V=$_/V
+                                ]
+                            ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Map/size( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf ) -> /Data/Primitive/Integer = CInt 0
+                        , /Data/Map/size
+                            ( Value /m -> /Data/Map/Node
+                                ( /value=TopType
+                                , /key=TopType
+                                , /right=TopType
+                                , /left=TopType
+                                ) = /Data/Map/Node( Value /left )( Value /key )( Value /value )( Value /right )
+                            ) -> /Data/Primitive/Integer = /operator+
+                            ( Value /l -> /Data/Primitive/Integer = /operator+
+                                ( Value /l -> /Data/Primitive/Integer = CInt 1 )
+                                ( Value /r -> /Data/Primitive/Integer = /Data/Map/size( Value /m -> TVArg /left = Value /left ) )
+                            )
+                            ( Value /r -> /Data/Primitive/Integer = /Data/Map/size( Value /m -> TVArg /right = Value /right ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Map/insert"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/insert[ /MV : TopType ][ /MK : ∀/Data/Algebra/Ord ]
+                            ( Value /m -> ∀/Data/Map
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ]
+                            )( Value /key -> $/MK )( Value /value -> $/MV ) -> ∀/Data/Map
+                            [ /K=$/MK
+                            , /V=$/MV
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Map/insert( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf )( Value /key -> ∀/Data/Algebra/Ord )( Value /value ) -> /Data/Map/Node
+                            ( /value=TopType
+                            , /key=∀/Data/Algebra/Ord
+                            , /right=/Data/Map/Leaf
+                            , /left=/Data/Map/Leaf
+                            ) = /Data/Map/Node( Value /left -> /Data/Map/Leaf = Value /Data/Map/Leaf )( Value /key -> TVArg /key = Value /key )( Value /value -> TVArg /value = Value /value )( Value /right -> /Data/Map/Leaf = Value /Data/Map/Leaf )
+                        , /Data/Map/insert
+                            ( Value /m -> /Data/Map/Node
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=TopType
+                                ]
+                                ( /value=$/V
+                                , /key=$/K
+                                , /right=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=$/MV
+                                    ]
+                                , /left=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=$/MV
+                                    ]
+                                ) = /Data/Map/Node
+                                ( Value /left -> ∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=$/MV
+                                    ]
+                                )( Value /key@Value /nk -> ∀/Data/Algebra/Ord )( Value /value@Value /nv )
+                                ( Value /right -> ∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=$/MV
+                                    ]
+                                )
+                            )( Value /key -> ∀/Data/Algebra/Ord )( Value /value ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Map/BinTree
+                                    [ /K=$/MK
+                                    , /V=$/MV
+                                    ]
+                                , fromList []
+                                , []
+                                )
+                            , /Data/Map/insertStep
+                                ( /nk=∀/Data/Algebra/Ord
+                                , /value=TopType
+                                , /key=∀/Data/Algebra/Ord
+                                , /cmp=∀/Data/Algebra/Comparison
+                                , /nv=TopType
+                                , /right=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=$/MV
+                                    ]
+                                , /left=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=$/MV
+                                    ]
+                                )
+                            , []
+                            ) = /insertStep
+                            ( Value /cmp -> ∀/Data/Algebra/Comparison = /Data/Algebra/compareTo( Value /other -> TVArg /nk = Value /nk )( Value /this -> TVArg /key = Value /key ) )( Value /left -> TVArg /left = Value /left )( Value /nk -> TVArg /nk = Value /nk )( Value /nv -> TVArg /nv = Value /nv )( Value /right -> TVArg /right = Value /right )( Value /key -> TVArg /key = Value /key )( Value /value -> TVArg /value = Value /value )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Map/mapValues"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/mapValues[ /MW : TopType ][ /MV : TopType ][ /MK : TopType ]
+                            ( Value /m -> ∀/Data/Map/BinTree
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ]
+                            )
+                            ( /fn( Value /v -> $/MV ) -> $/MW ) -> ∀/Data/Map/BinTree
+                            [ /K=$/MK
+                            , /V=$/MW
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Map/mapValues( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf )
+                            ( /fn( Value /v ) ) -> /Data/Map/Leaf = Value /Data/Map/Leaf
+                        , /Data/Map/mapValues
+                            ( Value /m -> /Data/Map/Node
+                                ( /value=TopType
+                                , /key=TopType
+                                , /right=TopType
+                                , /left=TopType
+                                ) = /Data/Map/Node( Value /left )( Value /key )( Value /value )( Value /right )
+                            )
+                            ( /fn( Value /v ) ) -> /Data/Map/Node
+                            ( /value=TopType
+                            , /key=TopType
+                            , /right=∀/Data/Map/BinTree
+                                [ /K=$/MK
+                                , /V=$/MW
+                                ]
+                            , /left=∀/Data/Map/BinTree
+                                [ /K=$/MK
+                                , /V=$/MW
+                                ]
+                            ) = /Data/Map/Node
+                            ( Value /left -> ∀/Data/Map/BinTree
+                                [ /K=$/MK
+                                , /V=$/MW
+                                ] = /Data/Map/mapValues( Value /m -> TVArg /left = Value /left )
+                                ( /fn( Value /v )= /fn( Value /v -> TVArg /v = Value /v ) )
+                            )( Value /key -> TVArg /key = Value /key )
+                            ( Value /value= /fn( Value /v -> TVArg /value = Value /value ) )
+                            ( Value /right -> ∀/Data/Map/BinTree
+                                [ /K=$/MK
+                                , /V=$/MW
+                                ] = /Data/Map/mapValues( Value /m -> TVArg /right = Value /right )
+                                ( /fn( Value /v )= /fn( Value /v -> TVArg /v = Value /v ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Map/mapEqual"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/mapEqual[ /MV : ∀/Data/Algebra/Eq ][ /MK : ∀/Data/Algebra/Ord ]
+                            ( Value /a -> ∀/Data/Map/BinTree
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ]
+                            )
+                            ( Value /b -> ∀/Data/Map/BinTree
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ]
+                            ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Map/mapEqual
+                            ( Value /a -> ∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=∀/Data/Algebra/Eq
+                                ]
+                            )
+                            ( Value /b -> ∀/Data/Map/BinTree
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=∀/Data/Algebra/Eq
+                                ]
+                            ) -> ∀/Data/Primitive/Boolean = /operator&&
+                            ( Value /l -> ∀/Data/Primitive/Boolean = /operator==
+                                ( Value /l -> /Data/Primitive/Integer = /Data/Map/size( Value /m -> TVArg /a = Value /a ) )
+                                ( Value /r -> /Data/Primitive/Integer = /Data/Map/size( Value /m -> TVArg /b = Value /b ) )
+                            )
+                            ( Value /r -> ∀/Data/Primitive/Boolean = /Data/Map/containedIn( Value /a -> TVArg /a = Value /a )( Value /b -> TVArg /b = Value /b ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Map/Leaf"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Map/Leaf ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Algebra/equal"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/equal( Value /other -> ∀/Data/Algebra/Eq )( Value /this -> /Data/Map/Leaf ) -> ∀/Data/Primitive/Boolean = /Data/Map/mapEqual( Value /a -> /Data/Map/Leaf = Value /Data/Map/Leaf )( Value /b -> TVArg /other = Value /other )
+                        , /Data/Algebra/equal( Value /other -> ∀/Data/Algebra/Eq )
+                            ( Value /this -> /Data/Map/Node
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=∀/Data/Algebra/Eq
+                                ]
+                                ( /value=$/V
+                                , /key=$/K
+                                , /right=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=∀/Data/Algebra/Eq
+                                    ]
+                                , /left=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=∀/Data/Algebra/Eq
+                                    ]
+                                ) = /Data/Map/Node[ /V : ∀/Data/Algebra/Eq ][ /K : ∀/Data/Algebra/Ord ]
+                                ( Value /left -> ∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=∀/Data/Algebra/Eq
+                                    ]
+                                )( Value /key -> ∀/Data/Algebra/Ord )( Value /value -> ∀/Data/Algebra/Eq )
+                                ( Value /right -> ∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=∀/Data/Algebra/Eq
+                                    ]
+                                )
+                            ) -> ∀/Data/Primitive/Boolean = /Data/Map/mapEqual
+                            ( Value /a -> /Data/Map/Node
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=∀/Data/Algebra/Eq
+                                ]
+                                ( /value=$/V
+                                , /key=$/K
+                                , /right=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=∀/Data/Algebra/Eq
+                                    ]
+                                , /left=∀/Data/Map/BinTree
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=∀/Data/Algebra/Eq
+                                    ]
+                                ) = /Data/Map/Node( Value /left -> TVArg /left = Value /left )( Value /key -> TVArg /key = Value /key )( Value /value -> TVArg /value = Value /value )( Value /right -> TVArg /right = Value /right )
+                            )( Value /b -> TVArg /other = Value /other )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Map/values"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/values
+                            ( Value /m -> ∀/Data/Map
+                                [ /K=$_/K
+                                , /V=$_/V
+                                ]
+                            ) -> ∀/Data/List[ /T=$_/V ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Map/values( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf ) -> /Data/List/Nil = Value /Data/List/Nil
+                        , /Data/Map/values
+                            ( Value /m -> /Data/Map/Node
+                                ( /value=TopType
+                                , /key=TopType
+                                , /right=TopType
+                                , /left=TopType
+                                ) = /Data/Map/Node( Value /left )( Value /key )( Value /value )( Value /right )
+                            ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/List/ConsList[ /T=TopType ]
+                                , fromList []
+                                , []
+                                )
+                            ,
+                                ( /Data/List/append
+                                    ( /a=UnionType
+                                        ( Just
+                                            ( PredClass /Data/List[ /T=TopType ]
+                                            , fromList []
+                                            , []
+                                            )
+                                        , /Data/List/Cons[ /T=TopType ]
+                                            ( /head=$/T
+                                            , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                            )
+                                        , []
+                                        )
+                                    , /b=/Data/List/Cons[ /T=TopType ]
+                                        ( /head=$/T
+                                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                        )
+                                    ) + /Data/List/Cons[ /T=TopType ]
+                                    ( /head=$/T
+                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                    )
+                                )
+                            , []
+                            ) = /Data/List/append
+                            ( Value /a -> UnionType
+                                ( Just
+                                    ( PredClass /Data/List[ /T=TopType ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/List/Cons[ /T=TopType ]
+                                    ( /head=$/T
+                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                    )
+                                , []
+                                ) = /Data/Map/values( Value /m -> TVArg /left = Value /left )
+                            )
+                            ( Value /b -> /Data/List/Cons[ /T=TopType ]
+                                ( /head=$/T
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                ) = /Data/List/Cons( Value /head -> TVArg /value = Value /value )
+                                ( Value /tail -> UnionType
+                                    ( Just
+                                        ( PredClass /Data/List[ /T=TopType ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /Data/List/Cons[ /T=TopType ]
+                                        ( /head=$/T
+                                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                        )
+                                    , []
+                                    ) = /Data/Map/values( Value /m -> TVArg /right = Value /right )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Data/Map/BinTree
+            ,
+                [ ∀/Data/Map/BinTree
+                    [ /K=∀/Data/Algebra/Ord
+                    , /V=∀/Data/Algebra/Eq
+                    ]
+                ]
+            , Just ""
+            )
+        , CGClass
+            ( False
+            , /Data/Map
+                [ /K=TopType
+                , /V=TopType
+                ]
+            ,
+                [ ∀/Data/Map/BinTree
+                    [ /K=$_/K
+                    , /V=$_/V
+                    ]
+                ]
+            , Just " Every [BinTree] is a [Map], so each [Map] operation resolves on it through the arms below. An
+              empty map is written [Leaf]."
+            )
+        , CGClass
+            ( True
+            , /Data/Map/BinTree
+                [ /K=TopType
+                , /V=TopType
+                ]
+            ,
+                [ /Data/Map/Node
+                    [ /K=$_/K
+                    , /V=$_/V
+                    ]
+                    ( /value=$/V
+                    , /key=$/K
+                    , /right=∀/Data/Map/BinTree
+                        [ /K=$_/K
+                        , /V=$_/V
+                        ]
+                    , /left=∀/Data/Map/BinTree
+                        [ /K=$_/K
+                        , /V=$_/V
+                        ]
+                    )
+                , /Data/Map/Leaf
+                ]
+            , Just ""
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String = CStr "# Maps
+            A [Map] is a collection that associates each [key] with a [value], so a value can be looked up by
+            its key. [Map] is an interface: it names the operations every map supports — [get], [insert],
+            [containsKey], [size], [keys], [values] — without fixing how the entries are stored. Concrete map
+            types implement it; this file provides the [BinTree], and a future hash map would be another.
+            Because the operations are declared on [Map] rather than on one concrete type, every map type
+            reuses those declarations just by being a [Map]." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "## An unbalanced binary search tree
+            A [BinTree] is the simplest [Map]: either empty ([Leaf]) or a [Node] holding a [key]/[value]
+            pair with a smaller-keyed [left] subtree and a larger-keyed [right] subtree. Keys must be [Ord]
+            so each operation can compare the target key against a node's key and descend the correct way.
+            Almost every operation is a two-arm recursion — a base case for [Leaf], and a step that inspects
+            the [Node] and recurses into a subtree. The tree is unbalanced: its shape depends on the order
+            keys were inserted, but the map it represents (the set of key/value entries) does not." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "Every [BinTree] is a [Map], so each [Map] operation resolves on it through the arms below. An
+            empty map is written [Leaf]." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "## Size" )
+        , /Catln/#print
+            ( Value /p -> /Data/Primitive/Integer = /Data/Map/size
+                ( Value /m -> ∀/Data/Map
+                    [ /K=TopType
+                    , /V=TopType
+                    ] = /insert
+                    ( Value /m -> ∀/Data/Map
+                        [ /K=∀/Data/Algebra/Ord
+                        , /V=$/MV
+                        ] = /insert( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf )
+                        ( Value /key -> /Data/Primitive/Integer = CInt 1 )
+                        ( Value /value -> /Data/Primitive/Integer = CInt 10 )
+                    )
+                    ( Value /key -> /Data/Primitive/Integer = CInt 2 )
+                    ( Value /value -> /Data/Primitive/Integer = CInt 20 )
+                )
+            )
+            ( Value /result -> /Data/String = CStr "2" )
+        , /Catln/#print
+            ( Value /p -> /Data/Primitive/Integer = /Data/Map/size( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf ) )
+            ( Value /result -> /Data/String = CStr "0" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "## Lookup" )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
+                ( Value /l -> UnionType
+                    ( Just
+                        ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq
+                        , fromList []
+                        , []
+                        )
+                    , /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T )
+                    , []
+                    ) = /Data/Map/get
+                    ( Value /m -> ∀/Data/Map
+                        [ /K=∀/Data/Algebra/Ord
+                        , /V=$/MV
+                        ] = /insert
+                        ( Value /m -> ∀/Data/Map
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=$/MV
+                            ] = /insert( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf )
+                            ( Value /key -> /Data/Primitive/Integer = CInt 1 )
+                            ( Value /value -> /Data/Primitive/Integer = CInt 10 )
+                        )
+                        ( Value /key -> /Data/Primitive/Integer = CInt 2 )
+                        ( Value /value -> /Data/Primitive/Integer = CInt 20 )
+                    )
+                    ( Value /key -> /Data/Primitive/Integer = CInt 2 )
+                )
+                ( Value /r -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                    ( Value /value -> /Data/Primitive/Integer = CInt 20 )
+                )
+            )
+            ( Value /result -> /Data/String = CStr "True" )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
+                ( Value /l -> UnionType
+                    ( Just
+                        ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq
+                        , fromList []
+                        , []
+                        )
+                    , /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T )
+                    , []
+                    ) = /Data/Map/get
+                    ( Value /m -> ∀/Data/Map
+                        [ /K=∀/Data/Algebra/Ord
+                        , /V=$/MV
+                        ] = /insert( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf )
+                        ( Value /key -> /Data/Primitive/Integer = CInt 1 )
+                        ( Value /value -> /Data/Primitive/Integer = CInt 10 )
+                    )
+                    ( Value /key -> /Data/Primitive/Integer = CInt 9 )
+                )( Value /r -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+            )
+            ( Value /result -> /Data/String = CStr "True" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "## Membership" )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Map/containsKey
+                ( Value /m -> ∀/Data/Map
+                    [ /K=∀/Data/Algebra/Ord
+                    , /V=$/MV
+                    ] = /insert( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf )
+                    ( Value /key -> /Data/Primitive/Integer = CInt 1 )
+                    ( Value /value -> /Data/Primitive/Integer = CInt 10 )
+                )
+                ( Value /key -> /Data/Primitive/Integer = CInt 1 )
+            )
+            ( Value /result -> /Data/String = CStr "True" )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Map/containsKey
+                ( Value /m -> ∀/Data/Map
+                    [ /K=∀/Data/Algebra/Ord
+                    , /V=$/MV
+                    ] = /insert( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf )
+                    ( Value /key -> /Data/Primitive/Integer = CInt 1 )
+                    ( Value /value -> /Data/Primitive/Integer = CInt 10 )
+                )
+                ( Value /key -> /Data/Primitive/Integer = CInt 3 )
+            )
+            ( Value /result -> /Data/String = CStr "False" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "## Insertion" )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
+                ( Value /l -> UnionType
+                    ( Just
+                        ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq
+                        , fromList []
+                        , []
+                        )
+                    , /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T )
+                    , []
+                    ) = /Data/Map/get
+                    ( Value /m -> ∀/Data/Map
+                        [ /K=∀/Data/Algebra/Ord
+                        , /V=$/MV
+                        ] = /insert
+                        ( Value /m -> ∀/Data/Map
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=$/MV
+                            ] = /insert( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf )
+                            ( Value /key -> /Data/Primitive/Integer = CInt 1 )
+                            ( Value /value -> /Data/Primitive/Integer = CInt 10 )
+                        )
+                        ( Value /key -> /Data/Primitive/Integer = CInt 1 )
+                        ( Value /value -> /Data/Primitive/Integer = CInt 99 )
+                    )
+                    ( Value /key -> /Data/Primitive/Integer = CInt 1 )
+                )
+                ( Value /r -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                    ( Value /value -> /Data/Primitive/Integer = CInt 99 )
+                )
+            )
+            ( Value /result -> /Data/String = CStr "True" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "## Keys and values" )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
+                ( Value /l -> UnionType
+                    ( Just
+                        ( PredClass /Data/Algebra/Eq && PredClass /Data/List[ /T=TopType ]
+                        , fromList []
+                        , []
+                        )
+                    , /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
+                        ( /head=$/T
+                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ]
+                        )
+                    , []
+                    ) = /Data/Map/keys
+                    ( Value /m -> ∀/Data/Map
+                        [ /K=TopType
+                        , /V=TopType
+                        ] = /insert
+                        ( Value /m -> ∀/Data/Map
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=$/MV
+                            ] = /insert( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf )
+                            ( Value /key -> /Data/Primitive/Integer = CInt 2 )
+                            ( Value /value -> /Data/Primitive/Integer = CInt 20 )
+                        )
+                        ( Value /key -> /Data/Primitive/Integer = CInt 1 )
+                        ( Value /value -> /Data/Primitive/Integer = CInt 10 )
+                    )
+                )
+                ( Value /r -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                    ( /head=/Data/Primitive/Integer
+                    , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        ( /head=/Data/Primitive/Integer
+                        , /tail=/Data/List/Nil
+                        )
+                    ) = /Data/List/Cons
+                    ( Value /head -> /Data/Primitive/Integer = CInt 1 )
+                    ( Value /tail -> /Data/List/Cons
+                        ( /head=/Data/Primitive/Integer
+                        , /tail=/Data/List/Nil
+                        ) = /Data/List/Cons
+                        ( Value /head -> /Data/Primitive/Integer = CInt 2 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                    )
+                )
+            )
+            ( Value /result -> /Data/String = CStr "True" )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
+                ( Value /l -> UnionType
+                    ( Just
+                        ( PredClass /Data/Algebra/Eq && PredClass /Data/List[ /T=TopType ]
+                        , fromList []
+                        , []
+                        )
+                    , /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
+                        ( /head=$/T
+                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ]
+                        )
+                    , []
+                    ) = /Data/Map/values
+                    ( Value /m -> ∀/Data/Map
+                        [ /K=TopType
+                        , /V=TopType
+                        ] = /insert
+                        ( Value /m -> ∀/Data/Map
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=$/MV
+                            ] = /insert( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf )
+                            ( Value /key -> /Data/Primitive/Integer = CInt 2 )
+                            ( Value /value -> /Data/Primitive/Integer = CInt 20 )
+                        )
+                        ( Value /key -> /Data/Primitive/Integer = CInt 1 )
+                        ( Value /value -> /Data/Primitive/Integer = CInt 10 )
+                    )
+                )
+                ( Value /r -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                    ( /head=/Data/Primitive/Integer
+                    , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        ( /head=/Data/Primitive/Integer
+                        , /tail=/Data/List/Nil
+                        )
+                    ) = /Data/List/Cons
+                    ( Value /head -> /Data/Primitive/Integer = CInt 10 )
+                    ( Value /tail -> /Data/List/Cons
+                        ( /head=/Data/Primitive/Integer
+                        , /tail=/Data/List/Nil
+                        ) = /Data/List/Cons
+                        ( Value /head -> /Data/Primitive/Integer = CInt 20 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                    )
+                )
+            )
+            ( Value /result -> /Data/String = CStr "True" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "# BinTree Eq membership (order-independent)
+            Makes a [BinTree] whose keys are [Ord] and values are [Eq] a proper member of [Eq], so the generic
+            [operator==] dispatches through [equal]. Equality is ORDER-INDEPENDENT: two maps are equal when
+            they hold the same key/value entries, regardless of the tree shape their insertion order produced.
+            (Structural node-for-node equality would call two maps with the same entries unequal — exactly the
+            case the [Eq] class docstring's [TreeSet] note warns about.) [equal] is decided by [mapEqual]: the
+            maps have the same [size] and every entry of one is [containedIn] the other (equal size plus
+            one-directional containment gives equality). [containedIn] reuses [get] and compares the looked-up
+            [Some] result through the [Maybe] [Eq] instance." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "Two maps with the same entries are equal even when built in different orders (different tree" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "  shapes); maps differing in a value are not." )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
+                ( Value /l ->
+                    ( TopType | PredClass /Data/Map
+                        [ /K=$/MK
+                        , /V=$/MV
+                        ] && PredClass /Data/Algebra/Eq
+                    ) = /insert
+                    ( Value /m -> ∀/Data/Map
+                        [ /K=∀/Data/Algebra/Ord
+                        , /V=$/MV
+                        ] = /insert( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf )
+                        ( Value /key -> /Data/Primitive/Integer = CInt 1 )
+                        ( Value /value -> /Data/Primitive/Integer = CInt 10 )
+                    )
+                    ( Value /key -> /Data/Primitive/Integer = CInt 2 )
+                    ( Value /value -> /Data/Primitive/Integer = CInt 20 )
+                )
+                ( Value /r ->
+                    ( TopType | PredClass /Data/Map
+                        [ /K=$/MK
+                        , /V=$/MV
+                        ] && PredClass /Data/Algebra/Eq
+                    ) = /insert
+                    ( Value /m -> ∀/Data/Map
+                        [ /K=∀/Data/Algebra/Ord
+                        , /V=$/MV
+                        ] = /insert( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf )
+                        ( Value /key -> /Data/Primitive/Integer = CInt 2 )
+                        ( Value /value -> /Data/Primitive/Integer = CInt 20 )
+                    )
+                    ( Value /key -> /Data/Primitive/Integer = CInt 1 )
+                    ( Value /value -> /Data/Primitive/Integer = CInt 10 )
+                )
+            )
+            ( Value /result -> /Data/String = CStr "True" )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
+                ( Value /l ->
+                    ( TopType | PredClass /Data/Map
+                        [ /K=$/MK
+                        , /V=$/MV
+                        ] && PredClass /Data/Algebra/Eq
+                    ) = /insert( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf )
+                    ( Value /key -> /Data/Primitive/Integer = CInt 1 )
+                    ( Value /value -> /Data/Primitive/Integer = CInt 10 )
+                )
+                ( Value /r ->
+                    ( TopType | PredClass /Data/Map
+                        [ /K=$/MK
+                        , /V=$/MV
+                        ] && PredClass /Data/Algebra/Eq
+                    ) = /insert( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf )
+                    ( Value /key -> /Data/Primitive/Integer = CInt 1 )
+                    ( Value /value -> /Data/Primitive/Integer = CInt 99 )
+                )
+            )
+            ( Value /result -> /Data/String = CStr "False" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "# Functor: mapping over values
+            A [BinTree] is a functor over its VALUES: [mapValues] applies a function to every value while
+            preserving the keys and the tree's shape, so mapping [f] over a map [{k1: v1, k2: v2}] gives
+            [{k1: f v1, k2: f v2}] — the "map a function over a collection" operation [fmap] generalises, here
+            ranging over the values only. (It is a standalone operation rather than an instance of the
+            [Functor] class: a [BinTree] is parameterized by both its key and value, and the single-parameter
+            [Functor] class cannot yet track re-typing one parameter while preserving the other — so the class
+            instance awaits two-parameter [Functor] support. The operation itself works generically.)" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "Mapping [+1] over a map's values leaves the keys unchanged and adds one to each value (checked by" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "  looking the mapped value back up with [get])." )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
+                ( Value /l -> UnionType
+                    ( Just
+                        ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq
+                        , fromList []
+                        , []
+                        )
+                    , /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T )
+                    , []
+                    ) = /Data/Map/get
+                    ( Value /m -> ∀/Data/Map/BinTree
+                        [ /K=$/MK
+                        , /V=$/MW
+                        ] = /Data/Map/mapValues
+                        ( Value /m ->
+                            ( TopType | PredClass /Data/Map
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ] && PredClass /Data/Map/BinTree
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ]
+                            ) = /insert( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf )
+                            ( Value /key -> /Data/Primitive/Integer = CInt 1 )
+                            ( Value /value -> /Data/Primitive/Integer = CInt 10 )
+                        )
+                        ( /fn( Value /v ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /v = Value /v )
+                            ( Value /r -> /Data/Primitive/Integer = CInt 1 )
+                        )
+                    )
+                    ( Value /key -> /Data/Primitive/Integer = CInt 1 )
+                )
+                ( Value /r -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                    ( Value /value -> /Data/Primitive/Integer = CInt 11 )
+                )
+            )
+            ( Value /result -> /Data/String = CStr "True" )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
+                ( Value /l -> UnionType
+                    ( Just
+                        ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq
+                        , fromList []
+                        , []
+                        )
+                    , /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T )
+                    , []
+                    ) = /Data/Map/get
+                    ( Value /m -> ∀/Data/Map/BinTree
+                        [ /K=$/MK
+                        , /V=$/MW
+                        ] = /Data/Map/mapValues
+                        ( Value /m -> ∀/Data/Map/BinTree
+                            [ /K=$/MK
+                            , /V=$/MV
+                            ] = /insert
+                            ( Value /m -> ∀/Data/Map
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=$/MV
+                                ] = /insert( Value /m -> /Data/Map/Leaf = Value /Data/Map/Leaf )
+                                ( Value /key -> /Data/Primitive/Integer = CInt 1 )
+                                ( Value /value -> /Data/Primitive/Integer = CInt 10 )
+                            )
+                            ( Value /key -> /Data/Primitive/Integer = CInt 2 )
+                            ( Value /value -> /Data/Primitive/Integer = CInt 20 )
+                        )
+                        ( /fn( Value /v ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /v = Value /v )
+                            ( Value /r -> /Data/Primitive/Integer = CInt 1 )
+                        )
+                    )
+                    ( Value /key -> /Data/Primitive/Integer = CInt 2 )
+                )
+                ( Value /r -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                    ( Value /value -> /Data/Primitive/Integer = CInt 21 )
+                )
+            )
+            ( Value /result -> /Data/String = CStr "True" )
+        ]
+    }

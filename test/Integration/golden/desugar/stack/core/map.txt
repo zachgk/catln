@@ -1,0 +1,673 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/Data/Map/maybeContains"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/maybeContains
+                            ( Value r -> ∀/Data/Maybe[ /T=$_/V ] ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Map/maybeContains( Value r= Value /Data/Maybe/Nothing ) -> ∀/Data/Primitive/Boolean = Value False
+                        , /Data/Map/maybeContains
+                            ( Value r= /Data/Maybe/Some( Value value ) ) -> ∀/Data/Primitive/Boolean = Value True
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Map/getStep"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/getStep[ /MV : TopType ][ /MK : ∀/Data/Algebra/Ord ]( Value cmp -> ∀/Data/Algebra/Comparison )( Value key -> $/MK )
+                            ( Value left -> ∀/Data/Map/BinTree
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ]
+                            )( Value value -> $/MV )
+                            ( Value right -> ∀/Data/Map/BinTree
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ]
+                            ) -> ∀/Data/Maybe[ /T=$/MV ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Map/getStep( Value cmp= Value /Data/Algebra/Equal )( Value key )( Value left )( Value value )( Value right )= /Data/Maybe/Some( Value value= Value value )
+                        , /Data/Map/getStep( Value cmp= Value /Data/Algebra/LessThan )( Value key )( Value left )( Value value )( Value right )= get( Value m= Value left )( Value key= Value key )
+                        , /Data/Map/getStep( Value cmp= Value /Data/Algebra/GreaterThan )( Value key )( Value left )( Value value )( Value right )= get( Value m= Value right )( Value key= Value key )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Map/containedIn"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/containedIn[ /MV : ∀/Data/Algebra/Eq ][ /MK : ∀/Data/Algebra/Ord ]
+                            ( Value a -> ∀/Data/Map/BinTree
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ]
+                            )
+                            ( Value b -> ∀/Data/Map/BinTree
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ]
+                            ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Map/containedIn( Value a= Value Leaf )( Value b ) -> ∀/Data/Primitive/Boolean = Value /Data/Primitive/True
+                        , /Data/Map/containedIn
+                            ( Value a= Node( Value left )( Value key )( Value value )( Value right ) )( Value b ) -> ∀/Data/Primitive/Boolean = /operator&&
+                            ( Value /l= /operator&&
+                                ( Value /l= /operator==
+                                    ( Value /l= get( Value m= Value b )( Value key= Value key ) )
+                                    ( Value /r= /Data/Maybe/Some( Value value= Value value ) )
+                                )
+                                ( Value /r= containedIn( Value a= Value left )( Value b= Value b ) )
+                            )
+                            ( Value /r= containedIn( Value a= Value right )( Value b= Value b ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Map/containsKey"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/containsKey[ /MV : TopType ][ /MK : ∀/Data/Algebra/Ord ]
+                            ( Value m -> ∀/Data/Map
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ]
+                            )( Value key -> $/MK ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Map/containsKey( Value m )( Value key ) -> ∀/Data/Primitive/Boolean = maybeContains
+                            ( Value r= get( Value m= Value m )( Value key= Value key ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Map/insertStep"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/insertStep[ /MV : TopType ][ /MK : ∀/Data/Algebra/Ord ]( Value cmp -> ∀/Data/Algebra/Comparison )
+                            ( Value left -> ∀/Data/Map/BinTree
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ]
+                            )( Value nk -> $/MK )( Value nv -> $/MV )
+                            ( Value right -> ∀/Data/Map/BinTree
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ]
+                            )( Value key -> $/MK )( Value value -> $/MV ) -> ∀/Data/Map/BinTree
+                            [ /K=$/MK
+                            , /V=$/MV
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Map/insertStep( Value cmp= Value /Data/Algebra/Equal )( Value left )( Value nk )( Value nv )( Value right )( Value key )( Value value )= Node( Value left= Value left )( Value key= Value nk )( Value value= Value value )( Value right= Value right )
+                        , /Data/Map/insertStep( Value cmp= Value /Data/Algebra/LessThan )( Value left )( Value nk )( Value nv )( Value right )( Value key )( Value value )= Node
+                            ( Value left= insert( Value m= Value left )( Value key= Value key )( Value value= Value value ) )( Value key= Value nk )( Value value= Value nv )( Value right= Value right )
+                        , /Data/Map/insertStep( Value cmp= Value /Data/Algebra/GreaterThan )( Value left )( Value nk )( Value nv )( Value right )( Value key )( Value value )= Node( Value left= Value left )( Value key= Value nk )( Value value= Value nv )
+                            ( Value right= insert( Value m= Value right )( Value key= Value key )( Value value= Value value ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Map/Node"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/Node[ /V : TopType ][ /K : TopType ]
+                            ( Value /left -> ∀/Data/Map/BinTree
+                                [ /K=$_/K
+                                , /V=$_/V
+                                ]
+                            )( Value /key -> $/K )( Value /value -> $/V )
+                            ( Value /right -> ∀/Data/Map/BinTree
+                                [ /K=$_/K
+                                , /V=$_/V
+                                ]
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Map/keys"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/keys
+                            ( Value m -> ∀/Data/Map
+                                [ /K=$_/K
+                                , /V=$_/V
+                                ]
+                            ) -> ∀/Data/List[ /T=$_/K ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Map/keys( Value m= Value Leaf )= Value /Data/List/Nil
+                        , /Data/Map/keys
+                            ( Value m= Node( Value left )( Value key )( Value value )( Value right ) )= /Data/List/append
+                            ( Value a= keys( Value m= Value left ) )
+                            ( Value b= /Data/List/Cons( Value head= Value key )
+                                ( Value tail= keys( Value m= Value right ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Map/get"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/get[ /MV : TopType ][ /MK : ∀/Data/Algebra/Ord ]
+                            ( Value m -> ∀/Data/Map
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ]
+                            )( Value key -> $/MK ) -> ∀/Data/Maybe[ /T=$/MV ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Map/get( Value m= Value Leaf )( Value key )= Value /Data/Maybe/Nothing
+                        , /Data/Map/get
+                            ( Value m= Node( Value left )( Value key@Value nk )( Value value )( Value right ) )( Value key )= getStep
+                            ( Value cmp= compareTo( Value other= Value nk )( Value /this= Value key ) )( Value key= Value key )( Value left= Value left )( Value value= Value value )( Value right= Value right )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Map/size"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/size
+                            ( Value m -> ∀/Data/Map
+                                [ /K=$_/K
+                                , /V=$_/V
+                                ]
+                            ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Map/size( Value m= Value Leaf ) -> /Data/Primitive/Integer = CInt 0
+                        , /Data/Map/size
+                            ( Value m= Node( Value left )( Value key )( Value value )( Value right ) ) -> /Data/Primitive/Integer = /operator+
+                            ( Value /l= /operator+
+                                ( Value /l= CInt 1 )
+                                ( Value /r= size( Value m= Value left ) )
+                            )
+                            ( Value /r= size( Value m= Value right ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Map/insert"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/insert[ /MV : TopType ][ /MK : ∀/Data/Algebra/Ord ]
+                            ( Value m -> ∀/Data/Map
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ]
+                            )( Value key -> $/MK )( Value value -> $/MV ) -> ∀/Data/Map
+                            [ /K=$/MK
+                            , /V=$/MV
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Map/insert( Value m= Value Leaf )( Value key )( Value value )= Node( Value left= Value Leaf )( Value key= Value key )( Value value= Value value )( Value right= Value Leaf )
+                        , /Data/Map/insert
+                            ( Value m= Node( Value left )( Value key@Value nk )( Value value@Value nv )( Value right ) )( Value key )( Value value )= insertStep
+                            ( Value cmp= compareTo( Value other= Value nk )( Value /this= Value key ) )( Value left= Value left )( Value nk= Value nk )( Value nv= Value nv )( Value right= Value right )( Value key= Value key )( Value value= Value value )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Map/mapValues"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/mapValues[ /MW : TopType ][ /MV : TopType ][ /MK : TopType ]
+                            ( Value m -> ∀/Data/Map/BinTree
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ]
+                            )
+                            ( fn( Value v -> $/MV ) -> $/MW ) -> ∀/Data/Map/BinTree
+                            [ /K=$/MK
+                            , /V=$/MW
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Map/mapValues( Value m= Value Leaf )
+                            ( fn( Value v ) )= Value Leaf
+                        , /Data/Map/mapValues
+                            ( Value m= Node( Value left )( Value key )( Value value )( Value right ) )
+                            ( fn( Value v ) )= Node
+                            ( Value left= mapValues( Value m= Value left )
+                                ( fn( Value v )= fn( Value v= Value v ) )
+                            )( Value key= Value key )
+                            ( Value value= fn( Value v= Value value ) )
+                            ( Value right= mapValues( Value m= Value right )
+                                ( fn( Value v )= fn( Value v= Value v ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Map/mapEqual"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/mapEqual[ /MV : ∀/Data/Algebra/Eq ][ /MK : ∀/Data/Algebra/Ord ]
+                            ( Value a -> ∀/Data/Map/BinTree
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ]
+                            )
+                            ( Value b -> ∀/Data/Map/BinTree
+                                [ /K=$/MK
+                                , /V=$/MV
+                                ]
+                            ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Map/mapEqual( Value a )( Value b ) -> ∀/Data/Primitive/Boolean = /operator&&
+                            ( Value /l= /operator==
+                                ( Value /l= size( Value m= Value a ) )
+                                ( Value /r= size( Value m= Value b ) )
+                            )
+                            ( Value /r= containedIn( Value a= Value a )( Value b= Value b ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Map/Leaf"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Map/Leaf ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Algebra/equal"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/equal( Value other )( Value /this -> /Data/Map/Leaf ) -> ∀/Data/Primitive/Boolean = /Data/Map/mapEqual( Value a= Value /Data/Map/Leaf )( Value b= Value other )
+                        , /Data/Algebra/equal( Value other )
+                            ( Value /this= /Data/Map/Node[ /V : ∀/Data/Algebra/Eq ][ /K : ∀/Data/Algebra/Ord ]( Value left )( Value key )( Value value )( Value right ) ) -> ∀/Data/Primitive/Boolean = /Data/Map/mapEqual
+                            ( Value a= /Data/Map/Node( Value left= Value left )( Value key= Value key )( Value value= Value value )( Value right= Value right ) )( Value b= Value other )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Map/values"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/values
+                            ( Value m -> ∀/Data/Map
+                                [ /K=$_/K
+                                , /V=$_/V
+                                ]
+                            ) -> ∀/Data/List[ /T=$_/V ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Map/values( Value m= Value Leaf )= Value /Data/List/Nil
+                        , /Data/Map/values
+                            ( Value m= Node( Value left )( Value key )( Value value )( Value right ) )= /Data/List/append
+                            ( Value a= values( Value m= Value left ) )
+                            ( Value b= /Data/List/Cons( Value head= Value value )
+                                ( Value tail= values( Value m= Value right ) )
+                            )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Data/Map/BinTree
+            ,
+                [ ∀/Data/Map/BinTree
+                    [ /K=∀/Data/Algebra/Ord
+                    , /V=∀/Data/Algebra/Eq
+                    ]
+                ]
+            , Just ""
+            )
+        , CGClass
+            ( False
+            , /Data/Map
+                [ /K=TopType
+                , /V=TopType
+                ]
+            ,
+                [ ∀/Data/Map/BinTree
+                    [ /K=$_/K
+                    , /V=$_/V
+                    ]
+                ]
+            , Just " Every [BinTree] is a [Map], so each [Map] operation resolves on it through the arms below. An
+              empty map is written [Leaf]."
+            )
+        , CGClass
+            ( True
+            , /Data/Map/BinTree
+                [ /K=TopType
+                , /V=TopType
+                ]
+            ,
+                [ /Data/Map/Node
+                    [ /K=$_/K
+                    , /V=$_/V
+                    ]
+                    ( /value=$/V
+                    , /key=$/K
+                    , /right=∀/Data/Map/BinTree
+                        [ /K=$_/K
+                        , /V=$_/V
+                        ]
+                    , /left=∀/Data/Map/BinTree
+                        [ /K=$_/K
+                        , /V=$_/V
+                        ]
+                    )
+                , /Data/Map/Leaf
+                ]
+            , Just ""
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "# Maps
+            A [Map] is a collection that associates each [key] with a [value], so a value can be looked up by
+            its key. [Map] is an interface: it names the operations every map supports — [get], [insert],
+            [containsKey], [size], [keys], [values] — without fixing how the entries are stored. Concrete map
+            types implement it; this file provides the [BinTree], and a future hash map would be another.
+            Because the operations are declared on [Map] rather than on one concrete type, every map type
+            reuses those declarations just by being a [Map]." )
+        , /Catln/#md
+            ( Value /text= CStr "## An unbalanced binary search tree
+            A [BinTree] is the simplest [Map]: either empty ([Leaf]) or a [Node] holding a [key]/[value]
+            pair with a smaller-keyed [left] subtree and a larger-keyed [right] subtree. Keys must be [Ord]
+            so each operation can compare the target key against a node's key and descend the correct way.
+            Almost every operation is a two-arm recursion — a base case for [Leaf], and a step that inspects
+            the [Node] and recurses into a subtree. The tree is unbalanced: its shape depends on the order
+            keys were inserted, but the map it represents (the set of key/value entries) does not." )
+        , /Catln/#md
+            ( Value /text= CStr "Every [BinTree] is a [Map], so each [Map] operation resolves on it through the arms below. An
+            empty map is written [Leaf]." )
+        , /Catln/#md
+            ( Value /text= CStr "## Size" )
+        , /Catln/#print
+            ( Value /p= size
+                ( Value m= insert
+                    ( Value m= insert( Value m= Value Leaf )
+                        ( Value key= CInt 1 )
+                        ( Value value= CInt 10 )
+                    )
+                    ( Value key= CInt 2 )
+                    ( Value value= CInt 20 )
+                )
+            )
+            ( Value /result= CStr "2" )
+        , /Catln/#print
+            ( Value /p= size( Value m= Value Leaf ) )
+            ( Value /result= CStr "0" )
+        , /Catln/#md
+            ( Value /text= CStr "## Lookup" )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= get
+                    ( Value m= insert
+                        ( Value m= insert( Value m= Value Leaf )
+                            ( Value key= CInt 1 )
+                            ( Value value= CInt 10 )
+                        )
+                        ( Value key= CInt 2 )
+                        ( Value value= CInt 20 )
+                    )
+                    ( Value key= CInt 2 )
+                )
+                ( Value /r= /Data/Maybe/Some
+                    ( Value value= CInt 20 )
+                )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= get
+                    ( Value m= insert( Value m= Value Leaf )
+                        ( Value key= CInt 1 )
+                        ( Value value= CInt 10 )
+                    )
+                    ( Value key= CInt 9 )
+                )( Value /r= Value /Data/Maybe/Nothing )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#md
+            ( Value /text= CStr "## Membership" )
+        , /Catln/#print
+            ( Value /p= containsKey
+                ( Value m= insert( Value m= Value Leaf )
+                    ( Value key= CInt 1 )
+                    ( Value value= CInt 10 )
+                )
+                ( Value key= CInt 1 )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#print
+            ( Value /p= containsKey
+                ( Value m= insert( Value m= Value Leaf )
+                    ( Value key= CInt 1 )
+                    ( Value value= CInt 10 )
+                )
+                ( Value key= CInt 3 )
+            )
+            ( Value /result= CStr "False" )
+        , /Catln/#md
+            ( Value /text= CStr "## Insertion" )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= get
+                    ( Value m= insert
+                        ( Value m= insert( Value m= Value Leaf )
+                            ( Value key= CInt 1 )
+                            ( Value value= CInt 10 )
+                        )
+                        ( Value key= CInt 1 )
+                        ( Value value= CInt 99 )
+                    )
+                    ( Value key= CInt 1 )
+                )
+                ( Value /r= /Data/Maybe/Some
+                    ( Value value= CInt 99 )
+                )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#md
+            ( Value /text= CStr "## Keys and values" )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= keys
+                    ( Value m= insert
+                        ( Value m= insert( Value m= Value Leaf )
+                            ( Value key= CInt 2 )
+                            ( Value value= CInt 20 )
+                        )
+                        ( Value key= CInt 1 )
+                        ( Value value= CInt 10 )
+                    )
+                )
+                ( Value /r= /Data/List/Cons
+                    ( Value /head= CInt 1 )
+                    ( Value /tail= /Data/List/Cons
+                        ( Value /head= CInt 2 )( Value /tail= Value /Data/List/Nil )
+                    )
+                )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= values
+                    ( Value m= insert
+                        ( Value m= insert( Value m= Value Leaf )
+                            ( Value key= CInt 2 )
+                            ( Value value= CInt 20 )
+                        )
+                        ( Value key= CInt 1 )
+                        ( Value value= CInt 10 )
+                    )
+                )
+                ( Value /r= /Data/List/Cons
+                    ( Value /head= CInt 10 )
+                    ( Value /tail= /Data/List/Cons
+                        ( Value /head= CInt 20 )( Value /tail= Value /Data/List/Nil )
+                    )
+                )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#md
+            ( Value /text= CStr "# BinTree Eq membership (order-independent)
+            Makes a [BinTree] whose keys are [Ord] and values are [Eq] a proper member of [Eq], so the generic
+            [operator==] dispatches through [equal]. Equality is ORDER-INDEPENDENT: two maps are equal when
+            they hold the same key/value entries, regardless of the tree shape their insertion order produced.
+            (Structural node-for-node equality would call two maps with the same entries unequal — exactly the
+            case the [Eq] class docstring's [TreeSet] note warns about.) [equal] is decided by [mapEqual]: the
+            maps have the same [size] and every entry of one is [containedIn] the other (equal size plus
+            one-directional containment gives equality). [containedIn] reuses [get] and compares the looked-up
+            [Some] result through the [Maybe] [Eq] instance." )
+        , /Catln/#md
+            ( Value /text= CStr "Two maps with the same entries are equal even when built in different orders (different tree" )
+        , /Catln/#md
+            ( Value /text= CStr "  shapes); maps differing in a value are not." )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= insert
+                    ( Value m= insert( Value m= Value Leaf )
+                        ( Value key= CInt 1 )
+                        ( Value value= CInt 10 )
+                    )
+                    ( Value key= CInt 2 )
+                    ( Value value= CInt 20 )
+                )
+                ( Value /r= insert
+                    ( Value m= insert( Value m= Value Leaf )
+                        ( Value key= CInt 2 )
+                        ( Value value= CInt 20 )
+                    )
+                    ( Value key= CInt 1 )
+                    ( Value value= CInt 10 )
+                )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= insert( Value m= Value Leaf )
+                    ( Value key= CInt 1 )
+                    ( Value value= CInt 10 )
+                )
+                ( Value /r= insert( Value m= Value Leaf )
+                    ( Value key= CInt 1 )
+                    ( Value value= CInt 99 )
+                )
+            )
+            ( Value /result= CStr "False" )
+        , /Catln/#md
+            ( Value /text= CStr "# Functor: mapping over values
+            A [BinTree] is a functor over its VALUES: [mapValues] applies a function to every value while
+            preserving the keys and the tree's shape, so mapping [f] over a map [{k1: v1, k2: v2}] gives
+            [{k1: f v1, k2: f v2}] — the "map a function over a collection" operation [fmap] generalises, here
+            ranging over the values only. (It is a standalone operation rather than an instance of the
+            [Functor] class: a [BinTree] is parameterized by both its key and value, and the single-parameter
+            [Functor] class cannot yet track re-typing one parameter while preserving the other — so the class
+            instance awaits two-parameter [Functor] support. The operation itself works generically.)" )
+        , /Catln/#md
+            ( Value /text= CStr "Mapping [+1] over a map's values leaves the keys unchanged and adds one to each value (checked by" )
+        , /Catln/#md
+            ( Value /text= CStr "  looking the mapped value back up with [get])." )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= get
+                    ( Value m= mapValues
+                        ( Value m= insert( Value m= Value Leaf )
+                            ( Value key= CInt 1 )
+                            ( Value value= CInt 10 )
+                        )
+                        ( fn( Value v )= /operator+( Value /l= Value v )
+                            ( Value /r= CInt 1 )
+                        )
+                    )
+                    ( Value key= CInt 1 )
+                )
+                ( Value /r= /Data/Maybe/Some
+                    ( Value value= CInt 11 )
+                )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= get
+                    ( Value m= mapValues
+                        ( Value m= insert
+                            ( Value m= insert( Value m= Value Leaf )
+                                ( Value key= CInt 1 )
+                                ( Value value= CInt 10 )
+                            )
+                            ( Value key= CInt 2 )
+                            ( Value value= CInt 20 )
+                        )
+                        ( fn( Value v )= /operator+( Value /l= Value v )
+                            ( Value /r= CInt 1 )
+                        )
+                    )
+                    ( Value key= CInt 2 )
+                )
+                ( Value /r= /Data/Maybe/Some
+                    ( Value value= CInt 21 )
+                )
+            )
+            ( Value /result= CStr "True" )
+        ]
+    }
