@@ -30,9 +30,11 @@ import           Data.List               (elemIndex, intercalate, partition,
                                           sortOn)
 import           Data.Maybe
 import           Data.UUID               (UUID)
-import           Eval                    (evalAnnots, evalBuild, evalBuildAll,
-                                          evalDebugExprPrgm, evalDebugPrgm,
-                                          evalPageValues, evalRun, evalRunMock,
+import           Eval                    (evalAnnots, evalBaseEnvStages,
+                                          evalBuild, evalBuildAll,
+                                          evalDShowCall, evalDebugExprPrgm,
+                                          evalDebugPrgm, evalPageValues,
+                                          evalRun, evalRunMock,
                                           prgmFromGraphData)
 import           Eval.Common             (DebugRun, EvalMetaDat, MockIO,
                                           StagePrgms (..), TExpr, TestResult,
@@ -980,6 +982,29 @@ getEvalAnnots ctss prgmName = do
       let annots = evalAnnots stages' prgmName tprgms
       lift $ ctssStore prgmName (\ssf -> ssf{ssfAnnots = Just annots}) ctss
       asCResT annots
+
+-- | Call a named function of the program with arguments supplied as values, for the value it
+-- displays as.
+--
+-- This is what a reader's typing reaches: the webdocs name a function the program holds and say what
+-- to compute over, rather than sending an expression for the compiler to read
+-- ('WebDocs.annotResp'). Nothing is parsed or typechecked per call, so what a call costs is building
+-- and running it against a program which is already compiled and kept.
+--
+-- Scoped the same way an annotation is: naming a page calls the function as though it were written
+-- there, and naming none calls it against every loaded file. Which is about which program the
+-- function is looked up and run in — a primitive reporting on the pages there are ('spAllPages')
+-- answers about all of them either way, so a caller scopes to keep from compiling every page rather
+-- than to narrow what it is told.
+ctssCallDShow :: CTSS -> Maybe FileImport -> String -> [(String, Val)] -> CResT IO Val
+ctssCallDShow ctss scope fun args = do
+  stages <- lift $ maybe (ctssStagePrgms ctss) (ctssStagePrgmsFrom ctss) scope
+  -- The pages of the scope which can be evaluated, with the rest reported rather than fatal, for the
+  -- same reason 'WebDocs.annotResp' takes them that way: a page which did not typecheck cannot be
+  -- built over at all, and a search box is not something to lose because some other page is broken.
+  tprgms <- ctssEvaluableFrom ssfTPrgm scope ctss
+  prgm <- asCResT $ maybe (return $ mconcat $ map fst3 $ graphToNodes tprgms) (`prgmFromGraphData` tprgms) scope
+  asCResT $ evalDShowCall (evalBaseEnvStages stages prgm) fun args
 
 -- | Whether a page marks any of its definitions as a test. A page that does not has no annotation
 -- that reads a test run, so it is not made to wait for one.

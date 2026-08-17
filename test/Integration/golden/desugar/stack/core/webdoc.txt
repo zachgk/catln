@@ -38,8 +38,8 @@ Prgm
                             ( Value trace= typeInferPnt( Value /pnt= Value /pnt )( Value annot= Value s ) )( Value pnt= Value pnt )
                         , /Catln/Doc/dshow( Value s= Value #sidebar )= Show/Sidebar
                             ( Value pages= sidebar( Value annot= Value s ) )
-                        , /Catln/Doc/dshow( Value s= Value #search )= Show/Search
-                            ( Value pages= searchPages( Value annot= Value s ) )
+                        , /Catln/Doc/dshow( Value s= Value #search )= searchWebdocs
+                            ( Value query= CStr "" )
                         , /Catln/Doc/dshow( Value s= Value #test )= Show/Test
                             ( Value run= testRun( Value annot= Value s ) )
                         , /Catln/Doc/dshow
@@ -56,16 +56,6 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/Doc/TreeBuild ]
                     , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
-                ( "/dshow./Catln/Doc/searchPages"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ dshow./Catln/Doc/searchPages( Value annot ) -> /Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -307,6 +297,18 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/Doc/searchWebdocs"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Catln/Doc/searchWebdocs( Value query -> /Data/String )= Show/Search
+                            ( Value pages= searchPagesFor( Value query= Value query ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/Catln/Doc/Typecheck"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/Doc/Typecheck ]
@@ -345,10 +347,21 @@ Prgm
                     , omiDefs = []
                     }
                 )
+            ,
+                ( "/searchWebdocs./Catln/Doc/searchPagesFor"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ searchWebdocs./Catln/Doc/searchPagesFor( Value query -> /Data/String ) -> /Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
             ]
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

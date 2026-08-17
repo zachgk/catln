@@ -25,20 +25,6 @@ const sidebarValue = {
   args: { '/pages': { tag: 'StrVal', contents: JSON.stringify(sidebarResponse) } },
 }
 
-// The navbar's box covers the same pages the sidebar shows, by an annotation of its own.
-const searchValue = {
-  tag: 'TupleVal',
-  name: '/Catln/Doc/Show/Search',
-  args: {
-    '/pages': {
-      tag: 'StrVal',
-      contents: JSON.stringify([
-        '/stack/core/main.ct', '/stack/core/bool.ct', '/stack/core/webdoc.ct', '/test/id.ct',
-      ]),
-    },
-  },
-}
-
 function renderRoot() {
   const router = createMemoryRouter(
     createRoutesFromElements(
@@ -65,29 +51,26 @@ describe('Root', () => {
 
   function annotFor(url) {
     if (url.startsWith('/api/annot?annot=%23sidebar')) return annotResponse('sidebar', sidebarValue)
-    if (url.startsWith('/api/annot?annot=%23search')) return annotResponse('search', searchValue)
   }
 
-  // Both are about which pages there are rather than about one of them, and are answered that way
-  // whatever page they are written in. So both name one -- the page the docs open at -- and neither
-  // is ever asked for without a page, which is what asks for it to be compiled against every page
-  // there is.
-  it('asks for the sidebar and the search box within the page the docs open at', async () => {
+  // The sidebar is about which pages there are rather than about one of them, and is answered that
+  // way whatever page it is written in. So it names one -- the page the docs open at -- and is never
+  // asked for without a page, which is what asks for it to be compiled against every page there is.
+  //
+  // And it is the only annotation the layout asks for: the navbar's search box is a box until it is
+  // typed into, so drawing the navbar no longer compiles a listing of every page to fill one.
+  it('asks for the sidebar within the page the docs open at, and for nothing else', async () => {
     renderRoot()
 
     await waitFor(() => expect(screen.getByText('test')).toBeInTheDocument())
     const annotCalls = global.fetch.mock.calls.map(c => c[0]).filter(u => u.startsWith('/api/annot'))
-    const scope = `&prgmName=${encodeURIComponent(ROOT_PAGE)}`
-    // Sorted rather than in order: which mounts first is only where they sit in the layout.
-    expect([...annotCalls].sort()).toEqual([
-      `/api/annot?annot=%23search${scope}`,
-      `/api/annot?annot=%23sidebar${scope}`,
-    ])
+    expect(annotCalls).toEqual([`/api/annot?annot=%23sidebar&prgmName=${encodeURIComponent(ROOT_PAGE)}`])
+    expect(global.fetch.mock.calls.map(c => c[0]).filter(u => u.startsWith('/api/call'))).toEqual([])
   })
 
   // The page is not there until the config says what it is, and asking without one is exactly what
-  // this exists to stop, so neither is asked for before then.
-  it('asks for neither before it knows the page the docs open at', async () => {
+  // this exists to stop, so nothing is asked for before then.
+  it('asks for nothing before it knows the page the docs open at', async () => {
     global.fetch = vi.fn(url => new Promise(resolve => {
       if (url === '/api/config') return
       resolve({ status: 200, json: () => Promise.resolve(annotFor(url)) })

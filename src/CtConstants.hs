@@ -60,6 +60,12 @@ mdAnnot, mdAnnotText :: String
 mdAnnot = "/Catln/#md"
 mdAnnotText = "text"
 
+-- | The class of what the webdocs can show, declared in @stack/core/webdoc.ct@. A display is built
+-- toward it, which is what makes it a display rather than the expression it was written as: see
+-- 'Eval.dshowDestType'.
+dshowClassName :: String
+dshowClassName = "/Catln/Doc/DShow"
+
 -- | The page a page is written over, declared in @stack/core/webdoc.ct@. A page carrying one is
 -- shown with the page at 'overlayAnnotUrl' beneath its own writing.
 overlayAnnot, overlayAnnotUrl :: String

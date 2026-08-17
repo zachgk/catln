@@ -486,44 +486,6 @@ function AnnotPage(props) {
   );
 }
 
-// Shows only what an annotation compiled to, with none of the listing an AnnotPage puts around it
-// and nothing at all until it arrives. That is what an annotation shown as a control rather than as
-// a page wants: the navbar's search box has no room for a program listing, and a "Loading..." or a
-// block of compiler notes would be laid out as part of the navbar rather than reported anywhere.
-// The failure is logged instead, so a control that never appears is still explained.
-function AnnotValue(props) {
-  const {annot, prgmName = ""} = props;
-  const apiResult = useApi(annotApi(annot, prgmName));
-  const value = apiResult.data && annotStatementValue(apiResult.data);
-
-  useEffect(() => {
-    if (apiResult.isLoaded && !value) {
-      console.error("Annotation compiled to no value", annot, apiResult.error, apiResult.notes);
-    }
-  }, [annot, apiResult, value]);
-
-  if (!value) {
-    return null;
-  }
-  return (
-    <PrgmNameContext.Provider value={prgmName}>
-      <Value data={value} />
-    </PrgmNameContext.Provider>
-  );
-}
-
-// The value an annotation compiled to. /api/annot answers with a one-statement program whose
-// annotation expression carries it, in the same meta slot a page's own annotations arrive in.
-function annotStatementValue(data) {
-  const [, statements] = data;
-  const [statementTree] = statements;
-  if (!statementTree) {
-    return null;
-  }
-  const [statement] = statementTree;
-  return statement.tag === "RawAnnot" ? rawExprMeta(statement.contents).getMetaDat[2] : null;
-}
-
 function Main(props) {
   const {data, prgmName, updateExpr} = props;
   const [imports, statements] = data;
@@ -655,4 +617,4 @@ function PlayButton(props) {
 
 
 export default DocsPage;
-export {AnnotPage, AnnotValue};
+export {AnnotPage};

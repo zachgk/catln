@@ -432,8 +432,40 @@ evalDShowAnnot env0@Env{evTbEnv, evTypeEnv} os annot0
     evalToValue a = do
       tree <- toTExprDest evTbEnv os a destM
       evalStateT (evalExpr tree) env
-    destType = classPartial $ partialVal "/Catln/Doc/DShow"
+    destType = dshowDestType
     destM = emptyMetaT destType
+
+-- | The class a display is built toward, which is what forces it to be evaluated: a tree built
+-- toward an expression's own type comes back as the application itself, unevaluated.
+dshowDestType :: Type
+dshowDestType = classPartial $ partialVal $ mkName dshowClassName
+
+-- | Build and evaluate a call to a named function of the program, with arguments supplied as runtime
+-- values, to the value it displays as through the @DShow@ class.
+--
+-- This is what lets the webdocs ask the program to compute something: a function is named and given
+-- what to compute over, rather than an expression being written out as source for the compiler to
+-- read. The function is one the program already holds, so nothing here parses, desugars or
+-- typechecks — the arguments are reconstructed as typed constants ('valToEExpr'), applied, and the
+-- call is built and run against the program as it already compiled. That is the same construction a
+-- generated test case is run by ('Eval.Testing.runProp').
+--
+-- The result must reach @DShow@, which is both what makes it displayable and what keeps a call that
+-- cannot be built from reaching 'TreeBuild': tree building a call it cannot resolve is an @error@
+-- rather than a note, and an @error@ raised answering a request is a failed connection rather than
+-- something the reader can be shown.
+evalDShowCall :: Env -> String -> [(String, Val)] -> CRes Val
+evalDShowCall env@Env{evTbEnv, evTypeEnv} fun args = do
+  fun' <- case maybeGetSingleton $ expandRelPartial evTypeEnv H.empty (partialVal (mkName fun)) of
+    Just f -> return $ nameStr $ ptName f
+    -- Both no match and several are reported as the name not being one function, since what the
+    -- caller has to do about either is the same: name the one they meant, absolutely.
+    Nothing -> fail $ printf "The doc server holds no single function named %s to call" fun
+  let input = foldl (\base (argName, argVal) -> eApply base ('/' : argName, valToEExpr argVal)) (eVal fun') args
+  unless (reachesTo evTypeEnv H.empty (getExprType input) dshowDestType) $
+    fail $ printf "Calling %s with %s does not reach %s, so it is not something the webdocs can show" fun' (show $ map fst args) dshowClassName
+  tree <- toTExprDest evTbEnv [] input (emptyMetaT dshowDestType)
+  evalStateT (evalExpr tree) env
 
 -- | Evaluate the annotations a page WRITES, in the program that page COMPILES TO. The two scopes
 -- differ: the annotations are the page's own, while the environment they are evaluated in is the
@@ -599,7 +631,7 @@ evalDebugPrgm function prgm = unsafePerformIO $ do
 evalDebugExprPrgm :: EExpr -> EPrgm -> CRes DebugRun
 evalDebugExprPrgm input prgm = do
   let env@Env{evTbEnv} = evalBaseEnv prgm
-  tree <- toTExprDest evTbEnv [] input (emptyMetaT $ classPartial $ partialVal "/Catln/Doc/DShow")
+  tree <- toTExprDest evTbEnv [] input (emptyMetaT dshowDestType)
   (val, env') <- runStateT (evalExpr tree) env
   return $ DebugRun Nothing "" (Just val) (evalResult env')
 

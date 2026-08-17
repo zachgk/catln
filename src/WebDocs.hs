@@ -14,15 +14,19 @@
 
 module WebDocs where
 
-import           Data.Aeson                    (ToJSON, Value, encode, object,
-                                                (.=))
+import           Data.Aeson                    (ToJSON, Value, eitherDecode,
+                                                encode, object, (.=))
+import qualified Data.Aeson                    as A
+import qualified Data.Aeson.Key                as AK
+import qualified Data.Aeson.KeyMap             as AKM
 import           Web.Scotty
 
 import           Data.ByteString.Builder       (lazyByteString)
 import qualified Data.ByteString.Lazy          as BL
 import qualified Data.HashMap.Strict           as H
+import           Data.Scientific               (floatingOrInteger)
 import qualified Data.Text.Lazy                as T
-import           Data.Text.Lazy.Encoding       (decodeUtf8)
+import           Data.Text.Lazy.Encoding       (decodeUtf8, encodeUtf8)
 import           GHC.Generics                  (Generic)
 import           Network.Wai.Middleware.Static
 
@@ -40,7 +44,8 @@ import           Data.Maybe                    (listToMaybe)
 import           Data.UUID                     (UUID, fromText)
 import           Eval                          (evalAllTargetModes, evalAnnots,
                                                 prgmFromGraphData)
-import           Eval.Common                   (EvalMode, Val)
+import           Eval.Common                   (EvalMode,
+                                                Val (FloatVal, IntVal, StrVal))
 import           Eval.Runtime.WebDocs          (sidebarOrder)
 import           MapMeta                       (interleaveMeta, interleavePrgm,
                                                 parseMetaIDScope, zip4MetaFun)
@@ -256,6 +261,28 @@ annotResp ctss scope' annot = do
     let annots' = H.fromList $ map (first (getMetaID . getExprMeta)) maybeAnnots
     return $ mapMetaRawPrgm (zip4MetaFun (interleaveMeta $ interleavePrgm annotTprgm) (interleaveMeta targetModes) (interleaveMeta annots') (interleaveMeta $ printSources rawPrgm')) rawPrgm'
 
+-- | The arguments of an @/api/call@, as the values they are called with.
+--
+-- Sent as a JSON object of argument name to value, which is what a caller has: a call names a
+-- function of the program and says what to compute over, and what it has to say that with is
+-- whatever the reader typed or picked. Read as values rather than written into Catln source for the
+-- compiler to read back, which is the whole of what this route is for — a query holding a quote is a
+-- query rather than the start of a parse error.
+--
+-- Only the scalars a value can be rebuilt from ('Eval.ExprBuilder.valToEExpr'). A structure would be
+-- a shape agreed between the webdocs and a program's declarations, which is a thing to want when
+-- something wants it; anything else is reported rather than approximated.
+callArgs :: T.Text -> CRes [(String, Val)]
+callArgs src = case eitherDecode (encodeUtf8 src) of
+  Left err -> fail $ printf "The arguments of the call are not JSON: %s" err
+  Right (A.Object o) -> mapM arg $ AKM.toList o
+  Right _ -> fail "The arguments of the call are not a JSON object of argument name to value"
+  where
+    arg (k, v) = (AK.toString k,) <$> argVal (AK.toString k) v
+    argVal _ (A.String s) = return $ StrVal $ T.unpack $ T.fromStrict s
+    argVal _ (A.Number n) = return $ either FloatVal IntVal $ floatingOrInteger n
+    argVal k v = fail $ printf "The argument %s was given %s, which is not a String or a number" k (show $ encode v)
+
 -- | The computation each @#print@ of a program displays the result of, as the source it was written
 -- as, keyed by the annotation it belongs to.
 --
@@ -367,6 +394,22 @@ docApiBase readonly ctss = do
     scope' <- liftAndCatchIO $ traverse (mkDesCanonicalImportStr buildCtssConfig) scope
     -- Scoped to the page it names, or to every page there is where it names none.
     serve ctss (Shown scope') (annotResp ctss scope' annot)
+
+  -- Calls a function the program holds, with what to compute over sent as its arguments, for the
+  -- value it displays as. This is how the webdocs ask the compiler to compute something about what a
+  -- reader is doing: an annotation says what it is about when it is WRITTEN, so a display that
+  -- answers to typing cannot be one. See 'CtService.ctssCallDShow'.
+  --
+  -- Scoped like @/api/annot@ and for the same reason, and named the same way, so that a call and an
+  -- annotation are the same question asked of the same program.
+  get "/api/call" $ do
+    fun <- param "fun"
+    args <- param "args" `rescue` (\_ -> return "{}")
+    scope <- fmap Just (param "prgmName") `rescue` (\_ -> return Nothing)
+    scope' <- liftAndCatchIO $ traverse (mkDesCanonicalImportStr buildCtssConfig) scope
+    serve ctss (Shown scope') (runCResT $ do
+      args' <- asCResT $ callArgs args
+      ctssCallDShow ctss scope' (T.unpack fun) args')
 
 
 docApi :: Bool -> [String] -> IO ()

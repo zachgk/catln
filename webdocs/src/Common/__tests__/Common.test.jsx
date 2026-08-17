@@ -7,6 +7,8 @@ import {
   isTopType,
   useApi,
   useLiveApi,
+  useDebounced,
+  callApi,
   Loading,
   Notes,
   Type,
@@ -138,6 +140,77 @@ describe('useApi', () => {
     const { result } = renderHook(() => useApi('/api/test'), { wrapper: Providers })
     await waitFor(() => expect(result.current.isLoaded).toBe(true))
     expect(result.current.error).toBe('Unknown result type')
+  })
+
+  // Asking again does not cancel what was already asked, and the two are not answered in the order
+  // they were asked: a search re-asked at each keystroke asks for more work for a shorter query than
+  // for a longer one. So the answer to the question being asked has to win however late the answer
+  // to the one before it arrives.
+  it('shows the answer to what it is asking, not the one that arrives last', async () => {
+    // Held open per path, so that the two can be answered in the other order. Only these two: the
+    // mock outlives the case, and a request left waiting forever is one the next case waits for.
+    const answers = {}
+    global.fetch = vi.fn((path) => Promise.resolve({
+      status: 200,
+      json: () => (path === '/api/first' || path === '/api/second')
+        ? new Promise(resolve => { answers[path] = resolve })
+        : Promise.resolve({ tag: 'Success', contents: [null, []] }),
+    }))
+    const { result, rerender } = renderHook(({ path }) => useApi(path), {
+      wrapper: Providers,
+      initialProps: { path: '/api/first' },
+    })
+    await waitFor(() => expect(answers['/api/first']).toBeDefined())
+
+    rerender({ path: '/api/second' })
+    await waitFor(() => expect(answers['/api/second']).toBeDefined())
+
+    await act(async () => {
+      answers['/api/second']({ tag: 'Success', contents: ['second', []] })
+      answers['/api/first']({ tag: 'Success', contents: ['first', []] })
+    })
+
+    expect(result.current.data).toBe('second')
+  })
+})
+
+// What is asked of the server is what a reader is asking rather than each step of them typing it.
+describe('useDebounced', () => {
+  afterEach(() => vi.useRealTimers())
+
+  it('settles on what it was last given once it stops changing', async () => {
+    vi.useFakeTimers()
+    const { result, rerender } = renderHook(({ value }) => useDebounced(value, 150), {
+      initialProps: { value: 'u' },
+    })
+    expect(result.current).toBe('u')
+
+    for (const value of ['ut', 'uti', 'util', 'utils']) {
+      rerender({ value })
+      await act(async () => { vi.advanceTimersByTime(50) })
+      // Still what it was: each change starts the wait again, so none of the letters between is
+      // ever what anything is asked about.
+      expect(result.current).toBe('u')
+    }
+
+    await act(async () => { vi.advanceTimersByTime(150) })
+    expect(result.current).toBe('utils')
+  })
+})
+
+// The call that evaluates a function of the program with what to compute over sent as its arguments.
+describe('callApi', () => {
+  it('names the function, its arguments and the page to call it in', () => {
+    expect(callApi('/Catln/Doc/searchWebdocs', { query: 'a b' }, '/test/id.ct'))
+      .toBe('/api/call?fun=%2FCatln%2FDoc%2FsearchWebdocs&args=%7B%22query%22%3A%22a%20b%22%7D&prgmName=%2Ftest%2Fid.ct')
+  })
+
+  // The arguments are JSON rather than Catln source, so a query holding what would be syntax is a
+  // query rather than the start of a parse error.
+  it('sends what was typed rather than something to be parsed', () => {
+    const url = callApi('/f', { query: '") + #print(' })
+    expect(url).not.toMatch(/prgmName/)
+    expect(JSON.parse(decodeURIComponent(url.split('args=')[1]))).toEqual({ query: '") + #print(' })
   })
 })
 

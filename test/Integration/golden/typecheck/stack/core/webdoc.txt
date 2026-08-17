@@ -47,8 +47,9 @@ Prgm
                             ( Value /trace -> /Data/String = /dshow./Catln/Doc/typeInferPnt( Value /pnt -> TVArg /pnt = Value /pnt )( Value /annot -> /s = Value /s ) )( Value /pnt -> TVArg /pnt = Value /pnt )
                         , /Catln/Doc/dshow( Value /s -> /Catln/Doc/#sidebar = Value /Catln/Doc/#sidebar ) -> /Catln/Doc/Show/Sidebar( /pages=/Data/String ) = /Catln/Doc/Show/Sidebar
                             ( Value /pages -> /Data/String = /dshow./Catln/Doc/sidebar( Value /annot -> /s = Value /s ) )
-                        , /Catln/Doc/dshow( Value /s -> /Catln/Doc/#search = Value /Catln/Doc/#search ) -> /Catln/Doc/Show/Search( /pages=/Data/String ) = /Catln/Doc/Show/Search
-                            ( Value /pages -> /Data/String = /dshow./Catln/Doc/searchPages( Value /annot -> /s = Value /s ) )
+                        , /Catln/Doc/dshow( Value /s -> /Catln/Doc/#search = Value /Catln/Doc/#search ) ->
+                            ( /Catln/Doc/Show/Search( /pages=/Data/String ) + /Catln/Doc/searchWebdocs( /query=/Data/String ) ) = /Catln/Doc/searchWebdocs
+                            ( Value /query -> /Data/String = CStr "" )
                         , /Catln/Doc/dshow( Value /s -> /Catln/#test = Value /Catln/#test ) -> /Catln/Doc/Show/Test( /run=/Data/String ) = /Catln/Doc/Show/Test
                             ( Value /run -> /Data/String = /dshow./Catln/Doc/testRun( Value /annot -> /s = Value /s ) )
                         , /Catln/Doc/dshow
@@ -71,16 +72,6 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/Doc/TreeBuild ]
                     , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
-                ( "/dshow./Catln/Doc/searchPages"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /dshow./Catln/Doc/searchPages( Value /annot ) -> /Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -322,6 +313,18 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/Doc/searchWebdocs"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Catln/Doc/searchWebdocs( Value /query -> /Data/String ) -> /Catln/Doc/Show/Search( /pages=/Data/String ) = /Catln/Doc/Show/Search
+                            ( Value /pages -> /Data/String = /searchWebdocs./Catln/Doc/searchPagesFor( Value /query -> TVArg /query = Value /query ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/Catln/Doc/Typecheck"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/Doc/Typecheck ]
@@ -360,10 +363,21 @@ Prgm
                     , omiDefs = []
                     }
                 )
+            ,
+                ( "/searchWebdocs./Catln/Doc/searchPagesFor"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /searchWebdocs./Catln/Doc/searchPagesFor( Value /query -> /Data/String ) -> /Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
             ]
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

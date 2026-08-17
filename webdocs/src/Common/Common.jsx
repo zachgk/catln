@@ -91,6 +91,12 @@ function useApi(path, reloadKey) {
     if(!path) {
       return;
     }
+    // The answer to a question no longer being asked is dropped rather than shown. Asking again
+    // does not cancel what was already asked, and a question asked earlier can be answered later —
+    // a search re-asked at each keystroke asks the compiler to do more work for a shorter query
+    // than for a longer one — so without this a reader would be shown the results of what they had
+    // typed a moment ago.
+    let asked = true;
     fetch(path)
       .then(res => {
         if(res.status !== 200) {
@@ -101,19 +107,36 @@ function useApi(path, reloadKey) {
       })
       .then(res => res.json())
       .then(
-        (res) => setResult(apiResult(res)),
+        (res) => { if(asked) { setResult(apiResult(res)); } },
         // Note: it's important to handle errors here
         // instead of a catch() block so that we don't swallow
         // exceptions from actual bugs in components.
         (error) => {
-          setResult({
-            isLoaded: true,
-            error
-          });
+          if(asked) {
+            setResult({
+              isLoaded: true,
+              error
+            });
+          }
         }
       );
+    return () => { asked = false; };
   }, [path, reloadKey]);
   return result;
+}
+
+// A value as it was a moment ago, once it has stopped changing for that long.
+//
+// What is asked of the server should be what a reader is asking, not each step of them typing it: a
+// reader types a letter at a time and is looking for a word, so a question per letter is a question
+// per answer nobody wanted. Waiting for the typing to stop is what makes the word the question.
+function useDebounced(value, ms) {
+  const [settled, setSettled] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setSettled(value), ms);
+    return () => clearTimeout(timer);
+  }, [value, ms]);
+  return settled;
 }
 
 // The same as useApi, but asked to keep answering: the server holds the question open and answers it
@@ -476,6 +499,22 @@ function annotApi(annot, prgmName) {
   return `/api/annot?annot=${encodeURIComponent(annot)}${scope}`;
 }
 
+// The call that evaluates a function of the program, named, with what to compute over sent as its
+// arguments. This is what a display driven by what a reader is DOING asks for: an annotation says
+// what it is about when it is written, so it can only carry what was written with it, while a call
+// carries whatever has been typed or picked since.
+//
+// The arguments are sent as JSON rather than written into the annotation source the way #type and
+// #debugger name theirs. What a reader types is not source, and quoting it into some would make a
+// query holding a quote into a parse error rather than a search that finds nothing.
+//
+// Scoped like annotApi: naming a page calls the function as though it were written there, which is
+// what keeps a call from compiling every page there is.
+function callApi(fun, args, prgmName) {
+  const scope = prgmName ? `&prgmName=${encodeURIComponent(prgmName)}` : "";
+  return `/api/call?fun=${encodeURIComponent(fun)}&args=${encodeURIComponent(JSON.stringify(args))}${scope}`;
+}
+
 // Replaces one expression of a page and saves the page back as the file it was read from. The page
 // is named per call rather than being the page doing the writing: a task shown in a list of every
 // note's tasks is written back to the note it was read from, which is not the page the list is on.
@@ -595,11 +634,13 @@ export {
   ReloadContext,
   annotLink,
   annotApi,
+  callApi,
   writeExpr,
   tagJoin,
   useQuery,
   useApi,
   useLiveApi,
+  useDebounced,
   Loading,
   Notes,
   PartialKey,

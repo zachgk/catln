@@ -23,9 +23,10 @@ import           CRes
 import           CtConstants         (noteObsidianTaskPath, noteSimpleTaskPath)
 import           Data.Aeson          (ToJSON)
 import           Data.Aeson.Text     (encodeToLazyText)
+import           Data.Char           (toLower)
 import           Data.Graph
 import qualified Data.HashMap.Strict as H
-import           Data.List           (partition, sort, sortOn)
+import           Data.List           (isInfixOf, partition, sort, sortOn)
 import           Data.List.Split     (splitOn)
 import qualified Data.Map            as M
 import qualified Data.Text.Lazy      as TL
@@ -41,7 +42,7 @@ import           Utils
 
 -- | The primitives backing the @Catln/Doc@ display annotations.
 webDocsPrims :: [EPrim]
-webDocsPrims = [listProgram, filterProgram, typeInfer, typeInferPnt, debugger, debugExpr, sidebar, searchPages, testRun, taskList]
+webDocsPrims = [listProgram, filterProgram, typeInfer, typeInferPnt, debugger, debugExpr, sidebar, searchPagesFor, testRun, taskList]
 
 -- | The argument of @/Catln/Doc/listProgram@ naming which stage to list, and the members of the
 -- @ListProgramMode@ enum it takes. @stack\/core\/webdoc.ct@ is the source of truth for these; a
@@ -248,26 +249,45 @@ sidebarOrder pages = concatMap pagePaths <$> sidebarNodes pages
     pagePaths SidebarDir{sbChildren} = concatMap pagePaths sbChildren
     pagePaths SidebarFile{sbPath}    = [sbPath]
 
--- | Backs @/Catln/Doc/searchPages@, the data carried by a @Show/Search@ page. It renders every page
--- there is as the flat list of the paths they are asked for, sorted, which is the order a box offers
--- them in.
+-- | The argument of @/Catln/Doc/searchPagesFor@ holding what was typed to search for.
+searchQueryArg :: String
+searchQueryArg = "/query"
+
+-- | Backs @/Catln/Doc/searchPagesFor@, the data carried by a @Show/Search@ page. It renders the pages
+-- whose path holds the query as the flat list of the paths they are asked for, sorted, which is the
+-- order a box offers them in. An empty query holds of every path, so it renders every page there is,
+-- which is what a box that has not been typed into shows.
+--
+-- The matching is done here rather than in the webdocs so that what is sent is what was asked for
+-- rather than everything there is to ask about. It is done here rather than in Catln because a
+-- [String] is not yet something Catln can look inside — @stack\/core\/str.ct@ has equality and
+-- concatenation and no substring — so a search written there could only compare whole paths.
+--
+-- Case-insensitively, and on the path alone, which is what the webdocs matched against when they
+-- held the list and matched it themselves. Only where the search happens has changed.
 --
 -- These are the same pages 'sidebar' renders as a tree, read the same way off 'spAllPages', and for
 -- the same reason: what is worth searching for is above all what one has not already got to. A box
 -- matching typing against a list and a navigation being walked want different shapes of the same
 -- answer, and each page carries the shape it displays, so the two are rendered separately rather
 -- than one being derived from the other in the webdocs.
-searchPages :: EPrim
-searchPages = EEnvPrim "searchPages" prim
+searchPagesFor :: EPrim
+searchPagesFor = EEnvPrim "searchPagesFor" prim
   where
-    prim Env{evStagePrgms=StagePrgms{spAllPages}} _ = case spAllPages of
-      CErr notes   -> Left $ prettyCNotes notes
-      CRes _ pages -> encodeJson . sort <$> traverse pagePath pages
+    prim Env{evStagePrgms=StagePrgms{spAllPages}} args = case (H.lookup searchQueryArg args, spAllPages) of
+      (Nothing, _) -> Left $ printf "searchPagesFor has no %s argument, only %s" searchQueryArg (show $ sort $ H.keys args)
+      (Just v, _) | not (isStr v) -> Left $ printf "searchPagesFor was given %s, which is not a String query" (show v)
+      (_, CErr notes) -> Left $ prettyCNotes notes
+      (Just (StrVal query), CRes _ pages) -> encodeJson . sort . filter (matches query) <$> traverse pagePath pages
+      _ -> Left "searchPagesFor could not read the query it was given"
+    isStr StrVal{} = True
+    isStr _        = False
+    matches query disp = map toLower query `isInfixOf` map toLower disp
     -- As in 'sidebar', a page with no display path cannot be opened, so it is reported rather than
     -- dropped from the list, where it would read as a page the doc server does not hold.
     pagePath imp = case impDisp imp of
       Just disp -> Right disp
-      Nothing -> Left $ printf "searchPages has no file path for %s, so it has no page to open" (show imp)
+      Nothing -> Left $ printf "searchPagesFor has no file path for %s, so it has no page to open" (show imp)
 
 -- | Backs @/Catln/Doc/testRun@, the data carried by a @Show/Test@ display. It renders the tests of
 -- the definition the annotation is written on as JSON: what each was, whether it passed, how many

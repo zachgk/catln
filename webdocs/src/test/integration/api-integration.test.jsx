@@ -82,9 +82,9 @@ describe('Backend API contract', () => {
     expect(core.sbChildren[0].sbName).toBe('main.ct')
   })
 
-  // The search box gets its pages from an annotation of its own rather than from the sidebar's
-  // tree. They are two answers to the same question, so they are checked against each other here:
-  // the duplication is deliberate for the moment, and a divergence should be a reported fact.
+  // The search box gets its pages from a search of its own rather than from the sidebar's tree. They
+  // are two answers to the same question, so they are checked against each other here: the
+  // duplication is deliberate for the moment, and a divergence should be a reported fact.
   it('/api/annot lists every page for an unscoped #search', async () => {
     const val = await annotValue('#search')
     expect(val.name).toBe('/Catln/Doc/Show/Search')
@@ -102,6 +102,79 @@ describe('Backend API contract', () => {
     // equality: a directory of pages is a page in its own right, so it is in the list while the
     // sidebar shows it as the directory node holding those pages.
     expect(pages).toEqual(expect.arrayContaining((await sidebarPages()).map(p => p.sbPath)))
+  })
+
+  // What /api/call answers with is the value itself rather than a program carrying it, since a call
+  // names what to evaluate instead of being a statement compiled to hold it.
+  function callApiUrl(fun, args, prgmName) {
+    const scope = prgmName ? `&prgmName=${encodeURIComponent(prgmName)}` : ''
+    return `/api/call?fun=${encodeURIComponent(fun)}&args=${encodeURIComponent(JSON.stringify(args))}${scope}`
+  }
+
+  async function searchPages(query, prgmName) {
+    const data = await fetchApi(callApiUrl('/Catln/Doc/searchWebdocs', {query}, prgmName))
+    expect(data.tag).toBe('Success')
+    const [val] = data.contents
+    expect(val.name).toBe('/Catln/Doc/Show/Search')
+    return JSON.parse(val.args['/pages'].contents)
+  }
+
+  // The search runs where the pages are. What crosses is what matched rather than every page there
+  // is, which is the whole of why a box asks the compiler rather than filtering a list it was given.
+  it('/api/call searches the pages for what it is given', async () => {
+    const matched = await searchPages('webdoc')
+
+    expect(matched.length).toBeGreaterThan(0)
+    expect(matched.every(p => p.toLowerCase().includes('webdoc'))).toBe(true)
+    expect(matched.some(p => p.endsWith('/stack/core/webdoc.ct'))).toBe(true)
+    // Narrower than the whole list, which is the point of asking.
+    expect(matched.length).toBeLessThan((await searchPages('')).length)
+  })
+
+  // The empty query is every page, which is what a box nobody has typed into covers -- and is what
+  // the #search annotation is, so the two cannot come apart.
+  it('/api/call answers the empty query with what #search does', async () => {
+    const val = await annotValue('#search')
+    expect(await searchPages('')).toEqual(JSON.parse(val.args['/pages'].contents))
+  })
+
+  it('/api/call matches without regard to case', async () => {
+    expect(await searchPages('WEBDOC')).toEqual(await searchPages('webdoc'))
+  })
+
+  // Naming a page is what keeps a call from compiling every page there is. It does not narrow what a
+  // search finds: the pages there are do not depend on the page a search is called in.
+  it('/api/call searches the same pages whichever page it is called in', async () => {
+    const rootPage = (await fetchApi('/api/config')).contents[0].rootPage
+    expect(await searchPages('core', rootPage)).toEqual(await searchPages('core'))
+  })
+
+  // A call that cannot be built is reported rather than raised: an error escaping a request is a
+  // failed connection, which a browser answers by asking again, so a bad call would be made forever.
+  it('/api/call reports a function it does not hold rather than failing', async () => {
+    const data = await fetchApi(callApiUrl('nosuchfunction', {}))
+    expect(data.tag).toBe('ResFail')
+    expect(data.contents[0].msg).toMatch(/no single function named nosuchfunction/)
+  })
+
+  it('/api/call reports a call it cannot show rather than failing', async () => {
+    const data = await fetchApi(callApiUrl('/Catln/Doc/searchWebdocs', {notAnArgument: 'x'}))
+    expect(data.tag).toBe('ResFail')
+    expect(data.contents[0].msg).toMatch(/does not reach \/Catln\/Doc\/DShow/)
+  })
+
+  it('/api/call reports arguments it cannot read rather than failing', async () => {
+    const res = await fetch(`${API_BASE}/api/call?fun=%2FCatln%2FDoc%2FsearchWebdocs&args=notjson`)
+    expect(res.status).toBe(200)
+    const data = await res.json()
+    expect(data.tag).toBe('ResFail')
+    expect(data.contents[0].msg).toMatch(/not JSON/)
+  })
+
+  // What a reader types is sent as a value rather than written into Catln source to be parsed back,
+  // so a query holding what would be syntax finds nothing rather than failing to compile.
+  it('/api/call takes a query that would not parse as Catln', async () => {
+    expect(await searchPages('") + #print(')).toEqual([])
   })
 
   // The listProgram eval primitive is only reachable through the doc pipeline, so these are the
