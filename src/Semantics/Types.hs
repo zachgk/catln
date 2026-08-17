@@ -5227,6 +5227,75 @@ substitutePartialKeep vaenv partial@PartialType{ptVars, ptArgs, ptPreds} = parti
     ptVars' = fmap (substituteKeep vaenv) ptVars
     innerVaenv = joinVarArgEnv ptVars' H.empty
 
+-- | Whether a type contains any 'TypeVar' reference anywhere — var\/arg slot values,
+-- class-predicate dims, and negative leaves included. A type without any is CLOSED:
+-- substituting it can never introduce a new reference for a later pass to substitute
+-- again, so only closed bindings are safe for the cross-epoch 'substituteFreeDeep'
+-- frame-closure (a self-referential discovered binding like @/T → Cons[/T=$/T]@ would
+-- otherwise embed a fresh occurrence each epoch and grow without bound).
+typeHasTypeVars :: Type -> Bool
+typeHasTypeVars TypeVar{} = True
+typeHasTypeVars (UnionType mtop leafs _) = any partialHas (splitUnionType leafs) || topHas
+  where
+    topHas = case mtop of
+      Just (preds, negLeafs, _) -> predsHas preds || any partialHas (splitUnionType negLeafs)
+      Nothing                   -> False
+    predsHas (PredsOne p)  = predHas p
+    predsHas (PredsAnd ps) = any predsHas ps
+    predsHas (PredsNot ps) = predsHas ps
+    predHas (PredClass p) = partialHas p
+    predHas (PredRel p)   = partialHas p
+    predHas (PredExpr p)  = partialHas p
+    partialHas PartialType{ptVars, ptArgs, ptPreds} =
+      any typeHasTypeVars (H.elems ptVars)
+        || any typeHasTypeVars (H.elems ptArgs)
+        || predsHas ptPreds
+
+-- | Deep-substitute the given FOREIGN frame bindings throughout a type: every external
+-- ('TVExt') reference to a bound name is replaced wherever it occurs — nested arg slot
+-- types and class-predicate dims included — except under a partial that declares a
+-- parameter of the same NAME, which shadows it (the reference then belongs to that
+-- partial's own frame). Unlike 'substituteKeep' the walk carries NO own-parameter
+-- resolution into the descent: a recursive member template's self-pointer
+-- (@tail=∀ConsList[/T=$/T]@) sits under its own @/T@ binder and stays symbolic, so the
+-- substitution cannot unroll a recursive spelling. Callers pass CLOSED (var-free)
+-- bindings only — see 'typeHasTypeVars'.
+--
+-- This is the frame-closure step for content ADOPTED into a stored ACTUAL from a
+-- requirement spelled in another frame (the discovered-binding resolve in
+-- 'arrowConstrainUbs'; the ACT channel is frame-local — Zach's ruling, 2026-08-16): an
+-- enclosing call's @$/MK@ inside an adopted @Node[..](left=∀BinTree[/K=$/MK], ..)@ must
+-- materialize while the discovering meet's bindings are still in hand — stored past the
+-- constraint the frame is gone, and Decode ships a typed meta no value can satisfy
+-- ("no arrows from Node(..)" at TreeBuild).
+substituteFreeDeep :: TypeVarArgEnv -> Type -> Type
+substituteFreeDeep env t | H.null env = t
+substituteFreeDeep env (TypeVar (TVApplied b overrides) loc) =
+  applyTypeVarOverrides (fmap (substituteFreeDeep env) overrides) (substituteFreeDeep env (TypeVar b loc))
+-- Both locs substitute: the env arrives pre-SHADOWED (each partial descent removed the
+-- names its ptVars bind), so a reference that still finds its name in the env is FREE at
+-- this position — a TVInt self-reference (@/head=$T@ under a partial declaring @/T@) was
+-- shadowed out on descent and stays a pointer, while an encoder-spelled declaration-frame
+-- TVInt (@∀BinTree[/K=$/MK]@ under mapEqual's frame) is exactly the dangling reference
+-- this closure exists to materialize.
+substituteFreeDeep env t@(TypeVar v _) = case H.lookup v env of
+  Just b | b /= PTopType -> b
+  _                      -> t
+substituteFreeDeep env (UnionType mtop leafs consts) =
+  UnionType (fmap goTop mtop) (joinUnionType $ map (goPartial env) $ splitUnionType leafs) consts
+  where
+    goTop (preds, negLeafs, ncs) =
+      (mapTypePreds (mapTypePred (goPartial env)) preds, joinUnionType $ map (goPartial env) $ splitUnionType negLeafs, ncs)
+    goPartial e p@PartialType{ptVars, ptArgs, ptPreds} = p{
+        ptVars  = fmap (substituteFreeDeep e) ptVars,
+        ptArgs  = fmap (substituteFreeDeep (shadow e)) ptArgs,
+        ptPreds = mapTypePreds (mapTypePred (goPartial (shadow e))) ptPreds
+        }
+      where
+        shadow = H.filterWithKey (\k _ -> case k of
+          TVVar n -> not (n `H.member` ptVars)
+          _       -> True)
+
 -- | The names of all external ('TVExt') type-VARIABLE references occurring anywhere in a type —
 -- var\/arg slot values of every positive and negative leaf, and predicate partials. Used by
 -- 'intersectPartialsBase' to decide which arg-meet discoveries genuinely belong to the
@@ -5608,6 +5677,19 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
                 [] -> Just supProp
                 ds -> Just $ intersectTypesEnv typeEnv vaenv supProp (unionAllTypesWithEnv typeEnv vaenv ds)
             (_, r) -> r
+      -- The value returned to the SUB point EXITS the sup partial's frame: a reference to one
+      -- of @sup@'s own vars (@Node[/K=$/MK](left=∀BinTree[/K=$/MK], ..)@ projected out of
+      -- @mapEqual[/MK=∀Ord, /MV=∀Eq](/a=..)@) names a frame the sub point does not carry —
+      -- stored there it is permanently dangling (no later constraint sees the binding), and
+      -- Decode ships a typed meta no value can satisfy ("no arrows from Node(..)" at
+      -- TreeBuild). Materialize the frame on the way out: substitute @sup@'s CLOSED
+      -- (var-free — see 'typeHasTypeVars') var bindings deep into the sub-bound copy
+      -- ('substituteFreeDeep'; the ACT channel is frame-local — Zach's ruling, 2026-08-16).
+      -- The copy stored back into @sup@'s own slot keeps its pointers — inside the frame the
+      -- link is the meaning ('dropOutOfScopeTVExt' extension below).
+      let closedSupEnv PartialType{ptVars=sv} = H.fromList
+            [ (TVVar k, b) | (k, b) <- H.toList sv, b /= PTopType, not (typeHasTypeVars b) ]
+      let closeFrame sup t = let e = closedSupEnv sup in if H.null e then t else substituteFreeDeep e t
       let intersectedPartials sup@PartialType{ptVars=supVars} sub = case (slotOwnVar sup, slotRead sup) of
             (Just v, _) -> do
               -- A pointer slot names a MEMBERSHIP position (@this -> $T@): a single
@@ -5619,7 +5701,7 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
               -- clamped by the var's current bound and the parent stays untouched.
               let supVar = H.lookupDefault PTopType v supVars
               let newProp = intersectTypesEnv typeEnv vaenv supVar sub
-              Just (sup, newProp)
+              Just (sup, closeFrame sup newProp)
             (_, Just supProp) -> do
               -- Same-class predicate intersection ('mergePredsAnd') unifies e.g.
               -- @Functor[/T=$_A] ∧ Functor[/T=Integer]@ into @Functor[/T=$_A]@ while recording the
@@ -5643,7 +5725,7 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
                 -- the drop's in-scope set extends with @sup@'s own var names — a slot value
                 -- @∀ConsList[/T=$_/T]@ under @insertStep[/T=∀Ord]@ keeps its link. The value is
                 -- detached from @sup@ here, so the enclosing scope must be supplied explicitly.
-                else Just (typeSetAux propName (dropOutOfScopeTVExt (H.union (joinVarArgEnv supVars H.empty) vaenv) newProp) sup, newProp)
+                else Just (typeSetAux propName (dropOutOfScopeTVExt (H.union (joinVarArgEnv supVars H.empty) vaenv) newProp) sup, closeFrame sup newProp)
             (_, Nothing) -> Nothing
       case subType of
         UnionType Nothing subPartials [] -> do
@@ -5657,7 +5739,7 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
           -- than the existing binding, a monotonicity violation when this constraint's scope
           -- does not bind @$_T@). Resolve the meet's fresh discoveries back in, mirroring the
           -- prop intersection above ('intersectedPartials').
-          let (ivaenv, tp0) = intersectTypesWithVarEnv typeEnv vaenv (H.lookupDefault PTopType v vaenv) (unionAllTypesWithEnv typeEnv vaenv $ mapMaybe slotRead supPartialList)
+          let (ivaenv, tp0) = intersectTypesWithVarEnv typeEnv vaenv (H.lookupDefault PTopType v vaenv) (unionAllTypesWithEnv typeEnv vaenv $ mapMaybe (\sup -> closeFrame sup <$> slotRead sup) supPartialList)
           let tpBindings = H.difference ivaenv vaenv
           let tp' = if H.null tpBindings then tp0 else substituteKeep tpBindings tp0
           let vaenv' = H.insert v tp' vaenv
@@ -5694,7 +5776,10 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
           let superType' = compactType typeEnv vaenv $ UnionType Nothing (joinUnionType $ mapMaybe updateSuperPartial $ splitUnionType supPartials) []
           (vaenv', superType', subType)
         PTopType -> do
-          let sub' = case mapMaybe slotRead supPartialList of
+          -- The frame-exit closure applies to the ⊤-sub SEEDING write too — this is the
+          -- FIRST projection a fresh sub point receives, and delivering the raw slot here
+          -- plants the dangling frame-var spelling every later epoch then preserves.
+          let sub' = case mapMaybe (\sup -> closeFrame sup <$> slotRead sup) supPartialList of
                 []       -> PTopType
                 supProps -> compactType typeEnv vaenv $ unionAllTypesWithEnv typeEnv vaenv supProps
           (vaenv, superType, sub')
