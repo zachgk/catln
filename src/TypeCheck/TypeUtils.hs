@@ -25,7 +25,7 @@ import           Control.Monad
 import           Control.Monad.State
 import           CtConstants         (runtimeAnnot)
 import           Data.Bifunctor      (Bifunctor (bimap))
-import           Data.List           (find, intercalate, nub, partition)
+import           Data.List           (find, intercalate, nub, partition, sortOn)
 import           Data.Maybe          (fromMaybe, isJust, isNothing, mapMaybe)
 import           Data.UUID           (nil)
 import           MapMeta
@@ -323,7 +323,17 @@ mkReachesEnv env (Constraint maybeConOa stypeVaenv _) = do
   -- it is constraint-independent, so rebuilding it per call would be redundant.
   let argTypeEnv = mkTypeEnv $ Prgm argObjMap (classGraphFromObjs argObjMap) []
   let feTypeEnv' = feReachesTypeEnv env
-  return $ ReachesEnv (argTypeEnv <> feTypeEnv') (fmap snd vaenv) S.empty
+  -- Re-establish the reach-query memo identity dropped by the merge: the merged graph =
+  -- the per-epoch graph (its token) + this constraint's arg objects, so the cache key is
+  -- the token plus the arg-object SIGNATURE (each arg's key and the same resolved slot
+  -- type 'argObjMap' embeds) — constraints whose arg sides differ never share entries,
+  -- while the many constraints with identical (usually empty) arg sides do.
+  let argSig = sortOn fst [ (inExprSingleton inExpr', substituteTVExt (fmap snd vaenv) (getMetaType outM'))
+                          | (inExpr', outM') <- H.elems argVaenv' ]
+  let mergedTypeEnv = (argTypeEnv <> feTypeEnv'){teQueryCacheKey = case teQueryCacheKey feTypeEnv' of
+        Just (tok, _) -> Just (tok, argSig)
+        Nothing       -> Nothing}
+  return $ ReachesEnv mergedTypeEnv (fmap snd vaenv) S.empty
 
 -- | The resolved view of exactly the object-side arg entries 'mkReachesEnv' reads from a
 -- constraint's 'conOs' (each arg's in-expression and out meta, resolved through the current

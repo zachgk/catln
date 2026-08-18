@@ -19,7 +19,9 @@ import qualified Data.HashMap.Strict as H
 import           CtConstants         (builtinAnnotNames, operatorHasArrow)
 import           Data.Graph          (graphFromEdges)
 import qualified Data.HashSet        as S
-import           Data.List           (partition)
+import           Data.IORef          (IORef, atomicModifyIORef', newIORef,
+                                      readIORef)
+import           Data.List           (partition, sortOn)
 import           Data.Maybe
 import           Semantics.Prgm
 import           Semantics.Types
@@ -31,10 +33,57 @@ newtype ObjArrTypeGraph e m = ObjArrTypeGraph (ObjectMap e m)
   deriving (Eq, Show)
 instance Semigroup (ObjArrTypeGraph e m) where
   (ObjArrTypeGraph a) <> (ObjArrTypeGraph b) = ObjArrTypeGraph (a <> b)
+-- | THE REACH-QUERY MEMO. Profiling a near-empty program against core (2026-08-17, the
+-- map-in-core 3x suite regression) put 48.5% of all time in 'objArrGraphQuery' — 121,525
+-- calls at ~9ms each, with 'mostSpecificPromises'' cover materialization alone at 29% —
+-- and the calls repeat heavily: the reaches graph changes at most once per epoch, while
+-- every constraint's 'arrowConstrainUbs' re-queries the same partials. The query is
+-- called from PURE set-algebra contexts ('compactType' chains), so the memo is an
+-- 'unsafePerformIO' global keyed STRUCTURALLY by the env identity ('teQueryCacheKey':
+-- the per-rebuild token plus the constraint's arg-object signature), the prune flag, the
+-- queried partial, and the full vaenv — a hash collision therefore falls back to 'Eq' in
+-- the 'H.HashMap', never a wrong answer. The table keeps one token generation and resets
+-- when a new token appears, bounding memory to one epoch's distinct queries. Envs
+-- without a key ('Nothing' — every env other than the per-epoch reaches envs) bypass the
+-- memo entirely.
+type QueryMemoKey = ((Int, [(PartialKey, Type)]), Bool, PartialType, [(TypeVarAux, Type)])
+
+{-# NOINLINE queryMemoRef #-}
+queryMemoRef :: IORef (Int, H.HashMap QueryMemoKey [(String, Type, Type)])
+queryMemoRef = unsafePerformIO (newIORef (-1, H.empty))
+
+{-# NOINLINE queryTokenRef #-}
+queryTokenRef :: IORef Int
+queryTokenRef = unsafePerformIO (newIORef 0)
+
+-- | A fresh, process-globally-unique token for a rebuilt reaches graph. Global uniqueness
+-- (not a per-run epoch number) is what keeps the memo sound across the many programs one
+-- process compiles (the test suite): a recurring epoch number would collide with another
+-- program's entries. The dummy argument ties each token to the graph value it stamps so
+-- the unsafe call cannot be floated and shared across rebuilds.
+{-# NOINLINE unsafeFreshQueryToken #-}
+unsafeFreshQueryToken :: tg -> Int
+unsafeFreshQueryToken _ = unsafePerformIO (atomicModifyIORef' queryTokenRef (\n -> (n + 1, n + 1)))
+
 -- | Shared body of 'typeGraphQueryWithReason' (@prune=True@) and
 -- 'typeGraphQueryAllWithReason' (@prune=False@ — every accepting arrow contributes).
 objArrGraphQuery :: (ExprClass e, MetaDat m, Show m, Show (e m)) => Bool -> TypeEnv (ObjArrTypeGraph e m) -> TypeVarArgEnv -> PartialType -> [(String, Type, Type)]
-objArrGraphQuery prune typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName} = concatMap tryTArrow $ promises $ flatObjectMapItem $ H.lookupDefault mempty ptName tg
+objArrGraphQuery prune typeEnv vaenv partial = case teQueryCacheKey typeEnv of
+  Nothing -> objArrGraphQueryRaw prune typeEnv vaenv partial
+  Just pfx@(tok, _) -> unsafePerformIO $ do
+    let key = (pfx, prune, partial, sortOn fst (H.toList vaenv))
+    (curTok, m) <- readIORef queryMemoRef
+    let mCur = if curTok == tok then m else H.empty
+    case H.lookup key mCur of
+      Just r -> return r
+      Nothing -> do
+        let r = objArrGraphQueryRaw prune typeEnv vaenv partial
+        atomicModifyIORef' queryMemoRef $ \(tok2, m2) ->
+          ((tok, H.insert key r (if tok2 == tok then m2 else H.empty)), ())
+        return r
+
+objArrGraphQueryRaw :: (ExprClass e, MetaDat m, Show m, Show (e m)) => Bool -> TypeEnv (ObjArrTypeGraph e m) -> TypeVarArgEnv -> PartialType -> [(String, Type, Type)]
+objArrGraphQueryRaw prune typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName} = concatMap tryTArrow $ promises $ flatObjectMapItem $ H.lookupDefault mempty ptName tg
     where
       promises | prune     = mostSpecificPromises
                | otherwise = filter accepts
@@ -225,7 +274,7 @@ buildCtssConfig = unsafePerformIO $ do
 {-# NOINLINE buildCtssConfig #-}
 
 mkTypeEnv :: (ExprClass e, Show m, Show (e m), MetaDat m) => Prgm e m -> TypeEnv (ObjArrTypeGraph e m)
-mkTypeEnv (Prgm objMap classGraph _) = TypeEnv classGraph (ObjArrTypeGraph objMap) typeNames False defaultTypeEnvDebug False False False (mkSatCache classGraph typeNames)
+mkTypeEnv (Prgm objMap classGraph _) = TypeEnv classGraph (ObjArrTypeGraph objMap) typeNames False defaultTypeEnvDebug False False False Nothing (mkSatCache classGraph typeNames)
   where
     -- The compiler-emitted annotation names ('builtinAnnotNames') are part of every program's
     -- vocabulary: desugar injects uses of them (doc comments become @#md@, @>@ statements become

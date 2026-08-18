@@ -400,6 +400,15 @@ data TypeEnv tg = TypeEnv {
   -- path", which only sibling branches of the same enumeration make complete — a standalone
   -- query has no siblings, so the guard's 'False' would become a free-standing false UNSAT.
   teInSatDecision     :: Bool,
+  -- | Identity key enabling the reach-query memo ('objArrGraphQuery'): @Just (token,
+  -- argSig)@ marks this env as one of the per-epoch reaches envs, where @token@ is a
+  -- process-globally-unique number minted per rebuilt reaches graph
+  -- ('unsafeFreshQueryToken') and @argSig@ is the constraint's arg-object signature (the
+  -- 'mkReachesEnv' arg entries that were merged into the graph — envs with different arg
+  -- sides must never share cache entries). 'Nothing' (the default everywhere else)
+  -- disables the memo: only the per-epoch reaches envs have the stable identity that
+  -- makes memoized answers sound.
+  teQueryCacheKey     :: Maybe (Int, [(PartialKey, Type)]),
   -- | Global views of 'teClassGraph' and 'teNames' for the symbolic satisfiability engine
   -- (see the section "Symbolic class-predicate satisfiability"), built strictly at
   -- construction via 'mkSatCache'. Any construction or update that changes 'teClassGraph'
@@ -413,7 +422,7 @@ defaultTypeEnvDebug = False
 
 
 emptyTypeEnv' :: TypeEnv EmptyTypeGraph
-emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty False defaultTypeEnvDebug False False False (mkSatCache mempty S.empty)
+emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty False defaultTypeEnvDebug False False False Nothing (mkSatCache mempty S.empty)
 
 -- | A class or type node within the 'ClassGraph'
 data CGNode
@@ -565,7 +574,10 @@ instance Monoid ClassGraph where
   mempty = ClassGraph $ graphFromEdges []
 
 instance (Semigroup tg) => Semigroup (TypeEnv tg) where
-  (TypeEnv cg1 tg1 n1 d1 dc1 pe1 ap1 is1 _) <> (TypeEnv cg2 tg2 n2 d2 dc2 pe2 ap2 is2 _) = TypeEnv cg' (tg1 <> tg2) n' (d1 || d2) (dc1 || dc2) (pe1 || pe2) (ap1 || ap2) (is1 || is2) (mkSatCache cg' n')
+  -- The merged env's query-cache key is dropped: a merge changes the graph, so any cached
+  -- identity would be wrong. 'mkReachesEnv' re-establishes the key explicitly with the
+  -- arg signature after its merge.
+  (TypeEnv cg1 tg1 n1 d1 dc1 pe1 ap1 is1 _ _) <> (TypeEnv cg2 tg2 n2 d2 dc2 pe2 ap2 is2 _ _) = TypeEnv cg' (tg1 <> tg2) n' (d1 || d2) (dc1 || dc2) (pe1 || pe2) (ap1 || ap2) (is1 || is2) Nothing (mkSatCache cg' n')
     where
       cg' = cg1 <> cg2
       n' = S.union n1 n2
