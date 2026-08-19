@@ -85,6 +85,10 @@ data SSF = SSF {
   ssfTPrgm          :: Maybe (CRes TPrgm),
   ssfTBPrgm         :: Maybe (CRes (Prgm TExpr EvalMetaDat)),
   ssfAnnots         :: Maybe (CRes [(Expr EvalMetaDat, Val)]),
+  -- | What evaluating 'ssfAnnots' asked the compilation service about, which is what decides when
+  -- the answer kept there stops being an answer. Written with the annotations it came from and read
+  -- only beside them, so an empty record on a page holding no annotations says nothing.
+  ssfAnnotAsks      :: AnnotAsks,
   -- | The tests this page wrote, run. Running a test is not part of building a page, so this is
   -- filled in when something asks for it (see 'CtService.ctssTestsFrom') rather than by the
   -- pipeline.
@@ -177,6 +181,34 @@ class CtServiceApi s where
   -- that order rather than one.
   csValues :: s -> Maybe FileImport -> IO ([Name] -> FileImport -> CRes [(EExpr, Val)])
 
+-- | What a display asked the compilation service about, as what would have to change for its answer
+-- to stop being its answer.
+--
+-- A display's value is kept on the page it was evaluated for, and a kept value is what the next
+-- reader is answered with before anything is asked again. So whatever the display reached has to be
+-- written down, or the answer outlives what it was an answer about. It is recorded rather than
+-- enumerated per display because the enumeration was already wrong before a display could ask for
+-- anything (see @CtService.ctssClearInvalidations@), and there is now no list of what a display may
+-- reach to keep up to date.
+--
+-- Scopes rather than pages, because that is the grain the service is asked in: a display asks about a
+-- page and gets that page and everything it imports. It is also the grain that makes the check
+-- cheap — a change to page @C@ can only alter an ask about scope @S@ if @S@ imports @C@, and the
+-- pages which import a changed one are exactly what the invalidation walk already computes.
+data AnnotAsks = AnnotAsks {
+    aaScopes :: S.HashSet FileImport
+  -- | Whether anything was asked that any page at all can bear on, which nothing narrower covers. A
+  -- test run is the case: which tests a page has is decided over the whole program that page belongs
+  -- to, so a change to a page which imports it can alter them.
+  , aaEvery  :: Bool
+  }
+
+instance Semigroup AnnotAsks where
+  a <> b = AnnotAsks (aaScopes a <> aaScopes b) (aaEvery a || aaEvery b)
+
+instance Monoid AnnotAsks where
+  mempty = AnnotAsks S.empty False
+
 -- | The compilation service an evaluation was given, and which of its pages the evaluation is of.
 --
 -- Existential because the service cannot be named here (see 'CtServiceApi'); this is the same shape
@@ -186,8 +218,70 @@ class CtServiceApi s where
 -- which pages an evaluation covers is a question asked where it is answered. A display reporting on
 -- the program it is written in reads the scope; one reporting on the pages there are ignores it; and
 -- the two can be written in the same page without the service having been asked twice.
+--
+-- The asks are recorded as they are made, which is what lets a kept answer be dropped when it stops
+-- being one. Every ask goes through the @es@ functions below rather than through the class directly,
+-- so a display cannot ask about a page without that being written down.
 data EvalService where
-  EvalService :: CtServiceApi s => s -> Maybe FileImport -> EvalService
+  EvalService :: CtServiceApi s => s -> Maybe FileImport -> IORef AnnotAsks -> EvalService
+
+-- | A handle on the service for one evaluation, with nothing asked yet.
+newEvalService :: (CtServiceApi s) => s -> Maybe FileImport -> IO EvalService
+newEvalService s scope = EvalService s scope <$> newIORef mempty
+
+-- | What the evaluation asked about, read back once it has finished asking.
+--
+-- Read by a caller which keeps the evaluation's value, so that it can be dropped when it stops being
+-- an answer. A caller which keeps nothing — a call answered and forgotten — never reads this, and its
+-- record is discarded with the handle.
+esAsks :: EvalService -> IO AnnotAsks
+esAsks (EvalService _ _ asks) = readIORef asks
+
+-- | Which of the service's pages the evaluation is of, or none where it is of no one page.
+esScope :: EvalService -> Maybe FileImport
+esScope (EvalService _ scope _) = scope
+
+-- | 'CtServiceApi.csPages', recording nothing: which pages there are is not what is in any of them,
+-- so no change to a page's contents can alter this. A page appearing or going can, and that is
+-- answered by the page set having changed rather than by anything recorded here.
+esPages :: EvalService -> IO [FileImport]
+esPages (EvalService s _ _) = csPages s
+
+-- | 'CtServiceApi.csBuilt' of a scope, recorded as asked about.
+esBuilt :: EvalService -> Maybe FileImport -> IO (GraphData SSF FileImport)
+esBuilt svc@(EvalService s _ _) scope = recordAsk svc scope >> csBuilt s scope
+
+-- | 'CtServiceApi.csTests' of a page, recorded as an ask about every page. A test is decided over the
+-- whole program its page belongs to, which reaches past what that page imports, so nothing narrower
+-- than every page covers what can alter one.
+esTests :: EvalService -> FileImport -> IO (CRes [TestResult])
+esTests svc@(EvalService s _ _) prgmName = recordEvery svc >> csTests s prgmName
+
+-- | 'CtServiceApi.csRunFun' of a page, recorded as an ask about that page's scope: a run is of that
+-- page's program, which is the page and what it imports.
+esRunFun :: EvalService -> FileImport -> String -> IO (CRes DebugRun)
+esRunFun svc@(EvalService s _ _) prgmName fun = recordAsk svc (Just prgmName) >> csRunFun s prgmName fun
+
+-- | 'CtServiceApi.csRunExpr' of a page, recorded as 'esRunFun' is: the expression is compiled against
+-- that page and means what that page makes it mean.
+esRunExpr :: EvalService -> FileImport -> String -> IO (CRes DebugRun)
+esRunExpr svc@(EvalService s _ _) prgmName src = recordAsk svc (Just prgmName) >> csRunExpr s prgmName src
+
+-- | 'CtServiceApi.csValues' over a scope, recorded as asked about. The gatherer that comes back can
+-- only be asked about pages of that scope, so recording the scope covers every page it will gather
+-- from — which a pure gatherer could not record for itself.
+esValues :: EvalService -> Maybe FileImport -> IO ([Name] -> FileImport -> CRes [(EExpr, Val)])
+esValues svc@(EvalService s _ _) scope = recordAsk svc scope >> csValues s scope
+
+-- | Write down a scope a display asked about. An unscoped ask is about every page there is, which is
+-- what asking without naming a page means.
+recordAsk :: EvalService -> Maybe FileImport -> IO ()
+recordAsk svc Nothing = recordEvery svc
+recordAsk (EvalService _ _ asks) (Just prgmName) =
+  modifyIORef' asks $ \a -> a{aaScopes = S.insert prgmName (aaScopes a)}
+
+recordEvery :: EvalService -> IO ()
+recordEvery (EvalService _ _ asks) = modifyIORef' asks $ \a -> a{aaEvery = True}
 
 data EPrim
   = EPrim String (H.HashMap String Val -> Either String Val)

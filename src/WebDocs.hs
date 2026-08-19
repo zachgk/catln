@@ -44,9 +44,9 @@ import           Data.Maybe                    (listToMaybe)
 import           Data.UUID                     (UUID, fromText)
 import           Eval                          (evalAllTargetModes, evalAnnots,
                                                 prgmFromGraphData)
-import           Eval.Common                   (EvalMode, EvalService (..),
-                                                SSF (..),
-                                                Val (FloatVal, IntVal, StrVal))
+import           Eval.Common                   (EvalMode, SSF (..),
+                                                Val (FloatVal, IntVal, StrVal),
+                                                newEvalService)
 import           Eval.Runtime.WebDocs          (sidebarOrder)
 import           MapMeta                       (interleaveMeta, interleavePrgm,
                                                 parseMetaIDScope, zip4MetaFun)
@@ -259,7 +259,10 @@ annotResp ctss scope' annot = do
     let targetModes = evalAllTargetModes annotTprgm
     -- The service is scoped to the page the annotation was asked about rather than to the synthetic
     -- page holding the annotation itself, which is a page of nothing that nobody wrote.
-    maybeAnnots <- asCResT $ evalAnnots (Just $ EvalService ctss scope') annotPrgmName joinedTprgms
+    -- As in 'CtService.ctssCallDShow', nothing keeps what this answers, so nothing reads what it
+    -- asked about.
+    svc <- lift $ newEvalService ctss scope'
+    maybeAnnots <- asCResT $ evalAnnots (Just svc) annotPrgmName joinedTprgms
     let annots' = H.fromList $ map (first (getMetaID . getExprMeta)) maybeAnnots
     return $ mapMetaRawPrgm (zip4MetaFun (interleaveMeta $ interleavePrgm annotTprgm) (interleaveMeta targetModes) (interleaveMeta annots') (interleaveMeta $ printSources rawPrgm')) rawPrgm'
 

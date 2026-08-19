@@ -22,7 +22,6 @@ import           Control.Monad           (forM, forM_, forever, unless, void,
                                           when)
 import           Control.Monad.Trans     (lift)
 import           CRes
-import           CtConstants             (testAnnot)
 import           Data.Graph
 import qualified Data.HashMap.Strict     as H
 import qualified Data.HashSet            as S
@@ -36,10 +35,11 @@ import           Eval                    (evalAnnots, evalBaseEnvService,
                                           evalDebugPrgm, evalPageValues,
                                           evalRun, evalRunMock,
                                           prgmFromGraphData)
-import           Eval.Common             (CtServiceApi (..), DebugRun,
-                                          EvalMetaDat, EvalService (..), MockIO,
+import           Eval.Common             (AnnotAsks (..), CtServiceApi (..),
+                                          DebugRun, EvalMetaDat, MockIO,
                                           SSF (..), TExpr, TestResult, Val,
-                                          joinedStage, oaTestId)
+                                          esAsks, joinedStage, newEvalService,
+                                          oaTestId)
 import           Eval.Testing            (TestDesc (..), evalPrints, evalTest,
                                           runTestDesc)
 import           FileWatch               (Watch, Watcher, allCovered,
@@ -47,7 +47,6 @@ import           FileWatch               (Watch, Watcher, allCovered,
                                           watchReads, withPending)
 import           MapMeta                 (parseMetaIDScope)
 import           Semantics               (CTSSConfig)
-import           Semantics.Annots        (hasAnnot)
 import           Semantics.Prgm
 import           Semantics.Types         (Name)
 import           Syntax.Ct.Desugarf      (desFinalPass, desFinalPasses, desPrgm,
@@ -170,6 +169,7 @@ newSSF rp = SSF { ssfSource = rpSource rp
                 , ssfTPrgm = Nothing
                 , ssfTBPrgm = Nothing
                 , ssfAnnots = Nothing
+                , ssfAnnotAsks = mempty
                 , ssfTests = Nothing
                 }
 
@@ -472,27 +472,25 @@ ctssClearInvalidations pagesChanged invalidations ss@CTSSDat{ctssData=(g, nodeFr
     -- | A page's annotations, where the change cannot have altered them.
     --
     -- An annotation is evaluated against the page's own program, which the walk above covers, and
-    -- against whatever else it asks the service for. A cached annotation is what 'getEvalAnnots'
-    -- answers with before it asks anything, so where a change could alter what the service would say,
-    -- the cache is what has to be dropped.
+    -- against whatever it asked the compilation service for. A kept annotation is what
+    -- 'getEvalAnnots' answers with before anything is asked again, so an ask whose answer the change
+    -- could alter is what has to drop it.
     --
-    -- Asked of each rather than dropped wholesale, because evaluating a page's annotations is work
-    -- and every change would otherwise cost it for every page: which pages there are changes only
-    -- when a page appears or goes, and a test run is read only by a page which writes a test.
+    -- Which asks those were is read off the page ('Eval.Common.ssfAnnotAsks') rather than worked out
+    -- from what displays there are. Enumerating it was already wrong: a @#taskList@ reads the tasks of
+    -- every note, a vault does not import its notes, and so the walk above never reached the page
+    -- showing them — one note edited left another page's list of its tasks as it was. A display may
+    -- now ask about any page at any stage, so there is no list of what one may reach to keep correct.
     --
-    -- TODO This is too narrow, and was already too narrow before an annotation could ask the service
-    -- anything. It enumerates what an annotation may reach past its own program — which pages there
-    -- are, and its own tests — but a gathering across pages reaches their CONTENTS: a @#taskList@
-    -- reads the tasks of every note, and a vault does not import its notes, so 'propagated' above
-    -- never reaches the page displaying them. Editing one note leaves another page's cached list of
-    -- its tasks stale. Now that a display may ask for any page at any stage, the enumeration cannot
-    -- be completed and the rule has to become a conservative one.
+    -- An ask about a scope is altered by a change to page @C@ only if that scope imports @C@, and the
+    -- pages which import a changed one are exactly 'propagated'. So an ask is checked by asking
+    -- whether the scope it named is in the walk — no second walk, and no widening to every page.
     keptAnnots ssf
-      | pagesChanged      = Nothing
-      | writesATest ssf   = Nothing
-      | otherwise         = ssfAnnots ssf
-
-    writesATest ssf = maybe False prgmWritesATest (cresToMaybe =<< ssfTPrgm ssf)
+      | pagesChanged                                = Nothing
+      | aaEvery asks                                = Nothing
+      | any (`S.member` propagated) (aaScopes asks) = Nothing
+      | otherwise                                   = ssfAnnots ssf
+      where asks = ssfAnnotAsks ssf
 
 -- | Build pages incrementally, one SCC at a time.
 -- Each successfully built SCC is committed to the MVar independently,
@@ -957,8 +955,14 @@ getEvalAnnots ctss prgmName = do
       -- service for the run itself, so they are run when one is being displayed and not when a page
       -- merely writes one — which is the same set of pages, decided by the thing that needs them
       -- rather than guessed at in advance.
-      let annots = evalAnnots (Just $ EvalService ctss (Just prgmName)) prgmName tprgms
-      lift $ ctssStore prgmName (\ssf -> ssf{ssfAnnots = Just annots}) ctss
+      svc <- lift $ newEvalService ctss (Just prgmName)
+      let annots = evalAnnots (Just svc) prgmName tprgms
+      -- Evaluated here rather than left for whoever displays it, because what it asked the service
+      -- about is only known once it has asked, and that record is kept with it. It is the same work
+      -- either way and it is done once: what is kept is the value that was forced, not a second
+      -- computation of it.
+      asks <- lift $ annots `seq` esAsks svc
+      lift $ ctssStore prgmName (\ssf -> ssf{ssfAnnots = Just annots, ssfAnnotAsks = asks}) ctss
       asCResT annots
 
 -- | Call a named function of the program with arguments supplied as values, for the value it
@@ -981,13 +985,10 @@ ctssCallDShow ctss scope fun args = do
   -- built over at all, and a search box is not something to lose because some other page is broken.
   tprgms <- ctssEvaluableFrom ssfTPrgm scope ctss
   prgm <- asCResT $ maybe (return $ mconcat $ map fst3 $ graphToNodes tprgms) (`prgmFromGraphData` tprgms) scope
-  asCResT $ evalDShowCall (evalBaseEnvService (Just $ EvalService ctss scope) prgm) fun args
-
--- | Whether a program marks any of its definitions as a test. What a page's own program says about
--- itself, which is also what decides whether a change to anything at all can alter the page's
--- annotations ('ctssClearInvalidations').
-prgmWritesATest :: TPrgm -> Bool
-prgmWritesATest (Prgm objMap _ _) = any (hasAnnot testAnnot) (flatObjectMap objMap)
+  -- Nothing keeps what this answers, so nothing reads what it asked: a call is answered and
+  -- forgotten, and there is no kept value to be dropped when the answer changes.
+  svc <- lift $ newEvalService ctss scope
+  asCResT $ evalDShowCall (evalBaseEnvService (Just svc) prgm) fun args
 
 -- | Read a page's computed item, without building the page or computing anything.
 ctssCached :: (SSF -> Maybe (CRes a)) -> FileImport -> CTSS -> IO (Maybe (CRes a))

@@ -11,7 +11,7 @@ module Syntax.LiveReloadTests where
 
 import           Control.Concurrent     (modifyMVar_, threadDelay)
 import           Control.Concurrent.STM (STM, atomically, orElse)
-import           Control.Exception      (SomeException, try)
+import           Control.Exception      (SomeException, evaluate, try)
 import           CRes                   (CNote (..), CNoteI (..), CRes (..),
                                          runCResT)
 import           CtService              (CTSS (..), CTSSDat (..),
@@ -21,10 +21,12 @@ import           CtService              (CTSS (..), CTSSDat (..),
                                          ctssFollow, ctssFollowing, ctssGetFrom,
                                          ctssKeys, ctssReadOf, ctssWatch,
                                          ctssWatchLive)
+import qualified Data.HashSet           as S
 import           Data.List              (isPrefixOf, sort)
 import           Data.Maybe             (isJust, isNothing)
 import           Data.Time.Clock        (addUTCTime, getCurrentTime)
-import           Eval.Common            (SSF (..))
+import           Eval.Common            (AnnotAsks (..), SSF (..), Val)
+import           Eval.Runtime.WebDocs   (askService)
 import           Semantics              (testCtssConfig)
 import           Semantics.Prgm         (FileImport, impDisp)
 import           Syntax.RereadTests     (caseDir, writeLater)
@@ -285,6 +287,67 @@ testAnnotsFollowThePages = testCase "a page appearing drops the annotations of a
   assertBool "a page appearing left an annotation cached from before it existed"
     . isNothing =<< ctssCached ssfAnnots a ctss
 
+-- | A page's annotations are dropped when a page they asked the compilation service about changed,
+-- and only then.
+--
+-- A display may ask about a page other than the one it is written in — a @#taskList@ gathers the
+-- tasks of every note — and the invalidation walk only reaches pages that IMPORT what changed. A
+-- vault does not import its notes, so a note edited left another page's list of its tasks exactly as
+-- it was. Enumerating what a display may reach was what went wrong, and there is no such list to keep
+-- correct now that one may ask for any page; so what each display actually asked is recorded with the
+-- answer, and that is what this holds to.
+--
+-- Both directions matter. A change to a page nobody asked about must NOT cost an unrelated page its
+-- annotations, which is what makes recording the asks worth doing rather than dropping everything.
+testAnnotsFollowTheirAsks :: TestTree
+testAnnotsFollowTheirAsks = testCase "a page's annotations are dropped when a page they asked about changed" $ do
+  dir <- caseDir "live-asks"
+  now <- getCurrentTime
+  writeLater now (dir </> "a.ct") "a = 1\n"
+  writeLater now (dir </> "b.ct") "b = 2\n"
+  writeLater now (dir </> "c.ct") "c = 3\n"
+  setModificationTime dir now
+  ctss <- ctssBaseFiles testCtssConfig [dir]
+  a <- pageAt (dir </> "a.ct") ctss
+  b <- pageAt (dir </> "b.ct") ctss
+  -- a.ct's display asked the service about b.ct and nothing else. a.ct does not import b.ct, so the
+  -- walk never reaches a.ct from it: the record is the only thing that can say the two are connected.
+  seedBuilt ctss $ \name ssf -> ssf{ssfBuilt = True, ssfAnnots = Just (pure [])
+                                   , ssfAnnotAsks = if name == a then mempty{aaScopes = S.singleton b} else mempty}
+  assertBool "the annotations were not there to be dropped" . isJust =<< ctssCached ssfAnnots a ctss
+
+  -- c.ct is a page of the same service that nothing asked about.
+  writeLater (addUTCTime 60 now) (dir </> "c.ct") "c = 4\n"
+  _ <- ctssReadOf ctss []
+  assertBool "writing to a page nothing asked about dropped an annotation anyway"
+    . isJust =<< ctssCached ssfAnnots a ctss
+
+  writeLater (addUTCTime 120 now) (dir </> "b.ct") "b = 3\n"
+  _ <- ctssReadOf ctss []
+  assertBool "writing to the page an annotation asked about left it saying what it said before"
+    . isNothing =<< ctssCached ssfAnnots a ctss
+
+-- | A display's ask of the service is finished before its value is handed back.
+--
+-- The service is behind an MVar which a build holds for a whole SCC ('CtService.ctssBuildSCC') and a
+-- read holds for a whole read ('CtService.ctssReadOf'), and an MVar is not re-entrant. A display's
+-- value is kept on the page it was evaluated for and read again whenever something shows that page —
+-- so an ask left unfinished inside one would be run at some unrelated later moment, which may be
+-- inside one of those locks, and would HANG there rather than fail. That is a failure no test would
+-- report as one, which is why the discipline is worth holding to directly.
+--
+-- 'Eval.Runtime.WebDocs.askService' is where every display's ask happens and where the answer is
+-- forced, and it takes its answer as text rather than as a value so that forcing it is total.
+testAskServiceForcesItsAnswer :: TestTree
+testAskServiceForcesItsAnswer = testCase "a display's ask is finished before its value is handed back" $ do
+  -- An answer whose tail cannot be produced. Forced where it is asked, this raises here; left lazy,
+  -- an intact value is handed back and raises whenever something later reads it.
+  let asked = askService $ return $ Right ("ok" ++ error "the answer was not forced where it was asked")
+  forced <- try (evaluate asked) :: IO (Either SomeException (Either String Val))
+  case forced of
+    Left _  -> return ()
+    Right _ -> assertFailure "askService handed back a display value with its ask still to be run"
+
 liveReloadTests :: TestTree
 liveReloadTests = testGroup "LiveReload" [
   testImporters,
@@ -293,5 +356,7 @@ liveReloadTests = testGroup "LiveReload" [
   testFollowCloses,
   testWatchLive,
   testBrokenPageLeftOut,
+  testAnnotsFollowTheirAsks,
+  testAskServiceForcesItsAnswer,
   testAnnotsFollowThePages
                                          ]

@@ -96,8 +96,9 @@ listProgram = EEnvPrim "listProgram" prim
 fromStage :: (Monoid a, ToJSON a) => Env -> (SSF -> Maybe (CRes a)) -> Either String Val
 fromStage env stage = case evService env of
   Nothing -> Left noService
-  Just (EvalService s scope) -> askService $ do
-    graph <- csBuilt s scope
+  Just svc -> askService $ do
+    let scope = esScope svc
+    graph <- esBuilt svc scope
     let pages = maybe graph (`graphFilterReaches` graph) scope
     return $ encodeJsonText <$> orNotes (joinedStage stage $ map fst3 $ graphToNodes pages)
 
@@ -160,10 +161,10 @@ typeInfer = EEnvPrim "typeInfer" prim
 withTypeInfer :: Env -> (CRes (VPrgm, TraceConstrain) -> Either String String) -> Either String Val
 withTypeInfer env render = case evService env of
   Nothing -> Left noService
-  Just (EvalService s scope) -> case scopedTo scope "type inference to report on" of
+  Just svc -> case scopedTo (esScope svc) "type inference to report on" of
     Left err       -> Left err
     Right prgmName -> askService $ do
-      graph <- csBuilt s (Just prgmName)
+      graph <- esBuilt svc (Just prgmName)
       return $ render $ do
         (_, vprgm, trace) <- requireComputed $ ssfTPrgmWithTrace =<< graphLookup prgmName graph
         return (vprgm, trace)
@@ -199,7 +200,7 @@ debugger :: EPrim
 debugger = EEnvPrim "debugger" prim
   where
     prim env args = case H.lookup debuggerFunArg args of
-      Just (StrVal fun) -> askRun env "program to run" (\s prgmName -> csRunFun s prgmName fun)
+      Just (StrVal fun) -> askRun env "program to run" (\svc prgmName -> esRunFun svc prgmName fun)
       Just v -> Left $ printf "debugger was given %s, which is not a String function name" (show v)
       Nothing -> Left $ printf "debugger has no %s argument, only %s" debuggerFunArg (show $ sort $ H.keys args)
 
@@ -209,12 +210,12 @@ debugger = EEnvPrim "debugger" prim
 -- program with one entry point, where every loaded page joined has as many @main@s as it has pages;
 -- an expression means what the page it is written in makes it mean, and the join of every page is
 -- not a page anything was written in.
-askRun :: Env -> String -> (forall s. CtServiceApi s => s -> FileImport -> IO (CRes DebugRun)) -> Either String Val
+askRun :: Env -> String -> (EvalService -> FileImport -> IO (CRes DebugRun)) -> Either String Val
 askRun env what run = case evService env of
   Nothing -> Left noService
-  Just (EvalService s scope) -> case scopedTo scope what of
+  Just svc -> case scopedTo (esScope svc) what of
     Left err       -> Left err
-    Right prgmName -> askService $ fmap (fmap encodeJsonText . orNotes) (run s prgmName)
+    Right prgmName -> askService $ fmap (fmap encodeJsonText . orNotes) (run svc prgmName)
 
 -- | The argument of @/Catln/Doc/debugExpr@ holding the expression to run, as its source.
 debugExprArg :: String
@@ -230,7 +231,7 @@ debugExpr :: EPrim
 debugExpr = EEnvPrim "debugExpr" prim
   where
     prim env args = case H.lookup debugExprArg args of
-      Just (StrVal expr) -> askRun env "expression to run" (\s prgmName -> csRunExpr s prgmName expr)
+      Just (StrVal expr) -> askRun env "expression to run" (\svc prgmName -> esRunExpr svc prgmName expr)
       Just v -> Left $ printf "debugExpr was given %s, which is not a String expression" (show v)
       Nothing -> Left $ printf "debugExpr has no %s argument, only %s" debugExprArg (show $ sort $ H.keys args)
 
@@ -258,8 +259,8 @@ sidebar :: EPrim
 sidebar = EEnvPrim "sidebar" prim
   where
     prim Env{evService = Nothing} _ = Left noService
-    prim Env{evService = Just (EvalService s _)} _ = askService $ do
-      pages <- csPages s
+    prim Env{evService = Just svc} _ = askService $ do
+      pages <- esPages svc
       return $ encodeJsonText <$> sidebarNodes pages
 
 -- | The pages as the tree of directories they sit in, which is the shape a navigation of them is
@@ -338,8 +339,8 @@ searchPagesFor = EEnvPrim "searchPagesFor" prim
       Nothing -> Left $ printf "searchPagesFor has no %s argument, only %s" searchQueryArg (show $ sort $ H.keys args)
       Just (StrVal query) -> case evService env of
         Nothing -> Left noService
-        Just (EvalService s _) -> askService $ do
-          pages <- csPages s
+        Just svc -> askService $ do
+          pages <- esPages svc
           return $ encodeJsonText . sort . filter (matchesQuery query) <$> traverse pagePath pages
       Just v -> Left $ printf "searchPagesFor was given %s, which is not a String query" (show v)
     -- As in 'sidebar', a page with no display path cannot be opened, so it is reported rather than
@@ -476,10 +477,10 @@ testRun = EEnvPrim "testRun" prim
     prim Env{evAnnotObj=Nothing} _ = Left "This #test is not written on a definition, so it has no test of one to report on"
     prim env@Env{evAnnotObj=Just oa} _ = case evService env of
       Nothing -> Left noService
-      Just (EvalService s scope) -> case scopedTo scope "tests to report on" of
+      Just svc -> case scopedTo (esScope svc) "tests to report on" of
         Left err -> Left err
         Right prgmName -> askService $ do
-          tests <- csTests s prgmName
+          tests <- esTests svc prgmName
           -- Of the definition the annotation is written on rather than of the page, since a @#test@
           -- marks one definition and reports on that one.
           return $ encodeJsonText . filter ((== oaTestId oa) . trOwnerId) <$> orNotes tests
@@ -522,12 +523,13 @@ taskList = EEnvPrim "taskList" prim
   where
     prim env _ = case evService env of
       Nothing -> Left noService
-      Just (EvalService s scope) -> askService $ do
-        graph <- csBuilt s scope
+      Just svc -> askService $ do
+        let scope = esScope svc
+        graph <- esBuilt svc scope
         -- One gatherer for every page asked about, not one per page. It holds the scope's
         -- typechecked programs, so asking for a fresh one per page would pay for the scope once per
         -- page — over a vault of notes, quadratic in the notes.
-        gather <- csValues s scope
+        gather <- esValues svc scope
         let pages = map snd3 $ graphToNodes $ maybe graph (`graphFilterReaches` graph) scope
         return $ encodeJsonText . concat <$> traverse (pageTasks gather) (sortOn impDisp pages)
 
