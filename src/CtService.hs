@@ -1122,7 +1122,6 @@ ctssStagePrgms ctss = do
     , spDebugRun = const $ notScoped "program to run"
     , spDebugExpr = const $ notScoped "expression to run"
     , spPages = pages
-    , spAllPages = pages
     , spTests = notScoped "tests to report on"
     , spPageValues = values
     }
@@ -1136,10 +1135,6 @@ ctssStagePrgms ctss = do
 ctssStagePrgmsFrom :: CTSS -> FileImport -> IO StagePrgms
 ctssStagePrgmsFrom ctss prgmName = do
   ctssData <- csBuilt ctss (Just prgmName)
-  -- Every page the service holds rather than the ones this scope reaches, which is what makes an
-  -- annotation reporting on the pages there are answer the same wherever it is written. It is the
-  -- graph as it is, so nothing is built to produce it.
-  allPages <- return <$> csPages ctss
   values <- csValues ctss (Just prgmName)
   let reaches = graphFilterReaches prgmName ctssData
   let ssfs = map fst3 $ graphToNodes reaches
@@ -1163,7 +1158,6 @@ ctssStagePrgmsFrom ctss prgmName = do
     , spDebugRun = debugRun
     , spDebugExpr = debugExpr
     , spPages = return $ map snd3 $ graphToNodes reaches
-    , spAllPages = allPages
     , spTests = notRun
     , spPageValues = values
     }

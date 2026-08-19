@@ -44,6 +44,7 @@ import           Semantics.Types     (ArgName, ClassGraph (..),
                                       maybeGetClassSingleton, maybeGetSingleton,
                                       mkName, nameStr, pkName,
                                       relativeNameMatches)
+import           System.IO.Unsafe    (unsafePerformIO)
 import           Text.Printf
 import           TypeCheck.Common    (filterTraceConstrain, flipTraceConstrain)
 import           Utils
@@ -199,17 +200,20 @@ data SidebarNode
 -- | Backs @/Catln/Doc/sidebar@, the data carried by a @Show/Sidebar@ page. It renders every page
 -- there is as the tree of directories they sit in.
 --
--- Every page rather than the pages the evaluation covers ('spAllPages', not 'spPages'), so this
--- answers the same wherever it is written. A navigation is for reaching the pages one has not
--- reached, so a navigation of only what the page it sits on imports would offer nothing but where
--- the reader already is. Reading it off the pages there are rather than off a compiled program is
--- also what lets a doc server put a navigation up without compiling everything it names.
+-- Every page rather than the pages the evaluation covers, so this answers the same wherever it is
+-- written. A navigation is for reaching the pages one has not reached, so a navigation of only what
+-- the page it sits on imports would offer nothing but where the reader already is.
+--
+-- 'csPages' rather than anything that builds: which pages there are is known as soon as they were
+-- read, and nothing has to be compiled to say so. That is what lets a doc server put a navigation up
+-- without compiling everything it names.
 sidebar :: EPrim
 sidebar = EEnvPrim "sidebar" prim
   where
-    prim Env{evStagePrgms=StagePrgms{spAllPages}} _ = case spAllPages of
-      CErr notes   -> Left $ prettyCNotes notes
-      CRes _ pages -> encodeJson <$> sidebarNodes pages
+    prim Env{evService = Nothing} _ = Left noService
+    prim Env{evService = Just (EvalService s _)} _ = askService $ do
+      pages <- csPages s
+      return $ encodeJsonText <$> sidebarNodes pages
 
 -- | The pages as the tree of directories they sit in, which is the shape a navigation of them is
 -- walked in.
@@ -273,22 +277,24 @@ searchQueryArg = "/query"
 -- Case-insensitively, and on the path alone, which is what the webdocs matched against when they
 -- held the list and matched it themselves. Only where the search happens has changed.
 --
--- These are the same pages 'sidebar' renders as a tree, read the same way off 'spAllPages', and for
--- the same reason: what is worth searching for is above all what one has not already got to. A box
+-- These are the same pages 'sidebar' renders as a tree, read the same way off 'csPages', and for the
+-- same reason: what is worth searching for is above all what one has not already got to. A box
 -- matching typing against a list and a navigation being walked want different shapes of the same
 -- answer, and each page carries the shape it displays, so the two are rendered separately rather
 -- than one being derived from the other in the webdocs.
 searchPagesFor :: EPrim
 searchPagesFor = EEnvPrim "searchPagesFor" prim
   where
-    prim Env{evStagePrgms=StagePrgms{spAllPages}} args = case (H.lookup searchQueryArg args, spAllPages) of
-      (Nothing, _) -> Left $ printf "searchPagesFor has no %s argument, only %s" searchQueryArg (show $ sort $ H.keys args)
-      (Just v, _) | not (isStr v) -> Left $ printf "searchPagesFor was given %s, which is not a String query" (show v)
-      (_, CErr notes) -> Left $ prettyCNotes notes
-      (Just (StrVal query), CRes _ pages) -> encodeJson . sort . filter (matchesQuery query) <$> traverse pagePath pages
-      _ -> Left "searchPagesFor could not read the query it was given"
-    isStr StrVal{} = True
-    isStr _        = False
+    -- What was asked is read before who to ask, so a display written wrongly says so rather than
+    -- reporting that it had nobody to ask.
+    prim env args = case H.lookup searchQueryArg args of
+      Nothing -> Left $ printf "searchPagesFor has no %s argument, only %s" searchQueryArg (show $ sort $ H.keys args)
+      Just (StrVal query) -> case evService env of
+        Nothing -> Left noService
+        Just (EvalService s _) -> askService $ do
+          pages <- csPages s
+          return $ encodeJsonText . sort . filter (matchesQuery query) <$> traverse pagePath pages
+      Just v -> Left $ printf "searchPagesFor was given %s, which is not a String query" (show v)
     -- As in 'sidebar', a page with no display path cannot be opened, so it is reported rather than
     -- dropped from the list, where it would read as a page the doc server does not hold.
     pagePath imp = case impDisp imp of
@@ -483,5 +489,55 @@ orNotes :: CRes a -> Either String a
 orNotes (CRes _ r)   = Right r
 orNotes (CErr notes) = Left $ prettyCNotes notes
 
+-- | What a primitive says when it was given no compilation service to ask.
+--
+-- Said rather than answered around: an evaluation with nothing to report on cannot answer, and
+-- reporting something else would be worse than failing. Every evaluation the service itself starts
+-- is one of these ('Eval.evalBaseEnv'), so a display reached by way of another display says this
+-- rather than recurring.
+noService :: String
+noService = "This evaluation was not given the compilation service its program was compiled by"
+
+-- | The page an evaluation is scoped to, or why it is not scoped to one.
+--
+-- Some displays are about the program the annotation is written in and some are about the pages
+-- there are, and only the first needs a page. The wording is what @\/api\/annot@ answers with when
+-- it was asked without one, and is pinned by the webdocs' own integration tests, so it is written
+-- here once rather than in each display that needs a page.
+scopedTo :: Maybe FileImport -> String -> Either String FileImport
+scopedTo (Just prgmName) _ = Right prgmName
+scopedTo Nothing what = Left $ "This evaluation is not scoped to a single page, so it has no " ++ what
+
+-- | Asks the compilation service for the text a display carries.
+--
+-- The 'unsafePerformIO' is what lets a primitive ask at all: a primitive is pure, and every question
+-- worth asking the service — which pages there are, what a page compiled to, what its tests did — is
+-- something the service answers in 'IO'. @Eval.Runtime.ioInput@ and 'Eval.evalDebugPrgm' already make
+-- the same trade.
+--
+-- The answer is forced HERE, which is the whole discipline of doing so. The service is behind an
+-- MVar which a build holds for a whole SCC (@CtService.ctssBuildSCC@) and a read holds for a whole
+-- read (@CtService.ctssReadOf@), and an MVar is not re-entrant. A primitive's value is kept on the
+-- page it was evaluated for (@CtService.getEvalAnnots@) and read later by whoever displays it — so an
+-- unforced ask left inside one would be run at some unrelated moment, possibly inside one of those
+-- locks, and would HANG there rather than fail. Asking inside the primitive is asking at the one
+-- moment nothing is held.
+--
+-- It takes the answer as text rather than as a 'Val' so that forcing it is total: there is no
+-- constructor a lazy remainder could hide behind. Every display here carries JSON, so this is what
+-- all of them return anyway.
+--
+-- The ask may be run more than once, which 'unsafePerformIO' does not promise not to do. That is
+-- harmless for all of them: building is idempotent, a test run is kept on its page, and a debugger's
+-- run is mocked. Nothing here writes anything a second run would double.
+askService :: IO (Either String String) -> Either String Val
+askService ask = case unsafePerformIO ask of
+  Left err   -> Left err
+  Right text -> length text `seq` Right (StrVal text)
+
 encodeJson :: (ToJSON p) => p -> Val
-encodeJson = StrVal . TL.unpack . encodeToLazyText
+encodeJson = StrVal . encodeJsonText
+
+-- | A display's data as the JSON text it is carried as.
+encodeJsonText :: (ToJSON p) => p -> String
+encodeJsonText = TL.unpack . encodeToLazyText

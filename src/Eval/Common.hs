@@ -217,19 +217,6 @@ data StagePrgms = StagePrgms {
   -- stages above are. It is the pages of whatever the evaluation was scoped to, so it goes with the
   -- stages above: these are the files those programs were joined out of.
   , spPages      :: CRes [FileImport]
-  -- | Every page there is, whatever the evaluation was scoped to.
-  --
-  -- For an annotation which reports on what there is rather than on the program it is written in. A
-  -- listing of the pages, or a search over them, is about the ones the reader has NOT reached as
-  -- much as the ones they have: read as a record of an exploration, what a page is worth offering
-  -- next to is exactly what that page does not import. Such an annotation is answered the same way
-  -- wherever it is written, and so can be written in a small program while still answering about
-  -- every page — which is what keeps a navigation from costing a compilation of everything it
-  -- names.
-  --
-  -- Unlike 'spPages' this is not a stage of a program at all, and nothing need be compiled to
-  -- answer it. It is which pages were read, which is known as soon as they were.
-  , spAllPages   :: CRes [FileImport]
   -- | The tests of the page the evaluation is scoped to, already run. Unlike every stage above,
   -- these are not an artifact of compiling a program but of running part of it, which needs IO — so
   -- they cannot be produced from within an evaluation at all and arrive already run. They are
@@ -267,7 +254,6 @@ stagePrgmsUnavailable = StagePrgms {
   , spDebugRun = const unavailable
   , spDebugExpr = const unavailable
   , spPages = unavailable
-  , spAllPages = unavailable
   , spTests = unavailable
   , spPageValues = \_ _ -> unavailable
   }
