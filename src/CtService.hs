@@ -39,7 +39,8 @@ import           Eval                    (evalAnnots, evalBaseEnvService,
 import           Eval.Common             (CtServiceApi (..), DebugRun,
                                           EvalMetaDat, EvalService (..), MockIO,
                                           SSF (..), StagePrgms (..), TExpr,
-                                          TestResult, Val, oaTestId)
+                                          TestResult, Val, joinedStage,
+                                          oaTestId)
 import           Eval.Testing            (TestDesc (..), evalPrints, evalTest,
                                           runTestDesc)
 import           FileWatch               (Watch, Watcher, allCovered,
@@ -1111,14 +1112,10 @@ scopeSSFs ctss@(CTSS ssmv) prgmName = do
 -- ('ctssStagePrgmsFrom').
 ctssStagePrgms :: CTSS -> IO StagePrgms
 ctssStagePrgms ctss = do
-  ctssData <- csBuilt ctss Nothing
   pages <- return <$> csPages ctss
   values <- csValues ctss Nothing
-  let ssfs = map fst3 $ graphToNodes ctssData
   return $ StagePrgms {
-      spDesPrgm = joinedStage ssfDes ssfs
-    , spTBPrgm = joinedStage ssfTBPrgm ssfs
-    , spTypeInfer = notScoped "type inference to report on"
+      spTypeInfer = notScoped "type inference to report on"
     , spDebugRun = const $ notScoped "program to run"
     , spDebugExpr = const $ notScoped "expression to run"
     , spPages = pages
@@ -1152,9 +1149,7 @@ ctssStagePrgmsFrom ctss prgmName = do
   -- not be made to do. An evaluation that does have a test to report on is given one by whoever
   -- asked for it (see 'getEvalAnnots').
   return $ StagePrgms {
-      spDesPrgm = joinedStage ssfDes ssfs
-    , spTBPrgm = joinedStage ssfTBPrgm ssfs
-    , spTypeInfer = typeInferred
+      spTypeInfer = typeInferred
     , spDebugRun = debugRun
     , spDebugExpr = debugExpr
     , spPages = return $ map snd3 $ graphToNodes reaches
@@ -1241,7 +1236,3 @@ pageValues graph = valuesOf
 
     exprId = getMetaID . getExprMeta
 
--- | Joins one stage over a set of pages, left unforced. See 'ctssStagePrgms' for why it must stay a
--- thunk.
-joinedStage :: (Monoid a) => (SSF -> Maybe (CRes a)) -> [SSF] -> CRes a
-joinedStage f ssfs = fmap mconcat $ sequence $ mapMaybe f ssfs

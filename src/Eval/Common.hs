@@ -25,6 +25,7 @@ import qualified Data.HashMap.Strict     as H
 import qualified Data.HashSet            as S
 import           Data.List               (intercalate)
 import qualified Data.Map                as Map
+import           Data.Maybe              (mapMaybe)
 import           GHC.Generics            (Generic)
 
 import           Control.Monad.State
@@ -38,7 +39,7 @@ import           Semantics
 import           Semantics.Prgm
 import           Semantics.TypeGraph
 import           Semantics.Types
-import           Syntax.Ct.Parser.Syntax (DesPrgm, ParseMetaDat)
+import           Syntax.Ct.Parser.Syntax (ParseMetaDat)
 import           Syntax.Ct.Prgm          (RawPrgm, ReadPage)
 import           Text.Printf
 import           TypeCheck.Common        (TPrgm, TraceConstrain, VPrgm)
@@ -89,6 +90,18 @@ data SSF = SSF {
   -- pipeline.
   ssfTests          :: Maybe (CRes [TestResult])
                }
+
+-- | Joins one stage over a set of pages, left unforced.
+--
+-- It must stay a thunk: a caller that never reads the stage must not pay for it, and merely
+-- inspecting 'ssfTBPrgm' runs an 'Eval.evalBuildAll' over every page joined.
+--
+-- A page which was never built has nothing to contribute and is passed over rather than failing the
+-- join — a @ctx@ page is marked built while deliberately skipping the pipeline. A page which failed
+-- to build fails whoever asked, since a stage joined out of the pages that happened to compile is
+-- not the stage of the program.
+joinedStage :: (Monoid a) => (SSF -> Maybe (CRes a)) -> [SSF] -> CRes a
+joinedStage f ssfs = fmap mconcat $ sequence $ mapMaybe f ssfs
 
 -- | The compilation service, as an evaluation of one of its programs may ask things of it.
 --
@@ -184,14 +197,12 @@ data EvalService where
 -- All are unforced: constructing an 'Env' must not compute a stage, since a caller pays only for
 -- the ones something actually asks for. Forcing the tree build runs a whole 'Eval.evalBuildAll'.
 data StagePrgms = StagePrgms {
-    spDesPrgm    :: CRes DesPrgm
-  , spTBPrgm     :: CRes (Prgm TExpr EvalMetaDat)
   -- | How the program's types were inferred: a type variable on every meta, and the trace of what
-  -- each epoch updated it to. Unlike the two stages above this is never joined across pages — a
-  -- typecheck numbers its points within the run that assigned them, so two pages' traces have
-  -- colliding point numbers and mean nothing merged together. An evaluation that is not scoped to
-  -- one page therefore has no type inference to report, rather than an amalgamated one.
-  , spTypeInfer  :: CRes (VPrgm, TraceConstrain)
+  -- each epoch updated it to. This is never joined across pages — a typecheck numbers its points
+  -- within the run that assigned them, so two pages' traces have colliding point numbers and mean
+  -- nothing merged together. An evaluation that is not scoped to one page therefore has no type
+  -- inference to report, rather than an amalgamated one.
+    spTypeInfer  :: CRes (VPrgm, TraceConstrain)
   -- | Runs one of the program's functions, for a debugger reporting on what it evaluated. It is a
   -- function rather than a value because which function to run is the annotation's argument, and it
   -- is supplied from outside for the same reason the stages above are: an evaluation cannot run the
@@ -248,9 +259,7 @@ data StagePrgms = StagePrgms {
 -- than failing.
 stagePrgmsUnavailable :: StagePrgms
 stagePrgmsUnavailable = StagePrgms {
-    spDesPrgm = unavailable
-  , spTBPrgm = unavailable
-  , spTypeInfer = unavailable
+    spTypeInfer = unavailable
   , spDebugRun = const unavailable
   , spDebugExpr = const unavailable
   , spPages = unavailable

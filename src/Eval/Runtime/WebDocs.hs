@@ -72,20 +72,32 @@ treeBuildMode = "/Catln/Doc/TreeBuild"
 -- annotation and everything it reaches — at every stage alike.
 --
 -- The typecheck stage is the program the evaluation itself runs on, so it is read straight off the
--- 'TBEnv'. The other two are not reachable from an evaluation and are supplied by whoever ran those
--- stages, as 'evStagePrgms'.
+-- 'TBEnv' and costs nothing. The other two are stages of the program the evaluation cannot reach,
+-- and are asked of the service page by page — which is why the mode is read first: a listing of the
+-- stage already in hand does not build anything to answer.
 listProgram :: EPrim
 listProgram = EEnvPrim "listProgram" prim
   where
-    prim Env{evTbEnv=TBEnv{tbPrgm}, evStagePrgms=StagePrgms{spDesPrgm, spTBPrgm}} args = case H.lookup listProgramModeArg args of
+    prim env args = case H.lookup listProgramModeArg args of
       Just (TupleVal mode _)
-        | mode == desugarMode -> fromStage spDesPrgm
-        | mode == typecheckMode -> Right $ encodeJson tbPrgm
-        | mode == treeBuildMode -> fromStage spTBPrgm
+        | mode == desugarMode -> fromStage env ssfDes
+        | mode == typecheckMode -> Right $ encodeJson $ tbPrgm $ evTbEnv env
+        | mode == treeBuildMode -> fromStage env ssfTBPrgm
       Just v -> Left $ printf "listProgram was given %s, which is not a ListProgramMode" (show v)
       Nothing -> Left $ printf "listProgram has no %s argument, only %s" listProgramModeArg (show $ sort $ H.keys args)
-    fromStage (CRes _ prgm) = Right $ encodeJson prgm
-    fromStage (CErr notes)  = Left $ prettyCNotes notes
+
+-- | One stage of the program a display covers, joined over the pages of its scope.
+--
+-- The scope is the evaluation's own: the page the annotation is written in and everything it
+-- imports, or every page there is where it was written in none. That is what makes a listing of a
+-- page list that page and what it reaches at every stage alike.
+fromStage :: (Monoid a, ToJSON a) => Env -> (SSF -> Maybe (CRes a)) -> Either String Val
+fromStage env stage = case evService env of
+  Nothing -> Left noService
+  Just (EvalService s scope) -> askService $ do
+    graph <- csBuilt s scope
+    let pages = maybe graph (`graphFilterReaches` graph) scope
+    return $ encodeJsonText <$> orNotes (joinedStage stage $ map fst3 $ graphToNodes pages)
 
 -- | The argument of @/Catln/Doc/filterProgram@ naming which type or class to keep.
 filterProgramNameArg :: String
