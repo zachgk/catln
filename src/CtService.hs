@@ -38,9 +38,8 @@ import           Eval                    (evalAnnots, evalBaseEnvService,
                                           prgmFromGraphData)
 import           Eval.Common             (CtServiceApi (..), DebugRun,
                                           EvalMetaDat, EvalService (..), MockIO,
-                                          SSF (..), StagePrgms (..), TExpr,
-                                          TestResult, Val, joinedStage,
-                                          oaTestId)
+                                          SSF (..), TExpr, TestResult, Val,
+                                          joinedStage, oaTestId)
 import           Eval.Testing            (TestDesc (..), evalPrints, evalTest,
                                           runTestDesc)
 import           FileWatch               (Watch, Watcher, allCovered,
@@ -472,17 +471,22 @@ ctssClearInvalidations pagesChanged invalidations ss@CTSSDat{ctssData=(g, nodeFr
 
     -- | A page's annotations, where the change cannot have altered them.
     --
-    -- An annotation is evaluated against the stages of the page's own program ('ctssStagePrgmsFrom'),
-    -- which the walk above covers, and against two things which reach past them: which pages there
-    -- are ('StagePrgms.spAllPages'), and the page's tests already run ('StagePrgms.spTests'). Both
-    -- can change without any page the annotation is compiled from being invalidated, and a cached
-    -- annotation is what 'getEvalAnnots' answers with before it looks at either — so the cache is
-    -- what has to be dropped.
+    -- An annotation is evaluated against the page's own program, which the walk above covers, and
+    -- against whatever else it asks the service for. A cached annotation is what 'getEvalAnnots'
+    -- answers with before it asks anything, so where a change could alter what the service would say,
+    -- the cache is what has to be dropped.
     --
     -- Asked of each rather than dropped wholesale, because evaluating a page's annotations is work
     -- and every change would otherwise cost it for every page: which pages there are changes only
-    -- when a page appears or goes, and a test run can only be read by a page which writes a test,
-    -- since 'getEvalAnnots' hands the run to no other page.
+    -- when a page appears or goes, and a test run is read only by a page which writes a test.
+    --
+    -- TODO This is too narrow, and was already too narrow before an annotation could ask the service
+    -- anything. It enumerates what an annotation may reach past its own program — which pages there
+    -- are, and its own tests — but a gathering across pages reaches their CONTENTS: a @#taskList@
+    -- reads the tasks of every note, and a vault does not import its notes, so 'propagated' above
+    -- never reaches the page displaying them. Editing one note leaves another page's cached list of
+    -- its tasks stale. Now that a display may ask for any page at any stage, the enumeration cannot
+    -- be completed and the rule has to become a conservative one.
     keptAnnots ssf
       | pagesChanged      = Nothing
       | writesATest ssf   = Nothing
@@ -949,12 +953,11 @@ getEvalAnnots ctss prgmName = do
     Just annots -> asCResT annots
     Nothing -> do
       tprgms <- ctssGetFrom ssfTPrgm prgmName ctss
-      stages <- lift $ ctssStagePrgmsFrom ctss prgmName
       -- A page's tests are no longer run here before anything asks. A @#test@ display asks the
       -- service for the run itself, so they are run when one is being displayed and not when a page
       -- merely writes one — which is the same set of pages, decided by the thing that needs them
       -- rather than guessed at in advance.
-      let annots = evalAnnots (Just $ EvalService ctss (Just prgmName)) stages prgmName tprgms
+      let annots = evalAnnots (Just $ EvalService ctss (Just prgmName)) prgmName tprgms
       lift $ ctssStore prgmName (\ssf -> ssf{ssfAnnots = Just annots}) ctss
       asCResT annots
 
@@ -973,13 +976,12 @@ getEvalAnnots ctss prgmName = do
 -- than to narrow what it is told.
 ctssCallDShow :: CTSS -> Maybe FileImport -> String -> [(String, Val)] -> CResT IO Val
 ctssCallDShow ctss scope fun args = do
-  stages <- lift $ maybe (ctssStagePrgms ctss) (ctssStagePrgmsFrom ctss) scope
   -- The pages of the scope which can be evaluated, with the rest reported rather than fatal, for the
   -- same reason 'WebDocs.annotResp' takes them that way: a page which did not typecheck cannot be
   -- built over at all, and a search box is not something to lose because some other page is broken.
   tprgms <- ctssEvaluableFrom ssfTPrgm scope ctss
   prgm <- asCResT $ maybe (return $ mconcat $ map fst3 $ graphToNodes tprgms) (`prgmFromGraphData` tprgms) scope
-  asCResT $ evalDShowCall (evalBaseEnvService (Just $ EvalService ctss scope) stages prgm) fun args
+  asCResT $ evalDShowCall (evalBaseEnvService (Just $ EvalService ctss scope) prgm) fun args
 
 -- | Whether a program marks any of its definitions as a test. What a page's own program says about
 -- itself, which is also what decides whether a change to anything at all can alter the page's
@@ -1038,9 +1040,6 @@ getTPrgmJoined = ctssGetJoined ssfTPrgm
 getTBPrgm :: CTSS -> CResT IO (GraphData TBPrgm FileImport)
 getTBPrgm = ctssGet ssfTBPrgm
 
--- | The desugar and tree build programs of every loaded page, joined and left unforced. This is the
--- 'StagePrgms' for an evaluation that is not scoped to one page, and so reaches all of them.
---
 -- | The service as an evaluation of one of its programs asks things of it.
 --
 -- Each of these is an existing operation of the service under the name an evaluation asks for it by.
@@ -1087,29 +1086,8 @@ scopeSSFs ctss@(CTSS ssmv) prgmName = do
   CTSSDat{ctssData} <- readMVar ssmv
   return $ map fst3 $ graphToNodes $ graphFilterReaches prgmName ctssData
 
--- Both of these are down to the last two fields, which the remaining displays take over next.
-ctssStagePrgms :: CTSS -> IO StagePrgms
-ctssStagePrgms ctss = do
-  pages <- return <$> csPages ctss
-  values <- csValues ctss Nothing
-  return $ StagePrgms {
-      spPages = pages
-    , spPageValues = values
-    }
-
--- | Like 'ctssStagePrgms' but for an evaluation scoped to one page: the pages are that page and what
--- it imports, and the values are gathered over the same.
-ctssStagePrgmsFrom :: CTSS -> FileImport -> IO StagePrgms
-ctssStagePrgmsFrom ctss prgmName = do
-  ctssData <- csBuilt ctss (Just prgmName)
-  values <- csValues ctss (Just prgmName)
-  return $ StagePrgms {
-      spPages = return $ map snd3 $ graphToNodes $ graphFilterReaches prgmName ctssData
-    , spPageValues = values
-    }
-
 -- | Compiles one expression, written as Catln source, as though it were a statement of a page, and
--- runs it. This is 'StagePrgms.spDebugExpr' of a scope: the same compile an annotation asked for over
+-- runs it. This is 'CtServiceApi.csRunExpr' of a page: the same compile an annotation asked for over
 -- @\/api\/annot@ gets ('WebDocs.annotResp'), with the expression run for its evaluation tree instead
 -- of displayed.
 --
@@ -1145,7 +1123,7 @@ debugExprRun prgmName scopeNodes src = do
   evalDebugExprPrgm expr prgm
 
 -- | The values one page declares of one type, evaluated to the values they display as. This is the
--- 'StagePrgms.spPageValues' of a set of pages: what a value gathered across pages means, without any
+-- 'CtServiceApi.csValues' of a set of pages: what a value gathered across pages means, without any
 -- notion of which type is worth gathering, which belongs to whatever is doing the gathering.
 --
 -- Ordered, which a program's declarations are not: they are held in a hash map, so one page's arrive
@@ -1157,7 +1135,7 @@ debugExprRun prgmName scopeNodes src = do
 -- A page that was never built has nothing to report and is answered with nothing, as 'joinedStage'
 -- passes over such a page in the stages beside this one; a page that failed to build fails what
 -- asked. The graph is read once for whichever pages are asked about, since the answer is a field of
--- one 'StagePrgms' rather than a call made afresh each time.
+-- one gatherer rather than a call made afresh each time.
 --
 -- Every type asked about is gathered in the one pass, and the order below is what makes that matter:
 -- asking twice and joining the answers would be two runs of the page's order rather than one.

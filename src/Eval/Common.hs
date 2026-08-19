@@ -189,50 +189,6 @@ class CtServiceApi s where
 data EvalService where
   EvalService :: CtServiceApi s => s -> Maybe FileImport -> EvalService
 
--- | The program being evaluated, at the pipeline stages the evaluation cannot reach on its own.
--- Desugar is strictly upstream of eval and tree build is a separate pass, so an 'Env' holds neither;
--- a caller that has run those stages passes them here. This is what a primitive reporting on the
--- program itself reads, in the same way 'evTbEnv' is read for the stage the evaluation runs on.
---
--- All are unforced: constructing an 'Env' must not compute a stage, since a caller pays only for
--- the ones something actually asks for. Forcing the tree build runs a whole 'Eval.evalBuildAll'.
-data StagePrgms = StagePrgms {
-  -- | The pages the evaluation's program was assembled from. An 'Env' holds one flattened 'Prgm'
-  -- with no file identity left in it, so which files it came from is reachable no more than the
-  -- stages above are. It is the pages of whatever the evaluation was scoped to, so it goes with the
-  -- stages above: these are the files those programs were joined out of.
-    spPages      :: CRes [FileImport]
-  -- | The values one of the evaluation's pages declares of one type, evaluated to the values they
-  -- display as, in the order that page writes them. Like 'spPages' this is about the pages there are
-  -- rather than about the one program the evaluation runs on, and it takes the page as an argument
-  -- for the same reason 'spDebugRun' takes a function name: which page is being asked about is the
-  -- caller's question, not a property of the evaluation. An 'Env' holds one flattened 'Prgm' with no
-  -- file identity left in it, so a page other than the one being evaluated is reachable no more than
-  -- the stages above are.
-  --
-  -- Supplied from outside for the same reason 'spDebugRun' is: evaluating a page's declarations is
-  -- work for the evaluator, which is downstream of the primitives that would have to ask for it.
-  --
-  -- Asked for several types at once rather than one at a time, because what is gathered comes back
-  -- in the order the page wrote it and two gatherings joined would be two runs of that order rather
-  -- than one. A checkbox is read as one of the members of @\/Data\/Note\/Task@, so a note mixing
-  -- them asked for a member at a time would answer with its tasks sorted by which reading each got.
-  , spPageValues :: [Name] -> FileImport -> CRes [(EExpr, Val)]
-  }
-
--- | The stage programs for an evaluation whose caller did not supply any. Asking for one is then an
--- error rather than a silent substitution of the stage the evaluation does hold: an evaluation with
--- no upstream artifacts to report on cannot answer, and reporting the wrong stage would be worse
--- than failing.
-stagePrgmsUnavailable :: StagePrgms
-stagePrgmsUnavailable = StagePrgms {
-    spPages = unavailable
-  , spPageValues = \_ _ -> unavailable
-  }
-  where
-    unavailable :: CRes a
-    unavailable = CErr [MkCNote $ GenCErr Nothing "This evaluation was not given the other pipeline stages of its program"]
-
 data EPrim
   = EPrim String (H.HashMap String Val -> Either String Val)
   -- | A primitive that also reads the evaluation 'Env'. This is what a primitive reporting on the
@@ -273,7 +229,6 @@ data Env = Env { evObjMap        :: EObjectMap
                , evArgs          :: Args
                , evExEnv         :: ResExEnv
                , evTbEnv         :: TBEnv
-               , evStagePrgms    :: StagePrgms
                -- | The compilation service this evaluation may ask about the pages there are, and
                -- about the stages of them it cannot reach on its own.
                --
@@ -362,7 +317,7 @@ data TestKind
 -- what it reported. This is the result rather than the check, so it can be cached, served, and
 -- displayed; the unrun form a test runner wants is @Eval.Testing.TestDesc@.
 --
--- It lives here beside 'DebugRun' for the same reason that does: 'StagePrgms' carries it, and
+-- It lives here beside 'DebugRun' for the same reason that does: 'SSF' carries it, and
 -- @Eval.Testing@ is downstream of this module.
 data TestResult = TestResult
   { trName    :: String

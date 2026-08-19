@@ -254,7 +254,7 @@ testBrokenPageLeftOut = testCase "a page that does not typecheck is left out, an
 -- | A page's annotations are dropped when a page appears, though nothing it imports changed.
 --
 -- An annotation is evaluated against which pages there are as well as against the program it is
--- written in ('StagePrgms.spAllPages'), and the invalidation walk only reaches pages that import what
+-- written in ('Eval.Common.csPages'), and the invalidation walk only reaches pages that import what
 -- changed. So a page carrying a navigation went on serving the navigation as it was when the page was
 -- built, and a page added never appeared on it — while the same annotation asked for on its own, which
 -- is not cached, listed it at once.

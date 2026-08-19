@@ -503,9 +503,9 @@ data PageTask = PageTask { ptPage :: String
 -- of the pages the evaluation covers as JSON: each the value the task displays as, beside the page it
 -- was written in and the expression it was declared by.
 --
--- That a task is a @\/Data\/Note\/Task@ is known here and nowhere below. What the pipeline offers is
--- the values a page declares of a type ('spPageValues'); which types are worth gathering, and what
--- to make of the ones it finds, is this display's own business. So the compilation service stays a
+-- That a task is a @\/Data\/Note\/Task@ is known here and nowhere below. What the service offers is
+-- the values a page declares of a type ('csValues'); which types are worth gathering, and what to
+-- make of the ones it finds, is this display's own business. So the compilation service stays a
 -- service for programs rather than one that knows what a note is.
 --
 -- The members of that class are named rather than the class itself, because a value is declared as
@@ -520,9 +520,16 @@ data PageTask = PageTask { ptPage :: String
 taskList :: EPrim
 taskList = EEnvPrim "taskList" prim
   where
-    prim Env{evStagePrgms=StagePrgms{spPages, spPageValues}} _ = do
-      pages <- orNotes spPages
-      encodeJson . concat <$> traverse (pageTasks spPageValues) (sortOn impDisp pages)
+    prim env _ = case evService env of
+      Nothing -> Left noService
+      Just (EvalService s scope) -> askService $ do
+        graph <- csBuilt s scope
+        -- One gatherer for every page asked about, not one per page. It holds the scope's
+        -- typechecked programs, so asking for a fresh one per page would pay for the scope once per
+        -- page — over a vault of notes, quadratic in the notes.
+        gather <- csValues s scope
+        let pages = map snd3 $ graphToNodes $ maybe graph (`graphFilterReaches` graph) scope
+        return $ encodeJsonText . concat <$> traverse (pageTasks gather) (sortOn impDisp pages)
 
     pageTasks pageValues prgmName = do
       tasks <- orNotes $ pageValues (map mkName [noteSimpleTaskPath, noteObsidianTaskPath]) prgmName

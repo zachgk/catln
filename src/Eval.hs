@@ -324,20 +324,19 @@ evalExpr (TCalls _ b callTree) = do
 -- ('Eval.Common.evService'). So it is not only the environment of a caller that has no service to
 -- give, it is the environment that says an evaluation is already inside one.
 evalBaseEnv :: EPrgm -> Env
-evalBaseEnv = evalBaseEnvService Nothing stagePrgmsUnavailable
+evalBaseEnv = evalBaseEnvService Nothing
 
 -- | An 'Env' that can also report on the program beyond what the evaluation itself holds: the
 -- compilation service it was evaluated by, and the other pipeline stages of its program. Callers
 -- that have them pass them here; 'evalBaseEnv' is the same thing for callers that do not, and
 -- reports them as unavailable rather than substituting what the evaluation does hold.
-evalBaseEnvService :: Maybe EvalService -> StagePrgms -> EPrgm -> Env
-evalBaseEnvService service stagePrgms prgm@Prgm{prgmObjMap} = Env {
+evalBaseEnvService :: Maybe EvalService -> EPrgm -> Env
+evalBaseEnvService service prgm@Prgm{prgmObjMap} = Env {
         evObjMap = prgmObjMap,
         evTypeEnv = (mkTypeEnv prgm){teArgModeProjection=True},
         evArgs = H.empty,
         evExEnv = H.empty,
         evTbEnv = buildTBEnv primEnv prgm,
-        evStagePrgms = stagePrgms,
         evService = service,
         evAnnotObj = Nothing,
         evCallStack = [],
@@ -485,13 +484,13 @@ evalDShowCall env@Env{evTbEnv, evTypeEnv} fun args = do
 -- read. Evaluating the imports' annotations too would compute a whole library's worth of values for
 -- every page, and then discard them — @WebDocs.docApiBase@ keys the results back onto the page's own
 -- source by meta ID, which no imported annotation can match.
-evalAnnots :: Maybe EvalService -> StagePrgms -> FileImport -> EPrgmGraphData -> CRes [(EExpr, Val)]
-evalAnnots service stagePrgms prgmName prgmGraphData = do
+evalAnnots :: Maybe EvalService -> FileImport -> EPrgmGraphData -> CRes [(EExpr, Val)]
+evalAnnots service prgmName prgmGraphData = do
   prgm <- prgmFromGraphData prgmName prgmGraphData
   Prgm objMap _ globalAnnots <- case graphLookup prgmName prgmGraphData of
     Just own -> return own
     Nothing  -> CErr [MkCNote $ GenCErr Nothing $ printf "Could not find the page %s to evaluate the annotations of" (show $ impRaw prgmName)]
-  let env = evalBaseEnvService service stagePrgms prgm
+  let env = evalBaseEnvService service prgm
   globalAnnots' <- buildDisplays env [] "annotation" globalAnnots
   objMapAnnots' <- forM (flatObjectMap objMap) $ \oa -> do
     let os = [(getExprPartialType $ oaObjExpr oa, oa)]

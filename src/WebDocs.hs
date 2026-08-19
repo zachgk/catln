@@ -236,7 +236,6 @@ pageResp ctss prgmName' = runCResT $ do
 -- for it for the same reason as 'pageResp'.
 annotResp :: CTSS -> Maybe FileImport -> String -> IO (CRes ShownPrgm)
 annotResp ctss scope' annot = do
-  stages <- maybe (ctssStagePrgms ctss) (ctssStagePrgmsFrom ctss) scope'
   runCResT $ do
     rawPrgm <- case runParser pExpr "<annot>" annot of
       Left err     -> fail $ show $ errorBundlePretty err
@@ -260,7 +259,7 @@ annotResp ctss scope' annot = do
     let targetModes = evalAllTargetModes annotTprgm
     -- The service is scoped to the page the annotation was asked about rather than to the synthetic
     -- page holding the annotation itself, which is a page of nothing that nobody wrote.
-    maybeAnnots <- asCResT $ evalAnnots (Just $ EvalService ctss scope') stages annotPrgmName joinedTprgms
+    maybeAnnots <- asCResT $ evalAnnots (Just $ EvalService ctss scope') annotPrgmName joinedTprgms
     let annots' = H.fromList $ map (first (getMetaID . getExprMeta)) maybeAnnots
     return $ mapMetaRawPrgm (zip4MetaFun (interleaveMeta $ interleavePrgm annotTprgm) (interleaveMeta targetModes) (interleaveMeta annots') (interleaveMeta $ printSources rawPrgm')) rawPrgm'
 
