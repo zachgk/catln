@@ -950,13 +950,11 @@ getEvalAnnots ctss prgmName = do
     Nothing -> do
       tprgms <- ctssGetFrom ssfTPrgm prgmName ctss
       stages <- lift $ ctssStagePrgmsFrom ctss prgmName
-      -- A @#test@ displays the run of the test it marks, which is the one thing an evaluation
-      -- cannot work out for itself. The page's tests are run only when the page writes one, since
-      -- running them is work rather than a lookup and no other annotation reads them.
-      stages' <- if pageWritesATest prgmName tprgms
-        then (\tests -> stages{spTests = pure tests}) <$> ctssTestsFrom ctss prgmName
-        else return stages
-      let annots = evalAnnots (Just $ EvalService ctss (Just prgmName)) stages' prgmName tprgms
+      -- A page's tests are no longer run here before anything asks. A @#test@ display asks the
+      -- service for the run itself, so they are run when one is being displayed and not when a page
+      -- merely writes one — which is the same set of pages, decided by the thing that needs them
+      -- rather than guessed at in advance.
+      let annots = evalAnnots (Just $ EvalService ctss (Just prgmName)) stages prgmName tprgms
       lift $ ctssStore prgmName (\ssf -> ssf{ssfAnnots = Just annots}) ctss
       asCResT annots
 
@@ -982,13 +980,6 @@ ctssCallDShow ctss scope fun args = do
   tprgms <- ctssEvaluableFrom ssfTPrgm scope ctss
   prgm <- asCResT $ maybe (return $ mconcat $ map fst3 $ graphToNodes tprgms) (`prgmFromGraphData` tprgms) scope
   asCResT $ evalDShowCall (evalBaseEnvService (Just $ EvalService ctss scope) stages prgm) fun args
-
--- | Whether a page marks any of its definitions as a test. A page that does not has no annotation
--- that reads a test run, so it is not made to wait for one.
-pageWritesATest :: FileImport -> GraphData TPrgm FileImport -> Bool
--- A page that is not in its own program graph has no annotations either; 'evalAnnots' is what
--- reports that, rather than it being decided here.
-pageWritesATest prgmName tprgms = maybe False prgmWritesATest (graphLookup prgmName tprgms)
 
 -- | Whether a program marks any of its definitions as a test. What a page's own program says about
 -- itself, which is also what decides whether a change to anything at all can alter the page's
@@ -1115,7 +1106,6 @@ ctssStagePrgms ctss = do
       spDebugRun = const $ notScoped "program to run"
     , spDebugExpr = const $ notScoped "expression to run"
     , spPages = pages
-    , spTests = notScoped "tests to report on"
     , spPageValues = values
     }
   where
@@ -1137,19 +1127,12 @@ ctssStagePrgmsFrom ctss prgmName = do
   -- Against the pages of the scope rather than their joined program, since compiling the expression
   -- typechecks it against them one by one, the way a page of the scope was itself typechecked.
   let debugExpr = debugExprRun prgmName (graphToNodes reaches)
-  -- No test run: unlike every stage here, one cannot be looked up — it has to be produced by
-  -- running the page's tests, which is the work an evaluation with nothing to report on them must
-  -- not be made to do. An evaluation that does have a test to report on is given one by whoever
-  -- asked for it (see 'getEvalAnnots').
   return $ StagePrgms {
       spDebugRun = debugRun
     , spDebugExpr = debugExpr
     , spPages = return $ map snd3 $ graphToNodes reaches
-    , spTests = notRun
     , spPageValues = values
     }
-  where
-    notRun = CErr [MkCNote $ GenCErr Nothing "This evaluation was not given a run of the page's tests"]
 
 -- | Compiles one expression, written as Catln source, as though it were a statement of a page, and
 -- runs it. This is 'StagePrgms.spDebugExpr' of a scope: the same compile an annotation asked for over

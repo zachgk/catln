@@ -457,16 +457,23 @@ lastNamePart = last . splitOn "/" . nameStr
 -- that one. An annotation written on nothing — a free-standing one asked for over the API — is not
 -- on a definition to report on, and says so rather than answering about some other one.
 --
--- Like 'debugger' this is a run rather than an artifact, and running the tests is neither something
--- an evaluation can do to itself nor something to do while merely displaying a page that has none.
--- It therefore arrives already run, on 'StagePrgms', from whoever asked for the display.
+-- Like 'debugger' this is a run rather than an artifact: running a page's tests is work, and neither
+-- something an evaluation can do to itself. It asks the service for the run, which is what makes
+-- the tests run exactly when a @#test@ is being displayed. Nothing has to decide in advance whether
+-- a page will want them — the display that wants them is what asks.
 testRun :: EPrim
 testRun = EEnvPrim "testRun" prim
   where
     prim Env{evAnnotObj=Nothing} _ = Left "This #test is not written on a definition, so it has no test of one to report on"
-    prim Env{evAnnotObj=Just oa, evStagePrgms=StagePrgms{spTests}} _ = case spTests of
-      CErr notes -> Left $ prettyCNotes notes
-      CRes _ tests -> Right $ encodeJson $ filter ((== oaTestId oa) . trOwnerId) tests
+    prim env@Env{evAnnotObj=Just oa} _ = case evService env of
+      Nothing -> Left noService
+      Just (EvalService s scope) -> case scopedTo scope "tests to report on" of
+        Left err -> Left err
+        Right prgmName -> askService $ do
+          tests <- csTests s prgmName
+          -- Of the definition the annotation is written on rather than of the page, since a @#test@
+          -- marks one definition and reports on that one.
+          return $ encodeJsonText . filter ((== oaTestId oa) . trOwnerId) <$> orNotes tests
 
 -- | One task of one note, as the value it displays as and as the expression it was declared by.
 --

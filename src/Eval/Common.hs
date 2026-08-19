@@ -222,13 +222,6 @@ data StagePrgms = StagePrgms {
   -- stages above are. It is the pages of whatever the evaluation was scoped to, so it goes with the
   -- stages above: these are the files those programs were joined out of.
   , spPages      :: CRes [FileImport]
-  -- | The tests of the page the evaluation is scoped to, already run. Unlike every stage above,
-  -- these are not an artifact of compiling a program but of running part of it, which needs IO — so
-  -- they cannot be produced from within an evaluation at all and arrive already run. They are
-  -- supplied only by an evaluation that has a test to report on, since running a page's tests is
-  -- work rather than a lookup, and are never joined across pages: a test belongs to the page that
-  -- wrote the definition it checks.
-  , spTests      :: CRes [TestResult]
   -- | The values one of the evaluation's pages declares of one type, evaluated to the values they
   -- display as, in the order that page writes them. Like 'spPages' this is about the pages there are
   -- rather than about the one program the evaluation runs on, and it takes the page as an argument
@@ -256,7 +249,6 @@ stagePrgmsUnavailable = StagePrgms {
     spDebugRun = const unavailable
   , spDebugExpr = const unavailable
   , spPages = unavailable
-  , spTests = unavailable
   , spPageValues = \_ _ -> unavailable
   }
   where
