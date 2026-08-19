@@ -1090,7 +1090,17 @@ ctssStagePrgms ctss@(CTSS ssmv) = do
   CTSSDat{ctssData} <- readMVar ssmv
   let ssfs = map fst3 $ graphToNodes ctssData
   let pages = return $ map snd3 $ graphToNodes ctssData
-  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) (notScoped "type inference to report on") (const $ notScoped "program to run") (const $ notScoped "expression to run") pages pages (notScoped "tests to report on") (pageValues ctssData)
+  return $ StagePrgms {
+      spDesPrgm = joinedStage ssfDes ssfs
+    , spTBPrgm = joinedStage ssfTBPrgm ssfs
+    , spTypeInfer = notScoped "type inference to report on"
+    , spDebugRun = const $ notScoped "program to run"
+    , spDebugExpr = const $ notScoped "expression to run"
+    , spPages = pages
+    , spAllPages = pages
+    , spTests = notScoped "tests to report on"
+    , spPageValues = pageValues ctssData
+    }
   where
     notScoped :: String -> CRes a
     notScoped what = CErr [MkCNote $ GenCErr Nothing $ "This evaluation is not scoped to a single page, so it has no " ++ what]
@@ -1121,7 +1131,17 @@ ctssStagePrgmsFrom ctss@(CTSS ssmv) prgmName = do
   -- annotation reporting on the pages there are answer the same wherever it is written. It is the
   -- graph as it is, so nothing is built to produce it.
   let allPages = return $ map snd3 $ graphToNodes ctssData
-  return $ StagePrgms (joinedStage ssfDes ssfs) (joinedStage ssfTBPrgm ssfs) typeInferred debugRun debugExpr (return $ map snd3 $ graphToNodes reaches) allPages notRun (pageValues reaches)
+  return $ StagePrgms {
+      spDesPrgm = joinedStage ssfDes ssfs
+    , spTBPrgm = joinedStage ssfTBPrgm ssfs
+    , spTypeInfer = typeInferred
+    , spDebugRun = debugRun
+    , spDebugExpr = debugExpr
+    , spPages = return $ map snd3 $ graphToNodes reaches
+    , spAllPages = allPages
+    , spTests = notRun
+    , spPageValues = pageValues reaches
+    }
   where
     notRun = CErr [MkCNote $ GenCErr Nothing "This evaluation was not given a run of the page's tests"]
 

@@ -136,7 +136,17 @@ data StagePrgms = StagePrgms {
 -- no upstream artifacts to report on cannot answer, and reporting the wrong stage would be worse
 -- than failing.
 stagePrgmsUnavailable :: StagePrgms
-stagePrgmsUnavailable = StagePrgms unavailable unavailable unavailable (const unavailable) (const unavailable) unavailable unavailable unavailable (\_ _ -> unavailable)
+stagePrgmsUnavailable = StagePrgms {
+    spDesPrgm = unavailable
+  , spTBPrgm = unavailable
+  , spTypeInfer = unavailable
+  , spDebugRun = const unavailable
+  , spDebugExpr = const unavailable
+  , spPages = unavailable
+  , spAllPages = unavailable
+  , spTests = unavailable
+  , spPageValues = \_ _ -> unavailable
+  }
   where
     unavailable :: CRes a
     unavailable = CErr [MkCNote $ GenCErr Nothing "This evaluation was not given the other pipeline stages of its program"]
