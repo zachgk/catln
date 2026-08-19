@@ -44,7 +44,8 @@ import           Data.Maybe                    (listToMaybe)
 import           Data.UUID                     (UUID, fromText)
 import           Eval                          (evalAllTargetModes, evalAnnots,
                                                 prgmFromGraphData)
-import           Eval.Common                   (EvalMode, SSF (..),
+import           Eval.Common                   (EvalMode, EvalService (..),
+                                                SSF (..),
                                                 Val (FloatVal, IntVal, StrVal))
 import           Eval.Runtime.WebDocs          (sidebarOrder)
 import           MapMeta                       (interleaveMeta, interleavePrgm,
@@ -257,7 +258,9 @@ annotResp ctss scope' annot = do
     [(annotTprgm, _, _)] <- asCResT $ typeCheckToRes $ typecheckPrgms [(annotDesPrgm', [], map fst3 $ graphToNodes tprgmsTrace)]
     let joinedTprgms = graphFromEdges ((annotTprgm, annotPrgmName, annotDeps) : graphToNodes tprgms)
     let targetModes = evalAllTargetModes annotTprgm
-    maybeAnnots <- asCResT $ evalAnnots stages annotPrgmName joinedTprgms
+    -- The service is scoped to the page the annotation was asked about rather than to the synthetic
+    -- page holding the annotation itself, which is a page of nothing that nobody wrote.
+    maybeAnnots <- asCResT $ evalAnnots (Just $ EvalService ctss scope') stages annotPrgmName joinedTprgms
     let annots' = H.fromList $ map (first (getMetaID . getExprMeta)) maybeAnnots
     return $ mapMetaRawPrgm (zip4MetaFun (interleaveMeta $ interleavePrgm annotTprgm) (interleaveMeta targetModes) (interleaveMeta annots') (interleaveMeta $ printSources rawPrgm')) rawPrgm'
 

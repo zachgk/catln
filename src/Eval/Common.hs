@@ -316,6 +316,17 @@ data Env = Env { evObjMap        :: EObjectMap
                , evExEnv         :: ResExEnv
                , evTbEnv         :: TBEnv
                , evStagePrgms    :: StagePrgms
+               -- | The compilation service this evaluation may ask about the pages there are, and
+               -- about the stages of them it cannot reach on its own.
+               --
+               -- 'Nothing' for an evaluation whose caller gave it none, which a primitive reports
+               -- rather than answering around. Notably that is every evaluation the service itself
+               -- starts on a primitive's behalf ('evalBaseEnv'): a gathering of what pages declare,
+               -- a debugger's run, a page's tests. That is what bounds re-entry to one level — an
+               -- annotation may ask the service to evaluate something, and what it evaluates cannot
+               -- ask again — and it falls out of those paths building their environments with no
+               -- service rather than out of anything tracking how deep a call is.
+               , evService       :: Maybe EvalService
                -- | The definition an annotation being evaluated is written on, for a primitive
                -- reporting on that definition. An annotation is local to the program it is written
                -- in and to whatever it is written on, and only the second is otherwise lost: the

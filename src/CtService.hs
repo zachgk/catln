@@ -30,16 +30,16 @@ import           Data.List               (elemIndex, intercalate, partition,
                                           sortOn)
 import           Data.Maybe
 import           Data.UUID               (UUID)
-import           Eval                    (evalAnnots, evalBaseEnvStages,
+import           Eval                    (evalAnnots, evalBaseEnvService,
                                           evalBuild, evalBuildAll,
                                           evalDShowCall, evalDebugExprPrgm,
                                           evalDebugPrgm, evalPageValues,
                                           evalRun, evalRunMock,
                                           prgmFromGraphData)
 import           Eval.Common             (CtServiceApi (..), DebugRun,
-                                          EvalMetaDat, MockIO, SSF (..),
-                                          StagePrgms (..), TExpr, TestResult,
-                                          Val, oaTestId)
+                                          EvalMetaDat, EvalService (..), MockIO,
+                                          SSF (..), StagePrgms (..), TExpr,
+                                          TestResult, Val, oaTestId)
 import           Eval.Testing            (TestDesc (..), evalPrints, evalTest,
                                           runTestDesc)
 import           FileWatch               (Watch, Watcher, allCovered,
@@ -958,7 +958,7 @@ getEvalAnnots ctss prgmName = do
       stages' <- if pageWritesATest prgmName tprgms
         then (\tests -> stages{spTests = pure tests}) <$> ctssTestsFrom ctss prgmName
         else return stages
-      let annots = evalAnnots stages' prgmName tprgms
+      let annots = evalAnnots (Just $ EvalService ctss (Just prgmName)) stages' prgmName tprgms
       lift $ ctssStore prgmName (\ssf -> ssf{ssfAnnots = Just annots}) ctss
       asCResT annots
 
@@ -983,7 +983,7 @@ ctssCallDShow ctss scope fun args = do
   -- built over at all, and a search box is not something to lose because some other page is broken.
   tprgms <- ctssEvaluableFrom ssfTPrgm scope ctss
   prgm <- asCResT $ maybe (return $ mconcat $ map fst3 $ graphToNodes tprgms) (`prgmFromGraphData` tprgms) scope
-  asCResT $ evalDShowCall (evalBaseEnvStages stages prgm) fun args
+  asCResT $ evalDShowCall (evalBaseEnvService (Just $ EvalService ctss scope) stages prgm) fun args
 
 -- | Whether a page marks any of its definitions as a test. A page that does not has no annotation
 -- that reads a test run, so it is not made to wait for one.

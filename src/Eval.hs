@@ -316,20 +316,29 @@ evalExpr (TCalls _ b callTree) = do
   b' <- evalExpr b
   evalCallTree b' callTree
 
+-- | An 'Env' with nothing of the pipeline around it: no other stage of the program, and no service
+-- to ask for one.
+--
+-- This is also what every evaluation the service starts on a primitive's behalf is built with, which
+-- is what keeps such an evaluation from asking the service for another
+-- ('Eval.Common.evService'). So it is not only the environment of a caller that has no service to
+-- give, it is the environment that says an evaluation is already inside one.
 evalBaseEnv :: EPrgm -> Env
-evalBaseEnv = evalBaseEnvStages stagePrgmsUnavailable
+evalBaseEnv = evalBaseEnvService Nothing stagePrgmsUnavailable
 
--- | An 'Env' that can also report on the other pipeline stages of the program. Callers that ran
--- those stages and kept them pass them here; 'evalBaseEnv' is the same thing for callers that did
--- not, and reports them as unavailable rather than substituting the stage it holds.
-evalBaseEnvStages :: StagePrgms -> EPrgm -> Env
-evalBaseEnvStages stagePrgms prgm@Prgm{prgmObjMap} = Env {
+-- | An 'Env' that can also report on the program beyond what the evaluation itself holds: the
+-- compilation service it was evaluated by, and the other pipeline stages of its program. Callers
+-- that have them pass them here; 'evalBaseEnv' is the same thing for callers that do not, and
+-- reports them as unavailable rather than substituting what the evaluation does hold.
+evalBaseEnvService :: Maybe EvalService -> StagePrgms -> EPrgm -> Env
+evalBaseEnvService service stagePrgms prgm@Prgm{prgmObjMap} = Env {
         evObjMap = prgmObjMap,
         evTypeEnv = (mkTypeEnv prgm){teArgModeProjection=True},
         evArgs = H.empty,
         evExEnv = H.empty,
         evTbEnv = buildTBEnv primEnv prgm,
         evStagePrgms = stagePrgms,
+        evService = service,
         evAnnotObj = Nothing,
         evCallStack = [],
         evCoverage = H.empty,
@@ -476,13 +485,13 @@ evalDShowCall env@Env{evTbEnv, evTypeEnv} fun args = do
 -- read. Evaluating the imports' annotations too would compute a whole library's worth of values for
 -- every page, and then discard them — @WebDocs.docApiBase@ keys the results back onto the page's own
 -- source by meta ID, which no imported annotation can match.
-evalAnnots :: StagePrgms -> FileImport -> EPrgmGraphData -> CRes [(EExpr, Val)]
-evalAnnots stagePrgms prgmName prgmGraphData = do
+evalAnnots :: Maybe EvalService -> StagePrgms -> FileImport -> EPrgmGraphData -> CRes [(EExpr, Val)]
+evalAnnots service stagePrgms prgmName prgmGraphData = do
   prgm <- prgmFromGraphData prgmName prgmGraphData
   Prgm objMap _ globalAnnots <- case graphLookup prgmName prgmGraphData of
     Just own -> return own
     Nothing  -> CErr [MkCNote $ GenCErr Nothing $ printf "Could not find the page %s to evaluate the annotations of" (show $ impRaw prgmName)]
-  let env = evalBaseEnvStages stagePrgms prgm
+  let env = evalBaseEnvService service stagePrgms prgm
   globalAnnots' <- buildDisplays env [] "annotation" globalAnnots
   objMapAnnots' <- forM (flatObjectMap objMap) $ \oa -> do
     let os = [(getExprPartialType $ oaObjExpr oa, oa)]
@@ -539,10 +548,11 @@ evalPageValues names prgmName prgmGraphData = do
     [] -> return []
     oas -> do
       prgm <- prgmFromGraphData prgmName prgmGraphData
-      -- The stages are left unavailable: a declared value is the declaration itself and reports on
-      -- no other stage of the program. That is also what keeps an annotation which gathers such
-      -- values from re-entering the gathering, which is a stage supplied from outside.
-      let env = evalBaseEnvStages stagePrgmsUnavailable prgm
+      -- Neither the stages nor the service: a declared value is the declaration itself and reports
+      -- on no other stage of the program. That is also what keeps an annotation which gathers such
+      -- values from re-entering the gathering — this evaluation is one the service started, and an
+      -- evaluation the service started has no service to ask.
+      let env = evalBaseEnv prgm
       concat <$> forM oas (\oa -> buildDisplays env [(getExprPartialType $ oaObjExpr oa, oa)] "declaration" [oaObjExpr oa])
   where
     declaresOne oa = isValueObjArr oa && oaObjPath oa `elem` names
