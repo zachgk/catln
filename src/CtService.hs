@@ -1087,50 +1087,24 @@ scopeSSFs ctss@(CTSS ssmv) prgmName = do
   CTSSDat{ctssData} <- readMVar ssmv
   return $ map fst3 $ graphToNodes $ graphFilterReaches prgmName ctssData
 
--- It cannot go through 'ctssGetJoined': that runs in @CResT IO@ and so forces its result, and
--- merely inspecting 'ssfTBPrgm' forces 'evalBuildAll' over every page. Keeping the join a thunk is
--- what lets a caller that never reads a stage avoid building it.
---
--- Neither the type inference nor a debug run is available here. Points are numbered per typecheck
--- run, so the traces of every page joined together would be a set of colliding numbers rather than an
--- answer, and a run needs one program with one entry point where the join has as many as it has
--- pages. Compiling an expression is out for the same reason a run is: an expression means what the
--- page it is written in makes it mean, and the join of every page is not a page anything was written
--- in. An evaluation that wants any of them has to name the page it is asking about
--- ('ctssStagePrgmsFrom').
+-- Both of these are down to the last two fields, which the remaining displays take over next.
 ctssStagePrgms :: CTSS -> IO StagePrgms
 ctssStagePrgms ctss = do
   pages <- return <$> csPages ctss
   values <- csValues ctss Nothing
   return $ StagePrgms {
-      spDebugRun = const $ notScoped "program to run"
-    , spDebugExpr = const $ notScoped "expression to run"
-    , spPages = pages
+      spPages = pages
     , spPageValues = values
     }
-  where
-    notScoped :: String -> CRes a
-    notScoped what = CErr [MkCNote $ GenCErr Nothing $ "This evaluation is not scoped to a single page, so it has no " ++ what]
 
--- | Like 'ctssStagePrgms' but for an evaluation scoped to one page: every stage covers that page and
--- what it imports, the type inference is that page's own, which is the only scope its points are
--- numbered in, and a debug run runs that page.
+-- | Like 'ctssStagePrgms' but for an evaluation scoped to one page: the pages are that page and what
+-- it imports, and the values are gathered over the same.
 ctssStagePrgmsFrom :: CTSS -> FileImport -> IO StagePrgms
 ctssStagePrgmsFrom ctss prgmName = do
   ctssData <- csBuilt ctss (Just prgmName)
   values <- csValues ctss (Just prgmName)
-  let reaches = graphFilterReaches prgmName ctssData
-  let ssfs = map fst3 $ graphToNodes reaches
-  -- Runs against the page's own typecheck program rather than the evaluation's, which for an
-  -- annotation is that program joined with the synthetic one holding the annotation itself.
-  let debugRun fun = evalDebugPrgm fun =<< joinedStage ssfTPrgm ssfs
-  -- Against the pages of the scope rather than their joined program, since compiling the expression
-  -- typechecks it against them one by one, the way a page of the scope was itself typechecked.
-  let debugExpr = debugExprRun prgmName (graphToNodes reaches)
   return $ StagePrgms {
-      spDebugRun = debugRun
-    , spDebugExpr = debugExpr
-    , spPages = return $ map snd3 $ graphToNodes reaches
+      spPages = return $ map snd3 $ graphToNodes $ graphFilterReaches prgmName ctssData
     , spPageValues = values
     }
 

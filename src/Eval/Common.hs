@@ -197,31 +197,11 @@ data EvalService where
 -- All are unforced: constructing an 'Env' must not compute a stage, since a caller pays only for
 -- the ones something actually asks for. Forcing the tree build runs a whole 'Eval.evalBuildAll'.
 data StagePrgms = StagePrgms {
-  -- | Runs one of the program's functions, for a debugger reporting on what it evaluated. It is a
-  -- function rather than a value because which function to run is the annotation's argument, and it
-  -- is supplied from outside for the same reason the stages above are: an evaluation cannot run the
-  -- program it is itself part of, since the evaluator is downstream of the primitives that would
-  -- have to call it. It is never joined across pages — a run needs one program with one entry
-  -- point, and the union of every loaded page has as many @main@s as it has pages.
-    spDebugRun   :: String -> CRes DebugRun
-  -- | Compiles one expression, written as Catln source, as though it were a statement of the page
-  -- being evaluated, and runs it for a debugger reporting on what it evaluated.
-  --
-  -- A source string rather than a name because what is worth debugging is often something no
-  -- definition names: the computation a @#print@ shows the result of, or the one generated input a
-  -- test case ran on. A generated input in particular exists nowhere in the program — the test
-  -- engine made it up, under a seed that is not kept — so the text of the call it ran is the only
-  -- handle on that case there is.
-  --
-  -- Supplied from outside for the reasons 'spDebugRun' is, and one more: compiling an expression
-  -- against the page is the whole of the work here, and the stages that would be compiled against
-  -- are the ones above.
-  , spDebugExpr  :: String -> CRes DebugRun
   -- | The pages the evaluation's program was assembled from. An 'Env' holds one flattened 'Prgm'
   -- with no file identity left in it, so which files it came from is reachable no more than the
   -- stages above are. It is the pages of whatever the evaluation was scoped to, so it goes with the
   -- stages above: these are the files those programs were joined out of.
-  , spPages      :: CRes [FileImport]
+    spPages      :: CRes [FileImport]
   -- | The values one of the evaluation's pages declares of one type, evaluated to the values they
   -- display as, in the order that page writes them. Like 'spPages' this is about the pages there are
   -- rather than about the one program the evaluation runs on, and it takes the page as an argument
@@ -246,9 +226,7 @@ data StagePrgms = StagePrgms {
 -- than failing.
 stagePrgmsUnavailable :: StagePrgms
 stagePrgmsUnavailable = StagePrgms {
-    spDebugRun = const unavailable
-  , spDebugExpr = const unavailable
-  , spPages = unavailable
+    spPages = unavailable
   , spPageValues = \_ _ -> unavailable
   }
   where

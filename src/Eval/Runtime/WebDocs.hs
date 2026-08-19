@@ -16,6 +16,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric  #-}
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE RankNTypes     #-}
 
 module Eval.Runtime.WebDocs where
 
@@ -190,19 +191,30 @@ debuggerFunArg = "/fun"
 -- the program being evaluated and renders that run as JSON: what it exited with, what it printed,
 -- and the tree of what it evaluated.
 --
--- Unlike the prims above this one does not read an artifact, it asks for one to be produced, so it
--- cannot compute its own answer: the evaluator is downstream of this module (@Eval@ imports
--- @Eval.Runtime@ imports this), and reaching back up to it would be a module cycle. The run therefore
--- arrives as a function on 'StagePrgms', supplied by whoever is above both.
+-- Unlike the prims above this one does not read an artifact, it asks for one to be produced. It
+-- cannot produce it itself: the evaluator is downstream of this module (@Eval@ imports
+-- @Eval.Runtime@ imports this), so a run is something to ask the service for rather than something
+-- to do here.
 debugger :: EPrim
 debugger = EEnvPrim "debugger" prim
   where
-    prim Env{evStagePrgms=StagePrgms{spDebugRun}} args = case H.lookup debuggerFunArg args of
-      Just (StrVal fun) -> case spDebugRun fun of
-        CRes _ run -> Right $ encodeJson run
-        CErr notes -> Left $ prettyCNotes notes
+    prim env args = case H.lookup debuggerFunArg args of
+      Just (StrVal fun) -> askRun env "program to run" (\s prgmName -> csRunFun s prgmName fun)
       Just v -> Left $ printf "debugger was given %s, which is not a String function name" (show v)
       Nothing -> Left $ printf "debugger has no %s argument, only %s" debuggerFunArg (show $ sort $ H.keys args)
+
+-- | A run of the page an evaluation is scoped to, rendered as JSON.
+--
+-- A page is needed rather than a scope for both of the runs below. A named function needs one
+-- program with one entry point, where every loaded page joined has as many @main@s as it has pages;
+-- an expression means what the page it is written in makes it mean, and the join of every page is
+-- not a page anything was written in.
+askRun :: Env -> String -> (forall s. CtServiceApi s => s -> FileImport -> IO (CRes DebugRun)) -> Either String Val
+askRun env what run = case evService env of
+  Nothing -> Left noService
+  Just (EvalService s scope) -> case scopedTo scope what of
+    Left err       -> Left err
+    Right prgmName -> askService $ fmap (fmap encodeJsonText . orNotes) (run s prgmName)
 
 -- | The argument of @/Catln/Doc/debugExpr@ holding the expression to run, as its source.
 debugExprArg :: String
@@ -213,15 +225,12 @@ debugExprArg = "/expr"
 -- renders the run as JSON.
 --
 -- Like 'debugger' it asks for an artifact to be produced rather than reading one, and for the same
--- reason cannot produce it here: compiling and evaluating are both downstream of this module. The
--- run arrives as a function on 'StagePrgms'.
+-- reason cannot produce it here: compiling and evaluating are both downstream of this module.
 debugExpr :: EPrim
 debugExpr = EEnvPrim "debugExpr" prim
   where
-    prim Env{evStagePrgms=StagePrgms{spDebugExpr}} args = case H.lookup debugExprArg args of
-      Just (StrVal expr) -> case spDebugExpr expr of
-        CRes _ run -> Right $ encodeJson run
-        CErr notes -> Left $ prettyCNotes notes
+    prim env args = case H.lookup debugExprArg args of
+      Just (StrVal expr) -> askRun env "expression to run" (\s prgmName -> csRunExpr s prgmName expr)
       Just v -> Left $ printf "debugExpr was given %s, which is not a String expression" (show v)
       Nothing -> Left $ printf "debugExpr has no %s argument, only %s" debugExprArg (show $ sort $ H.keys args)
 
