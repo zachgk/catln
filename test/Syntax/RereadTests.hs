@@ -10,23 +10,28 @@
 -- cases are changes: a file written to, a file added to a directory, a note added to a vault.
 module Syntax.RereadTests where
 
-import           Data.Graph       (graphFromEdges)
-import qualified Data.HashSet     as S
-import           Data.List        (isPrefixOf, sort)
-import           Data.Time.Clock  (UTCTime, addUTCTime, getCurrentTime)
-import           Semantics        (testCtssConfig)
-import           Semantics.Prgm   (FileImport, impDisp)
-import           Syntax.Ct.Prgm   (ReadPage (..), newReadEnv, scanTree, tsFiles)
-import           Syntax.Parsers   (mkRawImportStr, readFiles, readPathWrittenIn,
-                                   readPaths, unchangedPages)
-import           System.Directory (createDirectoryIfMissing,
-                                   getTemporaryDirectory, removeFile,
-                                   removePathForcibly, renameFile,
-                                   setModificationTime)
-import           System.FilePath  ((</>))
+import           Data.Graph          (graphFromEdges)
+import qualified Data.HashMap.Strict as H
+import qualified Data.HashSet        as S
+import           Data.IORef          (modifyIORef', newIORef, readIORef)
+import           Data.List           (isPrefixOf, sort)
+import           Data.Time.Clock     (UTCTime, addUTCTime, getCurrentTime)
+import           Semantics           (ctssCachePath, testCtssConfig)
+import           Semantics.Prgm      (FileImport, impDisp)
+import           Syntax.Ct.Prgm      (ReadPage (..), newReadEnv, scanTree,
+                                      tsFiles)
+import           Syntax.Parsers      (canonicalImport, finishReading,
+                                      mkRawImportStr, newReadQueue, newReading,
+                                      readFiles, readPathWrittenIn, readPaths,
+                                      readQueued, rqRestart, unchangedPages)
+import           System.Directory    (createDirectoryIfMissing,
+                                      getTemporaryDirectory, removeFile,
+                                      removePathForcibly, renameFile,
+                                      setModificationTime)
+import           System.FilePath     ((</>))
 import           Test.Tasty
 import           Test.Tasty.HUnit
-import           Utils            (GraphData, graphToNodes)
+import           Utils               (GraphData, graphToNodes)
 
 -- | The pages of a read written under one directory, by the path they are shown at.
 --
@@ -355,5 +360,47 @@ testVaultConfig = testCase "a vault's own configuration is not read from" $ do
   used <- readOnce first vault
   assertEqual "writing the vault's configuration read a page again" [] (readAgain dir first used)
 
+-- | A read hands each page over as it reads it, and reads the pages it has reached oldest first.
+--
+-- The order is what makes the difference visible. Reading from a queue reads @a@, then both of what
+-- @a@ imports, then what those import; reading from a stack reads @a@, then the whole of its first
+-- import before the second — so @d@ comes before @c@ rather than after it. It is a queue so that a
+-- page reached first is read first, which is an order whoever is watching the read can be told
+-- about, and it is what a service takes the pages up in ('CtService.ctssReadOf').
+--
+-- @d@ is imported by both @b@ and @c@ and read once, which is the queue keeping a page it already
+-- holds out rather than reading it twice.
+--
+-- The pages of the standard library are read too and left out here, as everywhere else in this
+-- module: every file imports it, and what this case is about is the four files written for it.
+testQueuedOrder :: TestTree
+testQueuedOrder = testCase "a read hands each page over as it reads it, oldest reached first" $ do
+  dir <- caseDir "queued"
+  now <- getCurrentTime
+  writeLater now (dir </> "a.ct") "import \"b.ct\"\nimport \"c.ct\"\na = 1\n"
+  writeLater now (dir </> "b.ct") "import \"d.ct\"\nb = 2\n"
+  writeLater now (dir </> "c.ct") "import \"d.ct\"\nc = 3\n"
+  writeLater now (dir </> "d.ct") "d = 4\n"
+  handed <- readHandingOver (dir </> "a.ct") (\imp _ -> return imp)
+  assertEqual "the pages were not read in the order they were reached"
+    [dir </> "a.ct", dir </> "b.ct", dir </> "c.ct", dir </> "d.ct"]
+    [path | imp <- handed, Just path <- [impDisp imp], dir `isPrefixOf` path]
+
+-- | Read what a name reaches, keeping what the given action makes of each page as it is handed over.
+--
+-- The read a service makes, without the service: 'Syntax.Parsers.readQueued' with a queue of its
+-- own and each page acted on as it arrives, which is 'CtService.ctssReadOf' but for what it does
+-- with them. Reads every page it reads in full, as 'readOnce' does and for the same reason.
+readHandingOver :: String -> (FileImport -> ReadPage -> IO a) -> IO [a]
+readHandingOver name found = do
+  reading <- newReading (ctssCachePath testCtssConfig)
+  queue <- newReadQueue
+  rqRestart queue =<< mapM (canonicalImport testCtssConfig Nothing) [mkRawImportStr name]
+  acc <- newIORef []
+  readQueued testCtssConfig reading S.empty H.empty queue $ \imp page ->
+    found imp page >>= \x -> modifyIORef' acc (x :)
+  finishReading reading
+  reverse <$> readIORef acc
+
 rereadTests :: TestTree
-rereadTests = testGroup "Reread" [testWritten, testListed, testVault, testDanglingLink, testNoteRemoved, testNoteMoved, testNoteWritten, testVaultConfig, testScanTreeOnce, testWrittenTo]
+rereadTests = testGroup "Reread" [testWritten, testListed, testVault, testDanglingLink, testNoteRemoved, testNoteMoved, testNoteWritten, testVaultConfig, testScanTreeOnce, testWrittenTo, testQueuedOrder]

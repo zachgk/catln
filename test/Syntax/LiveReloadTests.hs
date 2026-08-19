@@ -16,25 +16,31 @@ import           CRes                   (CNote (..), CNoteI (..), CRes (..),
                                          runCResT)
 import           CtService              (CTSS (..), CTSSDat (..),
                                          ReadChange (..), Shown (..),
-                                         changeReaches, ctssBaseFiles,
-                                         ctssCached, ctssEvaluableFrom,
-                                         ctssFollow, ctssFollowing, ctssGetFrom,
-                                         ctssKeys, ctssReadOf, ctssWatch,
-                                         ctssWatchLive)
+                                         changeReaches, ctssAddPage,
+                                         ctssBaseFiles, ctssCached,
+                                         ctssEvaluableFrom, ctssFollow,
+                                         ctssFollowing, ctssGetFrom, ctssKeys,
+                                         ctssMapPages, ctssReadOf, ctssWatch,
+                                         ctssWatchLive, emptyCTSS)
+import qualified Data.HashMap.Strict    as H
 import qualified Data.HashSet           as S
+import           Data.IORef             (modifyIORef', newIORef, readIORef)
 import           Data.List              (isPrefixOf, sort)
 import           Data.Maybe             (isJust, isNothing)
 import           Data.Time.Clock        (addUTCTime, getCurrentTime)
 import           Eval.Common            (AnnotAsks (..), SSF (..), Val)
 import           Eval.Runtime.WebDocs   (askService)
-import           Semantics              (testCtssConfig)
+import           Semantics              (ctssCachePath, testCtssConfig)
 import           Semantics.Prgm         (FileImport, impDisp)
+import           Syntax.Parsers         (canonicalImport, finishReading,
+                                         mkRawImportStr, newReadQueue,
+                                         newReading, readQueued, rqRestart)
 import           Syntax.RereadTests     (caseDir, writeLater)
 import           System.Directory       (setModificationTime)
 import           System.FilePath        ((</>))
 import           Test.Tasty
 import           Test.Tasty.HUnit
-import           Utils                  (fmapGraphWithKey, graphToNodes)
+import           Utils                  (graphToNodes)
 
 -- | The pages under a directory whose own display a read reaches, by the path each is shown at.
 --
@@ -215,7 +221,7 @@ testWatchLive = testCase "a write wakes a display with nothing having asked" $ d
 -- there. That a real type error leaves 'ssfTPrgm' failed is 'buildSCCPipeline's doing and is asserted
 -- by every other test in this suite going through a real build.
 seedBuilt :: CTSS -> (FileImport -> SSF -> SSF) -> IO ()
-seedBuilt (CTSS ssmv) f = modifyMVar_ ssmv $ \d -> return d{ctssData = fmapGraphWithKey f (ctssData d)}
+seedBuilt (CTSS ssmv) f = modifyMVar_ ssmv $ \d -> return $ ctssMapPages f d
 
 -- | A page that stops compiling does not take the rest of the scope with it.
 --
@@ -348,9 +354,45 @@ testAskServiceForcesItsAnswer = testCase "a display's ask is finished before its
     Left _  -> return ()
     Right _ -> assertFailure "askService handed back a display value with its ask still to be run"
 
+-- | The service holds a page as soon as the read has read it, rather than once the read is over.
+--
+-- This is what moving the read's queue into the service is for. A read used to hand back the whole
+-- graph at the end, so nothing the service held could have any part in the read producing it; now
+-- each page is taken up as it arrives ('CtService.ctssAddPage'), and the service is something to be
+-- asked about while a read of it is still running.
+--
+-- Driven page by page rather than through 'ctssReadOf', because what it asserts is what the service
+-- holds PART WAY through a read, and a read asked for from outside is over by the time it answers.
+-- The pieces are the ones that read makes: the same queue, the same walk, and the same taking up of
+-- each page as it arrives.
+testPageHeldWhileReading :: TestTree
+testPageHeldWhileReading = testCase "the service holds a page before the read that found it is over" $ do
+  dir <- caseDir "mid-read"
+  now <- getCurrentTime
+  writeLater now (dir </> "a.ct") "import \"b.ct\"\na = 1\n"
+  writeLater now (dir </> "b.ct") "b = 2\n"
+  ctss <- emptyCTSS testCtssConfig
+  reading <- newReading (ctssCachePath testCtssConfig)
+  queue <- newReadQueue
+  rqRestart queue =<< mapM (canonicalImport testCtssConfig Nothing) [mkRawImportStr (dir </> "a.ct")]
+  steps <- newIORef []
+  readQueued testCtssConfig reading S.empty H.empty queue $ \prgmName page -> do
+    _ <- ctssAddPage ctss prgmName page
+    held <- ctssKeys ctss
+    modifyIORef' steps ((prgmName, held) :)
+  finishReading reading
+  taken <- reverse <$> readIORef steps
+  -- Only the files written for this case; the standard library is read as well and is nothing to do
+  -- with what is being asserted.
+  let under names = sort [path | name <- names, Just path <- [impDisp name], dir `isPrefixOf` path]
+  assertEqual "the service did not hold each page as soon as the read reached it"
+    [(dir </> "a.ct", [dir </> "a.ct"]), (dir </> "b.ct", [dir </> "a.ct", dir </> "b.ct"])]
+    [(path, under held) | (prgmName, held) <- taken, Just path <- [impDisp prgmName], dir `isPrefixOf` path]
+
 liveReloadTests :: TestTree
 liveReloadTests = testGroup "LiveReload" [
   testImporters,
+  testPageHeldWhileReading,
   testUnchangedText,
   testPageAdded,
   testFollowCloses,

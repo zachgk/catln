@@ -18,17 +18,22 @@ module Syntax.Parsers where
 import qualified Data.HashSet            as S
 
 import           Control.Applicative     ((<|>))
+import           Control.Concurrent.STM  (TVar, atomically, modifyTVar',
+                                          newTVarIO, readTVar, readTVarIO,
+                                          writeTVar)
 import           Control.Exception       (IOException, try)
-import           Control.Monad           (join)
+import           Control.Monad           (forM_, join)
 import           Control.Monad.Identity  (Identity (..))
 import           Control.Monad.Trans
 import           CRes
 import           CtConstants             (noCoreAnnot)
 import           Data.Graph
 import qualified Data.HashMap.Strict     as H
+import           Data.IORef              (modifyIORef', newIORef, readIORef)
 import           Data.List
 import           Data.Maybe              (fromMaybe, isJust, listToMaybe,
                                           mapMaybe)
+import qualified Data.Sequence           as Sq
 import           Data.Time.Clock         (UTCTime, getCurrentTime)
 import           MapMeta                 (MetaLocation (ImportMeta), mapMeta,
                                           parseMetaIDScope)
@@ -207,6 +212,72 @@ importReader reading imp = do
   case H.lookup syntax (rdReaders reading) of
     Just reader -> return reader
     Nothing     -> fail $ printf "The read holds no reader for the syntax %s of %s" (show syntax) (show imp)
+
+-- | What a read has left to read, and every page it has taken up.
+--
+-- A queue rather than a stack, so that a page reached first is read first. What a stack reads is the
+-- whole of an import before the import written after it, which is an order nothing outside the walk
+-- can say anything about; what a queue reads is the pages of a program in the order the program
+-- names them, and what is left of it is a count rather than a shape.
+--
+-- Kept apart from 'Reading' because the two belong to different things. 'Reading' is what a read
+-- reads WITH and is made and finished by the read itself; this is what a read has left TO DO, and is
+-- held by whoever is doing the reading — see 'CtService.ctssReadQueue', which is a service taking up
+-- each page as the read reaches it rather than the whole graph once the read is over.
+data ReadQueueDat = ReadQueueDat {
+  -- | The pages left to read, the one reached first at the front.
+  rqPending :: Sq.Seq FileImport,
+  -- | Every page this read has queued, which is every page it reads.
+  --
+  -- A page already queued is kept out of the queue rather than passed over when it comes off, so
+  -- that the queue holds each page once and its length is what is left to do. It doubles as the
+  -- read's record of which pages it reached, which is what a caller taking up the pages one at a
+  -- time needs in order to say which of the pages it held this read did not find
+  -- ('CtService.ctssReadOf').
+  rqSeen    :: S.HashSet FileImport
+                                 }
+
+-- | The queue one read reads from.
+--
+-- Behind a 'TVar' rather than an 'IORef' because what a read has left to do is a thing to be asked
+-- about from outside the read.
+newtype ReadQueue = ReadQueue (TVar ReadQueueDat)
+
+newReadQueue :: IO ReadQueue
+newReadQueue = ReadQueue <$> newTVarIO (ReadQueueDat Sq.empty S.empty)
+
+-- | Begin a read, from the pages named.
+--
+-- What an earlier read took up is dropped: a page read then is a page to be read again now, and it
+-- is only within one read that a page queued twice is a page read twice for nothing. A read that
+-- threw part way leaves pages queued, and those are dropped with it — they are reached again from
+-- the pages this read is beginning from.
+rqRestart :: ReadQueue -> [FileImport] -> IO ()
+rqRestart queue@(ReadQueue v) imps = do
+  atomically $ writeTVar v $ ReadQueueDat Sq.empty S.empty
+  rqPush queue imps
+
+-- | Queue these pages to be read, passing over whichever of them this read has queued already.
+rqPush :: ReadQueue -> [FileImport] -> IO ()
+rqPush (ReadQueue v) imps = atomically $ modifyTVar' v $ \q -> foldl' add q imps
+  where
+    add q imp
+      | S.member imp (rqSeen q) = q
+      | otherwise = q{rqPending = rqPending q Sq.|> imp, rqSeen = S.insert imp (rqSeen q)}
+
+-- | The next page to read, and nothing where the read has read everything it reached.
+rqPop :: ReadQueue -> IO (Maybe FileImport)
+rqPop (ReadQueue v) = atomically $ do
+  q <- readTVar v
+  case Sq.viewl (rqPending q) of
+    Sq.EmptyL -> return Nothing
+    imp Sq.:< rest -> do
+      writeTVar v q{rqPending = rest}
+      return $ Just imp
+
+-- | Every page the read has reached, queued or read already.
+rqRead :: ReadQueue -> IO (S.HashSet FileImport)
+rqRead (ReadQueue v) = rqSeen <$> readTVarIO v
 
 -- | Reads where the page an import names sits in the import graph.
 -- TODO Modify the ImportPreloadResult to CResT to report back parse errors
@@ -446,7 +517,8 @@ readPage config reading inFull prev imp = case H.lookup imp prev of
           times <- readTime (rdEnv reading) started (piReads parsed)
           return page{rpPrgm=Just prgm, rpSource=piSource parsed, rpImports=imports, rpReads=times}
 
--- | Read the files an import names, and everything they import.
+-- | Read what the queue names, and everything those pages lead to, handing each page over as it is
+-- read.
 --
 -- A page of @prev@ is given back as it is, its files read again only where it is one of the pages
 -- named and its program has yet to be read, and the read walks on through the imports it was left
@@ -455,28 +527,44 @@ readPage config reading inFull prev imp = case H.lookup imp prev of
 -- reads what it is asked to read and no more.
 --
 -- The pages named are read as their programs; every other page a parser can place in the graph
--- without reading is left with its imports and without its program. What that leaves is a graph of
--- every page with the programs of the ones asked for, which is what lets a service take up the
--- shape of a program without reading all of it.
+-- without reading is left with its imports and without its program. What that leaves is every page
+-- with the programs of the ones asked for, which is what lets a service take up the shape of a
+-- program without reading all of it.
+--
+-- Each page is handed over before the pages it leads to are queued, so that whoever is reading has
+-- it before the read walks on from it. That is what this is for, and is the whole of the difference
+-- between it and 'readFiles' below, which is this with the pages gathered up and given back at the
+-- end: a caller which takes each page up as it arrives is one the read itself can be answered out
+-- of, where a caller given a graph at the end cannot be asked anything until the read is over.
+readQueued :: CTSSConfig -> Reading -> S.HashSet FileImport -> H.HashMap FileImport ReadPage -> ReadQueue -> (FileImport -> ReadPage -> IO ()) -> IO ()
+readQueued config reading inFull prev queue found = aux
+  where
+    aux = do
+      next <- rqPop queue
+      forM_ next $ \imp -> do
+        page <- readPage config reading inFull prev imp
+        found imp page
+        rqPush queue $ readPageVisits page
+        aux
+
+-- | Read the files an import names, and everything they import, as the graph they make.
+--
+-- 'readQueued' for a caller which wants the whole of what a read found rather than each page as it
+-- is read: the compiler asked for one program's dependencies, and the cases which assert on what a
+-- read reads. A service takes the pages up as they arrive instead ('CtService.ctssReadOf').
 --
 -- Whatever the read recorded is written back at the end rather than as it goes, so that a read
--- which read nothing writes nothing.
+-- which read nothing writes nothing. Not bracketed: see 'Syntax.Ct.Prgm.irFinish' for why a read
+-- which failed part way must not reach it.
 --
 -- TODO Change preloadImport and parseImport, then make this return GraphData of CRes
 readFiles :: CTSSConfig -> S.HashSet FileImport -> H.HashMap FileImport ReadPage -> [RawFileImport] -> IO (GraphData ReadPage FileImport)
 readFiles config inFull prev initialImps = do
   reading <- newReading (ctssCachePath config)
-  initialImps' <- mapM (canonicalImport config Nothing) initialImps
-  res <- aux reading [] S.empty initialImps'
+  queue <- newReadQueue
+  rqRestart queue =<< mapM (canonicalImport config Nothing) initialImps
+  acc <- newIORef []
+  readQueued config reading inFull prev queue $ \imp page ->
+    modifyIORef' acc ((page, imp, rpImports page) :)
   finishReading reading
-  return $ graphFromEdges res
-  where
-    aux :: Reading -> [GraphNodes ReadPage FileImport] -> S.HashSet FileImport -> [FileImport] -> IO [GraphNodes ReadPage FileImport]
-    aux _ acc _ [] = return acc
-    aux reading acc visited (nextToVisit:restToVisit) = do
-      if S.member nextToVisit visited
-        then aux reading acc visited restToVisit
-        else do
-          page <- readPage config reading inFull prev nextToVisit
-          let restToVisit' = readPageVisits page ++ restToVisit
-          aux reading ((page, nextToVisit, rpImports page) : acc) (S.insert nextToVisit visited) restToVisit'
+  graphFromEdges <$> readIORef acc
