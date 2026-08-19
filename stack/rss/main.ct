@@ -1,0 +1,31 @@
+module(Data/RSS)
+  # # RSS
+    An RSS feed is a page and each entry of it is a value declared on that page, in the way a note
+    is a page and each checkbox of it is a task declared on that page. Importing a feed writes the
+    page — @import rss("https://xkcd.com/rss.xml")@ — and what the page holds is one [Item] per
+    entry, newest first.
+    A feed is a window rather than a document: it says what it says now, and an entry falls off the
+    end of it as newer ones arrive. So the page is built out of what every read of that feed has
+    ever seen and not out of the last read alone, and the entries the feed no longer carries are
+    written below the ones it does.
+    This is not part of the standard library. A program which imports no feed has no use for the
+    type, and the page a feed is read as writes the import itself.
+  data(Item(title -> String, link -> String, guid -> String, published -> String, description -> String))
+    # An [Item] is one entry of a feed.
+      [guid] is the name the feed gave the entry, or its address, or its title — whichever of the
+      three the feed has. It is what says that an entry read today and the same entry read a week
+      ago are one entry, so an entry keeps its place on the page rather than arriving again each
+      time the feed is asked.
+      [published] is the date as the feed wrote it, and is a string for the reason
+      [/Data/Note/Task/Obsidian]'s dates are: Catln has no date to read one into, and inventing one
+      here would be inventing it for the whole language rather than for a feed.
+      [description] is the entry's writing exactly as the feed wrote it, which is markup rather than
+      prose — a comic strip's entry is an @img@ tag and nothing else. It is carried as it was
+      written and read apart by whatever shows it, so that nothing the feed said is lost between
+      here and there.
+
+  every(Item.., isa= [/Catln/Doc/DShow])
+    # An entry is shown in the webdocs as the entry it is, rather than as the declaration it was
+      read into: the title as a link to the entry, the date beside it, and the entry's own writing
+      below. It is the value itself that is shown, with no display type standing in for it, in the
+      way a task is.

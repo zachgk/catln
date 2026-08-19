@@ -1,0 +1,47 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/Data/RSS/Item"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/RSS/Item( Value /title -> /Data/String )( Value /link -> /Data/String )( Value /guid -> /Data/String )( Value /published -> /Data/String )( Value /description -> /Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGClass
+            ( False
+            , /Data/RSS/Item
+            , [ /Data/RSS/Item.. ]
+            , Just "An entry is shown in the webdocs as the entry it is, rather than as the declaration it was
+              read into: the title as a link to the entry, the date beside it, and the entry's own writing
+              below. It is the value itself that is shown, with no display type standing in for it, in the
+              way a task is."
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "# RSS
+            An RSS feed is a page and each entry of it is a value declared on that page, in the way a note
+            is a page and each checkbox of it is a task declared on that page. Importing a feed writes the
+            page — @import rss("https://xkcd.com/rss.xml")@ — and what the page holds is one [Item] per
+            entry, newest first.
+            A feed is a window rather than a document: it says what it says now, and an entry falls off the
+            end of it as newer ones arrive. So the page is built out of what every read of that feed has
+            ever seen and not out of the last read alone, and the entries the feed no longer carries are
+            written below the ones it does.
+            This is not part of the standard library. A program which imports no feed has no use for the
+            type, and the page a feed is read as writes the import itself." )
+        , /Catln/#md
+            ( Value /text= CStr "An entry is shown in the webdocs as the entry it is, rather than as the declaration it was
+            read into: the title as a link to the entry, the date beside it, and the entry's own writing
+            below. It is the value itself that is shown, with no display type standing in for it, in the
+            way a task is." )
+        ]
+    }

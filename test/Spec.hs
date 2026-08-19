@@ -9,6 +9,7 @@ import           Syntax.ObsidianCacheTests (obsidianCacheTests)
 import           Syntax.ObsidianTaskTests  (obsidianTaskTests)
 import           Syntax.ObsidianTests      (obsidianTests)
 import           Syntax.RereadTests        (rereadTests)
+import           Syntax.RssCacheTests      (rssCacheTests)
 import           Syntax.SyntaxTests        (syntaxTests)
 import           Test.Tasty
 import           Typecheck.TypeCheckTests  (typecheckTests)
@@ -18,5 +19,5 @@ main = do
   integrationTests' <- integrationTests
   syntaxTests' <- syntaxTests
   stackTests' <- stackTests
-  let catlnTests = testGroup "CatlnTests" [integrationTests', typeTests, typecheckTests, syntaxTests', stackTests', obsidianTests, obsidianTaskTests, obsidianCacheTests, rereadTests, fileWatchTests, liveReloadTests]
+  let catlnTests = testGroup "CatlnTests" [integrationTests', typeTests, typecheckTests, syntaxTests', stackTests', obsidianTests, obsidianTaskTests, obsidianCacheTests, rssCacheTests, rereadTests, fileWatchTests, liveReloadTests]
   defaultMain catlnTests

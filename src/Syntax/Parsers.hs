@@ -47,6 +47,7 @@ import           Syntax.InferImport      (dirSyntax, findImportPath,
 import           Syntax.Md.Parser        (mdSyntax)
 import           Syntax.Obsidian.Parser  (obsidian, obsidianSyntax)
 import           Syntax.Python.Parser    (pySyntax)
+import           Syntax.Rss.Parser       (rss, rssSyntax)
 import           System.FilePath         (isAbsolute, joinPath, takeDirectory)
 import           Text.Megaparsec         (runParser)
 import           Text.Printf
@@ -59,6 +60,7 @@ importSyntaxes = H.fromList [
   ("ctx", ctxSyntax),
   ("md", mdSyntax),
   (obsidian, obsidianSyntax),
+  (rss, rssSyntax),
   ("haskell", hsSyntax),
   ("python", pySyntax)
                              ]

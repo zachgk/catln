@@ -25,9 +25,17 @@
 -- caching. A vault is a directory of peers whose members are found by walking it, and whether a
 -- note is still the note that was read is answered by looking at that one file. Neither is true of
 -- a Haskell or a Python import, which is resolved against a project rather than against a
--- directory, so what a second syntax wanting a cache would have in common with this one is not yet
--- known. A second one wanting it is what should decide that shape; until then this stays where its
--- one reader is.
+-- directory.
+--
+-- There is now a second record, 'Syntax.Rss.Cache', and it is a second record rather than this one
+-- generalised. What the two have in common is where they are kept and how they are written: one
+-- directory per syntax under the cache root, one JSON file per source named by a hash of it with
+-- the source written inside, and a flush which moves a finished file into place. What they do not
+-- have in common is the question, which is the whole of what a cache is. This one asks whether a
+-- file is still the file that was read, out of that file's own time and length, and forgets what
+-- the vault no longer holds. That one asks whether six hours have passed, out of nothing but a
+-- clock, and forgets nothing until there is too much to keep. A mechanism holding both would be a
+-- mechanism holding neither question, which is a place to put a file and not a cache.
 --------------------------------------------------------------------
 
 {-# LANGUAGE DeriveAnyClass    #-}
