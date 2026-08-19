@@ -5,10 +5,10 @@ import           Control.Monad           (unless)
 import           CRes
 import           CtService
 import           Data.Maybe              (fromMaybe, isJust)
-import           Eval.Common             (TestResult (..))
+import           Eval.Common             (SSF (..), TestResult (..))
 import           Eval.Testing            (TestDesc (..), runTestDesc)
 import           Semantics               (testCtssConfig)
-import           Syntax.Parsers          (ReadPage (..))
+import           Syntax.Ct.Prgm          (ReadPage (..))
 import           Test.Tasty
 import           Test.Tasty.HUnit
 import           Utils                   (graphToNodes, snd3)

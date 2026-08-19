@@ -37,9 +37,10 @@ import           Semantics
 import           Semantics.Prgm
 import           Semantics.TypeGraph
 import           Semantics.Types
-import           Syntax.Ct.Parser.Syntax (DesPrgm)
+import           Syntax.Ct.Parser.Syntax (DesPrgm, ParseMetaDat)
+import           Syntax.Ct.Prgm          (RawPrgm, ReadPage)
 import           Text.Printf
-import           TypeCheck.Common        (TraceConstrain, VPrgm)
+import           TypeCheck.Common        (TPrgm, TraceConstrain, VPrgm)
 import           Utils
 
 type EvalMetaDat = Maybe ReachesTree
@@ -51,6 +52,42 @@ type EObjArr = ObjArr Expr EvalMetaDat
 type EObjectMap = ObjectMap Expr EvalMetaDat
 type EPrgm = Prgm Expr EvalMetaDat
 type EPrgmGraphData = GraphData EPrgm FileImport
+
+-- | One page of the compilation service: what a read of it left, and everything the pipeline has
+-- computed from it so far.
+--
+-- It lives here, below the service that keeps it, because an evaluation is given the service to ask
+-- its own questions of and so has to be able to name a page's answer. Every stage below mentions a
+-- type of this module — a tree build is a 'TExpr' program, a test run is a 'TestResult', an
+-- evaluated annotation is a 'Val' — and 'Env' is in one recursive knot with all of them, so there
+-- is nowhere lower to put it.
+--
+-- 'Nothing' means the same in every stage: not yet, ask and it will be. What asks is
+-- 'CtService.ctssLoad' for the program and 'CtService.ctssBuildFrom' for the stages below it, which
+-- every reader of this goes through. A stage is also left unforced once computed, so holding a page
+-- costs nothing until something reads the stage it wants — merely inspecting 'ssfTBPrgm' runs an
+-- 'Eval.evalBuildAll' over the page.
+data SSF = SSF {
+  ssfSource         :: Maybe String,
+  -- | The page's program, or 'Nothing' for a page whose imports are known and whose program has not
+  -- been read.
+  ssfRaw            :: Maybe (CRes (RawPrgm ParseMetaDat)),
+  -- | What the read which produced this page left: the imports it walked on from, and when the
+  -- files it read were last written. Handed back to the next read, which gives this page back
+  -- untouched while those files are unchanged, so a page is parsed again only when something it was
+  -- read from has been written to.
+  ssfRead           :: ReadPage,
+  ssfBuilt          :: Bool,
+  ssfDes            :: Maybe (CRes (Prgm Expr ParseMetaDat)),
+  ssfTPrgmWithTrace :: Maybe (CRes (TPrgm, VPrgm, TraceConstrain)),
+  ssfTPrgm          :: Maybe (CRes TPrgm),
+  ssfTBPrgm         :: Maybe (CRes (Prgm TExpr EvalMetaDat)),
+  ssfAnnots         :: Maybe (CRes [(Expr EvalMetaDat, Val)]),
+  -- | The tests this page wrote, run. Running a test is not part of building a page, so this is
+  -- filled in when something asks for it (see 'CtService.ctssTestsFrom') rather than by the
+  -- pipeline.
+  ssfTests          :: Maybe (CRes [TestResult])
+               }
 
 -- | The program being evaluated, at the pipeline stages the evaluation cannot reach on its own.
 -- Desugar is strictly upstream of eval and tree build is a separate pass, so an 'Env' holds neither;

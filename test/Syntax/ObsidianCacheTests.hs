@@ -12,21 +12,22 @@
 module Syntax.ObsidianCacheTests where
 
 import           CRes                  (CRes (..), runCResT)
-import           CtService             (CTSS, SSF (..), ctssBaseFiles,
-                                        ctssCached, ctssKeys, ctssLoad,
-                                        ctssRead, ctssRootPage, ctssStale,
-                                        getSource, setSource)
+import           CtService             (CTSS, ctssBaseFiles, ctssCached,
+                                        ctssKeys, ctssLoad, ctssRead,
+                                        ctssRootPage, ctssStale, getSource,
+                                        setSource)
 import           Data.Graph            (graphFromEdges)
 import qualified Data.HashSet          as S
 import           Data.List             (isInfixOf, isPrefixOf, isSuffixOf, sort)
 import           Data.Maybe            (isJust, isNothing)
 import           Data.Time.Clock       (UTCTime, addUTCTime, getCurrentTime)
+import           Eval.Common           (SSF (..))
 import           Semantics             (CTSSConfig (..), testCtssConfig)
 import           Semantics.Prgm        (FileImport, impDisp)
+import           Syntax.Ct.Prgm        (ReadPage (..))
 import           Syntax.Obsidian.Cache (vaultCacheFile)
-import           Syntax.Parsers        (ReadPage (..), mkDesCanonicalImportStr,
-                                        mkRawImportStr, readFiles,
-                                        unchangedPages)
+import           Syntax.Parsers        (mkDesCanonicalImportStr, mkRawImportStr,
+                                        readFiles, unchangedPages)
 import           System.Directory      (createDirectoryIfMissing, doesPathExist,
                                         getTemporaryDirectory, removeFile,
                                         removePathForcibly, renameFile,

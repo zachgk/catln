@@ -28,7 +28,7 @@ import qualified Data.HashMap.Strict  as H
 import qualified Data.HashSet         as S
 import           Data.List            (isInfixOf, nub)
 import           Data.Maybe
-import           Eval.Common          (BuiltFile (..),
+import           Eval.Common          (BuiltFile (..), SSF (..),
                                        TestKind (TestPrintGolden),
                                        TestResult (..), valResultFiles)
 import           Eval.Testing         (TestDesc (..), runTestDesc)

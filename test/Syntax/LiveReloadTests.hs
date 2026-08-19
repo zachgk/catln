@@ -15,7 +15,7 @@ import           Control.Exception      (SomeException, try)
 import           CRes                   (CNote (..), CNoteI (..), CRes (..),
                                          runCResT)
 import           CtService              (CTSS (..), CTSSDat (..),
-                                         ReadChange (..), SSF (..), Shown (..),
+                                         ReadChange (..), Shown (..),
                                          changeReaches, ctssBaseFiles,
                                          ctssCached, ctssEvaluableFrom,
                                          ctssFollow, ctssFollowing, ctssGetFrom,
@@ -24,6 +24,7 @@ import           CtService              (CTSS (..), CTSSDat (..),
 import           Data.List              (isPrefixOf, sort)
 import           Data.Maybe             (isJust, isNothing)
 import           Data.Time.Clock        (addUTCTime, getCurrentTime)
+import           Eval.Common            (SSF (..))
 import           Semantics              (testCtssConfig)
 import           Semantics.Prgm         (FileImport, impDisp)
 import           Syntax.RereadTests     (caseDir, writeLater)

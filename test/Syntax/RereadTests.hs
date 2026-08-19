@@ -16,9 +16,9 @@ import           Data.List        (isPrefixOf, sort)
 import           Data.Time.Clock  (UTCTime, addUTCTime, getCurrentTime)
 import           Semantics        (testCtssConfig)
 import           Semantics.Prgm   (FileImport, impDisp)
-import           Syntax.Ct.Prgm   (newReadEnv, scanTree, tsFiles)
-import           Syntax.Parsers   (ReadPage (..), mkRawImportStr, readFiles,
-                                   readPathWrittenIn, readPaths, unchangedPages)
+import           Syntax.Ct.Prgm   (ReadPage (..), newReadEnv, scanTree, tsFiles)
+import           Syntax.Parsers   (mkRawImportStr, readFiles, readPathWrittenIn,
+                                   readPaths, unchangedPages)
 import           System.Directory (createDirectoryIfMissing,
                                    getTemporaryDirectory, removeFile,
                                    removePathForcibly, renameFile,

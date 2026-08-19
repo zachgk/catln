@@ -37,8 +37,8 @@ import           Eval                    (evalAnnots, evalBaseEnvStages,
                                           evalRun, evalRunMock,
                                           prgmFromGraphData)
 import           Eval.Common             (DebugRun, EvalMetaDat, MockIO,
-                                          StagePrgms (..), TExpr, TestResult,
-                                          Val, oaTestId)
+                                          SSF (..), StagePrgms (..), TExpr,
+                                          TestResult, Val, oaTestId)
 import           Eval.Testing            (TestDesc (..), evalPrints, evalTest,
                                           runTestDesc)
 import           FileWatch               (Watch, Watcher, allCovered,
@@ -145,28 +145,6 @@ data ReadChange = ReadChange {
 changeReaches :: ReadChange -> Shown -> Bool
 changeReaches ReadChange{rcChanged, rcPages} Shown{shPage} =
   rcPages || maybe (not $ S.null rcChanged) (`S.member` rcChanged) shPage
-
-data SSF = SSF {
-  ssfSource         :: Maybe String,
-  -- | The page's program, or 'Nothing' for a page whose imports are known and whose program has not
-  -- been read. Absent means the same here as it does in every field below it: not yet, ask and it
-  -- will be. What asks is 'ctssLoad', which every reader of this goes through.
-  ssfRaw            :: Maybe (CRes (RawPrgm ParseMetaDat)),
-  -- | What the read which produced this page left: the imports it walked on from, and when the
-  -- files it read were last written. Handed back to the next read, which gives this page back
-  -- untouched while those files are unchanged, so a page is parsed again only when something it was
-  -- read from has been written to.
-  ssfRead           :: ReadPage,
-  ssfBuilt          :: Bool,
-  ssfDes            :: Maybe (CRes (Prgm Expr ParseMetaDat)),
-  ssfTPrgmWithTrace :: Maybe (CRes (TPrgm, VPrgm, TraceConstrain)),
-  ssfTPrgm          :: Maybe (CRes TPrgm),
-  ssfTBPrgm         :: Maybe (CRes TBPrgm),
-  ssfAnnots         :: Maybe (CRes [(Expr EvalMetaDat, Val)]),
-  -- | The tests this page wrote, run. Running a test is not part of building a page, so this is
-  -- filled in when something asks for it (see 'ctssTestsFrom') rather than by the pipeline.
-  ssfTests          :: Maybe (CRes [TestResult])
-               }
 
 emptyCTSS :: CTSSConfig -> IO CTSS
 emptyCTSS config = do

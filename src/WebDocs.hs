@@ -44,7 +44,7 @@ import           Data.Maybe                    (listToMaybe)
 import           Data.UUID                     (UUID, fromText)
 import           Eval                          (evalAllTargetModes, evalAnnots,
                                                 prgmFromGraphData)
-import           Eval.Common                   (EvalMode,
+import           Eval.Common                   (EvalMode, SSF (..),
                                                 Val (FloatVal, IntVal, StrVal))
 import           Eval.Runtime.WebDocs          (sidebarOrder)
 import           MapMeta                       (interleaveMeta, interleavePrgm,
