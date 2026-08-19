@@ -11,6 +11,7 @@ import TypePage from './Values/Type';
 import Sidebar from './Values/Sidebar';
 import Search from './Values/Search';
 import Test from './Values/Test';
+import HTMLShow from './Values/HTMLShow';
 import Task from './Values/Task';
 import ObsidianTask from './Values/ObsidianTask';
 import TaskList from './Values/TaskList';
@@ -42,6 +43,17 @@ function Value(props) {
       return <BuildFile {...val.args} />;
     case "/Catln/Doc/Show/MD":
       return <Comment comment={val.args["/text"].contents}/>;
+    // Markup a program wrote, laid into the page rather than framed in one. This is the whole of
+    // what the webdocs know about a display a library defines for one of its own types: the library
+    // writes an arm of /Catln/Doc/dshow beside the declaration, and what arrives here is the markup
+    // that arm built. So a note's page heads itself with the title it is known by without there
+    // being anything here that knows what a note is.
+    //
+    // No update. What is shown is markup rather than the value it was built from, so there is no
+    // expression here to write back -- a display meant to be edited is a value of its own, as a task
+    // is.
+    case "/Catln/Doc/Show/Html":
+      return <HTMLShow {...val.args} />;
     // update is passed outside the spread because the spread is the value's own arg names.
     case "/Catln/Doc/Show/ListProgram":
       return <ListProgram {...val.args} update={update} />;

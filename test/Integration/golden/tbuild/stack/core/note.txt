@@ -17,7 +17,20 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Catln/Doc/dshow( EAppArg Value /s -> /Data/Note/#taskList = Value /Data/Note/#taskList ) -> /Data/Note/Show/TaskList( /tasks=/Data/String ) = /Data/Note/Show/TaskList
+                        [ /Catln/Doc/dshow
+                            ( EAppArg Value /s -> /Data/Note/Page( /title=∀/Data/Algebra/Semigroup ) = /Data/Note/Page( EAppArg Value /title -> ∀/Data/Algebra/Semigroup ) ) -> /Catln/Doc/Show/Html( /contents=/Data/String ) = /Catln/Doc/Show/Html
+                            ( EAppArg Value /contents -> /Data/String =
+                                ( /operator++
+                                    ( EAppArg Value /l -> ∀/Data/Algebra/Semigroup =
+                                        ( /operator++
+                                            ( EAppArg Value /l -> /Data/String = "<h1>" )
+                                            ( EAppArg Value /r -> TVArg /title = ( Value /title ↦ TVArg /title ) ) ↦ ∀/Data/Algebra/Semigroup
+                                        )
+                                    )
+                                    ( EAppArg Value /r -> /Data/String = "</h1>" ) ↦ /Data/String
+                                )
+                            )
+                        , /Catln/Doc/dshow( EAppArg Value /s -> /Data/Note/#taskList = Value /Data/Note/#taskList ) -> /Data/Note/Show/TaskList( /tasks=/Data/String ) = /Data/Note/Show/TaskList
                             ( EAppArg Value /tasks -> /Data/String =
                                 ( /Catln/Doc/dshow./Data/Note/taskList( EAppArg Value /annot -> /s = Value /s ) ↦ /Data/String )
                             )

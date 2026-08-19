@@ -18,9 +18,30 @@ Prgm
                         ]
                     }
                 )
+            ,
+                ( "/Data/Note/Page"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Page
+                            ( Value /title -> UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr "A page written rather than read" ]
+                                ) = CStr "A page written rather than read"
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
             ]
         )
-    , prgmCG = [ CGType ]
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
     , prgmAnnots =
         [ /Catln/#md
             ( Value /text -> /Data/String = CStr "Tests importing an Obsidian vault. Every note of the vault becomes a page of its own, at any
@@ -30,5 +51,18 @@ Prgm
             a vault are not reachable from the page the vault is, and a golden test walking out from this file
             reaches the vault and stops. The two named here reach the rest of the vault by linking, so what
             every note of it is read as is written down and compared rather than left to be taken on trust." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "A page written rather than read, which is compiled and typechecked here and NOT displayed.
+            It was written to hold the display of a note's page down: the annotations and values of a page are
+            evaluated for the file a test names and not for the pages it reaches, so the pages of the vault
+            above are read, desugared, typechecked and built while their values are never asked for.
+            It does not hold it down, because a value declared in a @.ct@ page is not displayed at all. Such a
+            declaration reaches the typechecked program carrying an arrow, which @isValueObjArr@ reads as a
+            definition rather than a value, so the display of it is never asked for; the same declaration built
+            by the Obsidian reader carries none and is displayed. Nothing is reported when that happens —
+            @evalDShowAnnot@ answers an unreachable display with no value and no note — so a test naming this
+            file passes either way. The same is true of the values in @valueDeclFields.ct@.
+            What still holds is that the type and the arm displaying it compile and typecheck here. When a
+            @.ct@ declaration is displayed like a read one, this becomes the gate it was written to be." )
         ]
     }

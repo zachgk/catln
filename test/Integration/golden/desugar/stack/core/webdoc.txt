@@ -230,6 +230,16 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/Doc/Show/Html"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Doc/Show/Html( Value /contents -> /Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Doc/Show/Debugger"
                 , ObjectMapItem
                     { omiDecls =
@@ -428,6 +438,7 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
         , CGClass
             ( False
             , /Catln/Doc/DShow
@@ -435,6 +446,7 @@ Prgm
                 [ /Data/String
                 , ∀/Data/ToString
                 , /Catln/Doc/Show/MD..
+                , /Catln/Doc/Show/Html..
                 , /Catln/Doc/Show/Overlay..
                 , /Catln/Doc/Show/ListProgram..
                 , /Catln/Doc/Show/TypePage..
@@ -450,7 +462,7 @@ Prgm
               webdocs render such a value through its [/Data/toString]. This is what lets a `> value`
               print statement accept any [ToString] type. A [DShow] value that is not [ToString] (a
               visualization like [Show/MD]) is still printable, but only [ToString] values are compared
-              against a print/result golden.           "
+              against a print/result golden.            "
             )
         , CGClass
             ( False

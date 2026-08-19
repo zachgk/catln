@@ -19,6 +19,25 @@ module(Data/Note)
       opens with a block of properties holds it as a [#properties] of the page rather than as
       writing of it.
 
+  /Catln/Doc/dshow(s= Page(title))= /Catln/Doc/Show/Html(contents= "<h1>" ++ title ++ "</h1>")
+    # A note is shown in the webdocs as the note it is: headed by the title it is known and linked
+      by, rather than by the declaration that title was read into.
+      Written here rather than in the doc server. A [Page] is this library's type, so what one looks
+      like is this library's to say: the arm builds the heading and [/Catln/Doc/Show/Html] lays it
+      into the page, so a doc server shows a note while holding nothing that knows what a note is.
+      An arm and not membership of [/Catln/Doc/DShow]. A member is shown by the identity arm of
+      [/Catln/Doc/dshow], which hands the value back for the webdocs to make of what they will, which
+      is what a task is. Both at once is two arms matching one value with nothing to say which wins.
+      The title is the whole of the display because it is the whole of what the page holds. The
+      writing, the tasks and the properties are statements inside the page rather than fields of it,
+      so each is shown where the note wrote it and none of them is shown twice.
+      The title is not escaped. A note is titled by the file it is written in, so a note named with a
+      @<@ or an @&@ has that name read as markup. The webdocs sanitize what they are shown, so the
+      worst of it is a heading that reads wrongly rather than a page that runs what a filename said;
+      escaping it properly waits on [String] having a way to escape.
+      Shown and never written. A note is titled by the file it is written in, so retitling one is
+      renaming that file, which replacing an expression of the page cannot do.
+
   class(Task)
     # A [Task] is one thing to do, written in a note as a markdown checkbox. A task is a break in
       the writing of the note holding it: the comment ends where the checkbox was written, the task

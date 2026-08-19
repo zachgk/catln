@@ -789,6 +789,21 @@ describe('Backend API contract', () => {
       return {values: pageValues(page.pgPrgm[1]), source: page.pgSource}
     }
 
+    // The note's own declaration is a value like its tasks are, and the note library says what one
+    // looks like: an arm of /Catln/Doc/dshow beside the declaration builds the heading the title is
+    // shown as. So what the page carries is that markup, and the webdocs render it while holding
+    // nothing that knows what a note is.
+    it('displays as the markup the note library says a page looks like', async () => {
+      const {values} = await valuesOfNote()
+
+      const heading = values.find(v => v.name === '/Catln/Doc/Show/Html')
+      expect(heading).toBeDefined()
+      expect(heading.args['/contents'].contents).toBe('<h1>Overlay</h1>')
+      // Resolved to a display rather than handed back as itself, which is what taking Page out of
+      // DShow bought: a type that is still a member comes back through the identity arm as itself.
+      expect(values.find(v => v.name === '/Data/Note/Page')).toBeUndefined()
+    })
+
     it('reads its properties and the page it is written over out of the one block', async () => {
       const {values} = await valuesOfNote()
 

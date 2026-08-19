@@ -525,11 +525,26 @@ describe('editing a value on a page', () => {
   }
 
   async function renderNote(props = {}) {
-    render(<Providers {...props}><DocsPage prgmName={NOTE} /></Providers>)
+    const rendered = render(<Providers {...props}><DocsPage prgmName={NOTE} /></Providers>)
     await waitFor(() => {
       expect(screen.getByRole('checkbox')).toBeInTheDocument()
     })
+    return rendered
   }
+
+  // The page's own declaration is a value like its tasks are, and displays as the markup the note
+  // library says a page looks like: a heading of the title it is known by. The absent link is what
+  // says the syntax is gone -- a type name is otherwise rendered as a link to its page -- and the
+  // absent frame is what says the display is the program's own writing rather than somebody else's.
+  it('heads the note with the title it is titled by', async () => {
+    global.fetch = noteFetch()
+
+    const { container } = await renderNote()
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Tasks' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: '/Data/Note/Page' })).toBeNull()
+    expect(container.querySelector('iframe')).toBeNull()
+  })
 
   // The task is a sub-statement of the page it is declared in, so this is also what proves an
   // update reaches one.

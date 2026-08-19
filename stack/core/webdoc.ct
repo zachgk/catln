@@ -47,6 +47,26 @@ module(Catln/Doc)
   dshow(s= #md(text))= Show/MD(text= text)
   dshow(s= #print(p))= p
 
+  data(Show/Html(contents -> String))
+    # [Show/Html] shows markup a program wrote, laid into the page it is shown on. It is what a
+      library reaches for to say how one of its own types is displayed: an arm of [dshow] written
+      beside the declaration builds the markup, and the webdocs render it and know nothing else about
+      it. So a display belongs to the library owning the type rather than to a component of the doc
+      server named after that type.
+      Laid in and not framed, which is what separates it from the frame a compiled result or an entry
+      of a feed is shown in. Those frame because what is in them was written somewhere else, and
+      writing from somewhere else laid into this page would take this page's styling and give it
+      theirs. A program's own display is not somebody else's writing, so it is meant to take this
+      page's font, its links and its colours, which a frame would give it none of.
+      Markup where [Show/MD] is prose: writing which reads as a document is markdown, and writing
+      which is a shape to lay out is this, because markdown cannot say how a heading or a table sits.
+      Nothing written here is escaped, and the webdocs sanitize what they are given before showing
+      it. An arm joining a string into markup is an arm whose string is read as markup, which is that
+      arm's to get right; the sanitizing keeps getting it wrong from being a page that runs what a
+      string said.
+
+  every(Show/Html.., isa= [/Catln/Doc/DShow])
+
   annot(#overlay(url -> String))
 
   data(Show/Overlay(url -> String))

@@ -17,7 +17,15 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Catln/Doc/dshow( Value /s -> /Data/Note/#taskList = Value /Data/Note/#taskList ) -> /Data/Note/Show/TaskList( /tasks=/Data/String ) = /Data/Note/Show/TaskList
+                        [ /Catln/Doc/dshow
+                            ( Value /s -> /Data/Note/Page( /title=∀/Data/Algebra/Semigroup ) = /Data/Note/Page( Value /title -> ∀/Data/Algebra/Semigroup ) ) -> /Catln/Doc/Show/Html( /contents=/Data/String ) = /Catln/Doc/Show/Html
+                            ( Value /contents -> /Data/String = /operator++
+                                ( Value /l -> ∀/Data/Algebra/Semigroup = /operator++
+                                    ( Value /l -> /Data/String = CStr "<h1>" )( Value /r -> TVArg /title = Value /title )
+                                )
+                                ( Value /r -> /Data/String = CStr "</h1>" )
+                            )
+                        , /Catln/Doc/dshow( Value /s -> /Data/Note/#taskList = Value /Data/Note/#taskList ) -> /Data/Note/Show/TaskList( /tasks=/Data/String ) = /Data/Note/Show/TaskList
                             ( Value /tasks -> /Data/String = /Catln/Doc/dshow./Data/Note/taskList( Value /annot -> /s = Value /s ) )
                         , /Catln/Doc/dshow
                             ( Value /s -> /Data/Note/#properties( /text=/Data/String ) = /Data/Note/#properties( Value /text -> /Data/String ) ) -> /Data/Note/Show/Properties( /text=/Data/String ) = /Data/Note/Show/Properties( Value /text -> TVArg /text = Value /text )

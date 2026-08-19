@@ -17,7 +17,15 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Catln/Doc/dshow( Value s= Value #taskList )= Show/TaskList
+                        [ /Catln/Doc/dshow
+                            ( Value s= Page( Value title ) )= /Catln/Doc/Show/Html
+                            ( Value contents= /operator++
+                                ( Value /l= /operator++
+                                    ( Value /l= CStr "<h1>" )( Value /r= Value title )
+                                )
+                                ( Value /r= CStr "</h1>" )
+                            )
+                        , /Catln/Doc/dshow( Value s= Value #taskList )= Show/TaskList
                             ( Value tasks= taskList( Value annot= Value s ) )
                         , /Catln/Doc/dshow
                             ( Value s= #properties( Value text ) )= Show/Properties( Value text= Value text )
