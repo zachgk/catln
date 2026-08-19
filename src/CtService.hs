@@ -36,9 +36,10 @@ import           Eval                    (evalAnnots, evalBaseEnvStages,
                                           evalDebugPrgm, evalPageValues,
                                           evalRun, evalRunMock,
                                           prgmFromGraphData)
-import           Eval.Common             (DebugRun, EvalMetaDat, MockIO,
-                                          SSF (..), StagePrgms (..), TExpr,
-                                          TestResult, Val, oaTestId)
+import           Eval.Common             (CtServiceApi (..), DebugRun,
+                                          EvalMetaDat, MockIO, SSF (..),
+                                          StagePrgms (..), TExpr, TestResult,
+                                          Val, oaTestId)
 import           Eval.Testing            (TestDesc (..), evalPrints, evalTest,
                                           runTestDesc)
 import           FileWatch               (Watch, Watcher, allCovered,
@@ -1051,6 +1052,52 @@ getTBPrgm = ctssGet ssfTBPrgm
 -- | The desugar and tree build programs of every loaded page, joined and left unforced. This is the
 -- 'StagePrgms' for an evaluation that is not scoped to one page, and so reaches all of them.
 --
+-- | The service as an evaluation of one of its programs asks things of it.
+--
+-- Each of these is an existing operation of the service under the name an evaluation asks for it by.
+-- Nothing here decides anything on the evaluation's behalf — what a scope means, which pages an
+-- answer covers, and what to make of what comes back are all the asking primitive's
+-- ('Eval.Runtime.WebDocs'), which is what keeps a display from needing a change here to be added.
+instance CtServiceApi CTSS where
+  csPages = ctssKeys
+
+  -- Every page, with the scope built. 'graphFilterReaches' over what comes back is the scope; the
+  -- rest is there for a display that reports on which pages there are rather than on the program it
+  -- was evaluated against. Building all of them for an unscoped evaluation is what that evaluation
+  -- asked for by not naming a page.
+  csBuilt ctss@(CTSS ssmv) scope = do
+    maybe (ctssBuildAll ctss) (ctssBuildFrom ctss) scope
+    ctssData <$> readMVar ssmv
+
+  csTests ctss prgmName = runCResT $ ctssTestsFrom ctss prgmName
+
+  -- Against the page's own typecheck program rather than the caller's, which for an annotation is
+  -- that program joined with the synthetic one holding the annotation itself.
+  csRunFun ctss prgmName fun = do
+    ssfs <- scopeSSFs ctss prgmName
+    return $ evalDebugPrgm fun =<< joinedStage ssfTPrgm ssfs
+
+  -- Against the pages of the scope rather than their joined program, since compiling the expression
+  -- typechecks it against them one by one, the way a page of the scope was itself typechecked.
+  csRunExpr ctss@(CTSS ssmv) prgmName src = do
+    ctssBuildFrom ctss prgmName
+    CTSSDat{ctssData} <- readMVar ssmv
+    return $ debugExprRun prgmName (graphToNodes $ graphFilterReaches prgmName ctssData) src
+
+  -- 'pageValues' partially applied, which is what shares the scope's typechecked programs across
+  -- every page the gatherer is then asked about. Applying it per page instead is the quadratic
+  -- reading its own documentation warns about.
+  csValues ctss scope = do
+    graph <- csBuilt ctss scope
+    return $ pageValues $ maybe graph (`graphFilterReaches` graph) scope
+
+-- | The pages of a scope, built, as the pipeline records of each.
+scopeSSFs :: CTSS -> FileImport -> IO [SSF]
+scopeSSFs ctss@(CTSS ssmv) prgmName = do
+  ctssBuildFrom ctss prgmName
+  CTSSDat{ctssData} <- readMVar ssmv
+  return $ map fst3 $ graphToNodes $ graphFilterReaches prgmName ctssData
+
 -- It cannot go through 'ctssGetJoined': that runs in @CResT IO@ and so forces its result, and
 -- merely inspecting 'ssfTBPrgm' forces 'evalBuildAll' over every page. Keeping the join a thunk is
 -- what lets a caller that never reads a stage avoid building it.
@@ -1063,11 +1110,11 @@ getTBPrgm = ctssGet ssfTBPrgm
 -- in. An evaluation that wants any of them has to name the page it is asking about
 -- ('ctssStagePrgmsFrom').
 ctssStagePrgms :: CTSS -> IO StagePrgms
-ctssStagePrgms ctss@(CTSS ssmv) = do
-  ctssBuildAll ctss
-  CTSSDat{ctssData} <- readMVar ssmv
+ctssStagePrgms ctss = do
+  ctssData <- csBuilt ctss Nothing
+  pages <- return <$> csPages ctss
+  values <- csValues ctss Nothing
   let ssfs = map fst3 $ graphToNodes ctssData
-  let pages = return $ map snd3 $ graphToNodes ctssData
   return $ StagePrgms {
       spDesPrgm = joinedStage ssfDes ssfs
     , spTBPrgm = joinedStage ssfTBPrgm ssfs
@@ -1077,7 +1124,7 @@ ctssStagePrgms ctss@(CTSS ssmv) = do
     , spPages = pages
     , spAllPages = pages
     , spTests = notScoped "tests to report on"
-    , spPageValues = pageValues ctssData
+    , spPageValues = values
     }
   where
     notScoped :: String -> CRes a
@@ -1087,9 +1134,13 @@ ctssStagePrgms ctss@(CTSS ssmv) = do
 -- what it imports, the type inference is that page's own, which is the only scope its points are
 -- numbered in, and a debug run runs that page.
 ctssStagePrgmsFrom :: CTSS -> FileImport -> IO StagePrgms
-ctssStagePrgmsFrom ctss@(CTSS ssmv) prgmName = do
-  ctssBuildFrom ctss prgmName
-  CTSSDat{ctssData} <- readMVar ssmv
+ctssStagePrgmsFrom ctss prgmName = do
+  ctssData <- csBuilt ctss (Just prgmName)
+  -- Every page the service holds rather than the ones this scope reaches, which is what makes an
+  -- annotation reporting on the pages there are answer the same wherever it is written. It is the
+  -- graph as it is, so nothing is built to produce it.
+  allPages <- return <$> csPages ctss
+  values <- csValues ctss (Just prgmName)
   let reaches = graphFilterReaches prgmName ctssData
   let ssfs = map fst3 $ graphToNodes reaches
   let typeInferred = do
@@ -1105,10 +1156,6 @@ ctssStagePrgmsFrom ctss@(CTSS ssmv) prgmName = do
   -- running the page's tests, which is the work an evaluation with nothing to report on them must
   -- not be made to do. An evaluation that does have a test to report on is given one by whoever
   -- asked for it (see 'getEvalAnnots').
-  -- Every page the service holds rather than the ones this scope reaches, which is what makes an
-  -- annotation reporting on the pages there are answer the same wherever it is written. It is the
-  -- graph as it is, so nothing is built to produce it.
-  let allPages = return $ map snd3 $ graphToNodes ctssData
   return $ StagePrgms {
       spDesPrgm = joinedStage ssfDes ssfs
     , spTBPrgm = joinedStage ssfTBPrgm ssfs
@@ -1118,7 +1165,7 @@ ctssStagePrgmsFrom ctss@(CTSS ssmv) prgmName = do
     , spPages = return $ map snd3 $ graphToNodes reaches
     , spAllPages = allPages
     , spTests = notRun
-    , spPageValues = pageValues reaches
+    , spPageValues = values
     }
   where
     notRun = CErr [MkCNote $ GenCErr Nothing "This evaluation was not given a run of the page's tests"]

@@ -14,6 +14,7 @@
 {-# LANGUAGE DeriveAnyClass             #-}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE InstanceSigs               #-}
 
@@ -88,6 +89,92 @@ data SSF = SSF {
   -- pipeline.
   ssfTests          :: Maybe (CRes [TestResult])
                }
+
+-- | The compilation service, as an evaluation of one of its programs may ask things of it.
+--
+-- A class rather than the service itself because the service is the top of the pipeline and this is
+-- the bottom of it: @CtService@ imports @Eval@, so nothing under @Eval@ can name a @CTSS@. The class
+-- is declared here and instantiated there, as 'CRes.CNoteTC' is for the typechecker's errors.
+--
+-- These are the service's own operations, not a list of the questions anything currently asks. That
+-- is the point of handing an evaluation the service at all: a display that wants something new asks
+-- 'csBuilt' for another stage of the pages it already has, rather than the pipeline growing a field
+-- to carry that one answer to it. Only a new stage of the pipeline, or a new way of re-entering the
+-- compiler, is a new method here.
+--
+-- Every method is in 'IO', which an evaluation does not have. A primitive reaches them through
+-- 'System.IO.Unsafe.unsafePerformIO', as @Eval.Runtime.ioInput@ and 'Eval.evalDebugPrgm' already do.
+-- What that costs is discipline about /when/ the effect happens: the service is behind an MVar which
+-- a build holds for a whole SCC (@CtService.ctssBuildSCC@) and a read holds for a whole read
+-- (@CtService.ctssReadOf@), and an MVar is not re-entrant. So a primitive must force what it asks
+-- for before returning it. A lazy 'Val' carrying an unforced ask would be forced by whoever reads
+-- the display, which may be inside one of those locks, and would hang there rather than fail.
+class CtServiceApi s where
+  -- | Every page the service holds, whatever any of them has been built to. Nothing is read or
+  -- built to answer it: which pages there are is known as soon as they were read.
+  csPages :: s -> IO [FileImport]
+
+  -- | Every page the service holds, with the pages of a scope built — that page and everything it
+  -- imports, or all of them for a scope of 'Nothing'.
+  --
+  -- Every page rather than the scope's, because what is worth building and what is worth asking
+  -- about are different questions. A navigation is about the pages a reader has NOT reached, and
+  -- costs nothing to answer; scoping is how a caller keeps from compiling every page it can name.
+  -- A caller wanting the scope alone filters what comes back by the same scope.
+  --
+  -- The stages on the pages that come back are unforced, so this costs the build and no more.
+  -- Reading 'ssfTBPrgm' off one of them is what runs an 'Eval.evalBuildAll' over it.
+  csBuilt :: s -> Maybe FileImport -> IO (GraphData SSF FileImport)
+
+  -- | The tests a page wrote, run.
+  --
+  -- Unlike every stage 'csBuilt' carries, a test run is not an artifact of compiling a page but of
+  -- running part of it, so asking for one is asking for work rather than for a lookup. It is the
+  -- service's to do because a test is decided over the whole program a page belongs to rather than
+  -- over the page and its imports (@CtService.ctssTestPages@).
+  csTests :: s -> FileImport -> IO (CRes [TestResult])
+
+  -- | Runs a named function of a page's program, for a debugger reporting on what it evaluated.
+  --
+  -- A page rather than a scope: a run needs one program with one entry point, and the join of every
+  -- page has as many @main@s as it has pages.
+  csRunFun :: s -> FileImport -> String -> IO (CRes DebugRun)
+
+  -- | Compiles one expression, written as Catln source, as though it were a statement of a page, and
+  -- runs it.
+  --
+  -- Source rather than a name because what is worth debugging is often something no definition
+  -- names: the computation a @#print@ shows, or the one generated input a test case ran on. A
+  -- generated input in particular exists nowhere in the program, so the text of the call that ran is
+  -- the only handle on that case there is.
+  csRunExpr :: s -> FileImport -> String -> IO (CRes DebugRun)
+
+  -- | Gathers the values pages declare of some types, evaluated to the values they display as, in
+  -- the order each page writes them.
+  --
+  -- It hands back a gatherer rather than an answer because what is asked about is one page at a time
+  -- while the work of answering — the scope's typechecked programs — is shared across every page
+  -- asked about. A call per page would pay for the scope once per page, which over a vault of notes
+  -- is quadratic in the notes.
+  --
+  -- Which types are worth gathering is the caller's business and not the service's: what is offered
+  -- is values by the path they were declared at, so that the pipeline stays a pipeline for programs
+  -- rather than one that knows what a note is. Several types are asked for at once because what
+  -- comes back is in the order the page wrote it, and two gatherings joined would be two runs of
+  -- that order rather than one.
+  csValues :: s -> Maybe FileImport -> IO ([Name] -> FileImport -> CRes [(EExpr, Val)])
+
+-- | The compilation service an evaluation was given, and which of its pages the evaluation is of.
+--
+-- Existential because the service cannot be named here (see 'CtServiceApi'); this is the same shape
+-- 'CRes.MkCNote' uses to carry a note whose type is declared above the module that holds it.
+--
+-- The scope is carried beside the service rather than baked into what the service was asked, so that
+-- which pages an evaluation covers is a question asked where it is answered. A display reporting on
+-- the program it is written in reads the scope; one reporting on the pages there are ignores it; and
+-- the two can be written in the same page without the service having been asked twice.
+data EvalService where
+  EvalService :: CtServiceApi s => s -> Maybe FileImport -> EvalService
 
 -- | The program being evaluated, at the pipeline stages the evaluation cannot reach on its own.
 -- Desugar is strictly upstream of eval and tree build is a separate pass, so an 'Env' holds neither;
