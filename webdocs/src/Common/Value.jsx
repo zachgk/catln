@@ -1,7 +1,6 @@
 import React, {useContext} from 'react';
 
 import ReactMarkdown, {defaultUrlTransform} from 'react-markdown';
-import SyntaxHighlighter from 'react-syntax-highlighter';
 import path from 'pathe';
 
 import {KeyWord, PTypeName, tagJoin, PageDirContext} from './Common';
@@ -18,6 +17,7 @@ import TaskList from './Values/TaskList';
 import Overlay from './Values/Overlay';
 import Properties from './Values/Properties';
 import RssItem from './Values/RssItem';
+import {BuildFile, CatlnResult} from './Values/BuildResult';
 
 // A Value may be given an update function by whatever rendered it. Calling update(src) asks for
 // the expression this value was compiled from to be replaced by the Catln source src. What that
@@ -34,8 +34,12 @@ function Value(props) {
     return <span>{val.contents}</span>;
   case "TupleVal":
     switch(val.name) {
+    // A build result and the files in it. The result is the files alone, and each is shown as the
+    // path it is built at over what is written in it.
     case "/Catln/CatlnResult":
-      return <CatlnResult data={val}/>;
+      return <CatlnResult {...val.args} />;
+    case "/Catln/BuildFile":
+      return <BuildFile {...val.args} />;
     case "/Catln/Doc/Show/MD":
       return <Comment comment={val.args["/text"].contents}/>;
     // update is passed outside the spread because the spread is the value's own arg names.
@@ -196,25 +200,6 @@ function linkPath(href) {
     return decodeURIComponent(address);
   } catch {
     return address;
-  }
-}
-
-function CatlnResult(props) {
-  let data = props.data;
-  let fileName = data.args['/name'].contents;
-  let fileContents = data.args['/contents'].contents;
-  if(fileName.endsWith(".ll")) {
-    return (
-      <SyntaxHighlighter language="llvm">
-        {fileContents}
-      </SyntaxHighlighter>
-    );
-  } else if(fileName.endsWith(".html")) {
-    return <iframe srcDoc={fileContents} title={fileName} />;
-  } else {
-    return (
-      <pre>{fileContents}</pre>
-    );
   }
 }
 

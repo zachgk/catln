@@ -1,0 +1,36 @@
+import "core/list.ct"
+
+
+module(Data)
+  # # Files
+    A [FileOrDir] is a tree of files: a [File], which is a name and what is written in it, or a
+    [Dir], which is a name and the entries beneath it. It is the shape a directory has, written as a
+    value, so a program can be given one to read or can produce one to be written.
+    It is declared here rather than beside whatever wants it because more than one thing wants it. A
+    build result is a tree of files, and a directory read from disk is a tree of files, and neither
+    is the other. A type declared inside one of them would have to be reached through it by the
+    other, which says that the second use is a kind of the first when it is not.
+  class(FileOrDir, [File(name -> String, contents -> String), Dir(name -> String, entries -> /Data/List[$T -> FileOrDir])])
+    # A [File] carries its writing itself, rather than the path it was read from or is to be written
+      to. A tree says where each thing is by where it is in the tree, so a name is the one part of a
+      path a file holds, and the rest of it is the names of the directories above it. This is what
+      lets the same tree be written somewhere other than where it was read from, which is the whole
+      of what an overlay does.
+      [contents] is a [String] because that is what the language has. A file which is not text is
+      not representable here, and will want a type of its own rather than this one widened to hold
+      bytes it cannot say anything about.
+
+  # ## Not yet buildable
+    Nothing uses this yet, and it is kept because it is the shape a file tree wants rather than
+    because anything can be done with it. A [Dir] holding both a [File] and a [Dir] cannot be
+    written: a list literal takes its element type from its first entry, so the second entry is
+    checked against the first entry's type and does not fit. It is not a fact about this type —
+    @[/Data/Some(value= 1), /Data/Nothing]@ fails the same way, and neither of those is declared
+    here. Until a list can hold two members of one class, a result is the flat [/Catln/BuildFile]
+    list in @core/result.ct@, where every entry is the same kind of thing and the tree is said by
+    the @/@ in each path.
+  # ## Naming
+    The name of an entry is the one it has under its parent, not a path: a [Dir] named `notes`
+    holding a [File] named `a.md` is the file `notes/a.md`. Nothing here checks that a name is one a
+    filesystem accepts, because a tree is a value and may be built long before anything writes it —
+    whoever writes it is who has to refuse a name it cannot write, and does.

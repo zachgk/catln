@@ -14,6 +14,9 @@
 
 module CtConstants where
 
+import           Data.Char   (isPrint, isSpace, ord)
+import           Text.Printf (printf)
+
 operatorPrefix, operatorArgUnary, operatorArgL, operatorArgR :: String
 operatorPrefix = "/operator"
 operatorArgUnary = "a"
@@ -109,6 +112,25 @@ noteStatusTypePath = "/Data/Note/StatusType"
 notePriorityPath = "/Data/Note/Priority"
 notePropertiesAnnot = "/Data/Note/#properties"
 notePropertiesAnnotText = "text"
+
+-- | One entry of an RSS feed, declared in @stack\/rss\/main.ct@. A feed is read as a page holding
+-- one of these per entry, in the order 'Syntax.Rss.Cache' keeps them.
+--
+-- Declared outside the standard library rather than in it, so a program which imports no feed does
+-- not compile the type. That is why 'rssStackModule' is here: the page a feed is read as writes
+-- that import itself, where a note relies on the core every page is given.
+--
+-- 'rssItemGuid' is what the feed calls the entry — its id, or failing that its address, or failing
+-- that its title. It is the name the record merges on, so an entry is one entry across the runs
+-- which saw it rather than a new one each time it is fetched.
+rssItemPath, rssItemTitle, rssItemLink, rssItemGuid, rssItemPublished, rssItemDescription, rssStackModule :: String
+rssItemPath = "/Data/RSS/Item"
+rssItemTitle = "title"
+rssItemLink = "link"
+rssItemGuid = "guid"
+rssItemPublished = "published"
+rssItemDescription = "description"
+rssStackModule = "rss/main.ct"
 
 printAnnot, printAnnotText, resultAnnotText :: String
 printAnnot = "/Catln/#print"
@@ -215,9 +237,91 @@ ctListNil = "/Data/List/Nil"
 ctListConsHead = "head"
 ctListConsTail = "tail"
 
+-- | What a build produces, declared in @stack\/core\/result.ct@: the files of the directory it is
+-- built into, each at the path it is built at.
+--
+-- The files rather than a directory of its own, because the directory a result is written into
+-- already has a name and did not get it from the program.
+--
+-- Flat, with the tree said by the @\/@ in each path, rather than the nested @\/Data\/FileOrDir@ it
+-- wants to be. A list takes its element type from its first entry, so a directory holding both a
+-- file and a subdirectory is a list whose second entry does not fit its first — see the comment on
+-- @\/Data\/FileOrDir@ in @stack\/core\/file.ct@, which is declared and not yet usable for that
+-- reason and so is named nowhere here.
+catlnResultPath, catlnResultFiles, buildFilePath, buildFileFilePath, buildFileContents :: String
+catlnResultPath = "/Catln/CatlnResult"
+catlnResultFiles = "files"
+buildFilePath = "/Catln/BuildFile"
+buildFileFilePath = "path"
+buildFileContents = "contents"
+
+-- | The files a directory is entered through, in the order one takes precedence over another.
+--
+-- A directory is a page of its own, and the program that page holds is the one in the first of
+-- these it has ('Syntax.InferImport.dirParse'). 'dirCtcFileName' comes first because it says what
+-- the directory /is/ — an overlay directory's @dir.ctc@ builds the tree the directory stands for —
+-- where a @main.ct@ is a program that happens to be kept there.
+--
+-- Named here rather than where they are looked for, because two things must agree on them: the read
+-- which makes a directory a page, and the navigation which leads a directory's entry with the page
+-- it is entered through ('Eval.Runtime.WebDocs.sidebarLevel'). A directory entered through one file
+-- and listed under another is a navigation whose first entry is not the page it opens.
+dirCtcFileName, mainCtFileName :: String
+dirCtcFileName = "dir.ctc"
+mainCtFileName = "main.ct"
+
+dirEntryFileNames :: [String]
+dirEntryFileNames = [dirCtcFileName, mainCtFileName]
+
+-- | An argument name as it is keyed once the value carrying it has been EVALUATED, which is the
+-- name it is declared under with a leading separator (see 'debugAnnotArg'). The declared and the
+-- evaluated form are written once each here rather than as two constants per argument, so a name
+-- cannot drift between the shape a value is built with and the shape it is read back out of.
+runtimeArgKey :: String -> String
+runtimeArgKey = ('/' :)
+
+-- | The characters a name cannot hold, which is what @Syntax.Ct.Parser.Lexer.identifier@ refuses.
+--
+-- Here rather than only there because two things must agree on it: the parser, which decides what a
+-- written name is, and 'fileDirName', which builds a name that has to be written back. A character
+-- this missed would not be a name rejected but a name silently read as something else — @.@ is the
+-- method operator and @-@ is subtraction, so @\/FileDir\/my-notes@ parses as a subtraction of two
+-- names rather than failing.
+nameInvalidChars :: String
+nameInvalidChars = "-~:*%+<>()[]{}=!&|.@_,?\""
+
+-- | The name a directory read by @fileDirReference@ is declared under: @\/FileDir@ followed by the
+-- absolute path of the directory.
+--
+-- The path is what makes the name, so two reads of one directory are one name and two directories
+-- are never one name, whoever imported them and whatever they called it.
+--
+-- A path is not a name, though. Most real paths hold a @-@, a @.@ or a @_@, none of which a name
+-- may hold ('nameInvalidChars'), and each of which parses as something else rather than failing. So
+-- each such character becomes @q@ and its two hex digits, and a @q@ becomes @qq@ — which is
+-- reversible, uses only characters a name may hold, and leaves paths without any of them written as
+-- themselves. @\/home\/zach\/my-notes\/site_v2@ is @\/FileDir\/home\/zach\/myq2Dnotes\/siteq5Fv2@.
+--
+-- The separator is left alone, since a path's @\/@ and a name's @\/@ are the same character and the
+-- one is meant to read as the other.
+fileDirName :: FilePath -> String
+fileDirName path = fileDirNamePrefix ++ concatMap esc path
+  where
+    esc '/' = "/"
+    esc c
+      | c == fileDirEscapeChar = [fileDirEscapeChar, fileDirEscapeChar]
+      | isPrint c && not (isSpace c) && c `notElem` nameInvalidChars = [c]
+      | otherwise = fileDirEscapeChar : printf "%02X" (ord c)
+
+fileDirNamePrefix :: String
+fileDirNamePrefix = "/FileDir"
+
+fileDirEscapeChar :: Char
+fileDirEscapeChar = 'q'
+
 -- | The two arms of a @\/Data\/Maybe@, for building one where a value may be absent — as a date a
 -- task has or has not got is.
 ctMaybeSome, ctMaybeSomeValue, ctMaybeNothing :: String
-ctMaybeSome = "/Data/Some"
+ctMaybeSome = "/Data/Maybe/Some"
 ctMaybeSomeValue = "value"
-ctMaybeNothing = "/Data/Nothing"
+ctMaybeNothing = "/Data/Maybe/Nothing"

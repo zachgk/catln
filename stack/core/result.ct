@@ -1,0 +1,45 @@
+import "core/file.ct"
+import "core/webdoc.ct"
+
+
+module(Catln)
+  # # Build Results
+    What a build produces, and the ways of producing one.
+    This is declared apart from @core/compile.ct@, where it was, and the separation is load-bearing
+    rather than tidying. A result is a list of files, so declaring it beside the compiler's
+    annotations would give @core/compile.ct@ a path to @core/list.ct@. Every program reaches
+    @core/compile.ct@ — it is where [#md] and [#assert] are declared — and @core/algebra.ct@ imports
+    it, so that path closes a cycle which puts @core/list.ct@ in the same mutually-importing group as
+    @core/algebra.ct@. Measured on @test/Integration/code/io.ct@, that one import edge alone takes a
+    run from 203 seconds to over 900, and reports [/Data/Algebra/eq] and [/Data/Algebra/ord] as
+    unfulfilled declarations that are fulfilled without it.
+    So this file sits below both instead: it imports what it needs and nothing imports it but
+    @core/main.ct@, which is what every program is given.
+  data(BuildFile(path -> String, contents -> String))
+    # One file a build produces, at the [path] it is produced at.
+      A path rather than a name and a place in a tree, so that a result is a flat list of files and
+      every entry of that list is the same kind of thing. The nested form — a file or a directory of
+      further entries, which is [/Data/FileOrDir] — is the shape this wants, and is not yet a shape
+      the compiler can build: a list takes its element type from its first entry, so a directory
+      holding both a file and a subdirectory is a list whose second entry does not fit its first.
+      See the comment on [/Data/FileOrDir].
+      [path] is written with @/@ between its parts, and names a place inside the build and nowhere
+      else. A path leading out of it is refused when the build is written rather than here, since a
+      result may be built long before anything writes it.
+  data(CatlnResult(files -> /Data/List[$T -> BuildFile]))
+    # The [CatlnResult] represents the result of a catln build.
+      The most typical results are compiled executables.
+      But, they could also be other kinds of results such as websites or cloud configurations.
+      Any global value which has type [CatlnResult] can be called through `catln build [FILE] [VALUE]`.
+      A result is the [files] of the directory it is built into rather than a directory of its own,
+      because the directory it is built into already has a name and did not get it from the program.
+
+  www(html -> String)= CatlnResult(files= [BuildFile(path= "index.html", contents= html)])
+    # [www] is used to build web results.
+
+  llvm(c) -> CatlnResult..
+    # [llvm] runs the [LLVM Compiler](https://llvm.org/) to build the runnable argument [c] into a [CatlnResult] executable.
+    #runtime("llvm")
+
+  every(/Catln/BuildFile.., isa= [/Catln/Doc/DShow])
+  every(/Catln/CatlnResult.., isa= [/Catln/Doc/DShow])

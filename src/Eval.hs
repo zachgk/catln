@@ -655,11 +655,12 @@ evalBuild function prgmName prgmGraphData = do
   (expr, env) <- asCResT $ evalBuildPrgm input src dest prgm
   (res, env') <- asCResT $ runStateT (evalExpr expr) env
   case res of
-    val@(TupleVal "/Catln/CatlnResult" args) -> case (H.lookup "/name" args, H.lookup "/contents" args) of
-      (Just (StrVal _), Just (StrVal _)) -> return (val, evalResult env')
-      _ -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval %s returned a /Catln/CatlnResult with bad args" function]
     (LLVMVal _) -> do
       -- llvmStr <- codegenExInit toCodegen
       let llvmStr = "LLVM Placeholder result"
-      return (TupleVal "/Catln/CatlnResult" (H.fromList [("/name", StrVal "out.ll"), ("/contents", StrVal llvmStr)]), evalResult env')
-    val -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval %s did not return a /Catln/CatlnResult. Instead it returned %s" function (show val)]
+      return (oneFileResult "out.ll" llvmStr, evalResult env')
+    -- Checked here rather than merely returned, so that a value which is not a result is reported
+    -- as the compilation failure it is instead of reaching whoever asked for the build.
+    val -> case valResultFiles val of
+      Right _ -> return (val, evalResult env')
+      Left err -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval %s did not build a %s: %s" function catlnResultPath err]

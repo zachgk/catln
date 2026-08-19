@@ -70,6 +70,11 @@ testImportStr = testGroup "ImportStrTests" [
       assertEqual "names the parser" (Just $ mkName "obsidian") (fmap fst $ maybeExprPathM imp)
       assertEqual "names the path" (Just "dir") (rawImportPath imp)
 
+  , testCase "an import of a directory of files is read as that import" $ do
+      let imp = impAbs $ mkRawImportStr "fileDirReference(\"dir\")"
+      assertEqual "names the parser" (Just $ mkName "fileDirReference") (fmap fst $ maybeExprPathM imp)
+      assertEqual "names the path" (Just "dir") (rawImportPath imp)
+
   , testGroup "a path is read as the file it names" $ map pathCase [
       "test/Integration/code/id.ct"  -- a value with a method suffix
     , "main.ct"                      -- the same, with no directory to it

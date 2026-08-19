@@ -1,0 +1,11 @@
+import "core"
+
+
+# Tests a build result of more than one file.
+  A [CatlnResult] is the [files] of the directory it is built into, each carrying the path it is
+  built at, so a build produces a directory of files rather than the single file it once could. The
+  path is what says where a file goes, and a path with a @/@ in it is a file under a directory the
+  build makes on its way to writing it — which is how a result says it has a directory at all.
+main= CatlnResult(files= [BuildFile(path= "index.html", contents= "<html><body>tree test</body></html>"), BuildFile(path= "notes/deep.txt", contents= "under a directory")])
+
+#print(p= main)

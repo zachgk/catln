@@ -20,17 +20,18 @@
 module Eval.Runtime.WebDocs where
 
 import           CRes
-import           CtConstants         (noteObsidianTaskPath, noteSimpleTaskPath)
+import           CtConstants         (dirEntryFileNames, noteObsidianTaskPath,
+                                      noteSimpleTaskPath)
 import           Data.Aeson          (ToJSON)
 import           Data.Aeson.Text     (encodeToLazyText)
 import           Data.Char           (toLower)
 import           Data.Graph
 import qualified Data.HashMap.Strict as H
-import           Data.List           (intercalate, isInfixOf, partition, sort,
-                                      sortOn)
+import           Data.List           (elemIndex, intercalate, isInfixOf,
+                                      partition, sort, sortOn)
 import           Data.List.Split     (splitOn)
 import qualified Data.Map            as M
-import           Data.Maybe          (mapMaybe)
+import           Data.Maybe          (fromMaybe, mapMaybe)
 import qualified Data.Text.Lazy      as TL
 import qualified Data.UUID           as UUID
 import           Eval.Common
@@ -222,19 +223,16 @@ sidebarNodes pages = sidebarLevel "" . map splitEntry =<< traverse pageEntry pag
       Nothing -> Left $ printf "sidebar has no file path for %s, so it has no page to link to" (show imp)
     splitEntry (disp, dir) = (splitOn "/" $ drop 1 disp, dir)
 
--- | The page a directory of pages is entered through: importing a directory imports this file of it
--- (see @Syntax.InferImport@), so it is the page a directory's entry in the navigation leads with.
-mainFileName :: String
-mainFileName = "main.ct"
-
 -- | Groups the pages under one directory by their next path component, a directory of pages
 -- becoming a node of its own that groups what is below it in turn.
 --
--- Ordering is @main.ct@ first and then alphabetical, so a directory leads with its entry point. It
--- is a total order over the names rather than the order the pages arrived in, since which page is
--- built first says nothing about where it belongs in a navigation.
+-- Ordering is the pages a directory may be entered through first, in 'dirEntryFileNames' order, and
+-- then alphabetical — so a directory leads with its entry point, and one holding both an overlay's
+-- @dir.ctc@ and a @main.ct@ leads with the file it is actually entered through. It is a total order
+-- over the names rather than the order the pages arrived in, since which page is built first says
+-- nothing about where it belongs in a navigation.
 sidebarLevel :: String -> [([String], Maybe FilePath)] -> Either String [SidebarNode]
-sidebarLevel prefix entries = traverse toNode $ sortOn (\(n, _) -> (n /= mainFileName, n)) $ M.toList grouped
+sidebarLevel prefix entries = traverse toNode $ sortOn (\(n, _) -> (entryRank n, n)) $ M.toList grouped
   where
     grouped = M.fromListWith (++) [(n, [(rest, dir)]) | (n:rest, dir) <- entries]
     toNode (n, subs) = case partition (null . fst) subs of
@@ -245,6 +243,8 @@ sidebarLevel prefix entries = traverse toNode $ sortOn (\(n, _) -> (n /= mainFil
       (_, subDirs@(_:_)) -> SidebarDir n (subPath n) <$> sidebarLevel (subPath n) subDirs
       _ -> Left $ printf "sidebar has more than one page displayed as %s" (subPath n)
     subPath n = prefix ++ "/" ++ n
+    -- Where a name sits among the entry files, and after all of them where it is not one of them.
+    entryRank n = fromMaybe (length dirEntryFileNames) $ elemIndex n dirEntryFileNames
 
 -- | The pages in the order the navigation shows them, as the flat list of the paths it links to.
 -- This is the reading order the webdocs' previous/next buttons follow, so it is the tree's own order

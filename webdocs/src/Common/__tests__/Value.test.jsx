@@ -65,48 +65,95 @@ describe('Value', () => {
   })
 })
 
-describe('CatlnResult via Value', () => {
+// A build result, as the values `stack/core/result.ct` declares. A list is a /Data/Cons chain
+// ending in a /Data/Nil, which is what the [ ] sugar desugars to, so these build one the way the
+// evaluator hands one over.
+const nil = { tag: 'TupleVal', name: '/Data/Nil', args: {} }
+const list = entries => entries.reduceRight(
+  (tail, head) => ({ tag: 'TupleVal', name: '/Data/Cons', args: { '/head': head, '/tail': tail } }),
+  nil
+)
+const file = (path, contents) => ({
+  tag: 'TupleVal',
+  name: '/Catln/BuildFile',
+  args: {
+    '/path': { tag: 'StrVal', contents: path },
+    '/contents': { tag: 'StrVal', contents },
+  },
+})
+const result = files => ({
+  tag: 'TupleVal',
+  name: '/Catln/CatlnResult',
+  args: { '/files': list(files) },
+})
+
+// A result of one file is shown as that file's writing alone, so these check the rendering of
+// contents through the shape a single-file build arrives in.
+describe('CatlnResult of one file via Value', () => {
   it('renders .ll files with syntax highlighting', () => {
-    const val = {
-      tag: 'TupleVal',
-      name: '/Catln/CatlnResult',
-      args: {
-        '/name': { tag: 'StrVal', contents: 'output.ll' },
-        '/contents': { tag: 'StrVal', contents: 'define i32 @main()' },
-      },
-    }
-    const { container } = render(<Providers><Value data={val} /></Providers>)
+    const { container } = render(<Providers><Value data={result([file('output.ll', 'define i32 @main()')])} /></Providers>)
     // SyntaxHighlighter renders a <pre> with code
     expect(container.querySelector('pre')).toBeTruthy()
     expect(container.textContent).toContain('define i32 @main()')
   })
 
   it('renders .html files in an iframe', () => {
-    const val = {
-      tag: 'TupleVal',
-      name: '/Catln/CatlnResult',
-      args: {
-        '/name': { tag: 'StrVal', contents: 'page.html' },
-        '/contents': { tag: 'StrVal', contents: '<h1>Hello</h1>' },
-      },
-    }
-    const { container } = render(<Providers><Value data={val} /></Providers>)
+    const { container } = render(<Providers><Value data={result([file('page.html', '<h1>Hello</h1>')])} /></Providers>)
     const iframe = container.querySelector('iframe')
     expect(iframe).toBeTruthy()
     expect(iframe.getAttribute('srcdoc')).toBe('<h1>Hello</h1>')
   })
 
   it('renders other files in a <pre> tag', () => {
-    const val = {
+    const { container } = render(<Providers><Value data={result([file('output.txt', 'plain text')])} /></Providers>)
+    expect(container.querySelector('pre')).toHaveTextContent('plain text')
+  })
+
+  it('does not head a single file with its own path', () => {
+    const { container } = render(<Providers><Value data={result([file('output.txt', 'plain text')])} /></Providers>)
+    expect(container.querySelectorAll('li')).toHaveLength(0)
+    expect(container.textContent).not.toContain('output.txt')
+  })
+})
+
+describe('CatlnResult of several files via Value', () => {
+  it('renders each file under the path it is built at', () => {
+    const { container } = render(<Providers><Value data={result([file('a.txt', 'first'), file('b.txt', 'second')])} /></Providers>)
+    expect(container.querySelectorAll('li')).toHaveLength(2)
+    expect(container.textContent).toContain('a.txt')
+    expect(container.textContent).toContain('first')
+    expect(container.textContent).toContain('b.txt')
+    expect(container.textContent).toContain('second')
+  })
+
+  it('shows a path with directories in it as the path it is', () => {
+    const { container } = render(<Providers><Value data={result([file('sub/deep.txt', 'buried'), file('top.txt', 'shallow')])} /></Providers>)
+    expect(container.textContent).toContain('sub/deep.txt')
+    expect(container.textContent).toContain('buried')
+  })
+
+  it('says so when a result holds no files', () => {
+    const { container } = render(<Providers><Value data={result([])} /></Providers>)
+    expect(container.querySelector('em')).toHaveTextContent('no files')
+  })
+
+  it('shows a malformed tail rather than dropping it', () => {
+    // A list whose end is not a Nil is not a list. It is shown rather than ending the walk, so a
+    // result quietly missing its end does not read as a result that ended there.
+    const broken = {
       tag: 'TupleVal',
       name: '/Catln/CatlnResult',
       args: {
-        '/name': { tag: 'StrVal', contents: 'output.txt' },
-        '/contents': { tag: 'StrVal', contents: 'plain text' },
+        '/files': {
+          tag: 'TupleVal',
+          name: '/Data/Cons',
+          args: { '/head': file('a.txt', 'kept'), '/tail': { tag: 'StrVal', contents: 'not a list' } },
+        },
       },
     }
-    const { container } = render(<Providers><Value data={val} /></Providers>)
-    expect(container.querySelector('pre')).toHaveTextContent('plain text')
+    const { container } = render(<Providers><Value data={broken} /></Providers>)
+    expect(container.querySelectorAll('li')).toHaveLength(2)
+    expect(container.textContent).toContain('not a list')
   })
 })
 
@@ -184,6 +231,27 @@ describe('note and overlay values', () => {
 
     expect(screen.getByRole('rowheader', { name: 'title' })).toBeInTheDocument()
     expect(screen.getByText('A page')).toBeInTheDocument()
+  })
+
+  // An entry of a feed is the value the page declares, like a task, so it dispatches to the entry
+  // itself rather than to the `/Name(arg = ...)` every other value falls back to.
+  it('shows an entry of a feed as the entry it is', () => {
+    const val = {
+      tag: 'TupleVal',
+      name: '/Data/RSS/Item',
+      args: {
+        '/title': { tag: 'StrVal', contents: 'Accretionary Arc' },
+        '/link': { tag: 'StrVal', contents: 'https://xkcd.com/3285/' },
+        '/guid': { tag: 'StrVal', contents: 'https://xkcd.com/3285/' },
+        '/published': { tag: 'StrVal', contents: 'Fri, 14 Aug 2026 04:00:00 -0000' },
+        '/description': { tag: 'StrVal', contents: '<img src="comic.png" alt="A comic" />' },
+      },
+    }
+    const { container } = render(<Providers><Value data={val} /></Providers>)
+
+    expect(screen.getByRole('link', { name: 'Accretionary Arc' })).toHaveAttribute('href', 'https://xkcd.com/3285/')
+    expect(container.querySelector('iframe').getAttribute('srcdoc')).toContain('comic.png')
+    expect(screen.queryByText(/\/Data\/RSS\/Item/)).toBeNull()
   })
 })
 

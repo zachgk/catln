@@ -28,6 +28,7 @@ import           GHC.Generics            (Generic)
 
 import           Control.Monad.State
 import           CRes
+import           CtConstants
 import           Data.Aeson              hiding (Object)
 import           Data.IORef
 import           Data.UUID               (UUID)
@@ -389,12 +390,82 @@ instance ToJSON Val where
   toJSON LLVMIO{} = object ["tag".=("LLVMIO" :: String)]
   toJSON NoVal = object ["tag".=("NoVal" :: String)]
 
+-- | A build result, as the type a build is built toward.
+--
+-- With its arguments left unspecified ('PtArgAny'), which is what @CatlnResult..@ says where the
+-- type is written in Catln. The entries are a list of a recursive class, and writing that out here
+-- would be this module's copy of a shape @stack\/core\/compile.ct@ already declares — a copy which
+-- would then have to be kept in step with it, and which says nothing a build needs: what a build
+-- has to reach is a result, and what is in it is read back out of the value afterwards by
+-- 'valResultTree'.
 resultLeaf, queueLeaf :: PartialType
-resultLeaf = (partialVal "/Catln/CatlnResult"){ptArgs=H.fromList [(partialKey "name", strType), (partialKey "contents", strType)]}
+resultLeaf = (partialVal (mkName catlnResultPath)){ptArgMode=PtArgAny}
 queueLeaf = partialVal "llvmQueue"
 
 resultType :: Type
 resultType = singletonType resultLeaf
+
+-- | One file a build produces, as it is read out of an evaluated value: the Haskell side of
+-- @stack\/core\/result.ct@'s @\/Catln\/BuildFile@.
+--
+-- The path is the whole of where the file goes, written with @\/@ between its parts, so a result is
+-- a flat list rather than a tree walked into.
+data BuiltFile = BuiltFile {
+    bfPath     :: FilePath,
+    bfContents :: String
+  } deriving (Eq, Show)
+
+-- | The files of an evaluated @\/Catln\/CatlnResult@, or why the value is not one.
+--
+-- This is the one place the shape of a build result is known, and every caller that has to look
+-- inside one goes through it. Written once because it was written three times before, each copy
+-- knowing the argument keys for itself, and one of them ('Main.xBuild') had them wrong — it looked
+-- up @name@ where an evaluated value keys @\/name@, so every build crashed on a 'Data.Maybe.fromJust'
+-- and nothing noticed, since the tests call the evaluation and never the command.
+valResultFiles :: Val -> Either String [BuiltFile]
+valResultFiles (TupleVal name args) | name == catlnResultPath = case H.lookup (runtimeArgKey catlnResultFiles) args of
+  Just files -> traverse valBuiltFile =<< valList files
+  Nothing -> Left $ printf "A %s has no %s, only %s" catlnResultPath (runtimeArgKey catlnResultFiles) (show $ H.keys args)
+valResultFiles val = Left $ printf "%s is not a %s" (show val) catlnResultPath
+
+-- | One file of a result: where it goes, and what is written in it.
+valBuiltFile :: Val -> Either String BuiltFile
+valBuiltFile (TupleVal name args) | name == buildFilePath =
+  BuiltFile <$> valStrArg name buildFileFilePath args <*> valStrArg name buildFileContents args
+valBuiltFile val = Left $ printf "%s is not a %s" (show val) buildFilePath
+
+-- | An evaluated @\/Data\/List@ as the values in it. A list is a @\/Data\/Cons@ chain ending in a
+-- @\/Data\/Nil@, which is what the @[ ]@ sugar desugars to in @Syntax.Ct.Desugarf.Expr@.
+valList :: Val -> Either String [Val]
+valList (TupleVal name _) | name == ctListNil = Right []
+valList (TupleVal name args) | name == ctListCons =
+  (:) <$> valArg name ctListConsHead args <*> (valList =<< valArg name ctListConsTail args)
+valList val = Left $ printf "%s is not a list" (show val)
+
+-- | An argument of an evaluated value, by the name it is declared under.
+valArg :: String -> String -> H.HashMap String Val -> Either String Val
+valArg name argName args = case H.lookup (runtimeArgKey argName) args of
+  Just v  -> Right v
+  Nothing -> Left $ printf "A %s has no %s, only %s" name (runtimeArgKey argName) (show $ H.keys args)
+
+-- | The same, where the argument must be a string — which every name and every file's writing is.
+valStrArg :: String -> String -> H.HashMap String Val -> Either String String
+valStrArg name argName args = do
+  v <- valArg name argName args
+  case v of
+    StrVal s -> Right s
+    _        -> Left $ printf "The %s of a %s is %s, which is not a String" (runtimeArgKey argName) name (show v)
+
+-- | A list of values as the value of a @\/Data\/List@ holding them, which is the inverse of
+-- 'valList'. Used to build a result in Haskell where the program did not build one itself.
+valListOf :: [Val] -> Val
+valListOf = foldr cons (TupleVal ctListNil H.empty)
+  where cons v rest = TupleVal ctListCons $ H.fromList [(runtimeArgKey ctListConsHead, v), (runtimeArgKey ctListConsTail, rest)]
+
+-- | A build result of a single file, as the value one would have been built as.
+oneFileResult :: FilePath -> String -> Val
+oneFileResult path contents = TupleVal catlnResultPath $ H.singleton (runtimeArgKey catlnResultFiles) $ valListOf [file]
+  where file = TupleVal buildFilePath $ H.fromList [(runtimeArgKey buildFileFilePath, StrVal path), (runtimeArgKey buildFileContents, StrVal contents)]
 
 -- | The singleton typeset of a value: a 'Type' that carries a primitive's concrete value as a
 -- 'Constant' (e.g. @IntVal 5@ becomes the type @{5}@, a subtype of @Integer@). This is what a

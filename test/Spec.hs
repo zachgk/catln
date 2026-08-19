@@ -3,6 +3,7 @@ module Main where
 import           Integration.Integ
 import           Semantics.TypesTests      (typeTests)
 import           Stack.StackTests          (stackTests)
+import           Syntax.FileDirTests       (fileDirTests)
 import           Syntax.FileWatchTests     (fileWatchTests)
 import           Syntax.LiveReloadTests    (liveReloadTests)
 import           Syntax.ObsidianCacheTests (obsidianCacheTests)
@@ -19,5 +20,5 @@ main = do
   integrationTests' <- integrationTests
   syntaxTests' <- syntaxTests
   stackTests' <- stackTests
-  let catlnTests = testGroup "CatlnTests" [integrationTests', typeTests, typecheckTests, syntaxTests', stackTests', obsidianTests, obsidianTaskTests, obsidianCacheTests, rssCacheTests, rereadTests, fileWatchTests, liveReloadTests]
+  let catlnTests = testGroup "CatlnTests" [integrationTests', typeTests, typecheckTests, syntaxTests', stackTests', obsidianTests, obsidianTaskTests, obsidianCacheTests, rssCacheTests, rereadTests, fileDirTests, fileWatchTests, liveReloadTests]
   defaultMain catlnTests

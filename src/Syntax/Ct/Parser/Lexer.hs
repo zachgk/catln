@@ -17,6 +17,7 @@ module Syntax.Ct.Parser.Lexer where
 
 import           Control.Applicative        hiding (many, some)
 import           Control.Monad              (void)
+import           CtConstants                (nameInvalidChars)
 import           Data.Char                  (isPrint, isSpace)
 import qualified Data.HashSet               as S
 import           Data.Void
@@ -64,7 +65,8 @@ identifier :: Parser String
 identifier = try tvExtIdentifier <|> some (satisfy idChar)
   where
     idChar c = isPrint c && not (isSpace c) && not (c `S.member` invalidChars)
-    invalidChars = S.fromList "-~:*%+<>()[]{}=!&|.@_,?\""
+    -- Shared with 'CtConstants.fileDirName', which has to build a name that parses here.
+    invalidChars = S.fromList nameInvalidChars
 
     -- Allow '$_T' (TVExt type variable references) to parse as a single
     -- identifier even though '_' is normally excluded from identifiers.

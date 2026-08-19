@@ -95,19 +95,9 @@ module(Catln)
     #runtime("arrExists")
 
   # ## Result Classes
-  data(CatlnResult(name -> String, contents -> String))
-    # The [CatlnResult] represents the result of a catln build.
-      The most typical results are compiled executables.
-      But, they could also be other kinds of results such as websites or cloud configurations.
-      Any global value which has type [CatlnResult] can be called through `catln build [FILE] [VALUE]`.
-
-  www(html -> String)= CatlnResult(name= "index.html", contents= html)
-    # [www] is used to build web results.
-
-  llvm(c) -> CatlnResult..
-    # [llvm] runs the [LLVM Compiler](https://llvm.org/) to build the runnable argument [c] into a [CatlnResult] executable.
-    #runtime("llvm")
-
+    What a build produces is declared in @core/result.ct@ rather than here. It is a list of files,
+    so declaring it here would make this file reach @core/list.ct@ — and this file is one every
+    program reaches, through the annotations above. See @core/result.ct@ for what that costs.
   data(/Catln/classPlaceholder[$T])
     # [classPlaceholder] is used internally to represent a class with no elements.
       It ensures that expanding an empty class does not produce the empty set.

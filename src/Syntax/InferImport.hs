@@ -12,6 +12,7 @@
 
 module Syntax.InferImport where
 import           Control.Monad
+import           CtConstants            (dirEntryFileNames)
 import qualified Data.HashMap.Strict    as H
 import           Data.List
 import           Data.List.Split
@@ -31,6 +32,10 @@ import           Text.Printf
 fileExtensionParsers :: H.HashMap String String
 fileExtensionParsers = H.fromList [
   ("ct", "ct"),
+  -- A @.ctc@ is Catln, read exactly as a @.ct@ is. The extension says what the file is /for/ rather
+  -- than what it is written in: it configures the directory holding it (see 'dirParse') rather than
+  -- being a program that happens to be kept there.
+  ("ctc", "ct"),
   ("ctx", "ctx"),
   ("md", "md"),
   ("hs", "haskell"),
@@ -43,7 +48,6 @@ parserImport parser path = rawVal parser `applyRawArgs` [(Nothing, rawStr path)]
 
 isSupportedFileExtension :: String -> Bool
 isSupportedFileExtension fileName = any ((`isSuffixOf` fileName) . ('.':)) (H.keys fileExtensionParsers)
--- isSupportedFileExtension fileName = ".ct" `isSuffixOf` fileName || ".ctx" `isSuffixOf` fileName
 
 findExistingPath :: [FilePath] -> IO (Maybe FilePath)
 findExistingPath [] = return Nothing
@@ -64,19 +68,34 @@ withDirPath act imp = case exprAppliedArgs imp of
   [ObjArr{oaArr=Just (Just (CExpr _ (CStr name)), _)}] -> act name
   _                                                    -> undefined
 
--- | The page of a directory: the main program it holds, where it holds one.
+-- | The page of a directory: the program it is entered through, where it holds one.
+--
+-- Which that is comes from 'dirEntryFileNames', in the order written there: a @dir.ctc@ before a
+-- @main.ct@, because a @dir.ctc@ says what the directory is and a @main.ct@ is a program kept in it.
+-- A directory holding both is therefore the overlay it declares itself to be, and the @main.ct@
+-- beside it is still a page of its own like any other file there.
 --
 -- The directory alone, because everything read here is read out of its listing: which files it
--- holds, which of those are directories of their own, and whether it holds a main.ct. A file in it
--- changing is a change to that file's own page, not to this one.
+-- holds, which of those are directories of their own, and which of the entry files it holds. A file
+-- in it changing is a change to that file's own page, not to this one.
 dirParse :: FilePath -> ImportParseResult
 dirParse name = do
-  let mainPath = name ++ "/main.ct"
-  mainExists <- doesFileExist mainPath
-  let dirPrgm = if mainExists
-        then RawPrgm [mkRawFileImport $ rawStr mainPath] []
-        else RawPrgm [] []
+  entry <- findExistingFile $ map (name </>) dirEntryFileNames
+  let dirPrgm = RawPrgm (map (mkRawFileImport . rawStr) $ maybeToList entry) []
   return $ ParsedImport dirPrgm Nothing (Just [ReadDir name])
+
+-- | The first of these paths which is a file, or nothing where none of them is.
+--
+-- A file rather than a path, unlike 'findExistingPath', because these are read as programs: a
+-- directory named @main.ct@ is not one, and taking it for one would import a directory as the
+-- program a directory is entered through.
+findExistingFile :: [FilePath] -> IO (Maybe FilePath)
+findExistingFile [] = return Nothing
+findExistingFile (p:ps) = do
+  isFile <- doesFileExist p
+  if isFile
+    then return (Just p)
+    else findExistingFile ps
 
 -- | That page, and every file and directory in it as a page the read walks on to.
 dirPreload :: FilePath -> ImportPreloadResult

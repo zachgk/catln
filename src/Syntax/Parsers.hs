@@ -41,6 +41,7 @@ import           Syntax.Ct.MapRawMeta    (addRawPrgmMetaIDs)
 import           Syntax.Ct.Parser        (contents, ctSyntax, ctxSyntax)
 import           Syntax.Ct.Parser.Expr   (term)
 import           Syntax.Ct.Prgm
+import           Syntax.FileDir.Parser   (fileDirReference, fileDirSyntax)
 import           Syntax.Haskell.Parser   (hsSyntax)
 import           Syntax.InferImport      (dirSyntax, findImportPath,
                                           inferRawImportStr)
@@ -61,6 +62,7 @@ importSyntaxes = H.fromList [
   ("md", mdSyntax),
   (obsidian, obsidianSyntax),
   (rss, rssSyntax),
+  (fileDirReference, fileDirSyntax),
   ("haskell", hsSyntax),
   ("python", pySyntax)
                              ]

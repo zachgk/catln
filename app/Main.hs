@@ -28,12 +28,15 @@ import qualified Data.HashMap.Strict  as H
 import qualified Data.HashSet         as S
 import           Data.List            (isInfixOf, nub)
 import           Data.Maybe
-import           Eval.Common          (TestKind (TestPrintGolden),
-                                       TestResult (..), Val (StrVal, TupleVal))
+import           Eval.Common          (BuiltFile (..),
+                                       TestKind (TestPrintGolden),
+                                       TestResult (..), valResultFiles)
 import           Eval.Testing         (TestDesc (..), runTestDesc)
 import           LSP                  (lspRun)
 import           System.Directory
 import           System.Exit          (exitFailure)
+import           System.FilePath      (isAbsolute, splitDirectories,
+                                       takeDirectory, (</>))
 import           Text.Megaparsec      (sourceName)
 import           Text.Printf
 import           TypeCheck.Common     (flipTraceConstrain)
@@ -56,17 +59,28 @@ xBuild prgmName function = do
   prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
   ctss <- lift $ ctssBaseFiles buildCtssConfig [prgmName]
   returnValue <- getEvalBuild ctss prgmName' function
-  case returnValue of
-    TupleVal _ args -> do
-      let buildDir = "build"
-      lift $ removePathForcibly buildDir
-      lift $ createDirectoryIfMissing True buildDir
-      case (fromJust $ H.lookup "name" args, fromJust $ H.lookup "contents" args) of
-          (StrVal outFileName, StrVal outContents) -> do
-            lift $ writeFile (buildDir ++ "/" ++ outFileName) outContents
-            lift $ putStrLn $ printf "Successfully built %s" (show prgmName)
-          _ -> fail "Invalid name or contents found in result as build"
-    _ -> fail "Failed to build"
+  files <- either fail return $ valResultFiles returnValue
+  let buildDir = "build"
+  lift $ removePathForcibly buildDir
+  lift $ createDirectoryIfMissing True buildDir
+  mapM_ (writeBuiltFile buildDir) files
+  lift $ putStrLn $ printf "Successfully built %s" (show prgmName)
+
+-- | Writes one file of a build into the directory it is built into.
+--
+-- The directories along the way are made rather than required to exist, since a result says where
+-- each of its files goes and not which directories it wanted along the way.
+writeBuiltFile :: FilePath -> BuiltFile -> CResT IO ()
+writeBuiltFile buildDir BuiltFile{bfPath, bfContents}
+  -- A path names a place inside the build and nowhere else. One that does not is refused rather
+  -- than written: this runs immediately after @build/@ has been removed and remade, so a program
+  -- which could name its way out of that directory could have anything at all deleted and rewritten.
+  | isAbsolute bfPath = fail $ printf "A build wrote %s, which is an absolute path rather than a path within the build" (show bfPath)
+  | ".." `elem` splitDirectories bfPath = fail $ printf "A build wrote %s, which names a place outside the build" (show bfPath)
+  | otherwise = do
+      let path = buildDir </> bfPath
+      lift $ createDirectoryIfMissing True $ takeDirectory path
+      lift $ writeFile path bfContents
 
 xTypeTrace :: String -> CResT IO ()
 xTypeTrace prgmName = do

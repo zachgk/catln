@@ -38,7 +38,7 @@ import           Eval                    (evalAnnots, evalBaseEnvStages,
                                           prgmFromGraphData)
 import           Eval.Common             (DebugRun, EvalMetaDat, MockIO,
                                           StagePrgms (..), TExpr, TestResult,
-                                          Val (StrVal, TupleVal), oaTestId)
+                                          Val, oaTestId)
 import           Eval.Testing            (TestDesc (..), evalPrints, evalTest,
                                           runTestDesc)
 import           FileWatch               (Watch, Watcher, allCovered,
@@ -1052,14 +1052,6 @@ ctssStale (CTSS ssmv) prgmName = modifyMVar_ ssmv $ \ctssdat ->
   where
     forget k ssf | k == prgmName = ssf{ssfRead = (ssfRead ssf){rpReads = Nothing}}
                  | otherwise = ssf
-
-getWeb :: CTSS -> FileImport -> String -> CResT IO String
-getWeb ctss prgmName fun = do
-  base <- ctssGetFrom ssfTPrgm prgmName ctss
-  (TupleVal _ args, _) <- evalBuild fun prgmName base
-  case H.lookup "contents" args of
-    Just (StrVal s) -> return s
-    _               -> return "";
 
 -- Helpers
 

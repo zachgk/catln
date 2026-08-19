@@ -2,16 +2,6 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
-                ( "/Catln/llvm"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Catln/llvm( Value c ) -> /Catln/CatlnResult.. ]
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
                 ( "/Catln/#else"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/#else ]
@@ -106,18 +96,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Catln/www"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Catln/www( Value html -> /Data/String )= CatlnResult
-                            ( Value name= CStr "index.html" )( Value contents= Value html )
-                        ]
-                    }
-                )
-            ,
                 ( "/Catln/#debug"
                 , ObjectMapItem
                     { omiDecls =
@@ -146,16 +124,6 @@ Prgm
                         [ /Catln/#print( Value /p -> ∀/Catln/Doc/DShow )
                         , /Catln/#print( Value /p -> ∀/Catln/Doc/DShow )( Value /result -> /Data/String )
                         ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
-                ( "/Catln/CatlnResult"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Catln/CatlnResult( Value /name -> /Data/String )( Value /contents -> /Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -275,9 +243,6 @@ Prgm
         , CGType
         , CGType
         , CGType
-        , CGType
-        , CGType
-        , CGType
         , CGClass
             ( True
             , /Catln/ThenElse
@@ -299,6 +264,9 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "## Build-in Type Macros" )
         , /Catln/#md
-            ( Value /text= CStr "## Result Classes" )
+            ( Value /text= CStr "## Result Classes
+            What a build produces is declared in @core/result.ct@ rather than here. It is a list of files,
+            so declaring it here would make this file reach @core/list.ct@ — and this file is one every
+            program reaches, through the annotations above. See @core/result.ct@ for what that costs." )
         ]
     }

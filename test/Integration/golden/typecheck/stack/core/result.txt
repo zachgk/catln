@@ -1,0 +1,116 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/Catln/BuildFile"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/BuildFile( Value /path -> /Data/String )( Value /contents -> /Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/llvm"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Catln/llvm( Value /c ) -> /Catln/CatlnResult.. ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/www"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Catln/www( Value /html -> /Data/String ) -> /Catln/CatlnResult
+                            [ /T=/Catln/BuildFile
+                                ( /path=TopType
+                                , /contents=/Data/String
+                                )
+                            ]
+                            ( /files=/Data/Cons
+                                [ /T=/Catln/BuildFile
+                                    ( /path=/Data/String
+                                    , /contents=/Data/String
+                                    )
+                                ]
+                                ( /head=/Catln/BuildFile
+                                    ( /path=/Data/String
+                                    , /contents=/Data/String
+                                    )
+                                , /tail=/Data/Nil
+                                )
+                            ) = /Catln/CatlnResult
+                            ( Value /files -> /Data/Cons
+                                [ /T=/Catln/BuildFile
+                                    ( /path=/Data/String
+                                    , /contents=/Data/String
+                                    )
+                                ]
+                                ( /head=/Catln/BuildFile
+                                    ( /path=/Data/String
+                                    , /contents=/Data/String
+                                    )
+                                , /tail=/Data/Nil
+                                ) = /Data/Cons
+                                ( Value /head -> /Catln/BuildFile
+                                    ( /path=/Data/String
+                                    , /contents=/Data/String
+                                    ) = /Catln/BuildFile
+                                    ( Value /path -> /Data/String = CStr "index.html" )( Value /contents -> TVArg /html = Value /html )
+                                )( Value /tail -> /Data/Nil = Value /Data/Nil )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Catln/CatlnResult"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/CatlnResult
+                            ( Value /files -> ∀/Data/List[ /T=/Catln/BuildFile ] )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Catln/BuildFile
+            ,
+                [ /Catln/BuildFile..
+                , /Catln/CatlnResult..
+                ]
+            , Just " "
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String = CStr "# Build Results
+            What a build produces, and the ways of producing one.
+            This is declared apart from @core/compile.ct@, where it was, and the separation is load-bearing
+            rather than tidying. A result is a list of files, so declaring it beside the compiler's
+            annotations would give @core/compile.ct@ a path to @core/list.ct@. Every program reaches
+            @core/compile.ct@ — it is where [#md] and [#assert] are declared — and @core/algebra.ct@ imports
+            it, so that path closes a cycle which puts @core/list.ct@ in the same mutually-importing group as
+            @core/algebra.ct@. Measured on @test/Integration/code/io.ct@, that one import edge alone takes a
+            run from 203 seconds to over 900, and reports [/Data/Algebra/eq] and [/Data/Algebra/ord] as
+            unfulfilled declarations that are fulfilled without it.
+            So this file sits below both instead: it imports what it needs and nothing imports it but
+            @core/main.ct@, which is what every program is given." )
+        ]
+    }

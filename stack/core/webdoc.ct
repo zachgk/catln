@@ -33,7 +33,6 @@ module(Catln/Doc)
       [#md] or [#type]) into their visualization types.
 
   every(String, isa= [/Catln/Doc/DShow])
-  every(CatlnResult.., isa= [/Catln/Doc/DShow])
   every(/Data/ToString, isa= [/Catln/Doc/DShow])
     # Every [/Data/ToString] value is displayable, so [ToString] is a subset of [DShow]: the
       webdocs render such a value through its [/Data/toString]. This is what lets a `> value`
