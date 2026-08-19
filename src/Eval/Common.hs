@@ -197,19 +197,13 @@ data EvalService where
 -- All are unforced: constructing an 'Env' must not compute a stage, since a caller pays only for
 -- the ones something actually asks for. Forcing the tree build runs a whole 'Eval.evalBuildAll'.
 data StagePrgms = StagePrgms {
-  -- | How the program's types were inferred: a type variable on every meta, and the trace of what
-  -- each epoch updated it to. This is never joined across pages — a typecheck numbers its points
-  -- within the run that assigned them, so two pages' traces have colliding point numbers and mean
-  -- nothing merged together. An evaluation that is not scoped to one page therefore has no type
-  -- inference to report, rather than an amalgamated one.
-    spTypeInfer  :: CRes (VPrgm, TraceConstrain)
   -- | Runs one of the program's functions, for a debugger reporting on what it evaluated. It is a
   -- function rather than a value because which function to run is the annotation's argument, and it
   -- is supplied from outside for the same reason the stages above are: an evaluation cannot run the
   -- program it is itself part of, since the evaluator is downstream of the primitives that would
-  -- have to call it. Like 'spTypeInfer' it is never joined across pages — a run needs one program
-  -- with one entry point, and the union of every loaded page has as many @main@s as it has pages.
-  , spDebugRun   :: String -> CRes DebugRun
+  -- have to call it. It is never joined across pages — a run needs one program with one entry
+  -- point, and the union of every loaded page has as many @main@s as it has pages.
+    spDebugRun   :: String -> CRes DebugRun
   -- | Compiles one expression, written as Catln source, as though it were a statement of the page
   -- being evaluated, and runs it for a debugger reporting on what it evaluated.
   --
@@ -259,8 +253,7 @@ data StagePrgms = StagePrgms {
 -- than failing.
 stagePrgmsUnavailable :: StagePrgms
 stagePrgmsUnavailable = StagePrgms {
-    spTypeInfer = unavailable
-  , spDebugRun = const unavailable
+    spDebugRun = const unavailable
   , spDebugExpr = const unavailable
   , spPages = unavailable
   , spTests = unavailable

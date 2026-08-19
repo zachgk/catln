@@ -18,6 +18,7 @@
 module CRes where
 
 import           Data.List             (intercalate, nub)
+import           Data.Maybe            (fromMaybe)
 import           GHC.Generics          (Generic)
 -- import qualified Data.Text.Lazy as T
 -- import Text.Pretty.Simple
@@ -217,6 +218,15 @@ failOnErrorNotes (CErr notes) = CErr notes
 cresToMaybe :: CRes r -> Maybe r
 cresToMaybe (CRes _ r) = Just r
 cresToMaybe CErr{}     = Nothing
+
+-- | A stage of the compilation service which was asked for, where a stage that was never computed is
+-- a failure rather than an absence.
+--
+-- The service holds each stage of each page as a 'Maybe', meaning not yet. Whoever asks has already
+-- asked for the page to be built, so meeting a 'Nothing' at that point is the service having failed
+-- to build what it said it would rather than a question with no answer.
+requireComputed :: Maybe (CRes r) -> CRes r
+requireComputed = fromMaybe (CErr [MkCNote $ GenCErr Nothing "Value not computed in catln service"])
 
 fromCRes :: CRes r -> r
 fromCRes (CRes _ r) = r

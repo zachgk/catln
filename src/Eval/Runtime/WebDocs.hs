@@ -46,7 +46,8 @@ import           Semantics.Types     (ArgName, ClassGraph (..),
                                       relativeNameMatches)
 import           System.IO.Unsafe    (unsafePerformIO)
 import           Text.Printf
-import           TypeCheck.Common    (filterTraceConstrain, flipTraceConstrain)
+import           TypeCheck.Common    (TraceConstrain, VPrgm,
+                                      filterTraceConstrain, flipTraceConstrain)
 import           Utils
 
 -- | The primitives backing the @Catln/Doc@ display annotations.
@@ -140,9 +141,31 @@ typeInferPntArg = "/pnt"
 typeInfer :: EPrim
 typeInfer = EEnvPrim "typeInfer" prim
   where
-    prim Env{evStagePrgms=StagePrgms{spTypeInfer}} _ = case spTypeInfer of
-      CRes notes (vprgm, _) -> Right $ encodeJson (vprgm, notes)
-      CErr notes            -> Left $ prettyCNotes notes
+    prim env _ = withTypeInfer env render
+    -- The notes are rendered beside the inference rather than being what a failure is reported as.
+    -- The whole point of keeping a trace is to explain a program that did NOT typecheck, so its
+    -- notes are the answer here rather than an obstacle to one.
+    render (CRes notes (vprgm, _)) = Right $ encodeJsonText (vprgm, notes)
+    render (CErr notes)            = Left $ prettyCNotes notes
+
+-- | The type inference of the page an evaluation is scoped to, rendered by whoever asked.
+--
+-- Of that page alone, never of a scope joined: a typecheck numbers its points within the run that
+-- assigned them, so two pages' traces have colliding numbers and mean nothing merged together. An
+-- evaluation scoped to no page therefore has no inference to report rather than an amalgamated one.
+--
+-- It hands the whole answer to its caller rather than the value inside it, because the notes a
+-- typecheck left are part of what a reader of this is asking about.
+withTypeInfer :: Env -> (CRes (VPrgm, TraceConstrain) -> Either String String) -> Either String Val
+withTypeInfer env render = case evService env of
+  Nothing -> Left noService
+  Just (EvalService s scope) -> case scopedTo scope "type inference to report on" of
+    Left err       -> Left err
+    Right prgmName -> askService $ do
+      graph <- csBuilt s (Just prgmName)
+      return $ render $ do
+        (_, vprgm, trace) <- requireComputed $ ssfTPrgmWithTrace =<< graphLookup prgmName graph
+        return (vprgm, trace)
 
 -- | Backs @/Catln/Doc/typeInferPnt@, the data carried by a @Show/TypeInferPnt@ page. It renders the
 -- part of the same trace that touches a single point: the constraints mentioning it and, per epoch,
@@ -150,11 +173,14 @@ typeInfer = EEnvPrim "typeInfer" prim
 typeInferPnt :: EPrim
 typeInferPnt = EEnvPrim "typeInferPnt" prim
   where
-    prim Env{evStagePrgms=StagePrgms{spTypeInfer}} args = case (spTypeInfer, H.lookup typeInferPntArg args) of
-      (CErr notes, _) -> Left $ prettyCNotes notes
-      (CRes _ (_, trace), Just (IntVal pnt)) -> Right $ encodeJson $ flipTraceConstrain $ filterTraceConstrain trace (fromInteger pnt)
-      (_, Just v) -> Left $ printf "typeInferPnt was given %s, which is not an Integer point" (show v)
-      (_, Nothing) -> Left $ printf "typeInferPnt has no %s argument, only %s" typeInferPntArg (show $ sort $ H.keys args)
+    -- Which point was asked about is read before the inference is asked for, so a display written
+    -- wrongly says so rather than reporting whatever the typecheck of the page had to say.
+    prim env args = case H.lookup typeInferPntArg args of
+      Just (IntVal pnt) -> withTypeInfer env (render pnt)
+      Just v -> Left $ printf "typeInferPnt was given %s, which is not an Integer point" (show v)
+      Nothing -> Left $ printf "typeInferPnt has no %s argument, only %s" typeInferPntArg (show $ sort $ H.keys args)
+    render pnt (CRes _ (_, trace)) = Right $ encodeJsonText $ flipTraceConstrain $ filterTraceConstrain trace (fromInteger pnt)
+    render _ (CErr notes)          = Left $ prettyCNotes notes
 
 -- | The argument of @/Catln/Doc/debugger@ naming which function to run.
 debuggerFunArg :: String

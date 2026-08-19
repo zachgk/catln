@@ -702,9 +702,6 @@ ctssGetFrom f prgmName (CTSS ssmv) = do
   CTSSDat{ctssData} <- lift $ readMVar ssmv
   asCResT $ mapMGraph (requireComputed . f) (graphFilterReaches prgmName ctssData)
 
-requireComputed :: Maybe (CRes r) -> CRes r
-requireComputed = fromMaybe (CErr [MkCNote $ GenCErr Nothing "Value not computed in catln service"])
-
 -- | The pages of a scope which can be evaluated: those whose programs typechecked, with why the rest
 -- could not carried as notes rather than failing the lot.
 --
@@ -1115,8 +1112,7 @@ ctssStagePrgms ctss = do
   pages <- return <$> csPages ctss
   values <- csValues ctss Nothing
   return $ StagePrgms {
-      spTypeInfer = notScoped "type inference to report on"
-    , spDebugRun = const $ notScoped "program to run"
+      spDebugRun = const $ notScoped "program to run"
     , spDebugExpr = const $ notScoped "expression to run"
     , spPages = pages
     , spTests = notScoped "tests to report on"
@@ -1135,9 +1131,6 @@ ctssStagePrgmsFrom ctss prgmName = do
   values <- csValues ctss (Just prgmName)
   let reaches = graphFilterReaches prgmName ctssData
   let ssfs = map fst3 $ graphToNodes reaches
-  let typeInferred = do
-        (_, vprgm, trace) <- requireComputed $ ssfTPrgmWithTrace =<< graphLookup prgmName ctssData
-        return (vprgm, trace)
   -- Runs against the page's own typecheck program rather than the evaluation's, which for an
   -- annotation is that program joined with the synthetic one holding the annotation itself.
   let debugRun fun = evalDebugPrgm fun =<< joinedStage ssfTPrgm ssfs
@@ -1149,8 +1142,7 @@ ctssStagePrgmsFrom ctss prgmName = do
   -- not be made to do. An evaluation that does have a test to report on is given one by whoever
   -- asked for it (see 'getEvalAnnots').
   return $ StagePrgms {
-      spTypeInfer = typeInferred
-    , spDebugRun = debugRun
+      spDebugRun = debugRun
     , spDebugExpr = debugExpr
     , spPages = return $ map snd3 $ graphToNodes reaches
     , spTests = notRun
