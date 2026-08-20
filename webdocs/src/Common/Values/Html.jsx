@@ -3,14 +3,14 @@ import React, {useCallback, useState} from 'react';
 // Markup shown as the page it is, in a frame of its own.
 //
 // A frame rather than the markup laid into this page, because what is shown here was written
-// somewhere else: a compiled result is a whole document with its own styling, and an entry of a feed
-// is somebody else's writing. Either laid into this page would take this page's styling and give it
-// theirs.
+// somewhere else: a compiled result is a whole document with its own styling, and laying one into
+// this page would take this page's styling and give it that document's.
 //
 // `sandbox` is passed through rather than decided here, because what a frame may do depends on whose
-// writing is in it. A compiled result is the reader's own output and is framed with no sandbox at
-// all, so that a built site previews as the site it is. Untrusted writing is framed with one -- see
-// RssItem, which sanitizes as well.
+// writing is in it. Its one caller today is BuildResult, which frames a compiled `.html` with no
+// sandbox at all: that is the reader's own output, and a built site which needs script to run is a
+// site whose preview must run it. Writing from somewhere the reader did not compile would be framed
+// with one, and sanitized besides.
 //
 // `fit` asks for the frame to be sized to what is in it once it has loaded. A frame cannot say how
 // tall it is until there is something in it and nothing outside it can guess, so a frame which is

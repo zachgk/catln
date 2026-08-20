@@ -2,6 +2,50 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
+                ( "/Catln/Doc/dshow"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Catln/Doc/dshow
+                            ( Value /s -> /Data/RSS/Item
+                                ( /published=/Data/String
+                                , /link=/Data/String
+                                , /title=/Data/String
+                                , /description=∀/Data/Algebra/Semigroup
+                                ) = /Data/RSS/Item( Value /title -> /Data/String )( Value /link -> /Data/String )( Value /published -> /Data/String )( Value /description -> ∀/Data/Algebra/Semigroup )
+                            ) -> /Catln/Doc/Show/Html( /contents=/Data/String ) = /Catln/Doc/Show/Html
+                            ( Value /contents -> /Data/String = /operator++
+                                ( Value /l -> ∀/Data/Algebra/Semigroup = /operator++
+                                    ( Value /l -> UnionType
+                                        ( Just
+                                            ( PredClass /Data/Algebra/Semigroup
+                                            , fromList []
+                                            )
+                                        , /Data/Primitive/Integer
+                                        , []
+                                        ) = /operator++
+                                        ( Value /l -> UnionType
+                                            ( Just
+                                                ( PredClass /Data/Algebra/Semigroup
+                                                , fromList []
+                                                )
+                                            , /Data/Primitive/Integer
+                                            , []
+                                            ) = /operator++
+                                            ( Value /l -> /Data/String = CStr "<p>" )
+                                            ( Value /r -> /Data/String = /Catln/Doc/dshow./Data/RSS/titleOf( Value /published -> TVArg /published = Value /published )( Value /description -> TVArg /description = Value /description )( Value /title -> TVArg /title = Value /title )( Value /link -> TVArg /link = Value /link ) )
+                                        )
+                                        ( Value /r -> /Data/String = /Catln/Doc/dshow./Data/RSS/publishedOf( Value /link -> TVArg /link = Value /link )( Value /title -> TVArg /title = Value /title )( Value /description -> TVArg /description = Value /description )( Value /published -> TVArg /published = Value /published ) )
+                                    )
+                                    ( Value /r -> /Data/String = CStr "</p>" )
+                                )( Value /r -> TVArg /description = Value /description )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/RSS/Item"
                 , ObjectMapItem
                     { omiDecls =
@@ -11,19 +55,101 @@ Prgm
                     , omiDefs = []
                     }
                 )
+            ,
+                ( "/Catln/Doc/dshow./Data/RSS/titleOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Doc/dshow./Data/RSS/titleOf( Value /published )( Value /description )( Value /title -> /Data/String )( Value /link -> /Data/String ) -> /Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Catln/Doc/dshow./Data/RSS/titleOf( Value /published )( Value /description )( Value /title -> /Data/String )( Value /link -> /Data/String ) | /operator==( Value /l -> TVArg /link = Value /link )
+                            ( Value /r -> /Data/String = CStr "" ) ->
+                            ( /operator++[ /T=/Data/String ]
+                                ( /r=/Data/String
+                                , /l=∀/Data/Algebra/Semigroup
+                                ) + /Data/String
+                            ) = /operator++
+                            ( Value /l -> UnionType
+                                ( Just
+                                    ( PredClass /Data/Algebra/Semigroup
+                                    , fromList []
+                                    )
+                                , /Data/Primitive/Integer
+                                , []
+                                ) = /operator++
+                                ( Value /l -> /Data/String = CStr "<strong>" )( Value /r -> TVArg /title = Value /title )
+                            )
+                            ( Value /r -> /Data/String = CStr "</strong>" )
+                        , /Catln/Doc/dshow./Data/RSS/titleOf( Value /published )( Value /description )( Value /title -> /Data/String )( Value /link -> /Data/String ) ->
+                            ( /operator++[ /T=/Data/String ]
+                                ( /r=/Data/String
+                                , /l=∀/Data/Algebra/Semigroup
+                                ) + /Data/String
+                            ) = /operator++
+                            ( Value /l -> UnionType
+                                ( Just
+                                    ( PredClass /Data/Algebra/Semigroup
+                                    , fromList []
+                                    )
+                                , /Data/Primitive/Integer
+                                , []
+                                ) = /operator++
+                                ( Value /l -> ∀/Data/Algebra/Semigroup = /operator++
+                                    ( Value /l -> UnionType
+                                        ( Just
+                                            ( PredClass /Data/Algebra/Semigroup
+                                            , fromList []
+                                            )
+                                        , /Data/Primitive/Integer
+                                        , []
+                                        ) = /operator++
+                                        ( Value /l -> /Data/String = CStr "<strong><a href="" )( Value /r -> TVArg /link = Value /link )
+                                    )
+                                    ( Value /r -> /Data/String = CStr "">" )
+                                )( Value /r -> TVArg /title = Value /title )
+                            )
+                            ( Value /r -> /Data/String = CStr "</a></strong>" )
+                        ]
+                    }
+                )
+            ,
+                ( "/Catln/Doc/dshow./Data/RSS/publishedOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Doc/dshow./Data/RSS/publishedOf( Value /link )( Value /title )( Value /description )( Value /published -> /Data/String ) -> /Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Catln/Doc/dshow./Data/RSS/publishedOf( Value /link )( Value /title )( Value /description )( Value /published -> /Data/String ) | /operator==( Value /l -> TVArg /published = Value /published )
+                            ( Value /r -> /Data/String = CStr "" ) -> /Data/String = CStr ""
+                        , /Catln/Doc/dshow./Data/RSS/publishedOf( Value /link )( Value /title )( Value /description )( Value /published -> /Data/String ) ->
+                            ( /operator++[ /T=/Data/String ]
+                                ( /r=/Data/String
+                                , /l=∀/Data/Algebra/Semigroup
+                                ) + /Data/String
+                            ) = /operator++
+                            ( Value /l -> UnionType
+                                ( Just
+                                    ( PredClass /Data/Algebra/Semigroup
+                                    , fromList []
+                                    )
+                                , /Data/Primitive/Integer
+                                , []
+                                ) = /operator++
+                                ( Value /l -> /Data/String = CStr " <small>" )( Value /r -> TVArg /published = Value /published )
+                            )
+                            ( Value /r -> /Data/String = CStr "</small>" )
+                        ]
+                    }
+                )
             ]
         )
     , prgmCG =
         [ CGType
-        , CGClass
-            ( False
-            , /Data/RSS/Item
-            , [ /Data/RSS/Item.. ]
-            , Just "An entry is shown in the webdocs as the entry it is, rather than as the declaration it was
-              read into: the title as a link to the entry, the date beside it, and the entry's own writing
-              below. It is the value itself that is shown, with no display type standing in for it, in the
-              way a task is."
-            )
+        , CGType
+        , CGType
+        , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
@@ -38,10 +164,5 @@ Prgm
             written below the ones it does.
             This is not part of the standard library. A program which imports no feed has no use for the
             type, and the page a feed is read as writes the import itself." )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "An entry is shown in the webdocs as the entry it is, rather than as the declaration it was
-            read into: the title as a link to the entry, the date beside it, and the entry's own writing
-            below. It is the value itself that is shown, with no display type standing in for it, in the
-            way a task is." )
         ]
     }

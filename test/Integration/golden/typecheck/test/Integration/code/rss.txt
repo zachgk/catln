@@ -31,6 +31,14 @@ Prgm
             records nothing. What the address form does that this does not is ask, and keep what it was told —
             which @test/Syntax/RssCacheTests.hs@ holds it to, with the asking stubbed out.
             The page names the module declaring what an entry is, rather than being given it with the core
-            every page is given, so this reaches @stack/rss/main.ct@ and writes down what that is read as too." )
+            every page is given, so this reaches @stack/rss/main.ct@ and writes down what that is read as too.
+            What an entry is shown as is not printed here, and there is nowhere it could be. A display is
+            only asked for on the page being run — @Integration/Integ.hs@ calls @getEvalAnnots@ on the entry
+            file alone — so a print written in @stack/rss/main.ct@ is a print nothing evaluates; and the
+            display comes out a [/Catln/Doc/Show/Html], which a print-golden skips silently because only a
+            [/Data/ToString] is compared against one. The pieces it is joined out of are nested inside the
+            arm that joins them, so they have no name to be called by either.
+            What holds the markup down is the treebuild golden of @stack/rss/main.ct@, which carries every
+            string the arm joins and the [/Catln/Doc/Show/Html] it resolves to." )
         ]
     }

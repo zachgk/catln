@@ -2,6 +2,30 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
+                ( "/Catln/Doc/dshow"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Catln/Doc/dshow
+                            ( Value s= Item( Value title )( Value link )( Value published )( Value description ) )= /Catln/Doc/Show/Html
+                            ( Value contents= /operator++
+                                ( Value /l= /operator++
+                                    ( Value /l= /operator++
+                                        ( Value /l= /operator++
+                                            ( Value /l= CStr "<p>" )
+                                            ( Value /r= titleOf( Value /published= Value /published )( Value /description= Value /description )( Value title= Value title )( Value link= Value link ) )
+                                        )
+                                        ( Value /r= publishedOf( Value /link= Value /link )( Value /title= Value /title )( Value /description= Value /description )( Value published= Value published ) )
+                                    )
+                                    ( Value /r= CStr "</p>" )
+                                )( Value /r= Value description )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/RSS/Item"
                 , ObjectMapItem
                     { omiDecls =
@@ -11,19 +35,58 @@ Prgm
                     , omiDefs = []
                     }
                 )
+            ,
+                ( "/Catln/Doc/dshow./Data/RSS/titleOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Doc/dshow./Data/RSS/titleOf( Value /published )( Value /description )( Value title -> /Data/String )( Value link -> /Data/String ) -> /Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Catln/Doc/dshow./Data/RSS/titleOf( Value /published )( Value /description )( Value title )( Value link ) | /operator==( Value /l= Value link )
+                            ( Value /r= CStr "" ) -> /Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= CStr "<strong>" )( Value /r= Value title )
+                            )
+                            ( Value /r= CStr "</strong>" )
+                        , /Catln/Doc/dshow./Data/RSS/titleOf( Value /published )( Value /description )( Value title )( Value link ) -> /Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= /operator++
+                                    ( Value /l= /operator++
+                                        ( Value /l= CStr "<strong><a href="" )( Value /r= Value link )
+                                    )
+                                    ( Value /r= CStr "">" )
+                                )( Value /r= Value title )
+                            )
+                            ( Value /r= CStr "</a></strong>" )
+                        ]
+                    }
+                )
+            ,
+                ( "/Catln/Doc/dshow./Data/RSS/publishedOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Doc/dshow./Data/RSS/publishedOf( Value /link )( Value /title )( Value /description )( Value published -> /Data/String ) -> /Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Catln/Doc/dshow./Data/RSS/publishedOf( Value /link )( Value /title )( Value /description )( Value published ) | /operator==( Value /l= Value published )
+                            ( Value /r= CStr "" ) -> /Data/String = CStr ""
+                        , /Catln/Doc/dshow./Data/RSS/publishedOf( Value /link )( Value /title )( Value /description )( Value published ) -> /Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= CStr " <small>" )( Value /r= Value published )
+                            )
+                            ( Value /r= CStr "</small>" )
+                        ]
+                    }
+                )
             ]
         )
     , prgmCG =
         [ CGType
-        , CGClass
-            ( False
-            , /Data/RSS/Item
-            , [ /Data/RSS/Item.. ]
-            , Just "An entry is shown in the webdocs as the entry it is, rather than as the declaration it was
-              read into: the title as a link to the entry, the date beside it, and the entry's own writing
-              below. It is the value itself that is shown, with no display type standing in for it, in the
-              way a task is."
-            )
+        , CGType
+        , CGType
+        , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
@@ -38,10 +101,5 @@ Prgm
             written below the ones it does.
             This is not part of the standard library. A program which imports no feed has no use for the
             type, and the page a feed is read as writes the import itself." )
-        , /Catln/#md
-            ( Value /text= CStr "An entry is shown in the webdocs as the entry it is, rather than as the declaration it was
-            read into: the title as a link to the entry, the date beside it, and the entry's own writing
-            below. It is the value itself that is shown, with no display type standing in for it, in the
-            way a task is." )
         ]
     }

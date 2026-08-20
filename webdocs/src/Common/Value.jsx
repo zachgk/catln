@@ -17,7 +17,6 @@ import ObsidianTask from './Values/ObsidianTask';
 import TaskList from './Values/TaskList';
 import Overlay from './Values/Overlay';
 import Properties from './Values/Properties';
-import RssItem from './Values/RssItem';
 import {BuildFile, CatlnResult} from './Values/BuildResult';
 
 // A Value may be given an update function by whatever rendered it. Calling update(src) asks for
@@ -92,11 +91,6 @@ function Value(props) {
     // The properties a note opens with. No update: they are shown as the note wrote them.
     case "/Data/Note/Show/Properties":
       return <Properties {...val.args} />;
-    // One entry of an RSS feed, which like a task is the value the page declares rather than a
-    // display standing in for something else. No update: an entry is somebody else's writing and
-    // there is nowhere to write it back to.
-    case "/Data/RSS/Item":
-      return <RssItem {...val.args} />;
     default:
       let showArgs = "";
       if(Object.keys(val.args).length > 0) {

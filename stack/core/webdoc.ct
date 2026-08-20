@@ -53,11 +53,19 @@ module(Catln/Doc)
       beside the declaration builds the markup, and the webdocs render it and know nothing else about
       it. So a display belongs to the library owning the type rather than to a component of the doc
       server named after that type.
-      Laid in and not framed, which is what separates it from the frame a compiled result or an entry
-      of a feed is shown in. Those frame because what is in them was written somewhere else, and
-      writing from somewhere else laid into this page would take this page's styling and give it
-      theirs. A program's own display is not somebody else's writing, so it is meant to take this
-      page's font, its links and its colours, which a frame would give it none of.
+      Laid in and not framed, which is what separates it from the frame a compiled result is shown
+      in. That frames because what is in it is a whole document with its own styling, and laying one
+      into this page would take this page's styling and give it that document's. A program's own
+      display is not a document of its own, so it is meant to take this page's font, its links and
+      its colours, which a frame would give it none of.
+      An entry of a feed is laid in too, and is the case where that is a judgement rather than an
+      obvious one. What an entry says is markup somebody else wrote, which was framed and sandboxed
+      while the doc server held a display of its own for it. Written as an arm here it is laid in
+      like any other markup an arm builds, so it loses that isolation and keeps only the sanitizing —
+      which is what drops the scripts and the handlers, and is the half of the pair that was doing
+      the work. What it costs is that an entry's own styling now reads against this page's rather
+      than beside it, and that is the price of a feed saying what its entries look like instead of
+      the doc server saying it.
       Markup where [Show/MD] is prose: writing which reads as a document is markdown, and writing
       which is a shape to lay out is this, because markdown cannot say how a heading or a table sits.
       Nothing written here is escaped, and the webdocs sanitize what they are given before showing

@@ -233,25 +233,38 @@ describe('note and overlay values', () => {
     expect(screen.getByText('A page')).toBeInTheDocument()
   })
 
-  // An entry of a feed is the value the page declares, like a task, so it dispatches to the entry
-  // itself rather than to the `/Name(arg = ...)` every other value falls back to.
-  it('shows an entry of a feed as the entry it is', () => {
+  // An entry of a feed is shown by the arm `stack/rss/main.ct` writes for it, which arrives here
+  // already built into a Show/Html. So there is nothing here named after /Data/RSS/Item, and a raw
+  // one falls back to the `/Name(arg = ...)` any unknown value does -- which is the assertion that
+  // the doc server holds nothing about feeds.
+  it('shows an entry of a feed through the markup its own arm built', () => {
     const val = {
       tag: 'TupleVal',
-      name: '/Data/RSS/Item',
+      name: '/Catln/Doc/Show/Html',
       args: {
-        '/title': { tag: 'StrVal', contents: 'Accretionary Arc' },
-        '/link': { tag: 'StrVal', contents: 'https://xkcd.com/3285/' },
-        '/guid': { tag: 'StrVal', contents: 'https://xkcd.com/3285/' },
-        '/published': { tag: 'StrVal', contents: 'Fri, 14 Aug 2026 04:00:00 -0000' },
-        '/description': { tag: 'StrVal', contents: '<img src="comic.png" alt="A comic" />' },
+        '/contents': {
+          tag: 'StrVal',
+          contents: '<p><strong><a href="https://xkcd.com/3285/">Accretionary Arc</a></strong></p><img src="comic.png" alt="A comic" />',
+        },
       },
     }
     const { container } = render(<Providers><Value data={val} /></Providers>)
 
     expect(screen.getByRole('link', { name: 'Accretionary Arc' })).toHaveAttribute('href', 'https://xkcd.com/3285/')
-    expect(container.querySelector('iframe').getAttribute('srcdoc')).toContain('comic.png')
-    expect(screen.queryByText(/\/Data\/RSS\/Item/)).toBeNull()
+    // Laid into the page rather than framed in one, which is the change the arm made.
+    expect(container.querySelector('iframe')).toBeNull()
+    expect(container.querySelector('img').getAttribute('src')).toBe('comic.png')
+  })
+
+  it('knows nothing of what a feed entry is', () => {
+    const val = {
+      tag: 'TupleVal',
+      name: '/Data/RSS/Item',
+      args: { '/title': { tag: 'StrVal', contents: 'Accretionary Arc' } },
+    }
+    render(<Providers><Value data={val} /></Providers>)
+
+    expect(screen.getByText(/\/Data\/RSS\/Item/)).toBeInTheDocument()
   })
 })
 

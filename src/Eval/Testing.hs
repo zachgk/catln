@@ -233,6 +233,17 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
   -- 'bindap' arms: a plain value vs a 'Functor' vs a 'Monad', which also differ in what their
   -- function argument returns) are not meant to agree, so no agreement test is derived for them.
   , not (isBottomType (intersectTypes typeEnv (clauseCod oaA) (clauseCod oaB)))
+  -- A clause chosen by a condition rather than by its domain is not an overlapping definition. Two
+  -- guarded arms of one function are the branches of a conditional — @greet(…) | formal= …@ beside
+  -- @greet(…) else = …@ — and branches are meant to differ, which is the whole of what a branch is
+  -- for. Their domains are nevertheless identical, so without this every conditional written with
+  -- guards derives a test asserting that it does not branch.
+  --
+  -- Excluded rather than generated more narrowly. Inputs here are generated from the domain
+  -- intersection alone, and a pair of guarded clauses would have to be generated in the region
+  -- where BOTH conditions hold — which is not a type and so is not something 'genValForType' can be
+  -- asked for. Where that region is empty there is nothing to agree about in the first place.
+  , conditionFree oaA && conditionFree oaB
   ]
   where
     TypeEnv{teNames} = typeEnv
@@ -244,6 +255,10 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
       Just (Just _, _)  -> True
       Just (Nothing, _) -> isJust (getRuntimeAnnot (oaAnnots oa))
       _                 -> False
+    -- A clause with no guard on it, which is the only kind whose domain is the whole of what
+    -- selects it. 'TreeBuild.findResArrows' reads the same 'exprWhereConds' to decide which arrows
+    -- it may pick without evaluating a condition first.
+    conditionFree oa = null (exprWhereConds (oaObjExpr oa))
     clauseDom oa = getExprType (oaObjExpr oa)
     -- The clause's result (codomain) type: its body's type, or the declared return for a
     -- body-less runtime primitive.

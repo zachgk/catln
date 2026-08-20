@@ -1,0 +1,33 @@
+import "core"
+
+
+# DISABLED — a compiler gap, kept as the repro of it.
+  A guard written on an arm of a [case] or a [match] does not select: the guarded arm is taken
+  whether or not its condition holds. @abs(x= -5)@ below answers @-5@, having run the arm guarded by
+  @x2 >= 0@ on an input that is not.
+    Print golden mismatch:
+      expected: 5
+      actual:   -5
+  Both forms are wrong and identically so — @match(x)@ with @x2 | x2 >= 0=@ beside @x2 else =@ gives
+  the same answer as the [case] below. Only the built-in [case]/[match] are affected; the same
+  choice written as guards on the arms of a declared function is correct:
+    abs(x -> Integer) -> Integer
+    abs(x) | x >= 0= x
+    abs(x) else = x * -1
+  answers 5 for both 5 and -5. That is why @stack/rss/main.ct@ writes its branches that way.
+  @test/Integration/code/case.ct@ and @match.ct@ do not catch this because each calls @abs(0)@ and
+  nothing else, and at zero both arms answer zero. A test of a branch has to run the branch that is
+  not taken.
+  Not the same gap as @ifNonAgreeingBranches.ct@, though both are the declaration preprocessors in
+  @Syntax/Ct/Desugarf/Preprocessors.hs@ rewriting an arm into a generated @$hash@ function. That one
+  is a derived test failing on a program that runs correctly; this one is the program running
+  wrongly and no test noticing.
+abs(x -> Integer)= case(x)
+  x2 | x2 >= 0= x2
+  x2= x2 * -1
+
+> abs(x= 5)
+  >>> 5
+> abs(x= -5)
+  >>> 5
+main{io -> IO}= io.exit(val= 0)

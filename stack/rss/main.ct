@@ -24,8 +24,39 @@ module(Data/RSS)
       written and read apart by whatever shows it, so that nothing the feed said is lost between
       here and there.
 
-  every(Item.., isa= [/Catln/Doc/DShow])
+  /Catln/Doc/dshow(s= Item(title, link, published, description)) =
     # An entry is shown in the webdocs as the entry it is, rather than as the declaration it was
       read into: the title as a link to the entry, the date beside it, and the entry's own writing
-      below. It is the value itself that is shown, with no display type standing in for it, in the
-      way a task is.
+      below.
+      Written here rather than in the doc server, for the reason [/Data/Note/Page]'s display is
+      written beside [/Data/Note/Page]: an [Item] is this library's type, so what one looks like is
+      this library's to say. A feed is the case that makes the point rather than an example of it —
+      this is not part of the standard library at all, so a doc server holding a display of an entry
+      would be holding a display of something it is not given.
+      An arm and not membership of [/Catln/Doc/DShow], which is what this was. A member is shown by
+      the identity arm of [/Catln/Doc/dshow], so both at once is two arms matching one value with
+      nothing to say which wins.
+      [guid] is not shown. It is the name that says an entry read today and the same entry read a
+      week ago are one entry, which is what builds the page rather than anything a reader of the
+      page has a use for.
+      The entry's writing is laid into the page rather than framed in one, which is a change from
+      what the doc server did with it and is written down at [/Catln/Doc/Show/Html]. It is joined in
+      as the markup it is and is not escaped, as nothing joined into a [/Catln/Doc/Show/Html] is.
+      The two pieces that make a choice are nested here rather than declared beside this, since
+      neither is anything but a part of this display. A branch in Catln is a declaration and not an
+      expression — guards select between arms of a function — so a choice cannot be joined into a
+      string in the middle of one, and each is a helper for that reason alone.
+    titleOf(title -> String, link -> String) -> String
+      # The title of an entry, as the way to it where there is one. An entry may be published with
+        no address of its own, and then there is nothing to link to and the title is still the
+        title.
+    titleOf(title, link) | link == ""= "<strong>" ++ title ++ "</strong>"
+    titleOf(title, link) else = "<strong><a href=\"" ++ link ++ "\">" ++ title ++ "</a></strong>"
+
+    publishedOf(published -> String) -> String
+      # The date a feed wrote beside an entry, where it wrote one. A feed which dates nothing shows
+        no date rather than an empty label where a date would be.
+    publishedOf(published) | published == ""= ""
+    publishedOf(published) else = " <small>" ++ published ++ "</small>"
+
+    /Catln/Doc/Show/Html(contents= "<p>" ++ titleOf(title= title, link= link) ++ publishedOf(published= published) ++ "</p>" ++ description)

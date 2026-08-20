@@ -7,8 +7,7 @@ const useStyles = makeStyles({
   html: {
     // A block, because what a program writes here is block-level markup -- a heading, a table -- and
     // a value is rendered inside the span a statement is written as (RawObjArr, in Syntax.jsx). A
-    // span said to be a block is what RssItem does with the same problem, and is valid where a div
-    // written into a span is not.
+    // span said to be a block is valid where a div written into a span is not.
     display: 'block'
   }
 });
