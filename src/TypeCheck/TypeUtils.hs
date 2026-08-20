@@ -323,7 +323,16 @@ mkReachesEnv env (Constraint maybeConOa stypeVaenv _) = do
   -- it is constraint-independent, so rebuilding it per call would be redundant.
   let argTypeEnv = mkTypeEnv $ Prgm argObjMap (classGraphFromObjs argObjMap) []
   let feTypeEnv' = feReachesTypeEnv env
-  return $ ReachesEnv (argTypeEnv <> feTypeEnv') (fmap snd vaenv) S.empty
+  -- A constraint with NO arg objects uses the per-epoch env value ITSELF. The empty merge
+  -- is not free — '<>' on 'TypeEnv' re-merges the class graph ('graphFromEdges') and
+  -- re-derives 'mkSatCache' from the merged representation — and it ran once per
+  -- 'ArrowTo'\/'PropEq' constraint EXECUTION, every epoch (profiled at 72% of typecheck
+  -- inside the reach machinery it feeds). Sharing the one per-epoch value drops that
+  -- rebuild for the (majority) no-arg constraints.
+  let mergedTypeEnv
+        | H.null argVaenv' = feTypeEnv'
+        | otherwise        = argTypeEnv <> feTypeEnv'
+  return $ ReachesEnv mergedTypeEnv (fmap snd vaenv) S.empty
 
 -- | The resolved view of exactly the object-side arg entries 'mkReachesEnv' reads from a
 -- constraint's 'conOs' (each arg's in-expression and out meta, resolved through the current
