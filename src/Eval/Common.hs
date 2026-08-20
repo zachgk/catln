@@ -620,6 +620,15 @@ valStrArg name argName args = do
     StrVal s -> Right s
     _        -> Left $ printf "The %s of a %s is %s, which is not a String" (runtimeArgKey argName) name (show v)
 
+-- | The same, where the argument is a string which may be absent — which is a @\/Data\/Maybe@ of one.
+valMaybeStrArg :: String -> String -> H.HashMap String Val -> Either String (Maybe String)
+valMaybeStrArg name argName args = do
+  v <- valArg name argName args
+  case v of
+    TupleVal m _ | m == ctMaybeNothing -> Right Nothing
+    TupleVal m inner | m == ctMaybeSome -> Just <$> valStrArg name ctMaybeSomeValue inner
+    _ -> Left $ printf "The %s of a %s is %s, which is not a Maybe String" (runtimeArgKey argName) name (show v)
+
 -- | A list of values as the value of a @\/Data\/List@ holding them, which is the inverse of
 -- 'valList'. Used to build a result in Haskell where the program did not build one itself.
 valListOf :: [Val] -> Val

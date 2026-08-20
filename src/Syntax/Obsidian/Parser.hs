@@ -401,6 +401,19 @@ priorityMember PNone    = notePriorityPath ++ "/None"
 priorityMember PLow     = notePriorityPath ++ "/Low"
 priorityMember PLowest  = notePriorityPath ++ "/Lowest"
 
+-- | Which kind of status a member of @\/Data\/Note\/StatusType@ stands for, and which priority a
+-- member of @\/Data\/Note\/Priority@ does.
+--
+-- A checkbox is written into a value by the two above, and read back out of one by these. Built
+-- from those rather than written out again, over every kind and every priority there is, so a
+-- reading and a writing cannot disagree and neither can go missing: what names the members is one
+-- list of arms, which the compiler makes sure covers all of them.
+statusTypeKind :: String -> Maybe StatusKind
+statusTypeKind = (`lookup` [(statusTypeMember k, k) | k <- [minBound ..]])
+
+memberPriority :: String -> Maybe TaskPriority
+memberPriority = (`lookup` [(priorityMember p, p) | p <- [minBound ..]])
+
 -- | Everything a task said that is not a field of its own, as JSON.
 --
 -- Only what the task carries is written, so a plain checkbox's is @{}@ rather than a row of nulls.

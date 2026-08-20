@@ -27,10 +27,14 @@
 
 module Syntax.Obsidian.Task where
 
+import           Data.Aeson               (FromJSON (..), decode, withObject,
+                                           (.:?))
 import           Data.Char                (isAlpha, isAlphaNum, isDigit,
                                            isSpace)
 import           Data.List                (dropWhileEnd, isPrefixOf, isSuffixOf)
-import           Data.Maybe               (listToMaybe, mapMaybe)
+import           Data.Maybe               (fromMaybe, listToMaybe, mapMaybe)
+import qualified Data.Text.Lazy           as TL
+import qualified Data.Text.Lazy.Encoding  as TLE
 import           Syntax.Obsidian.Settings (TaskFormat (..), TaskSettings (..))
 
 -- | How urgent a task is, as the plugin's six priorities.
@@ -44,7 +48,7 @@ data TaskPriority
   | PNone
   | PLow
   | PLowest
-  deriving (Eq, Show)
+  deriving (Eq, Show, Enum, Bounded)
 
 -- | One checkbox line, read the way the plugin reads it.
 data ObsidianTask = ObsidianTask {
@@ -74,6 +78,51 @@ data ObsidianTask = ObsidianTask {
 -- | A task saying nothing, which reading a line fills in.
 emptyTask :: String -> ObsidianTask
 emptyTask contents = ObsidianTask contents "" [] PNone Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing [] Nothing
+
+-- | Everything a task said that is not a field of the type it is compiled to, read back out of the
+-- JSON it travels in.
+--
+-- The type's own comment in @stack\/core\/note.ct@ says why those fields travel that way and what
+-- would undo it. Read here rather than wherever the JSON is unpacked, so that the one place naming
+-- the keys is the module that knows what a task line says.
+--
+-- Only read and never written. What writes the JSON is @Syntax.Obsidian.Parser.taskRestJson@, which
+-- writes only what a task carries — so a plain checkbox's is @{}@ rather than a row of nulls, and
+-- that is what every golden of a note pins. A field missing here is a field the task did not say.
+data TaskRest = TaskRest {
+  trStatusName   :: Maybe String,
+  trTags         :: [String],
+  trDependsOn    :: [String],
+  trCreated      :: Maybe String,
+  trStart        :: Maybe String,
+  -- | The day a task was finished or the day it was dropped, which is one thing and not two: a task
+  -- is done or it is cancelled and never both, and its status says which of the two it is.
+  trStatusDate   :: Maybe String,
+  trOnCompletion :: Maybe String,
+  trTaskId       :: Maybe String,
+  trBlockLink    :: Maybe String
+                         }
+  deriving (Eq, Show)
+
+instance FromJSON TaskRest where
+  parseJSON = withObject "TaskRest" $ \o -> TaskRest
+    <$> o .:? "statusName"
+    <*> (fromMaybe [] <$> o .:? "tags")
+    <*> (fromMaybe [] <$> o .:? "dependsOn")
+    <*> o .:? "created"
+    <*> o .:? "start"
+    <*> o .:? "statusDate"
+    <*> o .:? "onCompletion"
+    <*> o .:? "id"
+    <*> o .:? "blockLink"
+
+-- | A task saying nothing beside its own fields, which is what a plain checkbox carries.
+emptyRest :: TaskRest
+emptyRest = TaskRest Nothing [] [] Nothing Nothing Nothing Nothing Nothing Nothing
+
+-- | What a task carried beside its own fields, read out of the JSON it carried it in.
+readTaskRest :: String -> Maybe TaskRest
+readTaskRest = decode . TLE.encodeUtf8 . TL.pack
 
 -- | Which field a mark on a line names.
 data SigKey

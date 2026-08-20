@@ -145,6 +145,43 @@ module(Data/Note)
       block, so a note asking about its tasks is a note holding that ask, and it carries [query] as
       the lines the reader typed rather than as a reading of them — the block is written back from
       it, and what a reader typed is what a reader has to be shown again.
+      The query asks about the vault the note was written in, which is what the plugin's own query
+      asks about. A note's page reaches only the notes it links to, so a query answered over what
+      the page reaches would answer about almost nothing; and one answered over every page there is
+      would answer a query of one vault with the tasks of another.
+      The language is read by @Syntax.Obsidian.Query@, which is where the whole of it is written
+      down. What is read is what a task must be, what order to give what is found, and how much of
+      it to show. What is not read: [group by] and the counts that go with it, the words that hide
+      and show parts of what is shown, @explain@, searching by a regular expression, the
+      instructions written as functions, presets and the query a vault sets for all of them, the
+      placeholders naming the file the query is written in, urgency as something to ask about or
+      order by, the filters over what a task waits on, and the filters over a note's headings and
+      properties. A line holding one of those is a line the reader is told about rather than one
+      quietly passed over.
+
+  data(Show/TaskQuery(result -> String))
+    # [Show/TaskQuery] shows what a note's query found: the tasks of its vault which are what the
+      query asked for, in the order it asked for, cut to the count it asked for. Each entry is the
+      [Task] value itself beside the page it was written in and the expression it was declared by,
+      as [Show/TaskList] carries them and for the same reason — a task shown in a list has no page
+      of its own to be written back to, so it carries one.
+      One field carrying both what was found and why nothing was, rather than two fields or two
+      arms. A query is something a reader typed, so a query nobody can read is an ordinary answer
+      and not a failure of the page: the block says which line was not understood, where the reader
+      wrote it, and the note around it is shown as it was. Both travel in the one [result] because
+      answering them apart would be running the query twice to ask whether it ran.
+
+  every(Show/TaskQuery.., isa= [/Catln/Doc/DShow])
+
+  /Catln/Doc/dshow(s= #tasks(query)) =
+    tasksQuery(query -> String) -> String
+      # [tasksQuery] answers a note's query as JSON: the tasks of the note's vault it found, each
+        beside the page it was written in and the expression it was declared by, or the lines of the
+        query which were not understood.
+      #runtime("tasksQuery")
+
+    Show/TaskQuery(result= tasksQuery(query= query))
+
   annot(#properties(text -> String))
 
   data(Show/Properties(text -> String))

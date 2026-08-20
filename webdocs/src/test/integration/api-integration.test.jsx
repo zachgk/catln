@@ -740,6 +740,77 @@ describe('Backend API contract', () => {
     })
   })
 
+  // The query a note writes in a block fenced as tasks, answered over the tasks of that note's
+  // vault. Scoped to a note, which is the only way to be asking about a vault: the vault a query
+  // searches is the vault holding the note it was written in.
+  //
+  // Absolute dates only. A doc server reads the day off the clock, so a query written here against
+  // a relative date would ask a different question every day; which day a relative date resolves to
+  // is ObsidianQueryTests, against the day every test of the compiler pins.
+  describe('#tasks', () => {
+    const NOTE = '/test/Integration/code/artifacts/catln-tasks/Query.md'
+    const OTHER_VAULT = 'catln-test'
+
+    async function notePage() {
+      const found = (await sidebarPages()).map(p => p.sbPath).find(p => p.endsWith(NOTE))
+      expect(found).toBeDefined()
+      return found
+    }
+
+    // What a query answers with: the tasks it found, or why nothing was found, in the one result.
+    async function answered(query, prgmName) {
+      const val = await annotValue(`#tasks(query= ${JSON.stringify(query)})`, prgmName)
+      expect(val.tag).toBe('TupleVal')
+      expect(val.name).toBe('/Data/Note/Show/TaskQuery')
+      return JSON.parse(val.args['/result'].contents)
+    }
+
+    function describedAs(task) {
+      return task.ptTask.args['/description'].contents
+    }
+
+    it('answers a note query over the tasks of that note vault', async () => {
+      const result = await answered('not done\nsort by priority\nlimit 3', await notePage())
+      expect(result.qrError).toBeNull()
+
+      // Filtered, ordered and cut: the one task of the vault anybody gave a priority to comes
+      // first, and the rest follow in the order the note wrote them.
+      expect(result.qrTasks.map(describedAs)).toEqual(['Ship it #work', 'Read the note', 'Plan the rest'])
+
+      // Each entry carries where it came from, which is what lets a row of a result be edited.
+      for (const task of result.qrTasks) {
+        expect(task.ptTask.tag).toBe('TupleVal')
+        expect(task.ptPage.endsWith('.md')).toBe(true)
+        expect(task.ptExpr).toMatch(/^[0-9a-f-]{36}$/)
+      }
+    })
+
+    it('finds only the tasks of the vault the query was written in', async () => {
+      // The doc server holds two vaults. A query in one must not answer with the other's tasks,
+      // which searching every page there is would do.
+      const result = await answered('', await notePage())
+      expect(result.qrError).toBeNull()
+      expect(result.qrTasks.length).toBeGreaterThan(0)
+      expect(result.qrTasks.filter(t => t.ptPage.includes(OTHER_VAULT))).toEqual([])
+    })
+
+    it('says which line of a query was not understood, as an answer and not a failure', async () => {
+      // A query is something a reader typed, so a query nobody can read is shown where they wrote
+      // it. The annotation still answers with a value: the page around it is not lost to it.
+      const result = await answered('not done\nsoonish', await notePage())
+      expect(result.qrTasks).toEqual([])
+      expect(result.qrError).toContain('soonish')
+    })
+
+    it('says a query written in no vault has nothing to search', async () => {
+      // Rather than falling back to every page the doc server holds, which would answer a question
+      // nobody asked.
+      const result = await answered('not done')
+      expect(result.qrTasks).toEqual([])
+      expect(result.qrError).toContain('vault')
+    })
+  })
+
   // A note which opens with properties naming a page on the web is written over that page. The
   // properties are read into a display of their own, and the address they name into an overlay
   // beside them -- neither of which the note itself wrote.

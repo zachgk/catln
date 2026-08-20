@@ -13,3 +13,10 @@ Anything written after them is the note again.
 ```
 - [ ] A checkbox inside code is writing about a task rather than making one
 ```
+
+A vault which runs no plugin still holds checkboxes, so a query written in one still has tasks to
+find.
+
+```tasks
+not done
+```

@@ -83,7 +83,7 @@ data StatusKind
   | KCancelled
   | KNonTask
   | KEmpty
-  deriving (Eq, Show)
+  deriving (Eq, Show, Enum, Bounded)
 
 -- | One status a vault knows: the character written in the box, what the vault calls it, and which
 -- kind it is.

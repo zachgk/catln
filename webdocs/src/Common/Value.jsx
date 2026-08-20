@@ -15,6 +15,7 @@ import HTMLShow from './Values/HTMLShow';
 import Task from './Values/Task';
 import ObsidianTask from './Values/ObsidianTask';
 import TaskList from './Values/TaskList';
+import TaskQuery from './Values/TaskQuery';
 import Overlay from './Values/Overlay';
 import Properties from './Values/Properties';
 import {BuildFile, CatlnResult} from './Values/BuildResult';
@@ -83,6 +84,12 @@ function Value(props) {
     // the note that row came from, which the row carries and the list on this page does not know.
     case "/Data/Note/Show/TaskList":
       return <TaskList {...val.args} />;
+    // What the query a note wrote found. It gets no update for the reason the list above gets none,
+    // and for one more: the query is markdown of the note, so it is changed by editing the note.
+    // Replacing the annotation with anything that is not the one the query was read into would leave
+    // the note unwriteable.
+    case "/Data/Note/Show/TaskQuery":
+      return <TaskQuery {...val.args} />;
     // The page a page is written over, shown as the address it names rather than as a frame of that
     // page. The frame belongs to whatever is laying the page out around it, so a page carrying an
     // overlay is one frame and one link rather than two frames.

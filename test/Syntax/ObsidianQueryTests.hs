@@ -10,10 +10,29 @@
 -- @last friday@ is yesterday and a @next monday@ is two days off.
 module Syntax.ObsidianQueryTests where
 
+import           CRes                     (CRes (..), prettyCNotes, runCResT)
+import           CtService                (CTSS, ctssBaseFiles, ctssKeys,
+                                           getEvalAnnots)
+import           Data.Aeson               (FromJSON (..), Value (..), decode,
+                                           withObject, (.:), (.:?))
+import qualified Data.Aeson.KeyMap        as KM
+import qualified Data.HashMap.Strict      as H
+import           Data.List                (isInfixOf)
+import           Data.Maybe               (listToMaybe)
+import qualified Data.Text                as T
+import qualified Data.Text.Lazy           as TL
+import qualified Data.Text.Lazy.Encoding  as TLE
 import           Data.Time.Calendar       (Day, fromGregorian)
+import           Eval.Common              (Val (..))
+import           Semantics                (testCtssConfig)
+import           Semantics.Prgm           (FileImport, impDisp)
 import           Syntax.Obsidian.Query
 import           Syntax.Obsidian.Settings (StatusKind (..))
 import           Syntax.Obsidian.Task     (TaskPriority (..))
+import           Syntax.RereadTests       (caseDir)
+import           System.Directory         (createDirectoryIfMissing,
+                                           makeAbsolute)
+import           System.FilePath          ((</>))
 import           Test.Tasty
 import           Test.Tasty.HUnit         (assertEqual, assertFailure, testCase)
 
@@ -290,6 +309,115 @@ testOrdering = testGroup "the order a query gives what it finds" [
   finds "cut with no order asked for" "limit 2" ["read it", "write it"]
                                                                  ]
 
+-- ---------------------------------------------------------------------------------------------
+-- Answering the query a note wrote
+-- ---------------------------------------------------------------------------------------------
+
+-- | What the display of a note's query carries, read back out of the JSON it carries it in.
+data Answered = Answered { answeredError :: Maybe String, answeredTasks :: [Value] }
+
+instance FromJSON Answered where
+  parseJSON = withObject "Answered" $ \o -> Answered <$> o .:? "qrError" <*> o .: "qrTasks"
+
+-- | The notes the cases below ask about, and the vault written for the one of them that needs a
+-- query nobody can read.
+--
+-- One service holding all of them rather than one per case. What a case here costs is compiling the
+-- standard library, which every note needs and which the service does once.
+queryNote, simpleNote :: FilePath
+queryNote = "test/Integration/code/artifacts/catln-tasks/Query.md"
+simpleNote = "test/Integration/code/artifacts/catln-test/Tasks.md"
+
+answeringNotes :: IO (CTSS, FilePath)
+answeringNotes = do
+  dir <- caseDir "obsidian-query-bad"
+  createDirectoryIfMissing True (dir </> ".obsidian")
+  writeFile (dir </> ".obsidian" </> "app.json") "{}"
+  writeFile (dir </> "Bad.md") $ unlines ["```tasks", "not done", "soonish", "```"]
+  ctss <- ctssBaseFiles testCtssConfig [queryNote, simpleNote, dir </> "Bad.md"]
+  return (ctss, dir </> "Bad.md")
+
+-- | The query a note wrote, answered by the compiler the way a doc server asks for it.
+--
+-- The whole of the way: the vault is read off disk, its notes are compiled, the annotation the query
+-- was read as is evaluated, and the value it displays as is what comes back. Nothing else runs this
+-- — the golden tests of a vault evaluate the annotations of the file a test names and not of the
+-- notes it reaches, which for a query is every note there is.
+answeredBy :: CTSS -> FilePath -> IO Answered
+answeredBy ctss note = do
+  page <- pageAt note ctss
+  annots <- runCResT $ getEvalAnnots ctss page
+  case annots of
+    CErr notes -> assertFailure $ "the note did not compile: " ++ prettyCNotes notes
+    CRes _ vals -> case [args | (_, TupleVal name args) <- vals, name == "/Data/Note/Show/TaskQuery"] of
+      [args] -> case H.lookup "/result" args of
+        Just (StrVal json) -> maybe (assertFailure $ "the answer is not JSON: " ++ json) return $
+          decode (TLE.encodeUtf8 (TL.pack json))
+        carried -> assertFailure $ "the display carries " ++ show carried ++ " rather than a result"
+      displays -> assertFailure $ "the note displays " ++ show (length displays) ++ " queries"
+
+-- | The page a service holds at a path.
+--
+-- Asked for by the path it resolves to rather than the path it was written as, since that is what
+-- the service names its pages by.
+pageAt :: FilePath -> CTSS -> IO FileImport
+pageAt path ctss = do
+  pages <- ctssKeys ctss
+  resolved <- makeAbsolute path
+  case [page | page <- pages, impDisp page `elem` [Just path, Just resolved]] of
+    [page] -> return page
+    held   -> assertFailure $ "the service holds " ++ show (length held) ++ " pages shown at " ++ path
+
+-- | What a task the answer carries says, which is what a reader of the block sees beside its box.
+saysOf :: Value -> Maybe String
+saysOf v = case v of
+  Object o | Just (Object shown) <- KM.lookup "ptTask" o
+           , Just (Object args) <- KM.lookup "args" shown
+           -> firstString [KM.lookup k args | k <- ["/description", "/contents"]]
+  _ -> Nothing
+  where
+    firstString vs = listToMaybe [T.unpack s | Just (Object arg) <- vs, Just (String s) <- [KM.lookup "contents" arg]]
+
+-- | Which note of the vault a task the answer carries came from.
+pageOf :: Value -> Maybe String
+pageOf (Object o) | Just (String p) <- KM.lookup "ptPage" o = Just (T.unpack p)
+pageOf _ = Nothing
+
+testAnswering :: TestTree
+testAnswering = withResource answeringNotes (const $ return ()) $ \held ->
+  testGroup "the query a note wrote, answered by the compiler" [
+
+  testCase "over the tasks of the vault the note is in" $ do
+    (ctss, _) <- held
+    answer <- answeredBy ctss queryNote
+    assertEqual "the query was not understood" Nothing (answeredError answer)
+    -- The query is @not done@, ordered by how urgent each task is and cut to three. Ship it is the
+    -- one task of the vault anybody gave a priority to, so it comes first and the rest follow in
+    -- the order the note wrote them.
+    assertEqual "the query did not find what the vault says"
+      [Just "Ship it #work", Just "Read the note", Just "Plan the rest"]
+      (map saysOf (answeredTasks answer)),
+
+  testCase "over that vault and no other" $ do
+    (ctss, _) <- held
+    answer <- answeredBy ctss simpleNote
+    assertEqual "the query was not understood" Nothing (answeredError answer)
+    -- A vault running no plugin holds checkboxes all the same, and a query written in one finds
+    -- them. The service holds the vault beside it as well, whose tasks this must not reach.
+    assertEqual "the query did not find the checkboxes of a vault running no plugin"
+      [Just "Read [[Welcome]]", Just "Plan the rest", Just "A checkbox indented deeper is a task of its own"]
+      (map saysOf (answeredTasks answer))
+    assertEqual "the query reached out of the vault it was written in"
+      [] [p | Just p <- map pageOf (answeredTasks answer), not ("catln-test/" `isInfixOf` p)],
+
+  testCase "saying which line of it was not understood, where it was written" $ do
+    (ctss, bad) <- held
+    answer <- answeredBy ctss bad
+    assertEqual "the line the reader wrote was not named back to them"
+      (Just (notUnderstood "soonish")) (answeredError answer)
+    assertEqual "a query nobody can read found something" [] (map saysOf (answeredTasks answer))
+                                                              ]
+
 obsidianQueryTests :: TestTree
 obsidianQueryTests = testGroup "ObsidianQueryTests" [
   testStatusFilters,
@@ -299,5 +427,6 @@ obsidianQueryTests = testGroup "ObsidianQueryTests" [
   testBooleanFilters,
   testWholeQuery,
   testFinding,
-  testOrdering
+  testOrdering,
+  testAnswering
                                                     ]

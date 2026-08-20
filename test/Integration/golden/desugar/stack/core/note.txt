@@ -28,6 +28,9 @@ Prgm
                         , /Catln/Doc/dshow( Value s= Value #taskList )= Show/TaskList
                             ( Value tasks= taskList( Value annot= Value s ) )
                         , /Catln/Doc/dshow
+                            ( Value s= #tasks( Value query ) )= Show/TaskQuery
+                            ( Value result= tasksQuery( Value query= Value query ) )
+                        , /Catln/Doc/dshow
                             ( Value s= #properties( Value text ) )= Show/Properties( Value text= Value text )
                         ]
                     }
@@ -87,6 +90,16 @@ Prgm
                 ( "/Data/Note/StatusType/NonTask"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Note/StatusType/NonTask ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/Show/TaskQuery"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/Show/TaskQuery( Value /result -> /Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -179,6 +192,16 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/Doc/dshow./Data/Note/tasksQuery"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Catln/Doc/dshow./Data/Note/tasksQuery( Value query -> /Data/String ) -> /Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/Note/#taskList"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Note/#taskList ]
@@ -259,6 +282,8 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
         , CGClass
             ( False
             , /Data/Note/Task/Simple
@@ -266,12 +291,13 @@ Prgm
                 [ /Data/Note/Task/Simple..
                 , /Data/Note/Task/Obsidian..
                 , /Data/Note/Show/TaskList..
+                , /Data/Note/Show/TaskQuery..
                 , /Data/Note/Show/Properties..
                 ]
             , Just "A task is shown in the webdocs as the task it is, rather than as the declaration it was read
               into: a box to check and the writing beside it. It is the value itself that is shown, with no
               display type standing in for it, which is what lets checking the box in a doc server write the
-              change back to the note the task was read from.   "
+              change back to the note the task was read from.    "
             )
         , CGClass
             ( True
