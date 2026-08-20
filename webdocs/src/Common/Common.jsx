@@ -1,6 +1,8 @@
 import React, {useState, useEffect} from 'react';
 
 import { styled } from '@mui/material/styles';
+import LinearProgress from '@mui/material/LinearProgress';
+import Typography from '@mui/material/Typography';
 import {SimpleTreeView} from '@mui/x-tree-view/SimpleTreeView';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -173,13 +175,150 @@ function useLiveApi(path, reloadKey) {
   return result;
 }
 
+// What the compiler is working on, as one connection for the whole app.
+//
+// A browser allows six connections to a server and the app already holds two of them open — the
+// navigation follows its own annotation and a page follows itself (see AnnotPage in DocsPage.jsx).
+// A stream per waiting display would be the app running out of connections to fetch the very page it
+// is telling the reader it is waiting for. It is also one question with one answer: the compiler
+// builds one component at a time behind one lock, so what it is working on is what every display
+// waiting on it is waiting for.
+const PROGRESS_PATH = '/api/progress';
+
+// How long a display waits before asking what is being done about it.
+//
+// A page that arrives at once should arrive at once rather than flash a bar on its way, and a wait
+// too short to read is a wait not worth reporting. It is also what keeps a display that was never
+// really waiting from opening a connection at all.
+const PROGRESS_DELAY = 500;
+
+let progressSource = null;
+let progressLast = null;
+const progressListeners = new Set();
+
+function progressSubscribe(listener) {
+  progressListeners.add(listener);
+  if(progressSource) {
+    return;
+  }
+  progressSource = new EventSource(PROGRESS_PATH);
+  progressSource.onmessage = e => {
+    // Whatever arrives here is shown to a reader who is already waiting, so a frame that cannot be
+    // read is passed over rather than allowed to take the display down with it.
+    let now = null;
+    try {
+      const res = JSON.parse(e.data);
+      const p = res.tag === "Success" ? res.contents[0] : null;
+      if(p && typeof p.prDone === 'number' && typeof p.prTotal === 'number') {
+        now = p;
+      }
+    } catch(err) {
+      return;
+    }
+    progressLast = now;
+    progressListeners.forEach(l => l(now));
+  };
+  // Closed rather than left for the browser to open again, which is the opposite of what a display
+  // following its page does: there, what comes back is the page as it now is and is worth waiting
+  // for, while a bar is worth nothing to reopen a connection for. The reader is left waiting at an
+  // indeterminate bar, which is what they had before there was anything to say. A display that waits
+  // later opens one again, so a doc server that has come back is picked up without this having to
+  // watch for it.
+  progressSource.onerror = () => {
+    progressSource.close();
+    progressSource = null;
+    progressLast = null;
+    progressListeners.forEach(l => l(null));
+  };
+}
+
+function progressUnsubscribe(listener) {
+  progressListeners.delete(listener);
+  if(progressListeners.size === 0 && progressSource) {
+    progressSource.close();
+    progressSource = null;
+    // Dropped with the connection, so that the next display to wait is not shown what the compiler
+    // was doing the last time somebody waited.
+    progressLast = null;
+  }
+}
+
+// What the compiler says it is doing, for a display that has been waiting long enough to say so.
+function useProgress() {
+  const [progress, setProgress] = useState(progressLast);
+  useEffect(() => {
+    const timer = setTimeout(() => progressSubscribe(setProgress), PROGRESS_DELAY);
+    return () => {
+      clearTimeout(timer);
+      progressUnsubscribe(setProgress);
+    };
+  }, []);
+  return progress;
+}
+
+// What a step of the compiler's says about itself, as a line to read.
+function progressText(progress) {
+  const {prStep, prDone, prTotal, prAt} = progress;
+  const at = prAt ? ` ${prAt}` : '';
+  switch(prStep) {
+  case "StepReading":
+    return `Read ${prDone} of ${prTotal} pages`;
+  case "StepBuilding":
+    return `Compiled ${prDone} of ${prTotal} pages`;
+  case "StepTypechecking":
+    return `Type checking${at}`;
+  case "StepEvaluating":
+    return `Evaluating${at}`;
+  default:
+    return '';
+  }
+}
+
+// How far the compiler has got with what is being waited for.
+//
+// The bar is only determinate while there is something left to count. A step with no count of its
+// own — an evaluation, which is a program the reader wrote — has no honest fraction to show, and a
+// count which has reached its total is a step that has FINISHED rather than a wait that is over: the
+// compiler can start a build from inside an evaluation, which leaves the pages it built standing at
+// their total while the evaluation goes on. Either reads as still working, which is what it is.
+function LoadingProgress() {
+  const progress = useProgress();
+  const working = progress && progress.prWorking;
+  const counted = working && progress.prTotal > 0 && progress.prDone < progress.prTotal;
+  return (
+    <>
+      <LinearProgress
+        variant={counted ? "determinate" : "indeterminate"}
+        value={counted ? 100 * progress.prDone / progress.prTotal : undefined}
+      />
+      {working && (
+        // Broken anywhere rather than at spaces, because what it is mostly made of is a path. The
+        // navigation is a narrow column, and a path which will not break is one clipped at its edge
+        // — which cuts off the end, and the end of a path is the part that says which file it is.
+        <Typography
+          variant="caption"
+          color="textSecondary"
+          component="div"
+          sx={{overflowWrap: 'anywhere'}}
+          data-testid="loading-progress"
+        >
+          {progressText(progress)}
+        </Typography>
+      )}
+    </>
+  );
+}
+
 function Loading(props) {
   const {error, isLoaded, data, notes} = props.status;
 
   if (error) {
     return <div>Error: {error.message}</div>;
   } else if (!isLoaded) {
-    return <div>Loading...</div>;
+    // The words stay the sole contents of their own element. What a display says while it waits is
+    // asserted against by name throughout the suites, and text put beside them here would be read as
+    // part of them.
+    return <div><div>Loading...</div><LoadingProgress /></div>;
   } else if (!data){
     return <div><Notes notes={notes} /></div>;
   } else if (notes && notes.length > 0) {
@@ -641,7 +780,9 @@ export {
   useApi,
   useLiveApi,
   useDebounced,
+  useProgress,
   Loading,
+  LoadingProgress,
   Notes,
   PartialKey,
   PartialType,

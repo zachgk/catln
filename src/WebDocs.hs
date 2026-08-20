@@ -30,9 +30,10 @@ import           Data.Text.Lazy.Encoding       (decodeUtf8, encodeUtf8)
 import           GHC.Generics                  (Generic)
 import           Network.Wai.Middleware.Static
 
+import           Control.Concurrent            (threadDelay)
 import           Control.Concurrent.STM        (STM, atomically, orElse,
                                                 readTVar, registerDelay, retry)
-import           Control.Exception             (SomeException, try)
+import           Control.Exception             (SomeException, evaluate, try)
 import           Control.Monad                 (unless, when)
 import           Control.Monad.Trans           (lift)
 import           CRes
@@ -158,8 +159,12 @@ serve ctss shown compute = do
       -- computed is one the next wait ends on rather than one nothing hears about.
       stream $ \write flush -> ctssFollow ctss shown $ \await -> do
         let sending sent = do
-              res <- try (ctssRead ctss >> compute)
-              let answer = either exceptionBody resBody res
+              -- A failure is said as the answer rather than let through, because letting one through
+              -- is the connection dropping — which an 'EventSource' answers by opening another, so a
+              -- page which cannot be compiled at all would be compiled again every few seconds
+              -- forever. A request answered once has no such loop to fall into and reports it as the
+              -- failure it is, which is why this is here and not in 'answering'.
+              answer <- either exceptionBody id <$> try (answering ctss compute)
               -- An answer the reader already has is not sent again. What a display is followed by is
               -- what it is compiled FROM, which is more than what it SHOWS: a navigation is compiled
               -- in the scope of a page, so every edit to that page reaches it, while which pages
@@ -176,11 +181,37 @@ serve ctss shown compute = do
               sending (Just answer)
         sending Nothing
     else do
-      liftAndCatchIO $ ctssRead ctss
-      maybeJson =<< liftAndCatchIO compute
-  where
-    eventStream = "text/event-stream"
-    keepAlive = 30000000
+      answer <- liftAndCatchIO $ answering ctss compute
+      setHeader "Content-Type" "application/json; charset=utf-8"
+      raw answer
+
+-- | Compute an answer, as the bytes of it, counted as work a reader is waiting for.
+--
+-- The bytes are made here rather than left for whoever writes them. A page's annotations are
+-- evaluated lazily ('CtService.getEvalAnnots'), and so is the graph of values they come to, so much
+-- of what the reader is waiting for is in fact paid by whatever first walks the answer — which is
+-- the encoding. Left to the write, that work would happen after the service had said it had stopped
+-- working, and a reader would be shown a bar which went away while the page was still being made.
+--
+-- Failures are left to whoever asked, since what to make of one differs between a request answered
+-- once and a connection held open.
+answering :: (ToJSON a) => CTSS -> IO (CRes a) -> IO BL.ByteString
+answering ctss compute = ctssWorking ctss $ do
+  answer <- resBody <$> (ctssRead ctss >> compute)
+  _ <- evaluate (BL.length answer)
+  return answer
+
+eventStream :: T.Text
+eventStream = "text/event-stream"
+
+-- | How long a stream with nothing to say waits before saying nothing, to find whether anyone is
+-- still there.
+keepAlive :: Int
+keepAlive = 30000000
+
+-- | The soonest a stream of what the service is working on says anything again.
+atMostEvery :: Int
+atMostEvery = 200000
 
 -- | Wait for a display to be reached, doing something every so often for as long as it is not.
 --
@@ -262,6 +293,10 @@ annotResp ctss scope' annot = do
     -- As in 'CtService.ctssCallDShow', nothing keeps what this answers, so nothing reads what it
     -- asked about.
     svc <- lift $ newEvalService ctss scope'
+    -- As in 'CtService.getEvalAnnots', with no count of its own. This is the path the navigation and
+    -- the annotation route take, which on a doc server that has just started is the slowest thing a
+    -- reader waits at.
+    lift $ ctssReport ctss StepEvaluating 0 0 (impDisp =<< scope')
     maybeAnnots <- asCResT $ evalAnnots (Just svc) annotPrgmName joinedTprgms
     let annots' = H.fromList $ map (first (getMetaID . getExprMeta)) maybeAnnots
     return $ mapMetaRawPrgm (zip4MetaFun (interleaveMeta $ interleavePrgm annotTprgm) (interleaveMeta targetModes) (interleaveMeta annots') (interleaveMeta $ printSources rawPrgm')) rawPrgm'
@@ -336,6 +371,41 @@ mkDocService baseFileNames = do
 
 docApiBase :: Bool -> CTSS -> ScottyM ()
 docApiBase readonly ctss = do
+
+  -- What the service is working on, said again as it changes, for a reader waiting at something which
+  -- has not arrived.
+  --
+  -- Its own route rather than frames on the page's, because it has to answer WHILE the work it reports
+  -- on is running, and a page is answered by computing it. Computing a page takes the service's lock
+  -- and holds it for a whole component; this reads a 'TVar' which sits beside that lock and takes
+  -- nothing. For the same reason it does not read the service ('ctssRead') — that would put it behind
+  -- exactly the read it is here to report on.
+  --
+  -- Not a display: it is about no page, so it is not registered with 'ctssFollow' and no read wakes
+  -- it. What wakes it is the work itself.
+  get "/api/progress" $ do
+    accept <- header "Accept"
+    if maybe False (T.isInfixOf eventStream) accept
+      then do
+        setHeader "Content-Type" eventStream
+        setHeader "Cache-Control" "no-cache"
+        stream $ \write flush -> do
+          let sending sent = do
+                now <- ctssProgress ctss
+                when (Just now /= sent) $ do
+                  write $ "data: " <> lazyByteString (resBody (pure now :: CRes Progress)) <> "\n\n"
+                  flush
+                -- A reader reads a bar, not every step of one. A read takes up a page thousands of
+                -- times over and each is a change, so what is said next is said no sooner than this.
+                -- The wait below then reads where the work has got to rather than where it went
+                -- through, so what those thousands of changes cost is one frame.
+                threadDelay atMostEvery
+                untilChanged (ctssProgressChanged ctss now) keepAlive $ write ": \n\n" >> flush
+                sending (Just now)
+          sending Nothing
+      else do
+        now <- liftAndCatchIO $ ctssProgress ctss
+        maybeJson (pure now :: CRes Progress)
 
   get "/api/config" $ do
     -- The page the docs open at, which is the doc server's own answer rather than a page picked out

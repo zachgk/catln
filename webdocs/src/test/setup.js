@@ -36,6 +36,13 @@ class FakeEventSource {
     this.onmessage = null
     this.onerror = null
     openSources.push(this)
+    // What the compiler is working on is not a question anything asks once, so there is no answer to
+    // take a first frame from and the cases about it push their own. Left alone here as well because
+    // a real EventSource does not go through fetch at all: taking the first frame that way is this
+    // stub's doing, and a suite counting the requests a display made would count one it never made.
+    if (url.includes('/api/progress')) {
+      return
+    }
     // The first frame is the answer a request asked once would have got, so it is taken from
     // whatever the suite is answering requests with. A suite that mocks one URL therefore answers
     // both the display that asks about it once and the display that follows it, and the cases about

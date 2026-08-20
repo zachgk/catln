@@ -11,17 +11,21 @@
 -- It supports partial and incremental compilation and rebuilding, for both the Main build and pieces like webdocs or IDE integration.
 --------------------------------------------------------------------
 
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric  #-}
+
 module CtService where
 import           Control.Concurrent      (MVar, forkIO, modifyMVar, modifyMVar_,
                                           newMVar, readMVar, withMVar)
 import           Control.Concurrent.STM  (STM, TVar, atomically, modifyTVar',
                                           newTVarIO, readTVar, readTVarIO,
                                           retry, writeTVar)
-import           Control.Exception       (bracket)
+import           Control.Exception       (bracket, bracket_)
 import           Control.Monad           (forM, forM_, forever, unless, void,
                                           when)
 import           Control.Monad.Trans     (lift)
 import           CRes
+import           Data.Aeson              (ToJSON)
 import           Data.Graph
 import qualified Data.HashMap.Strict     as H
 import qualified Data.HashSet            as S
@@ -46,6 +50,7 @@ import           Eval.Testing            (TestDesc (..), evalPrints, evalTest,
 import           FileWatch               (Watch, Watcher, allCovered,
                                           awaitSettled, covered, startWatcher,
                                           watchReads, withPending)
+import           GHC.Generics            (Generic)
 import           MapMeta                 (parseMetaIDScope)
 import           Semantics               (CTSSConfig, ctssCachePath)
 import           Semantics.Prgm
@@ -69,7 +74,69 @@ import           Utils
 
 type TBPrgm = Prgm TExpr EvalMetaDat
 
-newtype CTSS = CTSS (MVar CTSSDat)
+-- | The compilation service, and what it is working on.
+--
+-- Two things rather than one because they are asked about at different moments. The service itself is
+-- behind an MVar which a build holds for a whole SCC ('ctssBuildSCC'), so anything reached THROUGH
+-- that MVar is reached only once the build is over — and what a reader waiting on that build wants to
+-- be told is how far through it is. So what the service is working on sits beside the lock rather
+-- than under it, and is read without taking it.
+data CTSS = CTSS (MVar CTSSDat) (TVar Working)
+
+-- | What the service is working on, for whoever is waiting at something it has not answered yet.
+--
+-- Said as what the work IS rather than as one number for how much of it is left. What a page costs is
+-- the reading of the files it is compiled from, the compiling of them, and the evaluating of what it
+-- displays; the first two are counted in pages and the last is a program the reader wrote, which has
+-- no count at all. Fusing them into a percentage would need a weight for each, and there is nothing
+-- here that knows one — so each step says what it can say, and a step with nothing to count says so
+-- rather than inventing a fraction.
+data Progress = Progress {
+  -- | Whether anything is being computed for a reader at all.
+  --
+  -- Kept apart from the step below because the step is the LAST thing said rather than a thing being
+  -- done: a build that ended left "compiled 57 of 57 pages" behind it, and a reader shown that while
+  -- the service sat idle would be told something untrue about the present. Maintained by 'ctssWorking'
+  -- and by nothing else.
+  prWorking :: Bool,
+  prStep    :: ProgressStep,
+  -- | The pages this step has finished, and the pages it knows of.
+  --
+  -- The total grows as the step goes: a read finds out what it has to read by reading it, so what is
+  -- known of the work is what has been reached so far. Both zero for a step with no count of its own.
+  prDone    :: Int,
+  prTotal   :: Int,
+  -- | What is being worked on, where there is one thing to name it by.
+  prAt      :: Maybe String
+                         }
+  deriving (Eq, Generic, ToJSON)
+
+-- | Which kind of work the service is doing.
+data ProgressStep
+  = StepIdle
+  | StepReading
+  | StepBuilding
+  | StepTypechecking
+  | StepEvaluating
+  deriving (Eq, Show, Generic, ToJSON)
+
+-- | The progress, and how many readers are being computed for.
+--
+-- The count does not leave the service: what a reader is told is whether anything is happening, not
+-- how many other readers there are. It is counted rather than flagged because two readers can be
+-- waiting at once, and the first of them being answered is not the service falling idle.
+data Working = Working {
+  wkBusy :: Int,
+  wkNow  :: Progress
+                       }
+  deriving (Eq)
+
+-- | Nothing is being computed, and so there is nothing to say about what.
+idleProgress :: Progress
+idleProgress = Progress False StepIdle 0 0 Nothing
+
+newWorking :: IO (TVar Working)
+newWorking = newTVarIO $ Working 0 idleProgress
 
 -- Main data type for CtService Status
 data CTSSDat = CTSSDat {
@@ -172,7 +239,7 @@ changeReaches ReadChange{rcChanged, rcPages} Shown{shPage} =
 emptyCTSS :: CTSSConfig -> IO CTSS
 emptyCTSS config = do
   v <- newMVar =<< newCTSSDat config []
-  return $ CTSS v
+  CTSS v <$> newWorking
 
 newCTSSDat :: CTSSConfig -> [String] -> IO CTSSDat
 newCTSSDat config baseFileNames = CTSSDat config baseFileNames H.empty (graphFromEdges []) <$> newReadQueue
@@ -226,14 +293,14 @@ newSSF rp = SSF { ssfSource = rpSource rp
                 }
 
 ctssSetFiles :: CTSS -> [String] -> IO ()
-ctssSetFiles (CTSS ssmv) baseFileNames = do
-  modifyMVar_ ssmv $ \ctss -> return ctss{ctssBaseFileNames=baseFileNames}
-  ctssRead (CTSS ssmv)
+ctssSetFiles ctss@(CTSS ssmv _) baseFileNames = do
+  modifyMVar_ ssmv $ \ss -> return ss{ctssBaseFileNames=baseFileNames}
+  ctssRead ctss
 
 ctssBaseFiles :: CTSSConfig -> [String] -> IO CTSS
 ctssBaseFiles config baseFileNames = do
   v <- newMVar =<< newCTSSDat config baseFileNames
-  let ctss = CTSS v
+  ctss <- CTSS v <$> newWorking
   ctssRead ctss
   return ctss
 
@@ -243,7 +310,7 @@ ctssBaseFiles config baseFileNames = do
 -- looks at every file the service holds, which is cheap next to reading them but is still work
 -- proportional to the program rather than to the change.
 ctssWatch :: CTSS -> IO ()
-ctssWatch ctss@(CTSS ssmv) = do
+ctssWatch ctss@(CTSS ssmv _) = do
   -- A watch reaching under a directory reports whatever a reading of that tree would have read, so
   -- that a path no reading reads is a path no read is woken for. Without it a vault open in Obsidian
   -- reports a write every time its configuration is touched, and every read of the service goes the
@@ -264,7 +331,7 @@ ctssWatch ctss@(CTSS ssmv) = do
 -- For a service that is watching ('ctssWatch'); there is nothing to wait on without a watcher, and
 -- a service told what changed by whoever changed it has nothing to wait for.
 ctssWatchLive :: CTSS -> IO ()
-ctssWatchLive ctss@(CTSS ssmv) = do
+ctssWatchLive ctss@(CTSS ssmv _) = do
   CTSSDat{ctssWatcher} <- readMVar ssmv
   forM_ ctssWatcher $ \watcher -> void $ forkIO $ forever $ do
     awaitSettled watcher settleDelay
@@ -300,7 +367,7 @@ ctssWatchLive ctss@(CTSS ssmv) = do
 -- time — a connection holds one of these open for as long as a reader is reading, and has its own
 -- reasons to stop waiting.
 ctssFollow :: CTSS -> Shown -> (STM () -> IO a) -> IO a
-ctssFollow (CTSS ssmv) shown act = do
+ctssFollow (CTSS ssmv _) shown act = do
   CTSSDat{ctssShown} <- readMVar ssmv
   bracket (open ctssShown) (close ctssShown) $ \(_, reached) -> act (await reached)
   where
@@ -325,7 +392,7 @@ ctssFollow (CTSS ssmv) shown act = do
 -- Nothing acts on this — it is here to be asserted against. A display left on the list after it
 -- closed is woken for nobody, which shows in no other way than by being counted.
 ctssFollowing :: CTSS -> IO Int
-ctssFollowing (CTSS ssmv) = do
+ctssFollowing (CTSS ssmv _) = do
   CTSSDat{ctssShown} <- readMVar ssmv
   H.size . dsOpen <$> readTVarIO ctssShown
 
@@ -334,12 +401,64 @@ ctssFollowing (CTSS ssmv) = do
 -- Asked of the displays rather than of the pages: a change reaching a thousand pages nobody has open
 -- wakes nothing, and the work is what is being read rather than what has changed.
 ctssNotify :: CTSS -> ReadChange -> IO ()
-ctssNotify (CTSS ssmv) change = do
+ctssNotify (CTSS ssmv _) change = do
   CTSSDat{ctssShown} <- readMVar ssmv
   atomically $ do
     Displays{dsOpen} <- readTVar ctssShown
     forM_ (H.elems dsOpen) $ \(shown, reached) ->
       when (changeReaches change shown) $ writeTVar reached True
+
+-- | Say what the service is now doing.
+--
+-- Takes nothing but what to say. This is called from inside the service's own lock —
+-- 'buildSCCPipeline' runs under the 'modifyMVar_' of 'ctssBuildSCC' — so anything it read through
+-- that lock would be a report that deadlocks the build it is reporting on.
+--
+-- Says the step whether or not anybody is waiting. Whether anybody is, is 'prWorking', which
+-- 'ctssWorking' keeps: a build asked for by @catln build@ or by the LSP publishes its steps here and
+-- they are read by nobody, which costs one 'writeTVar' per SCC.
+ctssReport :: CTSS -> ProgressStep -> Int -> Int -> Maybe String -> IO ()
+ctssReport (CTSS _ wv) step done total at = atomically $ modifyTVar' wv $ \w ->
+  w{wkNow = Progress (wkBusy w > 0) step done total at}
+
+-- | Say what the service is now doing WITHIN the work it is already counting.
+--
+-- For a step which is part of a counted one rather than a step of its own: a type check is what a
+-- build of a component spends its time on, and the pages left to build are still the pages left to
+-- build while it runs. Reporting it as a step with no count would take the count away exactly when
+-- the reader has longest to wait for it — a build reports its pages once per component and then
+-- spends the whole component type checking, so a type check which cleared the count would clear it
+-- for all but an instant of the build.
+ctssReportAt :: CTSS -> ProgressStep -> Maybe String -> IO ()
+ctssReportAt (CTSS _ wv) step at = atomically $ modifyTVar' wv $ \w ->
+  w{wkNow = (wkNow w){prWorking = wkBusy w > 0, prStep = step, prAt = at}}
+
+-- | Compute something a reader is waiting for, counted as being worked on while it is computed.
+--
+-- Bracketed, so that a connection dropping, a compile throwing and an answer being sent all take the
+-- count back down the same way. One left up is a reader told forever that something is happening.
+ctssWorking :: CTSS -> IO a -> IO a
+ctssWorking (CTSS _ wv) = bracket_ (count 1) (count (-1))
+  where
+    -- The last reader to stop waiting leaves the service idle rather than leaving the last step it
+    -- published behind it. A step is what is being done, and once nothing is being done there is no
+    -- step to be part way through.
+    count n = atomically $ modifyTVar' wv $ \w ->
+      let busy = wkBusy w + n
+      in Working busy $ if busy > 0 then (wkNow w){prWorking = True} else idleProgress
+
+-- | What the service is doing, asked without waiting for it to stop doing it.
+ctssProgress :: CTSS -> IO Progress
+ctssProgress (CTSS _ wv) = wkNow <$> readTVarIO wv
+
+-- | Wait until what the service is doing is something other than this.
+--
+-- Handed back unrun for the same reason 'ctssFollow' hands its wait back: whoever is waiting has its
+-- own reasons to stop, and waits for those at the same time.
+ctssProgressChanged :: CTSS -> Progress -> STM ()
+ctssProgressChanged (CTSS _ wv) p = do
+  w <- readTVar wv
+  when (wkNow w == p) retry
 
 -- | Read the files the service was given, and take up whatever they now say.
 --
@@ -369,7 +488,7 @@ ctssRead ctss = void $ ctssReadOf ctss []
 -- below cannot match a program it holds against a read which brought none, so the page would be
 -- replaced by one with no program and everything built from it thrown away.
 ctssReadOf :: CTSS -> [FileImport] -> IO ReadChange
-ctssReadOf ctss@(CTSS ssmv) load = do
+ctssReadOf ctss@(CTSS ssmv _) load = do
   CTSSDat{ctssReadLock} <- readMVar ssmv
   change <- withMVar ctssReadLock $ \() -> do
     -- Taken under the read lock rather than before it, because what the read is to make of what it
@@ -386,9 +505,20 @@ ctssReadOf ctss@(CTSS ssmv) load = do
       -- pages this read has taken up and some of whose pages it has not — so the walk is made once,
       -- over the graph the read leaves.
       invalidations <- newIORef []
+      -- Counted here rather than asked of the queue, which holds what is left to do and not what has
+      -- been done. Reads are one at a time ('ctssReadLock'), so an 'IORef' is as safe as the queue is.
+      readSoFar <- newIORef (0 :: Int)
       readQueued ctssConfig reading (S.fromList $ load ++ held) unchanged ctssReadQueue $ \prgmName page -> do
         invalidated <- ctssAddPage ctss prgmName page
         when invalidated $ modifyIORef' invalidations (prgmName :)
+        -- What the read knows of itself at this moment. 'readQueued' takes a page off the queue,
+        -- calls this, and only then queues what that page imports — so here the page is neither
+        -- pending nor unqueued, and the two counts do not overlap or leave it out. The total grows
+        -- as the walk reaches more, which is what a read finding its work by doing it looks like.
+        modifyIORef' readSoFar (+ 1)
+        done <- readIORef readSoFar
+        left <- rqLeft ctssReadQueue
+        ctssReport ctss StepReading done (done + left) (impDisp prgmName)
       -- Not bracketed, as 'Syntax.Parsers.readFiles' does not bracket it: a read which failed part
       -- way must not have what it half read written back.
       finishReading reading
@@ -429,7 +559,7 @@ ctssReadOf ctss@(CTSS ssmv) load = do
 -- start of the read. A read queues each page once ('Syntax.Parsers.rqSeen'), so no page is ever
 -- compared against a version of itself this same read wrote.
 ctssAddPage :: CTSS -> FileImport -> ReadPage -> IO Bool
-ctssAddPage (CTSS ssmv) prgmName page = modifyMVar ssmv $ \ss -> do
+ctssAddPage (CTSS ssmv _) prgmName page = modifyMVar ssmv $ \ss -> do
   let (ssf, invalidated) = mergePage (H.lookup prgmName $ ctssPages ss) page
   return (ctssWithPages (H.insert prgmName ssf $ ctssPages ss) ss, invalidated)
 
@@ -524,7 +654,7 @@ readPathWatches (ReadTree dir)    = [(dir, True), (takeDirectory dir, False)]
 -- nothing had been read from before is in it afterwards, so both are answered the same way — by
 -- looking, once, at the pages whose files have only now come to be watched.
 ctssRewatch :: CTSS -> Watcher -> IO ()
-ctssRewatch (CTSS ssmv) watcher = do
+ctssRewatch ctss@(CTSS ssmv _) watcher = do
   CTSSDat{ctssData} <- readMVar ssmv
   before <- covered watcher
   watchReads watcher $ concatMap readPathWatches $ concatMap (readPaths . ssfRead . fst3) $ graphToNodes ctssData
@@ -534,7 +664,7 @@ ctssRewatch (CTSS ssmv) watcher = do
     let freshly = [(prgmName, ssfRead ssf) | (ssf, prgmName, _) <- graphToNodes ctssData
                                            , any (any (`S.member` fresh) . readPathWatches) $ readPaths $ ssfRead ssf]
     current <- unchangedPages freshly
-    forM_ freshly $ \(prgmName, _) -> unless (H.member prgmName current) $ ctssStale (CTSS ssmv) prgmName
+    forM_ freshly $ \(prgmName, _) -> unless (H.member prgmName current) $ ctssStale ctss prgmName
 
 -- | Drop what was built from the pages a change reached, and say which pages those were.
 --
@@ -586,17 +716,34 @@ ctssClearInvalidations pagesChanged invalidations ss@CTSSDat{ctssData=(g, nodeFr
 -- so earlier SCCs (e.g. core library) remain cached even if a later SCC fails.
 ctssBuildPagesExact :: CTSS -> GraphData SSF FileImport -> IO ()
 ctssBuildPagesExact _ pages | all (ssfBuilt . fst3) (graphToNodes pages) = return ()
-ctssBuildPagesExact (CTSS ssmv) pages = do
+ctssBuildPagesExact ctss pages = do
   -- stronglyConnCompR returns SCCs in reverse topological order (dependencies first)
   let sccs = stronglyConnCompR $ graphToNodes pages
+  -- What is left to do, counted in pages rather than in components. A component is one page or a
+  -- hundred, so a count of components says almost nothing about how much is left, while a page is
+  -- roughly a page's worth of work.
+  --
+  -- 'ssfBuilt' is read from the graph this was handed, while 'ctssBuildSCC' re-checks it against the
+  -- service as it is by the time it takes the lock, and may find another thread has built the
+  -- component already. So a page can be counted done without this thread having done it — which is
+  -- still what a reader waiting here is waiting for, since what they are waiting for is the page
+  -- being built and not this thread being the one to build it.
+  let unbuilt nodes = length [() | node <- nodes, not $ ssfBuilt (fst3 node)]
+  let toBuild = sum [unbuilt (flattenSCC comp) | comp <- sccs]
+  built <- newIORef (0 :: Int)
   forM_ sccs $ \comp -> do
     let sccNodes = flattenSCC comp
-    unless (all (ssfBuilt . fst3) sccNodes) $
-      ctssBuildSCC ssmv sccNodes pages
+    unless (all (ssfBuilt . fst3) sccNodes) $ do
+      done <- readIORef built
+      ctssReport ctss StepBuilding done toBuild (listToMaybe $ mapMaybe (impDisp . snd3) sccNodes)
+      ctssBuildSCC ctss sccNodes pages
+      modifyIORef' built (+ unbuilt sccNodes)
 
 -- | Build a single SCC and commit the result to the MVar atomically.
-ctssBuildSCC :: MVar CTSSDat -> [(SSF, FileImport, [FileImport])] -> GraphData SSF FileImport -> IO ()
-ctssBuildSCC ssmv sccNodes pages = do
+ctssBuildSCC :: CTSS -> [(SSF, FileImport, [FileImport])] -> GraphData SSF FileImport -> IO ()
+-- Nothing is reported before the lock is taken. A thread waiting for it is not the thread doing the
+-- work, and a report from here would overwrite the reporting of the one that is.
+ctssBuildSCC ctss@(CTSS ssmv _) sccNodes pages = do
   let sccFileNames = map snd3 sccNodes
   let sccNamesSet = S.fromList sccFileNames
   -- Get dep lists from the pages graph structure (stable across MVar updates)
@@ -612,7 +759,7 @@ ctssBuildSCC ssmv sccNodes pages = do
               ssf <- H.lookup name ctssPages
               let deps = fromMaybe [] $ H.lookup name pageDeps
               return (ssf, name, deps)) sccFileNames
-        p <- runCResT $ buildSCCPipeline ctssData sccNamesSet currentSCCNodes pages
+        p <- runCResT $ buildSCCPipeline ctss ctssData sccNamesSet currentSCCNodes pages
         case p of
           CRes notes updates -> do
             unless (null notes) $ putStrLn $ prettyCNotes notes
@@ -623,10 +770,10 @@ ctssBuildSCC ssmv sccNodes pages = do
 
 -- | Run the full pipeline (desugar → typecheck → build → annotate) for a single SCC.
 -- Returns a map of updated SSFs for the SCC members.
-buildSCCPipeline :: GraphData SSF FileImport -> S.HashSet FileImport
+buildSCCPipeline :: CTSS -> GraphData SSF FileImport -> S.HashSet FileImport
                  -> [(SSF, FileImport, [FileImport])] -> GraphData SSF FileImport
                  -> CResT IO (H.HashMap FileImport SSF)
-buildSCCPipeline ctssData sccNamesSet sccNodes pages = do
+buildSCCPipeline ctss ctssData sccNamesSet sccNodes pages = do
   -- Get raw programs for all SCC members
   rawPrgms <- forM sccNodes $ \(ssf, name, deps) -> do
     -- Read by whoever asked for the build ('ctssLoadOf'), so a page still unread here is a build of
@@ -672,6 +819,18 @@ buildSCCPipeline ctssData sccNamesSet sccNodes pages = do
             , let peerDes = [d | (d, (n, _)) <- zip finalDes namesAndDeps, n /= name]]
       let tcCRes = typeCheckToRes $ typecheckPrgms tcNodesForTC
       let tcNotes = getCNotes tcCRes
+      -- Said here and nowhere above, because nothing above forces anything. Step 1's 'desPrgm' is
+      -- bound through 'asCResT', which settles only whether it failed, and step 3's 'desFinalPasses'
+      -- is a let. The bind below is what forces the whole of both, and is where a build of anything
+      -- larger than a single page spends nearly all of its time — so reporting the steps above as
+      -- done would be reporting work which has not happened yet.
+      --
+      -- Keeping the count the build published rather than one of its own. 'typecheckPrgms' has no
+      -- place to report from — giving it one means threading a report through the whole of
+      -- 'TypeCheck' — so there is no fraction to be had for the type check itself, and none is
+      -- invented. What is still true is how many pages the build has left, which is what the reader
+      -- is waiting on; this only says which of them it is inside.
+      lift $ ctssReportAt ctss StepTypechecking (listToMaybe $ mapMaybe (impDisp . fst) namesAndDeps)
       tcResults <- asCResT tcCRes
 
       -- Step 6: Construct TPrgm graph for eval (SCC results + built dep TPrgms)
@@ -724,7 +883,7 @@ buildSCCPipeline ctssData sccNamesSet sccNodes pages = do
 -- ('ctssReadOf'), so each turn reads at least one page which was not read before — and a page asked
 -- for which comes back unread is that promise broken, which is reported rather than looped on.
 ctssLoadOf :: CTSS -> (GraphData SSF FileImport -> [FileImport]) -> IO ()
-ctssLoadOf ctss@(CTSS ssmv) select = aux S.empty
+ctssLoadOf ctss@(CTSS ssmv _) select = aux S.empty
   where
     aux asked = do
       CTSSDat{ctssData} <- readMVar ssmv
@@ -742,13 +901,13 @@ ctssLoad :: CTSS -> [FileImport] -> IO ()
 ctssLoad ctss names = ctssLoadOf ctss (const names)
 
 ctssBuildFrom :: CTSS -> FileImport -> IO ()
-ctssBuildFrom ctss@(CTSS ssmv) src = do
+ctssBuildFrom ctss@(CTSS ssmv _) src = do
   ctssLoadOf ctss (map snd3 . graphToNodes . graphFilterReaches src)
   CTSSDat{ctssData} <- readMVar ssmv
   ctssBuildPagesExact ctss (graphFilterReaches src ctssData)
 
 ctssBuildAll :: CTSS -> IO ()
-ctssBuildAll ctss@(CTSS ssmv) = do
+ctssBuildAll ctss@(CTSS ssmv _) = do
   ctssLoadOf ctss (map snd3 . graphToNodes)
   CTSSDat{ctssData} <- readMVar ssmv
   ctssBuildPagesExact ctss ctssData
@@ -764,7 +923,7 @@ ctssRefresh ctss = do
   ctssBuildAll ctss
 
 ctssKeys :: CTSS -> IO [FileImport]
-ctssKeys (CTSS ssmv) = do
+ctssKeys (CTSS ssmv _) = do
   CTSSDat{ctssData} <- readMVar ssmv
   return $ map snd3 $ graphToNodes ctssData
 
@@ -773,22 +932,22 @@ ctssKeys (CTSS ssmv) = do
 -- every page. Resolved the same way a page asked for by name is, so it is a page that can be asked
 -- for; a service started with no files at all has none.
 ctssRootPage :: CTSS -> IO (Maybe String)
-ctssRootPage (CTSS ssmv) = do
+ctssRootPage (CTSS ssmv _) = do
   CTSSDat{ctssConfig, ctssBaseFileNames} <- readMVar ssmv
   case ctssBaseFileNames of
     []       -> return Nothing
     (name:_) -> impDisp <$> mkDesCanonicalImportStr ctssConfig name
 
 ctssGet :: (SSF -> Maybe (CRes a)) -> CTSS -> CResT IO (GraphData a FileImport)
-ctssGet f (CTSS ssmv) = do
-  lift $ ctssBuildAll (CTSS ssmv)
+ctssGet f ctss@(CTSS ssmv _) = do
+  lift $ ctssBuildAll ctss
   CTSSDat{ctssData} <- lift $ readMVar ssmv
   let computed = graphFromEdges $ filter (isJust . f . fst3) $ graphToNodes ctssData
   asCResT $ mapMGraph (requireComputed . f) computed
 
 ctssGetFrom :: (SSF -> Maybe (CRes a)) -> FileImport -> CTSS -> CResT IO (GraphData a FileImport)
-ctssGetFrom f prgmName (CTSS ssmv) = do
-  lift $ ctssBuildFrom (CTSS ssmv) prgmName
+ctssGetFrom f prgmName ctss@(CTSS ssmv _) = do
+  lift $ ctssBuildFrom ctss prgmName
   CTSSDat{ctssData} <- lift $ readMVar ssmv
   asCResT $ mapMGraph (requireComputed . f) (graphFilterReaches prgmName ctssData)
 
@@ -807,7 +966,7 @@ ctssGetFrom f prgmName (CTSS ssmv) = do
 -- Leaving them in would make every annotation in a doc server go out with the first page a reader
 -- breaks, which is the moment a doc server is most worth reading.
 ctssEvaluableFrom :: (SSF -> Maybe (CRes a)) -> Maybe FileImport -> CTSS -> CResT IO (GraphData a FileImport)
-ctssEvaluableFrom f scope ctss@(CTSS ssmv) = do
+ctssEvaluableFrom f scope ctss@(CTSS ssmv _) = do
   lift $ maybe (ctssBuildAll ctss) (ctssBuildFrom ctss) scope
   CTSSDat{ctssData} <- lift $ readMVar ssmv
   let inScope = graphToNodes $ maybe ctssData (`graphFilterReaches` ctssData) scope
@@ -863,7 +1022,7 @@ ctssLookupReq f k ctss = do
 -- This does not use ctssGet because it doesn't require building, though it does require reading:
 -- a page's source is what reading it produced.
 getSource :: CTSS -> FileImport -> CResT IO String
-getSource ctss@(CTSS ssmv) prgmName = do
+getSource ctss@(CTSS ssmv _) prgmName = do
   lift $ ctssLoad ctss [prgmName]
   CTSSDat{ctssData} <- lift $ readMVar ssmv
   case graphLookup prgmName ctssData of
@@ -874,7 +1033,7 @@ getSource ctss@(CTSS ssmv) prgmName = do
 -- | The parsed program of one page. Like 'getSource' this does not build, as the parse is what
 -- reading the page already produced.
 getRawPrgmOf :: CTSS -> FileImport -> CResT IO PPrgm
-getRawPrgmOf ctss@(CTSS ssmv) prgmName = do
+getRawPrgmOf ctss@(CTSS ssmv _) prgmName = do
   lift $ ctssLoad ctss [prgmName]
   CTSSDat{ctssData} <- lift $ readMVar ssmv
   case graphLookup prgmName ctssData of
@@ -895,7 +1054,7 @@ setRawPrgm ctss prgmName prgm = do
 -- Only pages already in the service graph with source text can be written, which confines
 -- writes to the files served by the doc roots.
 setSource :: CTSS -> FileImport -> String -> CResT IO ()
-setSource ctss@(CTSS ssmv) prgmName src = do
+setSource ctss@(CTSS ssmv _) prgmName src = do
   -- Read first, since a page yet to be read has no source either, and "no source text available"
   -- means a page which is not one file to be written back rather than one not yet looked at.
   lift $ ctssLoad ctss [prgmName]
@@ -920,14 +1079,14 @@ setSource ctss@(CTSS ssmv) prgmName src = do
 
 -- This does not use ctssGet because it doesn't require building
 getRawPrgm :: CTSS -> CResT IO PPrgmGraphData
-getRawPrgm ctss@(CTSS ssmv) = do
+getRawPrgm ctss@(CTSS ssmv _) = do
   lift $ ctssLoadOf ctss (map snd3 . graphToNodes)
   CTSSDat{ctssData} <- lift $ readMVar ssmv
   asCResT $ mapMGraph (requireComputed . ssfRaw) ctssData
 
 -- | Like getRawPrgm but only returns the subgraph reachable from a given file.
 getRawPrgmFrom :: FileImport -> CTSS -> CResT IO PPrgmGraphData
-getRawPrgmFrom prgmName ctss@(CTSS ssmv) = do
+getRawPrgmFrom prgmName ctss@(CTSS ssmv _) = do
   lift $ ctssLoadOf ctss (map snd3 . graphToNodes . graphFilterReaches prgmName)
   CTSSDat{ctssData} <- lift $ readMVar ssmv
   asCResT $ mapMGraph (requireComputed . ssfRaw) (graphFilterReaches prgmName ctssData)
@@ -998,7 +1157,7 @@ ctssTestsFrom ctss prgmName = do
 -- the standard library, the file it is asked for reaches every page of it, so a law stated in one
 -- file is checked against the instances defined in another.
 ctssTestPages :: CTSS -> FileImport -> CResT IO (GraphData TPrgm FileImport)
-ctssTestPages ctss@(CTSS ssmv) prgmName = do
+ctssTestPages ctss@(CTSS ssmv _) prgmName = do
   CTSSDat{ctssConfig, ctssBaseFileNames, ctssData} <- lift $ readMVar ssmv
   roots <- lift $ mapM (mkDesCanonicalImportStr ctssConfig) ctssBaseFileNames
   let reaching = [root | root <- roots, isJust $ graphLookup prgmName $ graphFilterReaches root ctssData]
@@ -1045,6 +1204,11 @@ getEvalAnnots ctss prgmName = do
       -- rather than guessed at in advance.
       svc <- lift $ newEvalService ctss (Just prgmName)
       let annots = evalAnnots (Just svc) prgmName tprgms
+      -- An evaluation is a program the reader wrote, so there is no count of what it has left to do
+      -- and none is invented. What can be said is whose annotations are being evaluated. Said after
+      -- 'ctssGetFrom' above, which is what did the building, so this does not overwrite the report of
+      -- a build it was waiting on.
+      lift $ ctssReport ctss StepEvaluating 0 0 (impDisp prgmName)
       -- Evaluated here rather than left for whoever displays it, because what it asked the service
       -- about is only known once it has asked, and that record is kept with it. It is the same work
       -- either way and it is done once: what is kept is the value that was forced, not a second
@@ -1080,7 +1244,7 @@ ctssCallDShow ctss scope fun args = do
 
 -- | Read a page's computed item, without building the page or computing anything.
 ctssCached :: (SSF -> Maybe (CRes a)) -> FileImport -> CTSS -> IO (Maybe (CRes a))
-ctssCached f prgmName (CTSS ssmv) = do
+ctssCached f prgmName (CTSS ssmv _) = do
   CTSSDat{ctssData} <- readMVar ssmv
   return $ f =<< graphLookup prgmName ctssData
 
@@ -1095,7 +1259,7 @@ ctssCached f prgmName (CTSS ssmv) = do
 -- Whatever computes the item must do so OUTSIDE this lock. It is the same lock a build takes, and
 -- computing an item needs the page built.
 ctssStore :: FileImport -> (SSF -> SSF) -> CTSS -> IO ()
-ctssStore prgmName store (CTSS ssmv) = modifyMVar_ ssmv $ \ctssdat ->
+ctssStore prgmName store (CTSS ssmv _) = modifyMVar_ ssmv $ \ctssdat ->
   return $ ctssMapPages keep ctssdat
   where
     keep k ssf | k == prgmName && ssfBuilt ssf = store ssf
@@ -1106,7 +1270,7 @@ ctssStore prgmName store (CTSS ssmv) = modifyMVar_ ssmv $ \ctssdat ->
 -- What a page was read from is kept, so the read still knows which files to look at; only the claim
 -- that they are still as they were is dropped.
 ctssStale :: CTSS -> FileImport -> IO ()
-ctssStale (CTSS ssmv) prgmName = modifyMVar_ ssmv $ \ctssdat ->
+ctssStale (CTSS ssmv _) prgmName = modifyMVar_ ssmv $ \ctssdat ->
   return $ ctssMapPages forget ctssdat
   where
     forget k ssf | k == prgmName = ssf{ssfRead = (ssfRead ssf){rpReads = Nothing}}
@@ -1142,7 +1306,7 @@ instance CtServiceApi CTSS where
   -- rest is there for a display that reports on which pages there are rather than on the program it
   -- was evaluated against. Building all of them for an unscoped evaluation is what that evaluation
   -- asked for by not naming a page.
-  csBuilt ctss@(CTSS ssmv) scope = do
+  csBuilt ctss@(CTSS ssmv _) scope = do
     maybe (ctssBuildAll ctss) (ctssBuildFrom ctss) scope
     ctssData <$> readMVar ssmv
 
@@ -1156,7 +1320,7 @@ instance CtServiceApi CTSS where
 
   -- Against the pages of the scope rather than their joined program, since compiling the expression
   -- typechecks it against them one by one, the way a page of the scope was itself typechecked.
-  csRunExpr ctss@(CTSS ssmv) prgmName src = do
+  csRunExpr ctss@(CTSS ssmv _) prgmName src = do
     ctssBuildFrom ctss prgmName
     CTSSDat{ctssData} <- readMVar ssmv
     return $ debugExprRun prgmName (graphToNodes $ graphFilterReaches prgmName ctssData) src
@@ -1170,7 +1334,7 @@ instance CtServiceApi CTSS where
 
 -- | The pages of a scope, built, as the pipeline records of each.
 scopeSSFs :: CTSS -> FileImport -> IO [SSF]
-scopeSSFs ctss@(CTSS ssmv) prgmName = do
+scopeSSFs ctss@(CTSS ssmv _) prgmName = do
   ctssBuildFrom ctss prgmName
   CTSSDat{ctssData} <- readMVar ssmv
   return $ map fst3 $ graphToNodes $ graphFilterReaches prgmName ctssData

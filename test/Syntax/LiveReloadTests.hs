@@ -9,24 +9,27 @@
 -- looking at one page not to be interrupted by a change to another.
 module Syntax.LiveReloadTests where
 
-import           Control.Concurrent     (modifyMVar_, threadDelay)
+import           Control.Concurrent     (forkIO, modifyMVar_, newEmptyMVar,
+                                         putMVar, takeMVar, threadDelay)
 import           Control.Concurrent.STM (STM, atomically, orElse)
 import           Control.Exception      (SomeException, evaluate, try)
+import           Control.Monad          (void)
 import           CRes                   (CNote (..), CNoteI (..), CRes (..),
                                          runCResT)
-import           CtService              (CTSS (..), CTSSDat (..),
-                                         ReadChange (..), Shown (..),
-                                         changeReaches, ctssAddPage,
+import           CtService              (CTSS (..), Progress (..),
+                                         ProgressStep (..), ReadChange (..),
+                                         Shown (..), changeReaches, ctssAddPage,
                                          ctssBaseFiles, ctssCached,
                                          ctssEvaluableFrom, ctssFollow,
                                          ctssFollowing, ctssGetFrom, ctssKeys,
-                                         ctssMapPages, ctssReadOf, ctssWatch,
-                                         ctssWatchLive, emptyCTSS)
+                                         ctssMapPages, ctssProgress, ctssReadOf,
+                                         ctssReport, ctssWatch, ctssWatchLive,
+                                         ctssWorking, emptyCTSS)
 import qualified Data.HashMap.Strict    as H
 import qualified Data.HashSet           as S
 import           Data.IORef             (modifyIORef', newIORef, readIORef)
 import           Data.List              (isPrefixOf, sort)
-import           Data.Maybe             (isJust, isNothing)
+import           Data.Maybe             (isJust, isNothing, listToMaybe)
 import           Data.Time.Clock        (addUTCTime, getCurrentTime)
 import           Eval.Common            (AnnotAsks (..), SSF (..), Val)
 import           Eval.Runtime.WebDocs   (askService)
@@ -34,10 +37,12 @@ import           Semantics              (ctssCachePath, testCtssConfig)
 import           Semantics.Prgm         (FileImport, impDisp)
 import           Syntax.Parsers         (canonicalImport, finishReading,
                                          mkRawImportStr, newReadQueue,
-                                         newReading, readQueued, rqRestart)
+                                         newReading, readQueued, rqLeft,
+                                         rqRestart)
 import           Syntax.RereadTests     (caseDir, writeLater)
 import           System.Directory       (setModificationTime)
 import           System.FilePath        ((</>))
+import           System.Timeout         (timeout)
 import           Test.Tasty
 import           Test.Tasty.HUnit
 import           Utils                  (graphToNodes)
@@ -221,7 +226,7 @@ testWatchLive = testCase "a write wakes a display with nothing having asked" $ d
 -- there. That a real type error leaves 'ssfTPrgm' failed is 'buildSCCPipeline's doing and is asserted
 -- by every other test in this suite going through a real build.
 seedBuilt :: CTSS -> (FileImport -> SSF -> SSF) -> IO ()
-seedBuilt (CTSS ssmv) f = modifyMVar_ ssmv $ \d -> return $ ctssMapPages f d
+seedBuilt (CTSS ssmv _) f = modifyMVar_ ssmv $ \d -> return $ ctssMapPages f d
 
 -- | A page that stops compiling does not take the rest of the scope with it.
 --
@@ -389,10 +394,146 @@ testPageHeldWhileReading = testCase "the service holds a page before the read th
     [(dir </> "a.ct", [dir </> "a.ct"]), (dir </> "b.ct", [dir </> "a.ct", dir </> "b.ct"])]
     [(path, under held) | (prgmName, held) <- taken, Just path <- [impDisp prgmName], dir `isPrefixOf` path]
 
+-- | What the service is working on is answered while it is working on it.
+--
+-- The case the whole shape of progress reporting exists for. A build holds the service's lock for a
+-- whole component, which for the standard library is minutes, so anything reached THROUGH that lock
+-- is reached only once the build is over — and a reader waiting on that build is waiting for exactly
+-- the answer they cannot then be given. So what the service is working on sits beside the lock, and
+-- this holds the lock and asks anyway.
+--
+-- Timed out rather than left to hang, so that moving the report back under the lock fails this case
+-- by name instead of stopping the suite.
+testProgressUnderTheLock :: TestTree
+testProgressUnderTheLock = testCase "what the service is working on is answered while it is working" $ do
+  ctss@(CTSS ssmv _) <- emptyCTSS testCtssConfig
+  held <- newEmptyMVar
+  release <- newEmptyMVar
+  void $ forkIO $ modifyMVar_ ssmv $ \d -> do
+    ctssReport ctss StepBuilding 3 7 (Just "a.ct")
+    putMVar held ()
+    takeMVar release
+    return d
+  takeMVar held
+  answered <- timeout 2000000 $ ctssProgress ctss
+  putMVar release ()
+  case answered of
+    Nothing -> assertFailure "what the service is working on went behind the lock it is reporting on"
+    Just p -> assertEqual "the service did not say what it was working on"
+      (StepBuilding, 3, 7, Just "a.ct") (prStep p, prDone p, prTotal p, prAt p)
+
+-- | A read says how much of itself it has done, and never says more than it has.
+--
+-- The counting is asserted page by page over the pieces a read is made of — the same queue and the
+-- same walk 'ctssReadOf' drives — because what is being asserted is what a read says PART WAY
+-- through itself, and a read asked for from outside is over by the time it answers. This is the sum
+-- 'ctssReadOf' publishes: what it has taken up, and what 'rqLeft' says is still queued.
+--
+-- The total grows as the walk reaches more pages, so it is not asserted to be any particular number.
+-- What is asserted is what makes a count worth putting in front of a reader: it only goes forwards,
+-- it never claims more done than there is to do, and it ends having done all of it.
+testProgressCountsARead :: TestTree
+testProgressCountsARead = testCase "a read says how much of itself it has done" $ do
+  dir <- caseDir "read-progress"
+  now <- getCurrentTime
+  writeLater now (dir </> "a.ct") "import \"b.ct\"\nimport \"c.ct\"\na = 1\n"
+  writeLater now (dir </> "b.ct") "import \"c.ct\"\nb = 2\n"
+  writeLater now (dir </> "c.ct") "c = 3\n"
+  reading <- newReading (ctssCachePath testCtssConfig)
+  queue <- newReadQueue
+  rqRestart queue =<< mapM (canonicalImport testCtssConfig Nothing) [mkRawImportStr (dir </> "a.ct")]
+  steps <- newIORef []
+  readSoFar <- newIORef (0 :: Int)
+  readQueued testCtssConfig reading S.empty H.empty queue $ \_ _ -> do
+    modifyIORef' readSoFar (+ 1)
+    done <- readIORef readSoFar
+    left <- rqLeft queue
+    modifyIORef' steps ((done, done + left) :)
+  finishReading reading
+  counts <- reverse <$> readIORef steps
+  -- At least the three pages of this case. Not exactly three: a page imports the standard library,
+  -- which the read reaches as well, and the counting being about the whole read rather than about
+  -- the pages one case wrote is the point of it.
+  assertBool "the read did not reach the pages of this case" (length counts >= 3)
+  assertEqual "a read said it had done more than there was to do"
+    [] [(d, t) | (d, t) <- counts, d > t]
+  assertEqual "what a read had done went backwards"
+    [] [(a, b) | (a, b) <- zip (map fst counts) (drop 1 $ map fst counts), b < a]
+  assertEqual "a read did not end having read everything it reached"
+    (Just True) (uncurry (==) <$> listToMaybe (reverse counts))
+
+-- | A read of the service publishes that count as it goes.
+--
+-- The half 'testProgressCountsARead' cannot assert: that the sum it checks is one the service
+-- actually says, rather than one only its own case computes. Asserted after the read, which is when
+-- a read asked for from outside can be asked about — what it said part way through is the case
+-- above.
+testProgressSaysWhatARead :: TestTree
+testProgressSaysWhatARead = testCase "a read of the service says what it read" $ do
+  dir <- caseDir "read-progress-said"
+  now <- getCurrentTime
+  writeLater now (dir </> "a.ct") "a = 1\n"
+  ctss <- ctssBaseFiles testCtssConfig [dir </> "a.ct"]
+  p <- ctssProgress ctss
+  assertEqual "a read did not say it was reading" StepReading (prStep p)
+  assertBool "a read said it had read no pages" (prDone p > 0)
+  assertEqual "a read did not end having read everything it reached" (prDone p) (prTotal p)
+  -- Nobody was waiting on it. A read the service made for itself is not a reader's wait to report on,
+  -- which is what keeps a bar off the screen of a reader who is not waiting for anything.
+  assertEqual "a read nobody asked for said somebody was waiting" False (prWorking p)
+
+-- | A service nobody is waiting at says so, whatever it was last doing.
+--
+-- The step is the last thing said rather than a thing being done, so a build that ended leaves
+-- "compiled 7 of 7 pages" behind it. A reader shown that while nothing was happening would be told
+-- something untrue about the present, which is what 'prWorking' is for and why it is bracketed: an
+-- answer sent, a compile throwing and a connection dropping all have to take it back down.
+testProgressIdleWhenNothingIsWorking :: TestTree
+testProgressIdleWhenNothingIsWorking = testCase "a service nobody is waiting at says nothing is happening" $ do
+  ctss <- emptyCTSS testCtssConfig
+  fresh <- ctssProgress ctss
+  assertEqual "a service that has done nothing said something was happening" (False, StepIdle) (prWorking fresh, prStep fresh)
+  inside <- ctssWorking ctss $ do
+    ctssReport ctss StepBuilding 1 2 (Just "a.ct")
+    ctssProgress ctss
+  assertEqual "a service working for a reader did not say so" (True, StepBuilding) (prWorking inside, prStep inside)
+  answered <- ctssProgress ctss
+  assertEqual "a service left the last thing it did behind it" (False, StepIdle) (prWorking answered, prStep answered)
+  thrown <- try $ ctssWorking ctss $ do
+    ctssReport ctss StepBuilding 1 2 (Just "a.ct")
+    fail "a compile that threw"
+  assertBool "the failure did not happen" (either (const True) (const False) (thrown :: Either SomeException ()))
+  afterThrow <- ctssProgress ctss
+  assertEqual "a compile that threw left the service saying it was still working"
+    (False, StepIdle) (prWorking afterThrow, prStep afterThrow)
+
+-- | The first of two readers being answered is not the service falling idle.
+--
+-- Which is why what is working is counted rather than flagged. Two readers waiting at once is the
+-- ordinary case for a doc server — a page and the navigation beside it are two requests — and a flag
+-- would have the first of them to be answered tell the second that nothing was happening.
+testProgressCountsItsReaders :: TestTree
+testProgressCountsItsReaders = testCase "one reader being answered is not the service falling idle" $ do
+  ctss <- emptyCTSS testCtssConfig
+  still <- ctssWorking ctss $ do
+    ctssReport ctss StepBuilding 1 2 (Just "a.ct")
+    _ <- ctssWorking ctss $ return ()
+    ctssProgress ctss
+  assertEqual "the service fell idle while a reader was still waiting"
+    (True, StepBuilding) (prWorking still, prStep still)
+  bothAnswered <- ctssProgress ctss
+  assertEqual "the service did not fall idle once every reader had been answered"
+    (False, StepIdle) (prWorking bothAnswered, prStep bothAnswered)
+
 liveReloadTests :: TestTree
 liveReloadTests = testGroup "LiveReload" [
   testImporters,
   testPageHeldWhileReading,
+  testProgressUnderTheLock,
+  testProgressCountsARead,
+  testProgressSaysWhatARead,
+  testProgressIdleWhenNothingIsWorking,
+  testProgressCountsItsReaders,
   testUnchangedText,
   testPageAdded,
   testFollowCloses,

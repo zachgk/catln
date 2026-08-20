@@ -279,6 +279,18 @@ rqPop (ReadQueue v) = atomically $ do
 rqRead :: ReadQueue -> IO (S.HashSet FileImport)
 rqRead (ReadQueue v) = rqSeen <$> readTVarIO v
 
+-- | How many pages the read has left to read.
+--
+-- Answered without the read stopping, which is the whole reason this queue is behind a 'TVar'.
+--
+-- The length of what is pending rather than the size of what has been seen, because this is asked
+-- once per page read: 'Sq.length' is constant time where the size of a 'S.HashSet' is a walk of it,
+-- and a read of a vault of a few thousand notes which asked the second way would spend the read
+-- counting. A page not yet reached is not in either, so what this says is what is left of what is
+-- KNOWN — which grows as the walk finds more.
+rqLeft :: ReadQueue -> IO Int
+rqLeft (ReadQueue v) = Sq.length . rqPending <$> readTVarIO v
+
 -- | Reads where the page an import names sits in the import graph.
 -- TODO Modify the ImportPreloadResult to CResT to report back parse errors
 preloadImport :: Reading -> FileImport -> ImportPreloadResult

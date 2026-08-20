@@ -371,6 +371,123 @@ describe('Loading', () => {
   })
 })
 
+// --- Loading progress ---
+//
+// What a reader is shown while they wait. The compiler is asked separately from whatever is being
+// waited for, because what a page costs is paid before the request for it answers at all — so these
+// drive the progress stream by hand rather than through any display's own request.
+
+describe('Loading progress', () => {
+  const waiting = { isLoaded: false, error: null, data: null, notes: [] }
+
+  function progressFrame(p) {
+    act(() => eventSourceFor('/api/progress').frame({ tag: 'Success', contents: [p, []] }))
+  }
+
+  function renderWaiting(count = 1) {
+    const bars = Array.from({ length: count }, (_, i) => (
+      <Loading key={i} status={waiting}><div>ok</div></Loading>
+    ))
+    const rendered = render(<Providers>{bars}</Providers>)
+    // Nothing is asked until a wait has gone on long enough to be worth reporting.
+    act(() => vi.advanceTimersByTime(600))
+    return rendered
+  }
+
+  const progressSources = () => eventSources().filter(s => s.url.includes('/api/progress'))
+
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+
+  it('shows a bar while it is waiting', () => {
+    renderWaiting()
+    expect(screen.getByText('Loading...')).toBeInTheDocument()
+    expect(screen.getAllByRole('progressbar').length).toBe(1)
+  })
+
+  // A page that arrives at once should arrive at once. A bar shown for a wait too short to read is
+  // the display flickering rather than reporting.
+  it('asks nothing for a wait that is over before it is worth reporting', () => {
+    const { unmount } = render(<Providers><Loading status={waiting}><div>ok</div></Loading></Providers>)
+    act(() => vi.advanceTimersByTime(200))
+    unmount()
+    act(() => vi.advanceTimersByTime(1000))
+    expect(progressSources()).toEqual([])
+  })
+
+  // A browser allows six connections to a server, and the app already holds two open for itself.
+  it('asks once however many displays are waiting', () => {
+    renderWaiting(3)
+    expect(progressSources().length).toBe(1)
+    expect(screen.getAllByRole('progressbar').length).toBe(3)
+  })
+
+  it('says what the compiler is doing, and how far through it is', () => {
+    renderWaiting()
+    progressFrame({ prWorking: true, prStep: 'StepBuilding', prDone: 3, prTotal: 12, prAt: '/a.ct' })
+    expect(screen.getByTestId('loading-progress')).toHaveTextContent('Compiled 3 of 12 pages')
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '25')
+  })
+
+  // A type check is what a build spends its time inside, so the pages it has left to build are still
+  // the pages it has left. Losing the count there would lose it for all but an instant of the build.
+  it('keeps the count of a build through the type check inside it', () => {
+    renderWaiting()
+    progressFrame({ prWorking: true, prStep: 'StepTypechecking', prDone: 6, prTotal: 12, prAt: '/b.ct' })
+    expect(screen.getByTestId('loading-progress')).toHaveTextContent('Type checking /b.ct')
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '50')
+  })
+
+  // A step with nothing to count says so rather than inventing a fraction.
+  it('counts nothing for an evaluation, which has no count', () => {
+    renderWaiting()
+    progressFrame({ prWorking: true, prStep: 'StepEvaluating', prDone: 0, prTotal: 0, prAt: '/c.ct' })
+    expect(screen.getByTestId('loading-progress')).toHaveTextContent('Evaluating /c.ct')
+    expect(screen.getByRole('progressbar')).not.toHaveAttribute('aria-valuenow')
+  })
+
+  // A count that has reached its total is a step that has FINISHED, not a wait that is over: the
+  // compiler can start a build from inside an evaluation and leave the pages it built at their total.
+  it('goes back to counting nothing once a step has finished', () => {
+    renderWaiting()
+    progressFrame({ prWorking: true, prStep: 'StepBuilding', prDone: 12, prTotal: 12, prAt: '/a.ct' })
+    expect(screen.getByRole('progressbar')).not.toHaveAttribute('aria-valuenow')
+  })
+
+  // A compiler working for nobody is not a wait to report on. The bar is drawn from this display's
+  // own waiting; what the compiler says is only used when it says it is working for somebody.
+  it('says nothing about a compiler that is not working', () => {
+    renderWaiting()
+    progressFrame({ prWorking: false, prStep: 'StepIdle', prDone: 0, prTotal: 0, prAt: null })
+    expect(screen.queryByTestId('loading-progress')).not.toBeInTheDocument()
+    expect(screen.getByRole('progressbar')).toBeInTheDocument()
+  })
+
+  it('keeps waiting when the doc server has nothing to say', () => {
+    renderWaiting()
+    act(() => eventSourceFor('/api/progress').fail())
+    expect(screen.getByText('Loading...')).toBeInTheDocument()
+    expect(screen.getByRole('progressbar')).toBeInTheDocument()
+    expect(screen.queryByTestId('loading-progress')).not.toBeInTheDocument()
+  })
+
+  it('passes over a frame it cannot read rather than taking the display down', () => {
+    renderWaiting()
+    act(() => eventSourceFor('/api/progress').onmessage({data: 'not json'}))
+    expect(screen.getByText('Loading...')).toBeInTheDocument()
+    expect(screen.queryByTestId('loading-progress')).not.toBeInTheDocument()
+  })
+
+  // The stream is what a display waiting opened, so it goes when the waiting does. One left open is
+  // the compiler answering a question nobody is reading.
+  it('stops asking once nothing is waiting', () => {
+    const { unmount } = renderWaiting()
+    expect(progressSources()[0].readyState).toBe(1)
+    unmount()
+    expect(progressSources()[0].readyState).toBe(2)
+  })
+})
+
 // --- Notes ---
 
 describe('Notes', () => {

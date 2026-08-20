@@ -37,7 +37,7 @@ stackTests = do
     --
     -- Run here rather than as a case of its own so it cannot race the tests tasty runs in parallel,
     -- which share this service.
-    testReread ctss@(CTSS ssmv) = do
+    testReread ctss@(CTSS ssmv _) = do
       let pages = do
             CTSSDat{ctssData} <- readMVar ssmv
             return [(name, ssfBuilt ssf, rpReads (ssfRead ssf)) | (ssf, name, _) <- graphToNodes ctssData]
