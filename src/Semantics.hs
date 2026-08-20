@@ -16,10 +16,13 @@ module Semantics where
 
 import qualified Data.HashMap.Strict as H
 
+import           Control.Exception   (evaluate)
 import           CtConstants         (builtinAnnotNames, operatorHasArrow)
 import           Data.Graph          (graphFromEdges)
 import qualified Data.HashSet        as S
-import           Data.List           (partition)
+import           Data.IORef          (IORef, atomicModifyIORef', newIORef,
+                                      readIORef)
+import           Data.List           (partition, sortOn)
 import           Data.Maybe
 import           Semantics.Prgm
 import           Semantics.Types
@@ -31,10 +34,68 @@ newtype ObjArrTypeGraph e m = ObjArrTypeGraph (ObjectMap e m)
   deriving (Eq, Show)
 instance Semigroup (ObjArrTypeGraph e m) where
   (ObjArrTypeGraph a) <> (ObjArrTypeGraph b) = ObjArrTypeGraph (a <> b)
+-- | THE REACH-QUERY MEMO. Profiling a near-empty program against core put 48.5% of all
+-- time in 'objArrGraphQuery' — 121,525 calls at ~9ms each — while the reaches graph they
+-- query changes at most once per epoch. The query is called from PURE set-algebra
+-- contexts ('compactType' chains), so the memo is an 'unsafePerformIO' global keyed
+-- STRUCTURALLY by the env's identity token ('teQueryCacheKey'), the behavior flags a
+-- same-token env can vary in, the queried partial, and the full vaenv — a hash collision
+-- falls back to 'Eq' in the 'H.HashMap', never a wrong answer. Soundness rests on
+-- token-per-identical-env-value: every hit under a token is served from the same
+-- immutable env the entry was computed against. The table keeps one token generation and
+-- resets when a new token appears, bounding memory to one epoch's distinct queries.
+-- Queries under an in-flight sat decision bypass the memo entirely: 'teInSatDecision'
+-- demotes the query's own answers, which must neither be served from nor stored into the
+-- shared table.
+--
+-- HISTORY (the "time-dependence mystery", resolved 2026-08-21): the first landing of
+-- this memo produced stored-vs-recomputed divergences under identical keys, traced
+-- through StableName/fingerprint instrumentation to 'unsafeFreshQueryToken' executing
+-- its IO exactly ONCE per process — GHC's full-laziness floated the constant
+-- 'unsafePerformIO' body (which ignored its argument) out of the lambda, so every env
+-- shared token 1 and the memo mixed answers across epochs and programs. The mint's IO
+-- now forces its argument INSIDE the action, so the expression depends on the argument
+-- and cannot float.
+type QueryMemoKey = (Int, (Bool, Bool, Bool, Bool), PartialType, [(TypeVarAux, Type)])
+
+{-# NOINLINE queryMemoRef #-}
+queryMemoRef :: IORef (Int, H.HashMap QueryMemoKey [(String, Type, Type)])
+queryMemoRef = unsafePerformIO (newIORef (-1, H.empty))
+
+{-# NOINLINE queryTokenRef #-}
+queryTokenRef :: IORef Int
+queryTokenRef = unsafePerformIO (newIORef 0)
+
+-- | A fresh, process-globally-unique token stamping one rebuilt reaches graph. The
+-- argument is forced INSIDE the IO action: the action mentions the argument, so
+-- full-laziness cannot float it to a shared constant (see the memo history above —
+-- 'seq'-on-the-outside or a NOINLINE dummy argument are NOT sufficient).
+{-# NOINLINE unsafeFreshQueryToken #-}
+unsafeFreshQueryToken :: tg -> Int
+unsafeFreshQueryToken g = unsafePerformIO $ do
+  _ <- evaluate g
+  atomicModifyIORef' queryTokenRef (\n -> (n + 1, n + 1))
+
+objArrGraphQuery :: (ExprClass e, MetaDat m, Show m, Show (e m)) => Bool -> TypeEnv (ObjArrTypeGraph e m) -> TypeVarArgEnv -> PartialType -> [(String, Type, Type)]
+objArrGraphQuery prune typeEnv vaenv partial = case teQueryCacheKey typeEnv of
+  Nothing -> objArrGraphQueryRaw prune typeEnv vaenv partial
+  Just _ | teInSatDecision typeEnv -> objArrGraphQueryRaw prune typeEnv vaenv partial
+  Just tok -> unsafePerformIO $ do
+    let key = (tok, (prune, teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv), partial, sortOn fst (H.toList vaenv))
+    (curTok, m) <- readIORef queryMemoRef
+    let mCur = if curTok == tok then m else H.empty
+    case H.lookup key mCur of
+      Just r -> return r
+      Nothing -> do
+        let r = objArrGraphQueryRaw prune typeEnv vaenv partial
+        atomicModifyIORef' queryMemoRef $ \(tok2, m2) ->
+          ((tok, H.insert key r (if tok2 == tok then m2 else H.empty)), ())
+        return r
+
 -- | Shared body of 'typeGraphQueryWithReason' (@prune=True@) and
 -- 'typeGraphQueryAllWithReason' (@prune=False@ — every accepting arrow contributes).
-objArrGraphQuery :: (ExprClass e, MetaDat m, Show m, Show (e m)) => Bool -> TypeEnv (ObjArrTypeGraph e m) -> TypeVarArgEnv -> PartialType -> [(String, Type, Type)]
-objArrGraphQuery prune typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName} = concatMap tryTArrow $ promises $ flatObjectMapItem $ H.lookupDefault mempty ptName tg
+objArrGraphQueryRaw :: (ExprClass e, MetaDat m, Show m, Show (e m)) => Bool -> TypeEnv (ObjArrTypeGraph e m) -> TypeVarArgEnv -> PartialType -> [(String, Type, Type)]
+objArrGraphQueryRaw prune typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName} = concatMap tryTArrow $ promises $ flatObjectMapItem $ H.lookupDefault mempty ptName tg
     where
       promises | prune     = mostSpecificPromises
                | otherwise = filter accepts
@@ -225,7 +286,7 @@ buildCtssConfig = unsafePerformIO $ do
 {-# NOINLINE buildCtssConfig #-}
 
 mkTypeEnv :: (ExprClass e, Show m, Show (e m), MetaDat m) => Prgm e m -> TypeEnv (ObjArrTypeGraph e m)
-mkTypeEnv (Prgm objMap classGraph _) = TypeEnv classGraph (ObjArrTypeGraph objMap) typeNames False defaultTypeEnvDebug False False False (mkSatCache classGraph typeNames)
+mkTypeEnv (Prgm objMap classGraph _) = TypeEnv classGraph (ObjArrTypeGraph objMap) typeNames False defaultTypeEnvDebug False False False Nothing (mkSatCache classGraph typeNames)
   where
     -- The compiler-emitted annotation names ('builtinAnnotNames') are part of every program's
     -- vocabulary: desugar injects uses of them (doc comments become @#md@, @>@ statements become

@@ -24,6 +24,7 @@ import           Data.Maybe
 import qualified Data.Zip            as Z
 
 import           Control.Monad.State
+import           Semantics           (unsafeFreshQueryToken)
 import           Semantics.TypeGraph (isSettledLeaf)
 import           Semantics.Types
 import           Text.Printf
@@ -529,7 +530,14 @@ runConstraintsIdx limit cons = do
       -- The input-arrow name set is a pure function of the reaches graph: reuse it within an
       -- unchanged env, recompute otherwise (same policy as the completed-universe cache).
       let inputArrowNames = if envUnchanged then feInputArrowNames env else typeGraphInputEmbeddedNames reachesTypeEnv
-      modify $ \e -> e{feReachesTypeEnv = reachesTypeEnv, feCompletedAllObjsKey = u, feCompletedAllObjs = completedAllObjs,
+      -- The reach-query memo's identity: an unchanged graph KEEPS the previous epoch's env
+      -- value with its existing token (the memo stays warm across quiet epochs); a changed
+      -- graph is stamped with a fresh process-unique token, which also retires the previous
+      -- generation's entries ('objArrGraphQuery' resets on a new token).
+      let reachesTypeEnv' = if envUnchanged
+            then feReachesTypeEnv env
+            else reachesTypeEnv{teQueryCacheKey = Just (unsafeFreshQueryToken (teTypeGraph reachesTypeEnv))}
+      modify $ \e -> e{feReachesTypeEnv = reachesTypeEnv', feCompletedAllObjsKey = u, feCompletedAllObjs = completedAllObjs,
                        feInputArrowNames = inputArrowNames,
                        feEnvStamp = if envUnchanged then feEnvStamp e else feEnvStamp e + 1}
       constraintsToPrune <- mapM (uncurry executeConstraint) cons

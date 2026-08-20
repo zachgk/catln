@@ -400,6 +400,14 @@ data TypeEnv tg = TypeEnv {
   -- path", which only sibling branches of the same enumeration make complete — a standalone
   -- query has no siblings, so the guard's 'False' would become a free-standing false UNSAT.
   teInSatDecision     :: Bool,
+  -- | Identity token enabling the reach-query memo ('objArrGraphQuery'): @Just token@
+  -- marks this env as a per-epoch reaches env, with @token@ a process-globally-unique
+  -- number minted ONCE for this exact immutable env value ('unsafeFreshQueryToken').
+  -- Uniqueness per VALUE is the entire soundness argument: every cache hit under a token
+  -- was computed against the literally identical env, so the memoized answer is the pure
+  -- function's answer. Any DERIVED env (the 'mkReachesEnv' arg merge, or any other
+  -- modification beyond the behavior flags the memo keys on) must carry 'Nothing'.
+  teQueryCacheKey     :: Maybe Int,
   -- | Global views of 'teClassGraph' and 'teNames' for the symbolic satisfiability engine
   -- (see the section "Symbolic class-predicate satisfiability"), built strictly at
   -- construction via 'mkSatCache'. Any construction or update that changes 'teClassGraph'
@@ -413,7 +421,7 @@ defaultTypeEnvDebug = False
 
 
 emptyTypeEnv' :: TypeEnv EmptyTypeGraph
-emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty False defaultTypeEnvDebug False False False (mkSatCache mempty S.empty)
+emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty False defaultTypeEnvDebug False False False Nothing (mkSatCache mempty S.empty)
 
 -- | A class or type node within the 'ClassGraph'
 data CGNode
@@ -565,7 +573,8 @@ instance Monoid ClassGraph where
   mempty = ClassGraph $ graphFromEdges []
 
 instance (Semigroup tg) => Semigroup (TypeEnv tg) where
-  (TypeEnv cg1 tg1 n1 d1 dc1 pe1 ap1 is1 _) <> (TypeEnv cg2 tg2 n2 d2 dc2 pe2 ap2 is2 _) = TypeEnv cg' (tg1 <> tg2) n' (d1 || d2) (dc1 || dc2) (pe1 || pe2) (ap1 || ap2) (is1 || is2) (mkSatCache cg' n')
+  -- A merged env is a DIFFERENT value: it never carries a query-cache token.
+  (TypeEnv cg1 tg1 n1 d1 dc1 pe1 ap1 is1 _ _) <> (TypeEnv cg2 tg2 n2 d2 dc2 pe2 ap2 is2 _ _) = TypeEnv cg' (tg1 <> tg2) n' (d1 || d2) (dc1 || dc2) (pe1 || pe2) (ap1 || ap2) (is1 || is2) Nothing (mkSatCache cg' n')
     where
       cg' = cg1 <> cg2
       n' = S.union n1 n2
