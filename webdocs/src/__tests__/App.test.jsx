@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider, createRoutesFromElements, Route } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { Root } from '../App'
+import Docs from '../Docs'
 import DocsPage from '../DocsPage'
 import sidebarResponse from '../test/fixtures/sidebar-response.json'
 import pageResponse from '../test/fixtures/page-response.json'
@@ -24,6 +25,17 @@ const sidebarValue = {
   name: '/Catln/Doc/Show/Sidebar',
   args: { '/pages': { tag: 'StrVal', contents: JSON.stringify(sidebarResponse) } },
 }
+
+function annotFor(url) {
+  if (url.startsWith('/api/annot?annot=%23sidebar')) return annotResponse('sidebar', sidebarValue)
+}
+
+// jsdom does not scroll, so the window's own scrolling is not there to be called or read back.
+// Stubbed for every case here rather than only the ones asserting on it, since the layout scrolls
+// on every navigation and an unimplemented call is an error reported into every one of them.
+beforeEach(() => {
+  vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+})
 
 function renderRoot() {
   const router = createMemoryRouter(
@@ -48,10 +60,6 @@ describe('Root', () => {
       json: () => Promise.resolve(annotFor(url) || { tag: 'Success', contents: [{ readonly: false, rootPage: ROOT_PAGE }, []] }),
     }))
   })
-
-  function annotFor(url) {
-    if (url.startsWith('/api/annot?annot=%23sidebar')) return annotResponse('sidebar', sidebarValue)
-  }
 
   // The sidebar is about which pages there are rather than about one of them, and is answered that
   // way whatever page it is written in. So it names one -- the page the docs open at -- and is never
@@ -164,5 +172,87 @@ describe('Root', () => {
     renderRoot()
     expect(screen.getByTestId('sidebar')).toHaveStyle({ width: '0px' })
     expect(screen.getByLabelText('Show sidebar')).toBeInTheDocument()
+  })
+})
+
+// Going somewhere is what replaces the page shown beside the sidebar. The layout does it, so it is
+// about going somewhere rather than about what was clicked to go there: the cases below click the
+// sidebar because that is how most pages are reached, but a link in a page's own writing is the
+// same act and gets the same thing.
+describe('going to another page', () => {
+  // Two pages of one directory, so the sidebar is showing both: it opens the directories holding
+  // the page being read, and the page being read is the first of these.
+  const FROM = '/stack/core/main.ct'
+  const TO = 'bool.ct'
+
+  // Answers for every page but the one navigated to, which is left compiling. So what is on screen
+  // after the click is what a reader waiting on the compiler is shown, rather than a page which
+  // happened to arrive before the assertion.
+  function fetchLeavingItCompiling() {
+    return vi.fn(url => {
+      if (url.startsWith('/api/page')) {
+        return url.includes(TO)
+          ? new Promise(() => {})
+          : Promise.resolve({ status: 200, json: () => Promise.resolve(pageResponse) })
+      }
+      return Promise.resolve({
+        status: 200,
+        json: () => Promise.resolve(annotFor(url) || { tag: 'Success', contents: [{ readonly: false, rootPage: ROOT_PAGE }, []] }),
+      })
+    })
+  }
+
+  // The route which reads the page out of the address, rather than a fixed one, since what is being
+  // tested is what going to a different address does.
+  async function renderAt(page) {
+    const router = createMemoryRouter(
+      createRoutesFromElements(
+        <Route path="/" element={<Root />}>
+          <Route path="docs/:prgmName" element={<Docs />} />
+        </Route>
+      ),
+      { initialEntries: [`/docs/${encodeURIComponent(page)}`] }
+    )
+    render(<ThemeProvider theme={theme}><RouterProvider router={router} /></ThemeProvider>)
+    await waitFor(() => expect(screen.getByText('hello world')).toBeInTheDocument())
+  }
+
+  it('shows the page asked for waiting, not the page just left', async () => {
+    const user = userEvent.setup()
+    global.fetch = fetchLeavingItCompiling()
+
+    await renderAt(FROM)
+    await user.click(screen.getByRole('link', { name: TO }))
+
+    expect(screen.getByText('Loading...')).toBeInTheDocument()
+    expect(screen.queryByText('hello world')).not.toBeInTheDocument()
+  })
+
+  // The sidebar is as long as the doc server has pages, so a reader who scrolled down it to pick a
+  // page would otherwise be left below everything the page they picked has to say.
+  it('goes back to the top of it', async () => {
+    const user = userEvent.setup()
+    global.fetch = fetchLeavingItCompiling()
+
+    await renderAt(FROM)
+    window.scrollTo.mockClear()
+    await user.click(screen.getByRole('link', { name: TO }))
+
+    expect(window.scrollTo).toHaveBeenCalledWith(0, 0)
+  })
+
+  // Only the page is replaced. The sidebar is beside it rather than part of it, and it lists every
+  // page the doc server holds -- compiling that again for each page a reader opens is the cost the
+  // one-instance layout exists to avoid.
+  it('leaves the sidebar as it was, without asking for it again', async () => {
+    const user = userEvent.setup()
+    global.fetch = fetchLeavingItCompiling()
+
+    await renderAt(FROM)
+    const asked = global.fetch.mock.calls.filter(([url]) => url.startsWith('/api/annot')).length
+    await user.click(screen.getByRole('link', { name: TO }))
+
+    expect(screen.getByRole('link', { name: TO })).toBeInTheDocument()
+    expect(global.fetch.mock.calls.filter(([url]) => url.startsWith('/api/annot'))).toHaveLength(asked)
   })
 })

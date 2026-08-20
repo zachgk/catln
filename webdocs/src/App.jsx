@@ -1,6 +1,6 @@
 import './App.css';
 
-import {useState, useCallback} from 'react';
+import {useState, useEffect, useCallback} from 'react';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
@@ -16,7 +16,8 @@ import {
   Link,
   Route,
   RouterProvider,
-  Outlet
+  Outlet,
+  useLocation
 } from "react-router-dom";
 
 import {useApi, ConfigContext, annotLink} from './Common/Common';
@@ -39,6 +40,25 @@ function Root() {
   // The sidebar is one instance for the whole app rather than one per route, so it survives
   // navigating between pages, and its contents are the compiled #sidebar annotation.
   const [sidebarOpen, setSidebarOpen] = useState(readSidebarOpen);
+
+  // Where the reader has gone. Going somewhere is what replaces what is shown beside the sidebar:
+  // the display there is a new one, so it opens with nothing and says it is loading rather than
+  // leaving the page just left standing until the page asked for has compiled -- which, for a page
+  // the compiler has work to do for, is a click that appears to have done nothing.
+  //
+  // It is the address rather than the navigation, so that a display which changes what it is asking
+  // without going anywhere keeps what it has and updates in place. An annotation rewritten by a
+  // value shown on it (see AnnotPage in DocsPage.jsx) is that case.
+  //
+  // Said once here rather than by each display, and by the layout rather than by whatever was
+  // clicked: it is going somewhere that replaces the page, not the sidebar in particular. A link in
+  // a page's own writing is the same act and gets the same thing.
+  const location = useLocation();
+  const address = location.pathname + location.search;
+
+  // And back to the top of it. The sidebar is as long as the doc server has pages, so a reader who
+  // scrolled down it to pick a page is left below everything the page has to say.
+  useEffect(() => { window.scrollTo(0, 0); }, [address]);
 
   const toggleSidebar = useCallback(() => {
     setSidebarOpen(open => {
@@ -77,7 +97,7 @@ function Root() {
             {rootPage && <AnnotPage annot="#sidebar" prgmName={rootPage} live />}
           </Box>
         </Box>
-        <Box sx={{flexGrow: 1, minWidth: 0, p: 2}}>
+        <Box key={address} sx={{flexGrow: 1, minWidth: 0, p: 2}}>
           <Outlet />
         </Box>
       </Box>
