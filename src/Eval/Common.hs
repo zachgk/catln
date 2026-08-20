@@ -33,6 +33,7 @@ import           CRes
 import           CtConstants
 import           Data.Aeson              hiding (Object)
 import           Data.IORef
+import           Data.Time.Calendar      (Day)
 import           Data.UUID               (UUID)
 -- import qualified LLVM.AST            as AST
 import           Semantics
@@ -223,11 +224,15 @@ instance Monoid AnnotAsks where
 -- being one. Every ask goes through the @es@ functions below rather than through the class directly,
 -- so a display cannot ask about a page without that being written down.
 data EvalService where
-  EvalService :: CtServiceApi s => s -> Maybe FileImport -> IORef AnnotAsks -> EvalService
+  EvalService :: CtServiceApi s => s -> Maybe FileImport -> Day -> IORef AnnotAsks -> EvalService
 
 -- | A handle on the service for one evaluation, with nothing asked yet.
-newEvalService :: (CtServiceApi s) => s -> Maybe FileImport -> IO EvalService
-newEvalService s scope = EvalService s scope <$> newIORef mempty
+--
+-- The day is given rather than read here so that one evaluation reads one day. A display asking
+-- what is due today may ask it of many tasks, and reading the clock for each of them would let an
+-- evaluation straddling midnight answer one question two ways.
+newEvalService :: (CtServiceApi s) => s -> Maybe FileImport -> Day -> IO EvalService
+newEvalService s scope today = EvalService s scope today <$> newIORef mempty
 
 -- | What the evaluation asked about, read back once it has finished asking.
 --
@@ -235,53 +240,60 @@ newEvalService s scope = EvalService s scope <$> newIORef mempty
 -- an answer. A caller which keeps nothing — a call answered and forgotten — never reads this, and its
 -- record is discarded with the handle.
 esAsks :: EvalService -> IO AnnotAsks
-esAsks (EvalService _ _ asks) = readIORef asks
+esAsks (EvalService _ _ _ asks) = readIORef asks
 
 -- | Which of the service's pages the evaluation is of, or none where it is of no one page.
 esScope :: EvalService -> Maybe FileImport
-esScope (EvalService _ scope _) = scope
+esScope (EvalService _ scope _ _) = scope
+
+-- | The day the evaluation reads @today@ as, which is one day for the whole of it.
+--
+-- In 'IO' as every other ask is, though it reaches nothing: what a display may ask about is one
+-- list, and a day answered some other way would be an ask that went unwritten.
+esToday :: EvalService -> IO Day
+esToday (EvalService _ _ today _) = return today
 
 -- | 'CtServiceApi.csPages', recording nothing: which pages there are is not what is in any of them,
 -- so no change to a page's contents can alter this. A page appearing or going can, and that is
 -- answered by the page set having changed rather than by anything recorded here.
 esPages :: EvalService -> IO [FileImport]
-esPages (EvalService s _ _) = csPages s
+esPages (EvalService s _ _ _) = csPages s
 
 -- | 'CtServiceApi.csBuilt' of a scope, recorded as asked about.
 esBuilt :: EvalService -> Maybe FileImport -> IO (GraphData SSF FileImport)
-esBuilt svc@(EvalService s _ _) scope = recordAsk svc scope >> csBuilt s scope
+esBuilt svc@(EvalService s _ _ _) scope = recordAsk svc scope >> csBuilt s scope
 
 -- | 'CtServiceApi.csTests' of a page, recorded as an ask about every page. A test is decided over the
 -- whole program its page belongs to, which reaches past what that page imports, so nothing narrower
 -- than every page covers what can alter one.
 esTests :: EvalService -> FileImport -> IO (CRes [TestResult])
-esTests svc@(EvalService s _ _) prgmName = recordEvery svc >> csTests s prgmName
+esTests svc@(EvalService s _ _ _) prgmName = recordEvery svc >> csTests s prgmName
 
 -- | 'CtServiceApi.csRunFun' of a page, recorded as an ask about that page's scope: a run is of that
 -- page's program, which is the page and what it imports.
 esRunFun :: EvalService -> FileImport -> String -> IO (CRes DebugRun)
-esRunFun svc@(EvalService s _ _) prgmName fun = recordAsk svc (Just prgmName) >> csRunFun s prgmName fun
+esRunFun svc@(EvalService s _ _ _) prgmName fun = recordAsk svc (Just prgmName) >> csRunFun s prgmName fun
 
 -- | 'CtServiceApi.csRunExpr' of a page, recorded as 'esRunFun' is: the expression is compiled against
 -- that page and means what that page makes it mean.
 esRunExpr :: EvalService -> FileImport -> String -> IO (CRes DebugRun)
-esRunExpr svc@(EvalService s _ _) prgmName src = recordAsk svc (Just prgmName) >> csRunExpr s prgmName src
+esRunExpr svc@(EvalService s _ _ _) prgmName src = recordAsk svc (Just prgmName) >> csRunExpr s prgmName src
 
 -- | 'CtServiceApi.csValues' over a scope, recorded as asked about. The gatherer that comes back can
 -- only be asked about pages of that scope, so recording the scope covers every page it will gather
 -- from — which a pure gatherer could not record for itself.
 esValues :: EvalService -> Maybe FileImport -> IO ([Name] -> FileImport -> CRes [(EExpr, Val)])
-esValues svc@(EvalService s _ _) scope = recordAsk svc scope >> csValues s scope
+esValues svc@(EvalService s _ _ _) scope = recordAsk svc scope >> csValues s scope
 
 -- | Write down a scope a display asked about. An unscoped ask is about every page there is, which is
 -- what asking without naming a page means.
 recordAsk :: EvalService -> Maybe FileImport -> IO ()
 recordAsk svc Nothing = recordEvery svc
-recordAsk (EvalService _ _ asks) (Just prgmName) =
+recordAsk (EvalService _ _ _ asks) (Just prgmName) =
   modifyIORef' asks $ \a -> a{aaScopes = S.insert prgmName (aaScopes a)}
 
 recordEvery :: EvalService -> IO ()
-recordEvery (EvalService _ _ asks) = modifyIORef' asks $ \a -> a{aaEvery = True}
+recordEvery (EvalService _ _ _ asks) = modifyIORef' asks $ \a -> a{aaEvery = True}
 
 data EPrim
   = EPrim String (H.HashMap String Val -> Either String Val)

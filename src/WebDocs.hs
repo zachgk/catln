@@ -292,7 +292,7 @@ annotResp ctss scope' annot = do
     -- page holding the annotation itself, which is a page of nothing that nobody wrote.
     -- As in 'CtService.ctssCallDShow', nothing keeps what this answers, so nothing reads what it
     -- asked about.
-    svc <- lift $ newEvalService ctss scope'
+    svc <- lift $ newEvalService ctss scope' =<< serviceToday ctss
     -- As in 'CtService.getEvalAnnots', with no count of its own. This is the path the navigation and
     -- the annotation route take, which on a doc server that has just started is the slowest thing a
     -- reader waits at.

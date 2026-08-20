@@ -33,6 +33,8 @@ import           Data.IORef              (modifyIORef', newIORef, readIORef)
 import           Data.List               (elemIndex, intercalate, partition,
                                           sortOn)
 import           Data.Maybe
+import           Data.Time.Calendar      (Day)
+import           Data.Time.Clock         (getCurrentTime, utctDay)
 import           Data.UUID               (UUID)
 import           Eval                    (evalAnnots, evalBaseEnvService,
                                           evalBuild, evalBuildAll,
@@ -52,7 +54,7 @@ import           FileWatch               (Watch, Watcher, allCovered,
                                           watchReads, withPending)
 import           GHC.Generics            (Generic)
 import           MapMeta                 (parseMetaIDScope)
-import           Semantics               (CTSSConfig, ctssCachePath)
+import           Semantics               (CTSSConfig, ctssCachePath, ctssToday)
 import           Semantics.Prgm
 import           Semantics.Types         (Name)
 import           Syntax.Ct.Desugarf      (desFinalPass, desFinalPasses, desPrgm,
@@ -938,6 +940,17 @@ ctssRootPage (CTSS ssmv _) = do
     []       -> return Nothing
     (name:_) -> impDisp <$> mkDesCanonicalImportStr ctssConfig name
 
+-- | The day the service reads @today@ as, which is what an evaluation resolves a relative date
+-- against.
+--
+-- Whatever the service was configured with, or the day it is now for a service configured with none.
+-- Read per evaluation rather than once for the run, so a doc server left open across a midnight
+-- answers the next day's questions with the next day.
+serviceToday :: CTSS -> IO Day
+serviceToday (CTSS ssmv _) = do
+  CTSSDat{ctssConfig} <- readMVar ssmv
+  maybe (utctDay <$> getCurrentTime) return $ ctssToday ctssConfig
+
 ctssGet :: (SSF -> Maybe (CRes a)) -> CTSS -> CResT IO (GraphData a FileImport)
 ctssGet f ctss@(CTSS ssmv _) = do
   lift $ ctssBuildAll ctss
@@ -1202,7 +1215,7 @@ getEvalAnnots ctss prgmName = do
       -- service for the run itself, so they are run when one is being displayed and not when a page
       -- merely writes one — which is the same set of pages, decided by the thing that needs them
       -- rather than guessed at in advance.
-      svc <- lift $ newEvalService ctss (Just prgmName)
+      svc <- lift $ newEvalService ctss (Just prgmName) =<< serviceToday ctss
       let annots = evalAnnots (Just svc) prgmName tprgms
       -- An evaluation is a program the reader wrote, so there is no count of what it has left to do
       -- and none is invented. What can be said is whose annotations are being evaluated. Said after
@@ -1239,7 +1252,7 @@ ctssCallDShow ctss scope fun args = do
   prgm <- asCResT $ maybe (return $ mconcat $ map fst3 $ graphToNodes tprgms) (`prgmFromGraphData` tprgms) scope
   -- Nothing keeps what this answers, so nothing reads what it asked: a call is answered and
   -- forgotten, and there is no kept value to be dropped when the answer changes.
-  svc <- lift $ newEvalService ctss scope
+  svc <- lift $ newEvalService ctss scope =<< serviceToday ctss
   asCResT $ evalDShowCall (evalBaseEnvService (Just svc) prgm) fun args
 
 -- | Read a page's computed item, without building the page or computing anything.

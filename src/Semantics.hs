@@ -24,6 +24,7 @@ import           Data.IORef          (IORef, atomicModifyIORef', newIORef,
                                       readIORef)
 import           Data.List           (partition, sortOn)
 import           Data.Maybe
+import           Data.Time.Calendar  (Day, fromGregorian)
 import           Semantics.Prgm
 import           Semantics.Types
 import           System.Directory    (doesDirectoryExist, getHomeDirectory)
@@ -278,11 +279,23 @@ data CTSSConfig = CTSSConfig {
   --
   -- Held here rather than found by whoever wants it, so that what a run caches is the run's own
   -- setting and a test can be given a directory of its own.
-  ctssCachePath :: Maybe FilePath
+  ctssCachePath :: Maybe FilePath,
+  -- | The day a run reads @today@ as, or 'Nothing' for a run which reads it off the clock.
+  --
+  -- A note may write a query saying @due before tomorrow@, and what that asks for is decided by the
+  -- day it is asked on. Off the clock, the same query is a different question every day, and a test
+  -- written over one could only assert what today happens to make true.
+  --
+  -- Held here for the reason 'ctssCachePath' is: a run's own setting rather than something found
+  -- wherever it is wanted. Every test pins it, so a test's queries ask one thing forever; a doc
+  -- server leaves it absent and reads the day each evaluation is made on.
+  ctssToday     :: Maybe Day
                                 }
 
 testCtssConfig, buildCtssConfig :: CTSSConfig
-testCtssConfig = CTSSConfig "stack" Nothing
+-- | Pinned to a Saturday, which has a @last friday@ behind it and a @next monday@ ahead of it, and
+-- which sits among the dates the Obsidian fixtures write.
+testCtssConfig = CTSSConfig "stack" Nothing (Just (fromGregorian 2026 1 3))
 -- | The standard-library location used by the CLI/LSP/WebDocs. During development
 -- the compiler is run from a worktree (e.g. via @stack exec@) whose working directory
 -- contains a local @stack/@ standard library; prefer it so multiple worktrees can be
@@ -299,7 +312,7 @@ buildCtssConfig = unsafePerformIO $ do
   -- ('Syntax.InferImport.importPathCandidates').
   home <- getHomeDirectory
   let cachePath = joinPath [home, ".catln", "cache", "import"]
-  return $ CTSSConfig (if localExists then localPath else "~/.catln/stack") (Just cachePath)
+  return $ CTSSConfig (if localExists then localPath else "~/.catln/stack") (Just cachePath) Nothing
 {-# NOINLINE buildCtssConfig #-}
 
 mkTypeEnv :: (ExprClass e, Show m, Show (e m), MetaDat m) => Prgm e m -> TypeEnv (ObjArrTypeGraph e m)

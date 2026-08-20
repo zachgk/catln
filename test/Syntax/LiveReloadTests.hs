@@ -24,16 +24,18 @@ import           CtService              (CTSS (..), Progress (..),
                                          ctssFollowing, ctssGetFrom, ctssKeys,
                                          ctssMapPages, ctssProgress, ctssReadOf,
                                          ctssReport, ctssWatch, ctssWatchLive,
-                                         ctssWorking, emptyCTSS)
+                                         ctssWorking, emptyCTSS, serviceToday)
 import qualified Data.HashMap.Strict    as H
 import qualified Data.HashSet           as S
 import           Data.IORef             (modifyIORef', newIORef, readIORef)
 import           Data.List              (isPrefixOf, sort)
 import           Data.Maybe             (isJust, isNothing, listToMaybe)
-import           Data.Time.Clock        (addUTCTime, getCurrentTime)
+import           Data.Time.Calendar     (fromGregorian)
+import           Data.Time.Clock        (addUTCTime, getCurrentTime, utctDay)
 import           Eval.Common            (AnnotAsks (..), SSF (..), Val)
 import           Eval.Runtime.WebDocs   (askService)
-import           Semantics              (ctssCachePath, testCtssConfig)
+import           Semantics              (CTSSConfig (..), ctssCachePath,
+                                         testCtssConfig)
 import           Semantics.Prgm         (FileImport, impDisp)
 import           Syntax.Parsers         (canonicalImport, finishReading,
                                          mkRawImportStr, newReadQueue,
@@ -525,6 +527,20 @@ testProgressCountsItsReaders = testCase "one reader being answered is not the se
   assertEqual "the service did not fall idle once every reader had been answered"
     (False, StepIdle) (prWorking bothAnswered, prStep bothAnswered)
 
+-- | Which day the service reads @today@ as.
+--
+-- A note may write a query saying @due before tomorrow@, and what that asks for is decided by the
+-- day it is asked on. A service configured with a day answers with that one, so a test written over
+-- such a query asks one thing forever; a service configured with none reads the clock, which is what
+-- a doc server does so that a query asked tomorrow is tomorrow's question.
+testServiceToday :: TestTree
+testServiceToday = testCase "the day a service reads today as is the day it was given" $ do
+  pinned <- serviceToday =<< emptyCTSS testCtssConfig
+  assertEqual "a service given a day did not answer with it" (fromGregorian 2026 1 3) pinned
+  clock <- utctDay <$> getCurrentTime
+  read' <- serviceToday =<< emptyCTSS testCtssConfig{ctssToday = Nothing}
+  assertEqual "a service given no day did not read the clock" clock read'
+
 liveReloadTests :: TestTree
 liveReloadTests = testGroup "LiveReload" [
   testImporters,
@@ -541,5 +557,6 @@ liveReloadTests = testGroup "LiveReload" [
   testBrokenPageLeftOut,
   testAnnotsFollowTheirAsks,
   testAskServiceForcesItsAnswer,
-  testAnnotsFollowThePages
+  testAnnotsFollowThePages,
+  testServiceToday
                                          ]
