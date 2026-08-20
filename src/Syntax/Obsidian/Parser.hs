@@ -679,18 +679,20 @@ webAddress v = if "://" `isInfixOf` v then Just v else Nothing
 
 -- | 'noteParts' over lines, which is what the writing under a checkbox is already broken into.
 noteLineParts :: [String] -> [NotePart]
-noteLineParts = go False []
+noteLineParts = go Nothing []
   where
     go _ acc [] = writingPart acc
-    go inCode acc (l:ls)
-      | isFence l = go (not inCode) (l:acc) ls
-      | not inCode, Just (symbol, says) <- taskLine l = let (under, inCode', ls') = taskWriting (indentation l) inCode ls in
-          writingPart acc ++ (NoteTask symbol says (noteLineParts under) : go inCode' [] ls')
-      | otherwise = go inCode (l:acc) ls
+    go Nothing acc (l:ls)
+      | Just (fence, _) <- fenceOpen l = go (Just fence) (l:acc) ls
+      | Just (symbol, says) <- taskLine l = let (under, fence', ls') = taskWriting (indentation l) Nothing ls in
+          writingPart acc ++ (NoteTask symbol says (noteLineParts under) : go fence' [] ls')
+    go fence acc (l:ls)
+      | Just open <- fence, fenceClose open l = go Nothing (l:acc) ls
+      | otherwise = go fence (l:acc) ls
 
     writingPart acc = [NoteWriting writing | let writing = joinLines (reverse acc), not (null writing)]
 
--- | What is written under a checkbox, where the note goes on, and whether that is inside a fence.
+-- | What is written under a checkbox, where the note goes on, and which fence is still open there.
 --
 -- A line is written within the task while it is indented deeper than the checkbox itself, whether it
 -- is a checkbox or not: a checkbox indented deeper is a task of the one above it, written under it as
@@ -699,13 +701,18 @@ noteLineParts = go False []
 --
 -- What is found is written back out without the indentation it was written at, as markdown reads
 -- four spaces of indentation as code and what is written under a task is writing rather than code.
-taskWriting :: Int -> Bool -> [String] -> ([String], Bool, [String])
-taskWriting ind inCode ls = (dedent within, inCode', rest)
+taskWriting :: Int -> Maybe Fence -> [String] -> ([String], Maybe Fence, [String])
+taskWriting ind fence ls = (dedent within, fence', rest)
   where
-    (within, inCode', rest) = aux [] inCode ls
+    (within, fence', rest) = aux [] fence ls
     aux acc code (l:ls')
-      | isBlank l || indentation l > ind = aux (l:acc) (if isFence l then not code else code) ls'
+      | isBlank l || indentation l > ind = aux (l:acc) (nextFence code l) ls'
     aux acc code ls' = (reverse acc, code, ls')
+
+-- | Which fence is open after a line, given the one open before it.
+nextFence :: Maybe Fence -> String -> Maybe Fence
+nextFence Nothing l     = fst <$> fenceOpen l
+nextFence (Just open) l = if fenceClose open l then Nothing else Just open
 
 -- | The character in a checkbox's box and what the line says after it, if the line is a checkbox at
 -- all.
@@ -744,9 +751,34 @@ dedent ls = map (drop ind) ls
   where
     ind = minimum $ maxBound : map indentation (filter (not . isBlank) ls)
 
--- | Whether a line opens or closes a fenced code block.
-isFence :: String -> Bool
-isFence l = any (`isPrefixOf` dropWhile isSpace l) ["```", "~~~"]
+-- | A fenced block of code, as the fence opening it says what will close it: the character it is
+-- written with and how many of them there are.
+--
+-- Both are carried because both decide it. A block opened with backticks is not closed by tildes,
+-- and one opened with four backticks is not closed by three — which is how a block of markdown
+-- holding a fence of its own is written. Reading a fence as a line that merely begins with three of
+-- either would have the inner fence close the outer block, and everything written after it read as
+-- the note rather than as the code it is.
+data Fence = Fence Char Int
+  deriving (Eq, Show)
+
+-- | The fence a line opens and what it says the block is, if the line opens one.
+--
+-- The indentation is not read: a fence may be written at any width here, where markdown reads one
+-- indented four or more as code of its own. Reading it that way is a difference in what a note means
+-- rather than in how a fence is closed, so it is left as it was.
+fenceOpen :: String -> Maybe (Fence, String)
+fenceOpen l = case span (`elem` ['`', '~']) (dropWhile isSpace l) of
+  (marks@(c:_), info) | length marks >= 3, all (== c) marks -> Just (Fence c (length marks), info)
+  _ -> Nothing
+
+-- | Whether a line closes the fence that is open.
+--
+-- The same character, at least as many of them, and nothing written after them. A line saying
+-- anything else is a line of the block, whatever it begins with.
+fenceClose :: Fence -> String -> Bool
+fenceClose (Fence c n) l = case span (== c) (dropWhile isSpace l) of
+  (marks, rest) -> length marks >= n && isBlank rest
 
 -- | Whether a line is written on at all.
 isBlank :: String -> Bool

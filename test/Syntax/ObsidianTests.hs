@@ -9,7 +9,8 @@ module Syntax.ObsidianTests where
 
 import           CtConstants              (mdAnnot, mdAnnotText, overlayAnnot,
                                            overlayAnnotUrl)
-import           Data.List                (intercalate)
+import           Data.Char                (isSpace)
+import           Data.List                (dropWhileEnd, intercalate)
 import           Data.Maybe               (maybeToList)
 import           Semantics                (testCtssConfig)
 import           Syntax.Ct.Prgm           (RawPrgm (RawPrgm),
@@ -83,6 +84,76 @@ testNestedTask = testCase "a checkbox written under a checkbox is a task of it" 
     "- [ ] Plan it",
     "  - [ ] A step of the plan"
                                                                                                           ]
+
+-- | A block of markdown is written between more delimiters than the fences inside it, so a fence of
+-- the block is not the end of the block. What is written after the inner one is still code, and a
+-- checkbox written there is still writing about a task rather than a task.
+testFenceWithinFence :: TestTree
+testFenceWithinFence = testCase "a fence inside a longer fence does not close it" $
+  assertEqual "" [NoteWriting $ dropWhileEnd isSpace note] $ noteParts note
+  where
+    note = unlines [
+      "````",
+      "```",
+      "- [ ] A checkbox inside code",
+      "```",
+      "````"
+                   ]
+
+-- | A block is closed by the character it was opened with. A note writing one of each has two
+-- blocks rather than one block holding the other's delimiters.
+testFenceOfOtherCharacter :: TestTree
+testFenceOfOtherCharacter = testCase "a fence is not closed by the other character" $
+  assertEqual "" [NoteWriting $ dropWhileEnd isSpace note] $ noteParts note
+  where
+    note = unlines [
+      "~~~",
+      "```",
+      "- [ ] A checkbox inside code",
+      "```",
+      "~~~"
+                   ]
+
+-- | A line of a block which begins with the delimiter and says more is a line of the block. Only a
+-- line saying nothing after it closes one.
+testFenceClosedBySelfAlone :: TestTree
+testFenceClosedBySelfAlone = testCase "a fence line saying more does not close a block" $
+  assertEqual "" [NoteWriting $ dropWhileEnd isSpace note] $ noteParts note
+  where
+    note = unlines [
+      "```python",
+      "```haskell",
+      "- [ ] A checkbox inside code",
+      "```"
+                   ]
+
+-- | The state of a fence is carried across what is written under a checkbox, so a block opened and
+-- closed there leaves the note out of code and a checkbox after it is a task.
+testFenceWithinTask :: TestTree
+testFenceWithinTask = testCase "a block opened and closed under a task ends there" $
+  assertEqual "" [
+    NoteTask " " "Read it" [NoteWriting "```\n- [ ] A checkbox inside code\n```"],
+    NoteTask " " "Write it" []
+                 ] $ noteParts $ unlines [
+    "- [ ] Read it",
+    "  ```",
+    "  - [ ] A checkbox inside code",
+    "  ```",
+    "- [ ] Write it"
+                                         ]
+
+-- | And a block opened under a checkbox and never closed goes on being a block after it, so what
+-- follows is code rather than the note again.
+testFenceOpenedWithinTask :: TestTree
+testFenceOpenedWithinTask = testCase "a block opened under a task and not closed goes on after it" $
+  assertEqual "" [
+    NoteTask " " "Read it" [NoteWriting "```"],
+    NoteWriting "- [ ] A checkbox inside code"
+                 ] $ noteParts $ unlines [
+    "- [ ] Read it",
+    "  ```",
+    "- [ ] A checkbox inside code"
+                                         ]
 
 -- | A checkbox is a list item, and a list is written with numbers as readily as with bullets.
 testNumberedTask :: TestTree
@@ -603,6 +674,11 @@ obsidianTests = testGroup "ObsidianTests" [
   testNoLinksInCode,
   testNoteParts,
   testNestedTask,
+  testFenceWithinFence,
+  testFenceOfOtherCharacter,
+  testFenceClosedBySelfAlone,
+  testFenceWithinTask,
+  testFenceOpenedWithinTask,
   testNumberedTask,
   testRewrite,
   testRewriteNormalizes,
