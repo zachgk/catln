@@ -17,7 +17,7 @@ import           Control.Monad            (forM_, guard)
 import           CtConstants
 import           Data.Aeson               (object, (.=))
 import qualified Data.Aeson               as A
-import           Data.Char                (isDigit, isSpace)
+import           Data.Char                (isDigit, isSpace, toLower)
 import           Data.Foldable            (toList)
 import qualified Data.HashMap.Strict      as H
 import qualified Data.IntSet              as IS
@@ -345,6 +345,7 @@ partStatements settings href part = [partStatement settings href part]
 partStatement :: Maybe TaskSettings -> (String -> Maybe String) -> NotePart -> RawStatementTree RawExpr ()
 partStatement _ href (NoteWriting writing) = RawStatementTree (RawAnnot (rawComment (embedWikiLinks href writing))) []
 partStatement _ _ (NoteFrontmatter properties) = RawStatementTree (RawAnnot (rawProperties properties)) []
+partStatement _ _ (NoteQuery query) = RawStatementTree (RawAnnot (rawTasksQuery query)) []
 partStatement settings href (NoteTask symbol says under) = RawStatementTree (RawDeclStatement task) (map (partStatement settings href) under)
   where
     task = RawObjArr (Just taskExpr) TypeObj Nothing [] Nothing Nothing
@@ -427,6 +428,10 @@ rawProperties, rawOverlay :: String -> RawExpr ()
 rawProperties properties = rawVal notePropertiesAnnot `applyRawArgs` [(Just $ partialKey (mkName notePropertiesAnnotText), rawStr properties)]
 rawOverlay url = rawVal overlayAnnot `applyRawArgs` [(Just $ partialKey (mkName overlayAnnotUrl), rawStr url)]
 
+-- | A query a note wrote for the Obsidian Tasks plugin, as the annotation it is shown by.
+rawTasksQuery :: String -> RawExpr ()
+rawTasksQuery query = rawVal noteTasksAnnot `applyRawArgs` [(Just $ partialKey (mkName noteTasksAnnotQuery), rawStr query)]
+
 -- | Writes a note back as the markdown it was read from: the reversion of 'notePageStatement'.
 --
 -- The note is written out of the program rather than out of the file it was read from, so what it
@@ -465,6 +470,7 @@ notePart :: RawStatementTree RawExpr () -> Maybe NotePart
 notePart (RawStatementTree (RawAnnot annot) [])
   | named mdAnnot annot = NoteWriting . restoreWikiLinks <$> rawArgStr mdAnnotText annot
   | named notePropertiesAnnot annot = NoteFrontmatter <$> rawArgStr notePropertiesAnnotText annot
+  | named noteTasksAnnot annot = NoteQuery <$> rawArgStr noteTasksAnnotQuery annot
 notePart (RawStatementTree (RawDeclStatement task) under)
   | Just taskExpr <- roaObj task, named noteSimpleTaskPath taskExpr = do
       says <- rawArgStr noteTaskContents taskExpr
@@ -521,6 +527,9 @@ writeNoteParts parts = concat $ zipWith separated (Nothing : map Just parts) par
     -- Obsidian writes one: a blank line follows them whether the note goes on in writing or in a
     -- checkbox.
     apartFrom _ NoteFrontmatter{} = True
+    -- A query is a fenced block, which is a block of markdown of its own however it is surrounded.
+    apartFrom NoteQuery{} _       = True
+    apartFrom _ NoteQuery{}       = True
     apartFrom _ _                 = False
 
 -- | The lines one part of a note is written as: its writing as it was found, or its checkbox
@@ -530,6 +539,14 @@ writeNotePart (NoteWriting writing) = lines writing
 -- The delimiters are written again rather than carried, so a block written between more of them
 -- than it needs is written back between two.
 writeNotePart (NoteFrontmatter properties) = "---" : lines properties ++ ["---"]
+-- Written with backticks however it was written, and with as many of them as the query needs: a
+-- query holding a fence of its own is written between a longer one, so that writing it back cannot
+-- close the block in the middle of what the reader typed.
+writeNotePart (NoteQuery query) = (marks ++ noteTasksInfoString) : body ++ [marks]
+  where
+    body = lines query
+    marks = replicate (max 3 (1 + maximum (0 : map leadingTicks body))) '`'
+    leadingTicks = length . takeWhile ('`' ==) . dropWhile isSpace
 writeNotePart (NoteTask symbol says under) = dropWhileEnd isSpace (box ++ says) : map indentLine (writeNoteParts under)
   where
     box = "- [" ++ symbol ++ "] "
@@ -554,6 +571,11 @@ data NotePart
   -- rather than carried; everything between them is carried exactly as it was found, because the
   -- one place that has to give the block back as it was is the one writing the note back.
   | NoteFrontmatter String
+  -- | A query the note wrote for the Obsidian Tasks plugin, as the lines of it between the fences
+  -- are. The delimiters are carried no more than a block of properties' are, and for the same
+  -- reason; the body is carried exactly as it was written, because it is what the reader typed and
+  -- what the block is written back from.
+  | NoteQuery String
   deriving (Eq, Show)
 
 -- | Breaks a note into the writing and the tasks it holds, in the order they were written.
@@ -683,6 +705,9 @@ noteLineParts = go Nothing []
   where
     go _ acc [] = writingPart acc
     go Nothing acc (l:ls)
+      | Just (fence, info) <- fenceOpen l, isTasksInfo info, indentation l == 0 =
+          let (body, ls') = fenceBody fence ls in
+          writingPart acc ++ (NoteQuery (intercalate "\n" body) : go Nothing [] ls')
       | Just (fence, _) <- fenceOpen l = go (Just fence) (l:acc) ls
       | Just (symbol, says) <- taskLine l = let (under, fence', ls') = taskWriting (indentation l) Nothing ls in
           writingPart acc ++ (NoteTask symbol says (noteLineParts under) : go fence' [] ls')
@@ -691,6 +716,26 @@ noteLineParts = go Nothing []
       | otherwise = go fence (l:acc) ls
 
     writingPart acc = [NoteWriting writing | let writing = joinLines (reverse acc), not (null writing)]
+
+-- | Whether what a fence says the block is, is a query the Obsidian Tasks plugin reads.
+--
+-- The block is read as a query whatever the vault is set to, plugin or no plugin. What a fence says
+-- the block is, is markdown of the note rather than a setting of the vault, exactly as the @---@
+-- opening a block of properties is — and reading it in only some vaults would be reading the same
+-- writing two ways. A vault running no plugin has a query over the checkboxes it does have.
+isTasksInfo :: String -> Bool
+isTasksInfo = (noteTasksInfoString ==) . map toLower . trim
+
+-- | The lines of a fenced block and where the note goes on after it, with neither delimiter.
+--
+-- A block which is never closed is the rest of the note, which is what markdown reads one as. It is
+-- written back with a closing fence, as a checkbox is written back with a bullet however it was
+-- written.
+fenceBody :: Fence -> [String] -> ([String], [String])
+fenceBody fence = aux []
+  where
+    aux acc (l:ls) | not (fenceClose fence l) = aux (l:acc) ls
+    aux acc ls                                = (reverse acc, drop 1 ls)
 
 -- | What is written under a checkbox, where the note goes on, and which fence is still open there.
 --

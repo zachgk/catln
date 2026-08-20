@@ -82,6 +82,16 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Note/#tasks"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/#tasks( EAppArg Value /query -> /Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/Note/StatusType/NonTask"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Note/StatusType/NonTask ]
@@ -235,6 +245,7 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

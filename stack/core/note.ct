@@ -139,6 +139,12 @@ module(Data/Note)
 
     Show/TaskList(tasks= taskList(annot= s))
 
+  annot(#tasks(query -> String))
+    # A query a note writes over the tasks of its vault, which is what the Obsidian Tasks plugin
+      reads out of a block of code a note fences as @tasks@. It is written where the note wrote the
+      block, so a note asking about its tasks is a note holding that ask, and it carries [query] as
+      the lines the reader typed rather than as a reading of them — the block is written back from
+      it, and what a reader typed is what a reader has to be shown again.
   annot(#properties(text -> String))
 
   data(Show/Properties(text -> String))

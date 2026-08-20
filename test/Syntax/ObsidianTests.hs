@@ -155,6 +155,175 @@ testFenceOpenedWithinTask = testCase "a block opened under a task and not closed
     "- [ ] A checkbox inside code"
                                          ]
 
+-- | A block fenced as @tasks@ is a query the note wrote over its vault's tasks, so it is a part of
+-- its own and the writing around it is the note either side of it.
+testQueryPart :: TestTree
+testQueryPart = testCase "a block fenced as tasks is a query" $
+  assertEqual "" [
+    NoteWriting "A note.",
+    NoteQuery "not done\nsort by due",
+    NoteWriting "The note again."
+                 ] $ noteParts $ unlines [
+    "A note.",
+    "",
+    "```tasks",
+    "not done",
+    "sort by due",
+    "```",
+    "",
+    "The note again."
+                                         ]
+
+-- | What the fence says the block is, is read however it was written, since markdown reads it that
+-- way and a reader writes it either way.
+testQueryInfoString :: TestTree
+testQueryInfoString = testGroup "a block is a query where its fence says it is" [
+  isQuery "written in tildes" "~~~tasks" "~~~",
+  isQuery "written in capitals" "```Tasks" "```",
+  isQuery "written with a space after it" "```tasks " "```",
+  notQuery "which says it is something else" "```dataview" "```",
+  notQuery "which says the query is part of a word" "```tasksmore" "```",
+  notQuery "which says nothing" "```" "```"
+                                                                               ]
+  where
+    isQuery name open close = testCase name $ assertEqual "" [NoteQuery "not done"] $ noteParts (note open close)
+    notQuery name open close = testCase name $ assertEqual "" [NoteWriting $ dropWhileEnd isSpace $ note open close] $ noteParts (note open close)
+    note open close = unlines [open, "not done", close]
+
+-- | A query is written in whatever it holds a fence of, so that writing back what a reader typed
+-- cannot close the block in the middle of it.
+testQueryHoldingFence :: TestTree
+testQueryHoldingFence = testCase "a query holding a fence is written between a longer one" $ do
+  assertEqual "read" [NoteQuery "not done\n```\nsort by due"] $ noteParts note
+  assertEqual "written" (Just note) $ rewrite note
+  where
+    note = unlines [
+      "````tasks",
+      "not done",
+      "```",
+      "sort by due",
+      "````"
+                   ]
+
+-- | Only a block at the width the note is written at is a query. One indented is written inside
+-- something — a list item, most often — and pulling it out to write it back would take it out of
+-- whatever it was written in.
+testQueryIndented :: TestTree
+testQueryIndented = testCase "an indented tasks fence is code, not a query" $ do
+  assertEqual "read" [NoteWriting $ dropWhileEnd isSpace note] $ noteParts note
+  assertEqual "written" (Just note) $ rewrite note
+  where
+    note = unlines [
+      "  ```tasks",
+      "  not done",
+      "  ```"
+                   ]
+
+-- | A fence written inside a longer block is a line of that block, so it says nothing about what
+-- the block is.
+testQueryWithinFence :: TestTree
+testQueryWithinFence = testCase "a tasks fence inside a block is not a query" $
+  assertEqual "" [NoteWriting $ dropWhileEnd isSpace note] $ noteParts note
+  where
+    note = unlines [
+      "````",
+      "```tasks",
+      "not done",
+      "```",
+      "````"
+                   ]
+
+-- | What is written under a checkbox is the note again, so a query written there is a query — and
+-- is written back where it was written, indented under its task.
+testQueryWithinTask :: TestTree
+testQueryWithinTask = testCase "a query written under a checkbox is a query of it" $ do
+  assertEqual "read" [NoteTask " " "Plan it" [NoteQuery "not done"]] $ noteParts note
+  assertEqual "written" (Just note) $ rewrite note
+  where
+    note = unlines [
+      "- [ ] Plan it",
+      "  ```tasks",
+      "  not done",
+      "  ```"
+                   ]
+
+-- | A block which is never closed is the rest of the note, which is what markdown reads one as. It
+-- is written back closed, as a checkbox is written back with a bullet however it was written.
+testQueryUnclosed :: TestTree
+testQueryUnclosed = testCase "a query never closed is the rest of the note" $ do
+  assertEqual "read" [NoteQuery "not done\nsort by due"] $ noteParts note
+  assertEqual "written" (Just closed) $ rewrite note
+  where
+    note = unlines ["```tasks", "not done", "sort by due"]
+    closed = unlines ["```tasks", "not done", "sort by due", "```"]
+
+-- | A query says nothing, which the plugin reads as every task there is. It is a query all the
+-- same, rather than an empty block of code.
+testQueryEmpty :: TestTree
+testQueryEmpty = testCase "a query saying nothing is a query" $ do
+  assertEqual "read" [NoteQuery ""] $ noteParts note
+  assertEqual "written" (Just note) $ rewrite note
+  where
+    note = unlines ["```tasks", "```"]
+
+-- | The reversion of the reading: a note holding a query is written back as the note it was read
+-- from, which is what keeps such a note saveable at all.
+testRewriteQuery :: TestTree
+testRewriteQuery = testCase "a note holding a query is written back as it was read" $
+  assertEqual "" (Just note) (rewrite note)
+  where
+    note = unlines [
+      "A note.",
+      "",
+      "- [ ] Read it",
+      "",
+      "```tasks",
+      "not done",
+      "sort by due",
+      "```",
+      "",
+      "The note again."
+                   ]
+
+-- | And writing back what was already written back writes the same thing again.
+testRewriteQueryIdempotent :: TestTree
+testRewriteQueryIdempotent = testCase "writing a note's query back twice writes it the same way" $
+  assertEqual "" (rewrite note) (rewrite =<< rewrite note)
+  where
+    note = unlines [
+      "A note.",
+      "~~~tasks",
+      "not done",
+      "~~~",
+      "The note again."
+                   ]
+
+-- | The writing around a query is two runs of writing rather than one, and each is read for its
+-- links by itself. A link written either side of a query is still a link.
+testQueryDoesNotHideLinks :: TestTree
+testQueryDoesNotHideLinks = testCase "a link either side of a query is still written as a link" $
+  assertEqual "" [
+    "Before, [Welcome](Welcome.md).",
+    "After, [Nested](Notes/Nested.md)."
+                 ] $ writingOf $ unlines [
+    "Before, [[Welcome]].",
+    "",
+    "```tasks",
+    "not done",
+    "```",
+    "",
+    "After, [[Nested]]."
+                                         ]
+
+-- | A link written inside a query is inside a fenced block, so it is writing about a link rather
+-- than one. It travels in the query as the reader typed it.
+testQueryKeepsItsLinks :: TestTree
+testQueryKeepsItsLinks = testCase "a link written inside a query is left as it was written" $ do
+  assertEqual "linked" [] $ wikiLinks "note" note
+  assertEqual "written" (Just note) $ rewrite note
+  where
+    note = unlines ["```tasks", "path includes [[Welcome]]", "```"]
+
 -- | A checkbox is a list item, and a list is written with numbers as readily as with bullets.
 testNumberedTask :: TestTree
 testNumberedTask = testCase "a numbered checkbox is a task" $
@@ -679,6 +848,18 @@ obsidianTests = testGroup "ObsidianTests" [
   testFenceClosedBySelfAlone,
   testFenceWithinTask,
   testFenceOpenedWithinTask,
+  testQueryPart,
+  testQueryInfoString,
+  testQueryHoldingFence,
+  testQueryIndented,
+  testQueryWithinFence,
+  testQueryWithinTask,
+  testQueryUnclosed,
+  testQueryEmpty,
+  testRewriteQuery,
+  testRewriteQueryIdempotent,
+  testQueryDoesNotHideLinks,
+  testQueryKeepsItsLinks,
   testNumberedTask,
   testRewrite,
   testRewriteNormalizes,

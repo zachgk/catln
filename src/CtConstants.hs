@@ -113,6 +113,15 @@ notePriorityPath = "/Data/Note/Priority"
 notePropertiesAnnot = "/Data/Note/#properties"
 notePropertiesAnnotText = "text"
 
+-- | The query a note writes in a block of code the Obsidian Tasks plugin reads, which is a fenced
+-- block whose info string is @tasks@. The query is carried as the text it was written as, for the
+-- reason 'notePropertiesAnnot' carries a block of properties that way: the block is written back
+-- from it, and it is what the reader typed.
+noteTasksAnnot, noteTasksAnnotQuery, noteTasksInfoString :: String
+noteTasksAnnot = "/Data/Note/#tasks"
+noteTasksAnnotQuery = "query"
+noteTasksInfoString = "tasks"
+
 -- | One entry of an RSS feed, declared in @stack\/rss\/main.ct@. A feed is read as a page holding
 -- one of these per entry, in the order 'Syntax.Rss.Cache' keeps them.
 --
