@@ -21,8 +21,7 @@
 module Eval.Runtime.WebDocs where
 
 import           CRes
-import           CtConstants         (dirEntryFileNames, noteObsidianTaskPath,
-                                      noteSimpleTaskPath)
+import           CtConstants         (dirEntryFileNames)
 import           Data.Aeson          (ToJSON)
 import           Data.Aeson.Text     (encodeToLazyText)
 import           Data.Char           (toLower)
@@ -34,7 +33,6 @@ import           Data.List.Split     (splitOn)
 import qualified Data.Map            as M
 import           Data.Maybe          (fromMaybe, mapMaybe)
 import qualified Data.Text.Lazy      as TL
-import qualified Data.UUID           as UUID
 import           Eval.Common
 import           GHC.Generics        (Generic)
 import           Semantics.Prgm
@@ -53,7 +51,7 @@ import           Utils
 
 -- | The primitives backing the @Catln/Doc@ display annotations.
 webDocsPrims :: [EPrim]
-webDocsPrims = [listProgram, filterProgram, typeInfer, typeInferPnt, debugger, debugExpr, sidebar, searchPagesFor, docPagesFor, testRun, taskList]
+webDocsPrims = [listProgram, filterProgram, typeInfer, typeInferPnt, debugger, debugExpr, sidebar, searchPagesFor, docPagesFor, testRun]
 
 -- | The argument of @/Catln/Doc/listProgram@ naming which stage to list, and the members of the
 -- @ListProgramMode@ enum it takes. @stack\/core\/webdoc.ct@ is the source of truth for these; a
@@ -484,66 +482,6 @@ testRun = EEnvPrim "testRun" prim
           -- Of the definition the annotation is written on rather than of the page, since a @#test@
           -- marks one definition and reports on that one.
           return $ encodeJsonText . filter ((== oaTestId oa) . trOwnerId) <$> orNotes tests
-
--- | One task of one note, as the value it displays as and as the expression it was declared by.
---
--- A task shown on its own page is edited by replacing the expression it was compiled from, which the
--- page it is shown on names. A task shown in a list of every note's tasks has no such page — the
--- list is not the note — so it carries its own: 'ptPage' is the page the task was written in and
--- 'ptExpr' the expression of it, which together are what @\/api\/write-expr@ replaces. So checking a
--- box in a list of tasks writes the note the task came from rather than whatever is displaying it.
---
--- 'ptExpr' is the rendered form of the meta id rather than the id itself, since that is what a
--- request naming the expression sends.
-data PageTask = PageTask { ptPage :: String
-                         , ptExpr :: String
-                         , ptTask :: Val
-                         } deriving (Generic, ToJSON)
-
--- | Backs @/Data/Note/taskList@, the data carried by a @Show/TaskList@ display. It renders the tasks
--- of the pages the evaluation covers as JSON: each the value the task displays as, beside the page it
--- was written in and the expression it was declared by.
---
--- That a task is a @\/Data\/Note\/Task@ is known here and nowhere below. What the service offers is
--- the values a page declares of a type ('csValues'); which types are worth gathering, and what to
--- make of the ones it finds, is this display's own business. So the compilation service stays a
--- service for programs rather than one that knows what a note is.
---
--- The members of that class are named rather than the class itself, because a value is declared as
--- the member it is and what the pipeline offers is values by the path they were declared at. Naming
--- the class instead would be asking the evaluator which types are members of it, which is the type
--- environment's to answer and not this side's. They are named together in the one call so that a
--- note mixing the two readings gives its tasks back in the order it wrote them.
---
--- Like 'sidebar' this reports on which pages there are rather than on the program it was evaluated
--- against, so evaluated unscoped it is every task the doc server holds — the list of all of them,
--- taken page by page in the order the pages are opened by.
-taskList :: EPrim
-taskList = EEnvPrim "taskList" prim
-  where
-    prim env _ = case evService env of
-      Nothing -> Left noService
-      Just svc -> askService $ do
-        let scope = esScope svc
-        graph <- esBuilt svc scope
-        -- One gatherer for every page asked about, not one per page. It holds the scope's
-        -- typechecked programs, so asking for a fresh one per page would pay for the scope once per
-        -- page — over a vault of notes, quadratic in the notes.
-        gather <- esValues svc scope
-        let pages = map snd3 $ graphToNodes $ maybe graph (`graphFilterReaches` graph) scope
-        return $ encodeJsonText . concat <$> traverse (pageTasks gather) (sortOn impDisp pages)
-
-    pageTasks pageValues prgmName = do
-      tasks <- orNotes $ pageValues (map mkName [noteSimpleTaskPath, noteObsidianTaskPath]) prgmName
-      case (tasks, impDisp prgmName) of
-        ([], _) -> return []
-        -- As in 'sidebar', a page with no display path is reported rather than dropped. Here it is a
-        -- task with no note to be written back to, which is worth saying rather than serving a list
-        -- that is quietly missing it.
-        (_, Nothing) -> Left $ printf "taskList has no file path for %s, so its tasks have no note to be written back to" (show prgmName)
-        (_, Just disp) -> return $ map (pageTask disp) tasks
-
-    pageTask disp (e, task) = PageTask disp (UUID.toString $ getMetaID $ getExprMeta e) task
 
 -- | A pipeline answer as a primitive's, whose failure is the notes that produced it. 'CRes.fromCRes'
 -- is the partial version of this, which a primitive must not use: a stage it was not given is a

@@ -27,6 +27,7 @@ import           Data.IORef           (modifyIORef)
 import           Data.Maybe           (fromMaybe)
 import           Eval.Common
 import           Eval.ExprBuilder
+import           Eval.Runtime.Tasks   (tasksPrims)
 import           Eval.Runtime.WebDocs (webDocsPrims)
 import           Numeric              (showHex, showOct)
 import           System.IO            (hFlush, stdout)
@@ -340,7 +341,7 @@ primEnv :: ResBuildPrims
 primEnv = H.fromList [(mkName k, v) | (k, v) <- map mapPrim prims ++ macros]
   where
     mapPrim p = (ePrimName p, Left p)
-    prims = webDocsPrims ++
+    prims = webDocsPrims ++ tasksPrims ++
             [ liftIntOp "+" (+)
             , liftIntOp "-" (-)
             , liftIntOp "*" (*)
