@@ -1336,6 +1336,21 @@ expandPredicate typeEnv vaenv (PredClass clss) = expandClassPartial typeEnv vaen
 expandPredicate typeEnv vaenv (PredRel rel)    = expandRelPartial typeEnv vaenv rel
 expandPredicate typeEnv vaenv (PredExpr e)     = maybe (TopType H.empty (PredsOne $ PredExpr e)) (\ps -> UnionType Nothing (joinUnionType ps) []) (typeGraphExpandPredExpr typeEnv vaenv e)
 
+-- | 'expandPredicates' under the restricted-intersection-operand contract of
+-- 'expandClassPartialWithinNames': only POSITIVE class\/relation atoms are name-restricted.
+-- A 'PredsNot' (or any atom under it) takes the full unrestricted path — restricting a
+-- complemented expansion WIDENS the result, which is unsound in every consumer — and a
+-- 'PredExpr' has no name-local reading, so it keeps the full path too.
+expandPredicatesWithinNames :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> S.HashSet TypeName -> TypePredicates -> Type
+expandPredicatesWithinNames _       _     _  PredsNone    = PTopType
+expandPredicatesWithinNames typeEnv vaenv ns (PredsOne (PredClass clss)) = expandClassPartialWithinNames typeEnv vaenv ns clss
+expandPredicatesWithinNames typeEnv vaenv ns (PredsOne (PredRel rel))    = expandRelPartialWithinNames typeEnv vaenv ns rel
+expandPredicatesWithinNames typeEnv vaenv _  p@(PredsOne PredExpr{})     = expandPredicates typeEnv vaenv p
+expandPredicatesWithinNames typeEnv vaenv ns (PredsAnd ps) = case map (expandPredicatesWithinNames typeEnv vaenv ns) ps of
+  [] -> BottomType
+  ts -> foldr1 (intersectTypesEnv typeEnv vaenv) ts
+expandPredicatesWithinNames typeEnv vaenv _  p@PredsNot{}  = expandPredicates typeEnv vaenv p
+
 -- | Returns 'True' if every type satisfying @p1@ also satisfies @p2@, i.e. U_p1 ⊆ U_p2.
 -- Sound but potentially incomplete: 'False' does not guarantee the predicates are incomparable.
 predImplies :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicates -> TypePredicates -> Bool
@@ -1744,9 +1759,34 @@ expandClassPartialWithNamesFull typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaen
 
 
 expandClassPartial :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> Type
-expandClassPartial typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv PartialType{ptName, ptVars=classVarsP} = expanded
+expandClassPartial = expandClassPartialAux Nothing
+
+-- | 'expandClassPartial' restricted for use as an INTERSECTION OPERAND against a positive
+-- ('Nothing'-top) type whose leaf names lie within the allowed set: positive leaf members
+-- outside the names are dropped — they could only meet to ∅, since 'intersectPartialsBase'
+-- refuses any name mismatch (the same argument 'intersectTypesWithVarEnv' states at its own
+-- name-restricted expansion clause). Class-typed (Just-top) members stay SYMBOLIC exactly as
+-- in 'expandClassPartial', so the meet machinery's lazier materialization decides them
+-- identically. NOT a general expansion: the result equals 'expandClassPartial' only modulo
+-- that intersection — never store it, never use it under negation/complement or on the sub
+-- side of a subtype check.
+expandClassPartialWithinNames :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> S.HashSet TypeName -> PartialType -> Type
+expandClassPartialWithinNames typeEnv vaenv allowedNames = expandClassPartialAux (Just allowedNames) typeEnv vaenv
+
+expandClassPartialAux :: (TypeGraph tg) => Maybe (S.HashSet TypeName) -> TypeEnv tg -> TypeVarArgEnv -> PartialType -> Type
+expandClassPartialAux mAllowed typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv PartialType{ptName, ptVars=classVarsP} = expanded
   where
     className = PClassName ptName
+    -- The allowed-name filters: 'keepPartials' on a member list, 'keepType' on an expanded
+    -- var-bound member. Just-top (symbolic) and 'TypeVar' results pass through whole —
+    -- restricting under a predicate top would need complement reasoning, and the meet
+    -- machinery already name-restricts those lazily.
+    keepPartials = case mAllowed of
+      Nothing -> id
+      Just ns -> filter (\PartialType{ptName=memberName} -> S.member memberName ns)
+    keepType t = case (mAllowed, t) of
+      (Just _, UnionType Nothing p cs) -> UnionType Nothing (joinUnionType $ keepPartials $ splitUnionType p) cs
+      _                                -> t
     expanded = case graphLookup className cg of
       Just (CGClass (_, PartialType{ptVars=classVarsDecl}, classTypes, _)) -> case classTypes of
         [] -> singletonType $ classPlaceholderLeaf ptName
@@ -1756,12 +1796,15 @@ expandClassPartial typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv PartialType
         where
           classVars = H.unionWith (intersectTypesEnv typeEnv vaenv) classVarsP (cleanDeclSelfRefs classVarsDecl)
           mapClassType (TypeVar (TVVar t) _) = case H.lookup t classVars of
-            Just v -> expandNeg $ intersectTypesEnv typeEnv vaenv v (H.lookupDefault PTopType t classVars)
+            Just v -> keepType $ expandNeg $ intersectTypesEnv typeEnv vaenv v (H.lookupDefault PTopType t classVars)
             Nothing -> error $ printf "Unknown var %s in expandPartial" (show t)
           mapClassType (TypeVar (TVArg t) _) = error $ printf "Arg %s found in expandPartial" (show t)
           mapClassType (TypeVar (TVApplied t _) _) = error $ printf "Applied var %s found in expandPartial" (show t)
-          mapClassType (UnionType Nothing p []) = UnionType Nothing (joinUnionType $ map mapClassPartial $ splitUnionType p) []
-          mapClassType t@(UnionType Nothing _ _) = t
+          -- Name-filter BEFORE the exit substitution: 'substitutePartialExit' never renames
+          -- a member, so filtering on declared names is equivalent and skips the
+          -- substitution cost for dropped members.
+          mapClassType (UnionType Nothing p []) = UnionType Nothing (joinUnionType $ map mapClassPartial $ keepPartials $ splitUnionType p) []
+          mapClassType t@(UnionType Nothing _ _) = keepType t
           -- A class-typed member (@List@'s @∀ConsList[/T=$_T]@) exits the class scope here:
           -- substitute its external references totally ('substituteExit'), or the dangling
           -- spelling leaks and a like-named enclosing scope captures it.
@@ -1789,12 +1832,27 @@ relArgKeysFeasible typeEnv relPartial n = case declaredArgKeys typeEnv n of
   Just kss -> any (H.keysSet (ptArgs relPartial) `S.isSubsetOf`) kss
 
 expandRelPartial :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> Type
-expandRelPartial typeEnv@TypeEnv{teNames} vaenv relPartial = result
+expandRelPartial = expandRelPartialAux Nothing
+
+-- | 'expandRelPartial' under the same restricted-intersection-operand contract as
+-- 'expandClassPartialWithinNames': the concrete-name candidates ('tpNames'\/'fromArgs') are
+-- filtered to the allowed set — a dropped candidate is a positive leaf of another name and
+-- meets to ∅ — while the class-route candidates ('clsNames', symbolic 'classPartial' tops)
+-- are kept whole, since restricting under a predicate top is not name-local. This is where
+-- the whole-universe 'teNames' scan dies for single-name consumers.
+expandRelPartialWithinNames :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> S.HashSet TypeName -> PartialType -> Type
+expandRelPartialWithinNames typeEnv vaenv allowedNames = expandRelPartialAux (Just allowedNames) typeEnv vaenv
+
+expandRelPartialAux :: (TypeGraph tg) => Maybe (S.HashSet TypeName) -> TypeEnv tg -> TypeVarArgEnv -> PartialType -> Type
+expandRelPartialAux mAllowed typeEnv@TypeEnv{teNames} vaenv relPartial = result
   where
     result = unionAllTypesWithEnv typeEnv vaenv (UnionType Nothing (joinUnionType fromArgs) [] : tpNames ++ clsNames)
     relName = ptName relPartial
-    fromArgs = map (\n -> relPartial{ptName=n}) $ relativeNameFilter relName $ map pkName $ H.keys $ snd $ splitVarArgEnv vaenv
-    tpNames = map (\n -> singletonType relPartial{ptName=n}) $ filter (relArgKeysFeasible typeEnv relPartial) $ relativeNameFilter relName $ S.toList teNames
+    keepNames = case mAllowed of
+      Nothing -> id
+      Just ns -> filter (`S.member` ns)
+    fromArgs = map (\n -> relPartial{ptName=n}) $ keepNames $ relativeNameFilter relName $ map pkName $ H.keys $ snd $ splitVarArgEnv vaenv
+    tpNames = map (\n -> singletonType relPartial{ptName=n}) $ filter (relArgKeysFeasible typeEnv relPartial) $ keepNames $ relativeNameFilter relName $ S.toList teNames
     clsNames = map (setArgMode H.empty (ptArgMode relPartial) . classPartial . partialVal) $ relativeNameFilter relName $ listClassNames typeEnv
 
 -- ============================================================================
@@ -4445,6 +4503,25 @@ unionTypes typeEnv = unionTypesWithEnv typeEnv H.empty
 -- | Takes the 'unionTypes' of many types
 unionAllTypesWithEnv :: (TypeGraph tg, Foldable f) => TypeEnv tg -> TypeVarArgEnv -> f Type -> Type
 unionAllTypesWithEnv typeEnv vaenv = foldr (unionTypesWithEnv typeEnv vaenv) BottomType
+
+-- | 'unionAllTypesWithEnv' with ONE final 'compactType' instead of one per fold step: the
+-- positive 'Nothing'-top operands are merged raw ('unionPartialLeafs' + constant nub) and
+-- compacted once, and only the remaining operands (predicate tops, type vars — where the
+-- pairwise 'preds'' absorption and var resolution genuinely need 'unionTypesWithEnv') fold
+-- pairwise in their original relative order on top of that base. Set-equal to
+-- 'unionAllTypesWithEnv' (every intermediate compaction is semantics-preserving and the
+-- final compaction sees the same raw leafs); NOT guaranteed spelling-identical when a
+-- pairwise fold prefix would have triggered a union-folding compaction mid-fold — callers
+-- that store the result must gate adoption on a golden audit.
+unionAllTypesWithEnvOnce :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> [Type] -> Type
+unionAllTypesWithEnvOnce typeEnv vaenv ts = foldr (unionTypesWithEnv typeEnv vaenv) posBase others
+  where
+    isPosUnion (UnionType Nothing _ _) = True
+    isPosUnion _                       = False
+    (poss, others) = L.partition isPosUnion ts
+    posBase = compactType typeEnv vaenv $ UnionType Nothing
+                (unionPartialLeafs [p | UnionType Nothing p _ <- poss])
+                (L.nub (concat [c | UnionType Nothing _ c <- poss]))
 
 -- | Takes the 'unionTypes' of many types
 unionAllTypes :: (TypeGraph tg, Foldable f) => TypeEnv tg -> f Type -> Type
