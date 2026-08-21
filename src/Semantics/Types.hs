@@ -1463,12 +1463,39 @@ classDeclaredSubclassOf TypeEnv{teClassGraph=ClassGraph cg} c1 c2 = go S.empty c
             in any (\s -> relativeNameMatches c1 s || go (S.insert cName visited) s) subs
           _ -> False
 
+-- | 'classDeclaredSubclassOf' where the LEFT side carries element bounds: a var-carrying
+-- declared member (@every(BinTree[$K -> Ord, $V -> Eq], isa= [Eq])@) proves @c1 ⟹ c2@ at
+-- the DIRECT step when @c1@'s name matches the member and each bound the member declares
+-- covers @c1@'s corresponding bound (covariant, absent = ⊤ — the same rule as the
+-- same-name class covariance in 'predImpliesAtom'). The TRANSITIVE walk stays var-free:
+-- composing bounds through a second var-carrying edge would need bound substitution,
+-- which is left to the SAT route. Subsumes the name-only walk (a var-free member's
+-- 'directMatch' is exactly the name match). NOT used inside the SAT engine's
+-- declared-edge check — 'directMatch' runs algebra code ('isSubtypeOfWithEnv'), and
+-- 'satAtomImpliesDeclared' must stay engine- and algebra-free.
+classDeclaredSubclassOfBounded :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> TypeName -> Bool
+classDeclaredSubclassOfBounded typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv c1 c2 = go S.empty c2
+  where
+    go visited cName
+      | S.member cName visited = False
+      | otherwise = case graphLookup (PClassName cName) cg of
+          Just (CGClass (_, _, classTypes, _)) ->
+            let subs = [ sc | t <- classTypes, Just sc <- [maybeGetClassSingleton t] ]
+            in any (\sc -> directMatch sc || (H.null (ptVars sc) && go (S.insert cName visited) (ptName sc))) subs
+          _ -> False
+    directMatch sc = relativeNameMatches (ptName c1) (ptName sc)
+      && all (\(k, v) -> isSubtypeOfWithEnv typeEnv vaenv (H.lookupDefault PTopType k (ptVars c1)) v) (H.toList (ptVars sc))
+      && all (\(k, v) -> isSubtypeOfWithEnv typeEnv vaenv (H.lookupDefault PTopType k (ptArgs c1)) v) (H.toList (ptArgs sc))
+
 predImpliesAtom :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicate -> TypePredicate -> Bool
 -- A declared subclass edge @every(c1 isa c2)@ proves @c1 ⊆ c2@ directly, without enumerating
 -- @c1@'s members (which can recurse through a recursive parameterized member - see
 -- 'classDeclaredSubclassOf').
-predImpliesAtom typeEnv _ (PredClass c1) (PredClass c2)
+predImpliesAtom typeEnv vaenvB (PredClass c1) (PredClass c2)
   | classDeclaredSubclassOf typeEnv (ptName c1) (ptName c2) = True
+  -- The bounded direct edge: @BinTree[K→Ord,V→Eq] ⟹ Eq@ by the var-carrying member the
+  -- name-only walk skips — short-circuits the engine route below on map.ct's hot shape.
+  | classDeclaredSubclassOfBounded typeEnv vaenvB c1 (ptName c2) = True
 -- Same class, covariant element bound: @hasClass C[/T=a] ⟹ hasClass C[/T=b]@ when @a ⊆ b@. A value
 -- whose class-C element is within @a@ is also within the wider @b@. This is the parameterized-class
 -- subtype rule for a shared class name with a type-var vs. a wider element bound (e.g. @Eqv[$T] ⟹
@@ -1502,6 +1529,9 @@ predImpliesAtom typeEnv vaenv (PredRel r1) (PredRel r2)
   -- parameterized member). Restricted to plain (arg/var-free) relations, matching the nullary
   -- class edges (@Ord isa Eq@) it targets - see 'classDeclaredSubclassOf'.
   | plainPartial r1 && plainPartial r2 && classDeclaredSubclassOf typeEnv (ptName r1) (ptName r2) = True
+  -- Bounded-left form of the same edge (the right side must still be plain — the walk
+  -- targets nullary edges).
+  | plainPartial r2 && classDeclaredSubclassOfBounded typeEnv vaenv r1 (ptName r2) = True
   -- Symbolic emptiness of @r1 ∧ ¬r2@ replaces expanding both relations (which for a recursive
   -- parameterized class universe re-expands the element class combinatorially). Gated open-world
   -- ('gatePos'), like every other kind of implication here: @isa r1 ⟹ isa r2@ must NOT be proved by
@@ -1534,6 +1564,8 @@ predImpliesAtom typeEnv vaenv (PredClass c) (PredRel r)
   -- PredRel/PredRel and PredRel/PredClass 'classDeclaredSubclassOf' fast paths; only @r@ need be plain
   -- (a narrower element bound on @c@ only shrinks the left).
   | plainPartial r && classDeclaredSubclassOf typeEnv (ptName c) (ptName r) = True
+  -- Bounded-left form: @hasClass BinTree[K→Ord,V→Eq] ⟹ isa Eq@ by the var-carrying edge.
+  | plainPartial r && classDeclaredSubclassOfBounded typeEnv vaenv c (ptName r) = True
   | otherwise = satAtomImplies typeEnv vaenv True (SatClass c) (SatRel r)
 -- PredRel r implies PredClass c when every type matching r is a member of c.
 -- Fast path (mirrors the @PredClass c ⟹ PredRel r@ same-name case above): for the SAME plain class
@@ -1544,6 +1576,9 @@ predImpliesAtom typeEnv vaenv (PredClass c) (PredRel r)
 predImpliesAtom typeEnv vaenv (PredRel r) (PredClass c)
   | plainPartial r, plainPartial c
   , sameClass || classDeclaredSubclassOf typeEnv (ptName r) (ptName c) = True
+  -- Bounded-left form of the declared-edge route only (the same-class route keeps its
+  -- plain-r guard: @isa c ⟹ hasClass c@ is a same-entity reading, not an edge).
+  | plainPartial c, classDeclaredSubclassOfBounded typeEnv vaenv r (ptName c) = True
   -- Gated ('gatePos') like the other outermost implication decisions: a relation naming an
   -- UNSEALED class must not be enumerated closed-world here — @~List ⟹ ∀Bag@ via the current
   -- members is broken by any future @isa List@ declaration, and deciding it True while the
