@@ -1792,7 +1792,11 @@ expandClassPartialAux mAllowed typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv
         [] -> singletonType $ classPlaceholderLeaf ptName
         -- Restore each member's declared data fields so a field-form value (written with
         -- explicit args) is recognized as a member of this class.
-        _  -> completeDataPartialsTop typeEnv $ unionAllTypesWithEnv typeEnv vaenv $ map mapClassType classTypes
+        -- Single-compaction union: member templates carry no explicit recursion (the
+        -- canonical recursive reference is the predicate/top form), so the union-folding
+        -- compaction clauses cannot fire mid-fold and the once-compacted result is
+        -- spelling-identical to the pairwise fold.
+        _  -> completeDataPartialsTop typeEnv $ unionAllTypesWithEnvOnce typeEnv vaenv $ map mapClassType classTypes
         where
           classVars = H.unionWith (intersectTypesEnv typeEnv vaenv) classVarsP (cleanDeclSelfRefs classVarsDecl)
           mapClassType (TypeVar (TVVar t) _) = case H.lookup t classVars of
