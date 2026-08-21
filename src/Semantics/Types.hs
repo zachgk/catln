@@ -2754,7 +2754,10 @@ satGoal typeEnv0 vaenv gatePos hyps goal0
         -- for @fluffy(this=Fish) ∧ fluffy(this=Animal)@) would escape a negative the refined
         -- (@this=Fish@) value cannot — a false SAT that breaks @A ⊆ A∪B@ (covariance).
         mR = foldl refineByPos m (sgPos r)
-        refineByPos acc (SatClass c) = refineMeet acc (expandClassPartial typeEnv vaenv c)
+        -- Witness refinement only ever accepts a single-leaf meet named @ptName acc@
+        -- ('refineMeet'), so the class expansion is restricted to that one name — the
+        -- dropped members could only meet to ∅.
+        refineByPos acc (SatClass c) = refineMeet acc (expandClassPartialWithinNames typeEnv vaenv (S.singleton (ptName acc)) c)
         refineByPos acc (SatLeafs ls) = refineMeet acc (UnionType Nothing (joinUnionType ls) [])
         -- A relation is satisfied through its name route OR a matching class (a disjunction),
         -- so the witness may only be refined when a SINGLE route is available: name route
@@ -2764,7 +2767,7 @@ satGoal typeEnv0 vaenv gatePos hyps goal0
         -- witness towards a false UNSAT.
         refineByPos acc (SatRel r') = case (relNameAdmits typeEnv r' acc, relMatchingClasses typeEnv r') of
           (True, [])   -> refineMeet acc (singletonType r'{ptName = ptName acc})
-          (False, [c]) -> refineMeet acc (expandClassPartial typeEnv vaenv c)
+          (False, [c]) -> refineMeet acc (expandClassPartialWithinNames typeEnv vaenv (S.singleton (ptName acc)) c)
           _            -> acc
         refineMeet acc other =
           case snd $ intersectTypesWithVarEnv typeEnv vaenv (singletonType acc) other of
@@ -3434,11 +3437,16 @@ compactPartialsWithClassPred typeEnv vaenv partials = unionPartialLeafs $ map tr
     tryAux partial = if null classPreds && null relPreds
       then joinUnionType [partial]
       -- Expand the partial's own class/rel preds and intersect them back in.
-      else asLeafs $ foldr1 (intersectTypesEnv typeEnv vaenv) (singletonType partial' : map (expandRelPartial typeEnv vaenv) relPreds ++ map (expandClassPartial typeEnv vaenv) classPreds)
+      -- Expansions restricted to the partial's OWN name: the fold is
+      -- @partial' ∩ E₁ ∩ … ∩ Eₖ@ with a single-name positive leaf, so a member of any
+      -- other name meets to ∅ under every association order, and Just-top members stay
+      -- symbolic ('expandClassPartialWithinNames') exactly as the full expansion keeps them.
+      else asLeafs $ foldr1 (intersectTypesEnv typeEnv vaenv) (singletonType partial' : map (expandRelPartialWithinNames typeEnv vaenv ownName) relPreds ++ map (expandClassPartialWithinNames typeEnv vaenv ownName) classPreds)
       where
         -- Take the positive class/rel atom conjuncts out of partial
         (classPreds, relPreds, residConjs) = splitConjs (conjsOf (ptPreds partial))
         partial' = partial{ptPreds = rebuildConjs residConjs}
+        ownName = S.singleton (ptName partial')
 
         asLeafs (UnionType Nothing leafs []) = leafs
         asLeafs (UnionType (Just (_, negLeafs, _)) posLeafs []) = H.unionWith S.union negLeafs posLeafs  -- shouldn't normally occur
