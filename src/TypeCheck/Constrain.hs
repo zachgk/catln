@@ -211,10 +211,20 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByKnown i p@ST
       UnionType (Just (preds, negLeafs, _)) _ _ ->
         snd $ differenceTypeWithEnv feTypeEnv vaenv' (expandPredicates feTypeEnv vaenv' preds) (UnionType Nothing negLeafs [])
       t                                             -> t
-    act' = intersectTypesEnv feTypeEnv vaenv' act boundTp'
-    req' = intersectTypesEnv feTypeEnv (fmap (stypeReq . snd) vaenv) req boundTp'
+    -- Per-channel bound: when the channel is a positive union, the predicate expansion is
+    -- restricted to the channel's own leaf names — the dropped members are name-disjoint
+    -- from every channel leaf, and 'differenceTypeWithEnv' never renames a leaf, so the
+    -- meet result is unchanged ('expandPredicatesWithinNames''s operand contract). Any
+    -- other channel shape (⊤, a type var, a predicate top) keeps the full shared bound —
+    -- there the expansion IS the stored meet content and restriction would narrow it.
+    boundFor chanT = case (boundTp, chanT) of
+      (UnionType (Just (preds, negLeafs, _)) _ _, UnionType Nothing chanLeafs _) | not (H.null chanLeafs) ->
+        relaxNameBoundArgs act $ snd $ differenceTypeWithEnv feTypeEnv vaenv' (expandPredicatesWithinNames feTypeEnv vaenv' (H.keysSet chanLeafs) preds) (UnionType Nothing negLeafs [])
+      _ -> boundTp'
+    act' = intersectTypesEnv feTypeEnv vaenv' act (boundFor act)
+    req' = intersectTypesEnv feTypeEnv (fmap (stypeReq . snd) vaenv) req (boundFor req)
     -- A known bound is a spelled type (annotation seeds enter here), so it is decl-origin.
-    reqDecl' = intersectTypesEnv feTypeEnv (fmap (stypeReqDecl . snd) vaenv) reqDecl boundTp'
+    reqDecl' = intersectTypesEnv feTypeEnv (fmap (stypeReqDecl . snd) vaenv) reqDecl (boundFor reqDecl)
 computeConstraint _ con@(Constraint _ _ (BoundedByObjs _ SType{stypeReq=PTopType} _)) = (False, con)
 computeConstraint FEnv{feTypeEnv, feCompletedAllObjsKey, feCompletedAllObjs} con@(Constraint _ vaenv (BoundedByObjs i p@SType{stypeReq=pReq, stypeReqDecl=pReqDecl} objMapBoundUb)) = (False, con{conDat=BoundedByObjs i (p{stypeReq=pReq', stypeReqDecl=pReqDecl'}) objMapBoundUb})
   where
