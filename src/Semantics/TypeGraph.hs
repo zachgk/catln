@@ -63,14 +63,18 @@ unionReachesTree :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> ReachesTree
 -- @String@) is left exact, preserving raw-vs-settled dispatch keying. The coverage is the WHOLE
 -- union, so a settled sibling provided by another reach child is seen.
 unionReachesTree typeEnv vaenv (ReachesPartialTree children) =
-  presentRawResult typeEnv vaenv u u
+  presentRawResult typeEnv vaenv u
   where
-    u = unionAllTypesWithEnv typeEnv vaenv $ map unionChild $ H.toList children
+    -- Flattened single-compaction union: each child contributes its source key and its
+    -- subtree's union as separate operands ('unionAllTypesWithEnvOnce' merges all positive
+    -- operands raw and compacts once), instead of one compaction per child plus one per
+    -- fold step. The TypeVar cases keep replacing the key with the pointer, as before.
+    u = unionAllTypesWithEnvOnce typeEnv vaenv $ concatMap unionChild $ H.toList children
     unionChild (key, val) = case unionReachesTree typeEnv vaenv val of
-      (TypeVar (TVArg argName) tl) | makeAbsoluteName (ptName key) == makeAbsoluteName (pkName argName) -> TypeVar (TVArg $ makeAbsolutePk argName) tl
-      (TypeVar (TVVar varName) tl) -> TypeVar (TVVar $ makeAbsolutePk varName) tl
-      val' -> unionTypesWithEnv typeEnv vaenv (singletonType key) val'
-unionReachesTree typeEnv vaenv (ReachesTypeTree children) = unionAllTypesWithEnv typeEnv vaenv (H.keys children ++ map (unionReachesTree typeEnv vaenv . snd) (H.elems children))
+      (TypeVar (TVArg argName) tl) | makeAbsoluteName (ptName key) == makeAbsoluteName (pkName argName) -> [TypeVar (TVArg $ makeAbsolutePk argName) tl]
+      (TypeVar (TVVar varName) tl) -> [TypeVar (TVVar $ makeAbsolutePk varName) tl]
+      val' -> [singletonType key, val']
+unionReachesTree typeEnv vaenv (ReachesTypeTree children) = unionAllTypesWithEnvOnce typeEnv vaenv (H.keys children ++ map (unionReachesTree typeEnv vaenv . snd) (H.elems children))
 unionReachesTree _ _ ReachesLeaf = BottomType
 
 joinReachesTrees :: ReachesTree -> ReachesTree -> ReachesTree
@@ -109,7 +113,7 @@ cutReachesTree typeEnv vaenv req (ReachesPartialTree children) = ReachesPartialT
         kept = H.filterWithKey guaranteed arms
         -- The portion of the source each kept arm accepts, re-queried from the graph (the tree
         -- keeps its lean committed shape; see 'typeGraphQueryWithReason').
-        keptCoverage = unionAllTypesWithEnv typeEnv vaenv
+        keptCoverage = unionAllTypesWithEnvOnce typeEnv vaenv
           [ coveredSrc
           | (reason, coveredSrc, dest) <- typeGraphQueryWithReason typeEnv vaenv srcPartial
           , Just (keptReason, _) <- [H.lookup dest kept]
@@ -169,24 +173,25 @@ reachesPartials typeEnv partials = ReachesPartialTree $ H.fromList $ zip partial
 -- a recursive/raw applied form is recognised by what it settles to. Its declared result is a
 -- class-top (@∀ConsList@, @∀Functor@) or 'PTopType' when undeclared; intersecting that against a
 -- concrete member is transitive (@∀Functor ∩ Cons = Cons@ via 'expandClassPartialWithNamesFull'),
--- so the arms a settled value would reach are followed. @covered@ is what the term already reaches
--- in this union: a raw form whose declared result is ALREADY present adds nothing (kept exact, so
--- raw-vs-settled dispatch is preserved); only a form missing its settled data is widened. Settled
--- data leaves are left untouched.
-presentRawResult :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Type
-presentRawResult typeEnv vaenv covered t@(UnionType Nothing leafs _) =
+-- so the arms a settled value would reach are followed. Coverage is judged against the
+-- ACCUMULATING union itself (which always contains the whole original union): a raw form whose
+-- declared result is ALREADY present adds nothing (kept exact, so raw-vs-settled dispatch is
+-- preserved); only a form missing its settled data is widened. Settled data leaves are left
+-- untouched.
+presentRawResult :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
+presentRawResult typeEnv vaenv t@(UnionType Nothing leafs _) =
   foldr addResult t (filter (not . isSettledLeaf typeEnv) (splitUnionType leafs))
   where
     -- A 'PTopType' result (a genuinely undeclared function) carries no settled data to admit and
     -- would only widen the union to Top, so it is not added; only a concrete or class-top result is.
     addResult l acc =
       let r = typeGraphDeclaredResult typeEnv vaenv l
-      in if isBottomType r || isTop r || isSubtypeOfWithEnv typeEnv vaenv r (unionTypesWithEnv typeEnv vaenv covered acc)
+      in if isBottomType r || isTop r || isSubtypeOfWithEnv typeEnv vaenv r acc
            then acc
            else unionTypesWithEnv typeEnv vaenv r acc
     isTop PTopType = True
     isTop _        = False
-presentRawResult _ _ _ t = t
+presentRawResult _ _ t = t
 
 reaches :: (TypeGraph tg) => ReachesEnv tg -> Type -> ReachesTree
 reaches _     (UnionType (Just _) _ _) = ReachesLeaf
