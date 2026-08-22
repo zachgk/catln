@@ -74,7 +74,7 @@ module(Data/Note)
       medium and low rather than at either end, because that is where a task nobody gave a priority
       to sorts among ones somebody did.
 
-  data(Task/Obsidian(contents -> String, symbol -> String, statusType -> StatusType, description -> String, priority -> Priority, scheduled -> /Data/Maybe[$T -> String], due -> /Data/Maybe[$T -> String], recurrence -> /Data/Maybe[$T -> String], rest -> String))
+  data(Task/Obsidian(contents -> String, symbol -> String, statusType -> StatusType, description -> String, priority -> Priority, start -> /Data/Maybe[$T -> String], scheduled -> /Data/Maybe[$T -> String], due -> /Data/Maybe[$T -> String], recurrence -> /Data/Maybe[$T -> String], rest -> String))
     # A [Task/Obsidian] is a checkbox in a vault running the Obsidian Tasks plugin, which writes a
       task's dates, priority, recurrence and links into the line beside the box.
       It carries that line as [contents], exactly as it was written, and everything else beside it
@@ -95,8 +95,12 @@ module(Data/Note)
       The dates are carried as the @YYYY-MM-DD@ strings they were written as. Catln has no date to
       read them into, and inventing one here would be inventing it for the whole language rather
       than for a note.
-      TODO Only a few of the fields a task carries are named here. The rest — the created and start
-      dates, the done and cancelled dates, the tags apart from the description, the action on
+      The three days a task may be done on — [start], [scheduled] and [due] — are fields together,
+      where the first of them used to travel in [rest]. They are the three [/Data/Calendar/calendarDay]
+      reads to say which day a task sits on, and a day read out of JSON is a day only Haskell can
+      read: the arm answering that is written in Catln, so what it asks about has to be a field.
+      TODO Only a few of the fields a task carries are named here. The rest — the created date, the
+      done and cancelled dates, the tags apart from the description, the action on
       completion, the id, the ids it waits on, and the block link — are read exactly as these are
       and are carried together in [rest] as JSON, which is what [Show/TaskList] does with a whole
       list of tasks and what [Show/Properties] does with a block of properties. That is not because

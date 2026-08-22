@@ -26,8 +26,8 @@ import           CtConstants              (falsePrim, noteObsidianTaskPath,
                                            noteTaskDescription, noteTaskDue,
                                            noteTaskPriority, noteTaskRecurrence,
                                            noteTaskRest, noteTaskScheduled,
-                                           noteTaskState, noteTaskStatusType,
-                                           truePrim)
+                                           noteTaskStart, noteTaskState,
+                                           noteTaskStatusType, truePrim)
 import           Data.Aeson               (ToJSON)
 import qualified Data.HashMap.Strict      as H
 import           Data.List                (intercalate, sort, sortOn)
@@ -233,6 +233,7 @@ queryTask within (TupleVal name args)
       description <- valStrArg name noteTaskDescription args
       kind <- valMemberArg name noteTaskStatusType statusTypeKind "a status type" args
       priority <- valMemberArg name noteTaskPriority memberPriority "a priority" args
+      start <- valMaybeStrArg name noteTaskStart args
       scheduled <- valMaybeStrArg name noteTaskScheduled args
       due <- valMaybeStrArg name noteTaskDue args
       recurrence <- valMaybeStrArg name noteTaskRecurrence args
@@ -245,7 +246,7 @@ queryTask within (TupleVal name args)
         qtPriority = priority,
         qtDue = readDate =<< due,
         qtScheduled = readDate =<< scheduled,
-        qtStart = readDate =<< trStart rest,
+        qtStart = readDate =<< start,
         qtCreated = readDate =<< trCreated rest,
         -- The one date a finished task and a dropped one both write, read as whichever of the two
         -- its status says it is. A task is done or it is cancelled and never both.

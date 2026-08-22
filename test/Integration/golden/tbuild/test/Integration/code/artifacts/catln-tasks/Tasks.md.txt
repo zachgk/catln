@@ -26,7 +26,7 @@ Prgm
                                 ,
                                     [ CStr "Read the note" ]
                                 ) = "Read the note"
-                            )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /due -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                            )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /start -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /due -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
                             ( EAppArg Value /rest -> UnionType
                                 ( Nothing
                                 , ∅
@@ -55,7 +55,7 @@ Prgm
                                 ,
                                     [ CStr "Write this note" ]
                                 ) = "Write this note"
-                            )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /due -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                            )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /start -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /due -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
                             ( EAppArg Value /rest -> UnionType
                                 ( Nothing
                                 , ∅
@@ -84,7 +84,7 @@ Prgm
                                 ,
                                     [ CStr "Plan the rest" ]
                                 ) = "Plan the rest"
-                            )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /due -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                            )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /start -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /due -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
                             ( EAppArg Value /rest -> UnionType
                                 ( Nothing
                                 , ∅
@@ -113,7 +113,7 @@ Prgm
                                 ,
                                     [ CStr "Drop the old plan" ]
                                 ) = "Drop the old plan"
-                            )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /due -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                            )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /start -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /due -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
                             ( EAppArg Value /rest -> UnionType
                                 ( Nothing
                                 , ∅
@@ -142,7 +142,7 @@ Prgm
                                 ,
                                     [ CStr "Ship it #work" ]
                                 ) = "Ship it #work"
-                            )( EAppArg Value /priority -> /Data/Note/Priority/High = Value /Data/Note/Priority/High )( EAppArg Value /scheduled -> /Data/Nothing = Value /Data/Nothing )
+                            )( EAppArg Value /priority -> /Data/Note/Priority/High = Value /Data/Note/Priority/High )( EAppArg Value /start -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /scheduled -> /Data/Nothing = Value /Data/Nothing )
                             ( EAppArg Value /due -> /Data/Some
                                 [ /T=UnionType
                                     ( Nothing
@@ -194,7 +194,30 @@ Prgm
                                 ,
                                     [ CStr "Water the plants" ]
                                 ) = "Water the plants"
-                            )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /due -> /Data/Nothing = Value /Data/Nothing )
+                            )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )
+                            ( EAppArg Value /start -> /Data/Some
+                                [ /T=UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr "2026-01-02" ]
+                                    )
+                                ]
+                                ( /value=UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr "2026-01-02" ]
+                                    )
+                                ) = /Data/Some
+                                ( EAppArg Value /value -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr "2026-01-02" ]
+                                    ) = "2026-01-02"
+                                )
+                            )( EAppArg Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /due -> /Data/Nothing = Value /Data/Nothing )
                             ( EAppArg Value /recurrence -> /Data/Some
                                 [ /T=UnionType
                                     ( Nothing
@@ -222,8 +245,8 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "{"start":"2026-01-02","statusName":"Todo"}" ]
-                                ) = "{"start":"2026-01-02","statusName":"Todo"}"
+                                    [ CStr "{"statusName":"Todo"}" ]
+                                ) = "{"statusName":"Todo"}"
                             )
                         , /Data/Note/Task/Obsidian
                             ( EAppArg Value /contents -> UnionType
@@ -246,7 +269,7 @@ Prgm
                                 ,
                                     [ CStr "Do this first" ]
                                 ) = "Do this first"
-                            )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /due -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                            )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /start -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /due -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
                             ( EAppArg Value /rest -> UnionType
                                 ( Nothing
                                 , ∅
@@ -275,7 +298,7 @@ Prgm
                                 ,
                                     [ CStr "Do this after" ]
                                 ) = "Do this after"
-                            )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /due -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                            )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /start -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /due -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
                             ( EAppArg Value /rest -> UnionType
                                 ( Nothing
                                 , ∅
@@ -304,7 +327,7 @@ Prgm
                                 ,
                                     [ CStr "Answer the question" ]
                                 ) = "Answer the question"
-                            )( EAppArg Value /priority -> /Data/Note/Priority/Low = Value /Data/Note/Priority/Low )
+                            )( EAppArg Value /priority -> /Data/Note/Priority/Low = Value /Data/Note/Priority/Low )( EAppArg Value /start -> /Data/Nothing = Value /Data/Nothing )
                             ( EAppArg Value /scheduled -> /Data/Some
                                 [ /T=UnionType
                                     ( Nothing
@@ -356,7 +379,7 @@ Prgm
                                 ,
                                     [ CStr "Book 📅 lunch" ]
                                 ) = "Book 📅 lunch"
-                            )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /due -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                            )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /start -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /due -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
                             ( EAppArg Value /rest -> UnionType
                                 ( Nothing
                                 , ∅

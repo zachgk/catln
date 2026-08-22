@@ -94,7 +94,6 @@ data TaskRest = TaskRest {
   trTags         :: [String],
   trDependsOn    :: [String],
   trCreated      :: Maybe String,
-  trStart        :: Maybe String,
   -- | The day a task was finished or the day it was dropped, which is one thing and not two: a task
   -- is done or it is cancelled and never both, and its status says which of the two it is.
   trStatusDate   :: Maybe String,
@@ -110,7 +109,6 @@ instance FromJSON TaskRest where
     <*> (fromMaybe [] <$> o .:? "tags")
     <*> (fromMaybe [] <$> o .:? "dependsOn")
     <*> o .:? "created"
-    <*> o .:? "start"
     <*> o .:? "statusDate"
     <*> o .:? "onCompletion"
     <*> o .:? "id"
@@ -118,7 +116,7 @@ instance FromJSON TaskRest where
 
 -- | A task saying nothing beside its own fields, which is what a plain checkbox carries.
 emptyRest :: TaskRest
-emptyRest = TaskRest Nothing [] [] Nothing Nothing Nothing Nothing Nothing Nothing
+emptyRest = TaskRest Nothing [] [] Nothing Nothing Nothing Nothing Nothing
 
 -- | What a task carried beside its own fields, read out of the JSON it carried it in.
 readTaskRest :: String -> Maybe TaskRest

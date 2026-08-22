@@ -95,11 +95,15 @@ noteTaskState = "state"
 -- | The fields of a 'noteObsidianTaskPath', beside the 'noteTaskContents' it shares with the plain
 -- reading. Only the few worth naming are fields; the rest travel together in 'noteTaskRest' as
 -- JSON, for the reason the type's own comment gives.
-noteTaskSymbol, noteTaskStatusType, noteTaskDescription, noteTaskPriority, noteTaskScheduled, noteTaskDue, noteTaskRecurrence, noteTaskRest :: String
+noteTaskSymbol, noteTaskStatusType, noteTaskDescription, noteTaskPriority, noteTaskStart, noteTaskScheduled, noteTaskDue, noteTaskRecurrence, noteTaskRest :: String
 noteTaskSymbol = "symbol"
 noteTaskStatusType = "statusType"
 noteTaskDescription = "description"
 noteTaskPriority = "priority"
+-- | The three days a task may be done on. They are fields together because
+-- @\/Data\/Calendar\/calendarDay@ reads all three to say which day a task sits on, and that arm is
+-- written in Catln — which can read a field and cannot read a day out of 'noteTaskRest'.
+noteTaskStart = "start"
 noteTaskScheduled = "scheduled"
 noteTaskDue = "due"
 noteTaskRecurrence = "recurrence"
