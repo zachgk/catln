@@ -89,6 +89,43 @@ module(Data/Map)
 
   > get(m= insert(m= insert(m= Leaf, key= 1, value= 10), key= 1, value= 99), key= 1) == /Data/Maybe/Some(value= 99)
     >>> True
+  # ## Removal
+  remove[$MK -> /Data/Algebra/Ord, $MV](m -> /Data/Map[$K -> $MK, $V -> $MV], key -> $MK) -> /Data/Map[$K -> $MK, $V -> $MV]
+    # [remove] deletes the entry for [key], returning the updated map (unchanged if the key is
+      absent). It compares [key] against the node's key and, guided by [removeStep], descends into a
+      subtree or — on [Equal] — drops the node.
+  remove(m= Leaf, key)= Leaf
+  remove(m= Node(left, key@nk, value@nv, right), key)= removeStep(cmp= key.compareTo(other= nk), left= left, nk= nk, nv= nv, right= right, key= key)
+
+  removeStep[$MK -> /Data/Algebra/Ord, $MV](cmp -> /Data/Algebra/Comparison, left -> BinTree[$K -> $MK, $V -> $MV], nk -> $MK, nv -> $MV, right -> BinTree[$K -> $MK, $V -> $MV], key -> $MK) -> /Data/Map[$K -> $MK, $V -> $MV]
+    # [removeStep] carries the [key <=> nodeKey] decision for [remove]: [LessThan]/[GreaterThan]
+      rebuild the node with [key] removed from the [left]/[right] subtree. [Equal] drops this node,
+      replacing it with the merge of its two subtrees — [graft]ing all of the [left] subtree's
+      entries into the [right] one. (Because the map is order-independent, any tree holding exactly
+      the surviving entries is a correct result; this merge avoids promoting a synthesized successor
+      key.)
+  removeStep(cmp= /Data/Algebra/LessThan, left, nk, nv, right, key)= Node(left= remove(m= left, key= key), key= nk, value= nv, right= right)
+  removeStep(cmp= /Data/Algebra/GreaterThan, left, nk, nv, right, key)= Node(left= left, key= nk, value= nv, right= remove(m= right, key= key))
+  removeStep(cmp= /Data/Algebra/Equal, left, nk, nv, right, key)= graft(from= left, into= right)
+
+  graft[$MK -> /Data/Algebra/Ord, $MV](from -> BinTree[$K -> $MK, $V -> $MV], into -> /Data/Map[$K -> $MK, $V -> $MV]) -> /Data/Map[$K -> $MK, $V -> $MV]
+    # [graft] inserts every entry of the [from] tree into the [into] map, walking [from] in order and
+      [insert]ing each node's [key]/[value]. [removeStep] uses it to merge a deleted node's subtrees.
+  graft(from= Leaf, into)= into
+  graft(from= Node(left, key@fk, value@fv, right), into)= graft(from= right, into= graft(from= left, into= insert(m= into, key= fk, value= fv)))
+
+  # Removing a present key drops it (the other entries stay); removing an absent key is a no-op.
+  > containsKey(m= remove(m= insert(m= insert(m= Leaf, key= 1, value= 10), key= 2, value= 20), key= 1), key= 1)
+    >>> False
+  > containsKey(m= remove(m= insert(m= insert(m= Leaf, key= 1, value= 10), key= 2, value= 20), key= 1), key= 2)
+    >>> True
+  > size(m= remove(m= insert(m= Leaf, key= 1, value= 10), key= 9))
+    >>> 1
+  # Removing a node with two children merges its subtrees; the remaining keys are intact.
+  > containsKey(m= remove(m= insert(m= insert(m= insert(m= Leaf, key= 2, value= 20), key= 1, value= 10), key= 3, value= 30), key= 2), key= 2)
+    >>> False
+  > (keys(m= remove(m= insert(m= insert(m= insert(m= Leaf, key= 2, value= 20), key= 1, value= 10), key= 3, value= 30), key= 2)) == [1, 3])
+    >>> True
   # ## Keys and values
   keys(m -> /Data/Map[$K -> $_K, $V -> $_V]) -> /Data/List[$T -> $_K]
     # [keys] lists the map's keys by an in-order traversal, so a [BinTree]'s keys come out in
