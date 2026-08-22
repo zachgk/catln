@@ -23,6 +23,15 @@ module(Data/Calendar)
       [calendarDay] is declared here and answered elsewhere, and this file sits below the files
       holding its members rather than above them. The layering that forces is the one wanted anyway.
 
+  every(/Data/Maybe[$T -> /Catln/Doc/DShow], isa= [/Catln/Doc/DShow])
+    # A [/Data/Maybe] of something showable is showable, which is what lets an answer of
+      [calendarDay] be evaluated at all: a tree is built toward a class, and a tree built toward a
+      value's own type comes back as the unevaluated application of it.
+      Said here rather than in @stack/core/maybe.ct@, where it would read as the more general truth
+      it is. That file does not reach the webdocs, and having it reach them would put it in the
+      SCC that @compile.ct@ and @webdoc.ct@ are in, which is a cost paid by every compile for the
+      sake of one caller. It moves there when there is a second one.
+
   :$E.calendarDay[$E -> /Data/Calendar/CalendarEntry] -> /Data/Maybe[$T -> String]
     # [calendarDay] is the day an entry is assigned to, as the @YYYY-MM-DD@ string it is written as.
       A day is a string here as it is everywhere a note is read: Catln has no date, and inventing
@@ -33,3 +42,41 @@ module(Data/Calendar)
       the one asked.
       The receiver is bound as [$E] and not as [$T] because [/Data/Maybe] names its own parameter
       [$T] and a parameter resolves by name, so a receiver of that name would be the same one.
+
+  annot(#calendar, isa= [/Catln/Doc/DocPage])
+    # A calendar of everything the page it is written in reaches which sits on a day.
+      It takes nothing. What to show is what is there: every [CalendarEntry] the evaluation covers,
+      which is what a page reaches and, written where nothing is scoped, is everything there is. A
+      calendar asking for less would be asking in a language of its own, and a note wanting less
+      than its vault already has [/Data/Note/#tasks] to ask in.
+      Marked as a page of its own, so a reader can open a calendar by name without a page having
+      been written to hold one.
+
+  data(Show/Calendar(result -> String))
+    # [Show/Calendar] shows what a calendar found: everything which sits on a day, each beside the
+      day it sits on and the page and expression it was written as, and the day the question was
+      asked on.
+      Each entry is the value itself rather than a rendering of it, as [/Data/Note/Show/TaskList]
+      carries its tasks and for a further reason: a calendar does not know what it is showing, so
+      handing the value on as it is, is the only way to show a kind of thing it has never heard of.
+      Whatever draws a value of that kind draws it here.
+      The day the question was asked on travels with the answer. A reader's clock is a different
+      clock in a different place, and the day a calendar marks as today has to be the day the answer
+      it is drawing was worked out on.
+      Which days are drawn, and whether they are drawn a day, a week or a month at a time, is not
+      here. That is a reader turning over what they have already been handed rather than a second
+      question, so it is decided where the calendar is drawn and nothing is asked again for it.
+      One field carrying both what was found and why nothing was, as [/Data/Note/Show/TaskQuery]
+      carries them and for its reason.
+
+  every(Show/Calendar.., isa= [/Catln/Doc/DShow])
+
+  /Catln/Doc/dshow(s= #calendar) =
+    calendarEntries(annot) -> String
+      # [calendarEntries] renders everything the evaluation covers which sits on a day as JSON: each
+        the value it displays as, the day it sits on, and the page and expression it was written as.
+        Which values those are is asked of the class rather than listed, so a kind of thing joins a
+        calendar by saying it belongs and answering [calendarDay].
+      #runtime("calendarEntries")
+
+    Show/Calendar(result= calendarEntries(annot= s))

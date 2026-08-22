@@ -182,6 +182,23 @@ class CtServiceApi s where
   -- that order rather than one.
   csValues :: s -> Maybe FileImport -> IO ([Name] -> FileImport -> CRes [(EExpr, Val)])
 
+  -- | Asks a method of a page's program about a value, and gives back what the answer evaluates to.
+  --
+  -- The companion of 'csValues'. That gathers a class of value across pages without knowing what any
+  -- of them is; this reads something off one of them the same way — by naming a method the class
+  -- declares and letting the member answer it. So a display can gather and then ask, and adding a
+  -- new kind of thing for it to show is a @.ct@ file joining the class and answering the method,
+  -- with nothing here changed.
+  --
+  -- Which method is worth asking is the caller's business and not the service's, for the reason
+  -- 'csValues' gives about which types are worth gathering.
+  --
+  -- An asker per page rather than one for everything, because the page's program is what answering
+  -- costs and a value is answered about in the program of the page that declared it. That is the
+  -- same program 'csValues' built to gather it; asking is a second build of it, which is a cost
+  -- worth naming and is why the asker is taken once per page rather than once per value.
+  csAsk :: s -> Maybe FileImport -> IO (Name -> FileImport -> CRes (Val -> CRes Val))
+
 -- | What a display asked the compilation service about, as what would have to change for its answer
 -- to stop being its answer.
 --
@@ -284,6 +301,11 @@ esRunExpr svc@(EvalService s _ _ _) prgmName src = recordAsk svc (Just prgmName)
 -- from — which a pure gatherer could not record for itself.
 esValues :: EvalService -> Maybe FileImport -> IO ([Name] -> FileImport -> CRes [(EExpr, Val)])
 esValues svc@(EvalService s _ _ _) scope = recordAsk svc scope >> csValues s scope
+
+-- | 'CtServiceApi.csAsk' over a scope, recorded as 'esValues' is and for its reason: the asker that
+-- comes back can only be asked about pages of that scope, and cannot record for itself.
+esAsk :: EvalService -> Maybe FileImport -> IO (Name -> FileImport -> CRes (Val -> CRes Val))
+esAsk svc@(EvalService s _ _ _) scope = recordAsk svc scope >> csAsk s scope
 
 -- | Write down a scope a display asked about. An unscoped ask is about every page there is, which is
 -- what asking without naming a page means.

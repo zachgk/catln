@@ -556,6 +556,38 @@ evalPageValues names prgmName prgmGraphData = do
   where
     declaresOne oa = isValueObjArr oa && oaObjPath oa `elem` names
 
+-- | Asks a method of a page's program about a value, and evaluates the answer.
+--
+-- The companion of 'evalPageValues': that gathers what pages declare, this asks each of the gathered
+-- values a question the program knows how to answer. Together they are what lets a display gather a
+-- class of value across pages and then read something off each one without knowing what any of them
+-- is — the class declares the method, each member answers it, and this runs that answer.
+--
+-- The value is rebuilt as a typed constant ('valToEExpr') and the method applied to it, which is how
+-- 'evalDShowAnnot' renders a computed value through @toString@ and works for the same reason: the
+-- receiver is the concrete value, so it dispatches where the static type of whatever produced it
+-- could not. It is limited the same way too — a value 'valToEExpr' cannot rebuild (a closure, an IO
+-- handle) cannot be asked anything.
+--
+-- Built toward @DShow@, which is what forces the answer to be evaluated at all: a tree built toward
+-- an expression's own type comes back as the unevaluated application. So a method asked through this
+-- has to answer with something showable, which is a real constraint on the method and is why
+-- @stack\/core\/calendar.ct@ has to say that a @\/Data\/Maybe@ of a showable thing is showable.
+--
+-- An asker is handed back rather than an answer, as 'CtServiceApi.csValues' hands back a gatherer and
+-- for the same reason: the page's program is what answering costs, and it is one program however
+-- many of the page's values are asked.
+evalPageAsk :: Name -> FileImport -> EPrgmGraphData -> CRes (Val -> CRes Val)
+evalPageAsk method prgmName prgmGraphData = do
+  prgm <- prgmFromGraphData prgmName prgmGraphData
+  -- No service, as 'evalPageValues' takes none and for its reason: this evaluation is one the
+  -- service started, and an evaluation the service started has no service to ask.
+  let env@Env{evTbEnv} = evalBaseEnv prgm
+  return $ \val -> do
+    let e = eVal (nameStr method) `eApply` ("/this", valToEExpr val)
+    tree <- buildRoot evTbEnv e (getExprPartialType e) dshowDestType
+    evalStateT (evalExpr tree) env
+
 -- | Builds a function of a program as a run and evaluates it, threading @ioVal@ as its @/io@ handle.
 -- That handle is the only difference between a real run and a mocked one: an 'IOVal' accumulates
 -- writes to stdout where a 'MockIOVal' accumulates writes to a buffer.

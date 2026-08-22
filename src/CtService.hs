@@ -39,8 +39,8 @@ import           Data.UUID               (UUID)
 import           Eval                    (evalAnnots, evalBaseEnvService,
                                           evalBuild, evalBuildAll,
                                           evalDShowCall, evalDebugExprPrgm,
-                                          evalDebugPrgm, evalPageValues,
-                                          evalRun, evalRunMock,
+                                          evalDebugPrgm, evalPageAsk,
+                                          evalPageValues, evalRun, evalRunMock,
                                           prgmFromGraphData)
 import           Eval.Common             (AnnotAsks (..), CtServiceApi (..),
                                           DebugRun, EvalMetaDat, MockIO,
@@ -1345,6 +1345,12 @@ instance CtServiceApi CTSS where
     graph <- csBuilt ctss scope
     return $ pageValues $ maybe graph (`graphFilterReaches` graph) scope
 
+  -- 'pageAsk' partially applied over the same scope 'csValues' gathers from, so that a value
+  -- gathered from a page is asked about in the program of the page it was gathered from.
+  csAsk ctss scope = do
+    graph <- csBuilt ctss scope
+    return $ pageAsk $ maybe graph (`graphFilterReaches` graph) scope
+
 -- | The pages of a scope, built, as the pipeline records of each.
 scopeSSFs :: CTSS -> FileImport -> IO [SSF]
 scopeSSFs ctss@(CTSS ssmv _) prgmName = do
@@ -1428,4 +1434,21 @@ pageValues graph = valuesOf
     writtenAt written e = fromMaybe (length written) $ elemIndex (exprId e) written
 
     exprId = getMetaID . getExprMeta
+
+-- | The answers a named method gives about the values of one page. This is the
+-- 'CtServiceApi.csAsk' of a set of pages, and the companion of 'pageValues' above: that says what a
+-- page declares, this asks one of those values something.
+--
+-- A page which was never built is reported rather than answered with nothing, as 'pageValues'
+-- reports one and for its reason: a display gathering across pages must never be quietly short of
+-- the pages nobody has looked at yet. Unlike there, a page built without a typechecked program is
+-- reported too — a value was gathered from it, so it has a program, and being asked about a page
+-- that declared nothing is a caller's mistake rather than an empty answer.
+pageAsk :: GraphData SSF FileImport -> Name -> FileImport -> CRes (Val -> CRes Val)
+pageAsk graph method prgmName = case graphLookup prgmName graph of
+  Nothing -> fail $ printf "The page %s has not been read, so its values cannot be asked about" (show $ impRaw prgmName)
+  Just _ -> do
+    let computed = graphFromEdges $ filter (isJust . ssfTPrgm . fst3) $ graphToNodes graph
+    tprgms <- mapMGraph (requireComputed . ssfTPrgm) computed
+    evalPageAsk method prgmName tprgms
 

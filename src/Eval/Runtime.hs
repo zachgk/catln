@@ -16,22 +16,23 @@
 
 module Eval.Runtime where
 
-import qualified Data.HashMap.Strict  as H
+import qualified Data.HashMap.Strict   as H
 import           Semantics.Prgm
 import           Semantics.Types
 
 -- import           Emit                (codegenPrgm)
 import           CtConstants
-import           Data.Char            (chr, ord)
-import           Data.IORef           (modifyIORef)
-import           Data.Maybe           (fromMaybe)
+import           Data.Char             (chr, ord)
+import           Data.IORef            (modifyIORef)
+import           Data.Maybe            (fromMaybe)
 import           Eval.Common
 import           Eval.ExprBuilder
-import           Eval.Runtime.Tasks   (tasksPrims)
-import           Eval.Runtime.WebDocs (webDocsPrims)
-import           Numeric              (showHex, showOct)
-import           System.IO            (hFlush, stdout)
-import           System.IO.Unsafe     (unsafePerformIO)
+import           Eval.Runtime.Calendar (calendarPrims)
+import           Eval.Runtime.Tasks    (tasksPrims)
+import           Eval.Runtime.WebDocs  (webDocsPrims)
+import           Numeric               (showHex, showOct)
+import           System.IO             (hFlush, stdout)
+import           System.IO.Unsafe      (unsafePerformIO)
 import           Text.Printf
 
 type Op = (String, Either EPrim MacroFunction)
@@ -341,7 +342,7 @@ primEnv :: ResBuildPrims
 primEnv = H.fromList [(mkName k, v) | (k, v) <- map mapPrim prims ++ macros]
   where
     mapPrim p = (ePrimName p, Left p)
-    prims = webDocsPrims ++ tasksPrims ++
+    prims = webDocsPrims ++ tasksPrims ++ calendarPrims ++
             [ liftIntOp "+" (+)
             , liftIntOp "-" (-)
             , liftIntOp "*" (*)

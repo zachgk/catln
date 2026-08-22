@@ -117,6 +117,16 @@ notePriorityPath = "/Data/Note/Priority"
 notePropertiesAnnot = "/Data/Note/#properties"
 notePropertiesAnnotText = "text"
 
+-- | A calendar, declared in @stack\/core\/calendar.ct@. 'calendarEntryClass' is the class of things
+-- a calendar can show and 'calendarDayMethod' the one question asked of a member of it, which is
+-- which day it is assigned to. They are named here rather than where a task is because a calendar
+-- knows nothing about tasks: what joins the class and answers the method is written in @.ct@, so
+-- adding a kind of thing a calendar shows changes no Haskell.
+calendarAnnot, calendarEntryClass, calendarDayMethod :: String
+calendarAnnot = "/Data/Calendar/#calendar"
+calendarEntryClass = "/Data/Calendar/CalendarEntry"
+calendarDayMethod = "/Data/Calendar/calendarDay"
+
 -- | The query a note writes in a block of code the Obsidian Tasks plugin reads, which is a fenced
 -- block whose info string is @tasks@. The query is carried as the text it was written as, for the
 -- reason 'notePropertiesAnnot' carries a block of properties that way: the block is written back
