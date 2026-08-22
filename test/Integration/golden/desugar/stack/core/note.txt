@@ -126,6 +126,20 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Calendar/calendarDay"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Calendar/calendarDay
+                            ( Value /this= Task/Simple( Value contents )( Value state ) ) -> ∀/Data/Maybe[ /T=/Data/String ] = Value /Data/Nothing
+                        , /Data/Calendar/calendarDay
+                            ( Value /this= Task/Obsidian( Value contents )( Value symbol )( Value statusType )( Value description )( Value priority )( Value start )( Value scheduled )( Value due )( Value recurrence )( Value rest ) ) -> ∀/Data/Maybe[ /T=/Data/String ] = firstDay( Value a= Value start )( Value b= Value scheduled )( Value c= Value due )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Note/Show/Properties"
                 , ObjectMapItem
                     { omiDecls =
@@ -152,6 +166,26 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Note/firstDay"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Note/firstDay
+                            ( Value a -> ∀/Data/Maybe[ /T=/Data/String ] )
+                            ( Value b -> ∀/Data/Maybe[ /T=/Data/String ] )
+                            ( Value c -> ∀/Data/Maybe[ /T=/Data/String ] ) -> ∀/Data/Maybe[ /T=/Data/String ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Note/firstDay
+                            ( Value a= /Data/Some( Value value ) )( Value b )( Value c ) -> ∀/Data/Maybe[ /T=/Data/String ] = /Data/Some( Value value= Value value )
+                        , /Data/Note/firstDay( Value a= Value /Data/Nothing )
+                            ( Value b= /Data/Some( Value value ) )( Value c ) -> ∀/Data/Maybe[ /T=/Data/String ] = /Data/Some( Value value= Value value )
+                        , /Data/Note/firstDay( Value a= Value /Data/Nothing )( Value b= Value /Data/Nothing )( Value c ) -> ∀/Data/Maybe[ /T=/Data/String ] = Value c
+                        ]
                     }
                 )
             ,
@@ -285,6 +319,8 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
         , CGClass
             ( False
             , /Data/Note/Task/Simple
@@ -299,6 +335,19 @@ Prgm
               into: a box to check and the writing beside it. It is the value itself that is shown, with no
               display type standing in for it, which is what lets checking the box in a doc server write the
               change back to the note the task was read from.    "
+            )
+        , CGClass
+            ( False
+            , /Data/Note/Task
+            , [ ∀/Data/Note/Task ]
+            , Just "A task is a thing that sits on a day, so a calendar can show one. Said of [Task] rather than
+              of each of its two readings, because it is true of a checkbox however the vault it was written
+              in has it read; the two arms below answer for the two readings, as [/Data/Maybe] joins
+              [/Data/Algebra/Eq] as a class and answers per arm.
+              Said here rather than where a calendar is declared, so that a calendar is a calendar of
+              whatever says it belongs on one rather than of a list kept somewhere else. The class path is
+              written out in full: an [isa] list is keyed by the name as it is written, so a relative one
+              would name a second class of that name rather than the one meant."
             )
         , CGClass
             ( True
@@ -387,5 +436,84 @@ Prgm
             ( Value /text= CStr "How urgent a task is, as the plugin's six priorities. [Priority/None] is written between
             medium and low rather than at either end, because that is where a task nobody gave a priority
             to sorts among ones somebody did." )
+        , /Catln/#md
+            ( Value /text= CStr "A task is a thing that sits on a day, so a calendar can show one. Said of [Task] rather than
+            of each of its two readings, because it is true of a checkbox however the vault it was written
+            in has it read; the two arms below answer for the two readings, as [/Data/Maybe] joins
+            [/Data/Algebra/Eq] as a class and answers per arm.
+            Said here rather than where a calendar is declared, so that a calendar is a calendar of
+            whatever says it belongs on one rather than of a list kept somewhere else. The class path is
+            written out in full: an [isa] list is keyed by the name as it is written, so a relative one
+            would name a second class of that name rather than the one meant." )
+        , /Catln/#md
+            ( Value /text= CStr "A checkbox read as a checkbox sits on no day, whichever way its box is written." )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= calendarDay
+                    ( Value /this= Task/Simple
+                        ( Value contents= CStr "read it" )( Value state= Value False )
+                    )
+                )( Value /r= Value /Data/Nothing )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#md
+            ( Value /text= CStr "A task naming a day it may be begun and a day it is due sits on the first of the three, which is" )
+        , /Catln/#md
+            ( Value /text= CStr "  the day it may be begun." )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= calendarDay
+                    ( Value /this= Task/Obsidian
+                        ( Value contents= CStr "Water the plants" )
+                        ( Value symbol= CStr " " )( Value statusType= Value StatusType/Todo )
+                        ( Value description= CStr "Water the plants" )( Value priority= Value Priority/None )
+                        ( Value start= /Data/Some
+                            ( Value value= CStr "2026-01-02" )
+                        )( Value scheduled= Value /Data/Nothing )
+                        ( Value due= /Data/Some
+                            ( Value value= CStr "2026-01-04" )
+                        )( Value recurrence= Value /Data/Nothing )
+                        ( Value rest= CStr "{}" )
+                    )
+                )
+                ( Value /r= /Data/Some
+                    ( Value value= CStr "2026-01-02" )
+                )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#md
+            ( Value /text= CStr "A task naming only the day it is due sits on that day, the two before it being absent." )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= calendarDay
+                    ( Value /this= Task/Obsidian
+                        ( Value contents= CStr "Ship it" )
+                        ( Value symbol= CStr " " )( Value statusType= Value StatusType/Todo )
+                        ( Value description= CStr "Ship it" )( Value priority= Value Priority/None )( Value start= Value /Data/Nothing )( Value scheduled= Value /Data/Nothing )
+                        ( Value due= /Data/Some
+                            ( Value value= CStr "2026-01-04" )
+                        )( Value recurrence= Value /Data/Nothing )
+                        ( Value rest= CStr "{}" )
+                    )
+                )
+                ( Value /r= /Data/Some
+                    ( Value value= CStr "2026-01-04" )
+                )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#md
+            ( Value /text= CStr "A task naming none of the three sits on no day, which is an answer and not a task left out." )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= calendarDay
+                    ( Value /this= Task/Obsidian
+                        ( Value contents= CStr "Book" )
+                        ( Value symbol= CStr " " )( Value statusType= Value StatusType/Todo )
+                        ( Value description= CStr "Book" )( Value priority= Value Priority/None )( Value start= Value /Data/Nothing )( Value scheduled= Value /Data/Nothing )( Value due= Value /Data/Nothing )( Value recurrence= Value /Data/Nothing )
+                        ( Value rest= CStr "{}" )
+                    )
+                )( Value /r= Value /Data/Nothing )
+            )
+            ( Value /result= CStr "True" )
         ]
     }

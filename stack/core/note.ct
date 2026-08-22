@@ -1,4 +1,5 @@
 import "core/bool.ct"
+import "core/calendar.ct"
 import "core/maybe.ct"
 import "core/str.ct"
 import "core/webdoc.ct"
@@ -115,7 +116,59 @@ module(Data/Note)
 
   every(Task/Obsidian.., isa= [/Data/Note/Task])
   every(Task/Obsidian.., isa= [/Catln/Doc/DShow])
+  every(Task, isa= [/Data/Calendar/CalendarEntry])
+    # A task is a thing that sits on a day, so a calendar can show one. Said of [Task] rather than
+      of each of its two readings, because it is true of a checkbox however the vault it was written
+      in has it read; the two arms below answer for the two readings, as [/Data/Maybe] joins
+      [/Data/Algebra/Eq] as a class and answers per arm.
+      Said here rather than where a calendar is declared, so that a calendar is a calendar of
+      whatever says it belongs on one rather than of a list kept somewhere else. The class path is
+      written out in full: an [isa] list is keyed by the name as it is written, so a relative one
+      would name a second class of that name rather than the one meant.
 
+  :Task/Simple(contents, state).calendarDay= /Data/Nothing
+    # A checkbox read as a checkbox sits on no day. Such a line carries no dates at all — that is
+      the whole of what reading a box without the plugin's reading of it leaves — so this is what it
+      has to say rather than what it has not got round to saying.
+  :Task/Obsidian(contents, symbol, statusType, description, priority, start, scheduled, due, recurrence, rest).calendarDay= firstDay(a= start, b= scheduled, c= due)
+    # A task the plugin manages sits on the first of the three days it may name: the day it may be
+      begun, the day it is scheduled for, then the day it is due.
+      Every field is named although three are read. A receiver naming only some of them is a
+      receiver for a task which has only those, which no task is, so the arm is never reached; and
+      writing the rest as a [.._] parses and typechecks and then fails to evaluate, which is a hole
+      in the evaluator rather than something to write around. So they are written out.
+      The first and not the soonest. Those three mean "may begin", "planned for" and "due by", so a
+      task whose days run in the order they describe has its first-named day be its soonest, and the
+      two readings are the one day. They part only for a task written with a start after its due,
+      where this shows the start and a query asking what happens would answer the due. Answering
+      soonest here would mean comparing two days, and a day is a [String], which has an equality and
+      no order — so the reading that needs no comparison is the one that can be written at all.
+
+  firstDay(a -> /Data/Maybe[$T -> String], b -> /Data/Maybe[$T -> String], c -> /Data/Maybe[$T -> String]) -> /Data/Maybe[$T -> String]
+    # The first of three days which is there, and nothing where none of them is.
+      Three arms rather than a condition, because a guard on an arm of a [case] does not choose
+      between the arms and there is nothing to compare here anyway: which day is first is which of
+      the three is a [/Data/Some], which the arms match on directly.
+      Kept here beside the one arm that asks it rather than put among the [/Data/Maybe] operations.
+      It is named for what it does for a task, and a second caller is what would make it worth
+      naming for what it does to a [/Data/Maybe].
+  firstDay(a= /Data/Some(value), b, c)= /Data/Some(value= value)
+  firstDay(a= /Data/Nothing, b= /Data/Some(value), c)= /Data/Some(value= value)
+  firstDay(a= /Data/Nothing, b= /Data/Nothing, c)= c
+
+  # A checkbox read as a checkbox sits on no day, whichever way its box is written.
+  > (Task/Simple(contents= "read it", state= False).calendarDay == /Data/Nothing)
+    >>> True
+  # A task naming a day it may be begun and a day it is due sits on the first of the three, which is
+  #   the day it may be begun.
+  > (Task/Obsidian(contents= "Water the plants", symbol= " ", statusType= StatusType/Todo, description= "Water the plants", priority= Priority/None, start= /Data/Some(value= "2026-01-02"), scheduled= /Data/Nothing, due= /Data/Some(value= "2026-01-04"), recurrence= /Data/Nothing, rest= "{}").calendarDay == /Data/Some(value= "2026-01-02"))
+    >>> True
+  # A task naming only the day it is due sits on that day, the two before it being absent.
+  > (Task/Obsidian(contents= "Ship it", symbol= " ", statusType= StatusType/Todo, description= "Ship it", priority= Priority/None, start= /Data/Nothing, scheduled= /Data/Nothing, due= /Data/Some(value= "2026-01-04"), recurrence= /Data/Nothing, rest= "{}").calendarDay == /Data/Some(value= "2026-01-04"))
+    >>> True
+  # A task naming none of the three sits on no day, which is an answer and not a task left out.
+  > (Task/Obsidian(contents= "Book", symbol= " ", statusType= StatusType/Todo, description= "Book", priority= Priority/None, start= /Data/Nothing, scheduled= /Data/Nothing, due= /Data/Nothing, recurrence= /Data/Nothing, rest= "{}").calendarDay == /Data/Nothing)
+    >>> True
   annot(#taskList)
 
   data(Show/TaskList(tasks -> String))
