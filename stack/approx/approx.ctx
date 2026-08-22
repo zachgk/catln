@@ -25,11 +25,12 @@ class(Prob, [Probability])
 
   :Distribution.get(x -> $T) -> Prob
 
-  testDistributionNormalized(d -> Distribution[$T]) =
-    #test
-    #assert(enum[$T].map(f(x)= d.get(x)).sum == 1)
-    ()
-
+  # Commented out with the [Enum] class (see [Data/data.ct]): this normalization test relies on
+  #   [enum] to sum the distribution over every value of [$T].
+  # testDistributionNormalized(d -> Distribution[$T]) =
+  #   #test
+  #   #assert(enum[$T].map(f(x)= d.get(x)).sum == 1)
+  #   ()
   data(Fun[$T](p(x -> $_T) -> Prob))
     :Fun(p).get(x)= p(x)
 

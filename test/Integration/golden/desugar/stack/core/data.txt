@@ -55,16 +55,6 @@ Prgm
                     , omiDefs = []
                     }
                 )
-            ,
-                ( "/Data/enum"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/enum[ /T : ∀/Data/Enum ] -> ∀/Data/Set[ /T=TopType ] ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
             ]
         )
     , prgmCG =
@@ -73,14 +63,6 @@ Prgm
         , CGType
         , CGType
         , CGType
-        , CGType
-        , CGClass
-            ( False
-            , /Data/Enum
-            , []
-            , Just "[Enum] represents a type which can be enumerated.
-              It defines a single function [enum] which lists all of the values in the type."
-            )
         , CGClass
             ( True
             , /Data/Option[ /T=TopType ]
@@ -90,12 +72,6 @@ Prgm
                 ]
             , Just "[Option] defines a type that might have a value or [None].
               It can be used to handle operations that are uncertain if they can produce a response."
-            )
-        , CGClass
-            ( False
-            , /Data/Set[ /T=TopType ]
-            , []
-            , Just ""
             )
         , CGClass
             ( False
@@ -142,10 +118,18 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "collection and its [ConsList] implementation live in [Data/list.ct]." )
         , /Catln/#md
-            ( Value /text= CStr "A [Set] is a collection of zero or more unique items.
-            It is not ordered." )
+            ( Value /text= CStr "The [Set] class now lives in [Data/set.ct] alongside its [MapSet] implementation. [Enum] and" )
         , /Catln/#md
-            ( Value /text= CStr "[Enum] represents a type which can be enumerated.
-            It defines a single function [enum] which lists all of the values in the type." )
+            ( Value /text= CStr "  [enum] (which returned a [Set]) are commented out until an [Enum] implementation is provided." )
+        , /Catln/#md
+            ( Value /text= CStr "class(Enum)" )
+        , /Catln/#md
+            ( Value /text= CStr "  # [Enum] represents a type which can be enumerated." )
+        , /Catln/#md
+            ( Value /text= CStr "    It defines a single function [enum] which lists all of the values in the type." )
+        , /Catln/#md
+            ( Value /text= CStr "  enum[$T -> Enum] -> Set[$T]" )
+        , /Catln/#md
+            ( Value /text= CStr "    # [enum] lists all of the values in a type." )
         ]
     }

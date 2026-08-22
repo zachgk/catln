@@ -54,8 +54,8 @@ module(Data/Primitive)
     >>> True
   > (True ^ True)
     >>> False
-  every(Boolean, isa= [/Data/Enum])
-
+  # [Enum] membership is commented out with the [Enum] class (see [Data/data.ct]).
+  # every(Boolean, isa= [/Data/Enum])
   # ## Equality
     [Boolean] is an [Eq] type: [BoolEqv] wraps the primitive [boolEq], and [eq]/[equal] follow.
   every(Boolean, isa= [/Data/Algebra/Eq])

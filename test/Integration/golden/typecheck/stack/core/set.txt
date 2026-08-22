@@ -1,0 +1,23 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList [] )
+    , prgmCG =
+        [ CGClass
+            ( False
+            , /Data/Set[ /T=TopType ]
+            , []
+            , Just ""
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String = CStr "# Sets
+            A [Set] is a collection of zero or more unique items. It is not ordered. [Set] is an interface:
+            it names the operations every set supports — membership, insertion, the set-algebra combinators —
+            without fixing how the items are stored. Concrete set types implement it; the [MapSet] below is
+            the one this file provides, and a future hash-backed set would be another. Because the operations
+            are declared on [Set] rather than on one concrete type, every set type reuses those declarations
+            just by being a [Set]. The [Set] interface lives here directly under [Data]; the [MapSet]
+            implementation and the operations live in the [Data/Set] namespace it opens." )
+        ]
+    }

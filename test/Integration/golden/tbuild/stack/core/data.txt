@@ -55,16 +55,6 @@ Prgm
                     , omiDefs = []
                     }
                 )
-            ,
-                ( "/Data/enum"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/enum( EAppVar /T ∀/Data/Enum ) -> ∀/Data/Set[ /T=TopType ] ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
             ]
         )
     , prgmCG =
@@ -73,14 +63,6 @@ Prgm
         , CGType
         , CGType
         , CGType
-        , CGType
-        , CGClass
-            ( False
-            , /Data/Enum
-            , []
-            , Just "[Enum] represents a type which can be enumerated.
-              It defines a single function [enum] which lists all of the values in the type."
-            )
         , CGClass
             ( True
             , /Data/Option[ /T=TopType ]
@@ -90,12 +72,6 @@ Prgm
                 ]
             , Just "[Option] defines a type that might have a value or [None].
               It can be used to handle operations that are uncertain if they can produce a response."
-            )
-        , CGClass
-            ( False
-            , /Data/Set[ /T=TopType ]
-            , []
-            , Just ""
             )
         , CGClass
             ( False
@@ -142,10 +118,18 @@ Prgm
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "collection and its [ConsList] implementation live in [Data/list.ct]." )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "A [Set] is a collection of zero or more unique items.
-            It is not ordered." )
+            ( EAppArg Value /text -> /Data/String = "The [Set] class now lives in [Data/set.ct] alongside its [MapSet] implementation. [Enum] and" )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "[Enum] represents a type which can be enumerated.
-            It defines a single function [enum] which lists all of the values in the type." )
+            ( EAppArg Value /text -> /Data/String = "  [enum] (which returned a [Set]) are commented out until an [Enum] implementation is provided." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "class(Enum)" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "  # [Enum] represents a type which can be enumerated." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "    It defines a single function [enum] which lists all of the values in the type." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "  enum[$T -> Enum] -> Set[$T]" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "    # [enum] lists all of the values in a type." )
         ]
     }

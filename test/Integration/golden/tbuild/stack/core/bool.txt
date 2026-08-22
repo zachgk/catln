@@ -185,12 +185,6 @@ Prgm
             , Nothing
             )
         , CGClass
-            ( False
-            , /Data/Primitive/Boolean
-            , [ ∀/Data/Primitive/Boolean ]
-            , Just ""
-            )
-        , CGClass
             ( True
             , /Data/Primitive/Boolean
             ,
@@ -250,6 +244,10 @@ Prgm
                 ( /operator^( EAppArg Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /r -> /Data/Primitive/True = Value /Data/Primitive/True ) ↦ ∀/Data/Primitive/Boolean )
             )
             ( EAppArg Value /result -> /Data/String = "False" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "[Enum] membership is commented out with the [Enum] class (see [Data/data.ct])." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "every(Boolean, isa= [/Data/Enum])" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "## Equality
             [Boolean] is an [Eq] type: [BoolEqv] wraps the primitive [boolEq], and [eq]/[equal] follow." )
