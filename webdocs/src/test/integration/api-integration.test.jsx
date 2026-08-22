@@ -158,9 +158,11 @@ describe('Backend API contract', () => {
     const pages = await docPages('')
     const annots = pages.map(p => p.dpAnnot)
 
-    // Taking a sealed class, so one page per member of it, written absolutely so that running it
-    // does not depend on what the page it is run against happens to name.
+    // An annotation taking nothing is offered once, and one taking a sealed class is offered once
+    // per member of it, written absolutely so that running it does not depend on what the page it is
+    // run against happens to name.
     expect(annots).toEqual([
+      '#calendar',
       '#listProgram(mode= /Catln/Doc/Desugar)',
       '#listProgram(mode= /Catln/Doc/TreeBuild)',
       '#listProgram(mode= /Catln/Doc/Typecheck)',
@@ -808,6 +810,60 @@ describe('Backend API contract', () => {
       const result = await answered('not done')
       expect(result.qrTasks).toEqual([])
       expect(result.qrError).toContain('vault')
+    })
+  })
+
+  // Everything a page reaches which sits on a day, laid out on the day it sits on. Unlike the query
+  // above this is Catln's own and not a reading of anybody's plugin, and it asks about what the page
+  // reaches rather than about a vault.
+  describe('#calendar', () => {
+    const NOTE = '/test/Integration/code/artifacts/catln-tasks/Tasks.md'
+
+    async function notePage() {
+      const found = (await sidebarPages()).map(p => p.sbPath).find(p => p.endsWith(NOTE))
+      expect(found).toBeDefined()
+      return found
+    }
+
+    async function calendared(prgmName) {
+      const val = await annotValue('#calendar', prgmName)
+      expect(val.tag).toBe('TupleVal')
+      expect(val.name).toBe('/Data/Calendar/Show/Calendar')
+      return JSON.parse(val.args['/result'].contents)
+    }
+
+    it('lays what a page reaches on the days those things sit on', async () => {
+      const result = await calendared(await notePage())
+      expect(result.crError).toBeNull()
+      expect(result.crItems.length).toBeGreaterThan(0)
+
+      // The vault's tasks name three days between them, which the fixture pins.
+      const days = result.crItems.map(i => i.ciDay).filter(Boolean).sort()
+      expect(days).toEqual(['2026-01-02', '2026-01-03', '2026-01-04'])
+    })
+
+    it('carries the entries which sit on no day rather than dropping them', async () => {
+      const result = await calendared(await notePage())
+      // A calendar showing less than it was handed would answer a narrower question than the one
+      // asked, so a task naming none of its three days comes back with no day rather than not at all.
+      expect(result.crItems.filter(i => i.ciDay === null).length).toBeGreaterThan(0)
+    })
+
+    it('carries each entry back to the page it was written in', async () => {
+      const result = await calendared(await notePage())
+      for (const item of result.crItems) {
+        expect(item.ciValue.tag).toBe('TupleVal')
+        expect(item.ciPage.endsWith('.md')).toBe(true)
+        expect(item.ciExpr).toMatch(/^[0-9a-f-]{36}$/)
+      }
+    })
+
+    // A live doc server reads today off its own clock, so the day is checked for being a day rather
+    // than for being one particular day. What pins it to a day is CalendarTests, against a service
+    // told which day to read today as.
+    it('marks the day it was answered on', async () => {
+      const result = await calendared(await notePage())
+      expect(result.crToday).toMatch(/^\d{4}-\d{2}-\d{2}$/)
     })
   })
 

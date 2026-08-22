@@ -16,6 +16,7 @@ import Task from './Values/Task';
 import ObsidianTask from './Values/ObsidianTask';
 import TaskList from './Values/TaskList';
 import TaskQuery from './Values/TaskQuery';
+import Calendar from './Values/Calendar';
 import Overlay from './Values/Overlay';
 import Properties from './Values/Properties';
 import {BuildFile, CatlnResult} from './Values/BuildResult';
@@ -90,6 +91,11 @@ function Value(props) {
     // the note unwriteable.
     case "/Data/Note/Show/TaskQuery":
       return <TaskQuery {...val.args} />;
+    // Everything a page reaches which sits on a day, on the day it sits on. It gets no update for
+    // the reason the two above get none, and it does not need one: an entry of a calendar carries
+    // the page it came from and is written back there rather than through whatever is showing it.
+    case "/Data/Calendar/Show/Calendar":
+      return <Calendar {...val.args} />;
     // The page a page is written over, shown as the address it names rather than as a frame of that
     // page. The frame belongs to whatever is laying the page out around it, so a page carrying an
     // overlay is one frame and one link rather than two frames.

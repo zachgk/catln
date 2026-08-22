@@ -221,6 +221,42 @@ describe('note and overlay values', () => {
     expect(container.querySelector('iframe')).toBeNull()
   })
 
+  // A calendar dispatches to the calendar and not to a list, and each entry of it is drawn by
+  // whatever draws a value of its kind -- so a Task on a calendar is the task itself, the same value
+  // the note showing it draws.
+  it('shows a calendar as a calendar, drawing each entry as the value it is', () => {
+    const val = {
+      tag: 'TupleVal',
+      name: '/Data/Calendar/Show/Calendar',
+      args: {
+        '/result': {
+          tag: 'StrVal',
+          contents: JSON.stringify({
+            crError: null,
+            crToday: '2026-01-03',
+            crItems: [{
+              ciExpr: 'id-1',
+              ciPage: '/vault/Tasks.md',
+              ciDay: '2026-01-04',
+              ciValue: {
+                tag: 'TupleVal',
+                name: '/Data/Note/Task/Simple',
+                args: {
+                  '/contents': { tag: 'StrVal', contents: 'Ship it' },
+                  '/state': { tag: 'TupleVal', name: '/Data/Primitive/False', args: {} },
+                },
+              },
+            }],
+          }),
+        },
+      },
+    }
+    render(<Providers><Value data={val} /></Providers>)
+
+    expect(screen.getByTestId('calendar')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Ship it')).toBeInTheDocument()
+  })
+
   it('shows the properties a note opens with as a table', () => {
     const val = {
       tag: 'TupleVal',
