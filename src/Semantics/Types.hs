@@ -3400,14 +3400,73 @@ isSubtypeOf typeEnv = isSubtypeOfWithEnv typeEnv H.empty
 isSubtypePartialOf :: TypeGraph tg => TypeEnv tg -> PartialType -> Type -> Bool
 isSubtypePartialOf typeEnv subPartial = isSubtypeOf typeEnv (singletonType subPartial)
 
+-- | 'isSubtypeOfWithEnv' extended with the excluded-middle predicate case-split:
+-- @X ⊆ S ⟺ X∧Q ⊆ S ∧ X∧¬Q ⊆ S@ (an exact partition — @Q ∪ ¬Q = ⊤@; the meets are
+-- exact-or-wider, so proving the wider halves proves the exact ones), with @Q@ drawn from
+-- the ¬-conjuncts of the super side's leafs. This proves the joint cover the per-leaf
+-- chain cannot see when the partition halves live at DIFFERENT structural levels: a class
+-- membership pushed INTO the slots on one super (@Cons[T=∀EqC](tail=∀ConsList[EqC])@ —
+-- elementwise membership) beside its complement kept as a LEAF predicate on another
+-- (@Cons[T=⊤]{¬EqC}@) — exactly the shape @a∩(¬Q ∪ ∀Q)@ distributes to. A SEPARATE entry
+-- rather than a clause of 'isSubtypeOfWithEnv' itself: the split runs meets, and a
+-- meet-invoking rule inside the universal cover chain re-enters through every nested
+-- compaction (measured: unbounded mutual recursion). Consumers are the EQUALITY-level
+-- checks ('isEqTypeWithEnv'), whose internal meets here use only the plain machinery, so
+-- termination is structural; re-splitting on a @Q@ the sub half already carries is
+-- blocked, bounding the recursion by the super's finite ¬-conjunct set.
+isSubtypeOfWithEnvComplete :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Bool
+isSubtypeOfWithEnvComplete typeEnv vaenv t1 t2 = isSubtypeOfWithEnv typeEnv vaenv t1 t2 || predSplitCover
+  where
+    predSplitCover = case (t1, t2) of
+      (UnionType Nothing subPartials [], UnionType Nothing superPartials []) ->
+        all leafCovered (splitUnionType subPartials)
+        where
+          supT = UnionType Nothing superPartials []
+          -- A candidate is the WHOLE formula under a ¬-conjunct (an atom or a conjunction —
+          -- the split law holds for any predicate formula Q).
+          candidates = L.nub [inner | supP <- splitUnionType superPartials
+                                    , PredsNot inner <- conjList (ptPreds supP)]
+          leafCovered sub = isSubtypeOfWithEnv typeEnv vaenv (singletonType sub) supT
+                            || any (splitOnPred sub) candidates
+          -- ONE split level, halves checked with the PLAIN subtype: recursing the complete
+          -- relation on a half diverges — @subQ ∧ Q@ meets a recursive conditional member
+          -- (@ConsList[T→EqC]@) one level deeper each round, so the spelling never reaches
+          -- a fixpoint and the progress guard never trips. A deeper nested partition stays
+          -- cover-unproven, the safe polarity.
+          splitOnPred sub q
+            | q `elem` subConjs || PredsNot q `elem` subConjs = False
+            | otherwise =
+                let subT'   = singletonType sub
+                    subQ    = snd $ intersectTypesWithVarEnv typeEnv vaenv subT' (qTop q)
+                    subNotQ = snd $ intersectTypesWithVarEnv typeEnv vaenv subT' (qTop (PredsNot q))
+                in subQ /= subT' && subNotQ /= subT'
+                   && isSubtypeOfWithEnv typeEnv vaenv subQ t2
+                   && isSubtypeOfWithEnv typeEnv vaenv subNotQ t2
+            where subConjs = conjList (ptPreds sub)
+      _ -> False
+    conjList (PredsAnd ps) = concatMap conjList ps
+    conjList q             = [q]
+    qTop t = UnionType (Just (t, H.empty, [])) H.empty []
+
 isEqType :: TypeGraph tg => TypeEnv tg -> Type -> Type -> Bool
 isEqType TypeEnv{teDebug=True} a b | trace (printf "[EQ] %s = %s" (show a) (show b)) False = undefined
 isEqType _ a b | a == b = True
 isEqType typeEnv a b = isSubtypeOf typeEnv a b && isSubtypeOf typeEnv b a
 
+-- | The compiler's own equality: fast and sound but INCOMPLETE (per-leaf covers only — a
+-- False may mean "unproven"). Used inside the algebra's own recursion (compaction,
+-- 'eqScheme' convergence), where a miss costs a respelling or an epoch, never wrongness.
+-- Set-semantic equality ASSERTIONS (the algebra laws) must use 'isEqTypeWithEnvComplete'.
 isEqTypeWithEnv :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Bool
 isEqTypeWithEnv _ _ a b | a == b = True
 isEqTypeWithEnv typeEnv vaenv a b = isSubtypeOfWithEnv typeEnv vaenv a b && isSubtypeOfWithEnv typeEnv vaenv b a
+
+-- | Set-semantic equality via 'isSubtypeOfWithEnvComplete' — the specification-level
+-- relation, complete for the partition covers the plain checker cannot see. NOT for use
+-- inside the algebra's own meets/compaction (the split's meets would re-enter it).
+isEqTypeWithEnvComplete :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Bool
+isEqTypeWithEnvComplete _ _ a b | a == b = True
+isEqTypeWithEnvComplete typeEnv vaenv a b = isSubtypeOfWithEnvComplete typeEnv vaenv a b && isSubtypeOfWithEnvComplete typeEnv vaenv b a
 
 -- |
 -- Join partials by checking if one is a subset of another (redundant) and removing it.

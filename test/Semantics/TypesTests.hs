@@ -82,7 +82,7 @@ propCompactNoChanges gPrgm = property $ do
   a <- forAll $ genType prgm
   compacted <- timed "compact a" $ compactType typeEnv vaenv a
   annotate $ printf "compacted = %s" (show compacted)
-  assertTimed "a = compact a" $ isEqTypeWithEnv typeEnv vaenv a compacted
+  assertTimed "a = compact a" $ isEqTypeWithEnvComplete typeEnv vaenv a compacted
 
 propCompactIdempotent :: IO GenPrgm -> Property
 propCompactIdempotent gPrgm = property $ do
@@ -110,7 +110,7 @@ propSubtypeByUnion gPrgm = property $ do
   subtype <- timed "a ⊆ b" $ isSubtypeOfWithEnv typeEnv vaenv a b
   annotate $ printf "subtype = %s" (show subtype)
   ab <- timed "a∪b" $ unionTypesWithEnv typeEnv vaenv a b
-  byUnion <- timed "a∪b = b" $ isEqTypeWithEnv typeEnv vaenv ab b
+  byUnion <- timed "a∪b = b" $ isEqTypeWithEnvComplete typeEnv vaenv ab b
   annotate $ printf "a∪b = %s" (show ab)
   annotate $ printf "byUnion = %s" (show byUnion)
   eqTimed "subtype by union" subtype byUnion
@@ -126,7 +126,7 @@ propSubtypeByIntersection gPrgm = property $ do
   subtype <- timed "a ⊆ b" $ isSubtypeOfWithEnv typeEnv vaenv a b
   annotate $ printf "subtype = %s" (show subtype)
   ab <- timed "a∩b" $ intersectR typeEnv vaenv a b
-  byIntersection <- timed "a∩b = a" $ isEqTypeWithEnv typeEnv vaenv ab a
+  byIntersection <- timed "a∩b = a" $ isEqTypeWithEnvComplete typeEnv vaenv ab a
   annotate $ printf "a∩b = %s" (show ab)
   annotate $ printf "byIntersection = %s" (show byIntersection)
   eqTimed "subtype by intersection" subtype byIntersection
@@ -141,7 +141,7 @@ propUnionReflexive gPrgm = property $ do
   b <- forAll $ genType prgm
   ab <- timed "a∪b" $ unionTypesWithEnv typeEnv vaenv a b
   ba <- timed "b∪a" $ unionTypesWithEnv typeEnv vaenv b a
-  assertTimed "a∪b = b∪a" $ isEqTypeWithEnv typeEnv vaenv ab ba
+  assertTimed "a∪b = b∪a" $ isEqTypeWithEnvComplete typeEnv vaenv ab ba
 
 propUnionCommutative :: IO GenPrgm -> Property
 propUnionCommutative gPrgm = property $ do
@@ -154,7 +154,7 @@ propUnionCommutative gPrgm = property $ do
   c <- forAll $ genType prgm
   abc <- timed "a∪b∪c" $ unionAllTypesWithEnv typeEnv vaenv [a, b, c]
   cba <- timed "c∪b∪a" $ unionAllTypesWithEnv typeEnv vaenv [c, b, a]
-  assertTimed "a∪b∪c = c∪b∪a" $ isEqTypeWithEnv typeEnv vaenv abc cba
+  assertTimed "a∪b∪c = c∪b∪a" $ isEqTypeWithEnvComplete typeEnv vaenv abc cba
 
 propIntersectionReflexive :: IO GenPrgm -> Property
 propIntersectionReflexive gPrgm = property $ do
@@ -166,7 +166,7 @@ propIntersectionReflexive gPrgm = property $ do
   b <- forAll $ genType prgm
   ab <- timed "a∩b" $ intersectR typeEnv vaenv a b
   ba <- timed "b∩a" $ intersectR typeEnv vaenv b a
-  assertTimed "a∩b = b∩a" $ isEqTypeWithEnv typeEnv vaenv ab ba
+  assertTimed "a∩b = b∩a" $ isEqTypeWithEnvComplete typeEnv vaenv ab ba
 
 propIntersectionCommutative :: IO GenPrgm -> Property
 propIntersectionCommutative gPrgm = property $ do
@@ -189,7 +189,7 @@ propIntersectionCommutative gPrgm = property $ do
   annotate $ printf "a∩b∩c ⊆ c∩b∩a = %s" (show fwd)
   annotate $ printf "c∩b∩a ⊆ a∩b∩c = %s" (show bwd)
 
-  assertTimed "a∩b∩c = c∩b∩a" $ isEqTypeWithEnv typeEnv vaenv abc cba
+  assertTimed "a∩b∩c = c∩b∩a" $ isEqTypeWithEnvComplete typeEnv vaenv abc cba
 
 propIntersectionDistributesUnion :: IO GenPrgm -> Property
 propIntersectionDistributesUnion gPrgm = property $ do
@@ -209,7 +209,7 @@ propIntersectionDistributesUnion gPrgm = property $ do
   annotate $ printf "a∩b = %s" (show ab)
   annotate $ printf "a∩c = %s" (show ac)
   annotate $ printf "d = %s" (show d)
-  assertTimed "a∩(b∪c) = (a∩b)∪(a∩c)" $ isEqTypeWithEnv typeEnv vaenv f d
+  assertTimed "a∩(b∪c) = (a∩b)∪(a∩c)" $ isEqTypeWithEnvComplete typeEnv vaenv f d
 
 propUnionDistributesIntersection :: IO GenPrgm  -> Property
 propUnionDistributesIntersection gPrgm = property $ do
@@ -229,7 +229,7 @@ propUnionDistributesIntersection gPrgm = property $ do
   annotate $ printf "a∪c = %s" (show ac)
   d <- timed "(a∪b)∩(a∪c)" $ intersectR typeEnv vaenv ab ac
   annotate $ printf "d = %s" (show d)
-  assertTimed "a∪(b∩c) = (a∪b)∩(a∪c)" $ isEqTypeWithEnv typeEnv vaenv f d
+  assertTimed "a∪(b∩c) = (a∪b)∩(a∪c)" $ isEqTypeWithEnvComplete typeEnv vaenv f d
 
 propDifferenceShrinks :: IO GenPrgm -> Property
 propDifferenceShrinks gPrgm = property $ do
@@ -255,7 +255,7 @@ propUnionWithComplement gPrgm = property $ do
   annotate $ printf "a' = %s" (show a')
   combined <- timed "a∪¬a" $ unionTypesWithEnv typeEnv vaenv a a'
   annotate $ printf "combined = %s" (show combined)
-  assertTimed "a∪¬a = ⊤" $ isEqTypeWithEnv typeEnv vaenv combined PTopType
+  assertTimed "a∪¬a = ⊤" $ isEqTypeWithEnvComplete typeEnv vaenv combined PTopType
 
 -- A∩A=∅
 propIntersectionWithComplement :: IO GenPrgm -> Property
@@ -269,7 +269,7 @@ propIntersectionWithComplement gPrgm = property $ do
   annotate $ printf "a' = %s" (show a')
   combined <- timed "a∩¬a" $ intersectR typeEnv vaenv a a'
   annotate $ printf "combined = %s" (show combined)
-  assertTimed "a∩¬a = ∅" $ isEqTypeWithEnv typeEnv vaenv combined BottomType
+  assertTimed "a∩¬a = ∅" $ isEqTypeWithEnvComplete typeEnv vaenv combined BottomType
 
 -- A^c^c=A
 propComplementInverse :: IO GenPrgm -> Property
@@ -283,7 +283,7 @@ propComplementInverse gPrgm = property $ do
   annotate $ printf "a' = %s" (show a')
   a'' <- timed "¬¬a" $ complementTypeEnv typeEnv vaenv a'
   annotate $ printf "a'' = %s" (show a'')
-  assertTimed "¬¬a = a" $ isEqTypeWithEnv typeEnv vaenv a a''
+  assertTimed "¬¬a = a" $ isEqTypeWithEnvComplete typeEnv vaenv a a''
 
 -- A-A=∅
 propDifferenceIdentity :: IO GenPrgm -> Property
@@ -297,7 +297,7 @@ propDifferenceIdentity gPrgm = property $ do
   annotate $ printf "a' = %s" (show a')
   a'' <- timed "a-a" $ diffR typeEnv vaenv a a
   annotate $ printf "a-a = %s" (show a'')
-  assertTimed "a-a = ∅" $ isEqTypeWithEnv typeEnv vaenv a'' BottomType
+  assertTimed "a-a = ∅" $ isEqTypeWithEnvComplete typeEnv vaenv a'' BottomType
 
 -- A+B-A ⊆ B
 propDifferenceSubset :: IO GenPrgm -> Property
@@ -317,7 +317,7 @@ propDifferenceSubset gPrgm = property $ do
   annotate $ printf "a+b-a = %s" (show sub)
   if overlapping
     then assertTimed "a+b-a ⊆ b" $ isSubtypeOfWithEnv typeEnv vaenv sub b
-    else assertTimed "a+b-a = b" $ isEqTypeWithEnv typeEnv vaenv sub b
+    else assertTimed "a+b-a = b" $ isEqTypeWithEnvComplete typeEnv vaenv sub b
 
 
 -- | Deep-force a stage's result under a wall-clock budget: a case that exceeds it fails the
@@ -372,7 +372,7 @@ propIntersectByDifference gPrgm = property $ do
   forceTimed "a-(a-b)" diff'
   annotate $ printf "a-b' = %s" (show subDiff')
   annotate $ printf "diff' = a-(a-b) = %s" (show diff')
-  assertTimed "a∩b = a-(a-b)" $ isEqTypeWithEnv typeEnv vaenv intersect' diff'
+  assertTimed "a∩b = a-(a-b)" $ isEqTypeWithEnvComplete typeEnv vaenv intersect' diff'
 
 -- A-B=A-(A∩B)
 propDifferenceByIntersection :: IO GenPrgm -> Property
@@ -389,7 +389,7 @@ propDifferenceByIntersection gPrgm = property $ do
   withInter' <- timed "a-(a∩b)" $ diffR typeEnv vaenv a subInter'
   annotate $ printf "a∩b' = %s" (show subInter')
   annotate $ printf "withInter' = a-(a∩b) = %s" (show withInter')
-  assertTimed "a-b = a-(a∩b)" $ isEqTypeWithEnv typeEnv vaenv diff' withInter'
+  assertTimed "a-b = a-(a∩b)" $ isEqTypeWithEnvComplete typeEnv vaenv diff' withInter'
 
 -- P[$T=(A+B)] should be recognized as equal to P[$T=A] + P[$T=B]
 propSubtypeUnionVarSplit :: IO GenPrgm -> Property
