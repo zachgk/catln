@@ -25,8 +25,8 @@ import           Control.Monad
 import           Control.Monad.State
 import           CtConstants         (runtimeAnnot)
 import           Data.Bifunctor      (Bifunctor (bimap))
-import           Data.List           (find, intercalate, nub)
-import           Data.Maybe          (mapMaybe)
+import           Data.List           (find, intercalate, nub, partition)
+import           Data.Maybe          (fromMaybe, isNothing, mapMaybe)
 import           Data.UUID           (nil)
 import           MapMeta
 import           Semantics
@@ -123,24 +123,51 @@ addInferArgToType env@FEnv{feTypeEnv} vaenv (UnionType Nothing partials []) = Ju
     partials' = map (addInferArgToPartial env vaenv) $ splitUnionType partials
 addInferArgToType _ _ _ = Nothing
 
+-- | Builds the candidate shapes for an 'AddInferArg' 'Constraint': for each arrow of the
+-- base's name, each arg the base does not yet apply is offered as the filled slot, and the
+-- destination keeps the union of candidates until inference selects one
+-- ('TypeCheck.Decode.toExpr''s @learnedArgName@ then requires a single survivor).
+-- Arrows are precedence-filtered like the object universe ('addUnionObjToEnv'): where a
+-- declaration exists (@[2,2]@) definition arrows (@[2,3]@) offer no candidates — in
+-- particular a bare destructuring definition (@unwrap(Box(v))= v@) is never a candidate
+-- for its own filled arg, which it cannot name by pointing at itself.
+-- Each candidate slot carries the arrow's spelled arg type — a phase-stable 'Meta'
+-- spelling, not a solving point's scheme — so a declaration contributes its declared
+-- content (@/b=/Box[/T=⊤](/v=⊤)@) rather than a @⊤@ placeholder (which nothing narrows on
+-- the actual side under the req-only architecture), while an unannotated definition arg
+-- still contributes @⊤@. Spellings referencing the arrow's own scope (external vars, a
+-- bare own-var annotation) read as the @⊤@ they denote here ('dropOutOfScopeTVExt').
 addInferArgToPartial :: FEnv -> TypeVarArgEnv -> PartialType -> Type
 addInferArgToPartial FEnv{feVTypeGraph=ObjectMap vtypeGraph, feTTypeGraph=ObjectMap ttypeGraph, feTypeEnv} _ partial@PartialType{ptName=name, ptArgs} = do
-  let vtypeArrows = H.lookupDefault mempty name vtypeGraph
-  let vTypes = tryOMI vtypeArrows
-
-  let ttypeArrows = H.lookupDefault mempty name ttypeGraph
-  let tTypes = tryOMI ttypeArrows
-
-  unionTypes feTypeEnv vTypes tTypes
+  let vtypeArrows = flatObjectMapItem $ H.lookupDefault mempty name vtypeGraph
+  let ttypeArrows = flatObjectMapItem $ H.lookupDefault mempty name ttypeGraph
+  case map objectPrecedence vtypeArrows ++ map objectPrecedence ttypeArrows of
+    [] -> BottomType
+    precs -> do
+      let bestPrec = minimum precs
+      let vTypes = tryArrows $ filter ((== bestPrec) . objectPrecedence) vtypeArrows
+      let tTypes = tryArrows $ filter ((== bestPrec) . objectPrecedence) ttypeArrows
+      unionTypes feTypeEnv vTypes tTypes
   where
-    tryOMI :: (MetaDat m, Show m) => ObjectMapItem Expr m -> Type
-    tryOMI omi = unionAllTypes feTypeEnv $ map tryArrow $ flatObjectMapItem omi
+    tryArrows :: (MetaDat m, Show m) => [ObjArr Expr m] -> Type
+    tryArrows = unionAllTypes feTypeEnv . map tryArrow
 
     tryArrow :: (MetaDat m, Show m) => ObjArr Expr m -> Type
-    tryArrow oa = if H.keysSet ptArgs `isSubsetOf` H.keysSet (exprAppliedArgsMap $ oaObjExpr oa)
-      then UnionType Nothing (joinUnionType $ map addArg $ S.toList $ S.difference (H.keysSet $ exprAppliedArgsMap $ oaObjExpr oa) (H.keysSet ptArgs)) []
+    tryArrow oa = if H.keysSet ptArgs `isSubsetOf` H.keysSet arrowArgs
+      then UnionType Nothing (joinUnionType $ map addArg $ H.toList $ H.difference arrowArgs ptArgs) []
       else BottomType
-    addArg arg = partial{ptArgs=H.insertWith (unionTypes feTypeEnv) arg PTopType ptArgs}
+      where arrowArgs = exprAppliedArgsMap $ oaObjExpr oa
+
+    addArg :: (MetaDat m, Show m) => (ArgName, Maybe (Meta m, Maybe (Expr m))) -> PartialType
+    addArg (arg, argVal) = partial{ptArgs=H.insert arg (spelledContent argVal) ptArgs}
+
+    -- The arrow's spelled type for the slot, with references out of the arrow's own scope
+    -- read as the ⊤ they denote here (a bare top-level var names the arrow's scope too).
+    spelledContent :: (MetaDat m, Show m) => Maybe (Meta m, Maybe (Expr m)) -> Type
+    spelledContent (Just (argM, _)) = case dropOutOfScopeTVExt H.empty (getMetaType argM) of
+      TypeVar{} -> PTopType
+      t         -> t
+    spelledContent Nothing = PTopType
 
 -- TODO Look into making this run every epoch rather than per call to mkReachesEnv
 buildTypeEnv :: FEnv -> TypeCheckResult FEnvTypeEnv
@@ -221,7 +248,7 @@ fnArgInputBound env callAct fnKey inKey = case callAct of
     -- @Functor[$T -> $_A]@ ⇒ [(T, A)], whether the bound is a predicate top or a positive
     -- class-named leaf.
     boundClassVarPtrs bound = concatMap fromPartial (case bound of
-      UnionType (Just (preds, _)) posLeafs _ -> predPartials preds ++ splitUnionType posLeafs
+      UnionType (Just (preds, _, _)) posLeafs _ -> predPartials preds ++ splitUnionType posLeafs
       UnionType Nothing posLeafs _           -> splitUnionType posLeafs
       _                                      -> [])
       where
@@ -263,9 +290,19 @@ outVarBoundSrc env dest@(UnionType Nothing destLeafs _) src@(UnionType Nothing s
       , TypeVar (TVVar vn) _ <- [getMetaType outM]
       , Just declObj <- [maybeGetSingleton (getMetaType (getExprMeta (oaObjExpr oa)))]
       , H.member vn (ptVars declObj)
+      -- Output-ONLY variables: with an argument occurrence of the same var (@mmap@'s
+      -- @m -> $M@), the output position is just one more membership occurrence — the
+      -- variable's witness is the occurrences' JOIN, and intersecting the destination alone
+      -- onto it (@/M=Nothing@ from the result) would empty the argument evidence
+      -- (@m=Some(..) ∩ Nothing = ∅@). Only a var with no argument occurrence (@pure@'s @$M@)
+      -- is determined by the destination.
+      , not (any (argRefsVar vn) (H.elems (ptArgs declObj)))
       -- Complete applications only: a partial application's ArrowTo destination is the
       -- further-applied call node, not the result the declaration's output variable stands for.
       , all (`H.member` ptArgs p) (H.keys (ptArgs declObj)) ]
+    argRefsVar vn (TypeVar (TVVar vn') _)               = vn' == vn
+    argRefsVar vn (TypeVar (TVApplied (TVVar vn') _) _) = vn' == vn
+    argRefsVar _ _                                      = False
 outVarBoundSrc _ _ src = src
 
 mkReachesEnv :: FEnv -> RConstraint -> TypeCheckResult (ReachesEnv (ObjArrTypeGraph Expr ()))
@@ -288,11 +325,39 @@ mkReachesEnv env (Constraint maybeConOa stypeVaenv _) = do
   let feTypeEnv' = feReachesTypeEnv env
   return $ ReachesEnv (argTypeEnv <> feTypeEnv') (fmap snd vaenv) S.empty
 
+-- | The resolved view of exactly the object-side arg entries 'mkReachesEnv' reads from a
+-- constraint's 'conOs' (each arg's in-expression and out meta, resolved through the current
+-- point schemes). These are the only per-execution inputs of an 'ArrowTo' beyond its own
+-- resolved constraint view, so they complete the skip-memo key ('feConMemo').
+conOaResolveKey :: FEnv -> VConstraint -> [(Maybe SExpr, Maybe ShowMeta)]
+conOaResolveKey env con =
+  [ (tcreToMaybe (showExpr env InputMeta inExpr), tcreToMaybe (showM env ArrMeta outM))
+  | oa <- conOs con
+  , (inExpr, outM) <- map head $ H.elems $ snd $ splitVarArgEnv $ exprVarArgs $ oaObjExpr oa ]
+
 arrowConstrainUbs :: FEnv -> RConstraint -> SType -> SType -> TypeCheckResult (Type, Type, Type, Maybe ReachesTree)
 -- Relates the source and destination of an arrow in both directions and returns
 -- @(srcAct', srcReq', destAct', reaches)@. Forward: derive the destination actual from what the
 -- source reaches (the arrows applicable to it), bounded by the destination's requirement. Reverse:
 -- narrow the source requirement to the components that actually reach that destination.
+--
+-- THE TWO INVARIANTS of type inference (Zach's ruling, 2026-08-01), and how a destination
+-- union is read under them:
+--
+--   1. Every scheme is an UPPER BOUND on the possible values of its point.
+--   2. Inference only ever NARROWS a scheme — each write reflects a more precise
+--      understanding of the same value ('verifyScheme' enforces this).
+--
+-- A destination union enumerates the FORMS the term may take: @Nil ∪ fmap(⊤,⊤)@ means the
+-- term is either the still-unevaluated call form @fmap(⊤,⊤)@ or one of the evaluated forms
+-- listed beside it. The unevaluated member does NOT stand for "whatever fmap may produce" —
+-- the evaluated members are the complete enumeration of what evaluation can yield, so
+-- @Nil ∪ fmap(⊤,⊤)@ asserts the call evaluates only to @Nil@. A forward write must therefore
+-- include EVERY applicable arrow's result (@Nil ∪ Cons(…) ∪ fmap(⊤,⊤)@) or not narrow at
+-- all: an incomplete enumeration violates invariant (1), and invariant (2) makes the damage
+-- permanent — later epochs intersect against the too-narrow bound, so an omitted
+-- alternative can never re-enter, and every consumer downstream reasons soundly from the
+-- wrong premise (a dropped call form, a missing dispatch arm, an eval failure).
 -- When the src is fully unresolved (Top) we cannot yet pick an arrow, so skip
 -- deriving the destination from the whole-universe reach. This avoids re-running
 -- the (expensive) universe 'reachesPartials' every epoch while the src stays Top;
@@ -308,26 +373,130 @@ arrowConstrainUbs env con@Constraint{conVaenv} srcS@SType{stypeAct=TypeVar v _, 
       return (stypeAct srcS, srcReq, cdest, destRT)
 arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=src@(UnionType Nothing srcPartials consts), stypeReq=srcReq} SType{stypeAct=destAct, stypeReq=destReq} = do
   reachesEnv <- mkReachesEnv env con
+  -- Every operation that consults the type graph's OBJECT META TYPES (the reach union's
+  -- 'presentRawResult'/'typeGraphDeclaredResult', the requirement cut's re-query, settled-leaf
+  -- classification) must use the per-epoch reaches env — the same graph 'reachesPartials'
+  -- queries. The base 'feTypeEnv' was built from the PRE-typecheck program, whose object metas
+  -- are still unresolved (⊤): a query against it fires for everything, so a bare call form
+  -- would permanently absorb its declared result (e.g. @boolEq ∪ ∀Boolean@), which 'addArgToType'
+  -- then cannot apply an argument to. The set-algebra meets below keep 'feTypeEnv' — they read
+  -- only the class graph and structural arg keysets, which the two envs share.
+  let reachesTypeEnv = rTypeEnv reachesEnv
   let allPartials = splitUnionType srcPartials ++ map constantPartialType consts
-  let reaches' = reachesPartials reachesEnv allPartials
+  let reaches0 = reachesPartials reachesEnv allPartials
   let vaenv' = fmap (stypeAct . snd) conVaenv
-  let destByGraph = unionReachesTree feTypeEnv vaenv' reaches'
-  -- The destination the reach must satisfy is the meet of the destination's actual and required
-  -- bounds. Because the act⊆req invariant is only enforced at Decode, a use may narrow the required
-  -- bound below the actual; intersecting here cuts the reachable-destination union down to what is
-  -- required, letting the arrow drop non-matching definitions when several are available (e.g. an
-  -- Integer requirement picks the Integer-returning arrow out of an @Integer ∪ Float@ reach).
-  let destBound = intersectTypesEnv feTypeEnv vaenv' destAct destReq
+
+  -- Where and how the requirement acts depends on the kind of destination:
+  --   * A consumption point (an argument slot, a where-clause bool) holds the settled value
+  --     its consumer receives, so the whole reached union takes the full actual∧required meet.
+  --   * An Arrow result ('TypeCheck.Encode.fromObjectMap' constraint 32) is the definition
+  --     body's rewrite frontier, deliberately holding raw applied forms alongside what they
+  --     settle to (eval's dispatch keying reads them). There the requirement acts by ARROW
+  --     CHOICE, and only when it actually FORCES one: when the plain reach already satisfies
+  --     the requirement up to settling, it must do nothing — even a semantically-no-op meet
+  --     can rewrite representations (completing a bare class member @IntOrdering@ to
+  --     @IntOrdering[/T=Integer]@), which eval's value matching cannot tolerate. When it does
+  --     force a choice, the reach tree's choice nodes are cut to the arrows guaranteed to
+  --     satisfy it (an Integer requirement picks the Integer-returning arrow out of an
+  --     @Integer ∪ Float@ reach), guarded by source coverage ('cutReachesTree').
+  let destIsArrowResult = case con of
+        Constraint _ _ (ArrowTo 32 _ _) -> True
+        _                               -> False
+  -- A stored point type may reference only variables its own constraint scope binds: read the
+  -- graph presentation's out-of-scope external var spellings (source declarations' own
+  -- parameters) as the ⊤ they denote ('dropOutOfScopeTVExt'), so denotationally-equal forms
+  -- cannot flip between spellings across epochs.
+  let dropFree = dropOutOfScopeTVExt vaenv'
+  let destByGraph0 = dropFree $ unionReachesTree reachesTypeEnv vaenv' reaches0
+  -- A Top reach carries no information yet (some arm is still unresolved): there is nothing
+  -- to choose among, so the requirement cannot engage — forcing a choice there would derive
+  -- a destination from the few arms that happen to have resolved, which is not an upper
+  -- bound of the point's values and gets locked in by monotonicity.
+  let reqForcesChoice = destIsArrowResult && destReq /= PTopType && destByGraph0 /= PTopType && not (isSubtypeUpToSettlingOf reachesTypeEnv vaenv' destByGraph0 destReq)
+  -- Resolve each operand's recursive self-refs before it feeds any intersection below
+  -- ('resolveTypeSelfRefs'): a concrete @Cons[/T=Ord]@ leaf carrying an unresolved recursive
+  -- tail top @ConsList[/T=$_T]@ reads that tail as Top, so meeting it re-derives the outer
+  -- element from the tail and collapses @/T@ to Top — WIDENING the stored Arrow result across
+  -- epochs ('verifySchemeActLowers'). A leaf with no @/T@ param (raw applied forms the result
+  -- keeps for eval dispatch) is untouched. The reqForcesChoice GATE above still uses the raw
+  -- @destByGraph0@, so this cannot change which arrows a requirement forces.
+  let resolveSelf = if destIsArrowResult then resolveTypeSelfRefs H.empty else id
+  let destActR = resolveSelf destAct
+  let destBound = intersectTypesEnv feTypeEnv vaenv' destActR destReq
+  let reaches' = if reqForcesChoice then cutReachesTree reachesTypeEnv vaenv' destBound reaches0 else reaches0
+  let destByGraph = resolveSelf $ if reqForcesChoice then unionReachesTree reachesTypeEnv vaenv' reaches' else destByGraph0
   -- An arrow dest carrying a symbolic external var (an instance arm constructing
   -- @Some[/T=$_T]@) meets the accumulated dest's bound in the intersection's returned env,
   -- while the type keeps the bare var — discarding the env would WIDEN the stored dest (the
   -- free var reads as Top) and fail 'verifySchemeActLowers'. Resolve the newly recorded
   -- meets back into the result; still-unresolved vars stay symbolic ('substituteKeep', the
   -- 'mergeVarEnvVal' doctrine).
-  let (venv', dest') = intersectTypesWithVarEnv feTypeEnv vaenv' destBound destByGraph
+  let (venv', dest')
+        | reqForcesChoice =
+            -- A choice-forcing requirement splits the reached union: RAW leaves (ones the graph
+            -- can still rewrite — the body's unrewritten calls, which eval's dispatch keying
+            -- reads) are bounded only by the accumulated actual; the settled remainder is
+            -- bounded by the full actual∧required meet, cutting reach over-approximation (e.g.
+            -- a generic instance result impossible for this call) down to what is required. The
+            -- raws are reattached STRUCTURALLY (a leaf-map union): an algebraic union with the
+            -- settled part's predicate top would absorb them.
+            let (rawLeafs, settledLeafs) = partition (not . isSettledLeaf reachesTypeEnv) $ case destByGraph of
+                  UnionType _ leafs _ -> splitUnionType leafs
+                  _                   -> []
+                destByGraphSettled = case destByGraph of
+                  UnionType dMTop _ dConsts -> UnionType dMTop (joinUnionType settledLeafs) dConsts
+                  t                         -> t
+                (venvRaw, destRaw') = intersectTypesWithVarEnv feTypeEnv vaenv' destActR (UnionType Nothing (joinUnionType rawLeafs) [])
+                (venvSettled, destSettled') = intersectTypesWithVarEnv feTypeEnv vaenv' destBound destByGraphSettled
+                merged = case (destRaw', destSettled') of
+                  (UnionType Nothing rawLs [], UnionType sMt sLs sCs) -> UnionType sMt (H.unionWith S.union rawLs sLs) sCs
+                  (r, s) | isBottomType r -> s
+                         | isBottomType s -> r
+                         | otherwise      -> unionTypesWithEnv feTypeEnv vaenv' r s
+            in (mergeAllVarEnvs feTypeEnv [venvRaw, venvSettled], merged)
+        -- An Arrow result whose reach already satisfies the requirement: the requirement is
+        -- inert; only the accumulated actual bounds it (see the policy comment above). Both
+        -- operands are already self-ref-resolved ('destActR'/'destByGraph').
+        | destIsArrowResult = intersectTypesWithVarEnv feTypeEnv vaenv' destActR destByGraph
+        -- A consumption point: the committed full-meet behavior.
+        | otherwise = intersectTypesWithVarEnv feTypeEnv vaenv' destBound destByGraph
+  -- Settle-forcing requirement: a leaf the requirement does NOT admit as it stands
+  -- ('reqAdmitsLeaf' — the requirement is the boundary answering "must this settle now, or
+  -- is unsettled valid here"), with a viable compilation path to forms within the bound
+  -- ('reachesTo'), is REQUIRED to follow its arrows — the destination holds only what the
+  -- consumer receives, so the unadmitted form is dropped and the actual keeps the settled
+  -- remainder. The requirement never constrains such a leaf by plain membership (the
+  -- 'isSubtypeUpToSettlingOf' doctrine): the algebra answers class membership of an
+  -- unrewritten call SAT-conservatively ("could settle to a member") and would keep it. A
+  -- leaf with no viable path (or no engaged requirement) is kept: mid-solve its reach may
+  -- still be resolving, and dropping it would not be an upper bound of the point's values.
+  -- The drop is also skipped when it would empty the stored type (settled alternatives not
+  -- yet accumulated), which would poison the point to 'BottomType'.
+  -- Arrow-applicability first: settling is rewriting, so a leaf whose NAME no arrow can
+  -- accept never settles elsewhere — and 'reachesTo' alone cannot gate this, because its
+  -- required-node check counts a leaf already inside the bound as reaching by STAYING PUT
+  -- (a deep subtype per data literal per epoch). The probe is the bare name with open args
+  -- (no deep-argument intersects — a full-leaf query pays 'accepts' meets on every deep
+  -- operand); a name-level over-approximation only admits more leaves to the later gates.
+  -- TODO(admission): this gate should become the requirement-admission form used by
+  -- 'settlePropSlot' (drop iff an arrow applies, the requirement does not admit the form
+  -- as-is per 'reqAdmitsLeaf', and the reach is viable) — one criterion, no settled-name
+  -- class. The direct swap made a requirement's met call component LICENSE the dest's raw
+  -- leaf that this gate previously dropped, and the keep/re-drop disagreement with the
+  -- other writers oscillated past the 'runConstraints' limit (toString/++ family) — the
+  -- other writers must learn the admission rule in the same change.
+  let settleForced l = not (isSettledLeaf reachesTypeEnv l)
+                     && reachesTo reachesTypeEnv vaenv' (singletonType l) destBound
+  let dropSettleForcedRaws t@(UnionType dMTop dLeafs dConsts)
+        | destReq /= PTopType && not (isBottomType destBound) =
+            case partition settleForced (splitUnionType dLeafs) of
+              ([], _) -> t
+              (_, keptLs) | null keptLs && isNothing dMTop && null dConsts -> t
+                          | otherwise -> UnionType dMTop (joinUnionType keptLs) dConsts
+      dropSettleForcedRaws t = t
   let newBindings = H.difference venv' vaenv'
   let resolveNew = if H.null newBindings then id else substituteKeep newBindings
-  let destFinal = compactType feTypeEnv vaenv' (resolveNew dest')
+  let destFinal = compactType feTypeEnv vaenv' (dropFree (resolveSelf (resolveNew (dropSettleForcedRaws dest'))))
   -- Return-type direction: a declaration output that is a bare declared variable is determined
   -- by the call site's destination — bind it onto the call partial (see 'outVarBoundSrc').
   let srcBound = outVarBoundSrc env destFinal src
@@ -344,9 +513,26 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
           , isSubtypeOfWithEnv feTypeEnv vaenv' (singletonType key) destFinal
             || reachesHasCutSubtypeOf feTypeEnv vaenv' subTree destFinal ]
         _ -> []
-  let viableComponents = UnionType Nothing (joinUnionType viableKeys) []
+  -- The ACTUAL keeps the BARE viable keys: a stored actual shows what the call site itself
+  -- passed, and the bindings a meet with a matched object's contract discovers are per-use
+  -- derivations (TreeBuild re-derives them ephemerally against the pointer-linked objects).
+  -- The REQUIREMENT instead folds each viable component to its MET form (the union of
+  -- @potentialSrc@ = src ∩ arrow-object over the arrows it triggers): the meet with the
+  -- object's contract is what imposes the declaration's variable structure as a requirement
+  -- (e.g. @==(l=Integer, r=Integer)@ meeting @(l::$T == r::$T)[$T -> Eq]@ discovers
+  -- @/T=Integer@). A component no arrow accepts — possible mid-epoch — keeps its bare form
+  -- rather than emptying.
+  let viableBare = unionAllTypesWithEnv feTypeEnv vaenv' (map singletonType viableKeys)
+  -- The met union ranges over ALL accepting arrows ('typeGraphQueryAllWithReason'): the
+  -- most-specific-promise pruning is a destination-side reaches optimization, and pruning
+  -- against a sibling arm whose object presentation is still transiently ⊤ mid-solve would
+  -- collapse the requirement to the one settled arm (monotonically stuck thereafter).
+  let viableMet key = case [ metSrc | (_, metSrc, _) <- typeGraphQueryAllWithReason reachesTypeEnv vaenv' key ] of
+        []   -> singletonType key
+        mets -> unionAllTypesWithEnv feTypeEnv vaenv' mets
+  let viableComponents = unionAllTypesWithEnv feTypeEnv vaenv' (map viableMet viableKeys)
   let reqVaenv = fmap (stypeReq . snd) conVaenv
-  let narrowedAct = intersectTypesEnv feTypeEnv vaenv'   srcBound viableComponents
+  let narrowedAct = intersectTypesEnv feTypeEnv vaenv'   srcBound viableBare
   let narrowedReq = intersectTypesEnv feTypeEnv reqVaenv srcReq   viableComponents
   -- Narrow act and req in lockstep so the deferred act⊆req check still holds at Decode, and each
   -- side only shrinks. First guard: never publish an empty viability (a transiently-incomplete
@@ -357,4 +543,127 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
         | null viableKeys             = (srcBound, srcReq)
         | typeVarLost src narrowedAct = (srcBound, srcReq)
         | otherwise                   = (narrowedAct, narrowedReq)
-  return (src', srcReq', destFinal, Just reaches')
+  -- The stored tree is always the UNCUT reach: a requirement-forced cut is a per-epoch choice
+  -- (valid only against that epoch's requirement), while the stored tree is read downstream as
+  -- the record of where the source can rewrite to.
+  return (src', srcReq', destFinal, Just reaches0)
+
+-- | Whether a requirement admits a leaf AS IT STANDS — leaving it unsettled. The requirement
+-- is the boundary answering "must this settle now, or is unsettled valid here": an unsettled
+-- call form appearing IN the requirement licenses the matching unsettled form (leaving
+-- operations unsettled is what multi-level definitions and metaprogramming build on), while a
+-- class component is read by its DEFINITION — @∀ConsList@ is defined in terms of the settled
+-- @Cons@\/@Nil@ objects, so it admits those settled members and never an unrewritten call.
+-- Concretely the leaf is checked against the requirement's expansion restricted to the leaf's
+-- own name ('expandTypeWithNames'): a class component expands to its declared members (none
+-- of the leaf's name — not admitted), while a call-form component survives as itself. A
+-- candidate still carrying class predicates admits the leaf only when the predicates provably
+-- HOLD of it, which the engine answers conservatively-to-SAT (escape possible ⇒ not proven) —
+-- exactly the polarity admission needs. Deliberately NOT plain 'isSubtypeOfWithEnv' against
+-- the whole requirement: its class coverage reasons about what a term could settle TO, the
+-- direction 'reachesTo' owns.
+reqAdmitsLeaf :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> PartialType -> Bool
+reqAdmitsLeaf _ _ PTopType _ = True
+-- A var requirement resolves through the env; a self-referential entry (which an
+-- unconstrained var may acquire during intersection) carries no information and licenses
+-- like ⊤ — following it verbatim would recurse forever ('isSubtypeOfWithEnv' parity).
+reqAdmitsLeaf typeEnv vaenv (TypeVar v _) l = case vaenvLookup vaenv v of
+  TypeVar v' _ | v' == v -> True
+  looked                 -> reqAdmitsLeaf typeEnv vaenv looked l
+reqAdmitsLeaf typeEnv vaenv req l =
+  isSubtypeOfWithEnv typeEnv vaenv (singletonType l)
+    (UnionType Nothing (expandTypeWithNames typeEnv vaenv req (S.singleton (ptName l))) [])
+
+-- | Settle a construction slot at a 'PropEq' write — the slot-write mirror of
+-- 'arrowConstrainUbs''s settle-forcing. A 'PropEq' meet can never remove an unsettled call
+-- form once written into a slot (the algebra answers its class membership
+-- SAT-conservatively), so a definition body's early slot write (@tail = declared-top ∪
+-- rawRecursiveCall@) keeps that spelling forever even after the slot's requirement engages,
+-- and the dispatch presentation reads the stale form. Whether the form may stay unsettled is
+-- answered by the requirement boundary ('reqAdmitsLeaf'); here the requirement is the slot's
+-- own requirement MET WITH the field's declared bound (@Cons@'s @tail -> ConsList[$T -> $_T]@
+-- instantiated through the enclosing partial — the @ConsList@ definition is in terms of the
+-- settled @Cons@ object, so the declaration dictates a settled field). The bound is
+-- instantiated AT THIS SITE from 'typeGraphData' rather than pre-materialized into every
+-- stored requirement: an unconditional declared-bound meet on every requirement read re-runs
+-- a deep meet per epoch (its respelling never commits under 'eqScheme') and was measured
+-- intractable. Admission into the meet distributes (@l ⊆ A∩B ⟺ l ⊆ A ∧ l ⊆ B@), so the
+-- common path needs no deep meet at all. An unadmitted leaf settles only with a viable
+-- compilation path ('reachesTo') into the slot's actual∧required∧declared bound — the actual
+-- in the bound demands the leaf's settled alternatives are ALREADY accumulated in the slot
+-- (the alternatives-accumulated guard: @fmap@'s @Nil ∪ fmap(⊤,⊤)@ keeps its call form until
+-- the sub point delivers the settled top), and the drop never empties the stored slot. When
+-- the settle fires, the slot's stored requirement is tightened to its declared-bound meet
+-- (the settled spelling consumers read). Only 'TVArg' slots participate; pointer slots
+-- (partial-internal vars) are left to the var machinery.
+settlePropSlot :: FEnv -> TypeVarArgEnv -> TypeVarAux -> Type -> Type -> (Type, Type)
+settlePropSlot env@FEnv{feTypeEnv} vaenv propName@(TVArg k) superAct@(UnionType supMTop supLeafs supConsts) superReq@(UnionType reqMTop reqLeafs reqConsts) =
+  (superAct', superReq')
+  where
+    reachesTypeEnv = feReachesTypeEnv env
+    reqByName = splitUnionTypeByName reqLeafs
+
+    settlePartial :: PartialType -> (PartialType, Maybe PartialType, Bool)
+    settlePartial p = fromMaybe (p, Nothing, False) $ do
+      -- Fireable shape only: the stale family spelling is @declared-top ∪ rawCall@ — a slot
+      -- with no predicate-top component cannot fire (a call form's dests are never inside
+      -- its sibling leaves alone, and the bound includes the slot actual), so gate before
+      -- any graph or engine work.
+      UnionType aMTop@(Just _) aLeafs aConsts <- H.lookup k (ptArgs p)
+      let aLeafList = splitUnionType aLeafs
+      guard (not (null aLeafList))
+      [rp] <- H.lookup (ptName p) reqByName
+      slotReq <- typeGetAux propName rp
+      -- Engaged requirement only; a pointer-managed (var) slot is left to the var machinery.
+      guard (slotReq /= PTopType)
+      case slotReq of
+        TypeVar{} -> Nothing
+        _         -> return ()
+      let declBounds = [freeTVIntToTopDeep vaenv p d | PartialType{ptArgs=dArgs} <- typeGraphData feTypeEnv (ptName p), Just d <- [H.lookup k dArgs]]
+      -- DECLARATION-BOUNDED construction slots only (a data-graph declaration exists for
+      -- this field): the declared bound is what dictates settling (@Cons@'s tail is a
+      -- settled @ConsList@ by definition). An ordinary call-argument slot has no such
+      -- declaration and keeps its unsettled forms — they may be exactly what the
+      -- presentation and dispatch keying read. ANNOTATION argument slots (the parser's @#@
+      -- marker) are also excluded for now: their declarations reach 'typeGraphData' like
+      -- data, but settling e.g. @#print@'s argument drops many-leaf unions whose commit-time
+      -- verification ('verifyScheme' subtype + compact on the changed spelling) is measured
+      -- intractable — deferred until the print-presentation family needs it.
+      guard (not (null declBounds))
+      guard ('#' `notElem` nameStr (ptName p))
+      let declBoundU = unionAllTypesWithEnv feTypeEnv vaenv declBounds
+      let admitted l = reqAdmitsLeaf reachesTypeEnv vaenv slotReq l
+                     && reqAdmitsLeaf reachesTypeEnv vaenv declBoundU l
+      -- The settle bound (lazy — forced only when some leaf is not admitted).
+      let slotAct = UnionType aMTop aLeafs aConsts
+      let bound = intersectTypesEnv feTypeEnv vaenv (intersectTypesEnv feTypeEnv vaenv slotAct slotReq) declBoundU
+      -- Arrow-applicability first: settling is rewriting, so a leaf whose NAME no arrow can
+      -- accept never settles elsewhere — and 'reachesTo' alone cannot gate this, because
+      -- its required-node check counts a leaf already inside the bound as reaching by
+      -- STAYING PUT (a deep subtype against the forced bound per data literal per epoch).
+      -- The probe is the bare name with open args (no deep-argument intersects).
+      let settleForced l = not (null (typeGraphQueryAllWithReason reachesTypeEnv vaenv ((partialVal (ptName l)){ptArgMode=PtArgAny})))
+                         && not (admitted l)
+                         && not (isBottomType bound)
+                         && reachesTo reachesTypeEnv vaenv (singletonType l) bound
+      case partition settleForced aLeafList of
+        ([], _) -> Nothing
+        (_, keptLs)
+          | null keptLs && isNothing aMTop && null aConsts -> Nothing
+          | otherwise -> do
+              let slotAct' = UnionType aMTop (joinUnionType keptLs) aConsts
+              let p' = p{ptArgs=H.insert k slotAct' (ptArgs p)}
+              let rp' = case H.lookup k (ptArgs rp) of
+                    Just UnionType{} ->
+                      Just rp{ptArgs=H.insert k (compactType feTypeEnv vaenv (intersectTypesEnv feTypeEnv vaenv slotReq declBoundU)) (ptArgs rp)}
+                    _ -> Nothing
+              return (p', rp', True)
+
+    results = map settlePartial (splitUnionType supLeafs)
+    changed = or [c | (_, _, c) <- results]
+    superAct' | changed = compactType feTypeEnv vaenv (UnionType supMTop (joinUnionType [p | (p, _, _) <- results]) supConsts)
+              | otherwise = superAct
+    reqUpdates = H.fromList [(ptName rp, rp) | (_, Just rp, _) <- results]
+    superReq' | H.null reqUpdates = superReq
+              | otherwise = UnionType reqMTop (joinUnionType (map (\q -> fromMaybe q (H.lookup (ptName q) reqUpdates)) (splitUnionType reqLeafs))) reqConsts
+settlePropSlot _ _ _ superAct superReq = (superAct, superReq)

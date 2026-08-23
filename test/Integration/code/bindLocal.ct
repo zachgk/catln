@@ -5,8 +5,10 @@ import "core"
 # The inline desugar could not express this (it was a desugar error); the helper desugar carries the
 # whole continuation as a sub function, so its own local decls are preprocessed normally.
 bindWithLocal(m -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe =
-  x <- m
-  doubled = x + x
+  x<- m
+
+  doubled= x + x
+
   /Data/Some(value= doubled + 1)
 
 main{io -> IO} =

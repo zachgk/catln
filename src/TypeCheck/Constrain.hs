@@ -17,10 +17,14 @@
 module TypeCheck.Constrain where
 
 import qualified Data.HashMap.Strict as H
+import qualified Data.HashSet        as S
+import qualified Data.IntMap.Strict  as IM
+import           Data.List           (partition)
 import           Data.Maybe
 import qualified Data.Zip            as Z
 
 import           Control.Monad.State
+import           Semantics.TypeGraph (isSettledLeaf)
 import           Semantics.Types
 import           Text.Printf
 import           TypeCheck.Common
@@ -33,8 +37,15 @@ isSolved _                                 = False
 
 -- | Updates a 'VarMeta' point to a new 'Scheme' value
 setScheme :: FEnv -> VConstraint -> (RConstraint, RConstraint) -> VarMeta -> Scheme -> String -> FEnv
-setScheme env con (oldCon, newCon) p scheme baseMsg = setDescriptor env con p (checkScheme scheme) (msg "" "")
+setScheme env con (oldCon, newCon) p scheme baseMsg = setDescriptor env con p (checkScheme (fmap normalizeScope scheme)) (msg "" "")
   where
+    -- A stored point type may reference only variables its own constraint scope binds: nested
+    -- external spellings from foreign declarations denote ⊤ and are read as ⊤
+    -- ('dropOutOfScopeTVExt'), so denotationally-equal forms cannot flip between spellings
+    -- across epochs. In-scope variables (and bare top-level ones) stay symbolic.
+    scopeKeys = fmap (const PTopType) (constraintVarArgEnv con)
+    normalizeScope s@SType{stypeAct=act, stypeReq=req} =
+      s{stypeAct=dropOutOfScopeTVExt scopeKeys act, stypeReq=dropOutOfScopeTVExt scopeKeys req}
     -- checkScheme (TypeCheckResult _ (SType ub _ desc)) | containsBottomType ub = error $ msg desc $ printf "Actual type contains bottomType: %s" (show ub)
     checkScheme (TypeCheckResult notes (SType ub _ _ desc)) | containsBottomType ub = TypeCheckResE (mkTracedTypeCheckError env p (msg desc "Actual type contains bottomType") : notes)
     checkScheme (TypeCheckResult notes (SType _ req _ desc)) | containsBottomType req = TypeCheckResE (mkTracedTypeCheckError env p (msg desc "Required type contains bottomType") : notes)
@@ -75,12 +86,15 @@ equalizeSTypes FEnv{feTypeEnv} vaenv (stype1@SType{stypeAct=act1, stypeReq=req1}
   (vaenv', stype1{stypeAct=actBoth, stypeReq=reqBoth}, stype2{stypeAct=actBoth, stypeReq=reqBoth})
 
 
--- | A helper for the 'PropEq' 'Constraint' that applies to both the actual and required types
+-- | A helper for the 'PropEq' 'Constraint' that applies to both the actual and required types.
+-- After the meets, the slot settle ('settlePropSlot') drops settle-forced unsettled forms from
+-- the super's actual slot and tightens its requirement slot to the declared-bound meet.
 updateSchemeProp :: FEnv -> STypeVarArgEnv -> SType -> TypeVarAux -> SType -> (STypeVarArgEnv, SType, SType)
-updateSchemeProp FEnv{feTypeEnv} vaenv super@SType{stypeAct=superAct, stypeReq=superReq} propName sub@SType{stypeAct=subAct, stypeReq=subReq} = (vaenv', super{stypeAct=superAct', stypeReq=superReq'}, sub{stypeAct=subAct', stypeReq=subReq'})
+updateSchemeProp env@FEnv{feTypeEnv} vaenv super@SType{stypeAct=superAct, stypeReq=superReq} propName sub@SType{stypeAct=subAct, stypeReq=subReq} = (vaenv', super{stypeAct=superAct'', stypeReq=superReq''}, sub{stypeAct=subAct', stypeReq=subReq'})
   where
     (actVaenv', superAct', subAct') = updateTypeProp feTypeEnv (fmap stypeAct vaenv) superAct propName subAct
     (reqVaenv', superReq', subReq') = updateTypeProp feTypeEnv (fmap stypeReq vaenv) superReq propName subReq
+    (superAct'', superReq'') = settlePropSlot env (fmap stypeAct vaenv) propName superAct' superReq'
     vaenv' = H.intersectionWith (\t s -> s{stypeReq=t}) reqVaenv' $ H.intersectionWith (\t s -> s{stypeAct=t}) actVaenv' vaenv
 
 -- | A helper for the 'AddArg' 'Constraint'
@@ -141,13 +155,13 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByKnown i p@ST
     vaenv' = fmap (stypeAct . snd) vaenv
     boundTp' = relaxNameBoundArgs act $ case boundTp of
       TypeVar v _                                   -> H.lookupDefault PTopType v vaenv'
-      UnionType (Just (preds, negLeafs)) _ _ ->
+      UnionType (Just (preds, negLeafs, _)) _ _ ->
         snd $ differenceTypeWithEnv feTypeEnv vaenv' (expandPredicates feTypeEnv vaenv' preds) (UnionType Nothing negLeafs [])
       t                                             -> t
     act' = intersectTypesEnv feTypeEnv vaenv' act boundTp'
     req' = intersectTypesEnv feTypeEnv (fmap (stypeReq . snd) vaenv) req boundTp'
-computeConstraint _ con@(Constraint _ _ (BoundedByObjs _ SType{stypeAct=PTopType} _)) = (False, con)
-computeConstraint FEnv{feTypeEnv, feCompletedAllObjsKey, feCompletedAllObjs} con@(Constraint _ vaenv (BoundedByObjs i p@SType{stypeAct=pAct, stypeReq=pReq} objMapBoundUb)) = (False, con{conDat=BoundedByObjs i (p{stypeAct=pAct', stypeReq=pReq'}) objMapBoundUb})
+computeConstraint _ con@(Constraint _ _ (BoundedByObjs _ SType{stypeReq=PTopType} _)) = (False, con)
+computeConstraint FEnv{feTypeEnv, feCompletedAllObjsKey, feCompletedAllObjs} con@(Constraint _ vaenv (BoundedByObjs i p@SType{stypeReq=pReq} objMapBoundUb)) = (False, con{conDat=BoundedByObjs i (p{stypeReq=pReq'}) objMapBoundUb})
   where
     vaenv' = fmap (stypeAct . snd) vaenv
     argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnv vaenv' $ UnionType Nothing (joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con) []
@@ -163,35 +177,65 @@ computeConstraint FEnv{feTypeEnv, feCompletedAllObjsKey, feCompletedAllObjs} con
     -- shifted mid-epoch), so the result is byte-identical to the uncached computation.
     objMapBoundUb' | objMapBoundUb == feCompletedAllObjsKey = feCompletedAllObjs
                    | otherwise = unionTypes feTypeEnv objMapBoundUb (completeDataPartials feTypeEnv objMapBoundUb)
+    -- A type is REQUIRED to be a declared/defined object, but that does not mean it ACTUALLY is one:
+    -- being one of the known objects is only a requirement. So narrow only the requirement against
+    -- the object-universe bound and leave the actual untouched.
+    --
     -- Relax each bound object's self-referential field (one that recurses back to a type the
     -- object participates in) so a destructured value whose corresponding field is still an
     -- unconstrained pattern variable can reconcile with it (see 'relaxRecursiveSelfArgs').
     -- The objects universe is closed-world (only currently-declared data objects), but an OPEN
     -- (unsealed) class may gain instances in a future file, so a value typed by one is genuinely
-    -- inhabitable and must survive the bound rather than empty. Admit the value's OWN open-class
-    -- predicate components (with their real element bounds) as inhabitable bound members: the
-    -- intersection then preserves exactly those components (a foreign class-top with an
-    -- unconstrained element would instead let the value's element widen). Sealed classes are
+    -- inhabitable and must survive the bound rather than empty. Admit the requirement's OWN
+    -- open-class predicate components (with their real element bounds) as inhabitable bound members
+    -- ('openClassPart pReq'): an open-class requirement (e.g. a @Functor[Eq]@ law argument with no
+    -- in-scope instance) must survive the object-universe bound rather than empty. Sealed classes are
     -- excluded — they equal their declared members, already in the universe.
-    boundUb = relaxRecursiveSelfArgs feTypeEnv $ unionTypes feTypeEnv (unionTypes feTypeEnv objMapBoundUb' (openClassPart feTypeEnv pAct)) argsBoundUb
-
-    -- A partially applied tuple would not be a raw type on the unionObj,
-    -- but a subset of the arguments in that type. The object-universe bound is an upper bound, so it
-    -- applies to the required type as well as the actual (both are upper bounds — see 'SType'), just
-    -- as 'BoundedByKnown' narrows both; each side is resolved against its own ambient var-env.
-    (_, pAct') = intersectTypesWithVarEnv feTypeEnv vaenv' pAct boundUb
+    --
     -- Only narrow a *concrete* requirement. A Top requirement meets the whole universe to the whole
     -- universe (every known object) — not a narrowing, and a performance blowup — so leave it be
-    -- (mirroring the 'stypeAct=PTopType' guard above). A named requirement instead meets only its
-    -- name-matching objects, tightening the requirement's arg fields (e.g. @/f(/a=Top)@ narrows to
-    -- @/f(/a=<declared>)@). The requirement narrows against its OWN open-class part
-    -- ('openClassPart pReq'), exactly as 'boundUb' above uses 'openClassPart pAct': an open-class
-    -- requirement (e.g. a @Functor[Eq]@ law argument with no in-scope instance) must survive the
-    -- object-universe bound rather than empty — and its matching actual is often still a bare type
-    -- variable, so 'openClassPart pAct' would be empty and cannot cover it.
+    -- (the 'stypeReq=PTopType' guard above already short-circuits it). A named requirement instead
+    -- meets only its name-matching objects, tightening the requirement's arg fields (e.g.
+    -- @/f(/a=Top)@ narrows to @/f(/a=<declared>)@).
     boundUbReq = relaxRecursiveSelfArgs feTypeEnv $ unionTypes feTypeEnv (unionTypes feTypeEnv objMapBoundUb' (openClassPart feTypeEnv pReq)) argsBoundUb
+    reqVaenv = fmap (stypeReq . snd) vaenv
+    boundNames = case boundUbReq of
+      UnionType _ bLeafs _ -> map ptName $ splitUnionType bLeafs
+      _                    -> []
+    -- The universe bound is open-world on NAMES: a requirement leaf whose name matches no
+    -- object in the universe (a compiler annotation whose compile.ct declaration is not in
+    -- this import closure, or any name declared outside the current program) offers nothing
+    -- to tighten against, so it passes through unchanged rather than emptying the requirement.
+    -- A name the universe DOES know meets its name-matching objects as before.
+    nameKnown l = any (relativeNameMatches (ptName l)) boundNames
+    -- A bound object's arg type constrains what the term's argument SETTLES to. A requirement
+    -- argument still holding a raw applied form (an unrewritten call such as @fmap(...)@) is
+    -- not yet a settled value, so meeting it against the bound's settled-value arg type
+    -- (@#print@'s @p -> DShow@) would empty it spuriously — the raw form is bounded at its own
+    -- settling point ('isSubtypeUpToSettlingOf' is the checking-side analogue). Relax the
+    -- name-matching bound objects' arg slots to ⊤ at exactly those positions; settled
+    -- arguments still meet the declared arg types exactly.
+    argHasUnsettled t = case t of
+      UnionType _ ls _ -> any (not . isSettledLeaf feTypeEnv) (splitUnionType ls)
+      _                -> False
+    relaxBoundAtUnsettledArgs l@PartialType{ptArgs=lArgs} bound@(UnionType bTop bLeafs bConsts)
+      | S.null rawKeys = bound
+      | otherwise = UnionType bTop (joinUnionType (map relaxLeaf (splitUnionType bLeafs))) bConsts
+      where
+        rawKeys = S.fromList [k | (k, v) <- H.toList lArgs, argHasUnsettled v]
+        relaxLeaf b@PartialType{ptName=bn, ptArgs=bArgs}
+          | relativeNameMatches (ptName l) bn = b{ptArgs=H.mapWithKey (\k v -> if S.member k rawKeys then PTopType else v) bArgs}
+          | otherwise = b
+    relaxBoundAtUnsettledArgs _ bound = bound
     pReq' | pReq == PTopType = pReq
-          | otherwise        = snd $ intersectTypesWithVarEnv feTypeEnv (fmap (stypeReq . snd) vaenv) pReq boundUbReq
+          | otherwise        = case pReq of
+              UnionType mTop leafs consts ->
+                let (knownLeafs, unknownLeafs) = partition nameKnown (splitUnionType leafs)
+                    metKnown = [ snd $ intersectTypesWithVarEnv feTypeEnv reqVaenv (singletonType l) (relaxBoundAtUnsettledArgs l boundUbReq)
+                               | l <- knownLeafs ]
+                    metTopConsts = snd $ intersectTypesWithVarEnv feTypeEnv reqVaenv (UnionType mTop H.empty consts) boundUbReq
+                in unionAllTypes feTypeEnv (UnionType Nothing (joinUnionType unknownLeafs) [] : metTopConsts : metKnown)
+              _ -> snd $ intersectTypesWithVarEnv feTypeEnv reqVaenv pReq boundUbReq
 computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (NoReturnArg i p@SType{stypeAct=act@(UnionType Nothing _ _)})) = (True, con{conVaenv=updateCOVarArgEnvAct vaenv'' vaenv, conDat=NoReturnArg i p{stypeAct=act'}})
   where
     vaenv' = fmap (stypeAct . snd) vaenv
@@ -208,14 +252,60 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (NoReturnArg i p@SType
       _                        -> posLeafs
     act' = UnionType (Just topData) posLeafs' consts
 computeConstraint _ con@(Constraint _ _ NoReturnArg{}) = (False, con)
--- An input argument actually is only whatever it is required to be, so pull its actual down to its
--- requirement. As uses (and the ArrowTo reverse propagation) keep narrowing the requirement, this
--- re-runs each epoch (returns False, not "done"); both bounds only shrink, so the actual stays
--- monotone (@act ∩ req ⊆ act@) and a bare 'TypeVar' requirement is preserved by the intersection.
-computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (EqReqAct i p@SType{stypeAct=act, stypeReq=req})) = (False, con{conDat=EqReqAct i p{stypeAct=act'}})
+-- An input argument actually IS whatever it is required to be, AND VICE VERSA: a declaration LHS is
+-- an input, so its actual and requirement denote the same thing and must agree. Meet the two and
+-- assign it to BOTH bounds. Pulling the actual down to the requirement gives it the requirement's
+-- object-universe bound ('BoundedByObjs' now narrows only the requirement); pulling the requirement
+-- down to the actual carries an ANNOTATION written on the LHS (e.g. @Cons[$T -> Integer]@, whose
+-- @/T=Integer@ arrives on the actual) into the requirement, so a destructured field @/head=$T@ then
+-- resolves through @/T@ to @Integer@ in the requirement rather than staying Top - which was leaving
+-- the field binding's own requirement Top, so its EqReqAct meet could not narrow anything. As uses
+-- (and the ArrowTo reverse propagation) keep narrowing, this re-runs each epoch (returns False, not
+-- "done"); the meet only shrinks either bound (@act ∩ req ⊆ act@, @⊆ req@), so both stay monotone
+-- and a bare 'TypeVar' bound is preserved by the intersection.
+computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (EqReqAct i p@SType{stypeAct=act, stypeReq=req})) = (False, con{conDat=EqReqAct i p{stypeAct=meet, stypeReq=meet}})
   where
     vaenv' = fmap (stypeAct . snd) vaenv
-    act' = intersectTypesEnv feTypeEnv vaenv' act req
+    -- A destructure pattern's field carries only the value inference gives it, which for a bare
+    -- pattern variable (@#md(text)@) is Top: the data/annotation declaration says the field IS its
+    -- declared type (@text -> String@), so an LHS input actually is that. 'BoundedByObjs' would
+    -- narrow it via the object universe, but now only touches the requirement — and an open-class
+    -- bound on the pattern's slot (@dshow(s -> DShow)@) re-widens the requirement's field, leaving
+    -- the meet Top and building @Show/MD(text=Top)@. So complete each partial's concrete declared
+    -- fields onto the actual directly (option 1): only fields whose declared type is fully concrete
+    -- are carried (a parameter-typed field @v -> $A@ stays as inference left it, so no free
+    -- parameter is reintroduced). This narrows the field on both bounds through the meet below.
+    actC = completeConcreteFields feTypeEnv act
+    -- An LHS input's actual and requirement denote the same thing, so meet them and set BOTH: pulling
+    -- the actual down to the requirement gives it the requirement's object-universe bound
+    -- ('BoundedByObjs' now narrows only the requirement); pulling the requirement down to the actual
+    -- carries an LHS ANNOTATION (@Cons[$T -> Integer]@, whose @/T=Integer@ lands on the actual) into
+    -- the requirement so a destructured field @/head=$T@ resolves through @/T@ there. Resolve the
+    -- meet's freshly-discovered bindings back into the result: meeting a narrow actual
+    -- (@∀ConsList[/T=∀Eq]@) with a requirement carrying a bare recursion var (@∀ConsList[/T=$_T]@)
+    -- records @$_T ↦ ∀Eq@ but keeps @$_T@ in the type, which unresolved reads WIDER and re-widens it
+    -- (a 'verifySchemeActLowers' failure), the trap 'intersectPartialsBase'/'arrowConstrainUbs'
+    -- resolve back. Still-unresolved vars stay symbolic ('substituteKeep').
+    (ivaenv, meet0) = intersectTypesWithVarEnv feTypeEnv vaenv' actC req
+    -- Resolve the meet's freshly-discovered bindings back into the result. Meeting a concretized
+    -- actual (@∀ConsList[/T=∀Eq]@) with a requirement carrying the recursion element var
+    -- (@∀ConsList[/T=$_T]@) records @/T ↦ ∀Eq@ but keeps @$_T@ (which is literally @TVVar "/T"@,
+    -- referring to the enclosing Cons's own element) in the type — unresolved it reads WIDER and the
+    -- requirement re-widens (@verifySchemeReqLowers@) and the actual re-widens
+    -- (@verifySchemeActLowers@). Resolving is exactly correct: the tail's element IS the enclosing
+    -- element. 'substituteKeep' leaves any still-unresolved var symbolic.
+    newBindings = H.difference ivaenv vaenv'
+    meet1 | H.null newBindings = meet0
+          | otherwise          = substituteKeep newBindings meet0
+    -- The meet can drop an EXTERNAL var spelling the actual carries at a nested slot to Top —
+    -- a declaration's implicit-through-usage element link (@b -> Box[$T -> $_T]@) is unbound in
+    -- the constraint's vaenv, so the meet reads it as the ⊤ it denotes and bakes ⊤ into the
+    -- slot. The spelling is the declaration's OWN cross-occurrence link (its result @-> $_T@
+    -- resolves through it at every call — 'arrowDestType' via 'exprVarArgsWithSrc'), so losing
+    -- it detaches the declared result from the argument for the rest of compilation. Restore
+    -- what the meet only widened, exactly as 'updateTypeProp' does on both its sides ("only a
+    -- loss to Top is reverted" — a resolution to a narrower type is kept).
+    meet = restoreLostTVExtVars actC meet1
 computeConstraint env con@(Constraint _ _ (ArrowTo i src dest)) = case arrowConstrainUbs env con src dest of
     TypeCheckResult _ (srcAct', srcReq', destAct', destRT') -> (False, con{conDat=ArrowTo i src{stypeAct=srcAct', stypeReq=srcReq'} dest{stypeAct=destAct', stypeTree=destRT'}})
     TypeCheckResE _ -> (True, con)
@@ -282,16 +372,39 @@ saveConstraint vals old new env = saveDat $ saveVaenv env
 -- This takes a constraint and tries to apply it in the environment.
 -- It will return the updated environment and a boolean that is true if the constraint is done.
 -- If it is done, it can be safely removed and no longer needs to be executed.
-executeConstraint :: VConstraint -> StateT FEnv TypeCheckResult Bool
-executeConstraint con = do
+executeConstraint :: Int -> VConstraint -> StateT FEnv TypeCheckResult Bool
+executeConstraint cid con = do
   modify $ startConstraint con
-  env <- get
+  env@FEnv{feEnvStamp} <- get
+  let conMemo = feConMemo env
   case stypeConstraint $ showCon env con of
     TypeCheckResE _ -> return True
     TypeCheckResult _ con' -> do
-      let (prune, con'') = computeConstraint env con'
-      modify $ saveConstraint con con' con''
-      return prune
+      -- Skip-if-unchanged: 'computeConstraint' is a pure function of the resolved view
+      -- @con'@ plus, for the kinds that read the per-epoch env caches, those caches
+      -- ('feReachesTypeEnv' for ArrowTo/PropEq/FnInputBound via 'mkReachesEnv' /
+      -- 'settlePropSlot' / 'fnArgInputBound'; the universe is already substituted INTO a
+      -- BoundedByObjs view by 'showCon', and 'feCompletedAllObjs' is an exact function of
+      -- it). An ArrowTo additionally resolves its 'conOs' object-side arg entries
+      -- ('conOaResolveKey'). When every component of that key equals the last execution's,
+      -- the recomputed stores would all be refused as unchanged by 'setScheme' — a provable
+      -- no-op, so skip the compute and save entirely and repeat the prune decision.
+      let stampKey = case conDat con of
+            ArrowTo{}      -> feEnvStamp
+            PropEq{}       -> feEnvStamp
+            FnInputBound{} -> feEnvStamp
+            _              -> 0
+      let oaKey = case conDat con of
+            ArrowTo{} -> conOaResolveKey env con
+            _         -> []
+      case IM.lookup cid conMemo of
+        Just (ConMemo memoStamp memoCon memoOa memoPrune)
+          | memoStamp == stampKey && memoCon == con' && memoOa == oaKey -> return memoPrune
+        _ -> do
+          let (prune, con'') = computeConstraint env con'
+          modify $ saveConstraint con con' con''
+          modify $ \e -> e{feConMemo = IM.insert cid (ConMemo stampKey con' oaKey prune) (feConMemo e)}
+          return prune
 
 -- |
 -- Applies the constraints continuously to update the environment.
@@ -299,14 +412,20 @@ executeConstraint con = do
 -- This function also accepts a limit 'Integer' to indicate a maximum number of times a constraint can be used.
 -- A 'TypeCheckError' will be thrown if it has not converged by the time the limit is reached.
 runConstraints :: Integer -> [VConstraint] -> StateT FEnv TypeCheckResult ()
-runConstraints _ [] = return ()
-runConstraints 0 _ = do
+runConstraints limit cons = do
+  -- Fresh skip-memo per constraint set: memo keys are positions in THIS list.
+  modify $ \e -> e{feConMemo = IM.empty}
+  runConstraintsIdx limit (zip [0..] cons)
+
+runConstraintsIdx :: Integer -> [(Int, VConstraint)] -> StateT FEnv TypeCheckResult ()
+runConstraintsIdx _ [] = return ()
+runConstraintsIdx 0 _ = do
   env@FEnv{feTrace, feUnionAllObjs} <- get
   -- _ <- trace (printf "Trace 908: %s" (show $ showTraceConstrainPnt env 908)) (return ())
   if (stypeAct <$> descriptor env feUnionAllObjs) == pure PTopType
     then lift $ TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit without determining the TopTop (unionAllObjs)"] ()
     else lift $ TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit with still changing constraints: \n\n%s" (show $ showTraceConstrainEpoch env $ head $ tail $ tcEpochs feTrace)] ()
-runConstraints limit cons = do
+runConstraintsIdx limit cons = do
   env <- get
   -- Compute the constraint-independent reaches type graph once for this epoch and cache it, so
   -- the (many) 'arrowConstrainUbs'/'mkReachesEnv' calls in this epoch reuse it instead of each
@@ -327,11 +446,19 @@ runConstraints limit cons = do
       -- in 'computeConstraint' is identical across all of them. Compute it once per epoch, keyed by the
       -- universe value @u@ so 'computeConstraint' can reuse it EXACTLY (only when its bound equals @u@).
       let u = maybe BottomType stypeAct $ tcreToMaybe $ descriptor env $ feUnionAllObjs env
-      let completedAllObjs = unionTypes (feTypeEnv env) u (completeDataPartials (feTypeEnv env) u)
-      modify $ \e -> e{feReachesTypeEnv = reachesTypeEnv, feCompletedAllObjsKey = u, feCompletedAllObjs = completedAllObjs}
-      constraintsToPrune <- mapM executeConstraint cons
+      -- The completion is an exact function of @u@: reuse last epoch's when @u@ is unchanged.
+      let uUnchanged = u == feCompletedAllObjsKey env
+      let completedAllObjs = if uUnchanged
+            then feCompletedAllObjs env
+            else unionTypes (feTypeEnv env) u (completeDataPartials (feTypeEnv env) u)
+      -- Bump the env stamp iff a per-epoch env input changed: constraint kinds that read
+      -- these caches only skip re-execution within an unchanged stamp (see 'feConMemo').
+      let envUnchanged = uUnchanged && teTypeGraph reachesTypeEnv == teTypeGraph (feReachesTypeEnv env)
+      modify $ \e -> e{feReachesTypeEnv = reachesTypeEnv, feCompletedAllObjsKey = u, feCompletedAllObjs = completedAllObjs,
+                       feEnvStamp = if envUnchanged then feEnvStamp e else feEnvStamp e + 1}
+      constraintsToPrune <- mapM (uncurry executeConstraint) cons
       updated <- gets feUpdatedDuringEpoch
-      let cons' = mapMaybe (\(con, shouldPrune) -> if shouldPrune then Nothing else Just con) $ zip cons constraintsToPrune
+      let cons' = mapMaybe (\(icon, shouldPrune) -> if shouldPrune then Nothing else Just icon) $ zip cons constraintsToPrune
       when updated $ do
         modify nextConstrainEpoch
-        runConstraints (limit - 1) cons'
+        runConstraintsIdx (limit - 1) cons'

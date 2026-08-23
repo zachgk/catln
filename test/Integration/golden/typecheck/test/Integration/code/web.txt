@@ -10,7 +10,7 @@ Prgm
                     , omiDefs =
                         [ Value /main ->
                             ( /Catln/www( /html=/Data/String ) + /Catln/CatlnResult
-                                ( /name=/Data/String
+                                ( /name=TopType
                                 , /contents=/Data/String
                                 )
                             ) = /Catln/www
@@ -27,7 +27,7 @@ Prgm
             It also prints the result of the build in an iframe." )
         , /Catln/#print
             ( Value /p -> /Catln/CatlnResult
-                ( /name=/Data/String
+                ( /name=TopType
                 , /contents=/Data/String
                 ) = Value /main
             )

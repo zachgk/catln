@@ -16,9 +16,10 @@ module Semantics where
 
 import qualified Data.HashMap.Strict as H
 
-import           CtConstants         (operatorHasArrow)
+import           CtConstants         (builtinAnnotNames, operatorHasArrow)
 import           Data.Graph          (graphFromEdges)
 import qualified Data.HashSet        as S
+import           Data.List           (partition)
 import           Data.Maybe
 import           Semantics.Prgm
 import           Semantics.Types
@@ -27,19 +28,76 @@ import           System.IO.Unsafe    (unsafePerformIO)
 import           Text.Printf
 
 newtype ObjArrTypeGraph e m = ObjArrTypeGraph (ObjectMap e m)
-  deriving (Show)
+  deriving (Eq, Show)
 instance Semigroup (ObjArrTypeGraph e m) where
   (ObjArrTypeGraph a) <> (ObjArrTypeGraph b) = ObjArrTypeGraph (a <> b)
-instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGraph e m) where
-  typeGraphQueryWithReason typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName} = concatMap tryTArrow $ flatObjectMapItem $ H.lookupDefault mempty ptName tg
+-- | Shared body of 'typeGraphQueryWithReason' (@prune=True@) and
+-- 'typeGraphQueryAllWithReason' (@prune=False@ — every accepting arrow contributes).
+objArrGraphQuery :: (ExprClass e, MetaDat m, Show m, Show (e m)) => Bool -> TypeEnv (ObjArrTypeGraph e m) -> TypeVarArgEnv -> PartialType -> [(String, Type, Type)]
+objArrGraphQuery prune typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName} = concatMap tryTArrow $ promises $ flatObjectMapItem $ H.lookupDefault mempty ptName tg
     where
-      tryTArrow :: (ExprClass e, MetaDat m, Show m, Show (e m)) => ObjArr e m -> [(String, Type)]
+      promises | prune     = mostSpecificPromises
+               | otherwise = filter accepts
+      -- Each declaration/definition is a PROMISE: given an input of one type, an output of a certain
+      -- type can be produced. Among the promises the source triggers, keep only the MOST HELPFUL — an
+      -- arrow whose object (input type) is a strict SUPERTYPE of another triggered arrow's object is
+      -- dominated and dropped. The abstract accessor DECLARATION @:$T.eq -> Eqv[$T]@ (object
+      -- @eq(this=$T->Eq)@, result the class-top @∀Eqv@) is thus dropped for a concrete source whenever
+      -- the specific DEFINITION @:Integer.eq= IntOrdering@ (object @eq(this=Integer)@) also triggers,
+      -- so the concrete rewrite is not absorbed by the declaration's class-top in the reaches union.
+      -- Declarations and definitions compete on equal footing; specificity alone decides, and equally
+      -- specific promises (e.g. a recursive function's own decl and def) are both kept.
+      --
+      -- Specificity may only choose among VALID promise sets, and a valid set must COVER the full
+      -- source: the reach union enumerates every form the term may take (an upper bound), so pruning
+      -- to promises that accept only part of the source writes an incomplete enumeration. For
+      -- @fmap(lst=⊤)@ the valid sets are the declaration alone or the Nil and Cons definition arms
+      -- together; the Nil arm alone is more specific but accepts only @lst=Nil@. Mid-inference a
+      -- definition arm whose object pattern has not yet resolved presents as ⊤ and is dominated
+      -- exactly like a declaration, so without the cover check its claim would be omitted from the
+      -- union — and monotonic narrowing makes the omission permanent. The check parallels
+      -- 'completeTreeSet' in "TreeBuild" with opposite polarity: dispatch must ERROR when coverage
+      -- fails, while a reach query instead DECLINES TO PRUNE (keeping every triggered promise is the
+      -- sound fallback for an upper bound).
+      mostSpecificPromises arrows
+        | length kept == length triggered || covered = kept
+        | otherwise = triggered
+        where
+          triggered = filter accepts arrows
+          kept = filter (\oa -> not (any (`strictlyDominates` oa) triggered)) triggered
+          -- What each kept promise accepts OF THIS SOURCE (the same intersect 'tryTArrow' performs).
+          keptSrcs = [intersectTypesEnv typeEnv vaenv (singletonType partial) (arrowObjType oa) | oa <- kept]
+          covered = materializedCovers || symbolicCovers
+          materializedCovers = isSubtypeOfWithEnv typeEnv vaenv (singletonType partial) (unionAllTypesWithEnv typeEnv vaenv keptSrcs)
+          -- The engine sees joint covers a leafwise subtype check cannot (e.g. Nil and Cons arms
+          -- jointly covering a class-typed argument); out of fragment the materialized check decides.
+          -- In-flight engine decision ('teInSatDecision', reachable via the in-decision
+          -- meets' 'compactType' → 'typeGraphQueryWithReason'): starting a fresh
+          -- empty-hypothesis 'satLeafEscapesAll' here is the nested-regress hazard. Demote
+          -- to cover-unproven — 'materializedCovers' still decides, and declining to prune
+          -- is the sound fallback above.
+          symbolicCovers = case traverse unionLeafs keptSrcs of
+            Just optss
+              | teInSatDecision typeEnv -> debugTrace typeEnv "[SAT-DEMOTE:symbolicCovers]" False
+              | dispatchInFragment partial && all dispatchInFragment (concat optss)
+              -> not (satLeafEscapesAll typeEnv vaenv S.empty partial (concat optss))
+            _ -> False
+          unionLeafs (UnionType Nothing leafs []) = Just (splitUnionType leafs)
+          unionLeafs _                            = Nothing
+      accepts oa@ObjArr{oaArr=Just{}} = not $ isBottomType $ intersectTypesEnv typeEnv vaenv (singletonType partial) (arrowObjType oa)
+      accepts _ = False
+      arrowObjType oa = getMetaType $ getExprMeta $ oaObjExpr oa
+      -- @a@ strictly dominates @b@ when a's object is a strict subtype of b's (a is more specific).
+      strictlyDominates a b = let oa' = arrowObjType a; ob = arrowObjType b
+                              in oa' /= ob && isSubtypeOfWithEnv typeEnv vaenv oa' ob
+
+      tryTArrow :: (ExprClass e, MetaDat m, Show m, Show (e m)) => ObjArr e m -> [(String, Type, Type)]
       tryTArrow oa@ObjArr{oaArr=Just{}} = do
         -- It is possible to send part of a partial through the arrow, so must compute the valid part
         -- If none of it is valid, then there is Nothing
         case intersectTypesEnv typeEnv vaenv (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa) of
           potentialSrc@(UnionType Nothing potSrcLeafs []) -> if not (isBottomType potentialSrc)
-            then map (printf "using %s" (show oa),) $ joinPartialDestTypes [arrowDestType typeEnv potentialSrcPartial oa | potentialSrcPartial <- splitUnionType potSrcLeafs]
+            then map (printf "using %s" (show oa), potentialSrc,) $ joinPartialDestTypes [arrowDestType typeEnv potentialSrcPartial oa | potentialSrcPartial <- splitUnionType potSrcLeafs]
             else []
           _ -> error "Unexpected non-union in TryTArrow"
       tryTArrow ObjArr{oaArr=Nothing} = []
@@ -48,6 +106,9 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
       joinPartialDestTypes [] = [BottomType]
       joinPartialDestTypes (pdt1:restPdt) = [unionTypes typeEnv pdt1Poss restPdt' | pdt1Poss <- pdt1, restPdt' <- joinPartialDestTypes restPdt]
 
+instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGraph e m) where
+  typeGraphQueryWithReason = objArrGraphQuery True
+  typeGraphQueryAllWithReason = objArrGraphQuery False
  -- TODO: Implement this to expand other PredExprs as well, and begin using the Nothing to represent having no meaningful way to break
   typeGraphExpandPredExpr typeEnv _vaenv partial | nameStr (ptName partial) == operatorHasArrow = Just $ map (\p -> p{ptPreds=PredsOne (PredExpr partial)}) $ topTypeAsPartials typeEnv
   typeGraphExpandPredExpr typeEnv _vaenv partial = Just $ map (\p -> p{ptPreds=PredsOne (PredExpr partial)}) $ topTypeAsPartials typeEnv
@@ -60,6 +121,61 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
         UnionType Nothing leafs _ -> splitUnionType leafs
         _                         -> []
       dataPartials ObjArr{oaArr=Just{}} = []
+
+  -- The arrow-object complement of 'typeGraphData': input templates of declarations and
+  -- definition arms. A mid-solve object whose input presentation is not yet a plain leaf
+  -- union (e.g. still ⊤) contributes nothing — callers treat missing templates as
+  -- no-information, the monotone-safe direction.
+  typeGraphArrowTemplates TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name = concatMap arrowPartials $ flatObjectMapItem $ H.lookupDefault mempty name tg
+    where
+      arrowPartials oa@ObjArr{oaArr=Just{}} = case getMetaType $ getExprMeta $ oaObjExpr oa of
+        UnionType Nothing leafs _ -> splitUnionType leafs
+        _                         -> []
+      arrowPartials ObjArr{oaArr=Nothing} = []
+
+  -- The arg keysets come from the object EXPRESSION structure ('exprAppliedArgs' /
+  -- 'inExprSingleton' — the same keying every partial built from an expression uses), not
+  -- the expression's meta type, which need not be resolved. A relatively-spelled name (a
+  -- class-graph node's @#noCore@ vs the objMap's @/#noCore@) matches by
+  -- 'relativeNameFilter'; its realizable arg-sets are bounded by the union over every
+  -- matching declaration. A name matching no declaration is open world ('Nothing').
+  typeGraphArgKeys TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name = case H.lookup name tg of
+    Just item -> Just $ itemArgKeys item
+    Nothing   -> case relativeNameFilter name (H.keys tg) of
+      []    -> Nothing
+      names -> Just $ concatMap (itemArgKeys . (tg H.!)) names
+    where
+      itemArgKeys item = [ S.fromList [inExprSingleton (oaObjExpr a) | a <- exprAppliedArgs (oaObjExpr oa)]
+                         | oa <- flatObjectMapItem item ]
+
+  typeGraphDeclaredResult typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName=pName} =
+    case declDests of
+      (_:_) -> unionAllTypes typeEnv declDests
+      -- No declaration (e.g. @sorted@): the return type is INFERRED from the definition arms —
+      -- 'PTopType' until they resolve, refining as they do. Each arm dest's own raw applied leaves
+      -- are then replaced by THEIR declared result (one level, declared-only, so this terminates):
+      -- @sorted@'s Cons arm dest @insert(raw)@ becomes @∀ConsList@, giving @sorted@ the @Cons@ its
+      -- arms produce so a requirement built from it admits @Cons@ instead of collapsing to @Nil@.
+      []    -> case [ armDest
+                    | oa@ObjArr{oaArr=Just{}} <- omiDefs item
+                    , not $ isBottomType $ intersectTypesEnv typeEnv vaenv (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa)
+                    , armDest <- arrowDestType typeEnv partial oa ] of
+                 []       -> PTopType
+                 defDests -> unionAllTypes typeEnv (defDests ++ concatMap declResultOfRawLeaves defDests)
+    where
+      item = H.lookupDefault mempty pName tg
+      declDests = [ dest
+                  | oa@ObjArr{oaArr=Just{}} <- omiDecls item
+                  , not $ isBottomType $ intersectTypesEnv typeEnv vaenv (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa)
+                  , dest <- arrowDestType typeEnv partial oa ]
+      -- The declared result of each raw applied leaf in a type (declared functions only — no
+      -- recursion into undeclared ones, keeping this bounded).
+      declResultOfRawLeaves (UnionType Nothing ls _) =
+        [ d | l <- splitUnionType ls, null (typeGraphData typeEnv (ptName l))
+            , oa@ObjArr{oaArr=Just{}} <- omiDecls (H.lookupDefault mempty (ptName l) tg)
+            , not $ isBottomType $ intersectTypesEnv typeEnv vaenv (singletonType l) (getMetaType $ getExprMeta $ oaObjExpr oa)
+            , d <- arrowDestType typeEnv l oa ]
+      declResultOfRawLeaves _ = []
 
 newtype CTSSConfig = CTSSConfig {
   -- TODO Replace stack path with (CTSSStackConfig = CTSSStackTest | CTSSStackBuild DirString BranchString) when adding support for auto-downloading core
@@ -82,9 +198,12 @@ buildCtssConfig = unsafePerformIO $ do
 {-# NOINLINE buildCtssConfig #-}
 
 mkTypeEnv :: (ExprClass e, Show m, Show (e m), MetaDat m) => Prgm e m -> TypeEnv (ObjArrTypeGraph e m)
-mkTypeEnv (Prgm objMap classGraph _) = TypeEnv classGraph (ObjArrTypeGraph objMap) typeNames False defaultTypeEnvDebug False False (mkSatCache classGraph typeNames)
+mkTypeEnv (Prgm objMap classGraph _) = TypeEnv classGraph (ObjArrTypeGraph objMap) typeNames False defaultTypeEnvDebug False False False (mkSatCache classGraph typeNames)
   where
-    typeNames = S.fromList $ map makeAbsoluteName $ concatMap getAllObjArrNames $ flatObjectMap objMap
+    -- The compiler-emitted annotation names ('builtinAnnotNames') are part of every program's
+    -- vocabulary: desugar injects uses of them (doc comments become @#md@, @>@ statements become
+    -- @#print@, ...) whether or not their compile.ct declarations are in the import closure.
+    typeNames = S.fromList $ map makeAbsoluteName $ map mkName builtinAnnotNames ++ concatMap getAllObjArrNames (flatObjectMap objMap)
 
 emptyMetaM :: (MetaDat m) => Meta m -> Meta m
 emptyMetaM m = emptyMetaN{getMetaPos=getMetaPos m}
@@ -158,12 +277,16 @@ arrowDestTypeBase resolveAppFields typeEnv src oa@ObjArr{oaArr=Just (oaArrExpr, 
       Nothing -> error $ printf "Non-singleton in arrowDestType"
     arrowDestTypeForVaenv vaenv = case oaArrExpr of
       -- _ | trace (printf "arrowDestType from %s with %s to %s.\n\t\tVanev: %s" (show src) (show oa) (show joined) (show vaenv)) False -> undefined
-      Just n | isJust (maybeExprPath n) -> maybe joinedResolved substitute (H.lookup (TVArg $ inExprSingleton n) vaenv)
-      _                              -> joinedResolved
+      Just n | isJust (maybeExprPath n) -> maybe joinedDispatch substitute (H.lookup (TVArg $ inExprSingleton n) vaenv)
+      _                              -> joinedDispatch
       where
         substitute = substituteTVExt vaenv
         expr' = fmap (substitute . getExprType) oaArrExpr
-        arr' = substitute $ getMetaType oaM
+        -- Re-link the declared result's Top class-parameter slots to the type variables the source
+        -- bound before substituting: an accessor result parameterized by the receiver's own type
+        -- (@:$T.eq -> Eqv[$T]@) desugars to @Eqv[/T=Top]@, dropping the @$/T@ link, so without this
+        -- the element cannot follow the receiver (see 'relateArrowVars').
+        arr' = substitute $ relateArrowVars vaenv $ getMetaType oaM
         joined = fromMaybe arr' expr'
         -- Only rewrite a body that directly CONSTRUCTS a data value (@Cons(head=x)@): its applied
         -- arguments are the constructor's fields. A function/operator body (@a && b@, @f(a=..)@) has
@@ -173,6 +296,22 @@ arrowDestTypeBase resolveAppFields typeEnv src oa@ObjArr{oaArr=Just (oaArrExpr, 
           Nothing -> False
         joinedResolved | isDataConstruction = applyResolvedFields typeEnv resolvedFields joined
                        | otherwise          = joined
+        -- DISPATCH ONLY ('arrowDestTypeDispatch'): the presented dest must be what the BUILT arm
+        -- returns. The arm's body compiles toward the arrow's result meta ('TreeBuild.buildArrow'),
+        -- so a body-meta leaf the graph can still rewrite (a raw applied term such as
+        -- @mkComparison(..)@ in a @compare@ arm) settles INSIDE the arm; presenting it raw would
+        -- make the caller's followup re-dispatch the already-settled result (applying
+        -- @mkComparison@'s value-pattern arms to @Equal@). Replace the raw leaves by the result
+        -- meta's presentation; settled leaves (data constructions, forwarded arguments) keep
+        -- their tighter per-call form. Typecheck-side queries ('arrowDestType') keep the raw
+        -- presentation — the reaches trees walk through it.
+        joinedDispatch
+          | resolveAppFields
+          , arr' /= PTopType
+          , UnionType mTop leafs consts <- joinedResolved
+          , (_:_, settledLs) <- partition (null . typeGraphData typeEnv . ptName) (splitUnionType leafs)
+          = unionTypes typeEnv (UnionType mTop (joinUnionType settledLs) consts) arr'
+          | otherwise = joinedResolved
         -- A definition body that constructs a value — @Cons(head=x)@ — stores its fields with the
         -- body's (abstract) argument types: @head@ becomes Top because @x@ is abstract in the body.
         -- At dispatch the vaenv binds the argument (@x=Integer@), so resolve each field whose value
@@ -220,14 +359,39 @@ arrowDestTypeBase _ _ _ oa@ObjArr{oaArr=Nothing} = error $ printf "Unexpected ca
 -- application) is already a settled value and stays itself. Constant-carrying unions and
 -- predicate tops are returned unchanged.
 reduceAppliedType :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
-reduceAppliedType typeEnv vaenv t@(UnionType Nothing leafs []) = case splitUnionType leafs of
+-- A 'Just'-top component (a predicate region such as a dispatch meta's @∀Boolean@) already
+-- denotes settled values and is carried through unchanged; only the POSITIVE leaves are raw
+-- applied terms the graph may rewrite. Punting on the mixed shape would leave the raw self-leaf
+-- in a consumer's destination and short-circuit its build to 'TCTId'.
+reduceAppliedType typeEnv vaenv t@(UnionType mTop leafs consts) = case splitUnionType leafs of
   [] -> t
-  ls -> unionAllTypesWithEnv typeEnv vaenv (map reduceLeaf ls)
+  ls -> unionAllTypesWithEnv typeEnv vaenv (UnionType mTop H.empty consts : map reduceLeaf ls)
   where
     reduceLeaf l = case typeGraphQueryWithReason typeEnv vaenv l of
       []    -> singletonType l
-      dests -> unionAllTypesWithEnv typeEnv vaenv (map snd dests)
+      dests -> unionAllTypesWithEnv typeEnv vaenv (map (\(_, _, dest) -> dest) dests)
 reduceAppliedType _ _ t = t
+
+-- | 'reduceAppliedType' iterated to a FIXPOINT: an arrow's destination may itself carry the
+-- next call's raw form (@==@'s dest holds @equal(..)@ raw, whose dest holds the accessor's
+-- raw form, …), and a consumer building toward a one-step reduction still short-circuits at
+-- the second level. Each leaf NAME reduces at most once (visited set), so mutual recursion
+-- terminates and a recursive function's own raw form stays put after its first step.
+reduceAppliedTypeFix :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
+reduceAppliedTypeFix typeEnv vaenv = go S.empty
+  where
+    go seen t@(UnionType mTop leafs consts) =
+      let ls = splitUnionType leafs
+          reducible l = not (S.member (ptName l) seen) && not (null (typeGraphQueryWithReason typeEnv vaenv l))
+          todo = filter reducible ls
+          keep = filter (not . reducible) ls
+      in if null todo
+           then t
+           else
+             let seen' = foldr (S.insert . ptName) seen todo
+                 reduced = [ unionAllTypesWithEnv typeEnv vaenv [dest | (_, _, dest) <- typeGraphQueryWithReason typeEnv vaenv l] | l <- todo ]
+             in go seen' $ unionAllTypesWithEnv typeEnv vaenv (UnionType mTop (joinUnionType keep) consts : reduced)
+    go _ t = t
 
 -- | 'reduceAppliedType', additionally settling the field and parameter positions of a leaf no
 -- arrow accepts: a data construction storing a raw applied term (@Box[/v=/operator+(..)]@)
@@ -244,7 +408,7 @@ reduceAppliedTypeDeep typeEnv vaenv t@(UnionType Nothing leafs []) = case splitU
   where
     reduceLeaf l = case typeGraphQueryWithReason typeEnv vaenv l of
       []    -> singletonType (reduceLeafPositions l)
-      dests -> unionAllTypesWithEnv typeEnv vaenv (map snd dests)
+      dests -> unionAllTypesWithEnv typeEnv vaenv (map (\(_, _, dest) -> dest) dests)
     reduceLeafPositions p@PartialType{ptArgs, ptVars} = p
       { ptArgs = fmap (reduceAppliedTypeDeep typeEnv vaenv) ptArgs
       , ptVars = fmap (reduceAppliedTypeDeep typeEnv vaenv) ptVars }

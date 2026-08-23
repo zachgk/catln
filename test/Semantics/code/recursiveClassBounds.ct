@@ -1,0 +1,29 @@
+annot(#noCore)
+
+# Interlocked recursive class-bounded memberships, mirroring core's
+#   every(ConsList[$T -> Eq], isa= [Eq]) / every(ConsList[$T -> Ord], isa= [Ord])
+# pair (stack/core/list.ct). Deciding a conjunction of two such classes recurses through the
+# shared container with the OTHER class as the element bound (SAT(EqC ∧ OrdC) →
+# SAT(ConsList[EqC] ∧ OrdC) → SAT(ConsList[OrdC] ∧ ConsList[EqC]) → element meet → the same
+# conjunction again), so any engine entry without a goal-stack guard loops forever — the shape
+# behind the 2026-08 treebuild memory explosion. The SEALED pair is enumerable under the laws'
+# open-world gate, putting the recursion in reach of every generated set-algebra law; the OPEN
+# pair reproduces core's every()-spelling for the closed-world (tePrgmEnv) paths.
+#noCore
+data(Integer)
+
+class(ConsList[$T], [Cons[$T -> $_T](head -> $T, tail -> ConsList[$T -> $_T]), Nil])
+
+# Sealed interlock: each class declares Integer and the recursive container (bounded by
+#   ITSELF) as members.
+class(EqCS, [/Integer, /ConsList[$T -> /EqCS]])
+class(OrdCS, [/Integer, /ConsList[$T -> /OrdCS]])
+
+# Open interlock: the same shape via every(), as core spells it.
+class(EqCO)
+class(OrdCO)
+
+every(Integer, isa= [/EqCO])
+every(Integer, isa= [/OrdCO])
+every(ConsList[$T -> /EqCO], isa= [/EqCO])
+every(ConsList[$T -> /OrdCO], isa= [/OrdCO])

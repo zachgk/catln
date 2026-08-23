@@ -16,35 +16,35 @@ Prgm
                     }
                 )
             ,
-                ( "/abs.$2b7362"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ abs.$2b7362( Value /x -> /Data/Primitive/Integer )
-                            ( Value /$2b7362-arg= Hole TopType HoleActive Nothing@Value Then )= Value x
-                        , abs.$2b7362( Value /x -> /Data/Primitive/Integer )
-                            ( Value /$2b7362-arg= Hole TopType HoleActive Nothing@Value Else )= /operator*
-                            ( Value /l= /operator-
-                                ( Value /a= CInt 1 )
-                            )( Value /r= Value x )
-                        ]
-                    }
-                )
-            ,
                 ( "/abs"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ abs( Value x -> /Data/Primitive/Integer )= abs.$2b7362( Value /x= Value /x )
-                            ( Value /$2b7362-arg= /Catln/ThenElse/fromBool
+                        [ abs( Value x -> /Data/Primitive/Integer )= abs.$8209a9( Value /x= Value /x )
+                            ( Value /$8209a9-arg= /Catln/ThenElse/fromBool
                                 ( Value /v= /operator>=( Value /l= Value x )
                                     ( Value /r= CInt 0 )
                                 )
                             )
+                        ]
+                    }
+                )
+            ,
+                ( "/abs.$8209a9"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ abs.$8209a9( Value /x -> /Data/Primitive/Integer )
+                            ( Value /$8209a9-arg= Hole TopType HoleActive Nothing@Value Then )= Value x
+                        , abs.$8209a9( Value /x -> /Data/Primitive/Integer )
+                            ( Value /$8209a9-arg= Hole TopType HoleActive Nothing@Value Else )= /operator*
+                            ( Value /l= /operator-
+                                ( Value /a= CInt 1 )
+                            )( Value /r= Value x )
                         ]
                     }
                 )

@@ -25,25 +25,16 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Scratch/rel( EAppArg Value /a -> $/T )( EAppArg Value /b -> $/T )
-                            ( EAppArg Value /this -> ∀/Scratch/TEqv[ /T=$/T ] ) -> ∀/Data/Primitive/Boolean
+                            ( EAppArg Value /this -> ∀/Scratch/TEqv[ /T=$_/T ] ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Scratch/rel( EAppArg Value /a -> /Data/Primitive/Integer )( EAppArg Value /b -> /Data/Primitive/Integer )
-                            ( EAppArg Value /this -> /Scratch/MyEqv[ /T=TopType ] ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Primitive/Boolean
-                                , fromList []
-                                )
-                            , /Data/Primitive/intEq
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                )
-                            , []
-                            ) = /Data/Primitive/intEq
-                            ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
-                            ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) )
+                        [ /Scratch/rel( EAppArg Value /a )( EAppArg Value /b )( EAppArg Value /this -> /Scratch/MyEqv ) -> ∀/Data/Primitive/Boolean =
+                            ( /Data/Primitive/intEq
+                                ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
+                                ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) ) ↦ ∀/Data/Primitive/Boolean
+                            )
                         ]
                     }
                 )

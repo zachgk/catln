@@ -9,7 +9,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /unbox( Value /b -> /Data/Primitive/Integer ) -> TVArg /b = Value /b ]
+                        [ /unbox( Value /b -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = Value /b ]
                     }
                 )
             ,
@@ -43,8 +43,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /useBox
-                            ( Value /p -> /Box[ /A=∀/Boxed ]( /x=∀/Boxed ) = /Box( Value /x -> ∀/Boxed ) ) ->
-                            ( /unbox( /b=∀/Boxed ) + /Data/Primitive/Integer ) = /unbox( Value /b -> TVArg /x = Value /x )
+                            ( Value /p -> /Box[ /A=∀/Boxed ]( /x=∀/Boxed ) = /Box( Value /x -> ∀/Boxed ) ) -> /Data/Primitive/Integer = /unbox( Value /b -> TVArg /x = Value /x )
                         ]
                     }
                 )

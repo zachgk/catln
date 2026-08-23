@@ -4,8 +4,18 @@ annot(#noCore)
 data(Integer)
 
 class(List[$T])
-class(ConsList[$T], [Cons[$T -> $T](head -> $T, tail -> ConsList[$T -> $T]), Nil])
+class(ConsList[$T], [Cons[$T -> $_T](head -> $T, tail -> ConsList[$T -> $_T]), Nil])
 
 every(ConsList, isa= [/List])
+
+class(Bag[$T])
+
+every(ConsList[$T -> $_T], isa= [/Bag])
+
+class(Maybe[$T], [Some[$T -> $_T](value -> $T), None])
+class(Option[$T], [$_T, None])
+
+data(Pair[$A, $B](first -> $A, second -> $B))
+data(Point(x -> Integer, y -> Integer))
 
 :List.length -> Integer

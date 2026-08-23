@@ -85,6 +85,22 @@ argStartAnnot, argEndAnnot :: String
 argStartAnnot = "/Catln/#argStart"
 argEndAnnot = "/Catln/#argEnd"
 
+-- | Every annotation name the compiler itself emits or recognizes: doc comments desugar to
+-- @#md@, @>@ statements to @#print@\/@#example@\/@#assert@, parenthesized arguments to
+-- @#argStart@\/@#argEnd@, and so on. These names are part of the compiler's vocabulary and
+-- exist in every program regardless of imports, so the type-name universe must always
+-- contain them; the declarations in core's compile.ct refine their argument types when in
+-- scope. Without this, a file whose import closure lacks compile.ct (a core module, or a
+-- @#noCore@ test file) would read its own desugared doc comment as an undeclared name.
+builtinAnnotNames :: [String]
+builtinAnnotNames =
+  [ assertStr, testAnnot, exampleAnnot, mdAnnot, printAnnot, ctxAnnot, elseAnnot
+  , refineAnnot, runtimeAnnot, argStartAnnot, argEndAnnot, "/Catln/#noCore", "/Catln/#name"
+  -- The annotations' argument keywords are emitted alongside them (@#md(text= ...)@), so they
+  -- are part of the same vocabulary.
+  , assertTestStr, assertMsgStr, mdAnnotText, printAnnotText, resultAnnotText, runtimeAnnotK, "name"
+  ]
+
 anonStr :: String
 anonStr = "/"
 

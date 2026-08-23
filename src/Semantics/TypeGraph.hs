@@ -20,7 +20,6 @@
 module Semantics.TypeGraph where
 import           Control.Monad
 import           Data.Aeson          (ToJSON)
-import           Data.Bifunctor      (Bifunctor (second))
 import           Data.Hashable       (Hashable)
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
@@ -56,8 +55,17 @@ instance Show ReachesTree where
       aux _ ReachesLeaf = return ()
 
 unionReachesTree :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> ReachesTree -> Type
-unionReachesTree typeEnv vaenv (ReachesPartialTree children) = unionAllTypesWithEnv typeEnv vaenv $ map unionChild $ H.toList children
+-- A raw applied form whose settled data this whole union does not already contain (a recursive
+-- result like @sorted(raw)@ next to only its @Nil@ base case) is presented BY its declared result
+-- too ('presentRawResult': @sorted(raw) ∪ ∀ConsList@), so a requirement built from the union admits
+-- the @Cons@ the term reaches. A raw form whose settled result IS already present anywhere in the
+-- union (a wrapper @pureConsInt(raw)@ beside its @Cons@ result, or @restToString(raw)@ beside its
+-- @String@) is left exact, preserving raw-vs-settled dispatch keying. The coverage is the WHOLE
+-- union, so a settled sibling provided by another reach child is seen.
+unionReachesTree typeEnv vaenv (ReachesPartialTree children) =
+  presentRawResult typeEnv vaenv u u
   where
+    u = unionAllTypesWithEnv typeEnv vaenv $ map unionChild $ H.toList children
     unionChild (key, val) = case unionReachesTree typeEnv vaenv val of
       (TypeVar (TVArg argName) tl) | makeAbsoluteName (ptName key) == makeAbsoluteName (pkName argName) -> TypeVar (TVArg $ makeAbsolutePk argName) tl
       (TypeVar (TVVar varName) tl) -> TypeVar (TVVar $ makeAbsolutePk varName) tl
@@ -82,6 +90,59 @@ reachesHasCutSubtypeOf typeEnv vaenv (ReachesTypeTree children) superType = any 
   where childIsSubtype (key, (_, val)) = isSubtypeOfWithEnv typeEnv vaenv key superType || reachesHasCutSubtypeOf typeEnv vaenv val superType
 reachesHasCutSubtypeOf _ _ ReachesLeaf _ = False
 
+-- | Cuts a reaches tree to a required destination. At a source partial's choice node
+-- ('ReachesTypeTree'), a child arrow is GUARANTEED when its claimed type satisfies the
+-- requirement ('isSubtypeUpToSettlingOf' — raw applied claims judged by what they settle to)
+-- or its subtree can be cut to within it ('reachesHasCutSubtypeOf'). When the guaranteed
+-- children jointly COVER the source partial — every value the source admits is accepted by
+-- some guaranteed arrow — only they are kept: the requirement forces the arrow choice, and
+-- no input is stranded by ignoring the others. Without joint coverage the node is left whole:
+-- the remaining arrows are value dispatch (each accepting inputs the guaranteed ones do not),
+-- which the compiler is not free to choose among. Required nodes ('ReachesPartialTree') keep
+-- every child — their keys are the source terms themselves, which eval needs intact.
+cutReachesTree :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> ReachesTree -> ReachesTree
+cutReachesTree typeEnv vaenv req (ReachesPartialTree children) = ReachesPartialTree $ H.mapWithKey cutChild children
+  where
+    cutChild srcPartial (ReachesTypeTree arms) = ReachesTypeTree $ fmap recurseArm arms'
+      where
+        guaranteed key (_, subTree) = isSubtypeUpToSettlingOf typeEnv vaenv key req || reachesHasCutSubtypeOf typeEnv vaenv subTree req
+        kept = H.filterWithKey guaranteed arms
+        -- The portion of the source each kept arm accepts, re-queried from the graph (the tree
+        -- keeps its lean committed shape; see 'typeGraphQueryWithReason').
+        keptCoverage = unionAllTypesWithEnv typeEnv vaenv
+          [ coveredSrc
+          | (reason, coveredSrc, dest) <- typeGraphQueryWithReason typeEnv vaenv srcPartial
+          , Just (keptReason, _) <- [H.lookup dest kept]
+          , reason == keptReason ]
+        covers = isSubtypeOfWithEnv typeEnv vaenv (singletonType srcPartial) keptCoverage
+        arms' = if not (H.null kept) && covers then kept else arms
+        recurseArm (reason, subTree) = (reason, cutReachesTree typeEnv vaenv req subTree)
+    cutChild _ subTree = cutReachesTree typeEnv vaenv req subTree
+cutReachesTree typeEnv vaenv req (ReachesTypeTree children) = ReachesTypeTree $ fmap (fmap (cutReachesTree typeEnv vaenv req)) children
+cutReachesTree _ _ _ ReachesLeaf = ReachesLeaf
+
+-- | A SETTLED leaf is a data value: one whose name has a data definition. Everything else —
+-- a function-named applied term, including one whose name is still relative (an exact graph
+-- lookup would miss it) — is a term the graph may still rewrite. Only settled leaves are
+-- what a requirement constrains; the rewritable ones settle at their own points.
+isSettledLeaf :: (TypeGraph tg) => TypeEnv tg -> PartialType -> Bool
+isSettledLeaf typeEnv l = not (null (typeGraphData typeEnv (ptName l)))
+
+-- | @sub ⊆ sup@ up to settling: a requirement constrains what a term settles to, so a
+-- positive leaf the type graph may still rewrite (a raw applied call, kept alongside its
+-- settled forms for eval's dispatch keying) is exempt from the check — the results its
+-- arrows produce carry their own bounds at their own points. Settled leaves (data values,
+-- 'isSettledLeaf'), constants, and the predicate component are checked structurally.
+isSubtypeUpToSettlingOf :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Bool
+isSubtypeUpToSettlingOf typeEnv vaenv sub sup = case sub of
+  UnionType mTop leafs consts ->
+    isSubtypeOfWithEnv typeEnv vaenv (UnionType mTop H.empty consts) sup
+      && all leafOk (splitUnionType leafs)
+  _ -> isSubtypeOfWithEnv typeEnv vaenv sub sup
+  where
+    leafOk l = not (isSettledLeaf typeEnv l)
+             || isSubtypeOfWithEnv typeEnv vaenv (singletonType l) sup
+
 reachesPartials :: (TypeGraph tg) => ReachesEnv tg -> [PartialType] -> ReachesTree
 reachesPartials typeEnv partials = ReachesPartialTree $ H.fromList $ zip partials (map (reachesPartial typeEnv) partials)
   where
@@ -95,7 +156,37 @@ reachesPartials typeEnv partials = ReachesPartialTree $ H.fromList $ zip partial
       let env' = env{rVisited=S.insert partial rVisited}
       if null ttypes
         then ReachesLeaf
-        else ReachesTypeTree $ H.fromList $ zip (map snd ttypes) (map (second (reaches env')) ttypes)
+        else ReachesTypeTree $ H.fromList [(dest, (reason, reaches env' dest)) | (reason, _, dest) <- ttypes]
+
+-- | Present a partial's raw applied-form arguments by their declared result type (unioned onto
+-- the raw form itself), so the reach follows any arrow a settled argument could match. A
+-- recursive call in an argument position (@insert(lst= sorted(raw))@) matches no arrow object
+-- structurally (@sorted(raw) ∩ Nil = ∅@); unioning @sorted@'s declared result — 'PTopType' until
+-- inferred, else e.g. @ConsList@ — lets both @insert@ arms apply, so the reach stays a genuine
+-- upper bound. Only unsettled (raw applied) leaves are widened; settled data arguments keep
+-- their precise type. One level only: the query inspects direct arguments.
+-- | Union a type's raw applied-form leaves with their declared result type ('raw ∪ result'), so
+-- a recursive/raw applied form is recognised by what it settles to. Its declared result is a
+-- class-top (@∀ConsList@, @∀Functor@) or 'PTopType' when undeclared; intersecting that against a
+-- concrete member is transitive (@∀Functor ∩ Cons = Cons@ via 'expandClassPartialWithNamesFull'),
+-- so the arms a settled value would reach are followed. @covered@ is what the term already reaches
+-- in this union: a raw form whose declared result is ALREADY present adds nothing (kept exact, so
+-- raw-vs-settled dispatch is preserved); only a form missing its settled data is widened. Settled
+-- data leaves are left untouched.
+presentRawResult :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Type
+presentRawResult typeEnv vaenv covered t@(UnionType Nothing leafs _) =
+  foldr addResult t (filter (not . isSettledLeaf typeEnv) (splitUnionType leafs))
+  where
+    -- A 'PTopType' result (a genuinely undeclared function) carries no settled data to admit and
+    -- would only widen the union to Top, so it is not added; only a concrete or class-top result is.
+    addResult l acc =
+      let r = typeGraphDeclaredResult typeEnv vaenv l
+      in if isBottomType r || isTop r || isSubtypeOfWithEnv typeEnv vaenv r (unionTypesWithEnv typeEnv vaenv covered acc)
+           then acc
+           else unionTypesWithEnv typeEnv vaenv r acc
+    isTop PTopType = True
+    isTop _        = False
+presentRawResult _ _ _ t = t
 
 reaches :: (TypeGraph tg) => ReachesEnv tg -> Type -> ReachesTree
 reaches _     (UnionType (Just _) _ _) = ReachesLeaf

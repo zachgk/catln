@@ -392,7 +392,16 @@ instance ExprClass Expr where
             = joinAllPossVarArgMetaWithSrc typeEnv $ map (exprVarArgsWithSrc typeEnv obj) $ splitUnionType srcArg
             | otherwise = case getMetaType arrM of
                 (TypeVar v _) -> [H.insertWith (mergeVarArgMetaWithSrcItem typeEnv) v ([(obj, arrM)], fromMaybe PTopType $ typeGetArgLoose structKey src) mainArg]
-                _ -> [mainArg]
+                -- A declared argument spelled as a class application linking the object's
+                -- variables (@lst -> List[/T=$_/T]@) BINDS those variables from the source
+                -- content's linked dimension (@lst=Cons[/T=Integer](…)@ binds @/T=Integer@) —
+                -- the argument position is a linked occurrence of the variable, so the content's
+                -- element evidence is the variable's per-call value. Without this only an
+                -- explicit application (@sorted[/T=Integer](…)@) could bind, and a declaration's
+                -- linked result (@-> List[/T=$_/T]@) always presented at the variable's declared
+                -- bound instead of the call's element type.
+                declT -> [foldr insertLinked mainArg (linkedDimBinds typeEnv declT (fromMaybe PTopType (typeGetArgLoose structKey src)))]
+                  where insertLinked (v, d) = H.insertWith (mergeVarArgMetaWithSrcItem typeEnv) v ([(obj, arrM)], d)
             where
               structKey = inExprSingleton obj
               -- For an alias destructure (@field@name@, e.g. @first@f@) the matched field is
@@ -410,7 +419,18 @@ instance ExprClass Expr where
               patternHeadNamesArg argType = case maybeGetSingleton argType of
                 Just p  -> headName == makeAbsoluteName (ptName p)
                 Nothing -> False
-              mainArg = H.singleton (TVArg bindKey) ([(obj, arrM)], fromMaybe (getMetaType arrM) (typeGetArgLoose structKey src))
+              -- The declared-meta fallback must also cover a source slot that resolves to ⊤:
+              -- an upper-unbounded source ('typeGetArg' on a @..@-mode partial) reports an
+              -- absent argument as @Just ⊤@ ("may still be present"), which is no information —
+              -- while the value taking this arrow necessarily matches the object, so its
+              -- content lies within the declared meta (declaration-boundedness). Without this
+              -- the desugared @main@ wrapper's @TVArg /io@ return resolves to ⊤ against the
+              -- generic @/ContextIn[$V](value=$V)..@ hop and TreeBuild reports
+              -- "Arrow has indeterminate return type".
+              mainArg = H.singleton (TVArg bindKey) ([(obj, arrM)],
+                case typeGetArgLoose structKey src of
+                  Just t | t /= PTopType -> t
+                  _                      -> getMetaType arrM)
           fromArg (EAppVar vn vm) = [H.singleton (TVVar vn) ([(Value (emptyMetaT $ partialToTypeSingleton vn) (pkName vn), vm)], H.lookupDefault PTopType vn (ptVars src))]
           fromArg (EAppSpread s) = exprVarArgsWithSrc typeEnv s src
           fromArg oa = error $ printf "Invalid oa %s" (show oa)
@@ -433,6 +453,52 @@ instance ObjArrClass ObjArr where
       exprArg _ = error $ printf "Invalid oa %s" (show oa)
 
   getOaAnnots = oaAnnots
+
+-- | The variable bindings a declared argument's LINKED spelling extracts from the source
+-- content: for a declared type that is a pure class application whose parameters link the
+-- object's variables (@List[/T=$_/T]@ — 'TVExt'), each linked variable binds to the JOIN of the
+-- content's dimensions at the class parameter (@Cons[/T=Integer](…)@ yields @/T=Integer@; a bare
+-- atom member like @Nil@ pins nothing). Strictly conservative — the same projection discipline
+-- as the declaration-bounded dim tightening in "Semantics.Types": var-carrying dimensions,
+-- unknown content shapes, or a ⊤ join produce no binding (a ⊤ entry carries no information).
+linkedDimBinds :: (TypeGraph tg) => TypeEnv tg -> Type -> Type -> [(TypeVarAux, Type)]
+linkedDimBinds typeEnv declT content = case declT of
+  UnionType (Just (PredsOne (PredClass q), negs, [])) pos []
+    | H.null negs, H.null pos, H.null (ptArgs q)
+    -> fromTemplate q
+  -- A declared DATA spelling whose parameters link the object's variables
+  -- (@b -> Box[$T -> $_T]@) binds them the same way as the class-application form: the
+  -- content's dimension at the parameter is the variable's per-call value
+  -- (@b= Box[/T=Integer](…)@ yields @/T=Integer@). Single-leaf declared spellings only —
+  -- the same strictly conservative projection.
+  UnionType Nothing declLeafs []
+    | [q] <- splitUnionType declLeafs
+    -> fromTemplate q
+  _ -> []
+  where
+    -- The template's var-slot reference may be spelled 'TVExt' (@List[/T=$_/T]@) or 'TVInt'
+    -- (@Box[/T=$/U]@ from an explicit-parameter declaration @unwrap[$U](b -> Box[$T -> $U])@ —
+    -- the parser spells @$U@ 'TVInt' context-free, so the reference lands internal-spelled
+    -- inside the nested partial's slot). Both denote the declaring object's variable:
+    -- 'substituteTVExt' already reads a var-slot value against the ambient env regardless of
+    -- loc, so the linked-occurrence read here must bind under the same rule or the two
+    -- surfaces disagree (the explicit spelling's binding was silently dropped, leaving the
+    -- declaration route at ⊤ and the call unreduced at eval).
+    fromTemplate q =
+      [ (TVVar k, dim)
+      | (k', TypeVar (TVVar k) _) <- H.toList (ptVars q)
+      , Just dim <- [contentDim k']
+      , dim /= PTopType ]
+    contentDim k' = case content of
+      UnionType Nothing leafs [] -> unionAllTypes typeEnv <$> mapM (leafDim k') (splitUnionType leafs)
+      UnionType (Just (PredsOne (PredClass q'), negs, [])) pos []
+        | H.null negs, H.null pos -> leafDim k' q'
+      _ -> Nothing
+    leafDim k' l = case H.lookup k' (ptVars l) of
+      Just e | not (typeHasVars e) -> Just e
+             | otherwise -> Nothing
+      Nothing | H.null (ptVars l) && H.null (ptArgs l) -> Just BottomType
+              | otherwise -> Nothing
 
 mergeVarArgMetaWithSrcItem :: (TypeGraph tg) => TypeEnv tg -> ([(Expr m, Meta m)], Type) -> ([(Expr m, Meta m)], Type) -> ([(Expr m, Meta m)], Type)
 mergeVarArgMetaWithSrcItem typeEnv (m1s, t1) (m2s, t2) = (m1s ++ m2s, intersectTypes typeEnv t1 t2)
@@ -612,14 +678,46 @@ getRecursiveObjs oa@ObjArr{oaBasis, oaObj=Just objE} = objectMapFromList (oa : r
     toObjMapItem e = ObjArr (Just e) oaBasis Nothing [] Nothing
 getRecursiveObjs oa = error $ printf "getRecursiveObjs with no input expression: %s" (show oa)
 
+-- | The names an object DEFINES or DECLARES: its own object path plus the variables BOUND in its
+-- object pattern — argument names, type variables, and destructuring aliases (@head\@ah@ binds
+-- @ah@). These are all legitimate names in a term-rewriting language. What is NOT collected is
+-- USAGE: the matching CRITERIA on the value side of a pattern (the constructor\/field heads @Cons@,
+-- @head@ — references to existing names, not new bindings) and the arrow BODY (@this.eq.rel(..)@
+-- USES @rel@, it does not define it). Collecting those fabricates names for terms that name no
+-- object — a bare @rel@ absolutised to @/rel@ — polluting the type-name universe ('teNames').
+-- 'exprVarArgs' is exactly the binding classifier (it keys aliases\/args\/vars and never criteria),
+-- so the bound names come from it; the criteria and body are simply not traversed.
 getAllObjArrNames :: (ExprClass e, MetaDat m, Show m, Show (e m)) => ObjArr e m -> [Name]
-getAllObjArrNames ObjArr{oaObj, oaArr=Just (oaArrExpr, _)} = maybe [] getAllExprNames oaObj ++ maybe [] getAllExprNames oaArrExpr
-getAllObjArrNames ObjArr{oaObj, oaArr=Nothing} = maybe [] getAllExprNames oaObj
+getAllObjArrNames oa@ObjArr{oaObj} = oaObjPath oa : (maybe [] getAllExprNames oaObj ++ maybe [] boundNames oaObj)
+  where
+    -- The OBJECT pattern's names — its head plus every arg name recursed through
+    -- 'getAllExprNames'\/'exprAppliedArgs' — are all part of the DEFINITION: a parameter
+    -- (@tst(d= T(x))@'s @d@) or an entry point (@main{io->IO}@ desugared to
+    -- @ContextIn(value= main)@) is declared here, and its 'BoundedByKnown' relative bound (@~d@,
+    -- @~main@) resolves only if the name is in 'teNames'. The arrow BODY is intentionally NOT
+    -- traversed: a name USED there (@this.eq.rel@'s @rel@) must not mint an object. Aliases
+    -- ('exprVarArgs') are added on top — 'getAllExprNames' takes an alias's base, not its new name.
+    boundNames objE = mapMaybe varAuxName $ H.keys $ exprVarArgs objE
+    varAuxName (TVArg n)       = Just (pkName n)
+    varAuxName (TVVar n)       = Just (pkName n)
+    varAuxName (TVApplied b _) = varAuxName b
 
 getAllExprNames :: (ExprClass e, MetaDat m, Show m, Show (e m)) => e m -> [Name]
-getAllExprNames e = maybeToList (maybeExprPath e) ++ concatMap getAllObjArrNames (exprAppliedArgs e) ++ concatMap fromOrdVar (exprAppliedOrdVars e)
+getAllExprNames e = maybeToList (maybeExprPath e) ++ concatMap argAllNames (exprAppliedArgs e) ++ concatMap fromOrdVar (exprAppliedOrdVars e)
   where
     fromOrdVar (v, _) = varNamesWithPrefix $ pkName v
+    -- An arg's value side introduces its HEAD name: the entry point @ContextIn(value= main)@
+    -- declares @main@ (a module-scoped @/Scratch/main@, a converted Python def's
+    -- @value= say_hello(msg -> String)@) right here — it appears nowhere else — and its
+    -- 'BoundedByKnown' relative bound (@~main@) resolves only if the name is in 'teNames'
+    -- (this generalizes the former @data(/main)@ workaround in @stack/core/data.ct@). A
+    -- matching-criterion head (@b= Box(v)@'s @Box@) is a reference to an existing name, so
+    -- collecting it is idempotent — the same holds for criteria heads in the arg-name
+    -- position (@unwrap(Box(v))@), which 'getAllObjArrNames' has always collected. Only the
+    -- head is taken; nested bindings remain 'boundNames'\/'exprVarArgs' territory.
+    argAllNames aoa = getAllObjArrNames aoa ++ argValueHeadName aoa
+    argValueHeadName ObjArr{oaArr=Just (Just ve, _)} = maybeToList (maybeExprPath ve)
+    argValueHeadName _                               = []
 
 -- | Updates the types based on the format as they are fixed for inputs (due to arrows this does not work for output expressions)
 exprPropagateTypes :: (MetaDat m, Show m) => Expr m -> Expr m

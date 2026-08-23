@@ -171,7 +171,7 @@ evalCallTree  m (TCMatch destType opts) = do
     -- retry once; if the rebuild is not strictly more resolved, fall back to the original error.
     [] -> do
       Env{evTbEnv} <- get
-      case buildPartialCallTree evTbEnv [] S.empty (getValPartialType m) destType of
+      case buildPartialCallTree evTbEnv [] S.empty PTopType (getValPartialType m) destType of
         CRes _ rebuilt | rebuilt /= TCMatch destType opts ->
           withEvalPush ("rebuild match with val " ++ show m) $ evalCallTree m rebuilt
         _ -> evalError $ printf "Failed match in eval callTree: \n\tVal: %s \n\tVal type: %s\n\tOptions: %s" (show m) (show $ getValPartialType m) (show opts)
@@ -179,7 +179,7 @@ evalCallTree  m (TCMatch destType opts) = do
 evalCallTree v (TCSeq a b) = do
   v' <- evalCallTree v a
   evalCallTree v' b
-evalCallTree _ (TCCond _ []) = evalError "Found no matching conditions in evalTree"
+evalCallTree m (TCCond _ []) = evalError $ printf "Found no matching conditions in evalTree for val %s (val type %s)" (show m) (show $ getValPartialType m)
 evalCallTree m (TCCond resType ((cond, ifThenTree):restIfTrees)) = do
   Env{evTypeEnv} <- get
   -- The value's partial is tried in both slot conventions, like the 'TCMatch' branch above: a
@@ -215,12 +215,12 @@ evalCallTree input (TCArg _ name) = do
     Just arg' -> return arg'
     Nothing -> evalError $ printf "Unknown arg %s found during evaluation \n\t\t with arg env %s" name (show evArgs)
 evalCallTree input (TCObjArr oa) = evalObjArr input (Left oa)
-evalCallTree input (TCPrim _ (EPrim _ f)) = do
+evalCallTree input (TCPrim oa (EPrim _ f)) = do
   case input of
     (TupleVal _ args) -> case f args of
       Right val -> return val
       Left err  -> evalError err
-    _                 -> error "Unexpected eval PrimArrow input"
+    _                 -> evalError $ printf "Unexpected eval PrimArrow input %s to %s" (show input) (show oa)
 evalCallTree _ TCMacro{} = evalError $ printf "Can't evaluate a macro - it should be removed during TreeBuild"
 
 -- | Checks the implicit equality of a non-linear pattern's shared argument positions. For an

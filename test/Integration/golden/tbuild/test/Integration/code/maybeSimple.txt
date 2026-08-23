@@ -13,13 +13,15 @@ Prgm
                                 ( /this=/Catln/IO
                                 , /val=/Data/Primitive/Integer
                                 ) + /Catln/IO
-                            ) = /Catln/exit
-                            ( EAppArg Value /val -> /Data/Primitive/Integer =
-                                ( /defInt
-                                    ( EAppArg Value /x -> /Data/Primitive/Integer = 0 ) ↦ /Data/Primitive/Integer
+                            ) =
+                            ( /Catln/exit
+                                ( EAppArg Value /val -> /Data/Primitive/Integer =
+                                    ( /defInt
+                                        ( EAppArg Value /x -> /Data/Primitive/Integer = 0 ) ↦ /Data/Primitive/Integer
+                                    )
                                 )
+                                ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) ) ↦ /Catln/IO
                             )
-                            ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
                         ]
                     }
                 )
@@ -31,8 +33,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /defInt( EAppArg Value /x -> /Data/Primitive/Integer ) -> TVArg /x = ( Value /x ↦ TVArg /x )
-                        , /defInt
-                            ( EAppArg Value /x -> ( /Nothing + /Data/Nothing ) = Value /Nothing ) -> /Data/Primitive/Integer = 0
+                        , /defInt( EAppArg Value /x -> ~Nothing = Value /Nothing ) -> /Data/Primitive/Integer = 0
                         ]
                     }
                 )

@@ -50,7 +50,7 @@ propConstraint = property $ do
   fenv' <- evalMaybe $ tcreToMaybe $ execStateT (fromPrgms prgms []) fenv
   let cons = feCons fenv'
   con <- forAll $ HG.element cons
-  let _fenv'' = execStateT (executeConstraint con) fenv'
+  let _fenv'' = execStateT (executeConstraint 0 con) fenv'
   return ()
 
 propConstraints :: Property
@@ -62,7 +62,7 @@ propConstraints = property $ do
   fenv' <- evalMaybe $ tcreToMaybe $ execStateT (fromPrgms prgms []) fenv
   let cons = feCons fenv'
   usedCons <- forAll $ HG.subsequence (concat $ replicate 4 cons)
-  let _fenv'' = execStateT (mapM executeConstraint usedCons) fenv'
+  let _fenv'' = execStateT (mapM (uncurry executeConstraint) (zip [0..] usedCons)) fenv'
   return ()
 
 propTypeChecks :: Property

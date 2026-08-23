@@ -77,6 +77,8 @@ makeBaseFEnv prgm = FEnv{
   feCompletedAllObjsKey = BottomType,
   feCompletedAllObjs = PTopType,
   feLocalDefNames = S.empty,
+  feEnvStamp = 0,
+  feConMemo = IM.empty,
   feTrace = mkTraceConstrain
   }
 
@@ -132,6 +134,13 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
   arg'' <- case arg of
     EAppArg a -> do
       arg' <- fromObjArr est a
+      -- An input argument actually is only whatever it is required to be (it only ever receives
+      -- declared values), so tie the argument's type slot ('arrM') actual down to its
+      -- (use-narrowed) requirement. Emitting this here in the Tuple-arg handling covers every input
+      -- argument form — matched-value args (@f(x= True)@, wildcards @f(x= _)@) and destructuring
+      -- patterns as well as typed parameters — whereas the old 'exprVarArgs'-driven emission in
+      -- 'fromObjectMap' only reached the parameter/binding forms it collected.
+      let eqReqActs = [EqReqAct 34 arrM' | EncodeIn <- [est], Just (_, arrM') <- [oaArr arg']]
       let constraints = case (est, oaObj arg', oaArr arg') of
             (EncodeOut{}, Just obj, Just (Just _argExpr', arrM')) ->
               -- Output with (x=x)
@@ -178,13 +187,15 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
                         PropEq 25 (m', TVArg $ inExprSingleton obj) arrM'
                         ]
             _ -> error $ printf "Invalid fromExpr in %s mode for %s" (show est) (show arg)
-      modify $ addConstraints constraints
+      modify $ addConstraints (eqReqActs ++ constraints)
       modify $ endConstraintBlock (if isJust (oaObj arg') then Just arg' else Nothing) (maybe H.empty (fmap (first getExprMeta . head) . exprVarArgs) (oaObj arg'))
       return $ EAppArg arg'
     EAppVar vn vm -> do
       let baseName = printf "VarApply %s[%s = %s]" (show baseExpr) (show vn) (show vm) :: String
       vm' <- fromMeta BAct est vm $ printf "%s val" baseName
-      modify $ addConstraints [AddArg 27 (baseM', TVVar vn) m', PropEq 27 (m', TVVar vn) vm']
+      -- As with the 'EAppArg' inputs above, an input type-variable application's actual is only
+      -- whatever it is required to be, so pull its value slot's actual down to its requirement.
+      modify $ addConstraints ([AddArg 27 (baseM', TVVar vn) m', PropEq 27 (m', TVVar vn) vm'] ++ [EqReqAct 34 vm' | EncodeIn <- [est]])
       return $ EAppVar vn vm'
     EAppSpread a@HoleExpr{} -> do -- Shortcut for Hole since no need to track neglected args
       a' <- fromExpr est a
@@ -214,6 +225,15 @@ nonLinearEqConstraints obj =
   , ((_, m1), (_, m2)) <- zip grp (tail grp)
   ]
 
+-- | An annotation is a root statement: nothing consumes it, so no 'ArrowTo' source position
+-- ever writes its requirement (application metas otherwise get their requirements from their
+-- consumers). An annotation's requirement is its own spelled annotation — seed the
+-- application meta with the annotation name's relation type, which 'BoundedByObjs' then
+-- narrows to the declared annotation object (e.g. @#assert(test -> Boolean)@), giving the
+-- argument slots their requirements through the usual arg projection ('PropEq').
+annotSeedConstraints :: [VExpr] -> [VConstraintDat]
+annotSeedConstraints = map (\a -> BoundedByKnown 46 (getExprMeta a) (relTypeAppliedVal (exprPath a)))
+
 fromObjArr :: EncodeState -> PObjArr -> StateT FEnv TypeCheckResult VObjArr
 fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   ObjArrTypeGraph (ObjectMap objTg) <- gets (teTypeGraph . feTypeEnv)
@@ -236,6 +256,7 @@ fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   modify $ addConstraints $ maybe [] nonLinearEqConstraints oaObj'
   modify startConstrainBlock
   oaAnnots' <- mapM (fromExpr est) oaAnnots
+  modify $ addConstraints $ annotSeedConstraints oaAnnots'
   oaArr' <- case oaArr of
     Nothing -> return Nothing
     Just (arrExpr, arrM) -> do
@@ -302,25 +323,44 @@ fromObjectMap oa@ObjArr{oaAnnots, oaObj=Just obj, oaArr} = do
   modify startConstrainBlock
   obj' <- fromExpr inEst obj
   modify $ addConstraints $ nonLinearEqConstraints obj'
-  -- Each matched input argument actually is only whatever it is required to be, so tie its actual
-  -- to its (use-narrowed) requirement. 'exprVarArgs' yields the argument's type slot ('arrM'), the
-  -- point Decode renders as the argument's type.
-  modify $ addConstraints [EqReqAct 34 arrM | (_, arrM) <- concat (H.elems (exprVarArgs obj'))]
+  -- The input arguments' 'EqReqAct' constraints (tying each arg's actual down to its requirement)
+  -- are emitted per-argument in 'fromExpr' (the Tuple-arg handling), covering every argument form.
 
   let est = EncodeOut (Just obj')
   oaAnnots' <- mapM (fromExpr est) oaAnnots
+  modify $ addConstraints $ annotSeedConstraints oaAnnots'
   oaArr' <- forM oaArr $ \(maybeArrE, arrM) -> do
     mUserReturn' <- fromMeta BAct est arrM (printf "Specified result from %s" (show $ exprPath obj'))
     case maybeArrE of
       Just arrE -> do
         vExpr <- fromExpr est arrE
-        arrM' <- fromMeta BAct est (emptyMetaM arrM) $ printf "Arrow result from %s" (show $ exprPath obj')
+        -- The Arrow result carries the declared return as its REQUIREMENT (the actual is
+        -- inferred from the body): the ArrowTo destination bound that lets the arrow choose
+        -- among definitions by the required result ('arrowConstrainUbs').
+        arrM' <- fromMeta BReq est arrM $ printf "Arrow result from %s" (show $ exprPath obj')
         modify $ addConstraints [ArrowTo 32 (getExprMeta vExpr) arrM', ArrowTo 33 (getExprMeta vExpr) mUserReturn', NoReturnArg 33 arrM']
         return (Just vExpr, arrM')
       Nothing -> return (Nothing, mUserReturn')
   let oa' = oa{oaObj=Just obj', oaArr=oaArr', oaAnnots=oaAnnots'}
   modify $ fAddVTypeGraph oa'
-  modify $ endConstraintBlock (Just oa') (first getExprMeta . head <$> exprVarArgs obj')
+  -- The object's IMPLICIT type variables — external spellings introduced through usage in its
+  -- argument or result annotations (@unwrap(b -> Box[$T -> $_T]) -> $_T@) rather than by an
+  -- explicit application (@unwrap[$U]@, collected into the block vaenv by 'exprVarArgs') —
+  -- belong to the object's OWN scope: they are its cross-occurrence links, and the declared
+  -- result resolves through them at every call ('arrowDestType' via 'exprVarArgsWithSrc').
+  -- Register each with a fresh point so the scope normalization applied at every store
+  -- ('setScheme'/'dropOutOfScopeTVExt', which reads an UNREGISTERED external spelling as the ⊤
+  -- it denotes) keeps the object's own links symbolic instead of erasing them.
+  let explicitVaenv = first getExprMeta . head <$> exprVarArgs obj'
+  let annotTys = [getMetaType m | ObjArr{oaArr=Just (_, m)} <- exprAppliedArgs obj']
+              ++ [getMetaType m | (_, m) <- maybeToList oaArr']
+  let scopeBase = H.fromList [(k, PTopType) | k <- H.keys explicitVaenv]
+  let implicitVs = S.toList $ S.unions $ map (outOfScopeTVExtVars scopeBase) annotTys
+  implicitVaenv <- fmap H.fromList $ forM implicitVs $ \v -> do
+    p <- fresh $ TypeCheckResult [] $ SType PTopType PTopType Nothing $ printf "implicit object var %s in %s" (show v) (show $ exprPath obj')
+    let vm = Meta PTopType (getMetaPos $ getExprMeta obj') nil (mkVarMetaDat inEst p)
+    return (v, (vm, vm))
+  modify $ endConstraintBlock (Just oa') (H.union explicitVaenv implicitVaenv)
   return oa'
 fromObjectMap oa = error $ printf "Invalid oa in fromObjectMap %s" (show oa)
 
@@ -330,6 +370,7 @@ fromPrgm (Prgm objMap classGraph annots) = do
 
   modify startConstrainBlock
   annots' <- mapM (fromExpr (EncodeOut Nothing)) annots
+  modify $ addConstraints $ annotSeedConstraints annots'
   modify $ endConstraintBlock Nothing H.empty
 
   return (objMap', classGraph, annots')

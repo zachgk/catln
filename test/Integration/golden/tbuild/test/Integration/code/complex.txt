@@ -13,19 +13,21 @@ Prgm
                                 ( /this=/Catln/IO
                                 , /val=/Data/Primitive/Integer
                                 ) + /Catln/IO
-                            ) = /Catln/exit
-                            ( EAppArg Value /val -> /Data/Primitive/Integer =
-                                ( /real
-                                    ( EAppArg Value /c -> /Complex
-                                        ( /a=/Data/Primitive/Integer
-                                        , /b=/Data/Primitive/Integer
-                                        ) = /Complex
-                                        ( EAppArg Value /a -> /Data/Primitive/Integer = 0 )
-                                        ( EAppArg Value /b -> /Data/Primitive/Integer = 7 )
-                                    ) ↦ /Data/Primitive/Integer
+                            ) =
+                            ( /Catln/exit
+                                ( EAppArg Value /val -> /Data/Primitive/Integer =
+                                    ( /real
+                                        ( EAppArg Value /c -> /Complex
+                                            ( /a=/Data/Primitive/Integer
+                                            , /b=/Data/Primitive/Integer
+                                            ) = /Complex
+                                            ( EAppArg Value /a -> /Data/Primitive/Integer = 0 )
+                                            ( EAppArg Value /b -> /Data/Primitive/Integer = 7 )
+                                        ) ↦ /Data/Primitive/Integer
+                                    )
                                 )
+                                ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) ) ↦ /Catln/IO
                             )
-                            ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
                         ]
                     }
                 )
@@ -48,9 +50,9 @@ Prgm
                     , omiDefs =
                         [ /real
                             ( EAppArg Value /c -> /Complex
-                                ( /a=∀/Data/Primitive/Number
-                                , /b=∀/Data/Primitive/Number
-                                ) = /Complex( EAppArg Value /a -> ∀/Data/Primitive/Number )( EAppArg Value /b -> ∀/Data/Primitive/Number )
+                                ( /a=TopType
+                                , /b=TopType
+                                ) = /Complex( EAppArg Value /a )( EAppArg Value /b )
                             ) -> TVArg /a = ( Value /a ↦ TVArg /a )
                         ]
                     }

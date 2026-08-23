@@ -80,8 +80,16 @@ data FEnv = FEnv { fePnts                :: IM.IntMap Scheme
                  , feCompletedAllObjsKey :: Type -- ^ The 'feUnionAllObjs' descriptor value from which 'feCompletedAllObjs' was built (recomputed each epoch). 'computeConstraint' uses the cache only when a 'BoundedByObjs' constraint's (showCon-substituted) bound equals this key, so the cache is an EXACT memo of the union+completion — no staleness. Initialized to 'BottomType'.
                  , feCompletedAllObjs    :: Type -- ^ Per-epoch cache of the completed @feUnionAllObjs@ bound (@unionTypes key (completeDataPartials key)@ for @key = feCompletedAllObjsKey@). Every 'BoundedByObjs' constraint is bounded by the same 'feUnionAllObjs' descriptor (substituted uniformly by 'showCon'), so this otherwise-identical union+completion is computed once per epoch and reused by every constraint whose bound matches the key. Initialized to 'PTopType' but never read until the first epoch populates it.
                  , feLocalDefNames       :: S.HashSet Name -- ^ Absolute names defined by the programs currently being encoded (not yet in 'feTypeEnv'\'s object map). Used to tell a destructuring binding variable from a reference to a same-batch definition.
+                 , feEnvStamp            :: Int -- ^ Version counter for the per-epoch env inputs ('feReachesTypeEnv' graph and 'feCompletedAllObjsKey' universe): bumped at each epoch start iff either differs from the previous epoch. Constraint kinds that read those env caches skip re-execution only within the same stamp (see 'feConMemo').
+                 , feConMemo             :: IM.IntMap ConMemo -- ^ Per-constraint memo of the last execution's resolved inputs, keyed by the constraint's position in the 'runConstraints' list. 'executeConstraint' skips 'computeConstraint'+'saveConstraint' when the constraint's resolved view (and, for env-reading kinds, the env stamp) is unchanged: a pure function of unchanged inputs recomputes the same stores, which 'setScheme' would refuse as unchanged — a provable no-op.
                  , feTrace               :: TraceConstrain
                  } deriving (Show)
+
+-- | A constraint's last-execution inputs and result: env stamp ('feEnvStamp'), the resolved
+-- constraint view ('showCon'+'stypeConstraint'), the resolved object-side arg entries an
+-- 'ArrowTo' additionally reads ('mkReachesEnv'), and the returned prune decision.
+data ConMemo = ConMemo Int RConstraint [(Maybe SExpr, Maybe ShowMeta)] Bool
+  deriving (Show)
 
 type UnionObj = (Pnt, Pnt) -- a union of all TypeObj for argument inference, union of all Object types for function limiting
 
@@ -96,7 +104,7 @@ data ConstraintDat p
   | BoundedByKnown Int p Type -- ^ Both Actual and Req
   | BoundedByObjs Int p Type
   | NoReturnArg Int p
-  | EqReqAct Int p -- ^ Pull an input argument's actual down to its requirement (an input actually is only whatever it is required to be)
+  | EqReqAct Int p -- ^ An input argument's actual and requirement denote the same thing (an LHS input actually IS whatever it is required to be, and vice versa), so meet the two and set BOTH to @act ∩ req@.
   | ArrowTo Int p p -- ArrowTo src dest
   | PropEq Int (p, TypeVarAux) p -- ^ Both Actual and Req
   | FnInputBound Int (p, ArgName, ArgName) p -- ^ Actual only. @FnInputBound (call, fnArgKey, inputKey) input@ bounds a call-site lambda argument's input point by the matched declarations' input type for that position (see 'fnArgInputBound')
@@ -439,6 +447,61 @@ typeVarBindingGained (UnionType _ oldLeafs _) (UnionType _ newLeafs _) =
     informative _ _                      = True
 typeVarBindingGained _ _ = False
 
+-- | Structurally detects whether @new@ strictly NARROWS a nested 'ptVars' dimension that @old@
+-- spells wider (e.g. under an outer @Cons[T=Integer]@, the declaration-clamped tail
+-- @Cons[T=∀Ord](head=$T, …)@ narrowing to @Cons[T=Integer](head=Integer, …)@). The two spellings
+-- denote the SAME set under declaration-boundedness — the outer binding already bounds the
+-- declaration-linked slot's content, so 'eqScheme' rightly judges the schemes equal — but the
+-- stored spelling is what every consumer reads, and the wide form freezes a deep element one
+-- level short (TreeBuild finds no arrows from it). A strictly-finer dimension must therefore
+-- commit. Gain-only like the neighboring rules: the reverse widening stays a no-op under the
+-- 'eqScheme' path, so the finer spelling is kept once found and there is no oscillation.
+-- Mirrors the matching discipline of 'typeVarLost' (single same-name partial on each side;
+-- nested positions compared only on shared keys). Var LINKS are skipped — only two resolved
+-- dimension values are compared.
+nestedVarNarrowed :: TypeGraph tg => TypeEnv tg -> Type -> Type -> Bool
+nestedVarNarrowed typeEnv (UnionType _ oldLeafs _) (UnionType _ newLeafs _) =
+  or [ partialNarrowed op np
+     | (name, [op]) <- H.toList (splitUnionTypeByName oldLeafs)
+     , Just [np] <- [H.lookup name (splitUnionTypeByName newLeafs)] ]
+  where
+    partialNarrowed op np =
+      or [ dimNarrowed ov nv | (k, ov) <- H.toList (ptVars op), Just nv <- [H.lookup k (ptVars np)] ]
+      || or [ nestedVarNarrowed typeEnv ov nv | (k, ov) <- H.toList (ptArgs op), Just nv <- [H.lookup k (ptArgs np)] ]
+    dimNarrowed ov@UnionType{} nv@UnionType{} =
+      isSubtypeOfWithEnv typeEnv H.empty nv ov && not (isSubtypeOfWithEnv typeEnv H.empty ov nv)
+    dimNarrowed _ _ = False
+nestedVarNarrowed _ _ _ = False
+
+-- | Structurally detects the settle machinery's respelling of a nested arg slot
+-- ('TypeCheck.TypeUtils.settlePropSlot' and the 'arrowConstrainUbs' settle-forcing) that
+-- 'eqScheme' judges equal: the slot's positive-leaf NAME SET strictly shrank — a
+-- settle-forced unsettled call form was dropped, invisible because the algebra answers its
+-- class membership SAT-conservatively (@tail=(∀List ∪ rangeFrom(..))@ ≡ @tail=∀List@). The
+-- settled spelling must commit: the stored spelling is what every consumer reads (the
+-- requirement side's declared-bound tighten rides the same store — a scheme commits whole).
+-- Deliberately ONLY the leaf-drop signature: a general strictly-narrower-spelling rule
+-- fires on the natural respelling churn of every epoch and the per-commit verification
+-- cost is measured intractable. Gain-only like the neighboring rules (re-adding a dropped
+-- leaf stays a no-op under the 'eqScheme' path), so there is no oscillation. Mirrors the
+-- matching discipline of 'typeVarLost' (single same-name partial on each side; shared keys
+-- only). Consulted only AFTER 'eqScheme' judged the schemes equal; identical spellings
+-- short-circuit before any walk.
+nestedSlotSettled :: TypeGraph tg => TypeEnv tg -> Type -> Type -> Bool
+nestedSlotSettled typeEnv (UnionType _ oldLeafs _) (UnionType _ newLeafs _) =
+  or [ partialSettled op np
+     | (name, [op]) <- H.toList (splitUnionTypeByName oldLeafs)
+     , Just [np] <- [H.lookup name (splitUnionTypeByName newLeafs)] ]
+  where
+    partialSettled op np =
+      or [ slotSettled ov nv | (k, ov) <- H.toList (ptArgs op), Just nv <- [H.lookup k (ptArgs np)] ]
+    slotSettled ov nv | ov == nv = False -- identical spellings cannot contain a respelling
+    slotSettled ov@(UnionType _ oLs _) nv@(UnionType _ nLs _) =
+      (H.keysSet nLs /= H.keysSet oLs && S.null (S.difference (H.keysSet nLs) (H.keysSet oLs)))
+      || nestedSlotSettled typeEnv ov nv
+    slotSettled _ _ = False
+nestedSlotSettled _ _ _ = False
+
 -- This ensures schemes are correct
 -- It differs from Constrain.checkScheme because it checks for bugs in the internal compiler, not bugs in the user code
 verifyScheme :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> VarMeta -> Scheme -> Scheme -> Maybe String
@@ -452,7 +515,10 @@ verifyScheme typeEnv vaenv Meta{getMetaDat=VarMetaDat _ _} (TypeCheckResult _ (S
     verifySchemeActLowers  = case act of
       TypeVar{} -> True
       _         -> isSubtypeOfWithEnv typeEnv vaenv act oldAct
-    verifyNoTypeVarLost = not (typeVarLost oldAct act)
+    -- The old side may predate scope normalization (an Encode-time preset holding a foreign
+    -- declaration's var spelling): read its out-of-scope vars as the ⊤ they denote before
+    -- comparing, so replacing such a spelling by ⊤ is not reported as a lost variable.
+    verifyNoTypeVarLost = not (typeVarLost (dropOutOfScopeTVExt vaenv oldAct) act)
     verifySchemeReqLowers  = isSubtypeOfWithEnv typeEnv vaenv req oldReq
     verifyCompacted = act == compactType typeEnv vaenv act
 verifyScheme _ _ _ _ _ = Nothing
@@ -502,6 +568,18 @@ setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch} con m@M
       -- Gain-only for the same convergence reason as above: dropping the binding later stays a
       -- no-op, so the resolved value is kept once found.
       (TypeCheckResult _ (SType a1 _ _ _), TypeCheckResult _ (SType a2 _ _ _)) | typeVarBindingGained a1 a2 -> True
+      -- STRICTLY NARROWING a nested 'ptVars' dimension (see 'nestedVarNarrowed') is a spelling
+      -- improvement of the same set that 'eqScheme' judges equal, but the finer spelling is what
+      -- consumers read — it must commit. Gain-only like the two rules above.
+      (TypeCheckResult _ (SType a1 _ _ _), TypeCheckResult _ (SType a2 _ _ _)) | nestedVarNarrowed feTypeEnv a1 a2 -> True
+      -- The settle machinery's leaf-drop respelling (see 'nestedSlotSettled') is checked
+      -- only when 'eqScheme' judged the schemes equal — the refusal path. The actual side
+      -- alone is inspected; the requirement side's tighten rides the same whole-scheme store.
+      (TypeCheckResult _ (SType a1 _ _ _), TypeCheckResult _ (SType a2 _ _ _)) ->
+        fromMaybe False $ tcreToMaybe $ do
+          showVaenv <- vaenv
+          return $ not (eqScheme env showVaenv scheme scheme')
+                 || (a1 /= a2 && nestedSlotSettled feTypeEnv a1 a2)
       _ ->  fromMaybe False $ tcreToMaybe $ do
         showVaenv <- vaenv
         return $ not (eqScheme env showVaenv scheme scheme')
