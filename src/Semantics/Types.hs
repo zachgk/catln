@@ -3418,6 +3418,18 @@ isSubtypeOfWithEnvComplete :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Typ
 isSubtypeOfWithEnvComplete typeEnv vaenv t1 t2 = isSubtypeOfWithEnv typeEnv vaenv t1 t2 || predSplitCover
   where
     predSplitCover = case (t1, t2) of
+      -- Just-top sub vs a positive union: rewrite the top into its EXACT positive
+      -- materialization and recurse — the shape one association order of a meet keeps
+      -- symbolic (@⊤ | ¬EqC ∧ ~ConsList@) while the other materializes
+      -- (@Cons{¬EqC}@, Nil dropped). The positive rel\/class conjuncts expand exhaustively
+      -- when sealed (or under 'tePrgmEnv'); the ¬-conjuncts are then reduced per-member by
+      -- the MEET (whose exact negLeaf reduction drops an uninhabited member like
+      -- @Nil ∧ ¬EqC@, which a per-leaf uninhabitedness proof cannot). The recursion lands
+      -- on a positive union, where the excluded-middle split below applies — and only
+      -- there (a non-positive rewrite answers cover-unproven), so the top-rewrite runs at
+      -- most once per query.
+      (UnionType (Just (preds, negLeafs, [])) (H.null -> True) [], UnionType Nothing _ [])
+        | H.null negLeafs -> topRewriteCover preds
       (UnionType Nothing subPartials [], UnionType Nothing superPartials []) ->
         all leafCovered (splitUnionType subPartials)
         where
@@ -3444,6 +3456,37 @@ isSubtypeOfWithEnvComplete typeEnv vaenv t1 t2 = isSubtypeOfWithEnv typeEnv vaen
                    && isSubtypeOfWithEnv typeEnv vaenv subNotQ t2
             where subConjs = conjList (ptPreds sub)
       _ -> False
+    -- Fuel-bounded: each rewrite step peels one symbolic layer (@~C@ expands to the class
+    -- top @∀C@, which expands to the member union), so a small fuel covers the real chains
+    -- while any pathological formula loop answers cover-unproven.
+    topRewriteCover = go (3 :: Int)
+      where
+        go fuel preds
+          | fuel <= 0 = False
+          | otherwise =
+              let conjs = conjList preds
+                  posAtoms = [q | q@(PredsOne PredClass{}) <- conjs] ++ [q | q@(PredsOne PredRel{}) <- conjs]
+                  notFs    = [q | q@PredsNot{} <- conjs]
+                  others   = length conjs - length posAtoms - length notFs
+                  posConj  = mkAnd posAtoms
+                  expanded = expandPredicates typeEnv vaenv posConj
+                  restricted = case notFs of
+                    [] -> expanded
+                    _  -> snd $ intersectTypesWithVarEnv typeEnv vaenv expanded (qTop (mkAnd notFs))
+              in others == 0 && not (null posAtoms)
+                 && (tePrgmEnv typeEnv || predsSealed typeEnv posConj)
+                 && cover fuel restricted
+        cover fuel t = case t of
+          BottomType -> True
+          UnionType Nothing _ [] -> isSubtypeOfWithEnvComplete typeEnv vaenv t t2
+          -- A pure top again (the ¬-conjuncts from the meet ride along in the formula):
+          -- peel another layer.
+          UnionType (Just (p', nl, [])) (H.null -> True) [] | H.null nl -> go (fuel - 1) p'
+          -- Mixed: the positive part and the top part must each cover.
+          UnionType (Just (p', nl, [])) pos [] | H.null nl ->
+            isSubtypeOfWithEnvComplete typeEnv vaenv (UnionType Nothing pos []) t2
+              && go (fuel - 1) p'
+          _ -> False
     conjList (PredsAnd ps) = concatMap conjList ps
     conjList q             = [q]
     qTop t = UnionType (Just (t, H.empty, [])) H.empty []
