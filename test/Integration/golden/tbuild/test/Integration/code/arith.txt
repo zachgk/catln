@@ -25,6 +25,10 @@ Prgm
                                     ( /this=∀/Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
                                     , /a=∀/Data/Primitive/Boolean
                                     , /b=∀/Data/Algebra/Eq
+                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Integer ]
+                                    ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
+                                    , /a=/Data/Primitive/Integer
+                                    , /b=∀/Data/Algebra/Eq
                                     ) + /Data/Algebra/rel[ /T=/Data/Primitive/Float ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Float ]
                                     , /a=/Data/Primitive/Float
@@ -33,13 +37,18 @@ Prgm
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/String ]
                                     , /a=/Data/String
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Integer ]
-                                    ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
-                                    , /a=/Data/Primitive/Integer
-                                    , /b=∀/Data/Algebra/Eq
                                     ) + /operator&&
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Set/setEqual[ /E=∀/Data/Algebra/Ord ]
+                                    ( /a=/Data/Set/MkSet
+                                        ( /map=∀/Data/Map
+                                            [ /K=TopType
+                                            , /V=TopType
+                                            ]
+                                        )
+                                    , /b=
+                                        ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/Set[ /T=$/E ] )
                                     ) + /Data/Map/mapEqual
                                     [ /MV=∀/Data/Algebra/Eq
                                     , /MK=∀/Data/Algebra/Ord
@@ -115,6 +124,10 @@ Prgm
                                     ( /this=∀/Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
                                     , /a=∀/Data/Primitive/Boolean
                                     , /b=∀/Data/Algebra/Eq
+                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Integer ]
+                                    ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
+                                    , /a=/Data/Primitive/Integer
+                                    , /b=∀/Data/Algebra/Eq
                                     ) + /Data/Algebra/rel[ /T=/Data/Primitive/Float ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Float ]
                                     , /a=/Data/Primitive/Float
@@ -123,13 +136,18 @@ Prgm
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/String ]
                                     , /a=/Data/String
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Integer ]
-                                    ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
-                                    , /a=/Data/Primitive/Integer
-                                    , /b=∀/Data/Algebra/Eq
                                     ) + /operator&&
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Set/setEqual[ /E=∀/Data/Algebra/Ord ]
+                                    ( /a=/Data/Set/MkSet
+                                        ( /map=∀/Data/Map
+                                            [ /K=TopType
+                                            , /V=TopType
+                                            ]
+                                        )
+                                    , /b=
+                                        ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/Set[ /T=$/E ] )
                                     ) + /Data/Map/mapEqual
                                     [ /MV=∀/Data/Algebra/Eq
                                     , /MK=∀/Data/Algebra/Ord
@@ -215,6 +233,10 @@ Prgm
                                     ( /this=∀/Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
                                     , /a=∀/Data/Primitive/Boolean
                                     , /b=∀/Data/Algebra/Eq
+                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Integer ]
+                                    ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
+                                    , /a=/Data/Primitive/Integer
+                                    , /b=∀/Data/Algebra/Eq
                                     ) + /Data/Algebra/rel[ /T=/Data/Primitive/Float ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Float ]
                                     , /a=/Data/Primitive/Float
@@ -223,13 +245,18 @@ Prgm
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/String ]
                                     , /a=/Data/String
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Integer ]
-                                    ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
-                                    , /a=/Data/Primitive/Integer
-                                    , /b=∀/Data/Algebra/Eq
                                     ) + /operator&&
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Set/setEqual[ /E=∀/Data/Algebra/Ord ]
+                                    ( /a=/Data/Set/MkSet
+                                        ( /map=∀/Data/Map
+                                            [ /K=TopType
+                                            , /V=TopType
+                                            ]
+                                        )
+                                    , /b=
+                                        ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/Set[ /T=$/E ] )
                                     ) + /Data/Map/mapEqual
                                     [ /MV=∀/Data/Algebra/Eq
                                     , /MK=∀/Data/Algebra/Ord
@@ -305,6 +332,10 @@ Prgm
                                     ( /this=∀/Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
                                     , /a=∀/Data/Primitive/Boolean
                                     , /b=∀/Data/Algebra/Eq
+                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Integer ]
+                                    ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
+                                    , /a=/Data/Primitive/Integer
+                                    , /b=∀/Data/Algebra/Eq
                                     ) + /Data/Algebra/rel[ /T=/Data/Primitive/Float ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Float ]
                                     , /a=/Data/Primitive/Float
@@ -313,13 +344,18 @@ Prgm
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/String ]
                                     , /a=/Data/String
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Integer ]
-                                    ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
-                                    , /a=/Data/Primitive/Integer
-                                    , /b=∀/Data/Algebra/Eq
                                     ) + /operator&&
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Set/setEqual[ /E=∀/Data/Algebra/Ord ]
+                                    ( /a=/Data/Set/MkSet
+                                        ( /map=∀/Data/Map
+                                            [ /K=TopType
+                                            , /V=TopType
+                                            ]
+                                        )
+                                    , /b=
+                                        ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/Set[ /T=$/E ] )
                                     ) + /Data/Map/mapEqual
                                     [ /MV=∀/Data/Algebra/Eq
                                     , /MK=∀/Data/Algebra/Ord
@@ -395,6 +431,10 @@ Prgm
                                     ( /this=∀/Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
                                     , /a=∀/Data/Primitive/Boolean
                                     , /b=∀/Data/Algebra/Eq
+                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Integer ]
+                                    ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
+                                    , /a=/Data/Primitive/Integer
+                                    , /b=∀/Data/Algebra/Eq
                                     ) + /Data/Algebra/rel[ /T=/Data/Primitive/Float ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Float ]
                                     , /a=/Data/Primitive/Float
@@ -403,13 +443,18 @@ Prgm
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/String ]
                                     , /a=/Data/String
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Integer ]
-                                    ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
-                                    , /a=/Data/Primitive/Integer
-                                    , /b=∀/Data/Algebra/Eq
                                     ) + /operator&&
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Set/setEqual[ /E=∀/Data/Algebra/Ord ]
+                                    ( /a=/Data/Set/MkSet
+                                        ( /map=∀/Data/Map
+                                            [ /K=TopType
+                                            , /V=TopType
+                                            ]
+                                        )
+                                    , /b=
+                                        ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/Set[ /T=$/E ] )
                                     ) + /Data/Map/mapEqual
                                     [ /MV=∀/Data/Algebra/Eq
                                     , /MK=∀/Data/Algebra/Ord
@@ -485,6 +530,10 @@ Prgm
                                     ( /this=∀/Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
                                     , /a=∀/Data/Primitive/Boolean
                                     , /b=∀/Data/Algebra/Eq
+                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Integer ]
+                                    ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
+                                    , /a=/Data/Primitive/Integer
+                                    , /b=∀/Data/Algebra/Eq
                                     ) + /Data/Algebra/rel[ /T=/Data/Primitive/Float ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Float ]
                                     , /a=/Data/Primitive/Float
@@ -493,13 +542,18 @@ Prgm
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/String ]
                                     , /a=/Data/String
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Integer ]
-                                    ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
-                                    , /a=/Data/Primitive/Integer
-                                    , /b=∀/Data/Algebra/Eq
                                     ) + /operator&&
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Set/setEqual[ /E=∀/Data/Algebra/Ord ]
+                                    ( /a=/Data/Set/MkSet
+                                        ( /map=∀/Data/Map
+                                            [ /K=TopType
+                                            , /V=TopType
+                                            ]
+                                        )
+                                    , /b=
+                                        ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/Set[ /T=$/E ] )
                                     ) + /Data/Map/mapEqual
                                     [ /MV=∀/Data/Algebra/Eq
                                     , /MK=∀/Data/Algebra/Ord
@@ -575,6 +629,10 @@ Prgm
                                     ( /this=∀/Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
                                     , /a=∀/Data/Primitive/Boolean
                                     , /b=∀/Data/Algebra/Eq
+                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Integer ]
+                                    ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
+                                    , /a=/Data/Primitive/Integer
+                                    , /b=∀/Data/Algebra/Eq
                                     ) + /Data/Algebra/rel[ /T=/Data/Primitive/Float ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Float ]
                                     , /a=/Data/Primitive/Float
@@ -583,13 +641,18 @@ Prgm
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/String ]
                                     , /a=/Data/String
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Integer ]
-                                    ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
-                                    , /a=/Data/Primitive/Integer
-                                    , /b=∀/Data/Algebra/Eq
                                     ) + /operator&&
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Set/setEqual[ /E=∀/Data/Algebra/Ord ]
+                                    ( /a=/Data/Set/MkSet
+                                        ( /map=∀/Data/Map
+                                            [ /K=TopType
+                                            , /V=TopType
+                                            ]
+                                        )
+                                    , /b=
+                                        ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/Set[ /T=$/E ] )
                                     ) + /Data/Map/mapEqual
                                     [ /MV=∀/Data/Algebra/Eq
                                     , /MK=∀/Data/Algebra/Ord
@@ -665,6 +728,10 @@ Prgm
                                     ( /this=∀/Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
                                     , /a=∀/Data/Primitive/Boolean
                                     , /b=∀/Data/Algebra/Eq
+                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Integer ]
+                                    ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
+                                    , /a=/Data/Primitive/Integer
+                                    , /b=∀/Data/Algebra/Eq
                                     ) + /Data/Algebra/rel[ /T=/Data/Primitive/Float ]
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Float ]
                                     , /a=/Data/Primitive/Float
@@ -673,13 +740,18 @@ Prgm
                                     ( /this=∀/Data/Algebra/Eqv[ /T=/Data/String ]
                                     , /a=/Data/String
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Integer ]
-                                    ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
-                                    , /a=/Data/Primitive/Integer
-                                    , /b=∀/Data/Algebra/Eq
                                     ) + /operator&&
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Set/setEqual[ /E=∀/Data/Algebra/Ord ]
+                                    ( /a=/Data/Set/MkSet
+                                        ( /map=∀/Data/Map
+                                            [ /K=TopType
+                                            , /V=TopType
+                                            ]
+                                        )
+                                    , /b=
+                                        ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/Set[ /T=$/E ] )
                                     ) + /Data/Map/mapEqual
                                     [ /MV=∀/Data/Algebra/Eq
                                     , /MK=∀/Data/Algebra/Ord

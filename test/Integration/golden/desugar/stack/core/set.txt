@@ -2,6 +2,25 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
+                ( "/Data/Set/allIn"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Set/allIn[ /E : ∀/Data/Algebra/Ord ]
+                            ( Value items -> ∀/Data/List/ConsList[ /T=$/E ] )
+                            ( Value s -> ∀/Data/Set[ /T=$/E ] ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Set/allIn( Value items= Value /Data/List/Nil )( Value s ) -> ∀/Data/Primitive/Boolean = Value /Data/Primitive/True
+                        , /Data/Set/allIn
+                            ( Value items= /Data/List/Cons( Value head )( Value tail ) )( Value s ) -> ∀/Data/Primitive/Boolean = /operator&&
+                            ( Value /l= contains( Value s= Value s )( Value item= Value head ) )
+                            ( Value /r= allIn( Value items= Value tail )( Value s= Value s ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Set/empty"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Set/empty -> ∀/Data/Set/MapSet ]
@@ -9,6 +28,38 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ Value /Data/Set/empty -> ∀/Data/Set/MapSet = MkSet( Value map= Value /Data/Map/Leaf ) ]
+                    }
+                )
+            ,
+                ( "/Data/Set/intersection"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Set/intersection[ /E : ∀/Data/Algebra/Ord ]
+                            ( Value a -> ∀/Data/Set[ /T=$/E ] )
+                            ( Value b -> ∀/Data/Set[ /T=$/E ] ) -> ∀/Data/Set[ /T=$/E ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Set/intersection( Value a )( Value b )= intersectInto
+                            ( Value items= elements( Value s= Value a ) )( Value b= Value b )( Value acc= Value empty )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Set/union"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Set/union[ /E : ∀/Data/Algebra/Ord ]
+                            ( Value a -> ∀/Data/Set[ /T=$/E ] )
+                            ( Value b -> ∀/Data/Set[ /T=$/E ] ) -> ∀/Data/Set[ /T=$/E ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Set/union( Value a )( Value b )= addAll( Value s= Value a )
+                            ( Value items= elements( Value s= Value b ) )
+                        ]
                     }
                 )
             ,
@@ -28,6 +79,27 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Set/intersectInto"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Set/intersectInto[ /E : ∀/Data/Algebra/Ord ]
+                            ( Value items -> ∀/Data/List/ConsList[ /T=$/E ] )
+                            ( Value b -> ∀/Data/Set[ /T=$/E ] )
+                            ( Value acc -> ∀/Data/Set[ /T=$/E ] ) -> ∀/Data/Set[ /T=$/E ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Set/intersectInto( Value items= Value /Data/List/Nil )( Value b )( Value acc )= Value acc
+                        , /Data/Set/intersectInto
+                            ( Value items= /Data/List/Cons( Value head )( Value tail ) )( Value b )( Value acc )= intersectInto( Value items= Value tail )( Value b= Value b )
+                            ( Value acc= addIf
+                                ( Value cond= contains( Value s= Value b )( Value item= Value head ) )( Value s= Value acc )( Value item= Value head )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Set/elements"
                 , ObjectMapItem
                     { omiDecls =
@@ -39,6 +111,55 @@ Prgm
                     , omiDefs =
                         [ /Data/Set/elements
                             ( Value s= MkSet( Value map ) )= /Data/Map/keys( Value m= Value map )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Set/isSubsetOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Set/isSubsetOf[ /E : ∀/Data/Algebra/Ord ]
+                            ( Value a -> ∀/Data/Set[ /T=$/E ] )
+                            ( Value b -> ∀/Data/Set[ /T=$/E ] ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Set/isSubsetOf( Value a )( Value b ) -> ∀/Data/Primitive/Boolean = allIn
+                            ( Value items= elements( Value s= Value a ) )( Value s= Value b )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Set/addIf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Set/addIf[ /E : ∀/Data/Algebra/Ord ]( Value cond -> ∀/Data/Primitive/Boolean )
+                            ( Value s -> ∀/Data/Set[ /T=$/E ] )( Value item -> $/E ) -> ∀/Data/Set[ /T=$/E ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Set/addIf( Value cond= Value /Data/Primitive/True )( Value s )( Value item )= add( Value s= Value s )( Value item= Value item )
+                        , /Data/Set/addIf( Value cond= Value /Data/Primitive/False )( Value s )( Value item )= Value s
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Set/removeAll"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Set/removeAll[ /E : ∀/Data/Algebra/Ord ]
+                            ( Value s -> ∀/Data/Set[ /T=$/E ] )
+                            ( Value items -> ∀/Data/List/ConsList[ /T=$/E ] ) -> ∀/Data/Set[ /T=$/E ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Set/removeAll( Value s )( Value items= Value /Data/List/Nil )= Value s
+                        , /Data/Set/removeAll( Value s )
+                            ( Value items= /Data/List/Cons( Value head )( Value tail ) )= removeAll
+                            ( Value s= remove( Value s= Value s )( Value item= Value head ) )( Value items= Value tail )
                         ]
                     }
                 )
@@ -74,6 +195,26 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Set/setEqual"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Set/setEqual[ /E : ∀/Data/Algebra/Ord ]
+                            ( Value a -> ∀/Data/Set[ /T=$/E ] )
+                            ( Value b -> ∀/Data/Set[ /T=$/E ] ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Set/setEqual( Value a )( Value b ) -> ∀/Data/Primitive/Boolean = /operator&&
+                            ( Value /l= /operator==
+                                ( Value /l= size( Value s= Value a ) )
+                                ( Value /r= size( Value s= Value b ) )
+                            )
+                            ( Value /r= isSubsetOf( Value a= Value a )( Value b= Value b ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Set/isEmpty"
                 , ObjectMapItem
                     { omiDecls =
@@ -86,6 +227,24 @@ Prgm
                         [ /Data/Set/isEmpty( Value s ) -> ∀/Data/Primitive/Boolean = /operator==
                             ( Value /l= size( Value s= Value s ) )
                             ( Value /r= CInt 0 )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Set/addAll"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Set/addAll[ /E : ∀/Data/Algebra/Ord ]
+                            ( Value s -> ∀/Data/Set[ /T=$/E ] )
+                            ( Value items -> ∀/Data/List/ConsList[ /T=$/E ] ) -> ∀/Data/Set[ /T=$/E ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Set/addAll( Value s )( Value items= Value /Data/List/Nil )= Value s
+                        , /Data/Set/addAll( Value s )
+                            ( Value items= /Data/List/Cons( Value head )( Value tail ) )= addAll
+                            ( Value s= add( Value s= Value s )( Value item= Value head ) )( Value items= Value tail )
                         ]
                     }
                 )
@@ -104,6 +263,51 @@ Prgm
                         ]
                     }
                 )
+            ,
+                ( "/Data/Set/difference"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Set/difference[ /E : ∀/Data/Algebra/Ord ]
+                            ( Value a -> ∀/Data/Set[ /T=$/E ] )
+                            ( Value b -> ∀/Data/Set[ /T=$/E ] ) -> ∀/Data/Set[ /T=$/E ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Set/difference( Value a )( Value b )= removeAll( Value s= Value a )
+                            ( Value items= elements( Value s= Value b ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/equal"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/equal( Value other )
+                            ( Value /this= /Data/Set/MkSet[ /K : ∀/Data/Algebra/Ord ]( Value map@Value m ) ) -> ∀/Data/Primitive/Boolean = /Data/Set/setEqual
+                            ( Value a= /Data/Set/MkSet( Value map= Value m ) )( Value b= Value other )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Set/remove"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Set/remove[ /E : ∀/Data/Algebra/Ord ]
+                            ( Value s -> ∀/Data/Set[ /T=$/E ] )( Value item -> $/E ) -> ∀/Data/Set[ /T=$/E ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Set/remove
+                            ( Value s= MkSet( Value map ) )( Value item )= MkSet
+                            ( Value map= /Data/Map/remove( Value m= Value map )( Value key= Value item ) )
+                        ]
+                    }
+                )
             ]
         )
     , prgmCG =
@@ -114,6 +318,29 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Data/Set/MapSet
+            ,
+                [ ∀/Data/Set/MapSet
+                    [ /K=∀/Data/Algebra/Ord
+                    , /V=$_/V
+                    ]
+                ]
+            , Just ""
+            )
         , CGClass
             ( False
             , /Data/Set[ /T=TopType ]
@@ -246,5 +473,257 @@ Prgm
             ( Value /text= CStr "  same frontier stops [sorted]/[reversed] in [Data/list] from printing directly. Verify a set's" )
         , /Catln/#md
             ( Value /text= CStr "  contents with [elements] and [operator==] (as above) instead." )
+        , /Catln/#md
+            ( Value /text= CStr "## Removal" )
+        , /Catln/#print
+            ( Value /p= contains
+                ( Value s= remove
+                    ( Value s= add
+                        ( Value s= add( Value s= Value empty )
+                            ( Value item= CInt 1 )
+                        )
+                        ( Value item= CInt 2 )
+                    )
+                    ( Value item= CInt 1 )
+                )
+                ( Value item= CInt 1 )
+            )
+            ( Value /result= CStr "False" )
+        , /Catln/#print
+            ( Value /p= contains
+                ( Value s= remove
+                    ( Value s= add
+                        ( Value s= add( Value s= Value empty )
+                            ( Value item= CInt 1 )
+                        )
+                        ( Value item= CInt 2 )
+                    )
+                    ( Value item= CInt 1 )
+                )
+                ( Value item= CInt 2 )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#md
+            ( Value /text= CStr "## Union" )
+        , /Catln/#print
+            ( Value /p= size
+                ( Value s= union
+                    ( Value a= add
+                        ( Value s= add( Value s= Value empty )
+                            ( Value item= CInt 1 )
+                        )
+                        ( Value item= CInt 2 )
+                    )
+                    ( Value b= add
+                        ( Value s= add( Value s= Value empty )
+                            ( Value item= CInt 2 )
+                        )
+                        ( Value item= CInt 3 )
+                    )
+                )
+            )
+            ( Value /result= CStr "3" )
+        , /Catln/#print
+            ( Value /p= contains
+                ( Value s= union
+                    ( Value a= add( Value s= Value empty )
+                        ( Value item= CInt 1 )
+                    )
+                    ( Value b= add( Value s= Value empty )
+                        ( Value item= CInt 2 )
+                    )
+                )
+                ( Value item= CInt 1 )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#md
+            ( Value /text= CStr "## Difference" )
+        , /Catln/#print
+            ( Value /p= size
+                ( Value s= difference
+                    ( Value a= add
+                        ( Value s= add( Value s= Value empty )
+                            ( Value item= CInt 1 )
+                        )
+                        ( Value item= CInt 2 )
+                    )
+                    ( Value b= add( Value s= Value empty )
+                        ( Value item= CInt 2 )
+                    )
+                )
+            )
+            ( Value /result= CStr "1" )
+        , /Catln/#print
+            ( Value /p= contains
+                ( Value s= difference
+                    ( Value a= add
+                        ( Value s= add( Value s= Value empty )
+                            ( Value item= CInt 1 )
+                        )
+                        ( Value item= CInt 2 )
+                    )
+                    ( Value b= add( Value s= Value empty )
+                        ( Value item= CInt 2 )
+                    )
+                )
+                ( Value item= CInt 1 )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#print
+            ( Value /p= contains
+                ( Value s= difference
+                    ( Value a= add
+                        ( Value s= add( Value s= Value empty )
+                            ( Value item= CInt 1 )
+                        )
+                        ( Value item= CInt 2 )
+                    )
+                    ( Value b= add( Value s= Value empty )
+                        ( Value item= CInt 2 )
+                    )
+                )
+                ( Value item= CInt 2 )
+            )
+            ( Value /result= CStr "False" )
+        , /Catln/#md
+            ( Value /text= CStr "## Intersection" )
+        , /Catln/#print
+            ( Value /p= size
+                ( Value s= intersection
+                    ( Value a= add
+                        ( Value s= add( Value s= Value empty )
+                            ( Value item= CInt 1 )
+                        )
+                        ( Value item= CInt 2 )
+                    )
+                    ( Value b= add
+                        ( Value s= add( Value s= Value empty )
+                            ( Value item= CInt 2 )
+                        )
+                        ( Value item= CInt 3 )
+                    )
+                )
+            )
+            ( Value /result= CStr "1" )
+        , /Catln/#print
+            ( Value /p= contains
+                ( Value s= intersection
+                    ( Value a= add
+                        ( Value s= add( Value s= Value empty )
+                            ( Value item= CInt 1 )
+                        )
+                        ( Value item= CInt 2 )
+                    )
+                    ( Value b= add
+                        ( Value s= add( Value s= Value empty )
+                            ( Value item= CInt 2 )
+                        )
+                        ( Value item= CInt 3 )
+                    )
+                )
+                ( Value item= CInt 2 )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#print
+            ( Value /p= contains
+                ( Value s= intersection
+                    ( Value a= add
+                        ( Value s= add( Value s= Value empty )
+                            ( Value item= CInt 1 )
+                        )
+                        ( Value item= CInt 2 )
+                    )
+                    ( Value b= add
+                        ( Value s= add( Value s= Value empty )
+                            ( Value item= CInt 2 )
+                        )
+                        ( Value item= CInt 3 )
+                    )
+                )
+                ( Value item= CInt 1 )
+            )
+            ( Value /result= CStr "False" )
+        , /Catln/#md
+            ( Value /text= CStr "## Subset" )
+        , /Catln/#print
+            ( Value /p= isSubsetOf
+                ( Value a= add( Value s= Value empty )
+                    ( Value item= CInt 1 )
+                )
+                ( Value b= add
+                    ( Value s= add( Value s= Value empty )
+                        ( Value item= CInt 1 )
+                    )
+                    ( Value item= CInt 2 )
+                )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#print
+            ( Value /p= isSubsetOf
+                ( Value a= add
+                    ( Value s= add( Value s= Value empty )
+                        ( Value item= CInt 1 )
+                    )
+                    ( Value item= CInt 3 )
+                )
+                ( Value b= add
+                    ( Value s= add( Value s= Value empty )
+                        ( Value item= CInt 1 )
+                    )
+                    ( Value item= CInt 2 )
+                )
+            )
+            ( Value /result= CStr "False" )
+        , /Catln/#md
+            ( Value /text= CStr "# MapSet Eq membership (order-independent)
+            Makes a [MapSet] of [Ord] items a proper member of [Eq], so the generic [operator==] dispatches
+            through [equal]. Equality is ORDER-INDEPENDENT: two sets are equal when they hold the same items,
+            regardless of the insertion order that shaped their backing trees. [setEqual] decides it — equal
+            [size] and every item of one [isSubsetOf] the other (equal size plus one-directional containment
+            gives equality). Mirrors the [BinTree] [Eq] membership in [Data/map], and inherits its
+            order-independence from the map underneath." )
+        , /Catln/#md
+            ( Value /text= CStr "Two sets with the same items are equal even when built in different orders; sets differing in an" )
+        , /Catln/#md
+            ( Value /text= CStr "  item or in size are not." )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= add
+                    ( Value s= add( Value s= Value empty )
+                        ( Value item= CInt 1 )
+                    )
+                    ( Value item= CInt 2 )
+                )
+                ( Value /r= add
+                    ( Value s= add( Value s= Value empty )
+                        ( Value item= CInt 2 )
+                    )
+                    ( Value item= CInt 1 )
+                )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= add
+                    ( Value s= add( Value s= Value empty )
+                        ( Value item= CInt 1 )
+                    )
+                    ( Value item= CInt 2 )
+                )
+                ( Value /r= add( Value s= Value empty )
+                    ( Value item= CInt 1 )
+                )
+            )
+            ( Value /result= CStr "False" )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= add( Value s= Value empty )
+                    ( Value item= CInt 1 )
+                )
+                ( Value /r= add( Value s= Value empty )
+                    ( Value item= CInt 2 )
+                )
+            )
+            ( Value /result= CStr "False" )
         ]
     }
