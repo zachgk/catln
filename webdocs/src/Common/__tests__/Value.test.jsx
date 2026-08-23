@@ -65,12 +65,12 @@ describe('Value', () => {
   })
 })
 
-// A build result, as the values `stack/core/result.ct` declares. A list is a /Data/Cons chain
-// ending in a /Data/Nil, which is what the [ ] sugar desugars to, so these build one the way the
+// A build result, as the values `stack/core/result.ct` declares. A list is a /Data/List/Cons chain
+// ending in a /Data/List/Nil, which is what the [ ] sugar desugars to, so these build one the way the
 // evaluator hands one over.
-const nil = { tag: 'TupleVal', name: '/Data/Nil', args: {} }
+const nil = { tag: 'TupleVal', name: '/Data/List/Nil', args: {} }
 const list = entries => entries.reduceRight(
-  (tail, head) => ({ tag: 'TupleVal', name: '/Data/Cons', args: { '/head': head, '/tail': tail } }),
+  (tail, head) => ({ tag: 'TupleVal', name: '/Data/List/Cons', args: { '/head': head, '/tail': tail } }),
   nil
 )
 const file = (path, contents) => ({
@@ -146,7 +146,7 @@ describe('CatlnResult of several files via Value', () => {
       args: {
         '/files': {
           tag: 'TupleVal',
-          name: '/Data/Cons',
+          name: '/Data/List/Cons',
           args: { '/head': file('a.txt', 'kept'), '/tail': { tag: 'StrVal', contents: 'not a list' } },
         },
       },

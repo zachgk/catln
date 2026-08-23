@@ -9,52 +9,33 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ Value /main -> /Catln/CatlnResult
-                            [ /T=/Catln/BuildFile
-                                ( /path=TopType
-                                , /contents=TopType
-                                )
-                            ]
-                            ( /files=/Data/Cons
-                                [ /T=/Catln/BuildFile
-                                    ( /path=/Data/String
-                                    , /contents=/Data/String
-                                    )
-                                ]
+                            ( /files=/Data/List/Cons
                                 ( /head=/Catln/BuildFile
                                     ( /path=/Data/String
                                     , /contents=/Data/String
                                     )
-                                , /tail=/Data/Cons
-                                    [ /T=/Catln/BuildFile
-                                        ( /path=TopType
-                                        , /contents=TopType
+                                , /tail=/Data/List/Cons
+                                    ( /head=/Catln/BuildFile
+                                        ( /path=/Data/String
+                                        , /contents=/Data/String
                                         )
-                                    ]
-                                    ( /head=$/T
-                                    , /tail=/Data/Nil
+                                    , /tail=/Data/List/Nil
                                     )
                                 )
                             ) = /Catln/CatlnResult
-                            ( EAppArg Value /files -> /Data/Cons
-                                [ /T=/Catln/BuildFile
-                                    ( /path=/Data/String
-                                    , /contents=/Data/String
-                                    )
-                                ]
+                            ( EAppArg Value /files -> /Data/List/Cons
                                 ( /head=/Catln/BuildFile
                                     ( /path=/Data/String
                                     , /contents=/Data/String
                                     )
-                                , /tail=/Data/Cons
-                                    [ /T=/Catln/BuildFile
-                                        ( /path=TopType
-                                        , /contents=TopType
+                                , /tail=/Data/List/Cons
+                                    ( /head=/Catln/BuildFile
+                                        ( /path=/Data/String
+                                        , /contents=/Data/String
                                         )
-                                    ]
-                                    ( /head=$/T
-                                    , /tail=/Data/Nil
+                                    , /tail=/Data/List/Nil
                                     )
-                                ) = /Data/Cons
+                                ) = /Data/List/Cons
                                 ( EAppArg Value /head -> /Catln/BuildFile
                                     ( /path=/Data/String
                                     , /contents=/Data/String
@@ -62,25 +43,20 @@ Prgm
                                     ( EAppArg Value /path -> /Data/String = "index.html" )
                                     ( EAppArg Value /contents -> /Data/String = "<html><body>tree test</body></html>" )
                                 )
-                                ( EAppArg Value /tail -> /Data/Cons
-                                    [ /T=/Catln/BuildFile
-                                        ( /path=/Data/String
-                                        , /contents=/Data/String
-                                        )
-                                    ]
+                                ( EAppArg Value /tail -> /Data/List/Cons
                                     ( /head=/Catln/BuildFile
                                         ( /path=/Data/String
                                         , /contents=/Data/String
                                         )
-                                    , /tail=/Data/Nil
-                                    ) = /Data/Cons
+                                    , /tail=/Data/List/Nil
+                                    ) = /Data/List/Cons
                                     ( EAppArg Value /head -> /Catln/BuildFile
                                         ( /path=/Data/String
                                         , /contents=/Data/String
                                         ) = /Catln/BuildFile
                                         ( EAppArg Value /path -> /Data/String = "notes/deep.txt" )
                                         ( EAppArg Value /contents -> /Data/String = "under a directory" )
-                                    )( EAppArg Value /tail -> /Data/Nil = Value /Data/Nil )
+                                    )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                                 )
                             )
                         ]
@@ -98,56 +74,32 @@ Prgm
             build makes on its way to writing it — which is how a result says it has a directory at all." )
         , /Catln/#print
             ( EAppArg Value /p -> /Catln/CatlnResult
-                [ /T=/Catln/BuildFile
-                    ( /path=TopType
-                    , /contents=TopType
-                    )
-                ]
-                ( /files=/Data/Cons
-                    [ /T=/Catln/BuildFile
-                        ( /path=/Data/String
-                        , /contents=/Data/String
-                        )
-                    ]
+                ( /files=/Data/List/Cons
                     ( /head=/Catln/BuildFile
                         ( /path=/Data/String
                         , /contents=/Data/String
                         )
-                    , /tail=/Data/Cons
-                        [ /T=/Catln/BuildFile
-                            ( /path=TopType
-                            , /contents=TopType
-                            )
-                        ]
-                        ( /head=$/T
-                        , /tail=/Data/Nil
-                        )
-                    )
-                ) =
-                ( Value /main ↦ /Catln/CatlnResult
-                    [ /T=/Catln/BuildFile
-                        ( /path=TopType
-                        , /contents=TopType
-                        )
-                    ]
-                    ( /files=/Data/Cons
-                        [ /T=/Catln/BuildFile
-                            ( /path=/Data/String
-                            , /contents=/Data/String
-                            )
-                        ]
+                    , /tail=/Data/List/Cons
                         ( /head=/Catln/BuildFile
                             ( /path=/Data/String
                             , /contents=/Data/String
                             )
-                        , /tail=/Data/Cons
-                            [ /T=/Catln/BuildFile
-                                ( /path=TopType
-                                , /contents=TopType
+                        , /tail=/Data/List/Nil
+                        )
+                    )
+                ) =
+                ( Value /main ↦ /Catln/CatlnResult
+                    ( /files=/Data/List/Cons
+                        ( /head=/Catln/BuildFile
+                            ( /path=/Data/String
+                            , /contents=/Data/String
+                            )
+                        , /tail=/Data/List/Cons
+                            ( /head=/Catln/BuildFile
+                                ( /path=/Data/String
+                                , /contents=/Data/String
                                 )
-                            ]
-                            ( /head=$/T
-                            , /tail=/Data/Nil
+                            , /tail=/Data/List/Nil
                             )
                         )
                     )

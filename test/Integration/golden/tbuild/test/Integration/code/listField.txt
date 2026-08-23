@@ -13,9 +13,11 @@ Prgm
                                 ( /this=/Catln/IO
                                 , /val=/Data/Primitive/Integer
                                 ) + /Catln/IO
-                            ) = /Catln/exit
-                            ( EAppArg Value /val -> /Data/Primitive/Integer = 0 )
-                            ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
+                            ) =
+                            ( /Catln/exit
+                                ( EAppArg Value /val -> /Data/Primitive/Integer = 0 )
+                                ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) ) ↦ /Catln/IO
+                            )
                         ]
                     }
                 )
@@ -32,7 +34,7 @@ Prgm
                                 ,
                                     [ CStr "none" ]
                                 ) = "none"
-                            )( EAppArg Value /tags -> /Data/Nil = Value /Data/Nil )
+                            )( EAppArg Value /tags -> /Data/List/Nil = Value /Data/List/Nil )
                         , /Tagged
                             ( EAppArg Value /name -> UnionType
                                 ( Nothing
@@ -41,29 +43,22 @@ Prgm
                                     [ CStr "one" ]
                                 ) = "one"
                             )
-                            ( EAppArg Value /tags -> /Data/Cons
-                                [ /T=UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr "x" ]
-                                    )
-                                ]
+                            ( EAppArg Value /tags -> /Data/List/Cons
                                 ( /head=UnionType
                                     ( Nothing
                                     , ∅
                                     ,
                                         [ CStr "x" ]
                                     )
-                                , /tail=/Data/Nil
-                                ) = /Data/Cons
+                                , /tail=/Data/List/Nil
+                                ) = /Data/List/Cons
                                 ( EAppArg Value /head -> UnionType
                                     ( Nothing
                                     , ∅
                                     ,
                                         [ CStr "x" ]
                                     ) = "x"
-                                )( EAppArg Value /tail -> /Data/Nil = Value /Data/Nil )
+                                )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -76,7 +71,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /ConsTagged( EAppArg Value /name -> /Data/String )
-                            ( EAppArg Value /tags -> ∀/Data/ConsList[ /T=/Data/String ] )
+                            ( EAppArg Value /tags -> ∀/Data/List/ConsList[ /T=/Data/String ] )
                         , /ConsTagged
                             ( EAppArg Value /name -> UnionType
                                 ( Nothing
@@ -84,7 +79,7 @@ Prgm
                                 ,
                                     [ CStr "none" ]
                                 ) = "none"
-                            )( EAppArg Value /tags -> /Data/Nil = Value /Data/Nil )
+                            )( EAppArg Value /tags -> /Data/List/Nil = Value /Data/List/Nil )
                         , /ConsTagged
                             ( EAppArg Value /name -> UnionType
                                 ( Nothing
@@ -93,29 +88,22 @@ Prgm
                                     [ CStr "one" ]
                                 ) = "one"
                             )
-                            ( EAppArg Value /tags -> /Data/Cons
-                                [ /T=UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr "x" ]
-                                    )
-                                ]
+                            ( EAppArg Value /tags -> /Data/List/Cons
                                 ( /head=UnionType
                                     ( Nothing
                                     , ∅
                                     ,
                                         [ CStr "x" ]
                                     )
-                                , /tail=/Data/Nil
-                                ) = /Data/Cons
+                                , /tail=/Data/List/Nil
+                                ) = /Data/List/Cons
                                 ( EAppArg Value /head -> UnionType
                                     ( Nothing
                                     , ∅
                                     ,
                                         [ CStr "x" ]
                                     ) = "x"
-                                )( EAppArg Value /tail -> /Data/Nil = Value /Data/Nil )
+                                )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -146,8 +134,8 @@ Prgm
             ( EAppArg Value /text -> /Data/String = "A field of a data type may hold a list of a concrete element.
             The tags of a task read out of an Obsidian note are a list of strings rather than the run of text
             they were written as. Nothing in the checked standard library gives a list-typed field to anything
-            but a list: the only one there is the [tail] a [/Data/Cons] holds, which is the list itself.
-            Written twice over, against the [/Data/List] interface and against the [/Data/ConsList] the
+            but a list: the only one there is the [tail] a [/Data/List/Cons] holds, which is the list itself.
+            Written twice over, against the [/Data/List] interface and against the [/Data/List/ConsList] the
             bracket literal builds, so that a failure says which of the two it is rather than only that a list
             in a field did not work. And written as values declared and never defined, for the reason
             [/Dated] is in @maybeField.ct@.
@@ -161,30 +149,30 @@ Prgm
             ( EAppArg Value /text -> /Data/String = "Printed so that the values are evaluated and not only built." )
         , /Catln/#print
             ( EAppArg Value /p -> ∀/Catln/Doc/DShow = /Tagged
-                ( EAppArg Value /name -> /Data/String = "none" )( EAppArg Value /tags -> /Data/Nil = Value /Data/Nil )
+                ( EAppArg Value /name -> /Data/String = "none" )( EAppArg Value /tags -> /Data/List/Nil = Value /Data/List/Nil )
             )
         , /Catln/#print
             ( EAppArg Value /p -> ∀/Catln/Doc/DShow = /Tagged
                 ( EAppArg Value /name -> /Data/String = "one" )
-                ( EAppArg Value /tags -> /Data/Cons[ /T=/Data/String ]
+                ( EAppArg Value /tags -> /Data/List/Cons
                     ( /head=/Data/String
-                    , /tail=/Data/Nil
-                    ) = /Data/Cons
-                    ( EAppArg Value /head -> /Data/String = "x" )( EAppArg Value /tail -> /Data/Nil = Value /Data/Nil )
+                    , /tail=/Data/List/Nil
+                    ) = /Data/List/Cons
+                    ( EAppArg Value /head -> /Data/String = "x" )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                 )
             )
         , /Catln/#print
             ( EAppArg Value /p -> ∀/Catln/Doc/DShow = /ConsTagged
-                ( EAppArg Value /name -> /Data/String = "none" )( EAppArg Value /tags -> /Data/Nil = Value /Data/Nil )
+                ( EAppArg Value /name -> /Data/String = "none" )( EAppArg Value /tags -> /Data/List/Nil = Value /Data/List/Nil )
             )
         , /Catln/#print
             ( EAppArg Value /p -> ∀/Catln/Doc/DShow = /ConsTagged
                 ( EAppArg Value /name -> /Data/String = "one" )
-                ( EAppArg Value /tags -> /Data/Cons[ /T=/Data/String ]
+                ( EAppArg Value /tags -> /Data/List/Cons
                     ( /head=/Data/String
-                    , /tail=/Data/Nil
-                    ) = /Data/Cons
-                    ( EAppArg Value /head -> /Data/String = "x" )( EAppArg Value /tail -> /Data/Nil = Value /Data/Nil )
+                    , /tail=/Data/List/Nil
+                    ) = /Data/List/Cons
+                    ( EAppArg Value /head -> /Data/String = "x" )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                 )
             )
         ]

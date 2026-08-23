@@ -126,7 +126,7 @@ module(Data/Note)
       written out in full: an [isa] list is keyed by the name as it is written, so a relative one
       would name a second class of that name rather than the one meant.
 
-  :Task/Simple(contents, state).calendarDay= /Data/Nothing
+  :Task/Simple(contents, state).calendarDay= /Data/Maybe/Nothing
     # A checkbox read as a checkbox sits on no day. Such a line carries no dates at all — that is
       the whole of what reading a box without the plugin's reading of it leaves — so this is what it
       has to say rather than what it has not got round to saying.
@@ -148,26 +148,26 @@ module(Data/Note)
     # The first of three days which is there, and nothing where none of them is.
       Three arms rather than a condition, because a guard on an arm of a [case] does not choose
       between the arms and there is nothing to compare here anyway: which day is first is which of
-      the three is a [/Data/Some], which the arms match on directly.
+      the three is a [/Data/Maybe/Some], which the arms match on directly.
       Kept here beside the one arm that asks it rather than put among the [/Data/Maybe] operations.
       It is named for what it does for a task, and a second caller is what would make it worth
       naming for what it does to a [/Data/Maybe].
-  firstDay(a= /Data/Some(value), b, c)= /Data/Some(value= value)
-  firstDay(a= /Data/Nothing, b= /Data/Some(value), c)= /Data/Some(value= value)
-  firstDay(a= /Data/Nothing, b= /Data/Nothing, c)= c
+  firstDay(a= /Data/Maybe/Some(value), b, c)= /Data/Maybe/Some(value= value)
+  firstDay(a= /Data/Maybe/Nothing, b= /Data/Maybe/Some(value), c)= /Data/Maybe/Some(value= value)
+  firstDay(a= /Data/Maybe/Nothing, b= /Data/Maybe/Nothing, c)= c
 
   # A checkbox read as a checkbox sits on no day, whichever way its box is written.
-  > (Task/Simple(contents= "read it", state= False).calendarDay == /Data/Nothing)
+  > (Task/Simple(contents= "read it", state= False).calendarDay == /Data/Maybe/Nothing)
     >>> True
   # A task naming a day it may be begun and a day it is due sits on the first of the three, which is
   #   the day it may be begun.
-  > (Task/Obsidian(contents= "Water the plants", symbol= " ", statusType= StatusType/Todo, description= "Water the plants", priority= Priority/None, start= /Data/Some(value= "2026-01-02"), scheduled= /Data/Nothing, due= /Data/Some(value= "2026-01-04"), recurrence= /Data/Nothing, rest= "{}").calendarDay == /Data/Some(value= "2026-01-02"))
+  > (Task/Obsidian(contents= "Water the plants", symbol= " ", statusType= StatusType/Todo, description= "Water the plants", priority= Priority/None, start= /Data/Maybe/Some(value= "2026-01-02"), scheduled= /Data/Maybe/Nothing, due= /Data/Maybe/Some(value= "2026-01-04"), recurrence= /Data/Maybe/Nothing, rest= "{}").calendarDay == /Data/Maybe/Some(value= "2026-01-02"))
     >>> True
   # A task naming only the day it is due sits on that day, the two before it being absent.
-  > (Task/Obsidian(contents= "Ship it", symbol= " ", statusType= StatusType/Todo, description= "Ship it", priority= Priority/None, start= /Data/Nothing, scheduled= /Data/Nothing, due= /Data/Some(value= "2026-01-04"), recurrence= /Data/Nothing, rest= "{}").calendarDay == /Data/Some(value= "2026-01-04"))
+  > (Task/Obsidian(contents= "Ship it", symbol= " ", statusType= StatusType/Todo, description= "Ship it", priority= Priority/None, start= /Data/Maybe/Nothing, scheduled= /Data/Maybe/Nothing, due= /Data/Maybe/Some(value= "2026-01-04"), recurrence= /Data/Maybe/Nothing, rest= "{}").calendarDay == /Data/Maybe/Some(value= "2026-01-04"))
     >>> True
   # A task naming none of the three sits on no day, which is an answer and not a task left out.
-  > (Task/Obsidian(contents= "Book", symbol= " ", statusType= StatusType/Todo, description= "Book", priority= Priority/None, start= /Data/Nothing, scheduled= /Data/Nothing, due= /Data/Nothing, recurrence= /Data/Nothing, rest= "{}").calendarDay == /Data/Nothing)
+  > (Task/Obsidian(contents= "Book", symbol= " ", statusType= StatusType/Todo, description= "Book", priority= Priority/None, start= /Data/Maybe/Nothing, scheduled= /Data/Maybe/Nothing, due= /Data/Maybe/Nothing, recurrence= /Data/Maybe/Nothing, rest= "{}").calendarDay == /Data/Maybe/Nothing)
     >>> True
   annot(#taskList)
 

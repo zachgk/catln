@@ -25,7 +25,7 @@ module(Data)
     because anything can be done with it. A [Dir] holding both a [File] and a [Dir] cannot be
     written: a list literal takes its element type from its first entry, so the second entry is
     checked against the first entry's type and does not fit. It is not a fact about this type —
-    @[/Data/Some(value= 1), /Data/Nothing]@ fails the same way, and neither of those is declared
+    @[/Data/Maybe/Some(value= 1), /Data/Maybe/Nothing]@ fails the same way, and neither of those is declared
     here. Until a list can hold two members of one class, a result is the flat [/Catln/BuildFile]
     list in @core/result.ct@, where every entry is the same kind of thing and the tree is said by
     the @/@ in each path.

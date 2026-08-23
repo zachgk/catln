@@ -10,17 +10,12 @@ Prgm
                     , omiDefs =
                         [ Value /main ->
                             ( /Catln/www( /html=/Data/String ) + /Catln/CatlnResult
-                                ( /files=/Data/Cons
-                                    [ /T=/Catln/BuildFile
-                                        ( /path=/Data/String
-                                        , /contents=/Data/String
-                                        )
-                                    ]
+                                ( /files=/Data/List/Cons
                                     ( /head=/Catln/BuildFile
                                         ( /path=/Data/String
                                         , /contents=/Data/String
                                         )
-                                    , /tail=/Data/Nil
+                                    , /tail=/Data/List/Nil
                                     )
                                 )
                             ) = /Catln/www
@@ -37,17 +32,12 @@ Prgm
             It also prints the result of the build in an iframe." )
         , /Catln/#print
             ( Value /p -> /Catln/CatlnResult
-                ( /files=/Data/Cons
-                    [ /T=/Catln/BuildFile
-                        ( /path=/Data/String
-                        , /contents=/Data/String
-                        )
-                    ]
+                ( /files=/Data/List/Cons
                     ( /head=/Catln/BuildFile
                         ( /path=/Data/String
                         , /contents=/Data/String
                         )
-                    , /tail=/Data/Nil
+                    , /tail=/Data/List/Nil
                     )
                 ) = Value /main
             )

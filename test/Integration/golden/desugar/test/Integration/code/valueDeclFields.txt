@@ -22,14 +22,14 @@ Prgm
                             ( Value /due -> ∀/Data/Maybe[ /T=/Data/String ] )
                         , /Noted
                             ( Value name= CStr "has both" )
-                            ( Value tags= /Data/Cons
-                                ( Value /head= CStr "x" )( Value /tail= Value /Data/Nil )
+                            ( Value tags= /Data/List/Cons
+                                ( Value /head= CStr "x" )( Value /tail= Value /Data/List/Nil )
                             )
-                            ( Value due= /Data/Some
+                            ( Value due= /Data/Maybe/Some
                                 ( Value value= CStr "2026-01-01" )
                             )
                         , /Noted
-                            ( Value name= CStr "has neither" )( Value tags= Value /Data/Nil )( Value due= Value /Data/Nothing )
+                            ( Value name= CStr "has neither" )( Value tags= Value /Data/List/Nil )( Value due= Value /Data/Maybe/Nothing )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -69,16 +69,16 @@ Prgm
         , /Catln/#print
             ( Value /p= /Noted
                 ( Value name= CStr "has both" )
-                ( Value tags= /Data/Cons
-                    ( Value /head= CStr "x" )( Value /tail= Value /Data/Nil )
+                ( Value tags= /Data/List/Cons
+                    ( Value /head= CStr "x" )( Value /tail= Value /Data/List/Nil )
                 )
-                ( Value due= /Data/Some
+                ( Value due= /Data/Maybe/Some
                     ( Value value= CStr "2026-01-01" )
                 )
             )
         , /Catln/#print
             ( Value /p= /Noted
-                ( Value name= CStr "has neither" )( Value tags= Value /Data/Nil )( Value due= Value /Data/Nothing )
+                ( Value name= CStr "has neither" )( Value tags= Value /Data/List/Nil )( Value due= Value /Data/Maybe/Nothing )
             )
         ]
     }

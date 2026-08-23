@@ -9,16 +9,16 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ Value main= CatlnResult
-                            ( Value files= /Data/Cons
+                            ( Value files= /Data/List/Cons
                                 ( Value /head= BuildFile
                                     ( Value path= CStr "index.html" )
                                     ( Value contents= CStr "<html><body>tree test</body></html>" )
                                 )
-                                ( Value /tail= /Data/Cons
+                                ( Value /tail= /Data/List/Cons
                                     ( Value /head= BuildFile
                                         ( Value path= CStr "notes/deep.txt" )
                                         ( Value contents= CStr "under a directory" )
-                                    )( Value /tail= Value /Data/Nil )
+                                    )( Value /tail= Value /Data/List/Nil )
                                 )
                             )
                         ]

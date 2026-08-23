@@ -13,9 +13,11 @@ Prgm
                                 ( /this=/Catln/IO
                                 , /val=/Data/Primitive/Integer
                                 ) + /Catln/IO
-                            ) = /Catln/exit
-                            ( EAppArg Value /val -> /Data/Primitive/Integer = 0 )
-                            ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
+                            ) =
+                            ( /Catln/exit
+                                ( EAppArg Value /val -> /Data/Primitive/Integer = 0 )
+                                ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) ) ↦ /Catln/IO
+                            )
                         ]
                     }
                 )
@@ -34,45 +36,31 @@ Prgm
                                     [ CStr "has both" ]
                                 ) = "has both"
                             )
-                            ( EAppArg Value /tags -> /Data/Cons
-                                [ /T=UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr "x" ]
-                                    )
-                                ]
+                            ( EAppArg Value /tags -> /Data/List/Cons
                                 ( /head=UnionType
                                     ( Nothing
                                     , ∅
                                     ,
                                         [ CStr "x" ]
                                     )
-                                , /tail=/Data/Nil
-                                ) = /Data/Cons
+                                , /tail=/Data/List/Nil
+                                ) = /Data/List/Cons
                                 ( EAppArg Value /head -> UnionType
                                     ( Nothing
                                     , ∅
                                     ,
                                         [ CStr "x" ]
                                     ) = "x"
-                                )( EAppArg Value /tail -> /Data/Nil = Value /Data/Nil )
+                                )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                             )
-                            ( EAppArg Value /due -> /Data/Some
-                                [ /T=UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr "2026-01-01" ]
-                                    )
-                                ]
+                            ( EAppArg Value /due -> /Data/Maybe/Some
                                 ( /value=UnionType
                                     ( Nothing
                                     , ∅
                                     ,
                                         [ CStr "2026-01-01" ]
                                     )
-                                ) = /Data/Some
+                                ) = /Data/Maybe/Some
                                 ( EAppArg Value /value -> UnionType
                                     ( Nothing
                                     , ∅
@@ -88,7 +76,7 @@ Prgm
                                 ,
                                     [ CStr "has neither" ]
                                 ) = "has neither"
-                            )( EAppArg Value /tags -> /Data/Nil = Value /Data/Nil )( EAppArg Value /due -> /Data/Nothing = Value /Data/Nothing )
+                            )( EAppArg Value /tags -> /Data/List/Nil = Value /Data/List/Nil )( EAppArg Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -128,19 +116,19 @@ Prgm
         , /Catln/#print
             ( EAppArg Value /p -> ∀/Catln/Doc/DShow = /Noted
                 ( EAppArg Value /name -> /Data/String = "has both" )
-                ( EAppArg Value /tags -> /Data/Cons[ /T=/Data/String ]
+                ( EAppArg Value /tags -> /Data/List/Cons
                     ( /head=/Data/String
-                    , /tail=/Data/Nil
-                    ) = /Data/Cons
-                    ( EAppArg Value /head -> /Data/String = "x" )( EAppArg Value /tail -> /Data/Nil = Value /Data/Nil )
+                    , /tail=/Data/List/Nil
+                    ) = /Data/List/Cons
+                    ( EAppArg Value /head -> /Data/String = "x" )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                 )
-                ( EAppArg Value /due -> /Data/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Some
+                ( EAppArg Value /due -> /Data/Maybe/Some( /value=/Data/String ) = /Data/Maybe/Some
                     ( EAppArg Value /value -> /Data/String = "2026-01-01" )
                 )
             )
         , /Catln/#print
             ( EAppArg Value /p -> ∀/Catln/Doc/DShow = /Noted
-                ( EAppArg Value /name -> /Data/String = "has neither" )( EAppArg Value /tags -> /Data/Nil = Value /Data/Nil )( EAppArg Value /due -> /Data/Nothing = Value /Data/Nothing )
+                ( EAppArg Value /name -> /Data/String = "has neither" )( EAppArg Value /tags -> /Data/List/Nil = Value /Data/List/Nil )( EAppArg Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
             )
         ]
     }

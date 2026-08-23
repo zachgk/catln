@@ -29,10 +29,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Catln/www( Value html -> /Data/String )= CatlnResult
-                            ( Value files= /Data/Cons
+                            ( Value files= /Data/List/Cons
                                 ( Value /head= BuildFile
                                     ( Value path= CStr "index.html" )( Value contents= Value html )
-                                )( Value /tail= Value /Data/Nil )
+                                )( Value /tail= Value /Data/List/Nil )
                             )
                         ]
                     }

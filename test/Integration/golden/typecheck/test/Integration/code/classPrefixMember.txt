@@ -85,18 +85,13 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /total
-                            ( Value /this -> /Thing/Simple( /x=/Data/Primitive/Integer ) = /Thing/Simple( Value /x -> /Data/Primitive/Integer ) ) -> TVArg /x = Value /x
+                            ( Value /this -> /Thing/Simple( /x=/Data/Primitive/Integer ) = /Thing/Simple( Value /x -> /Data/Primitive/Integer ) ) -> /Data/Primitive/Integer = Value /x
                         , /total
                             ( Value /this -> /Thing/Fancy
                                 ( /x=/Data/Primitive/Integer
                                 , /y=/Data/Primitive/Integer
                                 ) = /Thing/Fancy( Value /x -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer )
-                            ) ->
-                            ( /operator+
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer
-                            ) = /operator+( Value /l -> TVArg /x = Value /x )( Value /r -> TVArg /y = Value /y )
+                            ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /x = Value /x )( Value /r -> TVArg /y = Value /y )
                         ]
                     }
                 )
@@ -160,14 +155,7 @@ Prgm
             )
             ( Value /result -> /Data/String = CStr "3" )
         , /Catln/#print
-            ( Value /p -> UnionType
-                ( Just
-                    ( PredClass /Thing && PredClass /Catln/Doc/DShow
-                    , fromList []
-                    )
-                , /Data/Primitive/Integer
-                , []
-                ) = /total
+            ( Value /p -> /Data/Primitive/Integer = /total
                 ( Value /this -> /Thing/Fancy
                     ( /x=/Data/Primitive/Integer
                     , /y=/Data/Primitive/Integer

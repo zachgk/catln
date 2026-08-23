@@ -133,7 +133,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Calendar/calendarDay
-                            ( Value /this= Task/Simple( Value contents )( Value state ) ) -> ∀/Data/Maybe[ /T=/Data/String ] = Value /Data/Nothing
+                            ( Value /this= Task/Simple( Value contents )( Value state ) ) -> ∀/Data/Maybe[ /T=/Data/String ] = Value /Data/Maybe/Nothing
                         , /Data/Calendar/calendarDay
                             ( Value /this= Task/Obsidian( Value contents )( Value symbol )( Value statusType )( Value description )( Value priority )( Value start )( Value scheduled )( Value due )( Value recurrence )( Value rest ) ) -> ∀/Data/Maybe[ /T=/Data/String ] = firstDay( Value a= Value start )( Value b= Value scheduled )( Value c= Value due )
                         ]
@@ -181,10 +181,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Note/firstDay
-                            ( Value a= /Data/Some( Value value ) )( Value b )( Value c ) -> ∀/Data/Maybe[ /T=/Data/String ] = /Data/Some( Value value= Value value )
-                        , /Data/Note/firstDay( Value a= Value /Data/Nothing )
-                            ( Value b= /Data/Some( Value value ) )( Value c ) -> ∀/Data/Maybe[ /T=/Data/String ] = /Data/Some( Value value= Value value )
-                        , /Data/Note/firstDay( Value a= Value /Data/Nothing )( Value b= Value /Data/Nothing )( Value c ) -> ∀/Data/Maybe[ /T=/Data/String ] = Value c
+                            ( Value a= /Data/Maybe/Some( Value value ) )( Value b )( Value c ) -> ∀/Data/Maybe[ /T=/Data/String ] = /Data/Maybe/Some( Value value= Value value )
+                        , /Data/Note/firstDay( Value a= Value /Data/Maybe/Nothing )
+                            ( Value b= /Data/Maybe/Some( Value value ) )( Value c ) -> ∀/Data/Maybe[ /T=/Data/String ] = /Data/Maybe/Some( Value value= Value value )
+                        , /Data/Note/firstDay( Value a= Value /Data/Maybe/Nothing )( Value b= Value /Data/Maybe/Nothing )( Value c ) -> ∀/Data/Maybe[ /T=/Data/String ] = Value c
                         ]
                     }
                 )
@@ -453,7 +453,7 @@ Prgm
                     ( Value /this= Task/Simple
                         ( Value contents= CStr "read it" )( Value state= Value False )
                     )
-                )( Value /r= Value /Data/Nothing )
+                )( Value /r= Value /Data/Maybe/Nothing )
             )
             ( Value /result= CStr "True" )
         , /Catln/#md
@@ -467,16 +467,16 @@ Prgm
                         ( Value contents= CStr "Water the plants" )
                         ( Value symbol= CStr " " )( Value statusType= Value StatusType/Todo )
                         ( Value description= CStr "Water the plants" )( Value priority= Value Priority/None )
-                        ( Value start= /Data/Some
+                        ( Value start= /Data/Maybe/Some
                             ( Value value= CStr "2026-01-02" )
-                        )( Value scheduled= Value /Data/Nothing )
-                        ( Value due= /Data/Some
+                        )( Value scheduled= Value /Data/Maybe/Nothing )
+                        ( Value due= /Data/Maybe/Some
                             ( Value value= CStr "2026-01-04" )
-                        )( Value recurrence= Value /Data/Nothing )
+                        )( Value recurrence= Value /Data/Maybe/Nothing )
                         ( Value rest= CStr "{}" )
                     )
                 )
-                ( Value /r= /Data/Some
+                ( Value /r= /Data/Maybe/Some
                     ( Value value= CStr "2026-01-02" )
                 )
             )
@@ -489,14 +489,14 @@ Prgm
                     ( Value /this= Task/Obsidian
                         ( Value contents= CStr "Ship it" )
                         ( Value symbol= CStr " " )( Value statusType= Value StatusType/Todo )
-                        ( Value description= CStr "Ship it" )( Value priority= Value Priority/None )( Value start= Value /Data/Nothing )( Value scheduled= Value /Data/Nothing )
-                        ( Value due= /Data/Some
+                        ( Value description= CStr "Ship it" )( Value priority= Value Priority/None )( Value start= Value /Data/Maybe/Nothing )( Value scheduled= Value /Data/Maybe/Nothing )
+                        ( Value due= /Data/Maybe/Some
                             ( Value value= CStr "2026-01-04" )
-                        )( Value recurrence= Value /Data/Nothing )
+                        )( Value recurrence= Value /Data/Maybe/Nothing )
                         ( Value rest= CStr "{}" )
                     )
                 )
-                ( Value /r= /Data/Some
+                ( Value /r= /Data/Maybe/Some
                     ( Value value= CStr "2026-01-04" )
                 )
             )
@@ -509,10 +509,10 @@ Prgm
                     ( Value /this= Task/Obsidian
                         ( Value contents= CStr "Book" )
                         ( Value symbol= CStr " " )( Value statusType= Value StatusType/Todo )
-                        ( Value description= CStr "Book" )( Value priority= Value Priority/None )( Value start= Value /Data/Nothing )( Value scheduled= Value /Data/Nothing )( Value due= Value /Data/Nothing )( Value recurrence= Value /Data/Nothing )
+                        ( Value description= CStr "Book" )( Value priority= Value Priority/None )( Value start= Value /Data/Maybe/Nothing )( Value scheduled= Value /Data/Maybe/Nothing )( Value due= Value /Data/Maybe/Nothing )( Value recurrence= Value /Data/Maybe/Nothing )
                         ( Value rest= CStr "{}" )
                     )
-                )( Value /r= Value /Data/Nothing )
+                )( Value /r= Value /Data/Maybe/Nothing )
             )
             ( Value /result= CStr "True" )
         ]

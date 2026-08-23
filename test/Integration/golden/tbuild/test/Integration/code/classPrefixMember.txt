@@ -85,20 +85,17 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /total
-                            ( EAppArg Value /this -> /Thing/Simple( /x=/Data/Primitive/Integer ) = /Thing/Simple( EAppArg Value /x -> /Data/Primitive/Integer ) ) -> TVArg /x = ( Value /x ↦ TVArg /x )
+                            ( EAppArg Value /this -> /Thing/Simple( /x=/Data/Primitive/Integer ) = /Thing/Simple( EAppArg Value /x -> /Data/Primitive/Integer ) ) -> /Data/Primitive/Integer = ( Value /x ↦ /Data/Primitive/Integer )
                         , /total
                             ( EAppArg Value /this -> /Thing/Fancy
                                 ( /x=/Data/Primitive/Integer
                                 , /y=/Data/Primitive/Integer
                                 ) = /Thing/Fancy( EAppArg Value /x -> /Data/Primitive/Integer )( EAppArg Value /y -> /Data/Primitive/Integer )
-                            ) ->
+                            ) -> /Data/Primitive/Integer =
                             ( /operator+
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer
-                            ) = /operator+
-                            ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-                            ( EAppArg Value /r -> TVArg /y = ( Value /y ↦ TVArg /y ) )
+                                ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                                ( EAppArg Value /r -> TVArg /y = ( Value /y ↦ TVArg /y ) ) ↦ /Data/Primitive/Integer
+                            )
                         ]
                     }
                 )
@@ -164,14 +161,7 @@ Prgm
             )
             ( EAppArg Value /result -> /Data/String = "3" )
         , /Catln/#print
-            ( EAppArg Value /p -> UnionType
-                ( Just
-                    ( PredClass /Thing && PredClass /Catln/Doc/DShow
-                    , fromList []
-                    )
-                , /Data/Primitive/Integer
-                , []
-                ) =
+            ( EAppArg Value /p -> /Data/Primitive/Integer =
                 ( /total
                     ( EAppArg Value /this -> /Thing/Fancy
                         ( /x=/Data/Primitive/Integer
@@ -179,14 +169,7 @@ Prgm
                         ) = /Thing/Fancy
                         ( EAppArg Value /x -> /Data/Primitive/Integer = 3 )
                         ( EAppArg Value /y -> /Data/Primitive/Integer = 4 )
-                    ) ↦ UnionType
-                    ( Just
-                        ( PredClass /Thing && PredClass /Catln/Doc/DShow
-                        , fromList []
-                        )
-                    , /Data/Primitive/Integer
-                    , []
-                    )
+                    ) ↦ /Data/Primitive/Integer
                 )
             )
             ( EAppArg Value /result -> /Data/String = "7" )

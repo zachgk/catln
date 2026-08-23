@@ -593,7 +593,7 @@ describe('Backend API contract', () => {
 
     // A /Data/Maybe as the value it holds, or null where it holds none.
     function some(value) {
-      return value.name === '/Data/Some' ? value.args['/value'].contents : null
+      return value.name === '/Data/Maybe/Some' ? value.args['/value'].contents : null
     }
 
     async function tasks() {

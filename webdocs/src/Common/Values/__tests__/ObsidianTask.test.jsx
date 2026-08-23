@@ -9,10 +9,10 @@ const theme = createTheme()
 // These are the first fields of this shape the webdocs have had to read, so what a case is written
 // against is the compiled shape itself rather than a convenience for it.
 function some(value) {
-  return { tag: 'TupleVal', name: '/Data/Some', args: { '/value': { tag: 'StrVal', contents: value } } }
+  return { tag: 'TupleVal', name: '/Data/Maybe/Some', args: { '/value': { tag: 'StrVal', contents: value } } }
 }
 
-const NOTHING = { tag: 'TupleVal', name: '/Data/Nothing', args: {} }
+const NOTHING = { tag: 'TupleVal', name: '/Data/Maybe/Nothing', args: {} }
 
 function str(contents) {
   return { tag: 'StrVal', contents }

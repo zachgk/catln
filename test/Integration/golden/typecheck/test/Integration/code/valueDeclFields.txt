@@ -33,45 +33,31 @@ Prgm
                                     [ CStr "has both" ]
                                 ) = CStr "has both"
                             )
-                            ( Value /tags -> /Data/Cons
-                                [ /T=UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr "x" ]
-                                    )
-                                ]
+                            ( Value /tags -> /Data/List/Cons
                                 ( /head=UnionType
                                     ( Nothing
                                     , ∅
                                     ,
                                         [ CStr "x" ]
                                     )
-                                , /tail=/Data/Nil
-                                ) = /Data/Cons
+                                , /tail=/Data/List/Nil
+                                ) = /Data/List/Cons
                                 ( Value /head -> UnionType
                                     ( Nothing
                                     , ∅
                                     ,
                                         [ CStr "x" ]
                                     ) = CStr "x"
-                                )( Value /tail -> /Data/Nil = Value /Data/Nil )
+                                )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                             )
-                            ( Value /due -> /Data/Some
-                                [ /T=UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr "2026-01-01" ]
-                                    )
-                                ]
+                            ( Value /due -> /Data/Maybe/Some
                                 ( /value=UnionType
                                     ( Nothing
                                     , ∅
                                     ,
                                         [ CStr "2026-01-01" ]
                                     )
-                                ) = /Data/Some
+                                ) = /Data/Maybe/Some
                                 ( Value /value -> UnionType
                                     ( Nothing
                                     , ∅
@@ -87,7 +73,7 @@ Prgm
                                 ,
                                     [ CStr "has neither" ]
                                 ) = CStr "has neither"
-                            )( Value /tags -> /Data/Nil = Value /Data/Nil )( Value /due -> /Data/Nothing = Value /Data/Nothing )
+                            )( Value /tags -> /Data/List/Nil = Value /Data/List/Nil )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -127,19 +113,19 @@ Prgm
         , /Catln/#print
             ( Value /p -> ∀/Catln/Doc/DShow = /Noted
                 ( Value /name -> /Data/String = CStr "has both" )
-                ( Value /tags -> /Data/Cons[ /T=/Data/String ]
+                ( Value /tags -> /Data/List/Cons
                     ( /head=/Data/String
-                    , /tail=/Data/Nil
-                    ) = /Data/Cons
-                    ( Value /head -> /Data/String = CStr "x" )( Value /tail -> /Data/Nil = Value /Data/Nil )
+                    , /tail=/Data/List/Nil
+                    ) = /Data/List/Cons
+                    ( Value /head -> /Data/String = CStr "x" )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                 )
-                ( Value /due -> /Data/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Some
+                ( Value /due -> /Data/Maybe/Some( /value=/Data/String ) = /Data/Maybe/Some
                     ( Value /value -> /Data/String = CStr "2026-01-01" )
                 )
             )
         , /Catln/#print
             ( Value /p -> ∀/Catln/Doc/DShow = /Noted
-                ( Value /name -> /Data/String = CStr "has neither" )( Value /tags -> /Data/Nil = Value /Data/Nil )( Value /due -> /Data/Nothing = Value /Data/Nothing )
+                ( Value /name -> /Data/String = CStr "has neither" )( Value /tags -> /Data/List/Nil = Value /Data/List/Nil )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
             )
         ]
     }

@@ -36,7 +36,7 @@ module(Data/Calendar)
     # [calendarDay] is the day an entry is assigned to, as the @YYYY-MM-DD@ string it is written as.
       A day is a string here as it is everywhere a note is read: Catln has no date, and inventing
       one for a calendar would be inventing it for the whole language rather than for a calendar.
-      An entry which sits on no day answers [/Data/Nothing]. That is an answer and not a failure to
+      An entry which sits on no day answers [/Data/Maybe/Nothing]. That is an answer and not a failure to
       give one — an undated entry is shown apart from the days rather than dropped, because a
       calendar quietly showing less than it was handed would be answering a narrower question than
       the one asked.

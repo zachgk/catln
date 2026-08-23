@@ -160,7 +160,7 @@ showLocalName n = case getPath n of
   _                -> n
 
 -- | Render a generated value as the input a case ran on, in the surface form the value was written
--- in: @/Data/Some(value= 1)@.
+-- in: @/Data/Maybe/Some(value= 1)@.
 --
 -- 'Show' is not reused for this because it names the interpreter's own constructor (@TupleVal@),
 -- which tells a reader of the docs nothing about their test. Arguments are ordered by name rather

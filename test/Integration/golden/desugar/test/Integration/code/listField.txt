@@ -20,11 +20,11 @@ Prgm
                         [ Tagged( Value /name -> /Data/String )
                             ( Value /tags -> ∀/Data/List[ /T=/Data/String ] )
                         , /Tagged
-                            ( Value name= CStr "none" )( Value tags= Value /Data/Nil )
+                            ( Value name= CStr "none" )( Value tags= Value /Data/List/Nil )
                         , /Tagged
                             ( Value name= CStr "one" )
-                            ( Value tags= /Data/Cons
-                                ( Value /head= CStr "x" )( Value /tail= Value /Data/Nil )
+                            ( Value tags= /Data/List/Cons
+                                ( Value /head= CStr "x" )( Value /tail= Value /Data/List/Nil )
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -37,13 +37,13 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ ConsTagged( Value /name -> /Data/String )
-                            ( Value /tags -> ∀/Data/ConsList[ /T=/Data/String ] )
+                            ( Value /tags -> ∀/Data/List/ConsList[ /T=/Data/String ] )
                         , /ConsTagged
-                            ( Value name= CStr "none" )( Value tags= Value /Data/Nil )
+                            ( Value name= CStr "none" )( Value tags= Value /Data/List/Nil )
                         , /ConsTagged
                             ( Value name= CStr "one" )
-                            ( Value tags= /Data/Cons
-                                ( Value /head= CStr "x" )( Value /tail= Value /Data/Nil )
+                            ( Value tags= /Data/List/Cons
+                                ( Value /head= CStr "x" )( Value /tail= Value /Data/List/Nil )
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -74,8 +74,8 @@ Prgm
             ( Value /text= CStr "A field of a data type may hold a list of a concrete element.
             The tags of a task read out of an Obsidian note are a list of strings rather than the run of text
             they were written as. Nothing in the checked standard library gives a list-typed field to anything
-            but a list: the only one there is the [tail] a [/Data/Cons] holds, which is the list itself.
-            Written twice over, against the [/Data/List] interface and against the [/Data/ConsList] the
+            but a list: the only one there is the [tail] a [/Data/List/Cons] holds, which is the list itself.
+            Written twice over, against the [/Data/List] interface and against the [/Data/List/ConsList] the
             bracket literal builds, so that a failure says which of the two it is rather than only that a list
             in a field did not work. And written as values declared and never defined, for the reason
             [/Dated] is in @maybeField.ct@.
@@ -89,24 +89,24 @@ Prgm
             ( Value /text= CStr "Printed so that the values are evaluated and not only built." )
         , /Catln/#print
             ( Value /p= /Tagged
-                ( Value name= CStr "none" )( Value tags= Value /Data/Nil )
+                ( Value name= CStr "none" )( Value tags= Value /Data/List/Nil )
             )
         , /Catln/#print
             ( Value /p= /Tagged
                 ( Value name= CStr "one" )
-                ( Value tags= /Data/Cons
-                    ( Value /head= CStr "x" )( Value /tail= Value /Data/Nil )
+                ( Value tags= /Data/List/Cons
+                    ( Value /head= CStr "x" )( Value /tail= Value /Data/List/Nil )
                 )
             )
         , /Catln/#print
             ( Value /p= /ConsTagged
-                ( Value name= CStr "none" )( Value tags= Value /Data/Nil )
+                ( Value name= CStr "none" )( Value tags= Value /Data/List/Nil )
             )
         , /Catln/#print
             ( Value /p= /ConsTagged
                 ( Value name= CStr "one" )
-                ( Value tags= /Data/Cons
-                    ( Value /head= CStr "x" )( Value /tail= Value /Data/Nil )
+                ( Value tags= /Data/List/Cons
+                    ( Value /head= CStr "x" )( Value /tail= Value /Data/List/Nil )
                 )
             )
         ]

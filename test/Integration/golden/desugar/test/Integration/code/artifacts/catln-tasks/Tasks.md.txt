@@ -8,64 +8,64 @@ Prgm
                         [ /Data/Note/Task/Obsidian
                             ( Value /contents= CStr "Read the note" )
                             ( Value /symbol= CStr " " )( Value /statusType= Value /Data/Note/StatusType/Todo )
-                            ( Value /description= CStr "Read the note" )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Nothing )( Value /scheduled= Value /Data/Nothing )( Value /due= Value /Data/Nothing )( Value /recurrence= Value /Data/Nothing )
+                            ( Value /description= CStr "Read the note" )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr "{"statusName":"Todo"}" )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr "Write this note ✅ 2026-01-05" )
                             ( Value /symbol= CStr "x" )( Value /statusType= Value /Data/Note/StatusType/Done )
-                            ( Value /description= CStr "Write this note" )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Nothing )( Value /scheduled= Value /Data/Nothing )( Value /due= Value /Data/Nothing )( Value /recurrence= Value /Data/Nothing )
+                            ( Value /description= CStr "Write this note" )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr "{"statusDate":"2026-01-05","statusName":"Done"}" )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr "Plan the rest" )
                             ( Value /symbol= CStr "/" )( Value /statusType= Value /Data/Note/StatusType/InProgress )
-                            ( Value /description= CStr "Plan the rest" )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Nothing )( Value /scheduled= Value /Data/Nothing )( Value /due= Value /Data/Nothing )( Value /recurrence= Value /Data/Nothing )
+                            ( Value /description= CStr "Plan the rest" )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr "{"statusName":"In Progress"}" )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr "Drop the old plan ❌ 2026-01-06" )
                             ( Value /symbol= CStr "-" )( Value /statusType= Value /Data/Note/StatusType/Cancelled )
-                            ( Value /description= CStr "Drop the old plan" )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Nothing )( Value /scheduled= Value /Data/Nothing )( Value /due= Value /Data/Nothing )( Value /recurrence= Value /Data/Nothing )
+                            ( Value /description= CStr "Drop the old plan" )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr "{"statusDate":"2026-01-06","statusName":"Cancelled"}" )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr "Ship it #work ⏫ 📅 2026-01-04" )
                             ( Value /symbol= CStr " " )( Value /statusType= Value /Data/Note/StatusType/Todo )
-                            ( Value /description= CStr "Ship it #work" )( Value /priority= Value /Data/Note/Priority/High )( Value /start= Value /Data/Nothing )( Value /scheduled= Value /Data/Nothing )
-                            ( Value /due= /Data/Some
+                            ( Value /description= CStr "Ship it #work" )( Value /priority= Value /Data/Note/Priority/High )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )
+                            ( Value /due= /Data/Maybe/Some
                                 ( Value /value= CStr "2026-01-04" )
-                            )( Value /recurrence= Value /Data/Nothing )
+                            )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr "{"statusName":"Todo","tags":["#work"]}" )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr "Water the plants 🔁 every week 🛫 2026-01-02" )
                             ( Value /symbol= CStr " " )( Value /statusType= Value /Data/Note/StatusType/Todo )
                             ( Value /description= CStr "Water the plants" )( Value /priority= Value /Data/Note/Priority/None )
-                            ( Value /start= /Data/Some
+                            ( Value /start= /Data/Maybe/Some
                                 ( Value /value= CStr "2026-01-02" )
-                            )( Value /scheduled= Value /Data/Nothing )( Value /due= Value /Data/Nothing )
-                            ( Value /recurrence= /Data/Some
+                            )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )
+                            ( Value /recurrence= /Data/Maybe/Some
                                 ( Value /value= CStr "every week" )
                             )
                             ( Value /rest= CStr "{"statusName":"Todo"}" )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr "Do this first 🆔 dcf64c 🏁 delete" )
                             ( Value /symbol= CStr " " )( Value /statusType= Value /Data/Note/StatusType/Todo )
-                            ( Value /description= CStr "Do this first" )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Nothing )( Value /scheduled= Value /Data/Nothing )( Value /due= Value /Data/Nothing )( Value /recurrence= Value /Data/Nothing )
+                            ( Value /description= CStr "Do this first" )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr "{"id":"dcf64c","onCompletion":"delete","statusName":"Todo"}" )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr "Do this after ⛔ dcf64c, 0h17ye ➕ 2026-01-01" )
                             ( Value /symbol= CStr " " )( Value /statusType= Value /Data/Note/StatusType/Todo )
-                            ( Value /description= CStr "Do this after" )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Nothing )( Value /scheduled= Value /Data/Nothing )( Value /due= Value /Data/Nothing )( Value /recurrence= Value /Data/Nothing )
+                            ( Value /description= CStr "Do this after" )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr "{"created":"2026-01-01","dependsOn":["dcf64c","0h17ye"],"statusName":"Todo"}" )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr "Answer the question ⏳ 2026-01-03 🔽 ^answer-it" )
                             ( Value /symbol= CStr " " )( Value /statusType= Value /Data/Note/StatusType/Todo )
-                            ( Value /description= CStr "Answer the question" )( Value /priority= Value /Data/Note/Priority/Low )( Value /start= Value /Data/Nothing )
-                            ( Value /scheduled= /Data/Some
+                            ( Value /description= CStr "Answer the question" )( Value /priority= Value /Data/Note/Priority/Low )( Value /start= Value /Data/Maybe/Nothing )
+                            ( Value /scheduled= /Data/Maybe/Some
                                 ( Value /value= CStr "2026-01-03" )
-                            )( Value /due= Value /Data/Nothing )( Value /recurrence= Value /Data/Nothing )
+                            )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr "{"blockLink":"answer-it","statusName":"Todo"}" )
                         , /Data/Note/Task/Obsidian
                             ( Value /contents= CStr "Book 📅 lunch" )
                             ( Value /symbol= CStr " " )( Value /statusType= Value /Data/Note/StatusType/Todo )
-                            ( Value /description= CStr "Book 📅 lunch" )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Nothing )( Value /scheduled= Value /Data/Nothing )( Value /due= Value /Data/Nothing )( Value /recurrence= Value /Data/Nothing )
+                            ( Value /description= CStr "Book 📅 lunch" )( Value /priority= Value /Data/Note/Priority/None )( Value /start= Value /Data/Maybe/Nothing )( Value /scheduled= Value /Data/Maybe/Nothing )( Value /due= Value /Data/Maybe/Nothing )( Value /recurrence= Value /Data/Maybe/Nothing )
                             ( Value /rest= CStr "{"statusName":"Todo"}" )
                         ]
                     , omiRuntimeDecls = []

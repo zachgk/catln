@@ -26,7 +26,7 @@ Prgm
                                 ,
                                     [ CStr "Read the note" ]
                                 ) = CStr "Read the note"
-                            )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Nothing = Value /Data/Nothing )( Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( Value /due -> /Data/Nothing = Value /Data/Nothing )( Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                            )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( Value /rest -> UnionType
                                 ( Nothing
                                 , ∅
@@ -55,7 +55,7 @@ Prgm
                                 ,
                                     [ CStr "Write this note" ]
                                 ) = CStr "Write this note"
-                            )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Nothing = Value /Data/Nothing )( Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( Value /due -> /Data/Nothing = Value /Data/Nothing )( Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                            )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( Value /rest -> UnionType
                                 ( Nothing
                                 , ∅
@@ -84,7 +84,7 @@ Prgm
                                 ,
                                     [ CStr "Plan the rest" ]
                                 ) = CStr "Plan the rest"
-                            )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Nothing = Value /Data/Nothing )( Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( Value /due -> /Data/Nothing = Value /Data/Nothing )( Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                            )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( Value /rest -> UnionType
                                 ( Nothing
                                 , ∅
@@ -113,7 +113,7 @@ Prgm
                                 ,
                                     [ CStr "Drop the old plan" ]
                                 ) = CStr "Drop the old plan"
-                            )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Nothing = Value /Data/Nothing )( Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( Value /due -> /Data/Nothing = Value /Data/Nothing )( Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                            )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( Value /rest -> UnionType
                                 ( Nothing
                                 , ∅
@@ -142,22 +142,15 @@ Prgm
                                 ,
                                     [ CStr "Ship it #work" ]
                                 ) = CStr "Ship it #work"
-                            )( Value /priority -> /Data/Note/Priority/High = Value /Data/Note/Priority/High )( Value /start -> /Data/Nothing = Value /Data/Nothing )( Value /scheduled -> /Data/Nothing = Value /Data/Nothing )
-                            ( Value /due -> /Data/Some
-                                [ /T=UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr "2026-01-04" ]
-                                    )
-                                ]
+                            )( Value /priority -> /Data/Note/Priority/High = Value /Data/Note/Priority/High )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+                            ( Value /due -> /Data/Maybe/Some
                                 ( /value=UnionType
                                     ( Nothing
                                     , ∅
                                     ,
                                         [ CStr "2026-01-04" ]
                                     )
-                                ) = /Data/Some
+                                ) = /Data/Maybe/Some
                                 ( Value /value -> UnionType
                                     ( Nothing
                                     , ∅
@@ -165,7 +158,7 @@ Prgm
                                         [ CStr "2026-01-04" ]
                                     ) = CStr "2026-01-04"
                                 )
-                            )( Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                            )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( Value /rest -> UnionType
                                 ( Nothing
                                 , ∅
@@ -195,21 +188,14 @@ Prgm
                                     [ CStr "Water the plants" ]
                                 ) = CStr "Water the plants"
                             )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )
-                            ( Value /start -> /Data/Some
-                                [ /T=UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr "2026-01-02" ]
-                                    )
-                                ]
+                            ( Value /start -> /Data/Maybe/Some
                                 ( /value=UnionType
                                     ( Nothing
                                     , ∅
                                     ,
                                         [ CStr "2026-01-02" ]
                                     )
-                                ) = /Data/Some
+                                ) = /Data/Maybe/Some
                                 ( Value /value -> UnionType
                                     ( Nothing
                                     , ∅
@@ -217,22 +203,15 @@ Prgm
                                         [ CStr "2026-01-02" ]
                                     ) = CStr "2026-01-02"
                                 )
-                            )( Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( Value /due -> /Data/Nothing = Value /Data/Nothing )
-                            ( Value /recurrence -> /Data/Some
-                                [ /T=UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr "every week" ]
-                                    )
-                                ]
+                            )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+                            ( Value /recurrence -> /Data/Maybe/Some
                                 ( /value=UnionType
                                     ( Nothing
                                     , ∅
                                     ,
                                         [ CStr "every week" ]
                                     )
-                                ) = /Data/Some
+                                ) = /Data/Maybe/Some
                                 ( Value /value -> UnionType
                                     ( Nothing
                                     , ∅
@@ -269,7 +248,7 @@ Prgm
                                 ,
                                     [ CStr "Do this first" ]
                                 ) = CStr "Do this first"
-                            )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Nothing = Value /Data/Nothing )( Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( Value /due -> /Data/Nothing = Value /Data/Nothing )( Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                            )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( Value /rest -> UnionType
                                 ( Nothing
                                 , ∅
@@ -298,7 +277,7 @@ Prgm
                                 ,
                                     [ CStr "Do this after" ]
                                 ) = CStr "Do this after"
-                            )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Nothing = Value /Data/Nothing )( Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( Value /due -> /Data/Nothing = Value /Data/Nothing )( Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                            )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( Value /rest -> UnionType
                                 ( Nothing
                                 , ∅
@@ -327,22 +306,15 @@ Prgm
                                 ,
                                     [ CStr "Answer the question" ]
                                 ) = CStr "Answer the question"
-                            )( Value /priority -> /Data/Note/Priority/Low = Value /Data/Note/Priority/Low )( Value /start -> /Data/Nothing = Value /Data/Nothing )
-                            ( Value /scheduled -> /Data/Some
-                                [ /T=UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr "2026-01-03" ]
-                                    )
-                                ]
+                            )( Value /priority -> /Data/Note/Priority/Low = Value /Data/Note/Priority/Low )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+                            ( Value /scheduled -> /Data/Maybe/Some
                                 ( /value=UnionType
                                     ( Nothing
                                     , ∅
                                     ,
                                         [ CStr "2026-01-03" ]
                                     )
-                                ) = /Data/Some
+                                ) = /Data/Maybe/Some
                                 ( Value /value -> UnionType
                                     ( Nothing
                                     , ∅
@@ -350,7 +322,7 @@ Prgm
                                         [ CStr "2026-01-03" ]
                                     ) = CStr "2026-01-03"
                                 )
-                            )( Value /due -> /Data/Nothing = Value /Data/Nothing )( Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                            )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( Value /rest -> UnionType
                                 ( Nothing
                                 , ∅
@@ -379,7 +351,7 @@ Prgm
                                 ,
                                     [ CStr "Book 📅 lunch" ]
                                 ) = CStr "Book 📅 lunch"
-                            )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Nothing = Value /Data/Nothing )( Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( Value /due -> /Data/Nothing = Value /Data/Nothing )( Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                            )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( Value /rest -> UnionType
                                 ( Nothing
                                 , ∅

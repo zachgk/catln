@@ -8,7 +8,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Catln/Doc/dshow( EAppArg Value /s -> /Data/Calendar/#calendar = Value /Data/Calendar/#calendar ) -> /Data/Calendar/Show/Calendar( /result=/Data/String ) = /Data/Calendar/Show/Calendar
+                        [ /Catln/Doc/dshow( EAppArg Value /s -> /Data/Calendar/#calendar = Value /Data/Calendar/#calendar ) -> /Data/Calendar/Show/Calendar
+                            ( /result=
+                                ( /Data/String + /Data/String( /annot=TopType ) )
+                            ) = /Data/Calendar/Show/Calendar
                             ( EAppArg Value /result -> /Data/String =
                                 ( /Catln/Doc/dshow./Data/Calendar/calendarEntries( EAppArg Value /annot -> /s = Value /s ) ↦ /Data/String )
                             )

@@ -172,7 +172,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /reversed./Data/List/reverseOnto
+                        [ /reversed./Data/List/reverseOnto( EAppArg Value /lst -> /Data/List/Nil = Value /Data/List/Nil )( EAppArg Value /acc -> ∀/Data/List/ConsList ) -> ∀/Data/List/ConsList = ( Value /acc ↦ ∀/Data/List/ConsList )
+                        , /reversed./Data/List/reverseOnto
                             ( EAppArg Value /lst -> /Data/List/Cons
                                 ( /head=TopType
                                 , /tail=TopType
@@ -188,7 +189,6 @@ Prgm
                                     ( EAppArg Value /tail -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) )
                                 ) ↦ ∀/Data/List/ConsList
                             )
-                        , /reversed./Data/List/reverseOnto( EAppArg Value /lst -> /Data/List/Nil = Value /Data/List/Nil )( EAppArg Value /acc -> ∀/Data/List/ConsList ) -> ∀/Data/List/ConsList = ( Value /acc ↦ ∀/Data/List/ConsList )
                         ]
                     }
                 )
@@ -202,7 +202,12 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /sorted./Data/List/insert( EAppArg Value /t )( EAppArg Value /h )( EAppArg Value /x -> ∀/Data/Algebra/Ord )
+                        [ /sorted./Data/List/insert( EAppArg Value /t )( EAppArg Value /h )( EAppArg Value /x -> ∀/Data/Algebra/Ord )( EAppArg Value /lst -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/List/Cons
+                            ( /head=∀/Data/Algebra/Ord
+                            , /tail=/Data/List/Nil
+                            ) = /Data/List/Cons
+                            ( EAppArg Value /head -> TVArg /x = ( Value /x ↦ TVArg /x ) )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                        , /sorted./Data/List/insert( EAppArg Value /t )( EAppArg Value /h )( EAppArg Value /x -> ∀/Data/Algebra/Ord )
                             ( EAppArg Value /lst -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                                 ( /head=TopType
                                 , /tail=TopType
@@ -251,11 +256,6 @@ Prgm
                                 , []
                                 )
                             )
-                        , /sorted./Data/List/insert( EAppArg Value /t )( EAppArg Value /h )( EAppArg Value /x -> ∀/Data/Algebra/Ord )( EAppArg Value /lst -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/List/Cons
-                            ( /head=∀/Data/Algebra/Ord
-                            , /tail=/Data/List/Nil
-                            ) = /Data/List/Cons
-                            ( EAppArg Value /head -> TVArg /x = ( Value /x ↦ TVArg /x ) )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                         ]
                     }
                 )
@@ -353,7 +353,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /range./Data/List/rangeStep( EAppArg Value /more -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /i -> /Data/Primitive/Integer )( EAppArg Value /stop -> /Data/Primitive/Integer ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        [ /range./Data/List/rangeStep( EAppArg Value /more -> /Data/Primitive/False = Value /Data/Primitive/False )( EAppArg Value /i -> /Data/Primitive/Integer )( EAppArg Value /stop -> /Data/Primitive/Integer ) -> /Data/List/Nil = Value /Data/List/Nil
+                        , /range./Data/List/rangeStep( EAppArg Value /more -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /i -> /Data/Primitive/Integer )( EAppArg Value /stop -> /Data/Primitive/Integer ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
                             , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
                             ) = /Data/List/Cons
@@ -369,7 +370,6 @@ Prgm
                                     ( EAppArg Value /stop -> TVArg /stop = ( Value /stop ↦ TVArg /stop ) ) ↦ ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
                                 )
                             )
-                        , /range./Data/List/rangeStep( EAppArg Value /more -> /Data/Primitive/False = Value /Data/Primitive/False )( EAppArg Value /i -> /Data/Primitive/Integer )( EAppArg Value /stop -> /Data/Primitive/Integer ) -> /Data/List/Nil = Value /Data/List/Nil
                         ]
                     }
                 )
@@ -649,7 +649,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /toString./Data/List/restToString( EAppArg Value /t )( EAppArg Value /h )
+                        [ /toString./Data/List/restToString( EAppArg Value /t )( EAppArg Value /h )( EAppArg Value /lst -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/String = ""
+                        , /toString./Data/List/restToString( EAppArg Value /t )( EAppArg Value /h )
                             ( EAppArg Value /lst -> /Data/List/Cons[ /T=∀/Data/ToString ]
                                 ( /head=TopType
                                 , /tail=TopType
@@ -674,7 +675,6 @@ Prgm
                                     )
                                 ) ↦ /Data/String
                             )
-                        , /toString./Data/List/restToString( EAppArg Value /t )( EAppArg Value /h )( EAppArg Value /lst -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/String = ""
                         ]
                     }
                 )
@@ -688,21 +688,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /sorted./Data/List/insertStep( EAppArg Value /t )( EAppArg Value /h )( EAppVar /T ∀/Data/Algebra/Ord )( EAppArg Value /before -> /Data/Primitive/False = Value /Data/Primitive/False )( EAppArg Value /x -> ∀/Data/Algebra/Ord )( EAppArg Value /head -> ∀/Data/Algebra/Ord )
-                            ( EAppArg Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> /Data/List/Cons
-                            ( /head=∀/Data/Algebra/Ord
-                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                            ) = /Data/List/Cons
-                            ( EAppArg Value /head -> TVArg /head = ( Value /head ↦ TVArg /head ) )
-                            ( EAppArg Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] =
-                                ( /sorted./Data/List/insert
-                                    ( EAppArg Value /t -> TVArg /t = ( Value /t ↦ TVArg /t ) )
-                                    ( EAppArg Value /h -> TVArg /h = ( Value /h ↦ TVArg /h ) )
-                                    ( EAppArg Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-                                    ( EAppArg Value /lst -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) ) ↦ ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                )
-                            )
-                        , /sorted./Data/List/insertStep( EAppArg Value /t )( EAppArg Value /h )( EAppVar /T ∀/Data/Algebra/Ord )( EAppArg Value /before -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /x -> ∀/Data/Algebra/Ord )( EAppArg Value /head -> ∀/Data/Algebra/Ord )
+                        [ /sorted./Data/List/insertStep( EAppArg Value /t )( EAppArg Value /h )( EAppVar /T ∀/Data/Algebra/Ord )( EAppArg Value /before -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /x -> ∀/Data/Algebra/Ord )( EAppArg Value /head -> ∀/Data/Algebra/Ord )
                             ( EAppArg Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> /Data/List/Cons
                             ( /head=∀/Data/Algebra/Ord
                             , /tail=/Data/List/Cons
@@ -717,6 +703,20 @@ Prgm
                                 ) = /Data/List/Cons
                                 ( EAppArg Value /head -> TVArg /head = ( Value /head ↦ TVArg /head ) )
                                 ( EAppArg Value /tail -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) )
+                            )
+                        , /sorted./Data/List/insertStep( EAppArg Value /t )( EAppArg Value /h )( EAppVar /T ∀/Data/Algebra/Ord )( EAppArg Value /before -> /Data/Primitive/False = Value /Data/Primitive/False )( EAppArg Value /x -> ∀/Data/Algebra/Ord )( EAppArg Value /head -> ∀/Data/Algebra/Ord )
+                            ( EAppArg Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> /Data/List/Cons
+                            ( /head=∀/Data/Algebra/Ord
+                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                            ) = /Data/List/Cons
+                            ( EAppArg Value /head -> TVArg /head = ( Value /head ↦ TVArg /head ) )
+                            ( EAppArg Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] =
+                                ( /sorted./Data/List/insert
+                                    ( EAppArg Value /t -> TVArg /t = ( Value /t ↦ TVArg /t ) )
+                                    ( EAppArg Value /h -> TVArg /h = ( Value /h ↦ TVArg /h ) )
+                                    ( EAppArg Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                                    ( EAppArg Value /lst -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) ) ↦ ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                )
                             )
                         ]
                     }

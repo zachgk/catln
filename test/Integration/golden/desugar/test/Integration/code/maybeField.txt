@@ -21,11 +21,11 @@ Prgm
                             ( Value /due -> ∀/Data/Maybe[ /T=/Data/String ] )
                         , /Dated
                             ( Value name= CStr "has one" )
-                            ( Value due= /Data/Some
+                            ( Value due= /Data/Maybe/Some
                                 ( Value value= CStr "2026-01-01" )
                             )
                         , /Dated
-                            ( Value name= CStr "has none" )( Value due= Value /Data/Nothing )
+                            ( Value name= CStr "has none" )( Value due= Value /Data/Maybe/Nothing )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -49,7 +49,7 @@ Prgm
         [ /Catln/#md
             ( Value /text= CStr "A field of a data type may be a [/Data/Maybe] of a concrete element.
             A task read out of an Obsidian note has a due date or it has none, and having none is the
-            [/Data/Nothing] arm rather than an empty string standing in for one. So a field has to be able to
+            [/Data/Maybe/Nothing] arm rather than an empty string standing in for one. So a field has to be able to
             hold a [/Data/Maybe], which nothing in the checked standard library does — [/Data/Maybe] is used
             there only as what a function takes and answers with.
             Written as values declared and never defined, since that is the whole of what a note does with
@@ -63,13 +63,13 @@ Prgm
         , /Catln/#print
             ( Value /p= /Dated
                 ( Value name= CStr "has one" )
-                ( Value due= /Data/Some
+                ( Value due= /Data/Maybe/Some
                     ( Value value= CStr "2026-01-01" )
                 )
             )
         , /Catln/#print
             ( Value /p= /Dated
-                ( Value name= CStr "has none" )( Value due= Value /Data/Nothing )
+                ( Value name= CStr "has none" )( Value due= Value /Data/Maybe/Nothing )
             )
         ]
     }

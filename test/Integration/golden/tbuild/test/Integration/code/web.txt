@@ -10,24 +10,24 @@ Prgm
                     , omiDefs =
                         [ Value /main ->
                             ( /Catln/www( /html=/Data/String ) + /Catln/CatlnResult
-                                ( /files=/Data/Cons
-                                    [ /T=/Catln/BuildFile
-                                        ( /path=/Data/String
-                                        , /contents=/Data/String
-                                        )
-                                    ]
+                                ( /files=/Data/List/Cons
                                     ( /head=/Catln/BuildFile
                                         ( /path=/Data/String
                                         , /contents=/Data/String
                                         )
-                                    , /tail=/Data/Nil
+                                    , /tail=/Data/List/Nil
                                     )
                                 )
                             ) =
                             ( /Catln/www
                                 ( EAppArg Value /html -> /Data/String = "<html><body>web test</body></html>" ) ↦ /Catln/CatlnResult
-                                ( /name=/Data/String
-                                , /contents=/Data/String
+                                ( /files=/Data/List/Cons
+                                    ( /head=/Catln/BuildFile
+                                        ( /path=/Data/String
+                                        , /contents=/Data/String
+                                        )
+                                    , /tail=/Data/List/Nil
+                                    )
                                 )
                             )
                         ]
@@ -42,31 +42,21 @@ Prgm
             It also prints the result of the build in an iframe." )
         , /Catln/#print
             ( EAppArg Value /p -> /Catln/CatlnResult
-                ( /files=/Data/Cons
-                    [ /T=/Catln/BuildFile
-                        ( /path=/Data/String
-                        , /contents=/Data/String
-                        )
-                    ]
+                ( /files=/Data/List/Cons
                     ( /head=/Catln/BuildFile
                         ( /path=/Data/String
                         , /contents=/Data/String
                         )
-                    , /tail=/Data/Nil
+                    , /tail=/Data/List/Nil
                     )
                 ) =
                 ( Value /main ↦ /Catln/CatlnResult
-                    ( /files=/Data/Cons
-                        [ /T=/Catln/BuildFile
-                            ( /path=/Data/String
-                            , /contents=/Data/String
-                            )
-                        ]
+                    ( /files=/Data/List/Cons
                         ( /head=/Catln/BuildFile
                             ( /path=/Data/String
                             , /contents=/Data/String
                             )
-                        , /tail=/Data/Nil
+                        , /tail=/Data/List/Nil
                         )
                     )
                 )

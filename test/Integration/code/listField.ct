@@ -4,8 +4,8 @@ import "core"
 # A field of a data type may hold a list of a concrete element.
   The tags of a task read out of an Obsidian note are a list of strings rather than the run of text
   they were written as. Nothing in the checked standard library gives a list-typed field to anything
-  but a list: the only one there is the [tail] a [/Data/Cons] holds, which is the list itself.
-  Written twice over, against the [/Data/List] interface and against the [/Data/ConsList] the
+  but a list: the only one there is the [tail] a [/Data/List/Cons] holds, which is the list itself.
+  Written twice over, against the [/Data/List] interface and against the [/Data/List/ConsList] the
   bracket literal builds, so that a failure says which of the two it is rather than only that a list
   in a field did not work. And written as values declared and never defined, for the reason
   [/Dated] is in @maybeField.ct@.
@@ -22,7 +22,7 @@ every(ConsTagged.., isa= [/Catln/Doc/DShow])
 /Tagged(name= "none", tags= [])
 /Tagged(name= "one", tags= ["x"])
 
-data(ConsTagged(name -> String, tags -> /Data/ConsList[$T -> String]))
+data(ConsTagged(name -> String, tags -> /Data/List/ConsList[$T -> String]))
 
 /ConsTagged(name= "none", tags= [])
 /ConsTagged(name= "one", tags= ["x"])

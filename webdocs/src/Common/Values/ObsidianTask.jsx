@@ -38,7 +38,7 @@ const useStyles = makeStyles({
 // way because a task has a due date or has not got one, and an empty string would be a third thing
 // that is neither.
 function some(value) {
-  return value && value.name === "/Data/Some" ? value.args["/value"].contents : null;
+  return value && value.name === "/Data/Maybe/Some" ? value.args["/value"].contents : null;
 }
 
 // One task of a note in a vault running the Obsidian Tasks plugin, as the checkbox it was written as

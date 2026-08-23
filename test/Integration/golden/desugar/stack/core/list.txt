@@ -99,10 +99,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ reversed./Data/List/reverseOnto
+                        [ reversed./Data/List/reverseOnto( Value lst= Value Nil )( Value acc ) -> ∀/Data/List/ConsList = Value acc
+                        , reversed./Data/List/reverseOnto
                             ( Value lst= Cons( Value head )( Value tail ) )( Value acc ) -> ∀/Data/List/ConsList = reverseOnto( Value lst= Value tail )
                             ( Value acc= Cons( Value head= Value head )( Value tail= Value acc ) )
-                        , reversed./Data/List/reverseOnto( Value lst= Value Nil )( Value acc ) -> ∀/Data/List/ConsList = Value acc
                         ]
                     }
                 )
@@ -116,12 +116,12 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ sorted./Data/List/insert( Value /t )( Value /h )( Value x )
+                        [ sorted./Data/List/insert( Value /t )( Value /h )( Value x )( Value lst= Value Nil )= Cons( Value head= Value x )( Value tail= Value Nil )
+                        , sorted./Data/List/insert( Value /t )( Value /h )( Value x )
                             ( Value lst= Cons[ /T : ∀/Data/Algebra/Ord ]( Value head )( Value tail ) )= insertStep( Value /t= Value /t )( Value /h= Value /h )
                             ( Value before= isLessEq
                                 ( Value /this= compareTo( Value other= Value head )( Value /this= Value x ) )
                             )( Value x= Value x )( Value head= Value head )( Value tail= Value tail )
-                        , sorted./Data/List/insert( Value /t )( Value /h )( Value x )( Value lst= Value Nil )= Cons( Value head= Value x )( Value tail= Value Nil )
                         ]
                     }
                 )
@@ -189,13 +189,13 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ range./Data/List/rangeStep( Value more= Value /Data/Primitive/True )( Value i )( Value stop ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = Cons( Value head= Value i )
+                        [ range./Data/List/rangeStep( Value more= Value /Data/Primitive/False )( Value i )( Value stop ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = Value Nil
+                        , range./Data/List/rangeStep( Value more= Value /Data/Primitive/True )( Value i )( Value stop ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = Cons( Value head= Value i )
                             ( Value tail= rangeFrom
                                 ( Value i= /operator+( Value /l= Value i )
                                     ( Value /r= CInt 1 )
                                 )( Value stop= Value stop )
                             )
-                        , range./Data/List/rangeStep( Value more= Value /Data/Primitive/False )( Value i )( Value stop ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = Value Nil
                         ]
                     }
                 )
@@ -323,14 +323,14 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ toString./Data/List/restToString( Value /t )( Value /h )
+                        [ toString./Data/List/restToString( Value /t )( Value /h )( Value lst= Value Nil ) -> /Data/String = CStr ""
+                        , toString./Data/List/restToString( Value /t )( Value /h )
                             ( Value lst= Cons[ /T : ∀/Data/ToString ]( Value head )( Value tail ) ) -> /Data/String = /operator++
                             ( Value /l= /operator++
                                 ( Value /l= CStr ", " )
                                 ( Value /r= toString( Value /this= Value head ) )
                             )
                             ( Value /r= restToString( Value /t= Value /t )( Value /h= Value /h )( Value lst= Value tail ) )
-                        , toString./Data/List/restToString( Value /t )( Value /h )( Value lst= Value Nil ) -> /Data/String = CStr ""
                         ]
                     }
                 )
@@ -344,10 +344,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ sorted./Data/List/insertStep( Value /t )( Value /h )[ /T : ∀/Data/Algebra/Ord ]( Value before= Value /Data/Primitive/False )( Value x )( Value head )( Value tail )= Cons( Value head= Value head )
-                            ( Value tail= insert( Value /t= Value /t )( Value /h= Value /h )( Value x= Value x )( Value lst= Value tail ) )
-                        , sorted./Data/List/insertStep( Value /t )( Value /h )[ /T : ∀/Data/Algebra/Ord ]( Value before= Value /Data/Primitive/True )( Value x )( Value head )( Value tail )= Cons( Value head= Value x )
+                        [ sorted./Data/List/insertStep( Value /t )( Value /h )[ /T : ∀/Data/Algebra/Ord ]( Value before= Value /Data/Primitive/True )( Value x )( Value head )( Value tail )= Cons( Value head= Value x )
                             ( Value tail= Cons( Value head= Value head )( Value tail= Value tail ) )
+                        , sorted./Data/List/insertStep( Value /t )( Value /h )[ /T : ∀/Data/Algebra/Ord ]( Value before= Value /Data/Primitive/False )( Value x )( Value head )( Value tail )= Cons( Value head= Value head )
+                            ( Value tail= insert( Value /t= Value /t )( Value /h= Value /h )( Value x= Value x )( Value lst= Value tail ) )
                         ]
                     }
                 )

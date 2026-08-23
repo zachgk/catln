@@ -32,21 +32,14 @@ Prgm
                                     [ CStr "has one" ]
                                 ) = CStr "has one"
                             )
-                            ( Value /due -> /Data/Some
-                                [ /T=UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr "2026-01-01" ]
-                                    )
-                                ]
+                            ( Value /due -> /Data/Maybe/Some
                                 ( /value=UnionType
                                     ( Nothing
                                     , ∅
                                     ,
                                         [ CStr "2026-01-01" ]
                                     )
-                                ) = /Data/Some
+                                ) = /Data/Maybe/Some
                                 ( Value /value -> UnionType
                                     ( Nothing
                                     , ∅
@@ -62,7 +55,7 @@ Prgm
                                 ,
                                     [ CStr "has none" ]
                                 ) = CStr "has none"
-                            )( Value /due -> /Data/Nothing = Value /Data/Nothing )
+                            )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -86,7 +79,7 @@ Prgm
         [ /Catln/#md
             ( Value /text -> /Data/String = CStr "A field of a data type may be a [/Data/Maybe] of a concrete element.
             A task read out of an Obsidian note has a due date or it has none, and having none is the
-            [/Data/Nothing] arm rather than an empty string standing in for one. So a field has to be able to
+            [/Data/Maybe/Nothing] arm rather than an empty string standing in for one. So a field has to be able to
             hold a [/Data/Maybe], which nothing in the checked standard library does — [/Data/Maybe] is used
             there only as what a function takes and answers with.
             Written as values declared and never defined, since that is the whole of what a note does with
@@ -100,13 +93,13 @@ Prgm
         , /Catln/#print
             ( Value /p -> ∀/Catln/Doc/DShow = /Dated
                 ( Value /name -> /Data/String = CStr "has one" )
-                ( Value /due -> /Data/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Some
+                ( Value /due -> /Data/Maybe/Some( /value=/Data/String ) = /Data/Maybe/Some
                     ( Value /value -> /Data/String = CStr "2026-01-01" )
                 )
             )
         , /Catln/#print
             ( Value /p -> ∀/Catln/Doc/DShow = /Dated
-                ( Value /name -> /Data/String = CStr "has none" )( Value /due -> /Data/Nothing = Value /Data/Nothing )
+                ( Value /name -> /Data/String = CStr "has none" )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
             )
         ]
     }

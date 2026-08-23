@@ -18,38 +18,30 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Catln/Doc/dshow
-                            ( EAppArg Value /s -> /Data/Note/Page( /title=∀/Data/Algebra/Semigroup ) = /Data/Note/Page( EAppArg Value /title -> ∀/Data/Algebra/Semigroup ) ) -> /Catln/Doc/Show/Html( /contents=/Data/String ) = /Catln/Doc/Show/Html
+                            ( EAppArg Value /s -> /Data/Note/Page( /title=/Data/String ) = /Data/Note/Page( EAppArg Value /title -> /Data/String ) ) -> /Catln/Doc/Show/Html( /contents=∀/Data/Algebra/Semigroup ) = /Catln/Doc/Show/Html
                             ( EAppArg Value /contents -> /Data/String =
                                 ( /operator++
-                                    ( EAppArg Value /l -> UnionType
-                                        ( Just
-                                            ( PredClass /Data/Algebra/Semigroup
-                                            , fromList []
-                                            )
-                                        , /Data/Primitive/Integer
-                                        , []
-                                        ) =
+                                    ( EAppArg Value /l -> /Data/String =
                                         ( /operator++
                                             ( EAppArg Value /l -> /Data/String = "<h1>" )
-                                            ( EAppArg Value /r -> TVArg /title = ( Value /title ↦ TVArg /title ) ) ↦ UnionType
-                                            ( Just
-                                                ( PredClass /Data/Algebra/Semigroup
-                                                , fromList []
-                                                )
-                                            , /Data/Primitive/Integer
-                                            , []
-                                            )
+                                            ( EAppArg Value /r -> TVArg /title = ( Value /title ↦ TVArg /title ) ) ↦ /Data/String
                                         )
                                     )
                                     ( EAppArg Value /r -> /Data/String = "</h1>" ) ↦ /Data/String
                                 )
                             )
-                        , /Catln/Doc/dshow( EAppArg Value /s -> /Data/Note/#taskList = Value /Data/Note/#taskList ) -> /Data/Note/Show/TaskList( /tasks=/Data/String ) = /Data/Note/Show/TaskList
+                        , /Catln/Doc/dshow( EAppArg Value /s -> /Data/Note/#taskList = Value /Data/Note/#taskList ) -> /Data/Note/Show/TaskList
+                            ( /tasks=
+                                ( /Data/String + /Data/String( /annot=TopType ) )
+                            ) = /Data/Note/Show/TaskList
                             ( EAppArg Value /tasks -> /Data/String =
                                 ( /Catln/Doc/dshow./Data/Note/taskList( EAppArg Value /annot -> /s = Value /s ) ↦ /Data/String )
                             )
                         , /Catln/Doc/dshow
-                            ( EAppArg Value /s -> /Data/Note/#tasks( /query=/Data/String ) = /Data/Note/#tasks( EAppArg Value /query -> /Data/String ) ) -> /Data/Note/Show/TaskQuery( /result=/Data/String ) = /Data/Note/Show/TaskQuery
+                            ( EAppArg Value /s -> /Data/Note/#tasks( /query=/Data/String ) = /Data/Note/#tasks( EAppArg Value /query -> /Data/String ) ) -> /Data/Note/Show/TaskQuery
+                            ( /result=
+                                ( /Data/String + /Data/String( /query=TopType ) )
+                            ) = /Data/Note/Show/TaskQuery
                             ( EAppArg Value /result -> /Data/String =
                                 ( /Catln/Doc/dshow./Data/Note/tasksQuery
                                     ( EAppArg Value /query -> TVArg /query = ( Value /query ↦ TVArg /query ) ) ↦ /Data/String
@@ -159,42 +151,35 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Calendar/calendarDay
-                            ( EAppArg Value /this -> /Data/Note/Task/Simple
-                                ( /contents=TopType
-                                , /state=TopType
+                            ( EAppArg Value /this ->
+                                ( /Data/Note/Task/Simple
+                                    ( /contents=/Data/String
+                                    , /state=TopType
+                                    ) + /Task/Simple
+                                    ( /contents=TopType
+                                    , /state=TopType
+                                    )
                                 ) = /Task/Simple( EAppArg Value /contents )( EAppArg Value /state )
-                            ) -> /Data/Nothing = Value /Data/Nothing
+                            ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
                         , /Data/Calendar/calendarDay
                             ( EAppArg Value /this -> /Data/Note/Task/Obsidian
                                 ( /recurrence=TopType
-                                , /due=∀/Data/Maybe[ /T=/Data/String ]
-                                , /start=∀/Data/Maybe[ /T=/Data/String ]
+                                , /due=TopType
+                                , /start=TopType
                                 , /priority=TopType
-                                , /scheduled=∀/Data/Maybe[ /T=/Data/String ]
+                                , /scheduled=TopType
                                 , /statusType=TopType
-                                , /description=TopType
-                                , /contents=TopType
-                                , /symbol=TopType
-                                , /rest=TopType
-                                ) = /Task/Obsidian( EAppArg Value /contents )( EAppArg Value /symbol )( EAppArg Value /statusType )( EAppArg Value /description )( EAppArg Value /priority )
-                                ( EAppArg Value /start -> ∀/Data/Maybe[ /T=/Data/String ] )
-                                ( EAppArg Value /scheduled -> ∀/Data/Maybe[ /T=/Data/String ] )
-                                ( EAppArg Value /due -> ∀/Data/Maybe[ /T=/Data/String ] )( EAppArg Value /recurrence )( EAppArg Value /rest )
-                            ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Maybe[ /T=/Data/String ]
-                                , fromList []
-                                )
-                            , /Data/Note/firstDay
-                                ( /a=∀/Data/Maybe[ /T=/Data/String ]
-                                , /c=∀/Data/Maybe[ /T=/Data/String ]
-                                , /b=∀/Data/Maybe[ /T=/Data/String ]
-                                )
-                            , []
-                            ) = /Data/Note/firstDay
-                            ( EAppArg Value /a -> TVArg /start = ( Value /start ↦ TVArg /start ) )
-                            ( EAppArg Value /b -> TVArg /scheduled = ( Value /scheduled ↦ TVArg /scheduled ) )
-                            ( EAppArg Value /c -> TVArg /due = ( Value /due ↦ TVArg /due ) )
+                                , /description=/Data/String
+                                , /contents=/Data/String
+                                , /symbol=/Data/String
+                                , /rest=/Data/String
+                                ) = /Task/Obsidian( EAppArg Value /contents -> /Data/String )( EAppArg Value /symbol -> /Data/String )( EAppArg Value /statusType )( EAppArg Value /description -> /Data/String )( EAppArg Value /priority )( EAppArg Value /start )( EAppArg Value /scheduled )( EAppArg Value /due )( EAppArg Value /recurrence )( EAppArg Value /rest -> /Data/String )
+                            ) -> ∀/Data/Maybe[ /T=/Data/String ] =
+                            ( /Data/Note/firstDay
+                                ( EAppArg Value /a -> TVArg /start = ( Value /start ↦ TVArg /start ) )
+                                ( EAppArg Value /b -> TVArg /scheduled = ( Value /scheduled ↦ TVArg /scheduled ) )
+                                ( EAppArg Value /c -> TVArg /due = ( Value /due ↦ TVArg /due ) ) ↦ ∀/Data/Maybe[ /T=/Data/String ]
+                            )
                         ]
                     }
                 )
@@ -240,16 +225,17 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Note/firstDay
-                            ( EAppArg Value /a -> /Data/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Some( EAppArg Value /value -> /Data/String ) )
+                            ( EAppArg Value /a -> /Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Maybe/Some( EAppArg Value /value -> /Data/String ) )
                             ( EAppArg Value /b -> ∀/Data/Maybe[ /T=/Data/String ] )
-                            ( EAppArg Value /c -> ∀/Data/Maybe[ /T=/Data/String ] ) -> /Data/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Some
+                            ( EAppArg Value /c -> ∀/Data/Maybe[ /T=/Data/String ] ) -> /Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Maybe/Some
                             ( EAppArg Value /value -> TVArg /value = ( Value /value ↦ TVArg /value ) )
-                        , /Data/Note/firstDay( EAppArg Value /a -> /Data/Nothing = Value /Data/Nothing )
-                            ( EAppArg Value /b -> /Data/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Some( EAppArg Value /value -> /Data/String ) )
-                            ( EAppArg Value /c -> ∀/Data/Maybe[ /T=/Data/String ] ) -> /Data/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Some
+                        , /Data/Note/firstDay( EAppArg Value /a -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+                            ( EAppArg Value /b -> /Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Maybe/Some( EAppArg Value /value -> /Data/String ) )
+                            ( EAppArg Value /c -> ∀/Data/Maybe[ /T=/Data/String ] ) -> /Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Maybe/Some
                             ( EAppArg Value /value -> TVArg /value = ( Value /value ↦ TVArg /value ) )
-                        , /Data/Note/firstDay( EAppArg Value /a -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /b -> /Data/Nothing = Value /Data/Nothing )
-                            ( EAppArg Value /c -> ∀/Data/Maybe[ /T=/Data/String ] ) -> TVArg /c = ( Value /c ↦ TVArg /c )
+                        , /Data/Note/firstDay( EAppArg Value /a -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /b -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+                            ( EAppArg Value /c -> ∀/Data/Maybe[ /T=/Data/String ] ) -> ∀/Data/Maybe[ /T=/Data/String ] =
+                            ( Value /c ↦ ∀/Data/Maybe[ /T=/Data/String ] )
                         ]
                     }
                 )
@@ -513,20 +499,18 @@ Prgm
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "A checkbox read as a checkbox sits on no day, whichever way its box is written." )
         , /Catln/#print
-            ( EAppArg Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) =
+            ( EAppArg Value /p -> ∀/Data/Primitive/Boolean =
                 ( /operator==
-                    ( EAppArg Value /l ->
-                        ( TopType | PredClass /Data/Maybe[ /T=/Data/String ] && PredClass /Data/Algebra/Eq ) =
+                    ( EAppArg Value /l -> ∀/Data/Maybe[ /T=/Data/String ] =
                         ( /calendarDay
                             ( EAppArg Value /this -> /Data/Note/Task/Simple
                                 ( /contents=/Data/String
                                 , /state=/Data/Primitive/False
                                 ) = /Data/Note/Task/Simple
                                 ( EAppArg Value /contents -> /Data/String = "read it" )( EAppArg Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
-                            ) ↦
-                            ( TopType | PredClass /Data/Maybe[ /T=/Data/String ] && PredClass /Data/Algebra/Eq )
+                            ) ↦ ∀/Data/Maybe[ /T=/Data/String ]
                         )
-                    )( EAppArg Value /r -> /Data/Nothing = Value /Data/Nothing ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean )
+                    )( EAppArg Value /r -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing ) ↦ ∀/Data/Primitive/Boolean
                 )
             )
             ( EAppArg Value /result -> /Data/String = "True" )
@@ -535,17 +519,16 @@ Prgm
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "  the day it may be begun." )
         , /Catln/#print
-            ( EAppArg Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) =
+            ( EAppArg Value /p -> ∀/Data/Primitive/Boolean =
                 ( /operator==
-                    ( EAppArg Value /l ->
-                        ( TopType | PredClass /Data/Maybe[ /T=/Data/String ] && PredClass /Data/Algebra/Eq ) =
+                    ( EAppArg Value /l -> ∀/Data/Maybe[ /T=/Data/String ] =
                         ( /calendarDay
                             ( EAppArg Value /this -> /Data/Note/Task/Obsidian
-                                ( /recurrence=/Data/Nothing
-                                , /due=/Data/Some[ /T=/Data/String ]( /value=/Data/String )
-                                , /start=/Data/Some[ /T=/Data/String ]( /value=/Data/String )
+                                ( /recurrence=/Data/Maybe/Nothing
+                                , /due=/Data/Maybe/Some( /value=/Data/String )
+                                , /start=/Data/Maybe/Some( /value=/Data/String )
                                 , /priority=/Data/Note/Priority/None
-                                , /scheduled=/Data/Nothing
+                                , /scheduled=/Data/Maybe/Nothing
                                 , /statusType=/Data/Note/StatusType/Todo
                                 , /description=/Data/String
                                 , /contents=/Data/String
@@ -555,37 +538,35 @@ Prgm
                                 ( EAppArg Value /contents -> /Data/String = "Water the plants" )
                                 ( EAppArg Value /symbol -> /Data/String = " " )( EAppArg Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
                                 ( EAppArg Value /description -> /Data/String = "Water the plants" )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )
-                                ( EAppArg Value /start -> /Data/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Some
+                                ( EAppArg Value /start -> /Data/Maybe/Some( /value=/Data/String ) = /Data/Maybe/Some
                                     ( EAppArg Value /value -> /Data/String = "2026-01-02" )
-                                )( EAppArg Value /scheduled -> /Data/Nothing = Value /Data/Nothing )
-                                ( EAppArg Value /due -> /Data/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Some
+                                )( EAppArg Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+                                ( EAppArg Value /due -> /Data/Maybe/Some( /value=/Data/String ) = /Data/Maybe/Some
                                     ( EAppArg Value /value -> /Data/String = "2026-01-04" )
-                                )( EAppArg Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                                )( EAppArg Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                                 ( EAppArg Value /rest -> /Data/String = "{}" )
-                            ) ↦
-                            ( TopType | PredClass /Data/Maybe[ /T=/Data/String ] && PredClass /Data/Algebra/Eq )
+                            ) ↦ ∀/Data/Maybe[ /T=/Data/String ]
                         )
                     )
-                    ( EAppArg Value /r -> /Data/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Some
+                    ( EAppArg Value /r -> /Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Maybe/Some
                         ( EAppArg Value /value -> /Data/String = "2026-01-02" )
-                    ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean )
+                    ) ↦ ∀/Data/Primitive/Boolean
                 )
             )
             ( EAppArg Value /result -> /Data/String = "True" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "A task naming only the day it is due sits on that day, the two before it being absent." )
         , /Catln/#print
-            ( EAppArg Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) =
+            ( EAppArg Value /p -> ∀/Data/Primitive/Boolean =
                 ( /operator==
-                    ( EAppArg Value /l ->
-                        ( TopType | PredClass /Data/Maybe[ /T=/Data/String ] && PredClass /Data/Algebra/Eq ) =
+                    ( EAppArg Value /l -> ∀/Data/Maybe[ /T=/Data/String ] =
                         ( /calendarDay
                             ( EAppArg Value /this -> /Data/Note/Task/Obsidian
-                                ( /recurrence=/Data/Nothing
-                                , /due=/Data/Some[ /T=/Data/String ]( /value=/Data/String )
-                                , /start=/Data/Nothing
+                                ( /recurrence=/Data/Maybe/Nothing
+                                , /due=/Data/Maybe/Some( /value=/Data/String )
+                                , /start=/Data/Maybe/Nothing
                                 , /priority=/Data/Note/Priority/None
-                                , /scheduled=/Data/Nothing
+                                , /scheduled=/Data/Maybe/Nothing
                                 , /statusType=/Data/Note/StatusType/Todo
                                 , /description=/Data/String
                                 , /contents=/Data/String
@@ -594,35 +575,33 @@ Prgm
                                 ) = /Data/Note/Task/Obsidian
                                 ( EAppArg Value /contents -> /Data/String = "Ship it" )
                                 ( EAppArg Value /symbol -> /Data/String = " " )( EAppArg Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
-                                ( EAppArg Value /description -> /Data/String = "Ship it" )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /start -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /scheduled -> /Data/Nothing = Value /Data/Nothing )
-                                ( EAppArg Value /due -> /Data/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Some
+                                ( EAppArg Value /description -> /Data/String = "Ship it" )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+                                ( EAppArg Value /due -> /Data/Maybe/Some( /value=/Data/String ) = /Data/Maybe/Some
                                     ( EAppArg Value /value -> /Data/String = "2026-01-04" )
-                                )( EAppArg Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                                )( EAppArg Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                                 ( EAppArg Value /rest -> /Data/String = "{}" )
-                            ) ↦
-                            ( TopType | PredClass /Data/Maybe[ /T=/Data/String ] && PredClass /Data/Algebra/Eq )
+                            ) ↦ ∀/Data/Maybe[ /T=/Data/String ]
                         )
                     )
-                    ( EAppArg Value /r -> /Data/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Some
+                    ( EAppArg Value /r -> /Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Maybe/Some
                         ( EAppArg Value /value -> /Data/String = "2026-01-04" )
-                    ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean )
+                    ) ↦ ∀/Data/Primitive/Boolean
                 )
             )
             ( EAppArg Value /result -> /Data/String = "True" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "A task naming none of the three sits on no day, which is an answer and not a task left out." )
         , /Catln/#print
-            ( EAppArg Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) =
+            ( EAppArg Value /p -> ∀/Data/Primitive/Boolean =
                 ( /operator==
-                    ( EAppArg Value /l ->
-                        ( TopType | PredClass /Data/Maybe[ /T=/Data/String ] && PredClass /Data/Algebra/Eq ) =
+                    ( EAppArg Value /l -> ∀/Data/Maybe[ /T=/Data/String ] =
                         ( /calendarDay
                             ( EAppArg Value /this -> /Data/Note/Task/Obsidian
-                                ( /recurrence=/Data/Nothing
-                                , /due=/Data/Nothing
-                                , /start=/Data/Nothing
+                                ( /recurrence=/Data/Maybe/Nothing
+                                , /due=/Data/Maybe/Nothing
+                                , /start=/Data/Maybe/Nothing
                                 , /priority=/Data/Note/Priority/None
-                                , /scheduled=/Data/Nothing
+                                , /scheduled=/Data/Maybe/Nothing
                                 , /statusType=/Data/Note/StatusType/Todo
                                 , /description=/Data/String
                                 , /contents=/Data/String
@@ -631,12 +610,11 @@ Prgm
                                 ) = /Data/Note/Task/Obsidian
                                 ( EAppArg Value /contents -> /Data/String = "Book" )
                                 ( EAppArg Value /symbol -> /Data/String = " " )( EAppArg Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
-                                ( EAppArg Value /description -> /Data/String = "Book" )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /start -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /scheduled -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /due -> /Data/Nothing = Value /Data/Nothing )( EAppArg Value /recurrence -> /Data/Nothing = Value /Data/Nothing )
+                                ( EAppArg Value /description -> /Data/String = "Book" )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                                 ( EAppArg Value /rest -> /Data/String = "{}" )
-                            ) ↦
-                            ( TopType | PredClass /Data/Maybe[ /T=/Data/String ] && PredClass /Data/Algebra/Eq )
+                            ) ↦ ∀/Data/Maybe[ /T=/Data/String ]
                         )
-                    )( EAppArg Value /r -> /Data/Nothing = Value /Data/Nothing ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean )
+                    )( EAppArg Value /r -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing ) ↦ ∀/Data/Primitive/Boolean
                 )
             )
             ( EAppArg Value /result -> /Data/String = "True" )
