@@ -19,6 +19,11 @@ const NODE_HEIGHT = 40;
 const FOCUS_ZOOM = 1.25;
 const FOCUS_MS = 400;
 
+// What a pick is marked in: the page picked, the pages it is joined to, and the imports joining
+// them. One colour, so that what is lit reads as one neighbourhood rather than as a page and some
+// other pages which happen to stand out.
+const HIGHLIGHT = '#d32f2f';
+
 // How far the view may be zoomed. Out far enough to hold a program of the standard library and
 // everything above it, which is some thirty pages and does not fit at the half scale React Flow
 // would otherwise stop at; in no further than a page is drawn at, since there is nothing in a page
@@ -88,10 +93,24 @@ const useStyles = makeStyles({
     borderColor: '#1976d2',
     fontWeight: 'bold'
   },
+  // A page the picked one imports or is imported by. Marked in the same colour as the pick and more
+  // faintly, because what it is is the pick's neighbour: a colour of its own would read as a third
+  // kind of page rather than as the pick's surroundings, and the same weight would leave a reader
+  // hunting for which of the lit pages they had actually picked.
+  //
+  // Declared after `core` and `root` so that it holds of a page which is one of those too. Two
+  // classes of one weight are settled by which was written last, not by the order they are put on
+  // the node.
+  neighbour: {
+    borderColor: HIGHLIGHT,
+    background: '#fffaf8',
+    color: 'inherit'
+  },
   selected: {
-    borderColor: '#d32f2f',
+    borderColor: HIGHLIGHT,
     borderWidth: '2px',
-    background: '#fff3f0'
+    background: '#fff3f0',
+    color: 'inherit'
   },
   dimmed: {
     opacity: 0.35
@@ -229,11 +248,16 @@ function PrgmGraphView(props) {
   const shownNodes = useMemo(() => nodes.map(node => {
     const {page} = node.data;
     const lit = !neighbours || neighbours.has(node.id);
+    const isSelected = node.id === selected;
+    // Marked as well as left lit, so that what a page is joined to is something a reader can see
+    // rather than something they work out from what has gone faint.
+    const isNeighbour = Boolean(neighbours) && lit && !isSelected;
     const classNames = [
       classes.node,
       page.pgnCore ? classes.core : '',
       page.pgnRoot ? classes.root : '',
-      node.id === selected ? classes.selected : '',
+      isNeighbour ? classes.neighbour : '',
+      isSelected ? classes.selected : '',
       lit ? '' : classes.dimmed
     ].filter(Boolean).join(' ');
     return {
@@ -247,12 +271,15 @@ function PrgmGraphView(props) {
     };
   }), [nodes, selected, neighbours, classes]);
 
+  // The imports joining the picked page to its neighbours are marked with them. A neighbour lit
+  // across an unlit import would say the two are joined without saying which way, which is the whole
+  // of what an import is.
   const shownEdges = useMemo(() => edges.map(edge => {
-    const lit = !neighbours || edge.source === selected || edge.target === selected;
+    const joins = Boolean(neighbours) && (edge.source === selected || edge.target === selected);
     return {
       ...edge,
-      markerEnd: {type: MarkerType.ArrowClosed},
-      style: lit ? undefined : {opacity: 0.15}
+      markerEnd: {type: MarkerType.ArrowClosed, color: joins ? HIGHLIGHT : undefined},
+      style: joins ? {stroke: HIGHLIGHT, strokeWidth: 2} : (neighbours ? {opacity: 0.15} : undefined)
     };
   }), [edges, selected, neighbours]);
 

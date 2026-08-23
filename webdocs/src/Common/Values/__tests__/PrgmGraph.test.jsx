@@ -188,6 +188,40 @@ describe('PrgmGraph', () => {
     expect(boxOf('str.ct').className).toMatch(/dimmed/)
   })
 
+  // Marked as well as left lit: what a page is joined to is something to see rather than something
+  // to work out from what has gone faint.
+  it('marks the pages the picked one is joined to', async () => {
+    render(<Providers><PrgmGraph {...graphed()} /></Providers>)
+
+    await userEvent.click(libraryToggle())
+    fireEvent.click(screen.getByText('Notes.md'))
+
+    expect(boxOf('Tasks.md').className).toMatch(/neighbour/)
+    expect(boxOf('main.ct').className).toMatch(/neighbour/)
+    expect(boxOf('str.ct').className).not.toMatch(/neighbour/)
+  })
+
+  // The pick is marked apart from what it is joined to. Marking the two the same would leave a
+  // reader hunting for which of the lit pages they had picked.
+  it('marks the picked page apart from its neighbours', () => {
+    render(<Providers><PrgmGraph {...graphed()} /></Providers>)
+
+    fireEvent.click(screen.getByText('Notes.md'))
+
+    expect(boxOf('Notes.md').className).toMatch(/selected/)
+    expect(boxOf('Notes.md').className).not.toMatch(/neighbour/)
+    expect(boxOf('Tasks.md').className).not.toMatch(/selected/)
+  })
+
+  // Nothing is marked until something is picked, so a graph just opened is a graph of pages rather
+  // than of one page's surroundings.
+  it('marks nothing until a page is picked', () => {
+    render(<Providers><PrgmGraph {...graphed()} /></Providers>)
+
+    expect(boxOf('Notes.md').className).not.toMatch(/neighbour|selected/)
+    expect(boxOf('Tasks.md').className).not.toMatch(/neighbour|selected/)
+  })
+
   // A page picked and then hidden is nothing being picked. Dimming what a pick is not joined to,
   // with the pick itself gone, would dim every page there is and leave a reader looking at a graph
   // they cannot read and did not ask to change.
