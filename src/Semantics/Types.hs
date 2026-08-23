@@ -4248,6 +4248,15 @@ tightenDeclBoundedDims typeEnv p
       , Just contribss <- mapM (occurrenceContrib k) (H.toList (ptArgs tmpl))
       , contribs@(_:_) <- concat contribss
       , let joined = unionAllTypes typeEnv contribs
+      -- An EMPTY join means no occupant pins the dimension at all (every occurrence's
+      -- content is a bare atom member — a wrapper over @Lf@\/@Nil@), which is an ABSENCE of
+      -- information, not an empty dimension: the value exists with the variable free.
+      -- Tightening to ∅ would manufacture an ∅-valued type parameter, which
+      -- 'partialHasEmptySlot' (rightly, for an OCCUPIED parameter like @Cons[/T=∅]@) reads
+      -- as the empty set — collapsing an inhabited value like the empty
+      -- @MkSet(map=Leaf)@ to ⊥. A PARTIAL join (@Nil@ beside a content-bearing occupant)
+      -- still contributes its ∅ harmlessly through the union.
+      , not (isBottomType joined)
       , not (isSubtypeOfWithEnv typeEnv H.empty d joined)
       = compactType typeEnv H.empty $ intersectTypesEnv typeEnv H.empty d joined
       | otherwise = d
