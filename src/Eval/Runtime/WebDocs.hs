@@ -27,7 +27,7 @@ import           Data.Aeson.Text     (encodeToLazyText)
 import           Data.Char           (toLower)
 import           Data.Graph
 import qualified Data.HashMap.Strict as H
-import           Data.List           (elemIndex, intercalate, isInfixOf,
+import           Data.List           (elemIndex, intercalate, isInfixOf, nub,
                                       partition, sort, sortOn)
 import           Data.List.Split     (splitOn)
 import qualified Data.Map            as M
@@ -43,6 +43,8 @@ import           Semantics.Types     (ArgName, ClassGraph (..),
                                       maybeGetClassSingleton, maybeGetSingleton,
                                       mkName, nameStr, pkName,
                                       relativeNameMatches)
+import           Syntax.Ct.Prgm      (isCorePage)
+import           System.FilePath     (takeFileName)
 import           System.IO.Unsafe    (unsafePerformIO)
 import           Text.Printf
 import           TypeCheck.Common    (TraceConstrain, VPrgm,
@@ -51,7 +53,7 @@ import           Utils
 
 -- | The primitives backing the @Catln/Doc@ display annotations.
 webDocsPrims :: [EPrim]
-webDocsPrims = [listProgram, filterProgram, typeInfer, typeInferPnt, debugger, debugExpr, sidebar, searchPagesFor, docPagesFor, testRun]
+webDocsPrims = [listProgram, filterProgram, typeInfer, typeInferPnt, debugger, debugExpr, sidebar, searchPagesFor, docPagesFor, testRun, prgmGraph]
 
 -- | The argument of @/Catln/Doc/listProgram@ naming which stage to list, and the members of the
 -- @ListProgramMode@ enum it takes. @stack\/core\/webdoc.ct@ is the source of truth for these; a
@@ -482,6 +484,68 @@ testRun = EEnvPrim "testRun" prim
           -- Of the definition the annotation is written on rather than of the page, since a @#test@
           -- marks one definition and reports on that one.
           return $ encodeJsonText . filter ((== oaTestId oa) . trOwnerId) <$> orNotes tests
+
+-- | One page of the import graph a @Show/PrgmGraph@ carries: the page itself, and the pages it
+-- imports, which are its outgoing edges.
+--
+-- 'pgnPath' is 'Semantics.Prgm.impDisp', the name the page is opened by, as 'SidebarNode' uses it
+-- and for its reason: it is both what identifies a node and what a link to that page is built from,
+-- so a graph carrying it needs nothing else to be navigable. 'pgnName' is the same path's last part,
+-- which is what a node is labelled by — a graph of thirty pages has no room to write each of them
+-- out, and the whole path is there to show beside the one being pointed at.
+--
+-- 'pgnCore' and 'pgnRoot' are marked rather than acted on. Which pages are worth drawing is the
+-- reader's to turn over — a program's own pages and the standard library it rests on are different
+-- questions asked of one graph — and a graph answering only one of them would have to be asked
+-- again to answer the other.
+data PrgmGraphNode = PrgmGraphNode {
+    pgnPath    :: String,
+    pgnName    :: String,
+    -- | The pages this one imports, by 'pgnPath'. Every one of them is a node of the graph: a page
+    -- is in the graph because something reaches it, so what a page in it reaches is in it too.
+    pgnImports :: [String],
+    -- | Whether the page is part of the standard library ('Syntax.Ct.Prgm.isCorePage').
+    pgnCore    :: Bool,
+    -- | Whether the page is the one the graph was evaluated for, which is the graph's root. None is
+    -- where the evaluation was scoped to no page, and the graph is of every page there is.
+    pgnRoot    :: Bool
+  } deriving (Show, Generic, ToJSON)
+
+-- | Backs @/Catln/Doc/prgmGraph@, the data carried by a @Show/PrgmGraph@ page. It renders the pages
+-- of the program being evaluated as JSON: a node per page, carrying the pages it imports.
+--
+-- The scope is the evaluation's own, as 'fromStage' takes it: the page the annotation is written in
+-- and everything it imports, or every page there is where it was written in none. That is what makes
+-- a graph written in a page the graph of that page's program, and the same annotation opened on its
+-- own the graph of the whole doc server.
+--
+-- Asked of 'esBuilt' though nothing here reads a stage, because the edges are what is wanted and
+-- 'esPages' carries only the keys. It costs nothing to ask this way: an annotation of a scope is
+-- only evaluated once that scope was built, and an unscoped one is only evaluated once
+-- @WebDocs.annotResp@ built everything. The 'SSF' each node carries is dropped unforced.
+prgmGraph :: EPrim
+prgmGraph = EEnvPrim "prgmGraph" prim
+  where
+    prim Env{evService = Nothing} _ = Left noService
+    prim Env{evService = Just svc} _ = askService $ do
+      let scope = esScope svc
+      graph <- esBuilt svc scope
+      let pages = maybe graph (`graphFilterReaches` graph) scope
+      return $ encodeJsonText <$> traverse (graphNode scope) (graphToNodes pages)
+    -- As in 'sidebar', a page with no display path can be neither identified nor opened, so it is
+    -- reported rather than dropped from the graph, where it would read as a page nothing imports.
+    graphNode scope (_, imp, imports) = do
+      disp <- nodePath imp
+      -- One edge per page imported, however many times the page imports it. A page which writes
+      -- @import "core"@ is given the standard library twice — once as it wrote it and once as
+      -- 'Syntax.Parsers.pageImports' injects it — which @Main.xFmt@ already routes around where it
+      -- writes a page's imports back. Two arrows between one pair of pages would say the second
+      -- import means something, and it means nothing.
+      imports' <- traverse nodePath (nub imports)
+      return $ PrgmGraphNode disp (takeFileName disp) imports' (isCorePage imp) (Just imp == scope)
+    nodePath imp = case impDisp imp of
+      Just disp -> Right disp
+      Nothing -> Left $ printf "prgmGraph has no file path for %s, so it has no page to draw" (show imp)
 
 -- | A pipeline answer as a primitive's, whose failure is the notes that produced it. 'CRes.fromCRes'
 -- is the partial version of this, which a primitive must not use: a stage it was not given is a

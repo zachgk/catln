@@ -6,6 +6,7 @@ import path from 'pathe';
 import {KeyWord, PTypeName, tagJoin, PageDirContext} from './Common';
 import ListProgram from './Values/ListProgram';
 import TypeInfer, {TypeInferPnt} from './Values/TypeInfer';
+import PrgmGraph from './Values/PrgmGraph';
 import Debugger from './Values/Debugger';
 import TypePage from './Values/Type';
 import Sidebar from './Values/Sidebar';
@@ -64,6 +65,8 @@ function Value(props) {
       return <TypeInfer {...val.args} />;
     case "/Catln/Doc/Show/TypeInferPnt":
       return <TypeInferPnt {...val.args} />;
+    case "/Catln/Doc/Show/PrgmGraph":
+      return <PrgmGraph {...val.args} />;
     case "/Catln/Doc/Show/Debugger":
       return <Debugger {...val.args} />;
     case "/Catln/Doc/Show/Sidebar":

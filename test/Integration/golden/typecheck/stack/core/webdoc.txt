@@ -45,6 +45,8 @@ Prgm
                             , /trace=/Data/String
                             ) = /Catln/Doc/Show/TypeInferPnt
                             ( Value /trace -> /Data/String = /dshow./Catln/Doc/typeInferPnt( Value /pnt -> TVArg /pnt = Value /pnt )( Value /annot -> /s = Value /s ) )( Value /pnt -> TVArg /pnt = Value /pnt )
+                        , /Catln/Doc/dshow( Value /s -> /Catln/Doc/#prgmGraph = Value /Catln/Doc/#prgmGraph ) -> /Catln/Doc/Show/PrgmGraph( /graph=/Data/String ) = /Catln/Doc/Show/PrgmGraph
+                            ( Value /graph -> /Data/String = /dshow./Catln/Doc/prgmGraph( Value /annot -> /s = Value /s ) )
                         , /Catln/Doc/dshow( Value /s -> /Catln/Doc/#sidebar = Value /Catln/Doc/#sidebar ) -> /Catln/Doc/Show/Sidebar( /pages=/Data/String ) = /Catln/Doc/Show/Sidebar
                             ( Value /pages -> /Data/String = /dshow./Catln/Doc/sidebar( Value /annot -> /s = Value /s ) )
                         , /Catln/Doc/dshow( Value /s -> /Catln/Doc/#search = Value /Catln/Doc/#search ) ->
@@ -82,6 +84,15 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /dshow./Catln/Doc/sidebar( Value /annot ) -> /Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Doc/#prgmGraph"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/Doc/#prgmGraph ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -216,6 +227,16 @@ Prgm
                     }
                 )
             ,
+                ( "/dshow./Catln/Doc/prgmGraph"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /dshow./Catln/Doc/prgmGraph( Value /annot ) -> /Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Doc/#debugger"
                 , ObjectMapItem
                     { omiDecls =
@@ -281,6 +302,16 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /dshow./Catln/Doc/testRun( Value /annot ) -> /Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Doc/Show/PrgmGraph"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Doc/Show/PrgmGraph( Value /graph -> /Data/String ) ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -455,6 +486,9 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGClass
             ( False
             , /Catln/Doc/DShow
@@ -468,6 +502,7 @@ Prgm
                 , /Catln/Doc/Show/TypePage..
                 , /Catln/Doc/Show/TypeInfer..
                 , /Catln/Doc/Show/TypeInferPnt..
+                , /Catln/Doc/Show/PrgmGraph..
                 , /Catln/Doc/Show/Sidebar..
                 , /Catln/Doc/Show/Search..
                 , /Catln/Doc/Show/DocPages..
@@ -478,13 +513,15 @@ Prgm
               webdocs render such a value through its [/Data/toString]. This is what lets a `> value`
               print statement accept any [ToString] type. A [DShow] value that is not [ToString] (a
               visualization like [Show/MD]) is still printable, but only [ToString] values are compared
-              against a print/result golden.            "
+              against a print/result golden.             "
             )
         , CGClass
             ( False
             , /Catln/Doc/DocPage
             ,
-                [ /Catln/Doc/#listProgram( /mode=∀/Catln/Doc/ListProgramMode ) ]
+                [ /Catln/Doc/#listProgram( /mode=∀/Catln/Doc/ListProgramMode )
+                , /Catln/Doc/#prgmGraph
+                ]
             , Just "Marks an annotation as one the webdocs offer as a page of its own, rather than one only written
               into a program beside the thing it is about. A reader is offered these by name — in the search
               box, without having to know they exist — so what is marked here is what there is to find, and
@@ -497,6 +534,11 @@ Prgm
               nothing. And a page about one program rather than about the pages there are ([#typeInfer]) has
               to be pointed at that program to mean anything, so it belongs where a page is already in hand
               rather than in a box offering the same thing wherever it is opened from.
+              The last of those is about what the page says rather than about which program it is of, so a
+              page about a program which still says something of every page there is belongs in the box.
+              [#prgmGraph] is the case: pointed at a program it draws that program, and pointed at nothing it
+              draws which pages the doc server holds and how they reach one another, which is worth opening
+              from anywhere.
               Membership says the annotation is a page, not that it can be written with no argument. What can
               be offered without a reader typing anything is worked out from the declaration: an annotation
               taking no arguments is offered once, and one whose arguments are all sealed classes is offered
@@ -536,6 +578,11 @@ Prgm
             nothing. And a page about one program rather than about the pages there are ([#typeInfer]) has
             to be pointed at that program to mean anything, so it belongs where a page is already in hand
             rather than in a box offering the same thing wherever it is opened from.
+            The last of those is about what the page says rather than about which program it is of, so a
+            page about a program which still says something of every page there is belongs in the box.
+            [#prgmGraph] is the case: pointed at a program it draws that program, and pointed at nothing it
+            draws which pages the doc server holds and how they reach one another, which is worth opening
+            from anywhere.
             Membership says the annotation is a page, not that it can be written with no argument. What can
             be offered without a reader typing anything is worked out from the declaration: an annotation
             taking no arguments is offered once, and one whose arguments are all sealed classes is offered

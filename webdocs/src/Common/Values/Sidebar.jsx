@@ -145,6 +145,10 @@ function FileMenu(props) {
         onClose={handleClose}
       >
         <MenuItem onClick={linkClose(annotLink("#typeInfer", prgmName))}>Type Inference</MenuItem>
+        {/* Scoped to this page, which is what makes it the graph of this page's program. The same
+            annotation is offered unscoped in the search box, where it is the graph of every page the
+            doc server holds. */}
+        <MenuItem onClick={linkClose(annotLink("#prgmGraph", prgmName))}>Program Graph</MenuItem>
       </Menu>
     </span>
   );

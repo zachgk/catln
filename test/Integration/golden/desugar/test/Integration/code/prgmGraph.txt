@@ -1,0 +1,31 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= CInt 0 )( Value /this= Value io )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG = [ CGType ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "Tests a /Catln/Doc/#prgmGraph over a program with pages of its own. A graph shows the pages the
+            page it is written in reaches and the imports between them, so this page reaches a vault beside it
+            and the graph holds this page, the vault, the notes the vault holds, and the standard library.
+            The vault is named note by note as calendar.ct names it, and for its reason: a vault does not
+            import the notes it holds, so a golden test walking out from here would reach the vault and stop.
+            What the graph holds is not written down here. The annotations of a page are evaluated for the file
+            a test names, and what they evaluate to is not what a golden of the program records — so the
+            annotation is what is written down here and what answers it is PrgmGraphTests." )
+        , Value #prgmGraph
+        ]
+    }

@@ -20,6 +20,11 @@ module(Catln/Doc)
       nothing. And a page about one program rather than about the pages there are ([#typeInfer]) has
       to be pointed at that program to mean anything, so it belongs where a page is already in hand
       rather than in a box offering the same thing wherever it is opened from.
+      The last of those is about what the page says rather than about which program it is of, so a
+      page about a program which still says something of every page there is belongs in the box.
+      [#prgmGraph] is the case: pointed at a program it draws that program, and pointed at nothing it
+      draws which pages the doc server holds and how they reach one another, which is worth opening
+      from anywhere.
       Membership says the annotation is a page, not that it can be written with no argument. What can
       be offered without a reader typing anything is worked out from the declaration: an annotation
       taking no arguments is offered once, and one whose arguments are all sealed classes is offered
@@ -180,6 +185,43 @@ module(Catln/Doc)
       #runtime("typeInferPnt")
 
     Show/TypeInferPnt(trace= typeInferPnt(annot= s), pnt= pnt)
+
+  annot(#prgmGraph, isa= [/Catln/Doc/DocPage])
+    # The pages of the program it is written in, drawn as the graph of which of them import which.
+      It takes nothing, as [/Data/Calendar/#calendar] takes nothing and for its reason: what to draw
+      is what is there. The program is the page it is written in and everything that page imports,
+      and written where nothing is scoped it is every page the doc server holds.
+      Marked as a page of its own, which [#typeInfer] above is not. The paragraph on [DocPage] leaves
+      a page about one program out of the box because it has to be pointed at a program to mean
+      anything, and that holds of this one written in a page. It does not hold of this one written in
+      none: a graph of every page there is and how they reach one another is about which pages there
+      are, which is the question [#sidebar] and [#search] answer in the shapes they answer it in, and
+      is worth opening from wherever a reader is. So it is offered by name, and a reader who wants
+      the graph of one program opens it from that program.
+
+  data(Show/PrgmGraph(graph -> String))
+    # [Show/PrgmGraph] shows a program as its pages and the imports between them: a node per page,
+      carrying the path it is opened by, the pages it imports, whether it belongs to the standard
+      library, and whether it is the page the graph was drawn for. It carries all of that in [graph],
+      so the webdocs draw the graph from the compiled value rather than asking the compiler for it
+      over a separate route.
+      The standard library is in it, marked, rather than left out. A program's own pages and the
+      library it rests on are two questions asked of one graph, and a graph answering only one of
+      them would have to be drawn again to answer the other. Which of them a reader is asking is
+      decided where the graph is drawn, as [Show/Calendar] decides there which days it draws and for
+      the same reason: that is a reader turning over what they have already been handed.
+
+  every(Show/PrgmGraph.., isa= [/Catln/Doc/DShow])
+
+  dshow(s= #prgmGraph) =
+    prgmGraph(annot) -> String
+      # [prgmGraph] renders the pages the evaluation covers as JSON: each the path it is opened by,
+        the paths of the pages it imports, and whether it is the standard library's and whether it is
+        the one the evaluation is of. Every page a page imports is itself one of the pages, since a
+        page is covered because something reached it and what it reaches is reached too.
+      #runtime("prgmGraph")
+
+    Show/PrgmGraph(graph= prgmGraph(annot= s))
 
   annot(#sidebar)
 
