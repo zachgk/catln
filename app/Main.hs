@@ -14,7 +14,7 @@ import           Syntax.Ct.Builder    (applyRawArgs, rawStr, rawVal)
 import           Syntax.Ct.Formatter  (formatRootPrgm)
 import           Syntax.Ct.Prgm       (ParsedImport (..), RawPrgm (..),
                                        RawStatement (..), RawStatementTree (..),
-                                       rawExprAppliedArgsMap)
+                                       isCorePage, rawExprAppliedArgsMap)
 import           Syntax.Parsers       (canonicalImport, mkDesCanonicalImportStr,
                                        mkRawImportStr, parseFile,
                                        parseImportAlone, readFiles)
@@ -216,10 +216,6 @@ xDepTree prgmName showCore = do
     displayName :: FileImport -> String
     displayName imp = fromMaybe (show imp) (impDisp imp)
 
-    -- Check if a dependency is a core dependency
-    isCoreDep :: FileImport -> Bool
-    isCoreDep imp = "core" `isInfixOf` displayName imp
-
     -- Print the dependency tree, returning the updated visited set.
     -- The visited set is threaded through siblings so each node appears at most once.
     printTree :: H.HashMap FileImport [FileImport] -> S.HashSet FileImport -> String -> FileImport -> IO (S.HashSet FileImport)
@@ -227,7 +223,7 @@ xDepTree prgmName showCore = do
       let deps = H.lookupDefault [] imp dm
       -- Filter out core dependencies if showCore is False, and already-visited nodes
       let filteredDeps = filter (not . (`S.member` visited))
-                       $ if showCore then deps else filter (not . isCoreDep) deps
+                       $ if showCore then deps else filter (not . isCorePage) deps
       let depCount = length filteredDeps
       foldlM (printDep dm prefix depCount) visited (zip [1..] filteredDeps)
       where

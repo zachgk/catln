@@ -441,14 +441,10 @@ readPathWrittenIn written (ReadTree dir) = any (readsUnder dir) written
 -- may leave a page unread rather than a guess made here.
 pageImports :: FileImport -> Maybe (RawPrgm ()) -> [RawFileImport] -> [RawFileImport]
 pageImports imp prgm imports
-  | includeCore && not ("core" `isInfixOf` name) = mkRawFileImport (rawStr "core") : imports
+  | includeCore && not (isCorePage imp) = mkRawFileImport (rawStr "core") : imports
   | otherwise = imports
   where
     includeCore = maybe True (\prgm' -> not (rawPrgmHasAnnot prgm' noCoreAnnot)) prgm
-    name = case impAbs imp of
-      CExpr _ (CStr n) -> n
-      TupleApply _ _ (EAppArg ObjArr{oaArr=Just (Just (CExpr _ (CStr n)), _)}) -> n
-      _ -> ""
 
 -- | The program as the page holds it: writing the page's imports rather than its own, and with its
 -- meta ids named for the page.

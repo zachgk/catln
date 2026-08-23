@@ -25,7 +25,7 @@ import           GHC.Generics        (Generic)
 import           Control.Exception   (IOException, try)
 import           Data.Aeson          hiding (Object)
 import           Data.IORef          (IORef, modifyIORef', newIORef, readIORef)
-import           Data.List           (isPrefixOf, sort, stripPrefix)
+import           Data.List           (isInfixOf, isPrefixOf, sort, stripPrefix)
 import           Data.Maybe          (catMaybes, fromJust, isJust, mapMaybe)
 import           Data.Time.Clock     (UTCTime)
 import           Semantics
@@ -348,6 +348,27 @@ data ReadPage = ReadPage {
 -- | Every page the read walks on to from this one.
 readPageVisits :: ReadPage -> [FileImport]
 readPageVisits page = rpExtras page ++ rpImports page
+
+-- | The path an import names, where it names one at all.
+--
+-- Of 'impAbs', which is the path the import resolved to and so the one a page is the same page by,
+-- rather than of 'impRaw', which is whatever was written to reach it. Both forms an import takes are
+-- read: a bare path, and a path handed to a named parser.
+importPath :: FileImport -> Maybe String
+importPath imp = case impAbs imp of
+  CExpr _ (CStr n) -> Just n
+  TupleApply _ _ (EAppArg ObjArr{oaArr=Just (Just (CExpr _ (CStr n)), _)}) -> Just n
+  _ -> Nothing
+
+-- | Whether a page is part of the standard library.
+--
+-- Asked of the path, because that is all there is to ask: the standard library is a directory of
+-- ordinary pages and nothing in one of them says it belongs to it. It is the compiler's own rule
+-- and not a display's — 'Syntax.Parsers.pageImports' is what needs it, to keep from giving the
+-- standard library to itself — so a display asking which pages are the library's asks this rather
+-- than matching on paths again, and the two cannot come apart.
+isCorePage :: FileImport -> Bool
+isCorePage imp = maybe False ("core" `isInfixOf`) (importPath imp)
 
 type ImportParseResult = IO ParsedImport
 type ImportPreloadResult = IO PreloadImport
