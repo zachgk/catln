@@ -319,22 +319,22 @@ Prgm
                     }
                 )
             ,
-                ( "/add"
+                ( "/add_ints"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /add( EAppArg Value /x -> /Data/Primitive/Integer )( EAppArg Value /y -> /Data/Primitive/Integer ) ->
+                        [ /add_ints( EAppArg Value /x -> /Data/Primitive/Integer )( EAppArg Value /y -> /Data/Primitive/Integer ) ->
                             ( /operator+
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
-                                ) + /add.result
+                                ) + /add_ints.result
                                 ( /x=/Data/Primitive/Integer
                                 , /y=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer
                             ) =
-                            ( /add.result
+                            ( /add_ints.result
                                 ( EAppArg Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) )
                                 ( EAppArg Value /y -> TVArg /y = ( Value /y ↦ TVArg /y ) ) ↦
                                 ( /operator+
@@ -396,6 +396,21 @@ Prgm
                             ( /pow
                                 ( EAppArg Value /this -> TVArg /base = ( Value /base ↦ TVArg /base ) )
                                 ( EAppArg Value /exp -> TVArg /exp = ( Value /exp ↦ TVArg /exp ) ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/add_ints.result"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /add_ints.result( EAppArg Value /x -> /Data/Primitive/Integer )( EAppArg Value /y -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer =
+                            ( /operator+
+                                ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                                ( EAppArg Value /r -> TVArg /y = ( Value /y ↦ TVArg /y ) ) ↦ /Data/Primitive/Integer
                             )
                         ]
                     }
@@ -521,21 +536,6 @@ Prgm
                         [ /code_from_char( EAppArg Value /c -> /Data/String ) -> /Data/Primitive/Integer =
                             ( /ord
                                 ( EAppArg Value /this -> TVArg /c = ( Value /c ↦ TVArg /c ) ) ↦ /Data/Primitive/Integer
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/add.result"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /add.result( EAppArg Value /x -> /Data/Primitive/Integer )( EAppArg Value /y -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer =
-                            ( /operator+
-                                ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-                                ( EAppArg Value /r -> TVArg /y = ( Value /y ↦ TVArg /y ) ) ↦ /Data/Primitive/Integer
                             )
                         ]
                     }

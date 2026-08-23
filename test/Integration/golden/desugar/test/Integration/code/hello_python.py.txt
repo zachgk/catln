@@ -156,13 +156,13 @@ Prgm
                     }
                 )
             ,
-                ( "/add"
+                ( "/add_ints"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ add( Value x -> /Data/Primitive/Integer )( Value y -> /Data/Primitive/Integer )= add.result( Value /x= Value /x )( Value /y= Value /y ) ]
+                        [ add_ints( Value x -> /Data/Primitive/Integer )( Value y -> /Data/Primitive/Integer )= add_ints.result( Value /x= Value /x )( Value /y= Value /y ) ]
                     }
                 )
             ,
@@ -205,6 +205,16 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ power( Value base -> /Data/Primitive/Integer )( Value exp -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = pow( Value /this= Value base )( Value /exp= Value exp ) ]
+                    }
+                )
+            ,
+                ( "/add_ints.result"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ add_ints.result( Value /x -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l= Value x )( Value /r= Value y ) ]
                     }
                 )
             ,
@@ -295,16 +305,6 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ code_from_char( Value c -> /Data/String ) -> /Data/Primitive/Integer = ord( Value /this= Value c ) ]
-                    }
-                )
-            ,
-                ( "/add.result"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ add.result( Value /x -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l= Value x )( Value /r= Value y ) ]
                     }
                 )
             ,

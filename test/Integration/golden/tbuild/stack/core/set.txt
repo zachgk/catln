@@ -1,11 +1,375 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList [] )
+        ( fromList
+            [
+                ( "/Data/Set/empty"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Set/empty -> ∀/Data/Set/MapSet ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/Set/empty -> /Data/Set/MkSet( /map=/Data/Map/Leaf ) = /Data/Set/MkSet( EAppArg Value /map -> /Data/Map/Leaf = Value /Data/Map/Leaf ) ]
+                    }
+                )
+            ,
+                ( "/Data/Set/add"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Set/add( EAppVar /E ∀/Data/Algebra/Ord )
+                            ( EAppArg Value /s -> ∀/Data/Set[ /T=$/E ] )( EAppArg Value /item -> $/E ) -> ∀/Data/Set[ /T=$/E ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Set/add
+                            ( EAppArg Value /s -> /Data/Set/MkSet
+                                ( /map=∀/Data/Map
+                                    [ /K=TopType
+                                    , /V=TopType
+                                    ]
+                                ) = /Data/Set/MkSet
+                                ( EAppArg Value /map -> ∀/Data/Map
+                                    [ /K=TopType
+                                    , /V=TopType
+                                    ]
+                                )
+                            )( EAppArg Value /item -> ∀/Data/Algebra/Ord ) -> /Data/Set/MkSet
+                            ( /map=UnionType
+                                ( Just
+                                    ( PredClass /Data/Map
+                                        [ /K=$/MK
+                                        , /V=$/MV
+                                        ]
+                                    , fromList []
+                                    , []
+                                    )
+                                ,
+                                    ( /Data/Map/Node
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=TopType
+                                        ]
+                                        ( /value=TopType
+                                        , /key=∀/Data/Algebra/Ord
+                                        , /right=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=$/MV
+                                            ]
+                                        , /left=∀/Data/Map/BinTree
+                                            [ /K=$/MK
+                                            , /V=$/MV
+                                            ]
+                                        ) + /Data/Map/Node
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=TopType
+                                        ]
+                                        ( /value=TopType
+                                        , /key=∀/Data/Algebra/Ord
+                                        , /right=∀/Data/Map/BinTree
+                                            [ /K=$/MK
+                                            , /V=$/MV
+                                            ]
+                                        , /left=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=$/MV
+                                            ]
+                                        )
+                                    )
+                                , []
+                                )
+                            ) = /Data/Set/MkSet
+                            ( EAppArg Value /map -> UnionType
+                                ( Just
+                                    ( PredClass /Data/Map
+                                        [ /K=$/MK
+                                        , /V=$/MV
+                                        ]
+                                    , fromList []
+                                    , []
+                                    )
+                                ,
+                                    ( /Data/Map/Node
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=TopType
+                                        ]
+                                        ( /value=TopType
+                                        , /key=∀/Data/Algebra/Ord
+                                        , /right=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=$/MV
+                                            ]
+                                        , /left=∀/Data/Map/BinTree
+                                            [ /K=$/MK
+                                            , /V=$/MV
+                                            ]
+                                        ) + /Data/Map/Node
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=TopType
+                                        ]
+                                        ( /value=TopType
+                                        , /key=∀/Data/Algebra/Ord
+                                        , /right=∀/Data/Map/BinTree
+                                            [ /K=$/MK
+                                            , /V=$/MV
+                                            ]
+                                        , /left=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=$/MV
+                                            ]
+                                        )
+                                    )
+                                , []
+                                ) =
+                                ( /Data/Map/insert
+                                    ( EAppArg Value /m -> TVArg /map = ( Value /map ↦ TVArg /map ) )
+                                    ( EAppArg Value /key -> TVArg /item = ( Value /item ↦ TVArg /item ) )
+                                    ( EAppArg Value /value -> () = Value / ) ↦ UnionType
+                                    ( Just
+                                        ( PredClass /Data/Map
+                                            [ /K=$/MK
+                                            , /V=$/MV
+                                            ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    ,
+                                        ( /Data/Map/Node
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=TopType
+                                            ]
+                                            ( /value=TopType
+                                            , /key=∀/Data/Algebra/Ord
+                                            , /right=∀/Data/Map/BinTree
+                                                [ /K=∀/Data/Algebra/Ord
+                                                , /V=$/MV
+                                                ]
+                                            , /left=∀/Data/Map/BinTree
+                                                [ /K=$/MK
+                                                , /V=$/MV
+                                                ]
+                                            ) + /Data/Map/Node
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=TopType
+                                            ]
+                                            ( /value=TopType
+                                            , /key=∀/Data/Algebra/Ord
+                                            , /right=∀/Data/Map/BinTree
+                                                [ /K=$/MK
+                                                , /V=$/MV
+                                                ]
+                                            , /left=∀/Data/Map/BinTree
+                                                [ /K=∀/Data/Algebra/Ord
+                                                , /V=$/MV
+                                                ]
+                                            )
+                                        )
+                                    , []
+                                    )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Set/elements"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Set/elements
+                            ( EAppArg Value /s -> ∀/Data/Set[ /T=$_/E ] ) -> ∀/Data/List[ /T=$_/E ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Set/elements
+                            ( EAppArg Value /s -> /Data/Set/MkSet( /map=TopType ) = /Data/Set/MkSet( EAppArg Value /map ) ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/List[ /T=TopType ]
+                                , fromList []
+                                , []
+                                )
+                            ,
+                                ( /Data/List/append
+                                    ( /a=UnionType
+                                        ( Just
+                                            ( PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Data/List[ /T=TopType ]
+                                            , fromList []
+                                            , []
+                                            )
+                                        , /Data/List/Cons[ /T=TopType ]
+                                            ( /head=$/T
+                                            , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                            )
+                                        , []
+                                        )
+                                    , /b=/Data/List/Cons[ /T=TopType ]
+                                        ( /head=TopType
+                                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                        )
+                                    ) + /Data/Map/keys( /m=TopType ) + /Data/List/Cons[ /T=TopType ]
+                                    ( /head=TopType
+                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                    )
+                                )
+                            , []
+                            ) =
+                            ( /Data/Map/keys
+                                ( EAppArg Value /m -> TVArg /map = ( Value /map ↦ TVArg /map ) ) ↦ UnionType
+                                ( Just
+                                    ( PredClass /Data/List[ /T=TopType ]
+                                    , fromList []
+                                    , []
+                                    )
+                                ,
+                                    ( /Data/List/append
+                                        ( /a=UnionType
+                                            ( Just
+                                                ( PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Data/List[ /T=TopType ]
+                                                , fromList []
+                                                , []
+                                                )
+                                            , /Data/List/Cons[ /T=TopType ]
+                                                ( /head=$/T
+                                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                                )
+                                            , []
+                                            )
+                                        , /b=/Data/List/Cons[ /T=TopType ]
+                                            ( /head=TopType
+                                            , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                            )
+                                        ) + /Data/List/Cons[ /T=TopType ]
+                                        ( /head=TopType
+                                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                        )
+                                    )
+                                , []
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Set/size"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Set/size
+                            ( EAppArg Value /s -> ∀/Data/Set[ /T=$_/E ] ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Set/size
+                            ( EAppArg Value /s -> /Data/Set/MkSet( /map=TopType ) = /Data/Set/MkSet( EAppArg Value /map ) ) -> /Data/Primitive/Integer =
+                            ( /Data/Map/size
+                                ( EAppArg Value /m -> TVArg /map = ( Value /map ↦ TVArg /map ) ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Set/MkSet"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Set/MkSet
+                            ( EAppArg Value /map -> ∀/Data/Map
+                                [ /K=$_/K
+                                , /V=$_/V
+                                ]
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Set/isEmpty"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Set/isEmpty
+                            ( EAppArg Value /s -> ∀/Data/Set[ /T=$_/E ] ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Set/isEmpty
+                            ( EAppArg Value /s -> ∀/Data/Set[ /T=TopType ] ) -> ∀/Data/Primitive/Boolean =
+                            ( /operator==
+                                ( EAppArg Value /l -> /Data/Primitive/Integer =
+                                    ( /size
+                                        ( EAppArg Value /s -> TVArg /s = ( Value /s ↦ TVArg /s ) ) ↦ /Data/Primitive/Integer
+                                    )
+                                )
+                                ( EAppArg Value /r -> /Data/Primitive/Integer = 0 ) ↦ ∀/Data/Primitive/Boolean
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Set/contains"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Set/contains( EAppVar /E ∀/Data/Algebra/Ord )
+                            ( EAppArg Value /s -> ∀/Data/Set[ /T=$/E ] )( EAppArg Value /item -> $/E ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Set/contains
+                            ( EAppArg Value /s -> /Data/Set/MkSet
+                                ( /map=∀/Data/Map
+                                    [ /K=TopType
+                                    , /V=TopType
+                                    ]
+                                ) = /Data/Set/MkSet
+                                ( EAppArg Value /map -> ∀/Data/Map
+                                    [ /K=TopType
+                                    , /V=TopType
+                                    ]
+                                )
+                            )( EAppArg Value /item -> ∀/Data/Algebra/Ord ) -> ∀/Data/Primitive/Boolean =
+                            ( /Data/Map/containsKey
+                                ( EAppArg Value /m -> TVArg /map = ( Value /map ↦ TVArg /map ) )
+                                ( EAppArg Value /key -> TVArg /item = ( Value /item ↦ TVArg /item ) ) ↦ ∀/Data/Primitive/Boolean
+                            )
+                        ]
+                    }
+                )
+            ]
+        )
     , prgmCG =
-        [ CGClass
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
             ( False
             , /Data/Set[ /T=TopType ]
-            , []
+            ,
+                [ ∀/Data/Set/MapSet
+                    [ /K=$_/K
+                    , /V=$_/V
+                    ]
+                ]
+            , Just " Every [MapSet] is a [Set], so each [Set] operation resolves on it through the arms below. The
+              empty set is [empty]."
+            )
+        , CGClass
+            ( True
+            , /Data/Set/MapSet
+                [ /K=TopType
+                , /V=TopType
+                ]
+            ,
+                [ /Data/Set/MkSet
+                    ( /map=∀/Data/Map
+                        [ /K=$_/K
+                        , /V=$_/V
+                        ]
+                    )
+                ]
             , Just ""
             )
         ]
@@ -19,5 +383,166 @@ Prgm
             are declared on [Set] rather than on one concrete type, every set type reuses those declarations
             just by being a [Set]. The [Set] interface lives here directly under [Data]; the [MapSet]
             implementation and the operations live in the [Data/Set] namespace it opens." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "# The MapSet and the Set operations
+            Everything else set-related lives in [module(Data/Set)] — the namespace the [Set] class opens — so
+            the [MapSet] type, its constructor, and every operation sit under [/Data/Set]." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "## A Map-backed set
+            A [MapSet] is the simplest [Set]: it wraps a [Map] whose keys are the set's items and whose
+            values are the unit type [()] (a set only needs to record which items are present, not any value
+            against them). Every operation delegates to the underlying [Map] — membership is a key lookup,
+            insertion stores the item with a [()] value, and the item list is the map's keys. The items must
+            be [Ord] because the backing [Map] orders its keys." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "Every [MapSet] is a [Set], so each [Set] operation resolves on it through the arms below. The
+            empty set is [empty]." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "## The empty set" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "## Membership" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "## Insertion" )
+        , /Catln/#print
+            ( EAppArg Value /p -> ∀/Data/Primitive/Boolean =
+                ( /Data/Set/contains
+                    ( EAppArg Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] =
+                        ( /Data/Set/add
+                            ( EAppArg Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] =
+                                ( /Data/Set/add
+                                    ( EAppArg Value /s -> ∀/Data/Set/MapSet = ( Value /Data/Set/empty ↦ ∀/Data/Set/MapSet ) )
+                                    ( EAppArg Value /item -> /Data/Primitive/Integer = 1 ) ↦ ∀/Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                )
+                            )
+                            ( EAppArg Value /item -> /Data/Primitive/Integer = 2 ) ↦ ∀/Data/Set[ /T=∀/Data/Algebra/Ord ]
+                        )
+                    )
+                    ( EAppArg Value /item -> /Data/Primitive/Integer = 2 ) ↦ ∀/Data/Primitive/Boolean
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "True" )
+        , /Catln/#print
+            ( EAppArg Value /p -> ∀/Data/Primitive/Boolean =
+                ( /Data/Set/contains
+                    ( EAppArg Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] =
+                        ( /Data/Set/add
+                            ( EAppArg Value /s -> ∀/Data/Set/MapSet = ( Value /Data/Set/empty ↦ ∀/Data/Set/MapSet ) )
+                            ( EAppArg Value /item -> /Data/Primitive/Integer = 1 ) ↦ ∀/Data/Set[ /T=∀/Data/Algebra/Ord ]
+                        )
+                    )
+                    ( EAppArg Value /item -> /Data/Primitive/Integer = 9 ) ↦ ∀/Data/Primitive/Boolean
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "False" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "## Size" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "Adding the same item twice leaves the size at one — a set holds each item at most once." )
+        , /Catln/#print
+            ( EAppArg Value /p -> /Data/Primitive/Integer =
+                ( /size
+                    ( EAppArg Value /s -> ∀/Data/Set[ /T=TopType ] =
+                        ( /Data/Set/add
+                            ( EAppArg Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] =
+                                ( /Data/Set/add
+                                    ( EAppArg Value /s -> ∀/Data/Set/MapSet = ( Value /Data/Set/empty ↦ ∀/Data/Set/MapSet ) )
+                                    ( EAppArg Value /item -> /Data/Primitive/Integer = 1 ) ↦ ∀/Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                )
+                            )
+                            ( EAppArg Value /item -> /Data/Primitive/Integer = 1 ) ↦ ∀/Data/Set[ /T=TopType ]
+                        )
+                    ) ↦ /Data/Primitive/Integer
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "1" )
+        , /Catln/#print
+            ( EAppArg Value /p -> ∀/Data/Primitive/Boolean =
+                ( /Data/Set/isEmpty
+                    ( EAppArg Value /s -> ∀/Data/Set/MapSet = ( Value /Data/Set/empty ↦ ∀/Data/Set/MapSet ) ) ↦ ∀/Data/Primitive/Boolean
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "True" )
+        , /Catln/#print
+            ( EAppArg Value /p -> ∀/Data/Primitive/Boolean =
+                ( /Data/Set/isEmpty
+                    ( EAppArg Value /s -> ∀/Data/Set[ /T=TopType ] =
+                        ( /Data/Set/add
+                            ( EAppArg Value /s -> ∀/Data/Set/MapSet = ( Value /Data/Set/empty ↦ ∀/Data/Set/MapSet ) )
+                            ( EAppArg Value /item -> /Data/Primitive/Integer = 1 ) ↦ ∀/Data/Set[ /T=TopType ]
+                        )
+                    ) ↦ ∀/Data/Primitive/Boolean
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "False" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "## Items" )
+        , /Catln/#print
+            ( EAppArg Value /p -> ∀/Data/Primitive/Boolean =
+                ( /operator==
+                    ( EAppArg Value /l -> UnionType
+                        ( Just
+                            ( PredClass /Data/Algebra/Eq && PredClass /Data/List[ /T=TopType ]
+                            , fromList []
+                            , []
+                            )
+                        , /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
+                            ( /head=$/T
+                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ]
+                            )
+                        , []
+                        ) =
+                        ( /Data/Set/elements
+                            ( EAppArg Value /s -> ∀/Data/Set[ /T=TopType ] =
+                                ( /Data/Set/add
+                                    ( EAppArg Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] =
+                                        ( /Data/Set/add
+                                            ( EAppArg Value /s -> ∀/Data/Set/MapSet = ( Value /Data/Set/empty ↦ ∀/Data/Set/MapSet ) )
+                                            ( EAppArg Value /item -> /Data/Primitive/Integer = 2 ) ↦ ∀/Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                        )
+                                    )
+                                    ( EAppArg Value /item -> /Data/Primitive/Integer = 1 ) ↦ ∀/Data/Set[ /T=TopType ]
+                                )
+                            ) ↦ UnionType
+                            ( Just
+                                ( PredClass /Data/Algebra/Eq && PredClass /Data/List[ /T=TopType ]
+                                , fromList []
+                                , []
+                                )
+                            , /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
+                                ( /head=$/T
+                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ]
+                                )
+                            , []
+                            )
+                        )
+                    )
+                    ( EAppArg Value /r -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        ( /head=/Data/Primitive/Integer
+                        , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                            ( /head=/Data/Primitive/Integer
+                            , /tail=/Data/List/Nil
+                            )
+                        ) = /Data/List/Cons
+                        ( EAppArg Value /head -> /Data/Primitive/Integer = 1 )
+                        ( EAppArg Value /tail -> /Data/List/Cons
+                            ( /head=/Data/Primitive/Integer
+                            , /tail=/Data/List/Nil
+                            ) = /Data/List/Cons
+                            ( EAppArg Value /head -> /Data/Primitive/Integer = 2 )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                        )
+                    ) ↦ ∀/Data/Primitive/Boolean
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "True" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "NOTE: rendering a set directly (a [ToString] instance so [> aSet] prints [{1, 2}]) is blocked by" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "  the polymorphic-element rendering frontier: the generic [add] returns a set whose item type is" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "  the abstract [Ord] bound rather than the concrete item type, and [Ord] is not [ToString]. The" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "  same frontier stops [sorted]/[reversed] in [Data/list] from printing directly. Verify a set's" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "  contents with [elements] and [operator==] (as above) instead." )
         ]
     }

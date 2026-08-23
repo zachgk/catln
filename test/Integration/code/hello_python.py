@@ -1,7 +1,7 @@
 """A Python file testing the Catln Python parser."""
 
 
-def add(x: int, y: int) -> int:
+def add_ints(x: int, y: int) -> int:
     result: int = x + y
     return result
 

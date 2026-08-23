@@ -12,13 +12,13 @@ Prgm
                     }
                 )
             ,
-                ( "/add"
+                ( "/add_ints"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /add( EAppArg Value /x -> /Data/Primitive/Integer )( EAppArg Value /y -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer =
+                        [ /add_ints( EAppArg Value /x -> /Data/Primitive/Integer )( EAppArg Value /y -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer =
                             ( /operator+
                                 ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
                                 ( EAppArg Value /r -> TVArg /y = ( Value /y ↦ TVArg /y ) ) ↦ /Data/Primitive/Integer

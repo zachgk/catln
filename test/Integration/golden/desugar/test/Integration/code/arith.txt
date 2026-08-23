@@ -76,22 +76,6 @@ Prgm
                     }
                 )
             ,
-                ( "/add"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value add= /operator==
-                            ( Value /l= /operator+
-                                ( Value /l= CInt 1 )
-                                ( Value /r= CInt 1 )
-                            )
-                            ( Value /r= CInt 2 )
-                        ]
-                    }
-                )
-            ,
                 ( "/mul"
                 , ObjectMapItem
                     { omiDecls = []
@@ -136,6 +120,22 @@ Prgm
                                 ( Value /r= CInt 3 )
                             )
                             ( Value /r= CInt 1 )
+                        ]
+                    }
+                )
+            ,
+                ( "/intAdd"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value intAdd= /operator==
+                            ( Value /l= /operator+
+                                ( Value /l= CInt 1 )
+                                ( Value /r= CInt 1 )
+                            )
+                            ( Value /r= CInt 2 )
                         ]
                     }
                 )
