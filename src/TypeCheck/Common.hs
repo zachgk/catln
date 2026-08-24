@@ -432,7 +432,7 @@ fAddTTypeGraph oa env@FEnv{feTTypeGraph} = env {feTTypeGraph = singletonObjectMa
 -- compared, and only argument/variable keys present on both sides, so it never false-positives on a
 -- union whose set of options legitimately changed.
 typeVarLost :: Type -> Type -> Bool
-typeVarLost (TypeVar _ TVExt) PTopType = True
+typeVarLost (TypeVar _ TVOuter) PTopType = True
 typeVarLost (TypeVar _ _)     _        = False
 typeVarLost (UnionType _ oldLeafs _) (UnionType _ newLeafs _) =
   or [ partialVarLost op np

@@ -252,7 +252,7 @@ fnArgInputBound env callAct fnKey inKey = case callAct of
       UnionType Nothing posLeafs _           -> splitUnionType posLeafs
       _                                      -> [])
       where
-        fromPartial p = [ (vn, an) | (vn, TypeVar (TVVar an) TVExt) <- H.toList (ptVars p) ]
+        fromPartial p = [ (vn, an) | (vn, TypeVar (TVVar an) TVOuter) <- H.toList (ptVars p) ]
         predPartials preds = case tryPredsToList preds of
           Just ps -> [ p | pr <- ps, p <- predPartial pr ]
           Nothing -> []
