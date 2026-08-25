@@ -182,10 +182,10 @@ Prgm
                 ( "/Data/Set/MkSet"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Set/MkSet
+                        [ /Data/Set/MkSet[ /V : TopType ][ /K : TopType ]
                             ( Value /map -> ∀/Data/Map
-                                [ /K=$_/K
-                                , /V=$_/V
+                                [ /K=$^/K
+                                , /V=$^/V
                                 ]
                             )
                         ]
@@ -361,6 +361,9 @@ Prgm
                 ]
             ,
                 [ /Data/Set/MkSet
+                    [ /K=$_/K
+                    , /V=$_/V
+                    ]
                     ( /map=∀/Data/Map
                         [ /K=$_/K
                         , /V=$_/V

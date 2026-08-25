@@ -34,7 +34,11 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /Data/Set/empty -> /Data/Set/MkSet( /map=/Data/Map/Leaf ) = /Data/Set/MkSet( Value /map -> /Data/Map/Leaf = Value /Data/Map/Leaf ) ]
+                        [ Value /Data/Set/empty -> /Data/Set/MkSet
+                            [ /K=TopType
+                            , /V=TopType
+                            ]( /map=/Data/Map/Leaf ) = /Data/Set/MkSet( Value /map -> /Data/Map/Leaf = Value /Data/Map/Leaf )
+                        ]
                     }
                 )
             ,
@@ -427,10 +431,10 @@ Prgm
                 ( "/Data/Set/MkSet"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Set/MkSet
+                        [ /Data/Set/MkSet[ /V : TopType ][ /K : TopType ]
                             ( Value /map -> ∀/Data/Map
-                                [ /K=$_/K
-                                , /V=$_/V
+                                [ /K=$^/K
+                                , /V=$^/V
                                 ]
                             )
                         ]
@@ -742,6 +746,9 @@ Prgm
                 ]
             ,
                 [ /Data/Set/MkSet
+                    [ /K=$_/K
+                    , /V=$_/V
+                    ]
                     ( /map=∀/Data/Map
                         [ /K=$_/K
                         , /V=$_/V

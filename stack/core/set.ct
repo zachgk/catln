@@ -22,7 +22,7 @@ module(Data/Set)
     against them). Every operation delegates to the underlying [Map] — membership is a key lookup,
     insertion stores the item with a [()] value, and the item list is the map's keys. The items must
     be [Ord] because the backing [Map] orders its keys.
-  class(MapSet[$K, $V], [MkSet(map -> /Data/Map[$K -> $_K, $V -> $_V])])
+  class(MapSet[$K, $V], [MkSet[$K -> $_K, $V -> $_V](map -> /Data/Map[$K -> $_K, $V -> $_V])])
 
   every(MapSet[$K -> $_K, $V -> $_V], isa= [/Data/Set[$T -> $_K]])
     # Every [MapSet] is a [Set], so each [Set] operation resolves on it through the arms below. The
