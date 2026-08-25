@@ -270,3 +270,45 @@ reassignImportedMethodDefs (Prgm (ObjectMap fullObjMap) _ _) (Prgm (ObjectMap ob
       | otherwise  = ObjectMapItem (rn ds) (rn rs) (rn rfs) (rn defs)
       where rn = map (renameOA from to)
     renameOA from to oa = oa{oaObj = fmap (mapExprPath (\(eM, eN) -> Value eM (if eN == from then to else eN))) (oaObj oa)}
+
+-- |
+-- Names each type-variable reference that resolves to its object's own declared variable.
+--
+-- A declaration may type an argument slot by one of its OWN variables — @peq[$V -> Eqq](x ->
+-- Box[$T -> $_V])@ — and both that reference and a genuinely ambient one (a variable introduced
+-- in the Obj and used in the Arr) are spelled @$_T@ in source. The two need different scope
+-- rules: the first is in scope for as long as it sits inside its binder, the second only while
+-- the ambient environment binds it. Which one a reference IS follows from the enclosing binder,
+-- so it is decided here, where that binder is lexical, and carried by the reference afterwards
+-- ('TVParent'). Re-deriving it later, inside the type algebra, would capture a like-named
+-- variable of whatever scope the type had been carried into — the same capture
+-- 'seedDefResultTypes' avoids by refusing to copy a var-carrying declared return.
+--
+-- The binder is the object's own variable application (@[$V -> Eqq]@), so an object that applies
+-- no variables is left untouched, and the ANNOTATION metas are rewritten together ('ArrMeta' —
+-- the argument annotations at every nesting level and the result).
+--
+-- A variable's BOUND (@[$M -> Monad[$T -> $_A]]@) is deliberately left alone, for the reason
+-- 'dropOutOfScopeTVExt' gives for a partial's 'ptVars' values: it belongs to the scope CONTAINING
+-- the binder rather than inside it, and it travels without it — substituted for @$M@ wherever the
+-- variable is used. Naming it a parent reference strands it: @∀Monad[/T=$^/A]@ reached TreeBuild
+-- as a destination with no parent in view and nothing could reach it, where the ambient reading
+-- had correctly read the reference as the ⊤ it denotes there.
+--
+-- The result is rewritten WITH the arguments rather than held back with the bounds, so that one
+-- declaration spells a variable one way throughout: denotationally-equal forms that compare
+-- unequal are what make accumulations flip between spellings across epochs (the hazard
+-- 'dropOutOfScopeTVExt' documents), and a result is reached from its own arguments.
+classifyParentVarRefs :: DesPrgm -> DesPrgm
+classifyParentVarRefs (Prgm (ObjectMap objMap) classGraph annots) = Prgm (ObjectMap objMap') classGraph annots
+  where
+    objMap' = H.map classifyItem objMap
+    classifyItem (ObjectMapItem ds rs rfs defs) =
+      ObjectMapItem (map classifyOa ds) (map classifyOa rs) (map classifyOa rfs) (map classifyOa defs)
+    classifyOa oa
+      | S.null parentVars = oa
+      | otherwise = mapMetaObjArr tagMeta Nothing oa
+      where
+        parentVars = S.fromList [v | v@TVVar{} <- H.keys $ maybe H.empty exprVarArgs (oaObj oa)]
+        tagMeta ArrMeta m = return $ mWithType (tagParentVarRefs parentVars (getMetaType m)) m
+        tagMeta _       m = return m

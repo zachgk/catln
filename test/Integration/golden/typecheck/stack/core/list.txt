@@ -149,7 +149,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /sorted./Data/List/insert( Value /t )( Value /h )[ /T : ∀/Data/Algebra/Ord ]( Value /x -> $/T )
-                            ( Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/List/ConsList[ /T=$_/T ]
+                            ( Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/List/ConsList[ /T=$^/T ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -301,7 +301,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/sorted[ /T : ∀/Data/Algebra/Ord ]
-                            ( Value /lst -> ∀/Data/List[ /T=$_/T ] ) -> ∀/Data/List[ /T=$_/T ]
+                            ( Value /lst -> ∀/Data/List[ /T=$^/T ] ) -> ∀/Data/List[ /T=$^/T ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -415,7 +415,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/Cons[ /T : TopType ]( Value /head -> $/T )
-                            ( Value /tail -> ∀/Data/List/ConsList[ /T=$_/T ] )
+                            ( Value /tail -> ∀/Data/List/ConsList[ /T=$^/T ] )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -486,7 +486,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /sorted./Data/List/insertStep( Value /t )( Value /h )[ /T : ∀/Data/Algebra/Ord ]( Value /before -> ∀/Data/Primitive/Boolean )( Value /x -> $/T )( Value /head -> $/T )
-                            ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/List/ConsList[ /T=$_/T ]
+                            ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/List/ConsList[ /T=$^/T ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -917,10 +917,10 @@ Prgm
                 ) = /Data/List/sorted
                 ( Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                     ( /head=/Data/Primitive/Integer
-                    , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                    , /tail=/Data/List/Cons[ /T=$^/T ]
                         ( /head=/Data/Primitive/Integer
-                        , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                            ( /head=/Data/Primitive/Integer
+                        , /tail=/Data/List/Cons[ /T=$^/T ]
+                            ( /head=$/T
                             , /tail=/Data/List/Nil
                             )
                         )
@@ -970,12 +970,12 @@ Prgm
                 ) = /Data/List/sorted
                 ( Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                     ( /head=/Data/Primitive/Integer
-                    , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                    , /tail=/Data/List/Cons[ /T=$^/T ]
                         ( /head=/Data/Primitive/Integer
-                        , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        , /tail=/Data/List/Cons[ /T=$^/T ]
                             ( /head=/Data/Primitive/Integer
-                            , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                                ( /head=/Data/Primitive/Integer
+                            , /tail=/Data/List/Cons[ /T=$^/T ]
+                                ( /head=$/T
                                 , /tail=/Data/List/Nil
                                 )
                             )

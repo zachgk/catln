@@ -154,13 +154,13 @@ Prgm
                     { omiDecls =
                         [ /Data/Map/Node[ /V : TopType ][ /K : TopType ]
                             ( Value /left -> ∀/Data/Map/BinTree
-                                [ /K=$_/K
-                                , /V=$_/V
+                                [ /K=$^/K
+                                , /V=$^/V
                                 ]
                             )( Value /key -> $/K )( Value /value -> $/V )
                             ( Value /right -> ∀/Data/Map/BinTree
-                                [ /K=$_/K
-                                , /V=$_/V
+                                [ /K=$^/K
+                                , /V=$^/V
                                 ]
                             )
                         ]

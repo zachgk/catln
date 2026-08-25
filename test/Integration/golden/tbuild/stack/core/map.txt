@@ -552,13 +552,13 @@ Prgm
                     { omiDecls =
                         [ /Data/Map/Node( EAppVar /V TopType )( EAppVar /K TopType )
                             ( EAppArg Value /left -> ∀/Data/Map/BinTree
-                                [ /K=$_/K
-                                , /V=$_/V
+                                [ /K=$^/K
+                                , /V=$^/V
                                 ]
                             )( EAppArg Value /key -> $/K )( EAppArg Value /value -> $/V )
                             ( EAppArg Value /right -> ∀/Data/Map/BinTree
-                                [ /K=$_/K
-                                , /V=$_/V
+                                [ /K=$^/K
+                                , /V=$^/V
                                 ]
                             )
                         ]

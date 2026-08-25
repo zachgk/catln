@@ -5756,6 +5756,37 @@ resolveTypeSelfRefs = go
 -- variable stays symbolic (the mergeVarEnvVal doctrine — its binding may still resolve), as
 -- does a bare top-level variable (same doctrine) and every 'TVArg'/'TVInt' reference (arg
 -- links and partial-local pointers are structural, not ambient names).
+-- | Names every external reference that resolves to one of the given PARENT variables as the
+-- parent reference it is ('TVParent'), so the ambient scope rules stop reading it as a foreign
+-- name. The parent set is seeded by the caller with the variables the surrounding binder
+-- declares — a declaration's own @[$V -> Eqq]@ application — and then nests exactly as
+-- 'dropOutOfScopeTVExt' nests: descending into a partial's ARG slots (and predicates) extends
+-- the set with that partial's own var names, while its 'ptVars' VALUES reference the scope
+-- CONTAINING the partial and keep the un-extended set.
+--
+-- Applied where the binder is known and lexical (desugar), never re-derived deep in the type
+-- algebra, where a like-named ambient variable would be captured.
+tagParentVarRefs :: S.HashSet TypeVarAux -> Type -> Type
+tagParentVarRefs = onType
+  where
+    onType sc (UnionType mtop pos consts) =
+      UnionType (fmap (onTop sc) mtop) (joinUnionType $ map (onLeaf sc) $ splitUnionType pos) consts
+    onType _ t = t -- a bare top-level variable has no parent in view
+    onTop sc (preds, negLeafs, ncs) =
+      (mapTypePreds (mapTypePred (onLeaf sc)) preds, joinUnionType $ map (onLeaf sc) $ splitUnionType negLeafs, ncs)
+    onLeaf sc p@PartialType{ptVars, ptArgs, ptPreds} = p{
+        ptVars  = fmap (onSlot sc) ptVars,
+        ptArgs  = fmap (onSlot sc') ptArgs,
+        ptPreds = mapTypePreds (mapTypePred (onLeaf sc')) ptPreds
+      }
+      where sc' = S.union sc (S.fromList (map TVVar (H.keys ptVars)))
+    onSlot sc (TypeVar v@(TVVar _) TVExt) | S.member v sc = TypeVar v TVParent
+    onSlot sc (TypeVar (TVApplied b ovr) loc) =
+      applyTypeVarOverrides (fmap (onSlot sc) ovr) (onSlot sc (TypeVar b loc))
+    onSlot sc (UnionType mtop pos consts) =
+      UnionType (fmap (onTop sc) mtop) (joinUnionType $ map (onLeaf sc) $ splitUnionType pos) consts
+    onSlot _ t = t
+
 dropOutOfScopeTVExt :: TypeVarArgEnv -> Type -> Type
 dropOutOfScopeTVExt vaenv = onType (S.fromList (H.keys vaenv))
   where
@@ -5775,7 +5806,10 @@ dropOutOfScopeTVExt vaenv = onType (S.fromList (H.keys vaenv))
         ptPreds = mapTypePreds (mapTypePred (onLeaf sc')) ptPreds
       }
       where sc' = S.union sc (S.fromList (map TVVar (H.keys ptVars)))
-    onSlot sc t@(TypeVar v@(TVVar _) TVOuter) | not (S.member v sc) = PTopType
+    -- Only an AMBIENT reference is read as ⊤ here. A 'TVParent' names a variable of a partial
+    -- it sits inside, not of this scope, so it is none of the ambient env's business — erasing it
+    -- is what dropped a declaration's own arg-slot pointer (@Box[/T=$_/V]@) on every descent.
+    onSlot sc t@(TypeVar v@(TVVar _) TVExt) | not (S.member v sc) = PTopType
                                             | otherwise           = t
     onSlot sc (TypeVar (TVApplied b ovr) loc) = case onSlot sc (TypeVar b loc) of
       PTopType -> PTopType
@@ -5804,7 +5838,9 @@ hasOutOfScopeTVExt vaenv = onType (S.fromList (H.keys vaenv))
     onLeaf sc PartialType{ptVars, ptArgs, ptPreds} =
       any (onSlot sc) (H.elems ptVars) || any (onSlot sc') (H.elems ptArgs) || predsHas sc' ptPreds
       where sc' = S.union sc (S.fromList (map TVVar (H.keys ptVars)))
-    onSlot sc (TypeVar v@(TVVar _) TVOuter)   = not (S.member v sc)
+    -- Only an AMBIENT reference counts, matching 'dropOutOfScopeTVExt': a 'TVParent' names a
+    -- variable of a partial it sits inside, not of this scope, and is never erased.
+    onSlot sc (TypeVar v@(TVVar _) TVExt)   = not (S.member v sc)
     onSlot sc (TypeVar (TVApplied b ovr) loc) = onSlot sc (TypeVar b loc) || any (onSlot sc) (H.elems ovr)
     onSlot sc t@UnionType{}                 = onType sc t
     onSlot _ _                              = False
@@ -5829,7 +5865,9 @@ outOfScopeTVExtVars vaenv = onType (S.fromList (H.keys vaenv))
     onLeaf sc PartialType{ptVars, ptArgs, ptPreds} =
       S.unions (map (onSlot sc) (H.elems ptVars)) <> S.unions (map (onSlot sc') (H.elems ptArgs)) <> predsVars sc' ptPreds
       where sc' = S.union sc (S.fromList (map TVVar (H.keys ptVars)))
-    onSlot sc (TypeVar v@(TVVar _) TVOuter) = if S.member v sc then S.empty else S.singleton v
+    -- Only an AMBIENT reference is collected: a 'TVParent' resolves through the partial it sits
+    -- inside, so it is not one of the object's implicit variables.
+    onSlot sc (TypeVar v@(TVVar _) TVExt) = if S.member v sc then S.empty else S.singleton v
     onSlot sc (TypeVar (TVApplied b ovr) loc) = onSlot sc (TypeVar b loc) <> S.unions (map (onSlot sc) (H.elems ovr))
     onSlot sc t@UnionType{} = onType sc t
     onSlot _ _ = S.empty

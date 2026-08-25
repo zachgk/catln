@@ -265,7 +265,7 @@ desFinalPasses = map desFinalPass
 -- holding only the programs (such as the debugger's expression compile, @CtService.debugExprRun@)
 -- run it without an 'IO' to run it in.
 desFinalPass :: (DesPrgm, FileImport, [DesPrgm], [DesPrgm]) -> DesPrgm
-desFinalPass (prgm1, name, sccPeerDeps, myExtDeps) = addPrgmMetaIDs (desugarMetaIDScope name) prgm6
+desFinalPass (prgm1, name, sccPeerDeps, myExtDeps) = addPrgmMetaIDs (desugarMetaIDScope name) prgm7
   where
     fullPrgm1 = mconcat ([prgm1] ++ sccPeerDeps ++ myExtDeps)
     fullPrgm2 = removeClassInstanceObjects fullPrgm1 fullPrgm1
@@ -294,6 +294,11 @@ desFinalPass (prgm1, name, sccPeerDeps, myExtDeps) = addPrgmMetaIDs (desugarMeta
     -- Copy each declaration's (variable-free) return type onto its annotation-less definitions,
     -- so a def under a separate decl solves like an inline-annotated one.
     prgm6 = seedDefResultTypes fullPrgm4 prgm5
+
+    -- Name each reference to one of an object's OWN declared variables as the parent reference it
+    -- is, while the binder that gives it meaning is still lexically in view. Last, so it sees the
+    -- annotations the passes above complete and seed.
+    prgm7 = classifyParentVarRefs prgm6
 
 desPrgm :: (PPrgm, FileImport, [FileImport]) -> CRes (DesPrgm, FileImport, [FileImport])
 desPrgm (RawPrgm _ statements, name, imports) = do
