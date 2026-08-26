@@ -436,7 +436,7 @@ toTExpr env os (EWhere m b a) = do
 toTExpr env os (TupleApply m (bm, be) arg) = do
   be' <- case arg of
     EAppVar _ _ -> toTExprDest env os be m
-    _           -> toTExprDest env os be bm
+    _           -> toTExprDest env os be (baseBuildMeta env be bm)
   arg' <- case arg of
     EAppArg a     -> do
       let baseIsData = maybe False (not . null . typeGraphData (tbTypeEnv env)) (maybeExprPath be)
@@ -444,6 +444,34 @@ toTExpr env os (TupleApply m (bm, be) arg) = do
     EAppVar vn vm -> return $ EAppVar vn vm
     EAppSpread a  -> EAppSpread <$> toTExpr env os a
   return $ TTupleApply m (bm, be') arg'
+
+-- | The destination an application's BASE is built toward.
+--
+-- A bare name is a term in its own right — the partial application it is before anything has been
+-- given to it — so an arrow may be written from it (@f= f(b= 2, c= 3)@, the default-arrow form
+-- that gives @b@ and @c@ their defaults; @g= f(b= 2, c= 3)@ under another name is the same thing).
+-- That arrow has to fire on the base BEFORE this application's argument goes on top, or the
+-- argument lands on an empty tuple and the arrow's arguments are lost (@g(a= 1)@ evaluating to
+-- @/f(/a=1)@, with no @/b@ or @/c@ for @f@'s definition to read).
+--
+-- It does not fire on its own: the base meta holds the arrow's result BESIDE the raw name
+-- (@ACT (/g + /f(/b=/N))@ — the raw form is kept deliberately, for eval's dispatch keying), so the
+-- base is a subtype of its own destination and 'buildCallTree' short-circuits to 'TCTId'. Build it
+-- toward what it settles to instead ('reduceAppliedTypeFix'), which is the same medicine an
+-- applied argument already gets for the same reason (see 'arrBuildM' in 'toTEObjArr').
+--
+-- Only a BARE value. A base that is itself an application is a call still being assembled, and its
+-- own arrows must wait for the arguments this level is adding rather than firing an arity short of
+-- them. 'metaMightReduce' is the same cheap name-lookup pre-filter used below: with no res-env
+-- arrow for the name there is nothing to reduce, and this runs on every eval tree rebuild.
+baseBuildMeta :: TBEnv -> Expr TBMetaDat -> EvalMeta -> EvalMeta
+baseBuildMeta TBEnv{tbTypeEnv, tbResEnv} Value{} bm
+  | metaMightReduce = mWithType (reduceAppliedTypeFix tbTypeEnv H.empty (getMetaType bm)) bm
+  where
+    metaMightReduce = case getMetaType bm of
+      UnionType _ leafs _ -> any (\PartialType{ptName} -> isJust (suffixLookupInDict ptName tbResEnv)) (splitUnionType leafs)
+      _                   -> False
+baseBuildMeta _ _ bm = bm
 
 -- | The first Bool marks an ObjArr applied inside an expression ('EAppArg') as opposed to a root
 -- definition ('buildRootOA'); the second marks the application's base as a data construction

@@ -1,0 +1,60 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
+                    }
+                )
+            ,
+                ( "/g"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /g -> /f
+                            ( /c=/Data/Primitive/Integer
+                            , /b=/Data/Primitive/Integer
+                            ) = /f
+                            ( Value /b -> /Data/Primitive/Integer = CInt 2 )
+                            ( Value /c -> /Data/Primitive/Integer = CInt 3 )
+                        ]
+                    }
+                )
+            ,
+                ( "/f"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /f( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer )( Value /c -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+
+                            ( Value /l -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) )( Value /r -> TVArg /c = Value /c )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String = CStr "Partial application, as `docs/philosophy/basics.md` describes it: a name may be bound to a
+            call that has only some of its arguments, and the rest are applied later.
+              baseFunctionCall = callName(arg1=1, arg2=2)
+              finalCall = baseFunctionCall(arg3=9)
+            `g` is `f` with `b` and `c` already given, so `g(a= 1)` is `f(a= 1, b= 2, c= 3)`.
+            The arguments `g` carries have to survive the later application: applying `a` extends the
+            tuple `g` already is, rather than starting a fresh one. Distinct non-zero values, so the
+            answer distinguishes an argument that landed in the wrong slot." )
+        ]
+    }

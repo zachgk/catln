@@ -1,0 +1,68 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                    }
+                )
+            ,
+                ( "/g"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /g -> /f
+                            ( /c=/Data/Primitive/Integer
+                            , /b=/Data/Primitive/Integer
+                            ) = /f
+                            ( EAppArg Value /b -> /Data/Primitive/Integer = 2 )
+                            ( EAppArg Value /c -> /Data/Primitive/Integer = 3 )
+                        ]
+                    }
+                )
+            ,
+                ( "/f"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /f( EAppArg Value /a -> /Data/Primitive/Integer )( EAppArg Value /b -> /Data/Primitive/Integer )( EAppArg Value /c -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer =
+                            ( /operator+
+                                ( EAppArg Value /l -> /Data/Primitive/Integer =
+                                    ( /operator+
+                                        ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
+                                        ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) ) ↦ /Data/Primitive/Integer
+                                    )
+                                )
+                                ( EAppArg Value /r -> TVArg /c = ( Value /c ↦ TVArg /c ) ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "Partial application, as `docs/philosophy/basics.md` describes it: a name may be bound to a
+            call that has only some of its arguments, and the rest are applied later.
+              baseFunctionCall = callName(arg1=1, arg2=2)
+              finalCall = baseFunctionCall(arg3=9)
+            `g` is `f` with `b` and `c` already given, so `g(a= 1)` is `f(a= 1, b= 2, c= 3)`.
+            The arguments `g` carries have to survive the later application: applying `a` extends the
+            tuple `g` already is, rather than starting a fresh one. Distinct non-zero values, so the
+            answer distinguishes an argument that landed in the wrong slot." )
+        ]
+    }
