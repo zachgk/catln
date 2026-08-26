@@ -499,12 +499,19 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
 -- machinery. Drawing the second operand as a same-name single-field mutation instead forces the
 -- pair through 'subtractArg'\/'subtractVar', 'looseArgModeRejects' and 'argModeCovers' — the
 -- precise arg-set-interval reasoning that is otherwise never exercised.
+--
+-- The mutated leaf is returned AS-IS, exactly as 'genType' returns its own: a bare argument-less
+-- reference is a legitimate standalone value (the partial-application form before its args are
+-- applied), and 'completeDataPartialsTop' is not a canonicalization — it maps that form to a
+-- DIFFERENT type. Completing here would also overwrite the very 'ptArgMode' a mutation had just
+-- chosen (its 'completePartial' adopts the declaration's mode whenever the partial is left
+-- argless and exact), erasing the arg-mode dimension this generator exists to exercise.
 genRelatedType :: Prgm Expr () -> Type -> Gen Type
 genRelatedType prgm a = case a of
   UnionType Nothing leafs [] | not (H.null leafs) -> do
     p  <- HG.element (splitUnionType leafs)
     p' <- mutate p
-    return $ completeDataPartialsTop (mkTypeEnv prgm) $ singletonType p'
+    return $ singletonType p'
   _ -> genType prgm
   where
     -- the three modes that are exact under all set operations (see 'genType.withRandomArgModes')
