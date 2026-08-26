@@ -394,6 +394,46 @@ conOaResolveKey env con =
   | oa <- conOs con
   , (inExpr, outM) <- map head $ H.elems $ snd $ splitVarArgEnv $ exprVarArgs $ oaObjExpr oa ]
 
+-- | The self-reference guard for an application's BASE link ('TypeCheck.Encode' constraint
+-- @ArrowTo 7@): an arrow does not rewrite the base of its own body.
+--
+-- A bare name is a term in its own right — the partial application it is before anything has been
+-- given to it — so an arrow may be written from it: @f= f(b= 2, c= 3)@, the default-arrow form that
+-- gives @b@ and @c@ their defaults. Its body is built FROM the very name it rewrites, so without
+-- this guard the body's base reaches the arrow being defined and the arrow's result is defined in
+-- terms of itself. That does not converge from above: the base meta unions the raw name with the
+-- arrow's own still-unresolved (⊤) result, ⊤ absorbs the raw form, 'addArgToType' then has nothing
+-- to graft the applied arguments onto, and the result never leaves ⊤ — the definition, and every
+-- call of it, stay ⊤ for the whole solve. "TreeBuild" refuses the same shape outright ("Found
+-- cyclical use of function", 'arrowFollowup'); this is that ruling at the type level. Skipping it
+-- seeds the base from the raw name (@/f@), and applying the body's arguments settles the result to
+-- @/f(/b, /c)@ — a fixpoint, since re-grafting the same arguments is idempotent.
+--
+-- Two things keep it off ORDINARY RECURSION. It applies only at a base link, and only on an EXACT
+-- self-match: the enclosing arrow's own object must carry the same name AND the same argument keys
+-- as the source being reached. @Cons(head, tail).length= 1 + tail.length@ satisfies neither — the
+-- recursive call's base is the bare @/length@ (no arguments) against an object of arity one, and
+-- the call's own meta (@/length(/this=…)@, which does match the object's arity) is reached through
+-- the argument and result links, not the base link. Productive recursion consumes its input
+-- structurally and so always differs from its own object at one of the two.
+--
+-- The whole source is cut, not the single arrow: at a base link an exact self-match is the arrow
+-- being defined, and a name carrying a second arrow of that same shape would be a second default
+-- arrow for one name — which dispatch could not choose between anyway.
+dropSelfBaseReach :: RConstraint -> ReachesTree -> ReachesTree
+dropSelfBaseReach con (ReachesPartialTree children)
+  | isBaseLink && not (S.null selfKeys) = ReachesPartialTree $ H.mapWithKey cut children
+  where
+    isBaseLink = case con of
+      Constraint _ _ (ArrowTo 7 _ _) -> True
+      _                              -> False
+    selfKeys = S.fromList [ (makeAbsoluteName (oaObjPath oa), H.keysSet $ snd $ splitVarArgEnv $ exprVarArgs $ oaObjExpr oa)
+                          | oa@ObjArr{oaObj=Just{}, oaArr=Just (Just{}, _)} <- conOs con ]
+    cut PartialType{ptName, ptArgs} sub
+      | S.member (makeAbsoluteName ptName, H.keysSet ptArgs) selfKeys = ReachesLeaf
+      | otherwise                                                     = sub
+dropSelfBaseReach _ t = t
+
 arrowConstrainUbs :: FEnv -> RConstraint -> SType -> SType -> TypeCheckResult (Type, Type, Type, Maybe ReachesTree)
 -- Relates the source and destination of an arrow in both directions and returns
 -- @(srcAct', srcReq', destAct', reaches)@. Forward: derive the destination actual from what the
@@ -442,7 +482,7 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
   -- only the class graph and structural arg keysets, which the two envs share.
   let reachesTypeEnv = rTypeEnv reachesEnv
   let allPartials = splitUnionType srcPartials ++ map constantPartialType consts
-  let reaches0 = reachesPartials reachesEnv allPartials
+  let reaches0 = dropSelfBaseReach con $ reachesPartials reachesEnv allPartials
   let vaenv' = fmap (stypeAct . snd) conVaenv
 
   -- Where and how the requirement acts depends on the kind of destination:
