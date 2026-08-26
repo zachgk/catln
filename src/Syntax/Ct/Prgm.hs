@@ -398,18 +398,28 @@ data ImportSyntax = ImportSyntax {
   -- and a reader is made for every syntax whether or not the read reaches a page written in it. A
   -- syntax with something expensive to work out works it out when a page first needs it and keeps
   -- it, as 'scanTree' does, rather than when its reader is made.
-  isReader  :: ReadEnv -> IO ImportReader,
+  isReader   :: ReadEnv -> IO ImportReader,
   -- | Writes a page back as the file it was read from, or nothing when that syntax has no reversion.
   --
   -- A reversion writes the program rather than the file: it may write back what the file said in a
   -- form other than the one the file said it in.
-  isUnparse :: RawPrgm () -> Maybe String,
+  isUnparse  :: RawPrgm () -> Maybe String,
   -- | The directory a relative link written in a page's documentation resolves against.
   --
   -- The directory the page was imported relative to for nearly every syntax ('importedLinkDir'), and
   -- asked of the syntax rather than taken as that, because a syntax whose pages name each other by
   -- where they sit within something larger resolves a link against that larger thing.
-  isLinkDir :: FileImport -> IO (Maybe FilePath)
+  isLinkDir  :: FileImport -> IO (Maybe FilePath),
+  -- | The page an import of this syntax stands at when it names no path of its own, written relative
+  -- to the standard library root, and 'Nothing' for a syntax whose imports always name their own.
+  --
+  -- A page is identified by the import which names it, and everything which displays one names it by
+  -- the path it stands at ('Semantics.Prgm.impDisp'). A syntax read out of nothing on disk still has
+  -- to answer that, rather than being a page nothing can link to, open or draw. Asked of the syntax
+  -- for the reason 'isUnparse' and 'isLinkDir' are: which page a syntax's import means is the
+  -- syntax's own business, and a second table beside the table of syntaxes could drift out of step
+  -- with it.
+  isPagePath :: Maybe FilePath
                                  }
 
 -- | One read's reading of one syntax, holding whatever that syntax keeps for the length of a read.
@@ -440,7 +450,7 @@ eagerPreload parsed@ParsedImport{piPrgm=RawPrgm imports _, piReads} = PreloadImp
 -- | A syntax which needs nothing of a read at all: its pages are read out of the files they name
 -- and out of nothing else, so the reader made for each read is the same reader every time.
 statelessSyntax :: (Expr () -> ImportPreloadResult) -> (Expr () -> ImportParseResult) -> (RawPrgm () -> Maybe String) -> ImportSyntax
-statelessSyntax preload parse unparse = ImportSyntax (const $ return $ ImportReader preload parse (return ())) unparse importedLinkDir
+statelessSyntax preload parse unparse = ImportSyntax (const $ return $ ImportReader preload parse (return ())) unparse importedLinkDir Nothing
 
 -- | Where a relative link resolves for a syntax whose pages are read from the directory they sit in,
 -- which is the directory they sit in. Every syntax but the one which reads a page out of a

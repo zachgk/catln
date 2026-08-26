@@ -15,47 +15,50 @@
 
 module Syntax.Parsers where
 
-import qualified Data.HashSet            as S
+import qualified Data.HashSet             as S
 
-import           Control.Applicative     ((<|>))
-import           Control.Concurrent.STM  (TVar, atomically, modifyTVar',
-                                          newTVarIO, readTVar, readTVarIO,
-                                          writeTVar)
-import           Control.Exception       (IOException, try)
-import           Control.Monad           (forM_, join)
-import           Control.Monad.Identity  (Identity (..))
+import           Control.Applicative      ((<|>))
+import           Control.Concurrent.STM   (TVar, atomically, modifyTVar',
+                                           newTVarIO, readTVar, readTVarIO,
+                                           writeTVar)
+import           Control.Exception        (IOException, try)
+import           Control.Monad            (forM_, join)
+import           Control.Monad.Identity   (Identity (..))
 import           Control.Monad.Trans
 import           CRes
-import           CtConstants             (noCoreAnnot)
+import           CtConstants              (noCoreAnnot)
 import           Data.Graph
-import qualified Data.HashMap.Strict     as H
-import           Data.IORef              (modifyIORef', newIORef, readIORef)
+import qualified Data.HashMap.Strict      as H
+import           Data.IORef               (modifyIORef', newIORef, readIORef)
 import           Data.List
-import           Data.Maybe              (fromMaybe, isJust, listToMaybe,
-                                          mapMaybe)
-import qualified Data.Sequence           as Sq
-import           Data.Time.Clock         (UTCTime, getCurrentTime)
-import           MapMeta                 (MetaLocation (ImportMeta), mapMeta,
-                                          parseMetaIDScope)
+import           Data.Maybe               (fromMaybe, isJust, listToMaybe,
+                                           mapMaybe)
+import qualified Data.Sequence            as Sq
+import           Data.Time.Clock          (UTCTime, getCurrentTime)
+import           MapMeta                  (MetaLocation (ImportMeta), mapMeta,
+                                           parseMetaIDScope)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Builder
-import           Syntax.Ct.Desugarf.Expr (desFileImport)
-import           Syntax.Ct.MapRawMeta    (addRawPrgmMetaIDs)
-import           Syntax.Ct.Parser        (contents, ctSyntax, ctxSyntax)
-import           Syntax.Ct.Parser.Expr   (term)
+import           Syntax.Ct.Desugarf.Expr  (desFileImport)
+import           Syntax.Ct.MapRawMeta     (addRawPrgmMetaIDs)
+import           Syntax.Ct.Parser         (contents, ctSyntax, ctxSyntax)
+import           Syntax.Ct.Parser.Expr    (term)
 import           Syntax.Ct.Prgm
-import           Syntax.FileDir.Parser   (fileDirReference, fileDirSyntax)
-import           Syntax.Haskell.Parser   (hsSyntax)
-import           Syntax.InferImport      (dirSyntax, findImportPath,
-                                          inferRawImportStr)
-import           Syntax.Md.Parser        (mdSyntax)
-import           Syntax.Obsidian.Parser  (obsidian, obsidianSyntax)
-import           Syntax.Python.Parser    (pySyntax)
-import           Syntax.Rss.Parser       (rss, rssSyntax)
-import           System.FilePath         (isAbsolute, joinPath, takeDirectory)
-import           Text.Megaparsec         (runParser)
+import           Syntax.FileDir.Parser    (fileDirReference, fileDirSyntax)
+import           Syntax.Haskell.Parser    (hsSyntax)
+import           Syntax.HsBuiltins.Parser (hsBuiltins, hsBuiltinsSyntax)
+import           Syntax.InferImport       (dirSyntax, findImportPath,
+                                           inferRawImportStr, parserImport,
+                                           stackPath)
+import           Syntax.Md.Parser         (mdSyntax)
+import           Syntax.Obsidian.Parser   (obsidian, obsidianSyntax)
+import           Syntax.Python.Parser     (pySyntax)
+import           Syntax.Rss.Parser        (rss, rssSyntax)
+import           System.Directory         (makeAbsolute)
+import           System.FilePath          (isAbsolute, joinPath, takeDirectory)
+import           Text.Megaparsec          (runParser)
 import           Text.Printf
 import           Utils
 
@@ -69,7 +72,8 @@ importSyntaxes = H.fromList [
   (rss, rssSyntax),
   (fileDirReference, fileDirSyntax),
   ("haskell", hsSyntax),
-  ("python", pySyntax)
+  ("python", pySyntax),
+  (hsBuiltins, hsBuiltinsSyntax)
                              ]
 
 -- | The path an applied import names: its first positional argument.
@@ -121,9 +125,11 @@ canonicalImport config caller imp@AFileImport{impAbs=(RawCExpr _ (CStr name))} =
 --
 -- 'impRaw' is deliberately left alone. It is what 'Syntax.Ct.Formatter.formatImport' prints, so
 -- rewriting it would have the formatter replace what the file says with an absolute path.
-canonicalImport config caller imp = case maybeExprPath impAbs' of
+canonicalImport config caller imp = case maybeExprPath impAbs0 of
   Nothing -> fail $ printf "Invalid import %s must be string or oject" (show imp)
-  Just _ -> do
+  Just impPath -> do
+    impAbs' <- syntaxPageImport config (nameStr impPath) impAbs0
+    let named' = rawImportPath impAbs'
     resolved <- join <$> mapM (findImportPath config caller) named'
     let disp' = resolved <|> named'
     impDir' <- case (calledDir', disp') of
@@ -133,9 +139,27 @@ canonicalImport config caller imp = case maybeExprPath impAbs' of
     let impAbs'' = maybe impAbs' (`setRawImportPath` impAbs') resolved
     return $ desFileImport $ imp{impAbs=impAbs'', impDisp=disp', impCalledDir=calledDir', impDir=impDir'}
   where
-    impAbs' = mapMeta (\_ _ -> Identity emptyMetaN) ImportMeta $ impAbs imp
-    named' = rawImportPath impAbs'
+    impAbs0 = mapMeta (\_ _ -> Identity emptyMetaN) ImportMeta $ impAbs imp
     calledDir' = impDir =<< caller
+
+-- | An import which names no path of its own, written as the page its syntax stands at.
+--
+-- Written into the import rather than only into 'impDisp', so that a page with no file behind it is
+-- the same kind of thing as every other page from here on: @parser(\"path\")@ is what an import
+-- canonicalizes to ('Syntax.InferImport.inferRawImportStr' makes every written path into one), and
+-- everything which asks an import where its page is asks 'Syntax.Ct.Prgm.importPath', which reads
+-- that path back out. A page named only by its display would be one 'Syntax.Ct.Prgm.isCorePage'
+-- could not answer for.
+--
+-- Nothing is at the path, which is the point: 'findImportPath' looks and finds nothing, and the
+-- import is left naming the page it names. An import which names a path, and a syntax which stands
+-- at no page of its own, are both left exactly as they were.
+syntaxPageImport :: CTSSConfig -> String -> RawExpr () -> IO (RawExpr ())
+syntaxPageImport config syntax e = case (rawImportPath e, isPagePath =<< H.lookup syntax importSyntaxes) of
+  (Nothing, Just page) -> do
+    page' <- makeAbsolute =<< stackPath config page
+    return $ parserImport syntax page'
+  _ -> return e
 
 -- | The import a name written outside a program means: an import expression, as it would be written
 -- after @import@ in one, or else the path of a file to be read with whichever parser suits it.

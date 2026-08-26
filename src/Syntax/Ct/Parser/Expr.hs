@@ -188,10 +188,16 @@ pArgSuffix = do
   arg <- pArrowFullOA ArgObj
   return (isJust spread, arg)
 
+-- | The arguments applied to a term.
+--
+-- No arguments is an application too, and means the term it is applied to: an empty apply is read
+-- away by 'Syntax.Ct.Desugarf.Expr.semiDesExpr', so @f()@ and @f@ are the one thing. It is written
+-- by an import which names a syntax taking no path of its own — @import hsbuiltins()@ — where a
+-- bare name would read as a path to look for.
 pArgsSuffix :: Parser TermSuffix
 pArgsSuffix = do
   pos1 <- getSourcePos
-  args <- parens $ sepBy1 pArgSuffix (symbol ",")
+  args <- parens $ sepBy pArgSuffix (symbol ",")
   pos2 <- getSourcePos
   return $ ArgsSuffix (emptyMeta pos1 pos2) args
 

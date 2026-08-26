@@ -123,7 +123,7 @@ ctSyntax = eagerSyntax $ \imp -> case exprAppliedArgs imp of
 -- TODO Write a .ctx file back, once 'ctSyntax' can be written back: it is a .ct file with the one
 -- annotation this adds taken off again.
 ctxSyntax :: ImportSyntax
-ctxSyntax = ImportSyntax reader (const Nothing) importedLinkDir
+ctxSyntax = ImportSyntax reader (const Nothing) importedLinkDir Nothing
   where
     reader env = do
       ct <- isReader ctSyntax env

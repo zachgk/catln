@@ -1,0 +1,15 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList [] )
+    , prgmCG = []
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "# The Catln Builtins" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "These are the definitions the compiler supplies itself, rather than ones written in Catln." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "They are built in Haskell, in `Syntax.HsBuiltins.Parser`, and reached by writing `import hsbuiltins()`. The standard library writes that import, so every program has them." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "There are none yet. This page is where they will be written." )
+        ]
+    }

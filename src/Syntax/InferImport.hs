@@ -114,17 +114,27 @@ dirPreload name = do
   parsed <- dirParse name
   return (eagerPreload parsed){plExtraImports = map (mkRawFileImport . rawStr) $ catMaybes files'}
 
+-- | Where a path written relative to the standard library root is, with a leading @~\/@ in that root
+-- expanded against the home directory.
+--
+-- Answers where the path would be rather than whether anything is there, so that a page of the
+-- standard library which is not a file can be named the same way one which is, is
+-- ('Syntax.Ct.Prgm.isPagePath').
+stackPath :: CTSSConfig -> FilePath -> IO FilePath
+stackPath config name = case joinPath [ctssStackPath config, name] of
+  '~':'/':p -> do
+    homeDir <- getHomeDirectory
+    return $ joinPath [homeDir, p]
+  p -> return p
+
 -- | The places an import of @name@ could be: beside the file which wrote it, then in the standard
 -- library.
 importPathCandidates :: CTSSConfig -> Maybe FileImport -> String -> IO [FilePath]
 importPathCandidates config caller name = do
-  homeDir <- getHomeDirectory
-  stackPath <- case joinPath [ctssStackPath config, name] of
-    '~':'/':p -> return $ joinPath [homeDir, p]
-    p         -> return p
+  inStack <- stackPath config name
   return $ if isAbsolute name
     then [name]
-    else [maybe name (\p -> joinPath [p, name]) (caller >>= impDir), stackPath]
+    else [maybe name (\p -> joinPath [p, name]) (caller >>= impDir), inStack]
 
 -- | The absolute path an import names, or 'Nothing' when it names nothing that is there.
 --

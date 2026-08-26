@@ -77,7 +77,7 @@ obsidianConfigDir = ".obsidian"
 -- Only a note is written back. A vault is a directory, whose notes are pages of their own and are
 -- each written back as themselves, so it has no source text of its own for a reversion to produce.
 obsidianSyntax :: ImportSyntax
-obsidianSyntax = ImportSyntax newObsidianReader unparseNote noteLinkDir
+obsidianSyntax = ImportSyntax newObsidianReader unparseNote noteLinkDir Nothing
 
 -- | Where a relative link written in a note resolves: the vault holding it.
 --
