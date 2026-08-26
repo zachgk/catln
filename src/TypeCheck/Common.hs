@@ -399,6 +399,13 @@ constraintVarArgEnv = fmap snd . constraintVarArgEnvIO
 getPnt :: VarMeta -> Maybe Pnt
 getPnt Meta{getMetaDat=VarMetaDat p _} = p
 
+-- | Adds constraints to the innermost open block.
+--
+-- Constraints are ACCUMULATED IN REVERSE of the order 'TypeCheck.Encode' emits them, so that
+-- each add is O(1) rather than O(list). 'finalizeConstraints' flips the whole accumulator once
+-- at the end of encoding; every function here maintains that reversal exactly, so the flip
+-- recovers emission order and nothing else has to think about it. See 'finalizeConstraints' for
+-- why emission order is the order the solver wants.
 addConstraints :: [VConstraintDat] -> FEnv -> FEnv
 addConstraints newCons env@FEnv{feConsDats=curCons:parentCons} = env {feConsDats = (map (Constraint [] H.empty) newCons ++ curCons):parentCons}
 addConstraints _ FEnv{feConsDats=[]} = error $ printf "No constraint stack found in addConstraints"
@@ -413,6 +420,35 @@ endConstraintBlock :: Maybe VObjArr -> CVarArgEnv VarMeta -> FEnv -> FEnv
 endConstraintBlock oa vaenv env@FEnv{feConsDats=[newCons], feCons} = env{feConsDats=[], feCons = map (\(Constraint oas vaenvs d) -> Constraint (maybeToList oa ++ oas) (H.union vaenv vaenvs) d) newCons ++ feCons}
 endConstraintBlock oa vaenv env@FEnv{feConsDats=d1:d2:ds} = env{feConsDats=(map (\(Constraint oas vaenvs d) -> Constraint (maybeToList oa ++ oas) (H.union vaenv vaenvs) d) d1 ++ d2):ds}
 endConstraintBlock _ _ FEnv{feConsDats=[]} = error $ printf "No constraint stack found in endConstraintBlock"
+
+-- | Puts the encoded constraints into DATAFLOW ORDER, which is the order 'TypeCheck.Encode'
+-- emitted them in.
+--
+-- 'runConstraintsIdx' executes the list front to back once per epoch, and a constraint sees the
+-- points every constraint before it in the list already wrote. So a value crosses as many links
+-- per epoch as the list order lets it: run in dataflow order it rides a whole expression in one
+-- epoch, run against it it advances one link per epoch and the epoch count becomes proportional
+-- to nesting depth.
+--
+-- 'fromExpr' encodes post-order — a subexpression's constraints are emitted before those of the
+-- application containing it — which is exactly dataflow order for the actual types that flow
+-- outward from leaves. The accumulator above holds the exact global reverse of that (both
+-- 'addConstraints' and both 'endConstraintBlock' arms prepend, and a block ends before the
+-- enclosing block emits anything further), so ONE reverse here recovers it.
+--
+-- This is an ordering of the same constraint set, not a change to any constraint: the solver
+-- still runs to the same fixpoint, and order only decides how many epochs it takes to get
+-- there. It is not a correctness crutch either — 'runConstraintsLimit' is a runaway guard, and
+-- the point of ordering is that the guard stops being reachable by ordinary programs. Before
+-- this, a left-nested chain cost 3 epochs per operand, so an eight-operand @++@ chain (25 epoch
+-- budget, 26 needed) failed to typecheck at all.
+--
+-- This is the order the ACTUAL types want. Requirements flow the other way, so 'runConstraints'
+-- ALTERNATES the direction each epoch rather than leaving the requirement channel permanently
+-- in its worst order — see the note on the recursive call in 'runConstraintsIdx'. The two
+-- belong together: this ordering on its own breaks calls through a class top.
+finalizeConstraints :: FEnv -> FEnv
+finalizeConstraints env@FEnv{feCons} = env{feCons = reverse feCons}
 
 fAddVTypeGraph :: VObjArr -> FEnv -> FEnv
 fAddVTypeGraph oa env@FEnv{feVTypeGraph} = env {feVTypeGraph = singletonObjectMap oa <> feVTypeGraph}

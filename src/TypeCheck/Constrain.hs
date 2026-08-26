@@ -555,4 +555,23 @@ runConstraintsIdx limit cons = do
       let cons' = mapMaybe (\(icon, shouldPrune) -> if shouldPrune then Nothing else Just icon) $ zip cons constraintsToPrune
       when updated $ do
         modify nextConstrainEpoch
-        runConstraintsIdx (limit - 1) cons'
+        -- ALTERNATE the traversal direction each epoch.
+        --
+        -- Two flows run through the same constraint set in OPPOSITE directions: actuals travel
+        -- forward (a leaf's type outward to the application containing it) and requirements
+        -- travel backward (a consumer's demand inward to what supplies it). A constraint sees
+        -- whatever the constraints before it in this epoch already wrote, so ONE order is the
+        -- good order for one flow and the pessimal order for the other. Alternating gives each
+        -- flow its good order every other epoch instead of starving one of them.
+        --
+        -- Starving the requirement channel is not merely slow, it is WRONG: a requirement
+        -- computed from partial knowledge is locked in by the narrowing invariant
+        -- ('verifySchemeReqLowers'), so a demand derived before its siblings resolved cannot be
+        -- widened back. Encoding in dataflow order WITHOUT this alternation over-narrowed
+        -- requirements on calls through a class top (core's @insert(m= insert(m= ...))@, whose
+        -- requirement must round-trip between @/Data/Map@ and its @BinTree@ members) — 70 of 574
+        -- tests, against 2 on the unordered list.
+        --
+        -- The index paired with each constraint is its 'feConMemo' key and rides along, so
+        -- reversing the running order leaves the skip-memo keys untouched.
+        runConstraintsIdx (limit - 1) (reverse cons')

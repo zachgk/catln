@@ -414,4 +414,8 @@ fromPrgms pprgms tprgms = do
   vprgms <- mapM fromPrgm pprgms
   let (Prgm{prgmObjMap=tjoinObjMap}) = mconcat tprgms
   addUnionObjToEnv (mconcat $ map fst3 vprgms) tjoinObjMap
+  -- Last, once every constraint (including the universe's, added just above) is in: hand the
+  -- solver the list in the order values flow through it rather than the reverse the O(1)
+  -- accumulator built. See 'finalizeConstraints'.
+  modify finalizeConstraints
   return vprgms
