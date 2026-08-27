@@ -348,3 +348,21 @@ ctMaybeSome, ctMaybeSomeValue, ctMaybeNothing :: String
 ctMaybeSome = "/Data/Maybe/Some"
 ctMaybeSomeValue = "value"
 ctMaybeNothing = "/Data/Maybe/Nothing"
+
+-- | The type variable a parameterized standard-library type takes its element type as: the @$T@ of
+-- @\/Data\/List[$T -> String]@ in @stack\/core\/result.ct@.
+--
+-- Named here because two things have to agree on it — the @.ct@ files which declare those types, and
+-- 'Syntax.HsBuiltins.Derive', which writes a Haskell @[a]@ or @Maybe a@ back out as one of them.
+ctElemVar :: String
+ctElemVar = "$T"
+
+-- | The paths of the standard library's types a derived builtin's field can be, where the path is
+-- not already named by the constructors above.
+--
+-- 'ctBooleanPath' beside 'truePrim' and 'falsePrim', which are its two members;
+-- @stack\/core\/bool.ct@ writes them as one @class(Boolean, [True, False])@.
+ctBooleanPath, ctMaybePath, ctListPath :: String
+ctBooleanPath = "/Data/Primitive/Boolean"
+ctMaybePath = "/Data/Maybe"
+ctListPath = "/Data/List"

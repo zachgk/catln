@@ -1,15 +1,30 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList [] )
-    , prgmCG = []
+        ( fromList
+            [
+                ( "/Catln/Sample"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Sample( EAppArg Value /name -> /Data/String )( EAppArg Value /count -> /Data/Primitive/Integer )( EAppArg Value /enabled -> ∀/Data/Primitive/Boolean )
+                            ( EAppArg Value /note -> ∀/Data/Maybe[ /T=/Data/String ] )
+                            ( EAppArg Value /tags -> ∀/Data/List[ /T=/Data/String ] )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        )
+    , prgmCG = [ CGType ]
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg Value /text -> /Data/String = "# The Catln Builtins" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "These are the definitions the compiler supplies itself, rather than ones written in Catln." )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "They are built in Haskell, in `Syntax.HsBuiltins.Parser`, and reached by writing `import hsbuiltins()`. The standard library writes that import, so every program has them." )
+            ( EAppArg Value /text -> /Data/String = "They are built in Haskell, in `Syntax.HsBuiltins.Types`, and reached by writing `import hsbuiltins()`. The standard library writes that import, so every program has them." )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "There are none yet. This page is where they will be written." )
+            ( EAppArg Value /text -> /Data/String = "Each is derived from the shape of the Haskell type it stands for, which is the same reading the runtime converts a value of that type by. So what a builtin is called here and what it is handed to a program as cannot disagree." )
         ]
     }

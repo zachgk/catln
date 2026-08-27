@@ -150,3 +150,8 @@ classDeclSt cls extends = RawDeclStatement $ rawOutObjArr (rawVal classStr `appl
 
 classWithObjs :: PExpr -> [PExpr] -> [PExpr] -> PStatement
 classWithObjs cls objs extends = RawDeclStatement $ rawOutObjArr (rawVal classStr `applyRawEIArgs` [(cls, IArgNothing), (RawList emptyMetaN objs, IArgNothing)] `applyRawArgs` [(Just $ partialKey (mkName isaStr), RawList emptyMetaN extends) | not (null extends)])
+
+-- | @data(tp)@, as 'classWithObjs' is @class(cls, [objs])@ — the one declaration statement that had
+-- no builder, since nothing in the compiler built a type until the builtins page did.
+dataSt :: PExpr -> PStatement
+dataSt tp = RawDeclStatement $ rawOutObjArr (rawVal dataStr `applyRawEIArgs` [(tp, IArgNothing)])

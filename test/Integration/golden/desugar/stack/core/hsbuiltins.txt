@@ -1,15 +1,30 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList [] )
-    , prgmCG = []
+        ( fromList
+            [
+                ( "/Catln/Sample"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Sample( Value /name -> /Data/String )( Value /count -> /Data/Primitive/Integer )( Value /enabled -> ∀/Data/Primitive/Boolean )
+                            ( Value /note -> ∀/Data/Maybe[ /T=/Data/String ] )
+                            ( Value /tags -> ∀/Data/List[ /T=/Data/String ] )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        )
+    , prgmCG = [ CGType ]
     , prgmAnnots =
         [ /Catln/#md
             ( Value /text= CStr "# The Catln Builtins" )
         , /Catln/#md
             ( Value /text= CStr "These are the definitions the compiler supplies itself, rather than ones written in Catln." )
         , /Catln/#md
-            ( Value /text= CStr "They are built in Haskell, in `Syntax.HsBuiltins.Parser`, and reached by writing `import hsbuiltins()`. The standard library writes that import, so every program has them." )
+            ( Value /text= CStr "They are built in Haskell, in `Syntax.HsBuiltins.Types`, and reached by writing `import hsbuiltins()`. The standard library writes that import, so every program has them." )
         , /Catln/#md
-            ( Value /text= CStr "There are none yet. This page is where they will be written." )
+            ( Value /text= CStr "Each is derived from the shape of the Haskell type it stands for, which is the same reading the runtime converts a value of that type by. So what a builtin is called here and what it is handed to a program as cannot disagree." )
         ]
     }
