@@ -2,52 +2,53 @@
 module Main where
 
 import           CRes
-import           CtConstants           (printAnnot, printAnnotText,
-                                        resultAnnotText)
+import           CtConstants             (printAnnot, printAnnotText,
+                                          resultAnnotText)
 import           Options.Applicative
-import           Semantics             (buildCtssConfig)
-import           Semantics.Prgm        (CodeRangeDat, FileImport, MetaDat,
-                                        exprPath, getExprMeta, getMetaPos,
-                                        impDisp, impRaw)
-import           Semantics.Types       (mkName, nameStr, partialKey)
-import           Syntax.Ct.Builder     (applyRawArgs, rawStr, rawVal)
-import           Syntax.Ct.Formatter   (formatRootPrgm)
-import           Syntax.Ct.Prgm        (ParsedImport (..), RawPrgm (..),
-                                        RawStatement (..),
-                                        RawStatementTree (..), isCorePage,
-                                        rawExprAppliedArgsMap)
-import           Syntax.Parsers        (canonicalImport,
-                                        mkDesCanonicalImportStr, mkRawImportStr,
-                                        parseFile, parseImportAlone, readFiles)
+import           Semantics               (buildCtssConfig)
+import           Semantics.Prgm          (CodeRangeDat, FileImport, MetaDat,
+                                          exprPath, getExprMeta, getMetaPos,
+                                          impDisp, impRaw)
+import           Semantics.Types         (mkName, nameStr, partialKey)
+import           Syntax.Ct.Builder       (applyRawArgs, rawStr, rawVal)
+import           Syntax.Ct.Formatter     (formatRootPrgm)
+import           Syntax.Ct.Prgm          (ParsedImport (..), RawPrgm (..),
+                                          RawStatement (..),
+                                          RawStatementTree (..), isCorePage,
+                                          rawExprAppliedArgsMap)
+import           Syntax.Parsers          (canonicalImport,
+                                          mkDesCanonicalImportStr,
+                                          mkRawImportStr, parseFile,
+                                          parseImportAlone, readFiles)
 
 import           Control.Monad
 import           Control.Monad.Trans
-import           CtRef                 (printRefIndex)
+import           CtRef                   (printRefIndex)
 import           CtService
-import           Data.Foldable         (foldlM)
-import qualified Data.HashMap.Strict   as H
-import qualified Data.HashSet          as S
-import           Data.List             (isInfixOf, nub, sortOn)
+import           Data.Foldable           (foldlM)
+import qualified Data.HashMap.Strict     as H
+import qualified Data.HashSet            as S
+import           Data.List               (isInfixOf, nub, sortOn)
 import           Data.Maybe
-import           Eval.Common           (BuiltFile (..), SSF (..),
-                                        TestKind (TestPrintGolden),
-                                        TestResult (..), valResultFiles)
-import           Eval.Testing          (TestDesc (..), runTestDesc)
-import           LSP                   (lspRun)
+import           Eval.Common             (SSF (..), TestKind (TestPrintGolden),
+                                          TestResult (..))
+import           Eval.Testing            (TestDesc (..), runTestDesc)
+import           LSP                     (lspRun)
+import           Syntax.HsBuiltins.Types (BuiltFile (..), valResultFiles)
 import           System.Directory
-import           System.Exit           (exitFailure)
-import           System.FilePath       (isAbsolute, splitDirectories,
-                                        takeDirectory, (</>))
-import           Text.Megaparsec       (sourceName)
+import           System.Exit             (exitFailure)
+import           System.FilePath         (isAbsolute, splitDirectories,
+                                          takeDirectory, (</>))
+import           Text.Megaparsec         (sourceName)
 import           Text.Printf
-import           TypeCheck.Common      (flipTraceConstrain,
-                                        lookupEpochCountResult,
-                                        lookupTraceResult)
-import           TypeCheck.Instruments (defaultInstruments, epochInstruments,
-                                        typeInfoInstruments)
-import           TypeCheck.TraceWrite  (renderTypeTrace)
-import           Utils                 (fst3, graphToNodes, snd3, treeBranch)
-import           WebDocs               (docApi, docServe)
+import           TypeCheck.Common        (flipTraceConstrain,
+                                          lookupEpochCountResult,
+                                          lookupTraceResult)
+import           TypeCheck.Instruments   (defaultInstruments, epochInstruments,
+                                          typeInfoInstruments)
+import           TypeCheck.TraceWrite    (renderTypeTrace)
+import           Utils                   (fst3, graphToNodes, snd3, treeBranch)
+import           WebDocs                 (docApi, docServe)
 -- import Repl (repl)
 
 xRun :: String -> String -> CResT IO ()

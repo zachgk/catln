@@ -2,13 +2,10 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
-                ( "/Catln/Sample"
+                ( "/Catln/BuildFile"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/Sample( EAppArg Value /name -> /Data/String )( EAppArg Value /count -> /Data/Primitive/Integer )( EAppArg Value /enabled -> ∀/Data/Primitive/Boolean )
-                            ( EAppArg Value /note -> ∀/Data/Maybe[ /T=/Data/String ] )
-                            ( EAppArg Value /tags -> ∀/Data/List[ /T=/Data/String ] )
-                        ]
+                        [ /Catln/BuildFile( EAppArg Value /path -> /Data/String )( EAppArg Value /contents -> /Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []

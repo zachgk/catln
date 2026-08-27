@@ -147,10 +147,11 @@ class CtType a where
   ctFieldName :: Proxy a -> String -> String
   ctFieldName _ = ctDropFieldPrefix
 
-  -- | What the page says about the type, beneath its declaration. Nothing by default, which is a
+  -- | What the page says about the type, beneath its declaration: one entry per paragraph, as the
+  -- page's own comments are written and as a @.ct@ doc comment reads. Nothing by default, which is a
   -- declaration with nothing written on it rather than an empty comment.
-  ctDoc :: Proxy a -> Maybe String
-  ctDoc _ = Nothing
+  ctDoc :: Proxy a -> [String]
+  ctDoc _ = []
 
   -- | The page, with this type and everything its fields reach added to what it was given.
   ctPageInto :: Proxy a -> CtPage -> CtPage
@@ -222,7 +223,7 @@ ctDeclOf p = RawStatementTree statement doc
     statement = case cons of
       [con] -> dataSt (ctConExpr con)
       _     -> classWithObjs (rawVal $ ctPath p) (map ctConExpr cons) []
-    doc = [RawStatementTree (RawAnnot (rawComment d)) [] | Just d <- [ctDoc p]]
+    doc = [RawStatementTree (RawAnnot (rawComment d)) [] | d <- ctDoc p]
 
 -- | One constructor as it is written in a declaration: its path applied to each argument's declared
 -- type. A constructor with no arguments is the bare path, since 'applyRawEIArgs' of nothing is what

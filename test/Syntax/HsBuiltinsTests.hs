@@ -7,26 +7,27 @@
 -- the declaration says is asserted as the Catln it formats to, which is the text someone comparing
 -- it against a @.ct@ file would read.
 --
--- Over types written here rather than over 'Syntax.HsBuiltins.Types.Sample' alone, because the
+-- Over types written here rather than over 'Syntax.HsBuiltins.Types.BuiltFile' alone, because the
 -- shapes worth covering — a sum, a nullary arm, a record inside a record, a type that reaches
--- itself — are not shapes the builtins page has any reason to carry yet. 'Sample' is covered too,
--- since it is the one whose declaration the standard library actually typechecks.
+-- itself — are not shapes the builtins page has any reason to carry. 'BuiltFile' is covered too,
+-- since it is the one whose declaration the standard library actually typechecks and the one a
+-- build is actually read back through.
 {-# LANGUAGE DeriveGeneric       #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Syntax.HsBuiltinsTests where
 
-import           CtConstants              (ctMaybeSome, truePrim)
 import qualified Data.HashMap.Strict      as H
 import           Data.List                (isInfixOf)
 import           Data.Proxy               (Proxy (..))
-import           Eval.Common              (Val (..))
+import           Eval.Common              (Val (..), valListOf)
 import           GHC.Generics             (Generic)
 import           Syntax.Ct.Formatter      (formatRootPrgm)
 import           Syntax.Ct.Prgm           (RawPrgm (..))
 import           Syntax.HsBuiltins.Derive
 import           Syntax.HsBuiltins.Parser (hsBuiltinsImports)
-import           Syntax.HsBuiltins.Types  (Sample (..), hsBuiltinPage)
+import           Syntax.HsBuiltins.Types  (BuiltFile (..), hsBuiltinPage,
+                                           oneFileResult, valResultFiles)
 import           Test.Tasty
 import           Test.Tasty.HUnit
 
@@ -64,17 +65,18 @@ declText p = formatRootPrgm (RawPrgm [] (cpDecls $ ctPageOf p))
 roundTrip :: (CtType a, Eq a, Show a) => String -> a -> TestTree
 roundTrip name x = testCase name $ fromCt (toCt x) @?= Right x
 
-aSample :: Sample
-aSample = Sample "a name" 3 True (Just "a note") ["one", "two"]
+aFile :: BuiltFile
+aFile = BuiltFile "site/index.html" "<h1>hi</h1>"
 
 hsBuiltinsTests :: TestTree
 hsBuiltinsTests = testGroup "HsBuiltinsTests" [
   testGroup "a Haskell type declared as a Catln one" [
       testCase "as one data statement, with each field under the name its prefix was dropped from" $
-        declText (Proxy :: Proxy Sample) @?= unlines [
-          "data(/Catln/Sample(name -> /Data/String, count -> /Data/Primitive/Integer, enabled -> /Data/Primitive/Boolean, note -> /Data/Maybe[$T -> /Data/String], tags -> /Data/List[$T -> /Data/String]))",
-          "  # A stand-in builtin, until there is a real one. It is declared from Haskell rather than written in Catln, and is here so that there is something on this page for the compiler to supply."
-                                                     ]
+        head (lines (declText (Proxy :: Proxy BuiltFile)))
+          @?= "data(/Catln/BuildFile(path -> /Data/String, contents -> /Data/String))"
+
+    , testCase "at the Catln path the instance names, which is not the Haskell one" $
+        ctPath (Proxy :: Proxy BuiltFile) @?= "/Catln/BuildFile"
 
     , testCase "with a field written without a prefix left as it was" $
         declText (Proxy :: Proxy Plain) @?=
@@ -97,13 +99,10 @@ hsBuiltinsTests = testGroup "HsBuiltinsTests" [
 
   , testGroup "a Haskell value as the value that declaration is read with" [
       testCase "keyed as an evaluated value keys its arguments" $
-        toCt aSample @?= TupleVal "/Catln/Sample" (H.fromList [
-          ("/name", StrVal "a name"),
-          ("/count", IntVal 3),
-          ("/enabled", TupleVal truePrim H.empty),
-          ("/note", TupleVal ctMaybeSome (H.singleton "/value" (StrVal "a note"))),
-          ("/tags", toCt ["one", "two" :: String])
-                                                              ])
+        toCt aFile @?= TupleVal "/Catln/BuildFile" (H.fromList [
+          ("/path", StrVal "site/index.html"),
+          ("/contents", StrVal "<h1>hi</h1>")
+                                                               ])
 
     , testCase "a constructor of several named in the type's own namespace" $
         toCt (Circle 2) @?= TupleVal "/Catln/Shape/Circle" (H.singleton "/radius" (IntVal 2))
@@ -113,7 +112,7 @@ hsBuiltinsTests = testGroup "HsBuiltinsTests" [
                                                                           ]
 
   , testGroup "a Catln value read back as the Haskell one" [
-      roundTrip "a record of every kind of field" aSample
+      roundTrip "the one file of a build" aFile
     , roundTrip "a record held inside another" (Outer (Inner "in") 1)
     , roundTrip "the arm of a sum which carries fields" (Circle 7)
     , roundTrip "the arm of a sum which carries none" Point
@@ -144,7 +143,7 @@ hsBuiltinsTests = testGroup "HsBuiltinsTests" [
           (fromCt (TupleVal "/Catln/Shape/Circle" (H.singleton "/radius" (StrVal "two"))) :: Either String Shape)
 
     , testCase "reported where the value is not a tuple at all" $
-        assertLeftHolds "/Catln/Sample" (fromCt (IntVal 1) :: Either String Sample)
+        assertLeftHolds "/Catln/BuildFile" (fromCt (IntVal 1) :: Either String BuiltFile)
 
     , testCase "reported where a machine word would have to be truncated" $
         assertLeftHolds "does not fit"
@@ -153,23 +152,37 @@ hsBuiltinsTests = testGroup "HsBuiltinsTests" [
 
   , testGroup "the page the builtins are declared on" [
       testCase "importing what the types it declares are written in terms of" $
-        cpImports hsBuiltinPage @?= ["core/str.ct", "core/num.ct", "core/bool.ct", "core/maybe.ct", "core/list.ct"]
+        cpImports hsBuiltinPage @?= ["core/str.ct"]
 
     , testCase "and the compiling types its own comments are written in, ahead of them" $
         -- The lines it writes, and not the blank one 'Syntax.Ct.Formatter.formatPrgm' puts after
         -- them: what is asked here is which pages the page imports, and in what order.
         filter (not . null) (lines (formatRootPrgm (RawPrgm hsBuiltinsImports [] :: RawPrgm ()))) @?= [
           "import \"core/compile.ct\"",
-          "import \"core/str.ct\"",
-          "import \"core/num.ct\"",
-          "import \"core/bool.ct\"",
-          "import \"core/maybe.ct\"",
-          "import \"core/list.ct\""
+          "import \"core/str.ct\""
                                                                                                       ]
 
     , testCase "declaring each type once, however many fields reach it" $
         length (cpDecls $ ctPageOf (Proxy :: Proxy Chain)) @?= 1
                                                      ]
+
+    -- The point of mapping 'BuiltFile' rather than a stand-in: what a build is written as and what
+    -- it is read back as are the one derived reading, so the argument keys 'valResultFiles' got
+    -- wrong before are not written down anywhere any more.
+  , testGroup "a build result read back through the derived reading" [
+      testCase "the file a one-file result was built from" $
+        valResultFiles (oneFileResult "site/index.html" "<h1>hi</h1>") @?= Right [aFile]
+
+    , testCase "no files where the result holds none" $
+        valResultFiles (TupleVal "/Catln/CatlnResult" (H.singleton "/files" (toCt ([] :: [BuiltFile])))) @?= Right []
+
+    , testCase "a value which is no result at all" $
+        assertLeftHolds "/Catln/CatlnResult" (valResultFiles (IntVal 1))
+
+    , testCase "a result holding something which is no file" $
+        assertLeftHolds "/Catln/BuildFile"
+          (valResultFiles (TupleVal "/Catln/CatlnResult" (H.singleton "/files" (valListOf [IntVal 1]))))
+                                                                     ]
                                               ]
 
 -- | A failure which says the thing a reader of it needs to see.

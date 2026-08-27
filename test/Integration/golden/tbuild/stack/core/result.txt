@@ -2,16 +2,6 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
-                ( "/Catln/BuildFile"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Catln/BuildFile( EAppArg Value /path -> /Data/String )( EAppArg Value /contents -> /Data/String ) ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
                 ( "/Catln/llvm"
                 , ObjectMapItem
                     { omiDecls = []
@@ -83,7 +73,6 @@ Prgm
         [ CGType
         , CGType
         , CGType
-        , CGType
         , CGClass
             ( False
             , /Catln/BuildFile
@@ -107,6 +96,10 @@ Prgm
             run from 203 seconds to over 900, and reports [/Data/Algebra/eq] and [/Data/Algebra/ord] as
             unfulfilled declarations that are fulfilled without it.
             So this file sits below both instead: it imports what it needs and nothing imports it but
-            @core/main.ct@, which is what every program is given." )
+            @core/main.ct@, which is what every program is given.
+            [BuildFile] is not declared here. It is declared by the compiler, on the page @hsbuiltins()@
+            reads, because the compiler reads a build result back out of an evaluation itself — so what the
+            type is called there and what it is read as in Haskell are one thing rather than two kept in
+            step. [CatlnResult] around it is still declared here." )
         ]
     }

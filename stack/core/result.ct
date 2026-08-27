@@ -1,3 +1,4 @@
+import hsbuiltins()
 import "core/file.ct"
 import "core/webdoc.ct"
 
@@ -15,17 +16,10 @@ module(Catln)
     unfulfilled declarations that are fulfilled without it.
     So this file sits below both instead: it imports what it needs and nothing imports it but
     @core/main.ct@, which is what every program is given.
-  data(BuildFile(path -> String, contents -> String))
-    # One file a build produces, at the [path] it is produced at.
-      A path rather than a name and a place in a tree, so that a result is a flat list of files and
-      every entry of that list is the same kind of thing. The nested form — a file or a directory of
-      further entries, which is [/Data/FileOrDir] — is the shape this wants, and is not yet a shape
-      the compiler can build: a list takes its element type from its first entry, so a directory
-      holding both a file and a subdirectory is a list whose second entry does not fit its first.
-      See the comment on [/Data/FileOrDir].
-      [path] is written with @/@ between its parts, and names a place inside the build and nowhere
-      else. A path leading out of it is refused when the build is written rather than here, since a
-      result may be built long before anything writes it.
+    [BuildFile] is not declared here. It is declared by the compiler, on the page @hsbuiltins()@
+    reads, because the compiler reads a build result back out of an evaluation itself — so what the
+    type is called there and what it is read as in Haskell are one thing rather than two kept in
+    step. [CatlnResult] around it is still declared here.
   data(CatlnResult(files -> /Data/List[$T -> BuildFile]))
     # The [CatlnResult] represents the result of a catln build.
       The most typical results are compiled executables.

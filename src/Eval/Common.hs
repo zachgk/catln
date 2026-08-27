@@ -624,35 +624,6 @@ queueLeaf = partialVal "llvmQueue"
 resultType :: Type
 resultType = singletonType resultLeaf
 
--- | One file a build produces, as it is read out of an evaluated value: the Haskell side of
--- @stack\/core\/result.ct@'s @\/Catln\/BuildFile@.
---
--- The path is the whole of where the file goes, written with @\/@ between its parts, so a result is
--- a flat list rather than a tree walked into.
-data BuiltFile = BuiltFile {
-    bfPath     :: FilePath,
-    bfContents :: String
-  } deriving (Eq, Show)
-
--- | The files of an evaluated @\/Catln\/CatlnResult@, or why the value is not one.
---
--- This is the one place the shape of a build result is known, and every caller that has to look
--- inside one goes through it. Written once because it was written three times before, each copy
--- knowing the argument keys for itself, and one of them ('Main.xBuild') had them wrong — it looked
--- up @name@ where an evaluated value keys @\/name@, so every build crashed on a 'Data.Maybe.fromJust'
--- and nothing noticed, since the tests call the evaluation and never the command.
-valResultFiles :: Val -> Either String [BuiltFile]
-valResultFiles (TupleVal name args) | name == catlnResultPath = case H.lookup (runtimeArgKey catlnResultFiles) args of
-  Just files -> traverse valBuiltFile =<< valList files
-  Nothing -> Left $ printf "A %s has no %s, only %s" catlnResultPath (runtimeArgKey catlnResultFiles) (show $ H.keys args)
-valResultFiles val = Left $ printf "%s is not a %s" (show val) catlnResultPath
-
--- | One file of a result: where it goes, and what is written in it.
-valBuiltFile :: Val -> Either String BuiltFile
-valBuiltFile (TupleVal name args) | name == buildFilePath =
-  BuiltFile <$> valStrArg name buildFileFilePath args <*> valStrArg name buildFileContents args
-valBuiltFile val = Left $ printf "%s is not a %s" (show val) buildFilePath
-
 -- | An evaluated @\/Data\/List@ as the values in it. A list is a @\/Data\/Cons@ chain ending in a
 -- @\/Data\/Nil@, which is what the @[ ]@ sugar desugars to in @Syntax.Ct.Desugarf.Expr@.
 valList :: Val -> Either String [Val]
@@ -689,11 +660,6 @@ valMaybeStrArg name argName args = do
 valListOf :: [Val] -> Val
 valListOf = foldr cons (TupleVal ctListNil H.empty)
   where cons v rest = TupleVal ctListCons $ H.fromList [(runtimeArgKey ctListConsHead, v), (runtimeArgKey ctListConsTail, rest)]
-
--- | A build result of a single file, as the value one would have been built as.
-oneFileResult :: FilePath -> String -> Val
-oneFileResult path contents = TupleVal catlnResultPath $ H.singleton (runtimeArgKey catlnResultFiles) $ valListOf [file]
-  where file = TupleVal buildFilePath $ H.fromList [(runtimeArgKey buildFileFilePath, StrVal path), (runtimeArgKey buildFileContents, StrVal contents)]
 
 -- | The singleton typeset of a value: a 'Type' that carries a primitive's concrete value as a
 -- 'Constant' (e.g. @IntVal 5@ becomes the type @{5}@, a subtype of @Integer@). This is what a

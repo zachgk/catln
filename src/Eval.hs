@@ -17,7 +17,7 @@
 module Eval where
 
 import           CRes
-import qualified Data.HashMap.Strict as H
+import qualified Data.HashMap.Strict     as H
 import           Semantics.Prgm
 import           Semantics.Types
 
@@ -27,17 +27,18 @@ import           Data.Maybe
 -- import           Emit                (codegenExInit)
 import           Control.Monad.State
 import           CtConstants
-import qualified Data.HashSet        as S
-import           Data.UUID           (UUID)
+import qualified Data.HashSet            as S
+import           Data.UUID               (UUID)
 import           Eval.Common
 import           Eval.Env
 import           Eval.ExprBuilder
 import           Eval.Runtime
 import           Semantics
-import           Semantics.TypeGraph (ReachesEnv (ReachesEnv),
-                                      reachesHasCutSubtypeOf, reachesPartials,
-                                      reachesTo)
-import           System.IO.Unsafe    (unsafePerformIO)
+import           Semantics.TypeGraph     (ReachesEnv (ReachesEnv),
+                                          reachesHasCutSubtypeOf,
+                                          reachesPartials, reachesTo)
+import           Syntax.HsBuiltins.Types (oneFileResult, valResultFiles)
+import           System.IO.Unsafe        (unsafePerformIO)
 import           Text.Printf
 import           TreeBuild
 import           Utils
