@@ -46,9 +46,11 @@ runConstraintsLimit = 25
 
 typecheckPrgmsSt :: [PPrgm] -> [TPrgm] -> StateT FEnv TypeCheckResult ([TPrgm], [VPrgm], TraceConstrain)
 typecheckPrgmsSt pprgms typechecked = do
-  vprgms <- fromPrgms pprgms typechecked
-  cons <- gets feCons
+  mapM_ addTypeGraphPrgm typechecked
+  modify $ \e -> e{feLocalDefNames = prgmsLocalDefNames pprgms}
+  (vprgms, cons) <- fromPrgmsFragment pprgms (prgmObjMap $ mconcat typechecked)
   runConstraints runConstraintsLimit cons
+  modify nextConstrainEpoch
   -- Invariant: after convergence the union of all objects (the "TopTop") must be
   -- determined. If it remained 'TopType', some object failed to resolve (e.g. an
   -- untyped destructured pattern binding poisoned the union), which would otherwise

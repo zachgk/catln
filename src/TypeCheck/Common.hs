@@ -792,10 +792,15 @@ mkTraceConstrain :: TraceConstrain
 mkTraceConstrain = TraceConstrain [[]] H.empty [] emptyMetaN
 
 nextConstrainEpoch :: FEnv -> FEnv
-nextConstrainEpoch env@FEnv{feTrace=tc@TraceConstrain{tcCons=[]}, feCons, feUnionAllObjs} = nextConstrainEpoch env{feTrace=tc{tcCons=feCons, tcAllObjs=feUnionAllObjs}} -- On first epoch, set constraints and all objs
-nextConstrainEpoch env@FEnv{feTrace=tc@TraceConstrain{tcEpochs}} = case tcEpochs of
-  []         -> env
-  prevEpochs -> env{feTrace = tc{tcEpochs=[]:prevEpochs}, feUpdatedDuringEpoch = False}
+-- Refresh the traced constraint list and universe point EVERY epoch boundary (not just the
+-- first): the constraint accumulator grows per solve fragment, and the per-point trace
+-- listing must cover them all, not just the first fragment's.
+nextConstrainEpoch env@FEnv{feTrace=tc@TraceConstrain{tcEpochs}, feCons, feUnionAllObjs} = case tcEpochs of
+  []         -> env'
+  prevEpochs -> env'{feTrace = tc'{tcEpochs=[]:prevEpochs}, feUpdatedDuringEpoch = False}
+  where
+    tc' = tc{tcCons=feCons, tcAllObjs=feUnionAllObjs}
+    env' = env{feTrace=tc'}
 
 startConstraint :: VConstraint -> FEnv -> FEnv
 startConstraint c env@FEnv{feTrace = tc@TraceConstrain{tcEpochs=curEpoch:prevEpochs}} = env{feTrace = tc{tcEpochs=((c, []):curEpoch):prevEpochs}}

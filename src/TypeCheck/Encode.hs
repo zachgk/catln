@@ -406,16 +406,31 @@ addTypeGraphArrow oa = modify (fAddTTypeGraph oa)
 addTypeGraphPrgm :: TPrgm -> StateT FEnv TypeCheckResult ()
 addTypeGraphPrgm Prgm{prgmObjMap} = mapM_ addTypeGraphArrow $ flatObjectMap prgmObjMap
 
-fromPrgms :: [PPrgm] -> [TPrgm] -> StateT FEnv TypeCheckResult [VPrgm]
-fromPrgms pprgms tprgms = do
-  mapM_ addTypeGraphPrgm tprgms
-  let localNames = S.fromList $ map (makeAbsoluteName . exprPath . oaObjExpr) $ concatMap (flatObjectMap . prgmObjMap) pprgms
-  modify $ \e -> e{feLocalDefNames = localNames}
+-- | Encode one solve fragment against the already-typechecked dependency objects.
+-- The fragment's constraints build in an EMPTY accumulator so its own finalized
+-- (dataflow-ordered) list is returned for solving; the page accumulator keeps every
+-- fragment's constraints appended, in solve order, for the trace.
+fromPrgmsFragment :: [PPrgm] -> TObjectMap -> StateT FEnv TypeCheckResult ([VPrgm], [VConstraint])
+fromPrgmsFragment pprgms tjoinObjMap = do
+  accumCons <- gets feCons
+  modify $ \e -> e{feCons=[]}
   vprgms <- mapM fromPrgm pprgms
-  let (Prgm{prgmObjMap=tjoinObjMap}) = mconcat tprgms
   addUnionObjToEnv (mconcat $ map fst3 vprgms) tjoinObjMap
   -- Last, once every constraint (including the universe's, added just above) is in: hand the
   -- solver the list in the order values flow through it rather than the reverse the O(1)
   -- accumulator built. See 'finalizeConstraints'.
   modify finalizeConstraints
+  fragCons <- gets feCons
+  modify $ \e -> e{feCons = accumCons ++ fragCons}
+  return (vprgms, fragCons)
+
+fromPrgms :: [PPrgm] -> [TPrgm] -> StateT FEnv TypeCheckResult [VPrgm]
+fromPrgms pprgms tprgms = do
+  mapM_ addTypeGraphPrgm tprgms
+  modify $ \e -> e{feLocalDefNames = prgmsLocalDefNames pprgms}
+  (vprgms, _) <- fromPrgmsFragment pprgms (prgmObjMap $ mconcat tprgms)
   return vprgms
+
+-- | The absolute names every object the page itself defines, set once per page.
+prgmsLocalDefNames :: [PPrgm] -> S.HashSet TypeName
+prgmsLocalDefNames pprgms = S.fromList $ map (makeAbsoluteName . exprPath . oaObjExpr) $ concatMap (flatObjectMap . prgmObjMap) pprgms
