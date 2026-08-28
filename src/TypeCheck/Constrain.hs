@@ -480,13 +480,19 @@ executeConstraint cid con = do
       let oaKey = case conDat con of
             ArrowTo{} -> conOaResolveKey env con
             _         -> []
+      -- 'conOs' is CONSTANT for a given constraint (the same cid always resolves the same
+      -- object list), so it is zeroed out of the memoized view rather than structurally
+      -- compared every execution — its object expressions carry every meta and source
+      -- position, and comparing them was a third of a fragmented solve. The parts of the
+      -- objects a compute actually reads are covered separately ('conOaResolveKey').
+      let conMemoKey = con'{conOs=[]}
       case IM.lookup cid conMemo of
         Just (ConMemo memoStamp memoCon memoOa memoPrune)
-          | memoStamp == stampKey && memoCon == con' && memoOa == oaKey -> return memoPrune
+          | memoStamp == stampKey && memoCon == conMemoKey && memoOa == oaKey -> return memoPrune
         _ -> do
           let (prune, con'') = computeConstraint env con'
           modify $ saveConstraint con con' con''
-          modify $ \e -> e{feConMemo = IM.insert cid (ConMemo stampKey con' oaKey prune) (feConMemo e)}
+          modify $ \e -> e{feConMemo = IM.insert cid (ConMemo stampKey conMemoKey oaKey prune) (feConMemo e)}
           return prune
 
 -- |
@@ -494,20 +500,24 @@ executeConstraint cid con = do
 -- It should eventually converge after which applying the constraints no longer has any effect.
 -- This function also accepts a limit 'Integer' to indicate a maximum number of times a constraint can be used.
 -- A 'TypeCheckError' will be thrown if it has not converged by the time the limit is reached.
-runConstraints :: Integer -> [VConstraint] -> StateT FEnv TypeCheckResult ()
+-- Returns whether the constraints CONVERGED (a limit failure or an aborting env build returns
+-- 'False' after noting its error), so a per-fragment solve loop can stop before dependents
+-- solve against a half-settled fragment.
+runConstraints :: Integer -> [VConstraint] -> StateT FEnv TypeCheckResult Bool
 runConstraints limit cons = do
   -- Fresh skip-memo per constraint set: memo keys are positions in THIS list.
   modify $ \e -> e{feConMemo = IM.empty}
   runConstraintsIdx limit (zip [0..] cons)
 
-runConstraintsIdx :: Integer -> [(Int, VConstraint)] -> StateT FEnv TypeCheckResult ()
-runConstraintsIdx _ [] = return ()
+runConstraintsIdx :: Integer -> [(Int, VConstraint)] -> StateT FEnv TypeCheckResult Bool
+runConstraintsIdx _ [] = return True
 runConstraintsIdx 0 _ = do
   env@FEnv{feTrace, feUnionAllObjs} <- get
   -- _ <- trace (printf "Trace 908: %s" (show $ showTraceConstrainPnt env 908)) (return ())
   if (stypeAct <$> descriptor env feUnionAllObjs) == pure PTopType
     then lift $ TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit without determining the TopTop (unionAllObjs)"] ()
     else lift $ TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit with still changing constraints: \n\n%s" (show $ showTraceConstrainEpoch env $ head $ tail $ tcEpochs feTrace)] ()
+  return False
 runConstraintsIdx limit cons = do
   env <- get
   -- Compute the constraint-independent reaches type graph once for this epoch and cache it, so
@@ -521,8 +531,10 @@ runConstraintsIdx limit cons = do
   -- demote the failure to recoverable error notes and stop constraining: decoding still surfaces
   -- the poisoned points' errors, and consumers reject the program via 'failOnErrorNotes'.
   case buildTypeEnv env of
-    TypeCheckResE errNotes -> lift $ TypeCheckResult errNotes ()
-    TypeCheckResult notes reachesTypeEnv -> do
+    TypeCheckResE errNotes -> do
+      lift $ TypeCheckResult errNotes ()
+      return False
+    TypeCheckResult notes (reachesVPart, reachesTypeEnv) -> do
       lift $ TypeCheckResult notes ()
       -- Every 'BoundedByObjs' constraint is bounded by the same 'feUnionAllObjs' descriptor
       -- (substituted uniformly by 'showCon'), so the completion @unionTypes u (completeDataPartials u)@
@@ -536,7 +548,10 @@ runConstraintsIdx limit cons = do
             else unionTypes (feTypeEnv env) u (completeDataPartials (feTypeEnv env) u)
       -- Bump the env stamp iff a per-epoch env input changed: constraint kinds that read
       -- these caches only skip re-execution within an unchanged stamp (see 'feConMemo').
-      let envUnchanged = uUnchanged && teTypeGraph reachesTypeEnv == teTypeGraph (feReachesTypeEnv env)
+      -- Only the LIVE (V-side) part of the reaches graph is compared: the typechecked side
+      -- changes only between solve fragments, where the fresh universe point already makes
+      -- 'uUnchanged' False on the fragment's first epoch.
+      let envUnchanged = uUnchanged && reachesVPart == feReachesVPart env
       -- The input-arrow name set is a pure function of the reaches graph: reuse it within an
       -- unchanged env, recompute otherwise (same policy as the completed-universe cache).
       let inputArrowNames = if envUnchanged then feInputArrowNames env else typeGraphInputEmbeddedNames reachesTypeEnv
@@ -547,13 +562,14 @@ runConstraintsIdx limit cons = do
       let reachesTypeEnv' = if envUnchanged
             then feReachesTypeEnv env
             else reachesTypeEnv{teQueryCacheKey = Just (unsafeFreshQueryToken (teTypeGraph reachesTypeEnv))}
-      modify $ \e -> e{feReachesTypeEnv = reachesTypeEnv', feCompletedAllObjsKey = u, feCompletedAllObjs = completedAllObjs,
+      modify $ \e -> e{feReachesTypeEnv = reachesTypeEnv', feReachesVPart = reachesVPart,
+                       feCompletedAllObjsKey = u, feCompletedAllObjs = completedAllObjs,
                        feInputArrowNames = inputArrowNames,
                        feEnvStamp = if envUnchanged then feEnvStamp e else feEnvStamp e + 1}
       constraintsToPrune <- mapM (uncurry executeConstraint) cons
       updated <- gets feUpdatedDuringEpoch
       let cons' = mapMaybe (\(icon, shouldPrune) -> if shouldPrune then Nothing else Just icon) $ zip cons constraintsToPrune
-      when updated $ do
+      if not updated then return True else do
         modify nextConstrainEpoch
         -- ALTERNATE the traversal direction each epoch.
         --

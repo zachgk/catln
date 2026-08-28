@@ -34,7 +34,8 @@ import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
 import           TypeCheck.Common
-import           TypeCheck.TypeUtils (addUnionObjToEnv)
+import           TypeCheck.TypeUtils (addUnionObjToEnv,
+                                      recursiveObjsWithPrecedence)
 import           Utils
 
 -- represents how a specified variables corresponds to the known types.
@@ -64,6 +65,11 @@ encodeObj (EncodeOut obj) = obj
 encodeObj EncodeIn{}      = Nothing
 
 makeBaseFEnv :: PPrgm -> FEnv
+-- The static env is immutable for the FEnv's lifetime, so it carries a query-cache token
+-- from birth: the set-algebra meets that deliberately keep 'feTypeEnv' (rather than the
+-- per-epoch reaches env) still reach the reach-query and sat-goal memos. Without it, the
+-- SAT engine ran un-memoized under this env and a cyclic escape derivation re-decided the
+-- same goal unboundedly.
 makeBaseFEnv prgm = FEnv{
   fePnts = IM.empty,
   feConsDats = [],
@@ -71,9 +77,11 @@ makeBaseFEnv prgm = FEnv{
   feUnionAllObjs = Meta PTopType Nothing nil (VarMetaDat (Just 0) Nothing),
   feVTypeGraph = mempty,
   feTTypeGraph = mempty,
+  feTTypeGraphCleared = mempty,
+  feReachesVPart = mempty,
   feUpdatedDuringEpoch = False,
-  feTypeEnv = mkTypeEnv prgm,
-  feReachesTypeEnv = mkTypeEnv prgm,
+  feTypeEnv = tokenedTypeEnv,
+  feReachesTypeEnv = tokenedTypeEnv,
   feCompletedAllObjsKey = BottomType,
   feCompletedAllObjs = PTopType,
   feInputArrowNames = S.empty,
@@ -82,6 +90,9 @@ makeBaseFEnv prgm = FEnv{
   feConMemo = IM.empty,
   feTrace = mkTraceConstrain
   }
+  where
+    baseTypeEnv = mkTypeEnv prgm
+    tokenedTypeEnv = baseTypeEnv{teQueryCacheKey = Just (unsafeFreshQueryToken (teTypeGraph baseTypeEnv))}
 
 mkVarMetaDat :: EncodeState -> Pnt -> VarMetaDat
 mkVarMetaDat (EncodeOut obj) p = VarMetaDat (Just p) obj
@@ -406,16 +417,17 @@ addTypeGraphArrow oa = modify (fAddTTypeGraph oa)
 addTypeGraphPrgm :: TPrgm -> StateT FEnv TypeCheckResult ()
 addTypeGraphPrgm Prgm{prgmObjMap} = mapM_ addTypeGraphArrow $ flatObjectMap prgmObjMap
 
--- | Encode one solve fragment against the already-typechecked dependency objects.
+-- | Encode one solve fragment against the already-typechecked dependency objects
+-- (pre-enumerated with their precedence map — see 'recursiveObjsWithPrecedence').
 -- The fragment's constraints build in an EMPTY accumulator so its own finalized
 -- (dataflow-ordered) list is returned for solving; the page accumulator keeps every
 -- fragment's constraints appended, in solve order, for the trace.
-fromPrgmsFragment :: [PPrgm] -> TObjectMap -> StateT FEnv TypeCheckResult ([VPrgm], [VConstraint])
-fromPrgmsFragment pprgms tjoinObjMap = do
+fromPrgmsFragment :: [PPrgm] -> (TObjectMap, H.HashMap TypeName [Int]) -> StateT FEnv TypeCheckResult ([VPrgm], [VConstraint])
+fromPrgmsFragment pprgms (tobjMapRec, tPrecedenceMap) = do
   accumCons <- gets feCons
   modify $ \e -> e{feCons=[]}
   vprgms <- mapM fromPrgm pprgms
-  addUnionObjToEnv (mconcat $ map fst3 vprgms) tjoinObjMap
+  addUnionObjToEnv (mconcat $ map fst3 vprgms) tobjMapRec tPrecedenceMap
   -- Last, once every constraint (including the universe's, added just above) is in: hand the
   -- solver the list in the order values flow through it rather than the reverse the O(1)
   -- accumulator built. See 'finalizeConstraints'.
@@ -428,7 +440,7 @@ fromPrgms :: [PPrgm] -> [TPrgm] -> StateT FEnv TypeCheckResult [VPrgm]
 fromPrgms pprgms tprgms = do
   mapM_ addTypeGraphPrgm tprgms
   modify $ \e -> e{feLocalDefNames = prgmsLocalDefNames pprgms}
-  (vprgms, _) <- fromPrgmsFragment pprgms (prgmObjMap $ mconcat tprgms)
+  (vprgms, _) <- fromPrgmsFragment pprgms (recursiveObjsWithPrecedence $ prgmObjMap $ mconcat tprgms)
   return vprgms
 
 -- | The absolute names every object the page itself defines, set once per page.

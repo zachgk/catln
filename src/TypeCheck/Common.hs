@@ -33,7 +33,8 @@ import           Data.Maybe                 (catMaybes, fromJust, fromMaybe,
                                              isJust, listToMaybe, mapMaybe,
                                              maybeToList)
 import           Data.String.Builder        (literal)
-import           MapMeta                    (MetaType (ArrMeta), clearMetaDat)
+import           MapMeta                    (MetaType (ArrMeta), clearMetaDat,
+                                             mapMetaObjArr)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.TypeGraph        (ReachesTree)
@@ -87,6 +88,8 @@ data FEnv = FEnv { fePnts                :: IM.IntMap Scheme
                  , feUnionAllObjs        :: VarMeta -- union of all TypeObj for argument inference
                  , feVTypeGraph          :: VTypeGraph
                  , feTTypeGraph          :: TTypeGraph
+                 , feTTypeGraphCleared   :: ObjectMap Expr () -- ^ 'feTTypeGraph' with metadata cleared, maintained incrementally by 'fAddTTypeGraph' (cleared once per arrow) so 'buildTypeEnv' does not re-clear the whole typechecked graph every epoch.
+                 , feReachesVPart        :: ObjectMap Expr () -- ^ The previous epoch's live (V-side) contribution to the reaches type graph. The typechecked side only changes between solve fragments (where the universe key change already bumps the env stamp), so comparing the small live part alone decides 'envUnchanged'.
                  , feUpdatedDuringEpoch  :: Bool -- ^ If a pnt is updated during the epoch
                  , feTypeEnv             :: FEnvTypeEnv
                  , feReachesTypeEnv      :: FEnvTypeEnv -- ^ Per-epoch cache of 'buildTypeEnv' (the constraint-independent reaches type graph), recomputed once at the top of each 'runConstraints' epoch and reused across all 'mkReachesEnv' calls. Initialized to the base 'feTypeEnv' but never read until the first epoch populates it.
@@ -453,8 +456,14 @@ finalizeConstraints env@FEnv{feCons} = env{feCons = reverse feCons}
 fAddVTypeGraph :: VObjArr -> FEnv -> FEnv
 fAddVTypeGraph oa env@FEnv{feVTypeGraph} = env {feVTypeGraph = singletonObjectMap oa <> feVTypeGraph}
 
+-- | The metadata-cleared form is cached HERE, at promotion time, so each typechecked arrow is
+-- cleared exactly once: 'buildTypeEnv' runs at every solve epoch and re-clearing the whole
+-- (growing) typechecked graph there is quadratic across a page's solve fragments.
 fAddTTypeGraph :: TObjArr -> FEnv -> FEnv
-fAddTTypeGraph oa env@FEnv{feTTypeGraph} = env {feTTypeGraph = singletonObjectMap oa <> feTTypeGraph}
+fAddTTypeGraph oa env@FEnv{feTTypeGraph, feTTypeGraphCleared} = env
+  { feTTypeGraph = singletonObjectMap oa <> feTTypeGraph
+  , feTTypeGraphCleared = singletonObjectMap (mapMetaObjArr clearMetaDat Nothing oa) <> feTTypeGraphCleared
+  }
 
 -- | Structurally detects whether an EXTERNAL 'TypeVar' ('TVExt') present in @old@ has been widened
 -- back to Top in @new@. Such a variable is a reference to a variable of an enclosing scope (e.g. a

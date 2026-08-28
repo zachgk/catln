@@ -66,17 +66,25 @@ buildPrecedenceMap (ObjectMap objMap) = fmap (minimum . map objectPrecedence . f
 filterBestPrecedence :: (Show m, MetaDat m) => H.HashMap TypeName [Int] -> ObjectMap Expr m -> ObjectMap Expr m
 filterBestPrecedence precedenceMap = filterObjectMap (\oa -> objectPrecedence oa == H.lookupDefault (error $ printf "Could not find obj in union.\n\tObj: %s\n\tKeys: %s" (show oa) (show $ H.keys precedenceMap)) (makeAbsoluteName $ oaObjPath oa) precedenceMap)
 
+-- | Recursively enumerates an object map with its precedence map, in the form
+-- 'addUnionObjToEnv' consumes for the typechecked dependency side. Associative inputs for an
+-- accumulating solve loop: merge maps with '<>' and precedences with @H.unionWith min@.
+recursiveObjsWithPrecedence :: (Show m, MetaDat m) => ObjectMap Expr m -> (ObjectMap Expr m, H.HashMap TypeName [Int])
+recursiveObjsWithPrecedence objMap = (objMapRec, buildPrecedenceMap objMapRec)
+  where objMapRec = mconcat $ map getRecursiveObjs $ flatObjectMap objMap
 
--- | This creates 'feUnionAllObjs' and adds it to the 'FEnv'
-addUnionObjToEnv :: VObjectMap -> TObjectMap -> StateT FEnv TypeCheckResult ()
-addUnionObjToEnv vobjMap tobjMap = do
+
+-- | This creates 'feUnionAllObjs' and adds it to the 'FEnv'. The typechecked dependency
+-- objects arrive ALREADY recursively enumerated with their precedence map
+-- ('recursiveObjsWithPrecedence') so a per-fragment solve loop can accumulate them
+-- incrementally instead of re-walking the whole dependency set every fragment.
+addUnionObjToEnv :: VObjectMap -> TObjectMap -> H.HashMap TypeName [Int] -> StateT FEnv TypeCheckResult ()
+addUnionObjToEnv vobjMap tobjMapRec tPrecedenceMap = do
   FEnv{feTypeEnv} <- get
   let vobjMapRec = mconcat $ map getRecursiveObjs $ flatObjectMap vobjMap
-  let tobjMapRec = mconcat $ map getRecursiveObjs $ flatObjectMap tobjMap
 
   -- Finds the best precedence for all each object name
   let vePrecedenceMap = buildPrecedenceMap vobjMapRec
-  let tPrecedenceMap = buildPrecedenceMap tobjMapRec
   let precedenceMap = H.unionWith min vePrecedenceMap tPrecedenceMap
 
   -- Filter the objects to only those with the best precedence
@@ -92,8 +100,10 @@ addUnionObjToEnv vobjMap tobjMap = do
 
   let mkVarMeta p = Meta PTopType Nothing nil (VarMetaDat (Just p) Nothing)
 
-  -- Build a variable to store union of tobjs
-  let typecheckedAllType = unionAllTypes feTypeEnv $ filter (not . isTypeVar) tobjMetas
+  -- Build a variable to store union of tobjs. Single-compaction union: the pairwise fold
+  -- rebuilds the accumulated union per element (quadratic allocation over hundreds of
+  -- dependency objects, measured at a third of a fragmented solve).
+  let typecheckedAllType = unionAllTypesWithEnvOnce feTypeEnv H.empty $ filter (not . isTypeVar) tobjMetas
   when (typecheckedAllType == PTopType) $ fail $ printf "Failed to deteremine dependency TopType. Found undetermined dependent objects: \n\t%s" (intercalate "\n\t" $ map (show . snd) $ filter ((==) PTopType . fst) $ zip tobjMetas $ flatObjectMap tobjs')
   typecheckedAllObjs <- fresh $ TypeCheckResult [] $ SType typecheckedAllType PTopType PTopType Nothing "typecheckedAll"
   let typecheckedAllObjs' = mkVarMeta typecheckedAllObjs
@@ -169,12 +179,12 @@ addInferArgToPartial FEnv{feVTypeGraph=ObjectMap vtypeGraph, feTTypeGraph=Object
       t         -> t
     spelledContent Nothing = PTopType
 
--- TODO Look into making this run every epoch rather than per call to mkReachesEnv
-buildTypeEnv :: FEnv -> TypeCheckResult FEnvTypeEnv
-buildTypeEnv env@FEnv{feTypeEnv, feVTypeGraph, feTTypeGraph} = do
+-- | Also returns the live (V-side) part alone: the typechecked side only changes between
+-- solve fragments, so the caller's unchanged-env check can compare just the small live part.
+buildTypeEnv :: FEnv -> TypeCheckResult (ObjectMap Expr (), FEnvTypeEnv)
+buildTypeEnv env@FEnv{feTypeEnv, feVTypeGraph, feTTypeGraphCleared} = do
   feVTypeGraph' <- mapMObjectMap buildVObjArr feVTypeGraph
-  let ttypeGraph' = mapMetaObjectMap clearMetaDat feTTypeGraph
-  return feTypeEnv{teTypeGraph=ObjArrTypeGraph (feVTypeGraph' <> ttypeGraph')}
+  return (feVTypeGraph', feTypeEnv{teTypeGraph=ObjArrTypeGraph (feVTypeGraph' <> feTTypeGraphCleared)})
 
   where
     -- Env (typeGraph) from variables

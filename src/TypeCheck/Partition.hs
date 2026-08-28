@@ -115,6 +115,61 @@ itemSccGroups (ObjectMap omap) = [dataKeys | not (null dataKeys)] ++ sccGroups
         resolveRef r = relativeNameFilter r keys
     sccGroups = map (sortOn nameStr . map snd3 . flattenSCC) $ stronglyConnCompR [((), k, itemEdges k) | k <- funcKeys]
 
+-- | The keys of all arrow-less (data\/type) items. Class expansions materialize member
+-- objects from the static class graph regardless of any name reference, so EVERY solve
+-- fragment needs the data items in its dependency closure — they are cheap (no bodies) and
+-- their absence sends a class-typed solve through the un-memoized expansion fallbacks.
+dataItemKeys :: ObjectMap Expr m -> [Name]
+dataItemKeys (ObjectMap omap) = H.keys $ H.filter (all (isNothing . oaArr) . flatObjectMapItem) omap
+
+-- | Per-item UNRESOLVED references: every name each item's ObjArrs mention. Polymorphic in
+-- the meta so it serves both the page side (pre-typed) and the dependency side (typechecked
+-- — whose resolved metas can carry universe-sized types, so dedupe with a set, never 'nub').
+itemRawRefs :: (MetaDat m, Show m) => ObjectMap Expr m -> H.HashMap Name [Name]
+itemRawRefs (ObjectMap omap) = fmap (hashNub . concatMap objArrRefNames . flatObjectMapItem) omap
+
+-- | 'itemRawRefs' for TYPECHECKED items: expression names plus the names in the arrow
+-- RESULT types only. A typechecked item's every meta holds a fully resolved type — walking
+-- them all re-walks near-universe-sized unions hundreds of times per item, and the graph
+-- only follows an item outward through its calls (expression names) and its results (the
+-- reaches recursion enters the next arrows through the dest type's names).
+itemRawRefsShallow :: (MetaDat m, Show m) => ObjectMap Expr m -> H.HashMap Name [Name]
+itemRawRefsShallow (ObjectMap omap) = fmap (hashNub . concatMap oaRefs . flatObjectMapItem) omap
+  where
+    oaRefs oa = objArrExprRefNames oa ++ concatMap (typeRefNames . getMetaType) [m | Just (_, m) <- [oaArr oa]]
+
+hashNub :: [Name] -> [Name]
+hashNub = S.toList . S.fromList
+
+-- | Resolve raw per-item references into edges against a key set: a relative reference
+-- resolves to EVERY matching key (the conservative choice for an ambiguous name), through a
+-- suffix index so each reference resolves in one lookup instead of a scan over all keys
+-- (a typechecked item can carry thousands of distinct names).
+resolveRefEdges :: [Name] -> H.HashMap Name [Name] -> H.HashMap Name [Name]
+resolveRefEdges keys = H.mapWithKey resolveItem
+  where
+    -- 'relativeNameMatches rn k' holds iff ('/':rn) is a suffix of ('/':k) at a path
+    -- boundary (or rn == k): index every key under each of its path-boundary suffixes.
+    suffixIndex :: H.HashMap String [Name]
+    suffixIndex = H.fromListWith (++) $ concatMap keyEntries keys
+    keyEntries k = (nameStr k, [k]) : [(suf, [k]) | suf <- boundarySuffixes ('/' : nameStr k)]
+    boundarySuffixes s = [rest | ('/':rest) <- tails' s, not (null rest)]
+    tails' []         = []
+    tails' s@(_:rest) = s : tails' rest
+    resolveItem k refs = filter (/= k) $ hashNub $ concatMap resolveRef refs
+    resolveRef r
+      | nameStr r `elem` ["", "/"] = []
+      | otherwise = H.lookupDefault [] (nameStr r) suffixIndex
+
+-- | Transitive closure of the edge map from the seed keys, EXCLUDING the seeds themselves.
+closureFrom :: H.HashMap Name [Name] -> [Name] -> S.HashSet Name
+closureFrom edges seeds = S.difference (go S.empty seeds) (S.fromList seeds)
+  where
+    go visited [] = visited
+    go visited (k:rest)
+      | S.member k visited = go visited rest
+      | otherwise = go (S.insert k visited) (H.lookupDefault [] k edges ++ rest)
+
 -- | Restrict each source program to the items of one group, dropping
 -- statement annotations (they get their own fragments). The result keeps the
 -- source-program list shape so encode\/decode results stay aligned with the
