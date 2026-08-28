@@ -60,9 +60,13 @@ instance Semigroup (ObjArrTypeGraph e m) where
 -- and cannot float.
 type QueryMemoKey = (Int, (Bool, Bool, Bool, Bool), PartialType, [(TypeVarAux, Type)])
 
+-- | Keeps the TWO most-recently-used token generations: the per-page static env's token
+-- and the current epoch's reaches token alternate constantly, so a keep-one policy
+-- thrashed both away, while keep-all accumulated large-vaenv keys without bound. A new
+-- (third) token evicts the least-recently-used generation.
 {-# NOINLINE queryMemoRef #-}
-queryMemoRef :: IORef (Int, H.HashMap QueryMemoKey [(String, Type, Type)])
-queryMemoRef = unsafePerformIO (newIORef (-1, H.empty))
+queryMemoRef :: IORef [(Int, H.HashMap QueryMemoKey [(String, Type, Type)])]
+queryMemoRef = unsafePerformIO (newIORef [])
 
 {-# NOINLINE queryTokenRef #-}
 queryTokenRef :: IORef Int
@@ -84,14 +88,15 @@ objArrGraphQuery prune typeEnv vaenv partial = case teQueryCacheKey typeEnv of
   Just _ | teInSatDecision typeEnv -> objArrGraphQueryRaw prune typeEnv vaenv partial
   Just tok -> unsafePerformIO $ do
     let key = (tok, (prune, teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv), partial, sortOn fst (H.toList vaenv))
-    (curTok, m) <- readIORef queryMemoRef
-    let mCur = if curTok == tok then m else H.empty
-    case H.lookup key mCur of
+    gens <- readIORef queryMemoRef
+    case lookup tok gens >>= H.lookup key of
       Just r -> return r
       Nothing -> do
         let r = objArrGraphQueryRaw prune typeEnv vaenv partial
-        atomicModifyIORef' queryMemoRef $ \(tok2, m2) ->
-          ((tok, H.insert key r (if tok2 == tok then m2 else H.empty)), ())
+        atomicModifyIORef' queryMemoRef $ \gens2 ->
+          let mTok = fromMaybe H.empty (lookup tok gens2)
+              rest = filter ((/= tok) . fst) gens2
+          in ((tok, H.insert key r mTok) : take 1 rest, ())
         return r
 
 -- | Shared body of 'typeGraphQueryWithReason' (@prune=True@) and

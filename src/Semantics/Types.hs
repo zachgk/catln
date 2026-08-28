@@ -23,6 +23,7 @@
 
 module Semantics.Types where
 
+import           Control.Exception   (evaluate)
 import           CtConstants
 import           Data.Aeson
 import           Data.Aeson.Types    (contramapToJSONKeyFunction)
@@ -32,6 +33,8 @@ import           Data.Graph          (graphFromEdges, vertices)
 import           Data.Hashable
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
+import           Data.IORef          (IORef, atomicModifyIORef', newIORef,
+                                      readIORef)
 import           Data.List           (intercalate, partition)
 import qualified Data.List           as L
 import           Data.List.Split     (splitOn)
@@ -41,6 +44,7 @@ import           Data.Zip
 import           Debug.Trace         (trace)
 import           GHC.Generics        (Generic)
 import           Prelude             hiding (unzip)
+import           System.IO.Unsafe    (unsafePerformIO)
 import           Text.Printf
 import           Utils
 
@@ -2731,8 +2735,65 @@ satAtomImpliesDeclared typeEnv a1 a2 = case (a1, a2) of
 -- enumeration - every nested derivation is closed-world over current members, mirroring the
 -- materialized algebra (whose gate sits at the outermost implication/re-expression decision
 -- while all downstream expansion is ungated).
+-- | THE SAT-GOAL MEMO. 'satGoalRaw' is a pure function of the env (identified by its
+-- 'teQueryCacheKey' token plus the behavior flags a same-token env can vary in), the var
+-- env, the gate, the hypothesis path, and the goal — but its candidate enumeration
+-- re-derives shared subgoals per candidate, so a DAG-shaped goal space is explored as a
+-- tree: measured on the functor-composition law's @operator==@ query, TWO distinct
+-- depth-3 goals were re-decided 32,720 times each under identical hypotheses (an
+-- effectively unbounded single compute). Memoizing on the full input tuple collapses the
+-- tree to the DAG; entries are exact (same inputs, same pure result — hypothesis-path
+-- dependence is IN the key), and the table keeps one token generation like the
+-- reach-query memo above it in "Semantics".
+type SatMemoKey = (Int, (Bool, Bool, Bool, Bool, Bool), [(TypeVarAux, Type)], Bool, [SatGoal], SatGoal)
+
+-- | 'Nothing' marks a key whose decision is IN FLIGHT: a lookup hitting it is a derivation
+-- that returned to its own goal through a helper chain the hypothesis stack does not thread
+-- (the escape\/admit helpers recurse between themselves without a 'satGoal' entry). The
+-- engine's cycle rule applies unchanged — a goal that recurs on its own derivation path can
+-- produce no finite witness — so the re-entry answers 'False' exactly as the hypothesis
+-- guard would have, had the path carried the stack. Before this, such a cycle was an
+-- INFINITE LOOP: the functor-composition law's @operator==@ argument query re-derived the
+-- same two goals unboundedly (>7 minutes, killed) with the hypothesis depth pinned at 3.
+{-# NOINLINE satMemoRef #-}
+satMemoRef :: IORef (H.HashMap SatMemoKey Bool)
+satMemoRef = unsafePerformIO (newIORef H.empty)
+
+-- | The keys whose decision is currently BEING computed, on the (single-threaded)
+-- evaluation stack. Never reset and never capped: its size is bounded by the recursion
+-- depth, and dropping a marker mid-derivation would silently re-open the very cycle the
+-- marker refutes.
+{-# NOINLINE satInFlightRef #-}
+satInFlightRef :: IORef (S.HashSet SatMemoKey)
+satInFlightRef = unsafePerformIO (newIORef S.empty)
+
 satGoal :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Bool -> SatHyps -> SatGoal -> Bool
-satGoal typeEnv0 vaenv gatePos hyps goal0
+satGoal typeEnv vaenv gatePos hyps goal = case teQueryCacheKey typeEnv of
+  Nothing -> satGoalRaw typeEnv vaenv gatePos hyps goal
+  Just tok -> unsafePerformIO $ do
+    let key = (tok, (teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv, teInSatDecision typeEnv, teDebug typeEnv), L.sortOn fst (H.toList vaenv), gatePos, L.sort (S.toList hyps), goal)
+    -- The value table lives PER TOP-LEVEL DECISION: the measured blowup was the same
+    -- subgoals re-derived tens of thousands of times WITHIN one decision, so a fresh
+    -- table at each empty-hypothesis entry captures the whole win while keeping the
+    -- table small and exact — no cap, no eviction policy, no cross-decision key
+    -- accumulation (some vaenvs are large; a long-lived table swaps the process).
+    if S.null hyps then atomicModifyIORef' satMemoRef (const (H.empty, ())) else return ()
+    m <- readIORef satMemoRef
+    case H.lookup key m of
+      Just r -> return r
+      Nothing -> do
+        inFlight <- readIORef satInFlightRef
+        if key `S.member` inFlight
+          then return False -- in-flight re-entry: a cyclic derivation, no finite witness
+          else do
+            atomicModifyIORef' satInFlightRef $ \s -> (S.insert key s, ())
+            r <- evaluate (satGoalRaw typeEnv vaenv gatePos hyps goal)
+            atomicModifyIORef' satInFlightRef $ \s -> (S.delete key s, ())
+            atomicModifyIORef' satMemoRef $ \m2 -> (H.insert key r m2, ())
+            return r
+
+satGoalRaw :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Bool -> SatHyps -> SatGoal -> Bool
+satGoalRaw typeEnv0 vaenv gatePos hyps goal0
   | goal `S.member` hyps = False -- recursive goal: no finite witness along this path
   -- @X ∧ ¬X@: an atom required positively and negatively at once is contradictory, whatever
   -- the atom means. The enumeration below cannot be trusted to detect this (a candidate on
