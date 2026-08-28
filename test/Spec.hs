@@ -16,6 +16,7 @@ import           Syntax.RereadTests        (rereadTests)
 import           Syntax.RssCacheTests      (rssCacheTests)
 import           Syntax.SyntaxTests        (syntaxTests)
 import           Test.Tasty
+import           Typecheck.PartitionTests  (partitionTests)
 import           Typecheck.TypeCheckTests  (typecheckTests)
 
 main :: IO ()
@@ -23,5 +24,5 @@ main = do
   integrationTests' <- integrationTests
   syntaxTests' <- syntaxTests
   stackTests' <- stackTests
-  let catlnTests = testGroup "CatlnTests" [integrationTests', typeTests, typecheckTests, syntaxTests', stackTests', obsidianTests, obsidianTaskTests, obsidianQueryTests, obsidianCacheTests, rssCacheTests, rereadTests, fileDirTests, fileWatchTests, liveReloadTests, calendarTests, prgmGraphTests]
+  let catlnTests = testGroup "CatlnTests" [integrationTests', typeTests, typecheckTests, partitionTests, syntaxTests', stackTests', obsidianTests, obsidianTaskTests, obsidianQueryTests, obsidianCacheTests, rssCacheTests, rereadTests, fileDirTests, fileWatchTests, liveReloadTests, calendarTests, prgmGraphTests]
   defaultMain catlnTests
