@@ -288,6 +288,16 @@ reassignImportedMethodDefs (Prgm (ObjectMap fullObjMap) _ _) (Prgm (ObjectMap ob
 -- no variables is left untouched, and the ANNOTATION metas are rewritten together ('ArrMeta' —
 -- the argument annotations at every nesting level and the result).
 --
+-- The object's COMPOSED input metas (the tuple-apply types 'desObj' pre-computes for non-def
+-- objects, which encode seeds the object's actual from) are rewritten as well. They carry the
+-- same references INSIDE their binder — the outermost partial is the object itself — so the
+-- parent set is seeded empty and derived entirely from the type's own nesting: the partial's
+-- 'ptVars' VALUES keep the containing scope (a class member's own bound, @Cons[$T -> $_T]@,
+-- stays ambient) while its arg slots see its variables. Left unrewritten, a pre-computed
+-- @Cons[..](tail=∀ConsList[/T=$_/T])@ reaches the object universe spelled ambient and the
+-- scope rules read the reference as foreign, widening the field bound to ⊤ for every consumer
+-- the universe bounds ('BoundedByObjs').
+--
 -- A variable's BOUND (@[$M -> Monad[$T -> $_A]]@) is deliberately left alone, for the reason
 -- 'dropOutOfScopeTVExt' gives for a partial's 'ptVars' values: it belongs to the scope CONTAINING
 -- the binder rather than inside it, and it travels without it — substituted for @$M@ wherever the
@@ -305,10 +315,9 @@ classifyParentVarRefs (Prgm (ObjectMap objMap) classGraph annots) = Prgm (Object
     objMap' = H.map classifyItem objMap
     classifyItem (ObjectMapItem ds rs rfs defs) =
       ObjectMapItem (map classifyOa ds) (map classifyOa rs) (map classifyOa rfs) (map classifyOa defs)
-    classifyOa oa
-      | S.null parentVars = oa
-      | otherwise = mapMetaObjArr tagMeta Nothing oa
+    classifyOa oa = mapMetaObjArr tagMeta Nothing oa
       where
         parentVars = S.fromList [v | v@TVVar{} <- H.keys $ maybe H.empty exprVarArgs (oaObj oa)]
-        tagMeta ArrMeta m = return $ mWithType (tagParentVarRefs parentVars (getMetaType m)) m
-        tagMeta _       m = return m
+        tagMeta ArrMeta m | not (S.null parentVars) = return $ mWithType (tagParentVarRefs parentVars (getMetaType m)) m
+        tagMeta (ExprMeta InputMeta _) m = return $ mWithType (tagParentVarRefs S.empty (getMetaType m)) m
+        tagMeta _ m = return m
