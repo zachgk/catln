@@ -339,9 +339,17 @@ mkReachesEnv env (Constraint maybeConOa stypeVaenv _) = do
   -- 'ArrowTo'\/'PropEq' constraint EXECUTION, every epoch (profiled at 72% of typecheck
   -- inside the reach machinery it feeds). Sharing the one per-epoch value drops that
   -- rebuild for the (majority) no-arg constraints.
+  -- A merged env never carries a query-cache token ('<>' clears it: a merged env is a
+  -- different value), so every memo — reach-query, satGoal, class-expansion — silently
+  -- bypassed for ARG-CARRYING constraints: their whole reaches/SAT compute re-derived
+  -- shared subgoals as a tree (set.ct's functor-law fragment: one goal re-decided 3,553
+  -- times under a byte-identical key, OOM before epoch 5). The merged env lives for this
+  -- one constraint execution and is immutable, so mint it its own token — the same
+  -- token-per-immutable-env-value rule as the per-epoch mint in 'runConstraintsIdx'.
   let mergedTypeEnv
         | H.null argVaenv' = feTypeEnv'
-        | otherwise        = argTypeEnv <> feTypeEnv'
+        | otherwise        = let m = argTypeEnv <> feTypeEnv'
+                             in m{teQueryCacheKey = Just (unsafeFreshQueryToken (teTypeGraph m))}
   return $ ReachesEnv mergedTypeEnv (fmap snd vaenv) S.empty
 
 -- | The resolved view of exactly the object-side arg entries 'mkReachesEnv' reads from a

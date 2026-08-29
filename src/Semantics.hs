@@ -60,10 +60,11 @@ instance Semigroup (ObjArrTypeGraph e m) where
 -- and cannot float.
 type QueryMemoKey = (Int, (Bool, Bool, Bool, Bool), PartialType, [(TypeVarAux, Type)])
 
--- | Keeps the TWO most-recently-used token generations: the per-page static env's token
--- and the current epoch's reaches token alternate constantly, so a keep-one policy
--- thrashed both away, while keep-all accumulated large-vaenv keys without bound. A new
--- (third) token evicts the least-recently-used generation.
+-- | Keeps the THREE most-recently-used token generations: the per-page static env's
+-- token, the current epoch's reaches token, and the current constraint's merged reaches
+-- token (see 'TypeCheck.TypeUtils.mkReachesEnv') rotate constantly, so a keep-one policy
+-- thrashed them away, while keep-all accumulated large-vaenv keys without bound. A new
+-- (fourth) token evicts the least-recently-used generation.
 {-# NOINLINE queryMemoRef #-}
 queryMemoRef :: IORef [(Int, H.HashMap QueryMemoKey [(String, Type, Type)])]
 queryMemoRef = unsafePerformIO (newIORef [])
@@ -96,7 +97,7 @@ objArrGraphQuery prune typeEnv vaenv partial = case teQueryCacheKey typeEnv of
         atomicModifyIORef' queryMemoRef $ \gens2 ->
           let mTok = fromMaybe H.empty (lookup tok gens2)
               rest = filter ((/= tok) . fst) gens2
-          in ((tok, H.insert key r mTok) : take 1 rest, ())
+          in ((tok, H.insert key r mTok) : take 2 rest, ())
         return r
 
 -- | Shared body of 'typeGraphQueryWithReason' (@prune=True@) and

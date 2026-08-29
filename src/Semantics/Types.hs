@@ -1865,8 +1865,39 @@ expandClassPartial = expandClassPartialAux Nothing
 expandClassPartialWithinNames :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> S.HashSet TypeName -> PartialType -> Type
 expandClassPartialWithinNames typeEnv vaenv allowedNames = expandClassPartialAux (Just allowedNames) typeEnv vaenv
 
+-- | Token-keyed memo for 'expandClassPartialAux', mirroring the 'objArrGraphQuery' reach-query
+-- memo: same soundness story (token-per-immutable-env), same generational retention (the
+-- static per-page, epoch reaches, and merged reaches tokens rotate), same in-flight-sat bypass
+-- ('teInSatDecision' demotes graph answers that may feed the expansion's meets — those results
+-- must neither be served from nor stored into the shared table). Motivation: 'compactOverlapping'
+-- / 'compactPartialsWithClassPred' re-expand the SAME trivial classes (Boolean, Eq, DShow, ...)
+-- tens of thousands of times per epoch through per-leaf-pair subtype checks (set.ct's page:
+-- 88k expansions before OOM), while the expansion is a pure function of the key below.
+type ExpandClassMemoKey = (Int, (Bool, Bool, Bool), Maybe (S.HashSet TypeName), PartialType, [(TypeVarAux, Type)])
+
+{-# NOINLINE expandClassMemoRef #-}
+expandClassMemoRef :: IORef [(Int, H.HashMap ExpandClassMemoKey Type)]
+expandClassMemoRef = unsafePerformIO (newIORef [])
+
 expandClassPartialAux :: (TypeGraph tg) => Maybe (S.HashSet TypeName) -> TypeEnv tg -> TypeVarArgEnv -> PartialType -> Type
-expandClassPartialAux mAllowed typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv PartialType{ptName, ptVars=classVarsP} = expanded
+expandClassPartialAux mAllowed typeEnv vaenv pp = case teQueryCacheKey typeEnv of
+  Nothing -> expandClassPartialAuxRaw mAllowed typeEnv vaenv pp
+  Just _ | teInSatDecision typeEnv -> expandClassPartialAuxRaw mAllowed typeEnv vaenv pp
+  Just tok -> unsafePerformIO $ do
+    let key = (tok, (teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv), mAllowed, pp, L.sortOn fst (H.toList vaenv))
+    gens <- readIORef expandClassMemoRef
+    case lookup tok gens >>= H.lookup key of
+      Just r -> return r
+      Nothing -> do
+        r <- evaluate (expandClassPartialAuxRaw mAllowed typeEnv vaenv pp)
+        atomicModifyIORef' expandClassMemoRef $ \gens2 ->
+          let mTok = fromMaybe H.empty (lookup tok gens2)
+              rest = filter ((/= tok) . fst) gens2
+          in ((tok, H.insert key r mTok) : take 2 rest, ())
+        return r
+
+expandClassPartialAuxRaw :: (TypeGraph tg) => Maybe (S.HashSet TypeName) -> TypeEnv tg -> TypeVarArgEnv -> PartialType -> Type
+expandClassPartialAuxRaw mAllowed typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv PartialType{ptName, ptVars=classVarsP} = expanded
   where
     className = PClassName ptName
     -- The allowed-name filters: 'keepPartials' on a member list, 'keepType' on an expanded
@@ -2675,7 +2706,10 @@ satEscapes typeEnv vaenv gatePos hyps m0 atom
   | not (satEscapesAtomic typeEnv vaenv gatePos hyps m0 atom) = False
   | otherwise = case splitPartialByUnionVarArgs m0 of
       [_] -> True -- no union-valued components: the whole-shape answer is final
-      pieces | length pieces > satDNFCap -> True -- oversized split: conservative
+      -- Oversized split: conservative. Checked WITHOUT 'length' — the split is a cartesian
+      -- product over the union-valued slots, so forcing its full spine to count it can
+      -- itself be exponential; 'drop' materializes at most @satDNFCap + 1@ pieces.
+      pieces | not (null (drop satDNFCap pieces)) -> True
       pieces -> any (\m -> satEscapesAtomic typeEnv vaenv gatePos hyps m atom) pieces
 
 -- | 'satEscapes' for a shape with no union-valued vars/args.
@@ -2743,8 +2777,9 @@ satAtomImpliesDeclared typeEnv a1 a2 = case (a1, a2) of
 -- depth-3 goals were re-decided 32,720 times each under identical hypotheses (an
 -- effectively unbounded single compute). Memoizing on the full input tuple collapses the
 -- tree to the DAG; entries are exact (same inputs, same pure result — hypothesis-path
--- dependence is IN the key), and the table keeps one token generation like the
--- reach-query memo above it in "Semantics".
+-- dependence is IN the key), and the table keeps the three most-recently-used token
+-- generations like the reach-query memo in "Semantics" (the static per-page env's, the
+-- epoch reaches env's, and the current merged reaches env's tokens rotate).
 type SatMemoKey = (Int, (Bool, Bool, Bool, Bool, Bool), [(TypeVarAux, Type)], Bool, [SatGoal], SatGoal)
 
 -- | 'Nothing' marks a key whose decision is IN FLIGHT: a lookup hitting it is a derivation
@@ -2756,8 +2791,8 @@ type SatMemoKey = (Int, (Bool, Bool, Bool, Bool, Bool), [(TypeVarAux, Type)], Bo
 -- INFINITE LOOP: the functor-composition law's @operator==@ argument query re-derived the
 -- same two goals unboundedly (>7 minutes, killed) with the hypothesis depth pinned at 3.
 {-# NOINLINE satMemoRef #-}
-satMemoRef :: IORef (H.HashMap SatMemoKey Bool)
-satMemoRef = unsafePerformIO (newIORef H.empty)
+satMemoRef :: IORef [(Int, H.HashMap SatMemoKey Bool)]
+satMemoRef = unsafePerformIO (newIORef [])
 
 -- | The keys whose decision is currently BEING computed, on the (single-threaded)
 -- evaluation stack. Never reset and never capped: its size is bounded by the recursion
@@ -2772,14 +2807,17 @@ satGoal typeEnv vaenv gatePos hyps goal = case teQueryCacheKey typeEnv of
   Nothing -> satGoalRaw typeEnv vaenv gatePos hyps goal
   Just tok -> unsafePerformIO $ do
     let key = (tok, (teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv, teInSatDecision typeEnv, teDebug typeEnv), L.sortOn fst (H.toList vaenv), gatePos, L.sort (S.toList hyps), goal)
-    -- The value table lives PER TOP-LEVEL DECISION: the measured blowup was the same
-    -- subgoals re-derived tens of thousands of times WITHIN one decision, so a fresh
-    -- table at each empty-hypothesis entry captures the whole win while keeping the
-    -- table small and exact — no cap, no eviction policy, no cross-decision key
-    -- accumulation (some vaenvs are large; a long-lived table swaps the process).
-    if S.null hyps then atomicModifyIORef' satMemoRef (const (H.empty, ())) else return ()
-    m <- readIORef satMemoRef
-    case H.lookup key m of
+    -- The value table keeps the THREE most-recently-used token generations, exactly like
+    -- the reach-query memo ('queryMemoRef'): hypothesis-path dependence is IN the key, so
+    -- entries are reusable ACROSS top-level decisions under the same env token. The
+    -- earlier per-top-level-decision reset (chosen against unbounded large-vaenv key
+    -- accumulation) turned out to be the multiplier of set.ct's functor-law blowup:
+    -- 74k top-level decisions per epoch re-deciding the SAME handful of goals (one goal
+    -- 7,298 times in a 100k-call window), each reset forcing its whole subtree — and
+    -- every in-decision reach query and class expansion — to recompute raw. Two-generation
+    -- token eviction bounds the table to two envs' distinct decisions instead.
+    gens0 <- readIORef satMemoRef
+    case lookup tok gens0 >>= H.lookup key of
       Just r -> return r
       Nothing -> do
         inFlight <- readIORef satInFlightRef
@@ -2789,7 +2827,10 @@ satGoal typeEnv vaenv gatePos hyps goal = case teQueryCacheKey typeEnv of
             atomicModifyIORef' satInFlightRef $ \s -> (S.insert key s, ())
             r <- evaluate (satGoalRaw typeEnv vaenv gatePos hyps goal)
             atomicModifyIORef' satInFlightRef $ \s -> (S.delete key s, ())
-            atomicModifyIORef' satMemoRef $ \m2 -> (H.insert key r m2, ())
+            atomicModifyIORef' satMemoRef $ \gens2 ->
+              let mTok = fromMaybe H.empty (lookup tok gens2)
+                  rest = filter ((/= tok) . fst) gens2
+              in ((tok, H.insert key r mTok) : take 2 rest, ())
             return r
 
 satGoalRaw :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Bool -> SatHyps -> SatGoal -> Bool
@@ -3455,8 +3496,16 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing subPartials []) (UnionType N
           _                -> False
           where subN = normalizePtArgMode typeEnv sub
         -- A genuinely split sub is covered when every split component is covered by some super.
-        coveredBySplit splits = length splits > 1
-                                && all (\s -> any (isSubPartialOfWithEnv typeEnv vaenv s) sup) splits
+        -- STREAMED: the split of a partial with several union-valued slots is the CARTESIAN
+        -- PRODUCT of the slots' members — exponential in the slot count (set.ct's functor-law
+        -- fragment: an 'expandedSub' whose expanded slots produced enough pieces to allocate
+        -- >9.6GB, measured wide-not-deep under a 64MB stack cap). @length splits > 1@ forced
+        -- that whole product into existence BEFORE 'all' could reject on its first uncovered
+        -- piece. Match two cells to establish non-triviality and let 'all' consume the rest
+        -- incrementally — same Boolean, but a failing cover now stops after the first miss.
+        coveredBySplit splits = case splits of
+          (_:_:_) -> all (\s -> any (isSubPartialOfWithEnv typeEnv vaenv s) sup) splits
+          _       -> False
         expandedSub = sub{ptArgs = fmap expandArg (ptArgs sub), ptVars = fmap expandArg (ptVars sub)}
           -- The global (predicate) component and the positive partials of a 'UnionType' are
           -- joined by union; the predicate does not constrain the partials. So expanding a
@@ -3628,7 +3677,7 @@ isEqTypeWithEnvComplete typeEnv vaenv a b = isSubtypeOfWithEnvComplete typeEnv v
 -- |
 -- Join partials by checking if one is a subset of another (redundant) and removing it.
 -- TODO: This currently joins only with matching names. More matches could improve the effectiveness of the compaction, but slows down the code significantly
-compactOverlapping :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> PartialLeafs -> PartialLeafs
+compactOverlapping :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialLeafs -> PartialLeafs
 compactOverlapping typeEnv vaenv = joinUnionTypeByName . fmap ((aux . reverse) . aux) . splitUnionTypeByName
   where
     -- Tests each partial against all following partials to check if it is already handled by it
@@ -3644,7 +3693,7 @@ compactOverlapping typeEnv vaenv = joinUnionTypeByName . fmap ((aux . reverse) .
 -- |
 -- Joins partials with only one difference between their args or vars. Then, it can join the two partials into one partial
 -- TODO: Should check if preds are suitable for joining
-compactJoinPartials :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> PartialLeafs -> PartialLeafs
+compactJoinPartials :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialLeafs -> PartialLeafs
 compactJoinPartials typeEnv vaenv partials = joinUnionType $ concat $ H.elems $ fmap joinMatchArgPartials $ H.fromListWith (++) $ map prepGroupJoinable $ splitUnionType partials
   where
     -- group partials by name, argSet, and varSet to check for joins
@@ -3841,7 +3890,7 @@ compactOwnVarRefs p@PartialType{ptVars, ptArgs} = p{ptArgs = fmap subst ptArgs}
 -- list order. Fusing them removes two intermediate join+split round-trips (each of which
 -- re-hashes every partial) while keeping the order-sensitive 'compactJoinPartials' /
 -- 'compactOverlapping' stages operating on exactly the same 'PartialLeafs' as before.
-compactPartialLeafs :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> PartialLeafs -> PartialLeafs
+compactPartialLeafs :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialLeafs -> PartialLeafs
 compactPartialLeafs typeEnv vaenv =
   compactOverlapping typeEnv vaenv
   . compactJoinPartials typeEnv vaenv
@@ -3867,7 +3916,7 @@ compactPartialLeafs typeEnv vaenv =
 -- per-leaf rules, reaching the same canonical form as the materialized-meet route. A
 -- leaf whose predicates hold only 'PredExpr' content is left moded: no rule can decide
 -- an expression predicate either way, so the undecomposed moded spelling stays canonical.
-compactModedPredLeafs :: TypeGraph tg => TypeEnv tg -> [PartialType] -> [PartialType]
+compactModedPredLeafs :: (TypeGraph tg) => TypeEnv tg -> [PartialType] -> [PartialType]
 compactModedPredLeafs typeEnv = concatMap decompose
   where
     decompose p
@@ -3901,7 +3950,7 @@ predsHasClassRelAtom (PredsNot q)             = predsHasClassRelAtom q
 -- 'isEqType' and the distributivity\/bridge laws. Both questions recurse only into
 -- POSITIVE-formula subtype\/meet machinery (one ¬-level is stripped per step, so a nested
 -- negation bottoms out at the formula's finite depth).
-compactNegPredLeafs :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> [PartialType] -> [PartialType]
+compactNegPredLeafs :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> [PartialType] -> [PartialType]
 compactNegPredLeafs typeEnv vaenv = mapMaybe (reduceNegPredLeaf typeEnv vaenv)
 
 -- | Truth value of a predicate subformula relative to one leaf: decided for every value of
@@ -3982,7 +4031,7 @@ reduceNegPredLeaf typeEnv vaenv p
 -- |
 -- Used to simplify and reduce the size of a 'Type'.
 -- TODO: This should merge type partials into class partials
-compactType :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
+compactType :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
 compactType TypeEnv{teDisableCompact=True} _ t = t
 -- Idempotence fast paths for already-canonical trivial types. 'compactType' is provably the
 -- identity on each of these, yet the set algebra re-compacts them constantly (~94% of calls are
