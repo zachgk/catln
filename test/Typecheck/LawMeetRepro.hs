@@ -15,9 +15,9 @@
 --      report the hanger(s), then force the culprit's channels separately.
 --
 -- Run (stack repl is broken on this box — use ghci against the built library):
---   stack exec ghci -- test/Typecheck/LawMeetRepro.hs
+--   stack exec ghci -- test/Typecheck/LawMeetRepro.hs   (module Typecheck.LawMeetRepro)
 --   ghci> reproMain
-module LawMeetRepro where
+module Typecheck.LawMeetRepro where
 
 import           Control.Exception   (evaluate)
 import           Control.Monad
