@@ -25,12 +25,10 @@ import           CRes
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import           Data.List           (transpose)
-import           Data.Maybe          (isJust, mapMaybe)
+import           Data.Maybe          (mapMaybe)
 import           MapMeta
 import           Semantics.Prgm
 import           Semantics.Types
-import           System.Environment  (lookupEnv)
-import           System.IO.Unsafe    (unsafePerformIO)
 import           TypeCheck.Common
 import           TypeCheck.Constrain (runConstraints)
 import           TypeCheck.Decode
@@ -50,18 +48,6 @@ runConstraintsLimit :: Integer
 -- so such programs legitimately converge in 21-25 epochs. The headroom is NOT for masking
 -- non-convergence: unbounded growth is a bug (and was fixed, not budgeted around).
 runConstraintsLimit = 25
-
--- | Development A\/B switch: solve the page as ONE fragment (the pre-per-SCC behavior
--- expressed in the fragment loop) instead of per function SCC.
-solverGlobal :: Bool
-solverGlobal = unsafePerformIO (isJust <$> lookupEnv "CATLN_SOLVER_GLOBAL")
-{-# NOINLINE solverGlobal #-}
-
--- | Development A\/B switch: per-SCC fragments but each solving against the FULL dependency
--- set instead of its transitive closure (exact global-universe semantics).
-solverFullDeps :: Bool
-solverFullDeps = unsafePerformIO (isJust <$> lookupEnv "CATLN_SOLVER_FULLDEPS")
-{-# NOINLINE solverFullDeps #-}
 
 -- | A typechecked item's pre-computed contribution to a fragment's dependency side:
 -- its recursive objects, their precedences, the typed arrow-graph piece, and the
@@ -92,7 +78,7 @@ typecheckPrgmsSt pprgms typechecked = do
   let pageObjMap = mconcat (map prgmObjMap pprgms)
   let depObjMap = prgmObjMap (mconcat typechecked)
   let sccFragments = fragmentPrgms (itemSccGroups pageObjMap) pprgms ++ annotFragmentPrgms pprgms
-  let fragments = if solverGlobal || null sccFragments then [pprgms] else sccFragments
+  let fragments = if null sccFragments then [pprgms] else sccFragments
   let allKeys = objMapKeys pageObjMap ++ objMapKeys depObjMap
   let edgeMap = resolveRefEdges allKeys (H.unionWith (++) (itemRawRefs pageObjMap) (itemRawRefsShallow depObjMap))
   let depPieces0 = H.mapWithKey depPieceOf (unObjectMap depObjMap)
@@ -125,7 +111,7 @@ typecheckPrgmsSt pprgms typechecked = do
           -- An annotation fragment has no items of its own and its expressions are not part
           -- of the reference graph: give it the full dependency set (it runs once, last).
           let closureKeys
-                | solverGlobal || null fragKeys || solverFullDeps = H.keys pieces
+                | null fragKeys = H.keys pieces
                 | otherwise = hashNub (allDataKeys ++ S.toList (closureFrom edgeMap fragKeys))
           let cPieces = mapMaybe (`H.lookup` pieces) closureKeys
           let tRec = mconcat [r | (r, _, _, _) <- cPieces]
