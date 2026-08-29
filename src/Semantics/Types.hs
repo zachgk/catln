@@ -602,8 +602,15 @@ instance Semigroup ClassGraph where
     where
       graphToMap (g, nodeFromVertex, _) = H.fromList $ map ((\classData@(_, className, _) -> (className, classData)) . nodeFromVertex) $ vertices g
       mapToGraph = graphFromEdges . H.elems
+      -- DEDUPED: the same base classes re-merge once per importing page across a closure,
+      -- so plain (++) accumulated ~30-87 copies of every member (measured: Eq's Ord-top
+      -- member x30, String member x87 on functor.ct's 10-file closure). The Full
+      -- expansion family walks the class DAG branching once PER member entry, so the
+      -- duplication made the walk exponential in hierarchy depth (~30^5 expansions on the
+      -- algebra chain Eq -> Ord -> ... -> Group): the functor-law fragment OOM. Members
+      -- are compared by value ('nub'); the lists are small once deduplicated.
       mergeClasses (CGClass (sealedA, classA, setA, docA), className, subClassNamesA) (CGClass (sealedB, classB, setB, docB), _, subClassNamesB) = if sealedA == sealedB
-            then (CGClass (sealedA, mergeClassPartials classA classB, setA ++ setB, mergeDoc docA docB), className, subClassNamesA ++ subClassNamesB)
+            then (CGClass (sealedA, mergeClassPartials classA classB, L.nub (setA ++ setB), mergeDoc docA docB), className, L.nub (subClassNamesA ++ subClassNamesB))
             else error "Added to sealed class definition"
       mergeClasses node@(CGClass{}, _, _) (CGType{}, _, _) = node
       mergeClasses (CGType{}, _, _) node@(CGClass{}, _, _) = node
@@ -1683,25 +1690,38 @@ expandTypeWithNames typeEnv vaenv t allowedNames = fst $ expandTypesWithNamesFul
 -- approximate and the result may be incomplete. 'False' means the expansion is exact and all
 -- components are within 'allowedNames'.
 expandTypesWithNamesFull :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> S.HashSet TypeName -> (PartialLeafs, Bool)
-expandTypesWithNamesFull _ _ (UnionType Nothing partials []) allowedNames =
+expandTypesWithNamesFull = expandTypesWithNamesFullAux S.empty
+
+-- | 'expandTypesWithNamesFull' threading the CYCLE GUARD's visited set: the class names
+-- whose expansions are on the CURRENT path. The class graph is genuinely cyclic through
+-- top-shaped members (eq.ct: @Eq@'s members include @∀Ord@ whose expansion leads back to
+-- @Eq@), and this family — unlike the plain expansion, which keeps Just-top members
+-- symbolic — materializes THROUGH them, so an unguarded walk recurses forever (the
+-- functor-law fragment OOM: 'narrowChannel''s first @∀Eq ∩ leaf@ meet). A re-entered
+-- class contributes nothing here ('expandClassPartialWithNamesFullAux''s guard): its
+-- direct members were already enumerated at its first entry on this path, so the cut
+-- computes the membership transitive closure — the same rule as the reaches walk's
+-- @rVisited@ and the sat engine's in-flight markers.
+expandTypesWithNamesFullAux :: (TypeGraph tg) => S.HashSet TypeName -> TypeEnv tg -> TypeVarArgEnv -> Type -> S.HashSet TypeName -> (PartialLeafs, Bool)
+expandTypesWithNamesFullAux _visited _ _ (UnionType Nothing partials []) allowedNames =
   (filtered, hasOutside)
   where
     filtered = H.filterWithKey (\k _ -> S.member k allowedNames) partials
     hasOutside = any (\k -> not $ S.member k allowedNames) (H.keys partials)
-expandTypesWithNamesFull typeEnv vaenv (TypeVar v _) allowedNames =
-  expandTypesWithNamesFull typeEnv vaenv (H.lookupDefault PTopType v vaenv) allowedNames
-expandTypesWithNamesFull TypeEnv{teNames} _ PTopType allowedNames =
+expandTypesWithNamesFullAux visited typeEnv vaenv (TypeVar v _) allowedNames =
+  expandTypesWithNamesFullAux visited typeEnv vaenv (H.lookupDefault PTopType v vaenv) allowedNames
+expandTypesWithNamesFullAux _visited TypeEnv{teNames} _ PTopType allowedNames =
   (topFilteredLeafs, not $ S.isSubsetOf teNames allowedNames)
   where
     topFilteredLeafs = joinUnionType $ map ((\p -> p{ptArgMode=PtArgAny}) . partialVal) $ S.toList allowedNames
 -- Constants carry no partial-name information; drop them before filtering (both the outer
 -- positive constants and a Just-top's excluded constants — this computes leaf expansions only,
 -- and a point exclusion never removes a leaf)
-expandTypesWithNamesFull typeEnv vaenv (UnionType mTop leafs (_:_)) allowedNames =
-  expandTypesWithNamesFull typeEnv vaenv (UnionType mTop leafs []) allowedNames
-expandTypesWithNamesFull typeEnv vaenv (UnionType (Just (preds, negLeafs, _:_)) leafs []) allowedNames =
-  expandTypesWithNamesFull typeEnv vaenv (UnionType (Just (preds, negLeafs, [])) leafs []) allowedNames
-expandTypesWithNamesFull typeEnv@TypeEnv{teNames} vaenv (TopType negPartials preds) allowedNames =
+expandTypesWithNamesFullAux visited typeEnv vaenv (UnionType mTop leafs (_:_)) allowedNames =
+  expandTypesWithNamesFullAux visited typeEnv vaenv (UnionType mTop leafs []) allowedNames
+expandTypesWithNamesFullAux visited typeEnv vaenv (UnionType (Just (preds, negLeafs, _:_)) leafs []) allowedNames =
+  expandTypesWithNamesFullAux visited typeEnv vaenv (UnionType (Just (preds, negLeafs, [])) leafs []) allowedNames
+expandTypesWithNamesFullAux visited typeEnv@TypeEnv{teNames} vaenv (TopType negPartials preds) allowedNames =
   let (leafs, hasOutside) = expandPredsWithNamesFull preds
   in (subtractNeg leafs, hasOutside)
   where
@@ -1757,13 +1777,13 @@ expandTypesWithNamesFull typeEnv@TypeEnv{teNames} vaenv (TopType negPartials pre
                       (UnionType Nothing (H.filterWithKey (\k _ -> k == n) topFilteredLeafs) [])
                       (UnionType Nothing (H.filterWithKey (\k _ -> k == n) inners) [])))
     expandPredsWithNamesFull (PredsOne (PredClass clss)) =
-      expandClassPartialWithNamesFull typeEnv vaenv clss allowedNames
+      expandClassPartialWithNamesFullAux visited typeEnv vaenv clss allowedNames
     expandPredsWithNamesFull (PredsOne (PredRel rel)) =
       case expandRelPartial typeEnv vaenv rel of
         UnionType Nothing leafs [] ->
           (H.filterWithKey (\k _ -> S.member k allowedNames) leafs,
            any (\k -> not $ S.member k allowedNames) (H.keys leafs))
-        t -> expandTypesWithNamesFull typeEnv vaenv t allowedNames
+        t -> expandTypesWithNamesFullAux visited typeEnv vaenv t allowedNames
     expandPredsWithNamesFull (PredsOne (PredExpr e)) =
       case typeGraphExpandPredExpr typeEnv vaenv e of
         Nothing ->
@@ -1784,15 +1804,27 @@ expandTypesWithNamesFull typeEnv@TypeEnv{teNames} vaenv (TopType negPartials pre
                UnionType Nothing result [] -> result
                _                           -> leafs
 -- Mixed type (both top and pos non-empty): distribute expansion over union
-expandTypesWithNamesFull typeEnv vaenv (UnionType (Just topData) pos []) allowedNames
+expandTypesWithNamesFullAux visited typeEnv vaenv (UnionType (Just topData) pos []) allowedNames
   | not (H.null pos) =
-      let (topLeafs, topHasOutside) = expandTypesWithNamesFull typeEnv vaenv (UnionType (Just topData) H.empty []) allowedNames
-          (posLeafs, posHasOutside) = expandTypesWithNamesFull typeEnv vaenv (UnionType Nothing pos []) allowedNames
+      let (topLeafs, topHasOutside) = expandTypesWithNamesFullAux visited typeEnv vaenv (UnionType (Just topData) H.empty []) allowedNames
+          (posLeafs, posHasOutside) = expandTypesWithNamesFullAux visited typeEnv vaenv (UnionType Nothing pos []) allowedNames
       in (H.unionWith S.union topLeafs posLeafs, topHasOutside || posHasOutside)
-expandTypesWithNamesFull _ _ t _ = error $ printf "expandTypesWithNamesFull: unexpected type %s" (show t)
+expandTypesWithNamesFullAux _ _ _ t _ = error $ printf "expandTypesWithNamesFull: unexpected type %s" (show t)
 
 expandClassPartialWithNamesFull :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> S.HashSet TypeName -> (PartialLeafs, Bool)
-expandClassPartialWithNamesFull typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv PartialType{ptName, ptVars=classVarsP} allowedNames =
+expandClassPartialWithNamesFull = expandClassPartialWithNamesFullAux S.empty
+
+expandClassPartialWithNamesFullAux :: (TypeGraph tg) => S.HashSet TypeName -> TypeEnv tg -> TypeVarArgEnv -> PartialType -> S.HashSet TypeName -> (PartialLeafs, Bool)
+-- CYCLE GUARD (see 'expandTypesWithNamesFullAux'): a class re-entered on its own
+-- expansion path contributes nothing further — its direct members were enumerated at its
+-- first entry, so the cut yields the membership transitive closure. Reported as
+-- approximate ('True'): a PARAMETERIZED cyclic class re-entered under different
+-- instantiated arguments could contribute members the first entry's substitution did not,
+-- so exactness-dependent consumers must not rely on the cut expansion. (The current core
+-- class graph is a DAG, so this never fires today; it makes the walk total for any input.)
+expandClassPartialWithNamesFullAux visited _ _ PartialType{ptName} _
+  | S.member ptName visited = (H.empty, True)
+expandClassPartialWithNamesFullAux visited typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv PartialType{ptName, ptVars=classVarsP} allowedNames =
   case graphLookup (PClassName ptName) cg of
     Just (CGClass (_, PartialType{ptVars=classVarsDecl}, classTypes, _)) -> case classTypes of
       [] ->
@@ -1810,6 +1842,7 @@ expandClassPartialWithNamesFull typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaen
         in (leafs', any snd mapped)
       where
         classVars = H.unionWith (intersectTypesEnv typeEnv vaenv) classVarsP (cleanDeclSelfRefs classVarsDecl)
+        visited' = S.insert ptName visited
         -- A class member that is itself a (parameterized) class - e.g. @List@'s sole member
         -- @ConsList[/T=$_T]@ - must receive this class's instantiated arguments before being
         -- re-expanded, or the nested member's element parameter stays the raw member variable
@@ -1820,9 +1853,9 @@ expandClassPartialWithNamesFull typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaen
         -- variant would leak the dangling spelling into the re-expansion's 'classVarsP', where a
         -- like-named enclosing scope later captures it.
         mapClassTypeWithNamesFull (TopType negPartials ps) =
-          expandTypesWithNamesFull typeEnv vaenv (substituteExit (joinVarArgEnv classVars H.empty) (TopType negPartials ps)) allowedNames
+          expandTypesWithNamesFullAux visited' typeEnv vaenv (substituteExit (joinVarArgEnv classVars H.empty) (TopType negPartials ps)) allowedNames
         mapClassTypeWithNamesFull (TypeVar (TVVar t) _) = case H.lookup t classVars of
-          Just v  -> expandTypesWithNamesFull typeEnv vaenv (intersectTypesEnv typeEnv vaenv v (H.lookupDefault PTopType t classVars)) allowedNames
+          Just v  -> expandTypesWithNamesFullAux visited' typeEnv vaenv (intersectTypesEnv typeEnv vaenv v (H.lookupDefault PTopType t classVars)) allowedNames
           Nothing -> error $ printf "Unknown var %s in expandPartial" (show t)
         mapClassTypeWithNamesFull (TypeVar (TVArg t) _) = error $ printf "Arg %s found in expandPartial" (show t)
         mapClassTypeWithNamesFull (UnionType Nothing p []) =
@@ -1830,7 +1863,7 @@ expandClassPartialWithNamesFull typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaen
               filteredList = filter (\PartialType{ptName=n} -> S.member n allowedNames) fullList
               hasOut = any (\PartialType{ptName=n} -> not $ S.member n allowedNames) fullList
           in (joinUnionType $ map mapClassPartial filteredList, hasOut)
-        mapClassTypeWithNamesFull t = expandTypesWithNamesFull typeEnv vaenv t allowedNames
+        mapClassTypeWithNamesFull t = expandTypesWithNamesFullAux visited' typeEnv vaenv t allowedNames
         -- Substitute this class's instantiated arguments through the member at expansion EXIT
         -- ('substituteExit' resolves EVERY external 'TVExt' reference — the class scope the
         -- references name ceases to exist here, so a ⊤-bound parameter substitutes the ⊤ it

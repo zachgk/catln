@@ -23,16 +23,15 @@ import           Control.Exception   (evaluate)
 import           Control.Monad
 import           Control.Monad.State (StateT, modify, runStateT)
 import           CRes
-import           Data.Graph          (flattenSCC, reachable,
-                                      stronglyConnCompR)
+import           Data.Graph          (flattenSCC, reachable, stronglyConnCompR)
 import qualified Data.HashMap.Strict as H
-import qualified Data.IntMap.Strict  as IM
 import qualified Data.HashSet        as S
+import qualified Data.IntMap.Strict  as IM
 import           Data.List           (isInfixOf, partition)
 import           Data.Maybe          (fromJust, mapMaybe)
+import           Data.Time.Clock     (diffUTCTime, getCurrentTime)
 import           System.Environment  (lookupEnv)
 import           System.Timeout      (timeout)
-import           Data.Time.Clock     (diffUTCTime, getCurrentTime)
 
 import           CtService           (ctssBaseFiles, getRawPrgmFrom)
 import           MapMeta             (clearMetaDat, mapMetaPrgm)
@@ -44,9 +43,8 @@ import           Syntax.Parsers      (mkDesCanonicalImportStr)
 import           TypeCheck           (TypecheckTuplePrgm, depPieceOf,
                                       typecheckPrgms)
 import           TypeCheck.Common
-import           TypeCheck.Constrain (computeConstraint,
-                                      executeConstraint, runConstraints,
-                                      stypeConstraint)
+import           TypeCheck.Constrain (computeConstraint, executeConstraint,
+                                      runConstraints, stypeConstraint)
 import           TypeCheck.Decode    (toPrgms)
 import           TypeCheck.Encode    (fromPrgmsFragment, makeBaseFEnv,
                                       prgmsLocalDefNames)
@@ -231,20 +229,20 @@ probeChannels env con = case stypeConstraint (showCon env con) of
 -- | The 'SType's embedded in a constraint's payload ('ConstraintDat' has no Foldable).
 conSTypes :: ConstraintDat SType -> [SType]
 conSTypes d = case d of
-  EqualsKnown _ p _         -> [p]
-  EqPoints _ a b            -> [a, b]
-  BoundedByKnown _ p _      -> [p]
-  BoundedByObjs _ p _       -> [p]
-  NoReturnArg _ p           -> [p]
-  EqReqAct _ p              -> [p]
-  ArrowTo _ a b             -> [a, b]
-  PropEq _ (a, _) b         -> [a, b]
+  EqualsKnown _ p _          -> [p]
+  EqPoints _ a b             -> [a, b]
+  BoundedByKnown _ p _       -> [p]
+  BoundedByObjs _ p _        -> [p]
+  NoReturnArg _ p            -> [p]
+  EqReqAct _ p               -> [p]
+  ArrowTo _ a b              -> [a, b]
+  PropEq _ (a, _) b          -> [a, b]
   FnInputBound _ (a, _, _) b -> [a, b]
-  AddArg _ (a, _) b         -> [a, b]
-  AddInferArg _ a b         -> [a, b]
-  SetArgMode _ _ a b        -> [a, b]
-  ConWhere _ a b c          -> [a, b, c]
-  UnionOf _ p ps            -> p : ps
+  AddArg _ (a, _) b          -> [a, b]
+  AddInferArg _ a b          -> [a, b]
+  SetArgMode _ _ a b         -> [a, b]
+  ConWhere _ a b c           -> [a, b, c]
+  UnionOf _ p ps             -> p : ps
 
 -- | Replay the fragment's epochs one constraint at a time, mirroring
 -- 'runConstraintsIdx': per-epoch env-cache rebuild, sequential 'executeConstraint' with
@@ -498,6 +496,9 @@ runColdProbe sel te = do
         , ("whole",    show (compactDisconnectedPreds te vaenv [leafP]))
         , ("expandFull", show (expandTypesWithNamesFull te vaenv (TopType H.empty topPreds) (S.singleton (mkName "/$B"))))
         , ("eqMembers", showEqMembers te)
+        , ("memSemigroup", showClassMembersLen te "/Data/Algebra/Semigroup")
+        , ("memGroup", showClassMembersLen te "/Data/Algebra/Group")
+        , ("memCM", showClassMembersLen te "/Data/Algebra/CommutativeMonoid")
         ]
   case lookup sel probes of
     Nothing  -> putStrLn ("[COLD] unknown probe: " ++ sel)
@@ -518,4 +519,14 @@ showEqMembers te = case teClassGraph te of
   ClassGraph cg -> case graphLookup (PClassName (mkName "/Data/Algebra/Eq")) cg of
     Just (CGClass (sealed, decl, classTypes, doc)) ->
       "sealed=" ++ show sealed ++ " decl=" ++ show decl ++ " members=" ++ show classTypes ++ " doc=" ++ show doc
+    r -> "lookup: " ++ show r
+
+-- | Timed length of a class's member list: an infinite (cyclic) list from the ClassGraph
+-- merge makes 'length' diverge while a bounded 'take' completes.
+showClassMembersLen :: FEnvTypeEnv -> String -> String
+showClassMembersLen te nm = case teClassGraph te of
+  ClassGraph cg -> case graphLookup (PClassName (mkName nm)) cg of
+    Just (CGClass (_, _, classTypes, _)) ->
+      "first50=" ++ take 400 (show (take 50 classTypes))
+      ++ " | len=" ++ show (length classTypes)
     r -> "lookup: " ++ show r
