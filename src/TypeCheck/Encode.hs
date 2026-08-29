@@ -145,6 +145,21 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
   m' <- fromMeta BAct est m $ printf "Tuple Meta %s %s(%s)" (showIncodeInOut est) (show baseExpr) (show arg)
   baseM' <- fromMeta BAct est baseM $ printf "Tuple BaseMeta %s %s(%s)" (showIncodeInOut est) (show baseExpr) (show arg)
   baseExpr' <- fromExpr est baseExpr
+  -- The output base link ('ArrowTo') is emitted HERE — after the base subexpression, BEFORE the
+  -- argument constraints — because the actual channel flows @baseExpr' -> baseM'@ (this ArrowTo)
+  -- and then @baseM' -> m'@ (the arg's 'AddArg'), and 'runConstraintsIdx' executes in emission
+  -- order. Emitted after the argument instead, every application layer's pair sat in anti-flow
+  -- order: a forward epoch ran the AddArg before its ArrowTo feeder and a backward epoch the
+  -- reverse, so each curried-call layer cost a full epoch per link in BOTH directions (a 7-arg
+  -- call chain burned ~13 epochs reaching its head — m30/map.ct's insertStep hit the epoch limit
+  -- on exactly this). In flow order the whole chain rides one forward epoch, and its requirement
+  -- mirror rides the alternated backward epochs.
+  case est of
+    EncodeOut{} -> modify $ addConstraints [
+                ArrowTo 7 (getExprMeta baseExpr') baseM',
+                BoundedByObjs 9 m' PTopType
+                       ]
+    EncodeIn{} -> return ()
   arg'' <- case arg of
     EAppArg a -> do
       arg' <- fromObjArr est a
@@ -217,10 +232,7 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
       return $ EAppSpread a'
     EAppSpread a -> error $ printf "Not yet implemented %s" (show a)
   let baseConstraints = case est of
-        EncodeOut{} -> [
-                ArrowTo 7 (getExprMeta baseExpr') baseM',
-                BoundedByObjs 9 m' PTopType
-                       ]
+        EncodeOut{} -> [] -- emitted before the argument, see above
         EncodeIn{} -> [
                 EqPoints 16 (getExprMeta baseExpr') baseM',
                 BoundedByObjs 17 m' PTopType
