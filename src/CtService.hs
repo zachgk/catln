@@ -768,7 +768,21 @@ ctssBuildSCC ctss@(CTSS ssmv _) sccNodes pages = do
             return $ ctssMapPages (\k ssf -> fromMaybe ssf (H.lookup k updates)) ctssdat
           CErr notes -> do
             unless (null notes) $ putStrLn $ prettyCNotes notes
-            fail "Could not build catln service"
+            -- A page whose pipeline hard-failed is still a page the service holds: commit the
+            -- failure to the SCC's members rather than killing the host process (tests, LSP,
+            -- webdocs all live above this). Every stage field already carries 'CRes', and every
+            -- reader ('evaluablePages', 'joinedStage', 'ctssGetFrom') fails a 'CErr' page with
+            -- these notes; dependent SCCs skip a failed dependency ('cresToMaybe') and report
+            -- their own unresolved names. 'ssfBuilt' marks the build decided so the loop moves on.
+            let failSSF ssf = ssf{
+                  ssfBuilt = True,
+                  ssfDes = Just $ CErr notes,
+                  ssfTPrgmWithTrace = Just $ CErr notes,
+                  ssfTPrgm = Just $ CErr notes,
+                  ssfTBPrgm = Just $ CErr notes
+                }
+            let failedUpdates = H.fromList [(name, failSSF ssf) | (ssf, name, _) <- currentSCCNodes]
+            return $ ctssMapPages (\k ssf -> fromMaybe ssf (H.lookup k failedUpdates)) ctssdat
 
 -- | Run the full pipeline (desugar → typecheck → build → annotate) for a single SCC.
 -- Returns a map of updated SSFs for the SCC members.
