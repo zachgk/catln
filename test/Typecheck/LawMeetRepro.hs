@@ -30,7 +30,9 @@ import qualified Data.IntMap.Strict  as IM
 import qualified Data.HashSet        as S
 import           Data.List           (isInfixOf, partition)
 import           Data.Maybe          (fromJust, mapMaybe)
+import           System.Environment  (lookupEnv)
 import           System.Timeout      (timeout)
+import           Data.Time.Clock     (diffUTCTime, getCurrentTime)
 
 import           CtService           (ctssBaseFiles, getRawPrgmFrom)
 import           MapMeta             (clearMetaDat, mapMetaPrgm)
@@ -145,7 +147,10 @@ probeLawPage (page, peers, depTuples) = do
             Left notes -> putStrLn $ "encode ABORTED:\n" ++ unlines (map show (take 4 notes))
             Right ((_, cons), envE) -> do
               putStrLn $ "encoded; " ++ show (length cons) ++ " constraints"
-              replayEpochs envE{feConMemo = mempty} (zip [0 ..] cons)
+              mSel <- lookupEnv "REPRO_PROBE"
+              case mSel of
+                Just sel -> runColdProbe sel (feTypeEnv envE)
+                Nothing  -> replayEpochs envE{feConMemo = mempty} (zip [0 ..] cons)
         else
           case runStateTC (do (vp, cons) <- fromPrgmsFragment frag (tRec, tPrec)
                               _ <- runConstraints 25 cons
@@ -468,3 +473,49 @@ stageProbes te chanVaenv l topPreds topT = do
       r <- timeout 8000000 $ evaluate (length str)
       putStrLn $ "  [" ++ nm ++ "] "
                  ++ maybe "*** HANGS ***" (\n -> "ok (" ++ show n ++ " chars): " ++ take 200 str) r
+
+-- | ONE cold probe per process (select with REPRO_PROBE=<name>): decompose
+-- 'compactDisconnectedPreds.aux' on the minimal leaf with genuinely cold memos —
+-- in-process probe sequences lie (a hanging probe's partial evaluation warms the token
+-- memos and later probes of the same operands then complete). Runs right after the law
+-- fragment's ENCODE (no epoch replay): the operands are hardcoded (vaenv-independence and
+-- name-independence were established by the in-process controls) and only the static page
+-- env is needed.
+runColdProbe :: String -> FEnvTypeEnv -> IO ()
+runColdProbe sel te = do
+  let topPreds = PredsOne (PredClass (partialVal (mkName "/Data/Algebra/Eq")))
+  let leaf = (partialVal (mkName "/$B")){ptArgMode = PtArgAny}
+  let bare = singletonType leaf
+  let leafP = partialAddPreds leaf topPreds
+  let vaenv = H.empty :: TypeVarArgEnv
+  let meetDis = intersectTypesEnv te{teDisableCompact = True} vaenv bare (TopType H.empty topPreds)
+  let probes =
+        [ ("meetDis",  show meetDis)
+        , ("eq",       show (isEqTypeWithEnv te vaenv meetDis bare))
+        , ("sub1",     show (isSubtypeOfWithEnv te vaenv meetDis bare))
+        , ("sub2",     show (isSubtypeOfWithEnv te vaenv bare meetDis))
+        , ("meetReal", show (snd (intersectTypesWithVarEnv te vaenv (TopType H.empty topPreds) bare)))
+        , ("whole",    show (compactDisconnectedPreds te vaenv [leafP]))
+        , ("expandFull", show (expandTypesWithNamesFull te vaenv (TopType H.empty topPreds) (S.singleton (mkName "/$B"))))
+        , ("eqMembers", showEqMembers te)
+        ]
+  case lookup sel probes of
+    Nothing  -> putStrLn ("[COLD] unknown probe: " ++ sel)
+    Just str -> do
+      t0 <- getCurrentTime
+      r <- timeout 30000000 (evaluate (length str))
+      t1 <- getCurrentTime
+      putStrLn $ "[COLD " ++ sel ++ "] "
+                 ++ maybe "*** HANGS (30s) ***" (\n -> "ok (" ++ show n ++ " chars)") r
+                 ++ " elapsed=" ++ show (diffUTCTime t1 t0)
+      case r of
+        Just _  -> putStrLn $ "[COLD " ++ sel ++ " CONTENT] " ++ take 1500 str
+        Nothing -> return ()
+
+-- | Eq's raw class-graph entry: member shapes (finite, cheap) — the cycle's static side.
+showEqMembers :: FEnvTypeEnv -> String
+showEqMembers te = case teClassGraph te of
+  ClassGraph cg -> case graphLookup (PClassName (mkName "/Data/Algebra/Eq")) cg of
+    Just (CGClass (sealed, decl, classTypes, doc)) ->
+      "sealed=" ++ show sealed ++ " decl=" ++ show decl ++ " members=" ++ show classTypes ++ " doc=" ++ show doc
+    r -> "lookup: " ++ show r
