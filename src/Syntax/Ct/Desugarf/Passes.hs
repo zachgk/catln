@@ -186,7 +186,25 @@ completeAnnotationTypes fullPrgm (Prgm (ObjectMap objMap) classGraph annots) = P
     completeOa oa@ObjArr{oaObj, oaArr} = oa{oaObj=fmap completeExpr oaObj, oaArr=fmap completeArr oaArr}
     completeArr (e, m) = (e, completeMeta m)
     completeMeta m = mWithType (completeDataPartialsTop typeEnv (getMetaType m)) m
-    completeExpr (TupleApply m (bm, be) arg) = TupleApply m (bm, completeExpr be) (completeApplyArg arg)
+    -- The object meta carries the same annotations a second time, as the arg slots of its own
+    -- partial: the meta of @Cv(inner -> Bv)@ is @/Cv(/inner=/Bv)@, whose @/inner@ is the very
+    -- annotation 'completeArr' completes on the way past. Left alone, the two spellings of one
+    -- annotation disagree — the bare 0-arg @/Bv@ against the field-complete @/Bv(/label=⊤)@ — and
+    -- the 'PropEq' tying an argument's slot to its type meta meets them to bottom in the first
+    -- epoch. That is the same collapse this pass exists to stop, reached through the other spelling.
+    --
+    -- 'completeDataPartials' rather than 'completeDataPartialsTop' because only the arg slots are
+    -- annotations: the outermost partial is the object itself, which keeps its exact authored form
+    -- for the reason given above. A nested partial already carrying args, a class, a variable and a
+    -- bare name with no declared fields are all left as they are, so a pattern matching a nullary
+    -- constructor (@size(m= Leaf)@) is untouched.
+    -- The base meta gets it too: a declaration of several fields is a nest of applies
+    -- (@Cv(inner -> Bv)(n -> Integer)@), and the outer apply's base meta is the inner apply's own
+    -- meta at one argument less — the same partial, carrying the same annotation in the same slot.
+    -- Completing one and not the other only moves the disagreement out a level, where an 'EqPoints'
+    -- ties the two spellings together and meets them to bottom just the same.
+    completeObjMeta m = mWithType (completeDataPartials typeEnv (getMetaType m)) m
+    completeExpr (TupleApply m (bm, be) arg) = TupleApply (completeObjMeta m) (completeObjMeta bm, completeExpr be) (completeApplyArg arg)
     completeExpr e = e
     completeApplyArg (EAppVar n vm)    = EAppVar n (completeMeta vm)
     completeApplyArg (EAppArg innerOa) = EAppArg (completeOa innerOa)
