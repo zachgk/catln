@@ -71,8 +71,8 @@ unionReachesTree typeEnv vaenv (ReachesPartialTree children) =
     -- fold step. The TypeVar cases keep replacing the key with the pointer, as before.
     u = unionAllTypesWithEnvOnce typeEnv vaenv $ concatMap unionChild $ H.toList children
     unionChild (key, val) = case unionReachesTree typeEnv vaenv val of
-      (TypeVar (TVArg argName) tl) | makeAbsoluteName (ptName key) == makeAbsoluteName (pkName argName) -> [TypeVar (TVArg $ makeAbsolutePk argName) tl]
-      (TypeVar (TVVar varName) tl) -> [TypeVar (TVVar $ makeAbsolutePk varName) tl]
+      (TypeVar (TVArg argName) tl i) | makeAbsoluteName (ptName key) == makeAbsoluteName (pkName argName) -> [TypeVar (TVArg $ makeAbsolutePk argName) tl i]
+      (TypeVar (TVVar varName) tl i) -> [TypeVar (TVVar $ makeAbsolutePk varName) tl i]
       val' -> [singletonType key, val']
 unionReachesTree typeEnv vaenv (ReachesTypeTree children) = unionAllTypesWithEnvOnce typeEnv vaenv (H.keys children ++ map (unionReachesTree typeEnv vaenv . snd) (H.elems children))
 unionReachesTree _ _ ReachesLeaf = BottomType
@@ -152,7 +152,7 @@ reachesPartials typeEnv partials = ReachesPartialTree $ H.fromList $ zip partial
   where
     reachesPartial :: (TypeGraph tg) => ReachesEnv tg -> PartialType -> ReachesTree
     reachesPartial ReachesEnv{rVisited} p | S.member p rVisited = ReachesLeaf
-    reachesPartial ReachesEnv{rVaenv} PartialType{ptName=argName} | TVArg (partialKey argName) `H.member` rVaenv = ReachesTypeTree $ H.singleton (TypeVar (TVArg $ partialKey argName) TVInt) ("arg", ReachesLeaf)
+    reachesPartial ReachesEnv{rVaenv} PartialType{ptName=argName} | TVArg (partialKey argName) `H.member` rVaenv = ReachesTypeTree $ H.singleton (TypeVar (TVArg $ partialKey argName) TVInt PTopType) ("arg", ReachesLeaf)
     reachesPartial env@ReachesEnv{rTypeEnv, rVisited, rVaenv} partial = do
 
       let ttypes = typeGraphQueryWithReason rTypeEnv rVaenv partial
@@ -195,7 +195,7 @@ presentRawResult _ _ t = t
 
 reaches :: (TypeGraph tg) => ReachesEnv tg -> Type -> ReachesTree
 reaches _     (UnionType (Just _) _ _) = ReachesLeaf
-reaches _     (TypeVar v _) = error $ printf "reaches with typevar %s" (show v)
+reaches _     (TypeVar v _ _) = error $ printf "reaches with typevar %s" (show v)
 reaches env (UnionType Nothing src consts) =
   reachesPartials env $ splitUnionType src ++ map constantPartialType consts
 

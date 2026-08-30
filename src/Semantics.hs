@@ -553,7 +553,7 @@ applyResolvedFields typeEnv fields (UnionType Nothing leafs consts) =
             (t:_) -> Just t
             []    -> Nothing
       in case declFieldType of
-           Just (TypeVar (TVVar v) TVInt) ->
+           Just (TypeVar (TVVar v) TVInt _) ->
              p{ ptVars = H.insertWith (intersectTypes typeEnv) v fieldType ptVars
               , ptArgs = H.insert fieldName fieldType (ptArgs p) }
            _ -> p{ptArgs = H.insert fieldName fieldType (ptArgs p)}
@@ -561,8 +561,8 @@ applyResolvedFields _ _ t = t
 
 metaTypeVar :: Meta m -> Maybe TypeVarAux
 metaTypeVar m = case getMetaType m of
-  TypeVar v _ -> Just v
-  _           -> Nothing
+  TypeVar v _ _ -> Just v
+  _             -> Nothing
 
 isSubtypeOfWithObjSrcs :: (TypeGraph tg, Show m, MetaDat m) => TypeEnv tg -> [(PartialType, ObjArr Expr m)] -> Type -> Type -> Bool
 isSubtypeOfWithObjSrcs typeEnv objSrcs subType supType = any (\vaenv -> isSubtypeOfWithEnv typeEnv (fmap snd vaenv) subType supType) (exprVarArgsWithObjSrcs typeEnv objSrcs)

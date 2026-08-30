@@ -203,8 +203,8 @@ diagonalVar oa p = case sharedVars of
     argVar = mapMaybe argToVar (exprAppliedArgs (oaObjExpr oa))
     argToVar a = case (oaObj a, oaArr a) of
       (Just objE, Just (_, arrM)) -> case getMetaType arrM of
-        TypeVar (TVVar v) _ -> Just (inExprSingleton objE, v)
-        _                   -> Nothing
+        TypeVar (TVVar v) _ _ -> Just (inExprSingleton objE, v)
+        _                     -> Nothing
       _ -> Nothing
     sharedVars = [v | (v, n) <- H.toList (H.fromListWith (+) [(v, 1 :: Int) | (_, v) <- argVar]), n >= 2]
     argsForVar v = [a | (a, v') <- argVar, v' == v]
@@ -239,8 +239,8 @@ isClassParamMethodDecl oa = not (null receiverVars) && any isParamArg args
       , v <- H.keys ptVars
       ]
     isParamArg a = not (isThis a) && case argType a of
-      Just (TypeVar (TVVar v) _) -> v `elem` receiverVars
-      _                          -> False
+      Just (TypeVar (TVVar v) _ _) -> v `elem` receiverVars
+      _                            -> False
 
 -- | Universalize /destructuring binding variables/ that appear as argument values in a
 -- definition's input type. A pattern like @MyJust(v= lv)@ matches /any/ @MyJust@ regardless

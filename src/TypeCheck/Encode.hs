@@ -128,7 +128,7 @@ fromExpr est (HoleExpr m hole) = do
 fromExpr est (AliasExpr base alias) = do
   base' <- fromExpr est base
   alias' <- fromExpr est alias
-  modify $ addConstraints [BoundedByKnown 6 (getExprMeta base') (TypeVar (TVArg $ inExprSingleton alias) TVInt)]
+  modify $ addConstraints [BoundedByKnown 6 (getExprMeta base') (TypeVar (TVArg $ inExprSingleton alias) TVInt PTopType)]
   return $ AliasExpr base' alias'
 fromExpr est (EWhere m base cond) = do
   m' <- fromMeta BAct est m (printf "Where %s | %s" (show base) (show cond))
@@ -350,7 +350,7 @@ fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
           -- Input with (x=x)
           [
             BoundedByObjs 18 (getExprMeta argExpr') PTopType,
-            BoundedByKnown 18 (getExprMeta argExpr') (TypeVar (TVArg $ inExprSingleton obj) TVInt),
+            BoundedByKnown 18 (getExprMeta argExpr') (TypeVar (TVArg $ inExprSingleton obj) TVInt PTopType),
                      EqPoints 20 (getExprMeta argExpr') arrM'
                     ]
         (EncodeIn{}, Just _obj, Just (Nothing, _arrM')) ->

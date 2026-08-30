@@ -45,7 +45,7 @@ genTypeVar = do
   n   <- HG.element varNamePool
   aux <- HG.element [TVVar (partialKey n), TVArg (partialKey n)]
   loc <- HG.element [TVInt, TVExt]
-  return $ TypeVar aux loc
+  return $ TypeVar aux loc PTopType
 
 -- | A small external variable environment ('TypeVarArgEnv') mapping a subset of 'varNamePool'
 -- to concrete-ish types drawn from the program. Threading this through the @*WithEnv@ operations
@@ -382,7 +382,7 @@ genPartialType prgm@(Prgm objMap _ _) = do
       base <- baseGen
       varName <- HG.string (linear 1 5) HG.lower
       extName <- HG.element varNamePool
-      let extVar = TypeVar (TVVar (partialKey extName)) TVExt
+      let extVar = TypeVar (TVVar (partialKey extName)) TVExt PTopType
       return base{ptVars = H.insert (partialKey (mkName varName)) extVar (ptVars base)}
 
 genInputExpr :: Gen (Expr ())

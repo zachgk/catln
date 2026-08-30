@@ -182,7 +182,7 @@ exprToType _ (RawValue _ n) | isJust (parseTVVar (nameStr n)) = fromJust $ parse
 -- 'RawVarsApply' handling for ordinary class applications.
 exprToType vaenv (RawVarsApply _ (RawValue _ n) vs) | isJust (parseTVVar (nameStr n)) =
   case fromJust $ parseTVVar (nameStr n) of
-    TypeVar bAux loc -> TypeVar (TVApplied bAux (H.fromList $ mapMaybe toOverride vs)) loc
+    TypeVar bAux loc i -> TypeVar (TVApplied bAux (H.fromList $ mapMaybe toOverride vs)) loc i
     t -> error $ printf "parseTVVar returned a non-var %s for applied type var %s" (show t) (nameStr n)
   where
     toOverride RawObjArr{roaObj=Just varExpr, roaArr} = (varName,) . exprToType vaenv <$> (roaArr >>= snd)

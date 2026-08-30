@@ -391,7 +391,7 @@ instance ExprClass Expr where
             , Just (UnionType Nothing srcArg []) <- typeGetArg argKey src
             = joinAllPossVarArgMetaWithSrc typeEnv $ map (exprVarArgsWithSrc typeEnv obj) $ splitUnionType srcArg
             | otherwise = case getMetaType arrM of
-                (TypeVar v _) -> [H.insertWith (mergeVarArgMetaWithSrcItem typeEnv) v ([(obj, arrM)], fromMaybe PTopType $ typeGetArgLoose structKey src) mainArg]
+                (TypeVar v _ _) -> [H.insertWith (mergeVarArgMetaWithSrcItem typeEnv) v ([(obj, arrM)], fromMaybe PTopType $ typeGetArgLoose structKey src) mainArg]
                 -- A declared argument spelled as a class application linking the object's
                 -- variables (@lst -> List[/T=$_/T]@) BINDS those variables from the source
                 -- content's linked dimension (@lst=Cons[/T=Integer](…)@ binds @/T=Integer@) —
@@ -486,7 +486,7 @@ linkedDimBinds typeEnv declT content = case declT of
     -- declaration route at ⊤ and the call unreduced at eval).
     fromTemplate q =
       [ (TVVar k, dim)
-      | (k', TypeVar (TVVar k) _) <- H.toList (ptVars q)
+      | (k', TypeVar (TVVar k) _ _) <- H.toList (ptVars q)
       , Just dim <- [contentDim k']
       , dim /= PTopType ]
     contentDim k' = case content of

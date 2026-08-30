@@ -130,7 +130,7 @@ updateSchemeProp env@FEnv{feTypeEnv} vaenv super@SType{stypeAct=superAct, stypeR
 addArgToType :: FEnv -> TypeVarArgEnv -> Type -> TypeVarAux -> Maybe Type
 addArgToType _ _ PTopType _ = Nothing
 addArgToType _ _ (UnionType (Just _) _ _) _ = Nothing
-addArgToType env vaenv (TypeVar v _) newArg = case H.lookup v vaenv of
+addArgToType env vaenv (TypeVar v _ _) newArg = case H.lookup v vaenv of
   Just t  -> addArgToType env vaenv t newArg
   Nothing -> error $ printf "Unknown type in addArgToType: %s" (show v)
 addArgToType FEnv{feTypeEnv} _ (UnionType Nothing partials []) newArg = Just $ unionAllTypes feTypeEnv $ map singletonType kept
@@ -207,7 +207,7 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByKnown i p@ST
   where
     vaenv' = fmap (stypeAct . snd) vaenv
     boundTp' = relaxNameBoundArgs act $ case boundTp of
-      TypeVar v _                                   -> H.lookupDefault PTopType v vaenv'
+      TypeVar v _ _                                   -> H.lookupDefault PTopType v vaenv'
       UnionType (Just (preds, negLeafs, _)) _ _ ->
         snd $ differenceTypeWithEnv feTypeEnv vaenv' (expandPredicates feTypeEnv vaenv' preds) (UnionType Nothing negLeafs [])
       t                                             -> t

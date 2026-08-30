@@ -550,21 +550,34 @@ describe('Type', () => {
   })
 
   const key = (name) => ({ pkName: name, pkArgs: [], pkVars: [] })
+  // The wire format's third TypeVar component: occurrence-local knowledge (var ∩ inner).
+  const topJson = { tag: 'UnionType', contents: [[predsNone, {}, []], {}, []] }
 
   it('renders a TVVar by location', () => {
-    const int = { tag: 'TypeVar', contents: [{ tag: 'TVVar', contents: key('a') }, 'TVInt'] }
+    const int = { tag: 'TypeVar', contents: [{ tag: 'TVVar', contents: key('a') }, 'TVInt', topJson] }
     expect(render(<Providers><Type data={int} /></Providers>).container.textContent).toBe('$a')
 
-    const ext = { tag: 'TypeVar', contents: [{ tag: 'TVVar', contents: key('a') }, 'TVExt'] }
+    const parent = { tag: 'TypeVar', contents: [{ tag: 'TVVar', contents: key('a') }, 'TVParent', topJson] }
+    expect(render(<Providers><Type data={parent} /></Providers>).container.textContent).toBe('$^a')
+
+    const ext = { tag: 'TypeVar', contents: [{ tag: 'TVVar', contents: key('a') }, 'TVExt', topJson] }
     expect(render(<Providers><Type data={ext} /></Providers>).container.textContent).toBe('$_a')
   })
 
   it('renders a TVArg by location', () => {
-    const int = { tag: 'TypeVar', contents: [{ tag: 'TVArg', contents: key('v') }, 'TVInt'] }
+    const int = { tag: 'TypeVar', contents: [{ tag: 'TVArg', contents: key('v') }, 'TVInt', topJson] }
     expect(render(<Providers><Type data={int} /></Providers>).container.textContent).toBe('TVArg v')
 
-    const ext = { tag: 'TypeVar', contents: [{ tag: 'TVArg', contents: key('v') }, 'TVExt'] }
+    const parent = { tag: 'TypeVar', contents: [{ tag: 'TVArg', contents: key('v') }, 'TVParent', topJson] }
+    expect(render(<Providers><Type data={parent} /></Providers>).container.textContent).toBe('TVArg(parent) v')
+
+    const ext = { tag: 'TypeVar', contents: [{ tag: 'TVArg', contents: key('v') }, 'TVExt', topJson] }
     expect(render(<Providers><Type data={ext} /></Providers>).container.textContent).toBe('TVArg(ext) v')
+  })
+
+  it('renders a non-top inner as a ∩{…} suffix', () => {
+    const t = { tag: 'TypeVar', contents: [{ tag: 'TVVar', contents: key('a') }, 'TVInt', { tag: 'UnionType', contents: [null, leaf, []] }] }
+    expect(render(<Providers><Type data={t} /></Providers>).container.textContent).toBe('$a∩{/Integer}')
   })
 
   it('renders a TVApplied with its overrides', () => {
@@ -574,6 +587,7 @@ describe('Type', () => {
       contents: [
         { tag: 'TVApplied', contents: [base, [[key('T'), { tag: 'UnionType', contents: [null, leaf, []] }]]] },
         'TVInt',
+        topJson,
       ],
     }
     const { container } = render(<Providers><Type data={t} /></Providers>)

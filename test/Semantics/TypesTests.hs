@@ -53,8 +53,8 @@ ggPrgm prgms = HG.choice [genPremade, genPrgm]
 -- they thread the environment through each nested scope (a 'TVExt' slot reads the outer binding),
 -- whereas a bare top-level variable is the one shape the meet mishandles (see 'intersectR').
 readTopVar :: TypeVarArgEnv -> Type -> Type
-readTopVar env (TypeVar (TVApplied b ovr) loc) = applyTypeVarOverrides (fmap (readTopVar env) ovr) (readTopVar env (TypeVar b loc))
-readTopVar env (TypeVar v _)                    = vaenvLookup env v
+readTopVar env (TypeVar (TVApplied b ovr) loc i) = applyTypeVarOverrides (fmap (readTopVar env) ovr) (readTopVar env (TypeVar b loc i))
+readTopVar env (TypeVar v _ _)                    = vaenvLookup env v
 readTopVar _   t                                = t
 
 -- | Intersection for the property tests, threading a seed 'TypeVarArgEnv'. A bare top-level variable
@@ -587,7 +587,7 @@ propParamClassIntersectAbsorb ioPrgms = property $ do
   let clsOver elemT = UnionType (Just (PredsOne (PredClass clsPt{ptVars=H.singleton tKey elemT}), H.empty, [])) H.empty []
   -- The variable is deliberately NAMED like the class's own parameter key (an external @$_T@
   -- meeting a class whose parameter is also @/T@) — the shape a completed data field takes.
-  let flexVar = TypeVar (TVVar tKey) TVExt
+  let flexVar = TypeVar (TVVar tKey) TVExt PTopType
   let narrow = clsOver intT
   let flexed = clsOver flexVar
   -- The meet's standalone reading: the intersection records a var's binding in the returned
@@ -660,7 +660,7 @@ propConjMemberClassSubtype ioPrgms = property $ do
     []    -> fail "Bag class has no type parameter"
   -- An UNBOUND external variable, named unlike the class parameters: flexible (binds per
   -- value), the reading an authored @$_A@ has.
-  let flexA = TypeVar (TVVar (partialKey "A")) TVExt
+  let flexA = TypeVar (TVVar (partialKey "A")) TVExt PTopType
   let consListInt = consListPt{ptVars=H.singleton tKey intT}
   let conjOver outer = UnionType (Just (predsAnd (PredsOne (PredClass outer)) (PredsOne (PredClass consListInt)), H.empty, [])) H.empty []
   let conj = conjOver bagPt{ptVars=H.singleton bKey flexA}

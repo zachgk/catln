@@ -67,9 +67,9 @@ resolveRelativeNames fullPrgm@(Prgm fullPrgmObjMap _ _) (Prgm objMap (ClassGraph
     mapType :: Bool -> Type -> Type
     mapType reqResolve (TopType np (PredsOne (PredRel p))) | H.null np = resolveRelPartial reqResolve p
     mapType _ (TopType np ps) = TopType np ps
-    mapType _ tp@(TypeVar TVVar{} _) = tp
-    mapType _ (TypeVar TVArg{} _) = error "Invalid arg type"
-    mapType reqResolve (TypeVar (TVApplied b ovr) loc) = TypeVar (TVApplied b (fmap (mapType reqResolve) ovr)) loc
+    mapType _ tp@(TypeVar TVVar{} _ _) = tp
+    mapType _ (TypeVar TVArg{} _ _) = error "Invalid arg type"
+    mapType reqResolve (TypeVar (TVApplied b ovr) loc i) = TypeVar (TVApplied b (fmap (mapType reqResolve) ovr)) loc (mapType reqResolve i)
     mapType reqResolve (UnionType Nothing partials []) = UnionType Nothing (joinUnionType $ map (mapPartial reqResolve) $ splitUnionType partials) []
     mapType _ t = t
 
@@ -160,7 +160,7 @@ linkClassMethodReceivers (Prgm _ (ClassGraph fullCg) _) (Prgm (ObjectMap objMap)
     enrichReceiverType (TopType negPartials (PredsOne (PredClass p@PartialType{ptName, ptVars})))
       | Just (CGClass (_, PartialType{ptVars=classVarsDecl}, _, _)) <- graphLookup (PClassName ptName) fullCg
       , not (H.null classVarsDecl)
-      = TopType negPartials (PredsOne (PredClass p{ptVars=H.union ptVars (H.mapWithKey (\k _ -> TypeVar (TVVar k) TVExt) classVarsDecl)}))
+      = TopType negPartials (PredsOne (PredClass p{ptVars=H.union ptVars (H.mapWithKey (\k _ -> TypeVar (TVVar k) TVExt PTopType) classVarsDecl)}))
     enrichReceiverType t = t
 
 -- |

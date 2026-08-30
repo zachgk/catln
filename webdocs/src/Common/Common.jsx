@@ -489,19 +489,23 @@ function joinParts(parts) {
 }
 
 // Mirrors showTypeD's TypeVar cases. The aux is TVVar or TVArg over a PartialKey, or TVApplied
-// wrapping another aux with per-key overrides; the location is TVInt (internal) or TVExt.
+// wrapping another aux with per-key overrides; the location is TVInt (internal), TVParent
+// (nearest enclosing partial), or TVExt (ambient object scope). The third component is the
+// occurrence's inner knowledge (read as var ∩ inner), rendered as a ∩{…} suffix when non-top.
 function TypeVarType(props) {
-  const [aux, loc] = props.data;
+  const [aux, loc, inner] = props.data;
+  const innerSfx = (inner === undefined || inner === null || isTopType(inner))
+    ? null : <span>∩{"{"}<Type data={inner}/>{"}"}</span>;
   switch(aux.tag) {
   case "TVVar":
-    return <TypeVar>{loc === "TVExt" ? "$_" : "$"}<PartialKey data={aux.contents}/></TypeVar>;
+    return <TypeVar>{loc === "TVExt" ? "$_" : (loc === "TVParent" ? "$^" : "$")}<PartialKey data={aux.contents}/>{innerSfx}</TypeVar>;
   case "TVArg":
-    return <TypeVar>{loc === "TVExt" ? "TVArg(ext) " : "TVArg "}<PartialKey data={aux.contents}/></TypeVar>;
+    return <TypeVar>{loc === "TVExt" ? "TVArg(ext) " : (loc === "TVParent" ? "TVArg(parent) " : "TVArg ")}<PartialKey data={aux.contents}/>{innerSfx}</TypeVar>;
   case "TVApplied": {
     const [base, overrides] = aux.contents;
     const showOverrides = tagJoin(overrides.map((ovr, index) =>
       <span key={index}><PartialKey data={ovr[0]}/>=<Type data={ovr[1]}/></span>), ", ");
-    return <span><TypeVarType data={[base, loc]}/>[{showOverrides}]</span>;
+    return <span><TypeVarType data={[base, loc, null]}/>[{showOverrides}]{innerSfx}</span>;
   }
   default:
     console.error("Unknown TypeVarAux", aux);

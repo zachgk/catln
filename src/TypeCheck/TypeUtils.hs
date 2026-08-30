@@ -125,7 +125,7 @@ addUnionObjToEnv vobjMap tobjMapRec tPrecedenceMap = do
 addInferArgToType :: FEnv -> TypeVarArgEnv -> Type -> Maybe Type
 addInferArgToType _ _ PTopType = Nothing
 addInferArgToType _ _ (UnionType (Just _) _ _) = Nothing
-addInferArgToType env vaenv (TypeVar t _) = case H.lookup t vaenv of
+addInferArgToType env vaenv (TypeVar t _ _) = case H.lookup t vaenv of
   Just t' -> addInferArgToType env vaenv t'
   Nothing -> error $ printf "Failed to find %s in addInferArgToType" (show t)
 addInferArgToType env@FEnv{feTypeEnv} vaenv (UnionType Nothing partials []) = Just $ unionAllTypes feTypeEnv partials'
@@ -262,7 +262,7 @@ fnArgInputBound env callAct fnKey inKey = case callAct of
       UnionType Nothing posLeafs _           -> splitUnionType posLeafs
       _                                      -> [])
       where
-        fromPartial p = [ (vn, an) | (vn, TypeVar (TVVar an) TVOuter) <- H.toList (ptVars p) ]
+        fromPartial p = [ (vn, an) | (vn, TypeVar (TVVar an) TVOuter _) <- H.toList (ptVars p) ]
         predPartials preds = case tryPredsToList preds of
           Just ps -> [ p | pr <- ps, p <- predPartial pr ]
           Nothing -> []
@@ -297,7 +297,7 @@ outVarBoundSrc env dest@(UnionType Nothing destLeafs _) src@(UnionType Nothing s
       [ vn
       | oa <- maybe [] omiDecls (H.lookup ptName tg)
       , Just (_, outM) <- [oaArr oa]
-      , TypeVar (TVVar vn) _ <- [getMetaType outM]
+      , TypeVar (TVVar vn) _ _ <- [getMetaType outM]
       , Just declObj <- [maybeGetSingleton (getMetaType (getExprMeta (oaObjExpr oa)))]
       , H.member vn (ptVars declObj)
       -- Output-ONLY variables: with an argument occurrence of the same var (@mmap@'s
@@ -310,9 +310,9 @@ outVarBoundSrc env dest@(UnionType Nothing destLeafs _) src@(UnionType Nothing s
       -- Complete applications only: a partial application's ArrowTo destination is the
       -- further-applied call node, not the result the declaration's output variable stands for.
       , all (`H.member` ptArgs p) (H.keys (ptArgs declObj)) ]
-    argRefsVar vn (TypeVar (TVVar vn') _)               = vn' == vn
-    argRefsVar vn (TypeVar (TVApplied (TVVar vn') _) _) = vn' == vn
-    argRefsVar _ _                                      = False
+    argRefsVar vn (TypeVar (TVVar vn') _ _)               = vn' == vn
+    argRefsVar vn (TypeVar (TVApplied (TVVar vn') _) _ _) = vn' == vn
+    argRefsVar _ _                                        = False
 outVarBoundSrc _ _ src = src
 
 mkReachesEnv :: FEnv -> RConstraint -> TypeCheckResult (ReachesEnv (ObjArrTypeGraph Expr ()))
@@ -391,7 +391,7 @@ arrowConstrainUbs :: FEnv -> RConstraint -> SType -> SType -> TypeCheckResult (T
 -- once the src resolves, the concrete-src derivation below supersedes it.
 arrowConstrainUbs _ _ SType{stypeAct=PTopType, stypeReq=srcReq} SType{stypeAct=dest} = return (PTopType, srcReq, dest, Nothing)
 arrowConstrainUbs _ _ SType{stypeAct=src@(UnionType (Just _) _ _), stypeReq=srcReq} SType{stypeAct=dest} = return (src, srcReq, dest, Nothing)
-arrowConstrainUbs env con@Constraint{conVaenv} srcS@SType{stypeAct=TypeVar v _, stypeReq=srcReq} destS = do
+arrowConstrainUbs env con@Constraint{conVaenv} srcS@SType{stypeAct=TypeVar v _ _, stypeReq=srcReq} destS = do
   let srcv = maybe PTopType (stypeAct . snd) (H.lookup v conVaenv)
   case (srcv, stypeAct destS) of
     (PTopType, PTopType) -> return (stypeAct srcS, srcReq, stypeAct srcS, Nothing)
@@ -571,10 +571,10 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
   -- (measured: the toString/@++@ family diverges to the 'runConstraints' limit).
   let declEngaged = case destReqDecl of
         PTopType -> False
-        TypeVar v _ -> case vaenvLookup vaenv' v of
-          PTopType               -> False
-          TypeVar v' _ | v' == v -> False
-          _                      -> True
+        TypeVar v _ _ -> case vaenvLookup vaenv' v of
+          PTopType                 -> False
+          TypeVar v' _ _ | v' == v -> False
+          _                        -> True
         _ -> True
   let stayPutMet key
         | declEngaged
@@ -685,9 +685,9 @@ reqAdmitsForm _ _ PTopType _ = True
 -- A var requirement resolves through the env; a self-referential entry (which an
 -- unconstrained var may acquire during intersection) carries no information and licenses
 -- like ⊤ — following it verbatim would recurse forever ('isSubtypeOfWithEnv' parity).
-reqAdmitsForm typeEnv vaenv (TypeVar v _) l = case vaenvLookup vaenv v of
-  TypeVar v' _ | v' == v -> True
-  looked                 -> reqAdmitsForm typeEnv vaenv looked l
+reqAdmitsForm typeEnv vaenv (TypeVar v _ _) l = case vaenvLookup vaenv v of
+  TypeVar v' _ _ | v' == v -> True
+  looked                   -> reqAdmitsForm typeEnv vaenv looked l
 reqAdmitsForm typeEnv vaenv req l =
   not $ null $ splitUnionType $ expandTypeWithNames typeEnv vaenv req (S.singleton (ptName l))
 
@@ -782,7 +782,7 @@ settlePropSlot env@FEnv{feTypeEnv} vaenv propName@(TVArg k) superAct@(UnionType 
                     ++ [b | PartialType{ptArgs=dArgs, ptVars=dVars} <- typeGraphArrowTemplates reachesTypeEnv (ptName p)
                           , Just d0 <- [H.lookup k dArgs]
                           , let d = case d0 of
-                                  TypeVar (TVVar vn) _ | Just vb <- H.lookup vn dVars -> vb
+                                  TypeVar (TVVar vn) _ _ | Just vb <- H.lookup vn dVars -> vb
                                   _                                                  -> d0
                           , let b = freeTVIntToTopDeep vaenv p d
                           , b /= PTopType]

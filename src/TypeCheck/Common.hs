@@ -477,8 +477,8 @@ fAddTTypeGraph oa env@FEnv{feTTypeGraph, feTTypeGraphCleared} = env
 -- compared, and only argument/variable keys present on both sides, so it never false-positives on a
 -- union whose set of options legitimately changed.
 typeVarLost :: Type -> Type -> Bool
-typeVarLost (TypeVar _ TVOuter) PTopType = True
-typeVarLost (TypeVar _ _)     _        = False
+typeVarLost (TypeVar _ TVOuter _) PTopType = True
+typeVarLost (TypeVar _ _ _)     _        = False
 typeVarLost (UnionType _ oldLeafs _) (UnionType _ newLeafs _) =
   or [ partialVarLost op np
      | (name, [op]) <- H.toList (splitUnionTypeByName oldLeafs)
@@ -514,9 +514,9 @@ typeVarBindingGained (UnionType _ oldLeafs _) (UnionType _ newLeafs _) =
     -- a whole-type Top-to-TypeVar transition stays under 'eqScheme'. Gain-only, like the rest.
     slotGained PTopType TypeVar{} = True
     slotGained ov nv              = typeVarBindingGained ov nv
-    informative _ PTopType               = False
-    informative k (TypeVar (TVVar k') _) = k' /= k
-    informative _ _                      = True
+    informative _ PTopType                 = False
+    informative k (TypeVar (TVVar k') _ _) = k' /= k
+    informative _ _                        = True
 typeVarBindingGained _ _ = False
 
 -- | Structurally detects whether @new@ strictly NARROWS a nested 'ptVars' dimension that @old@

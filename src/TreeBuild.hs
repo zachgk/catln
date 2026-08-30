@@ -332,7 +332,7 @@ buildCallTree TBEnv{tbTypeEnv} os _ _ srcType destType | isSubtypeOfWithObjSrcs 
 -- buildCallTree _ os _ _ srcType destType | trace (printf "buildCallTree from %s to %s\n\t\twith %s" (show srcType) (show destType) (show $ map fst os)) False = undefined
 buildCallTree _ _ _ _ _ PTopType = return TCTId
 buildCallTree _ _ _ _ PTopType _ = error $ printf "buildCallTree from top type"
-buildCallTree env@TBEnv{tbTypeEnv} objSrcs visitedArrows bound (TypeVar v _) destType = case exprVarArgsWithObjSrcs tbTypeEnv objSrcs of
+buildCallTree env@TBEnv{tbTypeEnv} objSrcs visitedArrows bound (TypeVar v _ _) destType = case exprVarArgsWithObjSrcs tbTypeEnv objSrcs of
   [vaenv] -> case H.lookup v vaenv of
     Just (_, srcType') -> buildCallTree env objSrcs visitedArrows bound srcType' destType
     Nothing -> error $ printf "Unknown TypeVar %s in buildCallTree" (show v)
