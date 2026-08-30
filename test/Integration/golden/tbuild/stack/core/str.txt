@@ -22,6 +22,15 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Char"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Char ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/String"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/String ]
@@ -105,6 +114,7 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

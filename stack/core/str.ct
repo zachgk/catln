@@ -6,6 +6,17 @@ module(Data)
   # # Strings
     A [String] is a list of characters. Its equality is defined here alongside the type.
   data(String)
+  data(Char)
+    # A [Char] is a single character.
+      It is declared beside [String] because it is a primitive of the same kind: the compiler names
+      it as one, in `Semantics.Types.charLeaf`, and an evaluation carries one as a `CharVal`. A tree
+      build makes a [Char] out of a character constant, and the test generator produces them. So the
+      type was already being handed to programs and read back from them; what was missing was the
+      declaration saying so, and until it was written the name `/Data/Char` referred to nothing and
+      was open to the world.
+      Nothing in Catln can write one yet. There is no character literal in the language, so a [Char]
+      arrives only from the compiler, and a [String] is not yet a list of [Char] but a primitive of
+      its own — which is why [String] is declared above rather than as `/Data/List[$T -> Char]`.
 
   strEqual(l -> String, r -> String) -> Boolean
     #runtime("strEq")
