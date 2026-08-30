@@ -165,9 +165,13 @@ reversed(lst) =                                              # bare '=', body co
   `field= name` means "destructure the field against pattern `name`", which is different.
 - **Higher-order args include the nested parameter:** write `fn(v)` (with its parameter), not bare
   `fn`, in a definition that takes a function-typed argument.
-- **Mixed-singleton lists don't unify:** `[True, False]` fails to type-check — `True`/`False` are
-  distinct singleton types that don't widen to `Boolean` in one literal (Integer literals *do*
-  widen). Use same-singleton (`[True, True]`) or single-element (`[False]`) lists in examples.
+- **Mixed-singleton lists DO unify** (this note previously said they don't). `[True, False]`,
+  `[Some(value= 1), Nothing]` and a `Dir` holding both a `File` and a `Dir` all type-check today,
+  given a declared element type to widen to. Verify before routing around it.
+- **A field is read by destructuring, not by an accessor.** `Dir(name, entries)` in an arm pattern
+  reaches `entries`; `d.entries` reaches nothing, whether or not the list under it is mixed. `.name`
+  works only where something is *declared* as a method (`:/Data/List.length`). This is what makes
+  `/Data/FileOrDir` look unusable at first — the accessor fails, not the type.
 - **Rendering a polymorphic-element result is a frontier.** `sorted`/`reversed` return a list whose
   element type stays generic (`Ord`/existential), and the checker cannot reduce
   `List[Ord] ∩ List[ToString]` to the concrete element — so printing the result directly (which

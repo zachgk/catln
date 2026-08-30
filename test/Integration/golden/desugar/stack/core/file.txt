@@ -71,15 +71,20 @@ Prgm
             not representable here, and will want a type of its own rather than this one widened to hold
             bytes it cannot say anything about." )
         , /Catln/#md
-            ( Value /text= CStr "## Not yet buildable
-            Nothing uses this yet, and it is kept because it is the shape a file tree wants rather than
-            because anything can be done with it. A [Dir] holding both a [File] and a [Dir] cannot be
-            written: a list literal takes its element type from its first entry, so the second entry is
-            checked against the first entry's type and does not fit. It is not a fact about this type —
-            @[/Data/Maybe/Some(value= 1), /Data/Maybe/Nothing]@ fails the same way, and neither of those is declared
-            here. Until a list can hold two members of one class, a result is the flat [/Catln/BuildFile]
-            list in @core/result.ct@, where every entry is the same kind of thing and the tree is said by
-            the @/@ in each path." )
+            ( Value /text= CStr "## Read by destructuring
+            Nothing uses this yet, but it does work. A [Dir] holding both a [File] and a [Dir] can be
+            written and can be walked, by arms matching the two constructors — which is how every other
+            recursive type here is read, [ConsList] and [BinTree] alike.
+            What cannot be written is `d.entries`. A field is read by destructuring it, not through an
+            accessor named after it, so `count(f= Dir(name, entries))` reaches the entries and `d.entries`
+            reaches nothing whether the list under it is mixed or not.
+            This section used to say the type was unbuildable, because a list literal was thought to take
+            its element type from its first entry. It does not: `[Some(value= 1), Nothing]` typechecks, and
+            so does a [Dir] holding a [File] beside a [Dir]. The accessor was what failed, and the reason
+            given for it was wrong.
+            A build result is still the flat [/Catln/BuildFile] list in @core/result.ct@, which is a
+            separate choice: a result is a list of files so that every entry of it is the same kind of
+            thing, and the tree is said by the @/@ in each path." )
         , /Catln/#md
             ( Value /text= CStr "## Naming
             The name of an entry is the one it has under its parent, not a path: a [Dir] named `notes`

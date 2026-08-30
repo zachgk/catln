@@ -53,7 +53,7 @@ instance CtType BuiltFile where
   ctPath _ = buildFilePath
   ctDoc _ = [
     "One file a build produces, at the [path] it is produced at.",
-    "A path rather than a name and a place in a tree, so that a result is a flat list of files and every entry of that list is the same kind of thing. The nested form — a file or a directory of further entries, which is [/Data/FileOrDir] — is the shape this wants, and is not yet a shape the compiler can build: a list takes its element type from its first entry, so a directory holding both a file and a subdirectory is a list whose second entry does not fit its first. See the comment on [/Data/FileOrDir].",
+    "A path rather than a name and a place in a tree, so that a result is a flat list of files and every entry of that list is the same kind of thing. The nested form — a file or a directory of further entries, which is [/Data/FileOrDir] — is the shape this wants, and is a shape the compiler can build: a directory holding both a file and a subdirectory writes and walks, read by arms matching its two constructors. What a result is has stayed flat for its own reason rather than for want of the tree.",
     "[path] is written with @/@ between its parts, and names a place inside the build and nowhere else. A path leading out of it is refused when the build is written rather than here, since a result may be built long before anything writes it.",
     "It is declared from Haskell rather than in Catln because the compiler reads a build result back out of an evaluation itself, in [valResultFiles]. Declared in a `.ct` file, what it is called there and what it is read as here would be two things to keep in step."
             ]
