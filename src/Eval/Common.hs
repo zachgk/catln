@@ -17,13 +17,17 @@
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE InstanceSigs               #-}
+{-# LANGUAGE PatternSynonyms            #-}
 
-module Eval.Common where
+-- The data half of a value lives in "Semantics.Val" and is re-exported here, so a module that reads
+-- @import Eval.Common@ still sees 'IntVal', 'TupleVal' and the rest under the names they have always
+-- had. Only 'Val' and 'Args' themselves are hidden and re-bound below, as this evaluation's
+-- instantiation of the parameterized ones.
+module Eval.Common (module Eval.Common, module Semantics.Val) where
 
 import           Data.Hashable
 import qualified Data.HashMap.Strict     as H
 import qualified Data.HashSet            as S
-import           Data.List               (intercalate)
 import qualified Data.Map                as Map
 import           Data.Maybe              (mapMaybe)
 import           GHC.Generics            (Generic)
@@ -40,6 +44,8 @@ import           Semantics
 import           Semantics.Prgm
 import           Semantics.TypeGraph
 import           Semantics.Types
+import qualified Semantics.Val           as SV
+import           Semantics.Val           hiding (Args, Val)
 import           Syntax.Ct.Parser.Syntax (ParseMetaDat)
 import           Syntax.Ct.Prgm          (RawPrgm, ReadPage)
 import           Text.Printf
@@ -384,7 +390,6 @@ type EvalTreebugOpen = (String, AnyObjArr)
 data EvalTreebugClosed = EvalTreebugClosed AnyObjArr Val Val [EvalTreebugClosed] String
   deriving (Eq, Generic, Hashable, ToJSON)
 
-type Args = H.HashMap String Val
 data Env = Env { evObjMap        :: EObjectMap
                , evTypeEnv       :: TypeEnv (ObjArrTypeGraph Expr EvalMetaDat)
                , evArgs          :: Args
@@ -530,84 +535,86 @@ getMockIOOutput (MockIO ref) = unlines . reverse <$> readIORef ref
 mockIORef :: MockIO -> IORef [String]
 mockIORef (MockIO ref) = ref
 
-data Val
-  = IntVal Integer
-  | FloatVal Double
-  | StrVal String
-  | CharVal Char
-  | TupleVal String (H.HashMap String Val)
+-- | The arms of a 'Semantics.Val.Val' only an evaluation knows the inside of.
+--
+-- These are what keeps a value from being data: each names a type of this module, and this module
+-- is in one recursive knot with the whole runtime — a closure holds a 'TExpr', a 'TExpr' holds a
+-- value, a call tree holds an 'EPrim' which holds an 'Env' which holds the compilation service. The
+-- data arms are in "Semantics.Val" instead, below all of it, which is what lets a type say how it
+-- is read as a Catln value beside the type itself.
+data EvalRuntime
   -- | A function-typed argument's value: the lambda plus the arg env captured at its
   -- creation site, so body references to enclosing args (@fn(v)= fn(v= v)@'s inner @fn@)
   -- resolve lexically at application.
-  | ObjArrVal (ObjArr TExpr EvalMetaDat) Args
-  | IOVal Integer (IO ())
-  | MockIOVal Integer (IO ()) (IORef [String])
-  | LLVMVal (LLVM ())
-  | LLVMQueue [(TExpr EvalMetaDat, EObjArr)]
-  -- | LLVMOperand Type (Codegen AST.Operand)
-  | LLVMIO (Codegen ())
-  | NoVal
+  = ObjArrRV (ObjArr TExpr EvalMetaDat) Args
+  | IORV Integer (IO ())
+  | MockIORV Integer (IO ()) (IORef [String])
+  | LLVMRV (LLVM ())
+  | LLVMQueueRV [(TExpr EvalMetaDat, EObjArr)]
+  -- | LLVMOperandRV Type (Codegen AST.Operand)
+  | LLVMIORV (Codegen ())
 
-instance Eq Val where
-  (IntVal a) == (IntVal b) = a == b
-  (FloatVal a) == (FloatVal b) = a == b
-  (StrVal a) == (StrVal b) = a == b
-  (TupleVal an aa) == (TupleVal bn ba) = an == bn && aa == ba
-  IOVal{} == _ = error "Can't determine equality with IOVal"
-  _ == IOVal{} = error "Can't determine equality with IOVal"
-  MockIOVal{} == _ = error "Can't determine equality with MockIOVal"
-  _ == MockIOVal{} = error "Can't determine equality with MockIOVal"
-  NoVal == NoVal = True
-  _ == _ = False
+-- | An evaluated value, at this evaluation's runtime arms.
+type Val = SV.Val EvalRuntime
 
-instance Show Val where
-  show (IntVal i)   = show i
-  show (FloatVal d) = show d
-  show (StrVal s)   = show s
-  show (CharVal c)   = show c
-  show (TupleVal name args) = "TupleVal " ++ name ++ showArgs args
-    where
-      showArgs as | H.null as = ""
-      showArgs as = printf "(%s)" (intercalate ", " $ map showArg $ H.toList as)
-      showArg (argName, val) = argName ++ " = " ++ show val
-  show (ObjArrVal oa _) = printf "(ObjArrVal %s)" (show oa)
-  show IOVal{}      = "IOVal"
-  show MockIOVal{}  = "MockIOVal"
-  show LLVMVal{}   = "LLVMVal"
-  show LLVMQueue{}   = "LLVMQueue"
-  -- show (LLVMOperand tp _)   = printf "LLVMOperand<$T=%s>" (show tp)
-  show LLVMIO{}   = "LLVMIO"
-  show NoVal   = "NoVal"
+-- | The arguments of an evaluated value, by the name each is declared under.
+type Args = SV.Args EvalRuntime
 
-instance Hashable Val where
-  hashWithSalt s (IntVal i)        = s `hashWithSalt` i
-  hashWithSalt s (FloatVal i)      = s `hashWithSalt` i
-  hashWithSalt s (StrVal i)        = s `hashWithSalt` i
-  hashWithSalt s (CharVal i)       = s `hashWithSalt` i
-  hashWithSalt s (TupleVal n as)   = s `hashWithSalt` n `hashWithSalt` as
-  hashWithSalt s (ObjArrVal oa _)  = s `hashWithSalt` oa
-  hashWithSalt s (IOVal i _)       = s `hashWithSalt` i
-  hashWithSalt s (MockIOVal i _ _) = s `hashWithSalt` i
-  hashWithSalt s (LLVMVal _)       = s
-  hashWithSalt s (LLVMQueue _)     = s
-  -- hashWithSalt s (LLVMOperand tp _) = s `hashWithSalt` tp
-  hashWithSalt s (LLVMIO _)        = s
-  hashWithSalt s NoVal             = s
+-- | The runtime arms as they have always been written. Bidirectional, so these are constructors as
+-- well as patterns and every existing site reads and builds a value unchanged.
+pattern ObjArrVal :: ObjArr TExpr EvalMetaDat -> Args -> Val
+pattern ObjArrVal oa as = RuntimeVal (ObjArrRV oa as)
 
-instance ToJSON Val where
-  toJSON (IntVal v) = object ["tag".=("IntVal" :: String), "contents".=toJSON v]
-  toJSON (FloatVal v) = object ["tag".=("FloatVal" :: String), "contents".=toJSON v]
-  toJSON (StrVal v) = object ["tag".=("StrVal" :: String), "contents".=toJSON v]
-  toJSON (CharVal v) = object ["tag".=("CharVal" :: String), "contents".=toJSON v]
-  toJSON (TupleVal name args) = object ["tag".=("TupleVal" :: String), "name".=name, "args".=toJSON args]
-  toJSON (ObjArrVal _ _) = object ["tag".=("ObjArrVal" :: String)]
-  toJSON IOVal{}     = object ["tag".=("IOVal" :: String)]
-  toJSON MockIOVal{} = object ["tag".=("MockIOVal" :: String)]
-  toJSON LLVMVal{} = object ["tag".=("LLVMVal" :: String)]
-  toJSON LLVMQueue{} = object ["tag".=("LLVMQueue" :: String)]
-  -- toJSON LLVMOperand{} = object ["tag".=("LLVMOperand" :: String)]
-  toJSON LLVMIO{} = object ["tag".=("LLVMIO" :: String)]
-  toJSON NoVal = object ["tag".=("NoVal" :: String)]
+pattern IOVal :: Integer -> IO () -> Val
+pattern IOVal i io = RuntimeVal (IORV i io)
+
+pattern MockIOVal :: Integer -> IO () -> IORef [String] -> Val
+pattern MockIOVal i io ref = RuntimeVal (MockIORV i io ref)
+
+pattern LLVMVal :: LLVM () -> Val
+pattern LLVMVal l = RuntimeVal (LLVMRV l)
+
+pattern LLVMQueue :: [(TExpr EvalMetaDat, EObjArr)] -> Val
+pattern LLVMQueue q = RuntimeVal (LLVMQueueRV q)
+
+pattern LLVMIO :: Codegen () -> Val
+pattern LLVMIO c = RuntimeVal (LLVMIORV c)
+
+-- | The arms above are every 'Semantics.Val.RuntimeVal' there is, so a match listing them together
+-- with the data arms is total. Without this every existing @case@ over a value would be read as
+-- missing the 'Semantics.Val.RuntimeVal' case and @-Wall@ would report it.
+{-# COMPLETE IntVal, FloatVal, StrVal, CharVal, TupleVal, ObjArrVal, IOVal, MockIOVal, LLVMVal, LLVMQueue, LLVMIO, NoVal #-}
+
+-- | What an evaluation says about its own values.
+--
+-- An 'IOVal' is not compared but refused, against ANY value rather than against another 'IOVal':
+-- what a comparison of one would mean is the question, and answering it False would be answering
+-- it. That is why 'SV.rvEqVal' is given the whole other value.
+instance RuntimeValue EvalRuntime where
+  rvEqVal IORV{} _     = error "Can't determine equality with IOVal"
+  rvEqVal MockIORV{} _ = error "Can't determine equality with MockIOVal"
+  rvEqVal _ _          = False
+
+  rvShow (ObjArrRV oa _) = printf "(ObjArrVal %s)" (show oa)
+  rvShow IORV{}          = "IOVal"
+  rvShow MockIORV{}      = "MockIOVal"
+  rvShow LLVMRV{}        = "LLVMVal"
+  rvShow LLVMQueueRV{}   = "LLVMQueue"
+  rvShow LLVMIORV{}      = "LLVMIO"
+
+  rvHash s (ObjArrRV oa _)  = s `hashWithSalt` oa
+  rvHash s (IORV i _)       = s `hashWithSalt` i
+  rvHash s (MockIORV i _ _) = s `hashWithSalt` i
+  rvHash s LLVMRV{}         = s
+  rvHash s LLVMQueueRV{}    = s
+  rvHash s LLVMIORV{}       = s
+
+  rvToJSON ObjArrRV{}    = object ["tag" .= ("ObjArrVal" :: String)]
+  rvToJSON IORV{}        = object ["tag" .= ("IOVal" :: String)]
+  rvToJSON MockIORV{}    = object ["tag" .= ("MockIOVal" :: String)]
+  rvToJSON LLVMRV{}      = object ["tag" .= ("LLVMVal" :: String)]
+  rvToJSON LLVMQueueRV{} = object ["tag" .= ("LLVMQueue" :: String)]
+  rvToJSON LLVMIORV{}    = object ["tag" .= ("LLVMIO" :: String)]
 
 -- | A build result, as the type a build is built toward.
 --
@@ -623,43 +630,6 @@ queueLeaf = partialVal "llvmQueue"
 
 resultType :: Type
 resultType = singletonType resultLeaf
-
--- | An evaluated @\/Data\/List@ as the values in it. A list is a @\/Data\/Cons@ chain ending in a
--- @\/Data\/Nil@, which is what the @[ ]@ sugar desugars to in @Syntax.Ct.Desugarf.Expr@.
-valList :: Val -> Either String [Val]
-valList (TupleVal name _) | name == ctListNil = Right []
-valList (TupleVal name args) | name == ctListCons =
-  (:) <$> valArg name ctListConsHead args <*> (valList =<< valArg name ctListConsTail args)
-valList val = Left $ printf "%s is not a list" (show val)
-
--- | An argument of an evaluated value, by the name it is declared under.
-valArg :: String -> String -> H.HashMap String Val -> Either String Val
-valArg name argName args = case H.lookup (runtimeArgKey argName) args of
-  Just v  -> Right v
-  Nothing -> Left $ printf "A %s has no %s, only %s" name (runtimeArgKey argName) (show $ H.keys args)
-
--- | The same, where the argument must be a string — which every name and every file's writing is.
-valStrArg :: String -> String -> H.HashMap String Val -> Either String String
-valStrArg name argName args = do
-  v <- valArg name argName args
-  case v of
-    StrVal s -> Right s
-    _        -> Left $ printf "The %s of a %s is %s, which is not a String" (runtimeArgKey argName) name (show v)
-
--- | The same, where the argument is a string which may be absent — which is a @\/Data\/Maybe@ of one.
-valMaybeStrArg :: String -> String -> H.HashMap String Val -> Either String (Maybe String)
-valMaybeStrArg name argName args = do
-  v <- valArg name argName args
-  case v of
-    TupleVal m _ | m == ctMaybeNothing -> Right Nothing
-    TupleVal m inner | m == ctMaybeSome -> Just <$> valStrArg name ctMaybeSomeValue inner
-    _ -> Left $ printf "The %s of a %s is %s, which is not a Maybe String" (runtimeArgKey argName) name (show v)
-
--- | A list of values as the value of a @\/Data\/List@ holding them, which is the inverse of
--- 'valList'. Used to build a result in Haskell where the program did not build one itself.
-valListOf :: [Val] -> Val
-valListOf = foldr cons (TupleVal ctListNil H.empty)
-  where cons v rest = TupleVal ctListCons $ H.fromList [(runtimeArgKey ctListConsHead, v), (runtimeArgKey ctListConsTail, rest)]
 
 -- | The singleton typeset of a value: a 'Type' that carries a primitive's concrete value as a
 -- 'Constant' (e.g. @IntVal 5@ becomes the type @{5}@, a subtype of @Integer@). This is what a

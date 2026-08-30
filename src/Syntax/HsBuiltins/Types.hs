@@ -31,8 +31,9 @@ import           CtConstants              (buildFilePath, catlnResultFiles,
                                            catlnResultPath, runtimeArgKey)
 import qualified Data.HashMap.Strict      as H
 import           Data.Proxy               (Proxy (..))
-import           Eval.Common              (Val (..), valList, valListOf)
+import           Eval.Common              (Val)
 import           GHC.Generics             (Generic)
+import           Semantics.Val            hiding (Val)
 import           Syntax.HsBuiltins.Derive
 import           Text.Printf
 

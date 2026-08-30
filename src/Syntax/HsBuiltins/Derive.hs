@@ -43,11 +43,11 @@ import qualified Data.HashMap.Strict     as H
 import           Data.Kind               (Type)
 import           Data.List               (intercalate, union)
 import           Data.Proxy              (Proxy (..))
-import           Eval.Common             (Args, Val (..), valArg, valList,
-                                          valListOf)
+import           Eval.Common             (Args, Val)
 import           GHC.Generics
 import           GHC.TypeLits            (ErrorMessage (..), KnownSymbol,
                                           TypeError, symbolVal)
+import           Semantics.Val           hiding (Args, Val)
 import           Syntax.Ct.Builder
 import           Syntax.Ct.Parser.Syntax (PExpr, PStatementTree)
 import           Syntax.Ct.Prgm          (RawStatement (..),

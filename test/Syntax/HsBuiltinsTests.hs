@@ -20,8 +20,8 @@ module Syntax.HsBuiltinsTests where
 import qualified Data.HashMap.Strict      as H
 import           Data.List                (isInfixOf)
 import           Data.Proxy               (Proxy (..))
-import           Eval.Common              (Val (..), valListOf)
 import           GHC.Generics             (Generic)
+import           Semantics.Val            hiding (Val)
 import           Syntax.Ct.Formatter      (formatRootPrgm)
 import           Syntax.Ct.Prgm           (RawPrgm (..))
 import           Syntax.HsBuiltins.Derive

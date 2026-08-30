@@ -45,8 +45,7 @@ import           Data.Maybe                    (listToMaybe)
 import           Data.UUID                     (UUID, fromText)
 import           Eval                          (evalAllTargetModes, evalAnnots,
                                                 prgmFromGraphData)
-import           Eval.Common                   (EvalMode, SSF (..),
-                                                Val (FloatVal, IntVal, StrVal),
+import           Eval.Common                   (EvalMode, SSF (..), Val,
                                                 newEvalService)
 import           Eval.Runtime.WebDocs          (sidebarOrder)
 import           MapMeta                       (interleaveMeta, interleavePrgm,
@@ -54,6 +53,7 @@ import           MapMeta                       (interleaveMeta, interleavePrgm,
 import           Semantics                     (buildCtssConfig)
 import           Semantics.Prgm
 import           Semantics.Types               (mkName, nameStr, partialKey)
+import           Semantics.Val                 hiding (Val)
 import           Syntax.Ct.Desugarf            (desFinalPass, desPrgm)
 import           Syntax.Ct.Desugarf.Expr       (desFileImport)
 import           Syntax.Ct.Formatter           (formatExpr)

@@ -23,9 +23,9 @@ import qualified Data.Text                as T
 import qualified Data.Text.Lazy           as TL
 import qualified Data.Text.Lazy.Encoding  as TLE
 import           Data.Time.Calendar       (Day, fromGregorian)
-import           Eval.Common              (Val (..))
 import           Semantics                (testCtssConfig)
 import           Semantics.Prgm           (FileImport, impDisp)
+import           Semantics.Val            hiding (Val)
 import           Syntax.Obsidian.Query
 import           Syntax.Obsidian.Settings (StatusKind (..))
 import           Syntax.Obsidian.Task     (TaskPriority (..))

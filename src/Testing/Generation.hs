@@ -22,13 +22,14 @@ import qualified Data.HashMap.Strict     as H
 import           Data.List               (partition)
 import           Data.Maybe
 import qualified Data.Set                as S
-import           Eval.Common             (Val (..))
+import           Eval.Common             (Val)
 import           Hedgehog
 import qualified Hedgehog.Gen            as HG
 import           Hedgehog.Range          (linear, linearFrac, singleton)
 import           Semantics               (classGraphFromObjs, mkTypeEnv)
 import           Semantics.Prgm
 import           Semantics.Types
+import           Semantics.Val           hiding (Val)
 import           Syntax.Ct.Desugarf.Expr (desFileImport)
 import           Syntax.Ct.Prgm          (RawExpr (RawCExpr), mkRawFileImport)
 import           Text.Printf

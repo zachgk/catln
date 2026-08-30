@@ -22,9 +22,9 @@ import           Data.Maybe              (listToMaybe, mapMaybe)
 import qualified Data.Text               as T
 import qualified Data.Text.Lazy          as TL
 import qualified Data.Text.Lazy.Encoding as TLE
-import           Eval.Common             (Val (..))
 import           Semantics               (testCtssConfig)
 import           Semantics.Prgm          (FileImport, impDisp)
+import           Semantics.Val           hiding (Val)
 import           System.Directory        (makeAbsolute)
 import           Test.Tasty
 import           Test.Tasty.HUnit        (assertBool, assertEqual,
