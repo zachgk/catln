@@ -18,7 +18,8 @@
 module Syntax.HsBuiltinsTests where
 
 import qualified Data.HashMap.Strict      as H
-import           Data.List                (isInfixOf)
+import qualified Data.HashSet             as S
+import           Data.List                (isInfixOf, isPrefixOf)
 import           Data.Proxy               (Proxy (..))
 import           Eval.Common              (Val)
 import           GHC.Generics             (Generic)
@@ -58,6 +59,15 @@ instance CtType Chain
 data Plain = Plain { radius :: Integer, tags :: [String] }
   deriving (Eq, Show, Generic)
 instance CtType Plain
+
+-- | The containers, which are the shapes a Haskell type has and a Catln one has to be given.
+data Held = Held {
+    heldMap  :: H.HashMap String Integer,
+    heldSet  :: S.HashSet String,
+    heldPair :: (String, Integer),
+    heldChar :: Char
+  } deriving (Eq, Show, Generic)
+instance CtType Held
 
 -- | The Catln a type's declaration formats to, which is the text it would have been written as.
 declText :: (CtType a) => Proxy a -> String
@@ -110,6 +120,26 @@ hsBuiltinsTests = testGroup "HsBuiltinsTests" [
           "data(/Catln/Chain(head -> /Data/String, rest -> /Data/List[$T -> /Catln/Chain]))\n"
                                                      ]
 
+  , testGroup "a container as the Catln shape it is handed over as" [
+      -- A map and a set are both a list; what a map's elements are is the pair, which is the one
+      -- declaration here no Haskell type is the shape of.
+      -- The declarations only. The pair carries paragraphs of its own beneath it, which are what it
+      -- says rather than what it declares.
+      testCase "a map as a list of pairs, a set as a list, and the pair declared beside them" $
+        filter (not . isPrefixOf "  #") (lines (declText (Proxy :: Proxy Held))) @?= [
+          "data(/Catln/Held(map -> /Data/List[$T -> /Catln/Pair[$A -> /Data/String, $B -> /Data/Primitive/Integer]], set -> /Data/List[$T -> /Data/String], pair -> /Catln/Pair[$A -> /Data/String, $B -> /Data/Primitive/Integer], char -> /Data/Char))",
+          "data(/Catln/Pair[$A, $B](first -> $A, second -> $B))"
+                                                   ]
+
+      -- Reached at three fields and declared once, which is what 'ctPageDeclare' marking it seen is
+      -- for: without it a page would carry one Pair declaration per field that mentions one.
+    , testCase "declaring the pair once, however many fields reach one" $
+        length (filter ((== "/Catln/Pair") . cdPath) (cpDecls $ ctPageOf (Proxy :: Proxy Held))) @?= 1
+
+    , testCase "importing the pages the containers are written in terms of" $
+        cpImports (ctPageOf (Proxy :: Proxy Held)) @?= ["core/list.ct", "core/str.ct", "core/num.ct"]
+                                                                    ]
+
   , testGroup "a Haskell value as the value that declaration is read with" [
       testCase "keyed as an evaluated value keys its arguments" $
         toEval aFile @?= TupleVal "/Catln/BuildFile" (H.fromList [
@@ -140,7 +170,25 @@ hsBuiltinsTests = testGroup "HsBuiltinsTests" [
     , roundTrip "a fractional number" (1.5 :: Double)
     , roundTrip "truth" True
     , roundTrip "falsity" False
+    , roundTrip "a character" 'x'
+    , roundTrip "a pair" ("a" :: String, 1 :: Integer)
+    , roundTrip "a set" (S.fromList ["b", "a"] :: S.HashSet String)
+    , roundTrip "a map" (H.fromList [("b", 2), ("a", 1)] :: H.HashMap String Integer)
+    , roundTrip "everything a container is" (Held (H.fromList [("k", 1)]) (S.fromList ["s"]) ("p", 2) 'c')
                                                            ]
+
+    -- What a set and a map are handed over as does not depend on how they hash. Written out rather
+    -- than round-tripped, because a round trip would pass on either order and the order is the
+    -- point: a golden records one, and two equal maps have to convert to two equal values.
+  , testGroup "a container handed over in an order of its own" [
+      testCase "a set as its members, sorted" $
+        toEval (S.fromList ["c", "a", "b"] :: S.HashSet String)
+          @?= toEval (["a", "b", "c"] :: [String])
+
+    , testCase "a map as its entries, sorted by key" $
+        toEval (H.fromList [("c", 3), ("a", 1), ("b", 2)] :: H.HashMap String Integer)
+          @?= toEval ([("a", 1), ("b", 2), ("c", 3)] :: [(String, Integer)])
+                                                               ]
 
   , testGroup "a value which is not one of the type" [
       testCase "reported by the constructors that would have been accepted" $

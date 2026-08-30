@@ -45,6 +45,8 @@ import           Data.Zip
 import           Debug.Trace         (trace)
 import           GHC.Generics        (Generic)
 import           Prelude             hiding (unzip)
+import           Semantics.CtType
+import           Semantics.Val       (Val (StrVal))
 import           System.IO.Unsafe    (unsafePerformIO)
 import           Text.Printf
 import           Utils
@@ -60,6 +62,25 @@ data Name = Name { nameHash :: !Int, nameStr :: String }
 -- | The canonical way to build a 'Name': computes and caches the hash once.
 mkName :: String -> Name
 mkName s = Name (hash s) s
+
+-- | A name is its string, read as a Catln one.
+--
+-- Written by hand rather than read off the shape, which is the one case where the shape is the
+-- wrong thing to read. A 'Name' is a string with a cache of its hash, and 'nameHash' is exactly
+-- @hash nameStr@ — a fact the comment above records the type as depending on, since HashMap
+-- placement and so golden order rest on it. Derived structurally, the page would declare the hash
+-- as an argument, a program could be handed it, and 'fromCt' would rebuild a 'Name' whose hash and
+-- string disagree. The derivation cannot see an invariant like that; 'mkName' is where it lives.
+--
+-- So the type a program is handed is @\/Data\/String@ and nothing else. Nothing is lost: the string
+-- is the whole of what a name is, and the hash is recomputed on the way back.
+instance CtType Name where
+  ctPath _ = strPrim
+  ctImports _ = [coreStrPage]
+  ctPageInto = ctPageImport
+  toCt = StrVal . nameStr
+  fromCt (StrVal s) = Right $ mkName s
+  fromCt v          = Left $ printf "%s is not a %s" (show v) strPrim
 
 instance IsString Name where
   fromString = mkName
@@ -150,6 +171,23 @@ data PartialKey = PartialKey {
   pkVars :: S.HashSet PartialKey,
   pkArgs :: S.HashSet PartialKey
   } deriving (Eq, Ord, Generic, ToJSON, ToJSONKey)
+
+-- | A key read as a Catln type, off its own shape.
+--
+-- The first of the compiler's types whose reading needs anything: a record, of a name and two sets
+-- of itself. So it is what says the container mapping works — a set is the list of what is in it,
+-- and a type reaching itself through one terminates.
+--
+-- Derived rather than written, unlike the 'Name' above it. There is no cached anything here; all
+-- three fields are content. Its 'Hashable' hashes only the name and the two sizes, so what tells
+-- two keys apart is 'Eq' over the whole record, which is what a value read back has to satisfy —
+-- and does, since nothing is dropped.
+instance CtType PartialKey where
+  ctDoc _ = [
+    "The name of an argument or a type variable, with whatever it is itself applied to.",
+    "A key is a [name] and two sets: the [vars] it is written with and the [args] it is written over. Both hold keys again, so a key is a small tree rather than a string — which is what lets `f(x)` and `f(x, y)` be told apart as names before anything is known about what they are.",
+    "The sets are handed over as lists, in order, so that two keys holding the same members are handed over the same way."
+            ]
 
 -- | Fast hash: only name and set sizes.  Equality is still checked via 'Eq'.
 instance Hashable PartialKey where
@@ -918,7 +956,7 @@ floatLeaf = partialVal "/Data/Primitive/Float"
 trueLeaf = partialVal "/Data/Primitive/True"
 falseLeaf = partialVal "/Data/Primitive/False"
 strLeaf = partialVal "/Data/String"
-charLeaf = partialVal "/Data/Char"
+charLeaf = partialVal (mkName charPrim)
 ioLeaf = partialVal "/Catln/IO"
 
 -- | Defines some of the standard types used elsewhere in the compiler as 'Type'

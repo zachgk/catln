@@ -37,6 +37,7 @@ import           Eval.Common         (Val)
 import           GHC.Generics        (Generic)
 import           Semantics.CtType
 import           Semantics.Prgm      (ObjectBasis)
+import           Semantics.Types     (PartialKey)
 import           Semantics.Val       hiding (Val)
 import           Text.Printf
 
@@ -84,7 +85,10 @@ hsBuiltinPage = foldl (flip ($)) emptyCtPage hsBuiltinTypes
 -- whatever else its fields need, and the core reaching back into it is the cycle
 -- @core\/result.ct@'s comment is about.
 hsPrgmTypes :: [CtPage -> CtPage]
-hsPrgmTypes = [ctPageInto (Proxy :: Proxy ObjectBasis)]
+hsPrgmTypes = [
+  ctPageInto (Proxy :: Proxy ObjectBasis),
+  ctPageInto (Proxy :: Proxy PartialKey)
+              ]
 
 hsPrgmPage :: CtPage
 hsPrgmPage = foldl (flip ($)) emptyCtPage hsPrgmTypes

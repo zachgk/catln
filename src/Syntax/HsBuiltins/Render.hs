@@ -46,8 +46,14 @@ renderCtDecl (CtDecl path cons doc) = RawStatementTree statement docStatements
 -- type. A constructor with no arguments is the bare path, since 'applyRawEIArgs' of nothing is what
 -- it was given.
 renderCtCon :: CtCon -> PExpr
-renderCtCon (CtCon path fields) = rawVal path `applyRawEIArgs` map field fields
+renderCtCon (CtCon path vars fields) = rawVal path `withVars` map declVar vars `applyRawEIArgs` map field fields
   where
+    -- A parameter DECLARED is applied to nothing, which is the @[$A, $B]@ of
+    -- @data(Pair[$A, $B](…))@ and the @[$T]@ of @class(ConsList[$T], …)@. A parameter applied to
+    -- something is a 'CtTypeRef' and goes through 'renderCtTypeRef' instead.
+    withVars base [] = base
+    withVars base vs = base `applyRawExprEVars` vs
+    declVar varName = (rawVal varName, Nothing)
     -- The argument's name as WRITTEN, not as a 'Semantics.Types.partialKey' — which would make it
     -- absolute (@\/name@) here, where the parser leaves a written @name@ relative for the desugar to
     -- make absolute. Both reach the same declaration; only this one reads back as what a person

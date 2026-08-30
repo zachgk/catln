@@ -46,9 +46,11 @@ module Semantics.CtType where
 
 import           CtConstants
 import           Data.Char           (isLower, isUpper, toLower)
+import           Data.Hashable       (Hashable)
 import qualified Data.HashMap.Strict as H
+import qualified Data.HashSet        as S
 import           Data.Kind           (Type)
-import           Data.List           (intercalate, union)
+import           Data.List           (intercalate, sort, sortOn, union)
 import           Data.Proxy          (Proxy (..))
 import           GHC.Generics
 import           GHC.TypeLits        (ErrorMessage (..), KnownSymbol, TypeError,
@@ -87,11 +89,19 @@ data CtTypeRef = CtTypeRef {
 ctRef :: String -> CtTypeRef
 ctRef path = CtTypeRef path []
 
--- | One constructor as the page declares it: the path it is declared at, and each argument by name
--- and declared type. Empty arguments is a constructor written as a bare name, as
--- @\/Data\/Maybe\/Nothing@ is.
+-- | One constructor as the page declares it: the path it is declared at, the type parameters it is
+-- declared with, and each argument by name and declared type. Empty arguments is a constructor
+-- written as a bare name, as @\/Data\/Maybe\/Nothing@ is.
+--
+-- 'ccVars' are the parameters DECLARED, bound to nothing — the @[$A, $B]@ of
+-- @data(\/Catln\/Pair[$A, $B](first -> $A, second -> $B))@, which is how @stack\/core\/data.ct@
+-- writes @data(\/Context[$V](value -> $V, .._))@. A parameter APPLIED to something is a 'CtTypeRef'
+-- instead, which is the other half of the same syntax and was the only half that existed: a derived
+-- type could say @\/Data\/List[$T -> \/Data\/String]@ where it was used and had no way to declare
+-- the @[$T]@ that makes it mean anything.
 data CtCon = CtCon {
     ccPath   :: String,
+    ccVars   :: [String],
     ccFields :: [(String, CtTypeRef)]
   } deriving (Eq, Show)
 
@@ -225,6 +235,24 @@ ctPageImport p page
   | ctPath p `elem` cpSeen page = page
   | otherwise = page{cpSeen = cpSeen page ++ [ctPath p], cpImports = cpImports page `union` ctImports p}
 
+-- | A page given a type which declares something of its own, written rather than read off a shape.
+--
+-- For a type whose Catln form is not its Haskell form: a Haskell pair carries its parts positionally
+-- and a Catln one has to name them, so what the page declares is a record no Haskell type is the
+-- 'GHC.Generics.Rep' of. 'ctPageInto' cannot derive that, and 'ctPageImport' would leave the page
+-- naming a type nothing declares.
+--
+-- Marked seen by the same path as 'ctPageInto', so a container reached at twenty fields declares
+-- itself once.
+ctPageDeclare :: (CtType a) => CtDecl -> Proxy a -> CtPage -> CtPage
+ctPageDeclare decl p page
+  | ctPath p `elem` cpSeen page = page
+  | otherwise = page{
+      cpSeen = cpSeen page ++ [ctPath p],
+      cpImports = cpImports page `union` ctImports p,
+      cpDecls = cpDecls page ++ [decl]
+    }
+
 -- | How a type's constructors are named, which is what depends on how many of them there are.
 --
 -- One constructor is the type itself: a Haskell record's constructor name is an artifact of Haskell
@@ -299,7 +327,7 @@ instance (GCtCons f, GCtCons g) => GCtCons (f :+: g) where
 
 instance (Constructor c, GCtFields f) => GCtCons (M1 C c f) where
   gCtConNames _ = [conName (undefined :: M1 C c f p)]
-  gCtCons opts _ = [CtCon (coCon opts $ conName (undefined :: M1 C c f p)) (gCtFields opts (Proxy :: Proxy f))]
+  gCtCons opts _ = [CtCon (coCon opts $ conName (undefined :: M1 C c f p)) [] (gCtFields opts (Proxy :: Proxy f))]
   gCtConsPage _ = gCtFieldsPage (Proxy :: Proxy f)
   gToCt opts (M1 x) = TupleVal (coCon opts $ conName (undefined :: M1 C c f p)) (gToArgs opts x)
   gFromCt opts n as
@@ -430,3 +458,85 @@ instance {-# OVERLAPPABLE #-} (CtType a) => CtType [a] where
 -- @stack\/core\/result.ct@.
 ctElemTypeRef :: (CtType a) => String -> Proxy a -> CtTypeRef
 ctElemTypeRef path p = CtTypeRef path [(ctElemVar, ctTypeRef p)]
+
+-- | A character is @\/Data\/Char@, which @stack\/core\/str.ct@ declares beside @\/Data\/String@.
+--
+-- Reached through 'Semantics.Types.Constant', whose @CChar@ arm is the one primitive a program
+-- cannot write for itself: the language has no character literal, so a character only ever arrives
+-- from the compiler.
+instance CtType Char where
+  ctPath _ = charPrim
+  ctImports _ = [coreStrPage]
+  ctPageInto = ctPageImport
+  toCt = CharVal
+  fromCt (CharVal c) = Right c
+  fromCt v           = Left $ printf "%s is not a %s" (show v) charPrim
+
+-- | The two parts of a pair, named, since a Catln argument is named and a Haskell pair's are not.
+--
+-- @\/Catln\/Pair@ is declared by the compiler rather than in a @.ct@ file because it exists for the
+-- sake of what the compiler has to hand over: a map is a list of these, and the program AST is full
+-- of anonymous pairs. Naming them here rather than renaming them in Haskell is what keeps the
+-- reading from costing the compiler's own types a rewrite — @TupleApply@ carries a
+-- @(Meta m, Expr m)@ at some hundred sites, and giving those two halves Catln names does not have
+-- to disturb any of them.
+ctPairPath, ctPairFirst, ctPairSecond, ctPairFirstVar, ctPairSecondVar :: String
+ctPairPath = ctBuiltinNamespace ++ "Pair"
+ctPairFirst = "first"
+ctPairSecond = "second"
+ctPairFirstVar = "$A"
+ctPairSecondVar = "$B"
+
+-- | @data(\/Catln\/Pair[$A, $B](first -> $A, second -> $B))@, written rather than derived: no
+-- Haskell type has this shape, since the Haskell pair it stands for names nothing.
+ctPairDecl :: CtDecl
+ctPairDecl = CtDecl ctPairPath [CtCon ctPairPath [ctPairFirstVar, ctPairSecondVar] [
+    (ctPairFirst, ctRef ctPairFirstVar),
+    (ctPairSecond, ctRef ctPairSecondVar)
+                                                                                   ]] [
+  "Two values together, the [first] and the [second].",
+  "It is declared by the compiler because it is what the compiler has to hand over. A map is a list of these, and the program the compiler is compiling holds pairs in a dozen places that have no names of their own in Haskell. Naming them here is what lets those places be read without being rewritten."
+                                                                                      ]
+
+instance (CtType a, CtType b) => CtType (a, b) where
+  ctPath _ = ctPairPath
+  ctTypeRef _ = CtTypeRef ctPairPath [
+    (ctPairFirstVar, ctTypeRef (Proxy :: Proxy a)),
+    (ctPairSecondVar, ctTypeRef (Proxy :: Proxy b))
+                                     ]
+  ctPageInto _ = ctPageInto (Proxy :: Proxy b)
+               . ctPageInto (Proxy :: Proxy a)
+               . ctPageDeclare ctPairDecl (Proxy :: Proxy (a, b))
+  toCt (x, y) = TupleVal ctPairPath $ H.fromList [
+    (runtimeArgKey ctPairFirst, toCt x),
+    (runtimeArgKey ctPairSecond, toCt y)
+                                                 ]
+  fromCt (TupleVal n as) | n == ctPairPath =
+    (,) <$> (fromCt =<< valArg n ctPairFirst as) <*> (fromCt =<< valArg n ctPairSecond as)
+  fromCt v = Left $ printf "%s is not a %s" (show v) ctPairPath
+
+-- | A set is the list of what is in it, in order.
+--
+-- Sorted rather than left as the set iterates. A 'S.HashSet' has no order of its own, so the value
+-- a program is handed would otherwise depend on hashing — which makes a golden record whichever
+-- order this build happened to produce, and makes two equal sets convert to two unequal values.
+-- 'Ord' is what pays for that, and every key the compiler puts in a set has one.
+instance (CtType a, Ord a, Hashable a) => CtType (S.HashSet a) where
+  ctPath _ = ctListPath
+  ctTypeRef _ = ctElemTypeRef ctListPath (Proxy :: Proxy a)
+  ctImports _ = [coreListPage]
+  ctPageInto _ = ctPageInto (Proxy :: Proxy a) . ctPageImport (Proxy :: Proxy (S.HashSet a))
+  toCt = valListOf . map toCt . sort . S.toList
+  fromCt v = S.fromList <$> (traverse fromCt =<< valList v)
+
+-- | A map is the list of its entries, each an entry of @\/Catln\/Pair@, in order of key.
+--
+-- Sorted for 'S.HashSet''s reason, and by the key because that is what a map is keyed by and so
+-- what makes the order say something rather than merely be fixed.
+instance (CtType k, CtType v, Ord k, Hashable k) => CtType (H.HashMap k v) where
+  ctPath _ = ctListPath
+  ctTypeRef _ = ctElemTypeRef ctListPath (Proxy :: Proxy (k, v))
+  ctImports _ = [coreListPage]
+  ctPageInto _ = ctPageInto (Proxy :: Proxy (k, v)) . ctPageImport (Proxy :: Proxy (H.HashMap k v))
+  toCt = valListOf . map toCt . sortOn fst . H.toList
+  fromCt v = H.fromList <$> (traverse fromCt =<< valList v)

@@ -29,6 +29,19 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/PartialKey"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/PartialKey( EAppArg Value /name -> /Data/String )
+                            ( EAppArg Value /vars -> ∀/Data/List[ /T=/Catln/PartialKey ] )
+                            ( EAppArg Value /args -> ∀/Data/List[ /T=/Catln/PartialKey ] )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/ObjectBasis/TypeObj"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/ObjectBasis/TypeObj ]
@@ -50,6 +63,7 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

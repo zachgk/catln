@@ -31,12 +31,16 @@ operatorType = operatorName ":"
 operatorHasArrow = operatorName "?->"
 operatorEq = operatorName "=="
 
-intPrim, floatPrim, truePrim, falsePrim, strPrim, ioPrim :: String
+intPrim, floatPrim, truePrim, falsePrim, strPrim, charPrim, ioPrim :: String
 intPrim = "/Data/Primitive/Integer"
 floatPrim = "/Data/Primitive/Float"
 truePrim = "/Data/Primitive/True"
 falsePrim = "/Data/Primitive/False"
 strPrim = "/Data/String"
+-- | Declared in @stack\/core\/str.ct@ beside @\/Data\/String@. Named here rather than written where
+-- it is used, as every primitive beside it is: 'Semantics.Types.charLeaf' spelled it out for itself
+-- while nothing declared the type at all, which is two ways of the same name going unchecked.
+charPrim = "/Data/Char"
 ioPrim = "/Catln/IO"
 
 pattern ContextStr :: String
