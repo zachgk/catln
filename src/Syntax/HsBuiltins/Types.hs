@@ -10,16 +10,18 @@
 -- The types the compiler declares for itself, and the list the builtins page is built from.
 --
 -- A type here is a Haskell type whose Catln declaration, and whose conversions to and from an
--- evaluated value, are all read off its own shape by "Syntax.HsBuiltins.Derive". Adding one is
+-- evaluated value, are all read off its own shape by "Semantics.CtType". Adding one is
 -- deriving 'GHC.Generics.Generic', writing @instance CtType T@, and naming it in 'hsBuiltinTypes' —
 -- which is what puts its declaration, and the pages that declaration needs, onto the page.
 --
--- The types live here rather than in "Eval.Common" beside 'Eval.Common.Val', which is where
--- 'BuiltFile' was. The instance has to see both the value and the syntax, and this is the module
--- that is below neither — "Eval.Common" cannot import the derivation, because the derivation is
--- written in terms of 'Eval.Common.Val'. Reading a value back is what the instance IS, so a reader
--- written next to the type would be a second reading of the same declaration, which is the thing
--- this exists to stop.
+-- A type WHOSE HOME IS HERE is one the compiler supplies and nothing else owns — a build result is
+-- the compiler's own idea, and there is no other module it belongs beside. That is the only reason
+-- left for this module. It used to be a constraint rather than a choice: the derivation was written
+-- in terms of 'Eval.Common.Val' and produced syntax, so an instance had to sit above both the
+-- evaluator and the parser, and this was the module below neither. It no longer is — the derivation
+-- reads a value polymorphically ("Semantics.Val") and describes a declaration rather than building
+-- one ("Semantics.CtType"), so a type can carry its own instance wherever the type itself lives.
+-- Which is what the compiler's own AST will do, rather than being mirrored here.
 --------------------------------------------------------------------
 
 {-# LANGUAGE DeriveGeneric       #-}
@@ -27,14 +29,14 @@
 
 module Syntax.HsBuiltins.Types where
 
-import           CtConstants              (buildFilePath, catlnResultFiles,
-                                           catlnResultPath, runtimeArgKey)
-import qualified Data.HashMap.Strict      as H
-import           Data.Proxy               (Proxy (..))
-import           Eval.Common              (Val)
-import           GHC.Generics             (Generic)
-import           Semantics.Val            hiding (Val)
-import           Syntax.HsBuiltins.Derive
+import           CtConstants         (buildFilePath, catlnResultFiles,
+                                      catlnResultPath, runtimeArgKey)
+import qualified Data.HashMap.Strict as H
+import           Data.Proxy          (Proxy (..))
+import           Eval.Common         (Val)
+import           GHC.Generics        (Generic)
+import           Semantics.CtType
+import           Semantics.Val       hiding (Val)
 import           Text.Printf
 
 -- | One file a build produces.

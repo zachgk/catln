@@ -353,7 +353,7 @@ ctMaybeNothing = "/Data/Maybe/Nothing"
 -- @\/Data\/List[$T -> String]@ in @stack\/core\/result.ct@.
 --
 -- Named here because two things have to agree on it — the @.ct@ files which declare those types, and
--- 'Syntax.HsBuiltins.Derive', which writes a Haskell @[a]@ or @Maybe a@ back out as one of them.
+-- 'Semantics.CtType', which writes a Haskell @[a]@ or @Maybe a@ back out as one of them.
 ctElemVar :: String
 ctElemVar = "$T"
 

@@ -20,12 +20,14 @@ module Syntax.HsBuiltinsTests where
 import qualified Data.HashMap.Strict      as H
 import           Data.List                (isInfixOf)
 import           Data.Proxy               (Proxy (..))
+import           Eval.Common              (Val)
 import           GHC.Generics             (Generic)
+import           Semantics.CtType
 import           Semantics.Val            hiding (Val)
 import           Syntax.Ct.Formatter      (formatRootPrgm)
 import           Syntax.Ct.Prgm           (RawPrgm (..))
-import           Syntax.HsBuiltins.Derive
 import           Syntax.HsBuiltins.Parser (hsBuiltinsImports)
+import           Syntax.HsBuiltins.Render (renderCtDecls)
 import           Syntax.HsBuiltins.Types  (BuiltFile (..), hsBuiltinPage,
                                            oneFileResult, valResultFiles)
 import           Test.Tasty
@@ -59,11 +61,22 @@ instance CtType Plain
 
 -- | The Catln a type's declaration formats to, which is the text it would have been written as.
 declText :: (CtType a) => Proxy a -> String
-declText p = formatRootPrgm (RawPrgm [] (cpDecls $ ctPageOf p))
+declText p = formatRootPrgm (RawPrgm [] (renderCtDecls $ ctPageOf p))
+
+-- | Converting at the evaluation's own runtime arms.
+--
+-- 'toCt' and 'fromCt' are polymorphic in those arms, since a converted value names no closure and
+-- no action and so belongs to whichever evaluation asks for it. A test has to say which one it is
+-- asking about, and the one worth asking about is the one a program is actually handed.
+toEval :: (CtType a) => a -> Val
+toEval = toCt
+
+fromEval :: (CtType a) => Val -> Either String a
+fromEval = fromCt
 
 -- | A value converted and read back, which must be the value it started as.
 roundTrip :: (CtType a, Eq a, Show a) => String -> a -> TestTree
-roundTrip name x = testCase name $ fromCt (toCt x) @?= Right x
+roundTrip name x = testCase name $ fromEval (toEval x) @?= Right x
 
 aFile :: BuiltFile
 aFile = BuiltFile "site/index.html" "<h1>hi</h1>"
@@ -99,16 +112,16 @@ hsBuiltinsTests = testGroup "HsBuiltinsTests" [
 
   , testGroup "a Haskell value as the value that declaration is read with" [
       testCase "keyed as an evaluated value keys its arguments" $
-        toCt aFile @?= TupleVal "/Catln/BuildFile" (H.fromList [
+        toEval aFile @?= TupleVal "/Catln/BuildFile" (H.fromList [
           ("/path", StrVal "site/index.html"),
           ("/contents", StrVal "<h1>hi</h1>")
                                                                ])
 
     , testCase "a constructor of several named in the type's own namespace" $
-        toCt (Circle 2) @?= TupleVal "/Catln/Shape/Circle" (H.singleton "/radius" (IntVal 2))
+        toEval (Circle 2) @?= TupleVal "/Catln/Shape/Circle" (H.singleton "/radius" (IntVal 2))
 
     , testCase "a constructor carrying nothing written as a bare name" $
-        toCt Point @?= TupleVal "/Catln/Shape/Point" H.empty
+        toEval Point @?= TupleVal "/Catln/Shape/Point" H.empty
                                                                           ]
 
   , testGroup "a Catln value read back as the Haskell one" [
@@ -132,22 +145,22 @@ hsBuiltinsTests = testGroup "HsBuiltinsTests" [
   , testGroup "a value which is not one of the type" [
       testCase "reported by the constructors that would have been accepted" $
         assertLeftHolds "/Catln/Shape/Circle or /Catln/Shape/Point"
-          (fromCt (TupleVal "/Catln/Shape/Square" H.empty) :: Either String Shape)
+          (fromEval (TupleVal "/Catln/Shape/Square" H.empty) :: Either String Shape)
 
     , testCase "reported by the argument it has not got" $
         assertLeftHolds "/radius"
-          (fromCt (TupleVal "/Catln/Shape/Circle" H.empty) :: Either String Shape)
+          (fromEval (TupleVal "/Catln/Shape/Circle" H.empty) :: Either String Shape)
 
     , testCase "reported by the type an argument is not" $
         assertLeftHolds "/Data/Primitive/Integer"
-          (fromCt (TupleVal "/Catln/Shape/Circle" (H.singleton "/radius" (StrVal "two"))) :: Either String Shape)
+          (fromEval (TupleVal "/Catln/Shape/Circle" (H.singleton "/radius" (StrVal "two"))) :: Either String Shape)
 
     , testCase "reported where the value is not a tuple at all" $
-        assertLeftHolds "/Catln/BuildFile" (fromCt (IntVal 1) :: Either String BuiltFile)
+        assertLeftHolds "/Catln/BuildFile" (fromEval (IntVal 1) :: Either String BuiltFile)
 
     , testCase "reported where a machine word would have to be truncated" $
         assertLeftHolds "does not fit"
-          (fromCt (IntVal (toInteger (maxBound :: Int) + 1)) :: Either String Int)
+          (fromEval (IntVal (toInteger (maxBound :: Int) + 1)) :: Either String Int)
                                                      ]
 
   , testGroup "the page the builtins are declared on" [

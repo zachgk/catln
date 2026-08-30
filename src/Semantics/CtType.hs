@@ -1,6 +1,6 @@
 --------------------------------------------------------------------
 -- |
--- Module    :  Syntax.HsBuiltins.Derive
+-- Module    :  Semantics.CtType
 -- Copyright :  (c) Zach Kimberg 2026
 -- License   :  MIT
 -- Maintainer:  zachary@kimberg.com
@@ -12,9 +12,9 @@
 -- A definition the compiler supplies rather than one written in a @.ct@ file needs three things to
 -- agree with each other: the declaration written onto the builtins page, the value a Haskell value
 -- is handed to an evaluation as, and the Haskell value read back out of one. Written by hand those
--- are three places to keep in step per type, and 'Eval.Common.valResultFiles' records what that
--- costs — a third copy of @\/Catln\/BuildFile@'s argument keys had them wrong, looking up @path@
--- where an evaluated value keys @\/path@, and nothing noticed because the tests called the
+-- are three places to keep in step per type, and 'Syntax.HsBuiltins.Types.valResultFiles' records
+-- what that costs — a third copy of @\/Catln\/BuildFile@'s argument keys had them wrong, looking up
+-- @path@ where an evaluated value keys @\/path@, and nothing noticed because the tests called the
 -- evaluation and never the command.
 --
 -- So all three are derived from one 'GHC.Generics.Rep'. A type opts in by deriving 'Generic' and
@@ -24,6 +24,13 @@
 -- Generics rather than TemplateHaskell because @base@ already supplies it and the repo already
 -- writes @deriving (Generic, ToJSON)@ in some twenty places, so nothing new has to be depended on
 -- or learned.
+--
+-- What a type DECLARES is described here ('CtDecl') rather than built as syntax, and
+-- "Syntax.HsBuiltins.Render" turns the description into statements. That is what keeps this module
+-- clear of "Syntax.Ct.Builder" — which imports "Semantics.Prgm", so a class producing statements
+-- could never have instances written beside the semantic types. Conversion is polymorphic in the
+-- runtime half of a value ("Semantics.Val") for the same reason, since a converted value names no
+-- runtime arm.
 --------------------------------------------------------------------
 
 {-# LANGUAGE DataKinds            #-}
@@ -35,23 +42,18 @@
 {-# LANGUAGE TypeOperators        #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Syntax.HsBuiltins.Derive where
+module Semantics.CtType where
 
 import           CtConstants
-import           Data.Char               (isLower, isUpper, toLower)
-import qualified Data.HashMap.Strict     as H
-import           Data.Kind               (Type)
-import           Data.List               (intercalate, union)
-import           Data.Proxy              (Proxy (..))
-import           Eval.Common             (Args, Val)
+import           Data.Char           (isLower, isUpper, toLower)
+import qualified Data.HashMap.Strict as H
+import           Data.Kind           (Type)
+import           Data.List           (intercalate, union)
+import           Data.Proxy          (Proxy (..))
 import           GHC.Generics
-import           GHC.TypeLits            (ErrorMessage (..), KnownSymbol,
-                                          TypeError, symbolVal)
-import           Semantics.Val           hiding (Args, Val)
-import           Syntax.Ct.Builder
-import           Syntax.Ct.Parser.Syntax (PExpr, PStatementTree)
-import           Syntax.Ct.Prgm          (RawStatement (..),
-                                          RawStatementTree (..))
+import           GHC.TypeLits        (ErrorMessage (..), KnownSymbol, TypeError,
+                                      symbolVal)
+import           Semantics.Val
 import           Text.Printf
 
 -- | Where a derived type is declared: beside @\/Catln\/BuildFile@ and @\/Catln\/CatlnResult@, which
@@ -71,6 +73,39 @@ coreBoolPage = "core/bool.ct"
 coreMaybePage = "core/maybe.ct"
 coreListPage = "core/list.ct"
 
+-- | A Catln type as it is written where it is USED: a path, and whatever is applied to it.
+--
+-- A description rather than an expression, so that reading a Haskell type does not depend on the
+-- syntax it is eventually written in. "Syntax.HsBuiltins.Render" is what turns one into
+-- @\/Data\/List[$T -> \/Data\/String]@.
+data CtTypeRef = CtTypeRef {
+    ctrPath :: String,
+    ctrVars :: [(String, CtTypeRef)]
+  } deriving (Eq, Show)
+
+-- | The path alone, which is how every type not carrying parameters is written.
+ctRef :: String -> CtTypeRef
+ctRef path = CtTypeRef path []
+
+-- | One constructor as the page declares it: the path it is declared at, and each argument by name
+-- and declared type. Empty arguments is a constructor written as a bare name, as
+-- @\/Data\/Maybe\/Nothing@ is.
+data CtCon = CtCon {
+    ccPath   :: String,
+    ccFields :: [(String, CtTypeRef)]
+  } deriving (Eq, Show)
+
+-- | A type as the page declares it. One constructor is a @data@ statement and the constructor IS
+-- the type; several are one @class@ with the arms inline, which is how @stack\/core\/bool.ct@
+-- writes @class(Boolean, [True, False])@ — rather than a class and a @data@ per arm, which would be
+-- the same thing said in more places.
+data CtDecl = CtDecl {
+    cdPath :: String,
+    cdCons :: [CtCon],
+    -- | What the page says about the type, beneath its declaration: one entry per paragraph.
+    cdDoc  :: [String]
+  } deriving (Eq, Show)
+
 -- | What a page must hold in order to name the types a walk has reached: the pages to import, the
 -- declarations to carry, and the Catln paths already accounted for.
 --
@@ -87,7 +122,7 @@ coreListPage = "core/list.ct"
 data CtPage = CtPage {
     cpSeen    :: [String],
     cpImports :: [FilePath],
-    cpDecls   :: [PStatementTree]
+    cpDecls   :: [CtDecl]
   }
 
 emptyCtPage :: CtPage
@@ -106,14 +141,6 @@ data CtOpts = CtOpts {
     coField :: String -> String
   }
 
--- | One constructor as the page declares it: the path it is declared at, and each argument by name
--- and declared type. Empty arguments is a constructor written as a bare name, as
--- @\/Data\/Maybe\/Nothing@ is.
-data CtCon = CtCon {
-    ccPath   :: String,
-    ccFields :: [(String, PExpr)]
-  }
-
 -- | A Haskell type read as a Catln one.
 --
 -- Every method has a default read off 'Rep', so a derived type's whole instance is
@@ -129,10 +156,10 @@ class CtType a where
   -- | The type as written where it is USED, which for a container is its path with its element type
   -- applied: @\/Data\/List[$T -> \/Data\/String]@, as @stack\/core\/result.ct@ writes it. The path
   -- alone for everything else.
-  ctTypeExpr :: Proxy a -> PExpr
-  ctTypeExpr = rawVal . ctPath
+  ctTypeRef :: Proxy a -> CtTypeRef
+  ctTypeRef = ctRef . ctPath
 
-  -- | What a page holding the type must import for 'ctTypeExpr' to name something. Nothing for a
+  -- | What a page holding the type must import for 'ctTypeRef' to name something. Nothing for a
   -- type declared on the page itself.
   ctImports :: Proxy a -> [FilePath]
   ctImports _ = []
@@ -165,13 +192,16 @@ class CtType a where
       }
 
   -- | The Catln value a Haskell value is.
-  toCt :: a -> Val
-  default toCt :: (Generic a, GCtCons (Rep a), GCtDatatype (Rep a)) => a -> Val
+  --
+  -- Polymorphic in the runtime half of a value: a converted value names no closure and no action, so
+  -- it belongs to whichever evaluation asks for it and needs no coercion at the boundary.
+  toCt :: a -> Val r
+  default toCt :: (Generic a, GCtCons (Rep a), GCtDatatype (Rep a)) => a -> Val r
   toCt x = gToCt (ctOptsOf (Proxy :: Proxy a)) (from x)
 
   -- | The Haskell value a Catln one is, or why it is not one.
-  fromCt :: Val -> Either String a
-  default fromCt :: (Generic a, GCtCons (Rep a), GCtDatatype (Rep a)) => Val -> Either String a
+  fromCt :: (RuntimeValue r) => Val r -> Either String a
+  default fromCt :: (Generic a, GCtCons (Rep a), GCtDatatype (Rep a), RuntimeValue r) => Val r -> Either String a
   fromCt (TupleVal n as) = case gFromCt opts n as of
       Just res -> to <$> res
       -- Named rather than reporting whichever arm was tried last, since what a reader of the error
@@ -210,32 +240,9 @@ ctOptsOf p = CtOpts (ctPath p) conPath (ctFieldName p)
     conPath c | single = ctPath p
               | otherwise = ctPath p ++ "/" ++ c
 
--- | The statement declaring a type, with whatever it says about itself beneath it.
---
--- A sum is ONE statement with its constructors written inline in the class's member list, which is
--- how @stack\/core\/bool.ct@ writes @class(Boolean, [True, False])@ and @stack\/core\/maybe.ct@
--- writes @class(Maybe[$T], [Maybe\/Some[$T -> $_T](value -> $T), Maybe\/Nothing])@ — rather than a
--- class and a @data@ per arm, which would be the same thing said in more places.
-ctDeclOf :: forall a. (CtType a, Generic a, GCtCons (Rep a)) => Proxy a -> PStatementTree
-ctDeclOf p = RawStatementTree statement doc
-  where
-    cons = gCtCons (ctOptsOf p) (Proxy :: Proxy (Rep a))
-    statement = case cons of
-      [con] -> dataSt (ctConExpr con)
-      _     -> classWithObjs (rawVal $ ctPath p) (map ctConExpr cons) []
-    doc = [RawStatementTree (RawAnnot (rawComment d)) [] | d <- ctDoc p]
-
--- | One constructor as it is written in a declaration: its path applied to each argument's declared
--- type. A constructor with no arguments is the bare path, since 'applyRawEIArgs' of nothing is what
--- it was given.
-ctConExpr :: CtCon -> PExpr
-ctConExpr (CtCon path fields) = rawVal path `applyRawEIArgs` map field fields
-  where
-    -- The argument's name as WRITTEN, not as a 'Semantics.Types.partialKey' — which would make it
-    -- absolute (@\/name@) here, where the parser leaves a written @name@ relative for the desugar to
-    -- make absolute. Both reach the same declaration; only this one reads back as what a person
-    -- would have typed.
-    field (argName, argType) = (rawVal argName, IArgM (Just argType))
+-- | The declaration of a type, with whatever it says about itself.
+ctDeclOf :: forall a. (CtType a, Generic a, GCtCons (Rep a)) => Proxy a -> CtDecl
+ctDeclOf p = CtDecl (ctPath p) (gCtCons (ctOptsOf p) (Proxy :: Proxy (Rep a))) (ctDoc p)
 
 -- | The Catln name of a Haskell record field: the type's prefix dropped, and what is left
 -- uncapitalised. @sampleName@ is @name@ and @bfPath@ is @path@.
@@ -268,10 +275,10 @@ class GCtCons (f :: Type -> Type) where
   -- | The pages and declarations every constructor's fields reach.
   gCtConsPage :: proxy f -> CtPage -> CtPage
   -- | The value, which is the constructor reached and its arguments.
-  gToCt :: CtOpts -> f p -> Val
+  gToCt :: CtOpts -> f p -> Val r
   -- | The value read back, or 'Nothing' where the name is no constructor of this branch — which is
   -- what distinguishes a wrong constructor from a right one whose arguments do not fit.
-  gFromCt :: CtOpts -> String -> Args -> Maybe (Either String (f p))
+  gFromCt :: (RuntimeValue r) => CtOpts -> String -> Args r -> Maybe (Either String (f p))
 
 instance (GCtCons f) => GCtCons (M1 D d f) where
   gCtConNames _ = gCtConNames (Proxy :: Proxy f)
@@ -302,14 +309,14 @@ instance (Constructor c, GCtFields f) => GCtCons (M1 C c f) where
 -- | The fields of one constructor.
 class GCtFields (f :: Type -> Type) where
   -- | Each argument by the name it is declared under and the type it is declared as.
-  gCtFields :: CtOpts -> proxy f -> [(String, PExpr)]
+  gCtFields :: CtOpts -> proxy f -> [(String, CtTypeRef)]
   -- | The pages and declarations the fields' own types reach, which is where a page gets the
   -- declaration of a record held inside another record.
   gCtFieldsPage :: proxy f -> CtPage -> CtPage
   -- | The arguments a value carries, keyed as an evaluated value keys them.
-  gToArgs :: CtOpts -> f p -> Args
+  gToArgs :: CtOpts -> f p -> Args r
   -- | The fields read back out of those arguments.
-  gFromArgs :: CtOpts -> Args -> Either String (f p)
+  gFromArgs :: (RuntimeValue r) => CtOpts -> Args r -> Either String (f p)
 
 instance GCtFields U1 where
   gCtFields _ _ = []
@@ -324,7 +331,7 @@ instance (GCtFields f, GCtFields g) => GCtFields (f :*: g) where
   gFromArgs opts as = (:*:) <$> gFromArgs opts as <*> gFromArgs opts as
 
 instance (KnownSymbol name, CtType t) => GCtFields (M1 S ('MetaSel ('Just name) su ss ds) (K1 R t)) where
-  gCtFields opts _ = [(fieldNameOf opts (Proxy :: Proxy name), ctTypeExpr (Proxy :: Proxy t))]
+  gCtFields opts _ = [(fieldNameOf opts (Proxy :: Proxy name), ctTypeRef (Proxy :: Proxy t))]
   gCtFieldsPage _ = ctPageInto (Proxy :: Proxy t)
   gToArgs opts (M1 (K1 x)) = H.singleton (runtimeArgKey $ fieldNameOf opts (Proxy :: Proxy name)) (toCt x)
   gFromArgs opts as = M1 . K1 <$> (fromCt =<< valArg (coPath opts) argName as)
@@ -399,7 +406,7 @@ instance CtType Bool where
 
 instance (CtType a) => CtType (Maybe a) where
   ctPath _ = ctMaybePath
-  ctTypeExpr _ = ctElemTypeExpr ctMaybePath (Proxy :: Proxy a)
+  ctTypeRef _ = ctElemTypeRef ctMaybePath (Proxy :: Proxy a)
   ctImports _ = [coreMaybePage]
   ctPageInto _ = ctPageInto (Proxy :: Proxy a) . ctPageImport (Proxy :: Proxy (Maybe a))
   toCt Nothing = TupleVal ctMaybeNothing H.empty
@@ -408,11 +415,11 @@ instance (CtType a) => CtType (Maybe a) where
   fromCt (TupleVal n as) | n == ctMaybeSome = Just <$> (fromCt =<< valArg n ctMaybeSomeValue as)
   fromCt v = Left $ printf "%s is not a %s" (show v) ctMaybePath
 
--- | A list is a @\/Data\/Cons@ chain ending in a @\/Data\/Nil@, which 'Eval.Common.valListOf' and
--- 'Eval.Common.valList' are already the one place that knows.
+-- | A list is a @\/Data\/Cons@ chain ending in a @\/Data\/Nil@, which 'Semantics.Val.valListOf' and
+-- 'Semantics.Val.valList' are already the one place that knows.
 instance {-# OVERLAPPABLE #-} (CtType a) => CtType [a] where
   ctPath _ = ctListPath
-  ctTypeExpr _ = ctElemTypeExpr ctListPath (Proxy :: Proxy a)
+  ctTypeRef _ = ctElemTypeRef ctListPath (Proxy :: Proxy a)
   ctImports _ = [coreListPage]
   ctPageInto _ = ctPageInto (Proxy :: Proxy a) . ctPageImport (Proxy :: Proxy [a])
   toCt = valListOf . map toCt
@@ -421,5 +428,5 @@ instance {-# OVERLAPPABLE #-} (CtType a) => CtType [a] where
 -- | A parameterized type as it is written where it is used: its path with its element type applied
 -- to 'CtConstants.ctElemVar', which is @\/Data\/List[$T -> \/Catln\/BuildFile]@ in
 -- @stack\/core\/result.ct@.
-ctElemTypeExpr :: (CtType a) => String -> Proxy a -> PExpr
-ctElemTypeExpr path p = rawVal path `applyRawExprEVars` [(rawVal ctElemVar, Just (ctTypeExpr p))]
+ctElemTypeRef :: (CtType a) => String -> Proxy a -> CtTypeRef
+ctElemTypeRef path p = CtTypeRef path [(ctElemVar, ctTypeRef p)]
