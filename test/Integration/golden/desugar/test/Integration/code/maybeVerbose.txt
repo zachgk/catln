@@ -11,7 +11,9 @@ Prgm
                         [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
                             ( Value val= defInt
                                 ( Value x= Just
-                                    ( Value val= CInt 0 )
+                                    ( Value val= CInt
+                                        { ciValue = 0 }
+                                    )
                                 )
                             )( Value /this= Value io )
                         ]
@@ -26,7 +28,8 @@ Prgm
                     , omiDefs =
                         [ defInt
                             ( Value x= Just( Value val -> /Data/Primitive/Integer ) )= Value val
-                        , defInt( Value x= Value Nothing )= CInt 0
+                        , defInt( Value x= Value Nothing )= CInt
+                            { ciValue = 0 }
                         ]
                     }
                 )
@@ -68,6 +71,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "Tests a simple data structure with a sum type" )
+            ( Value /text= CStr
+                { csValue = "Tests a simple data structure with a sum type" }
+            )
         ]
     }

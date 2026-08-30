@@ -31,7 +31,9 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CInt 1 ]
+                                    [ CInt
+                                        { ciValue = 1 }
+                                    ]
                                 ) = 1
                             )
                         ]
@@ -50,14 +52,18 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CInt 1 ]
+                                    [ CInt
+                                        { ciValue = 1 }
+                                    ]
                                 ) = 1
                             )
                             ( EAppArg Value /y -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CInt 2 ]
+                                    [ CInt
+                                        { ciValue = 2 }
+                                    ]
                                 ) = 2
                             )
                         ]

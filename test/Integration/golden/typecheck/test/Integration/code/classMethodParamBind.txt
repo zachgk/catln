@@ -49,14 +49,24 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "Class-method type-parameter binding." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "Class-method type-parameter binding." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "The abstract [rel] is declared over the parameterized class [TEqv] with its arguments typed" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "The abstract [rel] is declared over the parameterized class [TEqv] with its arguments typed" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "by the class parameter. The object [MyEqv] is a member of [TEqv] with the parameter bound to" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "by the class parameter. The object [MyEqv] is a member of [TEqv] with the parameter bound to" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "[Integer], so the definition of [rel] sees its arguments as [Integer] and the declaration is" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "[Integer], so the definition of [rel] sees its arguments as [Integer] and the declaration is" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "fulfilled by covering the receiver (every member of the class has a definition)." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "fulfilled by covering the receiver (every member of the class has a definition)." }
+            )
         ]
     }

@@ -8,8 +8,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/toString( Value /this -> /Data/Primitive/True ) -> /Data/String = CStr "True"
-                        , /Data/toString( Value /this -> /Data/Primitive/False ) -> /Data/String = CStr "False"
+                        [ /Data/toString( Value /this -> /Data/Primitive/True ) -> /Data/String = CStr
+                            { csValue = "True" }
+                        , /Data/toString( Value /this -> /Data/Primitive/False ) -> /Data/String = CStr
+                            { csValue = "False" }
                         ]
                     }
                 )
@@ -26,14 +28,25 @@ Prgm
                 ( "/operator^"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /operator^( Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                        [ /operator^
+                            ( Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } )
+                            ( Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator^( Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
-                        , /operator^( Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
-                        , /operator^( Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
-                        , /operator^( Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        [ /operator^
+                            ( Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive { haName = Nothing } ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /operator^
+                            ( Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive { haName = Nothing } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /operator^
+                            ( Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive { haName = Nothing } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /operator^
+                            ( Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive { haName = Nothing } ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         ]
                     }
                 )
@@ -53,12 +66,16 @@ Prgm
                 ( "/operator~"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /operator~( Value /a -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                        [ /operator~
+                            ( Value /a -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator~( Value /a -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
-                        , /operator~( Value /a -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        [ /operator~
+                            ( Value /a -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive { haName = Nothing } ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /operator~
+                            ( Value /a -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive { haName = Nothing } ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         ]
                     }
                 )
@@ -85,13 +102,22 @@ Prgm
                 ( "/operator&&"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /operator&&( Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                        [ /operator&&
+                            ( Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } )
+                            ( Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator&&( Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
-                        , /operator&&( Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
-                        , /operator&&( Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        [ /operator&&
+                            ( Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive { haName = Nothing } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /operator&&
+                            ( Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive { haName = Nothing } ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /operator&&
+                            ( Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive { haName = Nothing } )
+                            ( Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         ]
                     }
                 )
@@ -99,13 +125,22 @@ Prgm
                 ( "/operator||"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /operator||( Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                        [ /operator||
+                            ( Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } )
+                            ( Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator||( Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
-                        , /operator||( Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
-                        , /operator||( Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        [ /operator||
+                            ( Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive { haName = Nothing } )
+                            ( Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /operator||
+                            ( Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive { haName = Nothing } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /operator||
+                            ( Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive { haName = Nothing } ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         ]
                     }
                 )
@@ -200,54 +235,92 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "# Booleans
-            [Boolean] is the type of truth values — [True] and [False] — with the standard logical
-            operators. Its equality is defined here alongside the type." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "# Booleans
+                [Boolean] is the type of truth values — [True] and [False] — with the standard logical
+                operators. Its equality is defined here alongside the type." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "[boolEq] is the primitive truth-table equality on [Boolean]s; [BoolEqv] and [equal] below build" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "[boolEq] is the primitive truth-table equality on [Boolean]s; [BoolEqv] and [equal] below build" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  on it." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  on it." }
+            )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator~( Value /a -> /Data/Primitive/True = Value /Data/Primitive/True ) )
-            ( Value /result -> /Data/String = CStr "False" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "False" }
+            )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator&&( Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( Value /r -> /Data/Primitive/True = Value /Data/Primitive/True ) )
-            ( Value /result -> /Data/String = CStr "True" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator&&( Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( Value /r -> /Data/Primitive/False = Value /Data/Primitive/False ) )
-            ( Value /result -> /Data/String = CStr "False" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "False" }
+            )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator||( Value /l -> /Data/Primitive/False = Value /Data/Primitive/False )( Value /r -> /Data/Primitive/True = Value /Data/Primitive/True ) )
-            ( Value /result -> /Data/String = CStr "True" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator||( Value /l -> /Data/Primitive/False = Value /Data/Primitive/False )( Value /r -> /Data/Primitive/False = Value /Data/Primitive/False ) )
-            ( Value /result -> /Data/String = CStr "False" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "False" }
+            )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator^( Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( Value /r -> /Data/Primitive/False = Value /Data/Primitive/False ) )
-            ( Value /result -> /Data/String = CStr "True" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator^( Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( Value /r -> /Data/Primitive/True = Value /Data/Primitive/True ) )
-            ( Value /result -> /Data/String = CStr "False" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "False" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "[Enum] membership is commented out with the [Enum] class (see [Data/data.ct])." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "[Enum] membership is commented out with the [Enum] class (see [Data/data.ct])." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "every(Boolean, isa= [/Data/Enum])" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "every(Boolean, isa= [/Data/Enum])" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "## Equality
-            [Boolean] is an [Eq] type: [BoolEqv] wraps the primitive [boolEq], and [eq]/[equal] follow." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "## Equality
+                [Boolean] is an [Eq] type: [BoolEqv] wraps the primitive [boolEq], and [eq]/[equal] follow." }
+            )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==( Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( Value /r -> /Data/Primitive/True = Value /Data/Primitive/True ) )
-            ( Value /result -> /Data/String = CStr "True" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==( Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( Value /r -> /Data/Primitive/False = Value /Data/Primitive/False ) )
-            ( Value /result -> /Data/String = CStr "False" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "False" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "## Rendering as text" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "## Rendering as text" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "A [Boolean] renders as the text of its constructor." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "A [Boolean] renders as the text of its constructor." }
+            )
         , /Catln/#print( Value /p -> /Data/Primitive/True = Value /Data/Primitive/True )
-            ( Value /result -> /Data/String = CStr "True" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "True" }
+            )
         , /Catln/#print( Value /p -> /Data/Primitive/False = Value /Data/Primitive/False )
-            ( Value /result -> /Data/String = CStr "False" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "False" }
+            )
         ]
     }

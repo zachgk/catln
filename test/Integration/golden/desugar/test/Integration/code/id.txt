@@ -10,7 +10,9 @@ Prgm
                     , omiDefs =
                         [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
                             ( Value val= id
-                                ( Value x= CInt 0 )
+                                ( Value x= CInt
+                                    { ciValue = 0 }
+                                )
                             )( Value /this= Value io )
                         ]
                     }
@@ -33,8 +35,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "Tests an identity function.
-            It requires using the type of the input argument as the output type of id as well.
-            So, it must be read as `id($T) -> $T`, not (id(Any) -> Any)." )
+            ( Value /text= CStr
+                { csValue = "Tests an identity function.
+                It requires using the type of the input argument as the output type of id as well.
+                So, it must be read as `id($T) -> $T`, not (id(Any) -> Any)." }
+            )
         ]
     }

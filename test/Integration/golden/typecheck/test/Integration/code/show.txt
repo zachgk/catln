@@ -36,9 +36,13 @@ Prgm
                             , []
                             ) = /operator==
                             ( Value /l -> /Data/String = /Data/toString
-                                ( Value /this -> /Data/Primitive/Integer = CInt 1 )
+                                ( Value /this -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 1 }
+                                )
                             )
-                            ( Value /r -> /Data/String = CStr "1" )
+                            ( Value /r -> /Data/String = CStr
+                                { csValue = "1" }
+                            )
                         ]
                     }
                 )
@@ -50,6 +54,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "Tests the toString method, later will be the Show class" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "Tests the toString method, later will be the Show class" }
+            )
         ]
     }

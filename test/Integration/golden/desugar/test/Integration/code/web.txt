@@ -9,7 +9,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ Value main= www
-                            ( CStr "<html><body>web test</body></html>" )
+                            ( CStr
+                                { csValue = "<html><body>web test</body></html>" }
+                            )
                         ]
                     }
                 )
@@ -18,8 +20,10 @@ Prgm
     , prgmCG = [ CGType ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "Tests using a custom build type [www].
-            It also prints the result of the build in an iframe." )
+            ( Value /text= CStr
+                { csValue = "Tests using a custom build type [www].
+                It also prints the result of the build in an iframe." }
+            )
         , #print( Value p= Value main )
         ]
     }

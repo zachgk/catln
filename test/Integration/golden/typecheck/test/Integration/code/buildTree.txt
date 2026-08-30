@@ -60,8 +60,12 @@ Prgm
                                     ( /path=/Data/String
                                     , /contents=/Data/String
                                     ) = /Catln/BuildFile
-                                    ( Value /path -> /Data/String = CStr "index.html" )
-                                    ( Value /contents -> /Data/String = CStr "<html><body>tree test</body></html>" )
+                                    ( Value /path -> /Data/String = CStr
+                                        { csValue = "index.html" }
+                                    )
+                                    ( Value /contents -> /Data/String = CStr
+                                        { csValue = "<html><body>tree test</body></html>" }
+                                    )
                                 )
                                 ( Value /tail -> /Data/List/Cons
                                     [ /T=/Catln/BuildFile
@@ -79,8 +83,12 @@ Prgm
                                         ( /path=/Data/String
                                         , /contents=/Data/String
                                         ) = /Catln/BuildFile
-                                        ( Value /path -> /Data/String = CStr "notes/deep.txt" )
-                                        ( Value /contents -> /Data/String = CStr "under a directory" )
+                                        ( Value /path -> /Data/String = CStr
+                                            { csValue = "notes/deep.txt" }
+                                        )
+                                        ( Value /contents -> /Data/String = CStr
+                                            { csValue = "under a directory" }
+                                        )
                                     )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                                 )
                             )
@@ -92,11 +100,13 @@ Prgm
     , prgmCG = [ CGType ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "Tests a build result of more than one file.
-            A [CatlnResult] is the [files] of the directory it is built into, each carrying the path it is
-            built at, so a build produces a directory of files rather than the single file it once could. The
-            path is what says where a file goes, and a path with a @/@ in it is a file under a directory the
-            build makes on its way to writing it — which is how a result says it has a directory at all." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "Tests a build result of more than one file.
+                A [CatlnResult] is the [files] of the directory it is built into, each carrying the path it is
+                built at, so a build produces a directory of files rather than the single file it once could. The
+                path is what says where a file goes, and a path with a @/@ in it is a file under a directory the
+                build makes on its way to writing it — which is how a result says it has a directory at all." }
+            )
         , /Catln/#print
             ( Value /p -> /Catln/CatlnResult
                 ( /files=/Data/List/Cons

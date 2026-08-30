@@ -14,7 +14,9 @@ Prgm
                                 , /val=/Data/Primitive/Integer
                                 ) + /Catln/IO
                             ) = /Catln/exit
-                            ( Value /val -> /Data/Primitive/Integer = CInt 0 )( Value /this -> TVArg /io = Value /io )
+                            ( Value /val -> /Data/Primitive/Integer = CInt
+                                { ciValue = 0 }
+                            )( Value /this -> TVArg /io = Value /io )
                         ]
                     }
                 )
@@ -30,15 +32,20 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "has both" ]
-                                ) = CStr "has both"
+                                    [ CStr
+                                        { csValue = "has both" }
+                                    ]
+                                ) = CStr
+                                { csValue = "has both" }
                             )
                             ( Value /tags -> /Data/List/Cons
                                 ( /head=UnionType
                                     ( Nothing
                                     , ∅
                                     ,
-                                        [ CStr "x" ]
+                                        [ CStr
+                                            { csValue = "x" }
+                                        ]
                                     )
                                 , /tail=/Data/List/Nil
                                 ) = /Data/List/Cons
@@ -46,8 +53,11 @@ Prgm
                                     ( Nothing
                                     , ∅
                                     ,
-                                        [ CStr "x" ]
-                                    ) = CStr "x"
+                                        [ CStr
+                                            { csValue = "x" }
+                                        ]
+                                    ) = CStr
+                                    { csValue = "x" }
                                 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                             )
                             ( Value /due -> /Data/Maybe/Some
@@ -55,15 +65,20 @@ Prgm
                                     ( Nothing
                                     , ∅
                                     ,
-                                        [ CStr "2026-01-01" ]
+                                        [ CStr
+                                            { csValue = "2026-01-01" }
+                                        ]
                                     )
                                 ) = /Data/Maybe/Some
                                 ( Value /value -> UnionType
                                     ( Nothing
                                     , ∅
                                     ,
-                                        [ CStr "2026-01-01" ]
-                                    ) = CStr "2026-01-01"
+                                        [ CStr
+                                            { csValue = "2026-01-01" }
+                                        ]
+                                    ) = CStr
+                                    { csValue = "2026-01-01" }
                                 )
                             )
                         , /Noted
@@ -71,8 +86,11 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "has neither" ]
-                                ) = CStr "has neither"
+                                    [ CStr
+                                        { csValue = "has neither" }
+                                    ]
+                                ) = CStr
+                                { csValue = "has neither" }
                             )( Value /tags -> /Data/List/Nil = Value /Data/List/Nil )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         ]
                     , omiRuntimeDecls = []
@@ -90,49 +108,56 @@ Prgm
             ( False
             , /Noted
             , [ /Noted.. ]
-            , Just "  "
+            , Just ""
             )
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "The shape a note's page is, with the fields a task carries.
-            [/Data/Note/Page] holds a declaration for each checkbox of the note: a value written out and
-            nothing else — no arrow, no definition, gathered by the name it was declared as. The two repros
-            beside this one reach a [/Data/Maybe] field and a list field one at a time; this is both of them
-            at once, on the one type.
-            Not nested under a page here, though a note nests its checkboxes under one: a declaration written
-            under another inherits its path, so at the root of a program the two names run together, where a
-            note's do not because they are written in a module. That a note's tasks nest correctly is already
-            held by the goldens @obsidian.ct@ reads.
-            One tag rather than several, because a field holding two or more does not typecheck — see
-            @test/Integration/disabled/listFieldMultiple.ct@." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "The shape a note's page is, with the fields a task carries.
+                [/Data/Note/Page] holds a declaration for each checkbox of the note: a value written out and
+                nothing else — no arrow, no definition, gathered by the name it was declared as. The two repros
+                beside this one reach a [/Data/Maybe] field and a list field one at a time; this is both of them
+                at once, on the one type.
+                Not nested under a page here, though a note nests its checkboxes under one: a declaration written
+                under another inherits its path, so at the root of a program the two names run together, where a
+                note's do not because they are written in a module. That a note's tasks nest correctly is already
+                held by the goldens @obsidian.ct@ reads.
+                One tag rather than several, because a field holding two or more does not typecheck — see
+                @test/Integration/disabled/listFieldMultiple.ct@." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "Shown as the value it is, with no display type standing in for it, as a task is." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "Shown as the value it is, with no display type standing in for it, as a task is." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "Printed so that the values are evaluated and not only built." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "Printed so that the values are evaluated and not only built." }
+            )
         , /Catln/#print
             ( Value /p -> ∀/Catln/Doc/DShow = /Noted
-                ( Value /name -> /Data/String = CStr "has both" )
-                ( Value /tags -> /Data/List/Cons[ /T=/Data/String ]
+                ( Value /name -> /Data/String = CStr
+                    { csValue = "has both" }
+                )
+                ( Value /tags -> /Data/List/Cons
                     ( /head=/Data/String
                     , /tail=/Data/List/Nil
                     ) = /Data/List/Cons
-                    ( Value /head -> /Data/String = CStr "x" )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                    ( Value /head -> /Data/String = CStr
+                        { csValue = "x" }
+                    )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                 )
-                ( Value /due -> /Data/Maybe/Some
-                    [ /T=UnionType
-                        ( Nothing
-                        , ∅
-                        ,
-                            [ CStr "2026-01-01" ]
-                        )
-                    ]( /value=/Data/String ) = /Data/Maybe/Some
-                    ( Value /value -> /Data/String = CStr "2026-01-01" )
+                ( Value /due -> /Data/Maybe/Some( /value=/Data/String ) = /Data/Maybe/Some
+                    ( Value /value -> /Data/String = CStr
+                        { csValue = "2026-01-01" }
+                    )
                 )
             )
         , /Catln/#print
             ( Value /p -> ∀/Catln/Doc/DShow = /Noted
-                ( Value /name -> /Data/String = CStr "has neither" )( Value /tags -> /Data/List/Nil = Value /Data/List/Nil )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+                ( Value /name -> /Data/String = CStr
+                    { csValue = "has neither" }
+                )( Value /tags -> /Data/List/Nil = Value /Data/List/Nil )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
             )
         ]
     }

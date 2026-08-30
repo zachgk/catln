@@ -228,11 +228,14 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Map/size( Value m= Value Leaf ) -> /Data/Primitive/Integer = CInt 0
+                        [ /Data/Map/size( Value m= Value Leaf ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
                         , /Data/Map/size
                             ( Value m= Node( Value left )( Value key )( Value value )( Value right ) ) -> /Data/Primitive/Integer = /operator+
                             ( Value /l= /operator+
-                                ( Value /l= CInt 1 )
+                                ( Value /l= CInt
+                                    { ciValue = 1 }
+                                )
                                 ( Value /r= size( Value m= Value left ) )
                             )
                             ( Value /r= size( Value m= Value right ) )
@@ -508,181 +511,319 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "# Maps
-            A [Map] is a collection that associates each [key] with a [value], so a value can be looked up by
-            its key. [Map] is an interface: it names the operations every map supports — [get], [insert],
-            [containsKey], [size], [keys], [values] — without fixing how the entries are stored. Concrete map
-            types implement it; this file provides the [BinTree], and a future hash map would be another.
-            Because the operations are declared on [Map] rather than on one concrete type, every map type
-            reuses those declarations just by being a [Map]." )
+            ( Value /text= CStr
+                { csValue = "# Maps
+                A [Map] is a collection that associates each [key] with a [value], so a value can be looked up by
+                its key. [Map] is an interface: it names the operations every map supports — [get], [insert],
+                [containsKey], [size], [keys], [values] — without fixing how the entries are stored. Concrete map
+                types implement it; this file provides the [BinTree], and a future hash map would be another.
+                Because the operations are declared on [Map] rather than on one concrete type, every map type
+                reuses those declarations just by being a [Map]." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## An unbalanced binary search tree
-            A [BinTree] is the simplest [Map]: either empty ([Leaf]) or a [Node] holding a [key]/[value]
-            pair with a smaller-keyed [left] subtree and a larger-keyed [right] subtree. Keys must be [Ord]
-            so each operation can compare the target key against a node's key and descend the correct way.
-            Almost every operation is a two-arm recursion — a base case for [Leaf], and a step that inspects
-            the [Node] and recurses into a subtree. The tree is unbalanced: its shape depends on the order
-            keys were inserted, but the map it represents (the set of key/value entries) does not." )
+            ( Value /text= CStr
+                { csValue = "## An unbalanced binary search tree
+                A [BinTree] is the simplest [Map]: either empty ([Leaf]) or a [Node] holding a [key]/[value]
+                pair with a smaller-keyed [left] subtree and a larger-keyed [right] subtree. Keys must be [Ord]
+                so each operation can compare the target key against a node's key and descend the correct way.
+                Almost every operation is a two-arm recursion — a base case for [Leaf], and a step that inspects
+                the [Node] and recurses into a subtree. The tree is unbalanced: its shape depends on the order
+                keys were inserted, but the map it represents (the set of key/value entries) does not." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "Every [BinTree] is a [Map], so each [Map] operation resolves on it through the arms below. An
-            empty map is written [Leaf]." )
+            ( Value /text= CStr
+                { csValue = "Every [BinTree] is a [Map], so each [Map] operation resolves on it through the arms below. An
+                empty map is written [Leaf]." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Size" )
+            ( Value /text= CStr
+                { csValue = "## Size" }
+            )
         , /Catln/#print
             ( Value /p= size
                 ( Value m= insert
                     ( Value m= insert( Value m= Value Leaf )
-                        ( Value key= CInt 1 )
-                        ( Value value= CInt 10 )
+                        ( Value key= CInt
+                            { ciValue = 1 }
+                        )
+                        ( Value value= CInt
+                            { ciValue = 10 }
+                        )
                     )
-                    ( Value key= CInt 2 )
-                    ( Value value= CInt 20 )
+                    ( Value key= CInt
+                        { ciValue = 2 }
+                    )
+                    ( Value value= CInt
+                        { ciValue = 20 }
+                    )
                 )
             )
-            ( Value /result= CStr "2" )
+            ( Value /result= CStr
+                { csValue = "2" }
+            )
         , /Catln/#print
             ( Value /p= size( Value m= Value Leaf ) )
-            ( Value /result= CStr "0" )
+            ( Value /result= CStr
+                { csValue = "0" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Lookup" )
+            ( Value /text= CStr
+                { csValue = "## Lookup" }
+            )
         , /Catln/#print
             ( Value /p= /operator==
                 ( Value /l= get
                     ( Value m= insert
                         ( Value m= insert( Value m= Value Leaf )
-                            ( Value key= CInt 1 )
-                            ( Value value= CInt 10 )
+                            ( Value key= CInt
+                                { ciValue = 1 }
+                            )
+                            ( Value value= CInt
+                                { ciValue = 10 }
+                            )
                         )
-                        ( Value key= CInt 2 )
-                        ( Value value= CInt 20 )
+                        ( Value key= CInt
+                            { ciValue = 2 }
+                        )
+                        ( Value value= CInt
+                            { ciValue = 20 }
+                        )
                     )
-                    ( Value key= CInt 2 )
+                    ( Value key= CInt
+                        { ciValue = 2 }
+                    )
                 )
                 ( Value /r= /Data/Maybe/Some
-                    ( Value value= CInt 20 )
+                    ( Value value= CInt
+                        { ciValue = 20 }
+                    )
                 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p= /operator==
                 ( Value /l= get
                     ( Value m= insert( Value m= Value Leaf )
-                        ( Value key= CInt 1 )
-                        ( Value value= CInt 10 )
+                        ( Value key= CInt
+                            { ciValue = 1 }
+                        )
+                        ( Value value= CInt
+                            { ciValue = 10 }
+                        )
                     )
-                    ( Value key= CInt 9 )
+                    ( Value key= CInt
+                        { ciValue = 9 }
+                    )
                 )( Value /r= Value /Data/Maybe/Nothing )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Membership" )
+            ( Value /text= CStr
+                { csValue = "## Membership" }
+            )
         , /Catln/#print
             ( Value /p= containsKey
                 ( Value m= insert( Value m= Value Leaf )
-                    ( Value key= CInt 1 )
-                    ( Value value= CInt 10 )
+                    ( Value key= CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value value= CInt
+                        { ciValue = 10 }
+                    )
                 )
-                ( Value key= CInt 1 )
+                ( Value key= CInt
+                    { ciValue = 1 }
+                )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p= containsKey
                 ( Value m= insert( Value m= Value Leaf )
-                    ( Value key= CInt 1 )
-                    ( Value value= CInt 10 )
+                    ( Value key= CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value value= CInt
+                        { ciValue = 10 }
+                    )
                 )
-                ( Value key= CInt 3 )
+                ( Value key= CInt
+                    { ciValue = 3 }
+                )
             )
-            ( Value /result= CStr "False" )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Insertion" )
+            ( Value /text= CStr
+                { csValue = "## Insertion" }
+            )
         , /Catln/#print
             ( Value /p= /operator==
                 ( Value /l= get
                     ( Value m= insert
                         ( Value m= insert( Value m= Value Leaf )
-                            ( Value key= CInt 1 )
-                            ( Value value= CInt 10 )
+                            ( Value key= CInt
+                                { ciValue = 1 }
+                            )
+                            ( Value value= CInt
+                                { ciValue = 10 }
+                            )
                         )
-                        ( Value key= CInt 1 )
-                        ( Value value= CInt 99 )
+                        ( Value key= CInt
+                            { ciValue = 1 }
+                        )
+                        ( Value value= CInt
+                            { ciValue = 99 }
+                        )
                     )
-                    ( Value key= CInt 1 )
+                    ( Value key= CInt
+                        { ciValue = 1 }
+                    )
                 )
                 ( Value /r= /Data/Maybe/Some
-                    ( Value value= CInt 99 )
+                    ( Value value= CInt
+                        { ciValue = 99 }
+                    )
                 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Removal" )
+            ( Value /text= CStr
+                { csValue = "## Removal" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "Removing a present key drops it (the other entries stay); removing an absent key is a no-op." )
+            ( Value /text= CStr
+                { csValue = "Removing a present key drops it (the other entries stay); removing an absent key is a no-op." }
+            )
         , /Catln/#print
             ( Value /p= containsKey
                 ( Value m= remove
                     ( Value m= insert
                         ( Value m= insert( Value m= Value Leaf )
-                            ( Value key= CInt 1 )
-                            ( Value value= CInt 10 )
+                            ( Value key= CInt
+                                { ciValue = 1 }
+                            )
+                            ( Value value= CInt
+                                { ciValue = 10 }
+                            )
                         )
-                        ( Value key= CInt 2 )
-                        ( Value value= CInt 20 )
+                        ( Value key= CInt
+                            { ciValue = 2 }
+                        )
+                        ( Value value= CInt
+                            { ciValue = 20 }
+                        )
                     )
-                    ( Value key= CInt 1 )
+                    ( Value key= CInt
+                        { ciValue = 1 }
+                    )
                 )
-                ( Value key= CInt 1 )
+                ( Value key= CInt
+                    { ciValue = 1 }
+                )
             )
-            ( Value /result= CStr "False" )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
         , /Catln/#print
             ( Value /p= containsKey
                 ( Value m= remove
                     ( Value m= insert
                         ( Value m= insert( Value m= Value Leaf )
-                            ( Value key= CInt 1 )
-                            ( Value value= CInt 10 )
+                            ( Value key= CInt
+                                { ciValue = 1 }
+                            )
+                            ( Value value= CInt
+                                { ciValue = 10 }
+                            )
                         )
-                        ( Value key= CInt 2 )
-                        ( Value value= CInt 20 )
+                        ( Value key= CInt
+                            { ciValue = 2 }
+                        )
+                        ( Value value= CInt
+                            { ciValue = 20 }
+                        )
                     )
-                    ( Value key= CInt 1 )
+                    ( Value key= CInt
+                        { ciValue = 1 }
+                    )
                 )
-                ( Value key= CInt 2 )
+                ( Value key= CInt
+                    { ciValue = 2 }
+                )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p= size
                 ( Value m= remove
                     ( Value m= insert( Value m= Value Leaf )
-                        ( Value key= CInt 1 )
-                        ( Value value= CInt 10 )
+                        ( Value key= CInt
+                            { ciValue = 1 }
+                        )
+                        ( Value value= CInt
+                            { ciValue = 10 }
+                        )
                     )
-                    ( Value key= CInt 9 )
+                    ( Value key= CInt
+                        { ciValue = 9 }
+                    )
                 )
             )
-            ( Value /result= CStr "1" )
+            ( Value /result= CStr
+                { csValue = "1" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "Removing a node with two children merges its subtrees; the remaining keys are intact." )
+            ( Value /text= CStr
+                { csValue = "Removing a node with two children merges its subtrees; the remaining keys are intact." }
+            )
         , /Catln/#print
             ( Value /p= containsKey
                 ( Value m= remove
                     ( Value m= insert
                         ( Value m= insert
                             ( Value m= insert( Value m= Value Leaf )
-                                ( Value key= CInt 2 )
-                                ( Value value= CInt 20 )
+                                ( Value key= CInt
+                                    { ciValue = 2 }
+                                )
+                                ( Value value= CInt
+                                    { ciValue = 20 }
+                                )
                             )
-                            ( Value key= CInt 1 )
-                            ( Value value= CInt 10 )
+                            ( Value key= CInt
+                                { ciValue = 1 }
+                            )
+                            ( Value value= CInt
+                                { ciValue = 10 }
+                            )
                         )
-                        ( Value key= CInt 3 )
-                        ( Value value= CInt 30 )
+                        ( Value key= CInt
+                            { ciValue = 3 }
+                        )
+                        ( Value value= CInt
+                            { ciValue = 30 }
+                        )
                     )
-                    ( Value key= CInt 2 )
+                    ( Value key= CInt
+                        { ciValue = 2 }
+                    )
                 )
-                ( Value key= CInt 2 )
+                ( Value key= CInt
+                    { ciValue = 2 }
+                )
             )
-            ( Value /result= CStr "False" )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
         , /Catln/#print
             ( Value /p= /operator==
                 ( Value /l= keys
@@ -690,168 +831,286 @@ Prgm
                         ( Value m= insert
                             ( Value m= insert
                                 ( Value m= insert( Value m= Value Leaf )
-                                    ( Value key= CInt 2 )
-                                    ( Value value= CInt 20 )
+                                    ( Value key= CInt
+                                        { ciValue = 2 }
+                                    )
+                                    ( Value value= CInt
+                                        { ciValue = 20 }
+                                    )
                                 )
-                                ( Value key= CInt 1 )
-                                ( Value value= CInt 10 )
+                                ( Value key= CInt
+                                    { ciValue = 1 }
+                                )
+                                ( Value value= CInt
+                                    { ciValue = 10 }
+                                )
                             )
-                            ( Value key= CInt 3 )
-                            ( Value value= CInt 30 )
+                            ( Value key= CInt
+                                { ciValue = 3 }
+                            )
+                            ( Value value= CInt
+                                { ciValue = 30 }
+                            )
                         )
-                        ( Value key= CInt 2 )
+                        ( Value key= CInt
+                            { ciValue = 2 }
+                        )
                     )
                 )
                 ( Value /r= /Data/List/Cons
-                    ( Value /head= CInt 1 )
+                    ( Value /head= CInt
+                        { ciValue = 1 }
+                    )
                     ( Value /tail= /Data/List/Cons
-                        ( Value /head= CInt 3 )( Value /tail= Value /Data/List/Nil )
+                        ( Value /head= CInt
+                            { ciValue = 3 }
+                        )( Value /tail= Value /Data/List/Nil )
                     )
                 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Keys and values" )
+            ( Value /text= CStr
+                { csValue = "## Keys and values" }
+            )
         , /Catln/#print
             ( Value /p= /operator==
                 ( Value /l= keys
                     ( Value m= insert
                         ( Value m= insert( Value m= Value Leaf )
-                            ( Value key= CInt 2 )
-                            ( Value value= CInt 20 )
+                            ( Value key= CInt
+                                { ciValue = 2 }
+                            )
+                            ( Value value= CInt
+                                { ciValue = 20 }
+                            )
                         )
-                        ( Value key= CInt 1 )
-                        ( Value value= CInt 10 )
+                        ( Value key= CInt
+                            { ciValue = 1 }
+                        )
+                        ( Value value= CInt
+                            { ciValue = 10 }
+                        )
                     )
                 )
                 ( Value /r= /Data/List/Cons
-                    ( Value /head= CInt 1 )
+                    ( Value /head= CInt
+                        { ciValue = 1 }
+                    )
                     ( Value /tail= /Data/List/Cons
-                        ( Value /head= CInt 2 )( Value /tail= Value /Data/List/Nil )
+                        ( Value /head= CInt
+                            { ciValue = 2 }
+                        )( Value /tail= Value /Data/List/Nil )
                     )
                 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p= /operator==
                 ( Value /l= values
                     ( Value m= insert
                         ( Value m= insert( Value m= Value Leaf )
-                            ( Value key= CInt 2 )
-                            ( Value value= CInt 20 )
+                            ( Value key= CInt
+                                { ciValue = 2 }
+                            )
+                            ( Value value= CInt
+                                { ciValue = 20 }
+                            )
                         )
-                        ( Value key= CInt 1 )
-                        ( Value value= CInt 10 )
+                        ( Value key= CInt
+                            { ciValue = 1 }
+                        )
+                        ( Value value= CInt
+                            { ciValue = 10 }
+                        )
                     )
                 )
                 ( Value /r= /Data/List/Cons
-                    ( Value /head= CInt 10 )
+                    ( Value /head= CInt
+                        { ciValue = 10 }
+                    )
                     ( Value /tail= /Data/List/Cons
-                        ( Value /head= CInt 20 )( Value /tail= Value /Data/List/Nil )
+                        ( Value /head= CInt
+                            { ciValue = 20 }
+                        )( Value /tail= Value /Data/List/Nil )
                     )
                 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "# BinTree Eq membership (order-independent)
-            Makes a [BinTree] whose keys are [Ord] and values are [Eq] a proper member of [Eq], so the generic
-            [operator==] dispatches through [equal]. Equality is ORDER-INDEPENDENT: two maps are equal when
-            they hold the same key/value entries, regardless of the tree shape their insertion order produced.
-            (Structural node-for-node equality would call two maps with the same entries unequal — exactly the
-            case the [Eq] class docstring's [TreeSet] note warns about.) [equal] is decided by [mapEqual]: the
-            maps have the same [size] and every entry of one is [containedIn] the other (equal size plus
-            one-directional containment gives equality). [containedIn] reuses [get] and compares the looked-up
-            [Some] result through the [Maybe] [Eq] instance." )
+            ( Value /text= CStr
+                { csValue = "# BinTree Eq membership (order-independent)
+                Makes a [BinTree] whose keys are [Ord] and values are [Eq] a proper member of [Eq], so the generic
+                [operator==] dispatches through [equal]. Equality is ORDER-INDEPENDENT: two maps are equal when
+                they hold the same key/value entries, regardless of the tree shape their insertion order produced.
+                (Structural node-for-node equality would call two maps with the same entries unequal — exactly the
+                case the [Eq] class docstring's [TreeSet] note warns about.) [equal] is decided by [mapEqual]: the
+                maps have the same [size] and every entry of one is [containedIn] the other (equal size plus
+                one-directional containment gives equality). [containedIn] reuses [get] and compares the looked-up
+                [Some] result through the [Maybe] [Eq] instance." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "Two maps with the same entries are equal even when built in different orders (different tree" )
+            ( Value /text= CStr
+                { csValue = "Two maps with the same entries are equal even when built in different orders (different tree" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "  shapes); maps differing in a value are not." )
+            ( Value /text= CStr
+                { csValue = "  shapes); maps differing in a value are not." }
+            )
         , /Catln/#print
             ( Value /p= /operator==
                 ( Value /l= insert
                     ( Value m= insert( Value m= Value Leaf )
-                        ( Value key= CInt 1 )
-                        ( Value value= CInt 10 )
+                        ( Value key= CInt
+                            { ciValue = 1 }
+                        )
+                        ( Value value= CInt
+                            { ciValue = 10 }
+                        )
                     )
-                    ( Value key= CInt 2 )
-                    ( Value value= CInt 20 )
+                    ( Value key= CInt
+                        { ciValue = 2 }
+                    )
+                    ( Value value= CInt
+                        { ciValue = 20 }
+                    )
                 )
                 ( Value /r= insert
                     ( Value m= insert( Value m= Value Leaf )
-                        ( Value key= CInt 2 )
-                        ( Value value= CInt 20 )
+                        ( Value key= CInt
+                            { ciValue = 2 }
+                        )
+                        ( Value value= CInt
+                            { ciValue = 20 }
+                        )
                     )
-                    ( Value key= CInt 1 )
-                    ( Value value= CInt 10 )
+                    ( Value key= CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value value= CInt
+                        { ciValue = 10 }
+                    )
                 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p= /operator==
                 ( Value /l= insert( Value m= Value Leaf )
-                    ( Value key= CInt 1 )
-                    ( Value value= CInt 10 )
+                    ( Value key= CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value value= CInt
+                        { ciValue = 10 }
+                    )
                 )
                 ( Value /r= insert( Value m= Value Leaf )
-                    ( Value key= CInt 1 )
-                    ( Value value= CInt 99 )
+                    ( Value key= CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value value= CInt
+                        { ciValue = 99 }
+                    )
                 )
             )
-            ( Value /result= CStr "False" )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "# Functor: mapping over values
-            A [BinTree] is a functor over its VALUES: [mapValues] applies a function to every value while
-            preserving the keys and the tree's shape, so mapping [f] over a map [{k1: v1, k2: v2}] gives
-            [{k1: f v1, k2: f v2}] — the "map a function over a collection" operation [fmap] generalises, here
-            ranging over the values only. (It is a standalone operation rather than an instance of the
-            [Functor] class: a [BinTree] is parameterized by both its key and value, and the single-parameter
-            [Functor] class cannot yet track re-typing one parameter while preserving the other — so the class
-            instance awaits two-parameter [Functor] support. The operation itself works generically.)" )
+            ( Value /text= CStr
+                { csValue = "# Functor: mapping over values
+                A [BinTree] is a functor over its VALUES: [mapValues] applies a function to every value while
+                preserving the keys and the tree's shape, so mapping [f] over a map [{k1: v1, k2: v2}] gives
+                [{k1: f v1, k2: f v2}] — the "map a function over a collection" operation [fmap] generalises, here
+                ranging over the values only. (It is a standalone operation rather than an instance of the
+                [Functor] class: a [BinTree] is parameterized by both its key and value, and the single-parameter
+                [Functor] class cannot yet track re-typing one parameter while preserving the other — so the class
+                instance awaits two-parameter [Functor] support. The operation itself works generically.)" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "Mapping [+1] over a map's values leaves the keys unchanged and adds one to each value (checked by" )
+            ( Value /text= CStr
+                { csValue = "Mapping [+1] over a map's values leaves the keys unchanged and adds one to each value (checked by" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "  looking the mapped value back up with [get])." )
+            ( Value /text= CStr
+                { csValue = "  looking the mapped value back up with [get])." }
+            )
         , /Catln/#print
             ( Value /p= /operator==
                 ( Value /l= get
                     ( Value m= mapValues
                         ( Value m= insert( Value m= Value Leaf )
-                            ( Value key= CInt 1 )
-                            ( Value value= CInt 10 )
+                            ( Value key= CInt
+                                { ciValue = 1 }
+                            )
+                            ( Value value= CInt
+                                { ciValue = 10 }
+                            )
                         )
                         ( fn( Value v )= /operator+( Value /l= Value v )
-                            ( Value /r= CInt 1 )
+                            ( Value /r= CInt
+                                { ciValue = 1 }
+                            )
                         )
                     )
-                    ( Value key= CInt 1 )
+                    ( Value key= CInt
+                        { ciValue = 1 }
+                    )
                 )
                 ( Value /r= /Data/Maybe/Some
-                    ( Value value= CInt 11 )
+                    ( Value value= CInt
+                        { ciValue = 11 }
+                    )
                 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p= /operator==
                 ( Value /l= get
                     ( Value m= mapValues
                         ( Value m= insert
                             ( Value m= insert( Value m= Value Leaf )
-                                ( Value key= CInt 1 )
-                                ( Value value= CInt 10 )
+                                ( Value key= CInt
+                                    { ciValue = 1 }
+                                )
+                                ( Value value= CInt
+                                    { ciValue = 10 }
+                                )
                             )
-                            ( Value key= CInt 2 )
-                            ( Value value= CInt 20 )
+                            ( Value key= CInt
+                                { ciValue = 2 }
+                            )
+                            ( Value value= CInt
+                                { ciValue = 20 }
+                            )
                         )
                         ( fn( Value v )= /operator+( Value /l= Value v )
-                            ( Value /r= CInt 1 )
+                            ( Value /r= CInt
+                                { ciValue = 1 }
+                            )
                         )
                     )
-                    ( Value key= CInt 2 )
+                    ( Value key= CInt
+                        { ciValue = 2 }
+                    )
                 )
                 ( Value /r= /Data/Maybe/Some
-                    ( Value value= CInt 21 )
+                    ( Value value= CInt
+                        { ciValue = 21 }
+                    )
                 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         ]
     }

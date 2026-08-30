@@ -72,7 +72,10 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /operator+( Value /l -> /Data/String = Hole TopType HoleActive Nothing )( Value /r -> /Data/String = Hole TopType HoleActive Nothing ) -> /Data/String ]
+                        [ /operator+
+                            ( Value /l -> /Data/String = Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/String = Hole TopType HoleActive { haName = Nothing } ) -> /Data/String
+                        ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -193,14 +196,24 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "## IO built-ins" )
+            ( Value /text= CStr
+                { csValue = "## IO built-ins" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Python built-in abs and pow mapped to methods" )
+            ( Value /text= CStr
+                { csValue = "## Python built-in abs and pow mapped to methods" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Type conversions" )
+            ( Value /text= CStr
+                { csValue = "## Type conversions" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## String operations" )
+            ( Value /text= CStr
+                { csValue = "## String operations" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Numeric min/max" )
+            ( Value /text= CStr
+                { csValue = "## Numeric min/max" }
+            )
         ]
     }

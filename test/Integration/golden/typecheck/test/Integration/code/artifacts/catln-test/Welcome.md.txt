@@ -10,8 +10,11 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Welcome" ]
-                                ) = CStr "Welcome"
+                                    [ CStr
+                                        { csValue = "Welcome" }
+                                    ]
+                                ) = CStr
+                                { csValue = "Welcome" }
                             )
                         ]
                     , omiRuntimeDecls = []

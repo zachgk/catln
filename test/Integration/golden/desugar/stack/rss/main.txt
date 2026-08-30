@@ -14,12 +14,16 @@ Prgm
                                 ( Value /l= /operator++
                                     ( Value /l= /operator++
                                         ( Value /l= /operator++
-                                            ( Value /l= CStr "<p>" )
+                                            ( Value /l= CStr
+                                                { csValue = "<p>" }
+                                            )
                                             ( Value /r= titleOf( Value /published= Value /published )( Value /description= Value /description )( Value title= Value title )( Value link= Value link ) )
                                         )
                                         ( Value /r= publishedOf( Value /link= Value /link )( Value /title= Value /title )( Value /description= Value /description )( Value published= Value published ) )
                                     )
-                                    ( Value /r= CStr "</p>" )
+                                    ( Value /r= CStr
+                                        { csValue = "</p>" }
+                                    )
                                 )( Value /r= Value description )
                             )
                         ]
@@ -44,21 +48,33 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Catln/Doc/dshow./Data/RSS/titleOf( Value /published )( Value /description )( Value title )( Value link ) | /operator==( Value /l= Value link )
-                            ( Value /r= CStr "" ) -> /Data/String = /operator++
+                            ( Value /r= CStr
+                                { csValue = "" }
+                            ) -> /Data/String = /operator++
                             ( Value /l= /operator++
-                                ( Value /l= CStr "<strong>" )( Value /r= Value title )
+                                ( Value /l= CStr
+                                    { csValue = "<strong>" }
+                                )( Value /r= Value title )
                             )
-                            ( Value /r= CStr "</strong>" )
+                            ( Value /r= CStr
+                                { csValue = "</strong>" }
+                            )
                         , /Catln/Doc/dshow./Data/RSS/titleOf( Value /published )( Value /description )( Value title )( Value link ) -> /Data/String = /operator++
                             ( Value /l= /operator++
                                 ( Value /l= /operator++
                                     ( Value /l= /operator++
-                                        ( Value /l= CStr "<strong><a href="" )( Value /r= Value link )
+                                        ( Value /l= CStr
+                                            { csValue = "<strong><a href="" }
+                                        )( Value /r= Value link )
                                     )
-                                    ( Value /r= CStr "">" )
+                                    ( Value /r= CStr
+                                        { csValue = "">" }
+                                    )
                                 )( Value /r= Value title )
                             )
-                            ( Value /r= CStr "</a></strong>" )
+                            ( Value /r= CStr
+                                { csValue = "</a></strong>" }
+                            )
                         ]
                     }
                 )
@@ -71,12 +87,19 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Catln/Doc/dshow./Data/RSS/publishedOf( Value /link )( Value /title )( Value /description )( Value published ) | /operator==( Value /l= Value published )
-                            ( Value /r= CStr "" ) -> /Data/String = CStr ""
+                            ( Value /r= CStr
+                                { csValue = "" }
+                            ) -> /Data/String = CStr
+                            { csValue = "" }
                         , /Catln/Doc/dshow./Data/RSS/publishedOf( Value /link )( Value /title )( Value /description )( Value published ) -> /Data/String = /operator++
                             ( Value /l= /operator++
-                                ( Value /l= CStr " <small>" )( Value /r= Value published )
+                                ( Value /l= CStr
+                                    { csValue = " <small>" }
+                                )( Value /r= Value published )
                             )
-                            ( Value /r= CStr "</small>" )
+                            ( Value /r= CStr
+                                { csValue = "</small>" }
+                            )
                         ]
                     }
                 )
@@ -90,16 +113,18 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "# RSS
-            An RSS feed is a page and each entry of it is a value declared on that page, in the way a note
-            is a page and each checkbox of it is a task declared on that page. Importing a feed writes the
-            page — @import rss("https://xkcd.com/rss.xml")@ — and what the page holds is one [Item] per
-            entry, newest first.
-            A feed is a window rather than a document: it says what it says now, and an entry falls off the
-            end of it as newer ones arrive. So the page is built out of what every read of that feed has
-            ever seen and not out of the last read alone, and the entries the feed no longer carries are
-            written below the ones it does.
-            This is not part of the standard library. A program which imports no feed has no use for the
-            type, and the page a feed is read as writes the import itself." )
+            ( Value /text= CStr
+                { csValue = "# RSS
+                An RSS feed is a page and each entry of it is a value declared on that page, in the way a note
+                is a page and each checkbox of it is a task declared on that page. Importing a feed writes the
+                page — @import rss("https://xkcd.com/rss.xml")@ — and what the page holds is one [Item] per
+                entry, newest first.
+                A feed is a window rather than a document: it says what it says now, and an entry falls off the
+                end of it as newer ones arrive. So the page is built out of what every read of that feed has
+                ever seen and not out of the last read alone, and the entries the feed no longer carries are
+                written below the ones it does.
+                This is not part of the standard library. A program which imports no feed has no use for the
+                type, and the page a feed is read as writes the import itself." }
+            )
         ]
     }

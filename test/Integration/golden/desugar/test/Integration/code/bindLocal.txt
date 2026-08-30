@@ -47,7 +47,9 @@ Prgm
                             ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value $b5054c-arg@Value x )= /Data/Maybe/Some
                             ( Value value= /operator+
                                 ( Value /l= bindWithLocal.$b5054c.doubled( Value /m= Value /m )( Value /x= Value /x ) )
-                                ( Value /r= CInt 1 )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
                             )
                         ]
                     }
@@ -62,10 +64,16 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "The bind continuation contains a local declaration ([doubled]) between the bind and the result." )
+            ( Value /text= CStr
+                { csValue = "The bind continuation contains a local declaration ([doubled]) between the bind and the result." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "The inline desugar could not express this (it was a desugar error); the helper desugar carries the" )
+            ( Value /text= CStr
+                { csValue = "The inline desugar could not express this (it was a desugar error); the helper desugar carries the" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "whole continuation as a sub function, so its own local decls are preprocessed normally." )
+            ( Value /text= CStr
+                { csValue = "whole continuation as a sub function, so its own local decls are preprocessed normally." }
+            )
         ]
     }

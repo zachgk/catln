@@ -16,14 +16,24 @@ Prgm
     , prgmCG = [ CGType ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "Exercises the core generic [fmap] (dispatched through the [Functor] class) with concrete" )
+            ( Value /text= CStr
+                { csValue = "Exercises the core generic [fmap] (dispatched through the [Functor] class) with concrete" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "values from an importing module, comparing results with the generic [operator==]. The law" )
+            ( Value /text= CStr
+                { csValue = "values from an importing module, comparing results with the generic [operator==]. The law" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "properties in stack/core/functor.ct check these shapes generically; this asserts exact" )
+            ( Value /text= CStr
+                { csValue = "properties in stack/core/functor.ct check these shapes generically; this asserts exact" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "values on the imported path (identity, increment, and composed increments, over both the" )
+            ( Value /text= CStr
+                { csValue = "values on the imported path (identity, increment, and composed increments, over both the" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "[ConsList] and [Maybe] instances)." )
+            ( Value /text= CStr
+                { csValue = "[ConsList] and [Maybe] instances)." }
+            )
         ]
     }

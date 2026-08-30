@@ -26,11 +26,15 @@ Prgm
                         [ /Data/Algebra/pcompare( Value a )( Value b ) -> ∀/Data/Algebra/PComparison = mkDivComparison
                             ( Value aDivB= /Data/Primitive/intEq
                                 ( Value l= /operator%( Value /l= Value b )( Value /r= Value a ) )
-                                ( Value r= CInt 0 )
+                                ( Value r= CInt
+                                    { ciValue = 0 }
+                                )
                             )
                             ( Value bDivA= /Data/Primitive/intEq
                                 ( Value l= /operator%( Value /l= Value a )( Value /r= Value b ) )
-                                ( Value r= CInt 0 )
+                                ( Value r= CInt
+                                    { ciValue = 0 }
+                                )
                             )
                         ]
                     }
@@ -94,7 +98,8 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/testOrdReflexive
-                            [ /O : ∀/Data/Algebra/Ordering[ /T=TopType ] ]( Value o -> $/O )( Value t -> $/T )= CInt 0
+                            [ /O : ∀/Data/Algebra/Ordering[ /T=TopType ] ]( Value o -> $/O )( Value t -> $/T )= CInt
+                            { ciValue = 0 }
                         ]
                     }
                 )
@@ -106,7 +111,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/mkComparison( Value lt= Value True )( Value eq= Hole TopType HoleActive Nothing ) -> ∀/Data/Algebra/Comparison = Value LessThan
+                        [ /Data/Algebra/mkComparison( Value lt= Value True )
+                            ( Value eq= Hole TopType HoleActive { haName = Nothing } ) -> ∀/Data/Algebra/Comparison = Value LessThan
                         , /Data/Algebra/mkComparison( Value lt= Value False )( Value eq= Value True ) -> ∀/Data/Algebra/Comparison = Value Equal
                         , /Data/Algebra/mkComparison( Value lt= Value False )( Value eq= Value False ) -> ∀/Data/Algebra/Comparison = Value GreaterThan
                         ]
@@ -183,7 +189,8 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/testOrdAntisymmetric
-                            [ /O : ∀/Data/Algebra/Ordering[ /T=TopType ] ]( Value o -> $/O )( Value x -> $/T )( Value y -> $/T )= CInt 0
+                            [ /O : ∀/Data/Algebra/Ordering[ /T=TopType ] ]( Value o -> $/O )( Value x -> $/T )( Value y -> $/T )= CInt
+                            { ciValue = 0 }
                         ]
                     }
                 )
@@ -195,7 +202,8 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/testOrdTransitive
-                            [ /O : ∀/Data/Algebra/Ordering[ /T=TopType ] ]( Value o -> $/O )( Value x -> $/T )( Value y -> $/T )( Value z -> $/T )= CInt 0
+                            [ /O : ∀/Data/Algebra/Ordering[ /T=TopType ] ]( Value o -> $/O )( Value x -> $/T )( Value y -> $/T )( Value z -> $/T )= CInt
+                            { ciValue = 0 }
                         ]
                     }
                 )
@@ -344,133 +352,215 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "# Ordering
-            Ordering describes types whose values can be compared and sorted — numbers from smallest to
-            largest, strings alphabetically, and so on. It builds on equality from [Data/Algebra/eq]: just
-            as an [Eq] type names a canonical equivalence and derives [operator==], an [Ord] type names a
-            canonical ordering and derives [compareTo], and because comparing also decides equality every
-            [Ord] is an [Eq].
-            Ordering mirrors equivalence exactly. [Ordering] is the class of orderings over a type [$T] (the
-            analog of [Eqv]); each object in the class supplies [compare], which ranks two values. An [Ord]
-            type names its canonical ordering with [ord] (the analog of [eq]), from which [compareTo]
-            follows. The primitive [operator<] / [operator<=] / [operator>] / [operator>=] remain defined
-            directly in [Data/Primitive]." )
+            ( Value /text= CStr
+                { csValue = "# Ordering
+                Ordering describes types whose values can be compared and sorted — numbers from smallest to
+                largest, strings alphabetically, and so on. It builds on equality from [Data/Algebra/eq]: just
+                as an [Eq] type names a canonical equivalence and derives [operator==], an [Ord] type names a
+                canonical ordering and derives [compareTo], and because comparing also decides equality every
+                [Ord] is an [Eq].
+                Ordering mirrors equivalence exactly. [Ordering] is the class of orderings over a type [$T] (the
+                analog of [Eqv]); each object in the class supplies [compare], which ranks two values. An [Ord]
+                type names its canonical ordering with [ord] (the analog of [eq]), from which [compareTo]
+                follows. The primitive [operator<] / [operator<=] / [operator>] / [operator>=] remain defined
+                directly in [Data/Primitive]." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## The comparison result
-            Comparing two values yields a [Comparison]: the left is [LessThan], [Equal] to, or
-            [GreaterThan] the right." )
+            ( Value /text= CStr
+                { csValue = "## The comparison result
+                Comparing two values yields a [Comparison]: the left is [LessThan], [Equal] to, or
+                [GreaterThan] the right." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "These predicates read a [Comparison] as a [Boolean]." )
+            ( Value /text= CStr
+                { csValue = "These predicates read a [Comparison] as a [Boolean]." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "[mkComparison] builds a [Comparison] from the two primitive answers "is less than" and "is" )
+            ( Value /text= CStr
+                { csValue = "[mkComparison] builds a [Comparison] from the two primitive answers "is less than" and "is" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "  equal to". The per-type [compare] arms build their result with it." )
+            ( Value /text= CStr
+                { csValue = "  equal to". The per-type [compare] arms build their result with it." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## The Ordering class
-            An [Ordering] is the class of orderings over a type [$T], the analog of [Eqv]. Each object in
-            the class is a single ordering and supplies [compare], which ranks two values of [$T] as
-            [LessThan], [Equal], or [GreaterThan]. It is a class declaration: every object in the class
-            defines it for its own type (see the per-type instances such as [IntOrdering] below)." )
+            ( Value /text= CStr
+                { csValue = "## The Ordering class
+                An [Ordering] is the class of orderings over a type [$T], the analog of [Eqv]. Each object in
+                the class is a single ordering and supplies [compare], which ranks two values of [$T] as
+                [LessThan], [Equal], or [GreaterThan]. It is a class declaration: every object in the class
+                defines it for its own type (see the per-type instances such as [IntOrdering] below)." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Ordering is an equivalence
-            Comparing also decides equality, so every [Ordering] is an [Eqv]: two values are equivalent
-            exactly when they compare [Equal]. This behavioral edge supplies the abstract [rel] of [Eqv]
-            for every [Ordering] from its own [compare], so an [Ordering] instance needs only define
-            [compare] to also be a usable [Eqv]." )
+            ( Value /text= CStr
+                { csValue = "## Ordering is an equivalence
+                Comparing also decides equality, so every [Ordering] is an [Eqv]: two values are equivalent
+                exactly when they compare [Equal]. This behavioral edge supplies the abstract [rel] of [Eqv]
+                for every [Ordering] from its own [compare], so an [Ordering] instance needs only define
+                [compare] to also be a usable [Eqv]." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## The Ord class
-            An [Ord] type can be ordered. Every [Ord] is an [Eq], and the standard numeric types are [Ord].
-            An [Ord] type names its canonical ordering with [ord], from which [compareTo] follows — the
-            direct parallel to an [Eq] type naming [eq] and deriving [equal]." )
+            ( Value /text= CStr
+                { csValue = "## The Ord class
+                An [Ord] type can be ordered. Every [Ord] is an [Eq], and the standard numeric types are [Ord].
+                An [Ord] type names its canonical ordering with [ord], from which [compareTo] follows — the
+                direct parallel to an [Eq] type naming [eq] and deriving [equal]." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "[ord] is the standard ordering for an [Ord] type; [compareTo] is the single method through which" )
+            ( Value /text= CStr
+                { csValue = "[ord] is the standard ordering for an [Ord] type; [compareTo] is the single method through which" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "  values are compared." )
+            ( Value /text= CStr
+                { csValue = "  values are compared." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "The per-type [Ordering] instances ([IntOrdering] etc.) and the [ord] / [compareTo] / [eq] each" )
+            ( Value /text= CStr
+                { csValue = "The per-type [Ordering] instances ([IntOrdering] etc.) and the [ord] / [compareTo] / [eq] each" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "  numeric type derives from its ordering live alongside their types in [Data/Primitive]; the" )
+            ( Value /text= CStr
+                { csValue = "  numeric type derives from its ordering live alongside their types in [Data/Primitive]; the" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "  class here defines only the abstract concept." )
+            ( Value /text= CStr
+                { csValue = "  class here defines only the abstract concept." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Partial ordering
-            Some types can be compared but need not be totally ordered: two values may have no order
-            between them. [pcompare] yields a [PComparison], which is either an ordinary [Comparison] or
-            [NoOrdering]. (A [Comparison] is itself a [PComparison], so a total ordering is automatically a
-            partial one.)" )
+            ( Value /text= CStr
+                { csValue = "## Partial ordering
+                Some types can be compared but need not be totally ordered: two values may have no order
+                between them. [pcompare] yields a [PComparison], which is either an ordinary [Comparison] or
+                [NoOrdering]. (A [Comparison] is itself a [PComparison], so a total ordering is automatically a
+                partial one.)" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "[isNoOrdering] / [isComparable] read a [PComparison] across all of its members, including" )
+            ( Value /text= CStr
+                { csValue = "[isNoOrdering] / [isComparable] read a [PComparison] across all of its members, including" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "  [NoOrdering], where the [Comparison]-only predicates above do not apply." )
+            ( Value /text= CStr
+                { csValue = "  [NoOrdering], where the [Comparison]-only predicates above do not apply." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Partial ordering example: divisibility
-            The integers are partially ordered by divisibility: [a] precedes [b] when [a] divides [b].
-            Some pairs — like 2 and 3 — divide neither way and are incomparable, which an ordinary total
-            [Comparison] could not express. [mkDivComparison] turns the two divisibility tests into the
-            partial result, and [pcompare] is the partial comparison." )
+            ( Value /text= CStr
+                { csValue = "## Partial ordering example: divisibility
+                The integers are partially ordered by divisibility: [a] precedes [b] when [a] divides [b].
+                Some pairs — like 2 and 3 — divide neither way and are incomparable, which an ordinary total
+                [Comparison] could not express. [mkDivComparison] turns the two divisibility tests into the
+                partial result, and [pcompare] is the partial comparison." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Examples
-            [compareTo] ranks integers by size, and a type's equality agrees with its ordering: values
-            compare [Equal] exactly when they are equal." )
+            ( Value /text= CStr
+                { csValue = "## Examples
+                [compareTo] ranks integers by size, and a type's equality agrees with its ordering: values
+                compare [Equal] exactly when they are equal." }
+            )
         , /Catln/#print
             ( Value /p= isLess
                 ( Value /this= compareTo
-                    ( Value other= CInt 3 )
-                    ( Value /this= CInt 2 )
+                    ( Value other= CInt
+                        { ciValue = 3 }
+                    )
+                    ( Value /this= CInt
+                        { ciValue = 2 }
+                    )
                 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p= isEq
                 ( Value /this= compareTo
-                    ( Value other= CInt 3 )
-                    ( Value /this= CInt 3 )
+                    ( Value other= CInt
+                        { ciValue = 3 }
+                    )
+                    ( Value /this= CInt
+                        { ciValue = 3 }
+                    )
                 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p= isGreater
                 ( Value /this= compareTo
-                    ( Value other= CInt 3 )
-                    ( Value /this= CInt 4 )
+                    ( Value other= CInt
+                        { ciValue = 3 }
+                    )
+                    ( Value /this= CInt
+                        { ciValue = 4 }
+                    )
                 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p= isLessEq
                 ( Value /this= compareTo
-                    ( Value other= CInt 3 )
-                    ( Value /this= CInt 2 )
+                    ( Value other= CInt
+                        { ciValue = 3 }
+                    )
+                    ( Value /this= CInt
+                        { ciValue = 2 }
+                    )
                 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "The divisibility ordering distinguishes ordered pairs from incomparable ones." )
+            ( Value /text= CStr
+                { csValue = "The divisibility ordering distinguishes ordered pairs from incomparable ones." }
+            )
         , /Catln/#print
             ( Value /p= isComparable
                 ( Value /this= pcompare
-                    ( Value a= CInt 2 )
-                    ( Value b= CInt 6 )
+                    ( Value a= CInt
+                        { ciValue = 2 }
+                    )
+                    ( Value b= CInt
+                        { ciValue = 6 }
+                    )
                 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p= isNoOrdering
                 ( Value /this= pcompare
-                    ( Value a= CInt 2 )
-                    ( Value b= CInt 3 )
+                    ( Value a= CInt
+                        { ciValue = 2 }
+                    )
+                    ( Value b= CInt
+                        { ciValue = 3 }
+                    )
                 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Laws of ordering
-            Each law is a property of the [Ordering] class itself, checked against every instance ([$O]) at
-            arbitrary members of that instance's type ([$T])." )
+            ( Value /text= CStr
+                { csValue = "## Laws of ordering
+                Each law is a property of the [Ordering] class itself, checked against every instance ([$O]) at
+                arbitrary members of that instance's type ([$T])." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "Reflexivity: every value compares [Equal] to itself." )
+            ( Value /text= CStr
+                { csValue = "Reflexivity: every value compares [Equal] to itself." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "Antisymmetry: comparing dual values reverses the ordering — a < b exactly when b > a." )
+            ( Value /text= CStr
+                { csValue = "Antisymmetry: comparing dual values reverses the ordering — a < b exactly when b > a." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "Transitivity: a < b and b < c imply a < c, expressed as a material implication." )
+            ( Value /text= CStr
+                { csValue = "Transitivity: a < b and b < c imply a < c, expressed as a material implication." }
+            )
         ]
     }

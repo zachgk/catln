@@ -44,10 +44,13 @@ Prgm
                             )
                         ]
                     , omiDefs =
-                        [ /Data/List/length( Value /this -> /Data/List/Nil ) -> /Data/Primitive/Integer = CInt 0
+                        [ /Data/List/length( Value /this -> /Data/List/Nil ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
                         , /Data/List/length
                             ( Value /this= Cons( Value head )( Value tail ) ) -> /Data/Primitive/Integer = /operator+
-                            ( Value /l= CInt 1 )
+                            ( Value /l= CInt
+                                { ciValue = 1 }
+                            )
                             ( Value /r= length( Value /this= Value tail ) )
                         ]
                     }
@@ -59,17 +62,22 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/toString( Value /this -> /Data/List/Nil ) -> /Data/String = CStr "[]"
+                        [ /Data/toString( Value /this -> /Data/List/Nil ) -> /Data/String = CStr
+                            { csValue = "[]" }
                         , /Data/toString
                             ( Value /this= Cons[ /T : ∀/Data/ToString ]( Value head@Value h )( Value tail@Value t ) ) -> /Data/String = /operator++
                             ( Value /l= /operator++
                                 ( Value /l= /operator++
-                                    ( Value /l= CStr "[" )
+                                    ( Value /l= CStr
+                                        { csValue = "[" }
+                                    )
                                     ( Value /r= toString( Value /this= Value h ) )
                                 )
                                 ( Value /r= restToString( Value /t= Value /t )( Value /h= Value /h )( Value lst= Value t ) )
                             )
-                            ( Value /r= CStr "]" )
+                            ( Value /r= CStr
+                                { csValue = "]" }
+                            )
                         ]
                     }
                 )
@@ -135,7 +143,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/List/sum( Value lst= Value Nil ) -> /Data/Primitive/Integer = CInt 0
+                        [ /Data/List/sum( Value lst= Value Nil ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
                         , /Data/List/sum
                             ( Value lst= Cons[ /T : /Data/Primitive/Integer ]( Value head )( Value tail ) ) -> /Data/Primitive/Integer = /operator+( Value /l= Value head )
                             ( Value /r= sum( Value lst= Value tail ) )
@@ -193,7 +202,9 @@ Prgm
                         , range./Data/List/rangeStep( Value more= Value /Data/Primitive/True )( Value i )( Value stop ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = Cons( Value head= Value i )
                             ( Value tail= rangeFrom
                                 ( Value i= /operator+( Value /l= Value i )
-                                    ( Value /r= CInt 1 )
+                                    ( Value /r= CInt
+                                        { ciValue = 1 }
+                                    )
                                 )( Value stop= Value stop )
                             )
                         ]
@@ -309,7 +320,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/List/range( Value stop ) -> ∀/Data/List[ /T=/Data/Primitive/Integer ] = rangeFrom
-                            ( Value i= CInt 0 )( Value stop= Value stop )
+                            ( Value i= CInt
+                                { ciValue = 0 }
+                            )( Value stop= Value stop )
                         ]
                     }
                 )
@@ -323,11 +336,14 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ toString./Data/List/restToString( Value /t )( Value /h )( Value lst= Value Nil ) -> /Data/String = CStr ""
+                        [ toString./Data/List/restToString( Value /t )( Value /h )( Value lst= Value Nil ) -> /Data/String = CStr
+                            { csValue = "" }
                         , toString./Data/List/restToString( Value /t )( Value /h )
                             ( Value lst= Cons[ /T : ∀/Data/ToString ]( Value head )( Value tail ) ) -> /Data/String = /operator++
                             ( Value /l= /operator++
-                                ( Value /l= CStr ", " )
+                                ( Value /l= CStr
+                                    { csValue = ", " }
+                                )
                                 ( Value /r= toString( Value /this= Value head ) )
                             )
                             ( Value /r= restToString( Value /t= Value /t )( Value /h= Value /h )( Value lst= Value tail ) )
@@ -494,366 +510,590 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "# Lists
-            A [List] is an ordered collection of zero or more items. [List] is an interface: it names the
-            operations every list supports without fixing how the items are stored. Concrete list types
-            implement it — this file provides the [ConsList], and a future [ArrayList] or [TreeList] would
-            be another. Because [sum], [reversed], [sorted] and the rest are declared on [List] rather than
-            on one concrete type, every list type reuses those same declarations just by being a [List]. The
-            [List] interface lives here directly under [Data]; the [ConsList] implementation and the
-            operations all live in the [Data/List] namespace it opens." )
+            ( Value /text= CStr
+                { csValue = "# Lists
+                A [List] is an ordered collection of zero or more items. [List] is an interface: it names the
+                operations every list supports without fixing how the items are stored. Concrete list types
+                implement it — this file provides the [ConsList], and a future [ArrayList] or [TreeList] would
+                be another. Because [sum], [reversed], [sorted] and the rest are declared on [List] rather than
+                on one concrete type, every list type reuses those same declarations just by being a [List]. The
+                [List] interface lives here directly under [Data]; the [ConsList] implementation and the
+                operations all live in the [Data/List] namespace it opens." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "# The ConsList and the List operations
-            Everything else list-related lives in [module(Data/List)] — the namespace the [List] class opens —
-            so the [ConsList] type, its constructors [Cons]/[Nil], and every operation sit under [/Data/List]
-            rather than loose at the top of [/Data]." )
+            ( Value /text= CStr
+                { csValue = "# The ConsList and the List operations
+                Everything else list-related lives in [module(Data/List)] — the namespace the [List] class opens —
+                so the [ConsList] type, its constructors [Cons]/[Nil], and every operation sit under [/Data/List]
+                rather than loose at the top of [/Data]." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
-            smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
-            [Nil], and a step that consumes the [head] and recurses on the [tail]." )
+            ( Value /text= CStr
+                { csValue = "A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
+                smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
+                [Nil], and a step that consumes the [head] and recurses on the [tail]." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below." )
+            ( Value /text= CStr
+                { csValue = "Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Bracket syntax
-            The literal [[1, 2, 3]] is sugar for a [ConsList]: it expands to [Cons(1, Cons(2, Cons(3,
-            Nil)))], and [[]] is [Nil]. The examples throughout this file use it." )
+            ( Value /text= CStr
+                { csValue = "## Bracket syntax
+                The literal [[1, 2, 3]] is sugar for a [ConsList]: it expands to [Cons(1, Cons(2, Cons(3,
+                Nil)))], and [[]] is [Nil]. The examples throughout this file use it." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Length" )
+            ( Value /text= CStr
+                { csValue = "## Length" }
+            )
         , /Catln/#print
             ( Value /p= length
                 ( Value /this= /Data/List/Cons
-                    ( Value /head= CInt 10 )
+                    ( Value /head= CInt
+                        { ciValue = 10 }
+                    )
                     ( Value /tail= /Data/List/Cons
-                        ( Value /head= CInt 20 )
+                        ( Value /head= CInt
+                            { ciValue = 20 }
+                        )
                         ( Value /tail= /Data/List/Cons
-                            ( Value /head= CInt 30 )( Value /tail= Value /Data/List/Nil )
+                            ( Value /head= CInt
+                                { ciValue = 30 }
+                            )( Value /tail= Value /Data/List/Nil )
                         )
                     )
                 )
             )
-            ( Value /result= CStr "3" )
+            ( Value /result= CStr
+                { csValue = "3" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Summing" )
+            ( Value /text= CStr
+                { csValue = "## Summing" }
+            )
         , /Catln/#print
             ( Value /p= /Data/List/sum
                 ( Value lst= /Data/List/Cons
-                    ( Value /head= CInt 1 )
+                    ( Value /head= CInt
+                        { ciValue = 1 }
+                    )
                     ( Value /tail= /Data/List/Cons
-                        ( Value /head= CInt 2 )
+                        ( Value /head= CInt
+                            { ciValue = 2 }
+                        )
                         ( Value /tail= /Data/List/Cons
-                            ( Value /head= CInt 3 )( Value /tail= Value /Data/List/Nil )
+                            ( Value /head= CInt
+                                { ciValue = 3 }
+                            )( Value /tail= Value /Data/List/Nil )
                         )
                     )
                 )
             )
-            ( Value /result= CStr "6" )
+            ( Value /result= CStr
+                { csValue = "6" }
+            )
         , /Catln/#print
             ( Value /p= /Data/List/sum( Value lst= Value /Data/List/Nil ) )
-            ( Value /result= CStr "0" )
+            ( Value /result= CStr
+                { csValue = "0" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Universal and existential quantifiers" )
+            ( Value /text= CStr
+                { csValue = "## Universal and existential quantifiers" }
+            )
         , /Catln/#print
             ( Value /p= /Data/List/all
                 ( Value lst= /Data/List/Cons( Value /head= Value True )
                     ( Value /tail= /Data/List/Cons( Value /head= Value True )( Value /tail= Value /Data/List/Nil ) )
                 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p= /Data/List/all
                 ( Value lst= /Data/List/Cons( Value /head= Value False )( Value /tail= Value /Data/List/Nil ) )
             )
-            ( Value /result= CStr "False" )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
         , /Catln/#print
             ( Value /p= /Data/List/any
                 ( Value lst= /Data/List/Cons( Value /head= Value True )( Value /tail= Value /Data/List/Nil ) )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p= /Data/List/any
                 ( Value lst= /Data/List/Cons( Value /head= Value False )
                     ( Value /tail= /Data/List/Cons( Value /head= Value False )( Value /tail= Value /Data/List/Nil ) )
                 )
             )
-            ( Value /result= CStr "False" )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Reversing" )
+            ( Value /text= CStr
+                { csValue = "## Reversing" }
+            )
         , /Catln/#print
             ( Value /p= /Data/List/reversed
                 ( Value lst= /Data/List/Cons
-                    ( Value /head= CInt 1 )
+                    ( Value /head= CInt
+                        { ciValue = 1 }
+                    )
                     ( Value /tail= /Data/List/Cons
-                        ( Value /head= CInt 2 )
+                        ( Value /head= CInt
+                            { ciValue = 2 }
+                        )
                         ( Value /tail= /Data/List/Cons
-                            ( Value /head= CInt 3 )( Value /tail= Value /Data/List/Nil )
+                            ( Value /head= CInt
+                                { ciValue = 3 }
+                            )( Value /tail= Value /Data/List/Nil )
                         )
                     )
                 )
             )
-            ( Value /result= CStr "[3, 2, 1]" )
+            ( Value /result= CStr
+                { csValue = "[3, 2, 1]" }
+            )
         , /Catln/#print
             ( Value /p= /Data/List/reversed( Value lst= Value /Data/List/Nil ) )
-            ( Value /result= CStr "[]" )
+            ( Value /result= CStr
+                { csValue = "[]" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Sorting" )
+            ( Value /text= CStr
+                { csValue = "## Sorting" }
+            )
         , /Catln/#print
             ( Value /p= /Data/List/sorted
                 ( Value lst= /Data/List/Cons
-                    ( Value /head= CInt 3 )
+                    ( Value /head= CInt
+                        { ciValue = 3 }
+                    )
                     ( Value /tail= /Data/List/Cons
-                        ( Value /head= CInt 1 )
+                        ( Value /head= CInt
+                            { ciValue = 1 }
+                        )
                         ( Value /tail= /Data/List/Cons
-                            ( Value /head= CInt 2 )( Value /tail= Value /Data/List/Nil )
+                            ( Value /head= CInt
+                                { ciValue = 2 }
+                            )( Value /tail= Value /Data/List/Nil )
                         )
                     )
                 )
             )
-            ( Value /result= CStr "[1, 2, 3]" )
+            ( Value /result= CStr
+                { csValue = "[1, 2, 3]" }
+            )
         , /Catln/#print
             ( Value /p= /Data/List/sorted
                 ( Value lst= /Data/List/Cons
-                    ( Value /head= CInt 5 )
+                    ( Value /head= CInt
+                        { ciValue = 5 }
+                    )
                     ( Value /tail= /Data/List/Cons
-                        ( Value /head= CInt 4 )
+                        ( Value /head= CInt
+                            { ciValue = 4 }
+                        )
                         ( Value /tail= /Data/List/Cons
-                            ( Value /head= CInt 4 )
+                            ( Value /head= CInt
+                                { ciValue = 4 }
+                            )
                             ( Value /tail= /Data/List/Cons
-                                ( Value /head= CInt 1 )( Value /tail= Value /Data/List/Nil )
+                                ( Value /head= CInt
+                                    { ciValue = 1 }
+                                )( Value /tail= Value /Data/List/Nil )
                             )
                         )
                     )
                 )
             )
-            ( Value /result= CStr "[1, 4, 4, 5]" )
+            ( Value /result= CStr
+                { csValue = "[1, 4, 4, 5]" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Counting ranges" )
+            ( Value /text= CStr
+                { csValue = "## Counting ranges" }
+            )
         , /Catln/#print
             ( Value /p= /Data/List/range
-                ( Value stop= CInt 3 )
+                ( Value stop= CInt
+                    { ciValue = 3 }
+                )
             )
-            ( Value /result= CStr "[0, 1, 2]" )
+            ( Value /result= CStr
+                { csValue = "[0, 1, 2]" }
+            )
         , /Catln/#print
             ( Value /p= /Data/List/range
-                ( Value stop= CInt 0 )
+                ( Value stop= CInt
+                    { ciValue = 0 }
+                )
             )
-            ( Value /result= CStr "[]" )
+            ( Value /result= CStr
+                { csValue = "[]" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Rendering as text" )
+            ( Value /text= CStr
+                { csValue = "## Rendering as text" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
-            rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
-            [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
-            implement it." )
+            ( Value /text= CStr
+                { csValue = "A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
+                rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
+                [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
+                implement it." }
+            )
         , /Catln/#print
             ( Value /p= /Data/List/Cons
-                ( Value /head= CInt 1 )
+                ( Value /head= CInt
+                    { ciValue = 1 }
+                )
                 ( Value /tail= /Data/List/Cons
-                    ( Value /head= CInt 2 )
+                    ( Value /head= CInt
+                        { ciValue = 2 }
+                    )
                     ( Value /tail= /Data/List/Cons
-                        ( Value /head= CInt 3 )( Value /tail= Value /Data/List/Nil )
+                        ( Value /head= CInt
+                            { ciValue = 3 }
+                        )( Value /tail= Value /Data/List/Nil )
                     )
                 )
             )
-            ( Value /result= CStr "[1, 2, 3]" )
+            ( Value /result= CStr
+                { csValue = "[1, 2, 3]" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Structural comparison helper" )
+            ( Value /text= CStr
+                { csValue = "## Structural comparison helper" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "# ConsList Functor instance
-            A [ConsList] is a [Functor]: [fmap] applies a function to every element while preserving the
-            list's shape — same length, same order — so mapping [f] over [[1, 2, 3]] gives [[f 1, f 2, f 3]].
-            Lists are the canonical [Functor]; "map a function over a collection" is exactly the operation
-            [fmap] generalises." )
+            ( Value /text= CStr
+                { csValue = "# ConsList Functor instance
+                A [ConsList] is a [Functor]: [fmap] applies a function to every element while preserving the
+                list's shape — same length, same order — so mapping [f] over [[1, 2, 3]] gives [[f 1, f 2, f 3]].
+                Lists are the canonical [Functor]; "map a function over a collection" is exactly the operation
+                [fmap] generalises." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "[fmap] over a [ConsList] rebuilds the list, applying [fn] to each [head]. This is the [ConsList]" )
+            ( Value /text= CStr
+                { csValue = "[fmap] over a [ConsList] rebuilds the list, applying [fn] to each [head]. This is the [ConsList]" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "instance of the generic [fmap] declared over [Functor] in [Data/functor]. The instance is" )
+            ( Value /text= CStr
+                { csValue = "instance of the generic [fmap] declared over [Functor] in [Data/functor]. The instance is" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "written under the declaration's absolute name so the open [Functor] interface need not be" )
+            ( Value /text= CStr
+                { csValue = "written under the declaration's absolute name so the open [Functor] interface need not be" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "totally covered while still resolving for [fmap] calls on a [ConsList]." )
+            ( Value /text= CStr
+                { csValue = "totally covered while still resolving for [fmap] calls on a [ConsList]." }
+            )
         , /Catln/#print
             ( Value /p= /Data/Functor/fmap
                 ( Value lst= /Data/List/Cons
-                    ( Value /head= CInt 1 )
+                    ( Value /head= CInt
+                        { ciValue = 1 }
+                    )
                     ( Value /tail= /Data/List/Cons
-                        ( Value /head= CInt 2 )
+                        ( Value /head= CInt
+                            { ciValue = 2 }
+                        )
                         ( Value /tail= /Data/List/Cons
-                            ( Value /head= CInt 3 )( Value /tail= Value /Data/List/Nil )
+                            ( Value /head= CInt
+                                { ciValue = 3 }
+                            )( Value /tail= Value /Data/List/Nil )
                         )
                     )
                 )
                 ( fn( Value v )= /operator+( Value /l= Value v )
-                    ( Value /r= CInt 1 )
+                    ( Value /r= CInt
+                        { ciValue = 1 }
+                    )
                 )
             )
-            ( Value /result= CStr "[2, 3, 4]" )
+            ( Value /result= CStr
+                { csValue = "[2, 3, 4]" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "# ConsList Eq membership
-            Makes a [ConsList] of any [Eq] element a proper member of [Eq], so the generic [operator==]
-            dispatches through the [equal] method. Two lists are equal when they match constructor for
-            constructor with equal heads pairwise; the recursion runs through [tail.equal]. This is the
-            idiomatic path (vs. a standalone operator overload), and mirrors Haskell's `instance Eq a => Eq
-            [a]`. The element bound `$T -> Eq` makes the membership conditional on the element being [Eq], so
-            the head comparison on the elements typechecks." )
+            ( Value /text= CStr
+                { csValue = "# ConsList Eq membership
+                Makes a [ConsList] of any [Eq] element a proper member of [Eq], so the generic [operator==]
+                dispatches through the [equal] method. Two lists are equal when they match constructor for
+                constructor with equal heads pairwise; the recursion runs through [tail.equal]. This is the
+                idiomatic path (vs. a standalone operator overload), and mirrors Haskell's `instance Eq a => Eq
+                [a]`. The element bound `$T -> Eq` makes the membership conditional on the element being [Eq], so
+                the head comparison on the elements typechecks." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "Equal lists compare equal element-wise, and lists that differ in an element or in length do" )
+            ( Value /text= CStr
+                { csValue = "Equal lists compare equal element-wise, and lists that differ in an element or in length do" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "  not. The element [Eq] dispatch is generic, so lists of [Integer], [Boolean], etc. all work." )
+            ( Value /text= CStr
+                { csValue = "  not. The element [Eq] dispatch is generic, so lists of [Integer], [Boolean], etc. all work." }
+            )
         , /Catln/#print
             ( Value /p= /operator==
                 ( Value /l= /Data/List/Cons
-                    ( Value /head= CInt 1 )
+                    ( Value /head= CInt
+                        { ciValue = 1 }
+                    )
                     ( Value /tail= /Data/List/Cons
-                        ( Value /head= CInt 2 )( Value /tail= Value /Data/List/Nil )
+                        ( Value /head= CInt
+                            { ciValue = 2 }
+                        )( Value /tail= Value /Data/List/Nil )
                     )
                 )
                 ( Value /r= /Data/List/Cons
-                    ( Value /head= CInt 1 )
+                    ( Value /head= CInt
+                        { ciValue = 1 }
+                    )
                     ( Value /tail= /Data/List/Cons
-                        ( Value /head= CInt 2 )( Value /tail= Value /Data/List/Nil )
+                        ( Value /head= CInt
+                            { ciValue = 2 }
+                        )( Value /tail= Value /Data/List/Nil )
                     )
                 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p= /operator==
                 ( Value /l= /Data/List/Cons
-                    ( Value /head= CInt 1 )
+                    ( Value /head= CInt
+                        { ciValue = 1 }
+                    )
                     ( Value /tail= /Data/List/Cons
-                        ( Value /head= CInt 2 )( Value /tail= Value /Data/List/Nil )
+                        ( Value /head= CInt
+                            { ciValue = 2 }
+                        )( Value /tail= Value /Data/List/Nil )
                     )
                 )
                 ( Value /r= /Data/List/Cons
-                    ( Value /head= CInt 1 )
+                    ( Value /head= CInt
+                        { ciValue = 1 }
+                    )
                     ( Value /tail= /Data/List/Cons
-                        ( Value /head= CInt 3 )( Value /tail= Value /Data/List/Nil )
+                        ( Value /head= CInt
+                            { ciValue = 3 }
+                        )( Value /tail= Value /Data/List/Nil )
                     )
                 )
             )
-            ( Value /result= CStr "False" )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
         , /Catln/#print
             ( Value /p= /operator==
                 ( Value /l= /Data/List/Cons
-                    ( Value /head= CInt 1 )
+                    ( Value /head= CInt
+                        { ciValue = 1 }
+                    )
                     ( Value /tail= /Data/List/Cons
-                        ( Value /head= CInt 2 )( Value /tail= Value /Data/List/Nil )
+                        ( Value /head= CInt
+                            { ciValue = 2 }
+                        )( Value /tail= Value /Data/List/Nil )
                     )
                 )
                 ( Value /r= /Data/List/Cons
-                    ( Value /head= CInt 1 )( Value /tail= Value /Data/List/Nil )
+                    ( Value /head= CInt
+                        { ciValue = 1 }
+                    )( Value /tail= Value /Data/List/Nil )
                 )
             )
-            ( Value /result= CStr "False" )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "# ConsList Ord membership
-            Makes a [ConsList] of any [Ord] element a proper member of [Ord], so [compareTo] dispatches per
-            constructor. Lists are ordered lexicographically ([consThen] sequences the head comparison with
-            the tail's); the recursion runs through [tail.compareTo]. Mirrors the [Eq] membership above (and
-            every [Ord] is an [Eq], which the [Eq] membership already supplies)." )
+            ( Value /text= CStr
+                { csValue = "# ConsList Ord membership
+                Makes a [ConsList] of any [Ord] element a proper member of [Ord], so [compareTo] dispatches per
+                constructor. Lists are ordered lexicographically ([consThen] sequences the head comparison with
+                the tail's); the recursion runs through [tail.compareTo]. Mirrors the [Eq] membership above (and
+                every [Ord] is an [Eq], which the [Eq] membership already supplies)." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "Lists order lexicographically: the first differing element decides, and a prefix is ordered" )
+            ( Value /text= CStr
+                { csValue = "Lists order lexicographically: the first differing element decides, and a prefix is ordered" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "  before its extension ([Nil] before any [Cons])." )
+            ( Value /text= CStr
+                { csValue = "  before its extension ([Nil] before any [Cons])." }
+            )
         , /Catln/#print
             ( Value /p= isLess
                 ( Value /this= compareTo
                     ( Value other= /Data/List/Cons
-                        ( Value /head= CInt 2 )( Value /tail= Value /Data/List/Nil )
+                        ( Value /head= CInt
+                            { ciValue = 2 }
+                        )( Value /tail= Value /Data/List/Nil )
                     )
                     ( Value /this= /Data/List/Cons
-                        ( Value /head= CInt 1 )( Value /tail= Value /Data/List/Nil )
+                        ( Value /head= CInt
+                            { ciValue = 1 }
+                        )( Value /tail= Value /Data/List/Nil )
                     )
                 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p= isLess
                 ( Value /this= compareTo
                     ( Value other= /Data/List/Cons
-                        ( Value /head= CInt 1 )
+                        ( Value /head= CInt
+                            { ciValue = 1 }
+                        )
                         ( Value /tail= /Data/List/Cons
-                            ( Value /head= CInt 2 )( Value /tail= Value /Data/List/Nil )
+                            ( Value /head= CInt
+                                { ciValue = 2 }
+                            )( Value /tail= Value /Data/List/Nil )
                         )
                     )
                     ( Value /this= /Data/List/Cons
-                        ( Value /head= CInt 1 )( Value /tail= Value /Data/List/Nil )
+                        ( Value /head= CInt
+                            { ciValue = 1 }
+                        )( Value /tail= Value /Data/List/Nil )
                     )
                 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p= isEq
                 ( Value /this= compareTo
                     ( Value other= /Data/List/Cons
-                        ( Value /head= CInt 1 )
+                        ( Value /head= CInt
+                            { ciValue = 1 }
+                        )
                         ( Value /tail= /Data/List/Cons
-                            ( Value /head= CInt 2 )( Value /tail= Value /Data/List/Nil )
+                            ( Value /head= CInt
+                                { ciValue = 2 }
+                            )( Value /tail= Value /Data/List/Nil )
                         )
                     )
                     ( Value /this= /Data/List/Cons
-                        ( Value /head= CInt 1 )
+                        ( Value /head= CInt
+                            { ciValue = 1 }
+                        )
                         ( Value /tail= /Data/List/Cons
-                            ( Value /head= CInt 2 )( Value /tail= Value /Data/List/Nil )
+                            ( Value /head= CInt
+                                { ciValue = 2 }
+                            )( Value /tail= Value /Data/List/Nil )
                         )
                     )
                 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "# ConsList Monad instance
-            [mmap] over a [ConsList] is concatMap: the function returns a whole list for each element, and
-            the results are appended in order." )
+            ( Value /text= CStr
+                { csValue = "# ConsList Monad instance
+                [mmap] over a [ConsList] is concatMap: the function returns a whole list for each element, and
+                the results are appended in order." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "[append] joins two lists in order — the recursive structural join (it recurses through itself" )
+            ( Value /text= CStr
+                { csValue = "[append] joins two lists in order — the recursive structural join (it recurses through itself" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "so the recursion stays a concrete arrow)." )
+            ( Value /text= CStr
+                { csValue = "so the recursion stays a concrete arrow)." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "The [ConsList] instance of the generic [mmap] declared over [Monad] in [Data/monad]. Like the" )
+            ( Value /text= CStr
+                { csValue = "The [ConsList] instance of the generic [mmap] declared over [Monad] in [Data/monad]. Like the" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "[fmap] instance above, it is written under the declaration's absolute name so the open [Monad]" )
+            ( Value /text= CStr
+                { csValue = "[fmap] instance above, it is written under the declaration's absolute name so the open [Monad]" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "class is not required to be totally covered here." )
+            ( Value /text= CStr
+                { csValue = "class is not required to be totally covered here." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "[append] joins two lists end to end." )
+            ( Value /text= CStr
+                { csValue = "[append] joins two lists end to end." }
+            )
         , /Catln/#print
             ( Value /p= /Data/List/append
                 ( Value a= /Data/List/Cons
-                    ( Value /head= CInt 1 )( Value /tail= Value /Data/List/Nil )
+                    ( Value /head= CInt
+                        { ciValue = 1 }
+                    )( Value /tail= Value /Data/List/Nil )
                 )
                 ( Value b= /Data/List/Cons
-                    ( Value /head= CInt 2 )( Value /tail= Value /Data/List/Nil )
+                    ( Value /head= CInt
+                        { ciValue = 2 }
+                    )( Value /tail= Value /Data/List/Nil )
                 )
             )
-            ( Value /result= CStr "[1, 2]" )
+            ( Value /result= CStr
+                { csValue = "[1, 2]" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "[mmap] over a [ConsList] is concatMap: the function returns a whole list per element and the" )
+            ( Value /text= CStr
+                { csValue = "[mmap] over a [ConsList] is concatMap: the function returns a whole list per element and the" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "  results are appended, so binding [[1]] to a function returning [[2]] yields [[2]], and binding" )
+            ( Value /text= CStr
+                { csValue = "  results are appended, so binding [[1]] to a function returning [[2]] yields [[2]], and binding" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "  the empty list yields the empty list." )
+            ( Value /text= CStr
+                { csValue = "  the empty list yields the empty list." }
+            )
         , /Catln/#print
             ( Value /p= /Data/Monad/mmap
                 ( Value m= /Data/List/Cons
-                    ( Value /head= CInt 1 )( Value /tail= Value /Data/List/Nil )
+                    ( Value /head= CInt
+                        { ciValue = 1 }
+                    )( Value /tail= Value /Data/List/Nil )
                 )
                 ( fn( Value v )= /Data/List/Cons
-                    ( Value /head= CInt 2 )( Value /tail= Value /Data/List/Nil )
+                    ( Value /head= CInt
+                        { ciValue = 2 }
+                    )( Value /tail= Value /Data/List/Nil )
                 )
             )
-            ( Value /result= CStr "[2]" )
+            ( Value /result= CStr
+                { csValue = "[2]" }
+            )
         , /Catln/#print
             ( Value /p= /Data/Monad/mmap( Value m= Value /Data/List/Nil )
                 ( fn( Value v )= /Data/List/Cons( Value /head= Value v )( Value /tail= Value /Data/List/Nil ) )
             )
-            ( Value /result= CStr "[]" )
+            ( Value /result= CStr
+                { csValue = "[]" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "[pure] for [ConsList] builds a singleton list; the call site's expected list type selects" )
+            ( Value /text= CStr
+                { csValue = "[pure] for [ConsList] builds a singleton list; the call site's expected list type selects" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "this instance (return-type-directed dispatch — see [pure] in [Data/monad])." )
+            ( Value /text= CStr
+                { csValue = "this instance (return-type-directed dispatch — see [pure] in [Data/monad])." }
+            )
         , /Catln/#print
             ( Value /p= pureConsInt
-                ( Value v= CInt 1 )
+                ( Value v= CInt
+                    { ciValue = 1 }
+                )
             )
-            ( Value /result= CStr "[1]" )
+            ( Value /result= CStr
+                { csValue = "[1]" }
+            )
         ]
     }

@@ -15,7 +15,10 @@ Prgm
                 ( "/operator++"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /operator++( EAppArg Value /l -> $/T = Hole $/T HoleActive Nothing )( EAppArg Value /r -> $/T = Hole $/T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Semigroup ) -> $/T ]
+                        [ /operator++
+                            ( EAppArg Value /l -> $/T = Hole $/T HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> $/T = Hole $/T HoleActive { haName = Nothing } )( EAppVar /T ∀/Data/Algebra/Semigroup ) -> $/T
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []

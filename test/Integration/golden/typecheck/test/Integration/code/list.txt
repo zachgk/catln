@@ -8,20 +8,22 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /llength( Value /this -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/Primitive/Integer = CInt 0
+                        [ /llength( Value /this -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
                         , /llength
                             ( Value /this -> /Data/List/Cons
                                 ( /head=TopType
-                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                ) = /Data/List/Cons( Value /head )
-                                ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
+                                , /tail=TopType
+                                ) = /Data/List/Cons( Value /head )( Value /tail )
                             ) ->
                             ( /operator+
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer
                             ) = /operator+
-                            ( Value /l -> /Data/Primitive/Integer = CInt 1 )
+                            ( Value /l -> /Data/Primitive/Integer = CInt
+                                { ciValue = 1 }
+                            )
                             ( Value /r -> /Data/Primitive/Integer = /llength( Value /this -> TVArg /tail = Value /tail ) )
                         ]
                     }
@@ -43,21 +45,27 @@ Prgm
                                 ( Value /l -> /Data/Primitive/Integer = /llength
                                     ( Value /this -> /Data/List/Cons
                                         ( /head=/Data/Primitive/Integer
-                                        , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                        , /tail=/Data/List/Cons
                                             ( /head=/Data/Primitive/Integer
                                             , /tail=/Data/List/Nil
                                             )
                                         ) = /Data/List/Cons
-                                        ( Value /head -> /Data/Primitive/Integer = CInt 5 )
-                                        ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                        ( Value /head -> /Data/Primitive/Integer = CInt
+                                            { ciValue = 5 }
+                                        )
+                                        ( Value /tail -> /Data/List/Cons
                                             ( /head=/Data/Primitive/Integer
                                             , /tail=/Data/List/Nil
                                             ) = /Data/List/Cons
-                                            ( Value /head -> /Data/Primitive/Integer = CInt 3 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                                            ( Value /head -> /Data/Primitive/Integer = CInt
+                                                { ciValue = 3 }
+                                            )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                                         )
                                     )
                                 )
-                                ( Value /r -> /Data/Primitive/Integer = CInt 2 )
+                                ( Value /r -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 2 }
+                                )
                             )( Value /this -> TVArg /io = Value /io )
                         ]
                     }
@@ -70,8 +78,12 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "The list tests recursive data structures without type variables" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "The list tests recursive data structures without type variables" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "TODO: Use core length rather than llength" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "TODO: Use core length rather than llength" }
+            )
         ]
     }

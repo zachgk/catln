@@ -6,7 +6,10 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /operator++( Value /l -> /Data/String = Hole TopType HoleActive Nothing )( Value /r -> /Data/String = Hole TopType HoleActive Nothing ) -> /Data/String ]
+                        [ /operator++
+                            ( Value /l -> /Data/String = Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/String = Hole TopType HoleActive { haName = Nothing } ) -> /Data/String
+                        ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -115,34 +118,60 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "# Strings
-            A [String] is a list of characters. Its equality is defined here alongside the type." )
+            ( Value /text= CStr
+                { csValue = "# Strings
+                A [String] is a list of characters. Its equality is defined here alongside the type." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Equality
-            [String] is an [Eq] type: [StrEqv] wraps the primitive [strEqual], and [eq]/[equal] follow." )
+            ( Value /text= CStr
+                { csValue = "## Equality
+                [String] is an [Eq] type: [StrEqv] wraps the primitive [strEqual], and [eq]/[equal] follow." }
+            )
         , /Catln/#print
             ( Value /p= /operator==
-                ( Value /l= CStr "hi" )
-                ( Value /r= CStr "hi" )
+                ( Value /l= CStr
+                    { csValue = "hi" }
+                )
+                ( Value /r= CStr
+                    { csValue = "hi" }
+                )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p= /operator==
-                ( Value /l= CStr "hi" )
-                ( Value /r= CStr "no" )
+                ( Value /l= CStr
+                    { csValue = "hi" }
+                )
+                ( Value /r= CStr
+                    { csValue = "no" }
+                )
             )
-            ( Value /result= CStr "False" )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Concatenation" )
+            ( Value /text= CStr
+                { csValue = "## Concatenation" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "[String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-            (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-            yet dispatched by return type across multiple types, so only the [Semigroup] is declared.)" )
+            ( Value /text= CStr
+                { csValue = "[String] is a [Semigroup] under concatenation: joining strings end to end is associative.
+                (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
+                yet dispatched by return type across multiple types, so only the [Semigroup] is declared.)" }
+            )
         , /Catln/#print
             ( Value /p= /operator++
-                ( Value /l= CStr "foo" )
-                ( Value /r= CStr "bar" )
+                ( Value /l= CStr
+                    { csValue = "foo" }
+                )
+                ( Value /r= CStr
+                    { csValue = "bar" }
+                )
             )
-            ( Value /result= CStr "foobar" )
+            ( Value /result= CStr
+                { csValue = "foobar" }
+            )
         ]
     }

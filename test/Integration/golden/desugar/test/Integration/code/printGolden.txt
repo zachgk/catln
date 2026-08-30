@@ -16,11 +16,19 @@ Prgm
     , prgmCG = [ CGType ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "A string-serializable #print carries its expected value as a #result golden, checked by" )
+            ( Value /text= CStr
+                { csValue = "A string-serializable #print carries its expected value as a #result golden, checked by" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "`catln test` and (re)written by `catln test --update`." )
+            ( Value /text= CStr
+                { csValue = "`catln test` and (re)written by `catln test --update`." }
+            )
         , /Catln/#print
-            ( Value /p= CStr "hello world" )
-            ( Value /result= CStr "hello world" )
+            ( Value /p= CStr
+                { csValue = "hello world" }
+            )
+            ( Value /result= CStr
+                { csValue = "hello world" }
+            )
         ]
     }

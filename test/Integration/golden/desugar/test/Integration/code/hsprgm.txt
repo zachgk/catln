@@ -2,6 +2,122 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
+                ( "/Test/report"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Test/report -> /Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Test/report -> /Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= /operator++
+                                    ( Value /l= /operator++
+                                        ( Value /l= /operator++
+                                            ( Value /l= /operator++
+                                                ( Value /l= constantKind
+                                                    ( Value c= /Catln/Constant/CInt
+                                                        ( Value value= CInt
+                                                            { ciValue = 3 }
+                                                        )
+                                                    )
+                                                )
+                                                ( Value /r= CStr
+                                                    { csValue = " " }
+                                                )
+                                            )
+                                            ( Value /r= toString
+                                                ( Value /this= intOf
+                                                    ( Value c= /Catln/Constant/CInt
+                                                        ( Value value= CInt
+                                                            { ciValue = 42 }
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        )
+                                        ( Value /r= CStr
+                                            { csValue = " " }
+                                        )
+                                    )
+                                    ( Value /r= keyName
+                                        ( Value k= /Catln/PartialKey
+                                            ( Value name= CStr
+                                                { csValue = "x" }
+                                            )( Value vars= Value /Data/List/Nil )( Value args= Value /Data/List/Nil )
+                                        )
+                                    )
+                                )
+                                ( Value /r= CStr
+                                    { csValue = " " }
+                                )
+                            )
+                            ( Value /r= toString
+                                ( Value /this= keyDepth
+                                    ( Value k= /Catln/PartialKey
+                                        ( Value name= CStr
+                                            { csValue = "f" }
+                                        )( Value vars= Value /Data/List/Nil )
+                                        ( Value args= /Data/List/Cons
+                                            ( Value /head= /Catln/PartialKey
+                                                ( Value name= CStr
+                                                    { csValue = "a" }
+                                                )( Value vars= Value /Data/List/Nil )( Value args= Value /Data/List/Nil )
+                                            )( Value /tail= Value /Data/List/Nil )
+                                        )
+                                    )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/constantKind"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/constantKind( Value c -> ∀/Catln/Constant ) -> /Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/constantKind
+                            ( Value c= /Catln/Constant/CInt( Value value ) ) -> /Data/String = CStr
+                            { csValue = "int" }
+                        , /Test/constantKind
+                            ( Value c= /Catln/Constant/CFloat( Value value ) ) -> /Data/String = CStr
+                            { csValue = "float" }
+                        , /Test/constantKind
+                            ( Value c= /Catln/Constant/CStr( Value value ) ) -> /Data/String = CStr
+                            { csValue = "str" }
+                        , /Test/constantKind
+                            ( Value c= /Catln/Constant/CChar( Value value ) ) -> /Data/String = CStr
+                            { csValue = "char" }
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/keyDepth"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/keyDepth
+                            ( Value k -> /Catln/PartialKey
+                                ( /name=TopType
+                                , /vars=TopType
+                                , /args=TopType
+                                )
+                            ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/keyDepth
+                            ( Value k= /Catln/PartialKey( Value name )( Value vars )( Value args ) ) -> /Data/Primitive/Integer = /operator+
+                            ( Value /l= CInt
+                                { ciValue = 1 }
+                            )
+                            ( Value /r= keyDepthAll( Value ks= Value args ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -9,7 +125,71 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= CInt 0 )( Value /this= Value io )
+                            ( Value val= CInt
+                                { ciValue = 0 }
+                            )
+                            ( Value /this= println( Value msg= Value report )( Value /this= Value io ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/keyName"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/keyName
+                            ( Value k -> /Catln/PartialKey
+                                ( /name=TopType
+                                , /vars=TopType
+                                , /args=TopType
+                                )
+                            ) -> /Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/keyName
+                            ( Value k= /Catln/PartialKey( Value name )( Value vars )( Value args ) ) -> /Data/String = Value name
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/intOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/intOf( Value c -> ∀/Catln/Constant ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/intOf
+                            ( Value c= /Catln/Constant/CInt( Value value ) ) -> /Data/Primitive/Integer = Value value
+                        , /Test/intOf
+                            ( Value c= /Catln/Constant/CFloat( Value value ) ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
+                        , /Test/intOf
+                            ( Value c= /Catln/Constant/CStr( Value value ) ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
+                        , /Test/intOf
+                            ( Value c= /Catln/Constant/CChar( Value value ) ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/keyDepthAll"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/keyDepthAll
+                            ( Value ks -> ∀/Data/List[ /T=/Catln/PartialKey ] ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/keyDepthAll( Value ks= Value /Data/List/Nil ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
+                        , /Test/keyDepthAll
+                            ( Value ks= /Data/List/Cons( Value head )( Value tail ) ) -> /Data/Primitive/Integer = /operator+
+                            ( Value /l= keyDepth( Value k= Value head ) )
+                            ( Value /r= keyDepthAll( Value ks= Value tail ) )
                         ]
                     }
                 )
@@ -34,18 +214,107 @@ Prgm
     , prgmCG =
         [ CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "# Reading the compiler's own types
-            The page @hsprgm()@ reads declares the compiler's types for the program it is compiling, so that
-            a Catln program can be handed one and read it. This file is what typechecks those declarations:
-            a page nothing imports is a page nothing checks." )
+            ( Value /text= CStr
+                { csValue = "# Reading the compiler's own types
+                The page @hsprgm()@ reads declares the compiler's types for the program it is compiling, so that
+                a Catln program can be handed one and read it. This file is what typechecks those declarations:
+                a page nothing imports is a page nothing checks." }
+            )
         , /Catln/#print
             ( Value /p= isType( Value b= Value /Catln/ObjectBasis/TypeObj ) )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p= isType( Value b= Value /Catln/ObjectBasis/ArgObj ) )
-            ( Value /result= CStr "False" )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
+        , /Catln/#print
+            ( Value /p= constantKind
+                ( Value c= /Catln/Constant/CInt
+                    ( Value value= CInt
+                        { ciValue = 3 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "int" }
+            )
+        , /Catln/#print
+            ( Value /p= constantKind
+                ( Value c= /Catln/Constant/CStr
+                    ( Value value= CStr
+                        { csValue = "hi" }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "str" }
+            )
+        , /Catln/#print
+            ( Value /p= intOf
+                ( Value c= /Catln/Constant/CInt
+                    ( Value value= CInt
+                        { ciValue = 42 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "42" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A key is a name and two sets of keys, so reading one reads a record, a list, and a type which
+                reaches itself — the whole of what @core/hsprgm.ct@'s containers have to do." }
+            )
+        , /Catln/#print
+            ( Value /p= keyName
+                ( Value k= /Catln/PartialKey
+                    ( Value name= CStr
+                        { csValue = "x" }
+                    )( Value vars= Value /Data/List/Nil )( Value args= Value /Data/List/Nil )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "x" }
+            )
+        , /Catln/#print
+            ( Value /p= keyDepth
+                ( Value k= /Catln/PartialKey
+                    ( Value name= CStr
+                        { csValue = "f" }
+                    )( Value vars= Value /Data/List/Nil )
+                    ( Value args= /Data/List/Cons
+                        ( Value /head= /Catln/PartialKey
+                            ( Value name= CStr
+                                { csValue = "a" }
+                            )( Value vars= Value /Data/List/Nil )( Value args= Value /Data/List/Nil )
+                        )( Value /tail= Value /Data/List/Nil )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "2" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## What the suite checks
+                The `>` examples above are checked by `catln test`, and the integration suite typechecks and
+                builds this file without comparing what they evaluate to — only a page under @stack/@ has its
+                examples run as cases, and no page under @stack/@ may import [hsprgm] without closing the import
+                cycle @core/result.ct@ measures. So the values are printed instead, and @hsprgm.stdout.txt@ is
+                what compares them, which is the one mechanism the integration runner already has for saying
+                what a program produced." }
+            )
         ]
     }

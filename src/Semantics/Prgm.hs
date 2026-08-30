@@ -46,10 +46,18 @@ newtype Export = Export String
 
 -- | The type of hole (a gap where an expression should be). Used in inputs to ignore the expression and outputs.
 data Hole
-  = HoleActive (Maybe Name) -- ^ A hole such as _ or _name, where the name is optional and treated as an error
+  = HoleActive { haName :: Maybe Name } -- ^ A hole such as _ or _name, where the name is optional and treated as an error
   | HoleUndefined -- ^ A hole with the keyword undefined that is an error only in runtime
   | HoleTodefine -- ^ A hole with the keyword todefine that is an error during runtime and commit time
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+
+-- | A gap where an expression should be, read as a Catln type.
+instance CtType Hole where
+  ctDoc _ = [
+    "A gap where an expression should be.",
+    "A [HoleActive] is one written `_` or `_name`, which is an error wherever it is found. A [HoleUndefined] is written `undefined` and is an error only if a run reaches it. A [HoleTodefine] is written `todefine` and is an error both then and when the program is committed.",
+    "The three are one type because they are one thing written three ways — a place the program is not finished — and differ only in when the compiler is entitled to complain."
+            ]
 
 -- Metadata for the Programs
 type ParseErrorRes = ParseErrorBundle String Void

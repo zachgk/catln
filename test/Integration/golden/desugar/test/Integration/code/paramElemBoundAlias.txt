@@ -63,16 +63,28 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "Prerequisite for multiFieldRouting (after paramElemBound): the alias-rename variant. Same as" )
+            ( Value /text= CStr
+                { csValue = "Prerequisite for multiFieldRouting (after paramElemBound): the alias-rename variant. Same as" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "paramElemBound but the destructured field is renamed via the alias form `x@v` and the body uses" )
+            ( Value /text= CStr
+                { csValue = "paramElemBound but the destructured field is renamed via the alias form `x@v` and the body uses" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "the alias `v`. The bare form (paramElemBound) works; isolating the alias rename here. Currently" )
+            ( Value /text= CStr
+                { csValue = "the alias `v`. The bare form (paramElemBound) works; isolating the alias rename here. Currently" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "the definition's argument `p` fails to resolve the `Box(x@v)` pattern (stays TopType) when the" )
+            ( Value /text= CStr
+                { csValue = "the definition's argument `p` fails to resolve the `Box(x@v)` pattern (stays TopType) when the" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "body uses `v` in a bounded-member call (`unbox(b= v)`), even though the bare and the" )
+            ( Value /text= CStr
+                { csValue = "body uses `v` in a bounded-member call (`unbox(b= v)`), even though the bare and the" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "simple-body (`= v`) alias forms both resolve." )
+            ( Value /text= CStr
+                { csValue = "simple-body (`= v`) alias forms both resolve." }
+            )
         ]
     }

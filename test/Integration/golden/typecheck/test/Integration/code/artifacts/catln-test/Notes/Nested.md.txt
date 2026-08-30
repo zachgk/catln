@@ -10,8 +10,11 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Nested" ]
-                                ) = CStr "Nested"
+                                    [ CStr
+                                        { csValue = "Nested" }
+                                    ]
+                                ) = CStr
+                                { csValue = "Nested" }
                             )
                         ]
                     , omiRuntimeDecls = []

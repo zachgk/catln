@@ -70,9 +70,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /abs.$8209a9( EAppArg Value /x -> /Data/Primitive/Integer )
-                            ( EAppArg Value /$8209a9-arg= Hole TopType HoleActive Nothing@Value /Catln/Then ) -> TVArg /x = ( Value /x ↦ TVArg /x )
+                            ( EAppArg Value /$8209a9-arg= Hole TopType HoleActive { haName = Nothing }@Value /Catln/Then ) -> TVArg /x = ( Value /x ↦ TVArg /x )
                         , /abs.$8209a9( EAppArg Value /x -> /Data/Primitive/Integer )
-                            ( EAppArg Value /$8209a9-arg= Hole TopType HoleActive Nothing@Value /Catln/Else ) ->
+                            ( EAppArg Value /$8209a9-arg= Hole TopType HoleActive { haName = Nothing }@Value /Catln/Else ) ->
                             ( /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer

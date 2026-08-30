@@ -32,7 +32,9 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "has one" ]
+                                    [ CStr
+                                        { csValue = "has one" }
+                                    ]
                                 ) = "has one"
                             )
                             ( EAppArg Value /due -> /Data/Maybe/Some
@@ -40,14 +42,18 @@ Prgm
                                     ( Nothing
                                     , ∅
                                     ,
-                                        [ CStr "2026-01-01" ]
+                                        [ CStr
+                                            { csValue = "2026-01-01" }
+                                        ]
                                     )
                                 ) = /Data/Maybe/Some
                                 ( EAppArg Value /value -> UnionType
                                     ( Nothing
                                     , ∅
                                     ,
-                                        [ CStr "2026-01-01" ]
+                                        [ CStr
+                                            { csValue = "2026-01-01" }
+                                        ]
                                     ) = "2026-01-01"
                                 )
                             )
@@ -56,7 +62,9 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "has none" ]
+                                    [ CStr
+                                        { csValue = "has none" }
+                                    ]
                                 ) = "has none"
                             )( EAppArg Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         ]

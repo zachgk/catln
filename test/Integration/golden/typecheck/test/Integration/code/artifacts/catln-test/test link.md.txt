@@ -10,8 +10,11 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "test link" ]
-                                ) = CStr "test link"
+                                    [ CStr
+                                        { csValue = "test link" }
+                                    ]
+                                ) = CStr
+                                { csValue = "test link" }
                             )
                         ]
                     , omiRuntimeDecls = []

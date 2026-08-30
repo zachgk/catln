@@ -90,7 +90,10 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /operator?->( EAppArg Value /l= Hole TopType HoleActive Nothing )( EAppArg Value /r= Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                        [ /operator?->
+                            ( EAppArg Value /l= Hole TopType HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r= Hole TopType HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }

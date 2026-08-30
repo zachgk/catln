@@ -15,8 +15,10 @@ Prgm
                                 ) + /Catln/IO
                             ) = /Catln/exit
                             ( Value /val -> /Data/Primitive/Integer = /defInt
-                                ( Value /x -> /Just[ /T=/Data/Primitive/Integer ]( /val=/Data/Primitive/Integer ) = /Just
-                                    ( Value /val -> /Data/Primitive/Integer = CInt 0 )
+                                ( Value /x -> /Just( /val=/Data/Primitive/Integer ) = /Just
+                                    ( Value /val -> /Data/Primitive/Integer = CInt
+                                        { ciValue = 0 }
+                                    )
                                 )
                             )( Value /this -> TVArg /io = Value /io )
                         ]
@@ -30,8 +32,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /defInt
-                            ( Value /x -> /Just[ /T=/Data/Primitive/Integer ]( /val=/Data/Primitive/Integer ) = /Just( Value /val -> /Data/Primitive/Integer ) ) -> TVArg /val = Value /val
-                        , /defInt( Value /x -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing ) -> /Data/Primitive/Integer = CInt 0
+                            ( Value /x -> /Just( /val=/Data/Primitive/Integer ) = /Just( Value /val -> /Data/Primitive/Integer ) ) -> TVArg /val = Value /val
+                        , /defInt( Value /x -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
                         ]
                     }
                 )
@@ -68,11 +71,13 @@ Prgm
                 [ /Just[ /T=TopType ]( /val=$_/T )
                 , /Data/Maybe/Nothing
                 ]
-            , Just "   "
+            , Just ""
             )
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "Tests a simple data structure with a sum type" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "Tests a simple data structure with a sum type" }
+            )
         ]
     }

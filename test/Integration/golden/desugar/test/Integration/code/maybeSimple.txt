@@ -10,7 +10,9 @@ Prgm
                     , omiDefs =
                         [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
                             ( Value val= defInt
-                                ( Value x= CInt 0 )
+                                ( Value x= CInt
+                                    { ciValue = 0 }
+                                )
                             )( Value /this= Value io )
                         ]
                     }
@@ -23,7 +25,8 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ defInt( Value x -> /Data/Primitive/Integer )= Value x
-                        , defInt( Value x= Value Nothing )= CInt 0
+                        , defInt( Value x= Value Nothing )= CInt
+                            { ciValue = 0 }
                         ]
                     }
                 )
@@ -54,6 +57,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "Tests a simple data structure with a true union" )
+            ( Value /text= CStr
+                { csValue = "Tests a simple data structure with a true union" }
+            )
         ]
     }

@@ -104,7 +104,9 @@ Prgm
                             , []
                             ) = /applyInc( Value /lst -> TVArg /m = Value /m )
                             ( /fn( Value /v ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /v = Value /v )
-                                ( Value /r -> /Data/Primitive/Integer = CInt 1 )
+                                ( Value /r -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 1 }
+                                )
                             )
                         ]
                     }
@@ -119,20 +121,36 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "Exercises applied type variables in a return annotation: [$F[$T -> $_B]] is the type the" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "Exercises applied type variables in a return annotation: [$F[$T -> $_B]] is the type the" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "bound container [$F] resolves to, with its [$T] parameter rebound to [$_B] — "same shape," )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "bound container [$F] resolves to, with its [$T] parameter rebound to [$_B] — "same shape," }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "new element". This is the contract of a mapping function: the compiler cannot know the" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "new element". This is the contract of a mapping function: the compiler cannot know the" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "result's element type from [$F] alone (that would claim the element is preserved)." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "result's element type from [$F] alone (that would claim the element is preserved)." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "An element-preserving map: [$_B] equals the input element, so the applied form claims the" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "An element-preserving map: [$_B] equals the input element, so the applied form claims the" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "same type the bare [$F] would." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "same type the bare [$F] would." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "An element-CHANGING map (Integer -> String): the applied form claims element [$_B] where" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "An element-CHANGING map (Integer -> String): the applied form claims element [$_B] where" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "the bare [$F] would wrongly claim the input's element type." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "the bare [$F] would wrongly claim the input's element type." }
+            )
         ]
     }

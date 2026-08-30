@@ -9,7 +9,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= CInt 0 )( Value /this= Value io )
+                            ( Value val= CInt
+                                { ciValue = 0 }
+                            )( Value /this= Value io )
                         ]
                     }
                 )
@@ -20,11 +22,17 @@ Prgm
                         [ Tagged( Value /name -> /Data/String )
                             ( Value /tags -> ∀/Data/List[ /T=/Data/String ] )
                         , /Tagged
-                            ( Value name= CStr "none" )( Value tags= Value /Data/List/Nil )
+                            ( Value name= CStr
+                                { csValue = "none" }
+                            )( Value tags= Value /Data/List/Nil )
                         , /Tagged
-                            ( Value name= CStr "one" )
+                            ( Value name= CStr
+                                { csValue = "one" }
+                            )
                             ( Value tags= /Data/List/Cons
-                                ( Value /head= CStr "x" )( Value /tail= Value /Data/List/Nil )
+                                ( Value /head= CStr
+                                    { csValue = "x" }
+                                )( Value /tail= Value /Data/List/Nil )
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -39,11 +47,17 @@ Prgm
                         [ ConsTagged( Value /name -> /Data/String )
                             ( Value /tags -> ∀/Data/List/ConsList[ /T=/Data/String ] )
                         , /ConsTagged
-                            ( Value name= CStr "none" )( Value tags= Value /Data/List/Nil )
+                            ( Value name= CStr
+                                { csValue = "none" }
+                            )( Value tags= Value /Data/List/Nil )
                         , /ConsTagged
-                            ( Value name= CStr "one" )
+                            ( Value name= CStr
+                                { csValue = "one" }
+                            )
                             ( Value tags= /Data/List/Cons
-                                ( Value /head= CStr "x" )( Value /tail= Value /Data/List/Nil )
+                                ( Value /head= CStr
+                                    { csValue = "x" }
+                                )( Value /tail= Value /Data/List/Nil )
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -71,42 +85,60 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "A field of a data type may hold a list of a concrete element.
-            The tags of a task read out of an Obsidian note are a list of strings rather than the run of text
-            they were written as. Nothing in the checked standard library gives a list-typed field to anything
-            but a list: the only one there is the [tail] a [/Data/List/Cons] holds, which is the list itself.
-            Written twice over, against the [/Data/List] interface and against the [/Data/List/ConsList] the
-            bracket literal builds, so that a failure says which of the two it is rather than only that a list
-            in a field did not work. And written as values declared and never defined, for the reason
-            [/Dated] is in @maybeField.ct@.
-            A field holding TWO OR MORE does not typecheck — see
-            @test/Integration/disabled/listFieldMultiple.ct@, which holds the signature and the boundary. So
-            what is checked here is a field with nothing in it and a field with one thing in it, which is as
-            far as a list field reaches today." )
+            ( Value /text= CStr
+                { csValue = "A field of a data type may hold a list of a concrete element.
+                The tags of a task read out of an Obsidian note are a list of strings rather than the run of text
+                they were written as. Nothing in the checked standard library gives a list-typed field to anything
+                but a list: the only one there is the [tail] a [/Data/List/Cons] holds, which is the list itself.
+                Written twice over, against the [/Data/List] interface and against the [/Data/List/ConsList] the
+                bracket literal builds, so that a failure says which of the two it is rather than only that a list
+                in a field did not work. And written as values declared and never defined, for the reason
+                [/Dated] is in @maybeField.ct@.
+                A field holding TWO OR MORE does not typecheck — see
+                @test/Integration/disabled/listFieldMultiple.ct@, which holds the signature and the boundary. So
+                what is checked here is a field with nothing in it and a field with one thing in it, which is as
+                far as a list field reaches today." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "Shown as the values they are, with no display type standing in for them, as a task is." )
+            ( Value /text= CStr
+                { csValue = "Shown as the values they are, with no display type standing in for them, as a task is." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "Printed so that the values are evaluated and not only built." )
-        , /Catln/#print
-            ( Value /p= /Tagged
-                ( Value name= CStr "none" )( Value tags= Value /Data/List/Nil )
+            ( Value /text= CStr
+                { csValue = "Printed so that the values are evaluated and not only built." }
             )
         , /Catln/#print
             ( Value /p= /Tagged
-                ( Value name= CStr "one" )
+                ( Value name= CStr
+                    { csValue = "none" }
+                )( Value tags= Value /Data/List/Nil )
+            )
+        , /Catln/#print
+            ( Value /p= /Tagged
+                ( Value name= CStr
+                    { csValue = "one" }
+                )
                 ( Value tags= /Data/List/Cons
-                    ( Value /head= CStr "x" )( Value /tail= Value /Data/List/Nil )
+                    ( Value /head= CStr
+                        { csValue = "x" }
+                    )( Value /tail= Value /Data/List/Nil )
                 )
             )
         , /Catln/#print
             ( Value /p= /ConsTagged
-                ( Value name= CStr "none" )( Value tags= Value /Data/List/Nil )
+                ( Value name= CStr
+                    { csValue = "none" }
+                )( Value tags= Value /Data/List/Nil )
             )
         , /Catln/#print
             ( Value /p= /ConsTagged
-                ( Value name= CStr "one" )
+                ( Value name= CStr
+                    { csValue = "one" }
+                )
                 ( Value tags= /Data/List/Cons
-                    ( Value /head= CStr "x" )( Value /tail= Value /Data/List/Nil )
+                    ( Value /head= CStr
+                        { csValue = "x" }
+                    )( Value /tail= Value /Data/List/Nil )
                 )
             )
         ]

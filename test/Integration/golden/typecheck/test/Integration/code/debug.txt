@@ -16,7 +16,9 @@ Prgm
                             ) = /Catln/exit
                             ( Value /val -> /Data/Primitive/Integer = /inc
                                 ( Value /x -> /Data/Primitive/Integer = /operator-
-                                    ( Value /a -> /Data/Primitive/Integer = CInt 1 )
+                                    ( Value /a -> /Data/Primitive/Integer = CInt
+                                        { ciValue = 1 }
+                                    )
                                 )
                             )( Value /this -> TVArg /io = Value /io )
                         ]
@@ -35,7 +37,9 @@ Prgm
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer
                             ) = /operator+( Value /l -> TVArg /x = Value /x )
-                            ( Value /r -> /Data/Primitive/Integer = CInt 1 )
+                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                { ciValue = 1 }
+                            )
                         ]
                     }
                 )
@@ -47,11 +51,13 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "Tests the [#debug] annotation, which records its value every time the definition it is written on
-            is evaluated.
-            Two of them on one definition, one on an argument and one on a computed expression. The computed
-            one is what checks that a record is placed by the annotation it was written as: an operator apply
-            carries no source position of its own, so a record placed by the expression inside the annotation
-            would have nowhere to say it came from." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "Tests the [#debug] annotation, which records its value every time the definition it is written on
+                is evaluated.
+                Two of them on one definition, one on an argument and one on a computed expression. The computed
+                one is what checks that a record is placed by the annotation it was written as: an operator apply
+                carries no source position of its own, so a record placed by the expression inside the annotation
+                would have nowhere to say it came from." }
+            )
         ]
     }

@@ -10,28 +10,36 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Read the note" ]
+                                    [ CStr
+                                        { csValue = "Read the note" }
+                                    ]
                                 ) = "Read the note"
                             )
                             ( EAppArg Value /symbol -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr " " ]
+                                    [ CStr
+                                        { csValue = " " }
+                                    ]
                                 ) = " "
                             )( EAppArg Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
                             ( EAppArg Value /description -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Read the note" ]
+                                    [ CStr
+                                        { csValue = "Read the note" }
+                                    ]
                                 ) = "Read the note"
                             )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( EAppArg Value /rest -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "{"statusName":"Todo"}" ]
+                                    [ CStr
+                                        { csValue = "{"statusName":"Todo"}" }
+                                    ]
                                 ) = "{"statusName":"Todo"}"
                             )
                         , /Data/Note/Task/Obsidian
@@ -39,28 +47,36 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Write this note ✅ 2026-01-05" ]
+                                    [ CStr
+                                        { csValue = "Write this note ✅ 2026-01-05" }
+                                    ]
                                 ) = "Write this note ✅ 2026-01-05"
                             )
                             ( EAppArg Value /symbol -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "x" ]
+                                    [ CStr
+                                        { csValue = "x" }
+                                    ]
                                 ) = "x"
                             )( EAppArg Value /statusType -> /Data/Note/StatusType/Done = Value /Data/Note/StatusType/Done )
                             ( EAppArg Value /description -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Write this note" ]
+                                    [ CStr
+                                        { csValue = "Write this note" }
+                                    ]
                                 ) = "Write this note"
                             )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( EAppArg Value /rest -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "{"statusDate":"2026-01-05","statusName":"Done"}" ]
+                                    [ CStr
+                                        { csValue = "{"statusDate":"2026-01-05","statusName":"Done"}" }
+                                    ]
                                 ) = "{"statusDate":"2026-01-05","statusName":"Done"}"
                             )
                         , /Data/Note/Task/Obsidian
@@ -68,28 +84,36 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Plan the rest" ]
+                                    [ CStr
+                                        { csValue = "Plan the rest" }
+                                    ]
                                 ) = "Plan the rest"
                             )
                             ( EAppArg Value /symbol -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "/" ]
+                                    [ CStr
+                                        { csValue = "/" }
+                                    ]
                                 ) = "/"
                             )( EAppArg Value /statusType -> /Data/Note/StatusType/InProgress = Value /Data/Note/StatusType/InProgress )
                             ( EAppArg Value /description -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Plan the rest" ]
+                                    [ CStr
+                                        { csValue = "Plan the rest" }
+                                    ]
                                 ) = "Plan the rest"
                             )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( EAppArg Value /rest -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "{"statusName":"In Progress"}" ]
+                                    [ CStr
+                                        { csValue = "{"statusName":"In Progress"}" }
+                                    ]
                                 ) = "{"statusName":"In Progress"}"
                             )
                         , /Data/Note/Task/Obsidian
@@ -97,28 +121,36 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Drop the old plan ❌ 2026-01-06" ]
+                                    [ CStr
+                                        { csValue = "Drop the old plan ❌ 2026-01-06" }
+                                    ]
                                 ) = "Drop the old plan ❌ 2026-01-06"
                             )
                             ( EAppArg Value /symbol -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "-" ]
+                                    [ CStr
+                                        { csValue = "-" }
+                                    ]
                                 ) = "-"
                             )( EAppArg Value /statusType -> /Data/Note/StatusType/Cancelled = Value /Data/Note/StatusType/Cancelled )
                             ( EAppArg Value /description -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Drop the old plan" ]
+                                    [ CStr
+                                        { csValue = "Drop the old plan" }
+                                    ]
                                 ) = "Drop the old plan"
                             )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( EAppArg Value /rest -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "{"statusDate":"2026-01-06","statusName":"Cancelled"}" ]
+                                    [ CStr
+                                        { csValue = "{"statusDate":"2026-01-06","statusName":"Cancelled"}" }
+                                    ]
                                 ) = "{"statusDate":"2026-01-06","statusName":"Cancelled"}"
                             )
                         , /Data/Note/Task/Obsidian
@@ -126,21 +158,27 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Ship it #work ⏫ 📅 2026-01-04" ]
+                                    [ CStr
+                                        { csValue = "Ship it #work ⏫ 📅 2026-01-04" }
+                                    ]
                                 ) = "Ship it #work ⏫ 📅 2026-01-04"
                             )
                             ( EAppArg Value /symbol -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr " " ]
+                                    [ CStr
+                                        { csValue = " " }
+                                    ]
                                 ) = " "
                             )( EAppArg Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
                             ( EAppArg Value /description -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Ship it #work" ]
+                                    [ CStr
+                                        { csValue = "Ship it #work" }
+                                    ]
                                 ) = "Ship it #work"
                             )( EAppArg Value /priority -> /Data/Note/Priority/High = Value /Data/Note/Priority/High )( EAppArg Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( EAppArg Value /due -> /Data/Maybe/Some
@@ -148,14 +186,18 @@ Prgm
                                     ( Nothing
                                     , ∅
                                     ,
-                                        [ CStr "2026-01-04" ]
+                                        [ CStr
+                                            { csValue = "2026-01-04" }
+                                        ]
                                     )
                                 ) = /Data/Maybe/Some
                                 ( EAppArg Value /value -> UnionType
                                     ( Nothing
                                     , ∅
                                     ,
-                                        [ CStr "2026-01-04" ]
+                                        [ CStr
+                                            { csValue = "2026-01-04" }
+                                        ]
                                     ) = "2026-01-04"
                                 )
                             )( EAppArg Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
@@ -163,7 +205,9 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "{"statusName":"Todo","tags":["#work"]}" ]
+                                    [ CStr
+                                        { csValue = "{"statusName":"Todo","tags":["#work"]}" }
+                                    ]
                                 ) = "{"statusName":"Todo","tags":["#work"]}"
                             )
                         , /Data/Note/Task/Obsidian
@@ -171,21 +215,27 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Water the plants 🔁 every week 🛫 2026-01-02" ]
+                                    [ CStr
+                                        { csValue = "Water the plants 🔁 every week 🛫 2026-01-02" }
+                                    ]
                                 ) = "Water the plants 🔁 every week 🛫 2026-01-02"
                             )
                             ( EAppArg Value /symbol -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr " " ]
+                                    [ CStr
+                                        { csValue = " " }
+                                    ]
                                 ) = " "
                             )( EAppArg Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
                             ( EAppArg Value /description -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Water the plants" ]
+                                    [ CStr
+                                        { csValue = "Water the plants" }
+                                    ]
                                 ) = "Water the plants"
                             )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )
                             ( EAppArg Value /start -> /Data/Maybe/Some
@@ -193,14 +243,18 @@ Prgm
                                     ( Nothing
                                     , ∅
                                     ,
-                                        [ CStr "2026-01-02" ]
+                                        [ CStr
+                                            { csValue = "2026-01-02" }
+                                        ]
                                     )
                                 ) = /Data/Maybe/Some
                                 ( EAppArg Value /value -> UnionType
                                     ( Nothing
                                     , ∅
                                     ,
-                                        [ CStr "2026-01-02" ]
+                                        [ CStr
+                                            { csValue = "2026-01-02" }
+                                        ]
                                     ) = "2026-01-02"
                                 )
                             )( EAppArg Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
@@ -209,14 +263,18 @@ Prgm
                                     ( Nothing
                                     , ∅
                                     ,
-                                        [ CStr "every week" ]
+                                        [ CStr
+                                            { csValue = "every week" }
+                                        ]
                                     )
                                 ) = /Data/Maybe/Some
                                 ( EAppArg Value /value -> UnionType
                                     ( Nothing
                                     , ∅
                                     ,
-                                        [ CStr "every week" ]
+                                        [ CStr
+                                            { csValue = "every week" }
+                                        ]
                                     ) = "every week"
                                 )
                             )
@@ -224,7 +282,9 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "{"statusName":"Todo"}" ]
+                                    [ CStr
+                                        { csValue = "{"statusName":"Todo"}" }
+                                    ]
                                 ) = "{"statusName":"Todo"}"
                             )
                         , /Data/Note/Task/Obsidian
@@ -232,28 +292,36 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Do this first 🆔 dcf64c 🏁 delete" ]
+                                    [ CStr
+                                        { csValue = "Do this first 🆔 dcf64c 🏁 delete" }
+                                    ]
                                 ) = "Do this first 🆔 dcf64c 🏁 delete"
                             )
                             ( EAppArg Value /symbol -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr " " ]
+                                    [ CStr
+                                        { csValue = " " }
+                                    ]
                                 ) = " "
                             )( EAppArg Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
                             ( EAppArg Value /description -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Do this first" ]
+                                    [ CStr
+                                        { csValue = "Do this first" }
+                                    ]
                                 ) = "Do this first"
                             )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( EAppArg Value /rest -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "{"id":"dcf64c","onCompletion":"delete","statusName":"Todo"}" ]
+                                    [ CStr
+                                        { csValue = "{"id":"dcf64c","onCompletion":"delete","statusName":"Todo"}" }
+                                    ]
                                 ) = "{"id":"dcf64c","onCompletion":"delete","statusName":"Todo"}"
                             )
                         , /Data/Note/Task/Obsidian
@@ -261,28 +329,36 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Do this after ⛔ dcf64c, 0h17ye ➕ 2026-01-01" ]
+                                    [ CStr
+                                        { csValue = "Do this after ⛔ dcf64c, 0h17ye ➕ 2026-01-01" }
+                                    ]
                                 ) = "Do this after ⛔ dcf64c, 0h17ye ➕ 2026-01-01"
                             )
                             ( EAppArg Value /symbol -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr " " ]
+                                    [ CStr
+                                        { csValue = " " }
+                                    ]
                                 ) = " "
                             )( EAppArg Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
                             ( EAppArg Value /description -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Do this after" ]
+                                    [ CStr
+                                        { csValue = "Do this after" }
+                                    ]
                                 ) = "Do this after"
                             )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( EAppArg Value /rest -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "{"created":"2026-01-01","dependsOn":["dcf64c","0h17ye"],"statusName":"Todo"}" ]
+                                    [ CStr
+                                        { csValue = "{"created":"2026-01-01","dependsOn":["dcf64c","0h17ye"],"statusName":"Todo"}" }
+                                    ]
                                 ) = "{"created":"2026-01-01","dependsOn":["dcf64c","0h17ye"],"statusName":"Todo"}"
                             )
                         , /Data/Note/Task/Obsidian
@@ -290,21 +366,27 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Answer the question ⏳ 2026-01-03 🔽 ^answer-it" ]
+                                    [ CStr
+                                        { csValue = "Answer the question ⏳ 2026-01-03 🔽 ^answer-it" }
+                                    ]
                                 ) = "Answer the question ⏳ 2026-01-03 🔽 ^answer-it"
                             )
                             ( EAppArg Value /symbol -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr " " ]
+                                    [ CStr
+                                        { csValue = " " }
+                                    ]
                                 ) = " "
                             )( EAppArg Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
                             ( EAppArg Value /description -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Answer the question" ]
+                                    [ CStr
+                                        { csValue = "Answer the question" }
+                                    ]
                                 ) = "Answer the question"
                             )( EAppArg Value /priority -> /Data/Note/Priority/Low = Value /Data/Note/Priority/Low )( EAppArg Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( EAppArg Value /scheduled -> /Data/Maybe/Some
@@ -312,14 +394,18 @@ Prgm
                                     ( Nothing
                                     , ∅
                                     ,
-                                        [ CStr "2026-01-03" ]
+                                        [ CStr
+                                            { csValue = "2026-01-03" }
+                                        ]
                                     )
                                 ) = /Data/Maybe/Some
                                 ( EAppArg Value /value -> UnionType
                                     ( Nothing
                                     , ∅
                                     ,
-                                        [ CStr "2026-01-03" ]
+                                        [ CStr
+                                            { csValue = "2026-01-03" }
+                                        ]
                                     ) = "2026-01-03"
                                 )
                             )( EAppArg Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
@@ -327,7 +413,9 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "{"blockLink":"answer-it","statusName":"Todo"}" ]
+                                    [ CStr
+                                        { csValue = "{"blockLink":"answer-it","statusName":"Todo"}" }
+                                    ]
                                 ) = "{"blockLink":"answer-it","statusName":"Todo"}"
                             )
                         , /Data/Note/Task/Obsidian
@@ -335,28 +423,36 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Book 📅 lunch" ]
+                                    [ CStr
+                                        { csValue = "Book 📅 lunch" }
+                                    ]
                                 ) = "Book 📅 lunch"
                             )
                             ( EAppArg Value /symbol -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr " " ]
+                                    [ CStr
+                                        { csValue = " " }
+                                    ]
                                 ) = " "
                             )( EAppArg Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
                             ( EAppArg Value /description -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Book 📅 lunch" ]
+                                    [ CStr
+                                        { csValue = "Book 📅 lunch" }
+                                    ]
                                 ) = "Book 📅 lunch"
                             )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( EAppArg Value /rest -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "{"statusName":"Todo"}" ]
+                                    [ CStr
+                                        { csValue = "{"statusName":"Todo"}" }
+                                    ]
                                 ) = "{"statusName":"Todo"}"
                             )
                         ]
@@ -374,7 +470,9 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Tasks" ]
+                                    [ CStr
+                                        { csValue = "Tasks" }
+                                    ]
                                 ) = "Tasks"
                             )
                         ]

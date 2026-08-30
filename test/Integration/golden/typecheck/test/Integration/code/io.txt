@@ -14,9 +14,13 @@ Prgm
                                 , /val=/Data/Primitive/Integer
                                 ) + /Catln/IO
                             ) = /Catln/exit
-                            ( Value /val -> /Data/Primitive/Integer = CInt 0 )
+                            ( Value /val -> /Data/Primitive/Integer = CInt
+                                { ciValue = 0 }
+                            )
                             ( Value /this -> /Catln/IO = /Catln/println
-                                ( Value /msg -> /Data/String = CStr "hello world" )( Value /this -> TVArg /io = Value /io )
+                                ( Value /msg -> /Data/String = CStr
+                                    { csValue = "hello world" }
+                                )( Value /this -> TVArg /io = Value /io )
                             )
                         ]
                     }

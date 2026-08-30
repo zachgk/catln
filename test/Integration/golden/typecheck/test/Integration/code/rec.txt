@@ -16,9 +16,13 @@ Prgm
                             ) = /Catln/exit
                             ( Value /val -> /Data/Primitive/Integer = /operator-
                                 ( Value /l -> /Data/Primitive/Integer = /fact
-                                    ( Value /x -> /Data/Primitive/Integer = CInt 3 )
+                                    ( Value /x -> /Data/Primitive/Integer = CInt
+                                        { ciValue = 3 }
+                                    )
                                 )
-                                ( Value /r -> /Data/Primitive/Integer = CInt 6 )
+                                ( Value /r -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 6 }
+                                )
                             )( Value /this -> TVArg /io = Value /io )
                         ]
                     }
@@ -31,7 +35,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /fact( Value /x -> /Data/Primitive/Integer ) | /operator==( Value /l -> TVArg /x = Value /x )
-                            ( Value /r -> /Data/Primitive/Integer = CInt 1 ) -> /Data/Primitive/Integer = CInt 1
+                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                { ciValue = 1 }
+                            ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 1 }
                         , /fact( Value /x -> /Data/Primitive/Integer ) ->
                             ( /operator*
                                 ( /r=/Data/Primitive/Integer
@@ -40,7 +47,9 @@ Prgm
                             ) = /operator*( Value /l -> TVArg /x = Value /x )
                             ( Value /r -> /Data/Primitive/Integer = /fact
                                 ( Value /x -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /x = Value /x )
-                                    ( Value /r -> /Data/Primitive/Integer = CInt 1 )
+                                    ( Value /r -> /Data/Primitive/Integer = CInt
+                                        { ciValue = 1 }
+                                    )
                                 )
                             )
                         ]
@@ -54,6 +63,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "Tests recursion" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "Tests recursion" }
+            )
         ]
     }

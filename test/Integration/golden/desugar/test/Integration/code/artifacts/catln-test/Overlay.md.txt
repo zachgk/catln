@@ -6,7 +6,9 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/Task/Simple
-                            ( Value /contents= CStr "Finish reading the page these notes are written over" )( Value /state= Value /Data/Primitive/False )
+                            ( Value /contents= CStr
+                                { csValue = "Finish reading the page these notes are written over" }
+                            )( Value /state= Value /Data/Primitive/False )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -18,7 +20,9 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/Page
-                            ( Value /title= CStr "Overlay" )
+                            ( Value /title= CStr
+                                { csValue = "Overlay" }
+                            )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

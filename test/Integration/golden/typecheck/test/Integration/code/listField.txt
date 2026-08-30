@@ -14,7 +14,9 @@ Prgm
                                 , /val=/Data/Primitive/Integer
                                 ) + /Catln/IO
                             ) = /Catln/exit
-                            ( Value /val -> /Data/Primitive/Integer = CInt 0 )( Value /this -> TVArg /io = Value /io )
+                            ( Value /val -> /Data/Primitive/Integer = CInt
+                                { ciValue = 0 }
+                            )( Value /this -> TVArg /io = Value /io )
                         ]
                     }
                 )
@@ -29,23 +31,31 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "none" ]
-                                ) = CStr "none"
+                                    [ CStr
+                                        { csValue = "none" }
+                                    ]
+                                ) = CStr
+                                { csValue = "none" }
                             )( Value /tags -> /Data/List/Nil = Value /Data/List/Nil )
                         , /Tagged
                             ( Value /name -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "one" ]
-                                ) = CStr "one"
+                                    [ CStr
+                                        { csValue = "one" }
+                                    ]
+                                ) = CStr
+                                { csValue = "one" }
                             )
                             ( Value /tags -> /Data/List/Cons
                                 ( /head=UnionType
                                     ( Nothing
                                     , ∅
                                     ,
-                                        [ CStr "x" ]
+                                        [ CStr
+                                            { csValue = "x" }
+                                        ]
                                     )
                                 , /tail=/Data/List/Nil
                                 ) = /Data/List/Cons
@@ -53,8 +63,11 @@ Prgm
                                     ( Nothing
                                     , ∅
                                     ,
-                                        [ CStr "x" ]
-                                    ) = CStr "x"
+                                        [ CStr
+                                            { csValue = "x" }
+                                        ]
+                                    ) = CStr
+                                    { csValue = "x" }
                                 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                             )
                         ]
@@ -74,23 +87,31 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "none" ]
-                                ) = CStr "none"
+                                    [ CStr
+                                        { csValue = "none" }
+                                    ]
+                                ) = CStr
+                                { csValue = "none" }
                             )( Value /tags -> /Data/List/Nil = Value /Data/List/Nil )
                         , /ConsTagged
                             ( Value /name -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "one" ]
-                                ) = CStr "one"
+                                    [ CStr
+                                        { csValue = "one" }
+                                    ]
+                                ) = CStr
+                                { csValue = "one" }
                             )
                             ( Value /tags -> /Data/List/Cons
                                 ( /head=UnionType
                                     ( Nothing
                                     , ∅
                                     ,
-                                        [ CStr "x" ]
+                                        [ CStr
+                                            { csValue = "x" }
+                                        ]
                                     )
                                 , /tail=/Data/List/Nil
                                 ) = /Data/List/Cons
@@ -98,8 +119,11 @@ Prgm
                                     ( Nothing
                                     , ∅
                                     ,
-                                        [ CStr "x" ]
-                                    ) = CStr "x"
+                                        [ CStr
+                                            { csValue = "x" }
+                                        ]
+                                    ) = CStr
+                                    { csValue = "x" }
                                 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                             )
                         ]
@@ -128,29 +152,39 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "A field of a data type may hold a list of a concrete element.
-            The tags of a task read out of an Obsidian note are a list of strings rather than the run of text
-            they were written as. Nothing in the checked standard library gives a list-typed field to anything
-            but a list: the only one there is the [tail] a [/Data/List/Cons] holds, which is the list itself.
-            Written twice over, against the [/Data/List] interface and against the [/Data/List/ConsList] the
-            bracket literal builds, so that a failure says which of the two it is rather than only that a list
-            in a field did not work. And written as values declared and never defined, for the reason
-            [/Dated] is in @maybeField.ct@.
-            A field holding TWO OR MORE does not typecheck — see
-            @test/Integration/disabled/listFieldMultiple.ct@, which holds the signature and the boundary. So
-            what is checked here is a field with nothing in it and a field with one thing in it, which is as
-            far as a list field reaches today." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "A field of a data type may hold a list of a concrete element.
+                The tags of a task read out of an Obsidian note are a list of strings rather than the run of text
+                they were written as. Nothing in the checked standard library gives a list-typed field to anything
+                but a list: the only one there is the [tail] a [/Data/List/Cons] holds, which is the list itself.
+                Written twice over, against the [/Data/List] interface and against the [/Data/List/ConsList] the
+                bracket literal builds, so that a failure says which of the two it is rather than only that a list
+                in a field did not work. And written as values declared and never defined, for the reason
+                [/Dated] is in @maybeField.ct@.
+                A field holding TWO OR MORE does not typecheck — see
+                @test/Integration/disabled/listFieldMultiple.ct@, which holds the signature and the boundary. So
+                what is checked here is a field with nothing in it and a field with one thing in it, which is as
+                far as a list field reaches today." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "Shown as the values they are, with no display type standing in for them, as a task is." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "Shown as the values they are, with no display type standing in for them, as a task is." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "Printed so that the values are evaluated and not only built." )
-        , /Catln/#print
-            ( Value /p -> ∀/Catln/Doc/DShow = /Tagged
-                ( Value /name -> /Data/String = CStr "none" )( Value /tags -> /Data/List/Nil = Value /Data/List/Nil )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "Printed so that the values are evaluated and not only built." }
             )
         , /Catln/#print
             ( Value /p -> ∀/Catln/Doc/DShow = /Tagged
-                ( Value /name -> /Data/String = CStr "one" )
+                ( Value /name -> /Data/String = CStr
+                    { csValue = "none" }
+                )( Value /tags -> /Data/List/Nil = Value /Data/List/Nil )
+            )
+        , /Catln/#print
+            ( Value /p -> ∀/Catln/Doc/DShow = /Tagged
+                ( Value /name -> /Data/String = CStr
+                    { csValue = "one" }
+                )
                 ( Value /tags -> /Data/List/Cons
                     [ /T=UnionType
                         ( Nothing
@@ -162,16 +196,22 @@ Prgm
                     ( /head=/Data/String
                     , /tail=/Data/List/Nil
                     ) = /Data/List/Cons
-                    ( Value /head -> /Data/String = CStr "x" )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                    ( Value /head -> /Data/String = CStr
+                        { csValue = "x" }
+                    )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                 )
             )
         , /Catln/#print
             ( Value /p -> ∀/Catln/Doc/DShow = /ConsTagged
-                ( Value /name -> /Data/String = CStr "none" )( Value /tags -> /Data/List/Nil = Value /Data/List/Nil )
+                ( Value /name -> /Data/String = CStr
+                    { csValue = "none" }
+                )( Value /tags -> /Data/List/Nil = Value /Data/List/Nil )
             )
         , /Catln/#print
             ( Value /p -> ∀/Catln/Doc/DShow = /ConsTagged
-                ( Value /name -> /Data/String = CStr "one" )
+                ( Value /name -> /Data/String = CStr
+                    { csValue = "one" }
+                )
                 ( Value /tags -> /Data/List/Cons
                     [ /T=UnionType
                         ( Nothing
@@ -183,7 +223,9 @@ Prgm
                     ( /head=/Data/String
                     , /tail=/Data/List/Nil
                     ) = /Data/List/Cons
-                    ( Value /head -> /Data/String = CStr "x" )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                    ( Value /head -> /Data/String = CStr
+                        { csValue = "x" }
+                    )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                 )
             )
         ]

@@ -10,7 +10,9 @@ Prgm
                     , omiDefs =
                         [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
                             ( Value val= abs
-                                ( CInt 0 )
+                                ( CInt
+                                    { ciValue = 0 }
+                                )
                             )( Value /this= Value io )
                         ]
                     }
@@ -23,7 +25,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ abs( Value x -> /Data/Primitive/Integer ) | /operator>=( Value /l= Value x )
-                            ( Value /r= CInt 0 )= Value x
+                            ( Value /r= CInt
+                                { ciValue = 0 }
+                            )= Value x
                         , abs( Value x -> /Data/Primitive/Integer )= Value x
                         ]
                     }
@@ -36,6 +40,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "Tests using the conditions if and else guards for arrows" )
+            ( Value /text= CStr
+                { csValue = "Tests using the conditions if and else guards for arrows" }
+            )
         ]
     }

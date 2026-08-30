@@ -9,7 +9,8 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Functor/testFunctorComposition
-                            [ /F : ∀/Data/Functor[ /T=/Data/Primitive/Integer ] ]( Value x -> $/F )= CInt 0
+                            [ /F : ∀/Data/Functor[ /T=/Data/Primitive/Integer ] ]( Value x -> $/F )= CInt
+                            { ciValue = 0 }
                         ]
                     }
                 )
@@ -34,7 +35,8 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Functor/testFunctorIdentity
-                            [ /F : ∀/Data/Functor[ /T=∀/Data/Algebra/Eq ] ]( Value x -> $/F )= CInt 0
+                            [ /F : ∀/Data/Functor[ /T=∀/Data/Algebra/Eq ] ]( Value x -> $/F )= CInt
+                            { ciValue = 0 }
                         ]
                     }
                 )
@@ -54,48 +56,76 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "# Functors
-            A [Functor] is a basic property of a collection: a container that can have a function
-            applied to each of the elements it holds." )
+            ( Value /text= CStr
+                { csValue = "# Functors
+                A [Functor] is a basic property of a collection: a container that can have a function
+                applied to each of the elements it holds." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Collections
-            Collections are containers that hold elements of a type inside them." )
+            ( Value /text= CStr
+                { csValue = "## Collections
+                Collections are containers that hold elements of a type inside them." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "A [Functor] is a basic property of a collection.
-            It has a single operation [fmap] that applies a function to each element in the collection." )
+            ( Value /text= CStr
+                { csValue = "A [Functor] is a basic property of a collection.
+                It has a single operation [fmap] that applies a function to each element in the collection." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]" )
+            ( Value /text= CStr
+                { csValue = "$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "# The fmap operation and laws
-            [fmap] and the [Functor] laws live in [module(Data/Functor)] — the namespace the [Functor] class
-            opens — so they sit under [/Data/Functor] rather than loose at the top of [/Data]." )
+            ( Value /text= CStr
+                { csValue = "# The fmap operation and laws
+                [fmap] and the [Functor] laws live in [module(Data/Functor)] — the namespace the [Functor] class
+                opens — so they sit under [/Data/Functor] rather than loose at the top of [/Data]." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "[fmap] applies a function to every element of a [Functor], producing a new one of the" )
+            ( Value /text= CStr
+                { csValue = "[fmap] applies a function to every element of a [Functor], producing a new one of the" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "same kind. This is the generic interface declared over the [Functor] class; each" )
+            ( Value /text= CStr
+                { csValue = "same kind. This is the generic interface declared over the [Functor] class; each" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "instance supplies its own definition in a separate module (so the open [Functor] class" )
+            ( Value /text= CStr
+                { csValue = "instance supplies its own definition in a separate module (so the open [Functor] class" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "is not required to be totally covered here). See the [ConsList] instance in [Data/List]." )
+            ( Value /text= CStr
+                { csValue = "is not required to be totally covered here). See the [ConsList] instance in [Data/List]." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "The result is the input container's shape with the element rebound to the mapped" )
+            ( Value /text= CStr
+                { csValue = "The result is the input container's shape with the element rebound to the mapped" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "function's return ([$F[$T -> $_B]]) — a bare [$F] would wrongly claim the element type" )
+            ( Value /text= CStr
+                { csValue = "function's return ([$F[$T -> $_B]]) — a bare [$F] would wrongly claim the element type" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "is preserved." )
+            ( Value /text= CStr
+                { csValue = "is preserved." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Functor laws
-            Identity law: mapping the identity function over a functor returns it unchanged. Expressed
-            as a property test, it is checked against every [Functor] instance (here [$F]) whose
-            elements are [Eq] — so the mapped result can be compared with the original — at arbitrary
-            members of that instance. Like the [Eqv] laws in [Data/Algebra/eq], it instantiates per
-            file over the import graph, so each file defining an instance checks the law for it." )
+            ( Value /text= CStr
+                { csValue = "## Functor laws
+                Identity law: mapping the identity function over a functor returns it unchanged. Expressed
+                as a property test, it is checked against every [Functor] instance (here [$F]) whose
+                elements are [Eq] — so the mapped result can be compared with the original — at arbitrary
+                members of that instance. Like the [Eqv] laws in [Data/Algebra/eq], it instantiates per
+                file over the import graph, so each file defining an instance checks the law for it." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "Composition law: mapping two functions in sequence equals mapping their composition.
-            Stated with concrete increment functions and the composition written out in the lambda
-            body ([(v + 1) + 1]) rather than over function-valued parameters, which the checker
-            cannot yet relate. Checked against every [Functor] instance whose elements are
-            [Integer] - so the increments apply - at arbitrary members of that instance,
-            instantiating per file like the identity law above." )
+            ( Value /text= CStr
+                { csValue = "Composition law: mapping two functions in sequence equals mapping their composition.
+                Stated with concrete increment functions and the composition written out in the lambda
+                body ([(v + 1) + 1]) rather than over function-valued parameters, which the checker
+                cannot yet relate. Checked against every [Functor] instance whose elements are
+                [Integer] - so the increments apply - at arbitrary members of that instance,
+                instantiating per file like the identity law above." }
+            )
         ]
     }

@@ -6,8 +6,12 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /operator<=( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-                        , /operator<=( EAppArg Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        [ /operator<=
+                            ( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
+                        , /operator<=
+                            ( EAppArg Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -18,8 +22,12 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /operator//( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
-                        , /operator//( EAppArg Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> /Data/Primitive/Float
+                        [ /operator//
+                            ( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } ) -> /Data/Primitive/Integer
+                        , /operator//
+                            ( EAppArg Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } ) -> /Data/Primitive/Float
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -30,7 +38,10 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /operator++( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer ]
+                        [ /operator++
+                            ( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } ) -> /Data/Primitive/Integer
+                        ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -40,8 +51,12 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /operator>=( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-                        , /operator>=( EAppArg Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        [ /operator>=
+                            ( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
+                        , /operator>=
+                            ( EAppArg Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -62,7 +77,10 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /operator%( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer ]
+                        [ /operator%
+                            ( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } ) -> /Data/Primitive/Integer
+                        ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -91,8 +109,12 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /operator+( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
-                        , /operator+( EAppArg Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> /Data/Primitive/Float
+                        [ /operator+
+                            ( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } ) -> /Data/Primitive/Integer
+                        , /operator+
+                            ( EAppArg Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } ) -> /Data/Primitive/Float
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -103,8 +125,12 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /operator<( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-                        , /operator<( EAppArg Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        [ /operator<
+                            ( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
+                        , /operator<
+                            ( EAppArg Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -139,14 +165,23 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /operator-( EAppArg Value /a -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
-                        , /operator-( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
-                        , /operator-( EAppArg Value /a -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> /Data/Primitive/Float
-                        , /operator-( EAppArg Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> /Data/Primitive/Float
+                        [ /operator-
+                            ( EAppArg Value /a -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } ) -> /Data/Primitive/Integer
+                        , /operator-
+                            ( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } ) -> /Data/Primitive/Integer
+                        , /operator-
+                            ( EAppArg Value /a -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } ) -> /Data/Primitive/Float
+                        , /operator-
+                            ( EAppArg Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } ) -> /Data/Primitive/Float
                         ]
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator-( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing@Value /x )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing@Value /x ) -> /Data/Primitive/Integer = 0 ]
+                        [ /operator-
+                            ( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing }@Value /x )
+                            ( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing }@Value /x ) -> /Data/Primitive/Integer = 0
+                        ]
                     }
                 )
             ,
@@ -178,8 +213,12 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /operator>( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-                        , /operator>( EAppArg Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        [ /operator>
+                            ( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
+                        , /operator>
+                            ( EAppArg Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -284,8 +323,12 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /operator*( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
-                        , /operator*( EAppArg Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> /Data/Primitive/Float
+                        [ /operator*
+                            ( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } ) -> /Data/Primitive/Integer
+                        , /operator*
+                            ( EAppArg Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } ) -> /Data/Primitive/Float
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []

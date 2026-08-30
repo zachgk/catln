@@ -15,7 +15,9 @@ Prgm
                                 ) + /Catln/IO
                             ) = /Catln/exit
                             ( Value /val -> /Data/Primitive/Integer = /id
-                                ( Value /x -> /Data/Primitive/Integer = CInt 0 )
+                                ( Value /x -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 0 }
+                                )
                             )( Value /this -> TVArg /io = Value /io )
                         ]
                     }
@@ -38,7 +40,9 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "Tests id with type variables.
-            This is one of the simplest tests with type variables." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "Tests id with type variables.
+                This is one of the simplest tests with type variables." }
+            )
         ]
     }

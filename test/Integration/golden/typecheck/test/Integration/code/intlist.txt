@@ -42,16 +42,22 @@ Prgm
                                             , /tail=/IntNil
                                             )
                                         ) = /IntCons
-                                        ( Value /head -> /Data/Primitive/Integer = CInt 5 )
+                                        ( Value /head -> /Data/Primitive/Integer = CInt
+                                            { ciValue = 5 }
+                                        )
                                         ( Value /tail -> /IntCons
                                             ( /head=/Data/Primitive/Integer
                                             , /tail=/IntNil
                                             ) = /IntCons
-                                            ( Value /head -> /Data/Primitive/Integer = CInt 3 )( Value /tail -> /IntNil = Value /IntNil )
+                                            ( Value /head -> /Data/Primitive/Integer = CInt
+                                                { ciValue = 3 }
+                                            )( Value /tail -> /IntNil = Value /IntNil )
                                         )
                                     )
                                 )
-                                ( Value /r -> /Data/Primitive/Integer = CInt 2 )
+                                ( Value /r -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 2 }
+                                )
                             )( Value /this -> TVArg /io = Value /io )
                         ]
                     }
@@ -64,14 +70,17 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /len( Value /this -> /IntNil ) -> /Data/Primitive/Integer = CInt 0
+                        [ /len( Value /this -> /IntNil ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
                         , /len
                             ( Value /this -> /IntCons
                                 ( /head=/Data/Primitive/Integer
                                 , /tail=∀/IntList
                                 ) = /IntCons( Value /head -> /Data/Primitive/Integer )( Value /tail -> ∀/IntList )
                             ) -> /Data/Primitive/Integer = /operator+
-                            ( Value /l -> /Data/Primitive/Integer = CInt 1 )
+                            ( Value /l -> /Data/Primitive/Integer = CInt
+                                { ciValue = 1 }
+                            )
                             ( Value /r -> /Data/Primitive/Integer = /len( Value /this -> TVArg /tail = Value /tail ) )
                         ]
                     }
@@ -98,10 +107,16 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "The intlist tests recursive data structures without type variables" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "The intlist tests recursive data structures without type variables" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "operator+:(Integer l, ConsList r) = Cons(head=l, tail=r)" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "operator+:(Integer l, ConsList r) = Cons(head=l, tail=r)" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "TODO: Fix example below which should work without explicit return value" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "TODO: Fix example below which should work without explicit return value" }
+            )
         ]
     }

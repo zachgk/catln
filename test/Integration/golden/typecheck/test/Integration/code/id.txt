@@ -15,7 +15,9 @@ Prgm
                                 ) + /Catln/IO
                             ) = /Catln/exit
                             ( Value /val -> /Data/Primitive/Integer = /id
-                                ( Value /x -> /Data/Primitive/Integer = CInt 0 )
+                                ( Value /x -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 0 }
+                                )
                             )( Value /this -> TVArg /io = Value /io )
                         ]
                     }
@@ -38,8 +40,10 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "Tests an identity function.
-            It requires using the type of the input argument as the output type of id as well.
-            So, it must be read as `id($T) -> $T`, not (id(Any) -> Any)." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "Tests an identity function.
+                It requires using the type of the input argument as the output type of id as well.
+                So, it must be read as `id($T) -> $T`, not (id(Any) -> Any)." }
+            )
         ]
     }

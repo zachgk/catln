@@ -9,7 +9,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= CInt 0 )( Value /this= Value io )
+                            ( Value val= CInt
+                                { ciValue = 0 }
+                            )( Value /this= Value io )
                         ]
                     }
                 )
@@ -21,15 +23,23 @@ Prgm
                             ( Value /tags -> ∀/Data/List[ /T=/Data/String ] )
                             ( Value /due -> ∀/Data/Maybe[ /T=/Data/String ] )
                         , /Noted
-                            ( Value name= CStr "has both" )
+                            ( Value name= CStr
+                                { csValue = "has both" }
+                            )
                             ( Value tags= /Data/List/Cons
-                                ( Value /head= CStr "x" )( Value /tail= Value /Data/List/Nil )
+                                ( Value /head= CStr
+                                    { csValue = "x" }
+                                )( Value /tail= Value /Data/List/Nil )
                             )
                             ( Value due= /Data/Maybe/Some
-                                ( Value value= CStr "2026-01-01" )
+                                ( Value value= CStr
+                                    { csValue = "2026-01-01" }
+                                )
                             )
                         , /Noted
-                            ( Value name= CStr "has neither" )( Value tags= Value /Data/List/Nil )( Value due= Value /Data/Maybe/Nothing )
+                            ( Value name= CStr
+                                { csValue = "has neither" }
+                            )( Value tags= Value /Data/List/Nil )( Value due= Value /Data/Maybe/Nothing )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -51,34 +61,48 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "The shape a note's page is, with the fields a task carries.
-            [/Data/Note/Page] holds a declaration for each checkbox of the note: a value written out and
-            nothing else — no arrow, no definition, gathered by the name it was declared as. The two repros
-            beside this one reach a [/Data/Maybe] field and a list field one at a time; this is both of them
-            at once, on the one type.
-            Not nested under a page here, though a note nests its checkboxes under one: a declaration written
-            under another inherits its path, so at the root of a program the two names run together, where a
-            note's do not because they are written in a module. That a note's tasks nest correctly is already
-            held by the goldens @obsidian.ct@ reads.
-            One tag rather than several, because a field holding two or more does not typecheck — see
-            @test/Integration/disabled/listFieldMultiple.ct@." )
+            ( Value /text= CStr
+                { csValue = "The shape a note's page is, with the fields a task carries.
+                [/Data/Note/Page] holds a declaration for each checkbox of the note: a value written out and
+                nothing else — no arrow, no definition, gathered by the name it was declared as. The two repros
+                beside this one reach a [/Data/Maybe] field and a list field one at a time; this is both of them
+                at once, on the one type.
+                Not nested under a page here, though a note nests its checkboxes under one: a declaration written
+                under another inherits its path, so at the root of a program the two names run together, where a
+                note's do not because they are written in a module. That a note's tasks nest correctly is already
+                held by the goldens @obsidian.ct@ reads.
+                One tag rather than several, because a field holding two or more does not typecheck — see
+                @test/Integration/disabled/listFieldMultiple.ct@." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "Shown as the value it is, with no display type standing in for it, as a task is." )
+            ( Value /text= CStr
+                { csValue = "Shown as the value it is, with no display type standing in for it, as a task is." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "Printed so that the values are evaluated and not only built." )
+            ( Value /text= CStr
+                { csValue = "Printed so that the values are evaluated and not only built." }
+            )
         , /Catln/#print
             ( Value /p= /Noted
-                ( Value name= CStr "has both" )
+                ( Value name= CStr
+                    { csValue = "has both" }
+                )
                 ( Value tags= /Data/List/Cons
-                    ( Value /head= CStr "x" )( Value /tail= Value /Data/List/Nil )
+                    ( Value /head= CStr
+                        { csValue = "x" }
+                    )( Value /tail= Value /Data/List/Nil )
                 )
                 ( Value due= /Data/Maybe/Some
-                    ( Value value= CStr "2026-01-01" )
+                    ( Value value= CStr
+                        { csValue = "2026-01-01" }
+                    )
                 )
             )
         , /Catln/#print
             ( Value /p= /Noted
-                ( Value name= CStr "has neither" )( Value tags= Value /Data/List/Nil )( Value due= Value /Data/Maybe/Nothing )
+                ( Value name= CStr
+                    { csValue = "has neither" }
+                )( Value tags= Value /Data/List/Nil )( Value due= Value /Data/Maybe/Nothing )
             )
         ]
     }

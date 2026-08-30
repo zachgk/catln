@@ -20,9 +20,13 @@ Prgm
                     , omiDefs =
                         [ Value showInt= /operator==
                             ( Value /l= toString
-                                ( Value /this= CInt 1 )
+                                ( Value /this= CInt
+                                    { ciValue = 1 }
+                                )
                             )
-                            ( Value /r= CStr "1" )
+                            ( Value /r= CStr
+                                { csValue = "1" }
+                            )
                         ]
                     }
                 )
@@ -34,6 +38,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "Tests the toString method, later will be the Show class" )
+            ( Value /text= CStr
+                { csValue = "Tests the toString method, later will be the Show class" }
+            )
         ]
     }

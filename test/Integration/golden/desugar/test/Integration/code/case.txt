@@ -9,12 +9,16 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ abs.$d5de40-0( Value /x -> /Data/Primitive/Integer )
-                            ( Value /$d5de40-arg= Hole TopType HoleActive Nothing@Value x2 | /operator>=( Value /l= Value x )
-                                ( Value /r= CInt 0 )
+                            ( Value /$d5de40-arg= Hole TopType HoleActive { haName = Nothing }@Value x2 | /operator>=( Value /l= Value x )
+                                ( Value /r= CInt
+                                    { ciValue = 0 }
+                                )
                             )= Value x2
                         , abs.$d5de40-0( Value /x -> /Data/Primitive/Integer )
-                            ( Value /$d5de40-arg= Hole TopType HoleActive Nothing@Value x2 | /operator>=( Value /l= Value x )
-                                ( Value /r= CInt 0 )
+                            ( Value /$d5de40-arg= Hole TopType HoleActive { haName = Nothing }@Value x2 | /operator>=( Value /l= Value x )
+                                ( Value /r= CInt
+                                    { ciValue = 0 }
+                                )
                             )= abs.$d5de40-1( Value /x= Value /x )( Value /$d5de40-arg= Value x )
                         ]
                     }
@@ -28,7 +32,9 @@ Prgm
                     , omiDefs =
                         [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
                             ( Value val= abs
-                                ( CInt 0 )
+                                ( CInt
+                                    { ciValue = 0 }
+                                )
                             )( Value /this= Value io )
                         ]
                     }
@@ -50,9 +56,12 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ abs.$d5de40-1( Value /x -> /Data/Primitive/Integer )( Value /$d5de40-arg= Hole TopType HoleActive Nothing@Value x2 )= /operator*( Value /l= Value x2 )
+                        [ abs.$d5de40-1( Value /x -> /Data/Primitive/Integer )
+                            ( Value /$d5de40-arg= Hole TopType HoleActive { haName = Nothing }@Value x2 )= /operator*( Value /l= Value x2 )
                             ( Value /r= /operator-
-                                ( Value /a= CInt 1 )
+                                ( Value /a= CInt
+                                    { ciValue = 1 }
+                                )
                             )
                         ]
                     }
@@ -67,6 +76,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "Tests the case statement" )
+            ( Value /text= CStr
+                { csValue = "Tests the case statement" }
+            )
         ]
     }

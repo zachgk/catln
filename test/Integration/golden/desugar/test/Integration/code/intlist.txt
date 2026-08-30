@@ -31,13 +31,19 @@ Prgm
                             ( Value val= /operator-
                                 ( Value /l= len
                                     ( Value /this= IntCons
-                                        ( Value head= CInt 5 )
+                                        ( Value head= CInt
+                                            { ciValue = 5 }
+                                        )
                                         ( Value tail= IntCons
-                                            ( Value head= CInt 3 )( Value tail= Value IntNil )
+                                            ( Value head= CInt
+                                                { ciValue = 3 }
+                                            )( Value tail= Value IntNil )
                                         )
                                     )
                                 )
-                                ( Value /r= CInt 2 )
+                                ( Value /r= CInt
+                                    { ciValue = 2 }
+                                )
                             )( Value /this= Value io )
                         ]
                     }
@@ -50,10 +56,13 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ len( Value /this -> /IntNil ) -> /Data/Primitive/Integer = CInt 0
+                        [ len( Value /this -> /IntNil ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
                         , len
                             ( Value /this= /IntCons( Value head )( Value tail ) ) -> /Data/Primitive/Integer = /operator+
-                            ( Value /l= CInt 1 )
+                            ( Value /l= CInt
+                                { ciValue = 1 }
+                            )
                             ( Value /r= len( Value /this= Value tail ) )
                         ]
                     }
@@ -80,10 +89,16 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "The intlist tests recursive data structures without type variables" )
+            ( Value /text= CStr
+                { csValue = "The intlist tests recursive data structures without type variables" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "operator+:(Integer l, ConsList r) = Cons(head=l, tail=r)" )
+            ( Value /text= CStr
+                { csValue = "operator+:(Integer l, ConsList r) = Cons(head=l, tail=r)" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "TODO: Fix example below which should work without explicit return value" )
+            ( Value /text= CStr
+                { csValue = "TODO: Fix example below which should work without explicit return value" }
+            )
         ]
     }

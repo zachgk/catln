@@ -8,8 +8,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/toString( Value /this -> /Data/Primitive/True ) -> /Data/String = CStr "True"
-                        , /Data/toString( Value /this -> /Data/Primitive/False ) -> /Data/String = CStr "False"
+                        [ /Data/toString( Value /this -> /Data/Primitive/True ) -> /Data/String = CStr
+                            { csValue = "True" }
+                        , /Data/toString( Value /this -> /Data/Primitive/False ) -> /Data/String = CStr
+                            { csValue = "False" }
                         ]
                     }
                 )
@@ -26,14 +28,25 @@ Prgm
                 ( "/operator^"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /operator^( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                        [ /operator^
+                            ( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator^( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean = Value False
-                        , /operator^( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean = Value True
-                        , /operator^( Value /l -> /Data/Primitive/False = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean = Value True
-                        , /operator^( Value /l -> /Data/Primitive/False = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean = Value False
+                        [ /operator^
+                            ( Value /l -> /Data/Primitive/True = Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/True = Hole TopType HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean = Value False
+                        , /operator^
+                            ( Value /l -> /Data/Primitive/True = Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/False = Hole TopType HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean = Value True
+                        , /operator^
+                            ( Value /l -> /Data/Primitive/False = Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/True = Hole TopType HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean = Value True
+                        , /operator^
+                            ( Value /l -> /Data/Primitive/False = Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/False = Hole TopType HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean = Value False
                         ]
                     }
                 )
@@ -51,12 +64,16 @@ Prgm
                 ( "/operator~"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /operator~( Value /a= Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                        [ /operator~
+                            ( Value /a= Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator~( Value /a= Hole /Data/Primitive/True HoleActive Nothing ) -> ∀/Data/Primitive/Boolean = Value False
-                        , /operator~( Value /a= Hole /Data/Primitive/False HoleActive Nothing ) -> ∀/Data/Primitive/Boolean = Value True
+                        [ /operator~
+                            ( Value /a= Hole /Data/Primitive/True HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean = Value False
+                        , /operator~
+                            ( Value /a= Hole /Data/Primitive/False HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean = Value True
                         ]
                     }
                 )
@@ -83,13 +100,22 @@ Prgm
                 ( "/operator&&"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /operator&&( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                        [ /operator&&
+                            ( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator&&( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean = Value True
-                        , /operator&&( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean = Value False
-                        , /operator&&( Value /l -> /Data/Primitive/False = Hole TopType HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean = Value False
+                        [ /operator&&
+                            ( Value /l -> /Data/Primitive/True = Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/True = Hole TopType HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean = Value True
+                        , /operator&&
+                            ( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/False = Hole TopType HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean = Value False
+                        , /operator&&
+                            ( Value /l -> /Data/Primitive/False = Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean = Value False
                         ]
                     }
                 )
@@ -97,13 +123,22 @@ Prgm
                 ( "/operator||"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /operator||( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                        [ /operator||
+                            ( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator||( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean = Value True
-                        , /operator||( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean = Value True
-                        , /operator||( Value /l -> /Data/Primitive/False = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean = Value False
+                        [ /operator||
+                            ( Value /l -> /Data/Primitive/True = Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean = Value True
+                        , /operator||
+                            ( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/True = Hole TopType HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean = Value True
+                        , /operator||
+                            ( Value /l -> /Data/Primitive/False = Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/False = Hole TopType HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean = Value False
                         ]
                     }
                 )
@@ -189,54 +224,92 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "# Booleans
-            [Boolean] is the type of truth values — [True] and [False] — with the standard logical
-            operators. Its equality is defined here alongside the type." )
+            ( Value /text= CStr
+                { csValue = "# Booleans
+                [Boolean] is the type of truth values — [True] and [False] — with the standard logical
+                operators. Its equality is defined here alongside the type." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "[boolEq] is the primitive truth-table equality on [Boolean]s; [BoolEqv] and [equal] below build" )
+            ( Value /text= CStr
+                { csValue = "[boolEq] is the primitive truth-table equality on [Boolean]s; [BoolEqv] and [equal] below build" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "  on it." )
+            ( Value /text= CStr
+                { csValue = "  on it." }
+            )
         , /Catln/#print
             ( Value /p= /operator~( Value /a= Value True ) )
-            ( Value /result= CStr "False" )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
         , /Catln/#print
             ( Value /p= /operator&&( Value /l= Value True )( Value /r= Value True ) )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p= /operator&&( Value /l= Value True )( Value /r= Value False ) )
-            ( Value /result= CStr "False" )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
         , /Catln/#print
             ( Value /p= /operator||( Value /l= Value False )( Value /r= Value True ) )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p= /operator||( Value /l= Value False )( Value /r= Value False ) )
-            ( Value /result= CStr "False" )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
         , /Catln/#print
             ( Value /p= /operator^( Value /l= Value True )( Value /r= Value False ) )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p= /operator^( Value /l= Value True )( Value /r= Value True ) )
-            ( Value /result= CStr "False" )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "[Enum] membership is commented out with the [Enum] class (see [Data/data.ct])." )
+            ( Value /text= CStr
+                { csValue = "[Enum] membership is commented out with the [Enum] class (see [Data/data.ct])." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "every(Boolean, isa= [/Data/Enum])" )
+            ( Value /text= CStr
+                { csValue = "every(Boolean, isa= [/Data/Enum])" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Equality
-            [Boolean] is an [Eq] type: [BoolEqv] wraps the primitive [boolEq], and [eq]/[equal] follow." )
+            ( Value /text= CStr
+                { csValue = "## Equality
+                [Boolean] is an [Eq] type: [BoolEqv] wraps the primitive [boolEq], and [eq]/[equal] follow." }
+            )
         , /Catln/#print
             ( Value /p= /operator==( Value /l= Value True )( Value /r= Value True ) )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p= /operator==( Value /l= Value True )( Value /r= Value False ) )
-            ( Value /result= CStr "False" )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Rendering as text" )
+            ( Value /text= CStr
+                { csValue = "## Rendering as text" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "A [Boolean] renders as the text of its constructor." )
+            ( Value /text= CStr
+                { csValue = "A [Boolean] renders as the text of its constructor." }
+            )
         , /Catln/#print( Value /p= Value True )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#print( Value /p= Value False )
-            ( Value /result= CStr "False" )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
         ]
     }

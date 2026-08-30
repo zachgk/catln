@@ -9,7 +9,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= CInt 0 )( Value /this= Value io )
+                            ( Value val= CInt
+                                { ciValue = 0 }
+                            )( Value /this= Value io )
                         ]
                     }
                 )
@@ -20,12 +22,18 @@ Prgm
                         [ Dated( Value /name -> /Data/String )
                             ( Value /due -> ∀/Data/Maybe[ /T=/Data/String ] )
                         , /Dated
-                            ( Value name= CStr "has one" )
+                            ( Value name= CStr
+                                { csValue = "has one" }
+                            )
                             ( Value due= /Data/Maybe/Some
-                                ( Value value= CStr "2026-01-01" )
+                                ( Value value= CStr
+                                    { csValue = "2026-01-01" }
+                                )
                             )
                         , /Dated
-                            ( Value name= CStr "has none" )( Value due= Value /Data/Maybe/Nothing )
+                            ( Value name= CStr
+                                { csValue = "has none" }
+                            )( Value due= Value /Data/Maybe/Nothing )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -47,29 +55,41 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "A field of a data type may be a [/Data/Maybe] of a concrete element.
-            A task read out of an Obsidian note has a due date or it has none, and having none is the
-            [/Data/Maybe/Nothing] arm rather than an empty string standing in for one. So a field has to be able to
-            hold a [/Data/Maybe], which nothing in the checked standard library does — [/Data/Maybe] is used
-            there only as what a function takes and answers with.
-            Written as values declared and never defined, since that is the whole of what a note does with
-            such a field: a checkbox is read into a declaration, and what reads the fields back out is the
-            webdocs reading the evaluated value rather than anything written in Catln. Reading a field back
-            in Catln is a gap of its own — see @test/Integration/disabled/bareDataDeclaration.ct@." )
+            ( Value /text= CStr
+                { csValue = "A field of a data type may be a [/Data/Maybe] of a concrete element.
+                A task read out of an Obsidian note has a due date or it has none, and having none is the
+                [/Data/Maybe/Nothing] arm rather than an empty string standing in for one. So a field has to be able to
+                hold a [/Data/Maybe], which nothing in the checked standard library does — [/Data/Maybe] is used
+                there only as what a function takes and answers with.
+                Written as values declared and never defined, since that is the whole of what a note does with
+                such a field: a checkbox is read into a declaration, and what reads the fields back out is the
+                webdocs reading the evaluated value rather than anything written in Catln. Reading a field back
+                in Catln is a gap of its own — see @test/Integration/disabled/bareDataDeclaration.ct@." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "Shown as the value it is, with no display type standing in for it, as a task is." )
+            ( Value /text= CStr
+                { csValue = "Shown as the value it is, with no display type standing in for it, as a task is." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "Printed so that the values are evaluated and not only built." )
+            ( Value /text= CStr
+                { csValue = "Printed so that the values are evaluated and not only built." }
+            )
         , /Catln/#print
             ( Value /p= /Dated
-                ( Value name= CStr "has one" )
+                ( Value name= CStr
+                    { csValue = "has one" }
+                )
                 ( Value due= /Data/Maybe/Some
-                    ( Value value= CStr "2026-01-01" )
+                    ( Value value= CStr
+                        { csValue = "2026-01-01" }
+                    )
                 )
             )
         , /Catln/#print
             ( Value /p= /Dated
-                ( Value name= CStr "has none" )( Value due= Value /Data/Maybe/Nothing )
+                ( Value name= CStr
+                    { csValue = "has none" }
+                )( Value due= Value /Data/Maybe/Nothing )
             )
         ]
     }

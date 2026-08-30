@@ -5,7 +5,10 @@ Prgm
                 ( "/operator=="
                 , ObjectMapItem
                     { omiDecls =
-                        [ /operator==( EAppArg Value /l -> $/T = Hole $/T HoleActive Nothing )( EAppArg Value /r -> $/T = Hole $/T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Eq ) -> ∀/Data/Primitive/Boolean ]
+                        [ /operator==
+                            ( EAppArg Value /l -> $/T = Hole $/T HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> $/T = Hole $/T HoleActive { haName = Nothing } )( EAppVar /T ∀/Data/Algebra/Eq ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
@@ -116,7 +119,10 @@ Prgm
                 ( "/operator!="
                 , ObjectMapItem
                     { omiDecls =
-                        [ /operator!=( EAppArg Value /l -> $/T = Hole $/T HoleActive Nothing )( EAppArg Value /r -> $/T = Hole $/T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Eq ) -> ∀/Data/Primitive/Boolean ]
+                        [ /operator!=
+                            ( EAppArg Value /l -> $/T = Hole $/T HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> $/T = Hole $/T HoleActive { haName = Nothing } )( EAppVar /T ∀/Data/Algebra/Eq ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =

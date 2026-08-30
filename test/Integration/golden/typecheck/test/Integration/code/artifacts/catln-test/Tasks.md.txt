@@ -10,32 +10,44 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Read [[Welcome]]" ]
-                                ) = CStr "Read [[Welcome]]"
+                                    [ CStr
+                                        { csValue = "Read [[Welcome]]" }
+                                    ]
+                                ) = CStr
+                                { csValue = "Read [[Welcome]]" }
                             )( Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
                         , /Data/Note/Task/Simple
                             ( Value /contents -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Write this note" ]
-                                ) = CStr "Write this note"
+                                    [ CStr
+                                        { csValue = "Write this note" }
+                                    ]
+                                ) = CStr
+                                { csValue = "Write this note" }
                             )( Value /state -> /Data/Primitive/True = Value /Data/Primitive/True )
                         , /Data/Note/Task/Simple
                             ( Value /contents -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Plan the rest" ]
-                                ) = CStr "Plan the rest"
+                                    [ CStr
+                                        { csValue = "Plan the rest" }
+                                    ]
+                                ) = CStr
+                                { csValue = "Plan the rest" }
                             )( Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
                         , /Data/Note/Task/Simple
                             ( Value /contents -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "A checkbox indented deeper is a task of its own" ]
-                                ) = CStr "A checkbox indented deeper is a task of its own"
+                                    [ CStr
+                                        { csValue = "A checkbox indented deeper is a task of its own" }
+                                    ]
+                                ) = CStr
+                                { csValue = "A checkbox indented deeper is a task of its own" }
                             )( Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
                         ]
                     , omiRuntimeDecls = []
@@ -52,8 +64,11 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Tasks" ]
-                                ) = CStr "Tasks"
+                                    [ CStr
+                                        { csValue = "Tasks" }
+                                    ]
+                                ) = CStr
+                                { csValue = "Tasks" }
                             )
                         ]
                     , omiRuntimeDecls = []

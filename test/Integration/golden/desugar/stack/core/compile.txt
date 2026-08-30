@@ -90,7 +90,10 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /operator?->( Value /l= Hole TopType HoleActive Nothing )( Value /r= Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                        [ /operator?->
+                            ( Value /l= Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /r= Hole TopType HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -255,18 +258,28 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "# Catln Core Compiling Types and Annotations" )
+            ( Value /text= CStr
+                { csValue = "# Catln Core Compiling Types and Annotations" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## IO" )
+            ( Value /text= CStr
+                { csValue = "## IO" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Core Annotations
-            The core annotations are all of the annotations used by the compiler and the web docs program." )
+            ( Value /text= CStr
+                { csValue = "## Core Annotations
+                The core annotations are all of the annotations used by the compiler and the web docs program." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Build-in Type Macros" )
+            ( Value /text= CStr
+                { csValue = "## Build-in Type Macros" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Result Classes
-            What a build produces is declared in @core/result.ct@ rather than here. It is a list of files,
-            so declaring it here would make this file reach @core/list.ct@ — and this file is one every
-            program reaches, through the annotations above. See @core/result.ct@ for what that costs." )
+            ( Value /text= CStr
+                { csValue = "## Result Classes
+                What a build produces is declared in @core/result.ct@ rather than here. It is a list of files,
+                so declaring it here would make this file reach @core/list.ct@ — and this file is one every
+                program reaches, through the annotations above. See @core/result.ct@ for what that costs." }
+            )
         ]
     }

@@ -10,8 +10,11 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Query" ]
-                                ) = CStr "Query"
+                                    [ CStr
+                                        { csValue = "Query" }
+                                    ]
+                                ) = CStr
+                                { csValue = "Query" }
                             )
                         ]
                     , omiRuntimeDecls = []

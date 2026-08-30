@@ -89,7 +89,9 @@ Prgm
                             ( Value /msg= toString( Value /this= Value msg ) )
                         , /ContextIn( Value /value= Value echo )( Value /io -> /Catln/IO )= println( Value /this= Value io )
                             ( Value /msg= toString
-                                ( Value /this= CStr """" )
+                                ( Value /this= CStr
+                                    { csValue = """" }
+                                )
                             )
                         , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io
                         ]
@@ -182,7 +184,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value PI -> /Data/Primitive/Float = CFloat 3.14159 ]
+                        [ Value PI -> /Data/Primitive/Float = CFloat
+                            { cfValue = 3.14159 }
+                        ]
                     }
                 )
             ,
@@ -193,7 +197,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ Value DOUBLE_PI -> /Data/Primitive/Float = /operator*( Value /l= Value PI )
-                            ( Value /r= CFloat 2.0 )
+                            ( Value /r= CFloat
+                                { cfValue = 2.0 }
+                            )
                         ]
                     }
                 )
@@ -374,7 +380,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value MAX_SIZE -> /Data/Primitive/Integer = CInt 100 ]
+                        [ Value MAX_SIZE -> /Data/Primitive/Integer = CInt
+                            { ciValue = 100 }
+                        ]
                     }
                 )
             ,

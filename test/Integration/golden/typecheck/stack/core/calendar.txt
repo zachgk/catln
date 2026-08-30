@@ -159,31 +159,37 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "# Calendars
-            A calendar lays out the things a page reaches which sit on a day, on the days they sit on.
-            What such a thing is, is not decided here. This declares only what a calendar needs to know
-            about one — which day it is assigned to — and leaves every answer to whoever has something to
-            show. So a calendar shows a kind of thing this file has never heard of, and adding one is
-            saying that it belongs and answering that question, both written where that kind of thing is
-            declared." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "# Calendars
+                A calendar lays out the things a page reaches which sit on a day, on the days they sit on.
+                What such a thing is, is not decided here. This declares only what a calendar needs to know
+                about one — which day it is assigned to — and leaves every answer to whoever has something to
+                show. So a calendar shows a kind of thing this file has never heard of, and adding one is
+                saying that it belongs and answering that question, both written where that kind of thing is
+                declared." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "[CalendarEntry] is the class of things a calendar can show. A task is one, which
-            @stack/core/note.ct@ says where a task is declared rather than this file saying it here.
-            Membership is declared by the member and not by the class for the reason the class exists: a
-            calendar which had to be told about each of its members would be a calendar of a fixed list of
-            things, and the list would live in the one file that has no reason to know what is on it.
-            There is a second reason it must be that way round, which is a limitation rather than a
-            choice. An arm answering an abstract method for a type that has fields is not read as
-            fulfilling the declaration unless it is written in a different file from the declaration. So
-            [calendarDay] is declared here and answered elsewhere, and this file sits below the files
-            holding its members rather than above them. The layering that forces is the one wanted anyway." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "[CalendarEntry] is the class of things a calendar can show. A task is one, which
+                @stack/core/note.ct@ says where a task is declared rather than this file saying it here.
+                Membership is declared by the member and not by the class for the reason the class exists: a
+                calendar which had to be told about each of its members would be a calendar of a fixed list of
+                things, and the list would live in the one file that has no reason to know what is on it.
+                There is a second reason it must be that way round, which is a limitation rather than a
+                choice. An arm answering an abstract method for a type that has fields is not read as
+                fulfilling the declaration unless it is written in a different file from the declaration. So
+                [calendarDay] is declared here and answered elsewhere, and this file sits below the files
+                holding its members rather than above them. The layering that forces is the one wanted anyway." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "A [/Data/Maybe] of something showable is showable, which is what lets an answer of
-            [calendarDay] be evaluated at all: a tree is built toward a class, and a tree built toward a
-            value's own type comes back as the unevaluated application of it.
-            Said here rather than in @stack/core/maybe.ct@, where it would read as the more general truth
-            it is. That file does not reach the webdocs, and having it reach them would put it in the
-            SCC that @compile.ct@ and @webdoc.ct@ are in, which is a cost paid by every compile for the
-            sake of one caller. It moves there when there is a second one." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "A [/Data/Maybe] of something showable is showable, which is what lets an answer of
+                [calendarDay] be evaluated at all: a tree is built toward a class, and a tree built toward a
+                value's own type comes back as the unevaluated application of it.
+                Said here rather than in @stack/core/maybe.ct@, where it would read as the more general truth
+                it is. That file does not reach the webdocs, and having it reach them would put it in the
+                SCC that @compile.ct@ and @webdoc.ct@ are in, which is a cost paid by every compile for the
+                sake of one caller. It moves there when there is a second one." }
+            )
         ]
     }

@@ -10,8 +10,11 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Finish reading the page these notes are written over" ]
-                                ) = CStr "Finish reading the page these notes are written over"
+                                    [ CStr
+                                        { csValue = "Finish reading the page these notes are written over" }
+                                    ]
+                                ) = CStr
+                                { csValue = "Finish reading the page these notes are written over" }
                             )( Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
                         ]
                     , omiRuntimeDecls = []
@@ -28,8 +31,11 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Overlay" ]
-                                ) = CStr "Overlay"
+                                    [ CStr
+                                        { csValue = "Overlay" }
+                                    ]
+                                ) = CStr
+                                { csValue = "Overlay" }
                             )
                         ]
                     , omiRuntimeDecls = []

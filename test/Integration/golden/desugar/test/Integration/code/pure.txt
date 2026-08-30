@@ -50,10 +50,16 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "Cross-module check that [pure] (declared over [Monad] in stack/core/monad.ct) dispatches by the" )
+            ( Value /text= CStr
+                { csValue = "Cross-module check that [pure] (declared over [Monad] in stack/core/monad.ct) dispatches by the" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "call site's expected type: the same call [pure(v= ...)] builds a [Some] or a singleton [Cons]" )
+            ( Value /text= CStr
+                { csValue = "call site's expected type: the same call [pure(v= ...)] builds a [Some] or a singleton [Cons]" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "depending only on the caller's declared return type (return-type-directed dispatch)." )
+            ( Value /text= CStr
+                { csValue = "depending only on the caller's declared return type (return-type-directed dispatch)." }
+            )
         ]
     }

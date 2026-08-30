@@ -24,7 +24,9 @@ Prgm
                         [ maybeBind.$b5054c
                             ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value $b5054c-arg@Value x )= /Data/Maybe/Some
                             ( Value value= /operator+( Value /l= Value x )
-                                ( Value /r= CInt 1 )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
                             )
                         ]
                     }
@@ -48,10 +50,16 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "Exercises the bind operator ([<-]) routing through [bindap]'s [mmap] arm — the monadic bind over" )
+            ( Value /text= CStr
+                { csValue = "Exercises the bind operator ([<-]) routing through [bindap]'s [mmap] arm — the monadic bind over" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "[Maybe]. The continuation returns a [Maybe], so the results are flattened (not nested). A" )
+            ( Value /text= CStr
+                { csValue = "[Maybe]. The continuation returns a [Maybe], so the results are flattened (not nested). A" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "bind-using function needs a declared return type to pin the [bindap] result." )
+            ( Value /text= CStr
+                { csValue = "bind-using function needs a declared return type to pin the [bindap] result." }
+            )
         ]
     }

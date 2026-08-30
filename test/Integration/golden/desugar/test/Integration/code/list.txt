@@ -8,10 +8,13 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ llength( Value /this= Value Nil )= CInt 0
+                        [ llength( Value /this= Value Nil )= CInt
+                            { ciValue = 0 }
                         , llength
                             ( Value /this= Cons( Value head )( Value tail ) )= /operator+
-                            ( Value /l= CInt 1 )
+                            ( Value /l= CInt
+                                { ciValue = 1 }
+                            )
                             ( Value /r= llength( Value /this= Value tail ) )
                         ]
                     }
@@ -27,13 +30,19 @@ Prgm
                             ( Value val= /operator-
                                 ( Value /l= llength
                                     ( Value /this= /Data/List/Cons
-                                        ( Value /head= CInt 5 )
+                                        ( Value /head= CInt
+                                            { ciValue = 5 }
+                                        )
                                         ( Value /tail= /Data/List/Cons
-                                            ( Value /head= CInt 3 )( Value /tail= Value /Data/List/Nil )
+                                            ( Value /head= CInt
+                                                { ciValue = 3 }
+                                            )( Value /tail= Value /Data/List/Nil )
                                         )
                                     )
                                 )
-                                ( Value /r= CInt 2 )
+                                ( Value /r= CInt
+                                    { ciValue = 2 }
+                                )
                             )( Value /this= Value io )
                         ]
                     }
@@ -46,8 +55,12 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "The list tests recursive data structures without type variables" )
+            ( Value /text= CStr
+                { csValue = "The list tests recursive data structures without type variables" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "TODO: Use core length rather than llength" )
+            ( Value /text= CStr
+                { csValue = "TODO: Use core length rather than llength" }
+            )
         ]
     }

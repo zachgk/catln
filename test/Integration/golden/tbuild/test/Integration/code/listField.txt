@@ -32,7 +32,9 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "none" ]
+                                    [ CStr
+                                        { csValue = "none" }
+                                    ]
                                 ) = "none"
                             )( EAppArg Value /tags -> /Data/List/Nil = Value /Data/List/Nil )
                         , /Tagged
@@ -40,7 +42,9 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "one" ]
+                                    [ CStr
+                                        { csValue = "one" }
+                                    ]
                                 ) = "one"
                             )
                             ( EAppArg Value /tags -> /Data/List/Cons
@@ -48,7 +52,9 @@ Prgm
                                     ( Nothing
                                     , ∅
                                     ,
-                                        [ CStr "x" ]
+                                        [ CStr
+                                            { csValue = "x" }
+                                        ]
                                     )
                                 , /tail=/Data/List/Nil
                                 ) = /Data/List/Cons
@@ -56,7 +62,9 @@ Prgm
                                     ( Nothing
                                     , ∅
                                     ,
-                                        [ CStr "x" ]
+                                        [ CStr
+                                            { csValue = "x" }
+                                        ]
                                     ) = "x"
                                 )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                             )
@@ -77,7 +85,9 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "none" ]
+                                    [ CStr
+                                        { csValue = "none" }
+                                    ]
                                 ) = "none"
                             )( EAppArg Value /tags -> /Data/List/Nil = Value /Data/List/Nil )
                         , /ConsTagged
@@ -85,7 +95,9 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "one" ]
+                                    [ CStr
+                                        { csValue = "one" }
+                                    ]
                                 ) = "one"
                             )
                             ( EAppArg Value /tags -> /Data/List/Cons
@@ -93,7 +105,9 @@ Prgm
                                     ( Nothing
                                     , ∅
                                     ,
-                                        [ CStr "x" ]
+                                        [ CStr
+                                            { csValue = "x" }
+                                        ]
                                     )
                                 , /tail=/Data/List/Nil
                                 ) = /Data/List/Cons
@@ -101,7 +115,9 @@ Prgm
                                     ( Nothing
                                     , ∅
                                     ,
-                                        [ CStr "x" ]
+                                        [ CStr
+                                            { csValue = "x" }
+                                        ]
                                     ) = "x"
                                 )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                             )

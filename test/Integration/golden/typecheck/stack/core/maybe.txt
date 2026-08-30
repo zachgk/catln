@@ -40,10 +40,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Monad/mmap( Value /m -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( /fn( Value /v ) ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
+                            ( /fn( Value /v ) -> ∀/Data/Monad[ /T=TopType ] ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
                         , /Data/Monad/mmap
                             ( Value /m -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( Value /value ) )
-                            ( /fn( Value /v ) )= /fn( Value /v -> TVArg /value = Value /value )
+                            ( /fn( Value /v ) -> ∀/Data/Monad[ /T=TopType ] ) -> ∀/Data/Monad[ /T=TopType ] = /fn( Value /v -> TVArg /value = Value /value )
                         ]
                     }
                 )
@@ -83,12 +83,12 @@ Prgm
                     , omiDefs =
                         [ /Data/Algebra/equal( Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /this -> /Data/Maybe/Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         , /Data/Algebra/equal
-                            ( Value /other -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( Value /value ) )( Value /this -> /Data/Maybe/Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                            ( Value /other -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) = /Data/Maybe/Some( Value /value -> ∀/Data/Algebra/Eq ) )( Value /this -> /Data/Maybe/Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/Algebra/equal( Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( Value /this -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( Value /value ) ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                            ( Value /this -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) = /Data/Maybe/Some( Value /value -> ∀/Data/Algebra/Eq ) ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/Algebra/equal
-                            ( Value /other -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( Value /value@Value /bv ) )
-                            ( Value /this -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Maybe/Some[ /T : ∀/Data/Algebra/Eq ]( Value /value@Value /av -> ∀/Data/Algebra/Eq ) ) -> ∀/Data/Primitive/Boolean = /operator==( Value /l -> TVArg /av = Value /av )( Value /r -> TVArg /bv = Value /bv )
+                            ( Value /other -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) = /Data/Maybe/Some( Value /value@Value /bv -> ∀/Data/Algebra/Eq ) )
+                            ( Value /this -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) = /Data/Maybe/Some[ /T : ∀/Data/Algebra/Eq ]( Value /value@Value /av -> ∀/Data/Algebra/Eq ) ) -> ∀/Data/Primitive/Boolean = /operator==( Value /l -> TVArg /av = Value /av )( Value /r -> TVArg /bv = Value /bv )
                         ]
                     }
                 )
@@ -101,12 +101,12 @@ Prgm
                     , omiDefs =
                         [ /Data/Algebra/compareTo( Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /this -> /Data/Maybe/Nothing ) -> /Data/Algebra/Equal = Value /Data/Algebra/Equal
                         , /Data/Algebra/compareTo
-                            ( Value /other -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( Value /value ) )( Value /this -> /Data/Maybe/Nothing ) -> /Data/Algebra/LessThan = Value /Data/Algebra/LessThan
+                            ( Value /other -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Ord ]( /value=$/T ) = /Data/Maybe/Some( Value /value -> ∀/Data/Algebra/Ord ) )( Value /this -> /Data/Maybe/Nothing ) -> /Data/Algebra/LessThan = Value /Data/Algebra/LessThan
                         , /Data/Algebra/compareTo( Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( Value /this -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( Value /value ) ) -> /Data/Algebra/GreaterThan = Value /Data/Algebra/GreaterThan
+                            ( Value /this -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Ord ]( /value=$/T ) = /Data/Maybe/Some( Value /value -> ∀/Data/Algebra/Ord ) ) -> /Data/Algebra/GreaterThan = Value /Data/Algebra/GreaterThan
                         , /Data/Algebra/compareTo
-                            ( Value /other -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( Value /value@Value /bv ) )
-                            ( Value /this -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Ord ]( /value=∀/Data/Algebra/Ord ) = /Data/Maybe/Some[ /T : ∀/Data/Algebra/Ord ]( Value /value@Value /av -> ∀/Data/Algebra/Ord ) ) -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /Data/Algebra/compareTo( Value /other -> TVArg /bv = Value /bv )( Value /this -> TVArg /av = Value /av )
+                            ( Value /other -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Ord ]( /value=$/T ) = /Data/Maybe/Some( Value /value@Value /bv -> ∀/Data/Algebra/Ord ) )
+                            ( Value /this -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Ord ]( /value=$/T ) = /Data/Maybe/Some[ /T : ∀/Data/Algebra/Ord ]( Value /value@Value /av -> ∀/Data/Algebra/Ord ) ) -> ∀/Data/Algebra/Comparison = /Data/Algebra/compareTo( Value /other -> TVArg /bv = Value /bv )( Value /this -> TVArg /av = Value /av )
                         ]
                     }
                 )
@@ -126,21 +126,21 @@ Prgm
             , /Data/Maybe
             ,
                 [ ∀/Data/Maybe[ /T=∀/Data/Algebra/Eq ] ]
-            , Just "       "
+            , Just ""
             )
         , CGClass
             ( False
             , /Data/Maybe
             ,
                 [ ∀/Data/Maybe[ /T=∀/Data/Algebra/Ord ] ]
-            , Just "       "
+            , Just ""
             )
         , CGClass
             ( False
             , /Data/Maybe
             ,
                 [ ∀/Data/Maybe[ /T=$_/T ] ]
-            , Just "       "
+            , Just ""
             )
         , CGClass
             ( True
@@ -149,166 +149,250 @@ Prgm
                 [ /Data/Maybe/Some[ /T=$_/T ]( /value=$/T )
                 , /Data/Maybe/Nothing
                 ]
-            , Just "A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]. A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]. A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]. A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]. A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]. A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]. A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]. A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]."
+            , Just "A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]."
             )
         , CGClass
             ( False
             , /Data/Maybe
             ,
                 [ ∀/Data/Maybe[ /T=$_/T ] ]
-            , Just "       "
+            , Just ""
             )
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "# Maybe
-            A [Maybe] holds either a single value ([Some]) or nothing ([Nothing]). Unlike a [ConsList] it is
-            not recursive, so it is the simplest parameterized type on which to define structural equality
-            and ordering. The [Some] and [Nothing] constructors are named into the [Maybe] namespace, so
-            they live at [/Data/Maybe/Some] and [/Data/Maybe/Nothing] rather than loose under [/Data]." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "# Maybe
+                A [Maybe] holds either a single value ([Some]) or nothing ([Nothing]). Unlike a [ConsList] it is
+                not recursive, so it is the simplest parameterized type on which to define structural equality
+                and ordering. The [Some] and [Nothing] constructors are named into the [Maybe] namespace, so
+                they live at [/Data/Maybe/Some] and [/Data/Maybe/Nothing] rather than loose under [/Data]." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "# Maybe equality and ordering examples" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "# Maybe equality and ordering examples" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "A [Maybe] of any [Eq] element is an [Eq] member (see the end of this file), so [operator==]" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "A [Maybe] of any [Eq] element is an [Eq] member (see the end of this file), so [operator==]" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  checks both arms structurally." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  checks both arms structurally." }
+            )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
                 ( Value /l -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
-                    ( Value /value -> /Data/Primitive/Integer = CInt 1 )
+                    ( Value /value -> /Data/Primitive/Integer = CInt
+                        { ciValue = 1 }
+                    )
                 )
                 ( Value /r -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
-                    ( Value /value -> /Data/Primitive/Integer = CInt 1 )
+                    ( Value /value -> /Data/Primitive/Integer = CInt
+                        { ciValue = 1 }
+                    )
                 )
             )
-            ( Value /result -> /Data/String = CStr "True" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
                 ( Value /l -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
-                    ( Value /value -> /Data/Primitive/Integer = CInt 1 )
+                    ( Value /value -> /Data/Primitive/Integer = CInt
+                        { ciValue = 1 }
+                    )
                 )
                 ( Value /r -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
-                    ( Value /value -> /Data/Primitive/Integer = CInt 2 )
+                    ( Value /value -> /Data/Primitive/Integer = CInt
+                        { ciValue = 2 }
+                    )
                 )
             )
-            ( Value /result -> /Data/String = CStr "False" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "False" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "A [Maybe] of any [Ord] element is an [Ord] member (see the end of this file), so [compareTo]" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "A [Maybe] of any [Ord] element is an [Ord] member (see the end of this file), so [compareTo]" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  orders both arms structurally, with [Nothing] before any [Some]." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  orders both arms structurally, with [Nothing] before any [Some]." }
+            )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isLess
-                ( Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /Data/Algebra/compareTo
-                    ( Value /other -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
-                        ( Value /value -> /Data/Primitive/Integer = CInt 2 )
+            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Algebra/isLess
+                ( Value /this -> ∀/Data/Algebra/Comparison = /Data/Algebra/compareTo
+                    ( Value /other -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                        ( Value /value -> /Data/Primitive/Integer = CInt
+                            { ciValue = 2 }
+                        )
                     )
                     ( Value /this -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
-                        ( Value /value -> /Data/Primitive/Integer = CInt 1 )
+                        ( Value /value -> /Data/Primitive/Integer = CInt
+                            { ciValue = 1 }
+                        )
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr "True" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isEq
-                ( Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /Data/Algebra/compareTo
-                    ( Value /other -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
-                        ( Value /value -> /Data/Primitive/Integer = CInt 2 )
+            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Algebra/isEq
+                ( Value /this -> ∀/Data/Algebra/Comparison = /Data/Algebra/compareTo
+                    ( Value /other -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                        ( Value /value -> /Data/Primitive/Integer = CInt
+                            { ciValue = 2 }
+                        )
                     )
                     ( Value /this -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
-                        ( Value /value -> /Data/Primitive/Integer = CInt 2 )
+                        ( Value /value -> /Data/Primitive/Integer = CInt
+                            { ciValue = 2 }
+                        )
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr "True" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Algebra/isGreater
-                ( Value /this -> /Data/Algebra/GreaterThan = /Data/Algebra/compareTo( Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                    ( Value /this -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
-                        ( Value /value -> /Data/Primitive/Integer = CInt 1 )
+                ( Value /this -> ∀/Data/Algebra/Comparison = /Data/Algebra/compareTo( Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+                    ( Value /this -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                        ( Value /value -> /Data/Primitive/Integer = CInt
+                            { ciValue = 1 }
+                        )
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr "True" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "True" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "# Maybe Eq membership
-            Makes a [Maybe] of any [Eq] element a proper member of [Eq], so the generic [operator==]
-            dispatches through the [equal] method. Two [Maybe]s are equal when both are [Nothing], or both
-            are [Some] of equal values. Mirrors the [ConsList] membership in [Data/list]." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "# Maybe Eq membership
+                Makes a [Maybe] of any [Eq] element a proper member of [Eq], so the generic [operator==]
+                dispatches through the [equal] method. Two [Maybe]s are equal when both are [Nothing], or both
+                are [Some] of equal values. Mirrors the [ConsList] membership in [Data/list]." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "# Maybe Ord membership
-            Makes a [Maybe] of any [Ord] element a proper member of [Ord], so [compareTo] dispatches per
-            constructor. A [Maybe] of [Ord] elements is ordered with [Nothing] before any [Some], and two
-            [Some]s ordered by their wrapped values. Mirrors the [Eq] membership above (and every [Ord] is an
-            [Eq], which the [Eq] membership already supplies)." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "# Maybe Ord membership
+                Makes a [Maybe] of any [Ord] element a proper member of [Ord], so [compareTo] dispatches per
+                constructor. A [Maybe] of [Ord] elements is ordered with [Nothing] before any [Some], and two
+                [Some]s ordered by their wrapped values. Mirrors the [Eq] membership above (and every [Ord] is an
+                [Eq], which the [Eq] membership already supplies)." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "# Maybe Functor instance
-            Makes a [Maybe] a [Functor]: [fmap] applies a function to the wrapped value of a [Some] and
-            leaves a [Nothing] unchanged. The instances are defined under the declaration's absolute name
-            (see the [ConsList] instance in [Data/list] for the naming rationale)." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "# Maybe Functor instance
+                Makes a [Maybe] a [Functor]: [fmap] applies a function to the wrapped value of a [Some] and
+                leaves a [Nothing] unchanged. The instances are defined under the declaration's absolute name
+                (see the [ConsList] instance in [Data/list] for the naming rationale)." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "# Maybe Monad instance
-            Makes a [Maybe] a [Monad]: [mmap] applies a value-to-[Maybe] function to the wrapped value of a
-            [Some] (returning whatever [Maybe] the function produces, which flattens the two layers into one),
-            and short-circuits a [Nothing] unchanged. Mirrors the [Functor] instance above; the definitions
-            are written under the declaration's absolute name (see the [ConsList] instance in [Data/list] for
-            the naming rationale)." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "# Maybe Monad instance
+                Makes a [Maybe] a [Monad]: [mmap] applies a value-to-[Maybe] function to the wrapped value of a
+                [Some] (returning whatever [Maybe] the function produces, which flattens the two layers into one),
+                and short-circuits a [Nothing] unchanged. Mirrors the [Functor] instance above; the definitions
+                are written under the declaration's absolute name (see the [ConsList] instance in [Data/list] for
+                the naming rationale)." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "[mmap] binds through the [Some] arm (its result is whatever [Maybe] the function returns) and" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "[mmap] binds through the [Some] arm (its result is whatever [Maybe] the function returns) and" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  short-circuits the [Nothing] arm. [Maybe] is already an [Eq] member (see above), so the" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  short-circuits the [Nothing] arm. [Maybe] is already an [Eq] member (see above), so the" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  flattened result compares with [operator==]. (A function whose body computes the wrapped" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  flattened result compares with [operator==]. (A function whose body computes the wrapped" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  value, e.g. [Some(value= v + 1)], is not yet comparable — a pre-existing gap unrelated to" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  value, e.g. [Some(value= v + 1)], is not yet comparable — a pre-existing gap unrelated to" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  [Monad]; see the note in [Data/monad].)" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  [Monad]; see the note in [Data/monad].)" }
+            )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
                 ( Value /l -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Monad/mmap
                     ( Value /m -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
-                        ( Value /value -> /Data/Primitive/Integer = CInt 5 )
+                        ( Value /value -> /Data/Primitive/Integer = CInt
+                            { ciValue = 5 }
+                        )
                     )
-                    ( /fn( Value /v ) -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
-                        ( Value /value -> /Data/Primitive/Integer = CInt 6 )
+                    ( /fn( Value /v ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                        ( Value /value -> /Data/Primitive/Integer = CInt
+                            { ciValue = 6 }
+                        )
                     )
                 )
                 ( Value /r -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
-                    ( Value /value -> /Data/Primitive/Integer = CInt 6 )
+                    ( Value /value -> /Data/Primitive/Integer = CInt
+                        { ciValue = 6 }
+                    )
                 )
             )
-            ( Value /result -> /Data/String = CStr "True" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
                 ( Value /l -> /Data/Maybe/Nothing = /Data/Monad/mmap
                     ( Value /m -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
-                        ( Value /value -> /Data/Primitive/Integer = CInt 5 )
+                        ( Value /value -> /Data/Primitive/Integer = CInt
+                            { ciValue = 5 }
+                        )
                     )
                     ( /fn( Value /v ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                 )( Value /r -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
             )
-            ( Value /result -> /Data/String = CStr "True" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
                 ( Value /l -> /Data/Maybe/Nothing = /Data/Monad/mmap( Value /m -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                     ( /fn( Value /v ) -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( Value /value -> TVArg /v = Value /v ) )
                 )( Value /r -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
             )
-            ( Value /result -> /Data/String = CStr "True" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "True" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "[pure] for [Maybe] wraps the value in a [Some]; the call site's expected [Maybe] type selects" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "[pure] for [Maybe] wraps the value in a [Some]; the call site's expected [Maybe] type selects" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  this instance (return-type-directed dispatch — see [pure] in [Data/monad])." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  this instance (return-type-directed dispatch — see [pure] in [Data/monad])." }
+            )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
                 ( Value /l -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/pureSomeInt
-                    ( Value /v -> /Data/Primitive/Integer = CInt 5 )
+                    ( Value /v -> /Data/Primitive/Integer = CInt
+                        { ciValue = 5 }
+                    )
                 )
                 ( Value /r -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
-                    ( Value /value -> /Data/Primitive/Integer = CInt 5 )
+                    ( Value /value -> /Data/Primitive/Integer = CInt
+                        { ciValue = 5 }
+                    )
                 )
             )
-            ( Value /result -> /Data/String = CStr "True" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "True" }
+            )
         ]
     }

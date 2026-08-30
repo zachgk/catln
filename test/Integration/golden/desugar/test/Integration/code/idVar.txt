@@ -10,7 +10,9 @@ Prgm
                     , omiDefs =
                         [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
                             ( Value val= id
-                                ( Value x= CInt 0 )
+                                ( Value x= CInt
+                                    { ciValue = 0 }
+                                )
                             )( Value /this= Value io )
                         ]
                     }
@@ -33,7 +35,9 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "Tests id with type variables.
-            This is one of the simplest tests with type variables." )
+            ( Value /text= CStr
+                { csValue = "Tests id with type variables.
+                This is one of the simplest tests with type variables." }
+            )
         ]
     }

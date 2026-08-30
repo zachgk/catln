@@ -36,8 +36,9 @@ import           Data.Proxy          (Proxy (..))
 import           Eval.Common         (Val)
 import           GHC.Generics        (Generic)
 import           Semantics.CtType
-import           Semantics.Prgm      (ObjectBasis)
-import           Semantics.Types     (PartialKey)
+import           Semantics.Prgm      (Hole, ObjectBasis)
+import           Semantics.Types     (Constant, PartialKey, PartialName,
+                                      PtArgMode, TypeVarLoc)
 import           Semantics.Val       hiding (Val)
 import           Text.Printf
 
@@ -87,6 +88,11 @@ hsBuiltinPage = foldl (flip ($)) emptyCtPage hsBuiltinTypes
 hsPrgmTypes :: [CtPage -> CtPage]
 hsPrgmTypes = [
   ctPageInto (Proxy :: Proxy ObjectBasis),
+  ctPageInto (Proxy :: Proxy Hole),
+  ctPageInto (Proxy :: Proxy Constant),
+  ctPageInto (Proxy :: Proxy PartialName),
+  ctPageInto (Proxy :: Proxy PtArgMode),
+  ctPageInto (Proxy :: Proxy TypeVarLoc),
   ctPageInto (Proxy :: Proxy PartialKey)
               ]
 

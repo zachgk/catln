@@ -6,7 +6,9 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/Page
-                            ( Value /title= CStr "Query" )
+                            ( Value /title= CStr
+                                { csValue = "Query" }
+                            )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

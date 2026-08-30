@@ -6,8 +6,12 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /operator<=( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-                        , /operator<=( Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        [ /operator<=
+                            ( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
+                        , /operator<=
+                            ( Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -18,8 +22,12 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /operator//( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
-                        , /operator//( Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> /Data/Primitive/Float
+                        [ /operator//
+                            ( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } ) -> /Data/Primitive/Integer
+                        , /operator//
+                            ( Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } ) -> /Data/Primitive/Float
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -30,7 +38,10 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /operator++( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer ]
+                        [ /operator++
+                            ( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } ) -> /Data/Primitive/Integer
+                        ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -40,8 +51,12 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /operator>=( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-                        , /operator>=( Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        [ /operator>=
+                            ( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
+                        , /operator>=
+                            ( Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -62,7 +77,10 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /operator%( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer ]
+                        [ /operator%
+                            ( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } ) -> /Data/Primitive/Integer
+                        ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -91,8 +109,12 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /operator+( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
-                        , /operator+( Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> /Data/Primitive/Float
+                        [ /operator+
+                            ( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } ) -> /Data/Primitive/Integer
+                        , /operator+
+                            ( Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } ) -> /Data/Primitive/Float
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -103,8 +125,12 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /operator<( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-                        , /operator<( Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        [ /operator<
+                            ( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
+                        , /operator<
+                            ( Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -135,14 +161,24 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /operator-( Value /a -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
-                        , /operator-( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
-                        , /operator-( Value /a -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> /Data/Primitive/Float
-                        , /operator-( Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> /Data/Primitive/Float
+                        [ /operator-
+                            ( Value /a -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } ) -> /Data/Primitive/Integer
+                        , /operator-
+                            ( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } ) -> /Data/Primitive/Integer
+                        , /operator-
+                            ( Value /a -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } ) -> /Data/Primitive/Float
+                        , /operator-
+                            ( Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } ) -> /Data/Primitive/Float
                         ]
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator-( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing@Value /x )( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing@Value /x ) -> /Data/Primitive/Integer = CInt 0 ]
+                        [ /operator-
+                            ( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing }@Value /x )
+                            ( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing }@Value /x ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
+                        ]
                     }
                 )
             ,
@@ -162,7 +198,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Primitive/nonNeg( Value /this -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean = /operator>=( Value /l -> TVArg /this = Value /this )
-                            ( Value /r -> /Data/Primitive/Integer = CInt 0 )
+                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                { ciValue = 0 }
+                            )
                         ]
                     }
                 )
@@ -171,8 +209,12 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /operator>( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-                        , /operator>( Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        [ /operator>
+                            ( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
+                        , /operator>
+                            ( Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -197,7 +239,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /Data/Primitive/mempty -> /Data/Primitive/Integer = CInt 0 ]
+                        [ Value /Data/Primitive/mempty -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
+                        ]
                     }
                 )
             ,
@@ -253,8 +297,12 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /operator*( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
-                        , /operator*( Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> /Data/Primitive/Float
+                        [ /operator*
+                            ( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive { haName = Nothing } ) -> /Data/Primitive/Integer
+                        , /operator*
+                            ( Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } )
+                            ( Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive { haName = Nothing } ) -> /Data/Primitive/Float
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -422,103 +470,199 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "# Numbers
-            The numeric primitives [Integer] and [Float] make up the [Number] class. Their arithmetic and
-            comparison operators are primitive runtime operations, and their [Eq]/[Ord] instances —
-            defined here alongside the types — build on those primitives." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "# Numbers
+                The numeric primitives [Integer] and [Float] make up the [Number] class. Their arithmetic and
+                comparison operators are primitive runtime operations, and their [Eq]/[Ord] instances —
+                defined here alongside the types — build on those primitives." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "## Integers" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "## Integers" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "The diagonal of subtraction: a value minus itself is zero. Both operands are aliased to the same" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "The diagonal of subtraction: a value minus itself is zero. Both operands are aliased to the same" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  [x] (a non-linear pattern), so this only matches equal operands and short-circuits to [0]. It" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  [x] (a non-linear pattern), so this only matches equal operands and short-circuits to [0]. It" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  overlaps the primitive subtraction, so the auto-derived overlap-agreement test checks they" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  overlaps the primitive subtraction, so the auto-derived overlap-agreement test checks they" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  agree on the diagonal — i.e. it derives and verifies [x - x == 0]." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  agree on the diagonal — i.e. it derives and verifies [x - x == 0]." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "The arithmetic operators on [Integer], shown on concrete inputs. [operator//] is integer" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "The arithmetic operators on [Integer], shown on concrete inputs. [operator//] is integer" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  division (rounding toward zero) and [operator%] is the remainder." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  division (rounding toward zero) and [operator%] is the remainder." }
+            )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /operator+
-                ( Value /l -> /Data/Primitive/Integer = CInt 2 )
-                ( Value /r -> /Data/Primitive/Integer = CInt 3 )
+                ( Value /l -> /Data/Primitive/Integer = CInt
+                    { ciValue = 2 }
+                )
+                ( Value /r -> /Data/Primitive/Integer = CInt
+                    { ciValue = 3 }
+                )
             )
-            ( Value /result -> /Data/String = CStr "5" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "5" }
+            )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /operator-
-                ( Value /l -> /Data/Primitive/Integer = CInt 5 )
-                ( Value /r -> /Data/Primitive/Integer = CInt 2 )
+                ( Value /l -> /Data/Primitive/Integer = CInt
+                    { ciValue = 5 }
+                )
+                ( Value /r -> /Data/Primitive/Integer = CInt
+                    { ciValue = 2 }
+                )
             )
-            ( Value /result -> /Data/String = CStr "3" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "3" }
+            )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /operator*
-                ( Value /l -> /Data/Primitive/Integer = CInt 4 )
-                ( Value /r -> /Data/Primitive/Integer = CInt 3 )
+                ( Value /l -> /Data/Primitive/Integer = CInt
+                    { ciValue = 4 }
+                )
+                ( Value /r -> /Data/Primitive/Integer = CInt
+                    { ciValue = 3 }
+                )
             )
-            ( Value /result -> /Data/String = CStr "12" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "12" }
+            )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /operator//
-                ( Value /l -> /Data/Primitive/Integer = CInt 10 )
-                ( Value /r -> /Data/Primitive/Integer = CInt 3 )
+                ( Value /l -> /Data/Primitive/Integer = CInt
+                    { ciValue = 10 }
+                )
+                ( Value /r -> /Data/Primitive/Integer = CInt
+                    { ciValue = 3 }
+                )
             )
-            ( Value /result -> /Data/String = CStr "3" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "3" }
+            )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /operator%
-                ( Value /l -> /Data/Primitive/Integer = CInt 7 )
-                ( Value /r -> /Data/Primitive/Integer = CInt 3 )
+                ( Value /l -> /Data/Primitive/Integer = CInt
+                    { ciValue = 7 }
+                )
+                ( Value /r -> /Data/Primitive/Integer = CInt
+                    { ciValue = 3 }
+                )
             )
-            ( Value /result -> /Data/String = CStr "1" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "1" }
+            )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator<
-                ( Value /l -> /Data/Primitive/Integer = CInt 2 )
-                ( Value /r -> /Data/Primitive/Integer = CInt 3 )
+                ( Value /l -> /Data/Primitive/Integer = CInt
+                    { ciValue = 2 }
+                )
+                ( Value /r -> /Data/Primitive/Integer = CInt
+                    { ciValue = 3 }
+                )
             )
-            ( Value /result -> /Data/String = CStr "True" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "True" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "The primitive integer "less than" is also exposed as a named function so [Data/Algebra/ord]'s" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "The primitive integer "less than" is also exposed as a named function so [Data/Algebra/ord]'s" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  [Ordering] instances can build a [Comparison] from it." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  [Ordering] instances can build a [Comparison] from it." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "The non-negativity predicate: an [Integer] is at least zero. Defined as a method so it can be" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "The non-negativity predicate: an [Integer] is at least zero. Defined as a method so it can be" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  used as a projection refinement (e.g. [Integer_nonNeg], desugaring to [$this.nonNeg == True])." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  used as a projection refinement (e.g. [Integer_nonNeg], desugaring to [$this.nonNeg == True])." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "[Integer]'s instances of the algebra ordering/equality classes. [IntOrdering] is its" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "[Integer]'s instances of the algebra ordering/equality classes. [IntOrdering] is its" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  [/Data/Algebra/Ordering]; [ord] and [compareTo] follow from it, and [eq] derives from the" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  [/Data/Algebra/Ordering]; [ord] and [compareTo] follow from it, and [eq] derives from the" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  same ordering (an [Ordering] is an [Eqv], so it doubles as the canonical equivalence)." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  same ordering (an [Ordering] is an [Eqv], so it doubles as the canonical equivalence)." }
+            )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> /Data/Primitive/Integer = CInt 2 )
-                ( Value /r -> /Data/Primitive/Integer = CInt 2 )
+                ( Value /l -> /Data/Primitive/Integer = CInt
+                    { ciValue = 2 }
+                )
+                ( Value /r -> /Data/Primitive/Integer = CInt
+                    { ciValue = 2 }
+                )
             )
-            ( Value /result -> /Data/String = CStr "True" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> /Data/Primitive/Integer = CInt 2 )
-                ( Value /r -> /Data/Primitive/Integer = CInt 3 )
+                ( Value /l -> /Data/Primitive/Integer = CInt
+                    { ciValue = 2 }
+                )
+                ( Value /r -> /Data/Primitive/Integer = CInt
+                    { ciValue = 3 }
+                )
             )
-            ( Value /result -> /Data/String = CStr "False" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "False" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "### Commutative Group" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "### Commutative Group" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "## Floats" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "## Floats" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "[Float] renders no text of its own (it is not a [ToString]), so its behavior is shown through" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "[Float] renders no text of its own (it is not a [ToString]), so its behavior is shown through" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  the [Boolean] a comparison produces." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  the [Boolean] a comparison produces." }
+            )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator<
-                ( Value /l -> /Data/Primitive/Float = CFloat 1.5 )
-                ( Value /r -> /Data/Primitive/Float = CFloat 2.5 )
+                ( Value /l -> /Data/Primitive/Float = CFloat
+                    { cfValue = 1.5 }
+                )
+                ( Value /r -> /Data/Primitive/Float = CFloat
+                    { cfValue = 2.5 }
+                )
             )
-            ( Value /result -> /Data/String = CStr "True" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "True" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "Named-function form of the primitive float "less than", used by [Data/Algebra/ord]." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "Named-function form of the primitive float "less than", used by [Data/Algebra/ord]." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "[Float]'s instances of the algebra ordering/equality classes, mirroring [Integer] above." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "[Float]'s instances of the algebra ordering/equality classes, mirroring [Integer] above." }
+            )
         ]
     }

@@ -53,43 +53,51 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "# Files
-            A [FileOrDir] is a tree of files: a [File], which is a name and what is written in it, or a
-            [Dir], which is a name and the entries beneath it. It is the shape a directory has, written as a
-            value, so a program can be given one to read or can produce one to be written.
-            It is declared here rather than beside whatever wants it because more than one thing wants it. A
-            build result is a tree of files, and a directory read from disk is a tree of files, and neither
-            is the other. A type declared inside one of them would have to be reached through it by the
-            other, which says that the second use is a kind of the first when it is not." )
+            ( Value /text= CStr
+                { csValue = "# Files
+                A [FileOrDir] is a tree of files: a [File], which is a name and what is written in it, or a
+                [Dir], which is a name and the entries beneath it. It is the shape a directory has, written as a
+                value, so a program can be given one to read or can produce one to be written.
+                It is declared here rather than beside whatever wants it because more than one thing wants it. A
+                build result is a tree of files, and a directory read from disk is a tree of files, and neither
+                is the other. A type declared inside one of them would have to be reached through it by the
+                other, which says that the second use is a kind of the first when it is not." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "A [File] carries its writing itself, rather than the path it was read from or is to be written
-            to. A tree says where each thing is by where it is in the tree, so a name is the one part of a
-            path a file holds, and the rest of it is the names of the directories above it. This is what
-            lets the same tree be written somewhere other than where it was read from, which is the whole
-            of what an overlay does.
-            [contents] is a [String] because that is what the language has. A file which is not text is
-            not representable here, and will want a type of its own rather than this one widened to hold
-            bytes it cannot say anything about." )
+            ( Value /text= CStr
+                { csValue = "A [File] carries its writing itself, rather than the path it was read from or is to be written
+                to. A tree says where each thing is by where it is in the tree, so a name is the one part of a
+                path a file holds, and the rest of it is the names of the directories above it. This is what
+                lets the same tree be written somewhere other than where it was read from, which is the whole
+                of what an overlay does.
+                [contents] is a [String] because that is what the language has. A file which is not text is
+                not representable here, and will want a type of its own rather than this one widened to hold
+                bytes it cannot say anything about." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Read by destructuring
-            Nothing uses this yet, but it does work. A [Dir] holding both a [File] and a [Dir] can be
-            written and can be walked, by arms matching the two constructors — which is how every other
-            recursive type here is read, [ConsList] and [BinTree] alike.
-            What cannot be written is `d.entries`. A field is read by destructuring it, not through an
-            accessor named after it, so `count(f= Dir(name, entries))` reaches the entries and `d.entries`
-            reaches nothing whether the list under it is mixed or not.
-            This section used to say the type was unbuildable, because a list literal was thought to take
-            its element type from its first entry. It does not: `[Some(value= 1), Nothing]` typechecks, and
-            so does a [Dir] holding a [File] beside a [Dir]. The accessor was what failed, and the reason
-            given for it was wrong.
-            A build result is still the flat [/Catln/BuildFile] list in @core/result.ct@, which is a
-            separate choice: a result is a list of files so that every entry of it is the same kind of
-            thing, and the tree is said by the @/@ in each path." )
+            ( Value /text= CStr
+                { csValue = "## Read by destructuring
+                Nothing uses this yet, but it does work. A [Dir] holding both a [File] and a [Dir] can be
+                written and can be walked, by arms matching the two constructors — which is how every other
+                recursive type here is read, [ConsList] and [BinTree] alike.
+                What cannot be written is `d.entries`. A field is read by destructuring it, not through an
+                accessor named after it, so `count(f= Dir(name, entries))` reaches the entries and `d.entries`
+                reaches nothing whether the list under it is mixed or not.
+                This section used to say the type was unbuildable, because a list literal was thought to take
+                its element type from its first entry. It does not: `[Some(value= 1), Nothing]` typechecks, and
+                so does a [Dir] holding a [File] beside a [Dir]. The accessor was what failed, and the reason
+                given for it was wrong.
+                A build result is still the flat [/Catln/BuildFile] list in @core/result.ct@, which is a
+                separate choice: a result is a list of files so that every entry of it is the same kind of
+                thing, and the tree is said by the @/@ in each path." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "## Naming
-            The name of an entry is the one it has under its parent, not a path: a [Dir] named `notes`
-            holding a [File] named `a.md` is the file `notes/a.md`. Nothing here checks that a name is one a
-            filesystem accepts, because a tree is a value and may be built long before anything writes it —
-            whoever writes it is who has to refuse a name it cannot write, and does." )
+            ( Value /text= CStr
+                { csValue = "## Naming
+                The name of an entry is the one it has under its parent, not a path: a [Dir] named `notes`
+                holding a [File] named `a.md` is the file `notes/a.md`. Nothing here checks that a name is one a
+                filesystem accepts, because a tree is a value and may be built long before anything writes it —
+                whoever writes it is who has to refuse a name it cannot write, and does." }
+            )
         ]
     }

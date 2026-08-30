@@ -36,9 +36,13 @@ Prgm
                             , []
                             ) = /operator==
                             ( Value /l -> /Data/Primitive/Integer = /operator+
-                                ( Value /l -> /Data/Primitive/Integer = CInt 1 )( Value /r -> TVArg /a = Value /a )
+                                ( Value /l -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 1 }
+                                )( Value /r -> TVArg /a = Value /a )
                             )
-                            ( Value /r -> /Data/Primitive/Integer = CInt 2 )
+                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                { ciValue = 2 }
+                            )
                         ]
                     }
                 )
@@ -50,14 +54,16 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "Infers an undeclared argument's type from how it is used. `a` is never annotated,
-            yet `1 + a` forces it to be an Integer (arithmetic's concrete Integer operator),
-            so the compiler infers `isOne(a -> Integer)` and augments the written definition
-            with that requirement — see `a -> /Data/Primitive/Integer` in the typecheck golden.
-            TODO: the intended form is `a == 1`, inferring the Integer requirement directly
-            through Eq. That does not yet reach Integer: generic Eq equality joins the operand
-            types up to `∀Eq` rather than unifying the shared type variable `$T` (from
-            `operator==(l -> $T)(r -> $T)[$T -> Eq]`) down to Integer. `1 + a` is a stepping
-            stone until shared-type-variable unification lands for Eq." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "Infers an undeclared argument's type from how it is used. `a` is never annotated,
+                yet `1 + a` forces it to be an Integer (arithmetic's concrete Integer operator),
+                so the compiler infers `isOne(a -> Integer)` and augments the written definition
+                with that requirement — see `a -> /Data/Primitive/Integer` in the typecheck golden.
+                TODO: the intended form is `a == 1`, inferring the Integer requirement directly
+                through Eq. That does not yet reach Integer: generic Eq equality joins the operand
+                types up to `∀Eq` rather than unifying the shared type variable `$T` (from
+                `operator==(l -> $T)(r -> $T)[$T -> Eq]`) down to Integer. `1 + a` is a stepping
+                stone until shared-type-variable unification lands for Eq." }
+            )
         ]
     }

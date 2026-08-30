@@ -33,7 +33,9 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "has both" ]
+                                    [ CStr
+                                        { csValue = "has both" }
+                                    ]
                                 ) = "has both"
                             )
                             ( EAppArg Value /tags -> /Data/List/Cons
@@ -41,7 +43,9 @@ Prgm
                                     ( Nothing
                                     , ∅
                                     ,
-                                        [ CStr "x" ]
+                                        [ CStr
+                                            { csValue = "x" }
+                                        ]
                                     )
                                 , /tail=/Data/List/Nil
                                 ) = /Data/List/Cons
@@ -49,7 +53,9 @@ Prgm
                                     ( Nothing
                                     , ∅
                                     ,
-                                        [ CStr "x" ]
+                                        [ CStr
+                                            { csValue = "x" }
+                                        ]
                                     ) = "x"
                                 )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                             )
@@ -58,14 +64,18 @@ Prgm
                                     ( Nothing
                                     , ∅
                                     ,
-                                        [ CStr "2026-01-01" ]
+                                        [ CStr
+                                            { csValue = "2026-01-01" }
+                                        ]
                                     )
                                 ) = /Data/Maybe/Some
                                 ( EAppArg Value /value -> UnionType
                                     ( Nothing
                                     , ∅
                                     ,
-                                        [ CStr "2026-01-01" ]
+                                        [ CStr
+                                            { csValue = "2026-01-01" }
+                                        ]
                                     ) = "2026-01-01"
                                 )
                             )
@@ -74,7 +84,9 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "has neither" ]
+                                    [ CStr
+                                        { csValue = "has neither" }
+                                    ]
                                 ) = "has neither"
                             )( EAppArg Value /tags -> /Data/List/Nil = Value /Data/List/Nil )( EAppArg Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         ]

@@ -2,6 +2,161 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
+                ( "/Test/report"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Test/report -> /Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Test/report -> /Data/String =
+                            ( /operator++
+                                ( EAppArg Value /l -> /Data/String =
+                                    ( /operator++
+                                        ( EAppArg Value /l -> /Data/String =
+                                            ( /operator++
+                                                ( EAppArg Value /l -> /Data/String =
+                                                    ( /operator++
+                                                        ( EAppArg Value /l -> /Data/String =
+                                                            ( /operator++
+                                                                ( EAppArg Value /l -> /Data/String =
+                                                                    ( /operator++
+                                                                        ( EAppArg Value /l -> /Data/String =
+                                                                            ( /Test/constantKind
+                                                                                ( EAppArg Value /c -> /Catln/Constant/CInt( /value=/Data/Primitive/Integer ) = /Catln/Constant/CInt
+                                                                                    ( EAppArg Value /value -> /Data/Primitive/Integer = 3 )
+                                                                                ) ↦ /Data/String
+                                                                            )
+                                                                        )
+                                                                        ( EAppArg Value /r -> /Data/String = " " ) ↦ /Data/String
+                                                                    )
+                                                                )
+                                                                ( EAppArg Value /r -> /Data/String =
+                                                                    ( /Data/toString
+                                                                        ( EAppArg Value /this -> /Data/Primitive/Integer =
+                                                                            ( /Test/intOf
+                                                                                ( EAppArg Value /c -> /Catln/Constant/CInt( /value=/Data/Primitive/Integer ) = /Catln/Constant/CInt
+                                                                                    ( EAppArg Value /value -> /Data/Primitive/Integer = 42 )
+                                                                                ) ↦ /Data/Primitive/Integer
+                                                                            )
+                                                                        ) ↦ /Data/String
+                                                                    )
+                                                                ) ↦ /Data/String
+                                                            )
+                                                        )
+                                                        ( EAppArg Value /r -> /Data/String = " " ) ↦ /Data/String
+                                                    )
+                                                )
+                                                ( EAppArg Value /r -> /Data/String =
+                                                    ( /Test/keyName
+                                                        ( EAppArg Value /k -> /Catln/PartialKey
+                                                            ( /name=/Data/String
+                                                            , /vars=/Data/List/Nil
+                                                            , /args=/Data/List/Nil
+                                                            ) = /Catln/PartialKey
+                                                            ( EAppArg Value /name -> /Data/String = "x" )( EAppArg Value /vars -> /Data/List/Nil = Value /Data/List/Nil )( EAppArg Value /args -> /Data/List/Nil = Value /Data/List/Nil )
+                                                        ) ↦ /Data/String
+                                                    )
+                                                ) ↦ /Data/String
+                                            )
+                                        )
+                                        ( EAppArg Value /r -> /Data/String = " " ) ↦ /Data/String
+                                    )
+                                )
+                                ( EAppArg Value /r -> /Data/String =
+                                    ( /Data/toString
+                                        ( EAppArg Value /this -> /Data/Primitive/Integer =
+                                            ( /Test/keyDepth
+                                                ( EAppArg Value /k -> /Catln/PartialKey
+                                                    ( /name=/Data/String
+                                                    , /vars=/Data/List/Nil
+                                                    , /args=/Data/List/Cons
+                                                        ( /head=/Catln/PartialKey
+                                                            ( /name=/Data/String
+                                                            , /vars=/Data/List/Nil
+                                                            , /args=/Data/List/Nil
+                                                            )
+                                                        , /tail=/Data/List/Nil
+                                                        )
+                                                    ) = /Catln/PartialKey
+                                                    ( EAppArg Value /name -> /Data/String = "f" )( EAppArg Value /vars -> /Data/List/Nil = Value /Data/List/Nil )
+                                                    ( EAppArg Value /args -> /Data/List/Cons
+                                                        ( /head=/Catln/PartialKey
+                                                            ( /name=/Data/String
+                                                            , /vars=/Data/List/Nil
+                                                            , /args=/Data/List/Nil
+                                                            )
+                                                        , /tail=/Data/List/Nil
+                                                        ) = /Data/List/Cons
+                                                        ( EAppArg Value /head -> /Catln/PartialKey
+                                                            ( /name=/Data/String
+                                                            , /vars=/Data/List/Nil
+                                                            , /args=/Data/List/Nil
+                                                            ) = /Catln/PartialKey
+                                                            ( EAppArg Value /name -> /Data/String = "a" )( EAppArg Value /vars -> /Data/List/Nil = Value /Data/List/Nil )( EAppArg Value /args -> /Data/List/Nil = Value /Data/List/Nil )
+                                                        )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                                                    )
+                                                ) ↦ /Data/Primitive/Integer
+                                            )
+                                        ) ↦ /Data/String
+                                    )
+                                ) ↦ /Data/String
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/constantKind"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/constantKind( EAppArg Value /c -> ∀/Catln/Constant ) -> /Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/constantKind
+                            ( EAppArg Value /c -> /Catln/Constant/CInt( /value=/Data/Primitive/Integer ) = /Catln/Constant/CInt( EAppArg Value /value -> /Data/Primitive/Integer ) ) -> /Data/String = "int"
+                        , /Test/constantKind
+                            ( EAppArg Value /c -> /Catln/Constant/CFloat( /value=/Data/Primitive/Float ) = /Catln/Constant/CFloat( EAppArg Value /value -> /Data/Primitive/Float ) ) -> /Data/String = "float"
+                        , /Test/constantKind
+                            ( EAppArg Value /c -> /Catln/Constant/CStr( /value=/Data/String ) = /Catln/Constant/CStr( EAppArg Value /value -> /Data/String ) ) -> /Data/String = "str"
+                        , /Test/constantKind
+                            ( EAppArg Value /c -> /Catln/Constant/CChar( /value=/Data/Char ) = /Catln/Constant/CChar( EAppArg Value /value -> /Data/Char ) ) -> /Data/String = "char"
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/keyDepth"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/keyDepth
+                            ( EAppArg Value /k -> /Catln/PartialKey
+                                ( /name=/Data/String
+                                , /vars=TopType
+                                , /args=TopType
+                                )
+                            ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/keyDepth
+                            ( EAppArg Value /k -> /Catln/PartialKey
+                                ( /name=/Data/String
+                                , /vars=TopType
+                                , /args=TopType
+                                ) = /Catln/PartialKey( EAppArg Value /name -> /Data/String )( EAppArg Value /vars )( EAppArg Value /args )
+                            ) -> /Data/Primitive/Integer =
+                            ( /operator+
+                                ( EAppArg Value /l -> /Data/Primitive/Integer = 1 )
+                                ( EAppArg Value /r -> /Data/Primitive/Integer =
+                                    ( /Test/keyDepthAll
+                                        ( EAppArg Value /ks -> TVArg /args = ( Value /args ↦ TVArg /args ) ) ↦ /Data/Primitive/Integer
+                                    )
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -16,7 +171,101 @@ Prgm
                             ) =
                             ( /Catln/exit
                                 ( EAppArg Value /val -> /Data/Primitive/Integer = 0 )
-                                ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) ) ↦ /Catln/IO
+                                ( EAppArg Value /this -> /Catln/IO =
+                                    ( /Catln/println
+                                        ( EAppArg Value /msg -> /Data/String = ( Value /Test/report ↦ /Data/String ) )
+                                        ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) ) ↦ /Catln/IO
+                                    )
+                                ) ↦ /Catln/IO
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/keyName"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/keyName
+                            ( EAppArg Value /k -> /Catln/PartialKey
+                                ( /name=/Data/String
+                                , /vars=TopType
+                                , /args=TopType
+                                )
+                            ) -> /Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/keyName
+                            ( EAppArg Value /k -> /Catln/PartialKey
+                                ( /name=/Data/String
+                                , /vars=TopType
+                                , /args=TopType
+                                ) = /Catln/PartialKey( EAppArg Value /name -> /Data/String )( EAppArg Value /vars )( EAppArg Value /args )
+                            ) -> /Data/String = ( Value /name ↦ /Data/String )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/intOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/intOf( EAppArg Value /c -> ∀/Catln/Constant ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/intOf
+                            ( EAppArg Value /c -> /Catln/Constant/CInt( /value=/Data/Primitive/Integer ) = /Catln/Constant/CInt( EAppArg Value /value -> /Data/Primitive/Integer ) ) -> /Data/Primitive/Integer = ( Value /value ↦ /Data/Primitive/Integer )
+                        , /Test/intOf
+                            ( EAppArg Value /c -> /Catln/Constant/CFloat( /value=/Data/Primitive/Float ) = /Catln/Constant/CFloat( EAppArg Value /value -> /Data/Primitive/Float ) ) -> /Data/Primitive/Integer = 0
+                        , /Test/intOf
+                            ( EAppArg Value /c -> /Catln/Constant/CStr( /value=/Data/String ) = /Catln/Constant/CStr( EAppArg Value /value -> /Data/String ) ) -> /Data/Primitive/Integer = 0
+                        , /Test/intOf
+                            ( EAppArg Value /c -> /Catln/Constant/CChar( /value=/Data/Char ) = /Catln/Constant/CChar( EAppArg Value /value -> /Data/Char ) ) -> /Data/Primitive/Integer = 0
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/keyDepthAll"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/keyDepthAll
+                            ( EAppArg Value /ks -> ∀/Data/List[ /T=/Catln/PartialKey ] ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/keyDepthAll( EAppArg Value /ks -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/Primitive/Integer = 0
+                        , /Test/keyDepthAll
+                            ( EAppArg Value /ks -> /Data/List/Cons
+                                [ /T=/Catln/PartialKey
+                                    ( /name=TopType
+                                    , /vars=TopType
+                                    , /args=TopType
+                                    )
+                                ]
+                                ( /head=$/T
+                                , /tail=∀/Data/List/ConsList[ /T=/Catln/PartialKey ]
+                                ) = /Data/List/Cons
+                                ( EAppArg Value /head -> /Catln/PartialKey
+                                    ( /name=/Data/String
+                                    , /vars=TopType
+                                    , /args=TopType
+                                    )
+                                )
+                                ( EAppArg Value /tail -> ∀/Data/List/ConsList[ /T=/Catln/PartialKey ] )
+                            ) -> /Data/Primitive/Integer =
+                            ( /operator+
+                                ( EAppArg Value /l -> /Data/Primitive/Integer =
+                                    ( /Test/keyDepth
+                                        ( EAppArg Value /k -> TVArg /head = ( Value /head ↦ TVArg /head ) ) ↦ /Data/Primitive/Integer
+                                    )
+                                )
+                                ( EAppArg Value /r -> /Data/Primitive/Integer =
+                                    ( /Test/keyDepthAll
+                                        ( EAppArg Value /ks -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) ) ↦ /Data/Primitive/Integer
+                                    )
+                                ) ↦ /Data/Primitive/Integer
                             )
                         ]
                     }
@@ -42,6 +291,12 @@ Prgm
     , prgmCG =
         [ CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
@@ -59,5 +314,92 @@ Prgm
                 ( /Test/isType( EAppArg Value /b -> /Catln/ObjectBasis/ArgObj = Value /Catln/ObjectBasis/ArgObj ) ↦ ∀/Data/Primitive/Boolean )
             )
             ( EAppArg Value /result -> /Data/String = "False" )
+        , /Catln/#print
+            ( EAppArg Value /p -> /Data/String =
+                ( /Test/constantKind
+                    ( EAppArg Value /c -> /Catln/Constant/CInt( /value=/Data/Primitive/Integer ) = /Catln/Constant/CInt
+                        ( EAppArg Value /value -> /Data/Primitive/Integer = 3 )
+                    ) ↦ /Data/String
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "int" )
+        , /Catln/#print
+            ( EAppArg Value /p -> /Data/String =
+                ( /Test/constantKind
+                    ( EAppArg Value /c -> /Catln/Constant/CStr( /value=/Data/String ) = /Catln/Constant/CStr
+                        ( EAppArg Value /value -> /Data/String = "hi" )
+                    ) ↦ /Data/String
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "str" )
+        , /Catln/#print
+            ( EAppArg Value /p -> /Data/Primitive/Integer =
+                ( /Test/intOf
+                    ( EAppArg Value /c -> /Catln/Constant/CInt( /value=/Data/Primitive/Integer ) = /Catln/Constant/CInt
+                        ( EAppArg Value /value -> /Data/Primitive/Integer = 42 )
+                    ) ↦ /Data/Primitive/Integer
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "42" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "A key is a name and two sets of keys, so reading one reads a record, a list, and a type which
+            reaches itself — the whole of what @core/hsprgm.ct@'s containers have to do." )
+        , /Catln/#print
+            ( EAppArg Value /p -> /Data/String =
+                ( /Test/keyName
+                    ( EAppArg Value /k -> /Catln/PartialKey
+                        ( /name=/Data/String
+                        , /vars=/Data/List/Nil
+                        , /args=/Data/List/Nil
+                        ) = /Catln/PartialKey
+                        ( EAppArg Value /name -> /Data/String = "x" )( EAppArg Value /vars -> /Data/List/Nil = Value /Data/List/Nil )( EAppArg Value /args -> /Data/List/Nil = Value /Data/List/Nil )
+                    ) ↦ /Data/String
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "x" )
+        , /Catln/#print
+            ( EAppArg Value /p -> /Data/Primitive/Integer =
+                ( /Test/keyDepth
+                    ( EAppArg Value /k -> /Catln/PartialKey
+                        ( /name=/Data/String
+                        , /vars=/Data/List/Nil
+                        , /args=/Data/List/Cons
+                            ( /head=/Catln/PartialKey
+                                ( /name=/Data/String
+                                , /vars=/Data/List/Nil
+                                , /args=/Data/List/Nil
+                                )
+                            , /tail=/Data/List/Nil
+                            )
+                        ) = /Catln/PartialKey
+                        ( EAppArg Value /name -> /Data/String = "f" )( EAppArg Value /vars -> /Data/List/Nil = Value /Data/List/Nil )
+                        ( EAppArg Value /args -> /Data/List/Cons
+                            ( /head=/Catln/PartialKey
+                                ( /name=/Data/String
+                                , /vars=/Data/List/Nil
+                                , /args=/Data/List/Nil
+                                )
+                            , /tail=/Data/List/Nil
+                            ) = /Data/List/Cons
+                            ( EAppArg Value /head -> /Catln/PartialKey
+                                ( /name=/Data/String
+                                , /vars=/Data/List/Nil
+                                , /args=/Data/List/Nil
+                                ) = /Catln/PartialKey
+                                ( EAppArg Value /name -> /Data/String = "a" )( EAppArg Value /vars -> /Data/List/Nil = Value /Data/List/Nil )( EAppArg Value /args -> /Data/List/Nil = Value /Data/List/Nil )
+                            )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                        )
+                    ) ↦ /Data/Primitive/Integer
+                )
+            )
+            ( EAppArg Value /result -> /Data/String = "2" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "## What the suite checks
+            The `>` examples above are checked by `catln test`, and the integration suite typechecks and
+            builds this file without comparing what they evaluate to — only a page under @stack/@ has its
+            examples run as cases, and no page under @stack/@ may import [hsprgm] without closing the import
+            cycle @core/result.ct@ measures. So the values are printed instead, and @hsprgm.stdout.txt@ is
+            what compares them, which is the one mechanism the integration runner already has for saying
+            what a program produced." )
         ]
     }

@@ -24,7 +24,9 @@ Prgm
                                     )
                                 )
                             ) = /Catln/www
-                            ( Value /html -> /Data/String = CStr "<html><body>web test</body></html>" )
+                            ( Value /html -> /Data/String = CStr
+                                { csValue = "<html><body>web test</body></html>" }
+                            )
                         ]
                     }
                 )
@@ -33,8 +35,10 @@ Prgm
     , prgmCG = [ CGType ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "Tests using a custom build type [www].
-            It also prints the result of the build in an iframe." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "Tests using a custom build type [www].
+                It also prints the result of the build in an iframe." }
+            )
         , /Catln/#print
             ( Value /p -> /Catln/CatlnResult
                 ( /files=/Data/List/Cons

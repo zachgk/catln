@@ -9,9 +9,13 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                            ( Value val= CInt 0 )
+                            ( Value val= CInt
+                                { ciValue = 0 }
+                            )
                             ( Value /this= println
-                                ( Value msg= CStr "hello world" )( Value /this= Value io )
+                                ( Value msg= CStr
+                                    { csValue = "hello world" }
+                                )( Value /this= Value io )
                             )
                         ]
                     }

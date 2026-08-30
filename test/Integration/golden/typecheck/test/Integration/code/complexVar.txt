@@ -19,8 +19,12 @@ Prgm
                                     ( /a=/Data/Primitive/Integer
                                     , /b=/Data/Primitive/Integer
                                     ) = /Complex
-                                    ( Value /a -> /Data/Primitive/Integer = CInt 0 )
-                                    ( Value /b -> /Data/Primitive/Integer = CInt 7 )
+                                    ( Value /a -> /Data/Primitive/Integer = CInt
+                                        { ciValue = 0 }
+                                    )
+                                    ( Value /b -> /Data/Primitive/Integer = CInt
+                                        { ciValue = 7 }
+                                    )
                                 )
                             )( Value /this -> TVArg /io = Value /io )
                         ]
@@ -61,6 +65,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "Tests data classes and matching values in functions (c=Type(...)) with type vars" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "Tests data classes and matching values in functions (c=Type(...)) with type vars" }
+            )
         ]
     }

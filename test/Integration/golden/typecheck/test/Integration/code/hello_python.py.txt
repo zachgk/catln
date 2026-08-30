@@ -116,7 +116,9 @@ Prgm
                                 ) + /Catln/IO
                             ) = /println( Value /this -> TVArg /io = Value /io )
                             ( Value /msg -> /Data/String = /toString
-                                ( Value /this -> /Data/String = CStr """" )
+                                ( Value /this -> /Data/String = CStr
+                                    { csValue = """" }
+                                )
                             )
                         , /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io
                         ]
@@ -218,7 +220,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /PI -> /Data/Primitive/Float = CFloat 3.14159 ]
+                        [ Value /PI -> /Data/Primitive/Float = CFloat
+                            { cfValue = 3.14159 }
+                        ]
                     }
                 )
             ,
@@ -229,7 +233,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ Value /DOUBLE_PI -> /Data/Primitive/Float = /operator*( Value /l -> /Data/Primitive/Float = Value /PI )
-                            ( Value /r -> /Data/Primitive/Float = CFloat 2.0 )
+                            ( Value /r -> /Data/Primitive/Float = CFloat
+                                { cfValue = 2.0 }
+                            )
                         ]
                     }
                 )
@@ -422,7 +428,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /MAX_SIZE -> /Data/Primitive/Integer = CInt 100 ]
+                        [ Value /MAX_SIZE -> /Data/Primitive/Integer = CInt
+                            { ciValue = 100 }
+                        ]
                     }
                 )
             ,

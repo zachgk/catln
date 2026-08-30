@@ -20,10 +20,16 @@ Prgm
                     , omiDefs =
                         [ Value outerVar= /operator==
                             ( Value /l= /operator-
-                                ( Value /l= CInt 5 )
-                                ( Value /r= CInt 3 )
+                                ( Value /l= CInt
+                                    { ciValue = 5 }
+                                )
+                                ( Value /r= CInt
+                                    { ciValue = 3 }
+                                )
                             )
-                            ( Value /r= CInt 2 )
+                            ( Value /r= CInt
+                                { ciValue = 2 }
+                            )
                         ]
                     }
                 )
@@ -36,10 +42,16 @@ Prgm
                     , omiDefs =
                         [ f.innerVar( Value /io -> /Catln/IO )= /operator==
                             ( Value /l= /operator+
-                                ( Value /l= CInt 1 )
-                                ( Value /r= CInt 1 )
+                                ( Value /l= CInt
+                                    { ciValue = 1 }
+                                )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
                             )
-                            ( Value /r= CInt 2 )
+                            ( Value /r= CInt
+                                { ciValue = 2 }
+                            )
                         ]
                     }
                 )
@@ -63,6 +75,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "Tests currying inner values" )
+            ( Value /text= CStr
+                { csValue = "Tests currying inner values" }
+            )
         ]
     }

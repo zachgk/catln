@@ -26,14 +26,25 @@ Prgm
                 ( "/operator^"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /operator^( EAppArg Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( EAppArg Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                        [ /operator^
+                            ( EAppArg Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator^( EAppArg Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
-                        , /operator^( EAppArg Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
-                        , /operator^( EAppArg Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
-                        , /operator^( EAppArg Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        [ /operator^
+                            ( EAppArg Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive { haName = Nothing } ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /operator^
+                            ( EAppArg Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive { haName = Nothing } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /operator^
+                            ( EAppArg Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive { haName = Nothing } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /operator^
+                            ( EAppArg Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive { haName = Nothing } ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         ]
                     }
                 )
@@ -57,12 +68,16 @@ Prgm
                 ( "/operator~"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /operator~( EAppArg Value /a -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                        [ /operator~
+                            ( EAppArg Value /a -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator~( EAppArg Value /a -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
-                        , /operator~( EAppArg Value /a -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        [ /operator~
+                            ( EAppArg Value /a -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive { haName = Nothing } ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /operator~
+                            ( EAppArg Value /a -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive { haName = Nothing } ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         ]
                     }
                 )
@@ -89,13 +104,22 @@ Prgm
                 ( "/operator&&"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /operator&&( EAppArg Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( EAppArg Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                        [ /operator&&
+                            ( EAppArg Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator&&( EAppArg Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
-                        , /operator&&( EAppArg Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
-                        , /operator&&( EAppArg Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( EAppArg Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        [ /operator&&
+                            ( EAppArg Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive { haName = Nothing } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /operator&&
+                            ( EAppArg Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive { haName = Nothing } ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /operator&&
+                            ( EAppArg Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         ]
                     }
                 )
@@ -103,13 +127,22 @@ Prgm
                 ( "/operator||"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /operator||( EAppArg Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( EAppArg Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                        [ /operator||
+                            ( EAppArg Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator||( EAppArg Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( EAppArg Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
-                        , /operator||( EAppArg Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
-                        , /operator||( EAppArg Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        [ /operator||
+                            ( EAppArg Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /operator||
+                            ( EAppArg Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive { haName = Nothing } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /operator||
+                            ( EAppArg Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive { haName = Nothing } ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         ]
                     }
                 )

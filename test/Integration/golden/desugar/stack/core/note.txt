@@ -21,9 +21,13 @@ Prgm
                             ( Value s= Page( Value title ) )= /Catln/Doc/Show/Html
                             ( Value contents= /operator++
                                 ( Value /l= /operator++
-                                    ( Value /l= CStr "<h1>" )( Value /r= Value title )
+                                    ( Value /l= CStr
+                                        { csValue = "<h1>" }
+                                    )( Value /r= Value title )
                                 )
-                                ( Value /r= CStr "</h1>" )
+                                ( Value /r= CStr
+                                    { csValue = "</h1>" }
+                                )
                             )
                         , /Catln/Doc/dshow( Value s= Value #taskList )= Show/TaskList
                             ( Value tasks= taskList( Value annot= Value s ) )
@@ -403,117 +407,183 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "# Notes
-            A note is a piece of writing that names itself and links to other notes. Each note is a page of
-            its own and each link between two notes is an import between their pages, so the graph a set of
-            notes forms is the import graph of the program they are read as.
-            A link is also a link in the writing. Where a note names another note of the same collection,
-            the writing holds the link to the page that note is read as, so reading a note is a way of
-            reaching the notes it names." )
+            ( Value /text= CStr
+                { csValue = "# Notes
+                A note is a piece of writing that names itself and links to other notes. Each note is a page of
+                its own and each link between two notes is an import between their pages, so the graph a set of
+                notes forms is the import graph of the program they are read as.
+                A link is also a link in the writing. Where a note names another note of the same collection,
+                the writing holds the link to the page that note is read as, so reading a note is a way of
+                reaching the notes it names." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "A [Task] is one thing to do, written in a note as a markdown checkbox. A task is a break in
-            the writing of the note holding it: the comment ends where the checkbox was written, the task
-            is declared in its place, and the writing goes on after it as another comment. So the tasks of
-            a note are declared in the order and the place they were written, and whatever is written
-            indented under a checkbox is written inside its task — the comment of it, and the checkboxes
-            indented under it, which are tasks of that task by the same reading.
-            Which of its readings a checkbox gets is decided by the vault it was written in rather than by
-            the checkbox. A vault running the Obsidian Tasks plugin writes dates, priorities and links
-            into the line beside the box, and reading such a line as though it were only a line would read
-            the plugin's writing as writing of the note." )
+            ( Value /text= CStr
+                { csValue = "A [Task] is one thing to do, written in a note as a markdown checkbox. A task is a break in
+                the writing of the note holding it: the comment ends where the checkbox was written, the task
+                is declared in its place, and the writing goes on after it as another comment. So the tasks of
+                a note are declared in the order and the place they were written, and whatever is written
+                indented under a checkbox is written inside its task — the comment of it, and the checkboxes
+                indented under it, which are tasks of that task by the same reading.
+                Which of its readings a checkbox gets is decided by the vault it was written in rather than by
+                the checkbox. A vault running the Obsidian Tasks plugin writes dates, priorities and links
+                into the line beside the box, and reading such a line as though it were only a line would read
+                the plugin's writing as writing of the note." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "A task is shown in the webdocs as the task it is, rather than as the declaration it was read
-            into: a box to check and the writing beside it. It is the value itself that is shown, with no
-            display type standing in for it, which is what lets checking the box in a doc server write the
-            change back to the note the task was read from." )
+            ( Value /text= CStr
+                { csValue = "A task is shown in the webdocs as the task it is, rather than as the declaration it was read
+                into: a box to check and the writing beside it. It is the value itself that is shown, with no
+                display type standing in for it, which is what lets checking the box in a doc server write the
+                change back to the note the task was read from." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "Which kind of status the character in a box is, as the Obsidian Tasks plugin names the seven
-            of them. Which character is which kind is the vault's to say and not markdown's: a vault may
-            write @[/]@ for a task begun and @[-]@ for one dropped, and only the vault's own settings say
-            so. So a box is read as the character it was written with and the kind that character is, and
-            the kind is the reading." )
+            ( Value /text= CStr
+                { csValue = "Which kind of status the character in a box is, as the Obsidian Tasks plugin names the seven
+                of them. Which character is which kind is the vault's to say and not markdown's: a vault may
+                write @[/]@ for a task begun and @[-]@ for one dropped, and only the vault's own settings say
+                so. So a box is read as the character it was written with and the kind that character is, and
+                the kind is the reading." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "How urgent a task is, as the plugin's six priorities. [Priority/None] is written between
-            medium and low rather than at either end, because that is where a task nobody gave a priority
-            to sorts among ones somebody did." )
+            ( Value /text= CStr
+                { csValue = "How urgent a task is, as the plugin's six priorities. [Priority/None] is written between
+                medium and low rather than at either end, because that is where a task nobody gave a priority
+                to sorts among ones somebody did." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "A task is a thing that sits on a day, so a calendar can show one. Said of [Task] rather than
-            of each of its two readings, because it is true of a checkbox however the vault it was written
-            in has it read; the two arms below answer for the two readings, as [/Data/Maybe] joins
-            [/Data/Algebra/Eq] as a class and answers per arm.
-            Said here rather than where a calendar is declared, so that a calendar is a calendar of
-            whatever says it belongs on one rather than of a list kept somewhere else. The class path is
-            written out in full: an [isa] list is keyed by the name as it is written, so a relative one
-            would name a second class of that name rather than the one meant." )
+            ( Value /text= CStr
+                { csValue = "A task is a thing that sits on a day, so a calendar can show one. Said of [Task] rather than
+                of each of its two readings, because it is true of a checkbox however the vault it was written
+                in has it read; the two arms below answer for the two readings, as [/Data/Maybe] joins
+                [/Data/Algebra/Eq] as a class and answers per arm.
+                Said here rather than where a calendar is declared, so that a calendar is a calendar of
+                whatever says it belongs on one rather than of a list kept somewhere else. The class path is
+                written out in full: an [isa] list is keyed by the name as it is written, so a relative one
+                would name a second class of that name rather than the one meant." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "A checkbox read as a checkbox sits on no day, whichever way its box is written." )
+            ( Value /text= CStr
+                { csValue = "A checkbox read as a checkbox sits on no day, whichever way its box is written." }
+            )
         , /Catln/#print
             ( Value /p= /operator==
                 ( Value /l= calendarDay
                     ( Value /this= Task/Simple
-                        ( Value contents= CStr "read it" )( Value state= Value False )
+                        ( Value contents= CStr
+                            { csValue = "read it" }
+                        )( Value state= Value False )
                     )
                 )( Value /r= Value /Data/Maybe/Nothing )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "A task naming a day it may be begun and a day it is due sits on the first of the three, which is" )
+            ( Value /text= CStr
+                { csValue = "A task naming a day it may be begun and a day it is due sits on the first of the three, which is" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "  the day it may be begun." )
+            ( Value /text= CStr
+                { csValue = "  the day it may be begun." }
+            )
         , /Catln/#print
             ( Value /p= /operator==
                 ( Value /l= calendarDay
                     ( Value /this= Task/Obsidian
-                        ( Value contents= CStr "Water the plants" )
-                        ( Value symbol= CStr " " )( Value statusType= Value StatusType/Todo )
-                        ( Value description= CStr "Water the plants" )( Value priority= Value Priority/None )
+                        ( Value contents= CStr
+                            { csValue = "Water the plants" }
+                        )
+                        ( Value symbol= CStr
+                            { csValue = " " }
+                        )( Value statusType= Value StatusType/Todo )
+                        ( Value description= CStr
+                            { csValue = "Water the plants" }
+                        )( Value priority= Value Priority/None )
                         ( Value start= /Data/Maybe/Some
-                            ( Value value= CStr "2026-01-02" )
+                            ( Value value= CStr
+                                { csValue = "2026-01-02" }
+                            )
                         )( Value scheduled= Value /Data/Maybe/Nothing )
                         ( Value due= /Data/Maybe/Some
-                            ( Value value= CStr "2026-01-04" )
+                            ( Value value= CStr
+                                { csValue = "2026-01-04" }
+                            )
                         )( Value recurrence= Value /Data/Maybe/Nothing )
-                        ( Value rest= CStr "{}" )
+                        ( Value rest= CStr
+                            { csValue = "{}" }
+                        )
                     )
                 )
                 ( Value /r= /Data/Maybe/Some
-                    ( Value value= CStr "2026-01-02" )
+                    ( Value value= CStr
+                        { csValue = "2026-01-02" }
+                    )
                 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "A task naming only the day it is due sits on that day, the two before it being absent." )
+            ( Value /text= CStr
+                { csValue = "A task naming only the day it is due sits on that day, the two before it being absent." }
+            )
         , /Catln/#print
             ( Value /p= /operator==
                 ( Value /l= calendarDay
                     ( Value /this= Task/Obsidian
-                        ( Value contents= CStr "Ship it" )
-                        ( Value symbol= CStr " " )( Value statusType= Value StatusType/Todo )
-                        ( Value description= CStr "Ship it" )( Value priority= Value Priority/None )( Value start= Value /Data/Maybe/Nothing )( Value scheduled= Value /Data/Maybe/Nothing )
+                        ( Value contents= CStr
+                            { csValue = "Ship it" }
+                        )
+                        ( Value symbol= CStr
+                            { csValue = " " }
+                        )( Value statusType= Value StatusType/Todo )
+                        ( Value description= CStr
+                            { csValue = "Ship it" }
+                        )( Value priority= Value Priority/None )( Value start= Value /Data/Maybe/Nothing )( Value scheduled= Value /Data/Maybe/Nothing )
                         ( Value due= /Data/Maybe/Some
-                            ( Value value= CStr "2026-01-04" )
+                            ( Value value= CStr
+                                { csValue = "2026-01-04" }
+                            )
                         )( Value recurrence= Value /Data/Maybe/Nothing )
-                        ( Value rest= CStr "{}" )
+                        ( Value rest= CStr
+                            { csValue = "{}" }
+                        )
                     )
                 )
                 ( Value /r= /Data/Maybe/Some
-                    ( Value value= CStr "2026-01-04" )
+                    ( Value value= CStr
+                        { csValue = "2026-01-04" }
+                    )
                 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "A task naming none of the three sits on no day, which is an answer and not a task left out." )
+            ( Value /text= CStr
+                { csValue = "A task naming none of the three sits on no day, which is an answer and not a task left out." }
+            )
         , /Catln/#print
             ( Value /p= /operator==
                 ( Value /l= calendarDay
                     ( Value /this= Task/Obsidian
-                        ( Value contents= CStr "Book" )
-                        ( Value symbol= CStr " " )( Value statusType= Value StatusType/Todo )
-                        ( Value description= CStr "Book" )( Value priority= Value Priority/None )( Value start= Value /Data/Maybe/Nothing )( Value scheduled= Value /Data/Maybe/Nothing )( Value due= Value /Data/Maybe/Nothing )( Value recurrence= Value /Data/Maybe/Nothing )
-                        ( Value rest= CStr "{}" )
+                        ( Value contents= CStr
+                            { csValue = "Book" }
+                        )
+                        ( Value symbol= CStr
+                            { csValue = " " }
+                        )( Value statusType= Value StatusType/Todo )
+                        ( Value description= CStr
+                            { csValue = "Book" }
+                        )( Value priority= Value Priority/None )( Value start= Value /Data/Maybe/Nothing )( Value scheduled= Value /Data/Maybe/Nothing )( Value due= Value /Data/Maybe/Nothing )( Value recurrence= Value /Data/Maybe/Nothing )
+                        ( Value rest= CStr
+                            { csValue = "{}" }
+                        )
                     )
                 )( Value /r= Value /Data/Maybe/Nothing )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
         ]
     }

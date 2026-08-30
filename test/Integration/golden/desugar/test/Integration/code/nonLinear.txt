@@ -32,12 +32,20 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "Exercises non-linear value patterns: a clause that binds the same variable to two argument" )
+            ( Value /text= CStr
+                { csValue = "Exercises non-linear value patterns: a clause that binds the same variable to two argument" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "positions applies only when those arguments are equal (compared via the argument type's Eq)." )
+            ( Value /text= CStr
+                { csValue = "positions applies only when those arguments are equal (compared via the argument type's Eq)." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "The diagonal clause below is a fast-path that overlaps — and must agree with — the general" )
+            ( Value /text= CStr
+                { csValue = "The diagonal clause below is a fast-path that overlaps — and must agree with — the general" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "definition, so the auto-derived overlap-agreement test passes." )
+            ( Value /text= CStr
+                { csValue = "definition, so the auto-derived overlap-agreement test passes." }
+            )
         ]
     }

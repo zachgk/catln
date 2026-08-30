@@ -36,10 +36,16 @@ Prgm
                             , []
                             ) = /operator==
                             ( Value /l -> /Data/Primitive/Integer = /operator-
-                                ( Value /l -> /Data/Primitive/Integer = CInt 5 )
-                                ( Value /r -> /Data/Primitive/Integer = CInt 3 )
+                                ( Value /l -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 5 }
+                                )
+                                ( Value /r -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 3 }
+                                )
                             )
-                            ( Value /r -> /Data/Primitive/Integer = CInt 2 )
+                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                { ciValue = 2 }
+                            )
                         ]
                     }
                 )
@@ -68,10 +74,16 @@ Prgm
                             , []
                             ) = /operator==
                             ( Value /l -> /Data/Primitive/Integer = /operator+
-                                ( Value /l -> /Data/Primitive/Integer = CInt 1 )
-                                ( Value /r -> /Data/Primitive/Integer = CInt 1 )
+                                ( Value /l -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 1 }
+                                )
+                                ( Value /r -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 1 }
+                                )
                             )
-                            ( Value /r -> /Data/Primitive/Integer = CInt 2 )
+                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                { ciValue = 2 }
+                            )
                         ]
                     }
                 )
@@ -84,6 +96,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "Tests currying values with context" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "Tests currying values with context" }
+            )
         ]
     }

@@ -5,7 +5,9 @@ Prgm
                 ( "/ContextOut"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /ContextOut[ /V : TopType ]( Value /value -> $/V )( ..Hole TopType HoleActive Nothing ) ]
+                        [ /ContextOut[ /V : TopType ]( Value /value -> $/V )
+                            ( ..Hole TopType HoleActive { haName = Nothing } )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -27,7 +29,9 @@ Prgm
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /ContextIn[ /V : TopType ]( Value /value -> $/V )( ..Hole TopType HoleActive Nothing ) ]
+                        [ /ContextIn[ /V : TopType ]( Value /value -> $/V )
+                            ( ..Hole TopType HoleActive { haName = Nothing } )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -37,10 +41,17 @@ Prgm
                 ( "/Context"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Context[ /V : TopType ]( Value /value -> $/V )( ..Hole TopType HoleActive Nothing ) ]
+                        [ /Context[ /V : TopType ]( Value /value -> $/V )
+                            ( ..Hole TopType HoleActive { haName = Nothing } )
+                        ]
                     , omiRuntimeDecls =
-                        [ /Context[ /T : TopType ][ /V : TopType ]( Value /value -> $/V )( ..Hole TopType HoleActive Nothing ) | /operator?->
-                            ( Value /l -> /ContextIn[ /V=TopType ]( /value=$/V ).. = /ContextIn[ /V : $_/V ]( Value /value -> $/V = Hole $/V HoleActive Nothing )( ..Hole TopType HoleActive Nothing ) )( Value /r -> $/T = Hole $/T HoleActive Nothing ) -> $/T
+                        [ /Context[ /T : TopType ][ /V : TopType ]( Value /value -> $/V )
+                            ( ..Hole TopType HoleActive { haName = Nothing } ) | /operator?->
+                            ( Value /l -> /ContextIn[ /V=TopType ]( /value=$/V ).. = /ContextIn[ /V : $_/V ]
+                                ( Value /value -> $/V = Hole $/V HoleActive { haName = Nothing } )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )
+                            ( Value /r -> $/T = Hole $/T HoleActive { haName = Nothing } ) -> $/T
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -345,49 +356,91 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "# Catln Core Data Types
-            These define the basic data types used in the language. [String] and its equality live in
-            [Data/str]; the conversions and collection types below build on it." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "# Catln Core Data Types
+                These define the basic data types used in the language. [String] and its equality live in
+                [Data/str]; the conversions and collection types below build on it." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "## Rendering as text" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "## Rendering as text" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "[ToString] is the class of types that can render themselves as a [String]. Defining
-            [toString] for a type makes its values printable and, more importantly, lets generic
-            containers such as [List] render their contents by rendering each element." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "[ToString] is the class of types that can render themselves as a [String]. Defining
+                [toString] for a type makes its values printable and, more importantly, lets generic
+                containers such as [List] render their contents by rendering each element." }
+            )
         , /Catln/#print
-            ( Value /p -> /Data/String = CStr "hello" )
-            ( Value /result -> /Data/String = CStr "hello" )
+            ( Value /p -> /Data/String = CStr
+                { csValue = "hello" }
+            )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "hello" }
+            )
         , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = CInt 42 )
-            ( Value /result -> /Data/String = CStr "42" )
+            ( Value /p -> /Data/Primitive/Integer = CInt
+                { ciValue = 42 }
+            )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "42" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "## Context" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "## Context" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "## Collections" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "## Collections" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "[Option] defines a type that might have a value or [None].
-            It can be used to handle operations that are uncertain if they can produce a response." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "[Option] defines a type that might have a value or [None].
+                It can be used to handle operations that are uncertain if they can produce a response." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "[Option] is not currently a [Functor]: it has no [fmap] instance yet, and its bare" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "[Option] is not currently a [Functor]: it has no [fmap] instance yet, and its bare" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "type-variable member interacts poorly with expanding the open [Functor] class during" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "type-variable member interacts poorly with expanding the open [Functor] class during" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "inference. The [Functor] class and the generic [fmap] live in [Data/functor.ct]; the [List]" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "inference. The [Functor] class and the generic [fmap] live in [Data/functor.ct]; the [List]" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "collection and its [ConsList] implementation live in [Data/list.ct]." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "collection and its [ConsList] implementation live in [Data/list.ct]." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "The [Set] class now lives in [Data/set.ct] alongside its [MapSet] implementation. [Enum] and" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "The [Set] class now lives in [Data/set.ct] alongside its [MapSet] implementation. [Enum] and" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  [enum] (which returned a [Set]) are commented out until an [Enum] implementation is provided." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  [enum] (which returned a [Set]) are commented out until an [Enum] implementation is provided." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "class(Enum)" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "class(Enum)" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  # [Enum] represents a type which can be enumerated." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  # [Enum] represents a type which can be enumerated." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "    It defines a single function [enum] which lists all of the values in the type." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "    It defines a single function [enum] which lists all of the values in the type." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  enum[$T -> Enum] -> Set[$T]" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  enum[$T -> Enum] -> Set[$T]" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "    # [enum] lists all of the values in a type." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "    # [enum] lists all of the values in a type." }
+            )
         ]
     }

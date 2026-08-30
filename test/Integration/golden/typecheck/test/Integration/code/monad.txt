@@ -16,10 +16,16 @@ Prgm
     , prgmCG = [ CGType ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "Cross-module check that the [Maybe] [Monad] instance (defined in stack/core/maybe.ct) resolves" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "Cross-module check that the [Maybe] [Monad] instance (defined in stack/core/maybe.ct) resolves" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "when [mmap] is called from another module. A stack/core function can type-check in its own module" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "when [mmap] is called from another module. A stack/core function can type-check in its own module" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "yet fail once imported, so this exercises the imported path end to end." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "yet fail once imported, so this exercises the imported path end to end." }
+            )
         ]
     }

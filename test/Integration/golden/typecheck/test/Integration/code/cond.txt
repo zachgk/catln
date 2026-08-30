@@ -15,7 +15,9 @@ Prgm
                                 ) + /Catln/IO
                             ) = /Catln/exit
                             ( Value /val -> /Data/Primitive/Integer = /abs
-                                ( Value /x -> /Data/Primitive/Integer = CInt 0 )
+                                ( Value /x -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 0 }
+                                )
                             )( Value /this -> TVArg /io = Value /io )
                         ]
                     }
@@ -28,7 +30,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /abs( Value /x -> /Data/Primitive/Integer ) | /operator>=( Value /l -> TVArg /x = Value /x )
-                            ( Value /r -> /Data/Primitive/Integer = CInt 0 ) -> TVArg /x = Value /x
+                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                { ciValue = 0 }
+                            ) -> TVArg /x = Value /x
                         , /abs( Value /x -> /Data/Primitive/Integer ) -> TVArg /x = Value /x
                         ]
                     }
@@ -41,6 +45,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "Tests using the conditions if and else guards for arrows" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "Tests using the conditions if and else guards for arrows" }
+            )
         ]
     }

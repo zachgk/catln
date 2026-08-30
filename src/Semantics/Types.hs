@@ -125,10 +125,21 @@ type DocComment = String
 -- Names which are PTypeName, PClassName refer to a particular type or class respectively
 -- The PRelativeName refers to a suffix of some number of types or classes (or possibly both).
 data PartialName
-  = PTypeName TypeName
-  | PClassName ClassName
-  | PRelativeName RelativeName
+  = PTypeName { ptnName :: TypeName }
+  | PClassName { pcnName :: ClassName }
+  | PRelativeName { prnName :: RelativeName }
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON, ToJSONKey)
+
+-- | Which kind of name a partial is named by, read as a Catln type.
+--
+-- The field names are what the reading needs and all it needs. A Catln argument is named and a
+-- positional constructor's are not, so the arms are written in record syntax — which changes
+-- nothing about how they are built or matched, and so touches none of the places that do either.
+instance CtType PartialName where
+  ctDoc _ = [
+    "What a partial type is named by: a type, a class, or a suffix that could be either.",
+    "A [PTypeName] names one declared type and a [PClassName] one declared class. A [PRelativeName] is a name written without its full path — the compiler resolves it to one of the other two, so a program reading a compiled one will not meet it."
+            ]
 
 -- |
 -- Describes how the listed args of a 'PartialType' bound the args of a matching
@@ -144,6 +155,14 @@ data PtArgMode = PtArgMode {
   ptArgLb :: Bool,
   ptArgUb :: Bool
   } deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+
+-- | How a partial's listed arguments bound a matching instance's, read as a Catln type. Already a
+-- record, so its whole instance is what it says.
+instance CtType PtArgMode where
+  ctDoc _ = [
+    "How the arguments a type lists bound the arguments of what it matches.",
+    "[argLb] says every listed argument is required, and [argUb] says no unlisted one is allowed. Both together is exactly the listed arguments; neither is no bound at all. They are two independent answers rather than four named cases, because that is what they are: an interval in the lattice of argument sets."
+            ]
 
 -- | Matches only the exact args (lower and upper bounded).
 pattern PtArgExact :: PtArgMode
@@ -252,11 +271,22 @@ instance Hashable PartialType where
       `hashWithSalt` ptArgMode
 
 data Constant
-  = CInt Integer
-  | CFloat Double
-  | CStr String
-  | CChar Char
+  = CInt { ciValue :: Integer }
+  | CFloat { cfValue :: Double }
+  | CStr { csValue :: String }
+  | CChar { chValue :: Char }
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+
+-- | A constant written in a program, read as a Catln type.
+--
+-- Its character arm is why @\/Data\/Char@ had to be declared: a constant is one of four things and
+-- one of them is a character, so a program reading a program is handed one whether or not it could
+-- have written one.
+instance CtType Constant where
+  ctDoc _ = [
+    "A value written directly in a program: a whole number, a fractional number, a string, or a character.",
+    "A character constant cannot be written in Catln — the language has no character literal — but the compiler makes one where it needs to, so a program reading a program can be handed one."
+            ]
 
 -- | The non-name properties of a 'PartialType'
 newtype PartialArgsOption = PartialArgsOption
@@ -379,6 +409,14 @@ pattern TVOuter <- (isOuterLoc -> True)
 -- Matching the local case beside the outward one covers every location, so a function that
 -- splits on 'TVInt' vs 'TVOuter' is total.
 {-# COMPLETE TVInt, TVOuter #-}
+
+-- | Where a type variable is defined, read as a Catln type. Three constructors carrying nothing, so
+-- the instance is what it says about itself.
+instance CtType TypeVarLoc where
+  ctDoc _ = [
+    "Where a type variable was defined: on the type it is written in ([TVInt], written `$T`), on the nearest enclosing type ([TVParent]), or on the ambient object scope ([TVExt]). The latter two are both written `$_T`.",
+    "The difference is what the variable is resolved against, so it is part of what the variable IS rather than a note about it."
+            ]
 
 -- | A type because two kinds of type variables are supported
 data TypeVarAux

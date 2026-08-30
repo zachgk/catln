@@ -16,9 +16,13 @@ Prgm
                             ) = /Catln/exit
                             ( Value /val -> /Data/Primitive/Integer = /operator-
                                 ( Value /l -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /fib
-                                    ( Value /integer -> /Data/Primitive/Integer = CInt 3 )
+                                    ( Value /integer -> /Data/Primitive/Integer = CInt
+                                        { ciValue = 3 }
+                                    )
                                 )
-                                ( Value /r -> /Data/Primitive/Integer = CInt 3 )
+                                ( Value /r -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 3 }
+                                )
                             )( Value /this -> TVArg /io = Value /io )
                         ]
                     }
@@ -31,7 +35,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /fib( Value /integer -> /Data/Primitive/Integer ) | /operator>( Value /l -> TVArg /integer = Value /integer )
-                            ( Value /r -> /Data/Primitive/Integer = CInt 1 ) ->
+                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                { ciValue = 1 }
+                            ) ->
                             ( /operator+
                                 ( /r=( /Data/Primitive/Integer + /Data/Primitive/Float )
                                 , /l=( /Data/Primitive/Integer + /Data/Primitive/Float )
@@ -39,15 +45,20 @@ Prgm
                             ) = /operator+
                             ( Value /l -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /fib
                                 ( Value /integer -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /integer = Value /integer )
-                                    ( Value /r -> /Data/Primitive/Integer = CInt 1 )
+                                    ( Value /r -> /Data/Primitive/Integer = CInt
+                                        { ciValue = 1 }
+                                    )
                                 )
                             )
                             ( Value /r -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /fib
                                 ( Value /integer -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /integer = Value /integer )
-                                    ( Value /r -> /Data/Primitive/Integer = CInt 2 )
+                                    ( Value /r -> /Data/Primitive/Integer = CInt
+                                        { ciValue = 2 }
+                                    )
                                 )
                             )
-                        , /fib( Value /integer -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = CInt 1
+                        , /fib( Value /integer -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 1 }
                         ]
                     }
                 )
@@ -59,6 +70,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "Tests recursion with fibonaccci" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "Tests recursion with fibonaccci" }
+            )
         ]
     }

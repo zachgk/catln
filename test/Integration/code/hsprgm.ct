@@ -21,5 +21,56 @@ module(Test)
     >>> True
   > isType(b= /Catln/ObjectBasis/ArgObj)
     >>> False
+  constantKind(c -> /Catln/Constant) -> String
+    # [constantKind] says which of the four things a constant written in a program is. It reads the
+      arm rather than the value, which is what a program reading a program mostly wants of one, and
+      it names every arm so that an arm the declaration is missing is one this does not compile
+      against.
+  constantKind(c= /Catln/Constant/CInt(value))= "int"
+  constantKind(c= /Catln/Constant/CFloat(value))= "float"
+  constantKind(c= /Catln/Constant/CStr(value))= "str"
+  constantKind(c= /Catln/Constant/CChar(value))= "char"
 
-main{io -> IO}= io.exit(val= 0)
+  > constantKind(c= /Catln/Constant/CInt(value= 3))
+    >>> int
+  > constantKind(c= /Catln/Constant/CStr(value= "hi"))
+    >>> str
+  intOf(c -> /Catln/Constant) -> Integer
+    # [intOf] reads the value out of a whole-number constant, which is destructuring a field rather
+      than only matching an arm — the thing a program reading a program is actually for.
+  intOf(c= /Catln/Constant/CInt(value))= value
+  intOf(c= /Catln/Constant/CFloat(value))= 0
+  intOf(c= /Catln/Constant/CStr(value))= 0
+  intOf(c= /Catln/Constant/CChar(value))= 0
+
+  > intOf(c= /Catln/Constant/CInt(value= 42))
+    >>> 42
+  # A key is a name and two sets of keys, so reading one reads a record, a list, and a type which
+    reaches itself — the whole of what @core/hsprgm.ct@'s containers have to do.
+  keyName(k -> /Catln/PartialKey) -> String
+  keyName(k= /Catln/PartialKey(name, vars, args))= name
+
+  keyDepth(k -> /Catln/PartialKey) -> Integer
+    # [keyDepth] counts the keys a key holds beneath it, walking the [args] it is written over. One
+      for the key itself, and then the same again for each argument.
+  keyDepth(k= /Catln/PartialKey(name, vars, args))= 1 + keyDepthAll(ks= args)
+
+  keyDepthAll(ks -> /Data/List[$T -> /Catln/PartialKey]) -> Integer
+  keyDepthAll(ks= /Data/List/Nil)= 0
+  keyDepthAll(ks= /Data/List/Cons(head, tail))= keyDepth(k= head) + keyDepthAll(ks= tail)
+
+  > keyName(k= /Catln/PartialKey(name= "x", vars= [], args= []))
+    >>> x
+  > keyDepth(k= /Catln/PartialKey(name= "f", vars= [], args= [/Catln/PartialKey(name= "a", vars= [], args= [])]))
+    >>> 2
+  # ## What the suite checks
+    The `>` examples above are checked by `catln test`, and the integration suite typechecks and
+    builds this file without comparing what they evaluate to — only a page under @stack/@ has its
+    examples run as cases, and no page under @stack/@ may import [hsprgm] without closing the import
+    cycle @core/result.ct@ measures. So the values are printed instead, and @hsprgm.stdout.txt@ is
+    what compares them, which is the one mechanism the integration runner already has for saying
+    what a program produced.
+  report() -> String
+  report()= constantKind(c= /Catln/Constant/CInt(value= 3)) ++ " " ++ intOf(c= /Catln/Constant/CInt(value= 42)).toString ++ " " ++ keyName(k= /Catln/PartialKey(name= "x", vars= [], args= [])) ++ " " ++ keyDepth(k= /Catln/PartialKey(name= "f", vars= [], args= [/Catln/PartialKey(name= "a", vars= [], args= [])])).toString
+
+main{io -> IO}= io.println(msg= report()).exit(val= 0)

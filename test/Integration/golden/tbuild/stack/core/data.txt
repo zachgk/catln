@@ -5,7 +5,9 @@ Prgm
                 ( "/ContextOut"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /ContextOut( EAppVar /V TopType )( EAppArg Value /value -> $/V )( EAppSpread Hole TopType HoleActive Nothing ) ]
+                        [ /ContextOut( EAppVar /V TopType )( EAppArg Value /value -> $/V )
+                            ( EAppSpread Hole TopType HoleActive { haName = Nothing } )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -27,7 +29,9 @@ Prgm
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /ContextIn( EAppVar /V TopType )( EAppArg Value /value -> $/V )( EAppSpread Hole TopType HoleActive Nothing ) ]
+                        [ /ContextIn( EAppVar /V TopType )( EAppArg Value /value -> $/V )
+                            ( EAppSpread Hole TopType HoleActive { haName = Nothing } )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -37,10 +41,17 @@ Prgm
                 ( "/Context"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Context( EAppVar /V TopType )( EAppArg Value /value -> $/V )( EAppSpread Hole TopType HoleActive Nothing ) ]
+                        [ /Context( EAppVar /V TopType )( EAppArg Value /value -> $/V )
+                            ( EAppSpread Hole TopType HoleActive { haName = Nothing } )
+                        ]
                     , omiRuntimeDecls =
-                        [ /Context( EAppVar /T TopType )( EAppVar /V TopType )( EAppArg Value /value -> $/V )( EAppSpread Hole TopType HoleActive Nothing ) | /operator?->
-                            ( EAppArg Value /l -> /ContextIn[ /V=TopType ]( /value=$/V ).. = /ContextIn( EAppVar /V $_/V )( EAppArg Value /value -> $/V = Hole $/V HoleActive Nothing )( EAppSpread Hole TopType HoleActive Nothing ) )( EAppArg Value /r -> $/T = Hole $/T HoleActive Nothing ) -> $/T
+                        [ /Context( EAppVar /T TopType )( EAppVar /V TopType )( EAppArg Value /value -> $/V )
+                            ( EAppSpread Hole TopType HoleActive { haName = Nothing } ) | /operator?->
+                            ( EAppArg Value /l -> /ContextIn[ /V=TopType ]( /value=$/V ).. = /ContextIn( EAppVar /V $_/V )
+                                ( EAppArg Value /value -> $/V = Hole $/V HoleActive { haName = Nothing } )
+                                ( EAppSpread Hole TopType HoleActive { haName = Nothing } )
+                            )
+                            ( EAppArg Value /r -> $/T = Hole $/T HoleActive { haName = Nothing } ) -> $/T
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []

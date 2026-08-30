@@ -11,6 +11,46 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/Hole/HoleActive"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Hole/HoleActive
+                            ( Value /name -> ∀/Data/Maybe[ /T=/Data/String ] )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/TypeVarLoc/TVInt"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/TypeVarLoc/TVInt ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Hole/HoleTodefine"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/Hole/HoleTodefine ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/PartialName/PTypeName"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/PartialName/PTypeName( Value /name -> /Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/ObjectBasis/ArgObj"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/ObjectBasis/ArgObj ]
@@ -20,9 +60,39 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/PartialName/PClassName"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/PartialName/PClassName( Value /name -> /Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/ObjectBasis/MatchObj"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/ObjectBasis/MatchObj ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Constant/CStr"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Constant/CStr( Value /value -> /Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/PtArgMode"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/PtArgMode( Value /argLb -> ∀/Data/Primitive/Boolean )( Value /argUb -> ∀/Data/Primitive/Boolean ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -42,9 +112,39 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/Constant/CInt"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Constant/CInt( Value /value -> /Data/Primitive/Integer ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/ObjectBasis/TypeObj"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/ObjectBasis/TypeObj ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Constant/CFloat"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Constant/CFloat( Value /value -> /Data/Primitive/Float ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/PartialName/PRelativeName"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/PartialName/PRelativeName( Value /name -> /Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -59,6 +159,34 @@ Prgm
                     , omiDefs = []
                     }
                 )
+            ,
+                ( "/Catln/Hole/HoleUndefined"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/Hole/HoleUndefined ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Constant/CChar"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Constant/CChar( Value /value -> /Data/Char ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/TypeVarLoc/TVExt"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/TypeVarLoc/TVExt ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
             ]
         )
     , prgmCG =
@@ -68,6 +196,41 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( True
+            , /Catln/Constant
+            ,
+                [ /Catln/Constant/CInt( /value=/Data/Primitive/Integer )
+                , /Catln/Constant/CFloat( /value=/Data/Primitive/Float )
+                , /Catln/Constant/CStr( /value=/Data/String )
+                , /Catln/Constant/CChar( /value=/Data/Char )
+                ]
+            , Just "A value written directly in a program: a whole number, a fractional number, a string, or a character.A character constant cannot be written in Catln — the language has no character literal — but the compiler makes one where it needs to, so a program reading a program can be handed one."
+            )
+        , CGClass
+            ( True
+            , /Catln/Hole
+            ,
+                [ /Catln/Hole/HoleActive
+                    ( /name=∀/Data/Maybe[ /T=/Data/String ] )
+                , /Catln/Hole/HoleUndefined
+                , /Catln/Hole/HoleTodefine
+                ]
+            , Just "A gap where an expression should be.A [HoleActive] is one written `_` or `_name`, which is an error wherever it is found. A [HoleUndefined] is written `undefined` and is an error only if a run reaches it. A [HoleTodefine] is written `todefine` and is an error both then and when the program is committed.The three are one type because they are one thing written three ways — a place the program is not finished — and differ only in when the compiler is entitled to complain."
+            )
         , CGClass
             ( True
             , /Catln/ObjectBasis
@@ -80,21 +243,90 @@ Prgm
                 ]
             , Just "What an object is: which of the ways of writing one it was written as.A [FunctionObj] is a definition or a declaration, a [TypeObj] is a `data` or a `class`, a [PatternObj] is an object matched against, a [MatchObj] is one arm of a match, and an [ArgObj] is an argument standing inside another object.It is declared by the compiler rather than in a `.ct` file because it is the compiler's own idea of what it is looking at. A program which reads programs is handed this, and what it is called here and what the compiler calls it are one thing."
             )
+        , CGClass
+            ( True
+            , /Catln/PartialName
+            ,
+                [ /Catln/PartialName/PTypeName( /name=/Data/String )
+                , /Catln/PartialName/PClassName( /name=/Data/String )
+                , /Catln/PartialName/PRelativeName( /name=/Data/String )
+                ]
+            , Just "What a partial type is named by: a type, a class, or a suffix that could be either.A [PTypeName] names one declared type and a [PClassName] one declared class. A [PRelativeName] is a name written without its full path — the compiler resolves it to one of the other two, so a program reading a compiled one will not meet it."
+            )
+        , CGClass
+            ( True
+            , /Catln/TypeVarLoc
+            ,
+                [ /Catln/TypeVarLoc/TVInt
+                , /Catln/TypeVarLoc/TVExt
+                ]
+            , Just "Where a type variable was defined: on the type it is written in ([TVInt], written `$T`), or on something outside it ([TVExt], written `$_T`).The difference is what the variable is resolved against, so it is part of what the variable IS rather than a note about it."
+            )
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "# The Catln Program" )
+            ( Value /text= CStr
+                { csValue = "# The Catln Program" }
+            )
         , /Catln/#md
-            ( Value /text= CStr "These are the compiler's own types for the program it is compiling, declared so that a Catln program can be handed one and read it." )
+            ( Value /text= CStr
+                { csValue = "These are the compiler's own types for the program it is compiling, declared so that a Catln program can be handed one and read it." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "They are reached by writing `import hsprgm()`. The standard library does not write that import and must not: these declarations reach `core/list.ct`, and a page every program compiles reaching it is the import cycle `core/result.ct` measures at seven hundred seconds. A program which wants to read programs asks for them and pays for them." )
+            ( Value /text= CStr
+                { csValue = "They are reached by writing `import hsprgm()`. The standard library does not write that import and must not: these declarations reach `core/list.ct`, and a page every program compiles reaching it is the import cycle `core/result.ct` measures at seven hundred seconds. A program which wants to read programs asks for them and pays for them." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "Each is derived from the shape of the Haskell type the compiler itself uses, by the same reading that converts a value of that type to and from an evaluated one — so what a program is handed and what the compiler holds cannot come apart." )
+            ( Value /text= CStr
+                { csValue = "Each is derived from the shape of the Haskell type the compiler itself uses, by the same reading that converts a value of that type to and from an evaluated one — so what a program is handed and what the compiler holds cannot come apart." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "What an object is: which of the ways of writing one it was written as." )
+            ( Value /text= CStr
+                { csValue = "What an object is: which of the ways of writing one it was written as." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "A [FunctionObj] is a definition or a declaration, a [TypeObj] is a `data` or a `class`, a [PatternObj] is an object matched against, a [MatchObj] is one arm of a match, and an [ArgObj] is an argument standing inside another object." )
+            ( Value /text= CStr
+                { csValue = "A [FunctionObj] is a definition or a declaration, a [TypeObj] is a `data` or a `class`, a [PatternObj] is an object matched against, a [MatchObj] is one arm of a match, and an [ArgObj] is an argument standing inside another object." }
+            )
         , /Catln/#md
-            ( Value /text= CStr "It is declared by the compiler rather than in a `.ct` file because it is the compiler's own idea of what it is looking at. A program which reads programs is handed this, and what it is called here and what the compiler calls it are one thing." )
+            ( Value /text= CStr
+                { csValue = "It is declared by the compiler rather than in a `.ct` file because it is the compiler's own idea of what it is looking at. A program which reads programs is handed this, and what it is called here and what the compiler calls it are one thing." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A gap where an expression should be." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A [HoleActive] is one written `_` or `_name`, which is an error wherever it is found. A [HoleUndefined] is written `undefined` and is an error only if a run reaches it. A [HoleTodefine] is written `todefine` and is an error both then and when the program is committed." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "The three are one type because they are one thing written three ways — a place the program is not finished — and differ only in when the compiler is entitled to complain." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A value written directly in a program: a whole number, a fractional number, a string, or a character." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A character constant cannot be written in Catln — the language has no character literal — but the compiler makes one where it needs to, so a program reading a program can be handed one." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "What a partial type is named by: a type, a class, or a suffix that could be either." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A [PTypeName] names one declared type and a [PClassName] one declared class. A [PRelativeName] is a name written without its full path — the compiler resolves it to one of the other two, so a program reading a compiled one will not meet it." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Where a type variable was defined: on the type it is written in ([TVInt], written `$T`), or on something outside it ([TVExt], written `$_T`)." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "The difference is what the variable is resolved against, so it is part of what the variable IS rather than a note about it." }
+            )
         ]
     }

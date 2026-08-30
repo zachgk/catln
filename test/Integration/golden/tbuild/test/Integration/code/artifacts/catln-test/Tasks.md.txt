@@ -10,7 +10,9 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Read [[Welcome]]" ]
+                                    [ CStr
+                                        { csValue = "Read [[Welcome]]" }
+                                    ]
                                 ) = "Read [[Welcome]]"
                             )( EAppArg Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
                         , /Data/Note/Task/Simple
@@ -18,7 +20,9 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Write this note" ]
+                                    [ CStr
+                                        { csValue = "Write this note" }
+                                    ]
                                 ) = "Write this note"
                             )( EAppArg Value /state -> /Data/Primitive/True = Value /Data/Primitive/True )
                         , /Data/Note/Task/Simple
@@ -26,7 +30,9 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Plan the rest" ]
+                                    [ CStr
+                                        { csValue = "Plan the rest" }
+                                    ]
                                 ) = "Plan the rest"
                             )( EAppArg Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
                         , /Data/Note/Task/Simple
@@ -34,7 +40,9 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "A checkbox indented deeper is a task of its own" ]
+                                    [ CStr
+                                        { csValue = "A checkbox indented deeper is a task of its own" }
+                                    ]
                                 ) = "A checkbox indented deeper is a task of its own"
                             )( EAppArg Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
                         ]
@@ -52,7 +60,9 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Tasks" ]
+                                    [ CStr
+                                        { csValue = "Tasks" }
+                                    ]
                                 ) = "Tasks"
                             )
                         ]

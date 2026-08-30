@@ -25,7 +25,11 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /range./Data/List/rangeFrom( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) ->
-                            ( TopType | PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ] && PredClass /Data/List[ /T=/Data/Primitive/Integer ] ) = /range./Data/List/rangeStep
+                            ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                ( /head=/Data/Primitive/Integer
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                                )
+                            ) = /range./Data/List/rangeStep
                             ( Value /more -> ∀/Data/Primitive/Boolean = /operator<( Value /l -> TVArg /i = Value /i )( Value /r -> TVArg /stop = Value /stop ) )( Value /i -> TVArg /i = Value /i )( Value /stop -> TVArg /stop = Value /stop )
                         ]
                     }
@@ -48,15 +52,17 @@ Prgm
                             )
                         ]
                     , omiDefs =
-                        [ /Data/List/length( Value /this -> /Data/List/Nil ) -> /Data/Primitive/Integer = CInt 0
+                        [ /Data/List/length( Value /this -> /Data/List/Nil ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
                         , /Data/List/length
                             ( Value /this -> /Data/List/Cons
                                 ( /head=TopType
-                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                ) = /Data/List/Cons( Value /head )
-                                ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
+                                , /tail=TopType
+                                ) = /Data/List/Cons( Value /head )( Value /tail )
                             ) -> /Data/Primitive/Integer = /operator+
-                            ( Value /l -> /Data/Primitive/Integer = CInt 1 )
+                            ( Value /l -> /Data/Primitive/Integer = CInt
+                                { ciValue = 1 }
+                            )
                             ( Value /r -> /Data/Primitive/Integer = /Data/List/length( Value /this -> TVArg /tail = Value /tail ) )
                         ]
                     }
@@ -68,26 +74,31 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/toString( Value /this -> /Data/List/Nil ) -> /Data/String = CStr "[]"
+                        [ /Data/toString( Value /this -> /Data/List/Nil ) -> /Data/String = CStr
+                            { csValue = "[]" }
                         , /Data/toString
                             ( Value /this ->
                                 ( /Cons[ /T=∀/Data/ToString ]
                                     ( /head=TopType
                                     , /tail=TopType
                                     ) + /Data/List/Cons[ /T=∀/Data/ToString ]
-                                    ( /head=∀/Data/ToString
-                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
+                                    ( /head=TopType
+                                    , /tail=TopType
                                     )
                                 ) = /Cons[ /T : ∀/Data/ToString ]( Value /head@Value /h )( Value /tail@Value /t )
                             ) -> /Data/String = /operator++
                             ( Value /l -> ∀/Data/Algebra/Semigroup = /operator++
                                 ( Value /l -> ∀/Data/Algebra/Semigroup = /operator++
-                                    ( Value /l -> /Data/String = CStr "[" )
+                                    ( Value /l -> /Data/String = CStr
+                                        { csValue = "[" }
+                                    )
                                     ( Value /r -> ∀/Data/Algebra/Semigroup = /toString( Value /this -> TVArg /h = Value /h ) )
                                 )
                                 ( Value /r -> ∀/Data/Algebra/Semigroup = /toString./Data/List/restToString( Value /t -> TVArg /t = Value /t )( Value /h -> TVArg /h = Value /h )( Value /lst -> TVArg /t = Value /t ) )
                             )
-                            ( Value /r -> /Data/String = CStr "]" )
+                            ( Value /r -> /Data/String = CStr
+                                { csValue = "]" }
+                            )
                         ]
                     }
                 )
@@ -107,9 +118,8 @@ Prgm
                         , /Data/List/append
                             ( Value /a -> /Data/List/Cons
                                 ( /head=TopType
-                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                ) = /Data/List/Cons( Value /head )
-                                ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
+                                , /tail=TopType
+                                ) = /Data/List/Cons( Value /head )( Value /tail )
                             )
                             ( Value /b -> ∀/Data/List/ConsList[ /T=TopType ] ) -> /Data/List/Cons
                             ( /head=TopType
@@ -131,22 +141,9 @@ Prgm
                         , /reversed./Data/List/reverseOnto
                             ( Value /lst -> /Data/List/Cons
                                 ( /head=TopType
-                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                ) = /Data/List/Cons( Value /head )
-                                ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
-                            )
-                            ( Value /acc -> ∀/Data/List/ConsList[ /T=TopType ] ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/List/ConsList
-                                , fromList []
-                                , []
-                                )
-                            , /Data/List/Cons[ /T=TopType ]
-                                ( /head=$/T
-                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                )
-                            , []
-                            ) = /reversed./Data/List/reverseOnto( Value /lst -> TVArg /tail = Value /tail )
+                                , /tail=TopType
+                                ) = /Data/List/Cons( Value /head )( Value /tail )
+                            )( Value /acc -> ∀/Data/List/ConsList ) -> ∀/Data/List/ConsList = /reversed./Data/List/reverseOnto( Value /lst -> TVArg /tail = Value /tail )
                             ( Value /acc -> /Data/List/Cons[ /T=TopType ]
                                 ( /head=$/T
                                 , /tail=∀/Data/List/ConsList[ /T=TopType ]
@@ -160,7 +157,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /sorted./Data/List/insert( Value /t )( Value /h )[ /T : ∀/Data/Algebra/Ord ]( Value /x -> $/T )
-                            ( Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/List/ConsList[ /T=$^/T ]
+                            ( Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/List/ConsList[ /T=$_/T ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -171,32 +168,26 @@ Prgm
                             ) = /Data/List/Cons( Value /head -> TVArg /x = Value /x )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                         , /sorted./Data/List/insert( Value /t )( Value /h )( Value /x -> ∀/Data/Algebra/Ord )
                             ( Value /lst -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                ( /head=∀/Data/Algebra/Ord
-                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                ) = /Data/List/Cons[ /T : ∀/Data/Algebra/Ord ]( Value /head -> ∀/Data/Algebra/Ord )
-                                ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
+                                ( /head=TopType
+                                , /tail=TopType
+                                ) = /Data/List/Cons[ /T : ∀/Data/Algebra/Ord ]( Value /head )( Value /tail )
                             ) -> UnionType
                             ( Just
                                 ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                 , fromList []
                                 , []
                                 )
-                            ,
-                                ( /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                    ( /head=∀/Data/Algebra/Ord
-                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    ) + /sorted./Data/List/insertStep
-                                    ( /head=∀/Data/Algebra/Ord
-                                    , /before=( /Data/Primitive/True + /Data/Primitive/False )
-                                    , /t=TopType
-                                    , /x=∀/Data/Algebra/Ord
-                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    , /h=TopType
-                                    )
+                            , /sorted./Data/List/insertStep
+                                ( /head=TopType
+                                , /before=∀/Data/Primitive/Boolean
+                                , /t=TopType
+                                , /x=∀/Data/Algebra/Ord
+                                , /tail=TopType
+                                , /h=TopType
                                 )
                             , []
                             ) = /sorted./Data/List/insertStep( Value /t -> TVArg /t = Value /t )( Value /h -> TVArg /h = Value /h )
-                            ( Value /before -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isLessEq
+                            ( Value /before -> ∀/Data/Primitive/Boolean = /Data/Algebra/isLessEq
                                 ( Value /this -> ∀/Data/Algebra/Comparison = /Data/Algebra/compareTo( Value /other -> TVArg /head = Value /head )( Value /this -> TVArg /x = Value /x ) )
                             )( Value /x -> TVArg /x = Value /x )( Value /head -> TVArg /head = Value /head )( Value /tail -> TVArg /tail = Value /tail )
                         ]
@@ -212,15 +203,15 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/List/sum( Value /lst -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/Primitive/Integer = CInt 0
+                        [ /Data/List/sum( Value /lst -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
                         , /Data/List/sum
                             ( Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                                ( /head=/Data/Primitive/Integer
-                                , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
-                                ) = /Data/List/Cons[ /T : /Data/Primitive/Integer ]( Value /head -> /Data/Primitive/Integer )
-                                ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] )
+                                ( /head=TopType
+                                , /tail=TopType
+                                ) = /Data/List/Cons[ /T : /Data/Primitive/Integer ]( Value /head )( Value /tail )
                             ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /head = Value /head )
-                            ( Value /r -> /Data/Primitive/Integer = /Data/List/sum( Value /lst -> TVArg /tail = Value /tail ) )
+                            ( Value /r -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /Data/List/sum( Value /lst -> TVArg /tail = Value /tail ) )
                         ]
                     }
                 )
@@ -245,9 +236,16 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/List/pureConsInt( Value /v -> /Data/Primitive/Integer ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                            ( /head=/Data/Primitive/Integer
-                            , /tail=/Data/List/Nil
+                        [ /Data/List/pureConsInt( Value /v -> /Data/Primitive/Integer ) ->
+                            ( /Data/Monad/pure
+                                [ /M=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                    ( /head=/Data/Primitive/Integer
+                                    , /tail=/Data/List/Nil
+                                    )
+                                ]( /v=/Data/Primitive/Integer ) + /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                ( /head=/Data/Primitive/Integer
+                                , /tail=/Data/List/Nil
+                                )
                             ) = /Data/Monad/pure( Value /v -> TVArg /v = Value /v )
                         ]
                     }
@@ -260,18 +258,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/List/reversed( Value /lst -> ∀/Data/List ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Data/List
-                                , fromList []
-                                , []
-                                )
-                            , /Data/List/Cons[ /T=TopType ]
-                                ( /head=$/T
-                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                )
-                            , []
-                            ) = /reversed./Data/List/reverseOnto( Value /lst -> TVArg /lst = Value /lst )( Value /acc -> /Data/List/Nil = Value /Data/List/Nil )
+                        [ /Data/List/reversed( Value /lst -> ∀/Data/List ) ->
+                            ( TopType | PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Data/List ) = /reversed./Data/List/reverseOnto( Value /lst -> TVArg /lst = Value /lst )( Value /acc -> /Data/List/Nil = Value /Data/List/Nil )
                         ]
                     }
                 )
@@ -288,10 +276,11 @@ Prgm
                             ( /head=/Data/Primitive/Integer
                             , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
                             ) = /Data/List/Cons( Value /head -> TVArg /i = Value /i )
-                            ( Value /tail ->
-                                ( TopType | PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ] && PredClass /Data/List[ /T=/Data/Primitive/Integer ] ) = /range./Data/List/rangeFrom
+                            ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = /range./Data/List/rangeFrom
                                 ( Value /i -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /i = Value /i )
-                                    ( Value /r -> /Data/Primitive/Integer = CInt 1 )
+                                    ( Value /r -> /Data/Primitive/Integer = CInt
+                                        { ciValue = 1 }
+                                    )
                                 )( Value /stop -> TVArg /stop = Value /stop )
                             )
                         ]
@@ -310,10 +299,9 @@ Prgm
                         [ /Data/List/any( Value /lst -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/List/any
                             ( Value /lst -> /Data/List/Cons[ /T=∀/Data/Primitive/Boolean ]
-                                ( /head=∀/Data/Primitive/Boolean
-                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Primitive/Boolean ]
-                                ) = /Data/List/Cons[ /T : ∀/Data/Primitive/Boolean ]( Value /head -> ∀/Data/Primitive/Boolean )
-                                ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Primitive/Boolean ] )
+                                ( /head=TopType
+                                , /tail=TopType
+                                ) = /Data/List/Cons[ /T : ∀/Data/Primitive/Boolean ]( Value /head )( Value /tail )
                             ) -> ∀/Data/Primitive/Boolean = /operator||( Value /l -> TVArg /head = Value /head )
                             ( Value /r -> ∀/Data/Primitive/Boolean = /Data/List/any( Value /lst -> TVArg /tail = Value /tail ) )
                         ]
@@ -324,7 +312,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/sorted[ /T : ∀/Data/Algebra/Ord ]
-                            ( Value /lst -> ∀/Data/List[ /T=$^/T ] ) -> ∀/Data/List[ /T=$^/T ]
+                            ( Value /lst -> ∀/Data/List[ /T=$_/T ] ) -> ∀/Data/List[ /T=$_/T ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -332,10 +320,9 @@ Prgm
                         [ /Data/List/sorted( Value /lst -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/List/Nil = Value /Data/List/Nil
                         , /Data/List/sorted
                             ( Value /lst -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                ( /head=∀/Data/Algebra/Ord
-                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                ) = /Data/List/Cons[ /T : ∀/Data/Algebra/Ord ]( Value /head@Value /h -> ∀/Data/Algebra/Ord )
-                                ( Value /tail@Value /t -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
+                                ( /head=TopType
+                                , /tail=TopType
+                                ) = /Data/List/Cons[ /T : ∀/Data/Algebra/Ord ]( Value /head@Value /h )( Value /tail@Value /t )
                             ) -> UnionType
                             ( Just
                                 ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
@@ -344,46 +331,31 @@ Prgm
                                 )
                             ,
                                 ( /sorted./Data/List/insert
-                                    ( /t=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    , /x=∀/Data/Algebra/Ord
-                                    , /lst=UnionType
-                                        ( Just
-                                            ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=∀/Data/Algebra/Ord ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                            ( /head=∀/Data/Algebra/Ord
+                                    ( /t=TopType
+                                    , /x=TopType
+                                    , /lst=
+                                        ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                            ( /head=$/T
                                             , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                             )
-                                        , []
                                         )
-                                    , /h=∀/Data/Algebra/Ord
-                                    ) + /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                    ( /head=∀/Data/Algebra/Ord
-                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    ) + /sorted./Data/List/insertStep[ /T=∀/Data/Algebra/Ord ]
-                                    ( /head=∀/Data/Algebra/Ord
-                                    , /before=( /Data/Primitive/True + /Data/Primitive/False )
+                                    , /h=TopType
+                                    ) + /sorted./Data/List/insertStep
+                                    ( /head=TopType
+                                    , /before=∀/Data/Primitive/Boolean
                                     , /t=TopType
                                     , /x=∀/Data/Algebra/Ord
-                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                    , /tail=TopType
                                     , /h=TopType
                                     )
                                 )
                             , []
                             ) = /sorted./Data/List/insert( Value /t -> TVArg /t = Value /t )( Value /h -> TVArg /h = Value /h )( Value /x -> TVArg /h = Value /h )
-                            ( Value /lst -> UnionType
-                                ( Just
-                                    ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=∀/Data/Algebra/Ord ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                    ( /head=∀/Data/Algebra/Ord
+                            ( Value /lst ->
+                                ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                    ( /head=$/T
                                     , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                     )
-                                , []
                                 ) = /Data/List/sorted( Value /lst -> TVArg /t = Value /t )
                             )
                         ]
@@ -397,56 +369,28 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Monad/mmap( Value /m -> /Data/List/Nil = Value /Data/List/Nil )
-                            ( /fn( Value /v ) ) -> /Data/List/Nil = Value /Data/List/Nil
+                            ( /fn( Value /v ) -> ∀/Data/Monad[ /T=TopType ] ) -> /Data/List/Nil = Value /Data/List/Nil
                         , /Data/Monad/mmap
                             ( Value /m -> /Data/List/Cons
                                 ( /head=TopType
-                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                ) = /Data/List/Cons( Value /head )
-                                ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
+                                , /tail=TopType
+                                ) = /Data/List/Cons( Value /head )( Value /tail )
                             )
-                            ( /fn( Value /v ) ) -> UnionType
+                            ( /fn( Value /v ) -> ∀/Data/Monad[ /T=TopType ] ) -> UnionType
                             ( Just
                                 ( PredClass /Data/List/ConsList[ /T=TopType ]
                                 , fromList []
                                 , []
                                 )
-                            ,
-                                ( /Data/List/append
-                                    ( /a=∀/Data/List/ConsList[ /T=TopType ]
-                                    , /b=UnionType
-                                        ( Just
-                                            ( PredClass /Data/List/ConsList[ /T=TopType ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/List/Cons[ /T=TopType ]
-                                            ( /head=$/T
-                                            , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                            )
-                                        , []
-                                        )
-                                    ) + /Data/List/Cons[ /T=TopType ]
-                                    ( /head=$/T
-                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                    )
+                            , /Data/List/append
+                                ( /a=∀/Data/List/ConsList[ /T=TopType ]
+                                , /b=∀/Data/List/ConsList[ /T=TopType ]
                                 )
                             , []
                             ) = /Data/List/append
                             ( Value /a -> ∀/Data/List/ConsList[ /T=TopType ] = /fn( Value /v -> TVArg /head = Value /head ) )
-                            ( Value /b -> UnionType
-                                ( Just
-                                    ( PredClass /Data/List/ConsList[ /T=TopType ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/List/Cons[ /T=TopType ]
-                                    ( /head=$/T
-                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                    )
-                                , []
-                                ) = /Data/Monad/mmap( Value /m -> TVArg /tail = Value /tail )
-                                ( /fn( Value /v )= /fn( Value /v -> TVArg /v = Value /v ) )
+                            ( Value /b -> ∀/Data/List/ConsList[ /T=TopType ] = /Data/Monad/mmap( Value /m -> TVArg /tail = Value /tail )
+                                ( /fn( Value /v ) -> ∀/Data/Monad[ /T=TopType ] = /fn( Value /v -> TVArg /v = Value /v ) )
                             )
                         ]
                     }
@@ -463,16 +407,15 @@ Prgm
                         , /Data/Functor/fmap
                             ( Value /lst -> /Data/List/Cons
                                 ( /head=TopType
-                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                ) = /Data/List/Cons( Value /head )
-                                ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
+                                , /tail=TopType
+                                ) = /Data/List/Cons( Value /head )( Value /tail )
                             )
                             ( /fn( Value /v ) ) -> /Data/List/Cons
                             ( /head=TopType
-                            , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                            , /tail=∀/Data/Functor[ /T=TopType ]
                             ) = /Data/List/Cons
                             ( Value /head= /fn( Value /v -> TVArg /head = Value /head ) )
-                            ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] = /Data/Functor/fmap( Value /lst -> TVArg /tail = Value /tail )
+                            ( Value /tail -> ∀/Data/Functor[ /T=TopType ] = /Data/Functor/fmap( Value /lst -> TVArg /tail = Value /tail )
                                 ( /fn( Value /v )= /fn( Value /v -> TVArg /v = Value /v ) )
                             )
                         ]
@@ -483,7 +426,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/Cons[ /T : TopType ]( Value /head -> $/T )
-                            ( Value /tail -> ∀/Data/List/ConsList[ /T=$^/T ] )
+                            ( Value /tail -> ∀/Data/List/ConsList[ /T=$_/T ] )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -503,10 +446,9 @@ Prgm
                         [ /Data/List/all( Value /lst -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         , /Data/List/all
                             ( Value /lst -> /Data/List/Cons[ /T=∀/Data/Primitive/Boolean ]
-                                ( /head=∀/Data/Primitive/Boolean
-                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Primitive/Boolean ]
-                                ) = /Data/List/Cons[ /T : ∀/Data/Primitive/Boolean ]( Value /head -> ∀/Data/Primitive/Boolean )
-                                ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Primitive/Boolean ] )
+                                ( /head=TopType
+                                , /tail=TopType
+                                ) = /Data/List/Cons[ /T : ∀/Data/Primitive/Boolean ]( Value /head )( Value /tail )
                             ) -> ∀/Data/Primitive/Boolean = /operator&&( Value /l -> TVArg /head = Value /head )
                             ( Value /r -> ∀/Data/Primitive/Boolean = /Data/List/all( Value /lst -> TVArg /tail = Value /tail ) )
                         ]
@@ -521,7 +463,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/List/range( Value /stop -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Data/Primitive/Integer ] = /range./Data/List/rangeFrom
-                            ( Value /i -> /Data/Primitive/Integer = CInt 0 )( Value /stop -> TVArg /stop = Value /stop )
+                            ( Value /i -> /Data/Primitive/Integer = CInt
+                                { ciValue = 0 }
+                            )( Value /stop -> TVArg /stop = Value /stop )
                         ]
                     }
                 )
@@ -535,16 +479,18 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /toString./Data/List/restToString( Value /t )( Value /h )( Value /lst -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/String = CStr ""
+                        [ /toString./Data/List/restToString( Value /t )( Value /h )( Value /lst -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/String = CStr
+                            { csValue = "" }
                         , /toString./Data/List/restToString( Value /t )( Value /h )
                             ( Value /lst -> /Data/List/Cons[ /T=∀/Data/ToString ]
-                                ( /head=∀/Data/ToString
-                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
-                                ) = /Data/List/Cons[ /T : ∀/Data/ToString ]( Value /head -> ∀/Data/ToString )
-                                ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
+                                ( /head=TopType
+                                , /tail=TopType
+                                ) = /Data/List/Cons[ /T : ∀/Data/ToString ]( Value /head )( Value /tail )
                             ) -> /Data/String = /operator++
                             ( Value /l -> ∀/Data/Algebra/Semigroup = /operator++
-                                ( Value /l -> /Data/String = CStr ", " )
+                                ( Value /l -> /Data/String = CStr
+                                    { csValue = ", " }
+                                )
                                 ( Value /r -> ∀/Data/Algebra/Semigroup = /toString( Value /this -> TVArg /head = Value /head ) )
                             )
                             ( Value /r -> ∀/Data/Algebra/Semigroup = /toString./Data/List/restToString( Value /t -> TVArg /t = Value /t )( Value /h -> TVArg /h = Value /h )( Value /lst -> TVArg /tail = Value /tail ) )
@@ -556,7 +502,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /sorted./Data/List/insertStep( Value /t )( Value /h )[ /T : ∀/Data/Algebra/Ord ]( Value /before -> ∀/Data/Primitive/Boolean )( Value /x -> $/T )( Value /head -> $/T )
-                            ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/List/ConsList[ /T=$^/T ]
+                            ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/List/ConsList[ /T=$_/T ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -564,12 +510,12 @@ Prgm
                         [ /sorted./Data/List/insertStep( Value /t )( Value /h )[ /T : ∀/Data/Algebra/Ord ]( Value /before -> /Data/Primitive/True = Value /Data/Primitive/True )( Value /x -> ∀/Data/Algebra/Ord )( Value /head -> ∀/Data/Algebra/Ord )
                             ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> /Data/List/Cons
                             ( /head=∀/Data/Algebra/Ord
-                            , /tail=/Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                            , /tail=/Data/List/Cons
                                 ( /head=∀/Data/Algebra/Ord
                                 , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                 )
                             ) = /Data/List/Cons( Value /head -> TVArg /x = Value /x )
-                            ( Value /tail -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                            ( Value /tail -> /Data/List/Cons
                                 ( /head=∀/Data/Algebra/Ord
                                 , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                 ) = /Data/List/Cons( Value /head -> TVArg /head = Value /head )( Value /tail -> TVArg /tail = Value /tail )
@@ -579,19 +525,7 @@ Prgm
                             ( /head=∀/Data/Algebra/Ord
                             , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                             ) = /Data/List/Cons( Value /head -> TVArg /head = Value /head )
-                            ( Value /tail -> UnionType
-                                ( Just
-                                    ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                    ( /head=∀/Data/Algebra/Ord
-                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    )
-                                , []
-                                ) = /sorted./Data/List/insert( Value /t -> TVArg /t = Value /t )( Value /h -> TVArg /h = Value /h )( Value /x -> TVArg /x = Value /x )( Value /lst -> TVArg /tail = Value /tail )
-                            )
+                            ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] = /sorted./Data/List/insert( Value /t -> TVArg /t = Value /t )( Value /h -> TVArg /h = Value /h )( Value /x -> TVArg /x = Value /x )( Value /lst -> TVArg /tail = Value /tail ) )
                         ]
                     }
                 )
@@ -604,28 +538,28 @@ Prgm
                     , omiDefs =
                         [ /Data/Algebra/equal( Value /other -> /Data/List/Nil = Value /Data/List/Nil )( Value /this -> /Data/List/Nil ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         , /Data/Algebra/equal
-                            ( Value /other -> /Data/List/Cons
-                                ( /head=TopType
-                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                ) = /Data/List/Cons( Value /head )
-                                ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
+                            ( Value /other -> /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
+                                ( /head=$/T
+                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ]
+                                ) = /Data/List/Cons( Value /head -> ∀/Data/Algebra/Eq )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ] )
                             )( Value /this -> /Data/List/Nil ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/Algebra/equal( Value /other -> /Data/List/Nil = Value /Data/List/Nil )
-                            ( Value /this -> /Data/List/Cons
-                                ( /head=TopType
-                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                ) = /Data/List/Cons( Value /head )
-                                ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
+                            ( Value /this -> /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
+                                ( /head=$/T
+                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ]
+                                ) = /Data/List/Cons( Value /head -> ∀/Data/Algebra/Eq )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ] )
                             ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/Algebra/equal
-                            ( Value /other -> /Data/List/Cons
-                                ( /head=TopType
-                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                ) = /Data/List/Cons( Value /head@Value /bh )
-                                ( Value /tail@Value /bt -> ∀/Data/List/ConsList[ /T=TopType ] )
+                            ( Value /other -> /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
+                                ( /head=$/T
+                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ]
+                                ) = /Data/List/Cons( Value /head@Value /bh -> ∀/Data/Algebra/Eq )
+                                ( Value /tail@Value /bt -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ] )
                             )
                             ( Value /this -> /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
-                                ( /head=∀/Data/Algebra/Eq
+                                ( /head=$/T
                                 , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ]
                                 ) = /Data/List/Cons[ /T : ∀/Data/Algebra/Eq ]( Value /head@Value /ah -> ∀/Data/Algebra/Eq )
                                 ( Value /tail@Value /at -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ] )
@@ -658,28 +592,28 @@ Prgm
                     , omiDefs =
                         [ /Data/Algebra/compareTo( Value /other -> /Data/List/Nil = Value /Data/List/Nil )( Value /this -> /Data/List/Nil ) -> /Data/Algebra/Equal = Value /Data/Algebra/Equal
                         , /Data/Algebra/compareTo
-                            ( Value /other -> /Data/List/Cons
-                                ( /head=TopType
-                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                ) = /Data/List/Cons( Value /head )
-                                ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
+                            ( Value /other -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                ( /head=$/T
+                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                ) = /Data/List/Cons( Value /head -> ∀/Data/Algebra/Ord )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
                             )( Value /this -> /Data/List/Nil ) -> /Data/Algebra/LessThan = Value /Data/Algebra/LessThan
                         , /Data/Algebra/compareTo( Value /other -> /Data/List/Nil = Value /Data/List/Nil )
-                            ( Value /this -> /Data/List/Cons
-                                ( /head=TopType
-                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                ) = /Data/List/Cons( Value /head )
-                                ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
+                            ( Value /this -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                ( /head=$/T
+                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                ) = /Data/List/Cons( Value /head -> ∀/Data/Algebra/Ord )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
                             ) -> /Data/Algebra/GreaterThan = Value /Data/Algebra/GreaterThan
                         , /Data/Algebra/compareTo
-                            ( Value /other -> /Data/List/Cons
-                                ( /head=TopType
-                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                ) = /Data/List/Cons( Value /head@Value /bh )
-                                ( Value /tail@Value /bt -> ∀/Data/List/ConsList[ /T=TopType ] )
+                            ( Value /other -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                ( /head=$/T
+                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                ) = /Data/List/Cons( Value /head@Value /bh -> ∀/Data/Algebra/Ord )
+                                ( Value /tail@Value /bt -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
                             )
                             ( Value /this -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                ( /head=∀/Data/Algebra/Ord
+                                ( /head=$/T
                                 , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                 ) = /Data/List/Cons[ /T : ∀/Data/Algebra/Ord ]( Value /head@Value /ah -> ∀/Data/Algebra/Ord )
                                 ( Value /tail@Value /at -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
@@ -721,28 +655,28 @@ Prgm
             , /Data/List/ConsList
             ,
                 [ ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ] ]
-            , Just "                    "
+            , Just ""
             )
         , CGClass
             ( False
             , /Data/List/ConsList
             ,
                 [ ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ]
-            , Just "                    "
+            , Just ""
             )
         , CGClass
             ( False
             , /Data/List/ConsList
             ,
                 [ ∀/Data/List/ConsList[ /T=$_/T ] ]
-            , Just "                    "
+            , Just ""
             )
         , CGClass
             ( False
             , /Data/List[ /T=TopType ]
             ,
                 [ ∀/Data/List/ConsList[ /T=$_/T ] ]
-            , Just " Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below.  Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below.  Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below.  Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below.  Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below.  Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below.  Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below.  Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below.  Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below.  Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below.  Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below.  Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below.  Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below.  Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below.  Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below.  Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below.  Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below.  Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below.  Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below.  Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below.  Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below."
+            , Just " Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below."
             )
         , CGClass
             ( True
@@ -756,46 +690,6 @@ Prgm
                 ]
             , Just "A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
               smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
-              [Nil], and a step that consumes the [head] and recurses on the [tail]. A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
-              smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
-              [Nil], and a step that consumes the [head] and recurses on the [tail]. A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
-              smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
-              [Nil], and a step that consumes the [head] and recurses on the [tail]. A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
-              smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
-              [Nil], and a step that consumes the [head] and recurses on the [tail]. A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
-              smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
-              [Nil], and a step that consumes the [head] and recurses on the [tail]. A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
-              smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
-              [Nil], and a step that consumes the [head] and recurses on the [tail]. A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
-              smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
-              [Nil], and a step that consumes the [head] and recurses on the [tail]. A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
-              smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
-              [Nil], and a step that consumes the [head] and recurses on the [tail]. A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
-              smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
-              [Nil], and a step that consumes the [head] and recurses on the [tail]. A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
-              smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
-              [Nil], and a step that consumes the [head] and recurses on the [tail]. A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
-              smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
-              [Nil], and a step that consumes the [head] and recurses on the [tail]. A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
-              smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
-              [Nil], and a step that consumes the [head] and recurses on the [tail]. A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
-              smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
-              [Nil], and a step that consumes the [head] and recurses on the [tail]. A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
-              smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
-              [Nil], and a step that consumes the [head] and recurses on the [tail]. A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
-              smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
-              [Nil], and a step that consumes the [head] and recurses on the [tail]. A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
-              smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
-              [Nil], and a step that consumes the [head] and recurses on the [tail]. A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
-              smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
-              [Nil], and a step that consumes the [head] and recurses on the [tail]. A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
-              smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
-              [Nil], and a step that consumes the [head] and recurses on the [tail]. A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
-              smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
-              [Nil], and a step that consumes the [head] and recurses on the [tail]. A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
-              smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
-              [Nil], and a step that consumes the [head] and recurses on the [tail]. A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
-              smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
               [Nil], and a step that consumes the [head] and recurses on the [tail]."
             )
         , CGClass
@@ -803,7 +697,7 @@ Prgm
             , /Data/List/ConsList
             ,
                 [ ∀/Data/List/ConsList[ /T=$_/T ] ]
-            , Just "                    "
+            , Just ""
             )
         , CGClass
             ( False
@@ -813,98 +707,61 @@ Prgm
             , Just "A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
               rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
               [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
-              implement it. A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
-              rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
-              [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
-              implement it. A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
-              rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
-              [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
-              implement it. A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
-              rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
-              [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
-              implement it. A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
-              rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
-              [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
-              implement it. A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
-              rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
-              [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
-              implement it. A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
-              rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
-              [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
-              implement it. A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
-              rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
-              [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
-              implement it. A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
-              rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
-              [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
-              implement it. A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
-              rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
-              [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
-              implement it. A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
-              rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
-              [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
-              implement it. A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
-              rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
-              [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
-              implement it. A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
-              rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
-              [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
-              implement it. A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
-              rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
-              [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
-              implement it. A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
-              rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
-              [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
-              implement it. A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
-              rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
-              [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
-              implement it. A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
-              rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
-              [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
-              implement it. A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
-              rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
-              [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
-              implement it. A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
-              rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
-              [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
-              implement it. A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
-              rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
-              [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
-              implement it. A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
-              rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
-              [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
               implement it."
             )
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "# Lists
-            A [List] is an ordered collection of zero or more items. [List] is an interface: it names the
-            operations every list supports without fixing how the items are stored. Concrete list types
-            implement it — this file provides the [ConsList], and a future [ArrayList] or [TreeList] would
-            be another. Because [sum], [reversed], [sorted] and the rest are declared on [List] rather than
-            on one concrete type, every list type reuses those same declarations just by being a [List]. The
-            [List] interface lives here directly under [Data]; the [ConsList] implementation and the
-            operations all live in the [Data/List] namespace it opens." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "# Lists
+                A [List] is an ordered collection of zero or more items. [List] is an interface: it names the
+                operations every list supports without fixing how the items are stored. Concrete list types
+                implement it — this file provides the [ConsList], and a future [ArrayList] or [TreeList] would
+                be another. Because [sum], [reversed], [sorted] and the rest are declared on [List] rather than
+                on one concrete type, every list type reuses those same declarations just by being a [List]. The
+                [List] interface lives here directly under [Data]; the [ConsList] implementation and the
+                operations all live in the [Data/List] namespace it opens." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "# The ConsList and the List operations
-            Everything else list-related lives in [module(Data/List)] — the namespace the [List] class opens —
-            so the [ConsList] type, its constructors [Cons]/[Nil], and every operation sit under [/Data/List]
-            rather than loose at the top of [/Data]." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "# The ConsList and the List operations
+                Everything else list-related lives in [module(Data/List)] — the namespace the [List] class opens —
+                so the [ConsList] type, its constructors [Cons]/[Nil], and every operation sit under [/Data/List]
+                rather than loose at the top of [/Data]." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
-            smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
-            [Nil], and a step that consumes the [head] and recurses on the [tail]." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
+                smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
+                [Nil], and a step that consumes the [head] and recurses on the [tail]." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "## Bracket syntax
-            The literal [[1, 2, 3]] is sugar for a [ConsList]: it expands to [Cons(1, Cons(2, Cons(3,
-            Nil)))], and [[]] is [Nil]. The examples throughout this file use it." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "## Bracket syntax
+                The literal [[1, 2, 3]] is sugar for a [ConsList]: it expands to [Cons(1, Cons(2, Cons(3,
+                Nil)))], and [[]] is [Nil]. The examples throughout this file use it." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "## Length" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "## Length" }
+            )
         , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /Data/List/length
+            ( Value /p -> UnionType
+                ( Just
+                    ( PredExpr /operator==
+                        ( /r=/Data/Primitive/True
+                        , /l=~nonNeg( /this=~/$this )
+                        ) && PredRel Integer
+                    , fromList []
+                    , []
+                    )
+                , /Data/Primitive/Integer
+                , []
+                ) = /Data/List/length
                 ( Value /this -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
@@ -915,130 +772,151 @@ Prgm
                             )
                         )
                     ) = /Data/List/Cons
-                    ( Value /head -> /Data/Primitive/Integer = CInt 10 )
-                    ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                    ( Value /head -> /Data/Primitive/Integer = CInt
+                        { ciValue = 10 }
+                    )
+                    ( Value /tail -> /Data/List/Cons
                         ( /head=/Data/Primitive/Integer
-                        , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        , /tail=/Data/List/Cons
                             ( /head=/Data/Primitive/Integer
                             , /tail=/Data/List/Nil
                             )
                         ) = /Data/List/Cons
-                        ( Value /head -> /Data/Primitive/Integer = CInt 20 )
-                        ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        ( Value /head -> /Data/Primitive/Integer = CInt
+                            { ciValue = 20 }
+                        )
+                        ( Value /tail -> /Data/List/Cons
                             ( /head=/Data/Primitive/Integer
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
-                            ( Value /head -> /Data/Primitive/Integer = CInt 30 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                            ( Value /head -> /Data/Primitive/Integer = CInt
+                                { ciValue = 30 }
+                            )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                         )
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr "3" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "3" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "## Summing" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "## Summing" }
+            )
         , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /Data/List/sum
+            ( Value /p -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /Data/List/sum
                 ( Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                     ( /head=/Data/Primitive/Integer
-                    , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                    , /tail=/Data/List/Cons
                         ( /head=/Data/Primitive/Integer
-                        , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        , /tail=/Data/List/Cons
                             ( /head=/Data/Primitive/Integer
                             , /tail=/Data/List/Nil
                             )
                         )
                     ) = /Data/List/Cons
-                    ( Value /head -> /Data/Primitive/Integer = CInt 1 )
-                    ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                    ( Value /head -> /Data/Primitive/Integer = CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value /tail -> /Data/List/Cons
                         ( /head=/Data/Primitive/Integer
-                        , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        , /tail=/Data/List/Cons
                             ( /head=/Data/Primitive/Integer
                             , /tail=/Data/List/Nil
                             )
                         ) = /Data/List/Cons
-                        ( Value /head -> /Data/Primitive/Integer = CInt 2 )
-                        ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        ( Value /head -> /Data/Primitive/Integer = CInt
+                            { ciValue = 2 }
+                        )
+                        ( Value /tail -> /Data/List/Cons
                             ( /head=/Data/Primitive/Integer
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
-                            ( Value /head -> /Data/Primitive/Integer = CInt 3 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                            ( Value /head -> /Data/Primitive/Integer = CInt
+                                { ciValue = 3 }
+                            )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                         )
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr "6" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "6" }
+            )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /Data/List/sum( Value /lst -> /Data/List/Nil = Value /Data/List/Nil ) )
-            ( Value /result -> /Data/String = CStr "0" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "0" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "## Universal and existential quantifiers" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "## Universal and existential quantifiers" }
+            )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/List/all
-                ( Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/True ]
+            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/List/all
+                ( Value /lst -> /Data/List/Cons[ /T=∀/Data/Primitive/Boolean ]
                     ( /head=/Data/Primitive/True
-                    , /tail=/Data/List/Cons[ /T=/Data/Primitive/True ]
+                    , /tail=/Data/List/Cons
                         ( /head=/Data/Primitive/True
                         , /tail=/Data/List/Nil
                         )
                     ) = /Data/List/Cons( Value /head -> /Data/Primitive/True = Value /Data/Primitive/True )
-                    ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/True ]
+                    ( Value /tail -> /Data/List/Cons
                         ( /head=/Data/Primitive/True
                         , /tail=/Data/List/Nil
                         ) = /Data/List/Cons( Value /head -> /Data/Primitive/True = Value /Data/Primitive/True )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr "True" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/List/all
+            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/List/all
                 ( Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/False ]
                     ( /head=/Data/Primitive/False
                     , /tail=/Data/List/Nil
                     ) = /Data/List/Cons( Value /head -> /Data/Primitive/False = Value /Data/Primitive/False )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                 )
             )
-            ( Value /result -> /Data/String = CStr "False" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "False" }
+            )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/List/any
+            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/List/any
                 ( Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/True ]
                     ( /head=/Data/Primitive/True
                     , /tail=/Data/List/Nil
                     ) = /Data/List/Cons( Value /head -> /Data/Primitive/True = Value /Data/Primitive/True )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                 )
             )
-            ( Value /result -> /Data/String = CStr "True" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/List/any
-                ( Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/False ]
+            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/List/any
+                ( Value /lst -> /Data/List/Cons[ /T=∀/Data/Primitive/Boolean ]
                     ( /head=/Data/Primitive/False
-                    , /tail=/Data/List/Cons[ /T=/Data/Primitive/False ]
+                    , /tail=/Data/List/Cons
                         ( /head=/Data/Primitive/False
                         , /tail=/Data/List/Nil
                         )
                     ) = /Data/List/Cons( Value /head -> /Data/Primitive/False = Value /Data/Primitive/False )
-                    ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/False ]
+                    ( Value /tail -> /Data/List/Cons
                         ( /head=/Data/Primitive/False
                         , /tail=/Data/List/Nil
                         ) = /Data/List/Cons( Value /head -> /Data/Primitive/False = Value /Data/Primitive/False )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr "False" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "False" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "## Reversing" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "## Reversing" }
+            )
         , /Catln/#print
-            ( Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/List
-                    , fromList []
-                    , []
-                    )
-                , /Data/List/Cons[ /T=∀/Data/ToString ]
-                    ( /head=$/T
-                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
-                    )
-                , []
-                ) = /Data/List/reversed
+            ( Value /p -> ∀/Data/List = /Data/List/reversed
                 ( Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
@@ -1049,58 +927,63 @@ Prgm
                             )
                         )
                     ) = /Data/List/Cons
-                    ( Value /head -> /Data/Primitive/Integer = CInt 1 )
-                    ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                    ( Value /head -> /Data/Primitive/Integer = CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value /tail -> /Data/List/Cons
                         ( /head=/Data/Primitive/Integer
-                        , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        , /tail=/Data/List/Cons
                             ( /head=/Data/Primitive/Integer
                             , /tail=/Data/List/Nil
                             )
                         ) = /Data/List/Cons
-                        ( Value /head -> /Data/Primitive/Integer = CInt 2 )
-                        ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        ( Value /head -> /Data/Primitive/Integer = CInt
+                            { ciValue = 2 }
+                        )
+                        ( Value /tail -> /Data/List/Cons
                             ( /head=/Data/Primitive/Integer
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
-                            ( Value /head -> /Data/Primitive/Integer = CInt 3 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                            ( Value /head -> /Data/Primitive/Integer = CInt
+                                { ciValue = 3 }
+                            )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                         )
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr "[3, 2, 1]" )
-        , /Catln/#print
-            ( Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/List
-                    , fromList []
-                    , []
-                    )
-                , /Data/List/Cons[ /T=∀/Data/ToString ]
-                    ( /head=$/T
-                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
-                    )
-                , []
-                ) = /Data/List/reversed( Value /lst -> /Data/List/Nil = Value /Data/List/Nil )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "[3, 2, 1]" }
             )
-            ( Value /result -> /Data/String = CStr "[]" )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/List = /Data/List/reversed( Value /lst -> /Data/List/Nil = Value /Data/List/Nil ) )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "[]" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "## Sorting" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "## Sorting" }
+            )
         , /Catln/#print
             ( Value /p -> UnionType
                 ( Just
-                    ( !
-                        ( !
-                            ( PredClass /Data/List[ /T=/Data/Primitive/Integer ] ) && !
-                            ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
-                        ) && PredClass /Catln/Doc/DShow
+                    ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                     , fromList []
                     , []
                     )
-                , /Data/List/Cons
-                    [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString ) ]
-                    ( /head=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString )
-                    , /tail=∀/Data/List/ConsList
-                        [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString ) ]
+                , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                    ( /head=∀/Data/Algebra/Ord
+                    , /tail=UnionType
+                        ( Just
+                            ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                            , fromList []
+                            , []
+                            )
+                        , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                            ( /head=∀/Data/Algebra/Ord
+                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                            )
+                        , []
+                        )
                     )
                 , []
                 ) = /Data/List/sorted
@@ -1114,41 +997,54 @@ Prgm
                             )
                         )
                     ) = /Data/List/Cons
-                    ( Value /head -> /Data/Primitive/Integer = CInt 3 )
-                    ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                    ( Value /head -> /Data/Primitive/Integer = CInt
+                        { ciValue = 3 }
+                    )
+                    ( Value /tail -> /Data/List/Cons
                         ( /head=/Data/Primitive/Integer
-                        , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        , /tail=/Data/List/Cons
                             ( /head=/Data/Primitive/Integer
                             , /tail=/Data/List/Nil
                             )
                         ) = /Data/List/Cons
-                        ( Value /head -> /Data/Primitive/Integer = CInt 1 )
-                        ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        ( Value /head -> /Data/Primitive/Integer = CInt
+                            { ciValue = 1 }
+                        )
+                        ( Value /tail -> /Data/List/Cons
                             ( /head=/Data/Primitive/Integer
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
-                            ( Value /head -> /Data/Primitive/Integer = CInt 2 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                            ( Value /head -> /Data/Primitive/Integer = CInt
+                                { ciValue = 2 }
+                            )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                         )
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr "[1, 2, 3]" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "[1, 2, 3]" }
+            )
         , /Catln/#print
             ( Value /p -> UnionType
                 ( Just
-                    ( !
-                        ( !
-                            ( PredClass /Data/List[ /T=/Data/Primitive/Integer ] ) && !
-                            ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
-                        ) && PredClass /Catln/Doc/DShow
+                    ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                     , fromList []
                     , []
                     )
-                , /Data/List/Cons
-                    [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString ) ]
-                    ( /head=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString )
-                    , /tail=∀/Data/List/ConsList
-                        [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString ) ]
+                , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                    ( /head=∀/Data/Algebra/Ord
+                    , /tail=UnionType
+                        ( Just
+                            ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                            , fromList []
+                            , []
+                            )
+                        , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                            ( /head=∀/Data/Algebra/Ord
+                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                            )
+                        , []
+                        )
                     )
                 , []
                 ) = /Data/List/sorted
@@ -1165,152 +1061,211 @@ Prgm
                             )
                         )
                     ) = /Data/List/Cons
-                    ( Value /head -> /Data/Primitive/Integer = CInt 5 )
-                    ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                    ( Value /head -> /Data/Primitive/Integer = CInt
+                        { ciValue = 5 }
+                    )
+                    ( Value /tail -> /Data/List/Cons
                         ( /head=/Data/Primitive/Integer
-                        , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        , /tail=/Data/List/Cons
                             ( /head=/Data/Primitive/Integer
-                            , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                            , /tail=/Data/List/Cons
                                 ( /head=/Data/Primitive/Integer
                                 , /tail=/Data/List/Nil
                                 )
                             )
                         ) = /Data/List/Cons
-                        ( Value /head -> /Data/Primitive/Integer = CInt 4 )
-                        ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        ( Value /head -> /Data/Primitive/Integer = CInt
+                            { ciValue = 4 }
+                        )
+                        ( Value /tail -> /Data/List/Cons
                             ( /head=/Data/Primitive/Integer
-                            , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                            , /tail=/Data/List/Cons
                                 ( /head=/Data/Primitive/Integer
                                 , /tail=/Data/List/Nil
                                 )
                             ) = /Data/List/Cons
-                            ( Value /head -> /Data/Primitive/Integer = CInt 4 )
-                            ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                            ( Value /head -> /Data/Primitive/Integer = CInt
+                                { ciValue = 4 }
+                            )
+                            ( Value /tail -> /Data/List/Cons
                                 ( /head=/Data/Primitive/Integer
                                 , /tail=/Data/List/Nil
                                 ) = /Data/List/Cons
-                                ( Value /head -> /Data/Primitive/Integer = CInt 1 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                                ( Value /head -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 1 }
+                                )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                             )
                         )
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr "[1, 4, 4, 5]" )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "## Counting ranges" )
-        , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/List[ /T=/Data/Primitive/Integer ] ) = /Data/List/range
-                ( Value /stop -> /Data/Primitive/Integer = CInt 3 )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "[1, 4, 4, 5]" }
             )
-            ( Value /result -> /Data/String = CStr "[0, 1, 2]" )
-        , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/List[ /T=/Data/Primitive/Integer ] ) = /Data/List/range
-                ( Value /stop -> /Data/Primitive/Integer = CInt 0 )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr
+                { csValue = "## Counting ranges" }
             )
-            ( Value /result -> /Data/String = CStr "[]" )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "## Rendering as text" )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
-            rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
-            [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
-            implement it." )
         , /Catln/#print
-            ( Value /p -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+            ( Value /p -> ∀/Data/List[ /T=/Data/Primitive/Integer ] = /Data/List/range
+                ( Value /stop -> /Data/Primitive/Integer = CInt
+                    { ciValue = 3 }
+                )
+            )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "[0, 1, 2]" }
+            )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/List[ /T=/Data/Primitive/Integer ] = /Data/List/range
+                ( Value /stop -> /Data/Primitive/Integer = CInt
+                    { ciValue = 0 }
+                )
+            )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "[]" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr
+                { csValue = "## Rendering as text" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr
+                { csValue = "A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
+                rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
+                [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
+                implement it." }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/List/Cons
                 ( /head=/Data/Primitive/Integer
-                , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                , /tail=/Data/List/Cons
                     ( /head=/Data/Primitive/Integer
-                    , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                    , /tail=/Data/List/Cons
                         ( /head=/Data/Primitive/Integer
                         , /tail=/Data/List/Nil
                         )
                     )
                 ) = /Data/List/Cons
-                ( Value /head -> /Data/Primitive/Integer = CInt 1 )
-                ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                ( Value /head -> /Data/Primitive/Integer = CInt
+                    { ciValue = 1 }
+                )
+                ( Value /tail -> /Data/List/Cons
                     ( /head=/Data/Primitive/Integer
-                    , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                    , /tail=/Data/List/Cons
                         ( /head=/Data/Primitive/Integer
                         , /tail=/Data/List/Nil
                         )
                     ) = /Data/List/Cons
-                    ( Value /head -> /Data/Primitive/Integer = CInt 2 )
-                    ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                    ( Value /head -> /Data/Primitive/Integer = CInt
+                        { ciValue = 2 }
+                    )
+                    ( Value /tail -> /Data/List/Cons
                         ( /head=/Data/Primitive/Integer
                         , /tail=/Data/List/Nil
                         ) = /Data/List/Cons
-                        ( Value /head -> /Data/Primitive/Integer = CInt 3 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                        ( Value /head -> /Data/Primitive/Integer = CInt
+                            { ciValue = 3 }
+                        )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr "[1, 2, 3]" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "[1, 2, 3]" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "## Structural comparison helper" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "## Structural comparison helper" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "# ConsList Functor instance
-            A [ConsList] is a [Functor]: [fmap] applies a function to every element while preserving the
-            list's shape — same length, same order — so mapping [f] over [[1, 2, 3]] gives [[f 1, f 2, f 3]].
-            Lists are the canonical [Functor]; "map a function over a collection" is exactly the operation
-            [fmap] generalises." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "# ConsList Functor instance
+                A [ConsList] is a [Functor]: [fmap] applies a function to every element while preserving the
+                list's shape — same length, same order — so mapping [f] over [[1, 2, 3]] gives [[f 1, f 2, f 3]].
+                Lists are the canonical [Functor]; "map a function over a collection" is exactly the operation
+                [fmap] generalises." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "[fmap] over a [ConsList] rebuilds the list, applying [fn] to each [head]. This is the [ConsList]" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "[fmap] over a [ConsList] rebuilds the list, applying [fn] to each [head]. This is the [ConsList]" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "instance of the generic [fmap] declared over [Functor] in [Data/functor]. The instance is" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "instance of the generic [fmap] declared over [Functor] in [Data/functor]. The instance is" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "written under the declaration's absolute name so the open [Functor] interface need not be" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "written under the declaration's absolute name so the open [Functor] interface need not be" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "totally covered while still resolving for [fmap] calls on a [ConsList]." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "totally covered while still resolving for [fmap] calls on a [ConsList]." }
+            )
         , /Catln/#print
-            ( Value /p -> /Data/List/Cons[ /T=∀/Data/ToString ]
+            ( Value /p -> /Data/List/Cons[ /T=TopType ]
                 ( /head=$/T
-                , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
+                , /tail=
+                    ( TopType | PredClass /Data/Functor[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ] )
                 ) = /Data/Functor/fmap
                 ( Value /lst -> /Data/List/Cons
                     ( /head=/Data/Primitive/Integer
-                    , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                    , /tail=/Data/List/Cons
                         ( /head=/Data/Primitive/Integer
-                        , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        , /tail=/Data/List/Cons
                             ( /head=/Data/Primitive/Integer
                             , /tail=/Data/List/Nil
                             )
                         )
                     ) = /Data/List/Cons
-                    ( Value /head -> /Data/Primitive/Integer = CInt 1 )
-                    ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                    ( Value /head -> /Data/Primitive/Integer = CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value /tail -> /Data/List/Cons
                         ( /head=/Data/Primitive/Integer
-                        , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        , /tail=/Data/List/Cons
                             ( /head=/Data/Primitive/Integer
                             , /tail=/Data/List/Nil
                             )
                         ) = /Data/List/Cons
-                        ( Value /head -> /Data/Primitive/Integer = CInt 2 )
-                        ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        ( Value /head -> /Data/Primitive/Integer = CInt
+                            { ciValue = 2 }
+                        )
+                        ( Value /tail -> /Data/List/Cons
                             ( /head=/Data/Primitive/Integer
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
-                            ( Value /head -> /Data/Primitive/Integer = CInt 3 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                            ( Value /head -> /Data/Primitive/Integer = CInt
+                                { ciValue = 3 }
+                            )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                         )
                     )
                 )
                 ( /fn( Value /v ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /v = Value /v )
-                    ( Value /r -> /Data/Primitive/Integer = CInt 1 )
+                    ( Value /r -> /Data/Primitive/Integer = CInt
+                        { ciValue = 1 }
+                    )
                 )
             )
-            ( Value /result -> /Data/String = CStr "[2, 3, 4]" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "[2, 3, 4]" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "# ConsList Eq membership
-            Makes a [ConsList] of any [Eq] element a proper member of [Eq], so the generic [operator==]
-            dispatches through the [equal] method. Two lists are equal when they match constructor for
-            constructor with equal heads pairwise; the recursion runs through [tail.equal]. This is the
-            idiomatic path (vs. a standalone operator overload), and mirrors Haskell's `instance Eq a => Eq
-            [a]`. The element bound `$T -> Eq` makes the membership conditional on the element being [Eq], so
-            the head comparison on the elements typechecks." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "# ConsList Eq membership
+                Makes a [ConsList] of any [Eq] element a proper member of [Eq], so the generic [operator==]
+                dispatches through the [equal] method. Two lists are equal when they match constructor for
+                constructor with equal heads pairwise; the recursion runs through [tail.equal]. This is the
+                idiomatic path (vs. a standalone operator overload), and mirrors Haskell's `instance Eq a => Eq
+                [a]`. The element bound `$T -> Eq` makes the membership conditional on the element being [Eq], so
+                the head comparison on the elements typechecks." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "Equal lists compare equal element-wise, and lists that differ in an element or in length do" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "Equal lists compare equal element-wise, and lists that differ in an element or in length do" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  not. The element [Eq] dispatch is generic, so lists of [Integer], [Boolean], etc. all work." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  not. The element [Eq] dispatch is generic, so lists of [Integer], [Boolean], etc. all work." }
+            )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
                 ( Value /l -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
@@ -1320,12 +1275,16 @@ Prgm
                         , /tail=/Data/List/Nil
                         )
                     ) = /Data/List/Cons
-                    ( Value /head -> /Data/Primitive/Integer = CInt 1 )
-                    ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                    ( Value /head -> /Data/Primitive/Integer = CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value /tail -> /Data/List/Cons
                         ( /head=/Data/Primitive/Integer
                         , /tail=/Data/List/Nil
                         ) = /Data/List/Cons
-                        ( Value /head -> /Data/Primitive/Integer = CInt 2 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                        ( Value /head -> /Data/Primitive/Integer = CInt
+                            { ciValue = 2 }
+                        )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                     )
                 )
                 ( Value /r -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
@@ -1335,16 +1294,22 @@ Prgm
                         , /tail=/Data/List/Nil
                         )
                     ) = /Data/List/Cons
-                    ( Value /head -> /Data/Primitive/Integer = CInt 1 )
-                    ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                    ( Value /head -> /Data/Primitive/Integer = CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value /tail -> /Data/List/Cons
                         ( /head=/Data/Primitive/Integer
                         , /tail=/Data/List/Nil
                         ) = /Data/List/Cons
-                        ( Value /head -> /Data/Primitive/Integer = CInt 2 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                        ( Value /head -> /Data/Primitive/Integer = CInt
+                            { ciValue = 2 }
+                        )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr "True" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
                 ( Value /l -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
@@ -1354,12 +1319,16 @@ Prgm
                         , /tail=/Data/List/Nil
                         )
                     ) = /Data/List/Cons
-                    ( Value /head -> /Data/Primitive/Integer = CInt 1 )
-                    ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                    ( Value /head -> /Data/Primitive/Integer = CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value /tail -> /Data/List/Cons
                         ( /head=/Data/Primitive/Integer
                         , /tail=/Data/List/Nil
                         ) = /Data/List/Cons
-                        ( Value /head -> /Data/Primitive/Integer = CInt 2 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                        ( Value /head -> /Data/Primitive/Integer = CInt
+                            { ciValue = 2 }
+                        )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                     )
                 )
                 ( Value /r -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
@@ -1369,16 +1338,22 @@ Prgm
                         , /tail=/Data/List/Nil
                         )
                     ) = /Data/List/Cons
-                    ( Value /head -> /Data/Primitive/Integer = CInt 1 )
-                    ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                    ( Value /head -> /Data/Primitive/Integer = CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value /tail -> /Data/List/Cons
                         ( /head=/Data/Primitive/Integer
                         , /tail=/Data/List/Nil
                         ) = /Data/List/Cons
-                        ( Value /head -> /Data/Primitive/Integer = CInt 3 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                        ( Value /head -> /Data/Primitive/Integer = CInt
+                            { ciValue = 3 }
+                        )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr "False" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "False" }
+            )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
                 ( Value /l -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
@@ -1388,93 +1363,125 @@ Prgm
                         , /tail=/Data/List/Nil
                         )
                     ) = /Data/List/Cons
-                    ( Value /head -> /Data/Primitive/Integer = CInt 1 )
-                    ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                    ( Value /head -> /Data/Primitive/Integer = CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value /tail -> /Data/List/Cons
                         ( /head=/Data/Primitive/Integer
                         , /tail=/Data/List/Nil
                         ) = /Data/List/Cons
-                        ( Value /head -> /Data/Primitive/Integer = CInt 2 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                        ( Value /head -> /Data/Primitive/Integer = CInt
+                            { ciValue = 2 }
+                        )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                     )
                 )
                 ( Value /r -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/List/Nil
                     ) = /Data/List/Cons
-                    ( Value /head -> /Data/Primitive/Integer = CInt 1 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                    ( Value /head -> /Data/Primitive/Integer = CInt
+                        { ciValue = 1 }
+                    )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                 )
             )
-            ( Value /result -> /Data/String = CStr "False" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "False" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "# ConsList Ord membership
-            Makes a [ConsList] of any [Ord] element a proper member of [Ord], so [compareTo] dispatches per
-            constructor. Lists are ordered lexicographically ([consThen] sequences the head comparison with
-            the tail's); the recursion runs through [tail.compareTo]. Mirrors the [Eq] membership above (and
-            every [Ord] is an [Eq], which the [Eq] membership already supplies)." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "# ConsList Ord membership
+                Makes a [ConsList] of any [Ord] element a proper member of [Ord], so [compareTo] dispatches per
+                constructor. Lists are ordered lexicographically ([consThen] sequences the head comparison with
+                the tail's); the recursion runs through [tail.compareTo]. Mirrors the [Eq] membership above (and
+                every [Ord] is an [Eq], which the [Eq] membership already supplies)." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "Lists order lexicographically: the first differing element decides, and a prefix is ordered" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "Lists order lexicographically: the first differing element decides, and a prefix is ordered" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  before its extension ([Nil] before any [Cons])." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  before its extension ([Nil] before any [Cons])." }
+            )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isLess
+            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Algebra/isLess
                 ( Value /this -> ∀/Data/Algebra/Comparison = /Data/Algebra/compareTo
                     ( Value /other -> /Data/List/Cons
                         ( /head=/Data/Primitive/Integer
                         , /tail=/Data/List/Nil
                         ) = /Data/List/Cons
-                        ( Value /head -> /Data/Primitive/Integer = CInt 2 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                        ( Value /head -> /Data/Primitive/Integer = CInt
+                            { ciValue = 2 }
+                        )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                     )
                     ( Value /this -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                         ( /head=/Data/Primitive/Integer
                         , /tail=/Data/List/Nil
                         ) = /Data/List/Cons
-                        ( Value /head -> /Data/Primitive/Integer = CInt 1 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                        ( Value /head -> /Data/Primitive/Integer = CInt
+                            { ciValue = 1 }
+                        )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr "True" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isLess
+            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Algebra/isLess
                 ( Value /this -> ∀/Data/Algebra/Comparison = /Data/Algebra/compareTo
-                    ( Value /other -> /Data/List/Cons
+                    ( Value /other -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                         ( /head=/Data/Primitive/Integer
                         , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
                             , /tail=/Data/List/Nil
                             )
                         ) = /Data/List/Cons
-                        ( Value /head -> /Data/Primitive/Integer = CInt 1 )
-                        ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        ( Value /head -> /Data/Primitive/Integer = CInt
+                            { ciValue = 1 }
+                        )
+                        ( Value /tail -> /Data/List/Cons
                             ( /head=/Data/Primitive/Integer
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
-                            ( Value /head -> /Data/Primitive/Integer = CInt 2 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                            ( Value /head -> /Data/Primitive/Integer = CInt
+                                { ciValue = 2 }
+                            )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                         )
                     )
                     ( Value /this -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                         ( /head=/Data/Primitive/Integer
                         , /tail=/Data/List/Nil
                         ) = /Data/List/Cons
-                        ( Value /head -> /Data/Primitive/Integer = CInt 1 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                        ( Value /head -> /Data/Primitive/Integer = CInt
+                            { ciValue = 1 }
+                        )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr "True" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "True" }
+            )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isEq
+            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Algebra/isEq
                 ( Value /this -> ∀/Data/Algebra/Comparison = /Data/Algebra/compareTo
-                    ( Value /other -> /Data/List/Cons
+                    ( Value /other -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                         ( /head=/Data/Primitive/Integer
                         , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
                             , /tail=/Data/List/Nil
                             )
                         ) = /Data/List/Cons
-                        ( Value /head -> /Data/Primitive/Integer = CInt 1 )
-                        ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        ( Value /head -> /Data/Primitive/Integer = CInt
+                            { ciValue = 1 }
+                        )
+                        ( Value /tail -> /Data/List/Cons
                             ( /head=/Data/Primitive/Integer
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
-                            ( Value /head -> /Data/Primitive/Integer = CInt 2 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                            ( Value /head -> /Data/Primitive/Integer = CInt
+                                { ciValue = 2 }
+                            )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                         )
                     )
                     ( Value /this -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
@@ -1484,83 +1491,109 @@ Prgm
                             , /tail=/Data/List/Nil
                             )
                         ) = /Data/List/Cons
-                        ( Value /head -> /Data/Primitive/Integer = CInt 1 )
-                        ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        ( Value /head -> /Data/Primitive/Integer = CInt
+                            { ciValue = 1 }
+                        )
+                        ( Value /tail -> /Data/List/Cons
                             ( /head=/Data/Primitive/Integer
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
-                            ( Value /head -> /Data/Primitive/Integer = CInt 2 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                            ( Value /head -> /Data/Primitive/Integer = CInt
+                                { ciValue = 2 }
+                            )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                         )
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr "True" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "True" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "# ConsList Monad instance
-            [mmap] over a [ConsList] is concatMap: the function returns a whole list for each element, and
-            the results are appended in order." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "# ConsList Monad instance
+                [mmap] over a [ConsList] is concatMap: the function returns a whole list for each element, and
+                the results are appended in order." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "[append] joins two lists in order — the recursive structural join (it recurses through itself" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "[append] joins two lists in order — the recursive structural join (it recurses through itself" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "so the recursion stays a concrete arrow)." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "so the recursion stays a concrete arrow)." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "The [ConsList] instance of the generic [mmap] declared over [Monad] in [Data/monad]. Like the" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "The [ConsList] instance of the generic [mmap] declared over [Monad] in [Data/monad]. Like the" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "[fmap] instance above, it is written under the declaration's absolute name so the open [Monad]" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "[fmap] instance above, it is written under the declaration's absolute name so the open [Monad]" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "class is not required to be totally covered here." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "class is not required to be totally covered here." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "[append] joins two lists end to end." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "[append] joins two lists end to end." }
+            )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Catln/Doc/DShow ) = /Data/List/append
+            ( Value /p -> ∀/Data/List/ConsList[ /T=TopType ] = /Data/List/append
                 ( Value /a -> /Data/List/Cons
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/List/Nil
                     ) = /Data/List/Cons
-                    ( Value /head -> /Data/Primitive/Integer = CInt 1 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                    ( Value /head -> /Data/Primitive/Integer = CInt
+                        { ciValue = 1 }
+                    )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                 )
                 ( Value /b -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/List/Nil
                     ) = /Data/List/Cons
-                    ( Value /head -> /Data/Primitive/Integer = CInt 2 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                    ( Value /head -> /Data/Primitive/Integer = CInt
+                        { ciValue = 2 }
+                    )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                 )
             )
-            ( Value /result -> /Data/String = CStr "[1, 2]" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "[1, 2]" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "[mmap] over a [ConsList] is concatMap: the function returns a whole list per element and the" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "[mmap] over a [ConsList] is concatMap: the function returns a whole list per element and the" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  results are appended, so binding [[1]] to a function returning [[2]] yields [[2]], and binding" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  results are appended, so binding [[1]] to a function returning [[2]] yields [[2]], and binding" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  the empty list yields the empty list." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  the empty list yields the empty list." }
+            )
         , /Catln/#print
-            ( Value /p -> UnionType
-                ( Just
-                    ( PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Catln/Doc/DShow
-                    , fromList []
-                    , []
-                    )
-                , /Data/List/Cons[ /T=∀/Data/ToString ]
-                    ( /head=$/T
-                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
-                    )
-                , []
-                ) = /Data/Monad/mmap
+            ( Value /p -> ∀/Data/List/ConsList[ /T=TopType ] = /Data/Monad/mmap
                 ( Value /m -> /Data/List/Cons
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/List/Nil
                     ) = /Data/List/Cons
-                    ( Value /head -> /Data/Primitive/Integer = CInt 1 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                    ( Value /head -> /Data/Primitive/Integer = CInt
+                        { ciValue = 1 }
+                    )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                 )
-                ( /fn( Value /v ) -> /Data/List/Cons
+                ( /fn( Value /v ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/List/Nil
                     ) = /Data/List/Cons
-                    ( Value /head -> /Data/Primitive/Integer = CInt 2 )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                    ( Value /head -> /Data/Primitive/Integer = CInt
+                        { ciValue = 2 }
+                    )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                 )
             )
-            ( Value /result -> /Data/String = CStr "[2]" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "[2]" }
+            )
         , /Catln/#print
             ( Value /p -> /Data/List/Nil = /Data/Monad/mmap( Value /m -> /Data/List/Nil = Value /Data/List/Nil )
                 ( /fn( Value /v ) -> /Data/List/Cons
@@ -1569,18 +1602,28 @@ Prgm
                     ) = /Data/List/Cons( Value /head -> TVArg /v = Value /v )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                 )
             )
-            ( Value /result -> /Data/String = CStr "[]" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "[]" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "[pure] for [ConsList] builds a singleton list; the call site's expected list type selects" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "[pure] for [ConsList] builds a singleton list; the call site's expected list type selects" }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "this instance (return-type-directed dispatch — see [pure] in [Data/monad])." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "this instance (return-type-directed dispatch — see [pure] in [Data/monad])." }
+            )
         , /Catln/#print
             ( Value /p -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                 ( /head=/Data/Primitive/Integer
-                , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
+                , /tail=TopType
                 ) = /Data/List/pureConsInt
-                ( Value /v -> /Data/Primitive/Integer = CInt 1 )
+                ( Value /v -> /Data/Primitive/Integer = CInt
+                    { ciValue = 1 }
+                )
             )
-            ( Value /result -> /Data/String = CStr "[1]" )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "[1]" }
+            )
         ]
     }

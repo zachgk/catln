@@ -72,7 +72,10 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /operator+( EAppArg Value /l -> /Data/String = Hole /Data/String HoleActive Nothing )( EAppArg Value /r -> /Data/String = Hole /Data/String HoleActive Nothing ) -> /Data/String ]
+                        [ /operator+
+                            ( EAppArg Value /l -> /Data/String = Hole /Data/String HoleActive { haName = Nothing } )
+                            ( EAppArg Value /r -> /Data/String = Hole /Data/String HoleActive { haName = Nothing } ) -> /Data/String
+                        ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }

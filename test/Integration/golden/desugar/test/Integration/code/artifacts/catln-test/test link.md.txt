@@ -6,7 +6,9 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/Page
-                            ( Value /title= CStr "test link" )
+                            ( Value /title= CStr
+                                { csValue = "test link" }
+                            )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
