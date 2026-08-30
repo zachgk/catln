@@ -167,7 +167,9 @@ desMultiTypeDefObj inheritPath varReplaceMap expr = desObj False inheritPath Use
     -- This replaces references from obj vars of class vars
     -- Consider JOptional<$T> = Just<$T=$T> | Nothing
     -- For the object Just, it needs to be Just<TopType $T> as the classes $T is out of scope
-    replaceMetaVar (ExprMeta InputMeta ExprMetaApplyVarVal) (Meta t pos mid md) = return $ Meta (substituteVarsWithVarEnv varReplaceMap t) pos mid md
+    -- 'emptyTypeEnv'' is exact here: desugar-time occurrences always carry a ⊤ inner (only
+    -- the parser constructs them), so the substitution's inner-meet is never consulted.
+    replaceMetaVar (ExprMeta InputMeta ExprMetaApplyVarVal) (Meta t pos mid md) = return $ Meta (substituteVarsWithVarEnv emptyTypeEnv' varReplaceMap t) pos mid md
     replaceMetaVar _ m = return m
     expr'' = mapMetaAppliedExpr replaceMetaVar InputMeta expr'
 
@@ -178,7 +180,7 @@ desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef clssExpr dataExprs e
   let clss@PartialType{ptVars=classVars} = exprToPartialType clssExpr
   let clss' = clss{ptName=makeAbsoluteName (mkName (show path'))}
 
-  let dataTypes = map (either id (substituteVarsWithVarEnv classVars . getExprType . exprPropagateTypes . semiDesExpr SDType Nothing) . eitherTypeVarExpr) dataExprs
+  let dataTypes = map (either id (substituteVarsWithVarEnv emptyTypeEnv' classVars . getExprType . exprPropagateTypes . semiDesExpr SDType Nothing) . eitherTypeVarExpr) dataExprs
 
   let objs = objectMapFromList $ map (desMultiTypeDefObj inheritPath classVars) $ rights $ map eitherTypeVarExpr dataExprs
   let objPaths = map (PRelativeName . oaObjPath) $ flatObjectMap objs

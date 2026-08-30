@@ -374,7 +374,7 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (EqReqAct i p@SType{st
     -- element. 'substituteKeep' leaves any still-unresolved var symbolic.
     newBindings = H.difference ivaenv vaenv'
     meet1 | H.null newBindings = meet0
-          | otherwise          = substituteKeep newBindings meet0
+          | otherwise          = substituteKeep feTypeEnv newBindings meet0
     -- The meet can drop an EXTERNAL var spelling the actual carries at a nested slot to Top —
     -- a declaration's implicit-through-usage element link (@b -> Box[$T -> $_T]@) is unbound in
     -- the constraint's vaenv, so the meet reads it as the ⊤ it denotes and bakes ⊤ into the

@@ -52,10 +52,11 @@ ggPrgm prgms = HG.choice [genPremade, genPrgm]
 -- variable inside a partial's arg\/var slot is resolved correctly by the operations themselves as
 -- they thread the environment through each nested scope (a 'TVExt' slot reads the outer binding),
 -- whereas a bare top-level variable is the one shape the meet mishandles (see 'intersectR').
-readTopVar :: TypeVarArgEnv -> Type -> Type
-readTopVar env (TypeVar (TVApplied b ovr) loc i) = applyTypeVarOverrides (fmap (readTopVar env) ovr) (readTopVar env (TypeVar b loc i))
-readTopVar env (TypeVar v _ _)                    = vaenvLookup env v
-readTopVar _   t                                = t
+readTopVar :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
+readTopVar typeEnv env (TypeVar (TVApplied b ovr) loc i) = applyTypeVarOverrides (fmap (readTopVar typeEnv env) ovr) (readTopVar typeEnv env (TypeVar b loc i))
+-- The reference reading of an occurrence: @⟦var⟧ ∩ ⟦inner⟧@.
+readTopVar typeEnv env (TypeVar v _ i)                    = meetInner typeEnv env (vaenvLookup env v) (readTopVar typeEnv env i)
+readTopVar _ _   t                                = t
 
 -- | Intersection for the property tests, threading a seed 'TypeVarArgEnv'. A bare top-level variable
 -- operand is read to its value first ('readTopVar'), because 'intersectTypesWithVarEnv' returns a
@@ -66,7 +67,7 @@ readTopVar _   t                                = t
 -- left for the meet, which resolves them exactly. Union, complement and the subtype\/equality checks
 -- resolve a bound variable inline (via 'vaenvLookup'), so they take the environment directly.
 intersectR :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Type
-intersectR typeEnv env a b = intersectTypesEnv typeEnv env (readTopVar env a) (readTopVar env b)
+intersectR typeEnv env a b = intersectTypesEnv typeEnv env (readTopVar typeEnv env a) (readTopVar typeEnv env b)
 
 -- | Difference threading a seed 'TypeVarArgEnv' (@a − b = a ∩ ¬b@). @complementTypeEnv@ resolves a
 -- bare bound @b@ inline, and a nested variable stays symbolic for the meet to resolve.
@@ -597,7 +598,7 @@ propParamClassIntersectAbsorb ioPrgms = property $ do
   let resolvedIntersect a b =
         let (venv, t) = intersectTypesWithVarEnv typeEnv H.empty a b
             newBindings = H.filter (/= PTopType) venv
-        in if H.null newBindings then t else substituteKeep newBindings t
+        in if H.null newBindings then t else substituteKeep typeEnv newBindings t
   met <- timed "flexed ∩ narrow" $ resolvedIntersect flexed narrow
   annotate $ printf "flexed = %s" (show flexed)
   annotate $ printf "narrow = %s" (show narrow)
@@ -705,6 +706,36 @@ propNegRecursiveClassMeet ioPrgms = property $ do
   met2 <- timed "re-meet" $ intersectTypes typeEnv notEqCO met
   eqTimed "re-meet idempotent" met met2
 
+-- The drop/has/vars parity triple: 'hasOutOfScopeTVExt' must be exactly "would
+-- 'dropOutOfScopeTVExt' change the type", and 'outOfScopeTVExtVars' must agree on emptiness.
+-- Pins the historically bug-prone family whose erase-to-⊤ became erase-to-inner.
+propOutOfScopeParity :: IO GenPrgm -> Property
+propOutOfScopeParity gPrgm = property $ do
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
+  vaenv <- forAll $ genVaenv prgm
+  t <- forAll $ genType prgm
+  dropped <- timed "drop" $ dropOutOfScopeTVExt vaenv t
+  annotate $ printf "dropped = %s" (show dropped)
+  hasOutOfScopeTVExt vaenv t === (dropped /= t)
+  S.null (outOfScopeTVExtVars vaenv t) === not (hasOutOfScopeTVExt vaenv t)
+
+-- Occurrence-reading soundness: an occurrence (@var ∩ inner@) is a subtype of its reference
+-- reading, and of its inner alone.
+propOccurrenceReadingSound :: IO GenPrgm -> Property
+propOccurrenceReadingSound gPrgm = property $ do
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
+  let typeEnv = mkTypeEnv prgm
+  vaenv <- forAll $ genVaenv prgm
+  o <- forAll $ genTypeVar prgm
+  let readO = readTopVar typeEnv vaenv o
+  annotate $ printf "read = %s" (show readO)
+  assertTimed "o ⊆ read(o)" $ isSubtypeOfWithEnv typeEnv vaenv o readO
+  case o of
+    TypeVar _ _ i -> assertTimed "o ⊆ inner" $ isSubtypeOfWithEnv typeEnv vaenv o i
+    _             -> return ()
+
 typeTests :: TestTree
 typeTests = withResource findPrgms (const $ pure ()) tests
   where
@@ -735,6 +766,8 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propParamClassIntersectAbsorb" (withTests 1 $ propParamClassIntersectAbsorb ioPrgms)
       , HG.testProperty "propConjMemberClassSubtype" (withTests 1 $ propConjMemberClassSubtype ioPrgms)
       , HG.testProperty "propNegRecursiveClassMeet" (withTests 1 $ propNegRecursiveClassMeet ioPrgms)
+      , HG.testProperty "propOutOfScopeParity" (p $ propOutOfScopeParity gPrgm)
+      , HG.testProperty "propOccurrenceReadingSound" (p $ propOccurrenceReadingSound gPrgm)
                                         ]
       where gPrgm = ggPrgm <$> ioPrgms
     p prop = prop

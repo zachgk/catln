@@ -40,12 +40,24 @@ varNamePool = map mkName ["a", "b", "c"]
 
 -- | Bare type variables as direct inputs ('TVVar'\/'TVArg' × 'TVInt'\/'TVExt'). With no
 -- external env a variable's standalone reading is unconstrained, i.e. ⊤ ('vaenvLookup').
-genTypeVar :: Gen Type
-genTypeVar = do
+genTypeVar :: Prgm Expr () -> Gen Type
+genTypeVar prgm = do
   n   <- HG.element varNamePool
   aux <- HG.element [TVVar (partialKey n), TVArg (partialKey n)]
   loc <- HG.element [TVInt, TVExt]
-  return $ TypeVar aux loc PTopType
+  -- The occurrence-local INNER (read as var ∩ inner): ⊤ (knowledge-free) two thirds of the
+  -- time, else a small concrete-ish type — never a bare var (closed-inner producer
+  -- discipline), never ⊤ (that is the explicit branch) nor ⊥ (would trivialize every law).
+  inner <- HG.frequency [(2, return PTopType), (1, HG.small (HG.filter concreteishInner (genType prgm)))]
+  return $ TypeVar aux loc inner
+
+-- | The inner-value filter shared by 'genTypeVar' and 'genWithTVExt' (mirrors 'genVaenv's
+-- local rule): no bare variable, no ⊤, no ⊥.
+concreteishInner :: Type -> Bool
+concreteishInner TypeVar{}  = False
+concreteishInner PTopType   = False
+concreteishInner BottomType = False
+concreteishInner _          = True
 
 -- | A small external variable environment ('TypeVarArgEnv') mapping a subset of 'varNamePool'
 -- to concrete-ish types drawn from the program. Threading this through the @*WithEnv@ operations
@@ -149,8 +161,8 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
     withRandomArgModes t = return t
 
     gens = if graphEmpty cg
-      then [genBasic, genConst, genMultiConst, genTypeVar]
-      else [genBasic, genCGOld, genCG, genCGRel, genObjM, genObj, genConst, genMultiConst, genPredShape, genMixed, genTypeVar]
+      then [genBasic, genConst, genMultiConst, genTypeVar prgm]
+      else [genBasic, genCGOld, genCG, genCGRel, genObjM, genObj, genConst, genMultiConst, genPredShape, genMixed, genTypeVar prgm]
              ++ [genUnrolledRecursive | not (null recExpansions)]
 
     -- Over-unrolled recursive class expansions. A sealed recursive class (e.g. @ConsList@) expands
@@ -382,7 +394,10 @@ genPartialType prgm@(Prgm objMap _ _) = do
       base <- baseGen
       varName <- HG.string (linear 1 5) HG.lower
       extName <- HG.element varNamePool
-      let extVar = TypeVar (TVVar (partialKey extName)) TVExt PTopType
+      -- ~1/3 of injected slots carry occurrence-local knowledge, so the drop/substitute
+      -- family's inner handling is exercised where it actually traverses (nested slots).
+      inner <- HG.frequency [(2, return PTopType), (1, HG.small (HG.filter concreteishInner (genType prgm)))]
+      let extVar = TypeVar (TVVar (partialKey extName)) TVExt inner
       return base{ptVars = H.insert (partialKey (mkName varName)) extVar (ptVars base)}
 
 genInputExpr :: Gen (Expr ())

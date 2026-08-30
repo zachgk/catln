@@ -396,7 +396,7 @@ arrowDestTypeDispatch = arrowDestTypeBase True
 arrowDestTypeBase :: (TypeGraph tg, ExprClass e, Show m, Show (e m), MetaDat m) => Bool -> TypeEnv tg -> PartialType -> ObjArr e m -> [Type]
 arrowDestTypeBase resolveAppFields typeEnv src oa@ObjArr{oaArr=Just (oaArrExpr, oaM)} = map (arrowDestTypeForVaenv . fmap snd) $ exprVarArgsWithSrc typeEnv (oaObjExpr oa) srcPartial
   where
-    srcPartial = case maybeGetSingleton $ substituteTVExt H.empty $ singletonType src of
+    srcPartial = case maybeGetSingleton $ substituteTVExt typeEnv H.empty $ singletonType src of
       Just s  -> s
       Nothing -> error $ printf "Non-singleton in arrowDestType"
     arrowDestTypeForVaenv vaenv = case oaArrExpr of
@@ -404,7 +404,7 @@ arrowDestTypeBase resolveAppFields typeEnv src oa@ObjArr{oaArr=Just (oaArrExpr, 
       Just n | isJust (maybeExprPath n) -> maybe joinedDispatch substitute (H.lookup (TVArg $ inExprSingleton n) vaenv)
       _                              -> joinedDispatch
       where
-        substitute = substituteTVExt vaenv
+        substitute = substituteTVExt typeEnv vaenv
         expr' = fmap (substitute . getExprType) oaArrExpr
         -- Re-link the declared result's Top class-parameter slots to the type variables the source
         -- bound before substituting: an accessor result parameterized by the receiver's own type

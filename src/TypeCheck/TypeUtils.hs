@@ -251,7 +251,7 @@ fnArgInputBound env callAct fnKey inKey = case callAct of
                        , (cvn, extV) <- boundClassVarPtrs bound
                        , let elemT = unionAllTypes typeEnv (mapMaybe (H.lookup cvn . ptVars) (splitUnionType rLeafs))
                        , not (isBottomType elemT) ]
-      let inTy = substituteTVExt (mergeAllVarEnvs typeEnv (venv0 : boundVenvs)) (getMetaType inM)
+      let inTy = substituteTVExt typeEnv (mergeAllVarEnvs typeEnv (venv0 : boundVenvs)) (getMetaType inM)
       guard (typeFullyConcrete inTy)
       return inTy
     -- The (class parameter name, external var name) pointers of a bound's class partials:
@@ -327,7 +327,7 @@ mkReachesEnv env (Constraint maybeConOa stypeVaenv _) = do
     inExpr' <- showExpr env InputMeta inExpr
     outM' <- showM env ArrMeta outM
     return (mapMeta clearMetaDat InputMeta inExpr', outM')
-  let argObjMap = objectMapFromList $ concatMap (\(inExpr, outM) -> [ObjArr (Just inExpr) ArgObj Nothing [] (Just (Nothing, emptyMetaT (substituteTVExt (fmap snd vaenv) (getMetaType outM))))]) $ H.elems argVaenv'
+  let argObjMap = objectMapFromList $ concatMap (\(inExpr, outM) -> [ObjArr (Just inExpr) ArgObj Nothing [] (Just (Nothing, emptyMetaT (substituteTVExt (feTypeEnv env) (fmap snd vaenv) (getMetaType outM))))]) $ H.elems argVaenv'
 
   -- final ReachesEnv. Reuse the per-epoch cached reaches type graph ('feReachesTypeEnv');
   -- it is constraint-independent, so rebuilding it per call would be redundant.
@@ -534,7 +534,7 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
                           | otherwise -> UnionType dMTop (joinUnionType keptLs) dConsts
       dropSettleForcedRaws t = t
   let newBindings = H.difference venv' vaenv'
-  let resolveNew = if H.null newBindings then id else substituteKeep newBindings
+  let resolveNew = if H.null newBindings then id else substituteKeep feTypeEnv newBindings
   let destFinal = compactType feTypeEnv vaenv' (dropFree (resolveSelf (resolveNew (dropSettleForcedRaws dest'))))
   -- Return-type direction: a declaration output that is a bare declared variable is determined
   -- by the call site's destination — bind it onto the call partial (see 'outVarBoundSrc').
@@ -777,14 +777,14 @@ settlePropSlot env@FEnv{feTypeEnv} vaenv propName@(TVArg k) superAct@(UnionType 
       -- the env-choice doctrine in 'arrowConstrainUbs'), so same-program declarations would
       -- present no templates and their call slots would never force. Data spellings are
       -- parse-stable and keep the base env.
-      let dataBounds = [freeTVIntToTopDeep vaenv p d | PartialType{ptArgs=dArgs} <- typeGraphData feTypeEnv (ptName p), Just d <- [H.lookup k dArgs]]
+      let dataBounds = [freeTVIntToTopDeep feTypeEnv vaenv p d | PartialType{ptArgs=dArgs} <- typeGraphData feTypeEnv (ptName p), Just d <- [H.lookup k dArgs]]
       let declBounds = dataBounds
                     ++ [b | PartialType{ptArgs=dArgs, ptVars=dVars} <- typeGraphArrowTemplates reachesTypeEnv (ptName p)
                           , Just d0 <- [H.lookup k dArgs]
                           , let d = case d0 of
                                   TypeVar (TVVar vn) _ _ | Just vb <- H.lookup vn dVars -> vb
                                   _                                                  -> d0
-                          , let b = freeTVIntToTopDeep vaenv p d
+                          , let b = freeTVIntToTopDeep feTypeEnv vaenv p d
                           , b /= PTopType]
       -- DECLARATION-BOUNDED construction slots only (a data-graph declaration exists for
       -- this field): the declared bound is what dictates settling (@Cons@'s tail is a
