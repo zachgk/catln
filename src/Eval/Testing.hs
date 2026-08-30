@@ -561,8 +561,8 @@ evalTest prgmGraphData = do
             argVals <- mapM (\argOA ->
               let argType = case oaArr argOA of
                     Just (_, arrMeta) -> case getMetaType arrMeta of
-                      TypeVar (TVVar vn) _ _ -> case H.lookup vn nestedTypeMap of
-                        Just t  -> t
+                      TypeVar (TVVar vn) _ i -> case H.lookup vn nestedTypeMap of
+                        Just t  -> intersectTypes typeEnv t i
                         Nothing -> singletonType $ H.lookupDefault intLeaf vn varTypeMap
                       t@(UnionType Nothing _ []) -> t
                       _                          -> intType

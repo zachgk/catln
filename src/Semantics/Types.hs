@@ -2488,7 +2488,7 @@ ptAtArgKeys p@PartialType{ptArgs} ks = p{ptArgs=args', ptArgMode=PtArgExact}
 -- path and @$/T@ on another). Only a direct top-level reference is rewritten: a nested
 -- one names the nested partial's own scope.
 freeTVIntToTop :: PartialType -> Type -> Type
-freeTVIntToTop p t@(TypeVar v TVInt _) | not (H.member v (ptVarArg p)) = PTopType
+freeTVIntToTop p t@(TypeVar v TVInt i) | not (H.member v (ptVarArg p)) = i  -- var ∩ inner: a free direct reference reads as its inner
                                      | otherwise = t
 freeTVIntToTop _ t = t
 
@@ -2546,13 +2546,15 @@ freeTVIntToTopDeep :: TypeVarArgEnv -> PartialType -> Type -> Type
 freeTVIntToTopDeep vaenv p = goT
   where
     own = ptVarArg p
-    goT (TypeVar v _ _) = case H.lookup v own of
-      Just (TypeVar v' _ _) | v' == v -> PTopType
-      Just b                          -> goB b
-      Nothing                         -> PTopType
+    -- The occurrence's inner is occurrence-carried CONTENT, so it takes the binding-content
+    -- walk 'goB' (not the template walk) and meets into every resolution of the reference.
+    goT (TypeVar v _ i) = case H.lookup v own of
+      Just (TypeVar v' _ _) | v' == v -> goB i
+      Just b                          -> meetInner vaenv (goB b) (goB i)
+      Nothing                         -> goB i
     goT (UnionType mtop pos consts) = UnionType (fmap (goTop goPartialT) mtop) (goLeafs goPartialT pos) consts
-    goB t@(TypeVar v _ _) | H.member v vaenv = t
-                        | otherwise        = PTopType
+    goB (TypeVar v loc i) | H.member v vaenv = TypeVar v loc (goB i)
+                        | otherwise        = goB i
     goB (UnionType mtop pos consts) = UnionType (fmap (goTop goPartialB) mtop) (goLeafs goPartialB pos) consts
     goTop gp (preds, negLeafs, ncs) = (mapTypePreds (mapTypePred gp) preds, goLeafs gp negLeafs, ncs)
     goLeafs gp = joinUnionType . map gp . splitUnionType
@@ -3280,8 +3282,8 @@ isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subAr
     -- the partial's @ptVars@ ('partialCoversSat'.'resolveSelfRefs').
     readOwnScope p t0 = substituteKeep (joinVarArgEnv (ptVars p) H.empty) (step t0)
       where
-        step t@(TypeVar tv@(TVVar n) TVInt _) = case H.lookup n (ptVars p) of
-          Just v | v /= PTopType, v /= t -> v
+        step t@(TypeVar tv@(TVVar n) TVInt i) = case H.lookup n (ptVars p) of
+          Just v | v /= PTopType, v /= t -> meetInner vaenv v i
           Just _                         -> t
           -- A name the partial does NOT declare is an enclosing scope's parameter, TVInt-spelled
           -- because the parser spells a bare @$U@ context-free (the scope axis lives in the
@@ -3293,15 +3295,18 @@ isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subAr
           -- per value") — resolving ⊤ literally would flip the slot from flexible-var to a
           -- non-var ⊤ and fail the flexible-vs-flexible guard against another frame's spelling.
           Nothing                        -> case H.lookup tv vaenv of
-            Just b | b /= PTopType, not (isTypeVar b) -> b
+            Just b | b /= PTopType, not (isTypeVar b) -> meetInner vaenv b i
             _                                         -> t
         step t = t
+    -- A TVInt occurrence stays flexible regardless of inner (the inner only BOUNDS the
+    -- per-value binding); a self-link env entry counts flexible only when its inner is ⊤ —
+    -- a knowledge-carrying self-link is information (producer-era rule, unreachable today).
     flexibleVar (TypeVar _ TVInt _) = True -- partial-local var: bindable per value
     flexibleVar (TypeVar v TVOuter _) = case H.lookup v vaenv of
-      Nothing               -> True
-      Just (TypeVar v' _ _) -> v' == v
-      Just PTopType         -> True -- bound to Top: unconstrained, so still bindable per value
-      _                     -> False
+      Nothing                -> True
+      Just (TypeVar v' _ bI) -> v' == v && bI == PTopType
+      Just PTopType          -> True -- bound to Top: unconstrained, so still bindable per value
+      _                      -> False
     flexibleVar _ = False
     result = hasAll subArgs superArgs && predsOk && hasAllVars subVars superVars
     msg = printf "[SUBPARTIAL] %s ⊆ %s = %s" (show sub) (show super) (show result)
@@ -3356,12 +3361,16 @@ isSubtypeOfWithEnv _ _ t1 t2 | t1 == t2 = True
 -- entry, which an unconstrained var may acquire during intersection) carries no information,
 -- so treat it as 'PTopType' - exactly as an unbound var already resolves via 'vaenvLookup'.
 -- Following it verbatim would re-enter this clause with identical arguments forever.
-isSubtypeOfWithEnv typeEnv vaenv (TypeVar v _ _) t2 = case vaenvLookup vaenv v of
-  TypeVar v' _ _ | v' == v -> isSubtypeOfWithEnv typeEnv vaenv PTopType t2
-  looked                   -> isSubtypeOfWithEnv typeEnv vaenv looked t2
-isSubtypeOfWithEnv typeEnv vaenv t1 (TypeVar v _ _) = case vaenvLookup vaenv v of
-  TypeVar v' _ _ | v' == v -> isSubtypeOfWithEnv typeEnv vaenv t1 PTopType
-  looked                   -> isSubtypeOfWithEnv typeEnv vaenv t1 looked
+-- The occurrence reads @var ∩ inner@: on the LEFT the inner supplies a sound upper bound
+-- even when the lookup is ⊤ (the point of occurrence-local knowledge); on the RIGHT both
+-- conjuncts must admit t1 (@t ⊆ A∩B ⟺ t ⊆ A ∧ t ⊆ B@). A ⊤ inner short-circuits both to
+-- the historical rules via the meet's and the ⊤-rhs identity clauses.
+isSubtypeOfWithEnv typeEnv vaenv (TypeVar v _ i) t2 = case vaenvLookup vaenv v of
+  TypeVar v' _ _ | v' == v -> isSubtypeOfWithEnv typeEnv vaenv (meetInner vaenv PTopType i) t2
+  looked                   -> isSubtypeOfWithEnv typeEnv vaenv (intersectTypesEnv typeEnv vaenv looked i) t2
+isSubtypeOfWithEnv typeEnv vaenv t1 (TypeVar v _ i) = case vaenvLookup vaenv v of
+  TypeVar v' _ _ | v' == v -> isSubtypeOfWithEnv typeEnv vaenv t1 i
+  looked                   -> isSubtypeOfWithEnv typeEnv vaenv t1 looked && isSubtypeOfWithEnv typeEnv vaenv t1 i
 -- ⊤ ⊆ a positive union: never (open world - a fresh type name or constant kind escapes any
 -- finite positive listing). A 'Just'-top rhs is NOT decided here: its subtractive component may
 -- be vacuous (e.g. tautological preds ¬(A∧B) with A∧B unsatisfiable, making it ⊤), which the
@@ -4374,7 +4383,12 @@ compactType typeEnv vaenv (UnionType (Just topData) pos cs)
       in UnionType (Just topData) pos' cs
 compactType _ _ t@(UnionType (Just _) _ _) = t
 -- TypeVar: unchanged
-compactType _ _ t@TypeVar{} = t
+-- An occurrence denotes @var ∩ inner@: compact the inner; a ⊥ inner makes the occurrence ⊥.
+-- The ⊤-inner fast path is exact (compact ⊤ = ⊤) and keeps the hot knowledge-free case free.
+compactType _ _ t@(TypeVar _ _ PTopType) = t
+compactType typeEnv vaenv (TypeVar v loc i) = case compactType typeEnv vaenv i of
+  i'@BottomType -> i'
+  i'            -> TypeVar v loc i'
 -- PosPartials with constants: compact leafs, remove constants covered by leafs
 compactType typeEnv vaenv (UnionType Nothing partials consts) =
   let -- Compact the nested argument/variable types (bottom-up) so a recursive arg already
@@ -4797,7 +4811,7 @@ unionTypesWithEnv _ _ BottomType t = t
 unionTypesWithEnv _ _ t1 t2 | t1 == t2 = t1
 -- TypeVar ∪ t → resolve the var in vaenv. An unconstrained var is unknown, i.e. 'PTopType'
 -- (matching 'vaenvLookup' and the TypeVar handling in 'isSubtypeOfWithEnv'/'complementTypeEnv').
-unionTypesWithEnv typeEnv vaenv (TypeVar v _ _) t = unionTypesWithEnv typeEnv vaenv (vaenvLookup vaenv v) t
+unionTypesWithEnv typeEnv vaenv (TypeVar v _ i) t = unionTypesWithEnv typeEnv vaenv (intersectTypesEnv typeEnv vaenv (vaenvLookup vaenv v) i) t
 unionTypesWithEnv typeEnv vaenv t v@TypeVar{} = unionTypesWithEnv typeEnv vaenv v t
 -- Structured union: separate handling for positive and top components.
 -- The outer posLeafs/posConsts of both sides always merge positively; a 'Just' top is carried
@@ -5116,8 +5130,8 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
       , Just r <- ambientReading n
       = let env = mergeAllVarEnvs typeEnv [aVaenv, bVaenv]
         in if isSubtypeOfWithEnv typeEnv vaenv r a then (env, b) else (env, intersectTypesEnv typeEnv vaenv r a)
-    subUnionVar (aVaenv, TypeVar _ TVInt _) (bVaenv, b) = (mergeAllVarEnvs typeEnv [aVaenv, bVaenv], b)
-    subUnionVar (aVaenv, a) (bVaenv, TypeVar _ TVInt _) = (mergeAllVarEnvs typeEnv [aVaenv, bVaenv], a)
+    subUnionVar (aVaenv, TypeVar _ TVInt i) (bVaenv, b) = (mergeAllVarEnvs typeEnv [aVaenv, bVaenv], intersectTypesEnv typeEnv vaenv b i)
+    subUnionVar (aVaenv, a) (bVaenv, TypeVar _ TVInt i) = (mergeAllVarEnvs typeEnv [aVaenv, bVaenv], intersectTypesEnv typeEnv vaenv a i)
     subUnionVar a b = subUnion (const PTopType) a b
     -- Resolve the field meet's freshly-discovered CONCRETE bindings back into its TYPE (the same
     -- resolve-meets-back rule 'intersectTypesEnv' applies at the top level, hoisted into the
@@ -5140,13 +5154,13 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
     -- via 'discoveryAt').
     subUnion _ (aVaenv, a@(TypeVar (TVVar _) TVInt _)) (bVaenv, b)
       | a == b = (mergeAllVarEnvs typeEnv [aVaenv, bVaenv], a)
-    subUnion varBound (aVaenv, TypeVar (TVVar n) TVInt _) (bVaenv, b)
+    subUnion varBound (aVaenv, TypeVar (TVVar n) TVInt i) (bVaenv, b)
       | not (isTypeVar b), b /= PTopType = let env = mergeAllVarEnvs typeEnv [aVaenv, bVaenv]
-                                               ev = intersectTypesEnv typeEnv env b (varBound n)
+                                               ev = intersectTypesEnv typeEnv env b (intersectTypesEnv typeEnv env (varBound n) i)
                                            in (H.insert (TVVar n) ev env, ev)
-    subUnion varBound (aVaenv, a) (bVaenv, TypeVar (TVVar n) TVInt _)
+    subUnion varBound (aVaenv, a) (bVaenv, TypeVar (TVVar n) TVInt i)
       | not (isTypeVar a), a /= PTopType = let env = mergeAllVarEnvs typeEnv [aVaenv, bVaenv]
-                                               ev = intersectTypesEnv typeEnv env a (varBound n)
+                                               ev = intersectTypesEnv typeEnv env a (intersectTypesEnv typeEnv env (varBound n) i)
                                            in (H.insert (TVVar n) ev env, ev)
     subUnion _ (aVaenv, a) (bVaenv, b) =
       let inEnv = mergeAllVarEnvs typeEnv [aVaenv, bVaenv]
@@ -5561,7 +5575,7 @@ complementTypeEnv typeEnv vaenv (UnionType (Just (preds, negPartials, negConsts)
   | otherwise = unionTypesWithEnv typeEnv vaenv (UnionType Nothing negPartials negConsts) notPreds
   where
     notPreds = UnionType (Just (predsNot preds, H.empty, [])) H.empty []
-complementTypeEnv typeEnv vaenv (TypeVar v _ _) = complementTypeEnv typeEnv vaenv (vaenvLookup vaenv v)
+complementTypeEnv typeEnv vaenv (TypeVar v _ i) = complementTypeEnv typeEnv vaenv (intersectTypesEnv typeEnv vaenv (vaenvLookup vaenv v) i)
 complementTypeEnv _ _ t = error $ printf "complementTypeEnv: unhandled case %s" (show t)
 
 -- | Takes the powerset of a 'Type' with the powerset of the arguments in the type.
@@ -5638,6 +5652,20 @@ vaenvLookup :: TypeVarArgEnv -> TypeVarAux -> Type
 vaenvLookup vaenv (TVApplied b overrides) = applyTypeVarOverrides overrides (vaenvLookup vaenv b)
 vaenvLookup vaenv v = H.lookupDefault PTopType v vaenv
 
+-- | Meets a resolved variable value with an occurrence's INNER (the @var ∩ inner@ reading)
+-- in contexts that carry no 'TypeEnv' — the substitute\/scope family. The ⊤ short-circuits
+-- make a knowledge-free occurrence (@inner = PTopType@) read EXACTLY as the bare variable
+-- did, so no code path changes until a producer installs a non-⊤ inner. The general clause
+-- meets class-graph-blind ('emptyTypeEnv'') — a documented precision trade-off: the result
+-- is correct but less canonical than a real-env meet; sites that do hold a 'TypeEnv'
+-- (subtype, union, complement, the partial meets, TreeBuild) use 'intersectTypesEnv' with it
+-- instead. Threading a 'TypeEnv' through the substitute family is the named follow-up if the
+-- property laws ever expose a canonicalization gap here.
+meetInner :: TypeVarArgEnv -> Type -> Type -> Type
+meetInner _ b PTopType = b
+meetInner _ PTopType i = i
+meetInner vaenv b i    = intersectTypesEnv emptyTypeEnv' vaenv b i
+
 -- | Replaces type variables in a 'Type' using the provided 'TypeVarArgEnv'.
 -- 'TVVar' and 'TVArg' are handled uniformly via 'vaenvLookup'.  The 'TVInt'/'TVExt' axis
 -- is reflected in the descent logic, not the leaf rule: descending into a partial pushes
@@ -5667,7 +5695,9 @@ substituteTVExt vaenv (UnionType (Just (preds, negLeafs, negConsts)) posLeafs co
   UnionType (Just (mapTypePreds (mapTypePred (substitutePartialKeep vaenv)) preds, negLeafs, negConsts)) posLeafs consts
 substituteTVExt vaenv (TypeVar (TVApplied b overrides) loc i) =
   applyTypeVarOverrides (fmap (substituteTVExt vaenv) overrides) (substituteTVExt vaenv (TypeVar b loc i))
-substituteTVExt vaenv (TypeVar v _ _) = vaenvLookup vaenv v
+-- The occurrence reads @var ∩ inner@: an env miss (⊤ lookup) therefore resolves to the
+-- (substituted) inner rather than ⊤ — the lossless form of the old erasure.
+substituteTVExt vaenv (TypeVar v _ i) = meetInner vaenv (vaenvLookup vaenv v) (substituteTVExt vaenv i)
 substituteTVExt _     t             = t
 
 -- | Substitute vars within a predicate partial, but *only* when the env resolves an external
@@ -5736,9 +5766,10 @@ substituteFreeDeep env (TypeVar (TVApplied b overrides) loc i) =
 -- shadowed out on descent and stays a pointer, while an encoder-spelled declaration-frame
 -- TVInt (@∀BinTree[/K=$/MK]@ under mapEqual's frame) is exactly the dangling reference
 -- this closure exists to materialize.
-substituteFreeDeep env t@(TypeVar v _ _) = case H.lookup v env of
-  Just b | b /= PTopType -> b
-  _                      -> t
+substituteFreeDeep env (TypeVar v loc i) = case H.lookup v env of
+  Just b | b /= PTopType -> meetInner env b i'
+  _                      -> TypeVar v loc i'
+  where i' = substituteFreeDeep env i
 substituteFreeDeep env (UnionType mtop leafs consts) =
   UnionType (fmap goTop mtop) (joinUnionType $ map (goPartial env) $ splitUnionType leafs) consts
   where
@@ -5788,12 +5819,13 @@ typeTVExtVarRefs (UnionType mtop leafs _) = S.unions $ topRefs ++ map partialRef
 substituteExit :: TypeVarArgEnv -> Type -> Type
 substituteExit vaenv (TypeVar (TVApplied b overrides) loc i) =
   applyTypeVarOverrides (fmap (substituteExit vaenv) overrides) (substituteExit vaenv (TypeVar b loc i))
-substituteExit vaenv t@(TypeVar v TVOuter _) = case H.lookup v vaenv of
-  Just b  -> b
+substituteExit vaenv (TypeVar v loc@TVOuter i) = case H.lookup v vaenv of
+  Just b  -> meetInner vaenv b i'
   Nothing -> case v of
-    TVVar _ -> PTopType
-    _       -> t
-substituteExit _     t@(TypeVar _ TVInt _) = t
+    TVVar _ -> i'  -- the occurrence reads var ∩ inner: erasing the dead var leaves the inner
+    _       -> TypeVar v loc i'
+  where i' = substituteExit vaenv i
+substituteExit vaenv (TypeVar v loc@TVInt i) = TypeVar v loc (substituteExit vaenv i)
 substituteExit vaenv (UnionType Nothing partials consts) =
   UnionType Nothing (joinUnionType $ map (substitutePartialExit vaenv) $ splitUnionType partials) consts
 substituteExit vaenv (UnionType (Just (preds, negLeafs, negConsts)) posLeafs consts) =
@@ -5824,10 +5856,11 @@ substitutePartialExit vaenv partial@PartialType{ptVars, ptArgs, ptPreds} = parti
     -- NOTE: a self-entry (@/T ↦ $/T@\/@/T ↦ $_/T@) is a producer ERROR form (a parameter is
     -- spelled as a constant, another variable, or a parent @$_T@ — never itself); these
     -- clauses are resilience while non-conformant producers remain.
-    exitVar k v@(TypeVar (TVVar k') loc _) | k' == k = case (vaenvLookup vaenv (TVVar k), loc) of
-      (PTopType, TVInt) -> v
-      (PTopType, _)     -> PTopType
-      (b, _)            -> b
+    exitVar k (TypeVar (TVVar k') loc i) | k' == k = case (vaenvLookup vaenv (TVVar k), loc) of
+      (PTopType, TVInt) -> TypeVar (TVVar k') loc i'
+      (PTopType, _)     -> i'  -- var ∩ inner: the dead self-spelling erases to the inner
+      (b, _)            -> meetInner vaenv b i'
+      where i' = substituteExit vaenv i
     exitVar _ v = substituteExit vaenv v
 
 -- | A class declaration spells an unbound parameter as a SELF-reference (@/T ↦ $_/T@); read
@@ -5837,7 +5870,7 @@ substitutePartialExit vaenv partial@PartialType{ptVars, ptArgs, ptPreds} = parti
 cleanDeclSelfRefs :: TypeVarEnv -> TypeVarEnv
 cleanDeclSelfRefs = H.mapWithKey clean
   where
-    clean k (TypeVar (TVVar k') TVOuter _) | k' == k = PTopType
+    clean k (TypeVar (TVVar k') TVOuter i) | k' == k = i  -- var ∩ inner: the self-spelling cleans to its inner
     clean _ v = v
 
 -- | See 'substitutePartialKeep': substitutes only concrete external bindings, keeping every other
@@ -5845,13 +5878,16 @@ cleanDeclSelfRefs = H.mapWithKey clean
 substituteKeep :: TypeVarArgEnv -> Type -> Type
 substituteKeep vaenv (TypeVar (TVApplied b overrides) loc i) =
   applyTypeVarOverrides (fmap (substituteKeep vaenv) overrides) (substituteKeep vaenv (TypeVar b loc i))
-substituteKeep vaenv t@(TypeVar v TVOuter _) = case H.lookup v vaenv of
-  Just b | not (isTop b) -> b
-  _                      -> t
+-- A concrete binding resolves the occurrence: @binding ∩ inner@. A kept occurrence keeps its
+-- (substituted) inner along with the reference.
+substituteKeep vaenv (TypeVar v loc@TVOuter i) = case H.lookup v vaenv of
+  Just b | not (isTop b) -> meetInner vaenv b i'
+  _                      -> TypeVar v loc i'
   where
     isTop PTopType = True
     isTop _        = False
-substituteKeep _     t@(TypeVar _ TVInt _) = t
+    i' = substituteKeep vaenv i
+substituteKeep vaenv (TypeVar v loc@TVInt i) = TypeVar v loc (substituteKeep vaenv i)
 substituteKeep vaenv (UnionType Nothing partials []) =
   UnionType Nothing (joinUnionType $ map (substitutePartialKeep vaenv) $ splitUnionType partials) []
 substituteKeep vaenv (UnionType (Just (preds, negLeafs, negConsts)) posLeafs consts) =
@@ -5970,8 +6006,10 @@ dropOutOfScopeTVExt vaenv = onType (S.fromList (H.keys vaenv))
     -- Only an AMBIENT reference is read as ⊤ here. A 'TVParent' names a variable of a partial
     -- it sits inside, not of this scope, so it is none of the ambient env's business — erasing it
     -- is what dropped a declaration's own arg-slot pointer (@Box[/T=$_/V]@) on every descent.
-    onSlot sc t@(TypeVar v@(TVVar _) TVExt _) | not (S.member v sc) = PTopType
-                                            | otherwise           = t
+    -- The occurrence reads @var ∩ inner@: erasing the out-of-scope var leaves the
+    -- (processed) inner — the lossless form of the old erasure-to-⊤.
+    onSlot sc (TypeVar v@(TVVar _) TVExt i) | not (S.member v sc) = onSlot sc i
+                                            | otherwise           = TypeVar v TVExt (onSlot sc i)
     onSlot sc (TypeVar (TVApplied b ovr) loc i) = case onSlot sc (TypeVar b loc i) of
       PTopType -> PTopType
       base     -> applyTypeVarOverrides (fmap (onSlot sc) ovr) base
@@ -6001,7 +6039,7 @@ hasOutOfScopeTVExt vaenv = onType (S.fromList (H.keys vaenv))
       where sc' = S.union sc (S.fromList (map TVVar (H.keys ptVars)))
     -- Only an AMBIENT reference counts, matching 'dropOutOfScopeTVExt': a 'TVParent' names a
     -- variable of a partial it sits inside, not of this scope, and is never erased.
-    onSlot sc (TypeVar v@(TVVar _) TVExt _)   = not (S.member v sc)
+    onSlot sc (TypeVar v@(TVVar _) TVExt i)   = not (S.member v sc) || onSlot sc i
     onSlot sc (TypeVar (TVApplied b ovr) loc i) = onSlot sc (TypeVar b loc i) || any (onSlot sc) (H.elems ovr)
     onSlot sc t@UnionType{}                 = onType sc t
     onSlot _ _                              = False
@@ -6028,7 +6066,7 @@ outOfScopeTVExtVars vaenv = onType (S.fromList (H.keys vaenv))
       where sc' = S.union sc (S.fromList (map TVVar (H.keys ptVars)))
     -- Only an AMBIENT reference is collected: a 'TVParent' resolves through the partial it sits
     -- inside, so it is not one of the object's implicit variables.
-    onSlot sc (TypeVar v@(TVVar _) TVExt _) = if S.member v sc then S.empty else S.singleton v
+    onSlot sc (TypeVar v@(TVVar _) TVExt i) = (if S.member v sc then S.empty else S.singleton v) <> onSlot sc i
     onSlot sc (TypeVar (TVApplied b ovr) loc i) = onSlot sc (TypeVar b loc i) <> S.unions (map (onSlot sc) (H.elems ovr))
     onSlot sc t@UnionType{} = onType sc t
     onSlot _ _ = S.empty

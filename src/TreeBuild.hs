@@ -332,9 +332,9 @@ buildCallTree TBEnv{tbTypeEnv} os _ _ srcType destType | isSubtypeOfWithObjSrcs 
 -- buildCallTree _ os _ _ srcType destType | trace (printf "buildCallTree from %s to %s\n\t\twith %s" (show srcType) (show destType) (show $ map fst os)) False = undefined
 buildCallTree _ _ _ _ _ PTopType = return TCTId
 buildCallTree _ _ _ _ PTopType _ = error $ printf "buildCallTree from top type"
-buildCallTree env@TBEnv{tbTypeEnv} objSrcs visitedArrows bound (TypeVar v _ _) destType = case exprVarArgsWithObjSrcs tbTypeEnv objSrcs of
+buildCallTree env@TBEnv{tbTypeEnv} objSrcs visitedArrows bound (TypeVar v _ i) destType = case exprVarArgsWithObjSrcs tbTypeEnv objSrcs of
   [vaenv] -> case H.lookup v vaenv of
-    Just (_, srcType') -> buildCallTree env objSrcs visitedArrows bound srcType' destType
+    Just (_, srcType') -> buildCallTree env objSrcs visitedArrows bound (intersectTypes tbTypeEnv srcType' i) destType
     Nothing -> error $ printf "Unknown TypeVar %s in buildCallTree" (show v)
   vaenvs -> error $ printf "Found unhandled zero or multiple vaenvs in builCallTree: %s" (show vaenvs)
 -- A source with no concrete leaves but a predicate top (a rel/class form such as @~Boolean@

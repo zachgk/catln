@@ -477,6 +477,9 @@ fAddTTypeGraph oa env@FEnv{feTTypeGraph, feTTypeGraphCleared} = env
 -- compared, and only argument/variable keys present on both sides, so it never false-positives on a
 -- union whose set of options legitimately changed.
 typeVarLost :: Type -> Type -> Bool
+-- Replacement by ⊤ drops BOTH the pointer and any occurrence-local inner — still a loss.
+-- For a future producer: replacement of an occurrence BY ITS OWN INNER is deliberate
+-- knowledge-preserving erasure, and already falls to the catch-all False clause below.
 typeVarLost (TypeVar _ TVOuter _) PTopType = True
 typeVarLost (TypeVar _ _ _)     _        = False
 typeVarLost (UnionType _ oldLeafs _) (UnionType _ newLeafs _) =
