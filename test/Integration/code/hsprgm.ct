@@ -1,0 +1,25 @@
+import hsprgm()
+
+
+module(Test)
+  # # Reading the compiler's own types
+    The page @hsprgm()@ reads declares the compiler's types for the program it is compiling, so that
+    a Catln program can be handed one and read it. This file is what typechecks those declarations:
+    a page nothing imports is a page nothing checks.
+  isType(b -> /Catln/ObjectBasis) -> Boolean
+    # [isType] answers whether an object was written as a `data` or a `class`, which is the one
+      question about an [ObjectBasis] that can be asked without anything else of the program to ask
+      it about. It is here to name every arm, so that an arm the declaration is missing is an arm
+      this does not compile against.
+  isType(b= /Catln/ObjectBasis/TypeObj)= True
+  isType(b= /Catln/ObjectBasis/FunctionObj)= False
+  isType(b= /Catln/ObjectBasis/PatternObj)= False
+  isType(b= /Catln/ObjectBasis/MatchObj)= False
+  isType(b= /Catln/ObjectBasis/ArgObj)= False
+
+  > isType(b= /Catln/ObjectBasis/TypeObj)
+    >>> True
+  > isType(b= /Catln/ObjectBasis/ArgObj)
+    >>> False
+
+main{io -> IO}= io.exit(val= 0)

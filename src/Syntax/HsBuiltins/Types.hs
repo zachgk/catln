@@ -36,6 +36,7 @@ import           Data.Proxy          (Proxy (..))
 import           Eval.Common         (Val)
 import           GHC.Generics        (Generic)
 import           Semantics.CtType
+import           Semantics.Prgm      (ObjectBasis)
 import           Semantics.Val       hiding (Val)
 import           Text.Printf
 
@@ -68,6 +69,25 @@ hsBuiltinTypes = [ctPageInto (Proxy :: Proxy BuiltFile)]
 -- | The page every builtin type together makes: what it must import, and what it declares.
 hsBuiltinPage :: CtPage
 hsBuiltinPage = foldl (flip ($)) emptyCtPage hsBuiltinTypes
+
+-- | The compiler's own program, as types a Catln program can be handed.
+--
+-- A page of its own rather than more of 'hsBuiltinTypes', because of what the two cost. Everything
+-- on the builtins page is compiled by every program — @stack\/core\/main.ct@ imports
+-- @hsbuiltins()@ — and the AST is dozens of mutually recursive declarations where a build result is
+-- two fields. @stack\/core\/result.ct@ records what a badly placed edge costs here: one import from
+-- @core\/compile.ct@ to @core\/list.ct@ took @test\/Integration\/code\/io.ct@ from 203 seconds to
+-- over 900. So a program pays for these by asking for them, with @import hsprgm()@, and a program
+-- which does not ask is no slower than it was.
+--
+-- No page of the standard library may write that import. This page reaches @core\/list.ct@ and
+-- whatever else its fields need, and the core reaching back into it is the cycle
+-- @core\/result.ct@'s comment is about.
+hsPrgmTypes :: [CtPage -> CtPage]
+hsPrgmTypes = [ctPageInto (Proxy :: Proxy ObjectBasis)]
+
+hsPrgmPage :: CtPage
+hsPrgmPage = foldl (flip ($)) emptyCtPage hsPrgmTypes
 
 -- | The files of an evaluated @\/Catln\/CatlnResult@, or why the value is not one.
 --

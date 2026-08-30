@@ -1,0 +1,51 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= CInt 0 )( Value /this= Value io )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/isType"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/isType( Value b -> ∀/Catln/ObjectBasis ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/isType( Value b= Value /Catln/ObjectBasis/TypeObj ) -> ∀/Data/Primitive/Boolean = Value True
+                        , /Test/isType( Value b= Value /Catln/ObjectBasis/FunctionObj ) -> ∀/Data/Primitive/Boolean = Value False
+                        , /Test/isType( Value b= Value /Catln/ObjectBasis/PatternObj ) -> ∀/Data/Primitive/Boolean = Value False
+                        , /Test/isType( Value b= Value /Catln/ObjectBasis/MatchObj ) -> ∀/Data/Primitive/Boolean = Value False
+                        , /Test/isType( Value b= Value /Catln/ObjectBasis/ArgObj ) -> ∀/Data/Primitive/Boolean = Value False
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "# Reading the compiler's own types
+            The page @hsprgm()@ reads declares the compiler's types for the program it is compiling, so that
+            a Catln program can be handed one and read it. This file is what typechecks those declarations:
+            a page nothing imports is a page nothing checks." )
+        , /Catln/#print
+            ( Value /p= isType( Value b= Value /Catln/ObjectBasis/TypeObj ) )
+            ( Value /result= CStr "True" )
+        , /Catln/#print
+            ( Value /p= isType( Value b= Value /Catln/ObjectBasis/ArgObj ) )
+            ( Value /result= CStr "False" )
+        ]
+    }

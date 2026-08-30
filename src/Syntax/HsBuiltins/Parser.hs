@@ -32,7 +32,7 @@ import           Semantics.CtType         (CtPage (..))
 import           Syntax.Ct.Builder
 import           Syntax.Ct.Prgm
 import           Syntax.HsBuiltins.Render (renderCtDecls)
-import           Syntax.HsBuiltins.Types  (hsBuiltinPage)
+import           Syntax.HsBuiltins.Types  (hsBuiltinPage, hsPrgmPage)
 
 -- | The name an import reads the compiler's own definitions with.
 hsBuiltins :: String
@@ -86,11 +86,52 @@ hsBuiltinsParse = return $ ParsedImport (RawPrgm hsBuiltinsImports hsBuiltinsSta
 -- it stands for, by the same reading that converts a value of that type to and from an evaluated
 -- one. See "Semantics.CtType".
 hsBuiltinsStatements :: [RawStatementTree RawExpr ()]
-hsBuiltinsStatements = map comment [
+hsBuiltinsStatements = map commentSt [
   "# The Catln Builtins",
   "These are the definitions the compiler supplies itself, rather than ones written in Catln.",
   "They are built in Haskell, in `Syntax.HsBuiltins.Types`, and reached by writing `import hsbuiltins()`. The standard library writes that import, so every program has them.",
   "Each is derived from the shape of the Haskell type it stands for, which is the same reading the runtime converts a value of that type by. So what a builtin is called here and what it is handed to a program as cannot disagree."
                                     ] ++ renderCtDecls hsBuiltinPage
-  where
-    comment text = RawStatementTree (RawAnnot (rawComment text)) []
+
+-- | One paragraph a page says about itself, as the statement carrying it.
+commentSt :: String -> RawStatementTree RawExpr ()
+commentSt text = RawStatementTree (RawAnnot (rawComment text)) []
+
+-- | The name an import reads the compiler's own program types with.
+hsPrgm :: String
+hsPrgm = "hsprgm"
+
+-- | The page an @hsprgm()@ import stands at.
+--
+-- Beside @core\/hsbuiltins.ct@ and not on it, because of who pays. Every program compiles the
+-- builtins page — @stack\/core\/main.ct@ imports it — and these are dozens of mutually recursive
+-- declarations rather than the two fields of a build result. A program which wants to read programs
+-- writes @import hsprgm()@ and pays for them; one which does not is not slowed down by their being
+-- available.
+--
+-- In @core\/@ for the same reason the other page is: that is what 'Syntax.Ct.Prgm.isCorePage'
+-- answers from, and so what keeps 'Syntax.Parsers.pageImports' from handing this page the standard
+-- library. Which matters more here than there, since this page reaches @core\/list.ct@ — the
+-- standard library importing it back is exactly the cycle @stack\/core\/result.ct@'s comment
+-- measures at 700 seconds. Nothing in @stack\/@ writes this import, and nothing in @stack\/@ should.
+hsPrgmPagePath :: FilePath
+hsPrgmPagePath = "core/hsprgm.ct"
+
+hsPrgmSyntax :: ImportSyntax
+hsPrgmSyntax = (eagerSyntax (const hsPrgmParse)){isPagePath = Just hsPrgmPagePath}
+
+-- | What the page must import for its declarations to name something, asked of the types on it.
+hsPrgmImports :: [RawFileImport]
+hsPrgmImports = map (mkRawFileImport . rawStr) $ ["core/compile.ct"] `union` cpImports hsPrgmPage
+
+hsPrgmParse :: ImportParseResult
+hsPrgmParse = return $ ParsedImport (RawPrgm hsPrgmImports hsPrgmStatements) Nothing (Just [])
+
+-- | What the page says about itself, and then what it declares.
+hsPrgmStatements :: [RawStatementTree RawExpr ()]
+hsPrgmStatements = map commentSt [
+  "# The Catln Program",
+  "These are the compiler's own types for the program it is compiling, declared so that a Catln program can be handed one and read it.",
+  "They are reached by writing `import hsprgm()`. The standard library does not write that import and must not: these declarations reach `core/list.ct`, and a page every program compiles reaching it is the import cycle `core/result.ct` measures at seven hundred seconds. A program which wants to read programs asks for them and pays for them.",
+  "Each is derived from the shape of the Haskell type the compiler itself uses, by the same reading that converts a value of that type to and from an evaluated one — so what a program is handed and what the compiler holds cannot come apart."
+                                 ] ++ renderCtDecls hsPrgmPage

@@ -1,0 +1,63 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+                            ( /Catln/exit
+                                ( /this=/Catln/IO
+                                , /val=/Data/Primitive/Integer
+                                ) + /Catln/IO
+                            ) =
+                            ( /Catln/exit
+                                ( EAppArg Value /val -> /Data/Primitive/Integer = 0 )
+                                ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) ) ↦ /Catln/IO
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/isType"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/isType( EAppArg Value /b -> ∀/Catln/ObjectBasis ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/isType( EAppArg Value /b -> /Catln/ObjectBasis/TypeObj = Value /Catln/ObjectBasis/TypeObj ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /Test/isType( EAppArg Value /b -> /Catln/ObjectBasis/FunctionObj = Value /Catln/ObjectBasis/FunctionObj ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Test/isType( EAppArg Value /b -> /Catln/ObjectBasis/PatternObj = Value /Catln/ObjectBasis/PatternObj ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Test/isType( EAppArg Value /b -> /Catln/ObjectBasis/MatchObj = Value /Catln/ObjectBasis/MatchObj ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Test/isType( EAppArg Value /b -> /Catln/ObjectBasis/ArgObj = Value /Catln/ObjectBasis/ArgObj ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "# Reading the compiler's own types
+            The page @hsprgm()@ reads declares the compiler's types for the program it is compiling, so that
+            a Catln program can be handed one and read it. This file is what typechecks those declarations:
+            a page nothing imports is a page nothing checks." )
+        , /Catln/#print
+            ( EAppArg Value /p -> ∀/Data/Primitive/Boolean =
+                ( /Test/isType( EAppArg Value /b -> /Catln/ObjectBasis/TypeObj = Value /Catln/ObjectBasis/TypeObj ) ↦ ∀/Data/Primitive/Boolean )
+            )
+            ( EAppArg Value /result -> /Data/String = "True" )
+        , /Catln/#print
+            ( EAppArg Value /p -> ∀/Data/Primitive/Boolean =
+                ( /Test/isType( EAppArg Value /b -> /Catln/ObjectBasis/ArgObj = Value /Catln/ObjectBasis/ArgObj ) ↦ ∀/Data/Primitive/Boolean )
+            )
+            ( EAppArg Value /result -> /Data/String = "False" )
+        ]
+    }

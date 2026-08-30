@@ -32,6 +32,7 @@ import           Data.List           (nub)
 import           Data.Maybe
 import           Data.UUID
 import           Data.Void           (Void)
+import           Semantics.CtType    (CtType (..))
 import           Semantics.TypeGraph (ReachesTree)
 import           Semantics.Types
 import           Text.Megaparsec
@@ -129,6 +130,22 @@ type ExprCond e m = Maybe (e m)
 
 data ObjectBasis = FunctionObj | TypeObj | PatternObj | MatchObj | ArgObj
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+
+-- | What an object is, read as a Catln type.
+--
+-- The first of the program's own types the compiler declares to Catln, and the reason it is first
+-- is that it needs nothing: five constructors carrying nothing, already 'Generic', so the whole
+-- instance is its name and what it says about itself.
+--
+-- Written HERE, beside the type, rather than anywhere above. That is what "Semantics.CtType" being
+-- below the evaluator and clear of the syntax buys: a type says how it is read as a Catln one in
+-- the file it is declared in, so a constructor added to it cannot fail to reach the page.
+instance CtType ObjectBasis where
+  ctDoc _ = [
+    "What an object is: which of the ways of writing one it was written as.",
+    "A [FunctionObj] is a definition or a declaration, a [TypeObj] is a `data` or a `class`, a [PatternObj] is an object matched against, a [MatchObj] is one arm of a match, and an [ArgObj] is an argument standing inside another object.",
+    "It is declared by the compiler rather than in a `.ct` file because it is the compiler's own idea of what it is looking at. A program which reads programs is handed this, and what it is called here and what the compiler calls it are one thing."
+            ]
 data ObjArr e m = ObjArr {
   oaObj    :: !(Maybe (e m)),
   oaBasis  :: !ObjectBasis,
