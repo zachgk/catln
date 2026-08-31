@@ -46,7 +46,7 @@ difference/complement/predicate/mixed/var branches all get exercised. The driver
 ```haskell
 data Type
   = UnionType (Maybe (TypePredicates, PartialLeafs, [Constant])) PartialLeafs [Constant]
-  | TypeVar TypeVarAux TypeVarLoc
+  | TypeVar TypeVarAux TypeVarLoc Type   -- the third field is the occurrence-local `inner`
 ```
 
 `UnionType mTop posLeafs posConsts` denotes:
@@ -90,7 +90,30 @@ PartialArgsOption)`.
 - `TVVar name` refers to a `ptVars` parameter; `TVArg name` refers to an argument's type.
 - `TVApplied base overrides` = a var re-applied with rebound parameter slots (`$F[$T -> $_B]`).
 - **Location** decides scope: `TVInt` (written `$T`) resolves against the *same* partial's
-  `ptVars`/`ptArgs`; `TVExt` (written `$_T`) resolves against the surrounding `TypeVarArgEnv` (vaenv).
+  `ptVars`/`ptArgs`; `TVParent` (`$^T`) names a variable of the nearest ENCLOSING partial and never
+  consults the vaenv; `TVExt` (`$_T`) resolves against the surrounding `TypeVarArgEnv` (vaenv).
+- The third `TypeVar` field is the occurrence-local **inner**: the occurrence denotes
+  `⟦var⟧ ∩ ⟦inner⟧`, and `inner = PTopType` is the knowledge-free case. It bounds an occurrence; it
+  does **not** stand in for resolving the variable (see the resolution rule below).
+
+**Resolution is an obligation of every traversal — and it has two failure directions.** `ptVars` is
+a binder, and a reference to it sits somewhere below the partial that binds it, so any traversal
+descending past that partial must carry the binding down (`intersectPartialsBase`'s `deepVaenv`,
+`isSubPartialOfWithEnv`'s `readOwnScope`/`comparedPartialsEnv`). Getting it right means neither:
+
+- **too lenient** — reading the reference as ⊤. `vaenvLookup` defaults a miss to ⊤, which is
+  correct for a genuinely free variable and silently wrong for one whose binder you failed to carry.
+  Since ⊤ is the lattice top the error only ever widens, so membership over-approximates and
+  difference (`a ∩ ¬b`) *under*-approximates — a real narrowing reads as ∅; nor
+- **too conservative** — freezing the occurrence at the variable's declared bound. `$/E` under
+  `[/E=∀Ord]` is not "some Ord"; it is the same type as every other `/E` occurrence, and where the
+  call site instantiates it that type is `Integer`. Replacing it with `∀Ord` throws away the
+  instantiation and the cross-occurrence link, and the loss reappears downstream as `∀Ord` where
+  `Integer` was needed.
+
+A variable's **value is contextual** and must be threaded. Its **scope class** (`TVInt`/`TVParent`/
+`TVExt`) is lexical, assigned once at desugar, and deliberately never re-derived inside the algebra
+— do not confuse the two. No representation change excuses a traversal from resolving correctly.
 
 **The `mergeVarEnvVal` doctrine (critical for the algebra props):** a *bare top-level* variable meet
 `$a ∩ b` keeps `$a` symbolic and records the narrowing in the (often discarded) env, rather than

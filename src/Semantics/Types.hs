@@ -3230,6 +3230,24 @@ looseArgModeRejects sub@PartialType{ptArgs=subArgs, ptArgMode=subMode} super@Par
 -- and a name both bind reads as the meet. An ambient @/T ↦ ∀Group@ (the surrounding law
 -- declaration's parameter) must not shadow a compared leaf's own @[/T=∀Eq]@ when resolving its
 -- @$/T@ arg slots; ambient bindings still resolve names the leaves do not declare.
+--
+-- THE RULE, both halves. A traversal that descends through a binder must resolve the references
+-- below it CORRECTLY — neither too leniently nor too conservatively:
+--
+--   * Too LENIENT is reading the reference as ⊤ (the 'vaenvLookup' default). It widens, and the
+--     widening is silent, because an unbound variable legitimately denotes ⊤ — a missing binding
+--     and a genuinely free variable are the same map miss.
+--   * Too CONSERVATIVE is baking the variable's DECLARED BOUND onto the occurrence and treating
+--     that as the answer. @$/E@ under @[/E=∀Ord]@ is not "some Ord": it is the SAME type as every
+--     other occurrence of @/E@ in this partial, and at a call site that instantiates it, that type
+--     is @Integer@, not @∀Ord@. Freezing it at the declared bound discards the instantiation and
+--     the cross-occurrence link — the very things that make it a variable rather than a type — and
+--     the loss simply resurfaces later as @∀Ord@ where @Integer@ was required.
+--
+-- A variable's value is CONTEXTUAL, so it cannot be pre-computed onto the occurrence and must be
+-- threaded. (Contrast a variable's SCOPE CLASS — 'TVInt'\/'TVParent'\/'TVExt' — which is lexical,
+-- is assigned once at desugar, and is deliberately never re-derived here.) Every descent owes the
+-- correct resolution; there is no representation that excuses a traversal from doing it.
 comparedPartialsEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> TypeVarArgEnv
 comparedPartialsEnv typeEnv vaenv a b =
   H.union (substituteTVExt typeEnv vaenv <$> H.unionWith (intersectTypesEnv typeEnv vaenv) (ptVarArg a) (ptVarArg b)) vaenv
@@ -6051,8 +6069,13 @@ dropOutOfScopeTVExt vaenv = onType (S.fromList (H.keys vaenv))
     -- Only an AMBIENT reference is read as ⊤ here. A 'TVParent' names a variable of a partial
     -- it sits inside, not of this scope, so it is none of the ambient env's business — erasing it
     -- is what dropped a declaration's own arg-slot pointer (@Box[/T=$_/V]@) on every descent.
-    -- The occurrence reads @var ∩ inner@: erasing the out-of-scope var leaves the
-    -- (processed) inner — the lossless form of the old erasure-to-⊤.
+    -- The occurrence reads @var ∩ inner@, so erasing a GENUINELY out-of-scope var leaves the
+    -- (processed) inner. That is exact HERE and only here: a var no scope binds denotes ⊤, so
+    -- @⊤ ∩ inner = inner@ is the reading, not an approximation of it. Do not generalize it — an
+    -- inner is not a substitute for resolving a var that IS bound. Carrying a declared bound on
+    -- the occurrence would freeze the variable at that bound and lose its instantiation
+    -- ('comparedPartialsEnv' states the rule); a traversal that reaches a bound variable still
+    -- owes it the correct contextual value.
     onSlot sc (TypeVar v@(TVVar _) TVExt i) | not (S.member v sc) = onSlot sc i
                                             | otherwise           = TypeVar v TVExt (onSlot sc i)
     onSlot sc (TypeVar (TVApplied b ovr) loc i) = case onSlot sc (TypeVar b loc i) of
@@ -6201,8 +6224,12 @@ typeSetAux (TVApplied k _) _ _ = error $ printf "Unexpected TVApplied %s used as
 -- @old@'s variable. A resolution to a concrete (narrower) type in @new@ is left untouched — only a
 -- loss to Top is reverted. This lets 'updateTypeProp' preserve the cross-scope link an explicit
 -- external variable carries (e.g. a higher-order argument's @fn(/v=$_A)@ tied to a container element)
--- rather than dropping it to Top during intersection. Internal variables ('TVInt') are ignored:
--- they resolve through their own partial's @ptVars@, so showing as Top is equivalent, not a loss.
+-- rather than dropping it to Top during intersection.
+--
+-- Internal variables ('TVInt') are currently ignored, on the reasoning that they resolve through
+-- their own partial's @ptVars@ so showing as Top is equivalent. That holds ONLY when the partial
+-- binds the name to Top; a binding below Top makes the replacement a real loss of both the value
+-- and the link. TODO(#42): same binding-aware treatment as 'TypeCheck.Common.typeVarLost'.
 restoreLostTVExtVars :: Type -> Type -> Type
 restoreLostTVExtVars old new = case (old, new) of
   (TypeVar _ TVOuter _, PTopType) -> old

@@ -468,11 +468,21 @@ fAddTTypeGraph oa env@FEnv{feTTypeGraph, feTTypeGraphCleared} = env
 -- | Structurally detects whether an EXTERNAL 'TypeVar' ('TVExt') present in @old@ has been widened
 -- back to Top in @new@. Such a variable is a reference to a variable of an enclosing scope (e.g. a
 -- higher-order argument's parameter, @/fn(/v=$_A)@, tied to a container element); replacing it with
--- Top drops that cross-scope link. Resolving a variable to a concrete (narrower) type is not a loss,
--- and an INTERNAL 'TypeVar' ('TVInt') is deliberately ignored: it resolves through its own partial's
--- @ptVars@, so a @/value=$V@ that shows as Top merely because the partial's @V@ parameter is Top is
--- equivalent, not a loss. This complements 'verifySchemeActLowers', which cannot see either case: in
+-- Top drops that cross-scope link. Resolving a variable to a concrete (narrower) type is not a loss.
+-- This complements 'verifySchemeActLowers', which cannot see either case: in
 -- a subtype test a free 'TypeVar' behaves like Top, so the widening looks like a legal narrowing.
+--
+-- An INTERNAL 'TypeVar' ('TVInt') is currently ignored, on the reasoning that it resolves through
+-- its own partial's @ptVars@ so a @/value=$V@ showing as Top is equivalent. That reasoning holds
+-- ONLY when the partial binds @V@ to Top. When it binds @V@ to something below Top the replacement
+-- is a REAL loss, of exactly the same kind as the 'TVExt' case: it discards both the value the
+-- binding carries here and the link tying this occurrence to the variable's other occurrences.
+--
+-- TODO(#42): make the 'TVInt' case binding-aware instead of blanket-excluded — a 'TVInt' loss
+-- counts when the enclosing partial binds the name below Top. Measured live: core/set.ct's
+-- @allIn[/E=∀Ord](items -> ConsList[$T -> $E], ..)@ has a requirement projection replace
+-- @ConsList[/T=$/E]@ by @ConsList[/T=⊤]@; this guard is the one designed to refuse that write
+-- ('updateSchemeProp'), and the blanket exclusion is why it does not fire.
 -- Only partials matched unambiguously by name (a single partial of that name on each side) are
 -- compared, and only argument/variable keys present on both sides, so it never false-positives on a
 -- union whose set of options legitimately changed.
