@@ -3277,8 +3277,25 @@ looseArgModeRejects sub@PartialType{ptArgs=subArgs, ptArgMode=subMode} super@Par
 -- is assigned once at desugar, and is deliberately never re-derived here.) Every descent owes the
 -- correct resolution; there is no representation that excuses a traversal from doing it.
 comparedPartialsEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> TypeVarArgEnv
-comparedPartialsEnv typeEnv vaenv a b =
-  H.union (substituteTVExt typeEnv vaenv <$> H.unionWith (intersectTypesEnv typeEnv vaenv) (ptVarArg a) (ptVarArg b)) vaenv
+comparedPartialsEnv typeEnv vaenv a b = H.union (H.filterWithKey installable merged) vaenv
+  where
+    merged = substituteTVExt typeEnv vaenv <$> H.unionWith (intersectTypesEnv typeEnv vaenv) (ptVarArg a) (ptVarArg b)
+    -- A binding whose VALUE still mentions the name being bound is a recursive equation, not a
+    -- value, and installing it changes the operands mid-comparison: the slot value here is derived
+    -- from @a@ and @b@ themselves, so an occurrence of the same name INSIDE @a@ then resolves to a
+    -- function of @a@ rather than to whatever it denoted. A parameterized class compared against a
+    -- union of itself is exactly that shape — @/T@ bound to @a ⊓ (a∪b)@ while @a@ carries a
+    -- @$_/T@ of its own (containers.ct's @/length(/this -> ∀/List[/T=$_/T])@) — and it made the
+    -- covariance rule refuse a genuine @a ⊆ a∪b@ that the same check decides True with the name
+    -- left alone. Leaving the key unbound keeps the occurrence symbolic and reads it IDENTICALLY
+    -- on both sides, which is what a comparison needs; the guard mirrors 'isSelfVar' in
+    -- 'intersectTypesWithVarEnv' and 'cleanDeclSelfRefs' on the declaration path.
+    -- Tested on the RAW slot values, not on 'merged': the meet and 'substituteTVExt' have already
+    -- rewritten a self-reference by then (an unbound @$_/T@ becomes ⊤), so the merged value no
+    -- longer shows the cycle that makes the binding unsafe to install.
+    installable k@(TVVar n) _ =
+      not $ any (S.member n . typeTVExtVarRefs) $ mapMaybe (H.lookup k) [ptVarArg a, ptVarArg b]
+    installable _ _ = True
 
 -- | A private helper for 'isSubPartialOfWithEnv' that checks while ignore class expansions
 isSubPartialOfWithEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Bool
