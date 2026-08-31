@@ -161,6 +161,15 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/Unit"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/Unit ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/TypePredicate/PredClass"
                 , ObjectMapItem
                     { omiDecls =
@@ -275,6 +284,16 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/SourcePos"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/SourcePos( EAppArg Value /file -> /Data/String )( EAppArg Value /line -> /Data/Primitive/Integer )( EAppArg Value /column -> /Data/Primitive/Integer ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Constant/CStr"
                 , ObjectMapItem
                     { omiDecls =
@@ -341,6 +360,24 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/TypePredicates/PredsOne( EAppArg Value /pred -> ∀/Catln/TypePredicate ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Meta"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Meta( EAppArg Value /type -> ∀/Catln/Type )
+                            ( EAppArg Value /pos -> ∀/Data/Maybe
+                                [ /T=/Catln/Pair
+                                    [ /B=/Catln/SourcePos
+                                    , /A=/Catln/SourcePos
+                                    ]
+                                ]
+                            )( EAppArg Value /id -> /Data/String )( EAppArg Value /dat -> /Catln/Unit )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -454,6 +491,9 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType

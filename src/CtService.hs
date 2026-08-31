@@ -1294,7 +1294,7 @@ pageOwners :: GraphData TPrgm FileImport -> H.HashMap UUID FileImport
 pageOwners tprgms = H.fromList
   [ (i, name)
   | (Prgm objMap _ globalAnnots, name, _) <- graphToNodes tprgms
-  , i <- map oaTestId (flatObjectMap objMap) ++ map (getMetaID . getExprMeta) globalAnnots
+  , i <- map oaTestId (flatObjectMap objMap) ++ map (getMetaId . getExprMeta) globalAnnots
   ]
 
 -- | The freshly-evaluated golden values for every string-serializable @#print@ reachable from the
@@ -1596,7 +1596,7 @@ pageValues graph = valuesOf
     -- it does rather than before them.
     writtenAt written e = fromMaybe (length written) $ elemIndex (exprId e) written
 
-    exprId = getMetaID . getExprMeta
+    exprId = getMetaId . getExprMeta
 
 -- | The answers a named method gives about the values of one page. This is the
 -- 'CtServiceApi.csAsk' of a set of pages, and the companion of 'pageValues' above: that says what a

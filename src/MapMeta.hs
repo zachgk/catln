@@ -72,7 +72,7 @@ interleavePrgm :: Prgm Expr m -> H.HashMap UUID.UUID (Meta m)
 interleavePrgm prgm = H.fromList $ execWriter $ mapMetaPrgmM f prgm
   where
     f _ m = do
-        tell [(getMetaID m, m)]
+        tell [(getMetaId m, m)]
         return m
 
 -- | The namespace every compiler-assigned meta id is generated in.
@@ -113,11 +113,11 @@ desugarMetaIDScope imp = MetaIDScope ("des:" ++ show imp) 0
 -- | Gives an id to a meta which has none, leaving one which already has an id alone. Both the
 -- parse and the desugar pass run over metas the other has already numbered.
 addMetaID :: MetaFun (State MetaIDScope) m m
-addMetaID _ m | not (UUID.null $ getMetaID m) = return m
+addMetaID _ m | not (UUID.null $ getMetaId m) = return m
 addMetaID _ m = do
   MetaIDScope scope n <- get
   put $ MetaIDScope scope (n + 1)
-  return m{getMetaID=UUID5.generateNamed metaIDNamespace $ utf8Bytes $ printf "%s#%d" scope n}
+  return m{getMetaId=UUID5.generateNamed metaIDNamespace $ utf8Bytes $ printf "%s#%d" scope n}
 
 zipMetaFun :: (Monad n) => MetaFun n a b -> MetaFun n a c -> MetaFun n a (b, c)
 zipMetaFun f1 f2 tp m@(Meta t p mid _) = do

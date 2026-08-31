@@ -249,7 +249,7 @@ pageResp ctss prgmName' = runCResT $ do
   maybeAnnots <- lift $ runCResT $ getEvalAnnots ctss prgmName'
   let tprgm' = maybe H.empty interleavePrgm (cresToMaybe maybeTPrgm)
   let targetModes = maybe H.empty evalAllTargetModes (cresToMaybe maybeTPrgmFull)
-  let annots' = maybe H.empty (H.fromList . map (first (getMetaID . getExprMeta))) (cresToMaybe maybeAnnots)
+  let annots' = maybe H.empty (H.fromList . map (first (getMetaId . getExprMeta))) (cresToMaybe maybeAnnots)
   let prgm' = mapMetaRawPrgm (zip4MetaFun (interleaveMeta tprgm') (interleaveMeta targetModes) (interleaveMeta annots') (interleaveMeta $ printSources rawPrgm')) rawPrgm'
   maybeSource <- lift $ runCResT $ getSource ctss prgmName'
   -- The pages either side of this one travel with it, so a page knows where it sits without the
@@ -297,7 +297,7 @@ annotResp ctss scope' annot = do
     -- reader waits at.
     lift $ ctssReport ctss StepEvaluating 0 0 (impDisp =<< scope')
     maybeAnnots <- asCResT $ evalAnnots (Just svc) annotPrgmName joinedTprgms
-    let annots' = H.fromList $ map (first (getMetaID . getExprMeta)) maybeAnnots
+    let annots' = H.fromList $ map (first (getMetaId . getExprMeta)) maybeAnnots
     return $ mapMetaRawPrgm (zip4MetaFun (interleaveMeta $ interleavePrgm annotTprgm) (interleaveMeta targetModes) (interleaveMeta annots') (interleaveMeta $ printSources rawPrgm')) rawPrgm'
 
 -- | The arguments of an @/api/call@, as the values they are called with.
@@ -344,7 +344,7 @@ printSources (RawPrgm _ statements) = H.fromList $ concatMap ofTree statements
     -- back out.
     ofStatement (RawAnnot annot) | nameStr (exprPath annot) == printAnnot =
       case H.lookup (partialKey (mkName printAnnotText)) $ rawExprAppliedArgsMap annot of
-        Just (Just (_, Just p)) -> [(getMetaID $ getExprMeta annot, formatExpr p)]
+        Just (Just (_, Just p)) -> [(getMetaId $ getExprMeta annot, formatExpr p)]
         _                       -> []
     ofStatement _ = []
 

@@ -662,7 +662,7 @@ derivePrintTests prgm = mapMaybe mkTest (collectPrintAnnots prgm)
         -- belongs to the annotation itself, which is a statement of that file in its own right.
         (owner, ownerId) = case os of
           ((_, oa):_) -> (nameStr (oaObjPath oa), oaTestId oa)
-          []          -> (testName, getMetaID (getExprMeta annot))
+          []          -> (testName, getMetaId (getExprMeta annot))
         desc = TestDesc testName owner ownerId TestPrintGolden . EvalCheck
         checkAction actual = asCResT $ case printResultArg annot of
           Nothing -> CErr [MkCNote $ GenCErr crange "Missing #result golden for print; run `catln test --update` to populate it"]

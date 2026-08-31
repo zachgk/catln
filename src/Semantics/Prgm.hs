@@ -28,13 +28,16 @@ import           Control.Monad       (join)
 import           CtConstants
 import           Data.Aeson          hiding (Object)
 import           Data.Bifunctor      (first)
-import           Data.List           (nub)
+import           Data.Char           (toLower)
+import           Data.List           (nub, stripPrefix)
 import           Data.Maybe
 import           Data.UUID
 import           Data.Void           (Void)
-import           Semantics.CtType    (CtType (..))
+import           Semantics.CtType
 import           Semantics.TypeGraph (ReachesTree)
 import           Semantics.Types
+import           Semantics.Val       (Val (IntVal, StrVal, TupleVal), valArg,
+                                      valStrArg)
 import           Text.Megaparsec
 import           Text.Printf
 
@@ -69,10 +72,68 @@ class (Eq m, Ord m) => MetaDat m where
 data Meta m = Meta {
   getMetaType :: Type,
   getMetaPos  :: CodeRange,
-  getMetaID   :: UUID,
+  getMetaId   :: UUID,
   getMetaDat  :: m
                    }
   deriving (Eq, Ord, Generic, ToJSON)
+
+-- | What is known about a piece of a program, read as a Catln type.
+--
+-- Declared at the metadata every stage shares and nothing more, which is what a program handed one
+-- has: 'MapMeta.clearMetaDat' is how a program of any stage is narrowed to this, and what it drops
+-- is the stage's own supplement — the reaches tree an evaluation carries. So the [dat] a program
+-- reads is a @\/Catln\/Unit@ rather than a lie about what is in it.
+--
+-- 'ctFieldName' is overridden because the fields are written @getMetaType@ and the default rule —
+-- drop the leading run of lowercase — yields @metaType@. Said as the prefix it is rather than as a
+-- list of the four names, so a field added to this record is named by the same rule as the others
+-- rather than by someone remembering to add it here.
+instance CtType (Meta ()) where
+  ctPath _ = ctBuiltinNamespace ++ "Meta"
+  ctFieldName _ n = case stripPrefix "getMeta" n of
+    Just (c:rest) -> toLower c : rest
+    _             -> ctDropFieldPrefix n
+  ctDoc _ = [
+    "What the compiler knows about one piece of a program: the [type] it was inferred to have, where it was written ([pos]), and the [id] that tells it apart from every other piece.",
+    "[pos] is absent for a piece of the program nothing wrote — one the compiler made while desugaring, which has a type and an identity but no place in a file.",
+    "[dat] is what the stage the program came from added of its own. It is handed over empty: a program is narrowed to the metadata every stage shares before it is read, so what would be there is a different thing depending on which stage was asked, and this way what is read is the same thing whichever was."
+            ]
+
+-- | Where something was written, read as a Catln type.
+--
+-- Written by hand rather than read off megaparsec's shape: its line and column are a @Pos@, a
+-- newtype whose @mkPos@ throws below one. Read off the shape, a program could hand back a zero and
+-- the conversion would raise rather than report. Numbers here, checked on the way back.
+instance CtType SourcePos where
+  ctPath _ = ctBuiltinNamespace ++ "SourcePos"
+  ctPageInto = ctPageDeclare ctSourcePosDecl
+  ctImports _ = [coreStrPage, coreNumPage]
+  toCt (SourcePos name line col) = TupleVal (ctBuiltinNamespace ++ "SourcePos") $ H.fromList [
+    (runtimeArgKey "file", StrVal name),
+    (runtimeArgKey "line", IntVal $ toInteger $ unPos line),
+    (runtimeArgKey "column", IntVal $ toInteger $ unPos col)
+                                                                                             ]
+  fromCt v@(TupleVal n as) | n == ctBuiltinNamespace ++ "SourcePos" = do
+    name <- valStrArg n "file" as
+    line <- posOf =<< valArg n "line" as
+    col <- posOf =<< valArg n "column" as
+    return $ SourcePos name line col
+    where
+      -- mkPos raises below one, so a number that is not a place in a file is reported here.
+      posOf (IntVal i) | i >= 1 = Right $ mkPos $ fromInteger i
+      posOf bad = Left $ printf "%s is not a line or column of %s" (show bad) (show v)
+  fromCt v = Left $ printf "%s is not a %s" (show v) (ctBuiltinNamespace ++ "SourcePos")
+
+ctSourcePosDecl :: CtDecl
+ctSourcePosDecl = CtDecl (ctBuiltinNamespace ++ "SourcePos") [CtCon (ctBuiltinNamespace ++ "SourcePos") [] [
+    ("file", ctRef strPrim),
+    ("line", ctRef intPrim),
+    ("column", ctRef intPrim)
+                                                                                                          ]] [
+  "A place in a file: which [file], and the [line] and [column] within it.",
+  "Lines and columns count from one, as an editor shows them. A number below one is not a place and is refused when one is read back."
+                                                                                                             ]
+
 -- | MetaDat contains supplemental metadata
 instance MetaDat () where
   emptyMetaDat = ()

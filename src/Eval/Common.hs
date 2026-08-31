@@ -515,7 +515,7 @@ data TestResult = TestResult
 -- what distinguishes one arm from its siblings (they all share the function's 'oaObjPath') and what
 -- attributes the test to the page that wrote it.
 oaTestId :: EObjArr -> UUID
-oaTestId = getMetaID . getExprMeta . oaObjExpr
+oaTestId = getMetaId . getExprMeta . oaObjExpr
 
 -- | A mock IO handle that captures printed lines in an internal buffer instead of writing to real
 -- stdout. It lives beside 'MockIOVal', the value that carries the same buffer through an evaluation.

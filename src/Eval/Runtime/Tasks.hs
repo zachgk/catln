@@ -107,7 +107,7 @@ taskList = EEnvPrim "taskList" prim
         (_, Nothing) -> Left $ printf "taskList has no file path for %s, so its tasks have no note to be written back to" (show prgmName)
         (_, Just disp) -> return $ map (pageTask disp) tasks
 
-    pageTask disp (e, task) = PageTask disp (UUID.toString $ getMetaID $ getExprMeta e) task
+    pageTask disp (e, task) = PageTask disp (UUID.toString $ getMetaId $ getExprMeta e) task
 
 -- | The argument of @/Data/Note/tasksQuery@ holding the query as the note wrote it.
 tasksQueryArg :: String
@@ -182,7 +182,7 @@ tasksQuery = EEnvPrim "tasksQuery" prim
       traverse (asked within disp) tasks
 
     asked within disp (e, task) = (, pageTask disp (e, task)) <$> queryTask within task
-    pageTask disp (e, task) = PageTask disp (UUID.toString $ getMetaID $ getExprMeta e) task
+    pageTask disp (e, task) = PageTask disp (UUID.toString $ getMetaId $ getExprMeta e) task
 
 -- | The vault a query is to search, or what to tell the reader instead.
 --

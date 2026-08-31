@@ -126,7 +126,7 @@ calendarEntries = EEnvPrim "calendarEntries" prim
 
     entry asked disp (e, value) = do
       day <- valDay =<< orNotes (asked value)
-      return $ CalendarItem disp (UUID.toString $ getMetaID $ getExprMeta e) day value
+      return $ CalendarItem disp (UUID.toString $ getMetaId $ getExprMeta e) day value
 
 -- | The types a calendar can show: the members of @\/Data\/Calendar\/CalendarEntry@, and the members
 -- of any of those which is itself a class, down to the types a value is actually declared as.

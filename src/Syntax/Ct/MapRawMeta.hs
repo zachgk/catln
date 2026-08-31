@@ -20,7 +20,7 @@ import           Data.Maybe             (fromMaybe)
 import           Data.UUID              (UUID)
 import           MapMeta
 import           Semantics.Prgm         (ExprClass (getExprMeta),
-                                         Meta (getMetaID))
+                                         Meta (getMetaId))
 import           Syntax.Ct.Prgm
 
 instance MapMeta RawExpr where
@@ -161,7 +161,7 @@ replaceRawExpr metaID expr (RawPrgm imports statementTrees) = case unzip $ map r
     replaceStatement (RawAnnot a) | names a = Just $ RawAnnot expr
     replaceStatement _ = Nothing
 
-    names e = getMetaID (getExprMeta e) == metaID
+    names e = getMetaId (getExprMeta e) == metaID
 
 -- | The ids of the expressions a page declares or annotates, in the order the page writes them.
 --
@@ -180,4 +180,4 @@ rawStatementExprIds (RawPrgm _ statementTrees) = concatMap treeIds statementTree
     statementIds (RawAnnot a)                                = [exprId a]
     statementIds _                                           = []
 
-    exprId = getMetaID . getExprMeta
+    exprId = getMetaId . getExprMeta

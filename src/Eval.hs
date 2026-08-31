@@ -91,10 +91,10 @@ evalAllTargetModes prgm@Prgm{prgmObjMap} = H.fromList $ mapMaybe targetMode $ fl
     targetMode oa = case nameStr (oaObjPath oa) of
       ContextStr -> case H.lookupDefault Nothing (partialKey (mkName contextValStr)) $ exprAppliedArgsMap $ oaObjExpr oa of
         Just (_, Just valE) -> case maybeExprPath valE of
-          Just valName -> Just (getMetaID $ getExprMeta $ oaObjExpr oa, evalPrgmTargetMode (nameStr valName) prgm)
+          Just valName -> Just (getMetaId $ getExprMeta $ oaObjExpr oa, evalPrgmTargetMode (nameStr valName) prgm)
           _ -> Nothing
         _ -> Nothing
-      _ -> Just (getMetaID $ getExprMeta $ oaObjExpr oa, evalPrgmTargetMode (nameStr (oaObjPath oa)) prgm)
+      _ -> Just (getMetaId $ getExprMeta $ oaObjExpr oa, evalPrgmTargetMode (nameStr (oaObjPath oa)) prgm)
 
 -- | evaluate annotations such as assertions that require compiler verification
 --

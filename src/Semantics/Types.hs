@@ -1287,10 +1287,17 @@ completeDataPartialsTop typeEnv = go
             []                 -> p1
       | otherwise = p1
       where
-        p1 = p{ptVars = fmap go ptVars, ptArgs = fmap go ptArgs}
+        completedVars = fmap go ptVars
+        p1 = p{ptVars = completedVars, ptArgs = fmap go ptArgs}
+        -- The bound is taken from the COMPLETED vars rather than the ones this was given. Both end
+        -- up in the same partial — the parameter in its var slot and the field it was declared for
+        -- in an arg slot — so taking one completed and the other not writes one type two ways, and
+        -- @Pair[$A -> SourcePos](first=$A)@ becomes @Pair[$A=SourcePos(file=⊤,..)](first=SourcePos)@,
+        -- which compacts to bottom. Reached once a parameter's bound was itself a record with
+        -- fields, which no declared type had until the compiler began declaring its own.
         restoreField fieldDefType = case fieldDefType of
-          TypeVar (TVVar v) _ _ | Just b <- H.lookup v ptVars, not (isTypeVar b) -> b
-          _                                                                    -> PTopType
+          TypeVar (TVVar v) _ _ | Just b <- H.lookup v completedVars, not (isTypeVar b) -> b
+          _                                                                             -> PTopType
 
 -- | Narrow each partial's present fields to their /concrete/ declared type. A destructure pattern
 -- (@#md(text)@) leaves its field's actual at Top; the declaration @#md(text -> String)@ says the

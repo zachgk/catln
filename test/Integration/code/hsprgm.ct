@@ -79,6 +79,29 @@ module(Test)
     >>> union
   > constCount(t= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= [/Catln/Constant/CInt(value= 1), /Catln/Constant/CStr(value= "s")]))
     >>> 2
+  writtenIn(m -> /Catln/Meta) -> String
+    # [writtenIn] says which file a piece of a program was written in, or that nothing wrote it.
+      A [Meta] with no [pos] is a piece the compiler made while desugaring, which has a type and an
+      identity and no place in any file — so reading one has to answer for that case rather than
+      assume every piece came from somewhere.
+  writtenIn(m= /Catln/Meta(type, pos= /Data/Maybe/Nothing, id, dat))= "nowhere"
+  writtenIn(m= /Catln/Meta(type, pos= /Data/Maybe/Some(value), id, dat))= startFile(r= value)
+
+  startFile(r -> /Catln/Pair[$A -> /Catln/SourcePos, $B -> /Catln/SourcePos]) -> String
+    # A range is the pair of places it runs between, so the file it is in is the file its [first] is
+      in.
+  startFile(r= /Catln/Pair(first, second))= posFile(p= first)
+
+  posFile(p -> /Catln/SourcePos) -> String
+  posFile(p= /Catln/SourcePos(file, line, column))= file
+
+  posLine(p -> /Catln/SourcePos) -> Integer
+  posLine(p= /Catln/SourcePos(file, line, column))= line
+
+  > writtenIn(m= /Catln/Meta(type= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= []), pos= /Data/Maybe/Nothing, id= "", dat= /Catln/Unit))
+    >>> nowhere
+  > posLine(p= /Catln/SourcePos(file= "a.ct", line= 7, column= 3))
+    >>> 7
   # ## What the suite checks
     The `>` examples above are checked by `catln test`, and the integration suite typechecks and
     builds this file without comparing what they evaluate to — only a page under @stack/@ has its
@@ -91,4 +114,4 @@ module(Test)
   #   the suite's two standing failures are, which is being worked on elsewhere. Printing each is
   #   what the answers are for, and it does not stand on the part of the solver that is unwell.
 
-main{io -> IO}= io.println(msg= constantKind(c= /Catln/Constant/CInt(value= 3))).println(msg= intOf(c= /Catln/Constant/CInt(value= 42)).toString).println(msg= keyName(k= /Catln/PartialKey(name= "x", vars= [], args= []))).println(msg= keyDepth(k= /Catln/PartialKey(name= "f", vars= [], args= [/Catln/PartialKey(name= "a", vars= [], args= [])])).toString).println(msg= typeKind(t= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= []))).println(msg= constCount(t= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= [/Catln/Constant/CInt(value= 1)])).toString).exit(val= 0)
+main{io -> IO}= io.println(msg= constantKind(c= /Catln/Constant/CInt(value= 3))).println(msg= intOf(c= /Catln/Constant/CInt(value= 42)).toString).println(msg= keyName(k= /Catln/PartialKey(name= "x", vars= [], args= []))).println(msg= keyDepth(k= /Catln/PartialKey(name= "f", vars= [], args= [/Catln/PartialKey(name= "a", vars= [], args= [])])).toString).println(msg= typeKind(t= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= []))).println(msg= constCount(t= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= [/Catln/Constant/CInt(value= 1)])).toString).println(msg= writtenIn(m= /Catln/Meta(type= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= []), pos= /Data/Maybe/Nothing, id= "", dat= /Catln/Unit))).println(msg= posLine(p= /Catln/SourcePos(file= "a.ct", line= 7, column= 3)).toString).exit(val= 0)

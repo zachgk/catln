@@ -52,6 +52,8 @@ import qualified Data.HashSet        as S
 import           Data.Kind           (Type)
 import           Data.List           (intercalate, sort, sortOn, union)
 import           Data.Proxy          (Proxy (..))
+import           Data.UUID           (UUID)
+import qualified Data.UUID           as UUID
 import           GHC.Generics
 import           GHC.TypeLits        (ErrorMessage (..), KnownSymbol, TypeError,
                                       symbolVal)
@@ -514,6 +516,43 @@ instance (CtType a, CtType b) => CtType (a, b) where
   fromCt (TupleVal n as) | n == ctPairPath =
     (,) <$> (fromCt =<< valArg n ctPairFirst as) <*> (fromCt =<< valArg n ctPairSecond as)
   fromCt v = Left $ printf "%s is not a %s" (show v) ctPairPath
+
+-- | A value carrying nothing.
+--
+-- Declared rather than mapped onto the anonymous type @()@ that @stack\/core\/primitives.ct@ says
+-- is the unit type. A field of this type is one the compiler HAS and has nothing in, which is a
+-- thing worth being able to name and read; the anonymous type is a matching form as much as a
+-- value, and reading a field as one would be saying something about how it matches rather than
+-- about what it holds.
+ctUnitPath :: String
+ctUnitPath = ctBuiltinNamespace ++ "Unit"
+
+ctUnitDecl :: CtDecl
+ctUnitDecl = CtDecl ctUnitPath [CtCon ctUnitPath [] []] [
+  "A value carrying nothing.",
+  "What a field whose contents the compiler does not keep is handed over as. A program is given the field, so that what it reads has the shape the compiler holds, and there is nothing in it."
+                                                        ]
+
+instance CtType () where
+  ctPath _ = ctUnitPath
+  ctPageInto = ctPageDeclare ctUnitDecl
+  toCt () = TupleVal ctUnitPath H.empty
+  fromCt (TupleVal n _) | n == ctUnitPath = Right ()
+  fromCt v = Left $ printf "%s is not a %s" (show v) ctUnitPath
+
+-- | An identifier is the text of it.
+--
+-- Its structure is not the compiler's: a 'UUID' is sixteen bytes whose halves mean nothing on their
+-- own, so handing over the halves would be handing over an accident of how it is stored. The text is
+-- the whole of what one is FOR — telling one apart from another and saying which — and it reads back
+-- as the same identifier or is refused.
+instance CtType UUID where
+  ctPath _ = strPrim
+  ctImports _ = [coreStrPage]
+  ctPageInto = ctPageImport
+  toCt = StrVal . UUID.toString
+  fromCt (StrVal s) = maybe (Left $ printf "%s is not an id" (show s)) Right (UUID.fromString s)
+  fromCt v          = Left $ printf "%s is not a %s" (show v) strPrim
 
 -- | Three values together, for the same reason a pair is two.
 --

@@ -69,7 +69,7 @@ instance Eq CNote where
   a == b = show a == show b
 
 instance ToJSON CNote where
-  toJSON (MkCNote n) = object ["msg".=show n, "pos".= posCNote n, "tp" .= typeCNote n, "id".=(getMetaID <$> metaCNote n)]
+  toJSON (MkCNote n) = object ["msg".=show n, "pos".= posCNote n, "tp" .= typeCNote n, "id".=(getMetaId <$> metaCNote n)]
 
 data CNoteI
   = GenCNote CodeRange String
