@@ -644,15 +644,29 @@ verifyScheme typeEnv vaenv Meta{getMetaDat=VarMetaDat _ _} (TypeCheckResult _ (S
   if verifyCompacted then Nothing else Just (printf "verifyCompacted\n\t\tCan be compacted to %s" (show $ compactType typeEnv vaenv act))
   ]
   where
+    -- Monotonicity test for the verify channels. 'isSubtypeOfWithEnv' is a SPELLING-SENSITIVE
+    -- walk and is incomplete on the pairs these channels actually compare: a genuine
+    -- narrowing whose two sides are spelled in different vocabularies is refused. core/map.ct
+    -- produced 52 identical refusals of
+    --   old @insert[/MV=⊤, /MK=∀Ord](/m=∀/Data/Map[/K=$/MK, /V=$/MV], ..)@
+    --   new @insert[/MV=Integer, /MK=Integer](/m=/Data/Map/Node[..](..), ..)@
+    -- — every slot strictly narrower, but proving @Node[..] ⊆ ∀Map[/K=$/MK, /V=$/MV]@ needs a
+    -- class expansion plus var reconciliation the walk does not perform. The DIFFERENCE
+    -- oracle decides the same question exactly (@new - old ≡ ∅@ iff @new ⊆ old@), so it backs
+    -- the walk as a second opinion — the prover-consistency doctrine 'predImplies' already
+    -- applies via 'predsEmpty'. Refusing a real narrowing poisons the point: the update is
+    -- dropped and re-derived identically every epoch, which is what those 52 errors were.
+    lowers a b = isSubtypeOfWithEnv typeEnv vaenv a b
+                   || isBottomType (snd (differenceTypeWithEnv typeEnv vaenv a b))
     verifySchemeActLowers  = case act of
       TypeVar{} -> True
-      _         -> isSubtypeOfWithEnv typeEnv vaenv act oldAct
+      _         -> lowers act oldAct
     -- The old side may predate scope normalization (an Encode-time preset holding a foreign
     -- declaration's var spelling): read its out-of-scope vars as the ⊤ they denote before
     -- comparing, so replacing such a spelling by ⊤ is not reported as a lost variable.
     verifyNoTypeVarLost = not (typeVarLost (dropOutOfScopeTVExt vaenv oldAct) act)
-    verifySchemeReqLowers  = isSubtypeOfWithEnv typeEnv vaenv req oldReq
-    verifySchemeReqDeclLowers = isSubtypeOfWithEnv typeEnv vaenv reqDecl oldReqDecl
+    verifySchemeReqLowers  = lowers req oldReq
+    verifySchemeReqDeclLowers = lowers reqDecl oldReqDecl
     verifyCompacted = act == compactType typeEnv vaenv act
 verifyScheme _ _ _ _ _ = Nothing
 
