@@ -244,6 +244,49 @@ propDifferenceShrinks gPrgm = property $ do
   annotate $ printf "diff' = %s" (show diff')
   assertTimed "a-b ⊆ a" $ isSubtypeOfWithEnv typeEnv vaenv diff' a
 
+-- | The meet is a LOWER BOUND: @a∩b ⊆ a@ and @a∩b ⊆ b@.
+--
+-- With 'propUnionGrows' these are the two most basic lattice laws, and the suite had neither —
+-- only the compound 'propIntersectionDistributesUnion' \/ 'propUnionDistributesIntersection' and
+-- the 'propIntersectionCommutative' fold, which reach a broken meet only indirectly. That costs
+-- twice over: a distributivity failure reports only that two sides DIFFER, without saying which
+-- one is wrong, and it needs three operands, so Hedgehog shrinks to a three-operand
+-- counterexample where a two-operand one would name the defect. The 2026-08 meet defect
+-- (Types.hs:5287 returning the left occurrence verbatim, dropping the right operand's
+-- occurrence-inner and so returning something WIDER than an operand) surfaced through
+-- distributivity after a 47-shrink path; this law states it directly.
+--
+-- 'genRelatedType' matters here as it does for 'propDifferenceShrinks': two independently drawn
+-- types usually meet to ∅, which satisfies the law trivially.
+propIntersectionShrinks :: IO GenPrgm -> Property
+propIntersectionShrinks gPrgm = property $ do
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
+  let typeEnv = mkTypeEnv prgm
+  vaenv <- forAll $ genVaenv prgm
+  a <- forAll $ genType prgm
+  b <- forAll $ HG.choice [genType prgm, genRelatedType prgm a]
+  ab <- timed "a∩b" $ intersectR typeEnv vaenv a b
+  annotate $ printf "a∩b = %s" (show ab)
+  assertTimed "a∩b ⊆ a" $ isSubtypeOfWithEnv typeEnv vaenv ab a
+  assertTimed "a∩b ⊆ b" $ isSubtypeOfWithEnv typeEnv vaenv ab b
+
+-- | The join is an UPPER BOUND: @a ⊆ a∪b@ and @b ⊆ a∪b@. The dual of 'propIntersectionShrinks'
+-- and the other half of the missing pair; a union that DROPS an operand's refinement is the same
+-- defect class seen from the other side.
+propUnionGrows :: IO GenPrgm -> Property
+propUnionGrows gPrgm = property $ do
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
+  let typeEnv = mkTypeEnv prgm
+  vaenv <- forAll $ genVaenv prgm
+  a <- forAll $ genType prgm
+  b <- forAll $ HG.choice [genType prgm, genRelatedType prgm a]
+  ab <- timed "a∪b" $ unionTypesWithEnv typeEnv vaenv a b
+  annotate $ printf "a∪b = %s" (show ab)
+  assertTimed "a ⊆ a∪b" $ isSubtypeOfWithEnv typeEnv vaenv a ab
+  assertTimed "b ⊆ a∪b" $ isSubtypeOfWithEnv typeEnv vaenv b ab
+
 -- A∪A=U
 propUnionWithComplement :: IO GenPrgm -> Property
 propUnionWithComplement gPrgm = property $ do
@@ -785,6 +828,8 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propIntersectionDistributesUnion" (p $ propIntersectionDistributesUnion gPrgm)
       , HG.testProperty "propUnionDistributesIntersection" (p $ propUnionDistributesIntersection gPrgm)
       , HG.testProperty "propDifferenceShrinks" (p $ propDifferenceShrinks gPrgm)
+      , HG.testProperty "propIntersectionShrinks" (p $ propIntersectionShrinks gPrgm)
+      , HG.testProperty "propUnionGrows" (p $ propUnionGrows gPrgm)
       , HG.testProperty "propUnionWithComplement" (p $ propUnionWithComplement gPrgm)
       , HG.testProperty "propIntersectionWithComplement" (p $ propIntersectionWithComplement gPrgm)
       , HG.testProperty "propComplementInverse" (p $ propComplementInverse gPrgm)
