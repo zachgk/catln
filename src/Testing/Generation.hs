@@ -59,6 +59,22 @@ concreteishInner PTopType   = False
 concreteishInner BottomType = False
 concreteishInner _          = True
 
+-- | Partition the class graph's nodes. 'graphToNodes' returns BOTH the classes ('CGClass') and the
+-- data types that are instances of one ('CGType'), and the two are not interchangeable in a type:
+--
+--   * a CLASS name in type position resolves to a @PredClass@ top, never a positive leaf, and
+--   * a DATA-TYPE name resolves to a positive leaf, never a @PredClass@
+--
+-- — the rule 'resolveRelPartial' implements and 'genType.genCG'\/'genType.genPreds' already follow.
+-- A 'PredClass' over a data type errors out of 'expandPartial' (@Unknown class \/aaaaa@), and a
+-- class drawn as a bare 'PartialType' is a leaf the compiler never produces. A 'PredRel' is
+-- well-formed over either, which is why 'genCGRel' draws from all nodes.
+classNodeNames, dataNodeNames :: ClassGraph -> [TypeName]
+classNodeNames (ClassGraph cg) = [fromPartialName k | (CGClass{}, k, _) <- graphToNodes cg]
+dataNodeNames  (ClassGraph cg) = [fromPartialName k | (n, k, _) <- graphToNodes cg, notClass n]
+  where notClass CGClass{} = False
+        notClass _         = True
+
 -- | Names for the OWN-variable binder generator. Deliberately DISJOINT from 'varNamePool' so a
 -- generated 'TypeVarArgEnv' can never also bind the name: the property is about the partial's own
 -- 'ptVars' being honoured, and an ambient binding of the same name would let a forgetful traversal
@@ -95,7 +111,7 @@ genOwnVarBoundPair prgm@(Prgm objMap _ _) = do
   -- of the pair differ by more than the one reference under test.
   bound   <- HG.small (HG.filter (\t -> concreteishInner t && not (typeHasTypeVars t)) (genType prgm))
   dim     <- partialKey <$> HG.element ["T", "K", "V"]
-  wrap    <- HG.choice (bareSlot : nestedDim dim : [classPredDim dim | not (graphEmpty cg)])
+  wrap    <- HG.choice (bareSlot : nestedDim dim : [classPredDim dim | not (null (classNodeNames (ClassGraph cg)))])
   outer   <- HG.element [singletonType, classPartial, relPartial]
   slotKey <- if H.null (ptArgs base)
     then return (partialKey "ownSlot")
@@ -116,9 +132,9 @@ genOwnVarBoundPair prgm@(Prgm objMap _ _) = do
       p <- genPartialType prgm
       return $ \v -> singletonType p{ptVars = H.insert dim v (ptVars p)}
     -- The payload is a dimension of a CLASS PREDICATE ('classPartial' builds the @∀C[..]@ form).
+    -- CLASS nodes only — a 'PredClass' over a data type is not well-formed ('classNodeNames').
     classPredDim dim = do
-      classNode <- HG.element $ graphToNodes cg
-      let className = fromPartialName $ snd3 classNode
+      className <- HG.element (classNodeNames (ClassGraph cg))
       return $ \v -> classPartial (partialVal className){ptVars = H.singleton dim v}
 
 -- | A small external variable environment ('TypeVarArgEnv') mapping a subset of 'varNamePool'
@@ -224,7 +240,11 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
 
     gens = if graphEmpty cg
       then [genBasic, genConst, genMultiConst, genTypeVar prgm]
-      else [genBasic, genCGOld, genCG, genCGRel, genObjM, genObj, genConst, genMultiConst, genPredShape, genMixed, genTypeVar prgm]
+      -- 'genPartialType' is its OWN family (its 'genCG'\/'genObj'\/'genWithTVExt' are distinct from
+      -- the like-named ones here) and was reachable only from 'genRelatedType'.'mutateArg' and
+      -- 'propParamClassCovariant' — so its shapes, including every 'TVExt'-carrying slot, never fed
+      -- the set-algebra laws' operands. Drawing from it here is what puts them in the corpus.
+      else [genBasic, genCGOld, genCG, genCGRel, genObjM, genObj, genConst, genMultiConst, genPredShape, genMixed, genTypeVar prgm, singletonType <$> genPartialType prgm]
              ++ [genUnrolledRecursive | not (null recExpansions)]
 
     -- Over-unrolled recursive class expansions. A sealed recursive class (e.g. @ConsList@) expands
@@ -426,7 +446,7 @@ genRelatedType prgm a = case a of
 
 genPartialType :: Prgm Expr () -> Gen PartialType
 genPartialType prgm@(Prgm objMap _ _) = do
-  gen <- if graphEmpty cg
+  gen <- if null dataNodes
     then if nullObjectMap objMap
       then HG.discard
       else return [genObj, genWithTVExt genObj]
@@ -434,10 +454,14 @@ genPartialType prgm@(Prgm objMap _ _) = do
   HG.choice gen
   where
     TypeEnv{teClassGraph=ClassGraph cg} = mkTypeEnv prgm
+    -- DATA-TYPE nodes only. A 'PartialType' IS a positive leaf, and a class name in type position
+    -- resolves to a 'PredClass' top instead — a 'PartialType' cannot represent a class at all
+    -- ('classNodeNames'\/'dataNodeNames'). Drawing class nodes here produced leaves the compiler
+    -- never emits, which is why they never reached the laws until 'genType' began drawing from
+    -- this generator.
+    dataNodes = dataNodeNames (ClassGraph cg)
     genCG :: Gen PartialType
-    genCG = do
-      classNode <- HG.element $ graphToNodes cg
-      return $ partialVal $ fromPartialName $ snd3 classNode
+    genCG = partialVal <$> HG.element dataNodes
 
     genObj :: Gen PartialType
     genObj = do
@@ -454,13 +478,21 @@ genPartialType prgm@(Prgm objMap _ _) = do
     genWithTVExt :: Gen PartialType -> Gen PartialType
     genWithTVExt baseGen = do
       base <- baseGen
-      varName <- HG.string (linear 1 5) HG.lower
       extName <- HG.element varNamePool
       -- ~1/3 of injected slots carry occurrence-local knowledge, so the drop/substitute
       -- family's inner handling is exercised where it actually traverses (nested slots).
       inner <- HG.frequency [(2, return PTopType), (1, HG.small (HG.filter concreteishInner (genType prgm)))]
       let extVar = TypeVar (TVVar (partialKey extName)) TVExt inner
-      return base{ptVars = H.insert (partialKey (mkName varName)) extVar (ptVars base)}
+      -- Fill a DECLARED type parameter; never invent one. A partial's 'ptVars' keys are the
+      -- parameters its declaration has — @Cons[$T -> $_T]@ fills @Cons@'s own @/T@ — and a key no
+      -- declaration mentions is not a slot any value carries (declaration-boundedness). Inventing
+      -- one produced leaves like @\/Dog[xyz=$_a]@; harmless while these partials only appeared
+      -- nested, and 5 law failures the moment 'genType' drew from this generator.
+      if H.null (ptVars base)
+        then return base
+        else do
+          varName <- HG.element (H.keys (ptVars base))
+          return base{ptVars = H.insert varName extVar (ptVars base)}
 
 genInputExpr :: Gen (Expr ())
 genInputExpr = do
