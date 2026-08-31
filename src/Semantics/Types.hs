@@ -2208,10 +2208,11 @@ predsSatDNF False (PredsAnd ps) = concat <$> mapM (predsSatDNF False) ps
 -- carries no constraint here. Only a 'TVExt' variable resolves against the outer scope.
 typeSatDNF :: TypeVarArgEnv -> Type -> Maybe [SatGoal]
 typeSatDNF _ PTopType = Just [SatGoal [] []]
-typeSatDNF _ (TypeVar _ TVInt _) = Just [SatGoal [] []] -- partial-local var: no ambient constraint
-typeSatDNF vaenv tv@(TypeVar v TVOuter _) = case vaenvLookup vaenv v of
-  looked | looked == tv -> Just [SatGoal [] []] -- unbound/self-bound var: no constraint
-  looked                -> typeSatDNF (H.delete v vaenv) looked -- delete to break var reference cycles
+typeSatDNF vaenv (TypeVar _ TVInt i) = satVarOccDNF vaenv (Just [SatGoal [] []]) i -- partial-local var: no ambient constraint
+typeSatDNF vaenv tv@(TypeVar v TVOuter i) = satVarOccDNF vaenv varDNF i
+  where varDNF = case vaenvLookup vaenv v of
+          looked | looked == tv -> Just [SatGoal [] []] -- unbound/self-bound var: no constraint
+          looked                -> typeSatDNF (H.delete v vaenv) looked -- delete to break var reference cycles
 typeSatDNF _ (UnionType _ _ (_:_)) = Nothing -- constants: out of fragment
 typeSatDNF _ (UnionType (Just (_, _, _:_)) _ _) = Nothing -- excluded constants: out of fragment
 typeSatDNF _ (UnionType Nothing leafs []) = case splitUnionType leafs of
@@ -2223,6 +2224,24 @@ typeSatDNF vaenv (UnionType (Just (preds, negLeafs, [])) pos []) = do
   let topGoals' = map (\g -> g{sgNeg = sgNeg g ++ negAtoms}) topGoals
   posGoals <- typeSatDNF vaenv (UnionType Nothing pos [])
   Just (topGoals' ++ posGoals)
+
+-- | DNF of an OCCURRENCE @⟦var⟧ ⊓ ⟦inner⟧@: the variable's own constraint conjoined with the
+-- occurrence-local inner's. Dropping the inner reads the occurrence as the bare variable, which
+-- for an unbound one is ⊤ — so @$_a∩{X}@ entered the engine as "no constraint at all" and every
+-- cover query manufactured an escape witness for a value that cannot escape. That made
+-- 'typeCoveredSymbolic' answer @Just False@, which SHORT-CIRCUITS the materialized fallback in
+-- the @PosPartials ⊆ Just-top@ subtype clause, so the expansion that decides it correctly never
+-- ran and the symbolic prover contradicted the difference oracle on the same pair
+-- (@a − wider = ∅@ while @a ⊆ wider = False@).
+--
+-- The inner is read under the CALLER's environment, not the variable's: it is a type written at
+-- the occurrence site, not part of whatever the variable is bound to.
+satVarOccDNF :: TypeVarArgEnv -> Maybe [SatGoal] -> Type -> Maybe [SatGoal]
+satVarOccDNF _ varDNF PTopType = varDNF -- knowledge-free occurrence: the variable alone
+satVarOccDNF vaenv varDNF i = do
+  vd <- varDNF
+  innerDNF <- typeSatDNF vaenv i
+  satDNFConj [vd, innerDNF]
 
 -- | The independent ways to falsify a goal: one falsified positive or one satisfied negative.
 satGoalNegChoices :: SatGoal -> [SatGoal]
@@ -2727,6 +2746,15 @@ partialCoversSat typeEnv vaenv gatePos hyps sup0 sub0 =
     -- the other kept the free form, the comparison spuriously fails; resolving both through their own
     -- @ptVars@ (@substituteKeep@ leaves genuinely-free vars untouched) restores the symmetry.
     resolveSelfRefs p t = substituteKeep typeEnv (joinVarArgEnv (ptVars p) H.empty) t
+    -- FLEXIBLE means "ranges over every binding". An occurrence CARRYING KNOWLEDGE is not that:
+    -- @$_b ∩ {X}@ ranges only within @X@, so calling it flexible demands a ⊤ (or equally
+    -- flexible) cover slot and REFUSES the true @$_b∩{X} ⊆ X@ — manufacturing an escape witness
+    -- for a value that cannot escape. 'typeCoveredSymbolic' then answers @Just False@, which
+    -- SHORT-CIRCUITS the materialized fallback at the @PosPartials ⊆ Just-top@ clause, so the
+    -- expansion that would have decided it correctly never runs.
+    -- This is the same rule, and the same fix, as 'isSubPartialOfWithEnv'.'flexibleVar'; the two
+    -- copies must agree or the symbolic and materialized provers contradict each other.
+    isFlexibleVar (TypeVar _ _ i) | i /= PTopType = False
     isFlexibleVar (TypeVar _ TVInt _) = True -- partial-local var: bindable per value
     isFlexibleVar (TypeVar v TVOuter _) = case H.lookup v vaenv of
       Nothing               -> True
@@ -5273,6 +5301,31 @@ intersectTypesWithVarEnv _ vaenv t PTopType = (vaenv, t)
 intersectTypesWithVarEnv _ vaenv _ BottomType = (vaenv, BottomType)
 intersectTypesWithVarEnv _ vaenv BottomType _ = (vaenv, BottomType)
 intersectTypesWithVarEnv _ vaenv t1 t2 | t1 == t2 = (vaenv, t1)
+-- Two occurrences of the SAME variable in the SAME scope: the meet is that variable bounded by
+-- BOTH occurrences' inners. An occurrence denotes @⟦var⟧ ⊓ ⟦inner⟧@, so
+-- @(v ⊓ i) ⊓ (v ⊓ i') = v ⊓ (i ⊓ i')@ — the inners meet and the variable stays symbolic, exactly
+-- as the general clause below keeps it.
+--
+-- Without this the general clause returns its LEFT operand verbatim, silently discarding the
+-- right operand's inner. That is not merely imprecise: when the discarded occurrence carried the
+-- NARROWER inner the result is WIDER than an operand, so the meet is unsound and its answer
+-- depends on argument order.
+--
+--   vaenv = {a ↦ /X(f=⊤)}
+--   $_a∩{/X} ∩ $_a  =  $_a∩{/X}      (correct)
+--   $_a ∩ $_a∩{/X}  =  $_a           (WRONG — wider than the right operand)
+--
+-- which propagates to @a ∩ (b∪c) ⊄ a@ through the mixed-distribute clause below, since that
+-- clause reaches the meet with the operands in the losing order. Found by
+-- 'propIntersectionDistributesUnion'; 'propIntersectionShrinks' now states it directly.
+--
+-- Scope class is part of the identity: a 'TVInt' and a 'TVExt' spelling of one NAME are different
+-- variables (partial-local vs ambient), so both the aux and the location must match. A mismatched
+-- pair falls through to the general clause unchanged.
+intersectTypesWithVarEnv typeEnv vaenv (TypeVar v loc i) (TypeVar v' loc' i')
+  | v == v' && loc == loc' =
+      let inner' = meetInner typeEnv vaenv i i'
+      in if isBottomType inner' then (vaenv, BottomType) else (vaenv, TypeVar v loc inner')
 -- TypeVar: constrain in vaenv.  Treats 'TVVar' and 'TVArg' uniformly: both look up in vaenv,
 -- and an unknown key is recorded as a fresh constraint.  TVInt/TVExt is informational here:
 -- a TVInt that reaches this top level was introduced as a fresh sentinel by an upstream

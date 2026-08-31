@@ -497,19 +497,36 @@ propParamClassCovariant gPrgm = property $ do
 -- definition, so @Cons(head=⊤, tail=⊤)@ has the same values as @Cons@ and stays inside
 -- @∀ConsList@). Regression for the symbolic engine manufacturing escape witnesses (e.g. a Cons
 -- with a non-ConsList tail) that no real value has.
+-- | Whether a program carries a class node whose (sealed, members) satisfy the predicate.
+--
+-- Drawn through 'HG.filter', this picks a QUALIFYING program by retrying INSIDE the generator
+-- rather than spending the property's discard budget: roughly a third of generated programs and
+-- one of the premade files carry no class at all, and the class laws are vacuous for those. A
+-- property that draws-then-rejects instead reports "gave up after N discards" once the count is
+-- raised — a FAIL that says nothing about the algebra, and the reason #40 was twice triaged as a
+-- class/negation gap when neither property had ever found a counterexample.
+prgmHasClass :: (Bool -> [Type] -> Bool) -> Prgm Expr () -> Bool
+prgmHasClass f (Prgm _ (ClassGraph cg) _) = any match (graphToNodes cg)
+  where match (CGClass (sealed, _, cts, _), _, _) = f sealed cts
+        match _                                   = False
+
 propClassExpansionLeafSubtype :: IO GenPrgm -> Property
 propClassExpansionLeafSubtype gPrgm = property $ do
   gPrgm' <- lift gPrgm
-  prgm <- forAll gPrgm'
+  prgm <- forAll $ HG.filter (prgmHasClass (\_ cts -> not (null cts))) gPrgm'
   let typeEnv@TypeEnv{teClassGraph=ClassGraph cgData} = mkTypeEnv prgm
-  let classPartials = [cpt | (CGClass (_, cpt, cts, _), _, _) <- graphToNodes cgData, not (null cts)]
-  when (null classPartials) discard
-  cpt <- forAll $ HG.element classPartials
+  -- Draw from the QUALIFYING classes rather than drawing one and rejecting it. A class whose
+  -- expansion is not a positive union cannot satisfy this law's premise, and rejecting it after
+  -- the draw spends the discard budget without testing anything: at 3000 iterations that budget
+  -- ran out and the property reported "gave up" — a FAIL carrying no information about the
+  -- algebra, which is how it was twice mistaken for a class/negation gap.
+  let candidates = [ (cpt, splitUnionType leafs)
+                   | (CGClass (_, cpt, cts, _), _, _) <- graphToNodes cgData, not (null cts)
+                   , UnionType Nothing leafs _ <- [expandClassPartial typeEnv H.empty cpt]
+                   , not (H.null leafs) ]
+  when (null candidates) discard
+  (cpt, leaves) <- forAll $ HG.element candidates
   let clsT = classPartial cpt
-  let expanded = expandClassPartial typeEnv H.empty cpt
-  leaves <- case expanded of
-    UnionType Nothing leafs _ | not (H.null leafs) -> return $ splitUnionType leafs
-    _                                              -> discard
   leaf <- forAll $ HG.element leaves
   let erased = leaf{ptArgs = fmap (const PTopType) (ptArgs leaf)}
   annotate $ printf "class = %s" (show clsT)
@@ -521,14 +538,17 @@ propClassExpansionLeafSubtype gPrgm = property $ do
 propClassGraphMatchesPredClass :: IO GenPrgm -> Property
 propClassGraphMatchesPredClass gPrgm = property $ do
   gPrgm' <- lift gPrgm
-  prgm <- forAll gPrgm'
+  prgm <- forAll $ HG.filter (prgmHasClass (\sealed _ -> sealed)) gPrgm'
 
   -- Skip programs with no objects (like empty or error programs)
   let Prgm{prgmObjMap} = prgm
   when (nullObjectMap prgmObjMap) discard
 
   let typeEnv@TypeEnv{teClassGraph=ClassGraph cgData} = mkTypeEnv prgm
-  let classNodes = filter isClassNode $ graphToNodes cgData
+  -- SEALED classes only, chosen BEFORE the draw. For an unsealed class the law does not hold
+  -- (a future file may add implementations), so drawing one and rejecting it afterwards spends
+  -- the discard budget on a case that was never testable — the "gave up after N discards" FAIL.
+  let classNodes = [n | n@(CGClass (True, _, _, _), _, _) <- graphToNodes cgData]
 
   -- Discard if no classes
   when (null classNodes) discard
@@ -536,10 +556,7 @@ propClassGraphMatchesPredClass gPrgm = property $ do
   -- Pick a random class
   (cgNode, className, _) <- forAll $ HG.element classNodes
   case cgNode of
-    CGClass (sealed, classPartialType, constituentTypes, _doc) -> do
-      -- For unsealed classes, the class type is not provably equal to its current members
-      -- (future implementations could be added). Skip them.
-      when (not sealed) discard
+    CGClass (_sealed, classPartialType, constituentTypes, _doc) -> do
       annotate $ printf "Testing class: %s" (nameStr (fromPartialName className))
       annotate $ printf "Class definition: %s" (show classPartialType)
 
@@ -563,9 +580,6 @@ propClassGraphMatchesPredClass gPrgm = property $ do
           assertTimed "class = union of constituents" $ isEqType typeEnv cls unionConstituents
 
     CGType -> discard
-  where
-    isClassNode (CGClass{}, _, _) = True
-    isClassNode _                 = False
 
 -- | A parameterized class over ⊤ must not imply the same class over a narrower element:
 -- @∀ConsList[⊤]@ contains a list of ANY element (e.g. a list of lists), which
