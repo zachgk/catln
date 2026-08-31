@@ -1,0 +1,879 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Catln/RawExpr/RawTupleApply"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/RawExpr/RawTupleApply
+                            ( EAppArg
+                                { eaaArg = Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /base -> /Catln/Pair
+                                    [ /B=∀/Catln/RawExpr
+                                    , /A=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ]
+                                    ( /first=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    , /second=∀/Catln/RawExpr
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /args -> ∀/Data/List
+                                    [ /T=/Catln/Pair
+                                        [ /B=/Catln/RawObjArr
+                                        , /A=∀/Data/Primitive/Boolean
+                                        ]
+                                    ]
+                                }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/RawExpr/RawApplyExpr"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/RawExpr/RawApplyExpr
+                            ( EAppArg
+                                { eaaArg = Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /apply -> /Catln/RawApply( /terms=TopType ) }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/RawObjArr"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/RawObjArr
+                            ( EAppArg
+                                { eaaArg = Value /obj -> ∀/Data/Maybe[ /T=∀/Catln/RawExpr ] }
+                            )
+                            ( EAppArg { eaaArg = Value /basis -> ∀/Catln/ObjectBasis } )
+                            ( EAppArg
+                                { eaaArg = Value /doc -> ∀/Data/Maybe[ /T=/Data/String ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /annots -> ∀/Data/List[ /T=∀/Catln/RawExpr ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /arr -> ∀/Data/Maybe
+                                    [ /T=/Catln/Pair
+                                        [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                        , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                        ]
+                                    ]
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /def -> ∀/Data/Maybe[ /T=∀/Catln/RawExpr ] }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/RawStatement/RawDeclStatement"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/RawStatement/RawDeclStatement
+                            ( EAppArg
+                                { eaaArg = Value /objArr -> /Catln/RawObjArr
+                                    ( /arr=TopType
+                                    , /obj=TopType
+                                    , /annots=TopType
+                                    , /doc=TopType
+                                    , /def=TopType
+                                    , /basis=TopType
+                                    )
+                                }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/RawExpr/RawMacroValue"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/RawExpr/RawMacroValue
+                            ( EAppArg
+                                { eaaArg = Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/RawExpr/RawContextApply"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/RawExpr/RawContextApply
+                            ( EAppArg
+                                { eaaArg = Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /base -> /Catln/Pair
+                                    [ /B=∀/Catln/RawExpr
+                                    , /A=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ]
+                                    ( /first=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    , /second=∀/Catln/RawExpr
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /args -> ∀/Data/List[ /T=/Catln/RawObjArr ] }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/RawExpr/RawList"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/RawExpr/RawList
+                            ( EAppArg
+                                { eaaArg = Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /values -> ∀/Data/List[ /T=∀/Catln/RawExpr ] }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/ImportResult"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/ImportResult
+                            ( EAppArg
+                                { eaaArg = Value /prgm -> /Catln/RawPrgm
+                                    ( /statements=TopType
+                                    , /imports=TopType
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /source -> ∀/Data/Maybe[ /T=/Data/String ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /reads -> ∀/Data/Maybe
+                                    [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
+                                }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/RawExpr/RawFmtStrExpr"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/RawExpr/RawFmtStrExpr
+                            ( EAppArg
+                                { eaaArg = Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /str -> /Data/String } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/RawExpr/RawVarsApply"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/RawExpr/RawVarsApply
+                            ( EAppArg
+                                { eaaArg = Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /base -> ∀/Catln/RawExpr } )
+                            ( EAppArg
+                                { eaaArg = Value /vars -> ∀/Data/List[ /T=/Catln/RawObjArr ] }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/RawApplyTerm/RATermChild"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/RawApplyTerm/RATermChild
+                            ( EAppArg { eaaArg = Value /expr -> ∀/Catln/RawExpr } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/AFileImport"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/AFileImport
+                            ( EAppArg { eaaArg = Value /raw -> ∀/Catln/RawExpr } )
+                            ( EAppArg { eaaArg = Value /abs -> ∀/Catln/RawExpr } )
+                            ( EAppArg
+                                { eaaArg = Value /disp -> ∀/Data/Maybe[ /T=/Data/String ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /calledDir -> ∀/Data/Maybe[ /T=/Data/String ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /dir -> ∀/Data/Maybe[ /T=/Data/String ] }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/RawExpr/RawHoleExpr"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/RawExpr/RawHoleExpr
+                            ( EAppArg
+                                { eaaArg = Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /hole -> ∀/Catln/Hole } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/RawExpr/RawCExpr"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/RawExpr/RawCExpr
+                            ( EAppArg
+                                { eaaArg = Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /const -> ∀/Catln/Constant } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/RawStatement/RawAnnot"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/RawStatement/RawAnnot
+                            ( EAppArg { eaaArg = Value /annot -> ∀/Catln/RawExpr } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/ReadPath/ReadTree"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/ReadPath/ReadTree
+                            ( EAppArg { eaaArg = Value /path -> /Data/String } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/RawExpr/RawParen"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/RawExpr/RawParen
+                            ( EAppArg { eaaArg = Value /expr -> ∀/Catln/RawExpr } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/RawApply"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/RawApply
+                            ( EAppArg
+                                { eaaArg = Value /terms -> ∀/Data/List[ /T=∀/Catln/RawApplyTerm ] }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/TypeProperty/TypePropRel"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/TypeProperty/TypePropRel
+                            ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /expr -> ∀/Catln/RawExpr } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/RawStatementTree"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/RawStatementTree
+                            ( EAppArg { eaaArg = Value /statement -> ∀/Catln/RawStatement } )
+                            ( EAppArg
+                                { eaaArg = Value /children -> ∀/Data/List[ /T=/Catln/RawStatementTree ] }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/RawExpr/RawAliasExpr"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/RawExpr/RawAliasExpr
+                            ( EAppArg { eaaArg = Value /base -> ∀/Catln/RawExpr } )
+                            ( EAppArg { eaaArg = Value /alias -> ∀/Catln/RawExpr } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/RawPrgm"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/RawPrgm
+                            ( EAppArg
+                                { eaaArg = Value /imports -> ∀/Data/List[ /T=/Catln/AFileImport ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /statements -> ∀/Data/List[ /T=/Catln/RawStatementTree ] }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/TypeProperty/TypePropProj"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/TypeProperty/TypePropProj
+                            ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /expr -> ∀/Catln/RawExpr } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/RawExpr/RawMethod"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/RawExpr/RawMethod
+                            ( EAppArg
+                                { eaaArg = Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /base -> ∀/Catln/RawExpr } )
+                            ( EAppArg { eaaArg = Value /value -> ∀/Catln/RawExpr } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/RawApplyTerm/RATermDeep"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/RawApplyTerm/RATermDeep
+                            ( EAppArg { eaaArg = Value /expr -> ∀/Catln/RawExpr } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/ReadPath/ReadExists"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/ReadPath/ReadExists
+                            ( EAppArg { eaaArg = Value /path -> /Data/String } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/RawStatement/RawBindStatement"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/RawStatement/RawBindStatement
+                            ( EAppArg
+                                { eaaArg = Value /objArr -> /Catln/RawObjArr
+                                    ( /arr=TopType
+                                    , /obj=TopType
+                                    , /annots=TopType
+                                    , /doc=TopType
+                                    , /def=TopType
+                                    , /basis=TopType
+                                    )
+                                }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/RawExpr/RawWhere"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/RawExpr/RawWhere
+                            ( EAppArg
+                                { eaaArg = Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /base -> ∀/Catln/RawExpr } )
+                            ( EAppArg { eaaArg = Value /cond -> ∀/Catln/RawExpr } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/ReadPath/ReadDir"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/ReadPath/ReadDir
+                            ( EAppArg { eaaArg = Value /path -> /Data/String } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/RawExpr/RawValue"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/RawExpr/RawValue
+                            ( EAppArg
+                                { eaaArg = Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/ReadPath/ReadFile"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/ReadPath/ReadFile
+                            ( EAppArg { eaaArg = Value /path -> /Data/String } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/RawExpr/RawTheExpr"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/RawExpr/RawTheExpr
+                            ( EAppArg { eaaArg = Value /expr -> ∀/Catln/RawExpr } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/RawExpr/RawTypeProp"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/RawExpr/RawTypeProp
+                            ( EAppArg
+                                { eaaArg = Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /base -> ∀/Catln/RawExpr } )
+                            ( EAppArg { eaaArg = Value /prop -> ∀/Catln/TypeProperty } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Catln/RawApplyTerm
+            , cgcExtends =
+                [ /Catln/RawApplyTerm/RATermDeep( /expr=∀/Catln/RawExpr )
+                , /Catln/RawApplyTerm/RATermChild( /expr=∀/Catln/RawExpr )
+                ]
+            , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Catln/RawExpr
+            , cgcExtends =
+                [ /Catln/RawExpr/RawCExpr
+                    ( /const=∀/Catln/Constant
+                    , /meta=/Catln/Meta
+                    )
+                , /Catln/RawExpr/RawValue
+                    ( /name=/Data/String
+                    , /meta=/Catln/Meta
+                    )
+                , /Catln/RawExpr/RawHoleExpr
+                    ( /hole=∀/Catln/Hole
+                    , /meta=/Catln/Meta
+                    )
+                , /Catln/RawExpr/RawMacroValue
+                    ( /name=/Data/String
+                    , /meta=/Catln/Meta
+                    )
+                , /Catln/RawExpr/RawApplyExpr
+                    ( /apply=/Catln/RawApply
+                    , /meta=/Catln/Meta
+                    )
+                , /Catln/RawExpr/RawFmtStrExpr
+                    ( /str=/Data/String
+                    , /name=/Data/String
+                    , /meta=/Catln/Meta
+                    )
+                , /Catln/RawExpr/RawTheExpr( /expr=∀/Catln/RawExpr )
+                , /Catln/RawExpr/RawAliasExpr
+                    ( /base=∀/Catln/RawExpr
+                    , /alias=∀/Catln/RawExpr
+                    )
+                , /Catln/RawExpr/RawTupleApply
+                    ( /args=∀/Data/List
+                        [ /T=/Catln/Pair
+                            [ /B=/Catln/RawObjArr
+                            , /A=∀/Data/Primitive/Boolean
+                            ]
+                        ]
+                    , /base=/Catln/Pair
+                        [ /B=∀/Catln/RawExpr
+                        , /A=/Catln/Meta
+                        ]
+                    , /meta=/Catln/Meta
+                    )
+                , /Catln/RawExpr/RawVarsApply
+                    ( /vars=∀/Data/List[ /T=/Catln/RawObjArr ]
+                    , /base=∀/Catln/RawExpr
+                    , /meta=/Catln/Meta
+                    )
+                , /Catln/RawExpr/RawContextApply
+                    ( /args=∀/Data/List[ /T=/Catln/RawObjArr ]
+                    , /base=/Catln/Pair
+                        [ /B=∀/Catln/RawExpr
+                        , /A=/Catln/Meta
+                        ]
+                    , /meta=/Catln/Meta
+                    )
+                , /Catln/RawExpr/RawWhere
+                    ( /base=∀/Catln/RawExpr
+                    , /cond=∀/Catln/RawExpr
+                    , /meta=/Catln/Meta
+                    )
+                , /Catln/RawExpr/RawParen( /expr=∀/Catln/RawExpr )
+                , /Catln/RawExpr/RawMethod
+                    ( /base=∀/Catln/RawExpr
+                    , /value=∀/Catln/RawExpr
+                    , /meta=/Catln/Meta
+                    )
+                , /Catln/RawExpr/RawList
+                    ( /values=∀/Data/List[ /T=∀/Catln/RawExpr ]
+                    , /meta=/Catln/Meta
+                    )
+                , /Catln/RawExpr/RawTypeProp
+                    ( /prop=∀/Catln/TypeProperty
+                    , /base=∀/Catln/RawExpr
+                    , /meta=/Catln/Meta
+                    )
+                ]
+            , cgcDoc = Just "An expression as it was written, before the compiler reduces what was written to what it means.Where a [/Catln/Expr] is six arms, this is twenty: the sugar is still here. A [RawMethod] is `a.b`, a [RawList] is `[a, b]`, a [RawFmtStrExpr] is a format string, a [RawTheExpr] is `:Name`, and a [RawParen] is a bracket that was written. Each of them becomes a [TupleApply] of something once desugaring is done.So this is what a program BUILDING a program writes, and [/Catln/Expr] is what a program READING one reads. An importer writes this."
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Catln/RawStatement
+            , cgcExtends =
+                [ /Catln/RawStatement/RawDeclStatement( /objArr=/Catln/RawObjArr )
+                , /Catln/RawStatement/RawBindStatement( /objArr=/Catln/RawObjArr )
+                , /Catln/RawStatement/RawAnnot( /annot=∀/Catln/RawExpr )
+                ]
+            , cgcDoc = Just "One statement of a page: a declaration, a bind written with `<-`, or an annotation.A [RawAnnot] is how a page's comments reach the program, since a doc comment is written as a [#md] annotation."
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Catln/ReadPath
+            , cgcExtends =
+                [ /Catln/ReadPath/ReadFile( /path=/Data/String )
+                , /Catln/ReadPath/ReadExists( /path=/Data/String )
+                , /Catln/ReadPath/ReadDir( /path=/Data/String )
+                , /Catln/ReadPath/ReadTree( /path=/Data/String )
+                ]
+            , cgcDoc = Just "Something a reading of a page looked at, and how it looked at it.A [ReadFile] is a file whose text was read; a [ReadExists] is one a reading only found, which a write to does not change what was read. A [ReadDir] is a directory whose listing was read, and a [ReadTree] is a directory and everything under it.A page is read again exactly when one of these is written to, so an importer which leaves one out is one whose page goes stale, and one which reports more than it read is a page read more often than it need be."
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Catln/TypeProperty
+            , cgcExtends =
+                [ /Catln/TypeProperty/TypePropProj
+                    ( /name=/Data/String
+                    , /expr=∀/Catln/RawExpr
+                    )
+                , /Catln/TypeProperty/TypePropRel
+                    ( /name=/Data/String
+                    , /expr=∀/Catln/RawExpr
+                    )
+                ]
+            , cgcDoc = Just "A property written about a type: a projection ([TypePropProj]) or a relation ([TypePropRel]), each by [name] and the [expr] it is written over."
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "# The Catln Program As Written" }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "These are the compiler's types for a program as the parser produced it, before desugaring reduces what was written to what it means. They are reached by writing `import hsrawprgm()`." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Where `core/hsprgm.ct` declares the six kinds of expression a program has been reduced to, this declares the twenty it was written as: a method call, a list, a format string, a bracket. Each of those becomes an application of the others once desugaring has run." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "So that page is what a program READING a program reads, and this is what a program PRODUCING one writes. An importer is the case: it is handed a file and answers with a `/Catln/ImportResult` holding a page of this." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "The standard library does not write this import and must not, for the reason `core/hsprgm.ct` gives about itself. A page declaring an importer writes it and pays for it." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Something a reading of a page looked at, and how it looked at it." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A [ReadFile] is a file whose text was read; a [ReadExists] is one a reading only found, which a write to does not change what was read. A [ReadDir] is a directory whose listing was read, and a [ReadTree] is a directory and everything under it." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A page is read again exactly when one of these is written to, so an importer which leaves one out is one whose page goes stale, and one which reports more than it read is a page read more often than it need be." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "An expression as it was written, before the compiler reduces what was written to what it means." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Where a [/Catln/Expr] is six arms, this is twenty: the sugar is still here. A [RawMethod] is `a.b`, a [RawList] is `[a, b]`, a [RawFmtStrExpr] is a format string, a [RawTheExpr] is `:Name`, and a [RawParen] is a bracket that was written. Each of them becomes a [TupleApply] of something once desugaring is done." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "So this is what a program BUILDING a program writes, and [/Catln/Expr] is what a program READING one reads. An importer writes this." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A property written about a type: a projection ([TypePropProj]) or a relation ([TypePropRel]), each by [name] and the [expr] it is written over." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "One statement of a page: a declaration, a bind written with `<-`, or an annotation." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A [RawAnnot] is how a page's comments reach the program, since a doc comment is written as a [#md] annotation." }
+            )
+        ]
+    }

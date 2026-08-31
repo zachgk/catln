@@ -1,0 +1,163 @@
+import hsrawprgm()
+
+
+module(Test)
+  # # Reading a program as it was written
+    The page @hsrawprgm()@ reads declares the compiler's types for a program as the parser produced
+    it, before desugaring reduces what was written to what it means. This file is what typechecks
+    those declarations: a page nothing imports is a page nothing checks.
+    Where @test/Integration/code/hsprgm.ct@ reads the six kinds of expression a program has been
+    reduced TO, this reads the twenty it was written AS. That is the side an importer needs, because
+    an importer does not read a program — it builds one.
+  # ## What a reading looked at
+  pathOf(r -> /Catln/ReadPath) -> String
+    # [pathOf] reads the path out of a [ReadPath], naming every arm so that an arm the declaration
+      is missing is an arm this does not compile against.
+  pathOf(r= /Catln/ReadPath/ReadFile(path))= path
+  pathOf(r= /Catln/ReadPath/ReadExists(path))= path
+  pathOf(r= /Catln/ReadPath/ReadDir(path))= path
+  pathOf(r= /Catln/ReadPath/ReadTree(path))= path
+
+  readKind(r -> /Catln/ReadPath) -> String
+    # [readKind] says how a reading looked at something, which is what decides when the page it
+      belongs to is read again. A file whose text was read goes stale when it is written to; one a
+      reading only found does not.
+  readKind(r= /Catln/ReadPath/ReadFile(path))= "file"
+  readKind(r= /Catln/ReadPath/ReadExists(path))= "exists"
+  readKind(r= /Catln/ReadPath/ReadDir(path))= "dir"
+  readKind(r= /Catln/ReadPath/ReadTree(path))= "tree"
+
+  > pathOf(r= /Catln/ReadPath/ReadFile(path= "a.ct"))
+    >>> a.ct
+  > readKind(r= /Catln/ReadPath/ReadDir(path= "src"))
+    >>> dir
+  # ## The metadata every piece carries
+  noMeta() -> /Catln/Meta
+    # [noMeta] is the metadata of a piece of program nothing wrote. Written once here because
+      building a [RawExpr] means building one of these, and what is being read is the expression
+      rather than the metadata.
+  noMeta()= /Catln/Meta(type= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= []), pos= /Data/Maybe/Nothing, id= "", dat= /Catln/Unit)
+
+  # ## An expression as it was written
+  exprKind(e -> /Catln/RawExpr) -> String
+    # [exprKind] says which of the sixteen an expression was written as. Naming all of them is
+      naming everything a Catln program can be written with, which is where a program that produces
+      a program starts from — and it is what makes an arm the declaration is missing a compile
+      error here rather than a surprise later.
+  exprKind(e= /Catln/RawExpr/RawCExpr(meta, const))= "const"
+  exprKind(e= /Catln/RawExpr/RawValue(meta, name))= "value"
+  exprKind(e= /Catln/RawExpr/RawHoleExpr(meta, hole))= "hole"
+  exprKind(e= /Catln/RawExpr/RawMacroValue(meta, name))= "macro"
+  exprKind(e= /Catln/RawExpr/RawApplyExpr(meta, apply))= "apply"
+  exprKind(e= /Catln/RawExpr/RawFmtStrExpr(meta, name, str))= "fmtStr"
+  exprKind(e= /Catln/RawExpr/RawTheExpr(expr))= "the"
+  exprKind(e= /Catln/RawExpr/RawAliasExpr(base, alias))= "alias"
+  exprKind(e= /Catln/RawExpr/RawTupleApply(meta, base, args))= "tupleApply"
+  exprKind(e= /Catln/RawExpr/RawVarsApply(meta, base, vars))= "varsApply"
+  exprKind(e= /Catln/RawExpr/RawContextApply(meta, base, args))= "contextApply"
+  exprKind(e= /Catln/RawExpr/RawWhere(meta, base, cond))= "where"
+  exprKind(e= /Catln/RawExpr/RawParen(expr))= "paren"
+  exprKind(e= /Catln/RawExpr/RawMethod(meta, base, value))= "method"
+  exprKind(e= /Catln/RawExpr/RawList(meta, values))= "list"
+  exprKind(e= /Catln/RawExpr/RawTypeProp(meta, base, prop))= "typeProp"
+
+  rawValueName(e -> /Catln/RawExpr) -> String
+    # [rawValueName] reads the name out of an expression that is one, which is the field a program
+      building a program writes most often.
+  rawValueName(e= /Catln/RawExpr/RawValue(meta, name))= name
+  rawValueName(e= /Catln/RawExpr/RawCExpr(meta, const))= ""
+  rawValueName(e= /Catln/RawExpr/RawHoleExpr(meta, hole))= ""
+  rawValueName(e= /Catln/RawExpr/RawMacroValue(meta, name))= ""
+  rawValueName(e= /Catln/RawExpr/RawApplyExpr(meta, apply))= ""
+  rawValueName(e= /Catln/RawExpr/RawFmtStrExpr(meta, name, str))= ""
+  rawValueName(e= /Catln/RawExpr/RawTheExpr(expr))= ""
+  rawValueName(e= /Catln/RawExpr/RawAliasExpr(base, alias))= ""
+  rawValueName(e= /Catln/RawExpr/RawTupleApply(meta, base, args))= ""
+  rawValueName(e= /Catln/RawExpr/RawVarsApply(meta, base, vars))= ""
+  rawValueName(e= /Catln/RawExpr/RawContextApply(meta, base, args))= ""
+  rawValueName(e= /Catln/RawExpr/RawWhere(meta, base, cond))= ""
+  rawValueName(e= /Catln/RawExpr/RawParen(expr))= ""
+  rawValueName(e= /Catln/RawExpr/RawMethod(meta, base, value))= ""
+  rawValueName(e= /Catln/RawExpr/RawList(meta, values))= ""
+  rawValueName(e= /Catln/RawExpr/RawTypeProp(meta, base, prop))= ""
+
+  > exprKind(e= /Catln/RawExpr/RawValue(meta= noMeta(), name= "foo"))
+    >>> value
+  > rawValueName(e= /Catln/RawExpr/RawValue(meta= noMeta(), name= "foo"))
+    >>> foo
+  # A method call is sugar that survives to this stage and not to the next one, which is the whole
+  #   difference between this page and @core/hsprgm.ct@.
+  > exprKind(e= /Catln/RawExpr/RawMethod(meta= noMeta(), base= /Catln/RawExpr/RawValue(meta= noMeta(), name= "io"), value= /Catln/RawExpr/RawValue(meta= noMeta(), name= "println")))
+    >>> method
+  > exprKind(e= /Catln/RawExpr/RawList(meta= noMeta(), values= []))
+    >>> list
+  # ## What a page holds
+  emptyObjArr(name -> String) -> /Catln/RawObjArr
+    # A declaration of [name] with nothing said about it: the smallest thing a page can hold, and
+      what an importer builds one of per definition it found in the file it read.
+  emptyObjArr(name)= /Catln/RawObjArr(obj= /Data/Maybe/Some(value= /Catln/RawExpr/RawValue(meta= noMeta(), name= name)), basis= /Catln/ObjectBasis/FunctionObj, doc= /Data/Maybe/Nothing, annots= [], arr= /Data/Maybe/Nothing, def= /Data/Maybe/Nothing)
+
+  objArrName(oa -> /Catln/RawObjArr) -> String
+    # [objArrName] reads back the name a declaration is written under, through the [Maybe] that says
+      a declaration need not have written an object at all.
+  objArrName(oa= /Catln/RawObjArr(obj= /Data/Maybe/Some(value), basis, doc, annots, arr, def))= rawValueName(e= value)
+  objArrName(oa= /Catln/RawObjArr(obj= /Data/Maybe/Nothing, basis, doc, annots, arr, def))= ""
+
+  statementKind(s -> /Catln/RawStatement) -> String
+    # [statementKind] says which of the three a statement is. An annotation is one of them because
+      a page's comments reach the program that way.
+  statementKind(s= /Catln/RawStatement/RawDeclStatement(objArr))= "decl"
+  statementKind(s= /Catln/RawStatement/RawBindStatement(objArr))= "bind"
+  statementKind(s= /Catln/RawStatement/RawAnnot(annot))= "annot"
+
+  > objArrName(oa= emptyObjArr(name= "myFn"))
+    >>> myFn
+  > statementKind(s= /Catln/RawStatement/RawDeclStatement(objArr= emptyObjArr(name= "myFn")))
+    >>> decl
+  # ## A whole page, and the result of reading one
+  emptyPrgm() -> /Catln/RawPrgm
+    # A page holding nothing: no imports and no statements. What an importer answers with for a file
+      that declared nothing.
+  emptyPrgm()= /Catln/RawPrgm(imports= [], statements= [])
+
+  declCount(p -> /Catln/RawPrgm) -> Integer
+    # [declCount] counts the statements a page holds, walking the [statements] it was written with.
+  declCount(p= /Catln/RawPrgm(imports, statements))= statements.length
+
+  onePrgm(name -> String) -> /Catln/RawPrgm
+    # A page holding one declaration, built the way an importer builds one.
+  onePrgm(name)= /Catln/RawPrgm(imports= [], statements= [/Catln/RawStatementTree(statement= /Catln/RawStatement/RawDeclStatement(objArr= emptyObjArr(name= name)), children= [])])
+
+  > declCount(p= emptyPrgm())
+    >>> 0
+  > declCount(p= onePrgm(name= "myFn"))
+    >>> 1
+  resultDeclCount(r -> /Catln/ImportResult) -> Integer
+    # [resultDeclCount] reads the program back out of an [ImportResult], which is the type an
+      `#importer` declaration answers with. Reading one here is what says the shape an importer
+      must produce is a shape a Catln program can actually build.
+  resultDeclCount(r= /Catln/ImportResult(prgm, source, reads))= declCount(p= prgm)
+
+  readsCount(r -> /Catln/ImportResult) -> Integer
+    # [readsCount] counts what the reading looked at. A reading which says nothing is a page read
+      again on every read, so an importer answering with [Nothing] here is answering that it cannot
+      be cached.
+  readsCount(r= /Catln/ImportResult(prgm, source, reads= /Data/Maybe/Nothing))= 0
+  readsCount(r= /Catln/ImportResult(prgm, source, reads= /Data/Maybe/Some(value)))= value.length
+
+  oneResult(name -> String) -> /Catln/ImportResult
+    # What an importer that read one file and found one declaration answers with.
+  oneResult(name)= /Catln/ImportResult(prgm= onePrgm(name= name), source= /Data/Maybe/Some(value= "src"), reads= /Data/Maybe/Some(value= [/Catln/ReadPath/ReadFile(path= "a.py")]))
+
+  > resultDeclCount(r= oneResult(name= "myFn"))
+    >>> 1
+  > readsCount(r= oneResult(name= "myFn"))
+    >>> 1
+  # ## What the suite checks
+    The `>` examples above are checked by `catln test`, and the integration suite typechecks and
+    builds this file without comparing what they evaluate to — only a page under @stack/@ has its
+    examples run as cases, and no page under @stack/@ may import [hsrawprgm] without closing the
+    import cycle @core/result.ct@ measures. So the values are printed instead, and
+    @hsrawprgm.stdout.txt@ is what compares them.
+
+main{io -> IO}= io.println(msg= pathOf(r= /Catln/ReadPath/ReadFile(path= "a.ct"))).println(msg= readKind(r= /Catln/ReadPath/ReadDir(path= "src"))).println(msg= exprKind(e= /Catln/RawExpr/RawValue(meta= noMeta(), name= "foo"))).println(msg= rawValueName(e= /Catln/RawExpr/RawValue(meta= noMeta(), name= "foo"))).println(msg= exprKind(e= /Catln/RawExpr/RawList(meta= noMeta(), values= []))).println(msg= objArrName(oa= emptyObjArr(name= "myFn"))).println(msg= statementKind(s= /Catln/RawStatement/RawDeclStatement(objArr= emptyObjArr(name= "myFn")))).println(msg= declCount(p= onePrgm(name= "myFn")).toString).println(msg= resultDeclCount(r= oneResult(name= "myFn")).toString).println(msg= readsCount(r= oneResult(name= "myFn")).toString).exit(val= 0)

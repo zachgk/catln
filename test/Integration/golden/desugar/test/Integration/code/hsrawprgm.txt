@@ -1,0 +1,720 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Test/emptyObjArr"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/emptyObjArr( Value name -> /Data/String ) -> /Catln/RawObjArr
+                            ( /arr=TopType
+                            , /obj=TopType
+                            , /annots=TopType
+                            , /doc=TopType
+                            , /def=TopType
+                            , /basis=TopType
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/emptyObjArr( Value name ) -> /Catln/RawObjArr
+                            ( /arr=TopType
+                            , /obj=TopType
+                            , /annots=TopType
+                            , /doc=TopType
+                            , /def=TopType
+                            , /basis=TopType
+                            ) = /Catln/RawObjArr
+                            ( Value obj= /Data/Maybe/Some
+                                ( Value value= /Catln/RawExpr/RawValue( Value meta= Value noMeta )( Value name= Value name ) )
+                            )( Value basis= Value /Catln/ObjectBasis/FunctionObj )( Value doc= Value /Data/Maybe/Nothing )( Value annots= Value /Data/List/Nil )( Value arr= Value /Data/Maybe/Nothing )( Value def= Value /Data/Maybe/Nothing )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/declCount"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/declCount
+                            ( Value p -> /Catln/RawPrgm
+                                ( /statements=TopType
+                                , /imports=TopType
+                                )
+                            ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/declCount
+                            ( Value p= /Catln/RawPrgm( Value imports )( Value statements ) ) -> /Data/Primitive/Integer = length( Value /this= Value statements )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/readsCount"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/readsCount
+                            ( Value r -> /Catln/ImportResult
+                                ( /prgm=TopType
+                                , /reads=TopType
+                                , /source=TopType
+                                )
+                            ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/readsCount
+                            ( Value r= /Catln/ImportResult( Value prgm )( Value source )( Value reads= Value /Data/Maybe/Nothing ) ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
+                        , /Test/readsCount
+                            ( Value r= /Catln/ImportResult( Value prgm )( Value source )
+                                ( Value reads= /Data/Maybe/Some( Value value ) )
+                            ) -> /Data/Primitive/Integer = length( Value /this= Value value )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/objArrName"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/objArrName
+                            ( Value oa -> /Catln/RawObjArr
+                                ( /arr=TopType
+                                , /obj=TopType
+                                , /annots=TopType
+                                , /doc=TopType
+                                , /def=TopType
+                                , /basis=TopType
+                                )
+                            ) -> /Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/objArrName
+                            ( Value oa= /Catln/RawObjArr
+                                ( Value obj= /Data/Maybe/Some( Value value ) )( Value basis )( Value doc )( Value annots )( Value arr )( Value def )
+                            ) -> /Data/String = rawValueName( Value e= Value value )
+                        , /Test/objArrName
+                            ( Value oa= /Catln/RawObjArr( Value obj= Value /Data/Maybe/Nothing )( Value basis )( Value doc )( Value annots )( Value arr )( Value def ) ) -> /Data/String = CStr
+                            { csValue = "" }
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/resultDeclCount"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/resultDeclCount
+                            ( Value r -> /Catln/ImportResult
+                                ( /prgm=TopType
+                                , /reads=TopType
+                                , /source=TopType
+                                )
+                            ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/resultDeclCount
+                            ( Value r= /Catln/ImportResult( Value prgm )( Value source )( Value reads ) ) -> /Data/Primitive/Integer = declCount( Value p= Value prgm )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/onePrgm"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/onePrgm( Value name -> /Data/String ) -> /Catln/RawPrgm
+                            ( /statements=TopType
+                            , /imports=TopType
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/onePrgm( Value name ) -> /Catln/RawPrgm
+                            ( /statements=TopType
+                            , /imports=TopType
+                            ) = /Catln/RawPrgm( Value imports= Value /Data/List/Nil )
+                            ( Value statements= /Data/List/Cons
+                                ( Value /head= /Catln/RawStatementTree
+                                    ( Value statement= /Catln/RawStatement/RawDeclStatement
+                                        ( Value objArr= emptyObjArr( Value name= Value name ) )
+                                    )( Value children= Value /Data/List/Nil )
+                                )( Value /tail= Value /Data/List/Nil )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/noMeta"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value /Test/noMeta -> /Catln/Meta
+                            ( /type=TopType
+                            , /dat=TopType
+                            , /id=TopType
+                            , /pos=TopType
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Test/noMeta -> /Catln/Meta
+                            ( /type=TopType
+                            , /dat=TopType
+                            , /id=TopType
+                            , /pos=TopType
+                            ) = /Catln/Meta
+                            ( Value type= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )( Value consts= Value /Data/List/Nil ) )( Value pos= Value /Data/Maybe/Nothing )
+                            ( Value id= CStr
+                                { csValue = "" }
+                            )( Value dat= Value /Catln/Unit )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= CInt
+                                { ciValue = 0 }
+                            )
+                            ( Value /this= println
+                                ( Value msg= toString
+                                    ( Value /this= readsCount
+                                        ( Value r= oneResult
+                                            ( Value name= CStr
+                                                { csValue = "myFn" }
+                                            )
+                                        )
+                                    )
+                                )
+                                ( Value /this= println
+                                    ( Value msg= toString
+                                        ( Value /this= resultDeclCount
+                                            ( Value r= oneResult
+                                                ( Value name= CStr
+                                                    { csValue = "myFn" }
+                                                )
+                                            )
+                                        )
+                                    )
+                                    ( Value /this= println
+                                        ( Value msg= toString
+                                            ( Value /this= declCount
+                                                ( Value p= onePrgm
+                                                    ( Value name= CStr
+                                                        { csValue = "myFn" }
+                                                    )
+                                                )
+                                            )
+                                        )
+                                        ( Value /this= println
+                                            ( Value msg= statementKind
+                                                ( Value s= /Catln/RawStatement/RawDeclStatement
+                                                    ( Value objArr= emptyObjArr
+                                                        ( Value name= CStr
+                                                            { csValue = "myFn" }
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                            ( Value /this= println
+                                                ( Value msg= objArrName
+                                                    ( Value oa= emptyObjArr
+                                                        ( Value name= CStr
+                                                            { csValue = "myFn" }
+                                                        )
+                                                    )
+                                                )
+                                                ( Value /this= println
+                                                    ( Value msg= exprKind
+                                                        ( Value e= /Catln/RawExpr/RawList( Value meta= Value noMeta )( Value values= Value /Data/List/Nil ) )
+                                                    )
+                                                    ( Value /this= println
+                                                        ( Value msg= rawValueName
+                                                            ( Value e= /Catln/RawExpr/RawValue( Value meta= Value noMeta )
+                                                                ( Value name= CStr
+                                                                    { csValue = "foo" }
+                                                                )
+                                                            )
+                                                        )
+                                                        ( Value /this= println
+                                                            ( Value msg= exprKind
+                                                                ( Value e= /Catln/RawExpr/RawValue( Value meta= Value noMeta )
+                                                                    ( Value name= CStr
+                                                                        { csValue = "foo" }
+                                                                    )
+                                                                )
+                                                            )
+                                                            ( Value /this= println
+                                                                ( Value msg= readKind
+                                                                    ( Value r= /Catln/ReadPath/ReadDir
+                                                                        ( Value path= CStr
+                                                                            { csValue = "src" }
+                                                                        )
+                                                                    )
+                                                                )
+                                                                ( Value /this= println
+                                                                    ( Value msg= pathOf
+                                                                        ( Value r= /Catln/ReadPath/ReadFile
+                                                                            ( Value path= CStr
+                                                                                { csValue = "a.ct" }
+                                                                            )
+                                                                        )
+                                                                    )( Value /this= Value io )
+                                                                )
+                                                            )
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/exprKind"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/exprKind( Value e -> ∀/Catln/RawExpr ) -> /Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/exprKind
+                            ( Value e= /Catln/RawExpr/RawCExpr( Value meta )( Value const ) ) -> /Data/String = CStr
+                            { csValue = "const" }
+                        , /Test/exprKind
+                            ( Value e= /Catln/RawExpr/RawValue( Value meta )( Value name ) ) -> /Data/String = CStr
+                            { csValue = "value" }
+                        , /Test/exprKind
+                            ( Value e= /Catln/RawExpr/RawHoleExpr( Value meta )( Value hole ) ) -> /Data/String = CStr
+                            { csValue = "hole" }
+                        , /Test/exprKind
+                            ( Value e= /Catln/RawExpr/RawMacroValue( Value meta )( Value name ) ) -> /Data/String = CStr
+                            { csValue = "macro" }
+                        , /Test/exprKind
+                            ( Value e= /Catln/RawExpr/RawApplyExpr( Value meta )( Value apply ) ) -> /Data/String = CStr
+                            { csValue = "apply" }
+                        , /Test/exprKind
+                            ( Value e= /Catln/RawExpr/RawFmtStrExpr( Value meta )( Value name )( Value str ) ) -> /Data/String = CStr
+                            { csValue = "fmtStr" }
+                        , /Test/exprKind
+                            ( Value e= /Catln/RawExpr/RawTheExpr( Value expr ) ) -> /Data/String = CStr
+                            { csValue = "the" }
+                        , /Test/exprKind
+                            ( Value e= /Catln/RawExpr/RawAliasExpr( Value base )( Value alias ) ) -> /Data/String = CStr
+                            { csValue = "alias" }
+                        , /Test/exprKind
+                            ( Value e= /Catln/RawExpr/RawTupleApply( Value meta )( Value base )( Value args ) ) -> /Data/String = CStr
+                            { csValue = "tupleApply" }
+                        , /Test/exprKind
+                            ( Value e= /Catln/RawExpr/RawVarsApply( Value meta )( Value base )( Value vars ) ) -> /Data/String = CStr
+                            { csValue = "varsApply" }
+                        , /Test/exprKind
+                            ( Value e= /Catln/RawExpr/RawContextApply( Value meta )( Value base )( Value args ) ) -> /Data/String = CStr
+                            { csValue = "contextApply" }
+                        , /Test/exprKind
+                            ( Value e= /Catln/RawExpr/RawWhere( Value meta )( Value base )( Value cond ) ) -> /Data/String = CStr
+                            { csValue = "where" }
+                        , /Test/exprKind
+                            ( Value e= /Catln/RawExpr/RawParen( Value expr ) ) -> /Data/String = CStr
+                            { csValue = "paren" }
+                        , /Test/exprKind
+                            ( Value e= /Catln/RawExpr/RawMethod( Value meta )( Value base )( Value value ) ) -> /Data/String = CStr
+                            { csValue = "method" }
+                        , /Test/exprKind
+                            ( Value e= /Catln/RawExpr/RawList( Value meta )( Value values ) ) -> /Data/String = CStr
+                            { csValue = "list" }
+                        , /Test/exprKind
+                            ( Value e= /Catln/RawExpr/RawTypeProp( Value meta )( Value base )( Value prop ) ) -> /Data/String = CStr
+                            { csValue = "typeProp" }
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/emptyPrgm"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value /Test/emptyPrgm -> /Catln/RawPrgm
+                            ( /statements=TopType
+                            , /imports=TopType
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Test/emptyPrgm -> /Catln/RawPrgm
+                            ( /statements=TopType
+                            , /imports=TopType
+                            ) = /Catln/RawPrgm( Value imports= Value /Data/List/Nil )( Value statements= Value /Data/List/Nil )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/oneResult"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/oneResult( Value name -> /Data/String ) -> /Catln/ImportResult
+                            ( /prgm=TopType
+                            , /reads=TopType
+                            , /source=TopType
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/oneResult( Value name ) -> /Catln/ImportResult
+                            ( /prgm=TopType
+                            , /reads=TopType
+                            , /source=TopType
+                            ) = /Catln/ImportResult
+                            ( Value prgm= onePrgm( Value name= Value name ) )
+                            ( Value source= /Data/Maybe/Some
+                                ( Value value= CStr
+                                    { csValue = "src" }
+                                )
+                            )
+                            ( Value reads= /Data/Maybe/Some
+                                ( Value value= /Data/List/Cons
+                                    ( Value /head= /Catln/ReadPath/ReadFile
+                                        ( Value path= CStr
+                                            { csValue = "a.py" }
+                                        )
+                                    )( Value /tail= Value /Data/List/Nil )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/readKind"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/readKind( Value r -> ∀/Catln/ReadPath ) -> /Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/readKind
+                            ( Value r= /Catln/ReadPath/ReadFile( Value path ) ) -> /Data/String = CStr
+                            { csValue = "file" }
+                        , /Test/readKind
+                            ( Value r= /Catln/ReadPath/ReadExists( Value path ) ) -> /Data/String = CStr
+                            { csValue = "exists" }
+                        , /Test/readKind
+                            ( Value r= /Catln/ReadPath/ReadDir( Value path ) ) -> /Data/String = CStr
+                            { csValue = "dir" }
+                        , /Test/readKind
+                            ( Value r= /Catln/ReadPath/ReadTree( Value path ) ) -> /Data/String = CStr
+                            { csValue = "tree" }
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/rawValueName"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/rawValueName( Value e -> ∀/Catln/RawExpr ) -> /Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/rawValueName
+                            ( Value e= /Catln/RawExpr/RawValue( Value meta )( Value name ) ) -> /Data/String = Value name
+                        , /Test/rawValueName
+                            ( Value e= /Catln/RawExpr/RawCExpr( Value meta )( Value const ) ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value e= /Catln/RawExpr/RawHoleExpr( Value meta )( Value hole ) ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value e= /Catln/RawExpr/RawMacroValue( Value meta )( Value name ) ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value e= /Catln/RawExpr/RawApplyExpr( Value meta )( Value apply ) ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value e= /Catln/RawExpr/RawFmtStrExpr( Value meta )( Value name )( Value str ) ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value e= /Catln/RawExpr/RawTheExpr( Value expr ) ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value e= /Catln/RawExpr/RawAliasExpr( Value base )( Value alias ) ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value e= /Catln/RawExpr/RawTupleApply( Value meta )( Value base )( Value args ) ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value e= /Catln/RawExpr/RawVarsApply( Value meta )( Value base )( Value vars ) ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value e= /Catln/RawExpr/RawContextApply( Value meta )( Value base )( Value args ) ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value e= /Catln/RawExpr/RawWhere( Value meta )( Value base )( Value cond ) ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value e= /Catln/RawExpr/RawParen( Value expr ) ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value e= /Catln/RawExpr/RawMethod( Value meta )( Value base )( Value value ) ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value e= /Catln/RawExpr/RawList( Value meta )( Value values ) ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value e= /Catln/RawExpr/RawTypeProp( Value meta )( Value base )( Value prop ) ) -> /Data/String = CStr
+                            { csValue = "" }
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/pathOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/pathOf( Value r -> ∀/Catln/ReadPath ) -> /Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/pathOf
+                            ( Value r= /Catln/ReadPath/ReadFile( Value path ) ) -> /Data/String = Value path
+                        , /Test/pathOf
+                            ( Value r= /Catln/ReadPath/ReadExists( Value path ) ) -> /Data/String = Value path
+                        , /Test/pathOf
+                            ( Value r= /Catln/ReadPath/ReadDir( Value path ) ) -> /Data/String = Value path
+                        , /Test/pathOf
+                            ( Value r= /Catln/ReadPath/ReadTree( Value path ) ) -> /Data/String = Value path
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/statementKind"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/statementKind( Value s -> ∀/Catln/RawStatement ) -> /Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/statementKind
+                            ( Value s= /Catln/RawStatement/RawDeclStatement( Value objArr ) ) -> /Data/String = CStr
+                            { csValue = "decl" }
+                        , /Test/statementKind
+                            ( Value s= /Catln/RawStatement/RawBindStatement( Value objArr ) ) -> /Data/String = CStr
+                            { csValue = "bind" }
+                        , /Test/statementKind
+                            ( Value s= /Catln/RawStatement/RawAnnot( Value annot ) ) -> /Data/String = CStr
+                            { csValue = "annot" }
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "# Reading a program as it was written
+                The page @hsrawprgm()@ reads declares the compiler's types for a program as the parser produced
+                it, before desugaring reduces what was written to what it means. This file is what typechecks
+                those declarations: a page nothing imports is a page nothing checks.
+                Where @test/Integration/code/hsprgm.ct@ reads the six kinds of expression a program has been
+                reduced TO, this reads the twenty it was written AS. That is the side an importer needs, because
+                an importer does not read a program — it builds one." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## What a reading looked at" }
+            )
+        , /Catln/#print
+            ( Value /p= pathOf
+                ( Value r= /Catln/ReadPath/ReadFile
+                    ( Value path= CStr
+                        { csValue = "a.ct" }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "a.ct" }
+            )
+        , /Catln/#print
+            ( Value /p= readKind
+                ( Value r= /Catln/ReadPath/ReadDir
+                    ( Value path= CStr
+                        { csValue = "src" }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "dir" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## The metadata every piece carries" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## An expression as it was written" }
+            )
+        , /Catln/#print
+            ( Value /p= exprKind
+                ( Value e= /Catln/RawExpr/RawValue( Value meta= Value noMeta )
+                    ( Value name= CStr
+                        { csValue = "foo" }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "value" }
+            )
+        , /Catln/#print
+            ( Value /p= rawValueName
+                ( Value e= /Catln/RawExpr/RawValue( Value meta= Value noMeta )
+                    ( Value name= CStr
+                        { csValue = "foo" }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "foo" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A method call is sugar that survives to this stage and not to the next one, which is the whole" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "  difference between this page and @core/hsprgm.ct@." }
+            )
+        , /Catln/#print
+            ( Value /p= exprKind
+                ( Value e= /Catln/RawExpr/RawMethod( Value meta= Value noMeta )
+                    ( Value base= /Catln/RawExpr/RawValue( Value meta= Value noMeta )
+                        ( Value name= CStr
+                            { csValue = "io" }
+                        )
+                    )
+                    ( Value value= /Catln/RawExpr/RawValue( Value meta= Value noMeta )
+                        ( Value name= CStr
+                            { csValue = "println" }
+                        )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "method" }
+            )
+        , /Catln/#print
+            ( Value /p= exprKind
+                ( Value e= /Catln/RawExpr/RawList( Value meta= Value noMeta )( Value values= Value /Data/List/Nil ) )
+            )
+            ( Value /result= CStr
+                { csValue = "list" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## What a page holds" }
+            )
+        , /Catln/#print
+            ( Value /p= objArrName
+                ( Value oa= emptyObjArr
+                    ( Value name= CStr
+                        { csValue = "myFn" }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "myFn" }
+            )
+        , /Catln/#print
+            ( Value /p= statementKind
+                ( Value s= /Catln/RawStatement/RawDeclStatement
+                    ( Value objArr= emptyObjArr
+                        ( Value name= CStr
+                            { csValue = "myFn" }
+                        )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "decl" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## A whole page, and the result of reading one" }
+            )
+        , /Catln/#print
+            ( Value /p= declCount( Value p= Value emptyPrgm ) )
+            ( Value /result= CStr
+                { csValue = "0" }
+            )
+        , /Catln/#print
+            ( Value /p= declCount
+                ( Value p= onePrgm
+                    ( Value name= CStr
+                        { csValue = "myFn" }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "1" }
+            )
+        , /Catln/#print
+            ( Value /p= resultDeclCount
+                ( Value r= oneResult
+                    ( Value name= CStr
+                        { csValue = "myFn" }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "1" }
+            )
+        , /Catln/#print
+            ( Value /p= readsCount
+                ( Value r= oneResult
+                    ( Value name= CStr
+                        { csValue = "myFn" }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "1" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## What the suite checks
+                The `>` examples above are checked by `catln test`, and the integration suite typechecks and
+                builds this file without comparing what they evaluate to — only a page under @stack/@ has its
+                examples run as cases, and no page under @stack/@ may import [hsrawprgm] without closing the
+                import cycle @core/result.ct@ measures. So the values are printed instead, and
+                @hsrawprgm.stdout.txt@ is what compares them." }
+            )
+        ]
+    }

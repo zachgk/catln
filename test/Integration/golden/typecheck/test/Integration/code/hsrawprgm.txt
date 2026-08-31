@@ -1,0 +1,1831 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Test/emptyObjArr"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/emptyObjArr( Value /name -> /Data/String ) -> /Catln/RawObjArr
+                            ( /arr=TopType
+                            , /obj=TopType
+                            , /annots=TopType
+                            , /doc=TopType
+                            , /def=TopType
+                            , /basis=TopType
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/emptyObjArr( Value /name -> /Data/String ) -> /Catln/RawObjArr
+                            ( /arr=/Data/Maybe/Nothing
+                            , /obj=/Data/Maybe/Some
+                                ( /value=/Catln/RawExpr/RawValue
+                                    ( /name=/Data/String
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=TopType
+                                        , /id=TopType
+                                        , /pos=TopType
+                                        )
+                                    )
+                                )
+                            , /annots=/Data/List/Nil
+                            , /doc=/Data/Maybe/Nothing
+                            , /def=/Data/Maybe/Nothing
+                            , /basis=/Catln/ObjectBasis/FunctionObj
+                            ) = /Catln/RawObjArr
+                            ( Value /obj -> /Data/Maybe/Some
+                                ( /value=/Catln/RawExpr/RawValue
+                                    ( /name=/Data/String
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=TopType
+                                        , /id=TopType
+                                        , /pos=TopType
+                                        )
+                                    )
+                                ) = /Data/Maybe/Some
+                                ( Value /value -> /Catln/RawExpr/RawValue
+                                    ( /name=/Data/String
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=TopType
+                                        , /id=TopType
+                                        , /pos=TopType
+                                        )
+                                    ) = /Catln/RawExpr/RawValue
+                                    ( Value /meta -> /Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=TopType
+                                        , /id=TopType
+                                        , /pos=TopType
+                                        ) = Value /Test/noMeta
+                                    )( Value /name -> TVArg /name = Value /name )
+                                )
+                            )( Value /basis -> /Catln/ObjectBasis/FunctionObj = Value /Catln/ObjectBasis/FunctionObj )( Value /doc -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /annots -> /Data/List/Nil = Value /Data/List/Nil )( Value /arr -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /def -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/declCount"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/declCount
+                            ( Value /p -> /Catln/RawPrgm
+                                ( /statements=TopType
+                                , /imports=TopType
+                                )
+                            ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/declCount
+                            ( Value /p -> /Catln/RawPrgm
+                                ( /statements=TopType
+                                , /imports=TopType
+                                ) = /Catln/RawPrgm( Value /imports )( Value /statements )
+                            ) -> /Data/Primitive/Integer = /Data/List/length( Value /this -> TVArg /statements = Value /statements )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/readsCount"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/readsCount
+                            ( Value /r -> /Catln/ImportResult
+                                ( /prgm=TopType
+                                , /reads=TopType
+                                , /source=TopType
+                                )
+                            ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/readsCount
+                            ( Value /r -> /Catln/ImportResult
+                                ( /prgm=TopType
+                                , /reads=/Data/Maybe/Nothing
+                                , /source=TopType
+                                ) = /Catln/ImportResult( Value /prgm )( Value /source )( Value /reads -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+                            ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
+                        , /Test/readsCount
+                            ( Value /r -> /Catln/ImportResult
+                                ( /prgm=TopType
+                                , /reads=/Data/Maybe/Some( /value=TopType )
+                                , /source=TopType
+                                ) = /Catln/ImportResult( Value /prgm )( Value /source )
+                                ( Value /reads -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( Value /value ) )
+                            ) -> /Data/Primitive/Integer = /Data/List/length( Value /this -> TVArg /value = Value /value )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/objArrName"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/objArrName
+                            ( Value /oa -> /Catln/RawObjArr
+                                ( /arr=TopType
+                                , /obj=TopType
+                                , /annots=TopType
+                                , /doc=TopType
+                                , /def=TopType
+                                , /basis=TopType
+                                )
+                            ) -> /Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/objArrName
+                            ( Value /oa -> /Catln/RawObjArr
+                                ( /arr=TopType
+                                , /obj=/Data/Maybe/Some( /value=TopType )
+                                , /annots=TopType
+                                , /doc=TopType
+                                , /def=TopType
+                                , /basis=TopType
+                                ) = /Catln/RawObjArr
+                                ( Value /obj -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( Value /value ) )( Value /basis )( Value /doc )( Value /annots )( Value /arr )( Value /def )
+                            ) -> /Data/String = /Test/rawValueName( Value /e -> TVArg /value = Value /value )
+                        , /Test/objArrName
+                            ( Value /oa -> /Catln/RawObjArr
+                                ( /arr=TopType
+                                , /obj=/Data/Maybe/Nothing
+                                , /annots=TopType
+                                , /doc=TopType
+                                , /def=TopType
+                                , /basis=TopType
+                                ) = /Catln/RawObjArr( Value /obj -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /basis )( Value /doc )( Value /annots )( Value /arr )( Value /def )
+                            ) -> /Data/String = CStr
+                            { csValue = "" }
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/resultDeclCount"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/resultDeclCount
+                            ( Value /r -> /Catln/ImportResult
+                                ( /prgm=TopType
+                                , /reads=TopType
+                                , /source=TopType
+                                )
+                            ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/resultDeclCount
+                            ( Value /r -> /Catln/ImportResult
+                                ( /prgm=TopType
+                                , /reads=TopType
+                                , /source=TopType
+                                ) = /Catln/ImportResult( Value /prgm )( Value /source )( Value /reads )
+                            ) -> /Data/Primitive/Integer = /Test/declCount( Value /p -> TVArg /prgm = Value /prgm )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/onePrgm"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/onePrgm( Value /name -> /Data/String ) -> /Catln/RawPrgm
+                            ( /statements=TopType
+                            , /imports=TopType
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/onePrgm( Value /name -> /Data/String ) -> /Catln/RawPrgm
+                            ( /statements=/Data/List/Cons
+                                ( /head=/Catln/RawStatementTree
+                                    ( /statement=/Catln/RawStatement/RawDeclStatement
+                                        ( /objArr=/Catln/RawObjArr
+                                            ( /arr=TopType
+                                            , /obj=TopType
+                                            , /annots=TopType
+                                            , /doc=TopType
+                                            , /def=TopType
+                                            , /basis=TopType
+                                            )
+                                        )
+                                    , /children=/Data/List/Nil
+                                    )
+                                , /tail=/Data/List/Nil
+                                )
+                            , /imports=/Data/List/Nil
+                            ) = /Catln/RawPrgm( Value /imports -> /Data/List/Nil = Value /Data/List/Nil )
+                            ( Value /statements -> /Data/List/Cons
+                                ( /head=/Catln/RawStatementTree
+                                    ( /statement=/Catln/RawStatement/RawDeclStatement
+                                        ( /objArr=/Catln/RawObjArr
+                                            ( /arr=TopType
+                                            , /obj=TopType
+                                            , /annots=TopType
+                                            , /doc=TopType
+                                            , /def=TopType
+                                            , /basis=TopType
+                                            )
+                                        )
+                                    , /children=/Data/List/Nil
+                                    )
+                                , /tail=/Data/List/Nil
+                                ) = /Data/List/Cons
+                                ( Value /head -> /Catln/RawStatementTree
+                                    ( /statement=/Catln/RawStatement/RawDeclStatement
+                                        ( /objArr=/Catln/RawObjArr
+                                            ( /arr=TopType
+                                            , /obj=TopType
+                                            , /annots=TopType
+                                            , /doc=TopType
+                                            , /def=TopType
+                                            , /basis=TopType
+                                            )
+                                        )
+                                    , /children=/Data/List/Nil
+                                    ) = /Catln/RawStatementTree
+                                    ( Value /statement -> /Catln/RawStatement/RawDeclStatement
+                                        ( /objArr=/Catln/RawObjArr
+                                            ( /arr=TopType
+                                            , /obj=TopType
+                                            , /annots=TopType
+                                            , /doc=TopType
+                                            , /def=TopType
+                                            , /basis=TopType
+                                            )
+                                        ) = /Catln/RawStatement/RawDeclStatement
+                                        ( Value /objArr -> /Catln/RawObjArr
+                                            ( /arr=TopType
+                                            , /obj=TopType
+                                            , /annots=TopType
+                                            , /doc=TopType
+                                            , /def=TopType
+                                            , /basis=TopType
+                                            ) = /Test/emptyObjArr( Value /name -> TVArg /name = Value /name )
+                                        )
+                                    )( Value /children -> /Data/List/Nil = Value /Data/List/Nil )
+                                )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/noMeta"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value /Test/noMeta -> /Catln/Meta
+                            ( /type=TopType
+                            , /dat=TopType
+                            , /id=TopType
+                            , /pos=TopType
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Test/noMeta -> /Catln/Meta
+                            ( /type=/Catln/Type/UnionType
+                                ( /top=/Data/Maybe/Nothing
+                                , /consts=/Data/List/Nil
+                                , /leafs=/Data/List/Nil
+                                )
+                            , /dat=/Catln/Unit
+                            , /id=/Data/String
+                            , /pos=/Data/Maybe/Nothing
+                            ) = /Catln/Meta
+                            ( Value /type -> /Catln/Type/UnionType
+                                ( /top=/Data/Maybe/Nothing
+                                , /consts=/Data/List/Nil
+                                , /leafs=/Data/List/Nil
+                                ) = /Catln/Type/UnionType( Value /top -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /leafs -> /Data/List/Nil = Value /Data/List/Nil )( Value /consts -> /Data/List/Nil = Value /Data/List/Nil )
+                            )( Value /pos -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+                            ( Value /id -> /Data/String = CStr
+                                { csValue = "" }
+                            )( Value /dat -> /Catln/Unit = Value /Catln/Unit )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
+                            ( /Catln/exit
+                                ( /this=/Catln/IO
+                                , /val=/Data/Primitive/Integer
+                                ) + /Catln/IO
+                            ) = /Catln/exit
+                            ( Value /val -> /Data/Primitive/Integer = CInt
+                                { ciValue = 0 }
+                            )
+                            ( Value /this -> /Catln/IO = /Catln/println
+                                ( Value /msg -> /Data/String = /Data/toString
+                                    ( Value /this -> UnionType
+                                        ( Just
+                                            ( PredExpr /operator==
+                                                ( /r=/Data/Primitive/True
+                                                , /l=~nonNeg( /this=~/$this )
+                                                ) && PredRel Integer && PredClass /Data/ToString
+                                            , fromList []
+                                            , []
+                                            )
+                                        , /Data/Primitive/Integer
+                                        , []
+                                        ) = /Test/readsCount
+                                        ( Value /r -> /Catln/ImportResult
+                                            ( /prgm=TopType
+                                            , /reads=TopType
+                                            , /source=TopType
+                                            ) = /Test/oneResult
+                                            ( Value /name -> /Data/String = CStr
+                                                { csValue = "myFn" }
+                                            )
+                                        )
+                                    )
+                                )
+                                ( Value /this -> /Catln/IO = /Catln/println
+                                    ( Value /msg -> /Data/String = /Data/toString
+                                        ( Value /this -> UnionType
+                                            ( Just
+                                                ( PredExpr /operator==
+                                                    ( /r=/Data/Primitive/True
+                                                    , /l=~nonNeg( /this=~/$this )
+                                                    ) && PredRel Integer && PredClass /Data/ToString
+                                                , fromList []
+                                                , []
+                                                )
+                                            , /Data/Primitive/Integer
+                                            , []
+                                            ) = /Test/resultDeclCount
+                                            ( Value /r -> /Catln/ImportResult
+                                                ( /prgm=TopType
+                                                , /reads=TopType
+                                                , /source=TopType
+                                                ) = /Test/oneResult
+                                                ( Value /name -> /Data/String = CStr
+                                                    { csValue = "myFn" }
+                                                )
+                                            )
+                                        )
+                                    )
+                                    ( Value /this -> /Catln/IO = /Catln/println
+                                        ( Value /msg -> /Data/String = /Data/toString
+                                            ( Value /this -> UnionType
+                                                ( Just
+                                                    ( PredExpr /operator==
+                                                        ( /r=/Data/Primitive/True
+                                                        , /l=~nonNeg( /this=~/$this )
+                                                        ) && PredRel Integer && PredClass /Data/ToString
+                                                    , fromList []
+                                                    , []
+                                                    )
+                                                , /Data/Primitive/Integer
+                                                , []
+                                                ) = /Test/declCount
+                                                ( Value /p -> /Catln/RawPrgm
+                                                    ( /statements=TopType
+                                                    , /imports=TopType
+                                                    ) = /Test/onePrgm
+                                                    ( Value /name -> /Data/String = CStr
+                                                        { csValue = "myFn" }
+                                                    )
+                                                )
+                                            )
+                                        )
+                                        ( Value /this -> /Catln/IO = /Catln/println
+                                            ( Value /msg -> /Data/String = /Test/statementKind
+                                                ( Value /s -> /Catln/RawStatement/RawDeclStatement
+                                                    ( /objArr=/Catln/RawObjArr
+                                                        ( /arr=TopType
+                                                        , /obj=TopType
+                                                        , /annots=TopType
+                                                        , /doc=TopType
+                                                        , /def=TopType
+                                                        , /basis=TopType
+                                                        )
+                                                    ) = /Catln/RawStatement/RawDeclStatement
+                                                    ( Value /objArr -> /Catln/RawObjArr
+                                                        ( /arr=TopType
+                                                        , /obj=TopType
+                                                        , /annots=TopType
+                                                        , /doc=TopType
+                                                        , /def=TopType
+                                                        , /basis=TopType
+                                                        ) = /Test/emptyObjArr
+                                                        ( Value /name -> /Data/String = CStr
+                                                            { csValue = "myFn" }
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                            ( Value /this -> /Catln/IO = /Catln/println
+                                                ( Value /msg -> /Data/String = /Test/objArrName
+                                                    ( Value /oa -> /Catln/RawObjArr
+                                                        ( /arr=TopType
+                                                        , /obj=TopType
+                                                        , /annots=TopType
+                                                        , /doc=TopType
+                                                        , /def=TopType
+                                                        , /basis=TopType
+                                                        ) = /Test/emptyObjArr
+                                                        ( Value /name -> /Data/String = CStr
+                                                            { csValue = "myFn" }
+                                                        )
+                                                    )
+                                                )
+                                                ( Value /this -> /Catln/IO = /Catln/println
+                                                    ( Value /msg -> /Data/String = /Test/exprKind
+                                                        ( Value /e -> /Catln/RawExpr/RawList
+                                                            ( /values=/Data/List/Nil
+                                                            , /meta=/Catln/Meta
+                                                                ( /type=TopType
+                                                                , /dat=TopType
+                                                                , /id=TopType
+                                                                , /pos=TopType
+                                                                )
+                                                            ) = /Catln/RawExpr/RawList
+                                                            ( Value /meta -> /Catln/Meta
+                                                                ( /type=TopType
+                                                                , /dat=TopType
+                                                                , /id=TopType
+                                                                , /pos=TopType
+                                                                ) = Value /Test/noMeta
+                                                            )( Value /values -> /Data/List/Nil = Value /Data/List/Nil )
+                                                        )
+                                                    )
+                                                    ( Value /this -> /Catln/IO = /Catln/println
+                                                        ( Value /msg -> /Data/String = /Test/rawValueName
+                                                            ( Value /e -> /Catln/RawExpr/RawValue
+                                                                ( /name=/Data/String
+                                                                , /meta=/Catln/Meta
+                                                                    ( /type=TopType
+                                                                    , /dat=TopType
+                                                                    , /id=TopType
+                                                                    , /pos=TopType
+                                                                    )
+                                                                ) = /Catln/RawExpr/RawValue
+                                                                ( Value /meta -> /Catln/Meta
+                                                                    ( /type=TopType
+                                                                    , /dat=TopType
+                                                                    , /id=TopType
+                                                                    , /pos=TopType
+                                                                    ) = Value /Test/noMeta
+                                                                )
+                                                                ( Value /name -> /Data/String = CStr
+                                                                    { csValue = "foo" }
+                                                                )
+                                                            )
+                                                        )
+                                                        ( Value /this -> /Catln/IO = /Catln/println
+                                                            ( Value /msg -> /Data/String = /Test/exprKind
+                                                                ( Value /e -> /Catln/RawExpr/RawValue
+                                                                    ( /name=/Data/String
+                                                                    , /meta=/Catln/Meta
+                                                                        ( /type=TopType
+                                                                        , /dat=TopType
+                                                                        , /id=TopType
+                                                                        , /pos=TopType
+                                                                        )
+                                                                    ) = /Catln/RawExpr/RawValue
+                                                                    ( Value /meta -> /Catln/Meta
+                                                                        ( /type=TopType
+                                                                        , /dat=TopType
+                                                                        , /id=TopType
+                                                                        , /pos=TopType
+                                                                        ) = Value /Test/noMeta
+                                                                    )
+                                                                    ( Value /name -> /Data/String = CStr
+                                                                        { csValue = "foo" }
+                                                                    )
+                                                                )
+                                                            )
+                                                            ( Value /this -> /Catln/IO = /Catln/println
+                                                                ( Value /msg -> /Data/String = /Test/readKind
+                                                                    ( Value /r -> /Catln/ReadPath/ReadDir( /path=/Data/String ) = /Catln/ReadPath/ReadDir
+                                                                        ( Value /path -> /Data/String = CStr
+                                                                            { csValue = "src" }
+                                                                        )
+                                                                    )
+                                                                )
+                                                                ( Value /this -> /Catln/IO = /Catln/println
+                                                                    ( Value /msg -> /Data/String = /Test/pathOf
+                                                                        ( Value /r -> /Catln/ReadPath/ReadFile( /path=/Data/String ) = /Catln/ReadPath/ReadFile
+                                                                            ( Value /path -> /Data/String = CStr
+                                                                                { csValue = "a.ct" }
+                                                                            )
+                                                                        )
+                                                                    )( Value /this -> TVArg /io = Value /io )
+                                                                )
+                                                            )
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/exprKind"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/exprKind( Value /e -> ∀/Catln/RawExpr ) -> /Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/exprKind
+                            ( Value /e -> /Catln/RawExpr/RawCExpr
+                                ( /const=∀/Catln/Constant
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawCExpr
+                                ( Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                )( Value /const -> ∀/Catln/Constant )
+                            ) -> /Data/String = CStr
+                            { csValue = "const" }
+                        , /Test/exprKind
+                            ( Value /e -> /Catln/RawExpr/RawValue
+                                ( /name=/Data/String
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawValue
+                                ( Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                )( Value /name -> /Data/String )
+                            ) -> /Data/String = CStr
+                            { csValue = "value" }
+                        , /Test/exprKind
+                            ( Value /e -> /Catln/RawExpr/RawHoleExpr
+                                ( /hole=∀/Catln/Hole
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawHoleExpr
+                                ( Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                )( Value /hole -> ∀/Catln/Hole )
+                            ) -> /Data/String = CStr
+                            { csValue = "hole" }
+                        , /Test/exprKind
+                            ( Value /e -> /Catln/RawExpr/RawMacroValue
+                                ( /name=/Data/String
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawMacroValue
+                                ( Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                )( Value /name -> /Data/String )
+                            ) -> /Data/String = CStr
+                            { csValue = "macro" }
+                        , /Test/exprKind
+                            ( Value /e -> /Catln/RawExpr/RawApplyExpr
+                                ( /apply=/Catln/RawApply( /terms=TopType )
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawApplyExpr
+                                ( Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                )
+                                ( Value /apply -> /Catln/RawApply( /terms=TopType ) )
+                            ) -> /Data/String = CStr
+                            { csValue = "apply" }
+                        , /Test/exprKind
+                            ( Value /e -> /Catln/RawExpr/RawFmtStrExpr
+                                ( /str=/Data/String
+                                , /name=/Data/String
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawFmtStrExpr
+                                ( Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                )( Value /name -> /Data/String )( Value /str -> /Data/String )
+                            ) -> /Data/String = CStr
+                            { csValue = "fmtStr" }
+                        , /Test/exprKind
+                            ( Value /e -> /Catln/RawExpr/RawTheExpr( /expr=∀/Catln/RawExpr ) = /Catln/RawExpr/RawTheExpr( Value /expr -> ∀/Catln/RawExpr ) ) -> /Data/String = CStr
+                            { csValue = "the" }
+                        , /Test/exprKind
+                            ( Value /e -> /Catln/RawExpr/RawAliasExpr
+                                ( /base=∀/Catln/RawExpr
+                                , /alias=∀/Catln/RawExpr
+                                ) = /Catln/RawExpr/RawAliasExpr( Value /base -> ∀/Catln/RawExpr )( Value /alias -> ∀/Catln/RawExpr )
+                            ) -> /Data/String = CStr
+                            { csValue = "alias" }
+                        , /Test/exprKind
+                            ( Value /e -> /Catln/RawExpr/RawTupleApply
+                                ( /args=∀/Data/List
+                                    [ /T=/Catln/Pair
+                                        [ /B=/Catln/RawObjArr
+                                        , /A=∀/Data/Primitive/Boolean
+                                        ]
+                                    ]
+                                , /base=/Catln/Pair
+                                    [ /B=∀/Catln/RawExpr
+                                    , /A=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ]
+                                    ( /first=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    , /second=∀/Catln/RawExpr
+                                    )
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawTupleApply
+                                ( Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                )
+                                ( Value /base -> /Catln/Pair
+                                    [ /B=∀/Catln/RawExpr
+                                    , /A=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ]
+                                    ( /first=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    , /second=∀/Catln/RawExpr
+                                    )
+                                )
+                                ( Value /args -> ∀/Data/List
+                                    [ /T=/Catln/Pair
+                                        [ /B=/Catln/RawObjArr
+                                        , /A=∀/Data/Primitive/Boolean
+                                        ]
+                                    ]
+                                )
+                            ) -> /Data/String = CStr
+                            { csValue = "tupleApply" }
+                        , /Test/exprKind
+                            ( Value /e -> /Catln/RawExpr/RawVarsApply
+                                ( /vars=∀/Data/List[ /T=/Catln/RawObjArr ]
+                                , /base=∀/Catln/RawExpr
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawVarsApply
+                                ( Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                )( Value /base -> ∀/Catln/RawExpr )
+                                ( Value /vars -> ∀/Data/List[ /T=/Catln/RawObjArr ] )
+                            ) -> /Data/String = CStr
+                            { csValue = "varsApply" }
+                        , /Test/exprKind
+                            ( Value /e -> /Catln/RawExpr/RawContextApply
+                                ( /args=∀/Data/List[ /T=/Catln/RawObjArr ]
+                                , /base=/Catln/Pair
+                                    [ /B=∀/Catln/RawExpr
+                                    , /A=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ]
+                                    ( /first=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    , /second=∀/Catln/RawExpr
+                                    )
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawContextApply
+                                ( Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                )
+                                ( Value /base -> /Catln/Pair
+                                    [ /B=∀/Catln/RawExpr
+                                    , /A=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ]
+                                    ( /first=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    , /second=∀/Catln/RawExpr
+                                    )
+                                )
+                                ( Value /args -> ∀/Data/List[ /T=/Catln/RawObjArr ] )
+                            ) -> /Data/String = CStr
+                            { csValue = "contextApply" }
+                        , /Test/exprKind
+                            ( Value /e -> /Catln/RawExpr/RawWhere
+                                ( /base=∀/Catln/RawExpr
+                                , /cond=∀/Catln/RawExpr
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawWhere
+                                ( Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                )( Value /base -> ∀/Catln/RawExpr )( Value /cond -> ∀/Catln/RawExpr )
+                            ) -> /Data/String = CStr
+                            { csValue = "where" }
+                        , /Test/exprKind
+                            ( Value /e -> /Catln/RawExpr/RawParen( /expr=∀/Catln/RawExpr ) = /Catln/RawExpr/RawParen( Value /expr -> ∀/Catln/RawExpr ) ) -> /Data/String = CStr
+                            { csValue = "paren" }
+                        , /Test/exprKind
+                            ( Value /e -> /Catln/RawExpr/RawMethod
+                                ( /base=∀/Catln/RawExpr
+                                , /value=∀/Catln/RawExpr
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawMethod
+                                ( Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                )( Value /base -> ∀/Catln/RawExpr )( Value /value -> ∀/Catln/RawExpr )
+                            ) -> /Data/String = CStr
+                            { csValue = "method" }
+                        , /Test/exprKind
+                            ( Value /e -> /Catln/RawExpr/RawList
+                                ( /values=∀/Data/List[ /T=∀/Catln/RawExpr ]
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawList
+                                ( Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                )
+                                ( Value /values -> ∀/Data/List[ /T=∀/Catln/RawExpr ] )
+                            ) -> /Data/String = CStr
+                            { csValue = "list" }
+                        , /Test/exprKind
+                            ( Value /e -> /Catln/RawExpr/RawTypeProp
+                                ( /prop=∀/Catln/TypeProperty
+                                , /base=∀/Catln/RawExpr
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawTypeProp
+                                ( Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                )( Value /base -> ∀/Catln/RawExpr )( Value /prop -> ∀/Catln/TypeProperty )
+                            ) -> /Data/String = CStr
+                            { csValue = "typeProp" }
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/emptyPrgm"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value /Test/emptyPrgm -> /Catln/RawPrgm
+                            ( /statements=TopType
+                            , /imports=TopType
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Test/emptyPrgm -> /Catln/RawPrgm
+                            ( /statements=/Data/List/Nil
+                            , /imports=/Data/List/Nil
+                            ) = /Catln/RawPrgm( Value /imports -> /Data/List/Nil = Value /Data/List/Nil )( Value /statements -> /Data/List/Nil = Value /Data/List/Nil )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/oneResult"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/oneResult( Value /name -> /Data/String ) -> /Catln/ImportResult
+                            ( /prgm=TopType
+                            , /reads=TopType
+                            , /source=TopType
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/oneResult( Value /name -> /Data/String ) -> /Catln/ImportResult
+                            ( /prgm=/Catln/RawPrgm
+                                ( /statements=TopType
+                                , /imports=TopType
+                                )
+                            , /reads=/Data/Maybe/Some
+                                ( /value=/Data/List/Cons
+                                    ( /head=/Catln/ReadPath/ReadFile( /path=/Data/String )
+                                    , /tail=/Data/List/Nil
+                                    )
+                                )
+                            , /source=/Data/Maybe/Some( /value=/Data/String )
+                            ) = /Catln/ImportResult
+                            ( Value /prgm -> /Catln/RawPrgm
+                                ( /statements=TopType
+                                , /imports=TopType
+                                ) = /Test/onePrgm( Value /name -> TVArg /name = Value /name )
+                            )
+                            ( Value /source -> /Data/Maybe/Some( /value=/Data/String ) = /Data/Maybe/Some
+                                ( Value /value -> /Data/String = CStr
+                                    { csValue = "src" }
+                                )
+                            )
+                            ( Value /reads -> /Data/Maybe/Some
+                                ( /value=/Data/List/Cons
+                                    ( /head=/Catln/ReadPath/ReadFile( /path=/Data/String )
+                                    , /tail=/Data/List/Nil
+                                    )
+                                ) = /Data/Maybe/Some
+                                ( Value /value -> /Data/List/Cons
+                                    ( /head=/Catln/ReadPath/ReadFile( /path=/Data/String )
+                                    , /tail=/Data/List/Nil
+                                    ) = /Data/List/Cons
+                                    ( Value /head -> /Catln/ReadPath/ReadFile( /path=/Data/String ) = /Catln/ReadPath/ReadFile
+                                        ( Value /path -> /Data/String = CStr
+                                            { csValue = "a.py" }
+                                        )
+                                    )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/readKind"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/readKind( Value /r -> ∀/Catln/ReadPath ) -> /Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/readKind
+                            ( Value /r -> /Catln/ReadPath/ReadFile( /path=/Data/String ) = /Catln/ReadPath/ReadFile( Value /path -> /Data/String ) ) -> /Data/String = CStr
+                            { csValue = "file" }
+                        , /Test/readKind
+                            ( Value /r -> /Catln/ReadPath/ReadExists( /path=/Data/String ) = /Catln/ReadPath/ReadExists( Value /path -> /Data/String ) ) -> /Data/String = CStr
+                            { csValue = "exists" }
+                        , /Test/readKind
+                            ( Value /r -> /Catln/ReadPath/ReadDir( /path=/Data/String ) = /Catln/ReadPath/ReadDir( Value /path -> /Data/String ) ) -> /Data/String = CStr
+                            { csValue = "dir" }
+                        , /Test/readKind
+                            ( Value /r -> /Catln/ReadPath/ReadTree( /path=/Data/String ) = /Catln/ReadPath/ReadTree( Value /path -> /Data/String ) ) -> /Data/String = CStr
+                            { csValue = "tree" }
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/rawValueName"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/rawValueName( Value /e -> ∀/Catln/RawExpr ) -> /Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/rawValueName
+                            ( Value /e -> /Catln/RawExpr/RawValue
+                                ( /name=/Data/String
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawValue
+                                ( Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                )( Value /name -> /Data/String )
+                            ) -> /Data/String = Value /name
+                        , /Test/rawValueName
+                            ( Value /e -> /Catln/RawExpr/RawCExpr
+                                ( /const=∀/Catln/Constant
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawCExpr
+                                ( Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                )( Value /const -> ∀/Catln/Constant )
+                            ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value /e -> /Catln/RawExpr/RawHoleExpr
+                                ( /hole=∀/Catln/Hole
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawHoleExpr
+                                ( Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                )( Value /hole -> ∀/Catln/Hole )
+                            ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value /e -> /Catln/RawExpr/RawMacroValue
+                                ( /name=/Data/String
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawMacroValue
+                                ( Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                )( Value /name -> /Data/String )
+                            ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value /e -> /Catln/RawExpr/RawApplyExpr
+                                ( /apply=/Catln/RawApply( /terms=TopType )
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawApplyExpr
+                                ( Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                )
+                                ( Value /apply -> /Catln/RawApply( /terms=TopType ) )
+                            ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value /e -> /Catln/RawExpr/RawFmtStrExpr
+                                ( /str=/Data/String
+                                , /name=/Data/String
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawFmtStrExpr
+                                ( Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                )( Value /name -> /Data/String )( Value /str -> /Data/String )
+                            ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value /e -> /Catln/RawExpr/RawTheExpr( /expr=∀/Catln/RawExpr ) = /Catln/RawExpr/RawTheExpr( Value /expr -> ∀/Catln/RawExpr ) ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value /e -> /Catln/RawExpr/RawAliasExpr
+                                ( /base=∀/Catln/RawExpr
+                                , /alias=∀/Catln/RawExpr
+                                ) = /Catln/RawExpr/RawAliasExpr( Value /base -> ∀/Catln/RawExpr )( Value /alias -> ∀/Catln/RawExpr )
+                            ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value /e -> /Catln/RawExpr/RawTupleApply
+                                ( /args=∀/Data/List
+                                    [ /T=/Catln/Pair
+                                        [ /B=/Catln/RawObjArr
+                                        , /A=∀/Data/Primitive/Boolean
+                                        ]
+                                    ]
+                                , /base=/Catln/Pair
+                                    [ /B=∀/Catln/RawExpr
+                                    , /A=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ]
+                                    ( /first=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    , /second=∀/Catln/RawExpr
+                                    )
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawTupleApply
+                                ( Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                )
+                                ( Value /base -> /Catln/Pair
+                                    [ /B=∀/Catln/RawExpr
+                                    , /A=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ]
+                                    ( /first=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    , /second=∀/Catln/RawExpr
+                                    )
+                                )
+                                ( Value /args -> ∀/Data/List
+                                    [ /T=/Catln/Pair
+                                        [ /B=/Catln/RawObjArr
+                                        , /A=∀/Data/Primitive/Boolean
+                                        ]
+                                    ]
+                                )
+                            ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value /e -> /Catln/RawExpr/RawVarsApply
+                                ( /vars=∀/Data/List[ /T=/Catln/RawObjArr ]
+                                , /base=∀/Catln/RawExpr
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawVarsApply
+                                ( Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                )( Value /base -> ∀/Catln/RawExpr )
+                                ( Value /vars -> ∀/Data/List[ /T=/Catln/RawObjArr ] )
+                            ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value /e -> /Catln/RawExpr/RawContextApply
+                                ( /args=∀/Data/List[ /T=/Catln/RawObjArr ]
+                                , /base=/Catln/Pair
+                                    [ /B=∀/Catln/RawExpr
+                                    , /A=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ]
+                                    ( /first=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    , /second=∀/Catln/RawExpr
+                                    )
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawContextApply
+                                ( Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                )
+                                ( Value /base -> /Catln/Pair
+                                    [ /B=∀/Catln/RawExpr
+                                    , /A=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ]
+                                    ( /first=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    , /second=∀/Catln/RawExpr
+                                    )
+                                )
+                                ( Value /args -> ∀/Data/List[ /T=/Catln/RawObjArr ] )
+                            ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value /e -> /Catln/RawExpr/RawWhere
+                                ( /base=∀/Catln/RawExpr
+                                , /cond=∀/Catln/RawExpr
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawWhere
+                                ( Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                )( Value /base -> ∀/Catln/RawExpr )( Value /cond -> ∀/Catln/RawExpr )
+                            ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value /e -> /Catln/RawExpr/RawParen( /expr=∀/Catln/RawExpr ) = /Catln/RawExpr/RawParen( Value /expr -> ∀/Catln/RawExpr ) ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value /e -> /Catln/RawExpr/RawMethod
+                                ( /base=∀/Catln/RawExpr
+                                , /value=∀/Catln/RawExpr
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawMethod
+                                ( Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                )( Value /base -> ∀/Catln/RawExpr )( Value /value -> ∀/Catln/RawExpr )
+                            ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value /e -> /Catln/RawExpr/RawList
+                                ( /values=∀/Data/List[ /T=∀/Catln/RawExpr ]
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawList
+                                ( Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                )
+                                ( Value /values -> ∀/Data/List[ /T=∀/Catln/RawExpr ] )
+                            ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Test/rawValueName
+                            ( Value /e -> /Catln/RawExpr/RawTypeProp
+                                ( /prop=∀/Catln/TypeProperty
+                                , /base=∀/Catln/RawExpr
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawTypeProp
+                                ( Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                )( Value /base -> ∀/Catln/RawExpr )( Value /prop -> ∀/Catln/TypeProperty )
+                            ) -> /Data/String = CStr
+                            { csValue = "" }
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/pathOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/pathOf( Value /r -> ∀/Catln/ReadPath ) -> /Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/pathOf
+                            ( Value /r -> /Catln/ReadPath/ReadFile( /path=/Data/String ) = /Catln/ReadPath/ReadFile( Value /path -> /Data/String ) ) -> /Data/String = Value /path
+                        , /Test/pathOf
+                            ( Value /r -> /Catln/ReadPath/ReadExists( /path=/Data/String ) = /Catln/ReadPath/ReadExists( Value /path -> /Data/String ) ) -> /Data/String = Value /path
+                        , /Test/pathOf
+                            ( Value /r -> /Catln/ReadPath/ReadDir( /path=/Data/String ) = /Catln/ReadPath/ReadDir( Value /path -> /Data/String ) ) -> /Data/String = Value /path
+                        , /Test/pathOf
+                            ( Value /r -> /Catln/ReadPath/ReadTree( /path=/Data/String ) = /Catln/ReadPath/ReadTree( Value /path -> /Data/String ) ) -> /Data/String = Value /path
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/statementKind"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/statementKind( Value /s -> ∀/Catln/RawStatement ) -> /Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/statementKind
+                            ( Value /s -> /Catln/RawStatement/RawDeclStatement
+                                ( /objArr=/Catln/RawObjArr
+                                    ( /arr=TopType
+                                    , /obj=TopType
+                                    , /annots=TopType
+                                    , /doc=TopType
+                                    , /def=TopType
+                                    , /basis=TopType
+                                    )
+                                ) = /Catln/RawStatement/RawDeclStatement
+                                ( Value /objArr -> /Catln/RawObjArr
+                                    ( /arr=TopType
+                                    , /obj=TopType
+                                    , /annots=TopType
+                                    , /doc=TopType
+                                    , /def=TopType
+                                    , /basis=TopType
+                                    )
+                                )
+                            ) -> /Data/String = CStr
+                            { csValue = "decl" }
+                        , /Test/statementKind
+                            ( Value /s -> /Catln/RawStatement/RawBindStatement
+                                ( /objArr=/Catln/RawObjArr
+                                    ( /arr=TopType
+                                    , /obj=TopType
+                                    , /annots=TopType
+                                    , /doc=TopType
+                                    , /def=TopType
+                                    , /basis=TopType
+                                    )
+                                ) = /Catln/RawStatement/RawBindStatement
+                                ( Value /objArr -> /Catln/RawObjArr
+                                    ( /arr=TopType
+                                    , /obj=TopType
+                                    , /annots=TopType
+                                    , /doc=TopType
+                                    , /def=TopType
+                                    , /basis=TopType
+                                    )
+                                )
+                            ) -> /Data/String = CStr
+                            { csValue = "bind" }
+                        , /Test/statementKind
+                            ( Value /s -> /Catln/RawStatement/RawAnnot( /annot=∀/Catln/RawExpr ) = /Catln/RawStatement/RawAnnot( Value /annot -> ∀/Catln/RawExpr ) ) -> /Data/String = CStr
+                            { csValue = "annot" }
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String = CStr
+                { csValue = "# Reading a program as it was written
+                The page @hsrawprgm()@ reads declares the compiler's types for a program as the parser produced
+                it, before desugaring reduces what was written to what it means. This file is what typechecks
+                those declarations: a page nothing imports is a page nothing checks.
+                Where @test/Integration/code/hsprgm.ct@ reads the six kinds of expression a program has been
+                reduced TO, this reads the twenty it was written AS. That is the side an importer needs, because
+                an importer does not read a program — it builds one." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr
+                { csValue = "## What a reading looked at" }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/String = /Test/pathOf
+                ( Value /r -> /Catln/ReadPath/ReadFile( /path=/Data/String ) = /Catln/ReadPath/ReadFile
+                    ( Value /path -> /Data/String = CStr
+                        { csValue = "a.ct" }
+                    )
+                )
+            )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "a.ct" }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/String = /Test/readKind
+                ( Value /r -> /Catln/ReadPath/ReadDir( /path=/Data/String ) = /Catln/ReadPath/ReadDir
+                    ( Value /path -> /Data/String = CStr
+                        { csValue = "src" }
+                    )
+                )
+            )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "dir" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr
+                { csValue = "## The metadata every piece carries" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr
+                { csValue = "## An expression as it was written" }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/String = /Test/exprKind
+                ( Value /e -> /Catln/RawExpr/RawValue
+                    ( /name=/Data/String
+                    , /meta=/Catln/Meta
+                        ( /type=TopType
+                        , /dat=TopType
+                        , /id=TopType
+                        , /pos=TopType
+                        )
+                    ) = /Catln/RawExpr/RawValue
+                    ( Value /meta -> /Catln/Meta
+                        ( /type=TopType
+                        , /dat=TopType
+                        , /id=TopType
+                        , /pos=TopType
+                        ) = Value /Test/noMeta
+                    )
+                    ( Value /name -> /Data/String = CStr
+                        { csValue = "foo" }
+                    )
+                )
+            )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "value" }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/String = /Test/rawValueName
+                ( Value /e -> /Catln/RawExpr/RawValue
+                    ( /name=/Data/String
+                    , /meta=/Catln/Meta
+                        ( /type=TopType
+                        , /dat=TopType
+                        , /id=TopType
+                        , /pos=TopType
+                        )
+                    ) = /Catln/RawExpr/RawValue
+                    ( Value /meta -> /Catln/Meta
+                        ( /type=TopType
+                        , /dat=TopType
+                        , /id=TopType
+                        , /pos=TopType
+                        ) = Value /Test/noMeta
+                    )
+                    ( Value /name -> /Data/String = CStr
+                        { csValue = "foo" }
+                    )
+                )
+            )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "foo" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr
+                { csValue = "A method call is sugar that survives to this stage and not to the next one, which is the whole" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  difference between this page and @core/hsprgm.ct@." }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/String = /Test/exprKind
+                ( Value /e -> /Catln/RawExpr/RawMethod
+                    ( /base=/Catln/RawExpr/RawValue
+                        ( /name=/Data/String
+                        , /meta=/Catln/Meta
+                            ( /type=TopType
+                            , /dat=TopType
+                            , /id=TopType
+                            , /pos=TopType
+                            )
+                        )
+                    , /value=/Catln/RawExpr/RawValue
+                        ( /name=/Data/String
+                        , /meta=/Catln/Meta
+                            ( /type=TopType
+                            , /dat=TopType
+                            , /id=TopType
+                            , /pos=TopType
+                            )
+                        )
+                    , /meta=/Catln/Meta
+                        ( /type=TopType
+                        , /dat=TopType
+                        , /id=TopType
+                        , /pos=TopType
+                        )
+                    ) = /Catln/RawExpr/RawMethod
+                    ( Value /meta -> /Catln/Meta
+                        ( /type=TopType
+                        , /dat=TopType
+                        , /id=TopType
+                        , /pos=TopType
+                        ) = Value /Test/noMeta
+                    )
+                    ( Value /base -> /Catln/RawExpr/RawValue
+                        ( /name=/Data/String
+                        , /meta=/Catln/Meta
+                            ( /type=TopType
+                            , /dat=TopType
+                            , /id=TopType
+                            , /pos=TopType
+                            )
+                        ) = /Catln/RawExpr/RawValue
+                        ( Value /meta -> /Catln/Meta
+                            ( /type=TopType
+                            , /dat=TopType
+                            , /id=TopType
+                            , /pos=TopType
+                            ) = Value /Test/noMeta
+                        )
+                        ( Value /name -> /Data/String = CStr
+                            { csValue = "io" }
+                        )
+                    )
+                    ( Value /value -> /Catln/RawExpr/RawValue
+                        ( /name=/Data/String
+                        , /meta=/Catln/Meta
+                            ( /type=TopType
+                            , /dat=TopType
+                            , /id=TopType
+                            , /pos=TopType
+                            )
+                        ) = /Catln/RawExpr/RawValue
+                        ( Value /meta -> /Catln/Meta
+                            ( /type=TopType
+                            , /dat=TopType
+                            , /id=TopType
+                            , /pos=TopType
+                            ) = Value /Test/noMeta
+                        )
+                        ( Value /name -> /Data/String = CStr
+                            { csValue = "println" }
+                        )
+                    )
+                )
+            )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "method" }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/String = /Test/exprKind
+                ( Value /e -> /Catln/RawExpr/RawList
+                    ( /values=/Data/List/Nil
+                    , /meta=/Catln/Meta
+                        ( /type=TopType
+                        , /dat=TopType
+                        , /id=TopType
+                        , /pos=TopType
+                        )
+                    ) = /Catln/RawExpr/RawList
+                    ( Value /meta -> /Catln/Meta
+                        ( /type=TopType
+                        , /dat=TopType
+                        , /id=TopType
+                        , /pos=TopType
+                        ) = Value /Test/noMeta
+                    )( Value /values -> /Data/List/Nil = Value /Data/List/Nil )
+                )
+            )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "list" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr
+                { csValue = "## What a page holds" }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/String = /Test/objArrName
+                ( Value /oa -> /Catln/RawObjArr
+                    ( /arr=TopType
+                    , /obj=TopType
+                    , /annots=TopType
+                    , /doc=TopType
+                    , /def=TopType
+                    , /basis=TopType
+                    ) = /Test/emptyObjArr
+                    ( Value /name -> /Data/String = CStr
+                        { csValue = "myFn" }
+                    )
+                )
+            )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "myFn" }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/String = /Test/statementKind
+                ( Value /s -> /Catln/RawStatement/RawDeclStatement
+                    ( /objArr=/Catln/RawObjArr
+                        ( /arr=TopType
+                        , /obj=TopType
+                        , /annots=TopType
+                        , /doc=TopType
+                        , /def=TopType
+                        , /basis=TopType
+                        )
+                    ) = /Catln/RawStatement/RawDeclStatement
+                    ( Value /objArr -> /Catln/RawObjArr
+                        ( /arr=TopType
+                        , /obj=TopType
+                        , /annots=TopType
+                        , /doc=TopType
+                        , /def=TopType
+                        , /basis=TopType
+                        ) = /Test/emptyObjArr
+                        ( Value /name -> /Data/String = CStr
+                            { csValue = "myFn" }
+                        )
+                    )
+                )
+            )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "decl" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr
+                { csValue = "## A whole page, and the result of reading one" }
+            )
+        , /Catln/#print
+            ( Value /p -> UnionType
+                ( Just
+                    ( PredExpr /operator==
+                        ( /r=/Data/Primitive/True
+                        , /l=~nonNeg( /this=~/$this )
+                        ) && PredRel Integer
+                    , fromList []
+                    , []
+                    )
+                , /Data/Primitive/Integer
+                , []
+                ) = /Test/declCount
+                ( Value /p -> /Catln/RawPrgm
+                    ( /statements=TopType
+                    , /imports=TopType
+                    ) = Value /Test/emptyPrgm
+                )
+            )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "0" }
+            )
+        , /Catln/#print
+            ( Value /p -> UnionType
+                ( Just
+                    ( PredExpr /operator==
+                        ( /r=/Data/Primitive/True
+                        , /l=~nonNeg( /this=~/$this )
+                        ) && PredRel Integer
+                    , fromList []
+                    , []
+                    )
+                , /Data/Primitive/Integer
+                , []
+                ) = /Test/declCount
+                ( Value /p -> /Catln/RawPrgm
+                    ( /statements=TopType
+                    , /imports=TopType
+                    ) = /Test/onePrgm
+                    ( Value /name -> /Data/String = CStr
+                        { csValue = "myFn" }
+                    )
+                )
+            )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "1" }
+            )
+        , /Catln/#print
+            ( Value /p -> UnionType
+                ( Just
+                    ( PredExpr /operator==
+                        ( /r=/Data/Primitive/True
+                        , /l=~nonNeg( /this=~/$this )
+                        ) && PredRel Integer
+                    , fromList []
+                    , []
+                    )
+                , /Data/Primitive/Integer
+                , []
+                ) = /Test/resultDeclCount
+                ( Value /r -> /Catln/ImportResult
+                    ( /prgm=TopType
+                    , /reads=TopType
+                    , /source=TopType
+                    ) = /Test/oneResult
+                    ( Value /name -> /Data/String = CStr
+                        { csValue = "myFn" }
+                    )
+                )
+            )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "1" }
+            )
+        , /Catln/#print
+            ( Value /p -> UnionType
+                ( Just
+                    ( PredExpr /operator==
+                        ( /r=/Data/Primitive/True
+                        , /l=~nonNeg( /this=~/$this )
+                        ) && PredRel Integer
+                    , fromList []
+                    , []
+                    )
+                , /Data/Primitive/Integer
+                , []
+                ) = /Test/readsCount
+                ( Value /r -> /Catln/ImportResult
+                    ( /prgm=TopType
+                    , /reads=TopType
+                    , /source=TopType
+                    ) = /Test/oneResult
+                    ( Value /name -> /Data/String = CStr
+                        { csValue = "myFn" }
+                    )
+                )
+            )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "1" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr
+                { csValue = "## What the suite checks
+                The `>` examples above are checked by `catln test`, and the integration suite typechecks and
+                builds this file without comparing what they evaluate to — only a page under @stack/@ has its
+                examples run as cases, and no page under @stack/@ may import [hsrawprgm] without closing the
+                import cycle @core/result.ct@ measures. So the values are printed instead, and
+                @hsrawprgm.stdout.txt@ is what compares them." }
+            )
+        ]
+    }

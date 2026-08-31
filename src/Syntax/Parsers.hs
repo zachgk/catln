@@ -49,7 +49,8 @@ import           Syntax.Ct.Prgm
 import           Syntax.FileDir.Parser    (fileDirReference, fileDirSyntax)
 import           Syntax.Haskell.Parser    (hsSyntax)
 import           Syntax.HsBuiltins.Parser (hsBuiltins, hsBuiltinsSyntax, hsPrgm,
-                                           hsPrgmSyntax)
+                                           hsPrgmSyntax, hsRawPrgm,
+                                           hsRawPrgmSyntax)
 import           Syntax.InferImport       (dirSyntax, findImportPath,
                                            inferRawImportStr, parserImport,
                                            stackPath)
@@ -75,7 +76,8 @@ importSyntaxes = H.fromList [
   ("haskell", hsSyntax),
   ("python", pySyntax),
   (hsBuiltins, hsBuiltinsSyntax),
-  (hsPrgm, hsPrgmSyntax)
+  (hsPrgm, hsPrgmSyntax),
+  (hsRawPrgm, hsRawPrgmSyntax)
                              ]
 
 -- | The path an applied import names: its first positional argument.

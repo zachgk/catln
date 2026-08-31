@@ -14,6 +14,8 @@
 {-# LANGUAGE DeriveGeneric             #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE FlexibleContexts          #-}
+{-# LANGUAGE FlexibleInstances         #-}
 {-# LANGUAGE InstanceSigs              #-}
 
 module Syntax.Ct.Prgm where
@@ -30,6 +32,7 @@ import           Data.Maybe          (catMaybes, fromJust, isJust, mapMaybe)
 import           Data.Time.Clock     (UTCTime)
 import           Semantics
 import           Semantics.Annots    (isAnnot)
+import           Semantics.CtType    (CtType (..), ctBuiltinNamespace)
 import           Semantics.Prgm
 import           Semantics.Types
 import           System.Directory    (doesDirectoryExist, getModificationTime,
@@ -105,6 +108,76 @@ type RawFileImport = AFileImport (RawExpr ())
 data RawPrgm m = RawPrgm { rprgmImports :: [RawFileImport], rprgmStatements :: [RawStatementTree RawExpr m] } -- TODO: Include [Export]
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
+-- | The program as the parser produced it, read as a Catln type.
+--
+-- These are what @hsrawprgm()@ declares, and they are the OTHER side of what @hsprgm()@ declares.
+-- That page is the program the compiler has finished reducing — six kinds of expression, which is
+-- what a program that rewrites programs works on. This is the program as it was written, twenty
+-- kinds of expression including the sugar, which is what a program that PRODUCES one has to build.
+-- An importer is the case: it is handed a file and answers with a page of this.
+--
+-- Declared on a page of their own rather than added to @hsprgm()@ for the reason that page is
+-- separate from @hsbuiltins()@ — see 'Syntax.HsBuiltins.Types.hsPrgmTypes'. A program which reads
+-- programs need not pay for the syntax it never sees, and a program which writes one asks for it.
+--
+-- The instances are here rather than in "Syntax.HsBuiltins.Types" because a type says how it is read
+-- as a Catln one in the file it is declared in, so a constructor added to one of these cannot fail
+-- to reach the page. 'AFileImport' is the exception and is an orphan below, since it is declared in
+-- "Semantics.Prgm", which cannot name a 'RawExpr'.
+instance CtType (RawExpr ()) where
+  ctDoc _ = [
+    "An expression as it was written, before the compiler reduces what was written to what it means.",
+    "Where a [/Catln/Expr] is six arms, this is twenty: the sugar is still here. A [RawMethod] is `a.b`, a [RawList] is `[a, b]`, a [RawFmtStrExpr] is a format string, a [RawTheExpr] is `:Name`, and a [RawParen] is a bracket that was written. Each of them becomes a [TupleApply] of something once desugaring is done.",
+    "So this is what a program BUILDING a program writes, and [/Catln/Expr] is what a program READING one reads. An importer writes this."
+            ]
+
+instance CtType (TypeProperty RawExpr ()) where
+  ctDoc _ = [
+    "A property written about a type: a projection ([TypePropProj]) or a relation ([TypePropRel]), each by [name] and the [expr] it is written over."
+            ]
+
+instance CtType (RawApplyTerm RawExpr ())
+instance CtType (RawApply RawExpr ()) where
+  ctDoc _ = [
+    "The terms of an `apply` statement, which is how a program written in Catln rewrites itself."
+            ]
+
+instance CtType (RawObjArr RawExpr ()) where
+  ctDoc _ = [
+    "One thing written in a program, before desugaring: the [obj] written on the left and the [arr] it becomes.",
+    "The written counterpart of [/Catln/ObjArr]. [arr] is a [Pair] of what it becomes and the type it was annotated with, either of which may be absent — a declaration writes the type and no value, a definition writes the value and no type, and a pattern writes neither.",
+    "[def] is a default written for an argument, which nothing after desugaring carries."
+            ]
+
+instance CtType (RawStatement RawExpr ()) where
+  ctDoc _ = [
+    "One statement of a page: a declaration, a bind written with `<-`, or an annotation.",
+    "A [RawAnnot] is how a page's comments reach the program, since a doc comment is written as a [#md] annotation."
+            ]
+
+instance CtType (RawStatementTree RawExpr ()) where
+  ctDoc _ = [
+    "A statement and the statements written underneath it.",
+    "Catln is written by indentation, so a page is a forest rather than a list: what is indented under a declaration belongs to it, and what is indented under an annotation is annotated by it."
+            ]
+
+instance CtType (RawPrgm ()) where
+  ctDoc _ = [
+    "A page as it was written: the files it [imports] and the [statements] it holds.",
+    "This is what reading a file produces, and so what an importer written in Catln answers with. The compiler takes it from there — desugaring it, typechecking it and building it exactly as it would a page it had parsed itself."
+            ]
+
+-- | An import as it is written, read as a Catln type.
+--
+-- An orphan, and it has to be: 'AFileImport' is declared in "Semantics.Prgm", which sits below this
+-- module and cannot name the 'RawExpr' this is an import of.
+instance CtType (AFileImport (RawExpr ())) where
+  ctDoc _ = [
+    "One `import` line: the expression it was written as ([raw]), the expression it resolved to ([abs]), and where that landed.",
+    "[abs] is the identity of the page imported — two imports naming the same page are the same import, however each was written — and [raw] is what the file says, which is what the formatter writes back.",
+    "[disp] is the path the page is displayed at, [calledDir] the directory the import was written in, and [dir] the directory the page itself sits in, which is what a relative import inside it resolves against."
+            ]
+
 data ReplRes m
   = ReplStatement (RawStatementTree RawExpr m)
   | ReplExpr (RawExpr m)
@@ -138,6 +211,19 @@ data ReadPath
   -- | A directory and the listings under it, at any depth.
   | ReadTree { rtPath :: FilePath }
   deriving (Eq, Ord, Show, Generic, Hashable)
+
+-- | Something a reading looked at, read as a Catln type.
+--
+-- Declared so that an importer written in Catln can say what it read. It has to be able to: a
+-- reading which cannot say is one whose page is read again on every read
+-- ('Syntax.Parsers.readTimeCurrent'), which for an importer means being evaluated again on every
+-- read of the service.
+instance CtType ReadPath where
+  ctDoc _ = [
+    "Something a reading of a page looked at, and how it looked at it.",
+    "A [ReadFile] is a file whose text was read; a [ReadExists] is one a reading only found, which a write to does not change what was read. A [ReadDir] is a directory whose listing was read, and a [ReadTree] is a directory and everything under it.",
+    "A page is read again exactly when one of these is written to, so an importer which leaves one out is one whose page goes stale, and one which reports more than it read is a page read more often than it need be."
+            ]
 
 -- | Whether a reading of a tree walks into an entry named this.
 --
@@ -285,6 +371,26 @@ data ParsedImport = ParsedImport {
   piSource :: Maybe String,
   piReads  :: ReadPaths
                                  }
+  deriving (Generic)
+
+-- | What reading a page produced, read as a Catln type. This is what an importer written in Catln
+-- answers with, and it is the same record the compiler's own parsers answer with rather than a
+-- second shape kept in step with it.
+--
+-- Called @\/Catln\/ImportResult@ on the page though the Haskell type is 'ParsedImport', which is
+-- what 'ctPath' is overridable for — the Haskell name says it came from a parse, and the Catln name
+-- says what an importer is being asked for.
+--
+-- All three fields matter and none may be dropped. Without [reads] the page is read again on every
+-- read of the service, so the importer is evaluated again every time; without [source] a natively
+-- read page has no text for the doc server to show or the editor to save.
+instance CtType ParsedImport where
+  ctPath _ = ctBuiltinNamespace ++ "ImportResult"
+  ctDoc _ = [
+    "What reading a file produced: the [prgm] it holds, the [source] text it was read from, and what the reading [reads].",
+    "[source] is absent for a page which is not one file, and so has no single text to show. [reads] is absent for a reading which cannot say what it looked at, which is a page read again every time — an importer should say, and answer with the file it opened.",
+    "This is what an `#importer` declaration answers with. The compiler takes the program from here and desugars, typechecks and builds it exactly as it would a page it had parsed itself."
+            ]
 
 -- | Where a page sits in the import graph, and the program it holds where reading it was the only
 -- way to say.

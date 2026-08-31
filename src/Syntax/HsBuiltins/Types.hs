@@ -40,6 +40,7 @@ import           Semantics.Prgm      (Expr, Hole, Meta, ObjectBasis, Prgm)
 import           Semantics.Types     (Constant, PartialKey, PartialName,
                                       PtArgMode, Type, TypeVarLoc)
 import           Semantics.Val       hiding (Val)
+import           Syntax.Ct.Prgm      (ParsedImport, ReadPath)
 import           Text.Printf
 
 -- | One file a build produces.
@@ -109,6 +110,40 @@ hsPrgmTypes = [
 
 hsPrgmPage :: CtPage
 hsPrgmPage = foldl (flip ($)) emptyCtPage hsPrgmTypes
+
+-- | The program as it was WRITTEN, as types a Catln program can be handed.
+--
+-- The other side of 'hsPrgmTypes'. That page is the program the compiler has finished reducing, six
+-- kinds of expression, which is what a program that READS a program works on. This is the program as
+-- the parser produced it, twenty kinds of expression with the sugar still in them, which is what a
+-- program that PRODUCES one has to build — an importer written in Catln is handed a file and answers
+-- with a page of this.
+--
+-- A page of its own, below @hsprgm()@ rather than beside it, for the reason that page is below
+-- @hsbuiltins()@: what a page costs is paid by everything that imports it. A program which reads
+-- programs need not carry the syntax it never sees.
+--
+-- 'ParsedImport' reaches the whole of the raw syntax, and 'ReadPath' is named alone because nothing
+-- else reaches it — 'ParsedImport' holds it behind two containers, which the walk follows, but
+-- naming it first is what puts its declaration above the record that uses it.
+hsRawPrgmTypes :: [CtPage -> CtPage]
+hsRawPrgmTypes = [
+  ctPageInto (Proxy :: Proxy ReadPath),
+  ctPageInto (Proxy :: Proxy ParsedImport)
+                 ]
+
+-- | The page, seeded with what @hsprgm()@ has already declared.
+--
+-- Seeded rather than built from nothing because a 'Syntax.Ct.Prgm.RawExpr' carries a
+-- 'Semantics.Prgm.Meta' and a 'Semantics.Types.Constant', and those are declared on the other page.
+-- An unseeded walk would declare @\/Catln\/Meta@ a second time, and a program importing both pages
+-- would be a program holding two of it. 'Semantics.CtType.cpSeen' is what the walk asks, so handing
+-- it the other page's answer is the whole of the fix.
+--
+-- 'cpImports' is NOT seeded, because those are pages this one must import for its own declarations
+-- to name something, and it must import them whether or not the other page also does.
+hsRawPrgmPage :: CtPage
+hsRawPrgmPage = foldl (flip ($)) emptyCtPage{cpSeen = cpSeen hsPrgmPage} hsRawPrgmTypes
 
 -- | The files of an evaluated @\/Catln\/CatlnResult@, or why the value is not one.
 --

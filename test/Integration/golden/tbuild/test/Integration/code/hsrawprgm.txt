@@ -1,0 +1,2608 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Test/emptyObjArr"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/emptyObjArr
+                            ( EAppArg { eaaArg = Value /name -> /Data/String } ) -> /Catln/RawObjArr
+                            ( /arr=TopType
+                            , /obj=TopType
+                            , /annots=TopType
+                            , /doc=TopType
+                            , /def=TopType
+                            , /basis=TopType
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/emptyObjArr
+                            ( EAppArg { eaaArg = Value /name -> /Data/String } ) -> /Catln/RawObjArr
+                            ( /arr=/Data/Maybe/Nothing
+                            , /obj=/Data/Maybe/Some
+                                ( /value=/Catln/RawExpr/RawValue
+                                    ( /name=/Data/String
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=TopType
+                                        , /id=TopType
+                                        , /pos=TopType
+                                        )
+                                    )
+                                )
+                            , /annots=/Data/List/Nil
+                            , /doc=/Data/Maybe/Nothing
+                            , /def=/Data/Maybe/Nothing
+                            , /basis=/Catln/ObjectBasis/FunctionObj
+                            ) = /Catln/RawObjArr
+                            ( EAppArg
+                                { eaaArg = Value /obj -> /Data/Maybe/Some
+                                    ( /value=/Catln/RawExpr/RawValue
+                                        ( /name=/Data/String
+                                        , /meta=/Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=TopType
+                                            , /id=TopType
+                                            , /pos=TopType
+                                            )
+                                        )
+                                    ) = /Data/Maybe/Some
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> /Catln/RawExpr/RawValue
+                                            ( /name=/Data/String
+                                            , /meta=/Catln/Meta
+                                                ( /type=TopType
+                                                , /dat=TopType
+                                                , /id=TopType
+                                                , /pos=TopType
+                                                )
+                                            ) = /Catln/RawExpr/RawValue
+                                            ( EAppArg
+                                                { eaaArg = Value /meta -> /Catln/Meta
+                                                    ( /type=TopType
+                                                    , /dat=TopType
+                                                    , /id=TopType
+                                                    , /pos=TopType
+                                                    ) =
+                                                    ( Value /Test/noMeta ↦ /Catln/Meta
+                                                        ( /type=TopType
+                                                        , /dat=TopType
+                                                        , /id=TopType
+                                                        , /pos=TopType
+                                                        )
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /name -> TVArg /name = ( Value /name ↦ TVArg /name ) }
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /basis -> /Catln/ObjectBasis/FunctionObj = Value /Catln/ObjectBasis/FunctionObj } )
+                            ( EAppArg { eaaArg = Value /doc -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /annots -> /Data/List/Nil = Value /Data/List/Nil } )
+                            ( EAppArg { eaaArg = Value /arr -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /def -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/declCount"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/declCount
+                            ( EAppArg
+                                { eaaArg = Value /p -> /Catln/RawPrgm
+                                    ( /statements=TopType
+                                    , /imports=TopType
+                                    )
+                                }
+                            ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/declCount
+                            ( EAppArg
+                                { eaaArg = Value /p -> /Catln/RawPrgm
+                                    ( /statements=TopType
+                                    , /imports=TopType
+                                    ) = /Catln/RawPrgm
+                                    ( EAppArg { eaaArg = Value /imports } )
+                                    ( EAppArg { eaaArg = Value /statements } )
+                                }
+                            ) -> /Data/Primitive/Integer =
+                            ( /Data/List/length
+                                ( EAppArg
+                                    { eaaArg = Value /this -> TVArg /statements = ( Value /statements ↦ TVArg /statements ) }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/readsCount"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/readsCount
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Catln/ImportResult
+                                    ( /prgm=TopType
+                                    , /reads=TopType
+                                    , /source=TopType
+                                    )
+                                }
+                            ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/readsCount
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Catln/ImportResult
+                                    ( /prgm=TopType
+                                    , /reads=/Data/Maybe/Nothing
+                                    , /source=TopType
+                                    ) = /Catln/ImportResult
+                                    ( EAppArg { eaaArg = Value /prgm } )
+                                    ( EAppArg { eaaArg = Value /source } )
+                                    ( EAppArg { eaaArg = Value /reads -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                                }
+                            ) -> /Data/Primitive/Integer = 0
+                        , /Test/readsCount
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Catln/ImportResult
+                                    ( /prgm=TopType
+                                    , /reads=/Data/Maybe/Some( /value=TopType )
+                                    , /source=TopType
+                                    ) = /Catln/ImportResult
+                                    ( EAppArg { eaaArg = Value /prgm } )
+                                    ( EAppArg { eaaArg = Value /source } )
+                                    ( EAppArg
+                                        { eaaArg = Value /reads -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some
+                                            ( EAppArg { eaaArg = Value /value } )
+                                        }
+                                    )
+                                }
+                            ) -> /Data/Primitive/Integer =
+                            ( /Data/List/length
+                                ( EAppArg
+                                    { eaaArg = Value /this -> TVArg /value = ( Value /value ↦ TVArg /value ) }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/objArrName"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/objArrName
+                            ( EAppArg
+                                { eaaArg = Value /oa -> /Catln/RawObjArr
+                                    ( /arr=TopType
+                                    , /obj=TopType
+                                    , /annots=TopType
+                                    , /doc=TopType
+                                    , /def=TopType
+                                    , /basis=TopType
+                                    )
+                                }
+                            ) -> /Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/objArrName
+                            ( EAppArg
+                                { eaaArg = Value /oa -> /Catln/RawObjArr
+                                    ( /arr=TopType
+                                    , /obj=/Data/Maybe/Some( /value=TopType )
+                                    , /annots=TopType
+                                    , /doc=TopType
+                                    , /def=TopType
+                                    , /basis=TopType
+                                    ) = /Catln/RawObjArr
+                                    ( EAppArg
+                                        { eaaArg = Value /obj -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some
+                                            ( EAppArg { eaaArg = Value /value } )
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /basis } )
+                                    ( EAppArg { eaaArg = Value /doc } )
+                                    ( EAppArg { eaaArg = Value /annots } )
+                                    ( EAppArg { eaaArg = Value /arr } )
+                                    ( EAppArg { eaaArg = Value /def } )
+                                }
+                            ) -> /Data/String =
+                            ( /Test/rawValueName
+                                ( EAppArg
+                                    { eaaArg = Value /e -> TVArg /value = ( Value /value ↦ TVArg /value ) }
+                                ) ↦ /Data/String
+                            )
+                        , /Test/objArrName
+                            ( EAppArg
+                                { eaaArg = Value /oa -> /Catln/RawObjArr
+                                    ( /arr=TopType
+                                    , /obj=/Data/Maybe/Nothing
+                                    , /annots=TopType
+                                    , /doc=TopType
+                                    , /def=TopType
+                                    , /basis=TopType
+                                    ) = /Catln/RawObjArr
+                                    ( EAppArg { eaaArg = Value /obj -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                                    ( EAppArg { eaaArg = Value /basis } )
+                                    ( EAppArg { eaaArg = Value /doc } )
+                                    ( EAppArg { eaaArg = Value /annots } )
+                                    ( EAppArg { eaaArg = Value /arr } )
+                                    ( EAppArg { eaaArg = Value /def } )
+                                }
+                            ) -> /Data/String = ""
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/resultDeclCount"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/resultDeclCount
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Catln/ImportResult
+                                    ( /prgm=TopType
+                                    , /reads=TopType
+                                    , /source=TopType
+                                    )
+                                }
+                            ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/resultDeclCount
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Catln/ImportResult
+                                    ( /prgm=TopType
+                                    , /reads=TopType
+                                    , /source=TopType
+                                    ) = /Catln/ImportResult
+                                    ( EAppArg { eaaArg = Value /prgm } )
+                                    ( EAppArg { eaaArg = Value /source } )
+                                    ( EAppArg { eaaArg = Value /reads } )
+                                }
+                            ) -> /Data/Primitive/Integer =
+                            ( /Test/declCount
+                                ( EAppArg
+                                    { eaaArg = Value /p -> TVArg /prgm = ( Value /prgm ↦ TVArg /prgm ) }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/onePrgm"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/onePrgm
+                            ( EAppArg { eaaArg = Value /name -> /Data/String } ) -> /Catln/RawPrgm
+                            ( /statements=TopType
+                            , /imports=TopType
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/onePrgm
+                            ( EAppArg { eaaArg = Value /name -> /Data/String } ) -> /Catln/RawPrgm
+                            ( /statements=/Data/List/Cons
+                                ( /head=/Catln/RawStatementTree
+                                    ( /statement=/Catln/RawStatement/RawDeclStatement
+                                        ( /objArr=/Catln/RawObjArr
+                                            ( /arr=TopType
+                                            , /obj=TopType
+                                            , /annots=TopType
+                                            , /doc=TopType
+                                            , /def=TopType
+                                            , /basis=TopType
+                                            )
+                                        )
+                                    , /children=/Data/List/Nil
+                                    )
+                                , /tail=/Data/List/Nil
+                                )
+                            , /imports=/Data/List/Nil
+                            ) = /Catln/RawPrgm
+                            ( EAppArg { eaaArg = Value /imports -> /Data/List/Nil = Value /Data/List/Nil } )
+                            ( EAppArg
+                                { eaaArg = Value /statements -> /Data/List/Cons
+                                    ( /head=/Catln/RawStatementTree
+                                        ( /statement=/Catln/RawStatement/RawDeclStatement
+                                            ( /objArr=/Catln/RawObjArr
+                                                ( /arr=TopType
+                                                , /obj=TopType
+                                                , /annots=TopType
+                                                , /doc=TopType
+                                                , /def=TopType
+                                                , /basis=TopType
+                                                )
+                                            )
+                                        , /children=/Data/List/Nil
+                                        )
+                                    , /tail=/Data/List/Nil
+                                    ) = /Data/List/Cons
+                                    ( EAppArg
+                                        { eaaArg = Value /head -> /Catln/RawStatementTree
+                                            ( /statement=/Catln/RawStatement/RawDeclStatement
+                                                ( /objArr=/Catln/RawObjArr
+                                                    ( /arr=TopType
+                                                    , /obj=TopType
+                                                    , /annots=TopType
+                                                    , /doc=TopType
+                                                    , /def=TopType
+                                                    , /basis=TopType
+                                                    )
+                                                )
+                                            , /children=/Data/List/Nil
+                                            ) = /Catln/RawStatementTree
+                                            ( EAppArg
+                                                { eaaArg = Value /statement -> /Catln/RawStatement/RawDeclStatement
+                                                    ( /objArr=/Catln/RawObjArr
+                                                        ( /arr=TopType
+                                                        , /obj=TopType
+                                                        , /annots=TopType
+                                                        , /doc=TopType
+                                                        , /def=TopType
+                                                        , /basis=TopType
+                                                        )
+                                                    ) = /Catln/RawStatement/RawDeclStatement
+                                                    ( EAppArg
+                                                        { eaaArg = Value /objArr -> /Catln/RawObjArr
+                                                            ( /arr=TopType
+                                                            , /obj=TopType
+                                                            , /annots=TopType
+                                                            , /doc=TopType
+                                                            , /def=TopType
+                                                            , /basis=TopType
+                                                            ) =
+                                                            ( /Test/emptyObjArr
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /name -> TVArg /name = ( Value /name ↦ TVArg /name ) }
+                                                                ) ↦ /Catln/RawObjArr
+                                                                ( /arr=TopType
+                                                                , /obj=TopType
+                                                                , /annots=TopType
+                                                                , /doc=TopType
+                                                                , /def=TopType
+                                                                , /basis=TopType
+                                                                )
+                                                            )
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg { eaaArg = Value /children -> /Data/List/Nil = Value /Data/List/Nil } )
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/noMeta"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value /Test/noMeta -> /Catln/Meta
+                            ( /type=TopType
+                            , /dat=TopType
+                            , /id=TopType
+                            , /pos=TopType
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Test/noMeta -> /Catln/Meta
+                            ( /type=/Catln/Type/UnionType
+                                ( /top=/Data/Maybe/Nothing
+                                , /consts=/Data/List/Nil
+                                , /leafs=/Data/List/Nil
+                                )
+                            , /dat=/Catln/Unit
+                            , /id=/Data/String
+                            , /pos=/Data/Maybe/Nothing
+                            ) = /Catln/Meta
+                            ( EAppArg
+                                { eaaArg = Value /type -> /Catln/Type/UnionType
+                                    ( /top=/Data/Maybe/Nothing
+                                    , /consts=/Data/List/Nil
+                                    , /leafs=/Data/List/Nil
+                                    ) = /Catln/Type/UnionType
+                                    ( EAppArg { eaaArg = Value /top -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                                    ( EAppArg { eaaArg = Value /leafs -> /Data/List/Nil = Value /Data/List/Nil } )
+                                    ( EAppArg { eaaArg = Value /consts -> /Data/List/Nil = Value /Data/List/Nil } )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /pos -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg
+                                { eaaArg = Value /id -> /Data/String = "" }
+                            )
+                            ( EAppArg { eaaArg = Value /dat -> /Catln/Unit = Value /Catln/Unit } )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
+                            ( /Catln/exit
+                                ( /this=/Catln/IO
+                                , /val=/Data/Primitive/Integer
+                                ) + /Catln/IO
+                            ) =
+                            ( /Catln/exit
+                                ( EAppArg
+                                    { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /this -> /Catln/IO =
+                                        ( /Catln/println
+                                            ( EAppArg
+                                                { eaaArg = Value /msg -> /Data/String =
+                                                    ( /Data/toString
+                                                        ( EAppArg
+                                                            { eaaArg = Value /this -> UnionType
+                                                                ( Just
+                                                                    ( PredExpr /operator==
+                                                                        ( /r=/Data/Primitive/True
+                                                                        , /l=~nonNeg( /this=~/$this )
+                                                                        ) && PredRel Integer && PredClass /Data/ToString
+                                                                    , fromList []
+                                                                    , []
+                                                                    )
+                                                                , /Data/Primitive/Integer
+                                                                , []
+                                                                ) =
+                                                                ( /Test/readsCount
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /r -> /Catln/ImportResult
+                                                                            ( /prgm=TopType
+                                                                            , /reads=TopType
+                                                                            , /source=TopType
+                                                                            ) =
+                                                                            ( /Test/oneResult
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /name -> /Data/String = "myFn" }
+                                                                                ) ↦ /Catln/ImportResult
+                                                                                ( /prgm=TopType
+                                                                                , /reads=TopType
+                                                                                , /source=TopType
+                                                                                )
+                                                                            )
+                                                                        }
+                                                                    ) ↦ UnionType
+                                                                    ( Just
+                                                                        ( PredExpr /operator==
+                                                                            ( /r=/Data/Primitive/True
+                                                                            , /l=~nonNeg( /this=~/$this )
+                                                                            ) && PredRel Integer && PredClass /Data/ToString
+                                                                        , fromList []
+                                                                        , []
+                                                                        )
+                                                                    , /Data/Primitive/Integer
+                                                                    , []
+                                                                    )
+                                                                )
+                                                            }
+                                                        ) ↦ /Data/String
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> /Catln/IO =
+                                                    ( /Catln/println
+                                                        ( EAppArg
+                                                            { eaaArg = Value /msg -> /Data/String =
+                                                                ( /Data/toString
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /this -> UnionType
+                                                                            ( Just
+                                                                                ( PredExpr /operator==
+                                                                                    ( /r=/Data/Primitive/True
+                                                                                    , /l=~nonNeg( /this=~/$this )
+                                                                                    ) && PredRel Integer && PredClass /Data/ToString
+                                                                                , fromList []
+                                                                                , []
+                                                                                )
+                                                                            , /Data/Primitive/Integer
+                                                                            , []
+                                                                            ) =
+                                                                            ( /Test/resultDeclCount
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /r -> /Catln/ImportResult
+                                                                                        ( /prgm=TopType
+                                                                                        , /reads=TopType
+                                                                                        , /source=TopType
+                                                                                        ) =
+                                                                                        ( /Test/oneResult
+                                                                                            ( EAppArg
+                                                                                                { eaaArg = Value /name -> /Data/String = "myFn" }
+                                                                                            ) ↦ /Catln/ImportResult
+                                                                                            ( /prgm=TopType
+                                                                                            , /reads=TopType
+                                                                                            , /source=TopType
+                                                                                            )
+                                                                                        )
+                                                                                    }
+                                                                                ) ↦ UnionType
+                                                                                ( Just
+                                                                                    ( PredExpr /operator==
+                                                                                        ( /r=/Data/Primitive/True
+                                                                                        , /l=~nonNeg( /this=~/$this )
+                                                                                        ) && PredRel Integer && PredClass /Data/ToString
+                                                                                    , fromList []
+                                                                                    , []
+                                                                                    )
+                                                                                , /Data/Primitive/Integer
+                                                                                , []
+                                                                                )
+                                                                            )
+                                                                        }
+                                                                    ) ↦ /Data/String
+                                                                )
+                                                            }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /this -> /Catln/IO =
+                                                                ( /Catln/println
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /msg -> /Data/String =
+                                                                            ( /Data/toString
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /this -> UnionType
+                                                                                        ( Just
+                                                                                            ( PredExpr /operator==
+                                                                                                ( /r=/Data/Primitive/True
+                                                                                                , /l=~nonNeg( /this=~/$this )
+                                                                                                ) && PredRel Integer && PredClass /Data/ToString
+                                                                                            , fromList []
+                                                                                            , []
+                                                                                            )
+                                                                                        , /Data/Primitive/Integer
+                                                                                        , []
+                                                                                        ) =
+                                                                                        ( /Test/declCount
+                                                                                            ( EAppArg
+                                                                                                { eaaArg = Value /p -> /Catln/RawPrgm
+                                                                                                    ( /statements=TopType
+                                                                                                    , /imports=TopType
+                                                                                                    ) =
+                                                                                                    ( /Test/onePrgm
+                                                                                                        ( EAppArg
+                                                                                                            { eaaArg = Value /name -> /Data/String = "myFn" }
+                                                                                                        ) ↦ /Catln/RawPrgm
+                                                                                                        ( /statements=TopType
+                                                                                                        , /imports=TopType
+                                                                                                        )
+                                                                                                    )
+                                                                                                }
+                                                                                            ) ↦ UnionType
+                                                                                            ( Just
+                                                                                                ( PredExpr /operator==
+                                                                                                    ( /r=/Data/Primitive/True
+                                                                                                    , /l=~nonNeg( /this=~/$this )
+                                                                                                    ) && PredRel Integer && PredClass /Data/ToString
+                                                                                                , fromList []
+                                                                                                , []
+                                                                                                )
+                                                                                            , /Data/Primitive/Integer
+                                                                                            , []
+                                                                                            )
+                                                                                        )
+                                                                                    }
+                                                                                ) ↦ /Data/String
+                                                                            )
+                                                                        }
+                                                                    )
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /this -> /Catln/IO =
+                                                                            ( /Catln/println
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /msg -> /Data/String =
+                                                                                        ( /Test/statementKind
+                                                                                            ( EAppArg
+                                                                                                { eaaArg = Value /s -> /Catln/RawStatement/RawDeclStatement
+                                                                                                    ( /objArr=/Catln/RawObjArr
+                                                                                                        ( /arr=TopType
+                                                                                                        , /obj=TopType
+                                                                                                        , /annots=TopType
+                                                                                                        , /doc=TopType
+                                                                                                        , /def=TopType
+                                                                                                        , /basis=TopType
+                                                                                                        )
+                                                                                                    ) = /Catln/RawStatement/RawDeclStatement
+                                                                                                    ( EAppArg
+                                                                                                        { eaaArg = Value /objArr -> /Catln/RawObjArr
+                                                                                                            ( /arr=TopType
+                                                                                                            , /obj=TopType
+                                                                                                            , /annots=TopType
+                                                                                                            , /doc=TopType
+                                                                                                            , /def=TopType
+                                                                                                            , /basis=TopType
+                                                                                                            ) =
+                                                                                                            ( /Test/emptyObjArr
+                                                                                                                ( EAppArg
+                                                                                                                    { eaaArg = Value /name -> /Data/String = "myFn" }
+                                                                                                                ) ↦ /Catln/RawObjArr
+                                                                                                                ( /arr=TopType
+                                                                                                                , /obj=TopType
+                                                                                                                , /annots=TopType
+                                                                                                                , /doc=TopType
+                                                                                                                , /def=TopType
+                                                                                                                , /basis=TopType
+                                                                                                                )
+                                                                                                            )
+                                                                                                        }
+                                                                                                    )
+                                                                                                }
+                                                                                            ) ↦ /Data/String
+                                                                                        )
+                                                                                    }
+                                                                                )
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /this -> /Catln/IO =
+                                                                                        ( /Catln/println
+                                                                                            ( EAppArg
+                                                                                                { eaaArg = Value /msg -> /Data/String =
+                                                                                                    ( /Test/objArrName
+                                                                                                        ( EAppArg
+                                                                                                            { eaaArg = Value /oa -> /Catln/RawObjArr
+                                                                                                                ( /arr=TopType
+                                                                                                                , /obj=TopType
+                                                                                                                , /annots=TopType
+                                                                                                                , /doc=TopType
+                                                                                                                , /def=TopType
+                                                                                                                , /basis=TopType
+                                                                                                                ) =
+                                                                                                                ( /Test/emptyObjArr
+                                                                                                                    ( EAppArg
+                                                                                                                        { eaaArg = Value /name -> /Data/String = "myFn" }
+                                                                                                                    ) ↦ /Catln/RawObjArr
+                                                                                                                    ( /arr=TopType
+                                                                                                                    , /obj=TopType
+                                                                                                                    , /annots=TopType
+                                                                                                                    , /doc=TopType
+                                                                                                                    , /def=TopType
+                                                                                                                    , /basis=TopType
+                                                                                                                    )
+                                                                                                                )
+                                                                                                            }
+                                                                                                        ) ↦ /Data/String
+                                                                                                    )
+                                                                                                }
+                                                                                            )
+                                                                                            ( EAppArg
+                                                                                                { eaaArg = Value /this -> /Catln/IO =
+                                                                                                    ( /Catln/println
+                                                                                                        ( EAppArg
+                                                                                                            { eaaArg = Value /msg -> /Data/String =
+                                                                                                                ( /Test/exprKind
+                                                                                                                    ( EAppArg
+                                                                                                                        { eaaArg = Value /e -> /Catln/RawExpr/RawList
+                                                                                                                            ( /values=/Data/List/Nil
+                                                                                                                            , /meta=/Catln/Meta
+                                                                                                                                ( /type=TopType
+                                                                                                                                , /dat=TopType
+                                                                                                                                , /id=TopType
+                                                                                                                                , /pos=TopType
+                                                                                                                                )
+                                                                                                                            ) = /Catln/RawExpr/RawList
+                                                                                                                            ( EAppArg
+                                                                                                                                { eaaArg = Value /meta -> /Catln/Meta
+                                                                                                                                    ( /type=TopType
+                                                                                                                                    , /dat=TopType
+                                                                                                                                    , /id=TopType
+                                                                                                                                    , /pos=TopType
+                                                                                                                                    ) =
+                                                                                                                                    ( Value /Test/noMeta ↦ /Catln/Meta
+                                                                                                                                        ( /type=TopType
+                                                                                                                                        , /dat=TopType
+                                                                                                                                        , /id=TopType
+                                                                                                                                        , /pos=TopType
+                                                                                                                                        )
+                                                                                                                                    )
+                                                                                                                                }
+                                                                                                                            )
+                                                                                                                            ( EAppArg { eaaArg = Value /values -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                                                                                        }
+                                                                                                                    ) ↦ /Data/String
+                                                                                                                )
+                                                                                                            }
+                                                                                                        )
+                                                                                                        ( EAppArg
+                                                                                                            { eaaArg = Value /this -> /Catln/IO =
+                                                                                                                ( /Catln/println
+                                                                                                                    ( EAppArg
+                                                                                                                        { eaaArg = Value /msg -> /Data/String =
+                                                                                                                            ( /Test/rawValueName
+                                                                                                                                ( EAppArg
+                                                                                                                                    { eaaArg = Value /e -> /Catln/RawExpr/RawValue
+                                                                                                                                        ( /name=/Data/String
+                                                                                                                                        , /meta=/Catln/Meta
+                                                                                                                                            ( /type=TopType
+                                                                                                                                            , /dat=TopType
+                                                                                                                                            , /id=TopType
+                                                                                                                                            , /pos=TopType
+                                                                                                                                            )
+                                                                                                                                        ) = /Catln/RawExpr/RawValue
+                                                                                                                                        ( EAppArg
+                                                                                                                                            { eaaArg = Value /meta -> /Catln/Meta
+                                                                                                                                                ( /type=TopType
+                                                                                                                                                , /dat=TopType
+                                                                                                                                                , /id=TopType
+                                                                                                                                                , /pos=TopType
+                                                                                                                                                ) =
+                                                                                                                                                ( Value /Test/noMeta ↦ /Catln/Meta
+                                                                                                                                                    ( /type=TopType
+                                                                                                                                                    , /dat=TopType
+                                                                                                                                                    , /id=TopType
+                                                                                                                                                    , /pos=TopType
+                                                                                                                                                    )
+                                                                                                                                                )
+                                                                                                                                            }
+                                                                                                                                        )
+                                                                                                                                        ( EAppArg
+                                                                                                                                            { eaaArg = Value /name -> /Data/String = "foo" }
+                                                                                                                                        )
+                                                                                                                                    }
+                                                                                                                                ) ↦ /Data/String
+                                                                                                                            )
+                                                                                                                        }
+                                                                                                                    )
+                                                                                                                    ( EAppArg
+                                                                                                                        { eaaArg = Value /this -> /Catln/IO =
+                                                                                                                            ( /Catln/println
+                                                                                                                                ( EAppArg
+                                                                                                                                    { eaaArg = Value /msg -> /Data/String =
+                                                                                                                                        ( /Test/exprKind
+                                                                                                                                            ( EAppArg
+                                                                                                                                                { eaaArg = Value /e -> /Catln/RawExpr/RawValue
+                                                                                                                                                    ( /name=/Data/String
+                                                                                                                                                    , /meta=/Catln/Meta
+                                                                                                                                                        ( /type=TopType
+                                                                                                                                                        , /dat=TopType
+                                                                                                                                                        , /id=TopType
+                                                                                                                                                        , /pos=TopType
+                                                                                                                                                        )
+                                                                                                                                                    ) = /Catln/RawExpr/RawValue
+                                                                                                                                                    ( EAppArg
+                                                                                                                                                        { eaaArg = Value /meta -> /Catln/Meta
+                                                                                                                                                            ( /type=TopType
+                                                                                                                                                            , /dat=TopType
+                                                                                                                                                            , /id=TopType
+                                                                                                                                                            , /pos=TopType
+                                                                                                                                                            ) =
+                                                                                                                                                            ( Value /Test/noMeta ↦ /Catln/Meta
+                                                                                                                                                                ( /type=TopType
+                                                                                                                                                                , /dat=TopType
+                                                                                                                                                                , /id=TopType
+                                                                                                                                                                , /pos=TopType
+                                                                                                                                                                )
+                                                                                                                                                            )
+                                                                                                                                                        }
+                                                                                                                                                    )
+                                                                                                                                                    ( EAppArg
+                                                                                                                                                        { eaaArg = Value /name -> /Data/String = "foo" }
+                                                                                                                                                    )
+                                                                                                                                                }
+                                                                                                                                            ) ↦ /Data/String
+                                                                                                                                        )
+                                                                                                                                    }
+                                                                                                                                )
+                                                                                                                                ( EAppArg
+                                                                                                                                    { eaaArg = Value /this -> /Catln/IO =
+                                                                                                                                        ( /Catln/println
+                                                                                                                                            ( EAppArg
+                                                                                                                                                { eaaArg = Value /msg -> /Data/String =
+                                                                                                                                                    ( /Test/readKind
+                                                                                                                                                        ( EAppArg
+                                                                                                                                                            { eaaArg = Value /r -> /Catln/ReadPath/ReadDir( /path=/Data/String ) = /Catln/ReadPath/ReadDir
+                                                                                                                                                                ( EAppArg
+                                                                                                                                                                    { eaaArg = Value /path -> /Data/String = "src" }
+                                                                                                                                                                )
+                                                                                                                                                            }
+                                                                                                                                                        ) ↦ /Data/String
+                                                                                                                                                    )
+                                                                                                                                                }
+                                                                                                                                            )
+                                                                                                                                            ( EAppArg
+                                                                                                                                                { eaaArg = Value /this -> /Catln/IO =
+                                                                                                                                                    ( /Catln/println
+                                                                                                                                                        ( EAppArg
+                                                                                                                                                            { eaaArg = Value /msg -> /Data/String =
+                                                                                                                                                                ( /Test/pathOf
+                                                                                                                                                                    ( EAppArg
+                                                                                                                                                                        { eaaArg = Value /r -> /Catln/ReadPath/ReadFile( /path=/Data/String ) = /Catln/ReadPath/ReadFile
+                                                                                                                                                                            ( EAppArg
+                                                                                                                                                                                { eaaArg = Value /path -> /Data/String = "a.ct" }
+                                                                                                                                                                            )
+                                                                                                                                                                        }
+                                                                                                                                                                    ) ↦ /Data/String
+                                                                                                                                                                )
+                                                                                                                                                            }
+                                                                                                                                                        )
+                                                                                                                                                        ( EAppArg
+                                                                                                                                                            { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                                                                                                                                        ) ↦ /Catln/IO
+                                                                                                                                                    )
+                                                                                                                                                }
+                                                                                                                                            ) ↦ /Catln/IO
+                                                                                                                                        )
+                                                                                                                                    }
+                                                                                                                                ) ↦ /Catln/IO
+                                                                                                                            )
+                                                                                                                        }
+                                                                                                                    ) ↦ /Catln/IO
+                                                                                                                )
+                                                                                                            }
+                                                                                                        ) ↦ /Catln/IO
+                                                                                                    )
+                                                                                                }
+                                                                                            ) ↦ /Catln/IO
+                                                                                        )
+                                                                                    }
+                                                                                ) ↦ /Catln/IO
+                                                                            )
+                                                                        }
+                                                                    ) ↦ /Catln/IO
+                                                                )
+                                                            }
+                                                        ) ↦ /Catln/IO
+                                                    )
+                                                }
+                                            ) ↦ /Catln/IO
+                                        )
+                                    }
+                                ) ↦ /Catln/IO
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/exprKind"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/exprKind
+                            ( EAppArg { eaaArg = Value /e -> ∀/Catln/RawExpr } ) -> /Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/exprKind
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawCExpr
+                                    ( /const=∀/Catln/Constant
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ) = /Catln/RawExpr/RawCExpr
+                                    ( EAppArg
+                                        { eaaArg = Value /meta -> /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /const -> ∀/Catln/Constant } )
+                                }
+                            ) -> /Data/String = "const"
+                        , /Test/exprKind
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawValue
+                                    ( /name=/Data/String
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ) = /Catln/RawExpr/RawValue
+                                    ( EAppArg
+                                        { eaaArg = Value /meta -> /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                                }
+                            ) -> /Data/String = "value"
+                        , /Test/exprKind
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawHoleExpr
+                                    ( /hole=∀/Catln/Hole
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ) = /Catln/RawExpr/RawHoleExpr
+                                    ( EAppArg
+                                        { eaaArg = Value /meta -> /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /hole -> ∀/Catln/Hole } )
+                                }
+                            ) -> /Data/String = "hole"
+                        , /Test/exprKind
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawMacroValue
+                                    ( /name=/Data/String
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ) = /Catln/RawExpr/RawMacroValue
+                                    ( EAppArg
+                                        { eaaArg = Value /meta -> /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                                }
+                            ) -> /Data/String = "macro"
+                        , /Test/exprKind
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawApplyExpr
+                                    ( /apply=/Catln/RawApply( /terms=TopType )
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ) = /Catln/RawExpr/RawApplyExpr
+                                    ( EAppArg
+                                        { eaaArg = Value /meta -> /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /apply -> /Catln/RawApply( /terms=TopType ) }
+                                    )
+                                }
+                            ) -> /Data/String = "apply"
+                        , /Test/exprKind
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawFmtStrExpr
+                                    ( /str=/Data/String
+                                    , /name=/Data/String
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ) = /Catln/RawExpr/RawFmtStrExpr
+                                    ( EAppArg
+                                        { eaaArg = Value /meta -> /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                                    ( EAppArg { eaaArg = Value /str -> /Data/String } )
+                                }
+                            ) -> /Data/String = "fmtStr"
+                        , /Test/exprKind
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawTheExpr( /expr=∀/Catln/RawExpr ) = /Catln/RawExpr/RawTheExpr
+                                    ( EAppArg { eaaArg = Value /expr -> ∀/Catln/RawExpr } )
+                                }
+                            ) -> /Data/String = "the"
+                        , /Test/exprKind
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawAliasExpr
+                                    ( /base=∀/Catln/RawExpr
+                                    , /alias=∀/Catln/RawExpr
+                                    ) = /Catln/RawExpr/RawAliasExpr
+                                    ( EAppArg { eaaArg = Value /base -> ∀/Catln/RawExpr } )
+                                    ( EAppArg { eaaArg = Value /alias -> ∀/Catln/RawExpr } )
+                                }
+                            ) -> /Data/String = "alias"
+                        , /Test/exprKind
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawTupleApply
+                                    ( /args=∀/Data/List
+                                        [ /T=/Catln/Pair
+                                            [ /B=/Catln/RawObjArr
+                                            , /A=∀/Data/Primitive/Boolean
+                                            ]
+                                        ]
+                                    , /base=/Catln/Pair
+                                        [ /B=∀/Catln/RawExpr
+                                        , /A=/Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        ]
+                                        ( /first=/Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        , /second=∀/Catln/RawExpr
+                                        )
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ) = /Catln/RawExpr/RawTupleApply
+                                    ( EAppArg
+                                        { eaaArg = Value /meta -> /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /base -> /Catln/Pair
+                                            [ /B=∀/Catln/RawExpr
+                                            , /A=/Catln/Meta
+                                                ( /type=TopType
+                                                , /dat=/Catln/Unit
+                                                , /id=/Data/String
+                                                , /pos=TopType
+                                                )
+                                            ]
+                                            ( /first=/Catln/Meta
+                                                ( /type=TopType
+                                                , /dat=/Catln/Unit
+                                                , /id=/Data/String
+                                                , /pos=TopType
+                                                )
+                                            , /second=∀/Catln/RawExpr
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /args -> ∀/Data/List
+                                            [ /T=/Catln/Pair
+                                                [ /B=/Catln/RawObjArr
+                                                , /A=∀/Data/Primitive/Boolean
+                                                ]
+                                            ]
+                                        }
+                                    )
+                                }
+                            ) -> /Data/String = "tupleApply"
+                        , /Test/exprKind
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawVarsApply
+                                    ( /vars=∀/Data/List[ /T=/Catln/RawObjArr ]
+                                    , /base=∀/Catln/RawExpr
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ) = /Catln/RawExpr/RawVarsApply
+                                    ( EAppArg
+                                        { eaaArg = Value /meta -> /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /base -> ∀/Catln/RawExpr } )
+                                    ( EAppArg
+                                        { eaaArg = Value /vars -> ∀/Data/List[ /T=/Catln/RawObjArr ] }
+                                    )
+                                }
+                            ) -> /Data/String = "varsApply"
+                        , /Test/exprKind
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawContextApply
+                                    ( /args=∀/Data/List[ /T=/Catln/RawObjArr ]
+                                    , /base=/Catln/Pair
+                                        [ /B=∀/Catln/RawExpr
+                                        , /A=/Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        ]
+                                        ( /first=/Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        , /second=∀/Catln/RawExpr
+                                        )
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ) = /Catln/RawExpr/RawContextApply
+                                    ( EAppArg
+                                        { eaaArg = Value /meta -> /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /base -> /Catln/Pair
+                                            [ /B=∀/Catln/RawExpr
+                                            , /A=/Catln/Meta
+                                                ( /type=TopType
+                                                , /dat=/Catln/Unit
+                                                , /id=/Data/String
+                                                , /pos=TopType
+                                                )
+                                            ]
+                                            ( /first=/Catln/Meta
+                                                ( /type=TopType
+                                                , /dat=/Catln/Unit
+                                                , /id=/Data/String
+                                                , /pos=TopType
+                                                )
+                                            , /second=∀/Catln/RawExpr
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /args -> ∀/Data/List[ /T=/Catln/RawObjArr ] }
+                                    )
+                                }
+                            ) -> /Data/String = "contextApply"
+                        , /Test/exprKind
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawWhere
+                                    ( /base=∀/Catln/RawExpr
+                                    , /cond=∀/Catln/RawExpr
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ) = /Catln/RawExpr/RawWhere
+                                    ( EAppArg
+                                        { eaaArg = Value /meta -> /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /base -> ∀/Catln/RawExpr } )
+                                    ( EAppArg { eaaArg = Value /cond -> ∀/Catln/RawExpr } )
+                                }
+                            ) -> /Data/String = "where"
+                        , /Test/exprKind
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawParen( /expr=∀/Catln/RawExpr ) = /Catln/RawExpr/RawParen
+                                    ( EAppArg { eaaArg = Value /expr -> ∀/Catln/RawExpr } )
+                                }
+                            ) -> /Data/String = "paren"
+                        , /Test/exprKind
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawMethod
+                                    ( /base=∀/Catln/RawExpr
+                                    , /value=∀/Catln/RawExpr
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ) = /Catln/RawExpr/RawMethod
+                                    ( EAppArg
+                                        { eaaArg = Value /meta -> /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /base -> ∀/Catln/RawExpr } )
+                                    ( EAppArg { eaaArg = Value /value -> ∀/Catln/RawExpr } )
+                                }
+                            ) -> /Data/String = "method"
+                        , /Test/exprKind
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawList
+                                    ( /values=∀/Data/List[ /T=∀/Catln/RawExpr ]
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ) = /Catln/RawExpr/RawList
+                                    ( EAppArg
+                                        { eaaArg = Value /meta -> /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /values -> ∀/Data/List[ /T=∀/Catln/RawExpr ] }
+                                    )
+                                }
+                            ) -> /Data/String = "list"
+                        , /Test/exprKind
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawTypeProp
+                                    ( /prop=∀/Catln/TypeProperty
+                                    , /base=∀/Catln/RawExpr
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ) = /Catln/RawExpr/RawTypeProp
+                                    ( EAppArg
+                                        { eaaArg = Value /meta -> /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /base -> ∀/Catln/RawExpr } )
+                                    ( EAppArg { eaaArg = Value /prop -> ∀/Catln/TypeProperty } )
+                                }
+                            ) -> /Data/String = "typeProp"
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/emptyPrgm"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value /Test/emptyPrgm -> /Catln/RawPrgm
+                            ( /statements=TopType
+                            , /imports=TopType
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Test/emptyPrgm -> /Catln/RawPrgm
+                            ( /statements=/Data/List/Nil
+                            , /imports=/Data/List/Nil
+                            ) = /Catln/RawPrgm
+                            ( EAppArg { eaaArg = Value /imports -> /Data/List/Nil = Value /Data/List/Nil } )
+                            ( EAppArg { eaaArg = Value /statements -> /Data/List/Nil = Value /Data/List/Nil } )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/oneResult"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/oneResult
+                            ( EAppArg { eaaArg = Value /name -> /Data/String } ) -> /Catln/ImportResult
+                            ( /prgm=TopType
+                            , /reads=TopType
+                            , /source=TopType
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/oneResult
+                            ( EAppArg { eaaArg = Value /name -> /Data/String } ) -> /Catln/ImportResult
+                            ( /prgm=/Catln/RawPrgm
+                                ( /statements=TopType
+                                , /imports=TopType
+                                )
+                            , /reads=/Data/Maybe/Some
+                                ( /value=/Data/List/Cons
+                                    ( /head=/Catln/ReadPath/ReadFile( /path=/Data/String )
+                                    , /tail=/Data/List/Nil
+                                    )
+                                )
+                            , /source=/Data/Maybe/Some( /value=/Data/String )
+                            ) = /Catln/ImportResult
+                            ( EAppArg
+                                { eaaArg = Value /prgm -> /Catln/RawPrgm
+                                    ( /statements=TopType
+                                    , /imports=TopType
+                                    ) =
+                                    ( /Test/onePrgm
+                                        ( EAppArg
+                                            { eaaArg = Value /name -> TVArg /name = ( Value /name ↦ TVArg /name ) }
+                                        ) ↦ /Catln/RawPrgm
+                                        ( /statements=TopType
+                                        , /imports=TopType
+                                        )
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /source -> /Data/Maybe/Some( /value=/Data/String ) = /Data/Maybe/Some
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> /Data/String = "src" }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /reads -> /Data/Maybe/Some
+                                    ( /value=/Data/List/Cons
+                                        ( /head=/Catln/ReadPath/ReadFile( /path=/Data/String )
+                                        , /tail=/Data/List/Nil
+                                        )
+                                    ) = /Data/Maybe/Some
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> /Data/List/Cons
+                                            ( /head=/Catln/ReadPath/ReadFile( /path=/Data/String )
+                                            , /tail=/Data/List/Nil
+                                            ) = /Data/List/Cons
+                                            ( EAppArg
+                                                { eaaArg = Value /head -> /Catln/ReadPath/ReadFile( /path=/Data/String ) = /Catln/ReadPath/ReadFile
+                                                    ( EAppArg
+                                                        { eaaArg = Value /path -> /Data/String = "a.py" }
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                        }
+                                    )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/readKind"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/readKind
+                            ( EAppArg { eaaArg = Value /r -> ∀/Catln/ReadPath } ) -> /Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/readKind
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Catln/ReadPath/ReadFile( /path=/Data/String ) = /Catln/ReadPath/ReadFile
+                                    ( EAppArg { eaaArg = Value /path -> /Data/String } )
+                                }
+                            ) -> /Data/String = "file"
+                        , /Test/readKind
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Catln/ReadPath/ReadExists( /path=/Data/String ) = /Catln/ReadPath/ReadExists
+                                    ( EAppArg { eaaArg = Value /path -> /Data/String } )
+                                }
+                            ) -> /Data/String = "exists"
+                        , /Test/readKind
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Catln/ReadPath/ReadDir( /path=/Data/String ) = /Catln/ReadPath/ReadDir
+                                    ( EAppArg { eaaArg = Value /path -> /Data/String } )
+                                }
+                            ) -> /Data/String = "dir"
+                        , /Test/readKind
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Catln/ReadPath/ReadTree( /path=/Data/String ) = /Catln/ReadPath/ReadTree
+                                    ( EAppArg { eaaArg = Value /path -> /Data/String } )
+                                }
+                            ) -> /Data/String = "tree"
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/rawValueName"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/rawValueName
+                            ( EAppArg { eaaArg = Value /e -> ∀/Catln/RawExpr } ) -> /Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/rawValueName
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawValue
+                                    ( /name=/Data/String
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ) = /Catln/RawExpr/RawValue
+                                    ( EAppArg
+                                        { eaaArg = Value /meta -> /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                                }
+                            ) -> /Data/String = ( Value /name ↦ /Data/String )
+                        , /Test/rawValueName
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawCExpr
+                                    ( /const=∀/Catln/Constant
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ) = /Catln/RawExpr/RawCExpr
+                                    ( EAppArg
+                                        { eaaArg = Value /meta -> /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /const -> ∀/Catln/Constant } )
+                                }
+                            ) -> /Data/String = ""
+                        , /Test/rawValueName
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawHoleExpr
+                                    ( /hole=∀/Catln/Hole
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ) = /Catln/RawExpr/RawHoleExpr
+                                    ( EAppArg
+                                        { eaaArg = Value /meta -> /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /hole -> ∀/Catln/Hole } )
+                                }
+                            ) -> /Data/String = ""
+                        , /Test/rawValueName
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawMacroValue
+                                    ( /name=/Data/String
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ) = /Catln/RawExpr/RawMacroValue
+                                    ( EAppArg
+                                        { eaaArg = Value /meta -> /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                                }
+                            ) -> /Data/String = ""
+                        , /Test/rawValueName
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawApplyExpr
+                                    ( /apply=/Catln/RawApply( /terms=TopType )
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ) = /Catln/RawExpr/RawApplyExpr
+                                    ( EAppArg
+                                        { eaaArg = Value /meta -> /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /apply -> /Catln/RawApply( /terms=TopType ) }
+                                    )
+                                }
+                            ) -> /Data/String = ""
+                        , /Test/rawValueName
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawFmtStrExpr
+                                    ( /str=/Data/String
+                                    , /name=/Data/String
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ) = /Catln/RawExpr/RawFmtStrExpr
+                                    ( EAppArg
+                                        { eaaArg = Value /meta -> /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                                    ( EAppArg { eaaArg = Value /str -> /Data/String } )
+                                }
+                            ) -> /Data/String = ""
+                        , /Test/rawValueName
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawTheExpr( /expr=∀/Catln/RawExpr ) = /Catln/RawExpr/RawTheExpr
+                                    ( EAppArg { eaaArg = Value /expr -> ∀/Catln/RawExpr } )
+                                }
+                            ) -> /Data/String = ""
+                        , /Test/rawValueName
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawAliasExpr
+                                    ( /base=∀/Catln/RawExpr
+                                    , /alias=∀/Catln/RawExpr
+                                    ) = /Catln/RawExpr/RawAliasExpr
+                                    ( EAppArg { eaaArg = Value /base -> ∀/Catln/RawExpr } )
+                                    ( EAppArg { eaaArg = Value /alias -> ∀/Catln/RawExpr } )
+                                }
+                            ) -> /Data/String = ""
+                        , /Test/rawValueName
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawTupleApply
+                                    ( /args=∀/Data/List
+                                        [ /T=/Catln/Pair
+                                            [ /B=/Catln/RawObjArr
+                                            , /A=∀/Data/Primitive/Boolean
+                                            ]
+                                        ]
+                                    , /base=/Catln/Pair
+                                        [ /B=∀/Catln/RawExpr
+                                        , /A=/Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        ]
+                                        ( /first=/Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        , /second=∀/Catln/RawExpr
+                                        )
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ) = /Catln/RawExpr/RawTupleApply
+                                    ( EAppArg
+                                        { eaaArg = Value /meta -> /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /base -> /Catln/Pair
+                                            [ /B=∀/Catln/RawExpr
+                                            , /A=/Catln/Meta
+                                                ( /type=TopType
+                                                , /dat=/Catln/Unit
+                                                , /id=/Data/String
+                                                , /pos=TopType
+                                                )
+                                            ]
+                                            ( /first=/Catln/Meta
+                                                ( /type=TopType
+                                                , /dat=/Catln/Unit
+                                                , /id=/Data/String
+                                                , /pos=TopType
+                                                )
+                                            , /second=∀/Catln/RawExpr
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /args -> ∀/Data/List
+                                            [ /T=/Catln/Pair
+                                                [ /B=/Catln/RawObjArr
+                                                , /A=∀/Data/Primitive/Boolean
+                                                ]
+                                            ]
+                                        }
+                                    )
+                                }
+                            ) -> /Data/String = ""
+                        , /Test/rawValueName
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawVarsApply
+                                    ( /vars=∀/Data/List[ /T=/Catln/RawObjArr ]
+                                    , /base=∀/Catln/RawExpr
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ) = /Catln/RawExpr/RawVarsApply
+                                    ( EAppArg
+                                        { eaaArg = Value /meta -> /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /base -> ∀/Catln/RawExpr } )
+                                    ( EAppArg
+                                        { eaaArg = Value /vars -> ∀/Data/List[ /T=/Catln/RawObjArr ] }
+                                    )
+                                }
+                            ) -> /Data/String = ""
+                        , /Test/rawValueName
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawContextApply
+                                    ( /args=∀/Data/List[ /T=/Catln/RawObjArr ]
+                                    , /base=/Catln/Pair
+                                        [ /B=∀/Catln/RawExpr
+                                        , /A=/Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        ]
+                                        ( /first=/Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        , /second=∀/Catln/RawExpr
+                                        )
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ) = /Catln/RawExpr/RawContextApply
+                                    ( EAppArg
+                                        { eaaArg = Value /meta -> /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /base -> /Catln/Pair
+                                            [ /B=∀/Catln/RawExpr
+                                            , /A=/Catln/Meta
+                                                ( /type=TopType
+                                                , /dat=/Catln/Unit
+                                                , /id=/Data/String
+                                                , /pos=TopType
+                                                )
+                                            ]
+                                            ( /first=/Catln/Meta
+                                                ( /type=TopType
+                                                , /dat=/Catln/Unit
+                                                , /id=/Data/String
+                                                , /pos=TopType
+                                                )
+                                            , /second=∀/Catln/RawExpr
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /args -> ∀/Data/List[ /T=/Catln/RawObjArr ] }
+                                    )
+                                }
+                            ) -> /Data/String = ""
+                        , /Test/rawValueName
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawWhere
+                                    ( /base=∀/Catln/RawExpr
+                                    , /cond=∀/Catln/RawExpr
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ) = /Catln/RawExpr/RawWhere
+                                    ( EAppArg
+                                        { eaaArg = Value /meta -> /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /base -> ∀/Catln/RawExpr } )
+                                    ( EAppArg { eaaArg = Value /cond -> ∀/Catln/RawExpr } )
+                                }
+                            ) -> /Data/String = ""
+                        , /Test/rawValueName
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawParen( /expr=∀/Catln/RawExpr ) = /Catln/RawExpr/RawParen
+                                    ( EAppArg { eaaArg = Value /expr -> ∀/Catln/RawExpr } )
+                                }
+                            ) -> /Data/String = ""
+                        , /Test/rawValueName
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawMethod
+                                    ( /base=∀/Catln/RawExpr
+                                    , /value=∀/Catln/RawExpr
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ) = /Catln/RawExpr/RawMethod
+                                    ( EAppArg
+                                        { eaaArg = Value /meta -> /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /base -> ∀/Catln/RawExpr } )
+                                    ( EAppArg { eaaArg = Value /value -> ∀/Catln/RawExpr } )
+                                }
+                            ) -> /Data/String = ""
+                        , /Test/rawValueName
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawList
+                                    ( /values=∀/Data/List[ /T=∀/Catln/RawExpr ]
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ) = /Catln/RawExpr/RawList
+                                    ( EAppArg
+                                        { eaaArg = Value /meta -> /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /values -> ∀/Data/List[ /T=∀/Catln/RawExpr ] }
+                                    )
+                                }
+                            ) -> /Data/String = ""
+                        , /Test/rawValueName
+                            ( EAppArg
+                                { eaaArg = Value /e -> /Catln/RawExpr/RawTypeProp
+                                    ( /prop=∀/Catln/TypeProperty
+                                    , /base=∀/Catln/RawExpr
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ) = /Catln/RawExpr/RawTypeProp
+                                    ( EAppArg
+                                        { eaaArg = Value /meta -> /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
+                                            , /pos=TopType
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /base -> ∀/Catln/RawExpr } )
+                                    ( EAppArg { eaaArg = Value /prop -> ∀/Catln/TypeProperty } )
+                                }
+                            ) -> /Data/String = ""
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/pathOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/pathOf
+                            ( EAppArg { eaaArg = Value /r -> ∀/Catln/ReadPath } ) -> /Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/pathOf
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Catln/ReadPath/ReadFile( /path=/Data/String ) = /Catln/ReadPath/ReadFile
+                                    ( EAppArg { eaaArg = Value /path -> /Data/String } )
+                                }
+                            ) -> /Data/String = ( Value /path ↦ /Data/String )
+                        , /Test/pathOf
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Catln/ReadPath/ReadExists( /path=/Data/String ) = /Catln/ReadPath/ReadExists
+                                    ( EAppArg { eaaArg = Value /path -> /Data/String } )
+                                }
+                            ) -> /Data/String = ( Value /path ↦ /Data/String )
+                        , /Test/pathOf
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Catln/ReadPath/ReadDir( /path=/Data/String ) = /Catln/ReadPath/ReadDir
+                                    ( EAppArg { eaaArg = Value /path -> /Data/String } )
+                                }
+                            ) -> /Data/String = ( Value /path ↦ /Data/String )
+                        , /Test/pathOf
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Catln/ReadPath/ReadTree( /path=/Data/String ) = /Catln/ReadPath/ReadTree
+                                    ( EAppArg { eaaArg = Value /path -> /Data/String } )
+                                }
+                            ) -> /Data/String = ( Value /path ↦ /Data/String )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/statementKind"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/statementKind
+                            ( EAppArg { eaaArg = Value /s -> ∀/Catln/RawStatement } ) -> /Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/statementKind
+                            ( EAppArg
+                                { eaaArg = Value /s -> /Catln/RawStatement/RawDeclStatement
+                                    ( /objArr=/Catln/RawObjArr
+                                        ( /arr=TopType
+                                        , /obj=TopType
+                                        , /annots=TopType
+                                        , /doc=TopType
+                                        , /def=TopType
+                                        , /basis=TopType
+                                        )
+                                    ) = /Catln/RawStatement/RawDeclStatement
+                                    ( EAppArg
+                                        { eaaArg = Value /objArr -> /Catln/RawObjArr
+                                            ( /arr=TopType
+                                            , /obj=TopType
+                                            , /annots=TopType
+                                            , /doc=TopType
+                                            , /def=TopType
+                                            , /basis=TopType
+                                            )
+                                        }
+                                    )
+                                }
+                            ) -> /Data/String = "decl"
+                        , /Test/statementKind
+                            ( EAppArg
+                                { eaaArg = Value /s -> /Catln/RawStatement/RawBindStatement
+                                    ( /objArr=/Catln/RawObjArr
+                                        ( /arr=TopType
+                                        , /obj=TopType
+                                        , /annots=TopType
+                                        , /doc=TopType
+                                        , /def=TopType
+                                        , /basis=TopType
+                                        )
+                                    ) = /Catln/RawStatement/RawBindStatement
+                                    ( EAppArg
+                                        { eaaArg = Value /objArr -> /Catln/RawObjArr
+                                            ( /arr=TopType
+                                            , /obj=TopType
+                                            , /annots=TopType
+                                            , /doc=TopType
+                                            , /def=TopType
+                                            , /basis=TopType
+                                            )
+                                        }
+                                    )
+                                }
+                            ) -> /Data/String = "bind"
+                        , /Test/statementKind
+                            ( EAppArg
+                                { eaaArg = Value /s -> /Catln/RawStatement/RawAnnot( /annot=∀/Catln/RawExpr ) = /Catln/RawStatement/RawAnnot
+                                    ( EAppArg { eaaArg = Value /annot -> ∀/Catln/RawExpr } )
+                                }
+                            ) -> /Data/String = "annot"
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "# Reading a program as it was written
+                The page @hsrawprgm()@ reads declares the compiler's types for a program as the parser produced
+                it, before desugaring reduces what was written to what it means. This file is what typechecks
+                those declarations: a page nothing imports is a page nothing checks.
+                Where @test/Integration/code/hsprgm.ct@ reads the six kinds of expression a program has been
+                reduced TO, this reads the twenty it was written AS. That is the side an importer needs, because
+                an importer does not read a program — it builds one." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "## What a reading looked at" }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/String =
+                    ( /Test/pathOf
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Catln/ReadPath/ReadFile( /path=/Data/String ) = /Catln/ReadPath/ReadFile
+                                ( EAppArg
+                                    { eaaArg = Value /path -> /Data/String = "a.ct" }
+                                )
+                            }
+                        ) ↦ /Data/String
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "a.ct" }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/String =
+                    ( /Test/readKind
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Catln/ReadPath/ReadDir( /path=/Data/String ) = /Catln/ReadPath/ReadDir
+                                ( EAppArg
+                                    { eaaArg = Value /path -> /Data/String = "src" }
+                                )
+                            }
+                        ) ↦ /Data/String
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "dir" }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "## The metadata every piece carries" }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "## An expression as it was written" }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/String =
+                    ( /Test/exprKind
+                        ( EAppArg
+                            { eaaArg = Value /e -> /Catln/RawExpr/RawValue
+                                ( /name=/Data/String
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=TopType
+                                    , /id=TopType
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawValue
+                                ( EAppArg
+                                    { eaaArg = Value /meta -> /Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=TopType
+                                        , /id=TopType
+                                        , /pos=TopType
+                                        ) =
+                                        ( Value /Test/noMeta ↦ /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=TopType
+                                            , /id=TopType
+                                            , /pos=TopType
+                                            )
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /name -> /Data/String = "foo" }
+                                )
+                            }
+                        ) ↦ /Data/String
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "value" }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/String =
+                    ( /Test/rawValueName
+                        ( EAppArg
+                            { eaaArg = Value /e -> /Catln/RawExpr/RawValue
+                                ( /name=/Data/String
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=TopType
+                                    , /id=TopType
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawValue
+                                ( EAppArg
+                                    { eaaArg = Value /meta -> /Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=TopType
+                                        , /id=TopType
+                                        , /pos=TopType
+                                        ) =
+                                        ( Value /Test/noMeta ↦ /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=TopType
+                                            , /id=TopType
+                                            , /pos=TopType
+                                            )
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /name -> /Data/String = "foo" }
+                                )
+                            }
+                        ) ↦ /Data/String
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "foo" }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A method call is sugar that survives to this stage and not to the next one, which is the whole" }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "  difference between this page and @core/hsprgm.ct@." }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/String =
+                    ( /Test/exprKind
+                        ( EAppArg
+                            { eaaArg = Value /e -> /Catln/RawExpr/RawMethod
+                                ( /base=/Catln/RawExpr/RawValue
+                                    ( /name=/Data/String
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=TopType
+                                        , /id=TopType
+                                        , /pos=TopType
+                                        )
+                                    )
+                                , /value=/Catln/RawExpr/RawValue
+                                    ( /name=/Data/String
+                                    , /meta=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=TopType
+                                        , /id=TopType
+                                        , /pos=TopType
+                                        )
+                                    )
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=TopType
+                                    , /id=TopType
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawMethod
+                                ( EAppArg
+                                    { eaaArg = Value /meta -> /Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=TopType
+                                        , /id=TopType
+                                        , /pos=TopType
+                                        ) =
+                                        ( Value /Test/noMeta ↦ /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=TopType
+                                            , /id=TopType
+                                            , /pos=TopType
+                                            )
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /base -> /Catln/RawExpr/RawValue
+                                        ( /name=/Data/String
+                                        , /meta=/Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=TopType
+                                            , /id=TopType
+                                            , /pos=TopType
+                                            )
+                                        ) = /Catln/RawExpr/RawValue
+                                        ( EAppArg
+                                            { eaaArg = Value /meta -> /Catln/Meta
+                                                ( /type=TopType
+                                                , /dat=TopType
+                                                , /id=TopType
+                                                , /pos=TopType
+                                                ) =
+                                                ( Value /Test/noMeta ↦ /Catln/Meta
+                                                    ( /type=TopType
+                                                    , /dat=TopType
+                                                    , /id=TopType
+                                                    , /pos=TopType
+                                                    )
+                                                )
+                                            }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /name -> /Data/String = "io" }
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /value -> /Catln/RawExpr/RawValue
+                                        ( /name=/Data/String
+                                        , /meta=/Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=TopType
+                                            , /id=TopType
+                                            , /pos=TopType
+                                            )
+                                        ) = /Catln/RawExpr/RawValue
+                                        ( EAppArg
+                                            { eaaArg = Value /meta -> /Catln/Meta
+                                                ( /type=TopType
+                                                , /dat=TopType
+                                                , /id=TopType
+                                                , /pos=TopType
+                                                ) =
+                                                ( Value /Test/noMeta ↦ /Catln/Meta
+                                                    ( /type=TopType
+                                                    , /dat=TopType
+                                                    , /id=TopType
+                                                    , /pos=TopType
+                                                    )
+                                                )
+                                            }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /name -> /Data/String = "println" }
+                                        )
+                                    }
+                                )
+                            }
+                        ) ↦ /Data/String
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "method" }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/String =
+                    ( /Test/exprKind
+                        ( EAppArg
+                            { eaaArg = Value /e -> /Catln/RawExpr/RawList
+                                ( /values=/Data/List/Nil
+                                , /meta=/Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=TopType
+                                    , /id=TopType
+                                    , /pos=TopType
+                                    )
+                                ) = /Catln/RawExpr/RawList
+                                ( EAppArg
+                                    { eaaArg = Value /meta -> /Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=TopType
+                                        , /id=TopType
+                                        , /pos=TopType
+                                        ) =
+                                        ( Value /Test/noMeta ↦ /Catln/Meta
+                                            ( /type=TopType
+                                            , /dat=TopType
+                                            , /id=TopType
+                                            , /pos=TopType
+                                            )
+                                        )
+                                    }
+                                )
+                                ( EAppArg { eaaArg = Value /values -> /Data/List/Nil = Value /Data/List/Nil } )
+                            }
+                        ) ↦ /Data/String
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "list" }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "## What a page holds" }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/String =
+                    ( /Test/objArrName
+                        ( EAppArg
+                            { eaaArg = Value /oa -> /Catln/RawObjArr
+                                ( /arr=TopType
+                                , /obj=TopType
+                                , /annots=TopType
+                                , /doc=TopType
+                                , /def=TopType
+                                , /basis=TopType
+                                ) =
+                                ( /Test/emptyObjArr
+                                    ( EAppArg
+                                        { eaaArg = Value /name -> /Data/String = "myFn" }
+                                    ) ↦ /Catln/RawObjArr
+                                    ( /arr=TopType
+                                    , /obj=TopType
+                                    , /annots=TopType
+                                    , /doc=TopType
+                                    , /def=TopType
+                                    , /basis=TopType
+                                    )
+                                )
+                            }
+                        ) ↦ /Data/String
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "myFn" }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/String =
+                    ( /Test/statementKind
+                        ( EAppArg
+                            { eaaArg = Value /s -> /Catln/RawStatement/RawDeclStatement
+                                ( /objArr=/Catln/RawObjArr
+                                    ( /arr=TopType
+                                    , /obj=TopType
+                                    , /annots=TopType
+                                    , /doc=TopType
+                                    , /def=TopType
+                                    , /basis=TopType
+                                    )
+                                ) = /Catln/RawStatement/RawDeclStatement
+                                ( EAppArg
+                                    { eaaArg = Value /objArr -> /Catln/RawObjArr
+                                        ( /arr=TopType
+                                        , /obj=TopType
+                                        , /annots=TopType
+                                        , /doc=TopType
+                                        , /def=TopType
+                                        , /basis=TopType
+                                        ) =
+                                        ( /Test/emptyObjArr
+                                            ( EAppArg
+                                                { eaaArg = Value /name -> /Data/String = "myFn" }
+                                            ) ↦ /Catln/RawObjArr
+                                            ( /arr=TopType
+                                            , /obj=TopType
+                                            , /annots=TopType
+                                            , /doc=TopType
+                                            , /def=TopType
+                                            , /basis=TopType
+                                            )
+                                        )
+                                    }
+                                )
+                            }
+                        ) ↦ /Data/String
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "decl" }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "## A whole page, and the result of reading one" }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> UnionType
+                    ( Just
+                        ( PredExpr /operator==
+                            ( /r=/Data/Primitive/True
+                            , /l=~nonNeg( /this=~/$this )
+                            ) && PredRel Integer
+                        , fromList []
+                        , []
+                        )
+                    , /Data/Primitive/Integer
+                    , []
+                    ) =
+                    ( /Test/declCount
+                        ( EAppArg
+                            { eaaArg = Value /p -> /Catln/RawPrgm
+                                ( /statements=TopType
+                                , /imports=TopType
+                                ) =
+                                ( Value /Test/emptyPrgm ↦ /Catln/RawPrgm
+                                    ( /statements=TopType
+                                    , /imports=TopType
+                                    )
+                                )
+                            }
+                        ) ↦ UnionType
+                        ( Just
+                            ( PredExpr /operator==
+                                ( /r=/Data/Primitive/True
+                                , /l=~nonNeg( /this=~/$this )
+                                ) && PredRel Integer
+                            , fromList []
+                            , []
+                            )
+                        , /Data/Primitive/Integer
+                        , []
+                        )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "0" }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> UnionType
+                    ( Just
+                        ( PredExpr /operator==
+                            ( /r=/Data/Primitive/True
+                            , /l=~nonNeg( /this=~/$this )
+                            ) && PredRel Integer
+                        , fromList []
+                        , []
+                        )
+                    , /Data/Primitive/Integer
+                    , []
+                    ) =
+                    ( /Test/declCount
+                        ( EAppArg
+                            { eaaArg = Value /p -> /Catln/RawPrgm
+                                ( /statements=TopType
+                                , /imports=TopType
+                                ) =
+                                ( /Test/onePrgm
+                                    ( EAppArg
+                                        { eaaArg = Value /name -> /Data/String = "myFn" }
+                                    ) ↦ /Catln/RawPrgm
+                                    ( /statements=TopType
+                                    , /imports=TopType
+                                    )
+                                )
+                            }
+                        ) ↦ UnionType
+                        ( Just
+                            ( PredExpr /operator==
+                                ( /r=/Data/Primitive/True
+                                , /l=~nonNeg( /this=~/$this )
+                                ) && PredRel Integer
+                            , fromList []
+                            , []
+                            )
+                        , /Data/Primitive/Integer
+                        , []
+                        )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "1" }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> UnionType
+                    ( Just
+                        ( PredExpr /operator==
+                            ( /r=/Data/Primitive/True
+                            , /l=~nonNeg( /this=~/$this )
+                            ) && PredRel Integer
+                        , fromList []
+                        , []
+                        )
+                    , /Data/Primitive/Integer
+                    , []
+                    ) =
+                    ( /Test/resultDeclCount
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Catln/ImportResult
+                                ( /prgm=TopType
+                                , /reads=TopType
+                                , /source=TopType
+                                ) =
+                                ( /Test/oneResult
+                                    ( EAppArg
+                                        { eaaArg = Value /name -> /Data/String = "myFn" }
+                                    ) ↦ /Catln/ImportResult
+                                    ( /prgm=TopType
+                                    , /reads=TopType
+                                    , /source=TopType
+                                    )
+                                )
+                            }
+                        ) ↦ UnionType
+                        ( Just
+                            ( PredExpr /operator==
+                                ( /r=/Data/Primitive/True
+                                , /l=~nonNeg( /this=~/$this )
+                                ) && PredRel Integer
+                            , fromList []
+                            , []
+                            )
+                        , /Data/Primitive/Integer
+                        , []
+                        )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "1" }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> UnionType
+                    ( Just
+                        ( PredExpr /operator==
+                            ( /r=/Data/Primitive/True
+                            , /l=~nonNeg( /this=~/$this )
+                            ) && PredRel Integer
+                        , fromList []
+                        , []
+                        )
+                    , /Data/Primitive/Integer
+                    , []
+                    ) =
+                    ( /Test/readsCount
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Catln/ImportResult
+                                ( /prgm=TopType
+                                , /reads=TopType
+                                , /source=TopType
+                                ) =
+                                ( /Test/oneResult
+                                    ( EAppArg
+                                        { eaaArg = Value /name -> /Data/String = "myFn" }
+                                    ) ↦ /Catln/ImportResult
+                                    ( /prgm=TopType
+                                    , /reads=TopType
+                                    , /source=TopType
+                                    )
+                                )
+                            }
+                        ) ↦ UnionType
+                        ( Just
+                            ( PredExpr /operator==
+                                ( /r=/Data/Primitive/True
+                                , /l=~nonNeg( /this=~/$this )
+                                ) && PredRel Integer
+                            , fromList []
+                            , []
+                            )
+                        , /Data/Primitive/Integer
+                        , []
+                        )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "1" }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "## What the suite checks
+                The `>` examples above are checked by `catln test`, and the integration suite typechecks and
+                builds this file without comparing what they evaluate to — only a page under @stack/@ has its
+                examples run as cases, and no page under @stack/@ may import [hsrawprgm] without closing the
+                import cycle @core/result.ct@ measures. So the values are printed instead, and
+                @hsrawprgm.stdout.txt@ is what compares them." }
+            )
+        ]
+    }

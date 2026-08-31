@@ -36,7 +36,8 @@ import           Syntax.Ct.Builder
 import           Syntax.Ct.Parser.Syntax  (PExpr)
 import           Syntax.Ct.Prgm
 import           Syntax.HsBuiltins.Render (renderCtDecls)
-import           Syntax.HsBuiltins.Types  (hsBuiltinPage, hsPrgmPage)
+import           Syntax.HsBuiltins.Types  (hsBuiltinPage, hsPrgmPage,
+                                           hsRawPrgmPage)
 
 -- | The name an import reads the compiler's own definitions with.
 hsBuiltins :: String
@@ -164,3 +165,49 @@ hsPrgmForStatement = RawStatementTree (RawDeclStatement decl) (map commentSt [
 -- | The @#runtime@ annotation naming which primitive answers a declaration.
 runtimeAnnotOf :: String -> PExpr
 runtimeAnnotOf key = rawVal runtimeAnnot `applyRawArgs` [(Just $ partialKey (mkName runtimeAnnotK), rawStr key)]
+
+-- | The name an import reads the compiler's own program-as-written types with.
+hsRawPrgm :: String
+hsRawPrgm = "hsrawprgm"
+
+-- | The page an @hsrawprgm()@ import stands at.
+--
+-- Below @core\/hsprgm.ct@ and not beside it, for the reason that page is below
+-- @core\/hsbuiltins.ct@: what a page costs is paid by everything importing it. These are the raw
+-- syntax — twenty kinds of expression with the sugar still in them — where @hsprgm()@ is the six
+-- kinds left after desugaring. A program which READS programs wants that page; only a program which
+-- PRODUCES one, which is what an importer does, wants this.
+--
+-- In @core\/@ for the reason the other two are: that is what 'Syntax.Ct.Prgm.isCorePage' answers
+-- from, and so what keeps 'Syntax.Parsers.pageImports' from handing this page the standard library.
+-- Nothing in @stack\/@ may write this import except a page declaring an importer, and no page of
+-- @stack\/core\/@ may write it at all — this page reaches @core\/list.ct@ through @hsprgm()@, and the
+-- core reaching back into it is the cycle @stack\/core\/result.ct@ measures at 700 seconds.
+hsRawPrgmPagePath :: FilePath
+hsRawPrgmPagePath = "core/hsrawprgm.ct"
+
+hsRawPrgmSyntax :: ImportSyntax
+hsRawPrgmSyntax = (eagerSyntax (const hsRawPrgmParse)){isPagePath = Just hsRawPrgmPagePath}
+
+-- | What the page must import: what its own declarations are written in terms of, and the page
+-- declaring the types they share.
+--
+-- @hsprgm()@ is imported rather than the shared types being declared again here. A raw expression
+-- carries a @\/Catln\/Meta@ and a @\/Catln\/Constant@, which that page already declares, and two
+-- pages declaring one type is a program holding two of it. 'Syntax.HsBuiltins.Types.hsRawPrgmPage'
+-- is seeded from the other page's 'Semantics.CtType.cpSeen' so that the walk leaves them alone.
+hsRawPrgmImports :: [RawFileImport]
+hsRawPrgmImports = map (mkRawFileImport . rawStr) (["core/compile.ct"] `union` cpImports hsRawPrgmPage `union` cpImports hsPrgmPage)
+               ++ [mkRawFileImport (rawVal hsPrgm)]
+
+hsRawPrgmParse :: ImportParseResult
+hsRawPrgmParse = return $ ParsedImport (RawPrgm hsRawPrgmImports hsRawPrgmStatements) Nothing (Just [])
+
+hsRawPrgmStatements :: [RawStatementTree RawExpr ()]
+hsRawPrgmStatements = map commentSt [
+  "# The Catln Program As Written",
+  "These are the compiler's types for a program as the parser produced it, before desugaring reduces what was written to what it means. They are reached by writing `import hsrawprgm()`.",
+  "Where `core/hsprgm.ct` declares the six kinds of expression a program has been reduced to, this declares the twenty it was written as: a method call, a list, a format string, a bracket. Each of those becomes an application of the others once desugaring has run.",
+  "So that page is what a program READING a program reads, and this is what a program PRODUCING one writes. An importer is the case: it is handed a file and answers with a `/Catln/ImportResult` holding a page of this.",
+  "The standard library does not write this import and must not, for the reason `core/hsprgm.ct` gives about itself. A page declaring an importer writes it and pays for it."
+                                    ] ++ renderCtDecls hsRawPrgmPage
