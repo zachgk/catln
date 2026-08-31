@@ -871,6 +871,22 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/prgmFor"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Catln/prgmFor
+                            ( EAppArg { eaaArg = Value /name -> /Data/String } ) -> /Catln/Prgm
+                            ( /cg=TopType
+                            , /annots=TopType
+                            , /objMap=TopType
+                            )
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Expr/AliasExpr"
                 , ObjectMapItem
                     { omiDecls =
@@ -936,6 +952,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

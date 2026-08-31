@@ -27,9 +27,13 @@
 
 module Syntax.HsBuiltins.Parser where
 
+import           CtConstants
 import           Data.List                (union)
-import           Semantics.CtType         (CtPage (..))
+import           Semantics.CtType         (CtPage (..), ctBuiltinNamespace)
+import           Semantics.Prgm           (ObjectBasis (FunctionObj))
+import           Semantics.Types          (mkName, partialKey)
 import           Syntax.Ct.Builder
+import           Syntax.Ct.Parser.Syntax  (PExpr)
 import           Syntax.Ct.Prgm
 import           Syntax.HsBuiltins.Render (renderCtDecls)
 import           Syntax.HsBuiltins.Types  (hsBuiltinPage, hsPrgmPage)
@@ -134,4 +138,29 @@ hsPrgmStatements = map commentSt [
   "These are the compiler's own types for the program it is compiling, declared so that a Catln program can be handed one and read it.",
   "They are reached by writing `import hsprgm()`. The standard library does not write that import and must not: these declarations reach `core/list.ct`, and a page every program compiles reaching it is the import cycle `core/result.ct` measures at seven hundred seconds. A program which wants to read programs asks for them and pays for them.",
   "Each is derived from the shape of the Haskell type the compiler itself uses, by the same reading that converts a value of that type to and from an evaluated one — so what a program is handed and what the compiler holds cannot come apart."
-                                 ] ++ renderCtDecls hsPrgmPage
+                                 ] ++ renderCtDecls hsPrgmPage ++ [hsPrgmForStatement]
+
+-- | The one definition the page supplies rather than a type: a way to be given a program.
+--
+-- Written here rather than derived, because it is not a type read off a shape — it is the compiler
+-- saying what it will answer. It belongs on this page and nowhere else: a page which does not
+-- declare @\/Catln\/Prgm@ could not say what this returns, and a @.ct@ file which does would have to
+-- be one no page of the standard library may import.
+--
+-- Narrowed to a name rather than the whole program, for the reason 'Eval.Runtime.Prgm.prgmFor'
+-- gives: what a value's type costs to compute is what the value holds, so a program asks for what
+-- it wants to read.
+hsPrgmForStatement :: RawStatementTree RawExpr ()
+hsPrgmForStatement = RawStatementTree (RawDeclStatement decl) (map commentSt [
+  "Answers with the program being compiled, narrowed to the things written under [name].",
+  "The program is the one the page asking was compiled as part of — that page and everything it reaches — so what is answered is what the asking program can see rather than everything there is.",
+  "It is narrowed by [name] rather than handed over whole because what a value costs to work with is what it holds, and the standard library is a large thing to be handed in order to read one definition of it."
+                                                                            ])
+  where
+    decl = RawObjArr (Just obj) FunctionObj Nothing [runtimeAnnotOf "prgmFor"] (Just (Nothing, Just returns)) Nothing
+    obj = rawVal (ctBuiltinNamespace ++ "prgmFor") `applyRawIArgs` [(partialKey (mkName "name"), IArgM (Just (rawVal strPrim)))]
+    returns = rawVal (ctBuiltinNamespace ++ "Prgm")
+
+-- | The @#runtime@ annotation naming which primitive answers a declaration.
+runtimeAnnotOf :: String -> PExpr
+runtimeAnnotOf key = rawVal runtimeAnnot `applyRawArgs` [(Just $ partialKey (mkName runtimeAnnotK), rawStr key)]

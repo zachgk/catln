@@ -147,6 +147,20 @@ module(Test)
 
   > declCount(p= /Catln/Prgm(objMap= /Catln/ObjectMap(items= []), cg= [], annots= []))
     >>> 0
+  # ## Being given a real program
+    Everything above reads a program built by hand in this file. [prgmFor] is the compiler answering
+    with the program it is actually compiling — this page and everything it reaches — narrowed to
+    the things written under a name. So [ownDeclCount] below is this file reading its own source as
+    data, through the same declarations the rest of the file exercises.
+  ownDeclCount(name -> String) -> Integer
+  ownDeclCount(name)= declCount(p= /Catln/prgmFor(name= name))
+
+  # [intOf] is defined in this file, so the compiler answers with the one name it is written under.
+  > ownDeclCount(name= "/Test/intOf")
+    >>> 1
+  # A name nothing is written under is a program holding nothing, rather than a failure.
+  > ownDeclCount(name= "/Test/notWrittenAnywhere")
+    >>> 0
   # ## What the suite checks
     The `>` examples above are checked by `catln test`, and the integration suite typechecks and
     builds this file without comparing what they evaluate to — only a page under @stack/@ has its
@@ -159,4 +173,4 @@ module(Test)
   #   the suite's two standing failures are, which is being worked on elsewhere. Printing each is
   #   what the answers are for, and it does not stand on the part of the solver that is unwell.
 
-main{io -> IO}= io.println(msg= constantKind(c= /Catln/Constant/CInt(value= 3))).println(msg= intOf(c= /Catln/Constant/CInt(value= 42)).toString).println(msg= keyName(k= /Catln/PartialKey(name= "x", vars= [], args= []))).println(msg= keyDepth(k= /Catln/PartialKey(name= "f", vars= [], args= [/Catln/PartialKey(name= "a", vars= [], args= [])])).toString).println(msg= typeKind(t= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= []))).println(msg= constCount(t= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= [/Catln/Constant/CInt(value= 1)])).toString).println(msg= writtenIn(m= /Catln/Meta(type= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= []), pos= /Data/Maybe/Nothing, id= "", dat= /Catln/Unit))).println(msg= posLine(p= /Catln/SourcePos(file= "a.ct", line= 7, column= 3)).toString).println(msg= exprKind(e= /Catln/Expr/Value(meta= noMeta(), name= "foo"))).println(msg= valueName(e= /Catln/Expr/Value(meta= noMeta(), name= "foo"))).println(msg= declCount(p= /Catln/Prgm(objMap= /Catln/ObjectMap(items= []), cg= [], annots= [])).toString).exit(val= 0)
+main{io -> IO}= io.println(msg= constantKind(c= /Catln/Constant/CInt(value= 3))).println(msg= intOf(c= /Catln/Constant/CInt(value= 42)).toString).println(msg= keyName(k= /Catln/PartialKey(name= "x", vars= [], args= []))).println(msg= keyDepth(k= /Catln/PartialKey(name= "f", vars= [], args= [/Catln/PartialKey(name= "a", vars= [], args= [])])).toString).println(msg= typeKind(t= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= []))).println(msg= constCount(t= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= [/Catln/Constant/CInt(value= 1)])).toString).println(msg= writtenIn(m= /Catln/Meta(type= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= []), pos= /Data/Maybe/Nothing, id= "", dat= /Catln/Unit))).println(msg= posLine(p= /Catln/SourcePos(file= "a.ct", line= 7, column= 3)).toString).println(msg= exprKind(e= /Catln/Expr/Value(meta= noMeta(), name= "foo"))).println(msg= valueName(e= /Catln/Expr/Value(meta= noMeta(), name= "foo"))).println(msg= declCount(p= /Catln/Prgm(objMap= /Catln/ObjectMap(items= []), cg= [], annots= [])).toString).println(msg= ownDeclCount(name= "/Test/intOf").toString).exit(val= 0)

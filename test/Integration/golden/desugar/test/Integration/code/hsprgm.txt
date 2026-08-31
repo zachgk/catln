@@ -156,22 +156,22 @@ Prgm
                             )
                             ( Value /this= println
                                 ( Value msg= toString
-                                    ( Value /this= declCount
-                                        ( Value p= /Catln/Prgm
-                                            ( Value objMap= /Catln/ObjectMap( Value items= Value /Data/List/Nil ) )( Value cg= Value /Data/List/Nil )( Value annots= Value /Data/List/Nil )
+                                    ( Value /this= ownDeclCount
+                                        ( Value name= CStr
+                                            { csValue = "/Test/intOf" }
                                         )
                                     )
                                 )
                                 ( Value /this= println
-                                    ( Value msg= valueName
-                                        ( Value e= /Catln/Expr/Value( Value meta= Value noMeta )
-                                            ( Value name= CStr
-                                                { csValue = "foo" }
+                                    ( Value msg= toString
+                                        ( Value /this= declCount
+                                            ( Value p= /Catln/Prgm
+                                                ( Value objMap= /Catln/ObjectMap( Value items= Value /Data/List/Nil ) )( Value cg= Value /Data/List/Nil )( Value annots= Value /Data/List/Nil )
                                             )
                                         )
                                     )
                                     ( Value /this= println
-                                        ( Value msg= exprKind
+                                        ( Value msg= valueName
                                             ( Value e= /Catln/Expr/Value( Value meta= Value noMeta )
                                                 ( Value name= CStr
                                                     { csValue = "foo" }
@@ -179,91 +179,100 @@ Prgm
                                             )
                                         )
                                         ( Value /this= println
-                                            ( Value msg= toString
-                                                ( Value /this= posLine
-                                                    ( Value p= /Catln/SourcePos
-                                                        ( Value file= CStr
-                                                            { csValue = "a.ct" }
-                                                        )
-                                                        ( Value line= CInt
-                                                            { ciValue = 7 }
-                                                        )
-                                                        ( Value column= CInt
-                                                            { ciValue = 3 }
-                                                        )
+                                            ( Value msg= exprKind
+                                                ( Value e= /Catln/Expr/Value( Value meta= Value noMeta )
+                                                    ( Value name= CStr
+                                                        { csValue = "foo" }
                                                     )
                                                 )
                                             )
                                             ( Value /this= println
-                                                ( Value msg= writtenIn
-                                                    ( Value m= /Catln/Meta
-                                                        ( Value type= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )( Value consts= Value /Data/List/Nil ) )( Value pos= Value /Data/Maybe/Nothing )
-                                                        ( Value id= CStr
-                                                            { csValue = "" }
-                                                        )( Value dat= Value /Catln/Unit )
+                                                ( Value msg= toString
+                                                    ( Value /this= posLine
+                                                        ( Value p= /Catln/SourcePos
+                                                            ( Value file= CStr
+                                                                { csValue = "a.ct" }
+                                                            )
+                                                            ( Value line= CInt
+                                                                { ciValue = 7 }
+                                                            )
+                                                            ( Value column= CInt
+                                                                { ciValue = 3 }
+                                                            )
+                                                        )
                                                     )
                                                 )
                                                 ( Value /this= println
-                                                    ( Value msg= toString
-                                                        ( Value /this= constCount
-                                                            ( Value t= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )
-                                                                ( Value consts= /Data/List/Cons
-                                                                    ( Value /head= /Catln/Constant/CInt
-                                                                        ( Value value= CInt
-                                                                            { ciValue = 1 }
-                                                                        )
-                                                                    )( Value /tail= Value /Data/List/Nil )
-                                                                )
-                                                            )
+                                                    ( Value msg= writtenIn
+                                                        ( Value m= /Catln/Meta
+                                                            ( Value type= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )( Value consts= Value /Data/List/Nil ) )( Value pos= Value /Data/Maybe/Nothing )
+                                                            ( Value id= CStr
+                                                                { csValue = "" }
+                                                            )( Value dat= Value /Catln/Unit )
                                                         )
                                                     )
                                                     ( Value /this= println
-                                                        ( Value msg= typeKind
-                                                            ( Value t= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )( Value consts= Value /Data/List/Nil ) )
-                                                        )
-                                                        ( Value /this= println
-                                                            ( Value msg= toString
-                                                                ( Value /this= keyDepth
-                                                                    ( Value k= /Catln/PartialKey
-                                                                        ( Value name= CStr
-                                                                            { csValue = "f" }
-                                                                        )( Value vars= Value /Data/List/Nil )
-                                                                        ( Value args= /Data/List/Cons
-                                                                            ( Value /head= /Catln/PartialKey
-                                                                                ( Value name= CStr
-                                                                                    { csValue = "a" }
-                                                                                )( Value vars= Value /Data/List/Nil )( Value args= Value /Data/List/Nil )
-                                                                            )( Value /tail= Value /Data/List/Nil )
-                                                                        )
+                                                        ( Value msg= toString
+                                                            ( Value /this= constCount
+                                                                ( Value t= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )
+                                                                    ( Value consts= /Data/List/Cons
+                                                                        ( Value /head= /Catln/Constant/CInt
+                                                                            ( Value value= CInt
+                                                                                { ciValue = 1 }
+                                                                            )
+                                                                        )( Value /tail= Value /Data/List/Nil )
                                                                     )
                                                                 )
                                                             )
+                                                        )
+                                                        ( Value /this= println
+                                                            ( Value msg= typeKind
+                                                                ( Value t= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )( Value consts= Value /Data/List/Nil ) )
+                                                            )
                                                             ( Value /this= println
-                                                                ( Value msg= keyName
-                                                                    ( Value k= /Catln/PartialKey
-                                                                        ( Value name= CStr
-                                                                            { csValue = "x" }
-                                                                        )( Value vars= Value /Data/List/Nil )( Value args= Value /Data/List/Nil )
-                                                                    )
-                                                                )
-                                                                ( Value /this= println
-                                                                    ( Value msg= toString
-                                                                        ( Value /this= intOf
-                                                                            ( Value c= /Catln/Constant/CInt
-                                                                                ( Value value= CInt
-                                                                                    { ciValue = 42 }
-                                                                                )
+                                                                ( Value msg= toString
+                                                                    ( Value /this= keyDepth
+                                                                        ( Value k= /Catln/PartialKey
+                                                                            ( Value name= CStr
+                                                                                { csValue = "f" }
+                                                                            )( Value vars= Value /Data/List/Nil )
+                                                                            ( Value args= /Data/List/Cons
+                                                                                ( Value /head= /Catln/PartialKey
+                                                                                    ( Value name= CStr
+                                                                                        { csValue = "a" }
+                                                                                    )( Value vars= Value /Data/List/Nil )( Value args= Value /Data/List/Nil )
+                                                                                )( Value /tail= Value /Data/List/Nil )
                                                                             )
                                                                         )
                                                                     )
+                                                                )
+                                                                ( Value /this= println
+                                                                    ( Value msg= keyName
+                                                                        ( Value k= /Catln/PartialKey
+                                                                            ( Value name= CStr
+                                                                                { csValue = "x" }
+                                                                            )( Value vars= Value /Data/List/Nil )( Value args= Value /Data/List/Nil )
+                                                                        )
+                                                                    )
                                                                     ( Value /this= println
-                                                                        ( Value msg= constantKind
-                                                                            ( Value c= /Catln/Constant/CInt
-                                                                                ( Value value= CInt
-                                                                                    { ciValue = 3 }
+                                                                        ( Value msg= toString
+                                                                            ( Value /this= intOf
+                                                                                ( Value c= /Catln/Constant/CInt
+                                                                                    ( Value value= CInt
+                                                                                        { ciValue = 42 }
+                                                                                    )
                                                                                 )
                                                                             )
-                                                                        )( Value /this= Value io )
+                                                                        )
+                                                                        ( Value /this= println
+                                                                            ( Value msg= constantKind
+                                                                                ( Value c= /Catln/Constant/CInt
+                                                                                    ( Value value= CInt
+                                                                                        { ciValue = 3 }
+                                                                                    )
+                                                                                )
+                                                                            )( Value /this= Value io )
+                                                                        )
                                                                     )
                                                                 )
                                                             )
@@ -304,6 +313,19 @@ Prgm
                         , /Test/exprKind
                             ( Value e= /Catln/Expr/TupleApply( Value meta )( Value base )( Value app ) ) -> /Data/String = CStr
                             { csValue = "apply" }
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/ownDeclCount"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/ownDeclCount( Value name -> /Data/String ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/ownDeclCount( Value name ) -> /Data/Primitive/Integer = declCount
+                            ( Value p= /Catln/prgmFor( Value name= Value name ) )
                         ]
                     }
                 )
@@ -537,6 +559,7 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
@@ -720,6 +743,40 @@ Prgm
             ( Value /p= declCount
                 ( Value p= /Catln/Prgm
                     ( Value objMap= /Catln/ObjectMap( Value items= Value /Data/List/Nil ) )( Value cg= Value /Data/List/Nil )( Value annots= Value /Data/List/Nil )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "0" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Being given a real program
+                Everything above reads a program built by hand in this file. [prgmFor] is the compiler answering
+                with the program it is actually compiling — this page and everything it reaches — narrowed to
+                the things written under a name. So [ownDeclCount] below is this file reading its own source as
+                data, through the same declarations the rest of the file exercises." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "[intOf] is defined in this file, so the compiler answers with the one name it is written under." }
+            )
+        , /Catln/#print
+            ( Value /p= ownDeclCount
+                ( Value name= CStr
+                    { csValue = "/Test/intOf" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "1" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A name nothing is written under is a program holding nothing, rather than a failure." }
+            )
+        , /Catln/#print
+            ( Value /p= ownDeclCount
+                ( Value name= CStr
+                    { csValue = "/Test/notWrittenAnywhere" }
                 )
             )
             ( Value /result= CStr

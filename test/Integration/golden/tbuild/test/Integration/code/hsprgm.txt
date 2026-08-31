@@ -411,21 +411,9 @@ Prgm
                                                                 , /Data/Primitive/Integer
                                                                 , []
                                                                 ) =
-                                                                ( /Test/declCount
+                                                                ( /Test/ownDeclCount
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /p -> /Catln/Prgm
-                                                                            ( /cg=/Data/List/Nil
-                                                                            , /annots=/Data/List/Nil
-                                                                            , /objMap=/Catln/ObjectMap( /items=/Data/List/Nil )
-                                                                            ) = /Catln/Prgm
-                                                                            ( EAppArg
-                                                                                { eaaArg = Value /objMap -> /Catln/ObjectMap( /items=/Data/List/Nil ) = /Catln/ObjectMap
-                                                                                    ( EAppArg { eaaArg = Value /items -> /Data/List/Nil = Value /Data/List/Nil } )
-                                                                                }
-                                                                            )
-                                                                            ( EAppArg { eaaArg = Value /cg -> /Data/List/Nil = Value /Data/List/Nil } )
-                                                                            ( EAppArg { eaaArg = Value /annots -> /Data/List/Nil = Value /Data/List/Nil } )
-                                                                        }
+                                                                        { eaaArg = Value /name -> /Data/String = "/Test/intOf" }
                                                                     ) ↦ UnionType
                                                                     ( Just
                                                                         ( PredExpr /operator==
@@ -449,35 +437,47 @@ Prgm
                                                     ( /Catln/println
                                                         ( EAppArg
                                                             { eaaArg = Value /msg -> /Data/String =
-                                                                ( /Test/valueName
+                                                                ( /Data/toString
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /e -> /Catln/Expr/Value
-                                                                            ( /name=/Data/String
-                                                                            , /meta=/Catln/Meta
-                                                                                ( /type=TopType
-                                                                                , /dat=TopType
-                                                                                , /id=TopType
-                                                                                , /pos=TopType
+                                                                        { eaaArg = Value /this -> UnionType
+                                                                            ( Just
+                                                                                ( PredExpr /operator==
+                                                                                    ( /r=/Data/Primitive/True
+                                                                                    , /l=~nonNeg( /this=~/$this )
+                                                                                    ) && PredRel Integer && PredClass /Data/ToString
+                                                                                , fromList []
+                                                                                , []
                                                                                 )
-                                                                            ) = /Catln/Expr/Value
-                                                                            ( EAppArg
-                                                                                { eaaArg = Value /meta -> /Catln/Meta
-                                                                                    ( /type=TopType
-                                                                                    , /dat=TopType
-                                                                                    , /id=TopType
-                                                                                    , /pos=TopType
-                                                                                    ) =
-                                                                                    ( Value /Test/noMeta ↦ /Catln/Meta
-                                                                                        ( /type=TopType
-                                                                                        , /dat=TopType
-                                                                                        , /id=TopType
-                                                                                        , /pos=TopType
+                                                                            , /Data/Primitive/Integer
+                                                                            , []
+                                                                            ) =
+                                                                            ( /Test/declCount
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /p -> /Catln/Prgm
+                                                                                        ( /cg=/Data/List/Nil
+                                                                                        , /annots=/Data/List/Nil
+                                                                                        , /objMap=/Catln/ObjectMap( /items=/Data/List/Nil )
+                                                                                        ) = /Catln/Prgm
+                                                                                        ( EAppArg
+                                                                                            { eaaArg = Value /objMap -> /Catln/ObjectMap( /items=/Data/List/Nil ) = /Catln/ObjectMap
+                                                                                                ( EAppArg { eaaArg = Value /items -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                                                            }
                                                                                         )
+                                                                                        ( EAppArg { eaaArg = Value /cg -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                                                        ( EAppArg { eaaArg = Value /annots -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                                                    }
+                                                                                ) ↦ UnionType
+                                                                                ( Just
+                                                                                    ( PredExpr /operator==
+                                                                                        ( /r=/Data/Primitive/True
+                                                                                        , /l=~nonNeg( /this=~/$this )
+                                                                                        ) && PredRel Integer && PredClass /Data/ToString
+                                                                                    , fromList []
+                                                                                    , []
                                                                                     )
-                                                                                }
-                                                                            )
-                                                                            ( EAppArg
-                                                                                { eaaArg = Value /name -> /Data/String = "foo" }
+                                                                                , /Data/Primitive/Integer
+                                                                                , []
+                                                                                )
                                                                             )
                                                                         }
                                                                     ) ↦ /Data/String
@@ -489,7 +489,7 @@ Prgm
                                                                 ( /Catln/println
                                                                     ( EAppArg
                                                                         { eaaArg = Value /msg -> /Data/String =
-                                                                            ( /Test/exprKind
+                                                                            ( /Test/valueName
                                                                                 ( EAppArg
                                                                                     { eaaArg = Value /e -> /Catln/Expr/Value
                                                                                         ( /name=/Data/String
@@ -529,27 +529,35 @@ Prgm
                                                                             ( /Catln/println
                                                                                 ( EAppArg
                                                                                     { eaaArg = Value /msg -> /Data/String =
-                                                                                        ( /Data/toString
+                                                                                        ( /Test/exprKind
                                                                                             ( EAppArg
-                                                                                                { eaaArg = Value /this -> /Data/Primitive/Integer =
-                                                                                                    ( /Test/posLine
-                                                                                                        ( EAppArg
-                                                                                                            { eaaArg = Value /p -> /Catln/SourcePos
-                                                                                                                ( /file=/Data/String
-                                                                                                                , /line=/Data/Primitive/Integer
-                                                                                                                , /column=/Data/Primitive/Integer
-                                                                                                                ) = /Catln/SourcePos
-                                                                                                                ( EAppArg
-                                                                                                                    { eaaArg = Value /file -> /Data/String = "a.ct" }
+                                                                                                { eaaArg = Value /e -> /Catln/Expr/Value
+                                                                                                    ( /name=/Data/String
+                                                                                                    , /meta=/Catln/Meta
+                                                                                                        ( /type=TopType
+                                                                                                        , /dat=TopType
+                                                                                                        , /id=TopType
+                                                                                                        , /pos=TopType
+                                                                                                        )
+                                                                                                    ) = /Catln/Expr/Value
+                                                                                                    ( EAppArg
+                                                                                                        { eaaArg = Value /meta -> /Catln/Meta
+                                                                                                            ( /type=TopType
+                                                                                                            , /dat=TopType
+                                                                                                            , /id=TopType
+                                                                                                            , /pos=TopType
+                                                                                                            ) =
+                                                                                                            ( Value /Test/noMeta ↦ /Catln/Meta
+                                                                                                                ( /type=TopType
+                                                                                                                , /dat=TopType
+                                                                                                                , /id=TopType
+                                                                                                                , /pos=TopType
                                                                                                                 )
-                                                                                                                ( EAppArg
-                                                                                                                    { eaaArg = Value /line -> /Data/Primitive/Integer = 7 }
-                                                                                                                )
-                                                                                                                ( EAppArg
-                                                                                                                    { eaaArg = Value /column -> /Data/Primitive/Integer = 3 }
-                                                                                                                )
-                                                                                                            }
-                                                                                                        ) ↦ /Data/Primitive/Integer
+                                                                                                            )
+                                                                                                        }
+                                                                                                    )
+                                                                                                    ( EAppArg
+                                                                                                        { eaaArg = Value /name -> /Data/String = "foo" }
                                                                                                     )
                                                                                                 }
                                                                                             ) ↦ /Data/String
@@ -561,34 +569,28 @@ Prgm
                                                                                         ( /Catln/println
                                                                                             ( EAppArg
                                                                                                 { eaaArg = Value /msg -> /Data/String =
-                                                                                                    ( /Test/writtenIn
+                                                                                                    ( /Data/toString
                                                                                                         ( EAppArg
-                                                                                                            { eaaArg = Value /m -> /Catln/Meta
-                                                                                                                ( /type=/Catln/Type/UnionType
-                                                                                                                    ( /top=/Data/Maybe/Nothing
-                                                                                                                    , /consts=/Data/List/Nil
-                                                                                                                    , /leafs=/Data/List/Nil
-                                                                                                                    )
-                                                                                                                , /dat=/Catln/Unit
-                                                                                                                , /id=/Data/String
-                                                                                                                , /pos=/Data/Maybe/Nothing
-                                                                                                                ) = /Catln/Meta
-                                                                                                                ( EAppArg
-                                                                                                                    { eaaArg = Value /type -> /Catln/Type/UnionType
-                                                                                                                        ( /top=/Data/Maybe/Nothing
-                                                                                                                        , /consts=/Data/List/Nil
-                                                                                                                        , /leafs=/Data/List/Nil
-                                                                                                                        ) = /Catln/Type/UnionType
-                                                                                                                        ( EAppArg { eaaArg = Value /top -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
-                                                                                                                        ( EAppArg { eaaArg = Value /leafs -> /Data/List/Nil = Value /Data/List/Nil } )
-                                                                                                                        ( EAppArg { eaaArg = Value /consts -> /Data/List/Nil = Value /Data/List/Nil } )
-                                                                                                                    }
+                                                                                                            { eaaArg = Value /this -> /Data/Primitive/Integer =
+                                                                                                                ( /Test/posLine
+                                                                                                                    ( EAppArg
+                                                                                                                        { eaaArg = Value /p -> /Catln/SourcePos
+                                                                                                                            ( /file=/Data/String
+                                                                                                                            , /line=/Data/Primitive/Integer
+                                                                                                                            , /column=/Data/Primitive/Integer
+                                                                                                                            ) = /Catln/SourcePos
+                                                                                                                            ( EAppArg
+                                                                                                                                { eaaArg = Value /file -> /Data/String = "a.ct" }
+                                                                                                                            )
+                                                                                                                            ( EAppArg
+                                                                                                                                { eaaArg = Value /line -> /Data/Primitive/Integer = 7 }
+                                                                                                                            )
+                                                                                                                            ( EAppArg
+                                                                                                                                { eaaArg = Value /column -> /Data/Primitive/Integer = 3 }
+                                                                                                                            )
+                                                                                                                        }
+                                                                                                                    ) ↦ /Data/Primitive/Integer
                                                                                                                 )
-                                                                                                                ( EAppArg { eaaArg = Value /pos -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
-                                                                                                                ( EAppArg
-                                                                                                                    { eaaArg = Value /id -> /Data/String = "" }
-                                                                                                                )
-                                                                                                                ( EAppArg { eaaArg = Value /dat -> /Catln/Unit = Value /Catln/Unit } )
                                                                                                             }
                                                                                                         ) ↦ /Data/String
                                                                                                     )
@@ -599,62 +601,34 @@ Prgm
                                                                                                     ( /Catln/println
                                                                                                         ( EAppArg
                                                                                                             { eaaArg = Value /msg -> /Data/String =
-                                                                                                                ( /Data/toString
+                                                                                                                ( /Test/writtenIn
                                                                                                                     ( EAppArg
-                                                                                                                        { eaaArg = Value /this -> UnionType
-                                                                                                                            ( Just
-                                                                                                                                ( PredExpr /operator==
-                                                                                                                                    ( /r=/Data/Primitive/True
-                                                                                                                                    , /l=~nonNeg( /this=~/$this )
-                                                                                                                                    ) && PredRel Integer && PredClass /Data/ToString
-                                                                                                                                , fromList []
-                                                                                                                                , []
+                                                                                                                        { eaaArg = Value /m -> /Catln/Meta
+                                                                                                                            ( /type=/Catln/Type/UnionType
+                                                                                                                                ( /top=/Data/Maybe/Nothing
+                                                                                                                                , /consts=/Data/List/Nil
+                                                                                                                                , /leafs=/Data/List/Nil
                                                                                                                                 )
-                                                                                                                            , /Data/Primitive/Integer
-                                                                                                                            , []
-                                                                                                                            ) =
-                                                                                                                            ( /Test/constCount
-                                                                                                                                ( EAppArg
-                                                                                                                                    { eaaArg = Value /t -> /Catln/Type/UnionType
-                                                                                                                                        ( /top=/Data/Maybe/Nothing
-                                                                                                                                        , /consts=/Data/List/Cons
-                                                                                                                                            [ /T=/Catln/Constant/CInt( /value=/Data/Primitive/Integer ) ]
-                                                                                                                                            ( /head=/Catln/Constant/CInt( /value=/Data/Primitive/Integer )
-                                                                                                                                            , /tail=/Data/List/Nil
-                                                                                                                                            )
-                                                                                                                                        , /leafs=/Data/List/Nil
-                                                                                                                                        ) = /Catln/Type/UnionType
-                                                                                                                                        ( EAppArg { eaaArg = Value /top -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
-                                                                                                                                        ( EAppArg { eaaArg = Value /leafs -> /Data/List/Nil = Value /Data/List/Nil } )
-                                                                                                                                        ( EAppArg
-                                                                                                                                            { eaaArg = Value /consts -> /Data/List/Cons
-                                                                                                                                                ( /head=/Catln/Constant/CInt( /value=/Data/Primitive/Integer )
-                                                                                                                                                , /tail=/Data/List/Nil
-                                                                                                                                                ) = /Data/List/Cons
-                                                                                                                                                ( EAppArg
-                                                                                                                                                    { eaaArg = Value /head -> /Catln/Constant/CInt( /value=/Data/Primitive/Integer ) = /Catln/Constant/CInt
-                                                                                                                                                        ( EAppArg
-                                                                                                                                                            { eaaArg = Value /value -> /Data/Primitive/Integer = 1 }
-                                                                                                                                                        )
-                                                                                                                                                    }
-                                                                                                                                                )
-                                                                                                                                                ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
-                                                                                                                                            }
-                                                                                                                                        )
-                                                                                                                                    }
-                                                                                                                                ) ↦ UnionType
-                                                                                                                                ( Just
-                                                                                                                                    ( PredExpr /operator==
-                                                                                                                                        ( /r=/Data/Primitive/True
-                                                                                                                                        , /l=~nonNeg( /this=~/$this )
-                                                                                                                                        ) && PredRel Integer && PredClass /Data/ToString
-                                                                                                                                    , fromList []
-                                                                                                                                    , []
-                                                                                                                                    )
-                                                                                                                                , /Data/Primitive/Integer
-                                                                                                                                , []
-                                                                                                                                )
+                                                                                                                            , /dat=/Catln/Unit
+                                                                                                                            , /id=/Data/String
+                                                                                                                            , /pos=/Data/Maybe/Nothing
+                                                                                                                            ) = /Catln/Meta
+                                                                                                                            ( EAppArg
+                                                                                                                                { eaaArg = Value /type -> /Catln/Type/UnionType
+                                                                                                                                    ( /top=/Data/Maybe/Nothing
+                                                                                                                                    , /consts=/Data/List/Nil
+                                                                                                                                    , /leafs=/Data/List/Nil
+                                                                                                                                    ) = /Catln/Type/UnionType
+                                                                                                                                    ( EAppArg { eaaArg = Value /top -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                                                                                                                                    ( EAppArg { eaaArg = Value /leafs -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                                                                                                    ( EAppArg { eaaArg = Value /consts -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                                                                                                }
                                                                                                                             )
+                                                                                                                            ( EAppArg { eaaArg = Value /pos -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                                                                                                                            ( EAppArg
+                                                                                                                                { eaaArg = Value /id -> /Data/String = "" }
+                                                                                                                            )
+                                                                                                                            ( EAppArg { eaaArg = Value /dat -> /Catln/Unit = Value /Catln/Unit } )
                                                                                                                         }
                                                                                                                     ) ↦ /Data/String
                                                                                                                 )
@@ -665,16 +639,62 @@ Prgm
                                                                                                                 ( /Catln/println
                                                                                                                     ( EAppArg
                                                                                                                         { eaaArg = Value /msg -> /Data/String =
-                                                                                                                            ( /Test/typeKind
+                                                                                                                            ( /Data/toString
                                                                                                                                 ( EAppArg
-                                                                                                                                    { eaaArg = Value /t -> /Catln/Type/UnionType
-                                                                                                                                        ( /top=/Data/Maybe/Nothing
-                                                                                                                                        , /consts=/Data/List/Nil
-                                                                                                                                        , /leafs=/Data/List/Nil
-                                                                                                                                        ) = /Catln/Type/UnionType
-                                                                                                                                        ( EAppArg { eaaArg = Value /top -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
-                                                                                                                                        ( EAppArg { eaaArg = Value /leafs -> /Data/List/Nil = Value /Data/List/Nil } )
-                                                                                                                                        ( EAppArg { eaaArg = Value /consts -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                                                                                                    { eaaArg = Value /this -> UnionType
+                                                                                                                                        ( Just
+                                                                                                                                            ( PredExpr /operator==
+                                                                                                                                                ( /r=/Data/Primitive/True
+                                                                                                                                                , /l=~nonNeg( /this=~/$this )
+                                                                                                                                                ) && PredRel Integer && PredClass /Data/ToString
+                                                                                                                                            , fromList []
+                                                                                                                                            , []
+                                                                                                                                            )
+                                                                                                                                        , /Data/Primitive/Integer
+                                                                                                                                        , []
+                                                                                                                                        ) =
+                                                                                                                                        ( /Test/constCount
+                                                                                                                                            ( EAppArg
+                                                                                                                                                { eaaArg = Value /t -> /Catln/Type/UnionType
+                                                                                                                                                    ( /top=/Data/Maybe/Nothing
+                                                                                                                                                    , /consts=/Data/List/Cons
+                                                                                                                                                        [ /T=/Catln/Constant/CInt( /value=/Data/Primitive/Integer ) ]
+                                                                                                                                                        ( /head=/Catln/Constant/CInt( /value=/Data/Primitive/Integer )
+                                                                                                                                                        , /tail=/Data/List/Nil
+                                                                                                                                                        )
+                                                                                                                                                    , /leafs=/Data/List/Nil
+                                                                                                                                                    ) = /Catln/Type/UnionType
+                                                                                                                                                    ( EAppArg { eaaArg = Value /top -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                                                                                                                                                    ( EAppArg { eaaArg = Value /leafs -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                                                                                                                    ( EAppArg
+                                                                                                                                                        { eaaArg = Value /consts -> /Data/List/Cons
+                                                                                                                                                            ( /head=/Catln/Constant/CInt( /value=/Data/Primitive/Integer )
+                                                                                                                                                            , /tail=/Data/List/Nil
+                                                                                                                                                            ) = /Data/List/Cons
+                                                                                                                                                            ( EAppArg
+                                                                                                                                                                { eaaArg = Value /head -> /Catln/Constant/CInt( /value=/Data/Primitive/Integer ) = /Catln/Constant/CInt
+                                                                                                                                                                    ( EAppArg
+                                                                                                                                                                        { eaaArg = Value /value -> /Data/Primitive/Integer = 1 }
+                                                                                                                                                                    )
+                                                                                                                                                                }
+                                                                                                                                                            )
+                                                                                                                                                            ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                                                                                                                        }
+                                                                                                                                                    )
+                                                                                                                                                }
+                                                                                                                                            ) ↦ UnionType
+                                                                                                                                            ( Just
+                                                                                                                                                ( PredExpr /operator==
+                                                                                                                                                    ( /r=/Data/Primitive/True
+                                                                                                                                                    , /l=~nonNeg( /this=~/$this )
+                                                                                                                                                    ) && PredRel Integer && PredClass /Data/ToString
+                                                                                                                                                , fromList []
+                                                                                                                                                , []
+                                                                                                                                                )
+                                                                                                                                            , /Data/Primitive/Integer
+                                                                                                                                            , []
+                                                                                                                                            )
+                                                                                                                                        )
                                                                                                                                     }
                                                                                                                                 ) ↦ /Data/String
                                                                                                                             )
@@ -685,55 +705,16 @@ Prgm
                                                                                                                             ( /Catln/println
                                                                                                                                 ( EAppArg
                                                                                                                                     { eaaArg = Value /msg -> /Data/String =
-                                                                                                                                        ( /Data/toString
+                                                                                                                                        ( /Test/typeKind
                                                                                                                                             ( EAppArg
-                                                                                                                                                { eaaArg = Value /this -> /Data/Primitive/Integer =
-                                                                                                                                                    ( /Test/keyDepth
-                                                                                                                                                        ( EAppArg
-                                                                                                                                                            { eaaArg = Value /k -> /Catln/PartialKey
-                                                                                                                                                                ( /name=/Data/String
-                                                                                                                                                                , /vars=/Data/List/Nil
-                                                                                                                                                                , /args=/Data/List/Cons
-                                                                                                                                                                    ( /head=/Catln/PartialKey
-                                                                                                                                                                        ( /name=/Data/String
-                                                                                                                                                                        , /vars=/Data/List/Nil
-                                                                                                                                                                        , /args=/Data/List/Nil
-                                                                                                                                                                        )
-                                                                                                                                                                    , /tail=/Data/List/Nil
-                                                                                                                                                                    )
-                                                                                                                                                                ) = /Catln/PartialKey
-                                                                                                                                                                ( EAppArg
-                                                                                                                                                                    { eaaArg = Value /name -> /Data/String = "f" }
-                                                                                                                                                                )
-                                                                                                                                                                ( EAppArg { eaaArg = Value /vars -> /Data/List/Nil = Value /Data/List/Nil } )
-                                                                                                                                                                ( EAppArg
-                                                                                                                                                                    { eaaArg = Value /args -> /Data/List/Cons
-                                                                                                                                                                        ( /head=/Catln/PartialKey
-                                                                                                                                                                            ( /name=/Data/String
-                                                                                                                                                                            , /vars=/Data/List/Nil
-                                                                                                                                                                            , /args=/Data/List/Nil
-                                                                                                                                                                            )
-                                                                                                                                                                        , /tail=/Data/List/Nil
-                                                                                                                                                                        ) = /Data/List/Cons
-                                                                                                                                                                        ( EAppArg
-                                                                                                                                                                            { eaaArg = Value /head -> /Catln/PartialKey
-                                                                                                                                                                                ( /name=/Data/String
-                                                                                                                                                                                , /vars=/Data/List/Nil
-                                                                                                                                                                                , /args=/Data/List/Nil
-                                                                                                                                                                                ) = /Catln/PartialKey
-                                                                                                                                                                                ( EAppArg
-                                                                                                                                                                                    { eaaArg = Value /name -> /Data/String = "a" }
-                                                                                                                                                                                )
-                                                                                                                                                                                ( EAppArg { eaaArg = Value /vars -> /Data/List/Nil = Value /Data/List/Nil } )
-                                                                                                                                                                                ( EAppArg { eaaArg = Value /args -> /Data/List/Nil = Value /Data/List/Nil } )
-                                                                                                                                                                            }
-                                                                                                                                                                        )
-                                                                                                                                                                        ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
-                                                                                                                                                                    }
-                                                                                                                                                                )
-                                                                                                                                                            }
-                                                                                                                                                        ) ↦ /Data/Primitive/Integer
-                                                                                                                                                    )
+                                                                                                                                                { eaaArg = Value /t -> /Catln/Type/UnionType
+                                                                                                                                                    ( /top=/Data/Maybe/Nothing
+                                                                                                                                                    , /consts=/Data/List/Nil
+                                                                                                                                                    , /leafs=/Data/List/Nil
+                                                                                                                                                    ) = /Catln/Type/UnionType
+                                                                                                                                                    ( EAppArg { eaaArg = Value /top -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                                                                                                                                                    ( EAppArg { eaaArg = Value /leafs -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                                                                                                                    ( EAppArg { eaaArg = Value /consts -> /Data/List/Nil = Value /Data/List/Nil } )
                                                                                                                                                 }
                                                                                                                                             ) ↦ /Data/String
                                                                                                                                         )
@@ -744,18 +725,55 @@ Prgm
                                                                                                                                         ( /Catln/println
                                                                                                                                             ( EAppArg
                                                                                                                                                 { eaaArg = Value /msg -> /Data/String =
-                                                                                                                                                    ( /Test/keyName
+                                                                                                                                                    ( /Data/toString
                                                                                                                                                         ( EAppArg
-                                                                                                                                                            { eaaArg = Value /k -> /Catln/PartialKey
-                                                                                                                                                                ( /name=/Data/String
-                                                                                                                                                                , /vars=/Data/List/Nil
-                                                                                                                                                                , /args=/Data/List/Nil
-                                                                                                                                                                ) = /Catln/PartialKey
-                                                                                                                                                                ( EAppArg
-                                                                                                                                                                    { eaaArg = Value /name -> /Data/String = "x" }
+                                                                                                                                                            { eaaArg = Value /this -> /Data/Primitive/Integer =
+                                                                                                                                                                ( /Test/keyDepth
+                                                                                                                                                                    ( EAppArg
+                                                                                                                                                                        { eaaArg = Value /k -> /Catln/PartialKey
+                                                                                                                                                                            ( /name=/Data/String
+                                                                                                                                                                            , /vars=/Data/List/Nil
+                                                                                                                                                                            , /args=/Data/List/Cons
+                                                                                                                                                                                ( /head=/Catln/PartialKey
+                                                                                                                                                                                    ( /name=/Data/String
+                                                                                                                                                                                    , /vars=/Data/List/Nil
+                                                                                                                                                                                    , /args=/Data/List/Nil
+                                                                                                                                                                                    )
+                                                                                                                                                                                , /tail=/Data/List/Nil
+                                                                                                                                                                                )
+                                                                                                                                                                            ) = /Catln/PartialKey
+                                                                                                                                                                            ( EAppArg
+                                                                                                                                                                                { eaaArg = Value /name -> /Data/String = "f" }
+                                                                                                                                                                            )
+                                                                                                                                                                            ( EAppArg { eaaArg = Value /vars -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                                                                                                                                            ( EAppArg
+                                                                                                                                                                                { eaaArg = Value /args -> /Data/List/Cons
+                                                                                                                                                                                    ( /head=/Catln/PartialKey
+                                                                                                                                                                                        ( /name=/Data/String
+                                                                                                                                                                                        , /vars=/Data/List/Nil
+                                                                                                                                                                                        , /args=/Data/List/Nil
+                                                                                                                                                                                        )
+                                                                                                                                                                                    , /tail=/Data/List/Nil
+                                                                                                                                                                                    ) = /Data/List/Cons
+                                                                                                                                                                                    ( EAppArg
+                                                                                                                                                                                        { eaaArg = Value /head -> /Catln/PartialKey
+                                                                                                                                                                                            ( /name=/Data/String
+                                                                                                                                                                                            , /vars=/Data/List/Nil
+                                                                                                                                                                                            , /args=/Data/List/Nil
+                                                                                                                                                                                            ) = /Catln/PartialKey
+                                                                                                                                                                                            ( EAppArg
+                                                                                                                                                                                                { eaaArg = Value /name -> /Data/String = "a" }
+                                                                                                                                                                                            )
+                                                                                                                                                                                            ( EAppArg { eaaArg = Value /vars -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                                                                                                                                                            ( EAppArg { eaaArg = Value /args -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                                                                                                                                                        }
+                                                                                                                                                                                    )
+                                                                                                                                                                                    ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                                                                                                                                                }
+                                                                                                                                                                            )
+                                                                                                                                                                        }
+                                                                                                                                                                    ) ↦ /Data/Primitive/Integer
                                                                                                                                                                 )
-                                                                                                                                                                ( EAppArg { eaaArg = Value /vars -> /Data/List/Nil = Value /Data/List/Nil } )
-                                                                                                                                                                ( EAppArg { eaaArg = Value /args -> /Data/List/Nil = Value /Data/List/Nil } )
                                                                                                                                                             }
                                                                                                                                                         ) ↦ /Data/String
                                                                                                                                                     )
@@ -766,18 +784,18 @@ Prgm
                                                                                                                                                     ( /Catln/println
                                                                                                                                                         ( EAppArg
                                                                                                                                                             { eaaArg = Value /msg -> /Data/String =
-                                                                                                                                                                ( /Data/toString
+                                                                                                                                                                ( /Test/keyName
                                                                                                                                                                     ( EAppArg
-                                                                                                                                                                        { eaaArg = Value /this -> /Data/Primitive/Integer =
-                                                                                                                                                                            ( /Test/intOf
-                                                                                                                                                                                ( EAppArg
-                                                                                                                                                                                    { eaaArg = Value /c -> /Catln/Constant/CInt( /value=/Data/Primitive/Integer ) = /Catln/Constant/CInt
-                                                                                                                                                                                        ( EAppArg
-                                                                                                                                                                                            { eaaArg = Value /value -> /Data/Primitive/Integer = 42 }
-                                                                                                                                                                                        )
-                                                                                                                                                                                    }
-                                                                                                                                                                                ) ↦ /Data/Primitive/Integer
+                                                                                                                                                                        { eaaArg = Value /k -> /Catln/PartialKey
+                                                                                                                                                                            ( /name=/Data/String
+                                                                                                                                                                            , /vars=/Data/List/Nil
+                                                                                                                                                                            , /args=/Data/List/Nil
+                                                                                                                                                                            ) = /Catln/PartialKey
+                                                                                                                                                                            ( EAppArg
+                                                                                                                                                                                { eaaArg = Value /name -> /Data/String = "x" }
                                                                                                                                                                             )
+                                                                                                                                                                            ( EAppArg { eaaArg = Value /vars -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                                                                                                                                            ( EAppArg { eaaArg = Value /args -> /Data/List/Nil = Value /Data/List/Nil } )
                                                                                                                                                                         }
                                                                                                                                                                     ) ↦ /Data/String
                                                                                                                                                                 )
@@ -788,11 +806,17 @@ Prgm
                                                                                                                                                                 ( /Catln/println
                                                                                                                                                                     ( EAppArg
                                                                                                                                                                         { eaaArg = Value /msg -> /Data/String =
-                                                                                                                                                                            ( /Test/constantKind
+                                                                                                                                                                            ( /Data/toString
                                                                                                                                                                                 ( EAppArg
-                                                                                                                                                                                    { eaaArg = Value /c -> /Catln/Constant/CInt( /value=/Data/Primitive/Integer ) = /Catln/Constant/CInt
-                                                                                                                                                                                        ( EAppArg
-                                                                                                                                                                                            { eaaArg = Value /value -> /Data/Primitive/Integer = 3 }
+                                                                                                                                                                                    { eaaArg = Value /this -> /Data/Primitive/Integer =
+                                                                                                                                                                                        ( /Test/intOf
+                                                                                                                                                                                            ( EAppArg
+                                                                                                                                                                                                { eaaArg = Value /c -> /Catln/Constant/CInt( /value=/Data/Primitive/Integer ) = /Catln/Constant/CInt
+                                                                                                                                                                                                    ( EAppArg
+                                                                                                                                                                                                        { eaaArg = Value /value -> /Data/Primitive/Integer = 42 }
+                                                                                                                                                                                                    )
+                                                                                                                                                                                                }
+                                                                                                                                                                                            ) ↦ /Data/Primitive/Integer
                                                                                                                                                                                         )
                                                                                                                                                                                     }
                                                                                                                                                                                 ) ↦ /Data/String
@@ -800,7 +824,26 @@ Prgm
                                                                                                                                                                         }
                                                                                                                                                                     )
                                                                                                                                                                     ( EAppArg
-                                                                                                                                                                        { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                                                                                                                                                        { eaaArg = Value /this -> /Catln/IO =
+                                                                                                                                                                            ( /Catln/println
+                                                                                                                                                                                ( EAppArg
+                                                                                                                                                                                    { eaaArg = Value /msg -> /Data/String =
+                                                                                                                                                                                        ( /Test/constantKind
+                                                                                                                                                                                            ( EAppArg
+                                                                                                                                                                                                { eaaArg = Value /c -> /Catln/Constant/CInt( /value=/Data/Primitive/Integer ) = /Catln/Constant/CInt
+                                                                                                                                                                                                    ( EAppArg
+                                                                                                                                                                                                        { eaaArg = Value /value -> /Data/Primitive/Integer = 3 }
+                                                                                                                                                                                                    )
+                                                                                                                                                                                                }
+                                                                                                                                                                                            ) ↦ /Data/String
+                                                                                                                                                                                        )
+                                                                                                                                                                                    }
+                                                                                                                                                                                )
+                                                                                                                                                                                ( EAppArg
+                                                                                                                                                                                    { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                                                                                                                                                                ) ↦ /Catln/IO
+                                                                                                                                                                            )
+                                                                                                                                                                        }
                                                                                                                                                                     ) ↦ /Catln/IO
                                                                                                                                                                 )
                                                                                                                                                             }
@@ -1013,6 +1056,40 @@ Prgm
                                     ( EAppArg { eaaArg = Value /app -> ∀/Catln/EApp } )
                                 }
                             ) -> /Data/String = "apply"
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/ownDeclCount"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/ownDeclCount
+                            ( EAppArg { eaaArg = Value /name -> /Data/String } ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/ownDeclCount
+                            ( EAppArg { eaaArg = Value /name -> /Data/String } ) -> /Data/Primitive/Integer =
+                            ( /Test/declCount
+                                ( EAppArg
+                                    { eaaArg = Value /p -> /Catln/Prgm
+                                        ( /cg=TopType
+                                        , /annots=TopType
+                                        , /objMap=TopType
+                                        ) =
+                                        ( /Catln/prgmFor
+                                            ( EAppArg
+                                                { eaaArg = Value /name -> TVArg /name = ( Value /name ↦ TVArg /name ) }
+                                            ) ↦ /Catln/Prgm
+                                            ( /cg=TopType
+                                            , /annots=TopType
+                                            , /objMap=TopType
+                                            )
+                                        )
+                                    }
+                                ) ↦ /Data/Primitive/Integer
+                            )
                         ]
                     }
                 )
@@ -1548,6 +1625,7 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
@@ -2037,6 +2115,92 @@ Prgm
                                 ( EAppArg { eaaArg = Value /cg -> /Data/List/Nil = Value /Data/List/Nil } )
                                 ( EAppArg { eaaArg = Value /annots -> /Data/List/Nil = Value /Data/List/Nil } )
                             }
+                        ) ↦ UnionType
+                        ( Just
+                            ( PredExpr /operator==
+                                ( /r=/Data/Primitive/True
+                                , /l=~nonNeg( /this=~/$this )
+                                ) && PredRel Integer
+                            , fromList []
+                            , []
+                            )
+                        , /Data/Primitive/Integer
+                        , []
+                        )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "0" }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "## Being given a real program
+                Everything above reads a program built by hand in this file. [prgmFor] is the compiler answering
+                with the program it is actually compiling — this page and everything it reaches — narrowed to
+                the things written under a name. So [ownDeclCount] below is this file reading its own source as
+                data, through the same declarations the rest of the file exercises." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "[intOf] is defined in this file, so the compiler answers with the one name it is written under." }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> UnionType
+                    ( Just
+                        ( PredExpr /operator==
+                            ( /r=/Data/Primitive/True
+                            , /l=~nonNeg( /this=~/$this )
+                            ) && PredRel Integer
+                        , fromList []
+                        , []
+                        )
+                    , /Data/Primitive/Integer
+                    , []
+                    ) =
+                    ( /Test/ownDeclCount
+                        ( EAppArg
+                            { eaaArg = Value /name -> /Data/String = "/Test/intOf" }
+                        ) ↦ UnionType
+                        ( Just
+                            ( PredExpr /operator==
+                                ( /r=/Data/Primitive/True
+                                , /l=~nonNeg( /this=~/$this )
+                                ) && PredRel Integer
+                            , fromList []
+                            , []
+                            )
+                        , /Data/Primitive/Integer
+                        , []
+                        )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "1" }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A name nothing is written under is a program holding nothing, rather than a failure." }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> UnionType
+                    ( Just
+                        ( PredExpr /operator==
+                            ( /r=/Data/Primitive/True
+                            , /l=~nonNeg( /this=~/$this )
+                            ) && PredRel Integer
+                        , fromList []
+                        , []
+                        )
+                    , /Data/Primitive/Integer
+                    , []
+                    ) =
+                    ( /Test/ownDeclCount
+                        ( EAppArg
+                            { eaaArg = Value /name -> /Data/String = "/Test/notWrittenAnywhere" }
                         ) ↦ UnionType
                         ( Just
                             ( PredExpr /operator==

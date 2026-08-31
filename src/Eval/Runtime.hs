@@ -28,6 +28,7 @@ import           Data.Maybe            (fromMaybe)
 import           Eval.Common
 import           Eval.ExprBuilder
 import           Eval.Runtime.Calendar (calendarPrims)
+import           Eval.Runtime.Prgm     (prgmPrims)
 import           Eval.Runtime.Tasks    (tasksPrims)
 import           Eval.Runtime.WebDocs  (webDocsPrims)
 import           Numeric               (showHex, showOct)
@@ -342,7 +343,7 @@ primEnv :: ResBuildPrims
 primEnv = H.fromList [(mkName k, v) | (k, v) <- map mapPrim prims ++ macros]
   where
     mapPrim p = (ePrimName p, Left p)
-    prims = webDocsPrims ++ tasksPrims ++ calendarPrims ++
+    prims = webDocsPrims ++ tasksPrims ++ calendarPrims ++ prgmPrims ++
             [ liftIntOp "+" (+)
             , liftIntOp "-" (-)
             , liftIntOp "*" (*)
