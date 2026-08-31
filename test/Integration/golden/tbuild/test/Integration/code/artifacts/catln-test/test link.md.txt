@@ -1,19 +1,21 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/Data/Note/Page"
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/Page
-                            ( EAppArg Value /title -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "test link" }
-                                    ]
-                                ) = "test link"
+                            ( EAppArg
+                                { eaaArg = Value /title -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "test link" }
+                                        ]
+                                    ) = "test link"
+                                }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -22,7 +24,7 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG = [ CGType ]
+        }
+    , prgmCg = [ CGType ]
     , prgmAnnots = []
     }

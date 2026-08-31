@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/Data/Set/allIn"
                 , ObjectMapItem
@@ -692,8 +692,8 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
@@ -714,35 +714,35 @@ Prgm
         , CGType
         , CGType
         , CGClass
-            ( False
-            , /Data/Set/MapSet
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Data/Set/MapSet
+            , cgcExtends =
                 [ ∀/Data/Set/MapSet
                     [ /K=∀/Data/Algebra/Ord
                     , /V=$_/V
                     ]
                 ]
-            , Just ""
-            )
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( False
-            , /Data/Set[ /T=TopType ]
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Data/Set[ /T=TopType ]
+            , cgcExtends =
                 [ ∀/Data/Set/MapSet
                     [ /K=$_/K
                     , /V=$_/V
                     ]
                 ]
-            , Just " Every [MapSet] is a [Set], so each [Set] operation resolves on it through the arms below. The
+            , cgcDoc = Just " Every [MapSet] is a [Set], so each [Set] operation resolves on it through the arms below. The
               empty set is [empty]."
-            )
+            }
         , CGClass
-            ( True
-            , /Data/Set/MapSet
+            { cgcSealed = True
+            , cgcPartial = /Data/Set/MapSet
                 [ /K=TopType
                 , /V=TopType
                 ]
-            ,
+            , cgcExtends =
                 [ /Data/Set/MkSet
                     ( /map=∀/Data/Map
                         [ /K=$_/K
@@ -750,8 +750,8 @@ Prgm
                         ]
                     )
                 ]
-            , Just ""
-            )
+            , cgcDoc = Just ""
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md

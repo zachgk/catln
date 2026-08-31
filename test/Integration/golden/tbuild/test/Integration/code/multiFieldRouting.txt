@@ -1,22 +1,39 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/unbox"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /unbox( EAppArg Value /b -> ∀/Boxed ) -> /Data/Primitive/Integer ]
+                        [ /unbox
+                            ( EAppArg { eaaArg = Value /b -> ∀/Boxed } ) -> /Data/Primitive/Integer
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /unbox( EAppArg Value /b -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = ( Value /b ↦ /Data/Primitive/Integer ) ]
+                        [ /unbox
+                            ( EAppArg { eaaArg = Value /b -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer = ( Value /b ↦ /Data/Primitive/Integer )
+                        ]
                     }
                 )
             ,
                 ( "/Pair"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Pair( EAppVar /B TopType )( EAppVar /A TopType )( EAppArg Value /first -> $/A )( EAppArg Value /second -> $/B ) ]
+                        [ /Pair
+                            ( EAppVar
+                                { eavName = /B
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppVar
+                                { eavName = /A
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /first -> $/A } )
+                            ( EAppArg { eaaArg = Value /second -> $/B } )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -29,7 +46,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
+                        ]
                     }
                 )
             ,
@@ -37,56 +57,66 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /bothUnbox
-                            ( EAppArg Value /p -> /Pair
-                                [ /B=∀/Boxed
-                                , /A=∀/Boxed
-                                ]
-                                ( /first=∀/Boxed
-                                , /second=∀/Boxed
-                                )
+                            ( EAppArg
+                                { eaaArg = Value /p -> /Pair
+                                    [ /B=∀/Boxed
+                                    , /A=∀/Boxed
+                                    ]
+                                    ( /first=∀/Boxed
+                                    , /second=∀/Boxed
+                                    )
+                                }
                             ) -> /Data/Primitive/Integer
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /bothUnbox
-                            ( EAppArg Value /p -> /Pair
-                                [ /B=∀/Boxed
-                                , /A=∀/Boxed
-                                ]
-                                ( /first=∀/Boxed
-                                , /second=∀/Boxed
-                                ) = /Pair( EAppArg Value /first@Value /f -> ∀/Boxed )( EAppArg Value /second@Value /s -> ∀/Boxed )
+                            ( EAppArg
+                                { eaaArg = Value /p -> /Pair
+                                    [ /B=∀/Boxed
+                                    , /A=∀/Boxed
+                                    ]
+                                    ( /first=∀/Boxed
+                                    , /second=∀/Boxed
+                                    ) = /Pair
+                                    ( EAppArg { eaaArg = Value /first@Value /f -> ∀/Boxed } )
+                                    ( EAppArg { eaaArg = Value /second@Value /s -> ∀/Boxed } )
+                                }
                             ) -> /Data/Primitive/Integer =
                             ( /unbox
-                                ( EAppArg Value /b -> TVArg /f = ( Value /f ↦ TVArg /f ) ) ↦ /Data/Primitive/Integer
+                                ( EAppArg
+                                    { eaaArg = Value /b -> TVArg /f = ( Value /f ↦ TVArg /f ) }
+                                ) ↦ /Data/Primitive/Integer
                             )
                         ]
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
         , CGType
         , CGClass
-            ( False
-            , /Boxed
-            , [ /Data/Primitive/Integer ]
-            , Just "         "
-            )
+            { cgcSealed = False
+            , cgcPartial = /Boxed
+            , cgcExtends = [ /Data/Primitive/Integer ]
+            , cgcDoc = Just " "
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Repro: a destructured element binding in a definition pattern must inherit the element
-            bound declared on the function's argument. This uses a local `Boxed` class with a member
-            `unbox` instead of the stdlib `Eq` class (which is no longer an effective class — equality
-            is now provided by standalone per-type `operator==` declarations, so a `$A -> Eq` bound does
-            not actually gate any operation). `bothUnbox` is declared over Pair[$A -> Boxed, $B -> Boxed],
-            so the destructured `first` binding `f` should inherit the `Boxed` bound and `unbox(f)` should
-            type-check and dispatch. Concrete construction/extraction already works; this isolates the
-            parametric case where the element's only bound comes from the declaration." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Repro: a destructured element binding in a definition pattern must inherit the element
+                bound declared on the function's argument. This uses a local `Boxed` class with a member
+                `unbox` instead of the stdlib `Eq` class (which is no longer an effective class — equality
+                is now provided by standalone per-type `operator==` declarations, so a `$A -> Eq` bound does
+                not actually gate any operation). `bothUnbox` is declared over Pair[$A -> Boxed, $B -> Boxed],
+                so the destructured `first` binding `f` should inherit the `Boxed` bound and `unbox(f)` should
+                type-check and dispatch. Concrete construction/extraction already works; this isolates the
+                parametric case where the element's only bound comes from the declaration." }
+            )
         ]
     }

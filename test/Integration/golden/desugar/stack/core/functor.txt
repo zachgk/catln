@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/Data/Functor/testFunctorComposition"
                 , ObjectMapItem
@@ -41,18 +41,18 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
         , CGClass
-            ( False
-            , /Data/Functor[ /T=TopType ]
-            , []
-            , Just "A [Functor] is a basic property of a collection.
+            { cgcSealed = False
+            , cgcPartial = /Data/Functor[ /T=TopType ]
+            , cgcExtends = []
+            , cgcDoc = Just "A [Functor] is a basic property of a collection.
               It has a single operation [fmap] that applies a function to each element in the collection.$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]"
-            )
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md

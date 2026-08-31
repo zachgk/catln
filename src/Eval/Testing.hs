@@ -523,7 +523,7 @@ evalTest prgmGraphData = do
           classNodes = let ClassGraph cg = teClassGraph typeEnv in graphToNodes cg
           instanceVarBindings instName = H.unions
             [ ptVars mp
-            | (CGClass (_, _, ts, _), _, _) <- classNodes
+            | (CGClass _ _ ts _, _, _) <- classNodes
             , mt <- ts
             , mp <- case mt of UnionType Nothing ls [] -> splitUnionType ls; _ -> []
             , ptName mp == instName ]

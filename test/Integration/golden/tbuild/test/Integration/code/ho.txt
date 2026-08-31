@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/ContextIn"
                 , ObjectMapItem
@@ -8,14 +8,19 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
+                        ]
                     }
                 )
             ,
                 ( "/T"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /T( EAppArg Value /x ) ]
+                        [ /T
+                            ( EAppArg { eaaArg = Value /x } )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -25,31 +30,56 @@ Prgm
                 ( "/tst"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /tst( EAppVar /T TopType )
-                            ( EAppArg Value /d -> /T( /x=TopType ) = /T( EAppArg Value /x -> $_/T ) )
-                            ( EAppArg /f( EAppArg Value /y -> $_/T ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean
+                        [ /tst
+                            ( EAppVar
+                                { eavName = /T
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /d -> /T( /x=TopType ) = /T
+                                    ( EAppArg { eaaArg = Value /x -> $_/T } )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = /f
+                                    ( EAppArg { eaaArg = Value /y -> $_/T } ) -> ∀/Data/Primitive/Boolean
+                                }
+                            ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /tst
-                            ( EAppArg Value /d -> /T( /x=TopType ) = /T( EAppArg Value /x ) )
-                            ( EAppArg /f( EAppArg Value /y ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean =
+                            ( EAppArg
+                                { eaaArg = Value /d -> /T( /x=TopType ) = /T
+                                    ( EAppArg { eaaArg = Value /x } )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = /f
+                                    ( EAppArg { eaaArg = Value /y } ) -> ∀/Data/Primitive/Boolean
+                                }
+                            ) -> ∀/Data/Primitive/Boolean =
                             ( /f
-                                ( EAppArg Value /y -> TVArg /x = ( Value /x ↦ TVArg /x ) ) ↦ ∀/Data/Primitive/Boolean
+                                ( EAppArg
+                                    { eaaArg = Value /y -> TVArg /x = ( Value /x ↦ TVArg /x ) }
+                                ) ↦ ∀/Data/Primitive/Boolean
                             )
                         ]
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Tests higher order functions" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Tests higher order functions" }
+            )
         ]
     }

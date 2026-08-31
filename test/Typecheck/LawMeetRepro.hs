@@ -517,7 +517,7 @@ runColdProbe sel te = do
 showEqMembers :: FEnvTypeEnv -> String
 showEqMembers te = case teClassGraph te of
   ClassGraph cg -> case graphLookup (PClassName (mkName "/Data/Algebra/Eq")) cg of
-    Just (CGClass (sealed, decl, classTypes, doc)) ->
+    Just (CGClass sealed decl classTypes doc) ->
       "sealed=" ++ show sealed ++ " decl=" ++ show decl ++ " members=" ++ show classTypes ++ " doc=" ++ show doc
     r -> "lookup: " ++ show r
 
@@ -526,7 +526,7 @@ showEqMembers te = case teClassGraph te of
 showClassMembersLen :: FEnvTypeEnv -> String -> String
 showClassMembersLen te nm = case teClassGraph te of
   ClassGraph cg -> case graphLookup (PClassName (mkName nm)) cg of
-    Just (CGClass (_, _, classTypes, _)) ->
+    Just (CGClass _ _ classTypes _) ->
       "first50=" ++ take 400 (show (take 50 classTypes))
       ++ " | len=" ++ show (length classTypes)
     r -> "lookup: " ++ show r

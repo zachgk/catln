@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/Catln/llvm"
                 , ObjectMapItem
@@ -42,20 +42,20 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
         , CGClass
-            ( False
-            , /Catln/BuildFile
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Catln/BuildFile
+            , cgcExtends =
                 [ /Catln/BuildFile..
                 , /Catln/CatlnResult..
                 ]
-            , Just " "
-            )
+            , cgcDoc = Just " "
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md

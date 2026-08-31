@@ -1,12 +1,20 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/ContextOut"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /ContextOut( EAppVar /V TopType )( EAppArg Value /value -> $/V )
-                            ( EAppSpread Hole TopType HoleActive { haName = Nothing } )
+                        [ /ContextOut
+                            ( EAppVar
+                                { eavName = /V
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /value -> $/V } )
+                            ( EAppSpread
+                                { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                            )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -17,20 +25,39 @@ Prgm
                 ( "/Data/toString"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/toString( EAppVar /T ∀/Data/ToString )( EAppArg Value /this -> $/T ) -> /Data/String ]
+                        [ /Data/toString
+                            ( EAppVar
+                                { eavName = /T
+                                , eavMeta = ∀/Data/ToString
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /this -> $/T } ) -> /Data/String
+                        ]
                     , omiRuntimeDecls =
-                        [ /Data/toString( EAppArg Value /this -> /Data/Primitive/Integer ) -> /Data/String ]
+                        [ /Data/toString
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer } ) -> /Data/String
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/toString( EAppArg Value /this -> /Data/String ) -> /Data/String = ( Value /this ↦ /Data/String ) ]
+                        [ /Data/toString
+                            ( EAppArg { eaaArg = Value /this -> /Data/String } ) -> /Data/String = ( Value /this ↦ /Data/String )
+                        ]
                     }
                 )
             ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /ContextIn( EAppVar /V TopType )( EAppArg Value /value -> $/V )
-                            ( EAppSpread Hole TopType HoleActive { haName = Nothing } )
+                        [ /ContextIn
+                            ( EAppVar
+                                { eavName = /V
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /value -> $/V } )
+                            ( EAppSpread
+                                { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                            )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -41,17 +68,51 @@ Prgm
                 ( "/Context"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Context( EAppVar /V TopType )( EAppArg Value /value -> $/V )
-                            ( EAppSpread Hole TopType HoleActive { haName = Nothing } )
+                        [ /Context
+                            ( EAppVar
+                                { eavName = /V
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /value -> $/V } )
+                            ( EAppSpread
+                                { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                            )
                         ]
                     , omiRuntimeDecls =
-                        [ /Context( EAppVar /T TopType )( EAppVar /V TopType )( EAppArg Value /value -> $/V )
-                            ( EAppSpread Hole TopType HoleActive { haName = Nothing } ) | /operator?->
-                            ( EAppArg Value /l -> /ContextIn[ /V=TopType ]( /value=$/V ).. = /ContextIn( EAppVar /V $_/V )
-                                ( EAppArg Value /value -> $/V = Hole $/V HoleActive { haName = Nothing } )
-                                ( EAppSpread Hole TopType HoleActive { haName = Nothing } )
+                        [ /Context
+                            ( EAppVar
+                                { eavName = /T
+                                , eavMeta = TopType
+                                }
                             )
-                            ( EAppArg Value /r -> $/T = Hole $/T HoleActive { haName = Nothing } ) -> $/T
+                            ( EAppVar
+                                { eavName = /V
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /value -> $/V } )
+                            ( EAppSpread
+                                { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                            ) | /operator?->
+                            ( EAppArg
+                                { eaaArg = Value /l -> /ContextIn[ /V=TopType ]( /value=$/V ).. = /ContextIn
+                                    ( EAppVar
+                                        { eavName = /V
+                                        , eavMeta = $_/V
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> $/V = Hole $/V HoleActive { haName = Nothing } }
+                                    )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> $/T = Hole $/T HoleActive { haName = Nothing } }
+                            ) -> $/T
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -67,338 +128,122 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
         , CGType
         , CGType
         , CGClass
-            ( True
-            , /Data/Option[ /T=TopType ]
-            ,
+            { cgcSealed = True
+            , cgcPartial = /Data/Option[ /T=TopType ]
+            , cgcExtends =
                 [ $_/T
                 , /Data/None
                 ]
-            , Just "[Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
-              It can be used to handle operations that are uncertain if they can produce a response. [Option] defines a type that might have a value or [None].
+            , cgcDoc = Just "[Option] defines a type that might have a value or [None].
               It can be used to handle operations that are uncertain if they can produce a response."
-            )
+            }
         , CGClass
-            ( False
-            , /Data/ToString
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Data/ToString
+            , cgcExtends =
                 [ /Data/String
                 , /Data/Primitive/Integer
                 ]
-            , Just "[ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
-              [toString] for a type makes its values printable and, more importantly, lets generic
-              containers such as [List] render their contents by rendering each element.   [ToString] is the class of types that can render themselves as a [String]. Defining
+            , cgcDoc = Just "[ToString] is the class of types that can render themselves as a [String]. Defining
               [toString] for a type makes its values printable and, more importantly, lets generic
               containers such as [List] render their contents by rendering each element.  "
-            )
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "# Catln Core Data Types
-            These define the basic data types used in the language. [String] and its equality live in
-            [Data/str]; the conversions and collection types below build on it." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "# Catln Core Data Types
+                These define the basic data types used in the language. [String] and its equality live in
+                [Data/str]; the conversions and collection types below build on it." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "## Rendering as text" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "## Rendering as text" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "[ToString] is the class of types that can render themselves as a [String]. Defining
-            [toString] for a type makes its values printable and, more importantly, lets generic
-            containers such as [List] render their contents by rendering each element." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "[ToString] is the class of types that can render themselves as a [String]. Defining
+                [toString] for a type makes its values printable and, more importantly, lets generic
+                containers such as [List] render their contents by rendering each element." }
+            )
         , /Catln/#print
-            ( EAppArg Value /p -> /Data/String = "hello" )
-            ( EAppArg Value /result -> /Data/String = "hello" )
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/String = "hello" }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "hello" }
+            )
         , /Catln/#print
-            ( EAppArg Value /p -> /Data/Primitive/Integer = 42 )
-            ( EAppArg Value /result -> /Data/String = "42" )
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer = 42 }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "42" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "## Context" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "## Context" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "## Collections" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "## Collections" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "[Option] defines a type that might have a value or [None].
-            It can be used to handle operations that are uncertain if they can produce a response." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "[Option] defines a type that might have a value or [None].
+                It can be used to handle operations that are uncertain if they can produce a response." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "[Option] is not currently a [Functor]: it has no [fmap] instance yet, and its bare" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "[Option] is not currently a [Functor]: it has no [fmap] instance yet, and its bare" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "type-variable member interacts poorly with expanding the open [Functor] class during" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "type-variable member interacts poorly with expanding the open [Functor] class during" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "inference. The [Functor] class and the generic [fmap] live in [Data/functor.ct]; the [List]" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "inference. The [Functor] class and the generic [fmap] live in [Data/functor.ct]; the [List]" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "collection and its [ConsList] implementation live in [Data/list.ct]." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "collection and its [ConsList] implementation live in [Data/list.ct]." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "The [Set] class now lives in [Data/set.ct] alongside its [MapSet] implementation. [Enum] and" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "The [Set] class now lives in [Data/set.ct] alongside its [MapSet] implementation. [Enum] and" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "  [enum] (which returned a [Set]) are commented out until an [Enum] implementation is provided." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "  [enum] (which returned a [Set]) are commented out until an [Enum] implementation is provided." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "class(Enum)" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "class(Enum)" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "  # [Enum] represents a type which can be enumerated." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "  # [Enum] represents a type which can be enumerated." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "    It defines a single function [enum] which lists all of the values in the type." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "    It defines a single function [enum] which lists all of the values in the type." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "  enum[$T -> Enum] -> Set[$T]" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "  enum[$T -> Enum] -> Set[$T]" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "    # [enum] lists all of the values in a type." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "    # [enum] lists all of the values in a type." }
+            )
         ]
     }

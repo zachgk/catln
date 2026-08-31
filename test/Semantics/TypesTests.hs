@@ -511,8 +511,8 @@ propParamClassCovariant gPrgm = property $ do
 -- class/negation gap when neither property had ever found a counterexample.
 prgmHasClass :: (Bool -> [Type] -> Bool) -> Prgm Expr () -> Bool
 prgmHasClass f (Prgm _ (ClassGraph cg) _) = any match (graphToNodes cg)
-  where match (CGClass (sealed, _, cts, _), _, _) = f sealed cts
-        match _                                   = False
+  where match (CGClass sealed _ cts _, _, _) = f sealed cts
+        match _                              = False
 
 propClassExpansionLeafSubtype :: IO GenPrgm -> Property
 propClassExpansionLeafSubtype gPrgm = property $ do
@@ -525,7 +525,7 @@ propClassExpansionLeafSubtype gPrgm = property $ do
   -- ran out and the property reported "gave up" — a FAIL carrying no information about the
   -- algebra, which is how it was twice mistaken for a class/negation gap.
   let candidates = [ (cpt, splitUnionType leafs)
-                   | (CGClass (_, cpt, cts, _), _, _) <- graphToNodes cgData, not (null cts)
+                   | (CGClass _ cpt cts _, _, _) <- graphToNodes cgData, not (null cts)
                    , UnionType Nothing leafs _ <- [expandClassPartial typeEnv H.empty cpt]
                    , not (H.null leafs) ]
   when (null candidates) discard
@@ -552,7 +552,7 @@ propClassGraphMatchesPredClass gPrgm = property $ do
   -- SEALED classes only, chosen BEFORE the draw. For an unsealed class the law does not hold
   -- (a future file may add implementations), so drawing one and rejecting it afterwards spends
   -- the discard budget on a case that was never testable — the "gave up after N discards" FAIL.
-  let classNodes = [n | n@(CGClass (True, _, _, _), _, _) <- graphToNodes cgData]
+  let classNodes = [n | n@(CGClass True _ _ _, _, _) <- graphToNodes cgData]
 
   -- Discard if no classes
   when (null classNodes) discard
@@ -560,7 +560,7 @@ propClassGraphMatchesPredClass gPrgm = property $ do
   -- Pick a random class
   (cgNode, className, _) <- forAll $ HG.element classNodes
   case cgNode of
-    CGClass (_sealed, classPartialType, constituentTypes, _doc) -> do
+    CGClass _sealed classPartialType constituentTypes _doc -> do
       annotate $ printf "Testing class: %s" (nameStr (fromPartialName className))
       annotate $ printf "Class definition: %s" (show classPartialType)
 
@@ -599,7 +599,7 @@ propParamClassWideNotNarrow ioPrgms = property $ do
     (prgm:_) -> return prgm
     []       -> fail "containers.ct program not found"
   let typeEnv@TypeEnv{teClassGraph=ClassGraph cgData, teNames} = mkTypeEnv prgm
-  clsPt <- case [cpt | (CGClass (_, cpt, cts, _), _, _) <- graphToNodes cgData, "ConsList" `isInfixOf` nameStr (ptName cpt), not (null cts)] of
+  clsPt <- case [cpt | (CGClass _ cpt cts _, _, _) <- graphToNodes cgData, "ConsList" `isInfixOf` nameStr (ptName cpt), not (null cts)] of
     (cpt:_) -> return cpt
     []      -> fail "ConsList class not found"
   intT <- case [n | n <- S.toList teNames, "Integer" `isInfixOf` nameStr n] of
@@ -637,7 +637,7 @@ propParamClassIntersectAbsorb ioPrgms = property $ do
     (prgm:_) -> return prgm
     []       -> fail "containers.ct program not found"
   let typeEnv@TypeEnv{teClassGraph=ClassGraph cgData, teNames} = mkTypeEnv prgm
-  clsPt <- case [cpt | (CGClass (_, cpt, cts, _), _, _) <- graphToNodes cgData, "ConsList" `isInfixOf` nameStr (ptName cpt), not (null cts)] of
+  clsPt <- case [cpt | (CGClass _ cpt cts _, _, _) <- graphToNodes cgData, "ConsList" `isInfixOf` nameStr (ptName cpt), not (null cts)] of
     (cpt:_) -> return cpt
     []      -> fail "ConsList class not found"
   intT <- case [n | n <- S.toList teNames, "Integer" `isInfixOf` nameStr n] of
@@ -671,7 +671,7 @@ propParamClassIntersectAbsorb ioPrgms = property $ do
   -- The same meet through a CONJUNCTION with a second class (the shape a completed data field
   -- takes: the field's class with an unresolved element ∧ a supertype class with the bound):
   -- @(ConsList[$_v] ∧ List[Int]) ∩ (ConsList[Int] ∧ List[Int])@ must also keep the bound.
-  listPt <- case [cpt | (CGClass (_, cpt, _, _), _, _) <- graphToNodes cgData, "List" `isInfixOf` nameStr (ptName cpt), not ("ConsList" `isInfixOf` nameStr (ptName cpt))] of
+  listPt <- case [cpt | (CGClass _ cpt _ _, _, _) <- graphToNodes cgData, "List" `isInfixOf` nameStr (ptName cpt), not ("ConsList" `isInfixOf` nameStr (ptName cpt))] of
     (cpt:_) -> return cpt
     []      -> fail "List class not found"
   lKey <- case H.keys (ptVars listPt) of
@@ -705,10 +705,10 @@ propConjMemberClassSubtype ioPrgms = property $ do
     (prgm:_) -> return prgm
     []       -> fail "containers.ct program not found"
   let typeEnv@TypeEnv{teClassGraph=ClassGraph cgData, teNames} = mkTypeEnv prgm
-  consListPt <- case [cpt | (CGClass (_, cpt, cts, _), _, _) <- graphToNodes cgData, "ConsList" `isInfixOf` nameStr (ptName cpt), not (null cts)] of
+  consListPt <- case [cpt | (CGClass _ cpt cts _, _, _) <- graphToNodes cgData, "ConsList" `isInfixOf` nameStr (ptName cpt), not (null cts)] of
     (cpt:_) -> return cpt
     []      -> fail "ConsList class not found"
-  bagPt <- case [cpt | (CGClass (_, cpt, _, _), _, _) <- graphToNodes cgData, "Bag" `isInfixOf` nameStr (ptName cpt)] of
+  bagPt <- case [cpt | (CGClass _ cpt _ _, _, _) <- graphToNodes cgData, "Bag" `isInfixOf` nameStr (ptName cpt)] of
     (cpt:_) -> return cpt
     []      -> fail "Bag class not found"
   intT <- case [n | n <- S.toList teNames, "Integer" `isInfixOf` nameStr n] of
@@ -750,10 +750,10 @@ propNegRecursiveClassMeet ioPrgms = property $ do
     (prgm:_) -> return prgm
     []       -> fail "recursiveClassBounds.ct program not found"
   let typeEnv@TypeEnv{teClassGraph=ClassGraph cgData} = mkTypeEnv prgm
-  eqCOPt <- case [cpt | (CGClass (_, cpt, _, _), _, _) <- graphToNodes cgData, "EqCO" `isInfixOf` nameStr (ptName cpt)] of
+  eqCOPt <- case [cpt | (CGClass _ cpt _ _, _, _) <- graphToNodes cgData, "EqCO" `isInfixOf` nameStr (ptName cpt)] of
     (cpt:_) -> return cpt
     []      -> fail "EqCO class not found"
-  consListPt <- case [cpt | (CGClass (_, cpt, cts, _), _, _) <- graphToNodes cgData, "ConsList" `isInfixOf` nameStr (ptName cpt), not (null cts)] of
+  consListPt <- case [cpt | (CGClass _ cpt cts _, _, _) <- graphToNodes cgData, "ConsList" `isInfixOf` nameStr (ptName cpt), not (null cts)] of
     (cpt:_) -> return cpt{ptVars=H.empty}
     []      -> fail "ConsList class not found"
   let notEqCO = UnionType (Just (PredsNot (PredsOne (PredClass eqCOPt)), H.empty, [])) H.empty []
@@ -847,7 +847,7 @@ propParamIsaEdgeCovariant ioPrgms = property $ do
     (prgm:_) -> return prgm
     []       -> fail "containers.ct program not found"
   let typeEnv@TypeEnv{teClassGraph=ClassGraph cgData, teNames} = mkTypeEnv prgm
-  let findClass n = case [cpt | (CGClass (_, cpt, _, _), _, _) <- graphToNodes cgData, n `isInfixOf` nameStr (ptName cpt)] of
+  let findClass n = case [cpt | (CGClass _ cpt _ _, _, _) <- graphToNodes cgData, n `isInfixOf` nameStr (ptName cpt)] of
         (cpt:_) -> return cpt
         []      -> fail $ printf "%s class not found" n
   let findData n = case [nm | nm <- S.toList teNames, n `isInfixOf` nameStr nm] of
@@ -887,7 +887,7 @@ propDeclClampClassMembership ioPrgms = property $ do
     (prgm:_) -> return prgm
     []       -> fail "containers.ct program not found"
   let typeEnv@TypeEnv{teClassGraph=ClassGraph cgData, teNames} = mkTypeEnv prgm
-  let findClass n = case [cpt | (CGClass (_, cpt, _, _), _, _) <- graphToNodes cgData, n `isInfixOf` nameStr (ptName cpt)] of
+  let findClass n = case [cpt | (CGClass _ cpt _ _, _, _) <- graphToNodes cgData, n `isInfixOf` nameStr (ptName cpt)] of
         (cpt:_) -> return cpt
         []      -> fail $ printf "%s class not found" n
   let findName n = case [nm | nm <- S.toList teNames, n `isInfixOf` nameStr nm] of
@@ -934,7 +934,7 @@ propExcludedConstantIrrelevantToData ioPrgms = property $ do
     (prgm:_) -> return prgm
     []       -> fail "recursiveClassBounds.ct program not found"
   let typeEnv@TypeEnv{teClassGraph=ClassGraph cgData, teNames} = mkTypeEnv prgm
-  let findClass n = case [cpt | (CGClass (_, cpt, _, _), _, _) <- graphToNodes cgData, n `isInfixOf` nameStr (ptName cpt)] of
+  let findClass n = case [cpt | (CGClass _ cpt _ _, _, _) <- graphToNodes cgData, n `isInfixOf` nameStr (ptName cpt)] of
         (cpt:_) -> return cpt
         []      -> fail $ printf "%s class not found" n
   let findName n = case [nm | nm <- S.toList teNames, n `isInfixOf` nameStr nm] of

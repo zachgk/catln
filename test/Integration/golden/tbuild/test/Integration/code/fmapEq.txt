@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/ContextIn"
                 , ObjectMapItem
@@ -8,22 +8,35 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
+                        ]
                     }
                 )
             ]
-        )
-    , prgmCG = [ CGType ]
+        }
+    , prgmCg = [ CGType ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Exercises the core generic [fmap] (dispatched through the [Functor] class) with concrete" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Exercises the core generic [fmap] (dispatched through the [Functor] class) with concrete" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "values from an importing module, comparing results with the generic [operator==]. The law" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "values from an importing module, comparing results with the generic [operator==]. The law" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "properties in stack/core/functor.ct check these shapes generically; this asserts exact" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "properties in stack/core/functor.ct check these shapes generically; this asserts exact" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "values on the imported path (identity, increment, and composed increments, over both the" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "values on the imported path (identity, increment, and composed increments, over both the" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "[ConsList] and [Maybe] instances)." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "[ConsList] and [Maybe] instances)." }
+            )
         ]
     }

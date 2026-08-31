@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/ContextIn"
                 , ObjectMapItem
@@ -8,7 +8,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
+                        ]
                     }
                 )
             ,
@@ -18,10 +21,16 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /add_ints( EAppArg Value /x -> /Data/Primitive/Integer )( EAppArg Value /y -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer =
+                        [ /add_ints
+                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
                             ( /operator+
-                                ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-                                ( EAppArg Value /r -> TVArg /y = ( Value /y ↦ TVArg /y ) ) ↦ /Data/Primitive/Integer
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /y = ( Value /y ↦ TVArg /y ) }
+                                ) ↦ /Data/Primitive/Integer
                             )
                         ]
                     }
@@ -37,17 +46,17 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
         , CGClass
-            ( False
-            , /Point
-            , []
-            , Just "  "
-            )
+            { cgcSealed = False
+            , cgcPartial = /Point
+            , cgcExtends = []
+            , cgcDoc = Just ""
+            }
         ]
     , prgmAnnots = []
     }

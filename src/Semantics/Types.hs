@@ -40,6 +40,7 @@ import           Data.List           (intercalate, partition)
 import qualified Data.List           as L
 import           Data.List.Split     (splitOn)
 import           Data.Maybe
+import           Data.Proxy          (Proxy (..))
 import           Data.String         (IsString (..))
 import           Data.Zip
 import           Debug.Trace         (trace)
@@ -496,6 +497,22 @@ type Sealed = Bool
 -- TODO: ClassGraph should be more granular. Can have class to only a certain object or based on type variables.
 newtype ClassGraph = ClassGraph (GraphData CGNode PartialName)
 
+-- | How the classes and types of a program relate, read as a Catln type.
+--
+-- Written by hand and not read off the shape, because there is no shape to read. A 'GraphData' is a
+-- tuple of a graph and two FUNCTIONS — one from a vertex to what is there, one from a name to a
+-- vertex — so what it holds cannot be handed over as it is stored. What it IS, though, is a list of
+-- what each name holds and which names it points at, which is what 'Utils.graphToNodes' answers and
+-- what 'Utils.graphFromEdges' builds one back from. So that list is what a program is given.
+instance CtType ClassGraph where
+  ctPath _ = ctListPath
+  ctTypeRef _ = ctElemTypeRef ctListPath (Proxy :: Proxy (CGNode, PartialName, [PartialName]))
+  ctImports _ = [coreListPage]
+  ctPageInto _ = ctPageInto (Proxy :: Proxy (CGNode, PartialName, [PartialName]))
+               . ctPageImport (Proxy :: Proxy ClassGraph)
+  toCt (ClassGraph g) = toCt (L.sortOn snd3 $ graphToNodes g)
+  fromCt v = ClassGraph . graphFromEdges <$> fromCt v
+
 class TypeGraph tg where
   -- | Queries the type graph for possible conversions from a partial type to a type. Each result
   -- carries the reason for the conversion, the portion of the source partial the arrow accepts
@@ -625,10 +642,22 @@ emptyTypeEnv' :: TypeEnv EmptyTypeGraph
 emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty False defaultTypeEnvDebug False False False Nothing (mkSatCache mempty S.empty)
 
 -- | A class or type node within the 'ClassGraph'
+--
+-- The class arm's four parts are named rather than left an anonymous tuple. Twenty-eight places
+-- build or match one, which is few enough that naming them costs little — and a
+-- @Quad[Boolean, PartialType, List[Type], Maybe[String]]@ handed to a program would say nothing
+-- about which half of it was which.
 data CGNode
-  = CGClass (Sealed, PartialType, [Type], Maybe DocComment)
+  = CGClass { cgcSealed :: Sealed, cgcPartial :: PartialType, cgcExtends :: [Type], cgcDoc :: Maybe DocComment }
   | CGType
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Generic)
+
+-- | What a class graph holds at a name, read as a Catln type.
+instance CtType CGNode where
+  ctDoc _ = [
+    "What a class graph holds at a name: a class, or a type.",
+    "A [CGClass] carries whether it is [sealed] — whether a later file may add members to it — the partial [class] itself, the [extends] it is a member of, and its [doc]. A [CGType] carries nothing: a type is in the graph so that classes can point at it, and has nothing of its own to say."
+            ]
 
 -- |
 -- The old format for a 'ClassGraph'.
@@ -777,8 +806,8 @@ instance Semigroup ClassGraph where
       -- duplication made the walk exponential in hierarchy depth (~30^5 expansions on the
       -- algebra chain Eq -> Ord -> ... -> Group): the functor-law fragment OOM. Members
       -- are compared by value ('nub'); the lists are small once deduplicated.
-      mergeClasses (CGClass (sealedA, classA, setA, docA), className, subClassNamesA) (CGClass (sealedB, classB, setB, docB), _, subClassNamesB) = if sealedA == sealedB
-            then (CGClass (sealedA, mergeClassPartials classA classB, L.nub (setA ++ setB), mergeDoc docA docB), className, L.nub (subClassNamesA ++ subClassNamesB))
+      mergeClasses (CGClass sealedA classA setA docA, className, subClassNamesA) (CGClass sealedB classB setB docB, _, subClassNamesB) = if sealedA == sealedB
+            then (CGClass sealedA (mergeClassPartials classA classB) (L.nub (setA ++ setB)) (mergeDoc docA docB), className, L.nub (subClassNamesA ++ subClassNamesB))
             else error "Added to sealed class definition"
       mergeClasses node@(CGClass{}, _, _) (CGType{}, _, _) = node
       mergeClasses (CGType{}, _, _) node@(CGClass{}, _, _) = node
@@ -818,8 +847,10 @@ asClassMap (ClassGraph graphData) = (typesToClass, classToTypes)
 
     classToTypes = H.fromList $ map classToTypeFromPartial $ mapMaybe getNodeClassToType $ graphToNodes graphData
     classToTypeFromPartial (c, d) = (fromPartialName c, d)
-    getNodeClassToType (CGClass d, n, _) = Just (n, d)
-    getNodeClassToType _                 = Nothing
+    -- Rebuilt as the tuple a 'ClassMap' holds, which is what the four fields were before they had
+    -- names and is still what this map is keyed to.
+    getNodeClassToType (CGClass sealed cls ext doc, n, _) = Just (n, (sealed, cls, ext, doc))
+    getNodeClassToType _                                  = Nothing
 
 instance ToJSON ClassGraph where
   toJSON classGraph = toJSON $ asClassMap classGraph
@@ -1373,7 +1404,7 @@ classConstituentNames TypeEnv{teClassGraph=ClassGraph cg} = go S.empty
     go visited cName
       | S.member absName visited = S.empty
       | otherwise = case graphLookup (PClassName cName) cg of
-          Just (CGClass (_, _, classTypes, _)) ->
+          Just (CGClass _ _ classTypes _) ->
             let direct = S.map makeAbsoluteName $ S.unions $ map memberNames classTypes
             in S.union direct (S.unions [go (S.insert absName visited) d | d <- S.toList direct])
           _ -> S.empty
@@ -1703,8 +1734,8 @@ predsSealed typeEnv@TypeEnv{teClassGraph=ClassGraph cg} = go
     -- members, so any class predicate may be soundly expanded to its declared constituents.
     classSealed _ | tePrgmEnv typeEnv = True
     classSealed name = case graphLookup (PClassName name) cg of
-      Just (CGClass (sealed, _, _, _)) -> sealed
-      _ -> case [ s | (CGClass (s, _, _, _), cKey, _) <- graphToNodes cg, relativeNameMatches name (fromPartialName cKey) ] of
+      Just (CGClass sealed _ _ _) -> sealed
+      _ -> case [ s | (CGClass s _ _ _, cKey, _) <- graphToNodes cg, relativeNameMatches name (fromPartialName cKey) ] of
              (s:_) -> s
              []    -> False
 
@@ -1726,7 +1757,7 @@ classDeclaredSubclassOf TypeEnv{teClassGraph=ClassGraph cg} c1 c2 = go S.empty c
     go visited cName
       | S.member cName visited = False
       | otherwise = case graphLookup (PClassName cName) cg of
-          Just (CGClass (_, _, classTypes, _)) ->
+          Just (CGClass _ _ classTypes _) ->
             let subs = [ ptName sc | t <- classTypes, Just sc <- [maybeGetClassSingleton t], H.null (ptVars sc) ]
             in any (\s -> relativeNameMatches c1 s || go (S.insert cName visited) s) subs
           _ -> False
@@ -1761,7 +1792,7 @@ classDeclaredSubclassOfBounded typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv
     go visited target@PartialType{ptName=cName}
       | S.member cName visited = False
       | otherwise = case graphLookup (PClassName cName) cg of
-          Just (CGClass (_, PartialType{ptVars=classVarsDecl}, classTypes, _)) ->
+          Just (CGClass _ PartialType{ptVars=classVarsDecl} classTypes _) ->
             let classVars = H.unionWith (intersectTypesEnv typeEnv vaenv) (ptVars target) (cleanDeclSelfRefs classVarsDecl)
                 subs = [ substitutePartialExit typeEnv (joinVarArgEnv classVars H.empty) sc
                        | t <- classTypes, Just sc <- [maybeGetClassSingleton t] ]
@@ -2069,7 +2100,7 @@ expandClassPartialWithNamesFullAux visited _ _ PartialType{ptName} _
   | S.member ptName visited = (H.empty, True)
 expandClassPartialWithNamesFullAux visited typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv PartialType{ptName, ptVars=classVarsP} allowedNames =
   case graphLookup (PClassName ptName) cg of
-    Just (CGClass (_, PartialType{ptVars=classVarsDecl}, classTypes, _)) -> case classTypes of
+    Just (CGClass _ PartialType{ptVars=classVarsDecl} classTypes _) -> case classTypes of
       [] ->
         let leafs = joinUnionType [classPlaceholderLeaf ptName]
         in (H.filterWithKey (\k _ -> S.member k allowedNames) leafs,
@@ -2187,7 +2218,7 @@ expandClassPartialAuxRaw mAllowed typeEnv@TypeEnv{teClassGraph=ClassGraph cg} va
       (Just _, UnionType Nothing p cs) -> UnionType Nothing (joinUnionType $ keepPartials $ splitUnionType p) cs
       _                                -> t
     expanded = case graphLookup className cg of
-      Just (CGClass (_, PartialType{ptVars=classVarsDecl}, classTypes, _)) -> case classTypes of
+      Just (CGClass _ PartialType{ptVars=classVarsDecl} classTypes _) -> case classTypes of
         [] -> singletonType $ classPlaceholderLeaf ptName
         -- Restore each member's declared data fields so a field-form value (written with
         -- explicit args) is recognized as a member of this class.
@@ -2654,7 +2685,7 @@ mkSatCache :: ClassGraph -> S.HashSet TypeName -> SatCache
 mkSatCache (ClassGraph cg) names = SatCache{
     scClassNames = [fromPartialName k | (CGClass{}, k, _) <- nodes],
     scTypeNames = S.toList names,
-    scClasses = H.fromList [(n, classInfo d) | (CGClass d, PClassName n, _) <- nodes]
+    scClasses = H.fromList [(n, classInfo (sealed, cls, ext, doc)) | (CGClass sealed cls ext doc, PClassName n, _) <- nodes]
   }
   where
     nodes = graphToNodes cg
@@ -5273,7 +5304,7 @@ foldRecursiveType typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv t@(UnionType
     -- cannot prove @Nil+Cons(tail=Nil+Cons(..)) ≡ Nil+Cons(tail=~C)@. 'leafsWithinMembers'
     -- gives @t ⊆ U_C@ and 'leafsCoverMembers' the reverse @U_C ⊆ t@ — together @t ≡ U_C@.
     matchingClassNames = [ fromPartialName cKey
-                         | (CGClass (sealed, _, classTypes, _), cKey, _) <- graphToNodes cg
+                         | (CGClass sealed _ classTypes _, cKey, _) <- graphToNodes cg
                          , sealed
                          , S.unions (map leafNameSet classTypes) == tNames
                          , leafsWithinMembers classTypes

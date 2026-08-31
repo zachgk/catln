@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/Thing/Fancy"
                 , ObjectMapItem
@@ -105,8 +105,8 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
@@ -116,26 +116,26 @@ Prgm
         , CGType
         , CGType
         , CGClass
-            ( False
-            , /Item
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Item
+            , cgcExtends =
                 [ /Item/Simple..
                 , /Item/Fancy..
                 ]
-            , Just "                 "
-            )
+            , cgcDoc = Just "  "
+            }
         , CGClass
-            ( True
-            , /Thing
-            ,
+            { cgcSealed = True
+            , cgcPartial = /Thing
+            , cgcExtends =
                 [ /Thing/Simple( /x=/Data/Primitive/Integer )
                 , /Thing/Fancy
                     ( /x=/Data/Primitive/Integer
                     , /y=/Data/Primitive/Integer
                     )
                 ]
-            , Just "     "
-            )
+            , cgcDoc = Just ""
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md

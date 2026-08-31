@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/operator++"
                 , ObjectMapItem
@@ -84,8 +84,8 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
@@ -95,26 +95,26 @@ Prgm
         , CGType
         , CGType
         , CGClass
-            ( False
-            , /Data/String
-            , [ /Data/String ]
-            , Just ""
-            )
+            { cgcSealed = False
+            , cgcPartial = /Data/String
+            , cgcExtends = [ /Data/String ]
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( False
-            , /Data/Algebra/Eqv[ /T=/Data/String ]
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Eqv[ /T=/Data/String ]
+            , cgcExtends =
                 [ /Data/StrEqv[ /T=/Data/String ] ]
-            , Nothing
-            )
+            , cgcDoc = Nothing
+            }
         , CGClass
-            ( False
-            , /Data/String
-            , [ /Data/String ]
-            , Just "[String] is a [Semigroup] under concatenation: joining strings end to end is associative.
+            { cgcSealed = False
+            , cgcPartial = /Data/String
+            , cgcExtends = [ /Data/String ]
+            , cgcDoc = Just "[String] is a [Semigroup] under concatenation: joining strings end to end is associative.
               (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
               yet dispatched by return type across multiple types, so only the [Semigroup] is declared.)"
-            )
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md

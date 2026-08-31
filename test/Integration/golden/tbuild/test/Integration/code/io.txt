@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/ContextIn"
                 , ObjectMapItem
@@ -8,26 +8,36 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
                             ( /Catln/exit
                                 ( /this=/Catln/IO
                                 , /val=/Data/Primitive/Integer
                                 ) + /Catln/IO
                             ) =
                             ( /Catln/exit
-                                ( EAppArg Value /val -> /Data/Primitive/Integer = 0 )
-                                ( EAppArg Value /this -> /Catln/IO =
-                                    ( /Catln/println
-                                        ( EAppArg Value /msg -> /Data/String = "hello world" )
-                                        ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) ) ↦ /Catln/IO
-                                    )
+                                ( EAppArg
+                                    { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /this -> /Catln/IO =
+                                        ( /Catln/println
+                                            ( EAppArg
+                                                { eaaArg = Value /msg -> /Data/String = "hello world" }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                            ) ↦ /Catln/IO
+                                        )
+                                    }
                                 ) ↦ /Catln/IO
                             )
                         ]
                     }
                 )
             ]
-        )
-    , prgmCG = [ CGType ]
+        }
+    , prgmCg = [ CGType ]
     , prgmAnnots = []
     }

@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/ContextIn"
                 , ObjectMapItem
@@ -53,21 +53,21 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
         , CGType
         , CGClass
-            ( True
-            , /Maybe[ /T=TopType ]
-            ,
+            { cgcSealed = True
+            , cgcPartial = /Maybe[ /T=TopType ]
+            , cgcExtends =
                 [ /Just[ /T=TopType ]( /val=$_/T )
                 , /Data/Maybe/Nothing
                 ]
-            , Just ""
-            )
+            , cgcDoc = Just ""
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md

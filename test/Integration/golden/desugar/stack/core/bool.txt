@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/Data/toString"
                 , ObjectMapItem
@@ -179,8 +179,8 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
@@ -194,33 +194,33 @@ Prgm
         , CGType
         , CGType
         , CGClass
-            ( False
-            , /Data/Primitive/Boolean
-            , [ ∀/Data/Primitive/Boolean ]
-            , Just ""
-            )
+            { cgcSealed = False
+            , cgcPartial = /Data/Primitive/Boolean
+            , cgcExtends = [ ∀/Data/Primitive/Boolean ]
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( False
-            , /Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
+            , cgcExtends =
                 [ /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] ]
-            , Nothing
-            )
+            , cgcDoc = Nothing
+            }
         , CGClass
-            ( True
-            , /Data/Primitive/Boolean
-            ,
+            { cgcSealed = True
+            , cgcPartial = /Data/Primitive/Boolean
+            , cgcExtends =
                 [ /Data/Primitive/True
                 , /Data/Primitive/False
                 ]
-            , Just ""
-            )
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( False
-            , /Data/Primitive/Boolean
-            , [ ∀/Data/Primitive/Boolean ]
-            , Just "A [Boolean] renders as the text of its constructor."
-            )
+            { cgcSealed = False
+            , cgcPartial = /Data/Primitive/Boolean
+            , cgcExtends = [ ∀/Data/Primitive/Boolean ]
+            , cgcDoc = Just "A [Boolean] renders as the text of its constructor."
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md

@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/Data/Algebra/isGreaterEq"
                 , ObjectMapItem
@@ -276,8 +276,8 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
@@ -300,55 +300,55 @@ Prgm
         , CGType
         , CGType
         , CGClass
-            ( True
-            , /Data/Algebra/Comparison
-            ,
+            { cgcSealed = True
+            , cgcPartial = /Data/Algebra/Comparison
+            , cgcExtends =
                 [ /Data/Algebra/LessThan
                 , /Data/Algebra/Equal
                 , /Data/Algebra/GreaterThan
                 ]
-            , Just ""
-            )
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( False
-            , /Data/Algebra/Ord
-            , [ ∀/Data/Algebra/Ord ]
-            , Just ""
-            )
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Ord
+            , cgcExtends = [ ∀/Data/Algebra/Ord ]
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( False
-            , /Data/Algebra/Ordering
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Ordering
+            , cgcExtends =
                 [ ∀/Data/Algebra/Ordering[ /T=$_/T ] ]
-            , Just ""
-            )
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( False
-            , /Data/Algebra/Ord
-            , [ ∀/Data/Primitive/Number ]
-            , Just " "
-            )
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Ord
+            , cgcExtends = [ ∀/Data/Primitive/Number ]
+            , cgcDoc = Just " "
+            }
         , CGClass
-            ( False
-            , /Data/Algebra/Ordering[ /T=TopType ]
-            , []
-            , Just ""
-            )
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Ordering[ /T=TopType ]
+            , cgcExtends = []
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( True
-            , /Data/Algebra/PComparison
-            ,
+            { cgcSealed = True
+            , cgcPartial = /Data/Algebra/PComparison
+            , cgcExtends =
                 [ ∀/Data/Algebra/Comparison
                 , /Data/Algebra/NoOrdering
                 ]
-            , Just ""
-            )
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( False
-            , /Data/Algebra/POrd
-            , []
-            , Just ""
-            )
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/POrd
+            , cgcExtends = []
+            , cgcDoc = Just ""
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md

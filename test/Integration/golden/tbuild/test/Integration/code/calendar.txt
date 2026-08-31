@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/ContextIn"
                 , ObjectMapItem
@@ -8,35 +8,43 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
                             ( /Catln/exit
                                 ( /this=/Catln/IO
                                 , /val=/Data/Primitive/Integer
                                 ) + /Catln/IO
                             ) =
                             ( /Catln/exit
-                                ( EAppArg Value /val -> /Data/Primitive/Integer = 0 )
-                                ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) ) ↦ /Catln/IO
+                                ( EAppArg
+                                    { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                ) ↦ /Catln/IO
                             )
                         ]
                     }
                 )
             ]
-        )
-    , prgmCG = [ CGType ]
+        }
+    , prgmCg = [ CGType ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Tests a /Data/Calendar/#calendar over a vault of tasks. A calendar shows everything the page it is
-            written in reaches which sits on a day, so this page reaches the vault beside it and the calendar
-            is of the tasks that vault holds.
-            Written in a .ct page and not in a note. A calendar is Catln's own and not a reading of the
-            Obsidian Tasks plugin, which has no such block for a note to write; what a note has to ask about
-            its own vault is /Data/Note/#tasks, which is a reading of the plugin and is tested apart.
-            The vault is named note by note as obsidianTasks.ct names it, and for its reason: a vault does not
-            import the notes it holds, so a golden test walking out from here would reach the vault and stop.
-            What the calendar finds is not written down here. The annotations of a page are evaluated for the
-            file a test names, and what they evaluate to is not what a golden of the program records — so the
-            annotation is what is written down here and what answers it is CalendarTests." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Tests a /Data/Calendar/#calendar over a vault of tasks. A calendar shows everything the page it is
+                written in reaches which sits on a day, so this page reaches the vault beside it and the calendar
+                is of the tasks that vault holds.
+                Written in a .ct page and not in a note. A calendar is Catln's own and not a reading of the
+                Obsidian Tasks plugin, which has no such block for a note to write; what a note has to ask about
+                its own vault is /Data/Note/#tasks, which is a reading of the plugin and is tested apart.
+                The vault is named note by note as obsidianTasks.ct names it, and for its reason: a vault does not
+                import the notes it holds, so a golden test walking out from here would reach the vault and stop.
+                What the calendar finds is not written down here. The annotations of a page are evaluated for the
+                file a test names, and what they evaluate to is not what a golden of the program records — so the
+                annotation is what is written down here and what answers it is CalendarTests." }
+            )
         , Value /Data/Calendar/#calendar
         ]
     }

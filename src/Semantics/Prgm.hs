@@ -157,20 +157,44 @@ showCodeRange :: CodeRangeDat -> String
 showCodeRange (start, end) = printf "%s:%d:%d-%d:%d" (sourceName start) (unPos $ sourceLine start) (unPos $ sourceColumn start) (unPos $ sourceLine end) (unPos $ sourceColumn end)
 
 data EApp e m
-  = EAppArg (ObjArr e m)
-  | EAppVar TypeVarName (Meta m)
-  | EAppSpread (e m)
+  = EAppArg { eaaArg :: ObjArr e m }
+  | EAppVar { eavName :: TypeVarName, eavMeta :: Meta m }
+  | EAppSpread { easExpr :: e m }
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+
+-- | What is applied to an expression, read as a Catln type.
+instance CtType (EApp Expr ()) where
+  ctDoc _ = [
+    "What is applied to an expression: an argument ([EAppArg]), a type parameter ([EAppVar], by [name] and the [meta] of what it is bound to), or the contents of another value spread into it ([EAppSpread]).",
+    "An application carries one of these at a time. `f(a, b)` is `f` applied to `a` and then to `b`, so the three arms are what one step of that can be rather than what a call is."
+            ]
 
 -- Expr after desugar
 data Expr m
-  = CExpr (Meta m) Constant
-  | Value (Meta m) TypeName
-  | HoleExpr (Meta m) Hole
-  | AliasExpr (Expr m) (Expr m) -- ^ AliasExpr baseExpr aliasExpr
-  | EWhere (Meta m) (Expr m) (Expr m) -- ^ base cond
-  | TupleApply (Meta m) (Meta m, Expr m) (EApp Expr m)
+  = CExpr { ceMeta :: Meta m, ceConst :: Constant }
+  | Value { veMeta :: Meta m, veName :: TypeName }
+  | HoleExpr { heMeta :: Meta m, heHole :: Hole }
+  | AliasExpr { aeBase :: Expr m, aeAlias :: Expr m } -- ^ AliasExpr baseExpr aliasExpr
+  | EWhere { ewMeta :: Meta m, ewBase :: Expr m, ewCond :: Expr m } -- ^ base cond
+  | TupleApply { taMeta :: Meta m, taBase :: (Meta m, Expr m), taApp :: EApp Expr m }
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
+
+-- | An expression after desugaring, read as a Catln type.
+--
+-- The thing a program that rewrites programs rewrites. Everything a Catln program is written with —
+-- arguments, type variables, contexts, lists, methods, format strings — has by this point become a
+-- [TupleApply] of one of the others, which is why the type a macro would be written against is six
+-- arms rather than the twenty the parser produces.
+--
+-- [TupleApply]'s [base] is handed over as a [\/Catln\/Pair]. It is a @(Meta, Expr)@ in Haskell,
+-- carrying the metadata of the application beside the expression being applied to, and naming those
+-- two halves would be rewriting the hundred-odd places that match one to improve a declaration.
+instance CtType (Expr ()) where
+  ctDoc _ = [
+    "An expression, after the compiler has reduced what was written to what it means.",
+    "A [CExpr] is a constant, a [Value] is a name, and a [HoleExpr] is a gap. An [AliasExpr] is a value given a second name, and an [EWhere] is a value narrowed by a condition. A [TupleApply] is everything else: one thing applied to another, which is what arguments, type parameters, lists and method calls all become.",
+    "So reading an expression is reading those six, however the program was written."
+            ]
 
 -- Compiler Annotation
 type CompAnnot em = em
@@ -232,16 +256,45 @@ data ObjectMapItem e m = ObjectMapItem {
   omiDefs         :: [ObjArr e m]
                             }
   deriving (Eq, Ord, Show, Generic, ToJSON, ToJSONKey)
-newtype ObjectMap e m = ObjectMap (H.HashMap TypeName (ObjectMapItem e m))
+newtype ObjectMap e m = ObjectMap { omItems :: H.HashMap TypeName (ObjectMapItem e m) }
   deriving (Eq, Show, Generic, ToJSON, ToJSONKey)
+
+-- | Everything a program declares and defines, read as a Catln type: each name, and what is written
+-- under it.
+instance CtType (ObjectMap Expr ()) where
+  ctDoc _ = [
+    "Everything a program declares and defines, by the name each is written under.",
+    "Handed over as a list of pairs, in order of name, so that two programs holding the same definitions are handed over the same way however they were built."
+            ]
+
+-- | What is written under one name, read as a Catln type.
+instance CtType (ObjectMapItem Expr ()) where
+  ctDoc _ = [
+    "Everything written under one name: its [decls], the [runtimeDecls] the compiler supplies rather than the program, the [refineDecls] narrowing what a definition returns, and the [defs] themselves.",
+    "A declaration says what may be called and a definition says what happens when it is. A name may have several of each, which is how one operation is written once and implemented per type."
+            ]
+
+-- | An object and the arrow from it, read as a Catln type.
+instance CtType (ObjArr Expr ()) where
+  ctDoc _ = [
+    "One thing written in a program: an [obj] it matches, and the [arr] it becomes.",
+    "[basis] says which way it was written — a definition, a type, a pattern, an arm of a match, or an argument standing inside another. [doc] is what was written about it and [annots] are the annotations on it.",
+    "[arr] is absent for something that only matches and produces nothing. When present it is a [Pair] of what it becomes — absent for a declaration, which says the shape without giving the value — and the [Meta] of that."
+            ]
 data Prgm e m = Prgm {
   prgmObjMap :: ObjectMap e m,
-  prgmCG     :: ClassGraph,
+  prgmCg     :: ClassGraph,
   prgmAnnots :: [CompAnnot (e m)]
   -- TODO: Include [Export]
                      }
   deriving (Show, Generic, ToJSON, ToJSONKey)
 
+-- | A whole program, read as a Catln type. What all of this was for.
+instance CtType (Prgm Expr ()) where
+  ctDoc _ = [
+    "A whole program: everything it declares and defines ([objMap]), how its classes and types relate ([cg]), and the annotations written on the program itself ([annots]).",
+    "This is what a program reading a program is given. It is the program at whichever stage it was asked for, narrowed to the metadata every stage shares, so what is read is the same shape whichever stage it came from."
+            ]
 
 instance (Show m) => Show (Meta m) where
   show :: Meta m -> String

@@ -1,15 +1,19 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/unbox"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /unbox( EAppArg Value /b -> ∀/Boxed ) -> /Data/Primitive/Integer ]
+                        [ /unbox
+                            ( EAppArg { eaaArg = Value /b -> ∀/Boxed } ) -> /Data/Primitive/Integer
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /unbox( EAppArg Value /b -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = ( Value /b ↦ /Data/Primitive/Integer ) ]
+                        [ /unbox
+                            ( EAppArg { eaaArg = Value /b -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer = ( Value /b ↦ /Data/Primitive/Integer )
+                        ]
                     }
                 )
             ,
@@ -19,14 +23,24 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
+                        ]
                     }
                 )
             ,
                 ( "/Box"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Box( EAppVar /A TopType )( EAppArg Value /x -> $/A ) ]
+                        [ /Box
+                            ( EAppVar
+                                { eavName = /A
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /x -> $/A } )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -37,45 +51,65 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /useBox
-                            ( EAppArg Value /p -> /Box[ /A=∀/Boxed ]( /x=∀/Boxed ) ) -> /Data/Primitive/Integer
+                            ( EAppArg
+                                { eaaArg = Value /p -> /Box[ /A=∀/Boxed ]( /x=∀/Boxed ) }
+                            ) -> /Data/Primitive/Integer
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /useBox
-                            ( EAppArg Value /p -> /Box[ /A=∀/Boxed ]( /x=∀/Boxed ) = /Box( EAppArg Value /x@Value /v -> ∀/Boxed ) ) -> /Data/Primitive/Integer =
+                            ( EAppArg
+                                { eaaArg = Value /p -> /Box[ /A=∀/Boxed ]( /x=∀/Boxed ) = /Box
+                                    ( EAppArg { eaaArg = Value /x@Value /v -> ∀/Boxed } )
+                                }
+                            ) -> /Data/Primitive/Integer =
                             ( /unbox
-                                ( EAppArg Value /b -> TVArg /v = ( Value /v ↦ TVArg /v ) ) ↦ /Data/Primitive/Integer
+                                ( EAppArg
+                                    { eaaArg = Value /b -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                ) ↦ /Data/Primitive/Integer
                             )
                         ]
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
         , CGType
         , CGClass
-            ( False
-            , /Boxed
-            , [ /Data/Primitive/Integer ]
-            , Just "         "
-            )
+            { cgcSealed = False
+            , cgcPartial = /Boxed
+            , cgcExtends = [ /Data/Primitive/Integer ]
+            , cgcDoc = Just " "
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Prerequisite for multiFieldRouting (after paramElemBound): the alias-rename variant. Same as" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Prerequisite for multiFieldRouting (after paramElemBound): the alias-rename variant. Same as" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "paramElemBound but the destructured field is renamed via the alias form `x@v` and the body uses" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "paramElemBound but the destructured field is renamed via the alias form `x@v` and the body uses" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "the alias `v`. The bare form (paramElemBound) works; isolating the alias rename here. Currently" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "the alias `v`. The bare form (paramElemBound) works; isolating the alias rename here. Currently" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "the definition's argument `p` fails to resolve the `Box(x@v)` pattern (stays TopType) when the" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "the definition's argument `p` fails to resolve the `Box(x@v)` pattern (stays TopType) when the" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "body uses `v` in a bounded-member call (`unbox(b= v)`), even though the bare and the" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "body uses `v` in a bounded-member call (`unbox(b= v)`), even though the bare and the" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "simple-body (`= v`) alias forms both resolve." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "simple-body (`= v`) alias forms both resolve." }
+            )
         ]
     }

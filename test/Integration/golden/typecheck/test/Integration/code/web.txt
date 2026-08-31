@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/main"
                 , ObjectMapItem
@@ -31,8 +31,8 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG = [ CGType ]
+        }
+    , prgmCg = [ CGType ]
     , prgmAnnots =
         [ /Catln/#md
             ( Value /text -> /Data/String = CStr

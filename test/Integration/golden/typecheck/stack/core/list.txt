@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/Data/Monad/pure"
                 , ObjectMapItem
@@ -624,8 +624,8 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
@@ -651,64 +651,64 @@ Prgm
         , CGType
         , CGType
         , CGClass
-            ( False
-            , /Data/List/ConsList
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Data/List/ConsList
+            , cgcExtends =
                 [ ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ] ]
-            , Just ""
-            )
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( False
-            , /Data/List/ConsList
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Data/List/ConsList
+            , cgcExtends =
                 [ ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ]
-            , Just ""
-            )
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( False
-            , /Data/List/ConsList
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Data/List/ConsList
+            , cgcExtends =
                 [ ∀/Data/List/ConsList[ /T=$_/T ] ]
-            , Just ""
-            )
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( False
-            , /Data/List[ /T=TopType ]
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Data/List[ /T=TopType ]
+            , cgcExtends =
                 [ ∀/Data/List/ConsList[ /T=$_/T ] ]
-            , Just " Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below."
-            )
+            , cgcDoc = Just " Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below."
+            }
         , CGClass
-            ( True
-            , /Data/List/ConsList[ /T=TopType ]
-            ,
+            { cgcSealed = True
+            , cgcPartial = /Data/List/ConsList[ /T=TopType ]
+            , cgcExtends =
                 [ /Data/List/Cons[ /T=$_/T ]
                     ( /head=$/T
                     , /tail=∀/Data/List/ConsList[ /T=$_/T ]
                     )
                 , /Data/List/Nil
                 ]
-            , Just "A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
+            , cgcDoc = Just "A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
               smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
               [Nil], and a step that consumes the [head] and recurses on the [tail]."
-            )
+            }
         , CGClass
-            ( False
-            , /Data/List/ConsList
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Data/List/ConsList
+            , cgcExtends =
                 [ ∀/Data/List/ConsList[ /T=$_/T ] ]
-            , Just ""
-            )
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( False
-            , /Data/List
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Data/List
+            , cgcExtends =
                 [ ∀/Data/List[ /T=∀/Data/ToString ] ]
-            , Just "A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
+            , cgcDoc = Just "A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
               rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
               [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
               implement it."
-            )
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md

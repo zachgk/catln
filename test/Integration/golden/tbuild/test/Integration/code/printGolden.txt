@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/ContextIn"
                 , ObjectMapItem
@@ -8,19 +8,30 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
+                        ]
                     }
                 )
             ]
-        )
-    , prgmCG = [ CGType ]
+        }
+    , prgmCg = [ CGType ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "A string-serializable #print carries its expected value as a #result golden, checked by" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A string-serializable #print carries its expected value as a #result golden, checked by" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "`catln test` and (re)written by `catln test --update`." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "`catln test` and (re)written by `catln test --update`." }
+            )
         , /Catln/#print
-            ( EAppArg Value /p -> /Data/String = "hello world" )
-            ( EAppArg Value /result -> /Data/String = "hello world" )
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/String = "hello world" }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "hello world" }
+            )
         ]
     }

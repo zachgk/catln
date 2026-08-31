@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/IntCons"
                 , ObjectMapItem
@@ -86,24 +86,24 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
         , CGType
         , CGClass
-            ( True
-            , /IntList
-            ,
+            { cgcSealed = True
+            , cgcPartial = /IntList
+            , cgcExtends =
                 [ /IntCons
                     ( /head=/Data/Primitive/Integer
                     , /tail=∀/IntList
                     )
                 , /IntNil
                 ]
-            , Just "   "
-            )
+            , cgcDoc = Just ""
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md

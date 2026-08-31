@@ -1,12 +1,14 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/Catln/llvm"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Catln/llvm( EAppArg Value /c ) -> /Catln/CatlnResult.. ]
+                        [ /Catln/llvm
+                            ( EAppArg { eaaArg = Value /c } ) -> /Catln/CatlnResult..
+                        ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -18,13 +20,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Catln/www( EAppArg Value /html -> /Data/String ) -> /Catln/CatlnResult
+                        [ /Catln/www
+                            ( EAppArg { eaaArg = Value /html -> /Data/String } ) -> /Catln/CatlnResult
                             ( /files=/Data/List/Cons
-                                [ /T=/Catln/BuildFile
-                                    ( /path=/Data/String
-                                    , /contents=/Data/String
-                                    )
-                                ]
                                 ( /head=/Catln/BuildFile
                                     ( /path=/Data/String
                                     , /contents=/Data/String
@@ -32,25 +30,29 @@ Prgm
                                 , /tail=/Data/List/Nil
                                 )
                             ) = /Catln/CatlnResult
-                            ( EAppArg Value /files -> /Data/List/Cons
-                                [ /T=/Catln/BuildFile
-                                    ( /path=/Data/String
-                                    , /contents=/Data/String
+                            ( EAppArg
+                                { eaaArg = Value /files -> /Data/List/Cons
+                                    ( /head=/Catln/BuildFile
+                                        ( /path=/Data/String
+                                        , /contents=/Data/String
+                                        )
+                                    , /tail=/Data/List/Nil
+                                    ) = /Data/List/Cons
+                                    ( EAppArg
+                                        { eaaArg = Value /head -> /Catln/BuildFile
+                                            ( /path=/Data/String
+                                            , /contents=/Data/String
+                                            ) = /Catln/BuildFile
+                                            ( EAppArg
+                                                { eaaArg = Value /path -> /Data/String = "index.html" }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /contents -> TVArg /html = ( Value /html ↦ TVArg /html ) }
+                                            )
+                                        }
                                     )
-                                ]
-                                ( /head=/Catln/BuildFile
-                                    ( /path=/Data/String
-                                    , /contents=/Data/String
-                                    )
-                                , /tail=/Data/List/Nil
-                                ) = /Data/List/Cons
-                                ( EAppArg Value /head -> /Catln/BuildFile
-                                    ( /path=/Data/String
-                                    , /contents=/Data/String
-                                    ) = /Catln/BuildFile
-                                    ( EAppArg Value /path -> /Data/String = "index.html" )
-                                    ( EAppArg Value /contents -> TVArg /html = ( Value /html ↦ TVArg /html ) )
-                                )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                                    ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                }
                             )
                         ]
                     }
@@ -60,7 +62,9 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/CatlnResult
-                            ( EAppArg Value /files -> ∀/Data/List[ /T=/Catln/BuildFile ] )
+                            ( EAppArg
+                                { eaaArg = Value /files -> ∀/Data/List[ /T=/Catln/BuildFile ] }
+                            )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -68,38 +72,40 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
         , CGClass
-            ( False
-            , /Catln/BuildFile
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Catln/BuildFile
+            , cgcExtends =
                 [ /Catln/BuildFile..
                 , /Catln/CatlnResult..
                 ]
-            , Just "       "
-            )
+            , cgcDoc = Just " "
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "# Build Results
-            What a build produces, and the ways of producing one.
-            This is declared apart from @core/compile.ct@, where it was, and the separation is load-bearing
-            rather than tidying. A result is a list of files, so declaring it beside the compiler's
-            annotations would give @core/compile.ct@ a path to @core/list.ct@. Every program reaches
-            @core/compile.ct@ — it is where [#md] and [#assert] are declared — and @core/algebra.ct@ imports
-            it, so that path closes a cycle which puts @core/list.ct@ in the same mutually-importing group as
-            @core/algebra.ct@. Measured on @test/Integration/code/io.ct@, that one import edge alone takes a
-            run from 203 seconds to over 900, and reports [/Data/Algebra/eq] and [/Data/Algebra/ord] as
-            unfulfilled declarations that are fulfilled without it.
-            So this file sits below both instead: it imports what it needs and nothing imports it but
-            @core/main.ct@, which is what every program is given.
-            [BuildFile] is not declared here. It is declared by the compiler, on the page @hsbuiltins()@
-            reads, because the compiler reads a build result back out of an evaluation itself — so what the
-            type is called there and what it is read as in Haskell are one thing rather than two kept in
-            step. [CatlnResult] around it is still declared here." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "# Build Results
+                What a build produces, and the ways of producing one.
+                This is declared apart from @core/compile.ct@, where it was, and the separation is load-bearing
+                rather than tidying. A result is a list of files, so declaring it beside the compiler's
+                annotations would give @core/compile.ct@ a path to @core/list.ct@. Every program reaches
+                @core/compile.ct@ — it is where [#md] and [#assert] are declared — and @core/algebra.ct@ imports
+                it, so that path closes a cycle which puts @core/list.ct@ in the same mutually-importing group as
+                @core/algebra.ct@. Measured on @test/Integration/code/io.ct@, that one import edge alone takes a
+                run from 203 seconds to over 900, and reports [/Data/Algebra/eq] and [/Data/Algebra/ord] as
+                unfulfilled declarations that are fulfilled without it.
+                So this file sits below both instead: it imports what it needs and nothing imports it but
+                @core/main.ct@, which is what every program is given.
+                [BuildFile] is not declared here. It is declared by the compiler, on the page @hsbuiltins()@
+                reads, because the compiler reads a build result back out of an evaluation itself — so what the
+                type is called there and what it is read as in Haskell are one thing rather than two kept in
+                step. [CatlnResult] around it is still declared here." }
+            )
         ]
     }

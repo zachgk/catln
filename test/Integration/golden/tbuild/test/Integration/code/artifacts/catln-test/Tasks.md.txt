@@ -1,50 +1,62 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/Data/Note/Task/Simple"
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/Task/Simple
-                            ( EAppArg Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Read [[Welcome]]" }
-                                    ]
-                                ) = "Read [[Welcome]]"
-                            )( EAppArg Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
+                            ( EAppArg
+                                { eaaArg = Value /contents -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "Read [[Welcome]]" }
+                                        ]
+                                    ) = "Read [[Welcome]]"
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
                         , /Data/Note/Task/Simple
-                            ( EAppArg Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Write this note" }
-                                    ]
-                                ) = "Write this note"
-                            )( EAppArg Value /state -> /Data/Primitive/True = Value /Data/Primitive/True )
+                            ( EAppArg
+                                { eaaArg = Value /contents -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "Write this note" }
+                                        ]
+                                    ) = "Write this note"
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /state -> /Data/Primitive/True = Value /Data/Primitive/True } )
                         , /Data/Note/Task/Simple
-                            ( EAppArg Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Plan the rest" }
-                                    ]
-                                ) = "Plan the rest"
-                            )( EAppArg Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
+                            ( EAppArg
+                                { eaaArg = Value /contents -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "Plan the rest" }
+                                        ]
+                                    ) = "Plan the rest"
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
                         , /Data/Note/Task/Simple
-                            ( EAppArg Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "A checkbox indented deeper is a task of its own" }
-                                    ]
-                                ) = "A checkbox indented deeper is a task of its own"
-                            )( EAppArg Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
+                            ( EAppArg
+                                { eaaArg = Value /contents -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "A checkbox indented deeper is a task of its own" }
+                                        ]
+                                    ) = "A checkbox indented deeper is a task of its own"
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -56,14 +68,16 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/Page
-                            ( EAppArg Value /title -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Tasks" }
-                                    ]
-                                ) = "Tasks"
+                            ( EAppArg
+                                { eaaArg = Value /title -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "Tasks" }
+                                        ]
+                                    ) = "Tasks"
+                                }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -72,8 +86,8 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         ]

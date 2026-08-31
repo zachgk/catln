@@ -1,12 +1,14 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList [] )
-    , prgmCG = []
+        { omItems = fromList [] }
+    , prgmCg = []
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "# Catln Core Library
-            This is the Catln core library.
-            It defines the fundamental units of the language, core data types, basic compilation, and standard methods.
-            All Catln files will automatically import the core library." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "# Catln Core Library
+                This is the Catln core library.
+                It defines the fundamental units of the language, core data types, basic compilation, and standard methods.
+                All Catln files will automatically import the core library." }
+            )
         ]
     }

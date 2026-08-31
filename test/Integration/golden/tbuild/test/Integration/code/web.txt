@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/main"
                 , ObjectMapItem
@@ -11,11 +11,6 @@ Prgm
                         [ Value /main ->
                             ( /Catln/www( /html=/Data/String ) + /Catln/CatlnResult
                                 ( /files=/Data/List/Cons
-                                    [ /T=/Catln/BuildFile
-                                        ( /path=/Data/String
-                                        , /contents=/Data/String
-                                        )
-                                    ]
                                     ( /head=/Catln/BuildFile
                                         ( /path=/Data/String
                                         , /contents=/Data/String
@@ -25,13 +20,10 @@ Prgm
                                 )
                             ) =
                             ( /Catln/www
-                                ( EAppArg Value /html -> /Data/String = "<html><body>web test</body></html>" ) ↦ /Catln/CatlnResult
+                                ( EAppArg
+                                    { eaaArg = Value /html -> /Data/String = "<html><body>web test</body></html>" }
+                                ) ↦ /Catln/CatlnResult
                                 ( /files=/Data/List/Cons
-                                    [ /T=/Catln/BuildFile
-                                        ( /path=/Data/String
-                                        , /contents=/Data/String
-                                        )
-                                    ]
                                     ( /head=/Catln/BuildFile
                                         ( /path=/Data/String
                                         , /contents=/Data/String
@@ -44,42 +36,36 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG = [ CGType ]
+        }
+    , prgmCg = [ CGType ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Tests using a custom build type [www].
-            It also prints the result of the build in an iframe." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Tests using a custom build type [www].
+                It also prints the result of the build in an iframe." }
+            )
         , /Catln/#print
-            ( EAppArg Value /p -> /Catln/CatlnResult
-                ( /files=/Data/List/Cons
-                    [ /T=/Catln/BuildFile
-                        ( /path=/Data/String
-                        , /contents=/Data/String
-                        )
-                    ]
-                    ( /head=/Catln/BuildFile
-                        ( /path=/Data/String
-                        , /contents=/Data/String
-                        )
-                    , /tail=/Data/List/Nil
-                    )
-                ) =
-                ( Value /main ↦ /Catln/CatlnResult
+            ( EAppArg
+                { eaaArg = Value /p -> /Catln/CatlnResult
                     ( /files=/Data/List/Cons
-                        [ /T=/Catln/BuildFile
-                            ( /path=/Data/String
-                            , /contents=/Data/String
-                            )
-                        ]
                         ( /head=/Catln/BuildFile
                             ( /path=/Data/String
                             , /contents=/Data/String
                             )
                         , /tail=/Data/List/Nil
                         )
+                    ) =
+                    ( Value /main ↦ /Catln/CatlnResult
+                        ( /files=/Data/List/Cons
+                            ( /head=/Catln/BuildFile
+                                ( /path=/Data/String
+                                , /contents=/Data/String
+                                )
+                            , /tail=/Data/List/Nil
+                            )
+                        )
                     )
-                )
+                }
             )
         ]
     }

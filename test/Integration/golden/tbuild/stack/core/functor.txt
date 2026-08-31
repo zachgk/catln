@@ -1,13 +1,32 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/Data/Functor/fmap"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Functor/fmap( EAppVar /B TopType )( EAppVar /A TopType )
-                            ( EAppVar /F ∀/Data/Functor[ /T=$_/A ] )( EAppArg Value /lst -> $/F )
-                            ( EAppArg /fn( EAppArg Value /v -> $_/A ) -> $_/B ) -> $/F[ /T=$_/B ]
+                        [ /Data/Functor/fmap
+                            ( EAppVar
+                                { eavName = /B
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppVar
+                                { eavName = /A
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppVar
+                                { eavName = /F
+                                , eavMeta = ∀/Data/Functor[ /T=$_/A ]
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /lst -> $/F } )
+                            ( EAppArg
+                                { eaaArg = /fn
+                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> $_/B
+                                }
+                            ) -> $/F[ /T=$_/B ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -15,66 +34,91 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
         , CGClass
-            ( False
-            , /Data/Functor[ /T=TopType ]
-            , []
-            , Just "A [Functor] is a basic property of a collection.
-              It has a single operation [fmap] that applies a function to each element in the collection.$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T] A [Functor] is a basic property of a collection.
-              It has a single operation [fmap] that applies a function to each element in the collection.$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T] A [Functor] is a basic property of a collection.
-              It has a single operation [fmap] that applies a function to each element in the collection.$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T] A [Functor] is a basic property of a collection.
+            { cgcSealed = False
+            , cgcPartial = /Data/Functor[ /T=TopType ]
+            , cgcExtends = []
+            , cgcDoc = Just "A [Functor] is a basic property of a collection.
               It has a single operation [fmap] that applies a function to each element in the collection.$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]"
-            )
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "# Functors
-            A [Functor] is a basic property of a collection: a container that can have a function
-            applied to each of the elements it holds." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "# Functors
+                A [Functor] is a basic property of a collection: a container that can have a function
+                applied to each of the elements it holds." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "## Collections
-            Collections are containers that hold elements of a type inside them." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "## Collections
+                Collections are containers that hold elements of a type inside them." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "A [Functor] is a basic property of a collection.
-            It has a single operation [fmap] that applies a function to each element in the collection." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A [Functor] is a basic property of a collection.
+                It has a single operation [fmap] that applies a function to each element in the collection." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "# The fmap operation and laws
-            [fmap] and the [Functor] laws live in [module(Data/Functor)] — the namespace the [Functor] class
-            opens — so they sit under [/Data/Functor] rather than loose at the top of [/Data]." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "# The fmap operation and laws
+                [fmap] and the [Functor] laws live in [module(Data/Functor)] — the namespace the [Functor] class
+                opens — so they sit under [/Data/Functor] rather than loose at the top of [/Data]." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "[fmap] applies a function to every element of a [Functor], producing a new one of the" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "[fmap] applies a function to every element of a [Functor], producing a new one of the" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "same kind. This is the generic interface declared over the [Functor] class; each" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "same kind. This is the generic interface declared over the [Functor] class; each" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "instance supplies its own definition in a separate module (so the open [Functor] class" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "instance supplies its own definition in a separate module (so the open [Functor] class" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "is not required to be totally covered here). See the [ConsList] instance in [Data/List]." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "is not required to be totally covered here). See the [ConsList] instance in [Data/List]." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "The result is the input container's shape with the element rebound to the mapped" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "The result is the input container's shape with the element rebound to the mapped" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "function's return ([$F[$T -> $_B]]) — a bare [$F] would wrongly claim the element type" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "function's return ([$F[$T -> $_B]]) — a bare [$F] would wrongly claim the element type" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "is preserved." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "is preserved." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "## Functor laws
-            Identity law: mapping the identity function over a functor returns it unchanged. Expressed
-            as a property test, it is checked against every [Functor] instance (here [$F]) whose
-            elements are [Eq] — so the mapped result can be compared with the original — at arbitrary
-            members of that instance. Like the [Eqv] laws in [Data/Algebra/eq], it instantiates per
-            file over the import graph, so each file defining an instance checks the law for it." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "## Functor laws
+                Identity law: mapping the identity function over a functor returns it unchanged. Expressed
+                as a property test, it is checked against every [Functor] instance (here [$F]) whose
+                elements are [Eq] — so the mapped result can be compared with the original — at arbitrary
+                members of that instance. Like the [Eqv] laws in [Data/Algebra/eq], it instantiates per
+                file over the import graph, so each file defining an instance checks the law for it." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Composition law: mapping two functions in sequence equals mapping their composition.
-            Stated with concrete increment functions and the composition written out in the lambda
-            body ([(v + 1) + 1]) rather than over function-valued parameters, which the checker
-            cannot yet relate. Checked against every [Functor] instance whose elements are
-            [Integer] - so the increments apply - at arbitrary members of that instance,
-            instantiating per file like the identity law above." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Composition law: mapping two functions in sequence equals mapping their composition.
+                Stated with concrete increment functions and the composition written out in the lambda
+                body ([(v + 1) + 1]) rather than over function-valued parameters, which the checker
+                cannot yet relate. Checked against every [Functor] instance whose elements are
+                [Integer] - so the increments apply - at arbitrary members of that instance,
+                instantiating per file like the identity law above." }
+            )
         ]
     }

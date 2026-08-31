@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/Scratch/MyEqv"
                 , ObjectMapItem
@@ -17,51 +17,75 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( EAppArg Value /value -> /Scratch/main = Value /Scratch/main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /Scratch/main = Value /Scratch/main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
+                        ]
                     }
                 )
             ,
                 ( "/Scratch/rel"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Scratch/rel( EAppArg Value /a -> $/T )( EAppArg Value /b -> $/T )
-                            ( EAppArg Value /this -> ∀/Scratch/TEqv[ /T=$_/T ] ) -> ∀/Data/Primitive/Boolean
+                        [ /Scratch/rel
+                            ( EAppArg { eaaArg = Value /a -> $/T } )
+                            ( EAppArg { eaaArg = Value /b -> $/T } )
+                            ( EAppArg
+                                { eaaArg = Value /this -> ∀/Scratch/TEqv[ /T=$_/T ] }
+                            ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Scratch/rel( EAppArg Value /a )( EAppArg Value /b )( EAppArg Value /this -> /Scratch/MyEqv ) -> ∀/Data/Primitive/Boolean =
+                        [ /Scratch/rel
+                            ( EAppArg { eaaArg = Value /a } )
+                            ( EAppArg { eaaArg = Value /b } )
+                            ( EAppArg { eaaArg = Value /this -> /Scratch/MyEqv } ) -> ∀/Data/Primitive/Boolean =
                             ( /Data/Primitive/intEq
-                                ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
-                                ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) ) ↦ ∀/Data/Primitive/Boolean
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) }
+                                ) ↦ ∀/Data/Primitive/Boolean
                             )
                         ]
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
         , CGClass
-            ( False
-            , /Scratch/TEqv[ /T=TopType ]
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Scratch/TEqv[ /T=TopType ]
+            , cgcExtends =
                 [ /Scratch/MyEqv[ /T=TopType ] ]
-            , Just "   "
-            )
+            , cgcDoc = Just ""
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Class-method type-parameter binding." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Class-method type-parameter binding." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "The abstract [rel] is declared over the parameterized class [TEqv] with its arguments typed" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "The abstract [rel] is declared over the parameterized class [TEqv] with its arguments typed" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "by the class parameter. The object [MyEqv] is a member of [TEqv] with the parameter bound to" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "by the class parameter. The object [MyEqv] is a member of [TEqv] with the parameter bound to" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "[Integer], so the definition of [rel] sees its arguments as [Integer] and the declaration is" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "[Integer], so the definition of [rel] sees its arguments as [Integer] and the declaration is" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "fulfilled by covering the receiver (every member of the class has a definition)." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "fulfilled by covering the receiver (every member of the class has a definition)." }
+            )
         ]
     }

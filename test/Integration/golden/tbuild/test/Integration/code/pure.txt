@@ -1,17 +1,22 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/pureMaybe"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /pureMaybe( EAppArg Value /v -> /Data/Primitive/Integer ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) ]
+                        [ /pureMaybe
+                            ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /pureMaybe( EAppArg Value /v -> /Data/Primitive/Integer ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) =
+                        [ /pureMaybe
+                            ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) =
                             ( /Data/Monad/pure
-                                ( EAppArg Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) ) ↦ /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                ( EAppArg
+                                    { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                ) ↦ /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
                             )
                         ]
                     }
@@ -23,14 +28,18 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
+                        ]
                     }
                 )
             ,
                 ( "/pureList"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /pureList( EAppArg Value /v -> /Data/Primitive/Integer ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        [ /pureList
+                            ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
                             , /tail=TopType
                             )
@@ -38,12 +47,15 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /pureList( EAppArg Value /v -> /Data/Primitive/Integer ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                        [ /pureList
+                            ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
                             , /tail=∀/Data/List/ConsList[ /T=TopType ]
                             ) =
                             ( /Data/Monad/pure
-                                ( EAppArg Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) ) ↦ /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                ( EAppArg
+                                    { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                ) ↦ /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                 ( /head=/Data/Primitive/Integer
                                 , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                 )
@@ -52,18 +64,24 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Cross-module check that [pure] (declared over [Monad] in stack/core/monad.ct) dispatches by the" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Cross-module check that [pure] (declared over [Monad] in stack/core/monad.ct) dispatches by the" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "call site's expected type: the same call [pure(v= ...)] builds a [Some] or a singleton [Cons]" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "call site's expected type: the same call [pure(v= ...)] builds a [Some] or a singleton [Cons]" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "depending only on the caller's declared return type (return-type-directed dispatch)." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "depending only on the caller's declared return type (return-type-directed dispatch)." }
+            )
         ]
     }

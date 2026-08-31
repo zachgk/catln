@@ -1,12 +1,22 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/Data/Monad/pure"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Monad/pure( EAppVar /A TopType )
-                            ( EAppVar /M ∀/Data/Monad[ /T=$_/A ] )( EAppArg Value /v -> $_/A ) -> $/M
+                        [ /Data/Monad/pure
+                            ( EAppVar
+                                { eavName = /A
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppVar
+                                { eavName = /M
+                                , eavMeta = ∀/Data/Monad[ /T=$_/A ]
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /v -> $_/A } ) -> $/M
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -17,9 +27,28 @@ Prgm
                 ( "/Data/Monad/mmap"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Monad/mmap( EAppVar /B TopType )( EAppVar /A TopType )
-                            ( EAppVar /M ∀/Data/Monad[ /T=$_/A ] )( EAppArg Value /m -> $/M )
-                            ( EAppArg /fn( EAppArg Value /v -> $_/A ) -> $/M ) -> $/M
+                        [ /Data/Monad/mmap
+                            ( EAppVar
+                                { eavName = /B
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppVar
+                                { eavName = /A
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppVar
+                                { eavName = /M
+                                , eavMeta = ∀/Data/Monad[ /T=$_/A ]
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /m -> $/M } )
+                            ( EAppArg
+                                { eaaArg = /fn
+                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> $/M
+                                }
+                            ) -> $/M
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -27,50 +56,66 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGClass
-            ( False
-            , /Data/Monad[ /T=TopType ]
-            , []
-            , Just "A [Monad] extends the container idea of a [Functor] with sequencing.
-              Its single operation [mmap] chains a value-to-monad function across the elements it holds. A [Monad] extends the container idea of a [Functor] with sequencing.
-              Its single operation [mmap] chains a value-to-monad function across the elements it holds. A [Monad] extends the container idea of a [Functor] with sequencing.
+            { cgcSealed = False
+            , cgcPartial = /Data/Monad[ /T=TopType ]
+            , cgcExtends = []
+            , cgcDoc = Just "A [Monad] extends the container idea of a [Functor] with sequencing.
               Its single operation [mmap] chains a value-to-monad function across the elements it holds."
-            )
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "# Monads
-            A [Monad] is a [Functor] with a way to sequence computations: [mmap] (the monadic bind,
-            written [>>=] in some languages) applies a function that itself produces a new monadic value
-            to the value(s) held inside one, and flattens the result back into a single monad." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "# Monads
+                A [Monad] is a [Functor] with a way to sequence computations: [mmap] (the monadic bind,
+                written [>>=] in some languages) applies a function that itself produces a new monadic value
+                to the value(s) held inside one, and flattens the result back into a single monad." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "A [Monad] extends the container idea of a [Functor] with sequencing.
-            Its single operation [mmap] chains a value-to-monad function across the elements it holds." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A [Monad] extends the container idea of a [Functor] with sequencing.
+                Its single operation [mmap] chains a value-to-monad function across the elements it holds." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "# The mmap and pure operations
-            [mmap] and [pure] live in [module(Data/Monad)] — the namespace the [Monad] class opens — so they
-            sit under [/Data/Monad] rather than loose at the top of [/Data]." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "# The mmap and pure operations
+                [mmap] and [pure] live in [module(Data/Monad)] — the namespace the [Monad] class opens — so they
+                sit under [/Data/Monad] rather than loose at the top of [/Data]." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "[mmap] is the generic monadic bind declared over the [Monad] class; each instance supplies" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "[mmap] is the generic monadic bind declared over the [Monad] class; each instance supplies" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "its own definition in a separate module (so the open [Monad] class is not required to be" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "its own definition in a separate module (so the open [Monad] class is not required to be" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "totally covered here). It mirrors [fmap]'s shape, but where [fmap]'s function returns a bare" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "totally covered here). It mirrors [fmap]'s shape, but where [fmap]'s function returns a bare" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "element ([$_B]), [mmap]'s function returns a whole monad of the same kind ([$M]) which [mmap]" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "element ([$_B]), [mmap]'s function returns a whole monad of the same kind ([$M]) which [mmap]" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "then flattens. See the [ConsList] instance in [Data/List] and the [Maybe] one in [Data/Maybe]." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "then flattens. See the [ConsList] instance in [Data/List] and the [Maybe] one in [Data/Maybe]." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "## Pure
-            [pure] wraps a single plain value into a [Monad]. Every instance shares the same input shape —
-            a bare value — so nothing about the arguments selects an instance: the call site's expected
-            result type ([$M]) does, through return-type-directed dispatch. A caller therefore needs a
-            resolved concrete expected type (such as a declared return type) where it calls [pure]. Each
-            instance supplies its own definition in a separate module (see the [Maybe] instance in
-            [Data/Maybe])." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "## Pure
+                [pure] wraps a single plain value into a [Monad]. Every instance shares the same input shape —
+                a bare value — so nothing about the arguments selects an instance: the call site's expected
+                result type ([$M]) does, through return-type-directed dispatch. A caller therefore needs a
+                resolved concrete expected type (such as a declared return type) where it calls [pure]. Each
+                instance supplies its own definition in a separate module (see the [Maybe] instance in
+                [Data/Maybe])." }
+            )
         ]
     }

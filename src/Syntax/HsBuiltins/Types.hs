@@ -36,7 +36,7 @@ import           Data.Proxy          (Proxy (..))
 import           Eval.Common         (Val)
 import           GHC.Generics        (Generic)
 import           Semantics.CtType
-import           Semantics.Prgm      (Hole, Meta, ObjectBasis)
+import           Semantics.Prgm      (Expr, Hole, Meta, ObjectBasis, Prgm)
 import           Semantics.Types     (Constant, PartialKey, PartialName,
                                       PtArgMode, Type, TypeVarLoc)
 import           Semantics.Val       hiding (Val)
@@ -100,7 +100,11 @@ hsPrgmTypes = [
   ctPageInto (Proxy :: Proxy Type),
   -- At the metadata every stage shares, which is what MapMeta.clearMetaDat narrows a program of any
   -- stage to. Reaches where something was written and the type it was inferred to have.
-  ctPageInto (Proxy :: Proxy (Meta ()))
+  ctPageInto (Proxy :: Proxy (Meta ())),
+  -- The program itself, which reaches everything above and everything a program is written out of:
+  -- the map of what it declares, the expressions those are written as, and the graph saying how its
+  -- classes and types relate.
+  ctPageInto (Proxy :: Proxy (Prgm Expr ()))
               ]
 
 hsPrgmPage :: CtPage

@@ -54,7 +54,7 @@ resolveRelativeNames fullPrgm@(Prgm fullPrgmObjMap _ _) (Prgm objMap (ClassGraph
   where
     classGraph' = ClassGraph $ graphFromEdges $ map mapClassEntry $ graphToNodes cg
     mapClassEntry (node, tp, subTypes) = (mapCGNode node, resolveName True tp, map (resolveName True) subTypes)
-    mapCGNode (CGClass (s, clss, ts, doc)) = CGClass (s, resolveClassPartial True clss, fmap (mapType True) ts, doc)
+    mapCGNode (CGClass s clss ts doc) = CGClass s (resolveClassPartial True clss) (fmap (mapType True) ts) doc
     mapCGNode CGType = CGType
     classNames = nub $ listClassNames $ mkTypeEnv fullPrgm
     objNames = relAbsNamePrune $ nub $ map oaObjPath (concatMap (flatObjectMap . getRecursiveObjs) $ flatObjectMap fullPrgmObjMap)
@@ -158,7 +158,7 @@ linkClassMethodReceivers (Prgm _ (ClassGraph fullCg) _) (Prgm (ObjectMap objMap)
     isThisArg oe = let p = nameStr (exprPath oe) in p == thisKey || p == "this"
 
     enrichReceiverType (TopType negPartials (PredsOne (PredClass p@PartialType{ptName, ptVars})))
-      | Just (CGClass (_, PartialType{ptVars=classVarsDecl}, _, _)) <- graphLookup (PClassName ptName) fullCg
+      | Just (CGClass _ PartialType{ptVars=classVarsDecl} _ _) <- graphLookup (PClassName ptName) fullCg
       , not (H.null classVarsDecl)
       = TopType negPartials (PredsOne (PredClass p{ptVars=H.union ptVars (H.mapWithKey (\k _ -> TypeVar (TVVar k) TVExt PTopType) classVarsDecl)}))
     enrichReceiverType t = t

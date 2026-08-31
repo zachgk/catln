@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/ContextIn"
                 , ObjectMapItem
@@ -8,7 +8,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
+                        ]
                     }
                 )
             ,
@@ -18,7 +21,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /isOne( EAppArg Value /a ) -> UnionType
+                        [ /isOne
+                            ( EAppArg { eaaArg = Value /a } ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
@@ -35,32 +39,42 @@ Prgm
                                 )
                             , []
                             ) = /operator==
-                            ( EAppArg Value /l -> /Data/Primitive/Integer =
-                                ( /operator+
-                                    ( EAppArg Value /l -> /Data/Primitive/Integer = 1 )
-                                    ( EAppArg Value /r -> TVArg /a = ( Value /a ↦ TVArg /a ) ) ↦ /Data/Primitive/Integer
-                                )
+                            ( EAppArg
+                                { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                    ( /operator+
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> /Data/Primitive/Integer = 1 }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> TVArg /a = ( Value /a ↦ TVArg /a ) }
+                                        ) ↦ /Data/Primitive/Integer
+                                    )
+                                }
                             )
-                            ( EAppArg Value /r -> /Data/Primitive/Integer = 2 )
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
+                            )
                         ]
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Infers an undeclared argument's type from how it is used. `a` is never annotated,
-            yet `1 + a` forces it to be an Integer (arithmetic's concrete Integer operator),
-            so the compiler infers `isOne(a -> Integer)` and augments the written definition
-            with that requirement — see `a -> /Data/Primitive/Integer` in the typecheck golden.
-            TODO: the intended form is `a == 1`, inferring the Integer requirement directly
-            through Eq. That does not yet reach Integer: generic Eq equality joins the operand
-            types up to `∀Eq` rather than unifying the shared type variable `$T` (from
-            `operator==(l -> $T)(r -> $T)[$T -> Eq]`) down to Integer. `1 + a` is a stepping
-            stone until shared-type-variable unification lands for Eq." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Infers an undeclared argument's type from how it is used. `a` is never annotated,
+                yet `1 + a` forces it to be an Integer (arithmetic's concrete Integer operator),
+                so the compiler infers `isOne(a -> Integer)` and augments the written definition
+                with that requirement — see `a -> /Data/Primitive/Integer` in the typecheck golden.
+                TODO: the intended form is `a == 1`, inferring the Integer requirement directly
+                through Eq. That does not yet reach Integer: generic Eq equality joins the operand
+                types up to `∀Eq` rather than unifying the shared type variable `$T` (from
+                `operator==(l -> $T)(r -> $T)[$T -> Eq]`) down to Integer. `1 + a` is a stepping
+                stone until shared-type-variable unification lands for Eq." }
+            )
         ]
     }

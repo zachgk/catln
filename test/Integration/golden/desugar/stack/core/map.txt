@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/Data/Map/remove"
                 , ObjectMapItem
@@ -436,8 +436,8 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
@@ -457,38 +457,38 @@ Prgm
         , CGType
         , CGType
         , CGClass
-            ( False
-            , /Data/Map/BinTree
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Data/Map/BinTree
+            , cgcExtends =
                 [ ∀/Data/Map/BinTree
                     [ /K=∀/Data/Algebra/Ord
                     , /V=∀/Data/Algebra/Eq
                     ]
                 ]
-            , Just ""
-            )
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( False
-            , /Data/Map
+            { cgcSealed = False
+            , cgcPartial = /Data/Map
                 [ /K=TopType
                 , /V=TopType
                 ]
-            ,
+            , cgcExtends =
                 [ ∀/Data/Map/BinTree
                     [ /K=$_/K
                     , /V=$_/V
                     ]
                 ]
-            , Just " Every [BinTree] is a [Map], so each [Map] operation resolves on it through the arms below. An
+            , cgcDoc = Just " Every [BinTree] is a [Map], so each [Map] operation resolves on it through the arms below. An
               empty map is written [Leaf]."
-            )
+            }
         , CGClass
-            ( True
-            , /Data/Map/BinTree
+            { cgcSealed = True
+            , cgcPartial = /Data/Map/BinTree
                 [ /K=TopType
                 , /V=TopType
                 ]
-            ,
+            , cgcExtends =
                 [ /Data/Map/Node
                     [ /K=$_/K
                     , /V=$_/V
@@ -506,8 +506,8 @@ Prgm
                     )
                 , /Data/Map/Leaf
                 ]
-            , Just ""
-            )
+            , cgcDoc = Just ""
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md

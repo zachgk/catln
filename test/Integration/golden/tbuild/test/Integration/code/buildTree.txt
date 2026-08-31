@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/main"
                 , ObjectMapItem
@@ -10,21 +10,11 @@ Prgm
                     , omiDefs =
                         [ Value /main -> /Catln/CatlnResult
                             ( /files=/Data/List/Cons
-                                [ /T=/Catln/BuildFile
-                                    ( /path=/Data/String
-                                    , /contents=/Data/String
-                                    )
-                                ]
                                 ( /head=/Catln/BuildFile
                                     ( /path=/Data/String
                                     , /contents=/Data/String
                                     )
                                 , /tail=/Data/List/Cons
-                                    [ /T=/Catln/BuildFile
-                                        ( /path=/Data/String
-                                        , /contents=/Data/String
-                                        )
-                                    ]
                                     ( /head=/Catln/BuildFile
                                         ( /path=/Data/String
                                         , /contents=/Data/String
@@ -33,113 +23,83 @@ Prgm
                                     )
                                 )
                             ) = /Catln/CatlnResult
-                            ( EAppArg Value /files -> /Data/List/Cons
-                                [ /T=/Catln/BuildFile
-                                    ( /path=/Data/String
-                                    , /contents=/Data/String
-                                    )
-                                ]
-                                ( /head=/Catln/BuildFile
-                                    ( /path=/Data/String
-                                    , /contents=/Data/String
-                                    )
-                                , /tail=/Data/List/Cons
-                                    [ /T=/Catln/BuildFile
-                                        ( /path=/Data/String
-                                        , /contents=/Data/String
-                                        )
-                                    ]
+                            ( EAppArg
+                                { eaaArg = Value /files -> /Data/List/Cons
                                     ( /head=/Catln/BuildFile
                                         ( /path=/Data/String
                                         , /contents=/Data/String
                                         )
-                                    , /tail=/Data/List/Nil
-                                    )
-                                ) = /Data/List/Cons
-                                ( EAppArg Value /head -> /Catln/BuildFile
-                                    ( /path=/Data/String
-                                    , /contents=/Data/String
-                                    ) = /Catln/BuildFile
-                                    ( EAppArg Value /path -> /Data/String = "index.html" )
-                                    ( EAppArg Value /contents -> /Data/String = "<html><body>tree test</body></html>" )
-                                )
-                                ( EAppArg Value /tail -> /Data/List/Cons
-                                    [ /T=/Catln/BuildFile
-                                        ( /path=/Data/String
-                                        , /contents=/Data/String
+                                    , /tail=/Data/List/Cons
+                                        ( /head=/Catln/BuildFile
+                                            ( /path=/Data/String
+                                            , /contents=/Data/String
+                                            )
+                                        , /tail=/Data/List/Nil
                                         )
-                                    ]
-                                    ( /head=/Catln/BuildFile
-                                        ( /path=/Data/String
-                                        , /contents=/Data/String
-                                        )
-                                    , /tail=/Data/List/Nil
                                     ) = /Data/List/Cons
-                                    ( EAppArg Value /head -> /Catln/BuildFile
-                                        ( /path=/Data/String
-                                        , /contents=/Data/String
-                                        ) = /Catln/BuildFile
-                                        ( EAppArg Value /path -> /Data/String = "notes/deep.txt" )
-                                        ( EAppArg Value /contents -> /Data/String = "under a directory" )
-                                    )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
-                                )
+                                    ( EAppArg
+                                        { eaaArg = Value /head -> /Catln/BuildFile
+                                            ( /path=/Data/String
+                                            , /contents=/Data/String
+                                            ) = /Catln/BuildFile
+                                            ( EAppArg
+                                                { eaaArg = Value /path -> /Data/String = "index.html" }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /contents -> /Data/String = "<html><body>tree test</body></html>" }
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> /Data/List/Cons
+                                            ( /head=/Catln/BuildFile
+                                                ( /path=/Data/String
+                                                , /contents=/Data/String
+                                                )
+                                            , /tail=/Data/List/Nil
+                                            ) = /Data/List/Cons
+                                            ( EAppArg
+                                                { eaaArg = Value /head -> /Catln/BuildFile
+                                                    ( /path=/Data/String
+                                                    , /contents=/Data/String
+                                                    ) = /Catln/BuildFile
+                                                    ( EAppArg
+                                                        { eaaArg = Value /path -> /Data/String = "notes/deep.txt" }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /contents -> /Data/String = "under a directory" }
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                        }
+                                    )
+                                }
                             )
                         ]
                     }
                 )
             ]
-        )
-    , prgmCG = [ CGType ]
+        }
+    , prgmCg = [ CGType ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Tests a build result of more than one file.
-            A [CatlnResult] is the [files] of the directory it is built into, each carrying the path it is
-            built at, so a build produces a directory of files rather than the single file it once could. The
-            path is what says where a file goes, and a path with a @/@ in it is a file under a directory the
-            build makes on its way to writing it — which is how a result says it has a directory at all." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Tests a build result of more than one file.
+                A [CatlnResult] is the [files] of the directory it is built into, each carrying the path it is
+                built at, so a build produces a directory of files rather than the single file it once could. The
+                path is what says where a file goes, and a path with a @/@ in it is a file under a directory the
+                build makes on its way to writing it — which is how a result says it has a directory at all." }
+            )
         , /Catln/#print
-            ( EAppArg Value /p -> /Catln/CatlnResult
-                ( /files=/Data/List/Cons
-                    [ /T=/Catln/BuildFile
-                        ( /path=/Data/String
-                        , /contents=/Data/String
-                        )
-                    ]
-                    ( /head=/Catln/BuildFile
-                        ( /path=/Data/String
-                        , /contents=/Data/String
-                        )
-                    , /tail=/Data/List/Cons
-                        [ /T=/Catln/BuildFile
-                            ( /path=/Data/String
-                            , /contents=/Data/String
-                            )
-                        ]
-                        ( /head=/Catln/BuildFile
-                            ( /path=/Data/String
-                            , /contents=/Data/String
-                            )
-                        , /tail=/Data/List/Nil
-                        )
-                    )
-                ) =
-                ( Value /main ↦ /Catln/CatlnResult
+            ( EAppArg
+                { eaaArg = Value /p -> /Catln/CatlnResult
                     ( /files=/Data/List/Cons
-                        [ /T=/Catln/BuildFile
-                            ( /path=/Data/String
-                            , /contents=/Data/String
-                            )
-                        ]
                         ( /head=/Catln/BuildFile
                             ( /path=/Data/String
                             , /contents=/Data/String
                             )
                         , /tail=/Data/List/Cons
-                            [ /T=/Catln/BuildFile
-                                ( /path=/Data/String
-                                , /contents=/Data/String
-                                )
-                            ]
                             ( /head=/Catln/BuildFile
                                 ( /path=/Data/String
                                 , /contents=/Data/String
@@ -147,8 +107,24 @@ Prgm
                             , /tail=/Data/List/Nil
                             )
                         )
+                    ) =
+                    ( Value /main ↦ /Catln/CatlnResult
+                        ( /files=/Data/List/Cons
+                            ( /head=/Catln/BuildFile
+                                ( /path=/Data/String
+                                , /contents=/Data/String
+                                )
+                            , /tail=/Data/List/Cons
+                                ( /head=/Catln/BuildFile
+                                    ( /path=/Data/String
+                                    , /contents=/Data/String
+                                    )
+                                , /tail=/Data/List/Nil
+                                )
+                            )
+                        )
                     )
-                )
+                }
             )
         ]
     }

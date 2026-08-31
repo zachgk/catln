@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/ContextIn"
                 , ObjectMapItem
@@ -8,14 +8,24 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
+                        ]
                     }
                 )
             ,
                 ( "/Box"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Box( EAppVar /T TopType )( EAppArg Value /v -> $/T ) ]
+                        [ /Box
+                            ( EAppVar
+                                { eavName = /T
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /v -> $/T } )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -25,29 +35,42 @@ Prgm
                 ( "/unwrap"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /unwrap( EAppVar /U TopType )
-                            ( EAppArg Value /b -> /Box[ /T=$/U ]( /v=TopType ) ) -> $/U
+                        [ /unwrap
+                            ( EAppVar
+                                { eavName = /U
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Box[ /T=$/U ]( /v=TopType ) }
+                            ) -> $/U
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /unwrap
-                            ( EAppArg Value /b -> /Box( /v=TopType ) = /Box( EAppArg Value /v ) ) -> TVArg /v = ( Value /v ↦ TVArg /v )
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Box( /v=TopType ) = /Box
+                                    ( EAppArg { eaaArg = Value /v } )
+                                }
+                            ) -> TVArg /v = ( Value /v ↦ TVArg /v )
                         ]
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Repro: the EXPLICIT-parameter twin of boxUnwrap — a declared [$U] referenced inside a
-            nested application (Box[$T -> $U]) must bind from the argument's content the same way the
-            implicit $_T spelling does. unwrap(b= Box(v= 5)) should reduce to 5 at eval, not leak the
-            raw call tuple into equal's dispatch." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Repro: the EXPLICIT-parameter twin of boxUnwrap — a declared [$U] referenced inside a
+                nested application (Box[$T -> $U]) must bind from the argument's content the same way the
+                implicit $_T spelling does. unwrap(b= Box(v= 5)) should reduce to 5 at eval, not leak the
+                raw call tuple into equal's dispatch." }
+            )
         ]
     }

@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/Data/Note/Priority/Medium"
                 , ObjectMapItem
@@ -327,8 +327,8 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
@@ -357,25 +357,25 @@ Prgm
         , CGType
         , CGType
         , CGClass
-            ( False
-            , /Data/Note/Task/Simple
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Data/Note/Task/Simple
+            , cgcExtends =
                 [ /Data/Note/Task/Simple..
                 , /Data/Note/Task/Obsidian..
                 , /Data/Note/Show/TaskList..
                 , /Data/Note/Show/TaskQuery..
                 , /Data/Note/Show/Properties..
                 ]
-            , Just "A task is shown in the webdocs as the task it is, rather than as the declaration it was read
+            , cgcDoc = Just "A task is shown in the webdocs as the task it is, rather than as the declaration it was read
               into: a box to check and the writing beside it. It is the value itself that is shown, with no
               display type standing in for it, which is what lets checking the box in a doc server write the
               change back to the note the task was read from.    "
-            )
+            }
         , CGClass
-            ( False
-            , /Data/Note/Task
-            , [ ∀/Data/Note/Task ]
-            , Just "A task is a thing that sits on a day, so a calendar can show one. Said of [Task] rather than
+            { cgcSealed = False
+            , cgcPartial = /Data/Note/Task
+            , cgcExtends = [ ∀/Data/Note/Task ]
+            , cgcDoc = Just "A task is a thing that sits on a day, so a calendar can show one. Said of [Task] rather than
               of each of its two readings, because it is true of a checkbox however the vault it was written
               in has it read; the two arms below answer for the two readings, as [/Data/Maybe] joins
               [/Data/Algebra/Eq] as a class and answers per arm.
@@ -383,11 +383,11 @@ Prgm
               whatever says it belongs on one rather than of a list kept somewhere else. The class path is
               written out in full: an [isa] list is keyed by the name as it is written, so a relative one
               would name a second class of that name rather than the one meant."
-            )
+            }
         , CGClass
-            ( True
-            , /Data/Note/Priority
-            ,
+            { cgcSealed = True
+            , cgcPartial = /Data/Note/Priority
+            , cgcExtends =
                 [ /Data/Note/Priority/Highest
                 , /Data/Note/Priority/High
                 , /Data/Note/Priority/Medium
@@ -395,14 +395,14 @@ Prgm
                 , /Data/Note/Priority/Low
                 , /Data/Note/Priority/Lowest
                 ]
-            , Just "How urgent a task is, as the plugin's six priorities. [Priority/None] is written between
+            , cgcDoc = Just "How urgent a task is, as the plugin's six priorities. [Priority/None] is written between
               medium and low rather than at either end, because that is where a task nobody gave a priority
               to sorts among ones somebody did."
-            )
+            }
         , CGClass
-            ( True
-            , /Data/Note/StatusType
-            ,
+            { cgcSealed = True
+            , cgcPartial = /Data/Note/StatusType
+            , cgcExtends =
                 [ /Data/Note/StatusType/Todo
                 , /Data/Note/StatusType/Done
                 , /Data/Note/StatusType/InProgress
@@ -411,20 +411,20 @@ Prgm
                 , /Data/Note/StatusType/NonTask
                 , /Data/Note/StatusType/Empty
                 ]
-            , Just "Which kind of status the character in a box is, as the Obsidian Tasks plugin names the seven
+            , cgcDoc = Just "Which kind of status the character in a box is, as the Obsidian Tasks plugin names the seven
               of them. Which character is which kind is the vault's to say and not markdown's: a vault may
               write @[/]@ for a task begun and @[-]@ for one dropped, and only the vault's own settings say
               so. So a box is read as the character it was written with and the kind that character is, and
               the kind is the reading."
-            )
+            }
         , CGClass
-            ( False
-            , /Data/Note/Task
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Data/Note/Task
+            , cgcExtends =
                 [ /Data/Note/Task/Simple..
                 , /Data/Note/Task/Obsidian..
                 ]
-            , Just "A [Task] is one thing to do, written in a note as a markdown checkbox. A task is a break in
+            , cgcDoc = Just "A [Task] is one thing to do, written in a note as a markdown checkbox. A task is a break in
               the writing of the note holding it: the comment ends where the checkbox was written, the task
               is declared in its place, and the writing goes on after it as another comment. So the tasks of
               a note are declared in the order and the place they were written, and whatever is written
@@ -434,7 +434,7 @@ Prgm
               the checkbox. A vault running the Obsidian Tasks plugin writes dates, priorities and links
               into the line beside the box, and reading such a line as though it were only a line would read
               the plugin's writing as writing of the note.  "
-            )
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md

@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/operator=="
                 , ObjectMapItem
@@ -73,10 +73,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/rel( Value /a )( Value /b )
-                            ( Value /this -> /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Primitive/Boolean = /Data/Primitive/intEq( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
-                        , /Data/Algebra/rel( Value /a )( Value /b )
-                            ( Value /this -> /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        [ /Data/Algebra/rel( Value /a )( Value /b )( Value /this -> /Data/Algebra/IntEqExample ) -> ∀/Data/Primitive/Boolean = /Data/Primitive/intEq( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
+                        , /Data/Algebra/rel( Value /a )( Value /b )( Value /this -> /Data/Algebra/AllEqv ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         ]
                     }
                 )
@@ -126,8 +124,8 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
@@ -139,20 +137,20 @@ Prgm
         , CGType
         , CGType
         , CGClass
-            ( False
-            , /Data/Algebra/Eq
-            , []
-            , Just "                                                                                      "
-            )
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Eq
+            , cgcExtends = []
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( False
-            , /Data/Algebra/Eqv[ /T=TopType ]
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Eqv[ /T=TopType ]
+            , cgcExtends =
                 [ /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ]
                 , /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ]
                 ]
-            , Just "                                                                                      "
-            )
+            , cgcDoc = Just ""
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md

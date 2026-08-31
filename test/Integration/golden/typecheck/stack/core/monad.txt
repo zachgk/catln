@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/Data/Monad/pure"
                 , ObjectMapItem
@@ -27,19 +27,17 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGClass
-            ( False
-            , /Data/Monad[ /T=TopType ]
-            , []
-            , Just "A [Monad] extends the container idea of a [Functor] with sequencing.
-              Its single operation [mmap] chains a value-to-monad function across the elements it holds. A [Monad] extends the container idea of a [Functor] with sequencing.
-              Its single operation [mmap] chains a value-to-monad function across the elements it holds. A [Monad] extends the container idea of a [Functor] with sequencing.
+            { cgcSealed = False
+            , cgcPartial = /Data/Monad[ /T=TopType ]
+            , cgcExtends = []
+            , cgcDoc = Just "A [Monad] extends the container idea of a [Functor] with sequencing.
               Its single operation [mmap] chains a value-to-monad function across the elements it holds."
-            )
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md

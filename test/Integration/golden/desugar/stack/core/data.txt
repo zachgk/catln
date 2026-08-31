@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/ContextOut"
                 , ObjectMapItem
@@ -67,34 +67,34 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
         , CGType
         , CGType
         , CGClass
-            ( True
-            , /Data/Option[ /T=TopType ]
-            ,
+            { cgcSealed = True
+            , cgcPartial = /Data/Option[ /T=TopType ]
+            , cgcExtends =
                 [ $_/T
                 , /Data/None
                 ]
-            , Just "[Option] defines a type that might have a value or [None].
+            , cgcDoc = Just "[Option] defines a type that might have a value or [None].
               It can be used to handle operations that are uncertain if they can produce a response."
-            )
+            }
         , CGClass
-            ( False
-            , /Data/ToString
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Data/ToString
+            , cgcExtends =
                 [ /Data/String
                 , /Data/Primitive/Integer
                 ]
-            , Just "[ToString] is the class of types that can render themselves as a [String]. Defining
+            , cgcDoc = Just "[ToString] is the class of types that can render themselves as a [String]. Defining
               [toString] for a type makes its values printable and, more importantly, lets generic
               containers such as [List] render their contents by rendering each element.  "
-            )
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md

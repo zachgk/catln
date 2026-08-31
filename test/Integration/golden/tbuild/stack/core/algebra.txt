@@ -1,11 +1,18 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/Data/Algebra/inverse"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Algebra/inverse( EAppVar /T ∀/Data/Algebra/Group )( EAppArg Value /t -> $/T ) -> $/T ]
+                        [ /Data/Algebra/inverse
+                            ( EAppVar
+                                { eavName = /T
+                                , eavMeta = ∀/Data/Algebra/Group
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /t -> $/T } ) -> $/T
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -16,8 +23,17 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /operator++
-                            ( EAppArg Value /l -> $/T = Hole $/T HoleActive { haName = Nothing } )
-                            ( EAppArg Value /r -> $/T = Hole $/T HoleActive { haName = Nothing } )( EAppVar /T ∀/Data/Algebra/Semigroup ) -> $/T
+                            ( EAppArg
+                                { eaaArg = Value /l -> $/T = Hole $/T HoleActive { haName = Nothing } }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> $/T = Hole $/T HoleActive { haName = Nothing } }
+                            )
+                            ( EAppVar
+                                { eavName = /T
+                                , eavMeta = ∀/Data/Algebra/Semigroup
+                                }
+                            ) -> $/T
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -38,7 +54,13 @@ Prgm
                 ( "/Data/Algebra/mempty"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Algebra/mempty( EAppVar /T ∀/Data/Algebra/Monoid ) -> $/T ]
+                        [ /Data/Algebra/mempty
+                            ( EAppVar
+                                { eavName = /T
+                                , eavMeta = ∀/Data/Algebra/Monoid
+                                }
+                            ) -> $/T
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -51,7 +73,14 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/testGroup( EAppVar /T ∀/Data/Algebra/Group )( EAppArg Value /t -> $/T ) -> /Data/Primitive/Integer = 0 ]
+                        [ /Data/Algebra/testGroup
+                            ( EAppVar
+                                { eavName = /T
+                                , eavMeta = ∀/Data/Algebra/Group
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /t -> $/T } ) -> /Data/Primitive/Integer = 0
+                        ]
                     }
                 )
             ,
@@ -61,7 +90,15 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/testCommutativeMonoid( EAppVar /T ∀/Data/Algebra/CommutativeMonoid )( EAppArg Value /a -> $/T )( EAppArg Value /b -> $/T ) -> /Data/Primitive/Integer = 0 ]
+                        [ /Data/Algebra/testCommutativeMonoid
+                            ( EAppVar
+                                { eavName = /T
+                                , eavMeta = ∀/Data/Algebra/CommutativeMonoid
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /a -> $/T } )
+                            ( EAppArg { eaaArg = Value /b -> $/T } ) -> /Data/Primitive/Integer = 0
+                        ]
                     }
                 )
             ,
@@ -71,7 +108,14 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/testRightMonoidIdentity( EAppVar /T ∀/Data/Algebra/Monoid )( EAppArg Value /t -> $/T ) -> /Data/Primitive/Integer = 0 ]
+                        [ /Data/Algebra/testRightMonoidIdentity
+                            ( EAppVar
+                                { eavName = /T
+                                , eavMeta = ∀/Data/Algebra/Monoid
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /t -> $/T } ) -> /Data/Primitive/Integer = 0
+                        ]
                     }
                 )
             ,
@@ -81,7 +125,16 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/testSemigroupAssociative( EAppVar /T ∀/Data/Algebra/Semigroup )( EAppArg Value /a -> $/T )( EAppArg Value /b -> $/T )( EAppArg Value /c -> $/T ) -> /Data/Primitive/Integer = 0 ]
+                        [ /Data/Algebra/testSemigroupAssociative
+                            ( EAppVar
+                                { eavName = /T
+                                , eavMeta = ∀/Data/Algebra/Semigroup
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /a -> $/T } )
+                            ( EAppArg { eaaArg = Value /b -> $/T } )
+                            ( EAppArg { eaaArg = Value /c -> $/T } ) -> /Data/Primitive/Integer = 0
+                        ]
                     }
                 )
             ,
@@ -91,12 +144,19 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/testLeftMonoidIdentity( EAppVar /T ∀/Data/Algebra/Monoid )( EAppArg Value /t -> $/T ) -> /Data/Primitive/Integer = 0 ]
+                        [ /Data/Algebra/testLeftMonoidIdentity
+                            ( EAppVar
+                                { eavName = /T
+                                , eavMeta = ∀/Data/Algebra/Monoid
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /t -> $/T } ) -> /Data/Primitive/Integer = 0
+                        ]
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
@@ -107,856 +167,104 @@ Prgm
         , CGType
         , CGType
         , CGClass
-            ( False
-            , /Data/Algebra/CommutativeMonoid
-            , []
-            , Just "The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
-              It is also called an Abelian Monoid
-              Here, integers with addition are a [CommutativeMonoid], but [String]s are not. The [CommutativeMonoid] builds on top of the [Monoid].
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/CommutativeMonoid
+            , cgcExtends = []
+            , cgcDoc = Just "The [CommutativeMonoid] builds on top of the [Monoid].
               It is also called an Abelian Monoid
               Here, integers with addition are a [CommutativeMonoid], but [String]s are not."
-            )
+            }
         , CGClass
-            ( False
-            , /Data/Algebra/Semigroup
-            , [ ∀/Data/Algebra/Semigroup ]
-            , Just "                                                                                      "
-            )
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Semigroup
+            , cgcExtends = [ ∀/Data/Algebra/Semigroup ]
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( False
-            , /Data/Algebra/Group
-            , []
-            , Just "The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-              It adds an inverse operation that finds the opposite of an element.
-              For integers with addition, negation with [operator~] would be the inverse.
-              Something like [String]s would not have an inverse, so it wouldn't be a [Group]. The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Group
+            , cgcExtends = []
+            , cgcDoc = Just "The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
               It adds an inverse operation that finds the opposite of an element.
               For integers with addition, negation with [operator~] would be the inverse.
               Something like [String]s would not have an inverse, so it wouldn't be a [Group]."
-            )
+            }
         , CGClass
-            ( False
-            , /Data/Algebra/Monoid
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Monoid
+            , cgcExtends =
                 [ ∀/Data/Algebra/CommutativeMonoid
                 , ∀/Data/Algebra/Group
                 ]
-            , Just "The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
-              It adds the identity value [mempty].
-              The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]   The [Monoid] builds on top of the [Semigroup].
+            , cgcDoc = Just "The [Monoid] builds on top of the [Semigroup].
               It adds the identity value [mempty].
               The integers with addition form a [Monoid], and 0 is the value for [mempty].
               Another example is [String] where "" is the value for [mempty]  "
-            )
+            }
         , CGClass
-            ( False
-            , /Data/Algebra/Semigroup
-            , [ ∀/Data/Algebra/Monoid ]
-            , Just "A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup.  A semigroup is a type combined with an associative operation called [operator++].
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Semigroup
+            , cgcExtends = [ ∀/Data/Algebra/Monoid ]
+            , cgcDoc = Just "A semigroup is a type combined with an associative operation called [operator++].
               For example, integers with the addition operation are a semigroup. "
-            )
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "# Catln Core Abstract Algebra Types
-            These types define some of the basic relationship between types and ways classes can relate to themselves.
-            The [Eq] class of equality lives in [Data/Algebra/eq] and ordering ([Ord]) in [Data/Algebra/ord];
-            this file covers the remaining algebraic structures ([Semigroup], [Monoid], [Group])." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "# Catln Core Abstract Algebra Types
+                These types define some of the basic relationship between types and ways classes can relate to themselves.
+                The [Eq] class of equality lives in [Data/Algebra/eq] and ordering ([Ord]) in [Data/Algebra/ord];
+                this file covers the remaining algebraic structures ([Semigroup], [Monoid], [Group])." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "## Semigroup" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "## Semigroup" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "A semigroup is a type combined with an associative operation called [operator++].
-            For example, integers with the addition operation are a semigroup." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A semigroup is a type combined with an associative operation called [operator++].
+                For example, integers with the addition operation are a semigroup." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "[Integer] is a [Semigroup] under addition, so [operator++] combines two of them. The result is" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "[Integer] is a [Semigroup] under addition, so [operator++] combines two of them. The result is" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "  a number (too polymorphic to render directly), so it is shown as an [#assert]ed property." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "  a number (too polymorphic to render directly), so it is shown as an [#assert]ed property." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "The [Monoid] builds on top of the [Semigroup].
-            It adds the identity value [mempty].
-            The integers with addition form a [Monoid], and 0 is the value for [mempty].
-            Another example is [String] where "" is the value for [mempty]" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "The [Monoid] builds on top of the [Semigroup].
+                It adds the identity value [mempty].
+                The integers with addition form a [Monoid], and 0 is the value for [mempty].
+                Another example is [String] where "" is the value for [mempty]" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "We can test to verify that [mempty] works with both the left and right." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "We can test to verify that [mempty] works with both the left and right." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Using the [Monoid], it is possible to combine a list of monoids together." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Using the [Monoid], it is possible to combine a list of monoids together." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "The [CommutativeMonoid] builds on top of the [Monoid].
-            It is also called an Abelian Monoid
-            Here, integers with addition are a [CommutativeMonoid], but [String]s are not." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "The [CommutativeMonoid] builds on top of the [Monoid].
+                It is also called an Abelian Monoid
+                Here, integers with addition are a [CommutativeMonoid], but [String]s are not." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "We can test to ensure that all [CommutativeMonoid]s satisfy the commutativity requirement." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "We can test to ensure that all [CommutativeMonoid]s satisfy the commutativity requirement." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-            It adds an inverse operation that finds the opposite of an element.
-            For integers with addition, negation with [operator~] would be the inverse.
-            Something like [String]s would not have an inverse, so it wouldn't be a [Group]." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
+                It adds an inverse operation that finds the opposite of an element.
+                For integers with addition, negation with [operator~] would be the inverse.
+                Something like [String]s would not have an inverse, so it wouldn't be a [Group]." }
+            )
         ]
     }

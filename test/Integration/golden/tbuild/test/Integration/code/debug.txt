@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/ContextIn"
                 , ObjectMapItem
@@ -8,23 +8,33 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
                             ( /Catln/exit
                                 ( /this=/Catln/IO
                                 , /val=/Data/Primitive/Integer
                                 ) + /Catln/IO
                             ) =
                             ( /Catln/exit
-                                ( EAppArg Value /val -> /Data/Primitive/Integer =
-                                    ( /inc
-                                        ( EAppArg Value /x -> /Data/Primitive/Integer =
-                                            ( /operator-
-                                                ( EAppArg Value /a -> /Data/Primitive/Integer = 1 ) ↦ /Data/Primitive/Integer
-                                            )
-                                        ) ↦ /Data/Primitive/Integer
-                                    )
+                                ( EAppArg
+                                    { eaaArg = Value /val -> /Data/Primitive/Integer =
+                                        ( /inc
+                                            ( EAppArg
+                                                { eaaArg = Value /x -> /Data/Primitive/Integer =
+                                                    ( /operator-
+                                                        ( EAppArg
+                                                            { eaaArg = Value /a -> /Data/Primitive/Integer = 1 }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
                                 )
-                                ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) ) ↦ /Catln/IO
+                                ( EAppArg
+                                    { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                ) ↦ /Catln/IO
                             )
                         ]
                     }
@@ -36,32 +46,39 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /inc( EAppArg Value /x -> /Data/Primitive/Integer ) ->
+                        [ /inc
+                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) ->
                             ( /operator+
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer
                             ) =
                             ( /operator+
-                                ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-                                ( EAppArg Value /r -> /Data/Primitive/Integer = 1 ) ↦ /Data/Primitive/Integer
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                ) ↦ /Data/Primitive/Integer
                             )
                         ]
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Tests the [#debug] annotation, which records its value every time the definition it is written on
-            is evaluated.
-            Two of them on one definition, one on an argument and one on a computed expression. The computed
-            one is what checks that a record is placed by the annotation it was written as: an operator apply
-            carries no source position of its own, so a record placed by the expression inside the annotation
-            would have nowhere to say it came from." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Tests the [#debug] annotation, which records its value every time the definition it is written on
+                is evaluated.
+                Two of them on one definition, one on an argument and one on a computed expression. The computed
+                one is what checks that a record is placed by the annotation it was written as: an operator apply
+                carries no source position of its own, so a record placed by the expression inside the annotation
+                would have nowhere to say it came from." }
+            )
         ]
     }

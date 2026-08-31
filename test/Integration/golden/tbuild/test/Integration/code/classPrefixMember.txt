@@ -1,11 +1,14 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/Thing/Fancy"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Thing/Fancy( EAppArg Value /x -> /Data/Primitive/Integer )( EAppArg Value /y -> /Data/Primitive/Integer ) ]
+                        [ /Thing/Fancy
+                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -18,23 +21,29 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
+                        ]
                     }
                 )
             ,
                 ( "/Item/Simple"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Item/Simple( EAppArg Value /x -> /Data/Primitive/Integer )
+                        [ /Item/Simple
+                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } )
                         , /Item/Simple
-                            ( EAppArg Value /x -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CInt
-                                        { ciValue = 1 }
-                                    ]
-                                ) = 1
+                            ( EAppArg
+                                { eaaArg = Value /x -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CInt
+                                            { ciValue = 1 }
+                                        ]
+                                    ) = 1
+                                }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -46,25 +55,31 @@ Prgm
                 ( "/Item/Fancy"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Item/Fancy( EAppArg Value /x -> /Data/Primitive/Integer )( EAppArg Value /y -> /Data/Primitive/Integer )
+                        [ /Item/Fancy
+                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } )
                         , /Item/Fancy
-                            ( EAppArg Value /x -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CInt
-                                        { ciValue = 1 }
-                                    ]
-                                ) = 1
+                            ( EAppArg
+                                { eaaArg = Value /x -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CInt
+                                            { ciValue = 1 }
+                                        ]
+                                    ) = 1
+                                }
                             )
-                            ( EAppArg Value /y -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CInt
-                                        { ciValue = 2 }
-                                    ]
-                                ) = 2
+                            ( EAppArg
+                                { eaaArg = Value /y -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CInt
+                                            { ciValue = 2 }
+                                        ]
+                                    ) = 2
+                                }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -76,7 +91,9 @@ Prgm
                 ( "/Thing/Simple"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Thing/Simple( EAppArg Value /x -> /Data/Primitive/Integer ) ]
+                        [ /Thing/Simple
+                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -86,28 +103,42 @@ Prgm
                 ( "/total"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /total( EAppArg Value /this -> ∀/Thing ) -> /Data/Primitive/Integer ]
+                        [ /total
+                            ( EAppArg { eaaArg = Value /this -> ∀/Thing } ) -> /Data/Primitive/Integer
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /total
-                            ( EAppArg Value /this -> /Thing/Simple( /x=/Data/Primitive/Integer ) = /Thing/Simple( EAppArg Value /x -> /Data/Primitive/Integer ) ) -> /Data/Primitive/Integer = ( Value /x ↦ /Data/Primitive/Integer )
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Thing/Simple( /x=/Data/Primitive/Integer ) = /Thing/Simple
+                                    ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } )
+                                }
+                            ) -> /Data/Primitive/Integer = ( Value /x ↦ /Data/Primitive/Integer )
                         , /total
-                            ( EAppArg Value /this -> /Thing/Fancy
-                                ( /x=/Data/Primitive/Integer
-                                , /y=/Data/Primitive/Integer
-                                ) = /Thing/Fancy( EAppArg Value /x -> /Data/Primitive/Integer )( EAppArg Value /y -> /Data/Primitive/Integer )
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Thing/Fancy
+                                    ( /x=/Data/Primitive/Integer
+                                    , /y=/Data/Primitive/Integer
+                                    ) = /Thing/Fancy
+                                    ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } )
+                                    ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } )
+                                }
                             ) -> /Data/Primitive/Integer =
                             ( /operator+
-                                ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-                                ( EAppArg Value /r -> TVArg /y = ( Value /y ↦ TVArg /y ) ) ↦ /Data/Primitive/Integer
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /y = ( Value /y ↦ TVArg /y ) }
+                                ) ↦ /Data/Primitive/Integer
                             )
                         ]
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
@@ -117,67 +148,89 @@ Prgm
         , CGType
         , CGType
         , CGClass
-            ( False
-            , /Item
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Item
+            , cgcExtends =
                 [ /Item/Simple..
                 , /Item/Fancy..
                 ]
-            , Just "                 "
-            )
+            , cgcDoc = Just "  "
+            }
         , CGClass
-            ( True
-            , /Thing
-            ,
+            { cgcSealed = True
+            , cgcPartial = /Thing
+            , cgcExtends =
                 [ /Thing/Simple( /x=/Data/Primitive/Integer )
                 , /Thing/Fancy
                     ( /x=/Data/Primitive/Integer
                     , /y=/Data/Primitive/Integer
                     )
                 ]
-            , Just "     "
-            )
+            , cgcDoc = Just ""
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "A class's name may be a prefix of its members' names.
-            A note's checkbox is read as one of two things, and the two are named under the name of the class
-            they are both members of, so that what a checkbox is read as is one name with two readings under
-            it rather than two unrelated names. That makes the class name a strict prefix of every member
-            name, which nothing else in the checked standard library does — and a relative name is matched by
-            its suffix, so a member named under its own class is exactly the case where the two could be taken
-            for each other.
-            Written in both of the forms a class is written in: [/Item], joined to member by member as a note
-            joins its readings to [/Catln/Doc/DShow], and [/Thing], which lists its members and so can carry a
-            method every member answers.
-            [/Thing] lists its members with their fields written out, which is the only way a class carrying a
-            method may list them — a class listing members declared apart from it does not seal over their
-            fields, and the method is then never covered. See
-            @test/Integration/disabled/classMemberByName.ct@." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A class's name may be a prefix of its members' names.
+                A note's checkbox is read as one of two things, and the two are named under the name of the class
+                they are both members of, so that what a checkbox is read as is one name with two readings under
+                it rather than two unrelated names. That makes the class name a strict prefix of every member
+                name, which nothing else in the checked standard library does — and a relative name is matched by
+                its suffix, so a member named under its own class is exactly the case where the two could be taken
+                for each other.
+                Written in both of the forms a class is written in: [/Item], joined to member by member as a note
+                joins its readings to [/Catln/Doc/DShow], and [/Thing], which lists its members and so can carry a
+                method every member answers.
+                [/Thing] lists its members with their fields written out, which is the only way a class carrying a
+                method may list them — a class listing members declared apart from it does not seal over their
+                fields, and the method is then never covered. See
+                @test/Integration/disabled/classMemberByName.ct@." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "The values a page of such members declares, written out and never defined — the shape a note's
-            page holds a checkbox as." )
-        , /Catln/#print
-            ( EAppArg Value /p -> /Data/Primitive/Integer =
-                ( /total
-                    ( EAppArg Value /this -> /Thing/Simple( /x=/Data/Primitive/Integer ) = /Thing/Simple
-                        ( EAppArg Value /x -> /Data/Primitive/Integer = 3 )
-                    ) ↦ /Data/Primitive/Integer
-                )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "The values a page of such members declares, written out and never defined — the shape a note's
+                page holds a checkbox as." }
             )
-            ( EAppArg Value /result -> /Data/String = "3" )
         , /Catln/#print
-            ( EAppArg Value /p -> /Data/Primitive/Integer =
-                ( /total
-                    ( EAppArg Value /this -> /Thing/Fancy
-                        ( /x=/Data/Primitive/Integer
-                        , /y=/Data/Primitive/Integer
-                        ) = /Thing/Fancy
-                        ( EAppArg Value /x -> /Data/Primitive/Integer = 3 )
-                        ( EAppArg Value /y -> /Data/Primitive/Integer = 4 )
-                    ) ↦ /Data/Primitive/Integer
-                )
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /total
+                        ( EAppArg
+                            { eaaArg = Value /this -> /Thing/Simple( /x=/Data/Primitive/Integer ) = /Thing/Simple
+                                ( EAppArg
+                                    { eaaArg = Value /x -> /Data/Primitive/Integer = 3 }
+                                )
+                            }
+                        ) ↦ /Data/Primitive/Integer
+                    )
+                }
             )
-            ( EAppArg Value /result -> /Data/String = "7" )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "3" }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /total
+                        ( EAppArg
+                            { eaaArg = Value /this -> /Thing/Fancy
+                                ( /x=/Data/Primitive/Integer
+                                , /y=/Data/Primitive/Integer
+                                ) = /Thing/Fancy
+                                ( EAppArg
+                                    { eaaArg = Value /x -> /Data/Primitive/Integer = 3 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /y -> /Data/Primitive/Integer = 4 }
+                                )
+                            }
+                        ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "7" }
+            )
         ]
     }

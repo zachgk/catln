@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/Data/Algebra/isGreaterEq"
                 , ObjectMapItem
@@ -23,7 +23,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/pcompare( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer ) -> ( /Data/Algebra/LessThan + /Data/Algebra/NoOrdering + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /Data/Algebra/mkDivComparison
+                        [ /Data/Algebra/pcompare( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer ) -> ∀/Data/Algebra/PComparison = /Data/Algebra/mkDivComparison
                             ( Value /aDivB -> ∀/Data/Primitive/Boolean = /Data/Primitive/intEq
                                 ( Value /l -> /Data/Primitive/Integer = /operator%( Value /l -> TVArg /b = Value /b )( Value /r -> TVArg /a = Value /a ) )
                                 ( Value /r -> /Data/Primitive/Integer = CInt
@@ -85,7 +85,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/rel( Value /a )( Value /b )
-                            ( Value /this -> ∀/Data/Algebra/Ordering[ /T=$_/T ] ) -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isEq
+                            ( Value /this -> ∀/Data/Algebra/Ordering[ /T=$_/T ] ) -> ∀/Data/Primitive/Boolean = /Data/Algebra/isEq
                             ( Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /compare( Value /a -> TVArg /a = Value /a )( Value /b -> TVArg /b = Value /b )( Value /this -> TVArg /this = Value /this ) )
                         ]
                     }
@@ -276,8 +276,8 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
@@ -300,55 +300,55 @@ Prgm
         , CGType
         , CGType
         , CGClass
-            ( True
-            , /Data/Algebra/Comparison
-            ,
+            { cgcSealed = True
+            , cgcPartial = /Data/Algebra/Comparison
+            , cgcExtends =
                 [ /Data/Algebra/LessThan
                 , /Data/Algebra/Equal
                 , /Data/Algebra/GreaterThan
                 ]
-            , Just "                                                                                      "
-            )
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( False
-            , /Data/Algebra/Ord
-            , [ ∀/Data/Algebra/Ord ]
-            , Just "                                                                                      "
-            )
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Ord
+            , cgcExtends = [ ∀/Data/Algebra/Ord ]
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( False
-            , /Data/Algebra/Ordering
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Ordering
+            , cgcExtends =
                 [ ∀/Data/Algebra/Ordering[ /T=$_/T ] ]
-            , Just "                                                                                      "
-            )
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( False
-            , /Data/Algebra/Ord
-            , [ ∀/Data/Primitive/Number ]
-            , Just "                                                                                                                                                                             "
-            )
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Ord
+            , cgcExtends = [ ∀/Data/Primitive/Number ]
+            , cgcDoc = Just " "
+            }
         , CGClass
-            ( False
-            , /Data/Algebra/Ordering[ /T=TopType ]
-            , []
-            , Just "                                                                                      "
-            )
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Ordering[ /T=TopType ]
+            , cgcExtends = []
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( True
-            , /Data/Algebra/PComparison
-            ,
+            { cgcSealed = True
+            , cgcPartial = /Data/Algebra/PComparison
+            , cgcExtends =
                 [ ∀/Data/Algebra/Comparison
                 , /Data/Algebra/NoOrdering
                 ]
-            , Just "                                                                                      "
-            )
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( False
-            , /Data/Algebra/POrd
-            , []
-            , Just "                                                                                      "
-            )
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/POrd
+            , cgcExtends = []
+            , cgcDoc = Just ""
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md
@@ -457,7 +457,7 @@ Prgm
                 compare [Equal] exactly when they are equal." }
             )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isLess
+            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Algebra/isLess
                 ( Value /this -> ∀/Data/Algebra/Comparison = /compareTo
                     ( Value /other -> /Data/Primitive/Integer = CInt
                         { ciValue = 3 }
@@ -471,7 +471,7 @@ Prgm
                 { csValue = "True" }
             )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isEq
+            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Algebra/isEq
                 ( Value /this -> ∀/Data/Algebra/Comparison = /compareTo
                     ( Value /other -> /Data/Primitive/Integer = CInt
                         { ciValue = 3 }
@@ -485,7 +485,7 @@ Prgm
                 { csValue = "True" }
             )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isGreater
+            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Algebra/isGreater
                 ( Value /this -> ∀/Data/Algebra/Comparison = /compareTo
                     ( Value /other -> /Data/Primitive/Integer = CInt
                         { ciValue = 3 }
@@ -499,7 +499,7 @@ Prgm
                 { csValue = "True" }
             )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isLessEq
+            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Algebra/isLessEq
                 ( Value /this -> ∀/Data/Algebra/Comparison = /compareTo
                     ( Value /other -> /Data/Primitive/Integer = CInt
                         { ciValue = 3 }
@@ -517,7 +517,7 @@ Prgm
                 { csValue = "The divisibility ordering distinguishes ordered pairs from incomparable ones." }
             )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isComparable
+            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Algebra/isComparable
                 ( Value /this -> ∀/Data/Algebra/PComparison = /Data/Algebra/pcompare
                     ( Value /a -> /Data/Primitive/Integer = CInt
                         { ciValue = 2 }
@@ -531,7 +531,7 @@ Prgm
                 { csValue = "True" }
             )
         , /Catln/#print
-            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isNoOrdering
+            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Algebra/isNoOrdering
                 ( Value /this -> ∀/Data/Algebra/PComparison = /Data/Algebra/pcompare
                     ( Value /a -> /Data/Primitive/Integer = CInt
                         { ciValue = 2 }

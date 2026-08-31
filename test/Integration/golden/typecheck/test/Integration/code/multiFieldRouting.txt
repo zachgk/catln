@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/unbox"
                 , ObjectMapItem
@@ -62,18 +62,18 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
         , CGType
         , CGClass
-            ( False
-            , /Boxed
-            , [ /Data/Primitive/Integer ]
-            , Just "         "
-            )
+            { cgcSealed = False
+            , cgcPartial = /Boxed
+            , cgcExtends = [ /Data/Primitive/Integer ]
+            , cgcDoc = Just " "
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md

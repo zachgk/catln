@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/ContextIn"
                 , ObjectMapItem
@@ -8,7 +8,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
+                        ]
                     }
                 )
             ,
@@ -35,23 +38,31 @@ Prgm
                                 )
                             , []
                             ) = /operator==
-                            ( EAppArg Value /l -> /Data/String =
-                                ( /Data/toString
-                                    ( EAppArg Value /this -> /Data/Primitive/Integer = 1 ) ↦ /Data/String
-                                )
+                            ( EAppArg
+                                { eaaArg = Value /l -> /Data/String =
+                                    ( /Data/toString
+                                        ( EAppArg
+                                            { eaaArg = Value /this -> /Data/Primitive/Integer = 1 }
+                                        ) ↦ /Data/String
+                                    )
+                                }
                             )
-                            ( EAppArg Value /r -> /Data/String = "1" )
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/String = "1" }
+                            )
                         ]
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Tests the toString method, later will be the Show class" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Tests the toString method, later will be the Show class" }
+            )
         ]
     }

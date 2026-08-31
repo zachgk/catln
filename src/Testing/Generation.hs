@@ -189,7 +189,7 @@ genOwnVarBoundPair prgm@(Prgm objMap _ _) = do
     -- CLASS nodes only — a 'PredClass' over a data type is not well-formed ('classNodeNames') —
     -- and the dimension must be one the CLASS declares.
     classDims = [ (fromPartialName k, ks)
-                | (CGClass (_, cpt, _, _), k, _) <- graphToNodes cg
+                | (CGClass _ cpt _ _, k, _) <- graphToNodes cg
                 , let ks = H.keys (ptVars cpt), not (null ks) ]
     classPredDim varName = do
       (className, ks) <- HG.element [c | c@(_, ks') <- classDims, any (/= varName) ks']
@@ -332,7 +332,7 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
     -- every law holds across the unrolled and folded representations.
     recExpansions =
       [ (ptName cpt, exp1)
-      | (CGClass (sealed, cpt, cts, _), _, _) <- graphToNodes cg
+      | (CGClass sealed cpt cts _, _, _) <- graphToNodes cg
       , sealed, not (null cts)
       , let exp1 = expandClassPartial typeEnv H.empty cpt
       , recursesExplicitly (ptName cpt) exp1 ]
@@ -707,7 +707,7 @@ genClasses = do
     let className   = makeAbsoluteName $ mkName $ printf "Class%d" (ci :: Int)
     let memberNames = [makeAbsoluteName $ mkName $ printf "Mem%d_%d" ci mi | mi <- [1 .. nMembers]]
     let memberObjs  = [ObjArr (Just (Value (emptyMetaT $ typeVal n) n)) TypeObj Nothing [] Nothing | n <- memberNames]
-    let node = ( CGClass (sealed, partialVal className, map (singletonType . partialVal) memberNames, Nothing)
+    let node = ( CGClass sealed (partialVal className) (map (singletonType . partialVal) memberNames) Nothing
                , PClassName className
                , map PTypeName memberNames )
     return (memberObjs, node)

@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/to_oct"
                 , ObjectMapItem
@@ -426,8 +426,8 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
@@ -469,11 +469,11 @@ Prgm
         , CGType
         , CGType
         , CGClass
-            ( False
-            , /Point
-            , []
-            , Just ""
-            )
+            { cgcSealed = False
+            , cgcPartial = /Point
+            , cgcExtends = []
+            , cgcDoc = Just ""
+            }
         ]
     , prgmAnnots = []
     }

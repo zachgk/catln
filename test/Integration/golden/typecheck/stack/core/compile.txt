@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/Catln/#else"
                 , ObjectMapItem
@@ -222,8 +222,8 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
@@ -247,14 +247,14 @@ Prgm
         , CGType
         , CGType
         , CGClass
-            ( True
-            , /Catln/ThenElse
-            ,
+            { cgcSealed = True
+            , cgcPartial = /Catln/ThenElse
+            , cgcExtends =
                 [ /Catln/Then
                 , /Catln/Else
                 ]
-            , Just "                                                                                      "
-            )
+            , cgcDoc = Just ""
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md

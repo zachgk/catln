@@ -1,14 +1,18 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/operator++"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /operator++
-                            ( EAppArg Value /l -> /Data/String = Hole /Data/String HoleActive { haName = Nothing } )
-                            ( EAppArg Value /r -> /Data/String = Hole /Data/String HoleActive { haName = Nothing } ) -> /Data/String
+                            ( EAppArg
+                                { eaaArg = Value /l -> /Data/String = Hole /Data/String HoleActive { haName = Nothing } }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/String = Hole /Data/String HoleActive { haName = Nothing } }
+                            ) -> /Data/String
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -19,7 +23,10 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Data/strEqual( EAppArg Value /l -> /Data/String )( EAppArg Value /r -> /Data/String ) -> ∀/Data/Primitive/Boolean ]
+                        [ /Data/strEqual
+                            ( EAppArg { eaaArg = Value /l -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /r -> /Data/String } ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -49,11 +56,17 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/rel( EAppArg Value /a )( EAppArg Value /b )
-                            ( EAppArg Value /this -> /Data/StrEqv[ /T=/Data/String ] ) -> ∀/Data/Primitive/Boolean =
+                        [ /Data/Algebra/rel
+                            ( EAppArg { eaaArg = Value /a } )
+                            ( EAppArg { eaaArg = Value /b } )
+                            ( EAppArg { eaaArg = Value /this -> /Data/StrEqv } ) -> ∀/Data/Primitive/Boolean =
                             ( /Data/strEqual
-                                ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
-                                ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) ) ↦ ∀/Data/Primitive/Boolean
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) }
+                                ) ↦ ∀/Data/Primitive/Boolean
                             )
                         ]
                     }
@@ -65,7 +78,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/eq( EAppArg Value /this -> /Data/String ) -> /Data/StrEqv[ /T=/Data/String ] = Value /Data/StrEqv ]
+                        [ /Data/Algebra/eq
+                            ( EAppArg { eaaArg = Value /this -> /Data/String } ) -> /Data/StrEqv[ /T=/Data/String ] = Value /Data/StrEqv
+                        ]
                     }
                 )
             ,
@@ -75,30 +90,24 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/equal( EAppArg Value /other -> ∀/Data/Algebra/Eq )( EAppArg Value /this -> /Data/String ) -> ∀/Data/Primitive/Boolean =
+                        [ /Data/Algebra/equal
+                            ( EAppArg { eaaArg = Value /other -> ∀/Data/Algebra/Eq } )
+                            ( EAppArg { eaaArg = Value /this -> /Data/String } ) -> ∀/Data/Primitive/Boolean =
                             ( /rel
-                                ( EAppArg Value /a -> TVArg /this = ( Value /this ↦ TVArg /this ) )
-                                ( EAppArg Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) )
-                                ( EAppArg Value /this -> UnionType
-                                    ( Just
-                                        ( PredClass /Data/Algebra/Eqv[ /T=/Data/String ]
-                                        , fromList []
-                                        , []
+                                ( EAppArg
+                                    { eaaArg = Value /a -> TVArg /this = ( Value /this ↦ TVArg /this ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /this -> ∀/Data/Algebra/Eqv[ /T=/Data/String ] =
+                                        ( /eq
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) }
+                                            ) ↦ ∀/Data/Algebra/Eqv[ /T=/Data/String ]
                                         )
-                                    , /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ]
-                                    , []
-                                    ) =
-                                    ( /eq
-                                        ( EAppArg Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) ) ↦ UnionType
-                                        ( Just
-                                            ( PredClass /Data/Algebra/Eqv[ /T=/Data/String ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ]
-                                        , []
-                                        )
-                                    )
+                                    }
                                 ) ↦ ∀/Data/Primitive/Boolean
                             )
                         ]
@@ -114,8 +123,8 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
@@ -125,235 +134,95 @@ Prgm
         , CGType
         , CGType
         , CGClass
-            ( False
-            , /Data/String
-            , [ /Data/String ]
-            , Just "                                                                                      "
-            )
+            { cgcSealed = False
+            , cgcPartial = /Data/String
+            , cgcExtends = [ /Data/String ]
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( False
-            , /Data/Algebra/Eqv[ /T=/Data/String ]
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Eqv[ /T=/Data/String ]
+            , cgcExtends =
                 [ /Data/StrEqv[ /T=/Data/String ] ]
-            , Nothing
-            )
+            , cgcDoc = Nothing
+            }
         , CGClass
-            ( False
-            , /Data/String
-            , [ /Data/String ]
-            , Just "[String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.) [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
+            { cgcSealed = False
+            , cgcPartial = /Data/String
+            , cgcExtends = [ /Data/String ]
+            , cgcDoc = Just "[String] is a [Semigroup] under concatenation: joining strings end to end is associative.
               (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
               yet dispatched by return type across multiple types, so only the [Semigroup] is declared.)"
-            )
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "# Strings
-            A [String] is a list of characters. Its equality is defined here alongside the type." )
-        , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "## Equality
-            [String] is an [Eq] type: [StrEqv] wraps the primitive [strEqual], and [eq]/[equal] follow." )
-        , /Catln/#print
-            ( EAppArg Value /p -> ∀/Data/Primitive/Boolean =
-                ( /operator==
-                    ( EAppArg Value /l -> /Data/String = "hi" )
-                    ( EAppArg Value /r -> /Data/String = "hi" ) ↦ ∀/Data/Primitive/Boolean
-                )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "# Strings
+                A [String] is a list of characters. Its equality is defined here alongside the type." }
             )
-            ( EAppArg Value /result -> /Data/String = "True" )
-        , /Catln/#print
-            ( EAppArg Value /p -> ∀/Data/Primitive/Boolean =
-                ( /operator==
-                    ( EAppArg Value /l -> /Data/String = "hi" )
-                    ( EAppArg Value /r -> /Data/String = "no" ) ↦ ∀/Data/Primitive/Boolean
-                )
-            )
-            ( EAppArg Value /result -> /Data/String = "False" )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "## Concatenation" )
-        , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "[String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-            (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-            yet dispatched by return type across multiple types, so only the [Semigroup] is declared.)" )
-        , /Catln/#print
-            ( EAppArg Value /p -> /Data/String =
-                ( /operator++
-                    ( EAppArg Value /l -> /Data/String = "foo" )
-                    ( EAppArg Value /r -> /Data/String = "bar" ) ↦ /Data/String
-                )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "## Equality
+                [String] is an [Eq] type: [StrEqv] wraps the primitive [strEqual], and [eq]/[equal] follow." }
             )
-            ( EAppArg Value /result -> /Data/String = "foobar" )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                    ( /operator==
+                        ( EAppArg
+                            { eaaArg = Value /l -> /Data/String = "hi" }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Data/String = "hi" }
+                        ) ↦ ∀/Data/Primitive/Boolean
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "True" }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                    ( /operator==
+                        ( EAppArg
+                            { eaaArg = Value /l -> /Data/String = "hi" }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Data/String = "no" }
+                        ) ↦ ∀/Data/Primitive/Boolean
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "False" }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "## Concatenation" }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "[String] is a [Semigroup] under concatenation: joining strings end to end is associative.
+                (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
+                yet dispatched by return type across multiple types, so only the [Semigroup] is declared.)" }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/String =
+                    ( /operator++
+                        ( EAppArg
+                            { eaaArg = Value /l -> /Data/String = "foo" }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Data/String = "bar" }
+                        ) ↦ /Data/String
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "foobar" }
+            )
         ]
     }

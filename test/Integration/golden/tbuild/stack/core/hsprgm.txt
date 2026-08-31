@@ -1,17 +1,29 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
+                ( "/Catln/CGNode/CGType"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/CGNode/CGType ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/TypeVarAux/TVApplied"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/TypeVarAux/TVApplied( EAppArg Value /base -> ∀/Catln/TypeVarAux )
-                            ( EAppArg Value /vars -> ∀/Data/List
-                                [ /T=/Catln/Pair
-                                    [ /B=∀/Catln/Type
-                                    , /A=/Catln/PartialKey
+                        [ /Catln/TypeVarAux/TVApplied
+                            ( EAppArg { eaaArg = Value /base -> ∀/Catln/TypeVarAux } )
+                            ( EAppArg
+                                { eaaArg = Value /vars -> ∀/Data/List
+                                    [ /T=/Catln/Pair
+                                        [ /B=∀/Catln/Type
+                                        , /A=/Catln/PartialKey
+                                        ]
                                     ]
-                                ]
+                                }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -29,11 +41,34 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/Expr/HoleExpr"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Expr/HoleExpr
+                            ( EAppArg
+                                { eaaArg = Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /hole -> ∀/Catln/Hole } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Hole/HoleActive"
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/Hole/HoleActive
-                            ( EAppArg Value /name -> ∀/Data/Maybe[ /T=/Data/String ] )
+                            ( EAppArg
+                                { eaaArg = Value /name -> ∀/Data/Maybe[ /T=/Data/String ] }
+                            )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -50,10 +85,40 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/CGNode/CGClass"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/CGNode/CGClass
+                            ( EAppArg { eaaArg = Value /sealed -> ∀/Data/Primitive/Boolean } )
+                            ( EAppArg
+                                { eaaArg = Value /partial -> /Catln/PartialType
+                                    ( /argMode=TopType
+                                    , /name=/Data/String
+                                    , /vars=TopType
+                                    , /args=TopType
+                                    , /preds=TopType
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /extends -> ∀/Data/List[ /T=∀/Catln/Type ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /doc -> ∀/Data/Maybe[ /T=/Data/String ] }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/TypePredicates/PredsNot"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/TypePredicates/PredsNot( EAppArg Value /pred -> ∀/Catln/TypePredicates ) ]
+                        [ /Catln/TypePredicates/PredsNot
+                            ( EAppArg { eaaArg = Value /pred -> ∀/Catln/TypePredicates } )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -73,27 +138,33 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/Type/UnionType
-                            ( EAppArg Value /top -> ∀/Data/Maybe
-                                [ /T=/Catln/Triple
-                                    [ /B=∀/Data/List
-                                        [ /T=/Catln/Pair
-                                            [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
-                                            , /A=/Data/String
+                            ( EAppArg
+                                { eaaArg = Value /top -> ∀/Data/Maybe
+                                    [ /T=/Catln/Triple
+                                        [ /B=∀/Data/List
+                                            [ /T=/Catln/Pair
+                                                [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
+                                                , /A=/Data/String
+                                                ]
                                             ]
+                                        , /C=∀/Data/List[ /T=∀/Catln/Constant ]
+                                        , /A=∀/Catln/TypePredicates
                                         ]
-                                    , /C=∀/Data/List[ /T=∀/Catln/Constant ]
-                                    , /A=∀/Catln/TypePredicates
                                     ]
-                                ]
+                                }
                             )
-                            ( EAppArg Value /leafs -> ∀/Data/List
-                                [ /T=/Catln/Pair
-                                    [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
-                                    , /A=/Data/String
+                            ( EAppArg
+                                { eaaArg = Value /leafs -> ∀/Data/List
+                                    [ /T=/Catln/Pair
+                                        [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
+                                        , /A=/Data/String
+                                        ]
                                     ]
-                                ]
+                                }
                             )
-                            ( EAppArg Value /consts -> ∀/Data/List[ /T=∀/Catln/Constant ] )
+                            ( EAppArg
+                                { eaaArg = Value /consts -> ∀/Data/List[ /T=∀/Catln/Constant ] }
+                            )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -104,7 +175,30 @@ Prgm
                 ( "/Catln/PartialName/PTypeName"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/PartialName/PTypeName( EAppArg Value /name -> /Data/String ) ]
+                        [ /Catln/PartialName/PTypeName
+                            ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/EApp/EAppArg"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/EApp/EAppArg
+                            ( EAppArg
+                                { eaaArg = Value /arg -> /Catln/ObjArr
+                                    ( /arr=TopType
+                                    , /obj=TopType
+                                    , /annots=TopType
+                                    , /doc=TopType
+                                    , /basis=TopType
+                                    )
+                                }
+                            )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -115,7 +209,9 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/TypePredicates/PredsAnd
-                            ( EAppArg Value /preds -> ∀/Data/List[ /T=∀/Catln/TypePredicates ] )
+                            ( EAppArg
+                                { eaaArg = Value /preds -> ∀/Data/List[ /T=∀/Catln/TypePredicates ] }
+                            )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -126,7 +222,26 @@ Prgm
                 ( "/Catln/Triple"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/Triple( EAppVar /C TopType )( EAppVar /B TopType )( EAppVar /A TopType )( EAppArg Value /first -> $/A )( EAppArg Value /second -> $/B )( EAppArg Value /third -> $/C ) ]
+                        [ /Catln/Triple
+                            ( EAppVar
+                                { eavName = /C
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppVar
+                                { eavName = /B
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppVar
+                                { eavName = /A
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /first -> $/A } )
+                            ( EAppArg { eaaArg = Value /second -> $/B } )
+                            ( EAppArg { eaaArg = Value /third -> $/C } )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -137,14 +252,79 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/TypePredicate/PredRel
-                            ( EAppArg Value /type -> /Catln/PartialType
-                                ( /argMode=TopType
-                                , /name=/Data/String
-                                , /vars=TopType
-                                , /args=TopType
-                                , /preds=TopType
-                                )
+                            ( EAppArg
+                                { eaaArg = Value /type -> /Catln/PartialType
+                                    ( /argMode=TopType
+                                    , /name=/Data/String
+                                    , /vars=TopType
+                                    , /args=TopType
+                                    , /preds=TopType
+                                    )
+                                }
                             )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Expr/TupleApply"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Expr/TupleApply
+                            ( EAppArg
+                                { eaaArg = Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /base -> /Catln/Pair
+                                    [ /B=∀/Catln/Expr
+                                    , /A=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    ]
+                                    ( /first=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
+                                        , /pos=TopType
+                                        )
+                                    , /second=∀/Catln/Expr
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /app -> ∀/Catln/EApp } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Expr/EWhere"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Expr/EWhere
+                            ( EAppArg
+                                { eaaArg = Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /base -> ∀/Catln/Expr } )
+                            ( EAppArg { eaaArg = Value /cond -> ∀/Catln/Expr } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -155,6 +335,27 @@ Prgm
                 ( "/Catln/ObjectBasis/ArgObj"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/ObjectBasis/ArgObj ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Expr/CExpr"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Expr/CExpr
+                            ( EAppArg
+                                { eaaArg = Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /const -> ∀/Catln/Constant } )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -174,13 +375,15 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/TypePredicate/PredClass
-                            ( EAppArg Value /type -> /Catln/PartialType
-                                ( /argMode=TopType
-                                , /name=/Data/String
-                                , /vars=TopType
-                                , /args=TopType
-                                , /preds=TopType
-                                )
+                            ( EAppArg
+                                { eaaArg = Value /type -> /Catln/PartialType
+                                    ( /argMode=TopType
+                                    , /name=/Data/String
+                                    , /vars=TopType
+                                    , /args=TopType
+                                    , /preds=TopType
+                                    )
+                                }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -192,7 +395,9 @@ Prgm
                 ( "/Catln/PartialName/PClassName"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/PartialName/PClassName( EAppArg Value /name -> /Data/String ) ]
+                        [ /Catln/PartialName/PClassName
+                            ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -212,13 +417,15 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/TypePredicate/PredExpr
-                            ( EAppArg Value /type -> /Catln/PartialType
-                                ( /argMode=TopType
-                                , /name=/Data/String
-                                , /vars=TopType
-                                , /args=TopType
-                                , /preds=TopType
-                                )
+                            ( EAppArg
+                                { eaaArg = Value /type -> /Catln/PartialType
+                                    ( /argMode=TopType
+                                    , /name=/Data/String
+                                    , /vars=TopType
+                                    , /args=TopType
+                                    , /preds=TopType
+                                    )
+                                }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -231,24 +438,31 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/PartialArgsOption
-                            ( EAppArg Value /vars -> ∀/Data/List
-                                [ /T=/Catln/Pair
-                                    [ /B=∀/Catln/Type
-                                    , /A=/Catln/PartialKey
+                            ( EAppArg
+                                { eaaArg = Value /vars -> ∀/Data/List
+                                    [ /T=/Catln/Pair
+                                        [ /B=∀/Catln/Type
+                                        , /A=/Catln/PartialKey
+                                        ]
                                     ]
-                                ]
+                                }
                             )
-                            ( EAppArg Value /args -> ∀/Data/List
-                                [ /T=/Catln/Pair
-                                    [ /B=∀/Catln/Type
-                                    , /A=/Catln/PartialKey
+                            ( EAppArg
+                                { eaaArg = Value /args -> ∀/Data/List
+                                    [ /T=/Catln/Pair
+                                        [ /B=∀/Catln/Type
+                                        , /A=/Catln/PartialKey
+                                        ]
                                     ]
-                                ]
-                            )( EAppArg Value /preds -> ∀/Catln/TypePredicates )
-                            ( EAppArg Value /argMode -> /Catln/PtArgMode
-                                ( /argUb=TopType
-                                , /argLb=TopType
-                                )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /preds -> ∀/Catln/TypePredicates } )
+                            ( EAppArg
+                                { eaaArg = Value /argMode -> /Catln/PtArgMode
+                                    ( /argUb=TopType
+                                    , /argLb=TopType
+                                    )
+                                }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -261,11 +475,13 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/TypeVarAux/TVVar
-                            ( EAppArg Value /name -> /Catln/PartialKey
-                                ( /name=/Data/String
-                                , /vars=TopType
-                                , /args=TopType
-                                )
+                            ( EAppArg
+                                { eaaArg = Value /name -> /Catln/PartialKey
+                                    ( /name=/Data/String
+                                    , /vars=TopType
+                                    , /args=TopType
+                                    )
+                                }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -277,7 +493,20 @@ Prgm
                 ( "/Catln/Pair"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/Pair( EAppVar /B TopType )( EAppVar /A TopType )( EAppArg Value /first -> $/A )( EAppArg Value /second -> $/B ) ]
+                        [ /Catln/Pair
+                            ( EAppVar
+                                { eavName = /B
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppVar
+                                { eavName = /A
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /first -> $/A } )
+                            ( EAppArg { eaaArg = Value /second -> $/B } )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -287,7 +516,11 @@ Prgm
                 ( "/Catln/SourcePos"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/SourcePos( EAppArg Value /file -> /Data/String )( EAppArg Value /line -> /Data/Primitive/Integer )( EAppArg Value /column -> /Data/Primitive/Integer ) ]
+                        [ /Catln/SourcePos
+                            ( EAppArg { eaaArg = Value /file -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /line -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /column -> /Data/Primitive/Integer } )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -297,7 +530,9 @@ Prgm
                 ( "/Catln/Constant/CStr"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/Constant/CStr( EAppArg Value /value -> /Data/String ) ]
+                        [ /Catln/Constant/CStr
+                            ( EAppArg { eaaArg = Value /value -> /Data/String } )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -307,7 +542,37 @@ Prgm
                 ( "/Catln/PtArgMode"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/PtArgMode( EAppArg Value /argLb -> ∀/Data/Primitive/Boolean )( EAppArg Value /argUb -> ∀/Data/Primitive/Boolean ) ]
+                        [ /Catln/PtArgMode
+                            ( EAppArg { eaaArg = Value /argLb -> ∀/Data/Primitive/Boolean } )
+                            ( EAppArg { eaaArg = Value /argUb -> ∀/Data/Primitive/Boolean } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Prgm"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Prgm
+                            ( EAppArg
+                                { eaaArg = Value /objMap -> /Catln/ObjectMap( /items=TopType ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /cg -> ∀/Data/List
+                                    [ /T=/Catln/Triple
+                                        [ /B=∀/Catln/PartialName
+                                        , /C=∀/Data/List[ /T=∀/Catln/PartialName ]
+                                        , /A=∀/Catln/CGNode
+                                        ]
+                                    ]
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /annots -> ∀/Data/List[ /T=∀/Catln/Expr ] }
+                            )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -317,9 +582,14 @@ Prgm
                 ( "/Catln/PartialKey"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/PartialKey( EAppArg Value /name -> /Data/String )
-                            ( EAppArg Value /vars -> ∀/Data/List[ /T=/Catln/PartialKey ] )
-                            ( EAppArg Value /args -> ∀/Data/List[ /T=/Catln/PartialKey ] )
+                        [ /Catln/PartialKey
+                            ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                            ( EAppArg
+                                { eaaArg = Value /vars -> ∀/Data/List[ /T=/Catln/PartialKey ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /args -> ∀/Data/List[ /T=/Catln/PartialKey ] }
+                            )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -330,7 +600,9 @@ Prgm
                 ( "/Catln/Constant/CInt"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/Constant/CInt( EAppArg Value /value -> /Data/Primitive/Integer ) ]
+                        [ /Catln/Constant/CInt
+                            ( EAppArg { eaaArg = Value /value -> /Data/Primitive/Integer } )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -349,7 +621,9 @@ Prgm
                 ( "/Catln/Constant/CFloat"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/Constant/CFloat( EAppArg Value /value -> /Data/Primitive/Float ) ]
+                        [ /Catln/Constant/CFloat
+                            ( EAppArg { eaaArg = Value /value -> /Data/Primitive/Float } )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -359,7 +633,9 @@ Prgm
                 ( "/Catln/TypePredicates/PredsOne"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/TypePredicates/PredsOne( EAppArg Value /pred -> ∀/Catln/TypePredicate ) ]
+                        [ /Catln/TypePredicates/PredsOne
+                            ( EAppArg { eaaArg = Value /pred -> ∀/Catln/TypePredicate } )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -369,14 +645,19 @@ Prgm
                 ( "/Catln/Meta"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/Meta( EAppArg Value /type -> ∀/Catln/Type )
-                            ( EAppArg Value /pos -> ∀/Data/Maybe
-                                [ /T=/Catln/Pair
-                                    [ /B=/Catln/SourcePos
-                                    , /A=/Catln/SourcePos
+                        [ /Catln/Meta
+                            ( EAppArg { eaaArg = Value /type -> ∀/Catln/Type } )
+                            ( EAppArg
+                                { eaaArg = Value /pos -> ∀/Data/Maybe
+                                    [ /T=/Catln/Pair
+                                        [ /B=/Catln/SourcePos
+                                        , /A=/Catln/SourcePos
+                                        ]
                                     ]
-                                ]
-                            )( EAppArg Value /id -> /Data/String )( EAppArg Value /dat -> /Catln/Unit )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /id -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /dat -> /Catln/Unit } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -387,25 +668,61 @@ Prgm
                 ( "/Catln/PartialType"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/PartialType( EAppArg Value /name -> /Data/String )
-                            ( EAppArg Value /vars -> ∀/Data/List
-                                [ /T=/Catln/Pair
-                                    [ /B=∀/Catln/Type
-                                    , /A=/Catln/PartialKey
+                        [ /Catln/PartialType
+                            ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                            ( EAppArg
+                                { eaaArg = Value /vars -> ∀/Data/List
+                                    [ /T=/Catln/Pair
+                                        [ /B=∀/Catln/Type
+                                        , /A=/Catln/PartialKey
+                                        ]
                                     ]
-                                ]
+                                }
                             )
-                            ( EAppArg Value /args -> ∀/Data/List
-                                [ /T=/Catln/Pair
-                                    [ /B=∀/Catln/Type
-                                    , /A=/Catln/PartialKey
+                            ( EAppArg
+                                { eaaArg = Value /args -> ∀/Data/List
+                                    [ /T=/Catln/Pair
+                                        [ /B=∀/Catln/Type
+                                        , /A=/Catln/PartialKey
+                                        ]
                                     ]
-                                ]
-                            )( EAppArg Value /preds -> ∀/Catln/TypePredicates )
-                            ( EAppArg Value /argMode -> /Catln/PtArgMode
-                                ( /argUb=TopType
-                                , /argLb=TopType
-                                )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /preds -> ∀/Catln/TypePredicates } )
+                            ( EAppArg
+                                { eaaArg = Value /argMode -> /Catln/PtArgMode
+                                    ( /argUb=TopType
+                                    , /argLb=TopType
+                                    )
+                                }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/EApp/EAppVar"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/EApp/EAppVar
+                            ( EAppArg
+                                { eaaArg = Value /name -> /Catln/PartialKey
+                                    ( /name=/Data/String
+                                    , /vars=TopType
+                                    , /args=TopType
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -417,7 +734,53 @@ Prgm
                 ( "/Catln/Type/TypeVar"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/Type/TypeVar( EAppArg Value /aux -> ∀/Catln/TypeVarAux )( EAppArg Value /loc -> ∀/Catln/TypeVarLoc ) ]
+                        [ /Catln/Type/TypeVar
+                            ( EAppArg { eaaArg = Value /aux -> ∀/Catln/TypeVarAux } )
+                            ( EAppArg { eaaArg = Value /loc -> ∀/Catln/TypeVarLoc } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/ObjectMap"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/ObjectMap
+                            ( EAppArg
+                                { eaaArg = Value /items -> ∀/Data/List
+                                    [ /T=/Catln/Pair
+                                        [ /B=/Catln/ObjectMapItem
+                                        , /A=/Data/String
+                                        ]
+                                    ]
+                                }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/ObjectMapItem"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/ObjectMapItem
+                            ( EAppArg
+                                { eaaArg = Value /decls -> ∀/Data/List[ /T=/Catln/ObjArr ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /runtimeDecls -> ∀/Data/List[ /T=/Catln/ObjArr ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /refineDecls -> ∀/Data/List[ /T=/Catln/ObjArr ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /defs -> ∀/Data/List[ /T=/Catln/ObjArr ] }
+                            )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -427,7 +790,51 @@ Prgm
                 ( "/Catln/PartialName/PRelativeName"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/PartialName/PRelativeName( EAppArg Value /name -> /Data/String ) ]
+                        [ /Catln/PartialName/PRelativeName
+                            ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/EApp/EAppSpread"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/EApp/EAppSpread
+                            ( EAppArg { eaaArg = Value /expr -> ∀/Catln/Expr } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/ObjArr"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/ObjArr
+                            ( EAppArg
+                                { eaaArg = Value /obj -> ∀/Data/Maybe[ /T=∀/Catln/Expr ] }
+                            )
+                            ( EAppArg { eaaArg = Value /basis -> ∀/Catln/ObjectBasis } )
+                            ( EAppArg
+                                { eaaArg = Value /doc -> ∀/Data/Maybe[ /T=/Data/String ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /annots -> ∀/Data/List[ /T=∀/Catln/Expr ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /arr -> ∀/Data/Maybe
+                                    [ /T=/Catln/Pair
+                                        [ /B=/Catln/Meta
+                                        , /A=∀/Data/Maybe[ /T=∀/Catln/Expr ]
+                                        ]
+                                    ]
+                                }
+                            )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -437,6 +844,40 @@ Prgm
                 ( "/Catln/ObjectBasis/FunctionObj"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/ObjectBasis/FunctionObj ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Expr/Value"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Expr/Value
+                            ( EAppArg
+                                { eaaArg = Value /meta -> /Catln/Meta
+                                    ( /type=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
+                                    , /pos=TopType
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Expr/AliasExpr"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Expr/AliasExpr
+                            ( EAppArg { eaaArg = Value /base -> ∀/Catln/Expr } )
+                            ( EAppArg { eaaArg = Value /alias -> ∀/Catln/Expr } )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -456,11 +897,13 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/TypeVarAux/TVArg
-                            ( EAppArg Value /name -> /Catln/PartialKey
-                                ( /name=/Data/String
-                                , /vars=TopType
-                                , /args=TopType
-                                )
+                            ( EAppArg
+                                { eaaArg = Value /name -> /Catln/PartialKey
+                                    ( /name=/Data/String
+                                    , /vars=TopType
+                                    , /args=TopType
+                                    )
+                                }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -472,7 +915,9 @@ Prgm
                 ( "/Catln/Constant/CChar"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/Constant/CChar( EAppArg Value /value -> /Data/Char ) ]
+                        [ /Catln/Constant/CChar
+                            ( EAppArg { eaaArg = Value /value -> /Data/Char } )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -488,8 +933,8 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
@@ -527,54 +972,132 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGClass
-            ( True
-            , /Catln/Constant
-            ,
+            { cgcSealed = True
+            , cgcPartial = /Catln/CGNode
+            , cgcExtends =
+                [ /Catln/CGNode/CGClass
+                    ( /sealed=∀/Data/Primitive/Boolean
+                    , /extends=∀/Data/List[ /T=∀/Catln/Type ]
+                    , /doc=∀/Data/Maybe[ /T=/Data/String ]
+                    , /partial=/Catln/PartialType
+                    )
+                , /Catln/CGNode/CGType
+                ]
+            , cgcDoc = Just "What a class graph holds at a name: a class, or a type.A [CGClass] carries whether it is [sealed] — whether a later file may add members to it — the partial [class] itself, the [extends] it is a member of, and its [doc]. A [CGType] carries nothing: a type is in the graph so that classes can point at it, and has nothing of its own to say."
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Catln/Constant
+            , cgcExtends =
                 [ /Catln/Constant/CInt( /value=/Data/Primitive/Integer )
                 , /Catln/Constant/CFloat( /value=/Data/Primitive/Float )
                 , /Catln/Constant/CStr( /value=/Data/String )
                 , /Catln/Constant/CChar( /value=/Data/Char )
                 ]
-            , Just "A value written directly in a program: a whole number, a fractional number, a string, or a character.A character constant cannot be written in Catln — the language has no character literal — but the compiler makes one where it needs to, so a program reading a program can be handed one."
-            )
+            , cgcDoc = Just "A value written directly in a program: a whole number, a fractional number, a string, or a character.A character constant cannot be written in Catln — the language has no character literal — but the compiler makes one where it needs to, so a program reading a program can be handed one."
+            }
         , CGClass
-            ( True
-            , /Catln/Hole
-            ,
+            { cgcSealed = True
+            , cgcPartial = /Catln/EApp
+            , cgcExtends =
+                [ /Catln/EApp/EAppArg( /arg=/Catln/ObjArr )
+                , /Catln/EApp/EAppVar
+                    ( /name=/Catln/PartialKey
+                    , /meta=/Catln/Meta
+                    )
+                , /Catln/EApp/EAppSpread( /expr=∀/Catln/Expr )
+                ]
+            , cgcDoc = Just "What is applied to an expression: an argument ([EAppArg]), a type parameter ([EAppVar], by [name] and the [meta] of what it is bound to), or the contents of another value spread into it ([EAppSpread]).An application carries one of these at a time. `f(a, b)` is `f` applied to `a` and then to `b`, so the three arms are what one step of that can be rather than what a call is."
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Catln/Expr
+            , cgcExtends =
+                [ /Catln/Expr/CExpr
+                    ( /const=∀/Catln/Constant
+                    , /meta=/Catln/Meta
+                    )
+                , /Catln/Expr/Value
+                    ( /name=/Data/String
+                    , /meta=/Catln/Meta
+                    )
+                , /Catln/Expr/HoleExpr
+                    ( /hole=∀/Catln/Hole
+                    , /meta=/Catln/Meta
+                    )
+                , /Catln/Expr/AliasExpr
+                    ( /base=∀/Catln/Expr
+                    , /alias=∀/Catln/Expr
+                    )
+                , /Catln/Expr/EWhere
+                    ( /base=∀/Catln/Expr
+                    , /cond=∀/Catln/Expr
+                    , /meta=/Catln/Meta
+                    )
+                , /Catln/Expr/TupleApply
+                    ( /app=∀/Catln/EApp
+                    , /base=/Catln/Pair
+                        [ /B=∀/Catln/Expr
+                        , /A=/Catln/Meta
+                        ]
+                    , /meta=/Catln/Meta
+                    )
+                ]
+            , cgcDoc = Just "An expression, after the compiler has reduced what was written to what it means.A [CExpr] is a constant, a [Value] is a name, and a [HoleExpr] is a gap. An [AliasExpr] is a value given a second name, and an [EWhere] is a value narrowed by a condition. A [TupleApply] is everything else: one thing applied to another, which is what arguments, type parameters, lists and method calls all become.So reading an expression is reading those six, however the program was written."
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Catln/Hole
+            , cgcExtends =
                 [ /Catln/Hole/HoleActive
                     ( /name=∀/Data/Maybe[ /T=/Data/String ] )
                 , /Catln/Hole/HoleUndefined
                 , /Catln/Hole/HoleTodefine
                 ]
-            , Just "A gap where an expression should be.A [HoleActive] is one written `_` or `_name`, which is an error wherever it is found. A [HoleUndefined] is written `undefined` and is an error only if a run reaches it. A [HoleTodefine] is written `todefine` and is an error both then and when the program is committed.The three are one type because they are one thing written three ways — a place the program is not finished — and differ only in when the compiler is entitled to complain."
-            )
+            , cgcDoc = Just "A gap where an expression should be.A [HoleActive] is one written `_` or `_name`, which is an error wherever it is found. A [HoleUndefined] is written `undefined` and is an error only if a run reaches it. A [HoleTodefine] is written `todefine` and is an error both then and when the program is committed.The three are one type because they are one thing written three ways — a place the program is not finished — and differ only in when the compiler is entitled to complain."
+            }
         , CGClass
-            ( True
-            , /Catln/ObjectBasis
-            ,
+            { cgcSealed = True
+            , cgcPartial = /Catln/ObjectBasis
+            , cgcExtends =
                 [ /Catln/ObjectBasis/FunctionObj
                 , /Catln/ObjectBasis/TypeObj
                 , /Catln/ObjectBasis/PatternObj
                 , /Catln/ObjectBasis/MatchObj
                 , /Catln/ObjectBasis/ArgObj
                 ]
-            , Just "What an object is: which of the ways of writing one it was written as.A [FunctionObj] is a definition or a declaration, a [TypeObj] is a `data` or a `class`, a [PatternObj] is an object matched against, a [MatchObj] is one arm of a match, and an [ArgObj] is an argument standing inside another object.It is declared by the compiler rather than in a `.ct` file because it is the compiler's own idea of what it is looking at. A program which reads programs is handed this, and what it is called here and what the compiler calls it are one thing."
-            )
+            , cgcDoc = Just "What an object is: which of the ways of writing one it was written as.A [FunctionObj] is a definition or a declaration, a [TypeObj] is a `data` or a `class`, a [PatternObj] is an object matched against, a [MatchObj] is one arm of a match, and an [ArgObj] is an argument standing inside another object.It is declared by the compiler rather than in a `.ct` file because it is the compiler's own idea of what it is looking at. A program which reads programs is handed this, and what it is called here and what the compiler calls it are one thing."
+            }
         , CGClass
-            ( True
-            , /Catln/PartialName
-            ,
+            { cgcSealed = True
+            , cgcPartial = /Catln/PartialName
+            , cgcExtends =
                 [ /Catln/PartialName/PTypeName( /name=/Data/String )
                 , /Catln/PartialName/PClassName( /name=/Data/String )
                 , /Catln/PartialName/PRelativeName( /name=/Data/String )
                 ]
-            , Just "What a partial type is named by: a type, a class, or a suffix that could be either.A [PTypeName] names one declared type and a [PClassName] one declared class. A [PRelativeName] is a name written without its full path — the compiler resolves it to one of the other two, so a program reading a compiled one will not meet it."
-            )
+            , cgcDoc = Just "What a partial type is named by: a type, a class, or a suffix that could be either.A [PTypeName] names one declared type and a [PClassName] one declared class. A [PRelativeName] is a name written without its full path — the compiler resolves it to one of the other two, so a program reading a compiled one will not meet it."
+            }
         , CGClass
-            ( True
-            , /Catln/Type
-            ,
+            { cgcSealed = True
+            , cgcPartial = /Catln/Type
+            , cgcExtends =
                 [ /Catln/Type/UnionType
                     ( /top=∀/Data/Maybe
                         [ /T=/Catln/Triple
@@ -601,33 +1124,33 @@ Prgm
                     , /loc=∀/Catln/TypeVarLoc
                     )
                 ]
-            , Just "A set of types: what a value may be.A [UnionType] is the [leafs] and [consts] it holds, and — if it has a [top] — everything EXCEPT what that says: the [Triple] there is the conditions the universe is filtered by, the leafs taken out of it, and the constants taken out of it. So a type with no [top] is written by what it contains, and a type with one is written by what it does not.A [TypeVar] is a variable rather than a set: an [aux] saying which variable, and a [loc] saying whether it was defined on the type it is written in or outside it."
-            )
+            , cgcDoc = Just "A set of types: what a value may be.A [UnionType] is the [leafs] and [consts] it holds, and — if it has a [top] — everything EXCEPT what that says: the [Triple] there is the conditions the universe is filtered by, the leafs taken out of it, and the constants taken out of it. So a type with no [top] is written by what it contains, and a type with one is written by what it does not.A [TypeVar] is a variable rather than a set: an [aux] saying which variable, and a [loc] saying whether it was defined on the type it is written in or outside it."
+            }
         , CGClass
-            ( True
-            , /Catln/TypePredicate
-            ,
+            { cgcSealed = True
+            , cgcPartial = /Catln/TypePredicate
+            , cgcExtends =
                 [ /Catln/TypePredicate/PredExpr( /type=/Catln/PartialType )
                 , /Catln/TypePredicate/PredClass( /type=/Catln/PartialType )
                 , /Catln/TypePredicate/PredRel( /type=/Catln/PartialType )
                 ]
-            , Just "One condition a type is filtered by, each written over the [type] it is about.A [PredExpr] says the value is that expression, a [PredClass] that it has that class, and a [PredRel] that it is one — the `isa` written `val : classOrModuleOrType`."
-            )
+            , cgcDoc = Just "One condition a type is filtered by, each written over the [type] it is about.A [PredExpr] says the value is that expression, a [PredClass] that it has that class, and a [PredRel] that it is one — the `isa` written `val : classOrModuleOrType`."
+            }
         , CGClass
-            ( True
-            , /Catln/TypePredicates
-            ,
+            { cgcSealed = True
+            , cgcPartial = /Catln/TypePredicates
+            , cgcExtends =
                 [ /Catln/TypePredicates/PredsOne( /pred=∀/Catln/TypePredicate )
                 , /Catln/TypePredicates/PredsAnd
                     ( /preds=∀/Data/List[ /T=∀/Catln/TypePredicates ] )
                 , /Catln/TypePredicates/PredsNot( /pred=∀/Catln/TypePredicates )
                 ]
-            , Just "The conditions a type is filtered by: one of them, all of a list of them, or the negation of one.No condition at all is written as an empty [PredsAnd], so a type with nothing said about it and a type with everything said about it are the same shape read two ways rather than two shapes."
-            )
+            , cgcDoc = Just "The conditions a type is filtered by: one of them, all of a list of them, or the negation of one.No condition at all is written as an empty [PredsAnd], so a type with nothing said about it and a type with everything said about it are the same shape read two ways rather than two shapes."
+            }
         , CGClass
-            ( True
-            , /Catln/TypeVarAux
-            ,
+            { cgcSealed = True
+            , cgcPartial = /Catln/TypeVarAux
+            , cgcExtends =
                 [ /Catln/TypeVarAux/TVVar( /name=/Catln/PartialKey )
                 , /Catln/TypeVarAux/TVArg( /name=/Catln/PartialKey )
                 , /Catln/TypeVarAux/TVApplied
@@ -640,68 +1163,146 @@ Prgm
                     , /base=∀/Catln/TypeVarAux
                     )
                 ]
-            , Just "Which type variable a variable type is: one written on the type ([TVVar], by [name]), one standing for an argument's type ([TVArg], by the argument's [name]), or one re-applied with new parameters ([TVApplied], the [base] it was and the [vars] rebound on it).A [TVApplied] holds a variable rather than a type, so it is the one arm that reaches this type again."
-            )
+            , cgcDoc = Just "Which type variable a variable type is: one written on the type ([TVVar], by [name]), one standing for an argument's type ([TVArg], by the argument's [name]), or one re-applied with new parameters ([TVApplied], the [base] it was and the [vars] rebound on it).A [TVApplied] holds a variable rather than a type, so it is the one arm that reaches this type again."
+            }
         , CGClass
-            ( True
-            , /Catln/TypeVarLoc
-            ,
+            { cgcSealed = True
+            , cgcPartial = /Catln/TypeVarLoc
+            , cgcExtends =
                 [ /Catln/TypeVarLoc/TVInt
                 , /Catln/TypeVarLoc/TVExt
                 ]
-            , Just "Where a type variable was defined: on the type it is written in ([TVInt], written `$T`), or on something outside it ([TVExt], written `$_T`).The difference is what the variable is resolved against, so it is part of what the variable IS rather than a note about it."
-            )
+            , cgcDoc = Just "Where a type variable was defined: on the type it is written in ([TVInt], written `$T`), or on something outside it ([TVExt], written `$_T`).The difference is what the variable is resolved against, so it is part of what the variable IS rather than a note about it."
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "# The Catln Program" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "# The Catln Program" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "These are the compiler's own types for the program it is compiling, declared so that a Catln program can be handed one and read it." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "These are the compiler's own types for the program it is compiling, declared so that a Catln program can be handed one and read it." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "They are reached by writing `import hsprgm()`. The standard library does not write that import and must not: these declarations reach `core/list.ct`, and a page every program compiles reaching it is the import cycle `core/result.ct` measures at seven hundred seconds. A program which wants to read programs asks for them and pays for them." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "They are reached by writing `import hsprgm()`. The standard library does not write that import and must not: these declarations reach `core/list.ct`, and a page every program compiles reaching it is the import cycle `core/result.ct` measures at seven hundred seconds. A program which wants to read programs asks for them and pays for them." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Each is derived from the shape of the Haskell type the compiler itself uses, by the same reading that converts a value of that type to and from an evaluated one — so what a program is handed and what the compiler holds cannot come apart." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Each is derived from the shape of the Haskell type the compiler itself uses, by the same reading that converts a value of that type to and from an evaluated one — so what a program is handed and what the compiler holds cannot come apart." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "What an object is: which of the ways of writing one it was written as." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "What an object is: which of the ways of writing one it was written as." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "A [FunctionObj] is a definition or a declaration, a [TypeObj] is a `data` or a `class`, a [PatternObj] is an object matched against, a [MatchObj] is one arm of a match, and an [ArgObj] is an argument standing inside another object." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A [FunctionObj] is a definition or a declaration, a [TypeObj] is a `data` or a `class`, a [PatternObj] is an object matched against, a [MatchObj] is one arm of a match, and an [ArgObj] is an argument standing inside another object." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "It is declared by the compiler rather than in a `.ct` file because it is the compiler's own idea of what it is looking at. A program which reads programs is handed this, and what it is called here and what the compiler calls it are one thing." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "It is declared by the compiler rather than in a `.ct` file because it is the compiler's own idea of what it is looking at. A program which reads programs is handed this, and what it is called here and what the compiler calls it are one thing." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "A gap where an expression should be." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A gap where an expression should be." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "A [HoleActive] is one written `_` or `_name`, which is an error wherever it is found. A [HoleUndefined] is written `undefined` and is an error only if a run reaches it. A [HoleTodefine] is written `todefine` and is an error both then and when the program is committed." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A [HoleActive] is one written `_` or `_name`, which is an error wherever it is found. A [HoleUndefined] is written `undefined` and is an error only if a run reaches it. A [HoleTodefine] is written `todefine` and is an error both then and when the program is committed." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "The three are one type because they are one thing written three ways — a place the program is not finished — and differ only in when the compiler is entitled to complain." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "The three are one type because they are one thing written three ways — a place the program is not finished — and differ only in when the compiler is entitled to complain." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "A value written directly in a program: a whole number, a fractional number, a string, or a character." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A value written directly in a program: a whole number, a fractional number, a string, or a character." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "A character constant cannot be written in Catln — the language has no character literal — but the compiler makes one where it needs to, so a program reading a program can be handed one." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A character constant cannot be written in Catln — the language has no character literal — but the compiler makes one where it needs to, so a program reading a program can be handed one." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "What a partial type is named by: a type, a class, or a suffix that could be either." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "What a partial type is named by: a type, a class, or a suffix that could be either." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "A [PTypeName] names one declared type and a [PClassName] one declared class. A [PRelativeName] is a name written without its full path — the compiler resolves it to one of the other two, so a program reading a compiled one will not meet it." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A [PTypeName] names one declared type and a [PClassName] one declared class. A [PRelativeName] is a name written without its full path — the compiler resolves it to one of the other two, so a program reading a compiled one will not meet it." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Where a type variable was defined: on the type it is written in ([TVInt], written `$T`), or on something outside it ([TVExt], written `$_T`)." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Where a type variable was defined: on the type it is written in ([TVInt], written `$T`), or on something outside it ([TVExt], written `$_T`)." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "The difference is what the variable is resolved against, so it is part of what the variable IS rather than a note about it." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "The difference is what the variable is resolved against, so it is part of what the variable IS rather than a note about it." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "A set of types: what a value may be." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A set of types: what a value may be." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "A [UnionType] is the [leafs] and [consts] it holds, and — if it has a [top] — everything EXCEPT what that says: the [Triple] there is the conditions the universe is filtered by, the leafs taken out of it, and the constants taken out of it. So a type with no [top] is written by what it contains, and a type with one is written by what it does not." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A [UnionType] is the [leafs] and [consts] it holds, and — if it has a [top] — everything EXCEPT what that says: the [Triple] there is the conditions the universe is filtered by, the leafs taken out of it, and the constants taken out of it. So a type with no [top] is written by what it contains, and a type with one is written by what it does not." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "A [TypeVar] is a variable rather than a set: an [aux] saying which variable, and a [loc] saying whether it was defined on the type it is written in or outside it." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A [TypeVar] is a variable rather than a set: an [aux] saying which variable, and a [loc] saying whether it was defined on the type it is written in or outside it." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "The conditions a type is filtered by: one of them, all of a list of them, or the negation of one." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "The conditions a type is filtered by: one of them, all of a list of them, or the negation of one." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "No condition at all is written as an empty [PredsAnd], so a type with nothing said about it and a type with everything said about it are the same shape read two ways rather than two shapes." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "No condition at all is written as an empty [PredsAnd], so a type with nothing said about it and a type with everything said about it are the same shape read two ways rather than two shapes." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "One condition a type is filtered by, each written over the [type] it is about." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "One condition a type is filtered by, each written over the [type] it is about." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "A [PredExpr] says the value is that expression, a [PredClass] that it has that class, and a [PredRel] that it is one — the `isa` written `val : classOrModuleOrType`." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A [PredExpr] says the value is that expression, a [PredClass] that it has that class, and a [PredRel] that it is one — the `isa` written `val : classOrModuleOrType`." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Which type variable a variable type is: one written on the type ([TVVar], by [name]), one standing for an argument's type ([TVArg], by the argument's [name]), or one re-applied with new parameters ([TVApplied], the [base] it was and the [vars] rebound on it)." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Which type variable a variable type is: one written on the type ([TVVar], by [name]), one standing for an argument's type ([TVArg], by the argument's [name]), or one re-applied with new parameters ([TVApplied], the [base] it was and the [vars] rebound on it)." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "A [TVApplied] holds a variable rather than a type, so it is the one arm that reaches this type again." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A [TVApplied] holds a variable rather than a type, so it is the one arm that reaches this type again." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "An expression, after the compiler has reduced what was written to what it means." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A [CExpr] is a constant, a [Value] is a name, and a [HoleExpr] is a gap. An [AliasExpr] is a value given a second name, and an [EWhere] is a value narrowed by a condition. A [TupleApply] is everything else: one thing applied to another, which is what arguments, type parameters, lists and method calls all become." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "So reading an expression is reading those six, however the program was written." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "What is applied to an expression: an argument ([EAppArg]), a type parameter ([EAppVar], by [name] and the [meta] of what it is bound to), or the contents of another value spread into it ([EAppSpread])." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "An application carries one of these at a time. `f(a, b)` is `f` applied to `a` and then to `b`, so the three arms are what one step of that can be rather than what a call is." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "What a class graph holds at a name: a class, or a type." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A [CGClass] carries whether it is [sealed] — whether a later file may add members to it — the partial [class] itself, the [extends] it is a member of, and its [doc]. A [CGType] carries nothing: a type is in the graph so that classes can point at it, and has nothing of its own to say." }
+            )
         ]
     }

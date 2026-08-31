@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/operator<="
                 , ObjectMapItem
@@ -375,8 +375,8 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
@@ -407,46 +407,46 @@ Prgm
         , CGType
         , CGType
         , CGClass
-            ( False
-            , /Data/Primitive/Integer
-            , [ /Data/Primitive/Integer ]
-            , Just ""
-            )
+            { cgcSealed = False
+            , cgcPartial = /Data/Primitive/Integer
+            , cgcExtends = [ /Data/Primitive/Integer ]
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( False
-            , /Data/Primitive/Number
-            , [ ∀/Data/Primitive/Number ]
-            , Just ""
-            )
+            { cgcSealed = False
+            , cgcPartial = /Data/Primitive/Number
+            , cgcExtends = [ ∀/Data/Primitive/Number ]
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( False
-            , /Data/Primitive/Integer
-            , [ /Data/Primitive/Integer ]
-            , Just ""
-            )
+            { cgcSealed = False
+            , cgcPartial = /Data/Primitive/Integer
+            , cgcExtends = [ /Data/Primitive/Integer ]
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( False
-            , /Data/Algebra/Ordering
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Ordering
                 [ /T=
                     ( TopType | !
                         ( !( PredRel Float ) && !( PredRel Integer ) )
                     )
                 ]
-            ,
+            , cgcExtends =
                 [ /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ]
                 , /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ]
                 ]
-            , Nothing
-            )
+            , cgcDoc = Nothing
+            }
         , CGClass
-            ( True
-            , /Data/Primitive/Number
-            ,
+            { cgcSealed = True
+            , cgcPartial = /Data/Primitive/Number
+            , cgcExtends =
                 [ /Data/Primitive/Integer
                 , /Data/Primitive/Float
                 ]
-            , Just ""
-            )
+            , cgcDoc = Just ""
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md

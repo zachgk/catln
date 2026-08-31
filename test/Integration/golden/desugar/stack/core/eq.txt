@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/operator=="
                 , ObjectMapItem
@@ -124,8 +124,8 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
@@ -137,20 +137,20 @@ Prgm
         , CGType
         , CGType
         , CGClass
-            ( False
-            , /Data/Algebra/Eq
-            , []
-            , Just ""
-            )
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Eq
+            , cgcExtends = []
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( False
-            , /Data/Algebra/Eqv[ /T=TopType ]
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Eqv[ /T=TopType ]
+            , cgcExtends =
                 [ /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ]
                 , /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ]
                 ]
-            , Just ""
-            )
+            , cgcDoc = Just ""
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md

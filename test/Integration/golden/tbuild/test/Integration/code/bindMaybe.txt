@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/maybeBind"
                 , ObjectMapItem
@@ -9,47 +9,41 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /maybeBind
-                            ( EAppArg Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> UnionType
+                            ( EAppArg
+                                { eaaArg = Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
+                            ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Maybe[ /T=TopType ]
                                 , fromList []
                                 , []
                                 )
                             , /Data/List/append
-                                ( /a=UnionType
-                                    ( Just
-                                        ( PredClass /Data/List/ConsList[ /T=TopType ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/List/Cons[ /T=TopType ]
+                                ( /a=
+                                    ( /Data/List/Nil + /Data/List/Cons[ /T=TopType ]
                                         ( /head=TopType
                                         , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                         )
-                                    , []
                                     )
-                                , /b=UnionType
-                                    ( Just
-                                        ( PredClass /Data/List/ConsList[ /T=TopType ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/List/Cons[ /T=TopType ]
-                                        ( /head=TopType
-                                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                        )
-                                    , []
-                                    )
+                                , /b=∀/Data/List/ConsList[ /T=TopType ]
                                 )
                             , []
                             ) =
                             ( /Data/bindap
-                                ( EAppArg Value /m -> TVArg /m = ( Value /m ↦ TVArg /m ) )
-                                ( EAppArg /fn( EAppArg Value /v -> /Data/Primitive/Integer ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) =
-                                    ( /maybeBind.$b5054c
-                                        ( EAppArg Value /m -> TVArg /m = ( Value /m ↦ TVArg /m ) )
-                                        ( EAppArg Value /$b5054c-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) ) ↦ /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                                    )
+                                ( EAppArg
+                                    { eaaArg = Value /m -> TVArg /m = ( Value /m ↦ TVArg /m ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = /fn
+                                        ( EAppArg { eaaArg = Value /v } ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) =
+                                        ( /maybeBind.$b5054c
+                                            ( EAppArg
+                                                { eaaArg = Value /m -> TVArg /m = ( Value /m ↦ TVArg /m ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /$b5054c-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                            ) ↦ /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                        )
+                                    }
                                 ) ↦ UnionType
                                 ( Just
                                     ( !
@@ -78,12 +72,21 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /maybeBind.$b5054c
-                            ( EAppArg Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( EAppArg Value /$b5054c-arg@Value /x ) -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
-                            ( EAppArg Value /value -> /Data/Primitive/Integer =
-                                ( /operator+
-                                    ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-                                    ( EAppArg Value /r -> /Data/Primitive/Integer = 1 ) ↦ /Data/Primitive/Integer
-                                )
+                            ( EAppArg
+                                { eaaArg = Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
+                            )
+                            ( EAppArg { eaaArg = Value /$b5054c-arg@Value /x } ) -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                            ( EAppArg
+                                { eaaArg = Value /value -> /Data/Primitive/Integer =
+                                    ( /operator+
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                        ) ↦ /Data/Primitive/Integer
+                                    )
+                                }
                             )
                         ]
                     }
@@ -95,22 +98,31 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
+                        ]
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Exercises the bind operator ([<-]) routing through [bindap]'s [mmap] arm — the monadic bind over" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Exercises the bind operator ([<-]) routing through [bindap]'s [mmap] arm — the monadic bind over" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "[Maybe]. The continuation returns a [Maybe], so the results are flattened (not nested). A" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "[Maybe]. The continuation returns a [Maybe], so the results are flattened (not nested). A" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "bind-using function needs a declared return type to pin the [bindap] result." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "bind-using function needs a declared return type to pin the [bindap] result." }
+            )
         ]
     }

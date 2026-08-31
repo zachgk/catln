@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/even"
                 , ObjectMapItem
@@ -8,8 +8,74 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /even( EAppArg Value /x -> /Data/Primitive/Integer ) ->
-                            ( /operator==
+                        [ /even
+                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) ->
+                            ( /operator==[ /T=∀/Data/Algebra/Eq ]
+                                ( /r=∀/Data/Algebra/Eq
+                                , /l=∀/Data/Algebra/Eq
+                                ) + /Data/strEqual
+                                ( /r=/Data/String
+                                , /l=/Data/String
+                                ) + /Data/Algebra/rel[ /T=/Data/String ]
+                                ( /this=∀/Data/Algebra/Eqv[ /T=/Data/String ]
+                                , /a=/Data/String
+                                , /b=∀/Data/Algebra/Eq
+                                ) + /Data/Algebra/rel[ /T=/Data/Primitive/Float ]
+                                ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Float ]
+                                , /a=/Data/Primitive/Float
+                                , /b=∀/Data/Algebra/Eq
+                                ) + /Data/Algebra/rel[ /T=/Data/Primitive/Integer ]
+                                ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
+                                , /a=/Data/Primitive/Integer
+                                , /b=∀/Data/Algebra/Eq
+                                ) + /Data/Algebra/rel[ /T=∀/Data/Primitive/Boolean ]
+                                ( /this=∀/Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
+                                , /a=∀/Data/Primitive/Boolean
+                                , /b=∀/Data/Algebra/Eq
+                                ) + /operator&&
+                                ( /r=∀/Data/Primitive/Boolean
+                                , /l=∀/Data/Primitive/Boolean
+                                ) + /Data/Set/setEqual[ /E=∀/Data/Algebra/Ord ]
+                                ( /a=/Data/Set/MkSet
+                                    ( /map=∀/Data/Map
+                                        [ /K=TopType
+                                        , /V=TopType
+                                        ]
+                                    )
+                                , /b=
+                                    ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/Set[ /T=$/E ] )
+                                ) + /Data/Map/mapEqual
+                                [ /MV=∀/Data/Algebra/Eq
+                                , /MK=∀/Data/Algebra/Ord
+                                ]
+                                ( /a=
+                                    ( /Data/Map/Node
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=∀/Data/Algebra/Eq
+                                        ]
+                                        ( /value=∀/Data/Algebra/Eq
+                                        , /key=∀/Data/Algebra/Ord
+                                        , /right=∀/Data/Map/BinTree
+                                            [ /K=$/MK
+                                            , /V=$/MV
+                                            ]
+                                        , /left=∀/Data/Map/BinTree
+                                            [ /K=$/MK
+                                            , /V=$/MV
+                                            ]
+                                        ) + /Data/Map/Leaf
+                                    )
+                                , /b=
+                                    ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/Map/BinTree
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=∀/Data/Algebra/Eq
+                                        ]
+                                    )
+                                ) + /Data/Primitive/boolEq
+                                ( /r=∀/Data/Primitive/Boolean
+                                , /l=∀/Data/Primitive/Boolean
+                                ) + /Data/Algebra/isEq
+                                ( /this=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) ) + /Data/Primitive/intEq
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
@@ -17,13 +83,21 @@ Prgm
                                 , /other=∀/Data/Algebra/Eq
                                 )
                             ) = /operator==
-                            ( EAppArg Value /l -> /Data/Primitive/Integer =
-                                ( /operator%
-                                    ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-                                    ( EAppArg Value /r -> /Data/Primitive/Integer = 2 ) ↦ /Data/Primitive/Integer
-                                )
+                            ( EAppArg
+                                { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                    ( /operator%
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
+                                        ) ↦ /Data/Primitive/Integer
+                                    )
+                                }
                             )
-                            ( EAppArg Value /r -> /Data/Primitive/Integer = 0 )
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/Primitive/Integer = 0 }
+                            )
                         ]
                     }
                 )
@@ -34,25 +108,39 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
                             ( /Catln/exit
                                 ( /this=/Catln/IO
                                 , /val=/Data/Primitive/Integer
                                 ) + /Catln/IO
                             ) =
                             ( /Catln/exit
-                                ( EAppArg Value /val -> /Data/Primitive/Integer =
-                                    ( /operator-
-                                        ( EAppArg Value /l -> /Data/Primitive/Integer =
-                                            ( /evenAdd
-                                                ( EAppArg Value /a -> /Data/Primitive/Integer = 2 )
-                                                ( EAppArg Value /b -> /Data/Primitive/Integer = 4 ) ↦ /Data/Primitive/Integer
+                                ( EAppArg
+                                    { eaaArg = Value /val -> /Data/Primitive/Integer =
+                                        ( /operator-
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                    ( /evenAdd
+                                                        ( EAppArg
+                                                            { eaaArg = Value /a -> /Data/Primitive/Integer = 2 }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /b -> /Data/Primitive/Integer = 4 }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
                                             )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 6 }
+                                            ) ↦ /Data/Primitive/Integer
                                         )
-                                        ( EAppArg Value /r -> /Data/Primitive/Integer = 6 ) ↦ /Data/Primitive/Integer
-                                    )
+                                    }
                                 )
-                                ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) ) ↦ /Catln/IO
+                                ( EAppArg
+                                    { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                ) ↦ /Catln/IO
                             )
                         ]
                     }
@@ -64,31 +152,43 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /evenAdd( EAppArg Value /a -> /Data/Primitive/Integer )( EAppArg Value /b -> /Data/Primitive/Integer ) | /even
-                            ( EAppArg Value /x -> TVArg /a = ( Value /a ↦ TVArg /a ) ) -> /Data/Primitive/Integer =
+                        [ /evenAdd
+                            ( EAppArg { eaaArg = Value /a -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /b -> /Data/Primitive/Integer } ) | /even
+                            ( EAppArg
+                                { eaaArg = Value /x -> TVArg /a = ( Value /a ↦ TVArg /a ) }
+                            ) -> /Data/Primitive/Integer =
                             ( /operator+
-                                ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
-                                ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) ) ↦ /Data/Primitive/Integer
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) }
+                                ) ↦ /Data/Primitive/Integer
                             )
                         ]
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Tests refinement types with type properties
-            TODO: Convert evenAdd to return (Integer | even($out)), switch to type props, switch to using refinement definition of addition rather than separate evenadd function
-            - Convert evenAdd to check | even(a) && even(b)
-            - Convert evenAdd to return (Integer | even($out))
-            - switch to type props
-            - switch to using refinement definition of addition rather than separate evenadd function" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Tests refinement types with type properties
+                TODO: Convert evenAdd to return (Integer | even($out)), switch to type props, switch to using refinement definition of addition rather than separate evenadd function
+                - Convert evenAdd to check | even(a) && even(b)
+                - Convert evenAdd to return (Integer | even($out))
+                - switch to type props
+                - switch to using refinement definition of addition rather than separate evenadd function" }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "evenAdd(a: Integer_even, b: Integer_even) -> Integer_even = a + b" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "evenAdd(a: Integer_even, b: Integer_even) -> Integer_even = a + b" }
+            )
         ]
     }

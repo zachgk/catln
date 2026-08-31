@@ -186,8 +186,8 @@ desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef clssExpr dataExprs e
   let objPaths = map (PRelativeName . oaObjPath) $ flatObjectMap objs
 
   let typeCGNodes = map (CGType, , []) objPaths
-  let classCGNode = (CGClass (True, clss', dataTypes, desObjDocComment subStatements), PClassName (makeAbsoluteName (mkName (show path'))), objPaths)
-  let extendNodes = [(CGClass (False, exprToPartialType extendClass, [classPartial clss'], Nothing), PClassName (exprPath extendClass), [PClassName $ makeAbsoluteName $ mkName $ show path']) | extendClass <- extends]
+  let classCGNode = (CGClass True clss' dataTypes (desObjDocComment subStatements), PClassName (makeAbsoluteName (mkName (show path'))), objPaths)
+  let extendNodes = [(CGClass False (exprToPartialType extendClass) [classPartial clss'] Nothing, PClassName (exprPath extendClass), [PClassName $ makeAbsoluteName $ mkName $ show path']) | extendClass <- extends]
   let classGraph' = ClassGraph $ graphFromEdges (classCGNode:extendNodes ++ typeCGNodes)
 
   (subPrgm, annots) <- splitPrgmAnnots <$> desInheritingSubstatements statementEnv path subStatements
@@ -206,8 +206,8 @@ desClassDecl statementEnv@(inheritPath, _) clssExpr extends subStatements = do
   let path = getPath $ nameStr $ exprPath clssExpr
   let path' = show $ relPathAddPrefix inheritPath path
   let clss = exprToPartialType clssExpr
-  let extendNodes = [(CGClass (False, exprToPartialType extendClass, [classPartial clss], Nothing), PClassName (exprPath extendClass), [PClassName $ makeAbsoluteName (mkName path')]) | extendClass <- extends]
-  let classGraph' = ClassGraph $ graphFromEdges ((CGClass (False, clss, [], desObjDocComment subStatements), PClassName (makeAbsoluteName (mkName path')), []):extendNodes)
+  let extendNodes = [(CGClass False (exprToPartialType extendClass) [classPartial clss] Nothing, PClassName (exprPath extendClass), [PClassName $ makeAbsoluteName (mkName path')]) | extendClass <- extends]
+  let classGraph' = ClassGraph $ graphFromEdges ((CGClass False clss [] (desObjDocComment subStatements), PClassName (makeAbsoluteName (mkName path')), []):extendNodes)
   subPrgm <- desInheritingSubstatements statementEnv path subStatements
   return (Prgm mempty classGraph' [] <> subPrgm)
 
@@ -228,14 +228,14 @@ desTypeDef statementEnv@(inheritPath, _) typeExpr extends subStatements = do
   -- @data IntOrdering isa Ordering[$T -> Integer]@ stores the member as @IntOrdering[$T=Integer]@).
   -- The shared class node keeps only one parent partial, so per-member element bindings must live on
   -- each member or they are lost when memberships merge.
-  let extendNodes = [(CGClass (False, ec, [singletonType type'{ptName=memberName, ptVars=ptVars ec}], Nothing), PClassName (exprPath extendClass), [PTypeName memberName]) | extendClass <- extends, let ec = exprToPartialType extendClass]
+  let extendNodes = [(CGClass False ec [singletonType type'{ptName=memberName, ptVars=ptVars ec}] Nothing, PClassName (exprPath extendClass), [PTypeName memberName]) | extendClass <- extends, let ec = exprToPartialType extendClass]
   let classGraph = classGraphFromObjs objMap <> ClassGraph (graphFromEdges extendNodes)
   return (Prgm objMap classGraph [] <> subPrgm)
 
 desClassDef :: StatementEnv -> Sealed -> RawClassDef ParseMetaDat -> [RawStatementTree RawExpr ParseMetaDat] -> CRes DesPrgm
 desClassDef statementEnv@(inheritPath, _) sealed (typeExpr, extends) subStatements = do
   let typeExpr' = exprPropagateTypes $ semiDesExpr SDType (Just typeExpr) typeExpr
-  let classGraph = ClassGraph $ graphFromEdges [(CGClass (sealed, partialVal (mkName (show path')), [getExprType typeExpr'], desObjDocComment subStatements), PClassName (exprPath className), [PRelativeName $ exprPath typeExpr']) | className <- extends ]
+  let classGraph = ClassGraph $ graphFromEdges [(CGClass sealed (partialVal (mkName (show path'))) [getExprType typeExpr'] (desObjDocComment subStatements), PClassName (exprPath className), [PRelativeName $ exprPath typeExpr']) | className <- extends ]
   subPrgm <- desInheritingSubstatements statementEnv path subStatements
   return (Prgm mempty classGraph [] <> subPrgm)
   where

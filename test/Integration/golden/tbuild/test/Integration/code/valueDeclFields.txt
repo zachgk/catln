@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/ContextIn"
                 , ObjectMapItem
@@ -8,15 +8,21 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
                             ( /Catln/exit
                                 ( /this=/Catln/IO
                                 , /val=/Data/Primitive/Integer
                                 ) + /Catln/IO
                             ) =
                             ( /Catln/exit
-                                ( EAppArg Value /val -> /Data/Primitive/Integer = 0 )
-                                ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) ) ↦ /Catln/IO
+                                ( EAppArg
+                                    { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                ) ↦ /Catln/IO
                             )
                         ]
                     }
@@ -25,70 +31,90 @@ Prgm
                 ( "/Noted"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Noted( EAppArg Value /name -> /Data/String )
-                            ( EAppArg Value /tags -> ∀/Data/List[ /T=/Data/String ] )
-                            ( EAppArg Value /due -> ∀/Data/Maybe[ /T=/Data/String ] )
-                        , /Noted
-                            ( EAppArg Value /name -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "has both" }
-                                    ]
-                                ) = "has both"
+                        [ /Noted
+                            ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                            ( EAppArg
+                                { eaaArg = Value /tags -> ∀/Data/List[ /T=/Data/String ] }
                             )
-                            ( EAppArg Value /tags -> /Data/List/Cons
-                                ( /head=UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "x" }
-                                        ]
-                                    )
-                                , /tail=/Data/List/Nil
-                                ) = /Data/List/Cons
-                                ( EAppArg Value /head -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "x" }
-                                        ]
-                                    ) = "x"
-                                )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
-                            )
-                            ( EAppArg Value /due -> /Data/Maybe/Some
-                                ( /value=UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "2026-01-01" }
-                                        ]
-                                    )
-                                ) = /Data/Maybe/Some
-                                ( EAppArg Value /value -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "2026-01-01" }
-                                        ]
-                                    ) = "2026-01-01"
-                                )
+                            ( EAppArg
+                                { eaaArg = Value /due -> ∀/Data/Maybe[ /T=/Data/String ] }
                             )
                         , /Noted
-                            ( EAppArg Value /name -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "has neither" }
-                                    ]
-                                ) = "has neither"
-                            )( EAppArg Value /tags -> /Data/List/Nil = Value /Data/List/Nil )( EAppArg Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+                            ( EAppArg
+                                { eaaArg = Value /name -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "has both" }
+                                        ]
+                                    ) = "has both"
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /tags -> /Data/List/Cons
+                                    ( /head=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CStr
+                                                { csValue = "x" }
+                                            ]
+                                        )
+                                    , /tail=/Data/List/Nil
+                                    ) = /Data/List/Cons
+                                    ( EAppArg
+                                        { eaaArg = Value /head -> UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CStr
+                                                    { csValue = "x" }
+                                                ]
+                                            ) = "x"
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /due -> /Data/Maybe/Some
+                                    ( /value=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CStr
+                                                { csValue = "2026-01-01" }
+                                            ]
+                                        )
+                                    ) = /Data/Maybe/Some
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CStr
+                                                    { csValue = "2026-01-01" }
+                                                ]
+                                            ) = "2026-01-01"
+                                        }
+                                    )
+                                }
+                            )
+                        , /Noted
+                            ( EAppArg
+                                { eaaArg = Value /name -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "has neither" }
+                                        ]
+                                    ) = "has neither"
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /tags -> /Data/List/Nil = Value /Data/List/Nil } )
+                            ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -96,58 +122,76 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
         , CGClass
-            ( False
-            , /Noted
-            , [ /Noted.. ]
-            , Just "  "
-            )
+            { cgcSealed = False
+            , cgcPartial = /Noted
+            , cgcExtends = [ /Noted.. ]
+            , cgcDoc = Just ""
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "The shape a note's page is, with the fields a task carries.
-            [/Data/Note/Page] holds a declaration for each checkbox of the note: a value written out and
-            nothing else — no arrow, no definition, gathered by the name it was declared as. The two repros
-            beside this one reach a [/Data/Maybe] field and a list field one at a time; this is both of them
-            at once, on the one type.
-            Not nested under a page here, though a note nests its checkboxes under one: a declaration written
-            under another inherits its path, so at the root of a program the two names run together, where a
-            note's do not because they are written in a module. That a note's tasks nest correctly is already
-            held by the goldens @obsidian.ct@ reads.
-            One tag rather than several, because a field holding two or more does not typecheck — see
-            @test/Integration/disabled/listFieldMultiple.ct@." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "The shape a note's page is, with the fields a task carries.
+                [/Data/Note/Page] holds a declaration for each checkbox of the note: a value written out and
+                nothing else — no arrow, no definition, gathered by the name it was declared as. The two repros
+                beside this one reach a [/Data/Maybe] field and a list field one at a time; this is both of them
+                at once, on the one type.
+                Not nested under a page here, though a note nests its checkboxes under one: a declaration written
+                under another inherits its path, so at the root of a program the two names run together, where a
+                note's do not because they are written in a module. That a note's tasks nest correctly is already
+                held by the goldens @obsidian.ct@ reads.
+                One tag rather than several, because a field holding two or more does not typecheck — see
+                @test/Integration/disabled/listFieldMultiple.ct@." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Shown as the value it is, with no display type standing in for it, as a task is." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Shown as the value it is, with no display type standing in for it, as a task is." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Printed so that the values are evaluated and not only built." )
-        , /Catln/#print
-            ( EAppArg Value /p -> ∀/Catln/Doc/DShow = /Noted
-                ( EAppArg Value /name -> /Data/String = "has both" )
-                ( EAppArg Value /tags -> /Data/List/Cons[ /T=/Data/String ]
-                    ( /head=/Data/String
-                    , /tail=/Data/List/Nil
-                    ) = /Data/List/Cons
-                    ( EAppArg Value /head -> /Data/String = "x" )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
-                )
-                ( EAppArg Value /due -> /Data/Maybe/Some
-                    [ /T=UnionType
-                        ( Nothing
-                        , ∅
-                        ,
-                            [ CStr "2026-01-01" ]
-                        )
-                    ]( /value=/Data/String ) = /Data/Maybe/Some
-                    ( EAppArg Value /value -> /Data/String = "2026-01-01" )
-                )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Printed so that the values are evaluated and not only built." }
             )
         , /Catln/#print
-            ( EAppArg Value /p -> ∀/Catln/Doc/DShow = /Noted
-                ( EAppArg Value /name -> /Data/String = "has neither" )( EAppArg Value /tags -> /Data/List/Nil = Value /Data/List/Nil )( EAppArg Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Catln/Doc/DShow = /Noted
+                    ( EAppArg
+                        { eaaArg = Value /name -> /Data/String = "has both" }
+                    )
+                    ( EAppArg
+                        { eaaArg = Value /tags -> /Data/List/Cons
+                            ( /head=/Data/String
+                            , /tail=/Data/List/Nil
+                            ) = /Data/List/Cons
+                            ( EAppArg
+                                { eaaArg = Value /head -> /Data/String = "x" }
+                            )
+                            ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                        }
+                    )
+                    ( EAppArg
+                        { eaaArg = Value /due -> /Data/Maybe/Some( /value=/Data/String ) = /Data/Maybe/Some
+                            ( EAppArg
+                                { eaaArg = Value /value -> /Data/String = "2026-01-01" }
+                            )
+                        }
+                    )
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Catln/Doc/DShow = /Noted
+                    ( EAppArg
+                        { eaaArg = Value /name -> /Data/String = "has neither" }
+                    )
+                    ( EAppArg { eaaArg = Value /tags -> /Data/List/Nil = Value /Data/List/Nil } )
+                    ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                }
             )
         ]
     }

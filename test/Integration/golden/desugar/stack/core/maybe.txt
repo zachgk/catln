@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/Data/Monad/pure"
                 , ObjectMapItem
@@ -111,8 +111,8 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
@@ -122,42 +122,42 @@ Prgm
         , CGType
         , CGType
         , CGClass
-            ( False
-            , /Data/Maybe
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Data/Maybe
+            , cgcExtends =
                 [ ∀/Data/Maybe[ /T=∀/Data/Algebra/Eq ] ]
-            , Just ""
-            )
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( False
-            , /Data/Maybe
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Data/Maybe
+            , cgcExtends =
                 [ ∀/Data/Maybe[ /T=∀/Data/Algebra/Ord ] ]
-            , Just ""
-            )
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( False
-            , /Data/Maybe
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Data/Maybe
+            , cgcExtends =
                 [ ∀/Data/Maybe[ /T=$_/T ] ]
-            , Just ""
-            )
+            , cgcDoc = Just ""
+            }
         , CGClass
-            ( True
-            , /Data/Maybe[ /T=TopType ]
-            ,
+            { cgcSealed = True
+            , cgcPartial = /Data/Maybe[ /T=TopType ]
+            , cgcExtends =
                 [ /Data/Maybe/Some[ /T=$_/T ]( /value=$/T )
                 , /Data/Maybe/Nothing
                 ]
-            , Just "A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]."
-            )
+            , cgcDoc = Just "A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]."
+            }
         , CGClass
-            ( False
-            , /Data/Maybe
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Data/Maybe
+            , cgcExtends =
                 [ ∀/Data/Maybe[ /T=$_/T ] ]
-            , Just ""
-            )
+            , cgcDoc = Just ""
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md

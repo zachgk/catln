@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/ContextIn"
                 , ObjectMapItem
@@ -8,25 +8,37 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
                             ( /Catln/exit
                                 ( /this=/Catln/IO
                                 , /val=/Data/Primitive/Integer
                                 ) + /Catln/IO
                             ) =
                             ( /Catln/exit
-                                ( EAppArg Value /val -> /Data/Primitive/Integer =
-                                    ( /real
-                                        ( EAppArg Value /c -> /Complex
-                                            ( /a=/Data/Primitive/Integer
-                                            , /b=/Data/Primitive/Integer
-                                            ) = /Complex
-                                            ( EAppArg Value /a -> /Data/Primitive/Integer = 0 )
-                                            ( EAppArg Value /b -> /Data/Primitive/Integer = 7 )
-                                        ) ↦ /Data/Primitive/Integer
-                                    )
+                                ( EAppArg
+                                    { eaaArg = Value /val -> /Data/Primitive/Integer =
+                                        ( /real
+                                            ( EAppArg
+                                                { eaaArg = Value /c -> /Complex
+                                                    ( /a=/Data/Primitive/Integer
+                                                    , /b=/Data/Primitive/Integer
+                                                    ) = /Complex
+                                                    ( EAppArg
+                                                        { eaaArg = Value /a -> /Data/Primitive/Integer = 0 }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /b -> /Data/Primitive/Integer = 7 }
+                                                    )
+                                                }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
                                 )
-                                ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) ) ↦ /Catln/IO
+                                ( EAppArg
+                                    { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                ) ↦ /Catln/IO
                             )
                         ]
                     }
@@ -35,7 +47,10 @@ Prgm
                 ( "/Complex"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Complex( EAppArg Value /a -> ∀/Data/Primitive/Number )( EAppArg Value /b -> ∀/Data/Primitive/Number ) ]
+                        [ /Complex
+                            ( EAppArg { eaaArg = Value /a -> ∀/Data/Primitive/Number } )
+                            ( EAppArg { eaaArg = Value /b -> ∀/Data/Primitive/Number } )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -49,23 +64,29 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /real
-                            ( EAppArg Value /c -> /Complex
-                                ( /a=∀/Data/Primitive/Number
-                                , /b=∀/Data/Primitive/Number
-                                ) = /Complex( EAppArg Value /a -> ∀/Data/Primitive/Number )( EAppArg Value /b -> ∀/Data/Primitive/Number )
+                            ( EAppArg
+                                { eaaArg = Value /c -> /Complex
+                                    ( /a=TopType
+                                    , /b=TopType
+                                    ) = /Complex
+                                    ( EAppArg { eaaArg = Value /a } )
+                                    ( EAppArg { eaaArg = Value /b } )
+                                }
                             ) -> TVArg /a = ( Value /a ↦ TVArg /a )
                         ]
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Tests data classes and matching values in functions (c=Type(...)) without type vars" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Tests data classes and matching values in functions (c=Type(...)) without type vars" }
+            )
         ]
     }

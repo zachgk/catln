@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/ContextIn"
                 , ObjectMapItem
@@ -8,19 +8,27 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
                             ( /Catln/exit
                                 ( /this=/Catln/IO
                                 , /val=/Data/Primitive/Integer
                                 ) + /Catln/IO
                             ) =
                             ( /Catln/exit
-                                ( EAppArg Value /val -> /Data/Primitive/Integer =
-                                    ( /id
-                                        ( EAppArg Value /x -> /Data/Primitive/Integer = 0 ) ↦ /Data/Primitive/Integer
-                                    )
+                                ( EAppArg
+                                    { eaaArg = Value /val -> /Data/Primitive/Integer =
+                                        ( /id
+                                            ( EAppArg
+                                                { eaaArg = Value /x -> /Data/Primitive/Integer = 0 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
                                 )
-                                ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) ) ↦ /Catln/IO
+                                ( EAppArg
+                                    { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                ) ↦ /Catln/IO
                             )
                         ]
                     }
@@ -32,19 +40,23 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /id( EAppArg Value /x ) -> TVArg /x = ( Value /x ↦ TVArg /x ) ]
+                        [ /id
+                            ( EAppArg { eaaArg = Value /x } ) -> TVArg /x = ( Value /x ↦ TVArg /x )
+                        ]
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Tests an identity function.
-            It requires using the type of the input argument as the output type of id as well.
-            So, it must be read as `id($T) -> $T`, not (id(Any) -> Any)." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Tests an identity function.
+                It requires using the type of the input argument as the output type of id as well.
+                So, it must be read as `id($T) -> $T`, not (id(Any) -> Any)." }
+            )
         ]
     }

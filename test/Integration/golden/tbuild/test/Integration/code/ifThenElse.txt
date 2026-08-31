@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/ContextIn"
                 , ObjectMapItem
@@ -8,19 +8,27 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
                             ( /Catln/exit
                                 ( /this=/Catln/IO
                                 , /val=/Data/Primitive/Integer
                                 ) + /Catln/IO
                             ) =
                             ( /Catln/exit
-                                ( EAppArg Value /val -> /Data/Primitive/Integer =
-                                    ( /abs
-                                        ( EAppArg Value /x -> /Data/Primitive/Integer = 0 ) ↦ /Data/Primitive/Integer
-                                    )
+                                ( EAppArg
+                                    { eaaArg = Value /val -> /Data/Primitive/Integer =
+                                        ( /abs
+                                            ( EAppArg
+                                                { eaaArg = Value /x -> /Data/Primitive/Integer = 0 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
                                 )
-                                ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) ) ↦ /Catln/IO
+                                ( EAppArg
+                                    { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                ) ↦ /Catln/IO
                             )
                         ]
                     }
@@ -32,26 +40,37 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /abs( EAppArg Value /x -> /Data/Primitive/Integer ) ->
+                        [ /abs
+                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) ->
                             ( /abs.$8209a9
                                 ( /x=/Data/Primitive/Integer
-                                , /$8209a9-arg=( /Catln/Else + /Catln/Then )
+                                , /$8209a9-arg=∀/Catln/ThenElse
                                 ) + /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer
                             ) =
                             ( /abs.$8209a9
-                                ( EAppArg Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-                                ( EAppArg Value /$8209a9-arg -> ( /Catln/Else + /Catln/Then ) =
-                                    ( /Catln/ThenElse/fromBool
-                                        ( EAppArg Value /v -> ∀/Data/Primitive/Boolean =
-                                            ( /operator>=
-                                                ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-                                                ( EAppArg Value /r -> /Data/Primitive/Integer = 0 ) ↦ ∀/Data/Primitive/Boolean
-                                            )
-                                        ) ↦ ( /Catln/Else + /Catln/Then )
-                                    )
+                                ( EAppArg
+                                    { eaaArg = Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /$8209a9-arg -> ∀/Catln/ThenElse =
+                                        ( /Catln/ThenElse/fromBool
+                                            ( EAppArg
+                                                { eaaArg = Value /v -> ∀/Data/Primitive/Boolean =
+                                                    ( /operator>=
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 0 }
+                                                        ) ↦ ∀/Data/Primitive/Boolean
+                                                    )
+                                                }
+                                            ) ↦ ∀/Catln/ThenElse
+                                        )
+                                    }
                                 ) ↦
                                 ( /operator*
                                     ( /r=/Data/Primitive/Integer
@@ -69,35 +88,49 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /abs.$8209a9( EAppArg Value /x -> /Data/Primitive/Integer )
-                            ( EAppArg Value /$8209a9-arg= Hole TopType HoleActive { haName = Nothing }@Value /Catln/Then ) -> TVArg /x = ( Value /x ↦ TVArg /x )
-                        , /abs.$8209a9( EAppArg Value /x -> /Data/Primitive/Integer )
-                            ( EAppArg Value /$8209a9-arg= Hole TopType HoleActive { haName = Nothing }@Value /Catln/Else ) ->
+                        [ /abs.$8209a9
+                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } )
+                            ( EAppArg
+                                { eaaArg = Value /$8209a9-arg= Hole TopType HoleActive { haName = Nothing }@Value /Catln/Then }
+                            ) -> TVArg /x = ( Value /x ↦ TVArg /x )
+                        , /abs.$8209a9
+                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } )
+                            ( EAppArg
+                                { eaaArg = Value /$8209a9-arg= Hole TopType HoleActive { haName = Nothing }@Value /Catln/Else }
+                            ) ->
                             ( /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer
                             ) =
                             ( /operator*
-                                ( EAppArg Value /l -> /Data/Primitive/Integer =
-                                    ( /operator-
-                                        ( EAppArg Value /a -> /Data/Primitive/Integer = 1 ) ↦ /Data/Primitive/Integer
-                                    )
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                        ( /operator-
+                                            ( EAppArg
+                                                { eaaArg = Value /a -> /Data/Primitive/Integer = 1 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
                                 )
-                                ( EAppArg Value /r -> TVArg /x = ( Value /x ↦ TVArg /x ) ) ↦ /Data/Primitive/Integer
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /x = ( Value /x ↦ TVArg /x ) }
+                                ) ↦ /Data/Primitive/Integer
                             )
                         ]
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Tests the "if-then-else" syntax with an absolute value" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Tests the "if-then-else" syntax with an absolute value" }
+            )
         ]
     }

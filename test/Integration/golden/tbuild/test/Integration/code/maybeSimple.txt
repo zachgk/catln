@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/ContextIn"
                 , ObjectMapItem
@@ -8,19 +8,27 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
                             ( /Catln/exit
                                 ( /this=/Catln/IO
                                 , /val=/Data/Primitive/Integer
                                 ) + /Catln/IO
                             ) =
                             ( /Catln/exit
-                                ( EAppArg Value /val -> /Data/Primitive/Integer =
-                                    ( /defInt
-                                        ( EAppArg Value /x -> /Data/Primitive/Integer = 0 ) ↦ /Data/Primitive/Integer
-                                    )
+                                ( EAppArg
+                                    { eaaArg = Value /val -> /Data/Primitive/Integer =
+                                        ( /defInt
+                                            ( EAppArg
+                                                { eaaArg = Value /x -> /Data/Primitive/Integer = 0 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
                                 )
-                                ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) ) ↦ /Catln/IO
+                                ( EAppArg
+                                    { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                ) ↦ /Catln/IO
                             )
                         ]
                     }
@@ -32,9 +40,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /defInt( EAppArg Value /x -> /Data/Primitive/Integer ) -> TVArg /x = ( Value /x ↦ TVArg /x )
+                        [ /defInt
+                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) -> TVArg /x = ( Value /x ↦ TVArg /x )
                         , /defInt
-                            ( EAppArg Value /x -> ( /Data/Maybe/Nothing + /Nothing ) = Value /Nothing ) -> /Data/Primitive/Integer = 0
+                            ( EAppArg { eaaArg = Value /x -> ~Nothing = Value /Nothing } ) -> /Data/Primitive/Integer = 0
                         ]
                     }
                 )
@@ -48,23 +57,25 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
         , CGClass
-            ( True
-            , /Maybe[ /T=TopType ]
-            ,
+            { cgcSealed = True
+            , cgcPartial = /Maybe[ /T=TopType ]
+            , cgcExtends =
                 [ $_/T
                 , /Nothing
                 ]
-            , Just "   "
-            )
+            , cgcDoc = Just ""
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Tests a simple data structure with a true union" )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Tests a simple data structure with a true union" }
+            )
         ]
     }

@@ -1,459 +1,611 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/Data/Note/Task/Obsidian"
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/Task/Obsidian
-                            ( EAppArg Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Read the note" }
-                                    ]
-                                ) = "Read the note"
-                            )
-                            ( EAppArg Value /symbol -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = " " }
-                                    ]
-                                ) = " "
-                            )( EAppArg Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
-                            ( EAppArg Value /description -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Read the note" }
-                                    ]
-                                ) = "Read the note"
-                            )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( EAppArg Value /rest -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "{"statusName":"Todo"}" }
-                                    ]
-                                ) = "{"statusName":"Todo"}"
-                            )
-                        , /Data/Note/Task/Obsidian
-                            ( EAppArg Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Write this note ✅ 2026-01-05" }
-                                    ]
-                                ) = "Write this note ✅ 2026-01-05"
-                            )
-                            ( EAppArg Value /symbol -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "x" }
-                                    ]
-                                ) = "x"
-                            )( EAppArg Value /statusType -> /Data/Note/StatusType/Done = Value /Data/Note/StatusType/Done )
-                            ( EAppArg Value /description -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Write this note" }
-                                    ]
-                                ) = "Write this note"
-                            )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( EAppArg Value /rest -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "{"statusDate":"2026-01-05","statusName":"Done"}" }
-                                    ]
-                                ) = "{"statusDate":"2026-01-05","statusName":"Done"}"
-                            )
-                        , /Data/Note/Task/Obsidian
-                            ( EAppArg Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Plan the rest" }
-                                    ]
-                                ) = "Plan the rest"
-                            )
-                            ( EAppArg Value /symbol -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "/" }
-                                    ]
-                                ) = "/"
-                            )( EAppArg Value /statusType -> /Data/Note/StatusType/InProgress = Value /Data/Note/StatusType/InProgress )
-                            ( EAppArg Value /description -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Plan the rest" }
-                                    ]
-                                ) = "Plan the rest"
-                            )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( EAppArg Value /rest -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "{"statusName":"In Progress"}" }
-                                    ]
-                                ) = "{"statusName":"In Progress"}"
-                            )
-                        , /Data/Note/Task/Obsidian
-                            ( EAppArg Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Drop the old plan ❌ 2026-01-06" }
-                                    ]
-                                ) = "Drop the old plan ❌ 2026-01-06"
-                            )
-                            ( EAppArg Value /symbol -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "-" }
-                                    ]
-                                ) = "-"
-                            )( EAppArg Value /statusType -> /Data/Note/StatusType/Cancelled = Value /Data/Note/StatusType/Cancelled )
-                            ( EAppArg Value /description -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Drop the old plan" }
-                                    ]
-                                ) = "Drop the old plan"
-                            )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( EAppArg Value /rest -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "{"statusDate":"2026-01-06","statusName":"Cancelled"}" }
-                                    ]
-                                ) = "{"statusDate":"2026-01-06","statusName":"Cancelled"}"
-                            )
-                        , /Data/Note/Task/Obsidian
-                            ( EAppArg Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Ship it #work ⏫ 📅 2026-01-04" }
-                                    ]
-                                ) = "Ship it #work ⏫ 📅 2026-01-04"
-                            )
-                            ( EAppArg Value /symbol -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = " " }
-                                    ]
-                                ) = " "
-                            )( EAppArg Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
-                            ( EAppArg Value /description -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Ship it #work" }
-                                    ]
-                                ) = "Ship it #work"
-                            )( EAppArg Value /priority -> /Data/Note/Priority/High = Value /Data/Note/Priority/High )( EAppArg Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( EAppArg Value /due -> /Data/Maybe/Some
-                                ( /value=UnionType
+                            ( EAppArg
+                                { eaaArg = Value /contents -> UnionType
                                     ( Nothing
                                     , ∅
                                     ,
                                         [ CStr
-                                            { csValue = "2026-01-04" }
+                                            { csValue = "Read the note" }
                                         ]
+                                    ) = "Read the note"
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /symbol -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = " " }
+                                        ]
+                                    ) = " "
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
+                            ( EAppArg
+                                { eaaArg = Value /description -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "Read the note" }
+                                        ]
+                                    ) = "Read the note"
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
+                            ( EAppArg { eaaArg = Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg
+                                { eaaArg = Value /rest -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "{"statusName":"Todo"}" }
+                                        ]
+                                    ) = "{"statusName":"Todo"}"
+                                }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( EAppArg
+                                { eaaArg = Value /contents -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "Write this note ✅ 2026-01-05" }
+                                        ]
+                                    ) = "Write this note ✅ 2026-01-05"
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /symbol -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "x" }
+                                        ]
+                                    ) = "x"
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Done = Value /Data/Note/StatusType/Done } )
+                            ( EAppArg
+                                { eaaArg = Value /description -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "Write this note" }
+                                        ]
+                                    ) = "Write this note"
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
+                            ( EAppArg { eaaArg = Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg
+                                { eaaArg = Value /rest -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "{"statusDate":"2026-01-05","statusName":"Done"}" }
+                                        ]
+                                    ) = "{"statusDate":"2026-01-05","statusName":"Done"}"
+                                }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( EAppArg
+                                { eaaArg = Value /contents -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "Plan the rest" }
+                                        ]
+                                    ) = "Plan the rest"
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /symbol -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "/" }
+                                        ]
+                                    ) = "/"
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/InProgress = Value /Data/Note/StatusType/InProgress } )
+                            ( EAppArg
+                                { eaaArg = Value /description -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "Plan the rest" }
+                                        ]
+                                    ) = "Plan the rest"
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
+                            ( EAppArg { eaaArg = Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg
+                                { eaaArg = Value /rest -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "{"statusName":"In Progress"}" }
+                                        ]
+                                    ) = "{"statusName":"In Progress"}"
+                                }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( EAppArg
+                                { eaaArg = Value /contents -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "Drop the old plan ❌ 2026-01-06" }
+                                        ]
+                                    ) = "Drop the old plan ❌ 2026-01-06"
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /symbol -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "-" }
+                                        ]
+                                    ) = "-"
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Cancelled = Value /Data/Note/StatusType/Cancelled } )
+                            ( EAppArg
+                                { eaaArg = Value /description -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "Drop the old plan" }
+                                        ]
+                                    ) = "Drop the old plan"
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
+                            ( EAppArg { eaaArg = Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg
+                                { eaaArg = Value /rest -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "{"statusDate":"2026-01-06","statusName":"Cancelled"}" }
+                                        ]
+                                    ) = "{"statusDate":"2026-01-06","statusName":"Cancelled"}"
+                                }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( EAppArg
+                                { eaaArg = Value /contents -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "Ship it #work ⏫ 📅 2026-01-04" }
+                                        ]
+                                    ) = "Ship it #work ⏫ 📅 2026-01-04"
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /symbol -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = " " }
+                                        ]
+                                    ) = " "
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
+                            ( EAppArg
+                                { eaaArg = Value /description -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "Ship it #work" }
+                                        ]
+                                    ) = "Ship it #work"
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/High = Value /Data/Note/Priority/High } )
+                            ( EAppArg { eaaArg = Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg
+                                { eaaArg = Value /due -> /Data/Maybe/Some
+                                    ( /value=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CStr
+                                                { csValue = "2026-01-04" }
+                                            ]
+                                        )
+                                    ) = /Data/Maybe/Some
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CStr
+                                                    { csValue = "2026-01-04" }
+                                                ]
+                                            ) = "2026-01-04"
+                                        }
                                     )
-                                ) = /Data/Maybe/Some
-                                ( EAppArg Value /value -> UnionType
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg
+                                { eaaArg = Value /rest -> UnionType
                                     ( Nothing
                                     , ∅
                                     ,
                                         [ CStr
-                                            { csValue = "2026-01-04" }
+                                            { csValue = "{"statusName":"Todo","tags":["#work"]}" }
                                         ]
-                                    ) = "2026-01-04"
-                                )
-                            )( EAppArg Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( EAppArg Value /rest -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "{"statusName":"Todo","tags":["#work"]}" }
-                                    ]
-                                ) = "{"statusName":"Todo","tags":["#work"]}"
+                                    ) = "{"statusName":"Todo","tags":["#work"]}"
+                                }
                             )
                         , /Data/Note/Task/Obsidian
-                            ( EAppArg Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Water the plants 🔁 every week 🛫 2026-01-02" }
-                                    ]
-                                ) = "Water the plants 🔁 every week 🛫 2026-01-02"
-                            )
-                            ( EAppArg Value /symbol -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = " " }
-                                    ]
-                                ) = " "
-                            )( EAppArg Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
-                            ( EAppArg Value /description -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Water the plants" }
-                                    ]
-                                ) = "Water the plants"
-                            )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )
-                            ( EAppArg Value /start -> /Data/Maybe/Some
-                                ( /value=UnionType
+                            ( EAppArg
+                                { eaaArg = Value /contents -> UnionType
                                     ( Nothing
                                     , ∅
                                     ,
                                         [ CStr
-                                            { csValue = "2026-01-02" }
+                                            { csValue = "Water the plants 🔁 every week 🛫 2026-01-02" }
                                         ]
+                                    ) = "Water the plants 🔁 every week 🛫 2026-01-02"
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /symbol -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = " " }
+                                        ]
+                                    ) = " "
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
+                            ( EAppArg
+                                { eaaArg = Value /description -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "Water the plants" }
+                                        ]
+                                    ) = "Water the plants"
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
+                            ( EAppArg
+                                { eaaArg = Value /start -> /Data/Maybe/Some
+                                    ( /value=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CStr
+                                                { csValue = "2026-01-02" }
+                                            ]
+                                        )
+                                    ) = /Data/Maybe/Some
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CStr
+                                                    { csValue = "2026-01-02" }
+                                                ]
+                                            ) = "2026-01-02"
+                                        }
                                     )
-                                ) = /Data/Maybe/Some
-                                ( EAppArg Value /value -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "2026-01-02" }
-                                        ]
-                                    ) = "2026-01-02"
-                                )
-                            )( EAppArg Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( EAppArg Value /recurrence -> /Data/Maybe/Some
-                                ( /value=UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "every week" }
-                                        ]
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg
+                                { eaaArg = Value /recurrence -> /Data/Maybe/Some
+                                    ( /value=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CStr
+                                                { csValue = "every week" }
+                                            ]
+                                        )
+                                    ) = /Data/Maybe/Some
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CStr
+                                                    { csValue = "every week" }
+                                                ]
+                                            ) = "every week"
+                                        }
                                     )
-                                ) = /Data/Maybe/Some
-                                ( EAppArg Value /value -> UnionType
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /rest -> UnionType
                                     ( Nothing
                                     , ∅
                                     ,
                                         [ CStr
-                                            { csValue = "every week" }
+                                            { csValue = "{"statusName":"Todo"}" }
                                         ]
-                                    ) = "every week"
-                                )
-                            )
-                            ( EAppArg Value /rest -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "{"statusName":"Todo"}" }
-                                    ]
-                                ) = "{"statusName":"Todo"}"
+                                    ) = "{"statusName":"Todo"}"
+                                }
                             )
                         , /Data/Note/Task/Obsidian
-                            ( EAppArg Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Do this first 🆔 dcf64c 🏁 delete" }
-                                    ]
-                                ) = "Do this first 🆔 dcf64c 🏁 delete"
-                            )
-                            ( EAppArg Value /symbol -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = " " }
-                                    ]
-                                ) = " "
-                            )( EAppArg Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
-                            ( EAppArg Value /description -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Do this first" }
-                                    ]
-                                ) = "Do this first"
-                            )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( EAppArg Value /rest -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "{"id":"dcf64c","onCompletion":"delete","statusName":"Todo"}" }
-                                    ]
-                                ) = "{"id":"dcf64c","onCompletion":"delete","statusName":"Todo"}"
-                            )
-                        , /Data/Note/Task/Obsidian
-                            ( EAppArg Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Do this after ⛔ dcf64c, 0h17ye ➕ 2026-01-01" }
-                                    ]
-                                ) = "Do this after ⛔ dcf64c, 0h17ye ➕ 2026-01-01"
-                            )
-                            ( EAppArg Value /symbol -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = " " }
-                                    ]
-                                ) = " "
-                            )( EAppArg Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
-                            ( EAppArg Value /description -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Do this after" }
-                                    ]
-                                ) = "Do this after"
-                            )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( EAppArg Value /rest -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "{"created":"2026-01-01","dependsOn":["dcf64c","0h17ye"],"statusName":"Todo"}" }
-                                    ]
-                                ) = "{"created":"2026-01-01","dependsOn":["dcf64c","0h17ye"],"statusName":"Todo"}"
-                            )
-                        , /Data/Note/Task/Obsidian
-                            ( EAppArg Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Answer the question ⏳ 2026-01-03 🔽 ^answer-it" }
-                                    ]
-                                ) = "Answer the question ⏳ 2026-01-03 🔽 ^answer-it"
-                            )
-                            ( EAppArg Value /symbol -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = " " }
-                                    ]
-                                ) = " "
-                            )( EAppArg Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
-                            ( EAppArg Value /description -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Answer the question" }
-                                    ]
-                                ) = "Answer the question"
-                            )( EAppArg Value /priority -> /Data/Note/Priority/Low = Value /Data/Note/Priority/Low )( EAppArg Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( EAppArg Value /scheduled -> /Data/Maybe/Some
-                                ( /value=UnionType
+                            ( EAppArg
+                                { eaaArg = Value /contents -> UnionType
                                     ( Nothing
                                     , ∅
                                     ,
                                         [ CStr
-                                            { csValue = "2026-01-03" }
+                                            { csValue = "Do this first 🆔 dcf64c 🏁 delete" }
                                         ]
+                                    ) = "Do this first 🆔 dcf64c 🏁 delete"
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /symbol -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = " " }
+                                        ]
+                                    ) = " "
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
+                            ( EAppArg
+                                { eaaArg = Value /description -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "Do this first" }
+                                        ]
+                                    ) = "Do this first"
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
+                            ( EAppArg { eaaArg = Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg
+                                { eaaArg = Value /rest -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "{"id":"dcf64c","onCompletion":"delete","statusName":"Todo"}" }
+                                        ]
+                                    ) = "{"id":"dcf64c","onCompletion":"delete","statusName":"Todo"}"
+                                }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( EAppArg
+                                { eaaArg = Value /contents -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "Do this after ⛔ dcf64c, 0h17ye ➕ 2026-01-01" }
+                                        ]
+                                    ) = "Do this after ⛔ dcf64c, 0h17ye ➕ 2026-01-01"
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /symbol -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = " " }
+                                        ]
+                                    ) = " "
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
+                            ( EAppArg
+                                { eaaArg = Value /description -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "Do this after" }
+                                        ]
+                                    ) = "Do this after"
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
+                            ( EAppArg { eaaArg = Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg
+                                { eaaArg = Value /rest -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "{"created":"2026-01-01","dependsOn":["dcf64c","0h17ye"],"statusName":"Todo"}" }
+                                        ]
+                                    ) = "{"created":"2026-01-01","dependsOn":["dcf64c","0h17ye"],"statusName":"Todo"}"
+                                }
+                            )
+                        , /Data/Note/Task/Obsidian
+                            ( EAppArg
+                                { eaaArg = Value /contents -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "Answer the question ⏳ 2026-01-03 🔽 ^answer-it" }
+                                        ]
+                                    ) = "Answer the question ⏳ 2026-01-03 🔽 ^answer-it"
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /symbol -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = " " }
+                                        ]
+                                    ) = " "
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
+                            ( EAppArg
+                                { eaaArg = Value /description -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "Answer the question" }
+                                        ]
+                                    ) = "Answer the question"
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/Low = Value /Data/Note/Priority/Low } )
+                            ( EAppArg { eaaArg = Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg
+                                { eaaArg = Value /scheduled -> /Data/Maybe/Some
+                                    ( /value=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CStr
+                                                { csValue = "2026-01-03" }
+                                            ]
+                                        )
+                                    ) = /Data/Maybe/Some
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CStr
+                                                    { csValue = "2026-01-03" }
+                                                ]
+                                            ) = "2026-01-03"
+                                        }
                                     )
-                                ) = /Data/Maybe/Some
-                                ( EAppArg Value /value -> UnionType
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg
+                                { eaaArg = Value /rest -> UnionType
                                     ( Nothing
                                     , ∅
                                     ,
                                         [ CStr
-                                            { csValue = "2026-01-03" }
+                                            { csValue = "{"blockLink":"answer-it","statusName":"Todo"}" }
                                         ]
-                                    ) = "2026-01-03"
-                                )
-                            )( EAppArg Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( EAppArg Value /rest -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "{"blockLink":"answer-it","statusName":"Todo"}" }
-                                    ]
-                                ) = "{"blockLink":"answer-it","statusName":"Todo"}"
+                                    ) = "{"blockLink":"answer-it","statusName":"Todo"}"
+                                }
                             )
                         , /Data/Note/Task/Obsidian
-                            ( EAppArg Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Book 📅 lunch" }
-                                    ]
-                                ) = "Book 📅 lunch"
+                            ( EAppArg
+                                { eaaArg = Value /contents -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "Book 📅 lunch" }
+                                        ]
+                                    ) = "Book 📅 lunch"
+                                }
                             )
-                            ( EAppArg Value /symbol -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = " " }
-                                    ]
-                                ) = " "
-                            )( EAppArg Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
-                            ( EAppArg Value /description -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Book 📅 lunch" }
-                                    ]
-                                ) = "Book 📅 lunch"
-                            )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( EAppArg Value /rest -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "{"statusName":"Todo"}" }
-                                    ]
-                                ) = "{"statusName":"Todo"}"
+                            ( EAppArg
+                                { eaaArg = Value /symbol -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = " " }
+                                        ]
+                                    ) = " "
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
+                            ( EAppArg
+                                { eaaArg = Value /description -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "Book 📅 lunch" }
+                                        ]
+                                    ) = "Book 📅 lunch"
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
+                            ( EAppArg { eaaArg = Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
+                            ( EAppArg
+                                { eaaArg = Value /rest -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "{"statusName":"Todo"}" }
+                                        ]
+                                    ) = "{"statusName":"Todo"}"
+                                }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -466,14 +618,16 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/Page
-                            ( EAppArg Value /title -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Tasks" }
-                                    ]
-                                ) = "Tasks"
+                            ( EAppArg
+                                { eaaArg = Value /title -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "Tasks" }
+                                        ]
+                                    ) = "Tasks"
+                                }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -482,8 +636,8 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         ]

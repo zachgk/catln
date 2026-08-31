@@ -102,6 +102,51 @@ module(Test)
     >>> nowhere
   > posLine(p= /Catln/SourcePos(file= "a.ct", line= 7, column= 3))
     >>> 7
+  noMeta() -> /Catln/Meta
+    # [noMeta] is the metadata of a piece of program nothing wrote: no type worth naming, no place
+      in a file, and nothing the stage added. Written once here because building an [Expr] means
+      building one of these, and what is being read is the expression rather than the metadata.
+  noMeta()= /Catln/Meta(type= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= []), pos= /Data/Maybe/Nothing, id= "", dat= /Catln/Unit)
+
+  exprKind(e -> /Catln/Expr) -> String
+    # [exprKind] says which of the six an expression is. Everything a Catln program is written with
+      has become one of these by the time the compiler is done reducing it, so naming all six is
+      naming everything a program can be — which is what a program that rewrites programs starts
+      from.
+  exprKind(e= /Catln/Expr/CExpr(meta, const))= "const"
+  exprKind(e= /Catln/Expr/Value(meta, name))= "value"
+  exprKind(e= /Catln/Expr/HoleExpr(meta, hole))= "hole"
+  exprKind(e= /Catln/Expr/AliasExpr(base, alias))= "alias"
+  exprKind(e= /Catln/Expr/EWhere(meta, base, cond))= "where"
+  exprKind(e= /Catln/Expr/TupleApply(meta, base, app))= "apply"
+
+  valueName(e -> /Catln/Expr) -> String
+    # [valueName] reads the name out of an expression that is one, which is the field a rewrite of a
+      program would look at first.
+  valueName(e= /Catln/Expr/Value(meta, name))= name
+  valueName(e= /Catln/Expr/CExpr(meta, const))= ""
+  valueName(e= /Catln/Expr/HoleExpr(meta, hole))= ""
+  valueName(e= /Catln/Expr/AliasExpr(base, alias))= ""
+  valueName(e= /Catln/Expr/EWhere(meta, base, cond))= ""
+  valueName(e= /Catln/Expr/TupleApply(meta, base, app))= ""
+
+  > exprKind(e= /Catln/Expr/Value(meta= noMeta(), name= "foo"))
+    >>> value
+  > valueName(e= /Catln/Expr/Value(meta= noMeta(), name= "foo"))
+    >>> foo
+  > exprKind(e= /Catln/Expr/CExpr(meta= noMeta(), const= /Catln/Constant/CInt(value= 1)))
+    >>> const
+  declCount(p -> /Catln/Prgm) -> Integer
+    # [declCount] counts the names a program declares or defines something under. Reading a whole
+      program is what all of this was for: [objMap] is what it holds, [cg] is how its classes relate,
+      and [annots] is what is written on the program itself.
+  declCount(p= /Catln/Prgm(objMap, cg, annots))= mapSize(m= objMap)
+
+  mapSize(m -> /Catln/ObjectMap) -> Integer
+  mapSize(m= /Catln/ObjectMap(items))= items.length
+
+  > declCount(p= /Catln/Prgm(objMap= /Catln/ObjectMap(items= []), cg= [], annots= []))
+    >>> 0
   # ## What the suite checks
     The `>` examples above are checked by `catln test`, and the integration suite typechecks and
     builds this file without comparing what they evaluate to — only a page under @stack/@ has its
@@ -114,4 +159,4 @@ module(Test)
   #   the suite's two standing failures are, which is being worked on elsewhere. Printing each is
   #   what the answers are for, and it does not stand on the part of the solver that is unwell.
 
-main{io -> IO}= io.println(msg= constantKind(c= /Catln/Constant/CInt(value= 3))).println(msg= intOf(c= /Catln/Constant/CInt(value= 42)).toString).println(msg= keyName(k= /Catln/PartialKey(name= "x", vars= [], args= []))).println(msg= keyDepth(k= /Catln/PartialKey(name= "f", vars= [], args= [/Catln/PartialKey(name= "a", vars= [], args= [])])).toString).println(msg= typeKind(t= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= []))).println(msg= constCount(t= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= [/Catln/Constant/CInt(value= 1)])).toString).println(msg= writtenIn(m= /Catln/Meta(type= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= []), pos= /Data/Maybe/Nothing, id= "", dat= /Catln/Unit))).println(msg= posLine(p= /Catln/SourcePos(file= "a.ct", line= 7, column= 3)).toString).exit(val= 0)
+main{io -> IO}= io.println(msg= constantKind(c= /Catln/Constant/CInt(value= 3))).println(msg= intOf(c= /Catln/Constant/CInt(value= 42)).toString).println(msg= keyName(k= /Catln/PartialKey(name= "x", vars= [], args= []))).println(msg= keyDepth(k= /Catln/PartialKey(name= "f", vars= [], args= [/Catln/PartialKey(name= "a", vars= [], args= [])])).toString).println(msg= typeKind(t= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= []))).println(msg= constCount(t= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= [/Catln/Constant/CInt(value= 1)])).toString).println(msg= writtenIn(m= /Catln/Meta(type= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= []), pos= /Data/Maybe/Nothing, id= "", dat= /Catln/Unit))).println(msg= posLine(p= /Catln/SourcePos(file= "a.ct", line= 7, column= 3)).toString).println(msg= exprKind(e= /Catln/Expr/Value(meta= noMeta(), name= "foo"))).println(msg= valueName(e= /Catln/Expr/Value(meta= noMeta(), name= "foo"))).println(msg= declCount(p= /Catln/Prgm(objMap= /Catln/ObjectMap(items= []), cg= [], annots= [])).toString).exit(val= 0)

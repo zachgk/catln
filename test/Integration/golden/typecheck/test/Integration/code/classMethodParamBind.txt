@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/Scratch/MyEqv"
                 , ObjectMapItem
@@ -34,18 +34,18 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
         , CGClass
-            ( False
-            , /Scratch/TEqv[ /T=TopType ]
-            ,
+            { cgcSealed = False
+            , cgcPartial = /Scratch/TEqv[ /T=TopType ]
+            , cgcExtends =
                 [ /Scratch/MyEqv[ /T=TopType ] ]
-            , Just "   "
-            )
+            , cgcDoc = Just ""
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md

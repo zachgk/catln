@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/Data/Dir"
                 , ObjectMapItem
@@ -24,14 +24,14 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGClass
-            ( True
-            , /Data/FileOrDir
-            ,
+            { cgcSealed = True
+            , cgcPartial = /Data/FileOrDir
+            , cgcExtends =
                 [ /Data/File
                     ( /name=/Data/String
                     , /contents=/Data/String
@@ -41,7 +41,7 @@ Prgm
                     , /entries=∀/Data/List[ /T=∀/Data/FileOrDir ]
                     )
                 ]
-            , Just "A [File] carries its writing itself, rather than the path it was read from or is to be written
+            , cgcDoc = Just "A [File] carries its writing itself, rather than the path it was read from or is to be written
               to. A tree says where each thing is by where it is in the tree, so a name is the one part of a
               path a file holds, and the rest of it is the names of the directories above it. This is what
               lets the same tree be written somewhere other than where it was read from, which is the whole
@@ -56,7 +56,7 @@ Prgm
               [contents] is a [String] because that is what the language has. A file which is not text is
               not representable here, and will want a type of its own rather than this one widened to hold
               bytes it cannot say anything about."
-            )
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md
