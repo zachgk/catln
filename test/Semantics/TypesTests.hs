@@ -736,6 +736,40 @@ propOccurrenceReadingSound gPrgm = property $ do
     TypeVar _ _ i -> assertTimed "o ⊆ inner" $ isSubtypeOfWithEnv typeEnv vaenv o i
     _             -> return ()
 
+-- | 'ptVars' is a BINDER: a 'TVInt' reference to a variable the enclosing partial declares
+-- denotes that variable's binding, not ⊤. So @F[/E=B](.. $/E ..)@ and @F[/E=B](.. B ..)@ are the
+-- SAME set, and every operation must decide them identically — both directions of both provers.
+--
+-- The failure mode this pins down is one-sided and silent. A traversal that descends from a
+-- partial into its parts without extending the environment with that partial's own 'ptVars'
+-- falls through to 'vaenvLookup', which defaults an unbound name to ⊤. Because ⊤ is the top of
+-- the lattice, forgetting the binder can only WIDEN: such a prover over-approximates membership
+-- and under-approximates difference, so it reports a genuine narrowing as a no-op. The provers
+-- disagree about which pairs are equal, and a solver that asks one for "did this change?" and
+-- another for "is this still narrowing?" can then accept an update forever
+-- (@core\/set.ct@'s @allIn@ oscillated between the two spellings until the epoch limit).
+--
+-- 'genOwnVarBoundPair' places the reference at the whole slot, inside a nested positive partial's
+-- dimension, and inside a CLASS PREDICATE's dimension; only the last reaches
+-- 'complementTypeEnv'\/'predImpliesAtom'.
+propOwnVarBindingRespected :: IO GenPrgm -> Property
+propOwnVarBindingRespected gPrgm = property $ do
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
+  let typeEnv = mkTypeEnv prgm
+  vaenv <- forAll $ genVaenv prgm
+  (ref, sub) <- forAll $ genOwnVarBoundPair prgm
+  annotate $ printf "ref = %s" (show ref)
+  annotate $ printf "sub = %s" (show sub)
+  assertTimed "ref ⊆ sub" $ isSubtypeOfWithEnv typeEnv vaenv ref sub
+  assertTimed "sub ⊆ ref" $ isSubtypeOfWithEnv typeEnv vaenv sub ref
+  refMinusSub <- timed "ref-sub" $ snd $ differenceTypeWithEnv typeEnv vaenv ref sub
+  annotate $ printf "ref - sub = %s" (show refMinusSub)
+  assertTimed "ref - sub = ∅" $ isBottomType refMinusSub
+  subMinusRef <- timed "sub-ref" $ snd $ differenceTypeWithEnv typeEnv vaenv sub ref
+  annotate $ printf "sub - ref = %s" (show subMinusRef)
+  assertTimed "sub - ref = ∅" $ isBottomType subMinusRef
+
 typeTests :: TestTree
 typeTests = withResource findPrgms (const $ pure ()) tests
   where
@@ -768,6 +802,7 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propNegRecursiveClassMeet" (withTests 1 $ propNegRecursiveClassMeet ioPrgms)
       , HG.testProperty "propOutOfScopeParity" (p $ propOutOfScopeParity gPrgm)
       , HG.testProperty "propOccurrenceReadingSound" (p $ propOccurrenceReadingSound gPrgm)
+      , HG.testProperty "propOwnVarBindingRespected" (withDiscards 1000 $ p $ propOwnVarBindingRespected gPrgm)
                                         ]
       where gPrgm = ggPrgm <$> ioPrgms
     p prop = prop

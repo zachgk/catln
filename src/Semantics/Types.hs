@@ -1586,10 +1586,14 @@ predImpliesAtom typeEnv vaenvB (PredClass c1) (PredClass c2)
 -- with an absent @c1@ var/arg defaulting to ⊤: this is DIRECTIONAL (unlike the shared-keys-only
 -- 'isSubPartialOfWithEnv', which would vacuously make @C ⟹ C[/T=∀Ord]@ True when @c1@ omits @/T@ and
 -- so drop the tighter bound from an intersection like @C[/T=∀Ord] ∧ C@).
+-- Slots are compared under 'comparedPartialsEnv', NOT the bare ambient env: a @$/E@ in either
+-- side's slot names that side's own 'ptVars' binding, and reading it as ⊤ would widen the
+-- comparison into vacuously proving @C[/T=⊤] ⟹ C[/T=$/E]@.
 predImpliesAtom typeEnv vaenv (PredClass c1) (PredClass c2)
   | ptName c1 == ptName c2
-  , all (\(k, v) -> isSubtypeOfWithEnv typeEnv vaenv (H.lookupDefault PTopType k (ptVars c1)) v) (H.toList (ptVars c2))
-  , all (\(k, v) -> isSubtypeOfWithEnv typeEnv vaenv (H.lookupDefault PTopType k (ptArgs c1)) v) (H.toList (ptArgs c2)) = True
+  , let vaenv' = comparedPartialsEnv typeEnv vaenv c1 c2
+  , all (\(k, v) -> isSubtypeOfWithEnv typeEnv vaenv' (H.lookupDefault PTopType k (ptVars c1)) v) (H.toList (ptVars c2))
+  , all (\(k, v) -> isSubtypeOfWithEnv typeEnv vaenv' (H.lookupDefault PTopType k (ptArgs c1)) v) (H.toList (ptArgs c2)) = True
 -- PredClass: c1 implies c2 only when c1 is sealed (all members known) and each member is in U_c2.
 -- Decided symbolically (emptiness of @c1 ∧ ¬c2@ against the class graph); the engine's positive
 -- gate reproduces the sealed/'tePrgmEnv' enumeration gate.
@@ -1624,10 +1628,19 @@ predImpliesAtom typeEnv vaenv (PredRel r1) (PredRel r2)
   -- @isa@ edge still implies (the 'classDeclaredSubclassOf' fast path above), and a SEALED @r1@ is
   -- still enumerated (the gate only refuses an unsealed, non-'tePrgmEnv' class).
   | otherwise = satAtomImplies typeEnv vaenv True (SatRel r1) (SatRel r2)
-  where checkArg k = isSubtypeOfWithEnv typeEnv vaenv
+  -- Slots are compared under 'comparedPartialsEnv', NOT the bare ambient env: a @$/E@ in either
+  -- side's slot names that side's own 'ptVars' binding, and reading it as ⊤ would widen the
+  -- comparison into vacuously proving @r[/items=⊤] ⟹ r[/items=$/E]@. This is the rule
+  -- @core/set.ct@'s @allIn@ reaches — its declaration binds @/E@ to @∀Ord@ and spells the
+  -- @/items@ element dimension @$/E@, so a forgotten binder made a genuine REQUIREMENT
+  -- WIDENING look like a no-op to 'differenceTypeWithEnv' while the subtype walk (which reads
+  -- each slot through its own scope) still saw a change — the two provers disagreeing is what
+  -- let the point oscillate to the 'runConstraintsLimit'.
+  where vaenv' = comparedPartialsEnv typeEnv vaenv r1 r2
+        checkArg k = isSubtypeOfWithEnv typeEnv vaenv'
                        (H.lookupDefault PTopType k (ptArgs r1))
                        (ptArgs r2 H.! k)
-        checkVar k = isSubtypeOfWithEnv typeEnv vaenv
+        checkVar k = isSubtypeOfWithEnv typeEnv vaenv'
                        (H.lookupDefault PTopType k (ptVars r1))
                        (ptVars r2 H.! k)
 -- PredExpr: use structural partial comparison (equality-based simplifying assumption)
@@ -3204,6 +3217,23 @@ looseArgModeRejects sub@PartialType{ptArgs=subArgs, ptArgMode=subMode} super@Par
     superKeys = H.keysSet superArgs
     involvesLowerUnbounded = not (ptArgLb subMode) || not (ptArgLb superMode)
 
+-- | The environment for comparing two same-name partials slot by slot.
+--
+-- 'ptVars' is a BINDER: a partial-local ('TVInt') reference inside a leaf names THAT leaf's
+-- variable. Comparing the leaves' slots under the bare ambient environment reads such a
+-- reference through 'vaenvLookup', which defaults an unbound name to ⊤ — and since ⊤ is the top
+-- of the lattice, forgetting the binder can only WIDEN. A prover that forgets therefore
+-- over-approximates membership and under-approximates difference: it proves @C[/T=⊤] ⟹
+-- C[/T=$/E]@ for a partial that binds @/E@ to something well below ⊤.
+--
+-- So the partials' OWN var/arg slots take precedence over the ambient env (left-biased union),
+-- and a name both bind reads as the meet. An ambient @/T ↦ ∀Group@ (the surrounding law
+-- declaration's parameter) must not shadow a compared leaf's own @[/T=∀Eq]@ when resolving its
+-- @$/T@ arg slots; ambient bindings still resolve names the leaves do not declare.
+comparedPartialsEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> TypeVarArgEnv
+comparedPartialsEnv typeEnv vaenv a b =
+  H.union (substituteTVExt typeEnv vaenv <$> H.unionWith (intersectTypesEnv typeEnv vaenv) (ptVarArg a) (ptVarArg b)) vaenv
+
 -- | A private helper for 'isSubPartialOfWithEnv' that checks while ignore class expansions
 isSubPartialOfWithEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Bool
 isSubPartialOfWithEnv TypeEnv{teDebug=True} _ l r | trace (printf "[SUBPARTIAL] %s ⊆ %s" (show l) (show r)) False = undefined
@@ -3225,13 +3255,7 @@ isSubPartialOfWithEnv typeEnv _ sub super
   , not (argModeCovers (normalizePtArgMode typeEnv super) (normalizePtArgMode typeEnv sub)) = False
 isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subArgs, ptPreds=subPreds} super@PartialType{ptVars=superVars, ptArgs=superArgs, ptPreds=superPreds} = debugTrace typeEnv msg result
   where
-    -- The partials' OWN var/arg slots take precedence over the ambient env (left-biased
-    -- union): a partial-local ('TVInt') reference inside a leaf names THAT leaf's var, and a
-    -- like-named var of the enclosing scope is a DIFFERENT var — an ambient @/T ↦ ∀Group@
-    -- (the surrounding law declaration's parameter) must not shadow a compared leaf's own
-    -- @[/T=∀Eq]@ when resolving its @$/T@ arg slots. Ambient bindings still resolve names
-    -- the leaves do not declare.
-    vaenv' = H.union (substituteTVExt typeEnv vaenv <$> H.unionWith (intersectTypesEnv typeEnv vaenv) (ptVarArg super) (ptVarArg sub)) vaenv
+    vaenv' = comparedPartialsEnv typeEnv vaenv super sub
     -- A sub-side FREE reference reads as ⊤ ('freeTVIntToTop'): it must not resolve through
     -- the shared env's like-named SUPER binding, which would narrow the sub's value set to
     -- the super's and wrongly prove e.g. @Cons(head=$/T) ⊆ Cons[/T=#noCore](head=#noCore)@.

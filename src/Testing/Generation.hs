@@ -59,6 +59,68 @@ concreteishInner PTopType   = False
 concreteishInner BottomType = False
 concreteishInner _          = True
 
+-- | Names for the OWN-variable binder generator. Deliberately DISJOINT from 'varNamePool' so a
+-- generated 'TypeVarArgEnv' can never also bind the name: the property is about the partial's own
+-- 'ptVars' being honoured, and an ambient binding of the same name would let a forgetful traversal
+-- reach the right answer for the wrong reason (shadowing is a separate question).
+ownVarNamePool :: [Name]
+ownVarNamePool = map mkName ["own1", "own2"]
+
+-- | A pair of types that MUST be indistinguishable to every operation: the same partial, binding
+-- one of its own type variables to a ground bound, holding at one nested position either a
+-- 'TVInt' reference to that variable or the bound itself.
+--
+-- 'ptVars' is a BINDER — inside the partial that declares it, @$v@ denotes its binding (the rule
+-- 'isSubPartialOfWithEnv'.'readOwnScope' implements). A traversal that descends into a partial
+-- without extending its environment with that partial's own 'ptVars' reads @$v@ as ⊤ instead
+-- ('vaenvLookup' defaults to ⊤), and because ⊤ is the lattice top, forgetting always WIDENS: such
+-- a prover over-approximates membership and under-approximates difference.
+--
+-- Two axes are drawn independently, because the binder is consulted (or forgotten) separately on
+-- each:
+--
+--   * the OUTER form the binding partial takes — a positive leaf, a @PredClass@ top, or a
+--     @PredRel@ top. The predicate forms matter because complementing a partial turns it into a
+--     predicate, and the same-name implication rules in 'predImpliesAtom' compare the two
+--     partials' slots directly. Those rules are where a forgotten binder is invisible: a positive
+--     leaf reaches the binding through 'intersectPartialsBase' instead.
+--   * the POSITION of the reference within the slot — the whole slot, a nested positive partial's
+--     dimension, or a class predicate's dimension.
+genOwnVarBoundPair :: Prgm Expr () -> Gen (Type, Type)
+genOwnVarBoundPair prgm@(Prgm objMap _ _) = do
+  when (nullObjectMap objMap && graphEmpty cg) HG.discard
+  base    <- genPartialType prgm
+  varName <- partialKey <$> HG.element ownVarNamePool
+  -- The bound must be GROUND: a bound that itself mentions a variable would make the two members
+  -- of the pair differ by more than the one reference under test.
+  bound   <- HG.small (HG.filter (\t -> concreteishInner t && not (typeHasTypeVars t)) (genType prgm))
+  dim     <- partialKey <$> HG.element ["T", "K", "V"]
+  wrap    <- HG.choice (bareSlot : nestedDim dim : [classPredDim dim | not (graphEmpty cg)])
+  outer   <- HG.element [singletonType, classPartial, relPartial]
+  slotKey <- if H.null (ptArgs base)
+    then return (partialKey "ownSlot")
+    else HG.element (H.keys (ptArgs base))
+  let withSlot v = outer base
+        { ptVars = H.insert varName bound (ptVars base)
+        , ptArgs = H.insert slotKey (wrap v) (ptArgs base)
+        }
+  return (withSlot (TypeVar (TVVar varName) TVInt PTopType), withSlot bound)
+  where
+    TypeEnv{teClassGraph=ClassGraph cg} = mkTypeEnv prgm
+    -- The @∀r[..]@ relation-predicate form, the sibling of 'classPartial'.
+    relPartial p = TopType H.empty (PredsOne (PredRel p))
+    -- The payload IS the slot.
+    bareSlot = return id
+    -- The payload is a dimension of a nested positive partial.
+    nestedDim dim = do
+      p <- genPartialType prgm
+      return $ \v -> singletonType p{ptVars = H.insert dim v (ptVars p)}
+    -- The payload is a dimension of a CLASS PREDICATE ('classPartial' builds the @∀C[..]@ form).
+    classPredDim dim = do
+      classNode <- HG.element $ graphToNodes cg
+      let className = fromPartialName $ snd3 classNode
+      return $ \v -> classPartial (partialVal className){ptVars = H.singleton dim v}
+
 -- | A small external variable environment ('TypeVarArgEnv') mapping a subset of 'varNamePool'
 -- to concrete-ish types drawn from the program. Threading this through the @*WithEnv@ operations
 -- exercises 'vaenvLookup' (a bound variable reads as its value rather than ⊤), 'substituteTVExt'\/
