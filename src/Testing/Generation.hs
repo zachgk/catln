@@ -17,6 +17,7 @@ import           Control.Monad
 import           CtConstants
 import           Data.Bifunctor          (bimap)
 import           Data.Either             (partitionEithers)
+import           Data.Graph              (graphFromEdges)
 import qualified Data.HashMap.Strict     as H
 import           Data.List               (partition)
 import           Data.Maybe
@@ -545,9 +546,56 @@ genPrgm = do
                                     arr <- genOutputExpr arrGoal obj
                                     return $ ObjArr (Just obj) FunctionObj Nothing [] (Just (Just arr, emptyMetaN))
 
-  let objMap = objectMapFromList (dataObjs ++ funObjs)
+  (classMemberObjs, classNodes) <- genClasses
 
-  return $ Prgm objMap (classGraphFromObjs objMap) []
+  let objMap = objectMapFromList (dataObjs ++ funObjs ++ classMemberObjs)
+
+  return $ Prgm objMap (classGraphFromObjs objMap <> ClassGraph (graphFromEdges classNodes)) []
+
+-- | Well-formed class-graph nodes, plus the nullary data objects that are their members.
+--
+-- Without this, a generated program has NO classes at all: 'genPrgm' built its whole class graph
+-- from 'classGraphFromObjs', which emits @CGType@ nodes exclusively (see @Semantics.hs@). That
+-- silently emptied the class corpus for EVERY law, not just the class-specific ones —
+-- 'genType'.'genAtom' can only build a 'PredClass' from a 'PClassName' node, so generated
+-- programs produced 'PredRel' atoms exclusively, and 'classNodeNames' being empty meant no
+-- @∀C@ shape was ever drawn. All class\/negation coverage came from the three hand-written
+-- files in @test\/Semantics\/code\/@, and the properties CONDITIONED on a class being present
+-- ('propClassExpansionLeafSubtype', 'propClassGraphMatchesPredClass') spent their entire
+-- discard budget on draws that were structurally incapable of satisfying them.
+--
+-- Well-formedness is by construction, mirroring what the desugarer emits:
+--
+--   * Members are FRESH NULLARY data types, so a member's stored type is exactly
+--     @singletonType (partialVal name)@ — the @class(C, [A, B])@ shape of @Animals.ct@. A member
+--     with declared fields would have to carry them here (as @containers.ct@'s
+--     @Some[$T -> $_T](value -> $T)@ does), and inventing that spelling is how malformed
+--     partials get into the corpus.
+--   * A SEALED class always has at least one member, because a sealed class can only be written
+--     @class(C, [..])@; the memberless form @class(C)@ is unsealed ('desClassDecl' builds it with
+--     @sealed=False@).
+--   * Class names are drawn from a pool disjoint from the data names ('genInputExpr' draws
+--     lowercase; these are capitalized), because the two are NOT interchangeable in a type: a
+--     class name in type position is a 'PredClass' top and a data name is a positive leaf — the
+--     distinction 'classNodeNames'\/'dataNodeNames' exists to keep.
+--
+-- Zero classes stays in the distribution, so the class-free programs that were previously the
+-- only kind are still generated.
+genClasses :: Gen ([ObjArr Expr ()], [(CGNode, PartialName, [PartialName])])
+genClasses = do
+  nClasses <- HG.int (linear 0 2)
+  parts <- forM [1 .. nClasses] $ \ci -> do
+    sealed <- HG.bool
+    -- Sealed classes are written with their member list, so they are never memberless.
+    nMembers <- HG.int (linear (if sealed then 1 else 0) 3)
+    let className   = makeAbsoluteName $ mkName $ printf "Class%d" (ci :: Int)
+    let memberNames = [makeAbsoluteName $ mkName $ printf "Mem%d_%d" ci mi | mi <- [1 .. nMembers]]
+    let memberObjs  = [ObjArr (Just (Value (emptyMetaT $ typeVal n) n)) TypeObj Nothing [] Nothing | n <- memberNames]
+    let node = ( CGClass (sealed, partialVal className, map (singletonType . partialVal) memberNames, Nothing)
+               , PClassName className
+               , map PTypeName memberNames )
+    return (memberObjs, node)
+  return (concatMap fst parts, map snd parts)
 
 genPrgms :: Gen [GraphNodes (Prgm Expr ()) FileImport]
 genPrgms = do
