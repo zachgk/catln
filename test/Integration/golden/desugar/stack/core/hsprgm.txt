@@ -2,6 +2,24 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
+                ( "/Catln/TypeVarAux/TVApplied"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/TypeVarAux/TVApplied( Value /base -> ∀/Catln/TypeVarAux )
+                            ( Value /vars -> ∀/Data/List
+                                [ /T=/Catln/Pair
+                                    [ /B=∀/Catln/Type
+                                    , /A=/Catln/PartialKey
+                                    ]
+                                ]
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/ObjectBasis/PatternObj"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/ObjectBasis/PatternObj ]
@@ -32,9 +50,51 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/TypePredicates/PredsNot"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/TypePredicates/PredsNot( Value /pred -> ∀/Catln/TypePredicates ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Hole/HoleTodefine"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/Hole/HoleTodefine ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Type/UnionType"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Type/UnionType
+                            ( Value /top -> ∀/Data/Maybe
+                                [ /T=/Catln/Triple
+                                    [ /B=∀/Data/List
+                                        [ /T=/Catln/Pair
+                                            [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
+                                            , /A=/Data/String
+                                            ]
+                                        ]
+                                    , /C=∀/Data/List[ /T=∀/Catln/Constant ]
+                                    , /A=∀/Catln/TypePredicates
+                                    ]
+                                ]
+                            )
+                            ( Value /leafs -> ∀/Data/List
+                                [ /T=/Catln/Pair
+                                    [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
+                                    , /A=/Data/String
+                                    ]
+                                ]
+                            )
+                            ( Value /consts -> ∀/Data/List[ /T=∀/Catln/Constant ] )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -51,9 +111,69 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/TypePredicates/PredsAnd"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/TypePredicates/PredsAnd
+                            ( Value /preds -> ∀/Data/List[ /T=∀/Catln/TypePredicates ] )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Triple"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Triple[ /C : TopType ][ /B : TopType ][ /A : TopType ]( Value /first -> $/A )( Value /second -> $/B )( Value /third -> $/C ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/TypePredicate/PredRel"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/TypePredicate/PredRel
+                            ( Value /type -> /Catln/PartialType
+                                ( /argMode=TopType
+                                , /name=TopType
+                                , /vars=TopType
+                                , /args=TopType
+                                , /preds=TopType
+                                )
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/ObjectBasis/ArgObj"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/ObjectBasis/ArgObj ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/TypePredicate/PredClass"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/TypePredicate/PredClass
+                            ( Value /type -> /Catln/PartialType
+                                ( /argMode=TopType
+                                , /name=TopType
+                                , /vars=TopType
+                                , /args=TopType
+                                , /preds=TopType
+                                )
+                            )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -73,6 +193,82 @@ Prgm
                 ( "/Catln/ObjectBasis/MatchObj"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/ObjectBasis/MatchObj ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/TypePredicate/PredExpr"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/TypePredicate/PredExpr
+                            ( Value /type -> /Catln/PartialType
+                                ( /argMode=TopType
+                                , /name=TopType
+                                , /vars=TopType
+                                , /args=TopType
+                                , /preds=TopType
+                                )
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/PartialArgsOption"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/PartialArgsOption
+                            ( Value /vars -> ∀/Data/List
+                                [ /T=/Catln/Pair
+                                    [ /B=∀/Catln/Type
+                                    , /A=/Catln/PartialKey
+                                    ]
+                                ]
+                            )
+                            ( Value /args -> ∀/Data/List
+                                [ /T=/Catln/Pair
+                                    [ /B=∀/Catln/Type
+                                    , /A=/Catln/PartialKey
+                                    ]
+                                ]
+                            )( Value /preds -> ∀/Catln/TypePredicates )
+                            ( Value /argMode -> /Catln/PtArgMode
+                                ( /argUb=TopType
+                                , /argLb=TopType
+                                )
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/TypeVarAux/TVVar"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/TypeVarAux/TVVar
+                            ( Value /name -> /Catln/PartialKey
+                                ( /name=TopType
+                                , /vars=TopType
+                                , /args=TopType
+                                )
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Pair"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Pair[ /B : TopType ][ /A : TopType ]( Value /first -> $/A )( Value /second -> $/B ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -141,6 +337,56 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/TypePredicates/PredsOne"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/TypePredicates/PredsOne( Value /pred -> ∀/Catln/TypePredicate ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/PartialType"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/PartialType( Value /name -> /Data/String )
+                            ( Value /vars -> ∀/Data/List
+                                [ /T=/Catln/Pair
+                                    [ /B=∀/Catln/Type
+                                    , /A=/Catln/PartialKey
+                                    ]
+                                ]
+                            )
+                            ( Value /args -> ∀/Data/List
+                                [ /T=/Catln/Pair
+                                    [ /B=∀/Catln/Type
+                                    , /A=/Catln/PartialKey
+                                    ]
+                                ]
+                            )( Value /preds -> ∀/Catln/TypePredicates )
+                            ( Value /argMode -> /Catln/PtArgMode
+                                ( /argUb=TopType
+                                , /argLb=TopType
+                                )
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Type/TypeVar"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Type/TypeVar( Value /aux -> ∀/Catln/TypeVarAux )( Value /loc -> ∀/Catln/TypeVarLoc ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/PartialName/PRelativeName"
                 , ObjectMapItem
                     { omiDecls =
@@ -169,6 +415,23 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/TypeVarAux/TVArg"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/TypeVarAux/TVArg
+                            ( Value /name -> /Catln/PartialKey
+                                ( /name=TopType
+                                , /vars=TopType
+                                , /args=TopType
+                                )
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Constant/CChar"
                 , ObjectMapItem
                     { omiDecls =
@@ -191,6 +454,21 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -252,6 +530,77 @@ Prgm
                 , /Catln/PartialName/PRelativeName( /name=/Data/String )
                 ]
             , Just "What a partial type is named by: a type, a class, or a suffix that could be either.A [PTypeName] names one declared type and a [PClassName] one declared class. A [PRelativeName] is a name written without its full path — the compiler resolves it to one of the other two, so a program reading a compiled one will not meet it."
+            )
+        , CGClass
+            ( True
+            , /Catln/Type
+            ,
+                [ /Catln/Type/UnionType
+                    ( /top=∀/Data/Maybe
+                        [ /T=/Catln/Triple
+                            [ /B=∀/Data/List
+                                [ /T=/Catln/Pair
+                                    [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
+                                    , /A=/Data/String
+                                    ]
+                                ]
+                            , /C=∀/Data/List[ /T=∀/Catln/Constant ]
+                            , /A=∀/Catln/TypePredicates
+                            ]
+                        ]
+                    , /consts=∀/Data/List[ /T=∀/Catln/Constant ]
+                    , /leafs=∀/Data/List
+                        [ /T=/Catln/Pair
+                            [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
+                            , /A=/Data/String
+                            ]
+                        ]
+                    )
+                , /Catln/Type/TypeVar
+                    ( /aux=∀/Catln/TypeVarAux
+                    , /loc=∀/Catln/TypeVarLoc
+                    )
+                ]
+            , Just "A set of types: what a value may be.A [UnionType] is the [leafs] and [consts] it holds, and — if it has a [top] — everything EXCEPT what that says: the [Triple] there is the conditions the universe is filtered by, the leafs taken out of it, and the constants taken out of it. So a type with no [top] is written by what it contains, and a type with one is written by what it does not.A [TypeVar] is a variable rather than a set: an [aux] saying which variable, and a [loc] saying whether it was defined on the type it is written in or outside it."
+            )
+        , CGClass
+            ( True
+            , /Catln/TypePredicate
+            ,
+                [ /Catln/TypePredicate/PredExpr( /type=/Catln/PartialType )
+                , /Catln/TypePredicate/PredClass( /type=/Catln/PartialType )
+                , /Catln/TypePredicate/PredRel( /type=/Catln/PartialType )
+                ]
+            , Just "One condition a type is filtered by, each written over the [type] it is about.A [PredExpr] says the value is that expression, a [PredClass] that it has that class, and a [PredRel] that it is one — the `isa` written `val : classOrModuleOrType`."
+            )
+        , CGClass
+            ( True
+            , /Catln/TypePredicates
+            ,
+                [ /Catln/TypePredicates/PredsOne( /pred=∀/Catln/TypePredicate )
+                , /Catln/TypePredicates/PredsAnd
+                    ( /preds=∀/Data/List[ /T=∀/Catln/TypePredicates ] )
+                , /Catln/TypePredicates/PredsNot( /pred=∀/Catln/TypePredicates )
+                ]
+            , Just "The conditions a type is filtered by: one of them, all of a list of them, or the negation of one.No condition at all is written as an empty [PredsAnd], so a type with nothing said about it and a type with everything said about it are the same shape read two ways rather than two shapes."
+            )
+        , CGClass
+            ( True
+            , /Catln/TypeVarAux
+            ,
+                [ /Catln/TypeVarAux/TVVar( /name=/Catln/PartialKey )
+                , /Catln/TypeVarAux/TVArg( /name=/Catln/PartialKey )
+                , /Catln/TypeVarAux/TVApplied
+                    ( /vars=∀/Data/List
+                        [ /T=/Catln/Pair
+                            [ /B=∀/Catln/Type
+                            , /A=/Catln/PartialKey
+                            ]
+                        ]
+                    , /base=∀/Catln/TypeVarAux
+                    )
+                ]
+            , Just "Which type variable a variable type is: one written on the type ([TVVar], by [name]), one standing for an argument's type ([TVArg], by the argument's [name]), or one re-applied with new parameters ([TVApplied], the [base] it was and the [vars] rebound on it).A [TVApplied] holds a variable rather than a type, so it is the one arm that reaches this type again."
             )
         , CGClass
             ( True
@@ -327,6 +676,42 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr
                 { csValue = "The difference is what the variable is resolved against, so it is part of what the variable IS rather than a note about it." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A set of types: what a value may be." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A [UnionType] is the [leafs] and [consts] it holds, and — if it has a [top] — everything EXCEPT what that says: the [Triple] there is the conditions the universe is filtered by, the leafs taken out of it, and the constants taken out of it. So a type with no [top] is written by what it contains, and a type with one is written by what it does not." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A [TypeVar] is a variable rather than a set: an [aux] saying which variable, and a [loc] saying whether it was defined on the type it is written in or outside it." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "The conditions a type is filtered by: one of them, all of a list of them, or the negation of one." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "No condition at all is written as an empty [PredsAnd], so a type with nothing said about it and a type with everything said about it are the same shape read two ways rather than two shapes." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "One condition a type is filtered by, each written over the [type] it is about." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A [PredExpr] says the value is that expression, a [PredClass] that it has that class, and a [PredRel] that it is one — the `isa` written `val : classOrModuleOrType`." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Which type variable a variable type is: one written on the type ([TVVar], by [name]), one standing for an argument's type ([TVArg], by the argument's [name]), or one re-applied with new parameters ([TVApplied], the [base] it was and the [vars] rebound on it)." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A [TVApplied] holds a variable rather than a type, so it is the one arm that reaches this type again." }
             )
         ]
     }

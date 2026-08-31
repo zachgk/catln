@@ -174,16 +174,31 @@ pattern PtArgAny = PtArgMode True False
 
 -- | A predicate applied to a type
 data TypePredicate
-  = PredExpr PartialType
-  | PredClass PartialType -- A hasClass predicate
-  | PredRel PartialType -- a isa predicate. Represented by val : classOrModuleOrType
+  = PredExpr { peType :: PartialType }
+  | PredClass { pcType :: PartialType } -- A hasClass predicate
+  | PredRel { prType :: PartialType } -- a isa predicate. Represented by val : classOrModuleOrType
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
+-- | One condition a type is filtered by, read as a Catln type.
+instance CtType TypePredicate where
+  ctDoc _ = [
+    "One condition a type is filtered by, each written over the [type] it is about.",
+    "A [PredExpr] says the value is that expression, a [PredClass] that it has that class, and a [PredRel] that it is one — the `isa` written `val : classOrModuleOrType`."
+            ]
+
 data TypePredicates
-  = PredsOne TypePredicate
-  | PredsAnd [TypePredicates]
-  | PredsNot TypePredicates
+  = PredsOne { poPred :: TypePredicate }
+  | PredsAnd { paPreds :: [TypePredicates] }
+  | PredsNot { pnPred :: TypePredicates }
   deriving (Eq, Ord, Generic, ToJSON)
+
+-- | The conditions a type is filtered by, read as a Catln type: one, all of several, or the
+-- negation of one. There is no arm for none, which is 'PredsNone' — an empty [PredsAnd].
+instance CtType TypePredicates where
+  ctDoc _ = [
+    "The conditions a type is filtered by: one of them, all of a list of them, or the negation of one.",
+    "No condition at all is written as an empty [PredsAnd], so a type with nothing said about it and a type with everything said about it are the same shape read two ways rather than two shapes."
+            ]
 
 data PartialKey = PartialKey {
   pkName :: Name,
@@ -259,6 +274,14 @@ data PartialType = PartialType {
   ptArgMode :: PtArgMode
   } deriving (Eq, Ord, Generic, ToJSON, ToJSONKey)
 
+-- | One simple set of types, read as a Catln type. Already a record, so nothing had to be named.
+instance CtType PartialType where
+  ctDoc _ = [
+    "A simple set of types: what one object or one data declaration could match.",
+    "Its [name] is what it is called, its [vars] are the type parameters it is written with, its [args] are the fields it is written over, its [preds] are what it is filtered by, and its [argMode] says how those args bound what it matches.",
+    "[vars] and [args] are tracked apart and matched apart. A field is not related to a type parameter by the declaration, so a value's field says nothing about a parameter of the type unless something else says it does."
+            ]
+
 -- | Hash PartialType without recursing into map *values* (which are Types containing
 -- more PartialLeafs).  Key names and sizes discriminate the common cases cheaply.
 -- predsTag breaks the TypePredicates→TypePredicate→PartialType cycle.
@@ -289,24 +312,40 @@ instance CtType Constant where
             ]
 
 -- | The non-name properties of a 'PartialType'
-newtype PartialArgsOption = PartialArgsOption
-  (H.HashMap TypeVarName Type, H.HashMap ArgName Type, TypePredicates, PtArgMode)
-  deriving (Eq, Ord)
+--
+-- Four fields rather than the one anonymous four-tuple it was. They are 'PartialType''s own fields
+-- minus its name, and are named after them, so that the two spellings of one thing read as one
+-- thing. What forced it is that a Catln argument is named and a tuple's parts are not — but eight
+-- sites build or match one, all of them in this file, so the names cost nothing that the
+-- hundred-odd sites behind 'Type''s own tuple would have.
+data PartialArgsOption = PartialArgsOption {
+  paoVars    :: H.HashMap TypeVarName Type,
+  paoArgs    :: H.HashMap ArgName Type,
+  paoPreds   :: TypePredicates,
+  paoArgMode :: PtArgMode
+  } deriving (Eq, Ord, Generic)
 
 instance Show PartialArgsOption where
-  show (PartialArgsOption t) = show t
+  show (PartialArgsOption vars args preds mode) = show (vars, args, preds, mode)
 
 instance ToJSON PartialArgsOption where
-  toJSON (PartialArgsOption t) = toJSON t
+  toJSON (PartialArgsOption vars args preds mode) = toJSON (vars, args, preds, mode)
 
 -- | Shallow hash: map sizes + predsTag + argMode, avoiding recursive descent into Type values.
 -- Mirrors the pattern used for 'PartialType' and 'Type'.
 instance Hashable PartialArgsOption where
-  hashWithSalt s (PartialArgsOption (vars, args, preds, mode)) =
+  hashWithSalt s (PartialArgsOption vars args preds mode) =
     s `hashWithSalt` H.size vars
       `hashWithSalt` H.size args
       `hashWithSalt` predsTag preds
       `hashWithSalt` mode
+
+-- | The non-name half of a partial type, read as a Catln one.
+instance CtType PartialArgsOption where
+  ctDoc _ = [
+    "Everything a partial type is apart from its name: the [vars] it is written with, the [args] it is written over, the [preds] it is filtered by, and how its arguments [argMode] bound what it matches.",
+    "It is what a set of partials sharing one name holds, so that the name is written once and each of the ways it can be filled in is written beside it."
+            ]
 
 -- | An alternative format for many 'PartialType's which combine those that share the same name
 type PartialLeafs = H.HashMap TypeName (S.HashSet PartialArgsOption)
@@ -321,9 +360,9 @@ type PartialLeafs = H.HashMap TypeName (S.HashSet PartialArgsOption)
 -- list for its exclusions, so "class-top ∪ positive constant" was unrepresentable and forced a
 -- lossy expansion of the class-top to its materialized members.)
 data Type
-  = UnionType (Maybe (TypePredicates, PartialLeafs, [Constant])) PartialLeafs [Constant]
+  = UnionType { utTop :: Maybe (TypePredicates, PartialLeafs, [Constant]), utLeafs :: PartialLeafs, utConsts :: [Constant] }
   -- | A type-variable OCCURRENCE: the variable reference plus occurrence-local knowledge.
-  -- The occurrence denotes @⟦var⟧ ∩ ⟦inner⟧@ — the third (inner) component is an upper bound
+  -- The occurrence denotes @⟦var⟧ ∩ ⟦inner⟧@ — the third ('tvInner') component is an upper bound
   -- this particular occurrence is known to satisfy, carried WITH the reference so traversals
   -- never have to choose between keeping the pointer (linkage) and materializing its bound
   -- (value): out-of-scope reads erase to the inner rather than ⊤, and a frame exit can fold
@@ -331,8 +370,22 @@ data Type
   -- knowledge) reproduces the plain-variable semantics exactly. PRODUCERS of a non-⊤ inner
   -- should install only CLOSED values ('typeHasTypeVars' — the 'substituteFreeDeep'
   -- discipline); consumers do not assume it.
-  | TypeVar TypeVarAux TypeVarLoc Type
+  | TypeVar { tvAux :: TypeVarAux, tvLoc :: TypeVarLoc, tvInner :: Type }
   deriving (Eq, Ord, Generic, ToJSON, ToJSONKey)
+
+-- | A set of types, read as a Catln type. The one the whole program is written in terms of.
+--
+-- Its subtractive half stays the three-tuple it is, handed over as a [\/Catln\/Triple]. Named as
+-- three fields it would read better, and a hundred and forty-eight places build or match that
+-- @Just@ — so the names would cost a rewrite of the type checker to improve a declaration. The
+-- triple is what a pair is: a way of handing over what Haskell leaves anonymous without renaming it
+-- where it is used.
+instance CtType Type where
+  ctDoc _ = [
+    "A set of types: what a value may be.",
+    "A [UnionType] is the [leafs] and [consts] it holds, and — if it has a [top] — everything EXCEPT what that says: the [Triple] there is the conditions the universe is filtered by, the leafs taken out of it, and the constants taken out of it. So a type with no [top] is written by what it contains, and a type with one is written by what it does not.",
+    "A [TypeVar] is a variable rather than a set: an [aux] saying which variable, a [loc] saying whether it was defined on the type it is written in or outside it, and an [inner] the occurrence is known to be within. The occurrence is the variable and the inner together, so it means everything the variable can be that is also within the inner."
+            ]
 
 -- | Hash Type using only structural shape and key names, not the nested Type
 -- values inside PartialLeafs.  This avoids the expensive recursive descent
@@ -420,10 +473,17 @@ instance CtType TypeVarLoc where
 
 -- | A type because two kinds of type variables are supported
 data TypeVarAux
-  = TVVar TypeVarName -- ^ A type variable stored from the 'PartialType' ptVars
-  | TVArg ArgName -- ^ A type variable referring to an arguments type
-  | TVApplied TypeVarAux !(H.HashMap TypeVarName Type) -- ^ A type variable re-applied with new parameter bindings (@$F[$T -> $_B]@): whatever the base variable resolves to, with the named parameter slots rebound ('applyTypeVarOverrides')
+  = TVVar { tvvName :: TypeVarName } -- ^ A type variable stored from the 'PartialType' ptVars
+  | TVArg { tvaName :: ArgName } -- ^ A type variable referring to an arguments type
+  | TVApplied { tvpBase :: TypeVarAux, tvpVars :: !(H.HashMap TypeVarName Type) } -- ^ A type variable re-applied with new parameter bindings (@$F[$T -> $_B]@): whatever the base variable resolves to, with the named parameter slots rebound ('applyTypeVarOverrides')
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON, ToJSONKey)
+
+-- | Which type variable a 'TypeVar' is, read as a Catln type.
+instance CtType TypeVarAux where
+  ctDoc _ = [
+    "Which type variable a variable type is: one written on the type ([TVVar], by [name]), one standing for an argument's type ([TVArg], by the argument's [name]), or one re-applied with new parameters ([TVApplied], the [base] it was and the [vars] rebound on it).",
+    "A [TVApplied] holds a variable rather than a type, so it is the one arm that reaches this type again."
+            ]
 
 -- | Whether the typeclass can be extended or not
 type Sealed = Bool
@@ -1150,21 +1210,21 @@ fromPartialName (PRelativeName n) = n
 -- | Used to convert a 'UnionType' into its components
 splitUnionType :: PartialLeafs -> [PartialType]
 splitUnionType partials = concatMap (\(k, vs) -> map (aux k) vs) $ H.toList $ fmap S.toList partials
-  where aux name (PartialArgsOption (vars, args, preds, argMode)) = PartialType name vars args preds argMode
+  where aux name (PartialArgsOption vars args preds argMode) = PartialType name vars args preds argMode
 
 -- | Used to combine the component 'PartialType' to form a 'UnionType'
 joinUnionType :: [PartialType] -> PartialLeafs
-joinUnionType = foldr (\(PartialType pName pVars pArgs pPreds pArgMode) partials -> H.insertWith S.union pName (S.singleton (PartialArgsOption (pVars, pArgs, pPreds, pArgMode))) partials) H.empty
+joinUnionType = foldr (\(PartialType pName pVars pArgs pPreds pArgMode) partials -> H.insertWith S.union pName (S.singleton (PartialArgsOption pVars pArgs pPreds pArgMode)) partials) H.empty
 
 -- | Used to convert a 'UnionType' into its components while keeping types with the same name together
 splitUnionTypeByName :: PartialLeafs -> H.HashMap TypeName [PartialType]
 splitUnionTypeByName = H.mapWithKey (\k vs -> map (aux k) (S.toList vs))
-  where aux name (PartialArgsOption (vars, args, preds, argMode)) = PartialType name vars args preds argMode
+  where aux name (PartialArgsOption vars args preds argMode) = PartialType name vars args preds argMode
 
 -- | Used to combine the component 'PartialType' to form a 'UnionType' while keeping types with the same name together
 joinUnionTypeByName :: H.HashMap TypeName [PartialType] -> PartialLeafs
 joinUnionTypeByName leafs = H.map (S.fromList . map typeToArgOption) $ H.filter (not . null) leafs
-  where typeToArgOption (PartialType _ pVars pArgs pPreds pArgMode) = PartialArgsOption (pVars, pArgs, pPreds, pArgMode)
+  where typeToArgOption (PartialType _ pVars pArgs pPreds pArgMode) = PartialArgsOption pVars pArgs pPreds pArgMode
 
 -- | Helper to create a 'UnionType' consisting of a single 'PartialType'
 singletonType :: PartialType -> Type
@@ -4621,7 +4681,7 @@ compactType TypeEnv{teDisableCompact=True} _ t = t
 --   * a single predicate-free partial with no args/vars: nothing to filter, join, overlap, or recurse into.
 compactType _ _ t@BottomType = t
 compactType _ _ t@(UnionType Nothing pos [])
-  | [PartialArgsOption (vars, args, PredsNone, _)] <- concatMap S.toList (H.elems pos)
+  | [PartialArgsOption vars args PredsNone _] <- concatMap S.toList (H.elems pos)
   , H.null vars
   , H.null args = t
 -- Canonical scope form: a NESTED external reference not bound by the ambient env denotes ⊤ —

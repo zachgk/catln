@@ -38,7 +38,7 @@ import           GHC.Generics        (Generic)
 import           Semantics.CtType
 import           Semantics.Prgm      (Hole, ObjectBasis)
 import           Semantics.Types     (Constant, PartialKey, PartialName,
-                                      PtArgMode, TypeVarLoc)
+                                      PtArgMode, Type, TypeVarLoc)
 import           Semantics.Val       hiding (Val)
 import           Text.Printf
 
@@ -93,7 +93,11 @@ hsPrgmTypes = [
   ctPageInto (Proxy :: Proxy PartialName),
   ctPageInto (Proxy :: Proxy PtArgMode),
   ctPageInto (Proxy :: Proxy TypeVarLoc),
-  ctPageInto (Proxy :: Proxy PartialKey)
+  ctPageInto (Proxy :: Proxy PartialKey),
+  -- Reaches the whole of what a type is: the partials it is made of, the conditions they are
+  -- filtered by, the variables they hold, and the maps and sets holding those. Named alone because
+  -- the walk finds the rest.
+  ctPageInto (Proxy :: Proxy Type)
               ]
 
 hsPrgmPage :: CtPage

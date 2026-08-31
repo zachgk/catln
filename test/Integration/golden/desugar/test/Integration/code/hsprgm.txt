@@ -2,75 +2,6 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
-                ( "/Test/report"
-                , ObjectMapItem
-                    { omiDecls = [ Value /Test/report -> /Data/String ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Test/report -> /Data/String = /operator++
-                            ( Value /l= /operator++
-                                ( Value /l= /operator++
-                                    ( Value /l= /operator++
-                                        ( Value /l= /operator++
-                                            ( Value /l= /operator++
-                                                ( Value /l= constantKind
-                                                    ( Value c= /Catln/Constant/CInt
-                                                        ( Value value= CInt
-                                                            { ciValue = 3 }
-                                                        )
-                                                    )
-                                                )
-                                                ( Value /r= CStr
-                                                    { csValue = " " }
-                                                )
-                                            )
-                                            ( Value /r= toString
-                                                ( Value /this= intOf
-                                                    ( Value c= /Catln/Constant/CInt
-                                                        ( Value value= CInt
-                                                            { ciValue = 42 }
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                        )
-                                        ( Value /r= CStr
-                                            { csValue = " " }
-                                        )
-                                    )
-                                    ( Value /r= keyName
-                                        ( Value k= /Catln/PartialKey
-                                            ( Value name= CStr
-                                                { csValue = "x" }
-                                            )( Value vars= Value /Data/List/Nil )( Value args= Value /Data/List/Nil )
-                                        )
-                                    )
-                                )
-                                ( Value /r= CStr
-                                    { csValue = " " }
-                                )
-                            )
-                            ( Value /r= toString
-                                ( Value /this= keyDepth
-                                    ( Value k= /Catln/PartialKey
-                                        ( Value name= CStr
-                                            { csValue = "f" }
-                                        )( Value vars= Value /Data/List/Nil )
-                                        ( Value args= /Data/List/Cons
-                                            ( Value /head= /Catln/PartialKey
-                                                ( Value name= CStr
-                                                    { csValue = "a" }
-                                                )( Value vars= Value /Data/List/Nil )( Value args= Value /Data/List/Nil )
-                                            )( Value /tail= Value /Data/List/Nil )
-                                        )
-                                    )
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Test/constantKind"
                 , ObjectMapItem
                     { omiDecls =
@@ -128,7 +59,90 @@ Prgm
                             ( Value val= CInt
                                 { ciValue = 0 }
                             )
-                            ( Value /this= println( Value msg= Value report )( Value /this= Value io ) )
+                            ( Value /this= println
+                                ( Value msg= toString
+                                    ( Value /this= constCount
+                                        ( Value t= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )
+                                            ( Value consts= /Data/List/Cons
+                                                ( Value /head= /Catln/Constant/CInt
+                                                    ( Value value= CInt
+                                                        { ciValue = 1 }
+                                                    )
+                                                )( Value /tail= Value /Data/List/Nil )
+                                            )
+                                        )
+                                    )
+                                )
+                                ( Value /this= println
+                                    ( Value msg= typeKind
+                                        ( Value t= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )( Value consts= Value /Data/List/Nil ) )
+                                    )
+                                    ( Value /this= println
+                                        ( Value msg= toString
+                                            ( Value /this= keyDepth
+                                                ( Value k= /Catln/PartialKey
+                                                    ( Value name= CStr
+                                                        { csValue = "f" }
+                                                    )( Value vars= Value /Data/List/Nil )
+                                                    ( Value args= /Data/List/Cons
+                                                        ( Value /head= /Catln/PartialKey
+                                                            ( Value name= CStr
+                                                                { csValue = "a" }
+                                                            )( Value vars= Value /Data/List/Nil )( Value args= Value /Data/List/Nil )
+                                                        )( Value /tail= Value /Data/List/Nil )
+                                                    )
+                                                )
+                                            )
+                                        )
+                                        ( Value /this= println
+                                            ( Value msg= keyName
+                                                ( Value k= /Catln/PartialKey
+                                                    ( Value name= CStr
+                                                        { csValue = "x" }
+                                                    )( Value vars= Value /Data/List/Nil )( Value args= Value /Data/List/Nil )
+                                                )
+                                            )
+                                            ( Value /this= println
+                                                ( Value msg= toString
+                                                    ( Value /this= intOf
+                                                        ( Value c= /Catln/Constant/CInt
+                                                            ( Value value= CInt
+                                                                { ciValue = 42 }
+                                                            )
+                                                        )
+                                                    )
+                                                )
+                                                ( Value /this= println
+                                                    ( Value msg= constantKind
+                                                        ( Value c= /Catln/Constant/CInt
+                                                            ( Value value= CInt
+                                                                { ciValue = 3 }
+                                                            )
+                                                        )
+                                                    )( Value /this= Value io )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/typeKind"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/typeKind( Value t -> ∀/Catln/Type ) -> /Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/typeKind
+                            ( Value t= /Catln/Type/UnionType( Value top )( Value leafs )( Value consts ) ) -> /Data/String = CStr
+                            { csValue = "union" }
+                        , /Test/typeKind
+                            ( Value t= /Catln/Type/TypeVar( Value aux )( Value loc ) ) -> /Data/String = CStr
+                            { csValue = "var" }
                         ]
                     }
                 )
@@ -175,6 +189,22 @@ Prgm
                     }
                 )
             ,
+                ( "/Test/constCount"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/constCount( Value t -> ∀/Catln/Type ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/constCount
+                            ( Value t= /Catln/Type/UnionType( Value top )( Value leafs )( Value consts ) ) -> /Data/Primitive/Integer = length( Value /this= Value consts )
+                        , /Test/constCount
+                            ( Value t= /Catln/Type/TypeVar( Value aux )( Value loc ) ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
+                        ]
+                    }
+                )
+            ,
                 ( "/Test/keyDepthAll"
                 , ObjectMapItem
                     { omiDecls =
@@ -213,6 +243,7 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -306,6 +337,35 @@ Prgm
             ( Value /result= CStr
                 { csValue = "2" }
             )
+        , /Catln/#print
+            ( Value /p= typeKind
+                ( Value t= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )( Value consts= Value /Data/List/Nil ) )
+            )
+            ( Value /result= CStr
+                { csValue = "union" }
+            )
+        , /Catln/#print
+            ( Value /p= constCount
+                ( Value t= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )
+                    ( Value consts= /Data/List/Cons
+                        ( Value /head= /Catln/Constant/CInt
+                            ( Value value= CInt
+                                { ciValue = 1 }
+                            )
+                        )
+                        ( Value /tail= /Data/List/Cons
+                            ( Value /head= /Catln/Constant/CStr
+                                ( Value value= CStr
+                                    { csValue = "s" }
+                                )
+                            )( Value /tail= Value /Data/List/Nil )
+                        )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "2" }
+            )
         , /Catln/#md
             ( Value /text= CStr
                 { csValue = "## What the suite checks
@@ -315,6 +375,22 @@ Prgm
                 cycle @core/result.ct@ measures. So the values are printed instead, and @hsprgm.stdout.txt@ is
                 what compares them, which is the one mechanism the integration runner already has for saying
                 what a program produced." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "One line per answer rather than one joined string. Joining them chained eight [operator++]s and" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "  reached the [runConstraints] limit on [/operator++[$T -> Semigroup]] — the same non-convergence" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "  the suite's two standing failures are, which is being worked on elsewhere. Printing each is" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "  what the answers are for, and it does not stand on the part of the solver that is unwell." }
             )
         ]
     }

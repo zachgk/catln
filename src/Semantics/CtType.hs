@@ -515,6 +515,48 @@ instance (CtType a, CtType b) => CtType (a, b) where
     (,) <$> (fromCt =<< valArg n ctPairFirst as) <*> (fromCt =<< valArg n ctPairSecond as)
   fromCt v = Left $ printf "%s is not a %s" (show v) ctPairPath
 
+-- | Three values together, for the same reason a pair is two.
+--
+-- A separate declaration rather than a pair of a pair: @Pair[$A, Pair[$B, $C]]@ would be read
+-- @second.first@ where the Haskell it stands for is read @b@, so the shape a program is handed
+-- would be an artifact of there being no triple rather than of anything about the value.
+ctTriplePath, ctTripleThird, ctTripleThirdVar :: String
+ctTriplePath = ctBuiltinNamespace ++ "Triple"
+ctTripleThird = "third"
+ctTripleThirdVar = "$C"
+
+ctTripleDecl :: CtDecl
+ctTripleDecl = CtDecl ctTriplePath [CtCon ctTriplePath [ctPairFirstVar, ctPairSecondVar, ctTripleThirdVar] [
+    (ctPairFirst, ctRef ctPairFirstVar),
+    (ctPairSecond, ctRef ctPairSecondVar),
+    (ctTripleThird, ctRef ctTripleThirdVar)
+                                                                                                          ]] [
+  "Three values together, the [first], the [second] and the [third].",
+  "Declared beside [/Catln/Pair] and for its reason. It is not a pair holding a pair: that would be read as [second.first] where what it stands for is read as one thing, and the shape handed over would say something about there being no triple rather than about the value."
+                                                                                                             ]
+
+instance (CtType a, CtType b, CtType c) => CtType (a, b, c) where
+  ctPath _ = ctTriplePath
+  ctTypeRef _ = CtTypeRef ctTriplePath [
+    (ctPairFirstVar, ctTypeRef (Proxy :: Proxy a)),
+    (ctPairSecondVar, ctTypeRef (Proxy :: Proxy b)),
+    (ctTripleThirdVar, ctTypeRef (Proxy :: Proxy c))
+                                       ]
+  ctPageInto _ = ctPageInto (Proxy :: Proxy c)
+               . ctPageInto (Proxy :: Proxy b)
+               . ctPageInto (Proxy :: Proxy a)
+               . ctPageDeclare ctTripleDecl (Proxy :: Proxy (a, b, c))
+  toCt (x, y, z) = TupleVal ctTriplePath $ H.fromList [
+    (runtimeArgKey ctPairFirst, toCt x),
+    (runtimeArgKey ctPairSecond, toCt y),
+    (runtimeArgKey ctTripleThird, toCt z)
+                                                      ]
+  fromCt (TupleVal n as) | n == ctTriplePath =
+    (,,) <$> (fromCt =<< valArg n ctPairFirst as)
+         <*> (fromCt =<< valArg n ctPairSecond as)
+         <*> (fromCt =<< valArg n ctTripleThird as)
+  fromCt v = Left $ printf "%s is not a %s" (show v) ctTriplePath
+
 -- | A set is the list of what is in it, in order.
 --
 -- Sorted rather than left as the set iterates. A 'S.HashSet' has no order of its own, so the value

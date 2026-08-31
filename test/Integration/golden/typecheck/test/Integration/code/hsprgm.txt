@@ -2,101 +2,6 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
-                ( "/Test/report"
-                , ObjectMapItem
-                    { omiDecls = [ Value /Test/report -> /Data/String ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Test/report -> /Data/String = /operator++
-                            ( Value /l -> /Data/String = /operator++
-                                ( Value /l -> /Data/String = /operator++
-                                    ( Value /l -> /Data/String = /operator++
-                                        ( Value /l -> /Data/String = /operator++
-                                            ( Value /l -> /Data/String = /operator++
-                                                ( Value /l -> /Data/String = /Test/constantKind
-                                                    ( Value /c -> /Catln/Constant/CInt( /value=/Data/Primitive/Integer ) = /Catln/Constant/CInt
-                                                        ( Value /value -> /Data/Primitive/Integer = CInt
-                                                            { ciValue = 3 }
-                                                        )
-                                                    )
-                                                )
-                                                ( Value /r -> /Data/String = CStr
-                                                    { csValue = " " }
-                                                )
-                                            )
-                                            ( Value /r -> /Data/String = /Data/toString
-                                                ( Value /this -> /Data/Primitive/Integer = /Test/intOf
-                                                    ( Value /c -> /Catln/Constant/CInt( /value=/Data/Primitive/Integer ) = /Catln/Constant/CInt
-                                                        ( Value /value -> /Data/Primitive/Integer = CInt
-                                                            { ciValue = 42 }
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                        )
-                                        ( Value /r -> /Data/String = CStr
-                                            { csValue = " " }
-                                        )
-                                    )
-                                    ( Value /r -> /Data/String = /Test/keyName
-                                        ( Value /k -> /Catln/PartialKey
-                                            ( /name=/Data/String
-                                            , /vars=/Data/List/Nil
-                                            , /args=/Data/List/Nil
-                                            ) = /Catln/PartialKey
-                                            ( Value /name -> /Data/String = CStr
-                                                { csValue = "x" }
-                                            )( Value /vars -> /Data/List/Nil = Value /Data/List/Nil )( Value /args -> /Data/List/Nil = Value /Data/List/Nil )
-                                        )
-                                    )
-                                )
-                                ( Value /r -> /Data/String = CStr
-                                    { csValue = " " }
-                                )
-                            )
-                            ( Value /r -> /Data/String = /Data/toString
-                                ( Value /this -> /Data/Primitive/Integer = /Test/keyDepth
-                                    ( Value /k -> /Catln/PartialKey
-                                        ( /name=/Data/String
-                                        , /vars=/Data/List/Nil
-                                        , /args=/Data/List/Cons
-                                            ( /head=/Catln/PartialKey
-                                                ( /name=/Data/String
-                                                , /vars=/Data/List/Nil
-                                                , /args=/Data/List/Nil
-                                                )
-                                            , /tail=/Data/List/Nil
-                                            )
-                                        ) = /Catln/PartialKey
-                                        ( Value /name -> /Data/String = CStr
-                                            { csValue = "f" }
-                                        )( Value /vars -> /Data/List/Nil = Value /Data/List/Nil )
-                                        ( Value /args -> /Data/List/Cons
-                                            ( /head=/Catln/PartialKey
-                                                ( /name=/Data/String
-                                                , /vars=/Data/List/Nil
-                                                , /args=/Data/List/Nil
-                                                )
-                                            , /tail=/Data/List/Nil
-                                            ) = /Data/List/Cons
-                                            ( Value /head -> /Catln/PartialKey
-                                                ( /name=/Data/String
-                                                , /vars=/Data/List/Nil
-                                                , /args=/Data/List/Nil
-                                                ) = /Catln/PartialKey
-                                                ( Value /name -> /Data/String = CStr
-                                                    { csValue = "a" }
-                                                )( Value /vars -> /Data/List/Nil = Value /Data/List/Nil )( Value /args -> /Data/List/Nil = Value /Data/List/Nil )
-                                            )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
-                                        )
-                                    )
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Test/constantKind"
                 , ObjectMapItem
                     { omiDecls =
@@ -164,7 +69,189 @@ Prgm
                             ( Value /val -> /Data/Primitive/Integer = CInt
                                 { ciValue = 0 }
                             )
-                            ( Value /this -> /Catln/IO = /Catln/println( Value /msg -> /Data/String = Value /Test/report )( Value /this -> TVArg /io = Value /io ) )
+                            ( Value /this -> /Catln/IO = /Catln/println
+                                ( Value /msg -> /Data/String = /Data/toString
+                                    ( Value /this -> UnionType
+                                        ( Just
+                                            ( PredExpr /operator==
+                                                ( /r=/Data/Primitive/True
+                                                , /l=~nonNeg( /this=~/$this )
+                                                ) && PredRel Integer && PredClass /Data/ToString
+                                            , fromList []
+                                            , []
+                                            )
+                                        , /Data/Primitive/Integer
+                                        , []
+                                        ) = /Test/constCount
+                                        ( Value /t -> /Catln/Type/UnionType
+                                            ( /top=/Data/Maybe/Nothing
+                                            , /consts=/Data/List/Cons
+                                                [ /T=/Catln/Constant/CInt( /value=/Data/Primitive/Integer ) ]
+                                                ( /head=/Catln/Constant/CInt( /value=/Data/Primitive/Integer )
+                                                , /tail=/Data/List/Nil
+                                                )
+                                            , /leafs=/Data/List/Nil
+                                            ) = /Catln/Type/UnionType( Value /top -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /leafs -> /Data/List/Nil = Value /Data/List/Nil )
+                                            ( Value /consts -> /Data/List/Cons
+                                                ( /head=/Catln/Constant/CInt( /value=/Data/Primitive/Integer )
+                                                , /tail=/Data/List/Nil
+                                                ) = /Data/List/Cons
+                                                ( Value /head -> /Catln/Constant/CInt( /value=/Data/Primitive/Integer ) = /Catln/Constant/CInt
+                                                    ( Value /value -> /Data/Primitive/Integer = CInt
+                                                        { ciValue = 1 }
+                                                    )
+                                                )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                                            )
+                                        )
+                                    )
+                                )
+                                ( Value /this -> /Catln/IO = /Catln/println
+                                    ( Value /msg -> /Data/String = /Test/typeKind
+                                        ( Value /t -> /Catln/Type/UnionType
+                                            ( /top=/Data/Maybe/Nothing
+                                            , /consts=/Data/List/Nil
+                                            , /leafs=/Data/List/Nil
+                                            ) = /Catln/Type/UnionType( Value /top -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /leafs -> /Data/List/Nil = Value /Data/List/Nil )( Value /consts -> /Data/List/Nil = Value /Data/List/Nil )
+                                        )
+                                    )
+                                    ( Value /this -> /Catln/IO = /Catln/println
+                                        ( Value /msg -> /Data/String = /Data/toString
+                                            ( Value /this -> /Data/Primitive/Integer = /Test/keyDepth
+                                                ( Value /k -> /Catln/PartialKey
+                                                    ( /name=/Data/String
+                                                    , /vars=/Data/List/Nil
+                                                    , /args=/Data/List/Cons
+                                                        ( /head=/Catln/PartialKey
+                                                            ( /name=/Data/String
+                                                            , /vars=/Data/List/Nil
+                                                            , /args=/Data/List/Nil
+                                                            )
+                                                        , /tail=/Data/List/Nil
+                                                        )
+                                                    ) = /Catln/PartialKey
+                                                    ( Value /name -> /Data/String = CStr
+                                                        { csValue = "f" }
+                                                    )( Value /vars -> /Data/List/Nil = Value /Data/List/Nil )
+                                                    ( Value /args -> /Data/List/Cons
+                                                        ( /head=/Catln/PartialKey
+                                                            ( /name=/Data/String
+                                                            , /vars=/Data/List/Nil
+                                                            , /args=/Data/List/Nil
+                                                            )
+                                                        , /tail=/Data/List/Nil
+                                                        ) = /Data/List/Cons
+                                                        ( Value /head -> /Catln/PartialKey
+                                                            ( /name=/Data/String
+                                                            , /vars=/Data/List/Nil
+                                                            , /args=/Data/List/Nil
+                                                            ) = /Catln/PartialKey
+                                                            ( Value /name -> /Data/String = CStr
+                                                                { csValue = "a" }
+                                                            )( Value /vars -> /Data/List/Nil = Value /Data/List/Nil )( Value /args -> /Data/List/Nil = Value /Data/List/Nil )
+                                                        )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                                                    )
+                                                )
+                                            )
+                                        )
+                                        ( Value /this -> /Catln/IO = /Catln/println
+                                            ( Value /msg -> /Data/String = /Test/keyName
+                                                ( Value /k -> /Catln/PartialKey
+                                                    ( /name=/Data/String
+                                                    , /vars=/Data/List/Nil
+                                                    , /args=/Data/List/Nil
+                                                    ) = /Catln/PartialKey
+                                                    ( Value /name -> /Data/String = CStr
+                                                        { csValue = "x" }
+                                                    )( Value /vars -> /Data/List/Nil = Value /Data/List/Nil )( Value /args -> /Data/List/Nil = Value /Data/List/Nil )
+                                                )
+                                            )
+                                            ( Value /this -> /Catln/IO = /Catln/println
+                                                ( Value /msg -> /Data/String = /Data/toString
+                                                    ( Value /this -> /Data/Primitive/Integer = /Test/intOf
+                                                        ( Value /c -> /Catln/Constant/CInt( /value=/Data/Primitive/Integer ) = /Catln/Constant/CInt
+                                                            ( Value /value -> /Data/Primitive/Integer = CInt
+                                                                { ciValue = 42 }
+                                                            )
+                                                        )
+                                                    )
+                                                )
+                                                ( Value /this -> /Catln/IO = /Catln/println
+                                                    ( Value /msg -> /Data/String = /Test/constantKind
+                                                        ( Value /c -> /Catln/Constant/CInt( /value=/Data/Primitive/Integer ) = /Catln/Constant/CInt
+                                                            ( Value /value -> /Data/Primitive/Integer = CInt
+                                                                { ciValue = 3 }
+                                                            )
+                                                        )
+                                                    )( Value /this -> TVArg /io = Value /io )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/typeKind"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/typeKind( Value /t -> ∀/Catln/Type ) -> /Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/typeKind
+                            ( Value /t -> /Catln/Type/UnionType
+                                ( /top=∀/Data/Maybe
+                                    [ /T=/Catln/Triple
+                                        [ /B=∀/Data/List
+                                            [ /T=/Catln/Pair
+                                                [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
+                                                , /A=/Data/String
+                                                ]
+                                            ]
+                                        , /C=∀/Data/List[ /T=∀/Catln/Constant ]
+                                        , /A=∀/Catln/TypePredicates
+                                        ]
+                                    ]
+                                , /consts=∀/Data/List[ /T=∀/Catln/Constant ]
+                                , /leafs=∀/Data/List
+                                    [ /T=/Catln/Pair
+                                        [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
+                                        , /A=/Data/String
+                                        ]
+                                    ]
+                                ) = /Catln/Type/UnionType
+                                ( Value /top -> ∀/Data/Maybe
+                                    [ /T=/Catln/Triple
+                                        [ /B=∀/Data/List
+                                            [ /T=/Catln/Pair
+                                                [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
+                                                , /A=/Data/String
+                                                ]
+                                            ]
+                                        , /C=∀/Data/List[ /T=∀/Catln/Constant ]
+                                        , /A=∀/Catln/TypePredicates
+                                        ]
+                                    ]
+                                )
+                                ( Value /leafs -> ∀/Data/List
+                                    [ /T=/Catln/Pair
+                                        [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
+                                        , /A=/Data/String
+                                        ]
+                                    ]
+                                )
+                                ( Value /consts -> ∀/Data/List[ /T=∀/Catln/Constant ] )
+                            ) -> /Data/String = CStr
+                            { csValue = "union" }
+                        , /Test/typeKind
+                            ( Value /t -> /Catln/Type/TypeVar
+                                ( /aux=∀/Catln/TypeVarAux
+                                , /loc=∀/Catln/TypeVarLoc
+                                ) = /Catln/Type/TypeVar( Value /aux -> ∀/Catln/TypeVarAux )( Value /loc -> ∀/Catln/TypeVarLoc )
+                            ) -> /Data/String = CStr
+                            { csValue = "var" }
                         ]
                     }
                 )
@@ -211,6 +298,68 @@ Prgm
                             { ciValue = 0 }
                         , /Test/intOf
                             ( Value /c -> /Catln/Constant/CChar( /value=/Data/Char ) = /Catln/Constant/CChar( Value /value -> /Data/Char ) ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
+                        ]
+                    }
+                )
+            ,
+                ( "/Test/constCount"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Test/constCount( Value /t -> ∀/Catln/Type ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Test/constCount
+                            ( Value /t -> /Catln/Type/UnionType
+                                ( /top=∀/Data/Maybe
+                                    [ /T=/Catln/Triple
+                                        [ /B=∀/Data/List
+                                            [ /T=/Catln/Pair
+                                                [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
+                                                , /A=/Data/String
+                                                ]
+                                            ]
+                                        , /C=∀/Data/List[ /T=∀/Catln/Constant ]
+                                        , /A=∀/Catln/TypePredicates
+                                        ]
+                                    ]
+                                , /consts=∀/Data/List[ /T=∀/Catln/Constant ]
+                                , /leafs=∀/Data/List
+                                    [ /T=/Catln/Pair
+                                        [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
+                                        , /A=/Data/String
+                                        ]
+                                    ]
+                                ) = /Catln/Type/UnionType
+                                ( Value /top -> ∀/Data/Maybe
+                                    [ /T=/Catln/Triple
+                                        [ /B=∀/Data/List
+                                            [ /T=/Catln/Pair
+                                                [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
+                                                , /A=/Data/String
+                                                ]
+                                            ]
+                                        , /C=∀/Data/List[ /T=∀/Catln/Constant ]
+                                        , /A=∀/Catln/TypePredicates
+                                        ]
+                                    ]
+                                )
+                                ( Value /leafs -> ∀/Data/List
+                                    [ /T=/Catln/Pair
+                                        [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
+                                        , /A=/Data/String
+                                        ]
+                                    ]
+                                )
+                                ( Value /consts -> ∀/Data/List[ /T=∀/Catln/Constant ] )
+                            ) -> /Data/Primitive/Integer = /Data/List/length( Value /this -> TVArg /consts = Value /consts )
+                        , /Test/constCount
+                            ( Value /t -> /Catln/Type/TypeVar
+                                ( /aux=∀/Catln/TypeVarAux
+                                , /loc=∀/Catln/TypeVarLoc
+                                ) = /Catln/Type/TypeVar( Value /aux -> ∀/Catln/TypeVarAux )( Value /loc -> ∀/Catln/TypeVarLoc )
+                            ) -> /Data/Primitive/Integer = CInt
                             { ciValue = 0 }
                         ]
                     }
@@ -271,6 +420,7 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -390,6 +540,72 @@ Prgm
             ( Value /result -> /Data/String = CStr
                 { csValue = "2" }
             )
+        , /Catln/#print
+            ( Value /p -> /Data/String = /Test/typeKind
+                ( Value /t -> /Catln/Type/UnionType
+                    ( /top=/Data/Maybe/Nothing
+                    , /consts=/Data/List/Nil
+                    , /leafs=/Data/List/Nil
+                    ) = /Catln/Type/UnionType( Value /top -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /leafs -> /Data/List/Nil = Value /Data/List/Nil )( Value /consts -> /Data/List/Nil = Value /Data/List/Nil )
+                )
+            )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "union" }
+            )
+        , /Catln/#print
+            ( Value /p -> UnionType
+                ( Just
+                    ( PredExpr /operator==
+                        ( /r=/Data/Primitive/True
+                        , /l=~nonNeg( /this=~/$this )
+                        ) && PredRel Integer
+                    , fromList []
+                    , []
+                    )
+                , /Data/Primitive/Integer
+                , []
+                ) = /Test/constCount
+                ( Value /t -> /Catln/Type/UnionType
+                    ( /top=/Data/Maybe/Nothing
+                    , /consts=/Data/List/Cons
+                        [ /T=/Catln/Constant/CInt( /value=/Data/Primitive/Integer ) ]
+                        ( /head=/Catln/Constant/CInt( /value=/Data/Primitive/Integer )
+                        , /tail=/Data/List/Cons
+                            [ /T=/Catln/Constant/CStr( /value=/Data/String ) ]
+                            ( /head=/Catln/Constant/CStr( /value=/Data/String )
+                            , /tail=/Data/List/Nil
+                            )
+                        )
+                    , /leafs=/Data/List/Nil
+                    ) = /Catln/Type/UnionType( Value /top -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /leafs -> /Data/List/Nil = Value /Data/List/Nil )
+                    ( Value /consts -> /Data/List/Cons
+                        ( /head=/Catln/Constant/CInt( /value=/Data/Primitive/Integer )
+                        , /tail=/Data/List/Cons
+                            ( /head=/Catln/Constant/CStr( /value=/Data/String )
+                            , /tail=/Data/List/Nil
+                            )
+                        ) = /Data/List/Cons
+                        ( Value /head -> /Catln/Constant/CInt( /value=/Data/Primitive/Integer ) = /Catln/Constant/CInt
+                            ( Value /value -> /Data/Primitive/Integer = CInt
+                                { ciValue = 1 }
+                            )
+                        )
+                        ( Value /tail -> /Data/List/Cons
+                            ( /head=/Catln/Constant/CStr( /value=/Data/String )
+                            , /tail=/Data/List/Nil
+                            ) = /Data/List/Cons
+                            ( Value /head -> /Catln/Constant/CStr( /value=/Data/String ) = /Catln/Constant/CStr
+                                ( Value /value -> /Data/String = CStr
+                                    { csValue = "s" }
+                                )
+                            )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                        )
+                    )
+                )
+            )
+            ( Value /result -> /Data/String = CStr
+                { csValue = "2" }
+            )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr
                 { csValue = "## What the suite checks
@@ -399,6 +615,22 @@ Prgm
                 cycle @core/result.ct@ measures. So the values are printed instead, and @hsprgm.stdout.txt@ is
                 what compares them, which is the one mechanism the integration runner already has for saying
                 what a program produced." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr
+                { csValue = "One line per answer rather than one joined string. Joining them chained eight [operator++]s and" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  reached the [runConstraints] limit on [/operator++[$T -> Semigroup]] — the same non-convergence" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  the suite's two standing failures are, which is being worked on elsewhere. Printing each is" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr
+                { csValue = "  what the answers are for, and it does not stand on the part of the solver that is unwell." }
             )
         ]
     }
