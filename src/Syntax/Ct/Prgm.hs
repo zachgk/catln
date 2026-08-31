@@ -48,47 +48,61 @@ data RawObjArr e m = RawObjArr {
                                }
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
+-- | The fields below are written in record syntax, and so are every raw type down to 'RawPrgm'.
+--
+-- Not for anything Haskell wants — nothing here is built or matched by field — but because a Catln
+-- argument is named and a positional constructor's arguments are not. 'Semantics.CtType' refuses to
+-- invent names ("Semantics.CtType", the @GCtFields@ instance for an unnamed selector), so a type the
+-- compiler wants to hand a Catln program has to say what its arguments are called where the
+-- constructor is written, which is also the only place the two cannot drift apart. Naming them is
+-- additive: positional construction and positional patterns are unchanged Haskell, so the several
+-- hundred sites building and matching a 'RawExpr' compile untouched.
+--
+-- The prefix is dropped when the name is read ('Semantics.CtType.ctDropFieldPrefix'), so @tppName@
+-- is declared as @name@. It must be entirely lowercase up to the first capital for that to work.
 data TypeProperty e m
-  = TypePropProj TypeName (e m)
-  | TypePropRel TypeName (e m)
+  = TypePropProj { tppName :: TypeName, tppExpr :: e m }
+  | TypePropRel { tprName :: TypeName, tprExpr :: e m }
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
-data RawApplyTerm e m = RATermDeep (e m) | RATermChild (e m)
+data RawApplyTerm e m = RATermDeep { ratdExpr :: e m } | RATermChild { ratcExpr :: e m }
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
-newtype RawApply e m = RawApply [RawApplyTerm e m]
+newtype RawApply e m = RawApply { raTerms :: [RawApplyTerm e m] }
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
 -- Expr before desugar
 data RawExpr m
-  = RawCExpr (Meta m) Constant
-  | RawValue (Meta m) TypeName
-  | RawHoleExpr (Meta m) Hole
-  | RawMacroValue (Meta m) TypeName
-  | RawApplyExpr (Meta m) (RawApply RawExpr m)
-  | RawFmtStrExpr (Meta m) String String
-  | RawTheExpr (RawExpr m) -- ^ Written :TypeName and read as The TypeName
-  | RawAliasExpr (RawExpr m) (RawExpr m) -- ^ base aliasExpr
-  | RawTupleApply (Meta m) (Meta m, RawExpr m) [(Bool, RawObjArr RawExpr m)] -- Boolean for isSpreadArg
-  | RawVarsApply (Meta m) (RawExpr m) [RawObjArr RawExpr m]
-  | RawContextApply (Meta m) (Meta m, RawExpr m) [RawObjArr RawExpr m]
-  | RawWhere (Meta m) (RawExpr m) (RawExpr m) -- ^ base cond
-  | RawParen (RawExpr m)
-  | RawMethod (Meta m) (RawExpr m) (RawExpr m) -- ^ base methodValue
-  | RawList (Meta m) [RawExpr m]
-  | RawTypeProp (Meta m) (RawExpr m) (TypeProperty RawExpr m)
+  = RawCExpr { rceMeta :: Meta m, rceConst :: Constant }
+  | RawValue { rvMeta :: Meta m, rvName :: TypeName }
+  | RawHoleExpr { rheMeta :: Meta m, rheHole :: Hole }
+  | RawMacroValue { rmvMeta :: Meta m, rmvName :: TypeName }
+  | RawApplyExpr { raeMeta :: Meta m, raeApply :: RawApply RawExpr m }
+  -- | The name a format string is written with, and the string itself.
+  | RawFmtStrExpr { rfsMeta :: Meta m, rfsName :: String, rfsStr :: String }
+  | RawTheExpr { rteExpr :: RawExpr m } -- ^ Written :TypeName and read as The TypeName
+  | RawAliasExpr { raliasBase :: RawExpr m, raliasAlias :: RawExpr m } -- ^ base aliasExpr
+  | RawTupleApply { rtaMeta :: Meta m, rtaBase :: (Meta m, RawExpr m), rtaArgs :: [(Bool, RawObjArr RawExpr m)] } -- Boolean for isSpreadArg
+  | RawVarsApply { rvaMeta :: Meta m, rvaBase :: RawExpr m, rvaVars :: [RawObjArr RawExpr m] }
+  | RawContextApply { rcaMeta :: Meta m, rcaBase :: (Meta m, RawExpr m), rcaArgs :: [RawObjArr RawExpr m] }
+  | RawWhere { rwMeta :: Meta m, rwBase :: RawExpr m, rwCond :: RawExpr m } -- ^ base cond
+  | RawParen { rpnExpr :: RawExpr m }
+  | RawMethod { rmMeta :: Meta m, rmBase :: RawExpr m, rmValue :: RawExpr m } -- ^ base methodValue
+  | RawList { rlMeta :: Meta m, rlValues :: [RawExpr m] }
+  | RawTypeProp { rtpMeta :: Meta m, rtpBase :: RawExpr m, rtpProp :: TypeProperty RawExpr m }
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
 data RawStatement e m
-  = RawDeclStatement (RawObjArr e m)
-  | RawBindStatement (RawObjArr e m) -- Uses <-
-  | RawAnnot (CompAnnot (e m))
+  = RawDeclStatement { rdsObjArr :: RawObjArr e m }
+  | RawBindStatement { rbsObjArr :: RawObjArr e m } -- Uses <-
+  | RawAnnot { ranAnnot :: CompAnnot (e m) }
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
-data RawStatementTree e m = RawStatementTree (RawStatement e m) [RawStatementTree e m]
+data RawStatementTree e m = RawStatementTree { rstStatement :: RawStatement e m, rstChildren :: [RawStatementTree e m] }
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
 type RawFileImport = AFileImport (RawExpr ())
-data RawPrgm m = RawPrgm [RawFileImport] [RawStatementTree RawExpr m] -- TODO: Include [Export]
+-- | 'rprgmImports' rather than @rpImports@, which 'ReadPage' below already takes in this module.
+data RawPrgm m = RawPrgm { rprgmImports :: [RawFileImport], rprgmStatements :: [RawStatementTree RawExpr m] } -- TODO: Include [Export]
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
 data ReplRes m
@@ -114,15 +128,15 @@ data ReplRes m
 -- typed into.
 data ReadPath
   -- | A file whose text was read.
-  = ReadFile FilePath
+  = ReadFile { rfPath :: FilePath }
   -- | A file a reading found without reading it, and would have done something else without.
   -- 'Syntax.Obsidian.Parser.notePrgm' resolves each of a note's wiki links to a note of the vault
   -- and imports it, which is a reading of that note's name and of nothing inside it.
-  | ReadExists FilePath
+  | ReadExists { rePath :: FilePath }
   -- | A directory whose listing was read.
-  | ReadDir FilePath
+  | ReadDir { rdPath :: FilePath }
   -- | A directory and the listings under it, at any depth.
-  | ReadTree FilePath
+  | ReadTree { rtPath :: FilePath }
   deriving (Eq, Ord, Show, Generic, Hashable)
 
 -- | Whether a reading of a tree walks into an entry named this.
