@@ -3340,9 +3340,17 @@ isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subAr
             Just b | b /= PTopType, not (isTypeVar b) -> meetInner typeEnv vaenv b i
             _                                         -> t
         step t = t
-    -- A TVInt occurrence stays flexible regardless of inner (the inner only BOUNDS the
-    -- per-value binding); a self-link env entry counts flexible only when its inner is ⊤ —
-    -- a knowledge-carrying self-link is information (producer-era rule, unreachable today).
+    -- FLEXIBLE means "ranges over every binding", which is why a flexible sub slot is a subtype
+    -- only of a super slot that itself admits everything. An occurrence CARRYING KNOWLEDGE is not
+    -- that: @$_b ∩ {X}@ ranges only within @X@. Calling it flexible demands the super side be ⊤ or
+    -- another variable and so REJECTS the true @$_b∩{X} ⊆ X@ — too conservative, and inconsistent
+    -- with 'compactType' and the meet, which already read an occurrence as @⟦var⟧ ⊓ ⟦inner⟧@.
+    -- A knowledge-carrying occurrence therefore falls through to 'isSubtypeOfWithEnv', which
+    -- applies that same reading. Holds for BOTH locations: the inner bounds the per-value binding
+    -- of a 'TVInt' exactly as it bounds an external one.
+    flexibleVar (TypeVar _ _ i) | i /= PTopType = False
+    -- A knowledge-free occurrence is bindable per value; a self-link env entry counts flexible
+    -- only when its inner is ⊤ — a knowledge-carrying self-link is information.
     flexibleVar (TypeVar _ TVInt _) = True -- partial-local var: bindable per value
     flexibleVar (TypeVar v TVOuter _) = case H.lookup v vaenv of
       Nothing                -> True
