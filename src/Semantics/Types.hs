@@ -730,7 +730,7 @@ mergePredsAnd typeEnv vaenv0 ps1 ps2 = (vaenvF, rebuild keptF)
           let (v'', ca') = foldl pinBy (v', ca) [cb | cb <- classPs, ptName cb /= ptName ca]
           in (v'', PredsOne (PredClass ca'))
         pinAtom v' other = (v', other)
-        pinBy (v', ca) cb = case classSatCandidates typeEnv v' False cb of
+        pinBy (v', ca) cb = case classSatCandidates typeEnv v' ProveWitness cb of
           Just cands -> case [m | Just m <- map candClassPartial cands, ptName m == ptName ca] of
             (m:_) -> case intersectPartials typeEnv v' ca m of
               (vd, [r]) -> (mergeAllVarEnvs typeEnv [v', vd], r)
@@ -1598,7 +1598,7 @@ predImpliesAtom typeEnv vaenv (PredClass c1) (PredClass c2)
 -- Decided symbolically (emptiness of @c1 ∧ ¬c2@ against the class graph); the engine's positive
 -- gate reproduces the sealed/'tePrgmEnv' enumeration gate.
 predImpliesAtom typeEnv vaenv (PredClass c1) (PredClass c2) =
-  satAtomImplies typeEnv vaenv True (SatClass c1) (SatClass c2)
+  satAtomImplies typeEnv vaenv ProveEmpty (SatClass c1) (SatClass c2)
 -- PredRel: for the SAME relation entity (r2's name path is a suffix of r1's — one relation, spelled
 -- relatively) the implication is EXACTLY covariance of r1's args AND element vars into r2's, decided
 -- BOTH ways here. The 'ptVars' check mirrors the PredClass\/PredClass covariance above (an element
@@ -1620,14 +1620,14 @@ predImpliesAtom typeEnv vaenv (PredRel r1) (PredRel r2)
   | plainPartial r2 && classDeclaredSubclassOfBounded typeEnv vaenv r1 (ptName r2) = True
   -- Symbolic emptiness of @r1 ∧ ¬r2@ replaces expanding both relations (which for a recursive
   -- parameterized class universe re-expands the element class combinatorially). Gated open-world
-  -- ('gatePos'), like every other kind of implication here: @isa r1 ⟹ isa r2@ must NOT be proved by
+  -- ('ProveEmpty'), like every other kind of implication here: @isa r1 ⟹ isa r2@ must NOT be proved by
   -- enumerating an UNSEALED @r1@'s CURRENT members (@~List ⟹ ~Bag@ because List's only member so far
   -- is a Bag member is broken by any future @isa List@ declaration). Deciding it True closed-world
   -- while the gated 'predsEmpty' oracle refuses the same enumeration is an inconsistency that breaks
   -- distributivity — @(~List ∩ ¬Bag)@ collapses to ∅ while the compound universe does not. A declared
   -- @isa@ edge still implies (the 'classDeclaredSubclassOf' fast path above), and a SEALED @r1@ is
   -- still enumerated (the gate only refuses an unsealed, non-'tePrgmEnv' class).
-  | otherwise = satAtomImplies typeEnv vaenv True (SatRel r1) (SatRel r2)
+  | otherwise = satAtomImplies typeEnv vaenv ProveEmpty (SatRel r1) (SatRel r2)
   -- Slots are compared under 'comparedPartialsEnv', NOT the bare ambient env: a @$/E@ in either
   -- side's slot names that side's own 'ptVars' binding, and reading it as ⊤ would widen the
   -- comparison into vacuously proving @r[/items=⊤] ⟹ r[/items=$/E]@. This is the rule
@@ -1661,7 +1661,7 @@ predImpliesAtom typeEnv vaenv (PredClass c) (PredRel r)
   | plainPartial r && classDeclaredSubclassOf typeEnv (ptName c) (ptName r) = True
   -- Bounded-left form: @hasClass BinTree[K→Ord,V→Eq] ⟹ isa Eq@ by the var-carrying edge.
   | plainPartial r && classDeclaredSubclassOfBounded typeEnv vaenv c (ptName r) = True
-  | otherwise = satAtomImplies typeEnv vaenv True (SatClass c) (SatRel r)
+  | otherwise = satAtomImplies typeEnv vaenv ProveEmpty (SatClass c) (SatRel r)
 -- PredRel r implies PredClass c when every type matching r is a member of c.
 -- Fast path (mirrors the @PredClass c ⟹ PredRel r@ same-name case above): for the SAME plain class
 -- name, @isa c ⟹ hasClass c@ holds directly — a value whose type is a member of class @c@ has class
@@ -1674,12 +1674,12 @@ predImpliesAtom typeEnv vaenv (PredRel r) (PredClass c)
   -- Bounded-left form of the declared-edge route only (the same-class route keeps its
   -- plain-r guard: @isa c ⟹ hasClass c@ is a same-entity reading, not an edge).
   | plainPartial c, classDeclaredSubclassOfBounded typeEnv vaenv r (ptName c) = True
-  -- Gated ('gatePos') like the other outermost implication decisions: a relation naming an
+  -- Gated ('ProveEmpty') like the other outermost implication decisions: a relation naming an
   -- UNSEALED class must not be enumerated closed-world here — @~List ⟹ ∀Bag@ via the current
   -- members is broken by any future @isa List@ declaration, and deciding it True while the
   -- gated 'predsEmpty' oracle refuses the same enumeration made the union drop the relation
   -- in one associativity order but not the other.
-  | otherwise = satAtomImplies typeEnv vaenv True (SatRel r) (SatClass c)
+  | otherwise = satAtomImplies typeEnv vaenv ProveEmpty (SatRel r) (SatClass c)
   where
     -- Same named entity (either absoluteness direction): @isa c ⟹ hasClass c@.
     sameClass = relativeNameMatches (ptName r) (ptName c) || relativeNameMatches (ptName c) (ptName r)
@@ -2070,6 +2070,21 @@ expandRelPartialAux mAllowed typeEnv@TypeEnv{teNames} vaenv relPartial = result
 -- which is exactly the polarity the emptiness/implication/coverage decisions
 -- need.
 
+-- | Which ANSWER of a satisfiability decision the caller relies on. Not a knob: it selects
+-- which direction of the decision must be sound, and therefore whether enumerating the
+-- CURRENT members of an open (unsealed, non-whole-program) class is legitimate.
+--
+-- * 'ProveWitness' — the caller relies on SAT (@∃@ a value). Enumeration is sound: a member
+--   found now IS a member, and a future file adding another cannot unmake it.
+-- * 'ProveEmpty' — the caller relies on UNSAT (@∀@ values). Enumeration is UNSOUND in the
+--   open world: a future file may add exactly the member that makes the goal satisfiable.
+--
+-- These are genuinely two different queries and both are memoized under this key.
+data SatUse
+  = ProveWitness
+  | ProveEmpty
+  deriving (Eq, Ord, Show, Generic, Hashable)
+
 -- | One conjunct constraining a single value in a satisfiability goal.
 data SatAtom
   = SatClass PartialType   -- ^ the value has class C (a 'PredClass')
@@ -2248,16 +2263,16 @@ satGoalNegChoices :: SatGoal -> [SatGoal]
 satGoalNegChoices (SatGoal pos neg) = [SatGoal [] [p] | p <- pos] ++ [SatGoal [n] [] | n <- neg]
 
 -- | SAT of a conjunction of member-of-type constraints; conservative towards 'True'.
-typesConjSat :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Bool -> SatHyps -> [Type] -> Bool
-typesConjSat typeEnv vaenv gatePos hyps ts = case mapM (typeSatDNF vaenv) ts >>= satDNFConj of
+typesConjSat :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> [Type] -> Bool
+typesConjSat typeEnv vaenv satUse hyps ts = case mapM (typeSatDNF vaenv) ts >>= satDNFConj of
   Nothing    -> True
-  Just goals -> any (satGoal typeEnv vaenv gatePos hyps) goals
+  Just goals -> any (satGoal typeEnv vaenv satUse hyps) goals
 
 -- | SAT of @t1 ∧ ¬t2@ (a value of @t1@ escaping @t2@); conservative towards 'True'.
-typesSatDiff :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Bool -> SatHyps -> Type -> Type -> Bool
-typesSatDiff typeEnv vaenv gatePos hyps t1 t2 = case res of
+typesSatDiff :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> Type -> Type -> Bool
+typesSatDiff typeEnv vaenv satUse hyps t1 t2 = case res of
   Nothing    -> True
-  Just goals -> any (satGoal typeEnv vaenv gatePos hyps) goals
+  Just goals -> any (satGoal typeEnv vaenv satUse hyps) goals
   where
     res = do
       d1 <- typeSatDNF vaenv t1
@@ -2267,14 +2282,14 @@ typesSatDiff typeEnv vaenv gatePos hyps t1 t2 = case res of
       satDNFConj [d1, negConj]
 
 -- | Enumerate a class's member shapes from the class graph. 'Nothing' when the class is
--- unknown, or when 'gatePos' is set and the class is neither sealed nor in the closed
+-- unknown, or when the caller relies on UNSAT ('ProveEmpty') and the class is neither sealed nor in the closed
 -- world ('tePrgmEnv') - the open-world gate of 'predImpliesAtom' (an unenumerable class
 -- must be treated as possibly containing anything).
-classSatCandidates :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Bool -> PartialType -> Maybe [SatCand]
-classSatCandidates typeEnv vaenv gatePos PartialType{ptName, ptVars=classVarsP} =
+classSatCandidates :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> PartialType -> Maybe [SatCand]
+classSatCandidates typeEnv vaenv satUse PartialType{ptName, ptVars=classVarsP} =
   case H.lookup ptName (scClasses (teSatCache typeEnv)) of
     Just ClassSatInfo{csiSealed=sealed, csiVarsDecl=classVarsDecl, csiTypes=classTypes}
-      | gatePos && not (sealed || tePrgmEnv typeEnv) -> Nothing
+      | satUse == ProveEmpty && not (sealed || tePrgmEnv typeEnv) -> Nothing
       | null classTypes -> Just [CandLeaf (classPlaceholderLeaf ptName)]
       | otherwise -> concat <$> mapM candsOfMember classTypes
       where
@@ -2402,14 +2417,14 @@ mkSatCache (ClassGraph cg) names = SatCache{
 -- type or vaenv-arg name the relative name matches (carrying the relation's args), plus
 -- every matching class (as a class constraint). The NAME universe is declaration-bounded
 -- (closed-world, the settled relation-type semantics), but a class route inherits the
--- class's own open/closed-world standing: under 'gatePos', a relation matching an UNSEALED
+-- class's own open/closed-world standing: under 'ProveEmpty', a relation matching an UNSEALED
 -- class is unenumerable ('Nothing' → conservatively satisfiable), exactly as
 -- 'classSatCandidates' gates the class itself — a future member of the open class matches
 -- the relation, so a closed-world enumeration would prove implications
 -- (e.g. @~List ⟹ ∀Bag@) that new declarations can break.
-relSatCandidates :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Bool -> PartialType -> Maybe [SatCand]
-relSatCandidates typeEnv vaenv gatePos relPartial
-  | gatePos && not (tePrgmEnv typeEnv) && any unsealedClass matchingClassNames = Nothing
+relSatCandidates :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> PartialType -> Maybe [SatCand]
+relSatCandidates typeEnv vaenv satUse relPartial
+  | satUse == ProveEmpty && not (tePrgmEnv typeEnv) && any unsealedClass matchingClassNames = Nothing
   | otherwise = Just (argCands ++ tpCands ++ clsCands)
   where
     relName = ptName relPartial
@@ -2651,20 +2666,20 @@ argModeCovers PartialType{ptArgs=supArgs, ptArgMode=PtArgMode supLb supUb} Parti
     ubOk = not supUb || (subUb && subKeys `S.isSubsetOf` supKeys)
 
 -- | SAT(a ∧ b) for two concrete shapes; conservative towards 'True'.
-partialsOverlapSat :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Bool -> SatHyps -> PartialType -> PartialType -> Bool
-partialsOverlapSat typeEnv vaenv gatePos hyps a b =
+partialsOverlapSat :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> PartialType -> PartialType -> Bool
+partialsOverlapSat typeEnv vaenv satUse hyps a b =
   ptName a == ptName b
   && argModesOverlap a b
   && all elemSat (H.elems (H.intersectionWith (,) (ptVars a) (ptVars b)))
   && all elemSat (H.elems (H.intersectionWith (,) (ptArgs a) (ptArgs b)))
   && predsOk
   where
-    elemSat (ta, tb) = typesConjSat typeEnv vaenv gatePos hyps [ta, tb]
+    elemSat (ta, tb) = typesConjSat typeEnv vaenv satUse hyps [ta, tb]
     predsOk = case predsAnd (ptPreds a) (ptPreds b) of
       PredsNone -> True
       preds -> case predsSatDNF True preds of
         Nothing  -> True
-        Just dnf -> any (\g -> satGoal typeEnv vaenv gatePos hyps
+        Just dnf -> any (\g -> satGoal typeEnv vaenv satUse hyps
                           (mergeSatGoals g (SatGoal [SatLeafs [a{ptPreds=PredsNone}], SatLeafs [b{ptPreds=PredsNone}]] []))) dnf
 
 -- | Proven cover of a shape by another: every value matching @sub@ matches @sup@.
@@ -2673,8 +2688,8 @@ partialsOverlapSat typeEnv vaenv gatePos hyps a b =
 -- super-side binding absent from sub is instantiation information, not a constraint), and a
 -- sub-side element that is an unresolved type variable is flexible - it can be bound to the
 -- super's element (as 'intersectTypesWithVarEnv' would) - so it does not defeat the cover.
-partialCoversSat :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Bool -> SatHyps -> PartialType -> PartialType -> Bool
-partialCoversSat typeEnv vaenv gatePos hyps sup0 sub0 =
+partialCoversSat :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> PartialType -> PartialType -> Bool
+partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
   ptName sup == ptName sub
   -- Mode-normalized ('normalizePtArgMode') for parity with 'isSubPartialOfWithEnv': a
   -- vacuous interval bound must not defeat a cover (e.g. @/x..@ with no larger declared
@@ -2720,7 +2735,7 @@ partialCoversSat typeEnv vaenv gatePos hyps sup0 sub0 =
     -- Top-valued parameter above: it binds per value and carries no dispatch information.
     elemCovered (tSub0, tSup0)
       | isFlexibleVar tSub = tSup == PTopType || isFlexibleVar tSup || teArgModeProjection typeEnv
-      | otherwise = not (typesSatDiff typeEnv vaenv gatePos hyps tSub tSup)
+      | otherwise = not (typesSatDiff typeEnv vaenv satUse hyps tSub tSup)
       where tSub = ambientRef sub (resolveSelfRefs sub (subSlot tSub0))
             tSup = ambientRef sup (resolveSelfRefs sup tSup0)
     -- A TVInt-spelled name the partial does NOT declare is an enclosing scope's parameter (the
@@ -2767,24 +2782,24 @@ partialCoversSat typeEnv vaenv gatePos hyps sup0 sub0 =
       PredsNone -> True
       preds -> case predsSatDNF False preds of
         Nothing  -> False
-        Just dnf -> not (any (\g -> satGoal typeEnv vaenv gatePos hyps
+        Just dnf -> not (any (\g -> satGoal typeEnv vaenv satUse hyps
                                (mergeSatGoals g (SatGoal [SatLeafs [sub{ptPreds=PredsNone}]] []))) dnf)
 
 -- | SAT(m ∧ atom): can a value of concrete shape @m@ satisfy the atom? Conservative towards 'True'.
-satAdmits :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Bool -> SatHyps -> PartialType -> SatAtom -> Bool
-satAdmits typeEnv vaenv gatePos hyps m atom = case atom of
-  SatLeafs ls -> any (partialsOverlapSat typeEnv vaenv gatePos hyps m) ls
-  SatClass c -> case classSatCandidates typeEnv vaenv gatePos c of
+satAdmits :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> PartialType -> SatAtom -> Bool
+satAdmits typeEnv vaenv satUse hyps m atom = case atom of
+  SatLeafs ls -> any (partialsOverlapSat typeEnv vaenv satUse hyps m) ls
+  SatClass c -> case classSatCandidates typeEnv vaenv satUse c of
     Nothing    -> True
     Just cands -> any candAdmits cands
   SatRel r -> nameRoute || classRoute
     where
       nameRoute = relNameAdmits typeEnv r m
-                  && partialsOverlapSat typeEnv vaenv gatePos hyps m r{ptName = ptName m}
-      classRoute = any (\c -> satAdmits typeEnv vaenv gatePos hyps m (SatClass c)) (relMatchingClasses typeEnv r)
+                  && partialsOverlapSat typeEnv vaenv satUse hyps m r{ptName = ptName m}
+      classRoute = any (\c -> satAdmits typeEnv vaenv satUse hyps m (SatClass c)) (relMatchingClasses typeEnv r)
   where
-    candAdmits (CandLeaf m') = partialsOverlapSat typeEnv vaenv gatePos hyps m m'
-    candAdmits (CandGoal g) = satGoal typeEnv vaenv gatePos hyps (mergeSatGoals g (SatGoal [SatLeafs [m]] []))
+    candAdmits (CandLeaf m') = partialsOverlapSat typeEnv vaenv satUse hyps m m'
+    candAdmits (CandGoal g) = satGoal typeEnv vaenv satUse hyps (mergeSatGoals g (SatGoal [SatLeafs [m]] []))
 
 -- | SAT(m ∧ ¬atom): can a value of concrete shape @m@ escape the atom? Conservative towards 'True'
 -- (an escape is only denied when cover is proven). The shape is first split into its atomic
@@ -2795,36 +2810,36 @@ satAdmits typeEnv vaenv gatePos hyps m atom = case atom of
 -- exceed 'satDNFCap' (e.g. an applied operator whose arg slots each carry a member union) —
 -- an oversized split otherwise reads as a conservative escape, which the coverage decisions
 -- ('typeCoveredSymbolic') would surface as a definitive not-covered.
-satEscapes :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Bool -> SatHyps -> PartialType -> SatAtom -> Bool
-satEscapes typeEnv vaenv gatePos hyps m0 atom
-  | not (satEscapesAtomic typeEnv vaenv gatePos hyps m0 atom) = False
+satEscapes :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> PartialType -> SatAtom -> Bool
+satEscapes typeEnv vaenv satUse hyps m0 atom
+  | not (satEscapesAtomic typeEnv vaenv satUse hyps m0 atom) = False
   | otherwise = case splitPartialByUnionVarArgs m0 of
       [_] -> True -- no union-valued components: the whole-shape answer is final
       -- Oversized split: conservative. Checked WITHOUT 'length' — the split is a cartesian
       -- product over the union-valued slots, so forcing its full spine to count it can
       -- itself be exponential; 'drop' materializes at most @satDNFCap + 1@ pieces.
       pieces | not (null (drop satDNFCap pieces)) -> True
-      pieces -> any (\m -> satEscapesAtomic typeEnv vaenv gatePos hyps m atom) pieces
+      pieces -> any (\m -> satEscapesAtomic typeEnv vaenv satUse hyps m atom) pieces
 
 -- | 'satEscapes' for a shape with no union-valued vars/args.
-satEscapesAtomic :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Bool -> SatHyps -> PartialType -> SatAtom -> Bool
-satEscapesAtomic typeEnv vaenv gatePos hyps m atom = case atom of
-  SatLeafs ls -> not (any (\l -> partialCoversSat typeEnv vaenv gatePos hyps l m) ls)
+satEscapesAtomic :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> PartialType -> SatAtom -> Bool
+satEscapesAtomic typeEnv vaenv satUse hyps m atom = case atom of
+  SatLeafs ls -> not (any (\l -> partialCoversSat typeEnv vaenv satUse hyps l m) ls)
   -- Negative atoms are enumerated regardless of the positive gate (parity with
   -- 'predImpliesAtom', which expands the implied class unconditionally).
-  SatClass c -> case classSatCandidates typeEnv vaenv False c of
+  SatClass c -> case classSatCandidates typeEnv vaenv ProveWitness c of
     Nothing    -> True
     Just cands -> not (any candCovers cands)
   SatRel r -> not (nameCovered || classCovered)
     where
       nameCovered = relNameAdmits typeEnv r m
-                    && partialCoversSat typeEnv vaenv gatePos hyps r{ptName = ptName m} m
-      classCovered = any (\c -> not (satEscapes typeEnv vaenv gatePos hyps m (SatClass c))) (relMatchingClasses typeEnv r)
+                    && partialCoversSat typeEnv vaenv satUse hyps r{ptName = ptName m} m
+      classCovered = any (\c -> not (satEscapes typeEnv vaenv satUse hyps m (SatClass c))) (relMatchingClasses typeEnv r)
   where
-    candCovers (CandLeaf m') = partialCoversSat typeEnv vaenv gatePos hyps m' m
+    candCovers (CandLeaf m') = partialCoversSat typeEnv vaenv satUse hyps m' m
     -- m is covered by a predicate-described member iff m ∧ ¬member-goal is unsatisfiable
     candCovers (CandGoal g) =
-      not (any (\ng -> satGoal typeEnv vaenv gatePos hyps (mergeSatGoals ng (SatGoal [SatLeafs [m]] [])))
+      not (any (\ng -> satGoal typeEnv vaenv satUse hyps (mergeSatGoals ng (SatGoal [SatLeafs [m]] [])))
              (satGoalNegChoices g))
 
 -- | Declaration-level implication between two atoms: the non-recursive fast paths of
@@ -2857,7 +2872,7 @@ satAtomImpliesDeclared typeEnv a1 a2 = case (a1, a2) of
   _ -> False
 
 -- | Is some (finite) value able to satisfy the goal? Conservative towards 'True'.
--- 'gatePos': when 'True', THIS goal's positive class generator may only be enumerated when
+-- 'satUse': under 'ProveEmpty', THIS goal's positive class generator may only be enumerated when
 -- the class is sealed or 'tePrgmEnv' is set (the open-world gate); an unenumerable positive
 -- class makes the goal conservatively satisfiable. The gate applies only to the outermost
 -- enumeration - every nested derivation is closed-world over current members, mirroring the
@@ -2874,7 +2889,7 @@ satAtomImpliesDeclared typeEnv a1 a2 = case (a1, a2) of
 -- dependence is IN the key), and the table keeps the three most-recently-used token
 -- generations like the reach-query memo in "Semantics" (the static per-page env's, the
 -- epoch reaches env's, and the current merged reaches env's tokens rotate).
-type SatMemoKey = (Int, (Bool, Bool, Bool, Bool, Bool), [(TypeVarAux, Type)], Bool, [SatGoal], SatGoal)
+type SatMemoKey = (Int, (Bool, Bool, Bool, Bool, Bool), [(TypeVarAux, Type)], SatUse, [SatGoal], SatGoal)
 
 -- | 'Nothing' marks a key whose decision is IN FLIGHT: a lookup hitting it is a derivation
 -- that returned to its own goal through a helper chain the hypothesis stack does not thread
@@ -2896,11 +2911,11 @@ satMemoRef = unsafePerformIO (newIORef [])
 satInFlightRef :: IORef (S.HashSet SatMemoKey)
 satInFlightRef = unsafePerformIO (newIORef S.empty)
 
-satGoal :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Bool -> SatHyps -> SatGoal -> Bool
-satGoal typeEnv vaenv gatePos hyps goal = case teQueryCacheKey typeEnv of
-  Nothing -> satGoalRaw typeEnv vaenv gatePos hyps goal
+satGoal :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> SatGoal -> Bool
+satGoal typeEnv vaenv satUse hyps goal = case teQueryCacheKey typeEnv of
+  Nothing -> satGoalRaw typeEnv vaenv satUse hyps goal
   Just tok -> unsafePerformIO $ do
-    let key = (tok, (teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv, teInSatDecision typeEnv, teDebug typeEnv), L.sortOn fst (H.toList vaenv), gatePos, L.sort (S.toList hyps), goal)
+    let key = (tok, (teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv, teInSatDecision typeEnv, teDebug typeEnv), L.sortOn fst (H.toList vaenv), satUse, L.sort (S.toList hyps), goal)
     -- The value table keeps the THREE most-recently-used token generations, exactly like
     -- the reach-query memo ('queryMemoRef'): hypothesis-path dependence is IN the key, so
     -- entries are reusable ACROSS top-level decisions under the same env token. The
@@ -2919,7 +2934,7 @@ satGoal typeEnv vaenv gatePos hyps goal = case teQueryCacheKey typeEnv of
           then return False -- in-flight re-entry: a cyclic derivation, no finite witness
           else do
             atomicModifyIORef' satInFlightRef $ \s -> (S.insert key s, ())
-            r <- evaluate (satGoalRaw typeEnv vaenv gatePos hyps goal)
+            r <- evaluate (satGoalRaw typeEnv vaenv satUse hyps goal)
             atomicModifyIORef' satInFlightRef $ \s -> (S.delete key s, ())
             atomicModifyIORef' satMemoRef $ \gens2 ->
               let mTok = fromMaybe H.empty (lookup tok gens2)
@@ -2927,8 +2942,8 @@ satGoal typeEnv vaenv gatePos hyps goal = case teQueryCacheKey typeEnv of
               in ((tok, H.insert key r mTok) : take 2 rest, ())
             return r
 
-satGoalRaw :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Bool -> SatHyps -> SatGoal -> Bool
-satGoalRaw typeEnv0 vaenv gatePos hyps goal0
+satGoalRaw :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> SatGoal -> Bool
+satGoalRaw typeEnv0 vaenv satUse hyps goal0
   | goal `S.member` hyps = False -- recursive goal: no finite witness along this path
   -- @X ∧ ¬X@: an atom required positively and negatively at once is contradictory, whatever
   -- the atom means. The enumeration below cannot be trusted to detect this (a candidate on
@@ -2967,7 +2982,7 @@ satGoalRaw typeEnv0 vaenv gatePos hyps goal0
     goal = satGoalUnifyPos vaenv (satGoalNorm goal0)
     hyps' = S.insert goal hyps
 
-    negAtomCoversUniverse (SatClass c) = maybe False (any candUniversal) (classSatCandidates typeEnv vaenv gatePos c)
+    negAtomCoversUniverse (SatClass c) = maybe False (any candUniversal) (classSatCandidates typeEnv vaenv satUse c)
     -- A relation negative is universal through its CLASS route (@¬~Option@ is the @isa@
     -- spelling of the same universal class; @hasClass C ⟹ isa C@ per
     -- 'satAtomImpliesDeclared') — parity with 'satAdmits'/'satEscapesAtomic', which consult
@@ -3009,25 +3024,25 @@ satGoalRaw typeEnv0 vaenv gatePos hyps goal0
           Just kss@(_:_:_) -> map (ptAtArgKeys lN) kss
           _                -> [lN]
           where lN = normalizePtArgMode typeEnv l
-    genCandidates (SatClass c)  = classSatCandidates typeEnv vaenv gatePos c
+    genCandidates (SatClass c)  = classSatCandidates typeEnv vaenv satUse c
     -- A relation's type-route candidates come from the name universe ('scTypeNames'); an env
     -- without one (e.g. the reduced env of the class-graph 'Semigroup' merge) makes the
     -- enumeration silently incomplete - a goal with no candidates would read as refuted when
     -- the engine merely knows nothing. Treat it as unenumerable (conservatively satisfiable).
     genCandidates (SatRel r)
       | null (scTypeNames (teSatCache typeEnv)) = Nothing
-      | otherwise = relSatCandidates typeEnv vaenv gatePos r
+      | otherwise = relSatCandidates typeEnv vaenv satUse r
 
     rest = SatGoal restPos (sgNeg goal)
 
-    checkCand (CandGoal g) = satGoal typeEnv vaenv False hyps' (mergeSatGoals g rest)
+    checkCand (CandGoal g) = satGoal typeEnv vaenv ProveWitness hyps' (mergeSatGoals g rest)
     checkCand (CandLeaf m)
       | ptPreds m /= PredsNone = case predsSatDNF True (ptPreds m) of
           Nothing  -> True -- member predicates outside the fragment: conservative
           Just dnf -> any (\g -> checkCandLeaf (mergeSatGoals g rest) m{ptPreds=PredsNone}) dnf
       | otherwise = checkCandLeaf rest m
-    checkCandLeaf r m = all (satAdmits typeEnv vaenv False hyps' mR) (sgPos r)
-                     && all (satEscapes typeEnv vaenv False hyps' mR) (sgNeg r)
+    checkCandLeaf r m = all (satAdmits typeEnv vaenv ProveWitness hyps' mR) (sgPos r)
+                     && all (satEscapes typeEnv vaenv ProveWitness hyps' mR) (sgNeg r)
       where
         -- Refine the witness by each co-occurring positive atom it must ALSO satisfy: meeting a
         -- @Cons@ witness with @Monad[Integer]@'s same-named member @Cons[Integer]@ pins its otherwise
@@ -3065,7 +3080,7 @@ satGoalRaw typeEnv0 vaenv gatePos hyps goal0
 -- | Engine-backed emptiness of a predicate conjunction ('predsEmpty' fast path):
 -- @Just isEmpty@ when the predicates are within the decidable fragment.
 --
--- The satisfiability check runs under the open-world gate ('gatePos' = 'True'), so a
+-- The satisfiability check runs under the open-world gate ('ProveEmpty'), so a
 -- conjunction of distinct /open/ classes (e.g. @Functor[Eq] ∧ Eq@) is treated as satisfiable
 -- rather than empty: a future file may declare a type inhabiting both, so the conjunction is
 -- not provably disjoint. The gate itself folds in 'tePrgmEnv' ('classSatCandidates'), so in the
@@ -3082,13 +3097,13 @@ predsEmptySymbolic typeEnv vaenv preds = do
   -- returns 'Nothing' out of fragment, so callers' materialized fallbacks are unchanged.
   if teInSatDecision typeEnv
     then debugTrace typeEnv (printf "[SAT-DEMOTE:predsEmpty] %s" (show preds)) (Just False)
-    else Just (not (any (satGoal typeEnv vaenv True S.empty) goals))
+    else Just (not (any (satGoal typeEnv vaenv ProveEmpty S.empty) goals))
 
 -- | Engine-backed subtype: @Just (t1 ⊆ t2)@, decided as emptiness of @t1 ∧ ¬t2@, when both
--- types are within the decidable fragment. 'gatePos' gates enumeration of t1's classes
+-- types are within the decidable fragment. 'satUse' gates enumeration of t1's classes
 -- (the open-world coverage gate).
-typeCoveredSymbolic :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Bool -> Type -> Type -> Maybe Bool
-typeCoveredSymbolic typeEnv vaenv gatePos t1 t2 = do
+typeCoveredSymbolic :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> Type -> Type -> Maybe Bool
+typeCoveredSymbolic typeEnv vaenv satUse t1 t2 = do
   d1 <- typeSatDNF vaenv t1
   d2 <- typeSatDNF vaenv t2
   negConj <- satDNFConj (map satGoalNegChoices d2)
@@ -3098,15 +3113,15 @@ typeCoveredSymbolic typeEnv vaenv gatePos t1 t2 = do
   -- fragment parse above still returns 'Nothing' out of fragment.
   if teInSatDecision typeEnv
     then debugTrace typeEnv (printf "[SAT-DEMOTE:typeCovered] %s <= %s" (show t1) (show t2)) (Just False)
-    else Just (not (any (satGoal typeEnv vaenv gatePos S.empty) goals))
+    else Just (not (any (satGoal typeEnv vaenv satUse S.empty) goals))
 
 -- | Engine-backed implication between two class/relation atoms: @a1 ⟹ a2@ decided as emptiness
--- of @a1 ∧ ¬a2@. 'gatePos' gates enumeration of a1's class (the open-world gate).
+-- of @a1 ∧ ¬a2@. 'satUse' gates enumeration of a1's class (the open-world gate).
 -- A memberless (but enumerable) class on the left implies anything vacuously - parity with
 -- the enumerate-members check, which is vacuously true on an empty member list (the class
 -- placeholder inhabitant is a satisfiability device, not a counterexample to implication).
-satAtomImplies :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Bool -> SatAtom -> SatAtom -> Bool
-satAtomImplies typeEnv vaenv gatePos a1 a2
+satAtomImplies :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatAtom -> SatAtom -> Bool
+satAtomImplies typeEnv vaenv satUse a1 a2
   | SatClass c1 <- a1
   , Just ClassSatInfo{csiSealed=sealed, csiTypes=[]} <- H.lookup (ptName c1) (scClasses (teSatCache typeEnv))
   , sealed || tePrgmEnv typeEnv = True
@@ -3115,7 +3130,7 @@ satAtomImplies typeEnv vaenv gatePos a1 a2
   | teInSatDecision typeEnv =
       debugTrace typeEnv (printf "[SAT-DEMOTE:atomImplies] %s => %s" (show a1) (show a2))
         (satAtomImpliesDeclared typeEnv a1 a2)
-  | otherwise = not (satGoal typeEnv vaenv gatePos S.empty (SatGoal [a1] [a2]))
+  | otherwise = not (satGoal typeEnv vaenv satUse S.empty (SatGoal [a1] [a2]))
 
 -- | Whether a partial is within the fragment of the dispatch-coverage queries below
 -- ('satLeafEscapesAll' and its wrappers): no 'PredExpr' predicates and no constant
@@ -3148,8 +3163,8 @@ dispatchInFragment PartialType{ptVars, ptArgs, ptPreds} =
 satLeafEscapesAll :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatHyps -> PartialType -> [PartialType] -> Bool
 satLeafEscapesAll typeEnv0 vaenv hyps m negs0
   | goal `S.member` hyps = False -- recursive goal: no finite witness along this path
-  | any (\n -> partialCoversSat typeEnv vaenv False hyps' n m) negs = False
-  | null negs = satGoal typeEnv vaenv False hyps (SatGoal [SatLeafs [m]] []) -- inhabited ⇒ escapes
+  | any (\n -> partialCoversSat typeEnv vaenv ProveWitness hyps' n m) negs = False
+  | null negs = satGoal typeEnv vaenv ProveWitness hyps (SatGoal [SatLeafs [m]] []) -- inhabited ⇒ escapes
   | otherwise = case refinements of
       []        -> True -- no discriminating position is refinable: conservative escape
       (cases:_) -> any (\m' -> satLeafEscapesAll typeEnv vaenv hyps' m' negs) cases
@@ -3159,7 +3174,7 @@ satLeafEscapesAll typeEnv0 vaenv hyps m negs0
     -- meet in 'enumAtom', and through it the 'compactType' → 'typeGraphQueryWithReason' →
     -- 'mostSpecificPromises' route back to a fresh 'satLeafEscapesAll').
     typeEnv = typeEnv0{teInSatDecision=True}
-    negs = filter (partialsOverlapSat typeEnv vaenv False hyps m) negs0
+    negs = filter (partialsOverlapSat typeEnv vaenv ProveWitness hyps m) negs0
     goal = satGoalNorm (SatGoal [SatLeafs [m]] [SatLeafs [n] | n <- negs])
     hyps' = S.insert goal hyps
 
@@ -3174,7 +3189,7 @@ satLeafEscapesAll typeEnv0 vaenv hyps m negs0
       | otherwise = Nothing
       where
         constrains n = case elemAt k n of
-          Just nk -> typesSatDiff typeEnv vaenv False hyps' tk nk
+          Just nk -> typesSatDiff typeEnv vaenv ProveWitness hyps' tk nk
           Nothing -> False
     elemAt (TVVar k) PartialType{ptVars} = H.lookup k ptVars
     elemAt (TVArg k) PartialType{ptArgs} = H.lookup k ptArgs
@@ -3203,8 +3218,8 @@ satLeafEscapesAll typeEnv0 vaenv hyps m negs0
     atomPref SatClass{} = 0 :: Int
     atomPref SatRel{}   = 1
     atomPref SatLeafs{} = 2
-    enumAtom (SatClass c) = classSatCandidates typeEnv vaenv True c >>= mapM candCase
-    enumAtom (SatRel r)   = relSatCandidates typeEnv vaenv True r >>= mapM candCase
+    enumAtom (SatClass c) = classSatCandidates typeEnv vaenv ProveEmpty c >>= mapM candCase
+    enumAtom (SatRel r)   = relSatCandidates typeEnv vaenv ProveEmpty r >>= mapM candCase
     enumAtom (SatLeafs _) = Nothing -- cannot appear in a preds DNF
     candCase (CandLeaf tp) = Just (singletonType tp)
     candCase (CandGoal (SatGoal [a] [])) = case a of
@@ -3414,7 +3429,7 @@ isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subAr
     -- other universally). Decide coverage of the sub leaf (with its own predicates) by the
     -- super's predicate universe symbolically; conservative 'False' stays the fallback.
     leafCtxPredsCover = superPreds /= PredsNone
-      && fromMaybe False (typeCoveredSymbolic typeEnv vaenv' False (singletonType sub) (UnionType (Just (superPreds, H.empty, [])) H.empty []))
+      && fromMaybe False (typeCoveredSymbolic typeEnv vaenv' ProveWitness (singletonType sub) (UnionType (Just (superPreds, H.empty, [])) H.empty []))
 
     hasAllPreds :: TypePredicates -> TypePredicates -> Bool
     hasAllPreds (PredsAnd subPs) supPs = all (`hasAllPreds` supPs) subPs
@@ -3494,11 +3509,11 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType (Just topData) pos cs) t2
 isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing _ []) t2@(UnionType (Just (PredsAnd ps, (H.null -> True), [])) (H.null -> True) []) =
   fromMaybe
     (all (\p -> isSubtypeOfWithEnv typeEnv vaenv t1 (UnionType (Just (p, H.empty, [])) H.empty [])) ps)
-    (typeCoveredSymbolic typeEnv vaenv False t1 t2)
+    (typeCoveredSymbolic typeEnv vaenv ProveWitness t1 t2)
 isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing _ []) t2@(UnionType (Just (PredsNot q, (H.null -> True), [])) (H.null -> True) []) =
   fromMaybe
     (isBottomType (intersectTypesEnv typeEnv vaenv t1 (UnionType (Just (q, H.empty, [])) H.empty [])))
-    (typeCoveredSymbolic typeEnv vaenv False t1 t2)
+    (typeCoveredSymbolic typeEnv vaenv ProveWitness t1 t2)
 -- PosPartials ⊆ NegPartials: filter by name.
 -- filteredLeafs is always exact for names in allowedNames; hasOutside only means the type
 -- has additional elements outside those names, which cannot affect subtype checking here.
@@ -3508,7 +3523,7 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing subPartials []) t2@(Union
   fromMaybe
     (let (filteredLeafs, _) = expandTypesWithNamesFull typeEnv vaenv t2 (H.keysSet subPartials)
      in isSubtypeOfWithEnv typeEnv vaenv t1 (UnionType Nothing filteredLeafs []))
-    (typeCoveredSymbolic typeEnv vaenv False t1 t2)
+    (typeCoveredSymbolic typeEnv vaenv ProveWitness t1 t2)
 -- PosPartials-with-constants ⊆ t2: partials check + each constant must be in t2
 -- (Only for PosPartials: in NegPartials, cs are excluded constants, not members)
 isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing leafs cs@(_:_)) t2 =
@@ -3564,7 +3579,7 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (p1, n1, _)) (H.null -> Tru
   -- name-level), never exactly a finite set of excluded constants, so re-adding nc1's points
   -- cannot flip an uncovered t1 to covered.
   | otherwise = fromMaybe oldReexpress
-      (typeCoveredSymbolic typeEnv vaenv True (UnionType (Just (p1, n1, [])) H.empty []) t2)
+      (typeCoveredSymbolic typeEnv vaenv ProveEmpty (UnionType (Just (p1, n1, [])) H.empty []) t2)
   where
     -- Re-express U_p1 - n1 as a positive type and recurse. Guarded on progress: when the predicate
     -- expands to the universe (e.g. p1 = PredsNone) the difference reproduces the same complement,
@@ -3594,14 +3609,14 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (preds, negLeafs, _)) (H.nu
   where
    -- Symbolic decision first (emptiness of @(U_preds − negLeafs) ∧ ¬t2@ against the class
    -- graph); the materialized chain remains as the out-of-fragment fallback. Gated open-world
-   -- ('gatePos' = 'True', matching 'predsEmptySymbolic' and the sealed-only 'predsCoveredExpand'
+   -- ('ProveEmpty', matching 'predsEmptySymbolic' and the sealed-only 'predsCoveredExpand'
    -- fallback below): an UNSEALED class in @preds@ must NOT be enumerated closed-world here, or the
    -- cover proves @Top(Bag ∧ ¬Nil) ⊆ Cons@ (Bag's only non-Nil member so far IS a Cons) — broken by
    -- any future @isa Bag@ declaration, and inconsistent with the open-world emptiness oracle, which
    -- collapses @∀Bag ∩ (¬Nil − Cons)@ to ∅ while the union side keeps it (a difference-subset law
    -- failure). In the closed-world coverage environment ('tePrgmEnv') the gate still enumerates.
    predsCovered = fromMaybe predsCoveredExpand
-     (typeCoveredSymbolic typeEnv vaenv True (UnionType (Just (preds, negLeafs, [])) H.empty []) t2)
+     (typeCoveredSymbolic typeEnv vaenv ProveEmpty (UnionType (Just (preds, negLeafs, [])) H.empty []) t2)
    predsCoveredExpand = case expandTypesWithNamesFull typeEnv vaenv t1 (H.keysSet superPartials) of
     (_, True)      | isPredsContradictory preds -> True
     (_, True)      | predImpliesPartials typeEnv vaenv preds superPartials -> True
