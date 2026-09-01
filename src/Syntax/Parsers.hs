@@ -55,6 +55,7 @@ import           Syntax.InferImport       (dirSyntax, findImportPath,
                                            inferRawImportStr, parserImport,
                                            stackPath)
 import           Syntax.Md.Parser         (mdSyntax)
+import           Syntax.Native.Parser     (nativeReference, nativeSyntax)
 import           Syntax.Obsidian.Parser   (obsidian, obsidianSyntax)
 import           Syntax.Python.Parser     (pySyntax)
 import           Syntax.Rss.Parser        (rss, rssSyntax)
@@ -77,7 +78,8 @@ importSyntaxes = H.fromList [
   ("python", pySyntax),
   (hsBuiltins, hsBuiltinsSyntax),
   (hsPrgm, hsPrgmSyntax),
-  (hsRawPrgm, hsRawPrgmSyntax)
+  (hsRawPrgm, hsRawPrgmSyntax),
+  (nativeReference, nativeSyntax)
                              ]
 
 -- | The path an applied import names: its first positional argument.

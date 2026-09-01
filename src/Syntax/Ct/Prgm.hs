@@ -303,8 +303,12 @@ data ImporterDecl = ImporterDecl {
 -- not ready is left unread, and whoever is driving the read builds the importer and reads again
 -- ('CtService.ctssLoadOf'). This says which page it is waiting on so that the driver knows what to
 -- build.
+-- | The page is named by its path rather than as a 'FileImport'. A native import carries the
+-- importer's path as a string in its own expression, since that is all an import expression can
+-- hold, and the reader which asks about it has only that string to ask with — turning it back into
+-- a 'FileImport' is 'Syntax.Parsers.canonicalImport''s job and is above this module.
 data ImportBlocked = ImportBlocked {
-  ibPage :: FileImport,
+  ibPage :: FilePath,
   ibWhy  :: String
                                    }
   deriving (Eq, Show)
@@ -333,12 +337,21 @@ data ImporterEnv = ImporterEnv {
   -- place an extension is resolved against — see 'Syntax.InferImport.inferFileParser' for why
   -- resolving an extension against the caller's imports would make one file into two pages.
   ieRegistry :: IO (Maybe FileImport),
+  -- | Whether the page at this path is built and can answer, and why not where it cannot.
+  --
+  -- Apart from 'ieInvoke' rather than being found out by trying, because the two are asked at
+  -- different moments and one of them must be cheap. A read asks this of every native page it
+  -- reaches, to decide whether to read the page at all ('irBlocked'); running the importer to find
+  -- out would run it twice for every page that is ready, and the whole cost of an importer is
+  -- running it.
+  ieReady    :: FilePath -> IO (Maybe ImportBlocked),
   -- | Run an importer whose page is already built, over the path it is to read.
   --
-  -- The page, the function's written name, the path, and whatever named arguments the import was
-  -- written with. Answers 'ImportBlocked' where the page is not built yet, which is the deferral
-  -- above rather than a failure.
-  ieInvoke   :: FileImport -> String -> String -> [(String, String)] -> IO (Either ImportBlocked ParsedImport)
+  -- The importer's page, the function's written name, the path to read, and whatever named
+  -- arguments the import was written with. Answers 'ImportBlocked' where the page turned out not to
+  -- be ready after all, which is the deferral above rather than a failure — 'ieReady' is asked
+  -- first, but nothing holds a lock between the two.
+  ieInvoke   :: FilePath -> String -> String -> [(String, String)] -> IO (Either ImportBlocked ParsedImport)
                                }
 
 -- | A read with no compiler behind it, which reads the syntaxes the compiler supplies and no others.
@@ -350,8 +363,11 @@ noImporters :: ImporterEnv
 noImporters = ImporterEnv{
   ieDeclared = const $ return [],
   ieRegistry = return Nothing,
-  ieInvoke = \page _ _ _ -> return $ Left $ ImportBlocked page "reading a page with a Catln-declared importer needs the compiler, which this command does not start"
+  ieReady = return . Just . noCompiler,
+  ieInvoke = \page _ _ _ -> return $ Left $ noCompiler page
                          }
+  where
+    noCompiler page = ImportBlocked page "reading a page with a Catln-declared importer needs the compiler, which this command does not start"
 
 -- | Where one import is being resolved: what wrote it, what was written above it, and what may be
 -- asked about importers.
