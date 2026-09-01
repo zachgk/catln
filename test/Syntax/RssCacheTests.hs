@@ -33,7 +33,8 @@ import           Syntax.Ct.Prgm    (ImportReader (..), ParsedImport (..),
                                     PreloadImport (..), RawExpr (..),
                                     RawObjArr (..), RawPrgm (..),
                                     RawStatement (..), RawStatementTree (..),
-                                    ReadPath (..), newRecordedReadEnv)
+                                    ReadPath (..), newRecordedReadEnv,
+                                    noImporters)
 import           Syntax.Parsers    (mkDesCanonicalImportStr)
 import           Syntax.Rss.Cache  (FeedCache (..), ItemEntry (..),
                                     feedCacheFile, rssCacheBuffer)
@@ -93,7 +94,7 @@ readFeed :: FilePath -> [Maybe String] -> IO Read'
 readFeed root answers = do
   script <- newIORef answers
   asked <- newIORef (0 :: Int)
-  env <- newRecordedReadEnv (Just root)
+  env <- newRecordedReadEnv (Just root) noImporters
   reader <- newRssReaderWith (stub script asked) env
   imp <- feedExpr
   parsed <- irParse reader imp
@@ -257,7 +258,7 @@ rssCacheTests = testGroup "RssCacheTests" [
 
   testCase "a feed read off the network is read again every time" $ do
     root <- caseRoot "reads"
-    env <- newRecordedReadEnv (Just root)
+    env <- newRecordedReadEnv (Just root) noImporters
     reader <- newRssReaderWith (const $ return Nothing) env
     imp <- feedExpr
     preloaded <- irPreload reader imp
@@ -270,7 +271,7 @@ rssCacheTests = testGroup "RssCacheTests" [
 
   testCase "a feed read from a file is read again when the file is written to" $ do
     root <- caseRoot "file-reads"
-    env <- newRecordedReadEnv (Just root)
+    env <- newRecordedReadEnv (Just root) noImporters
     reader <- newRssReaderWith (const $ return Nothing) env
     imp <- impAbs <$> mkDesCanonicalImportStr testCtssConfig "rss(\"test/Integration/code/artifacts/xkcd.xml\")"
     preloaded <- irPreload reader imp

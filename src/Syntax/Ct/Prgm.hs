@@ -112,7 +112,7 @@ data RawPrgm m = RawPrgm { rprgmImports :: [RawFileImport], rprgmStatements :: [
 --
 -- These are what @hsrawprgm()@ declares, and they are the OTHER side of what @hsprgm()@ declares.
 -- That page is the program the compiler has finished reducing — six kinds of expression, which is
--- what a program that rewrites programs works on. This is the program as it was written, twenty
+-- what a program that rewrites programs works on. This is the program as it was written, sixteen
 -- kinds of expression including the sugar, which is what a program that PRODUCES one has to build.
 -- An importer is the case: it is handed a file and answers with a page of this.
 --
@@ -127,7 +127,7 @@ data RawPrgm m = RawPrgm { rprgmImports :: [RawFileImport], rprgmStatements :: [
 instance CtType (RawExpr ()) where
   ctDoc _ = [
     "An expression as it was written, before the compiler reduces what was written to what it means.",
-    "Where a [/Catln/Expr] is six arms, this is twenty: the sugar is still here. A [RawMethod] is `a.b`, a [RawList] is `[a, b]`, a [RawFmtStrExpr] is a format string, a [RawTheExpr] is `:Name`, and a [RawParen] is a bracket that was written. Each of them becomes a [TupleApply] of something once desugaring is done.",
+    "Where a [/Catln/Expr] is six arms, this is sixteen: the sugar is still here. A [RawMethod] is `a.b`, a [RawList] is `[a, b]`, a [RawFmtStrExpr] is a format string, a [RawTheExpr] is `:Name`, and a [RawParen] is a bracket that was written. Each of them becomes a [TupleApply] of something once desugaring is done.",
     "So this is what a program BUILDING a program writes, and [/Catln/Expr] is what a program READING one reads. An importer writes this."
             ]
 
@@ -273,6 +273,107 @@ data TreeScan = TreeScan {
 -- things which want it must be given the one answer. What only one syntax wants belongs to that
 -- syntax's reader ('ImportReader'), which is why the record of Obsidian vaults is no longer named
 -- here.
+-- | An importer a page declares: a way of reading files written in some other syntax.
+--
+-- Read off the raw statements of a page rather than off a compiled one, which is what the
+-- @#importer@ annotation is for. Deciding which importer reads a file happens while the imports are
+-- being resolved, long before anything has been desugared, so the answer has to be available from a
+-- parse alone.
+data ImporterDecl = ImporterDecl {
+  -- | The page the declaration is written on, which is the page that must be built before the
+  -- importer can be run.
+  idPage :: FileImport,
+  -- | The name the declaration is written under, as written: @parsePython@ rather than
+  -- @\/Python\/parsePython@. Relative because the evaluator resolves it
+  -- ('Eval.evalDShowCall' expands a relative name), and because the absolute name is not known
+  -- until the page has been desugared — which is after this is needed.
+  idFn   :: String,
+  -- | The name an @import@ writes at its head to be read with this: the @python@ of
+  -- @import python("x.py")@.
+  idName :: String,
+  -- | The file extensions a file is read with this importer by, without their dots.
+  idExts :: [String]
+                                 }
+  deriving (Eq, Show)
+
+-- | Why an importer could not be run yet.
+--
+-- Not an error. An importer's page has to be BUILT before the importer can be called, and a read
+-- cannot build — it holds the read lock, and building takes it again. So a page whose importer is
+-- not ready is left unread, and whoever is driving the read builds the importer and reads again
+-- ('CtService.ctssLoadOf'). This says which page it is waiting on so that the driver knows what to
+-- build.
+data ImportBlocked = ImportBlocked {
+  ibPage :: FileImport,
+  ibWhy  :: String
+                                   }
+  deriving (Eq, Show)
+
+-- | What a read can ask the compiler about importers written in Catln.
+--
+-- A record of callbacks rather than the compilation service itself, because the service sits above
+-- this module — "CtService" imports "Syntax.Parsers", so nothing here may name a @CTSS@. The service
+-- builds one of these over itself and hands it down.
+--
+-- Everything here is answered out of what the service ALREADY holds. None of it reads a file, builds
+-- a page, or takes a lock the read is running inside: a read holds 'CtService.ctssReadLock' for its
+-- whole walk, and an MVar is not re-entrant, so an answer that went and built something would
+-- deadlock rather than be slow.
+data ImporterEnv = ImporterEnv {
+  -- | The importers declared directly on these pages, in the order the pages are given.
+  --
+  -- Directly, not transitively: an importer must be imported to be used. The alternative walks the
+  -- whole import closure of every page, and since every page imports the standard library, that is
+  -- the standard library walked once per import resolved.
+  ieDeclared :: [FileImport] -> IO [ImporterDecl],
+  -- | The page a file reached with no import line above it looks on for its importer.
+  --
+  -- A root file the compiler was given, or a file found in a directory listing, has no preceding
+  -- imports to search. This is the standard library's registry of importers, and it is the ONLY
+  -- place an extension is resolved against — see 'Syntax.InferImport.inferFileParser' for why
+  -- resolving an extension against the caller's imports would make one file into two pages.
+  ieRegistry :: IO (Maybe FileImport),
+  -- | Run an importer whose page is already built, over the path it is to read.
+  --
+  -- The page, the function's written name, the path, and whatever named arguments the import was
+  -- written with. Answers 'ImportBlocked' where the page is not built yet, which is the deferral
+  -- above rather than a failure.
+  ieInvoke   :: FileImport -> String -> String -> [(String, String)] -> IO (Either ImportBlocked ParsedImport)
+                               }
+
+-- | A read with no compiler behind it, which reads the syntaxes the compiler supplies and no others.
+--
+-- What 'Syntax.Parsers.parseFile' and 'Syntax.Parsers.parseImportAlone' are given: the formatter and
+-- @catln convert@ hold one page rather than a program, and have no service to ask. An import naming
+-- a Catln-declared importer is reported there rather than read, which is what 'ieInvoke' says.
+noImporters :: ImporterEnv
+noImporters = ImporterEnv{
+  ieDeclared = const $ return [],
+  ieRegistry = return Nothing,
+  ieInvoke = \page _ _ _ -> return $ Left $ ImportBlocked page "reading a page with a Catln-declared importer needs the compiler, which this command does not start"
+                         }
+
+-- | Where one import is being resolved: what wrote it, what was written above it, and what may be
+-- asked about importers.
+--
+-- The imports above it are what an importer is looked up in. An @import@ line may name an importer
+-- declared by a page imported on an earlier line, which is what lets a file bring in an importer and
+-- then use it. Only the lines ABOVE, so that what an import means is decided by what has been said
+-- before it rather than by the whole file.
+data ImportCtx = ImportCtx {
+  icCaller    :: Maybe FileImport,
+  icPreceding :: [FileImport],
+  icImporters :: ImporterEnv
+                           }
+
+-- | Resolving an import that no page wrote: one the compiler was given, or one a syntax built.
+rootImportCtx :: ImporterEnv -> ImportCtx
+rootImportCtx = ImportCtx Nothing []
+
+-- | Resolving an import written on a page, with nothing above it yet.
+pageImportCtx :: ImporterEnv -> FileImport -> ImportCtx
+pageImportCtx importers caller = ImportCtx (Just caller) [] importers
+
 data ReadEnv = ReadEnv {
   -- | The trees this read has walked.
   --
@@ -297,18 +398,26 @@ data ReadEnv = ReadEnv {
   -- The root alone. What is written under it, whether anything is, and whether what is written
   -- still holds are the syntax's own — see 'Syntax.Obsidian.Cache', which is one syntax's record
   -- and not a table of everyone's.
-  reCacheRoot :: Maybe FilePath
+  reCacheRoot :: Maybe FilePath,
+  -- | What this read may ask the compiler about importers written in Catln.
+  --
+  -- Here rather than on 'Syntax.Parsers.Reading' because a syntax is handed this and not that: a
+  -- reader is made from a 'ReadEnv' ('isReader'), and the syntax which decides whether a file of a
+  -- directory is one to read at all ('Syntax.InferImport.isSupportedFileExtension', reached from
+  -- @dirPreload@) has to be able to ask which extensions a declared importer handles.
+  reImporters :: ImporterEnv
                        }
 
 -- | A read which reads every page it reaches, keeping and consulting no record.
 newReadEnv :: IO ReadEnv
-newReadEnv = newRecordedReadEnv Nothing
+newReadEnv = newRecordedReadEnv Nothing noImporters
 
--- | A read which may answer for a page out of what an earlier run recorded.
-newRecordedReadEnv :: Maybe FilePath -> IO ReadEnv
-newRecordedReadEnv cacheRoot = do
+-- | A read which may answer for a page out of what an earlier run recorded, and which may ask the
+-- compiler about importers written in Catln.
+newRecordedReadEnv :: Maybe FilePath -> ImporterEnv -> IO ReadEnv
+newRecordedReadEnv cacheRoot importers = do
   scans <- newIORef H.empty
-  return $ ReadEnv scans cacheRoot
+  return $ ReadEnv scans cacheRoot importers
 
 -- | The walk of the tree under a directory this read made, walking it if this read has not.
 --
@@ -462,12 +571,24 @@ data ReadPage = ReadPage {
   -- | 'Nothing' where nothing timed the read, which is a page that is always read again: either the
   -- parser could not say what it read ('ReadPaths') or the read was not one
   -- 'Syntax.Parsers.readFiles' made.
-  rpReads   :: Maybe ReadTime
+  rpReads   :: Maybe ReadTime,
+  -- | The pages this one cannot be read until something has BUILT ('irBlocked'), and empty for the
+  -- ordinary page which can be read now.
+  --
+  -- A page with these is in the graph with its edges and without its program, exactly as a page
+  -- whose syntax could say what it imports without reading it is ('rpPrgm'). The difference is why:
+  -- that page has not been asked for yet, and this one cannot be answered yet. Whoever is driving
+  -- the read builds these and reads again ('CtService.ctssLoadOf').
+  rpBlocked :: [FileImport]
                          }
 
 -- | Every page the read walks on to from this one.
+--
+-- The pages it is waiting on are among them, so that a page which cannot be read yet still puts what
+-- it is waiting for into the graph. Without that the importer's page would be reachable from
+-- nothing, and a build of the page that needs it would not build it.
 readPageVisits :: ReadPage -> [FileImport]
-readPageVisits page = rpExtras page ++ rpImports page
+readPageVisits page = rpExtras page ++ rpImports page ++ rpBlocked page
 
 -- | The path an import names, where it names one at all.
 --
@@ -559,8 +680,24 @@ data ImportReader = ImportReader {
   -- At the end rather than as the read goes, so that a read which read nothing writes nothing. Not
   -- run for a read which failed part way: a record written out of a read that stopped halfway is a
   -- record of a program nobody read.
-  irFinish  :: IO ()
+  irFinish  :: IO (),
+  -- | The pages this one cannot be read until something has BUILT, and nothing for a page which can
+  -- be read now.
+  --
+  -- Asked before 'irParse' rather than found out by trying, because a read cannot build: it holds
+  -- 'CtService.ctssReadLock' for its whole walk, and building takes that lock again. A page which
+  -- answers with pages here is left in the graph with its edges and without its program, and
+  -- whoever is driving the read builds what it named and reads again ('CtService.ctssLoadOf').
+  --
+  -- Nothing for every syntax the compiler supplies: they read a file and are done. Only a page read
+  -- by an importer written in Catln waits on anything.
+  irBlocked :: Expr () -> IO [RawFileImport]
                                  }
+
+-- | A reader of a syntax which needs nothing built before it can read: every syntax the compiler
+-- supplies itself.
+readyReader :: (Expr () -> ImportPreloadResult) -> (Expr () -> ImportParseResult) -> IO () -> ImportReader
+readyReader preload parse finish = ImportReader preload parse finish (const $ return [])
 
 -- | The preload of a syntax which can say what a page imports only by reading it: the one read
 -- answers both questions, so the program it produced is handed on rather than read for again.
@@ -570,7 +707,7 @@ eagerPreload parsed@ParsedImport{piPrgm=RawPrgm imports _, piReads} = PreloadImp
 -- | A syntax which needs nothing of a read at all: its pages are read out of the files they name
 -- and out of nothing else, so the reader made for each read is the same reader every time.
 statelessSyntax :: (Expr () -> ImportPreloadResult) -> (Expr () -> ImportParseResult) -> (RawPrgm () -> Maybe String) -> ImportSyntax
-statelessSyntax preload parse unparse = ImportSyntax (const $ return $ ImportReader preload parse (return ())) unparse importedLinkDir Nothing
+statelessSyntax preload parse unparse = ImportSyntax (const $ return $ readyReader preload parse (return ())) unparse importedLinkDir Nothing
 
 -- | Where a relative link resolves for a syntax whose pages are read from the directory they sit in,
 -- which is the directory they sit in. Every syntax but the one which reads a page out of a

@@ -130,7 +130,7 @@ newObsidianReader env = do
   tasks <- newIORef H.empty
   cache <- traverse newObsidianCache (reCacheRoot env)
   let reader = ObsidianReader env indexes tasks cache
-  return $ ImportReader (obsidianPreload reader) (obsidianParse reader) (mapM_ flushObsidianCache cache)
+  return $ readyReader (obsidianPreload reader) (obsidianParse reader) (mapM_ flushObsidianCache cache)
 
 -- | Which of the two an obsidian import names: a vault, or a note and the vault holding it.
 data ObsidianImport

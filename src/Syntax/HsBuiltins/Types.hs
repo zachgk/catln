@@ -115,7 +115,7 @@ hsPrgmPage = foldl (flip ($)) emptyCtPage hsPrgmTypes
 --
 -- The other side of 'hsPrgmTypes'. That page is the program the compiler has finished reducing, six
 -- kinds of expression, which is what a program that READS a program works on. This is the program as
--- the parser produced it, twenty kinds of expression with the sugar still in them, which is what a
+-- the parser produced it, sixteen kinds of expression with the sugar still in them, which is what a
 -- program that PRODUCES one has to build — an importer written in Catln is handed a file and answers
 -- with a page of this.
 --

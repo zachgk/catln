@@ -74,7 +74,7 @@ newRssReaderWith :: (String -> IO (Maybe String)) -> ReadEnv -> IO ImportReader
 newRssReaderWith fetch env = do
   cache <- traverse newRssCache (reCacheRoot env)
   let reader = RssReader cache fetch
-  return $ ImportReader (rssPreload reader) (rssParse reader) (mapM_ flushRssCache cache)
+  return $ readyReader (rssPreload reader) (rssParse reader) (mapM_ flushRssCache cache)
 
 -- | Where a relative link written on a feed's page resolves against.
 --

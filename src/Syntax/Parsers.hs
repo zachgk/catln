@@ -112,10 +112,10 @@ setRawImportPath name (RawTupleApply m be args) = RawTupleApply m be (aux args)
 setRawImportPath _ e = e
 
 -- Processes an import, producing the rawImpAbs and rawImpDisp
-canonicalImport :: CTSSConfig -> Maybe FileImport -> RawFileImport -> IO FileImport
-canonicalImport config caller imp@AFileImport{impAbs=(RawCExpr _ (CStr name))} = do
-  inferred <- inferRawImportStr config caller name
-  canonicalImport config caller imp{impAbs=inferred}
+canonicalImport :: CTSSConfig -> ImportCtx -> RawFileImport -> IO FileImport
+canonicalImport config ctx imp@AFileImport{impAbs=(RawCExpr _ (CStr name))} = do
+  inferred <- inferRawImportStr config (icCaller ctx) name
+  canonicalImport config ctx imp{impAbs=inferred}
 -- The metas are cleared because 'impAbs' is the identity of a page: 'AFileImport' compares by it and
 -- 'MapMeta.parseMetaIDScope' names a file's meta-id scope by it. A written @import parser("path")@
 -- is the one import form which reaches here carrying the positions and types its parse gave it, and
@@ -129,12 +129,12 @@ canonicalImport config caller imp@AFileImport{impAbs=(RawCExpr _ (CStr name))} =
 --
 -- 'impRaw' is deliberately left alone. It is what 'Syntax.Ct.Formatter.formatImport' prints, so
 -- rewriting it would have the formatter replace what the file says with an absolute path.
-canonicalImport config caller imp = case maybeExprPath impAbs0 of
+canonicalImport config ctx imp = case maybeExprPath impAbs0 of
   Nothing -> fail $ printf "Invalid import %s must be string or oject" (show imp)
   Just impPath -> do
     impAbs' <- syntaxPageImport config (nameStr impPath) impAbs0
     let named' = rawImportPath impAbs'
-    resolved <- join <$> mapM (findImportPath config caller) named'
+    resolved <- join <$> mapM (findImportPath config (icCaller ctx)) named'
     let disp' = resolved <|> named'
     impDir' <- case (calledDir', disp') of
       (_, Just b) | isAbsolute b -> return $ Just $ takeDirectory b
@@ -144,7 +144,24 @@ canonicalImport config caller imp = case maybeExprPath impAbs0 of
     return $ desFileImport $ imp{impAbs=impAbs'', impDisp=disp', impCalledDir=calledDir', impDir=impDir'}
   where
     impAbs0 = mapMeta (\_ _ -> Identity emptyMetaN) ImportMeta $ impAbs imp
-    calledDir' = impDir =<< caller
+    calledDir' = impDir =<< icCaller ctx
+
+-- | Resolve the imports a page writes, in the order it writes them, each seeing the ones above it.
+--
+-- A left fold rather than a 'mapM' because that order is what an importer is looked up in: a page
+-- may import the page declaring an importer on one line and use that importer on the next, so what
+-- an import means depends on what has been imported before it. A 'mapM' would resolve them all
+-- against the same empty context and could not see that.
+--
+-- Nothing reads 'icPreceding' yet — the resolution that does is the next commit — but the order is
+-- established here, so that adding the lookup is adding a lookup rather than also rethreading this.
+canonicalImports :: CTSSConfig -> ImporterEnv -> Maybe FileImport -> [RawFileImport] -> IO [FileImport]
+canonicalImports config importers caller = go []
+  where
+    go _ [] = return []
+    go preceding (imp:rest) = do
+      imp' <- canonicalImport config (ImportCtx caller preceding importers) imp
+      (imp' :) <$> go (preceding ++ [imp']) rest
 
 -- | An import which names no path of its own, written as the page its syntax stands at.
 --
@@ -189,7 +206,7 @@ mkRawImportStr name = mkRawFileImport $ fromMaybe (rawStr name) (importExpr name
       _                                                            -> Nothing
 
 mkDesCanonicalImportStr :: CTSSConfig -> String -> IO FileImport
-mkDesCanonicalImportStr config = canonicalImport config Nothing . mkRawImportStr
+mkDesCanonicalImportStr config = canonicalImport config (rootImportCtx noImporters) . mkRawImportStr
 
 -- | The syntax a page is written in, and how that syntax is read and written back.
 --
@@ -223,9 +240,9 @@ data Reading = Reading {
 -- finishing them all a thing 'finishReading' can do: a read whose readers appeared as pages were
 -- reached would write back whatever the pages it happened to reach had made, which is a record that
 -- depends on the order a graph was walked in.
-newReading :: Maybe FilePath -> IO Reading
-newReading cacheRoot = do
-  env <- newRecordedReadEnv cacheRoot
+newReading :: Maybe FilePath -> ImporterEnv -> IO Reading
+newReading cacheRoot importers = do
+  env <- newRecordedReadEnv cacheRoot importers
   Reading env <$> traverse (`isReader` env) importSyntaxes
 
 -- | Writes back whatever the read has left each syntax with. See 'Syntax.Ct.Prgm.irFinish' for why
@@ -341,7 +358,7 @@ parseImport reading imp = do
 -- record said rather than what the file says would be a formatter which undoes edits.
 parseImportAlone :: FileImport -> IO ParsedImport
 parseImportAlone imp = do
-  reading <- newReading Nothing
+  reading <- newReading Nothing noImporters
   parsed <- parseImport reading imp
   finishReading reading
   return parsed
@@ -481,27 +498,30 @@ pagePrgm imp imports (RawPrgm _ statements) = addRawPrgmMetaIDs (parseMetaIDScop
 
 -- | The page a preload found: where it sits in the graph, and the program it holds where the
 -- preload had to read it.
-preloadPage :: CTSSConfig -> FileImport -> PreloadImport -> IO ReadPage
-preloadPage config imp PreloadImport{plImports, plExtraImports, plParsed} = do
+preloadPage :: CTSSConfig -> ImporterEnv -> FileImport -> PreloadImport -> IO ReadPage
+preloadPage config importers imp PreloadImport{plImports, plExtraImports, plParsed} = do
   let imports = pageImports imp (piPrgm <$> plParsed) plImports
-  imports' <- mapM (canonicalImport config (Just imp)) imports
-  extras' <- mapM (canonicalImport config (Just imp)) plExtraImports
-  return $ ReadPage (pagePrgm imp imports . piPrgm <$> plParsed) (piSource =<< plParsed) imports' extras' Nothing
+  imports' <- canonicalImports config importers (Just imp) imports
+  -- The extras are what a reading FOUND rather than what the page wrote — the files of a directory,
+  -- the notes of a vault — so none of them is written above any other and there is no order for one
+  -- to see the others in.
+  extras' <- mapM (canonicalImport config (pageImportCtx importers imp)) plExtraImports
+  return $ ReadPage (pagePrgm imp imports . piPrgm <$> plParsed) (piSource =<< plParsed) imports' extras' Nothing []
 
 -- | What a parse gives a page: the program as the page holds it, and the edges that program writes.
-parsedPage :: CTSSConfig -> FileImport -> ParsedImport -> IO (RawPrgm (), [FileImport])
-parsedPage config imp ParsedImport{piPrgm=prgm@(RawPrgm rawImports _)} = do
+parsedPage :: CTSSConfig -> ImporterEnv -> FileImport -> ParsedImport -> IO (RawPrgm (), [FileImport])
+parsedPage config importers imp ParsedImport{piPrgm=prgm@(RawPrgm rawImports _)} = do
   let imports = pageImports imp (Just prgm) rawImports
-  imports' <- mapM (canonicalImport config (Just imp)) imports
+  imports' <- canonicalImports config importers (Just imp) imports
   return (pagePrgm imp imports prgm, imports')
 
 -- | Read one page as its program, on its own and out of no record. What a caller which is to work
 -- with a page's program rather than with a graph of them wants: the formatter, and the goldens.
 parseFile :: CTSSConfig -> RawFileImport -> CResT IO (GraphNodes (RawPrgm ()) FileImport)
 parseFile config imp = lift $ do
-  imp' <- canonicalImport config Nothing imp
+  imp' <- canonicalImport config (rootImportCtx noImporters) imp
   parsed <- parseImportAlone imp'
-  (prgm, imports) <- parsedPage config imp' parsed
+  (prgm, imports) <- parsedPage config noImporters imp' parsed
   return (prgm, imp', imports)
 
 -- | What a page was read from, or nothing at all where the read could not say what it read.
@@ -540,7 +560,7 @@ readPage config reading inFull prev imp = case H.lookup imp prev of
   Nothing -> do
     started <- getCurrentTime
     preloaded <- preloadImport reading imp
-    page <- preloadPage config imp preloaded
+    page <- preloadPage config (reImporters $ rdEnv reading) imp preloaded
     times <- readTime (rdEnv reading) started (plReads preloaded)
     readOn page{rpReads = times}
   where
@@ -549,7 +569,7 @@ readPage config reading inFull prev imp = case H.lookup imp prev of
       | otherwise = do
           started <- getCurrentTime
           parsed <- parseImport reading imp
-          (prgm, imports) <- parsedPage config imp parsed
+          (prgm, imports) <- parsedPage config (reImporters $ rdEnv reading) imp parsed
           times <- readTime (rdEnv reading) started (piReads parsed)
           return page{rpPrgm=Just prgm, rpSource=piSource parsed, rpImports=imports, rpReads=times}
 
@@ -596,9 +616,9 @@ readQueued config reading inFull prev queue found = aux
 -- TODO Change preloadImport and parseImport, then make this return GraphData of CRes
 readFiles :: CTSSConfig -> S.HashSet FileImport -> H.HashMap FileImport ReadPage -> [RawFileImport] -> IO (GraphData ReadPage FileImport)
 readFiles config inFull prev initialImps = do
-  reading <- newReading (ctssCachePath config)
+  reading <- newReading (ctssCachePath config) noImporters
   queue <- newReadQueue
-  rqRestart queue =<< mapM (canonicalImport config Nothing) initialImps
+  rqRestart queue =<< mapM (canonicalImport config (rootImportCtx noImporters)) initialImps
   acc <- newIORef []
   readQueued config reading inFull prev queue $ \imp page ->
     modifyIORef' acc ((page, imp, rpImports page) :)

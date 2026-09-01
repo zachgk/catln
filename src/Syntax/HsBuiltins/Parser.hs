@@ -174,7 +174,7 @@ hsRawPrgm = "hsrawprgm"
 --
 -- Below @core\/hsprgm.ct@ and not beside it, for the reason that page is below
 -- @core\/hsbuiltins.ct@: what a page costs is paid by everything importing it. These are the raw
--- syntax — twenty kinds of expression with the sugar still in them — where @hsprgm()@ is the six
+-- syntax — sixteen kinds of expression with the sugar still in them — where @hsprgm()@ is the six
 -- kinds left after desugaring. A program which READS programs wants that page; only a program which
 -- PRODUCES one, which is what an importer does, wants this.
 --
@@ -207,7 +207,7 @@ hsRawPrgmStatements :: [RawStatementTree RawExpr ()]
 hsRawPrgmStatements = map commentSt [
   "# The Catln Program As Written",
   "These are the compiler's types for a program as the parser produced it, before desugaring reduces what was written to what it means. They are reached by writing `import hsrawprgm()`.",
-  "Where `core/hsprgm.ct` declares the six kinds of expression a program has been reduced to, this declares the twenty it was written as: a method call, a list, a format string, a bracket. Each of those becomes an application of the others once desugaring has run.",
+  "Where `core/hsprgm.ct` declares the six kinds of expression a program has been reduced to, this declares the sixteen it was written as: a method call, a list, a format string, a bracket. Each of those becomes an application of the others once desugaring has run.",
   "So that page is what a program READING a program reads, and this is what a program PRODUCING one writes. An importer is the case: it is handed a file and answers with a `/Catln/ImportResult` holding a page of this.",
   "The standard library does not write this import and must not, for the reason `core/hsprgm.ct` gives about itself. A page declaring an importer writes it and pays for it."
                                     ] ++ renderCtDecls hsRawPrgmPage

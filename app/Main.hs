@@ -15,7 +15,8 @@ import           Syntax.Ct.Formatter     (formatRootPrgm)
 import           Syntax.Ct.Prgm          (ParsedImport (..), RawPrgm (..),
                                           RawStatement (..),
                                           RawStatementTree (..), isCorePage,
-                                          rawExprAppliedArgsMap)
+                                          noImporters, rawExprAppliedArgsMap,
+                                          rootImportCtx)
 import           Syntax.Parsers          (canonicalImport,
                                           mkDesCanonicalImportStr,
                                           mkRawImportStr, parseFile,
@@ -137,7 +138,7 @@ xFmt prgmName = do
   -- pipeline: 'Syntax.Parsers.pageImports' injects an implicit @import "core"@ for compilation, and
   -- formatting that would write a duplicate @import "core"@ back into any file that already imports
   -- it.
-  imp <- lift $ canonicalImport buildCtssConfig Nothing $ mkRawImportStr prgmName
+  imp <- lift $ canonicalImport buildCtssConfig (rootImportCtx noImporters) $ mkRawImportStr prgmName
   ParsedImport{piPrgm=rawPrgm} <- lift $ parseImportAlone imp
   let prgm' = formatRootPrgm rawPrgm
   -- Written back to the file the import resolved to rather than to the name it was given by, which

@@ -112,7 +112,7 @@ newHaskellReader :: ReadEnv -> IO ImportReader
 newHaskellReader _ = do
   reader <- HaskellReader <$> newIORef H.empty
   let parse = hsParse reader
-  return $ ImportReader (fmap eagerPreload . parse) parse (return ())
+  return $ readyReader (fmap eagerPreload . parse) parse (return ())
 
 -- | What one read has found of the Stack projects the modules it reads belong to.
 --

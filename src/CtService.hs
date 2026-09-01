@@ -555,8 +555,8 @@ ctssReadOf ctss@(CTSS ssmv _) load = do
     withWritten ctssWatcher $ \written -> do
       unchanged <- ctssUnchanged ctssWatcher written [(prgmName, ssfRead ssf) | (prgmName, ssf) <- H.toList before]
       let held = [prgmName | (prgmName, ssf) <- H.toList before, isJust (ssfRaw ssf)]
-      reading <- newReading (ctssCachePath ctssConfig)
-      rqRestart ctssReadQueue =<< mapM (canonicalImport ctssConfig Nothing . mkRawImportStr) ctssBaseFileNames
+      reading <- newReading (ctssCachePath ctssConfig) noImporters
+      rqRestart ctssReadQueue =<< mapM (canonicalImport ctssConfig (rootImportCtx noImporters) . mkRawImportStr) ctssBaseFileNames
       -- Gathered up as the read goes and acted on once at the end. Which pages an invalidation
       -- reaches is the import graph walked the other way, and mid-read that is a graph some of whose
       -- pages this read has taken up and some of whose pages it has not — so the walk is made once,
@@ -641,7 +641,11 @@ mergePage held page = case held of
   -- from it to invalidate and nothing about it has changed, so this is not a change — without
   -- this arm every read of a page nothing has asked for yet would invalidate every page which
   -- imports it.
-  Just old@SSF{ssfRaw=Nothing} | isNothing (rpPrgm page), rpImports (ssfRead old) == rpImports page -> (old{ssfRead=page}, False)
+  -- What it is waiting on is compared as well as what it imports. A page held unread because its
+  -- importer was not built, read again now that the importer IS built, is a page which has changed
+  -- even though its edges have not — and taking it for unchanged is what would keep it unread
+  -- forever.
+  Just old@SSF{ssfRaw=Nothing} | isNothing (rpPrgm page), rpImports (ssfRead old) == rpImports page, rpBlocked (ssfRead old) == rpBlocked page -> (old{ssfRead=page}, False)
   Just{} -> (newSSF page, True)
   Nothing -> (newSSF page, False)
 

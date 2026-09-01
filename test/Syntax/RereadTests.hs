@@ -18,8 +18,8 @@ import           Data.List           (isPrefixOf, sort)
 import           Data.Time.Clock     (UTCTime, addUTCTime, getCurrentTime)
 import           Semantics           (ctssCachePath, testCtssConfig)
 import           Semantics.Prgm      (FileImport, impDisp)
-import           Syntax.Ct.Prgm      (ReadPage (..), newReadEnv, scanTree,
-                                      tsFiles)
+import           Syntax.Ct.Prgm      (ReadPage (..), newReadEnv, noImporters,
+                                      rootImportCtx, scanTree, tsFiles)
 import           Syntax.Parsers      (canonicalImport, finishReading,
                                       mkRawImportStr, newReadQueue, newReading,
                                       readFiles, readPathWrittenIn, readPaths,
@@ -393,9 +393,9 @@ testQueuedOrder = testCase "a read hands each page over as it reads it, oldest r
 -- with them. Reads every page it reads in full, as 'readOnce' does and for the same reason.
 readHandingOver :: String -> (FileImport -> ReadPage -> IO a) -> IO [a]
 readHandingOver name found = do
-  reading <- newReading (ctssCachePath testCtssConfig)
+  reading <- newReading (ctssCachePath testCtssConfig) noImporters
   queue <- newReadQueue
-  rqRestart queue =<< mapM (canonicalImport testCtssConfig Nothing) [mkRawImportStr name]
+  rqRestart queue =<< mapM (canonicalImport testCtssConfig (rootImportCtx noImporters)) [mkRawImportStr name]
   acc <- newIORef []
   readQueued testCtssConfig reading S.empty H.empty queue $ \imp page ->
     found imp page >>= \x -> modifyIORef' acc (x :)

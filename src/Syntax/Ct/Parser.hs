@@ -130,7 +130,7 @@ ctxSyntax = ImportSyntax reader (const Nothing) importedLinkDir Nothing
       -- Updated rather than rebuilt, so the file this read is a read of travels with it without
       -- being named again here.
       let ctxParse fileName = (\parsed -> parsed{piPrgm = annotate (piPrgm parsed)}) <$> irParse ct fileName
-      return $ ImportReader (fmap eagerPreload . ctxParse) ctxParse (irFinish ct)
+      return $ readyReader (fmap eagerPreload . ctxParse) ctxParse (irFinish ct)
     annotate (RawPrgm imports statements) = RawPrgm imports (RawStatementTree (RawAnnot (RawValue emptyMetaN (mkName ctxAnnot))) [] :statements)
 
 parseRepl :: String -> PReplRes

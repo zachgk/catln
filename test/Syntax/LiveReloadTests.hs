@@ -37,6 +37,7 @@ import           Eval.Runtime.WebDocs   (askService)
 import           Semantics              (CTSSConfig (..), ctssCachePath,
                                          testCtssConfig)
 import           Semantics.Prgm         (FileImport, impDisp)
+import           Syntax.Ct.Prgm         (noImporters, rootImportCtx)
 import           Syntax.Parsers         (canonicalImport, finishReading,
                                          mkRawImportStr, newReadQueue,
                                          newReading, readQueued, rqLeft,
@@ -379,9 +380,9 @@ testPageHeldWhileReading = testCase "the service holds a page before the read th
   writeLater now (dir </> "a.ct") "import \"b.ct\"\na = 1\n"
   writeLater now (dir </> "b.ct") "b = 2\n"
   ctss <- emptyCTSS testCtssConfig
-  reading <- newReading (ctssCachePath testCtssConfig)
+  reading <- newReading (ctssCachePath testCtssConfig) noImporters
   queue <- newReadQueue
-  rqRestart queue =<< mapM (canonicalImport testCtssConfig Nothing) [mkRawImportStr (dir </> "a.ct")]
+  rqRestart queue =<< mapM (canonicalImport testCtssConfig (rootImportCtx noImporters)) [mkRawImportStr (dir </> "a.ct")]
   steps <- newIORef []
   readQueued testCtssConfig reading S.empty H.empty queue $ \prgmName page -> do
     _ <- ctssAddPage ctss prgmName page
@@ -441,9 +442,9 @@ testProgressCountsARead = testCase "a read says how much of itself it has done" 
   writeLater now (dir </> "a.ct") "import \"b.ct\"\nimport \"c.ct\"\na = 1\n"
   writeLater now (dir </> "b.ct") "import \"c.ct\"\nb = 2\n"
   writeLater now (dir </> "c.ct") "c = 3\n"
-  reading <- newReading (ctssCachePath testCtssConfig)
+  reading <- newReading (ctssCachePath testCtssConfig) noImporters
   queue <- newReadQueue
-  rqRestart queue =<< mapM (canonicalImport testCtssConfig Nothing) [mkRawImportStr (dir </> "a.ct")]
+  rqRestart queue =<< mapM (canonicalImport testCtssConfig (rootImportCtx noImporters)) [mkRawImportStr (dir </> "a.ct")]
   steps <- newIORef []
   readSoFar <- newIORef (0 :: Int)
   readQueued testCtssConfig reading S.empty H.empty queue $ \_ _ -> do

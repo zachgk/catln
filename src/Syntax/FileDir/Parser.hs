@@ -60,7 +60,7 @@ fileDirSyntax = ImportSyntax newFileDirReader (const Nothing) importedLinkDir No
 newFileDirReader :: ReadEnv -> IO ImportReader
 newFileDirReader env = do
   let reader = FileDirReader env
-  return $ ImportReader (fileDirPreload reader) (fileDirParse reader) (return ())
+  return $ readyReader (fileDirPreload reader) (fileDirParse reader) (return ())
 
 -- | The directory an import names, as the one path that names it.
 --
