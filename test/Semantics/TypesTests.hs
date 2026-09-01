@@ -812,7 +812,7 @@ propOccurrenceReadingSound gPrgm = property $ do
 propOwnVarBindingRespected :: IO GenPrgm -> Property
 propOwnVarBindingRespected gPrgm = property $ do
   gPrgm' <- lift gPrgm
-  prgm <- forAll gPrgm'
+  prgm <- forAll $ HG.filter prgmHasPlacement gPrgm'
   let typeEnv = mkTypeEnv prgm
   vaenv <- forAll $ genVaenv prgm
   (ref, sub) <- forAll $ genOwnVarBoundPair prgm

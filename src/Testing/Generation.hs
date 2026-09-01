@@ -76,13 +76,6 @@ dataNodeNames  (ClassGraph cg) = [fromPartialName k | (n, k, _) <- graphToNodes 
   where notClass CGClass{} = False
         notClass _         = True
 
--- | Names for the OWN-variable binder generator. Deliberately DISJOINT from 'varNamePool' so a
--- generated 'TypeVarArgEnv' can never also bind the name: the property is about the partial's own
--- 'ptVars' being honoured, and an ambient binding of the same name would let a forgetful traversal
--- reach the right answer for the wrong reason (shadowing is a separate question).
-ownVarNamePool :: [Name]
-ownVarNamePool = map mkName ["own1", "own2"]
-
 -- | A pair of types that MUST be indistinguishable to every operation: the same partial, binding
 -- one of its own type variables to a ground bound, holding at one nested position either a
 -- 'TVInt' reference to that variable or the bound itself.
@@ -103,39 +96,96 @@ ownVarNamePool = map mkName ["own1", "own2"]
 --     leaf reaches the binding through 'intersectPartialsBase' instead.
 --   * the POSITION of the reference within the slot — the whole slot, a nested positive partial's
 --     dimension, or a class predicate's dimension.
+-- | Whether a declaration has a usable (binder, payload-slot) placement for
+-- 'genOwnVarBoundPair': at least one type parameter, and either a field or a second parameter.
+--
+-- Drawn through 'HG.filter' at the PROGRAM level this retries inside the generator instead of
+-- spending the property's discard budget. Without it, a program whose declarations are all
+-- nullary — common, and more so now that generated class members are nullary by construction —
+-- rejects EVERY draw, and the property gave up on discards at ~37% acceptance while a real
+-- counterexample sat past the cap.
+declHasPlacement :: Expr () -> Bool
+declHasPlacement = go (0 :: Int) (0 :: Int)
+  where
+    go nv na (TupleApply _ (_, b) (EAppVar _ _)) = go (nv + 1) na b
+    go nv na (TupleApply _ (_, b) (EAppArg _))   = go nv (na + 1) b
+    go nv na _                                   = nv >= 1 && (na >= 1 || nv >= 2)
+
+-- | A program carrying at least one such declaration.
+prgmHasPlacement :: Prgm Expr () -> Bool
+prgmHasPlacement (Prgm om _ _) = any (maybe False declHasPlacement . oaObj) (flatObjectMap om)
+
+-- TODO: a sibling generator should place the nested reference as a 'TVParent' (@$^T@) — the
+-- spelling @/Cons@'s own declaration uses for @/tail -> ∀/ConsList[/T=$^/T]@ — which reaches an
+-- enclosing parameter THROUGH a shadowing inner scope rather than avoiding one. That exercises the
+-- scope class this generator now deliberately steps around, and belongs with the shadowing
+-- property below rather than in this law.
 genOwnVarBoundPair :: Prgm Expr () -> Gen (Type, Type)
 genOwnVarBoundPair prgm@(Prgm objMap _ _) = do
   when (nullObjectMap objMap && graphEmpty cg) HG.discard
-  base    <- genPartialType prgm
-  varName <- partialKey <$> HG.element ownVarNamePool
+  -- Every key written below is one the base's DECLARATION already has. A partial's 'ptVars' and
+  -- 'ptArgs' keys ARE its declaration's parameters and fields (declaration-boundedness, the rule
+  -- 'genWithTVExt' follows), so inventing a binder name — this generator used to insert its own
+  -- @own1@\/@own2@ into whatever partial it drew — builds a leaf no value ever carries. The
+  -- operations then legitimately disagree about it, and the law reports a compiler defect that is
+  -- really a malformed input: @/Cons[/T=…, /own1=/Cons](/head=$/own1)@ (@/Cons@ declares only
+  -- @/T@) failed @sub ⊆ ref@, while the identical shape keyed on the declared @/T@ passes both
+  -- directions and both differences.
+  base    <- HG.filter (not . null . placements) (genPartialType prgm)
+  (varName, slot) <- HG.element (placements base)
   -- The bound must be GROUND: a bound that itself mentions a variable would make the two members
   -- of the pair differ by more than the one reference under test.
   bound   <- HG.small (HG.filter (\t -> concreteishInner t && not (typeHasTypeVars t)) (genType prgm))
-  dim     <- partialKey <$> HG.element ["T", "K", "V"]
-  wrap    <- HG.choice (bareSlot : nestedDim dim : [classPredDim dim | not (null (classNodeNames (ClassGraph cg)))])
+  wrap    <- HG.choice (bareSlot : nestedDim varName : [classPredDim varName | any ((/= [varName]) . snd) classDims])
   outer   <- HG.element [singletonType, classPartial, relPartial]
-  slotKey <- if H.null (ptArgs base)
-    then return (partialKey "ownSlot")
-    else HG.element (H.keys (ptArgs base))
   let withSlot v = outer base
-        { ptVars = H.insert varName bound (ptVars base)
-        , ptArgs = H.insert slotKey (wrap v) (ptArgs base)
+        { ptVars = H.insert varName bound (case slot of
+            Right k -> H.insert k (wrap v) (ptVars base)
+            Left _  -> ptVars base)
+        , ptArgs = case slot of
+            Left k  -> H.insert k (wrap v) (ptArgs base)
+            Right _ -> ptArgs base
         }
   return (withSlot (TypeVar (TVVar varName) TVInt PTopType), withSlot bound)
   where
     TypeEnv{teClassGraph=ClassGraph cg} = mkTypeEnv prgm
+    -- Where the reference can go: a (binder, payload-slot) pair, both DECLARED keys of the same
+    -- partial and necessarily distinct. The payload prefers a declared FIELD ('Left'); when the
+    -- declaration has none it takes a SECOND declared parameter ('Right'). Requiring a field
+    -- outright rejected most draws — plenty of declarations are nullary — and the property then
+    -- gave up on discards instead of testing anything.
+    placements b =
+      [ (v, Left k)  | v <- H.keys (ptVars b), k <- H.keys (ptArgs b) ] ++
+      [ (v, Right k) | v <- H.keys (ptVars b), k <- H.keys (ptVars b), k /= v ]
     -- The @∀r[..]@ relation-predicate form, the sibling of 'classPartial'.
     relPartial p = TopType H.empty (PredsOne (PredRel p))
+    -- NO SHADOWING at the nested positions. A 'TVInt' name the enclosing partial declares and the
+    -- NESTED one does not reads against the enclosing scope ('partialCoversSat'.'ambientRef'); but
+    -- if the nested partial declares the SAME name it captures the reference, and the two members
+    -- of the "identical" pair stop denoting the same thing —
+    -- @∀/Cons[/T=#noCore](/tail=/Some[/T=$/T])@ reads @$/T@ as @/Some@'s @/T@, not @/Cons@'s.
+    -- The old invented @own1@\/@own2@ names could never collide, so drawing DECLARED names (which
+    -- fixed a worse problem) reintroduced capture; the nested generators below exclude the binder's
+    -- name explicitly instead. Referring to an enclosing parameter from inside a nested partial
+    -- through a captured name is what 'TVParent' (@$^T@) is for, and generating that is a separate
+    -- question from this law — see the TODO below.
     -- The payload IS the slot.
     bareSlot = return id
-    -- The payload is a dimension of a nested positive partial.
-    nestedDim dim = do
-      p <- genPartialType prgm
+    -- The payload is a dimension of a nested positive partial — again one the nested partial
+    -- DECLARES, not an invented @T@\/@K@\/@V@.
+    nestedDim varName = do
+      p <- HG.filter (\q -> not (H.null (ptVars q)) && not (H.member varName (ptVars q))) (genPartialType prgm)
+      dim <- HG.element (H.keys (ptVars p))
       return $ \v -> singletonType p{ptVars = H.insert dim v (ptVars p)}
     -- The payload is a dimension of a CLASS PREDICATE ('classPartial' builds the @∀C[..]@ form).
-    -- CLASS nodes only — a 'PredClass' over a data type is not well-formed ('classNodeNames').
-    classPredDim dim = do
-      className <- HG.element (classNodeNames (ClassGraph cg))
+    -- CLASS nodes only — a 'PredClass' over a data type is not well-formed ('classNodeNames') —
+    -- and the dimension must be one the CLASS declares.
+    classDims = [ (fromPartialName k, ks)
+                | (CGClass (_, cpt, _, _), k, _) <- graphToNodes cg
+                , let ks = H.keys (ptVars cpt), not (null ks) ]
+    classPredDim varName = do
+      (className, ks) <- HG.element [c | c@(_, ks') <- classDims, any (/= varName) ks']
+      dim <- HG.element (filter (/= varName) ks)
       return $ \v -> classPartial (partialVal className){ptVars = H.singleton dim v}
 
 -- | A small external variable environment ('TypeVarArgEnv') mapping a subset of 'varNamePool'
