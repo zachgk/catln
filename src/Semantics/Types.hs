@@ -2872,12 +2872,22 @@ satAtomImpliesDeclared typeEnv a1 a2 = case (a1, a2) of
   _ -> False
 
 -- | Is some (finite) value able to satisfy the goal? Conservative towards 'True'.
--- 'satUse': under 'ProveEmpty', THIS goal's positive class generator may only be enumerated when
--- the class is sealed or 'tePrgmEnv' is set (the open-world gate); an unenumerable positive
--- class makes the goal conservatively satisfiable. The gate applies only to the outermost
--- enumeration - every nested derivation is closed-world over current members, mirroring the
--- materialized algebra (whose gate sits at the outermost implication/re-expression decision
--- while all downstream expansion is ungated).
+-- 'satUse' says which answer the caller relies on. Under 'ProveEmpty' a positive class
+-- generator may only be enumerated when the class is sealed or 'tePrgmEnv' is set; an
+-- unenumerable positive class makes the goal conservatively satisfiable.
+--
+-- The polarity is INHERITED by every sub-decision reached from here ('checkCand',
+-- 'checkCandLeaf'), because each of those answers' FALSE direction is what produces this
+-- goal's UNSAT: a sub-decision that enumerated an open class closed-world would manufacture
+-- the very non-membership 'ProveEmpty' forbids. Hardcoding an ungated sub-call let the SAME
+-- goal decide two ways by call site — @[SatRel /Bag] ¬[SatRel /ConsList]@ answered True at the
+-- root and False one level down — so @predsEmpty (Bag ∧ Option ∧ ¬ConsList)@ read empty though
+-- @/Bag@ is unsealed and a future @isa Bag@ declaration inhabits it.
+--
+-- The one justified flip is in 'satEscapesAtomic', where the enumeration searches for a member
+-- that COVERS the witness: a member found now really is a member, so the cover it proves cannot
+-- be unmade, and a member not yet declared only costs precision (an unproven cover reads as an
+-- escape, the conservative side).
 -- | THE SAT-GOAL MEMO. 'satGoalRaw' is a pure function of the env (identified by its
 -- 'teQueryCacheKey' token plus the behavior flags a same-token env can vary in), the var
 -- env, the gate, the hypothesis path, and the goal — but its candidate enumeration
@@ -2994,11 +3004,15 @@ satGoalRaw typeEnv0 vaenv satUse hyps goal0
     candUniversal _                          = False
 
     -- Prefer the most concrete generator: concrete leafs, then a class, then a relation. Among
-    -- those, take the first that can actually ENUMERATE: a gated-open positive class yields no
-    -- candidates, and skipping it for a co-present enumerable atom (e.g. the SEALED @ConsList@
-    -- deciding @Monad[Integer] ∧ ConsList ∧ ¬DShow@ that the OPEN @Monad@ generator only reports
-    -- conservatively satisfiable) is sound - the skipped atom is still enforced as a POSITIVE
-    -- membership on each enumerated witness ('satAdmits' in 'checkCandLeaf').
+    -- those, take the first that can actually ENUMERATE: a class the caller's polarity forbids
+    -- enumerating yields no candidates, so a co-present enumerable atom generates instead (e.g.
+    -- the SEALED @ConsList@ deciding @Monad[Integer] ∧ ConsList ∧ ¬DShow@ that the OPEN @Monad@
+    -- generator only reports conservatively satisfiable). Skipping is sound because the skipped
+    -- atom still reaches 'satAdmits' in 'checkCandLeaf' UNDER THE SAME POLARITY, which under
+    -- 'ProveEmpty' refuses the same enumeration and answers "admits" conservatively — so the
+    -- witness survives and the goal reads satisfiable. It is NOT sound to claim the skipped atom
+    -- is thereby ENFORCED: enforcing it would mean concluding non-membership from an open class's
+    -- current members, which is exactly what 'ProveEmpty' forbids.
     orderedAtoms = let (leafs, nonLeafs) = L.partition isLeafs (sgPos goal)
                        (classes, rels)   = L.partition isClass nonLeafs
                    in leafs ++ classes ++ rels
@@ -3035,12 +3049,17 @@ satGoalRaw typeEnv0 vaenv satUse hyps goal0
 
     rest = SatGoal restPos (sgNeg goal)
 
-    checkCand (CandGoal g) = satGoal typeEnv vaenv ProveWitness hyps' (mergeSatGoals g rest)
+    checkCand (CandGoal g) = satGoal typeEnv vaenv satUse hyps' (mergeSatGoals g rest)
     checkCand (CandLeaf m)
       | ptPreds m /= PredsNone = case predsSatDNF True (ptPreds m) of
           Nothing  -> True -- member predicates outside the fragment: conservative
           Just dnf -> any (\g -> checkCandLeaf (mergeSatGoals g rest) m{ptPreds=PredsNone}) dnf
       | otherwise = checkCandLeaf rest m
+    -- AUDIT PENDING (polarity split, D4): both of these answers' FALSE direction feeds this
+    -- goal's UNSAT, so on the reading that 'satUse' is inherited they should inherit too.
+    -- Left ungated for now: flipping them exposes the materialized meet's own open-world
+    -- expansion (@/Point ∩ ∀Bag = ∅@ for an UNSEALED @Bag@, which the gated engine refuses),
+    -- which is a separate defect and a separate fix.
     checkCandLeaf r m = all (satAdmits typeEnv vaenv ProveWitness hyps' mR) (sgPos r)
                      && all (satEscapes typeEnv vaenv ProveWitness hyps' mR) (sgNeg r)
       where
