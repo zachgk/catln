@@ -2243,9 +2243,25 @@ typeSatDNF vaenv tv@(TypeVar v TVOuter i) = satVarOccDNF vaenv varDNF i
           looked                -> typeSatDNF (H.delete v vaenv) looked -- delete to break var reference cycles
 typeSatDNF _ (UnionType _ _ (_:_)) = Nothing -- constants: out of fragment
 typeSatDNF _ (UnionType (Just (_, _, _:_)) _ _) = Nothing -- excluded constants: out of fragment
-typeSatDNF _ (UnionType Nothing leafs []) = case splitUnionType leafs of
+-- A leaf enters as one atom, but the engine decides it SLOT BY SLOT
+-- ('partialCoversSat'.'elemCovered' via 'typesSatDiff'), so a leaf is only in the fragment when
+-- its slots are. 'typesSatDiff' reports an out-of-fragment pair as "differs", which
+-- 'elemCovered' reads as PROVEN not-covered — a manufactured escape witness that makes
+-- 'typeCoveredSymbolic' answer @Just False@ and so SHORT-CIRCUIT the materialized fallback that
+-- would have decided correctly. Admitting the leaf and discovering the slot is undecidable only
+-- later turns "I cannot tell" into a definite negative.
+--
+-- Two leaves that are syntactically EQUAL still cover each other through the earlier equality
+-- check, which is why this stayed latent: only a pair that differs in spelling but not in
+-- denotation (@/P[/A=$_v∩{c}]@ against @/P[/A={c}]@) reaches the slot comparison and loses.
+typeSatDNF vaenv (UnionType Nothing leafs []) = case splitUnionType leafs of
   [] -> Just [] -- bottom: unsatisfiable
-  ls -> Just [SatGoal [SatLeafs ls] []]
+  ls | all leafInFragment ls -> Just [SatGoal [SatLeafs ls] []]
+     | otherwise             -> Nothing
+  where
+    leafInFragment PartialType{ptVars, ptArgs} =
+      all slotInFragment (H.elems ptVars ++ H.elems ptArgs)
+    slotInFragment t = isJust (typeSatDNF vaenv t)
 typeSatDNF vaenv (UnionType (Just (preds, negLeafs, [])) pos []) = do
   topGoals <- predsSatDNF True preds
   let negAtoms = [SatLeafs (splitUnionType negLeafs) | not (H.null negLeafs)]
