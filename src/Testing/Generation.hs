@@ -551,15 +551,31 @@ genInputExpr = do
   varArgNames <- HG.set (linear 0 5) genName
   varOrArg <- HG.list (singleton $ S.size varArgNames) HG.bool
   let (varNames, argNames) = bimap (map fst) (map fst) $ partition snd $ zip (S.toList varArgNames) varOrArg
-  let val = Value (emptyMetaT $ typeVal n) n
+  let base = partialVal n
+  let val = (base, Value (emptyMetaT $ singletonType base) n)
   withVars <- foldM genVar val (map (partialKey . mkName) varNames)
-  foldM genArg withVars (map mkName argNames)
+  snd <$> foldM genArg withVars (map mkName argNames)
   where
     genName = HG.string (linear 5 10) HG.lower
-    genVar base varName = do
-      return $ TupleApply emptyMetaN (emptyMetaN, base) (EAppVar varName emptyMetaN)
-    genArg base argName = do
-      return $ TupleApply emptyMetaN (emptyMetaN, base) (EAppArg (ObjArr (Just (Value emptyMetaN argName)) ArgObj Nothing [] (Just (Nothing, emptyMetaN))))
+    -- Every application node PRESENTS the type built so far: the object's name plus the
+    -- parameters and fields applied up to that point, each at its declared ⊤ bound. A
+    -- typechecked program carries these metas; leaving them ⊤ makes the object's declared type
+    -- ⊤ everywhere except the innermost 'Value', and 'Semantics.typeGraphData' — which reads
+    -- the OUTER meta and keeps only leaf-union presentations — then reports the name as having
+    -- NO declaration. Every declaration-dependent rule (a field's declared bound, a name's
+    -- declared dimensions and arg-sets, the stamp-support check) silently reads
+    -- no-information, so the laws exercise a weaker environment than the compiler's.
+    --
+    -- The arg's own object expression keeps its ⊤ meta on purpose: 'inExprSingleton' derives
+    -- the arg KEY from a singleton type when one is present and from the expression's path
+    -- otherwise, and the two spellings differ.
+    genVar (p, b) varName = do
+      let p' = p{ptVars = H.insert varName PTopType (ptVars p)}
+      return (p', TupleApply (emptyMetaT $ singletonType p') (emptyMetaN, b) (EAppVar varName emptyMetaN))
+    genArg (p, b) argName = do
+      let oa = ObjArr (Just (Value emptyMetaN argName)) ArgObj Nothing [] (Just (Nothing, emptyMetaN))
+          p' = p{ptArgs = H.insert (inExprSingleton $ oaObjExpr oa) PTopType (ptArgs p)}
+      return (p', TupleApply (emptyMetaT $ singletonType p') (emptyMetaN, b) (EAppArg oa))
 
 -- | Generates an output expression equivalent to an input expression
 genOutputExpr :: Expr () -> Expr () -> Gen (Expr ())
