@@ -2667,6 +2667,17 @@ partialUninhabited :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialTy
 partialUninhabited typeEnv vaenv p =
   partialUninhabitedByDecl typeEnv vaenv p || partialHasEmptySlot typeEnv vaenv p
 
+-- | Whether a POSITIVE type denotes ∅ because every one of its leafs is uninhabited
+-- ('partialUninhabited'). @∅@ is a subset of everything, but the subtype oracle walks its
+-- operands as written and never re-compacts them, so a leaf that 'compactType' would collapse
+-- (@/Pair[/A=∅]@, or a parameter slot holding an occurrence whose variable value and inner are
+-- disjoint) otherwise reads as inhabited there while the meet and the union agree it is empty —
+-- and @a ⊆ a∪b@ fails on the very leaf the union dropped. Callers use it as the LAST disjunct so
+-- the per-leaf compaction is paid only on an otherwise-negative answer.
+positiveLeafsAllUninhabited :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialLeafs -> Bool
+positiveLeafsAllUninhabited typeEnv vaenv leafs =
+  not (H.null leafs) && all (partialUninhabited typeEnv vaenv) (splitUnionType leafs)
+
 -- | Keyset coverage: every arg-set allowed by @sub@ is allowed by @sup@
 -- (the @negCoversAllPos@ reasoning of 'differencePartialLeafs').
 argModeCovers :: PartialType -> PartialType -> Bool
@@ -3561,14 +3572,16 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType (Just topData) pos cs) t2
 -- Sound both ways: the (∧) rule is set-exact given its sub-answers; the (¬) rule's meet is
 -- exact-or-wider (the mergeVarEnvVal doctrine), so a proven-∅ is truly ∅ and a nonempty
 -- meet answers subtype-unproven, the safe polarity.
-isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing _ []) t2@(UnionType (Just (PredsAnd ps, (H.null -> True), [])) (H.null -> True) []) =
+isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing subLeafs []) t2@(UnionType (Just (PredsAnd ps, (H.null -> True), [])) (H.null -> True) []) =
   fromMaybe
     (all (\p -> isSubtypeOfWithEnv typeEnv vaenv t1 (UnionType (Just (p, H.empty, [])) H.empty [])) ps)
     (typeCoveredSymbolic typeEnv vaenv ProveWitness t1 t2)
-isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing _ []) t2@(UnionType (Just (PredsNot q, (H.null -> True), [])) (H.null -> True) []) =
+  || positiveLeafsAllUninhabited typeEnv vaenv subLeafs
+isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing subLeafs []) t2@(UnionType (Just (PredsNot q, (H.null -> True), [])) (H.null -> True) []) =
   fromMaybe
     (isBottomType (intersectTypesEnv typeEnv vaenv t1 (UnionType (Just (q, H.empty, [])) H.empty [])))
     (typeCoveredSymbolic typeEnv vaenv ProveWitness t1 t2)
+  || positiveLeafsAllUninhabited typeEnv vaenv subLeafs
 -- PosPartials ⊆ NegPartials: filter by name.
 -- filteredLeafs is always exact for names in allowedNames; hasOutside only means the type
 -- has additional elements outside those names, which cannot affect subtype checking here.
@@ -3579,6 +3592,7 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing subPartials []) t2@(Union
     (let (filteredLeafs, _) = expandTypesWithNamesFull typeEnv vaenv t2 (H.keysSet subPartials)
      in isSubtypeOfWithEnv typeEnv vaenv t1 (UnionType Nothing filteredLeafs []))
     (typeCoveredSymbolic typeEnv vaenv ProveWitness t1 t2)
+  || positiveLeafsAllUninhabited typeEnv vaenv subPartials
 -- PosPartials-with-constants ⊆ t2: partials check + each constant must be in t2
 -- (Only for PosPartials: in NegPartials, cs are excluded constants, not members)
 isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing leafs cs@(_:_)) t2 =
