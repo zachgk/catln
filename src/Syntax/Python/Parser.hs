@@ -856,10 +856,21 @@ convertPyModule (PyModule stmts) =
 -- declares rather than in full, so there is not enough of it in the program to write one.
 pySyntax :: ImportSyntax
 pySyntax = eagerSyntax $ \imp -> case [arg | arg@ObjArr{oaObj=Nothing} <- exprAppliedArgs imp] of
-  (ObjArr{oaArr=Just (Just (CExpr _ (CStr filename)), _)}:_) -> do
-    fileContents <- BS.readFile filename
-    src <- readFile filename
-    pyMod <- parsePython fileContents
-    let prgm = convertPyModule pyMod
-    return $ ParsedImport prgm (Just src) (Just [ReadFile filename])
+  (ObjArr{oaArr=Just (Just (CExpr _ (CStr filename)), _)}:_) -> pyParseFile filename
   _ -> undefined
+
+-- | Read one Python file as the page it holds.
+--
+-- Apart from 'pySyntax' because it has two callers: the syntax registered in the compiler's own
+-- table, and the @\/Catln\/#runtime@ primitive an importer declared in Catln is backed by
+-- ("Eval.Runtime.Import"). They read the same file the same way, which is the point — the
+-- declaration of the Python importer moves into a @.ct@ file without the reading of a Python file
+-- changing at all, and that is a claim a shared function makes true rather than one a comment
+-- asserts.
+pyParseFile :: FilePath -> IO ParsedImport
+pyParseFile filename = do
+  fileContents <- BS.readFile filename
+  src <- readFile filename
+  pyMod <- parsePython fileContents
+  let prgm = convertPyModule pyMod
+  return $ ParsedImport prgm (Just src) (Just [ReadFile filename])

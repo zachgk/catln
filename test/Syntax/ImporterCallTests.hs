@@ -12,20 +12,25 @@
 -- defect they found lay between two pieces that each passed their own tests.
 module Syntax.ImporterCallTests where
 
-import           CRes                (CRes (..), prettyCNotes, runCResT)
-import           CtService           (CTSS, ctssBaseFiles, ctssBuildFrom,
-                                      ctssCached, ctssEvaluableFrom,
-                                      ctssImporterEnv, ctssLoad, getSource)
-import qualified Data.HashMap.Strict as H
-import           Eval                (evalBaseEnv, evalCallTo,
-                                      prgmFromGraphData)
-import           Eval.Common         (SSF (..), Val)
-import           Semantics           (testCtssConfig)
-import           Semantics.Types     (Type)
-import           Semantics.Val       hiding (Val)
-import           Syntax.Ct.Prgm      (ImporterDecl (..), ImporterEnv (..),
-                                      importResultType)
-import           Syntax.Parsers      (mkDesCanonicalImportStr)
+import           CRes                 (CRes (..), prettyCNotes, runCResT)
+import           CtConstants          (runtimeArgKey)
+import           CtService            (CTSS, ctssBaseFiles, ctssBuildFrom,
+                                       ctssCached, ctssEvaluableFrom,
+                                       ctssImporterEnv, ctssLoad, getSource)
+import qualified Data.HashMap.Strict  as H
+import           Data.List            (isInfixOf)
+import           Eval                 (evalBaseEnv, evalCallTo,
+                                       prgmFromGraphData)
+import           Eval.Common          (EPrim (..), SSF (..), Val)
+import           Eval.Runtime.Import  (importPathArg, pyImport)
+import           Semantics            (testCtssConfig)
+import           Semantics.CtType     (fromCt)
+import           Semantics.Types      (Type)
+import           Semantics.Val        hiding (Val)
+import           Syntax.Ct.Prgm       (ImporterDecl (..), ImporterEnv (..),
+                                       ParsedImport (..), importResultType)
+import           Syntax.Parsers       (mkDesCanonicalImportStr)
+import           Syntax.Python.Parser (pyParseFile)
 import           Test.Tasty
 import           Test.Tasty.HUnit
 
@@ -124,6 +129,41 @@ testImporterIsFoundByReadingAlone = testCase "an importer is found without compi
   built <- ctssCached (Just . pure . ssfBuilt) name ctss
   assertEqual "and its page was never built" (Just False) (fmap (orElse True) built)
 
+-- | The primitive reads the Python file, and reads it the way the compiler's own syntax does.
+--
+-- Both go through 'Syntax.Python.Parser.pyParseFile', so this says the primitive is wired to the
+-- reader rather than to a second copy of it. The comparison is what makes "only the declaration
+-- moves" checkable: if the two ever came apart, the page a @.py@ file is read as would depend on
+-- which of the compiler's tables found the importer.
+testPyImportReadsAsTheSyntaxDoes :: TestTree
+testPyImportReadsAsTheSyntaxDoes = testCase "the Python primitive reads what the Python syntax reads" $ do
+  let file = "test/Integration/code/simple.py"
+  expected <- pyParseFile file
+
+  case pyImportPrim (H.singleton (runtimeArgKey importPathArg) (StrVal file)) of
+    Left err -> assertFailure $ "the primitive could not read the file: " ++ err
+    Right val -> case fromCt val of
+      Left err -> assertFailure $ "what it answered was not an import result: " ++ err
+      Right parsed -> do
+        assertEqual "the same program" (piPrgm expected) (piPrgm parsed)
+        assertEqual "the same source" (piSource expected) (piSource parsed)
+        assertEqual "and the same reading" (piReads expected) (piReads parsed)
+  where
+    pyImportPrim = case pyImport of
+      EPrim _ f    -> f
+      EEnvPrim _ _ -> const $ Left "the Python importer is not an environment primitive"
+
+-- | A file that is not there is reported, rather than raised out of the evaluation.
+testPyImportReportsAMissingFile :: TestTree
+testPyImportReportsAMissingFile = testCase "a Python file that is not there is reported" $
+  case pyImportPrim (H.singleton (runtimeArgKey importPathArg) (StrVal "no-such-file.py")) of
+    Right _ -> assertFailure "reading a file that is not there answered with a page"
+    Left err -> assertBool ("the report names the path: " ++ err) ("no-such-file.py" `isInfixOf` err)
+  where
+    pyImportPrim = case pyImport of
+      EPrim _ f    -> f
+      EEnvPrim _ _ -> const $ Left "the Python importer is not an environment primitive"
+
 -- | Whatever a computed value came to, for an assertion that is about something else.
 orElse :: a -> CRes a -> a
 orElse _ (CRes _ v) = v
@@ -132,6 +172,8 @@ orElse d _          = d
 importerCallTests :: TestTree
 importerCallTests = testGroup "ImporterCall" [
   testImporterIsFoundByReadingAlone,
+  testPyImportReadsAsTheSyntaxDoes,
+  testPyImportReportsAMissingFile,
   testCallTowardDeclaredType,
   testDeferredPageIsEventuallyRead
                                              ]
