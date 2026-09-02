@@ -53,6 +53,15 @@ nativeImporterArg = "importer"
 nativeFnArg :: String
 nativeFnArg = "fn"
 
+-- | Whether a page is one read by an importer written in Catln.
+--
+-- Asked of the head of the import, which is the one place it is written down. What it is for is
+-- 'CtService.ctssClearInvalidations': such a page's program came from running the importer rather
+-- than from reading its own file, so a change to the importer has to make the page unread and not
+-- merely unbuilt.
+isNativeImport :: FileImport -> Bool
+isNativeImport imp = (nameStr <$> maybeExprPath (impAbs imp)) == Just nativeReference
+
 -- | What a native import says: the file to read, the page declaring the importer, the declaration
 -- to run, and whatever else the import was written with.
 data NativeImport = NativeImport {

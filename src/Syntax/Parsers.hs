@@ -345,6 +345,16 @@ preloadImport reading imp = do
   reader <- importReader reading imp
   irPreload reader $ impAbs imp
 
+-- | The pages an import cannot be read until something has built, as the pages they are.
+--
+-- Resolved here rather than by the syntax which named them, because a syntax names a page the way an
+-- import does — by a path — and turning that into the page it is, is what this module does.
+blockedImports :: CTSSConfig -> Reading -> FileImport -> IO [FileImport]
+blockedImports config reading imp = do
+  reader <- importReader reading imp
+  blocked <- irBlocked reader (impAbs imp)
+  mapM (canonicalImport config (pageImportCtx (reImporters $ rdEnv reading) imp)) blocked
+
 -- | Reads the page an import names as the program it holds.
 -- TODO Modify the ImportParseResult to CResT to report back parse errors
 parseImport :: Reading -> FileImport -> ImportParseResult
@@ -569,11 +579,25 @@ readPage config reading inFull prev imp = case H.lookup imp prev of
     readOn page
       | isJust (rpPrgm page) || not (S.member imp inFull) = return page
       | otherwise = do
-          started <- getCurrentTime
-          parsed <- parseImport reading imp
-          (prgm, imports) <- parsedPage config (reImporters $ rdEnv reading) imp parsed
-          times <- readTime (rdEnv reading) started (piReads parsed)
-          return page{rpPrgm=Just prgm, rpSource=piSource parsed, rpImports=imports, rpReads=times}
+          -- Asked before the page is read, because a page read by an importer written in Catln
+          -- cannot be read until that importer's page has been BUILT, and a read cannot build: it
+          -- holds 'CtService.ctssReadLock' for its whole walk. Such a page is left unread, naming
+          -- what it waits on, and 'CtService.ctssLoadOf' builds that and asks again.
+          blocked <- blockedImports config reading imp
+          if not (null blocked)
+            -- Left with nothing timing it, so that the next read reads it again rather than giving
+            -- it back as it is: 'readTimeCurrent' answers False for a page with no times, which is
+            -- what makes the loop turn.
+            then return page{rpBlocked=blocked, rpPrgm=Nothing, rpReads=Nothing}
+            else do
+              started <- getCurrentTime
+              parsed <- parseImport reading imp
+              (prgm, imports) <- parsedPage config (reImporters $ rdEnv reading) imp parsed
+              times <- readTime (rdEnv reading) started (piReads parsed)
+              -- Cleared, since a page which was waiting and is now readable is no longer waiting.
+              -- Left set, it would have 'CtService.ctssLoadOf' build an importer for a page that has
+              -- already been read by it.
+              return page{rpPrgm=Just prgm, rpSource=piSource parsed, rpImports=imports, rpReads=times, rpBlocked=[]}
 
 -- | Read what the queue names, and everything those pages lead to, handing each page over as it is
 -- read.

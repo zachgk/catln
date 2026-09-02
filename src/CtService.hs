@@ -69,6 +69,8 @@ import           Syntax.Ct.MapRawMeta    (addRawPrgmMetaIDs,
 import           Syntax.Ct.Parser.Expr   (pExpr)
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
+import           Syntax.InferImport      (findImportPath)
+import           Syntax.Native.Parser    (isNativeImport)
 import           Syntax.Parsers
 import           System.FilePath         (takeDirectory)
 import           Text.Megaparsec         (errorBundlePretty, runParser)
@@ -744,7 +746,14 @@ ctssClearInvalidations pagesChanged invalidations ss@CTSSDat{ctssData=(g, nodeFr
     maybeClear prgmName ssf
       -- Rebuilt from the read the page already has: an invalidation drops what was built from a
       -- page, not what the page was read from, so the next read still gives it back unread.
-      | prgmName `S.member` propagated = newSSF (ssfRead ssf)
+      --
+      -- Except for a page read by an importer written in Catln, whose read IS a build: its program
+      -- is whatever running that importer produced. Keeping it would leave the page holding what the
+      -- OLD importer said, and since the page's own files have not changed, nothing would ever read
+      -- it again — editing an importer would drop what was built from every page it reads and leave
+      -- every one of those pages saying what it said before. So such a page is marked unread as well
+      -- as unbuilt, and the next read runs the importer again.
+      | prgmName `S.member` propagated = newSSF (reReadNative prgmName $ ssfRead ssf)
       | null invalidations && not pagesChanged = ssf
       -- Which tests a page has, and what they find, is decided over the whole program the page
       -- belongs to rather than over the page and its imports (see 'ctssTestsFrom'). Invalidation
@@ -752,6 +761,20 @@ ctssClearInvalidations pagesChanged invalidations ss@CTSSDat{ctssData=(g, nodeFr
       -- downstream of — whose tests the change can still alter. Every page's tests are therefore
       -- dropped by any change at all, and re-run for whichever page is asked about next.
       | otherwise = ssf{ssfTests = Nothing, ssfAnnots = keptAnnots ssf}
+
+    -- | A page whose program came from running an importer, forgotten back to nothing, so that the
+    -- next read runs the importer again. Every other page is left exactly as it was.
+    --
+    -- Only a page reached THROUGH the change, never the page the change is. 'propagated' holds both:
+    -- it is the walk outward from what was invalidated, and a walk includes where it started. The
+    -- distinction is the difference between the two things that put a native page here. Its importer
+    -- changed, and its program is what the old importer said — that is the case this exists for.
+    -- Or it was itself just read, by an importer that had this moment become ready, and the program
+    -- it now holds is the freshly imported one — wiping that reads the page, throws the reading
+    -- away, and asks for it again, for ever.
+    reReadNative prgmName rp
+      | isNativeImport prgmName && prgmName `notElem` invalidations = rp{rpPrgm = Nothing, rpSource = Nothing, rpReads = Nothing}
+      | otherwise = rp
 
     -- | A page's annotations, where the change cannot have altered them.
     --
@@ -998,18 +1021,47 @@ buildSCCPipeline ctss ctssData sccNamesSet sccNodes pages instruments epochsVar 
 -- ('ctssReadOf'), so each turn reads at least one page which was not read before — and a page asked
 -- for which comes back unread is that promise broken, which is reported rather than looped on.
 ctssLoadOf :: CTSS -> (GraphData SSF FileImport -> [FileImport]) -> IO ()
-ctssLoadOf ctss@(CTSS ssmv _) select = aux S.empty
+ctssLoadOf ctss@(CTSS ssmv _) select = aux S.empty S.empty
   where
-    aux asked = do
+    aux asked built = do
       CTSSDat{ctssData} <- readMVar ssmv
       let unread = [prgmName | prgmName <- select ctssData
                              , maybe False (isNothing . ssfRaw) (graphLookup prgmName ctssData)]
       unless (null unread) $ do
-        case filter (`S.member` asked) unread of
-          [] -> return ()
-          again -> fail $ printf "Asked for %s and was given them back unread" (intercalate ", " $ map (show . impRaw) again)
-        void $ ctssReadOf ctss unread
-        aux $ S.union asked $ S.fromList unread
+        -- A page read by an importer written in Catln cannot be read until the page declaring that
+        -- importer has been BUILT, and a read cannot build — it holds 'ctssReadLock' for its whole
+        -- walk. So the read leaves such a page unread and names what it is waiting on
+        -- ('Syntax.Ct.Prgm.rpBlocked'), and this is where that is acted on: the importers are built
+        -- HERE, outside any read, and then the read is asked again.
+        let waiting = [(prgmName, b) | prgmName <- unread
+                                     , Just ssf <- [graphLookup prgmName ctssData]
+                                     , b <- rpBlocked (ssfRead ssf)]
+        let blockers = S.toList $ S.difference (S.fromList $ map snd waiting) built
+        case blockers of
+          [] -> do
+            -- What the loop did before importers existed, unchanged: a page asked for which comes
+            -- back unread is a promise broken, and is reported rather than asked for again.
+            case filter (`S.member` asked) unread of
+              [] -> return ()
+              again -> fail $ printf "Asked for %s and was given them back unread" (intercalate ", " $ map (show . impRaw) again)
+            void $ ctssReadOf ctss unread
+            aux (S.union asked $ S.fromList unread) built
+          _ -> do
+            -- A page which can only be read by an importer that is itself only reachable through
+            -- that page is a page nothing can ever read. Nothing above would stop: building the
+            -- importer would ask for the page, which would wait for the importer. Reported by name,
+            -- since a loop here is a hang rather than a failure.
+            forM_ waiting $ \(prgmName, blocker) ->
+              when (blocker `elem` blockers && prgmName `S.member` reaches ctssData blocker) $
+                fail $ printf "The importer declared in %s reads %s, which %s is compiled from" (show $ impRaw blocker) (show $ impRaw prgmName) (show $ impRaw blocker)
+            mapM_ (ctssBuildFrom ctss) blockers
+            void $ ctssReadOf ctss unread
+            -- 'built' only grows, and is bounded by the pages there are, so a blocker which does not
+            -- unblock its page is tried once and then falls into the report above rather than being
+            -- built for ever.
+            aux asked (S.union built $ S.fromList blockers)
+
+    reaches ctssData prgmName = S.fromList $ map snd3 $ graphToNodes $ graphFilterReaches prgmName ctssData
 
 -- | Read the programs of these pages, where a read has left them unread.
 ctssLoad :: CTSS -> [FileImport] -> IO ()
@@ -1385,11 +1437,21 @@ ctssImporterEnv (CTSS ssmv _) = noImporters{ieReady, ieInvoke}
   where
     -- The page a path names, out of the pages the service holds. Pages are keyed by the import which
     -- names them, so this is the reverse of 'Syntax.Ct.Prgm.importPath'.
-    pageAt ctssData at = listToMaybe [prgmName | (_, prgmName, _) <- graphToNodes ctssData, importPath prgmName == Just at]
+    --
+    -- The path is resolved the same way an import of it would be, because a page is keyed by where
+    -- it IS and an importer may be named by where it was written from. The two differ whenever the
+    -- name is relative, and comparing the written name against the resolved key finds nothing —
+    -- which reads as "the importer's page has not been read" about a page that has been read and
+    -- built. The written name is still matched as well, for a page that resolves to nothing on disk.
+    pageAt config ctssData at = do
+      resolved <- findImportPath config Nothing at
+      return $ listToMaybe [prgmName | (_, prgmName, _) <- graphToNodes ctssData
+                                     , importPath prgmName `elem` (Just at : [resolved | isJust resolved])]
 
     ieReady page = do
-      CTSSDat{ctssData} <- readMVar ssmv
-      return $ case pageAt ctssData page >>= (`graphLookup` ctssData) of
+      CTSSDat{ctssConfig, ctssData} <- readMVar ssmv
+      at <- pageAt ctssConfig ctssData page
+      return $ case at >>= (`graphLookup` ctssData) of
         Nothing -> Just $ ImportBlocked page "has not been read"
         Just ssf
           | not (ssfBuilt ssf) -> Just $ ImportBlocked page "has not been built"
@@ -1401,8 +1463,9 @@ ctssImporterEnv (CTSS ssmv _) = noImporters{ieReady, ieInvoke}
           | otherwise -> Nothing
 
     ieInvoke page fun readPath args = do
-      CTSSDat{ctssData} <- readMVar ssmv
-      case pageAt ctssData page of
+      CTSSDat{ctssConfig, ctssData} <- readMVar ssmv
+      at <- pageAt ctssConfig ctssData page
+      case at of
         Nothing -> return $ Left $ ImportBlocked page "has not been read"
         Just prgmName -> do
           let scope = graphToNodes $ graphFilterReaches prgmName ctssData
