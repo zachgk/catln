@@ -4579,13 +4579,28 @@ compactType typeEnv vaenv (UnionType (Just topData) pos cs)
           pos' = compactPartialLeafs typeEnv vaenv argCompacted
       in UnionType (Just topData) pos' cs
 compactType _ _ t@(UnionType (Just _) _ _) = t
--- TypeVar: unchanged
--- An occurrence denotes @var ∩ inner@: compact the inner; a ⊥ inner makes the occurrence ⊥.
+-- TypeVar: an occurrence denotes @var ∩ inner@, so compact the inner and reduce the whole
+-- occurrence to ⊥ whenever that meet is empty — either because the inner alone is, or because
+-- the inner and the variable's value in this environment are disjoint. The second case is the
+-- one a plain structural walk misses: the occurrence still LOOKS inhabited, so it survives
+-- operations (a meet against ⊤, a union) that never consult the environment, and an
+-- uninhabited slot then keeps its enclosing partial alive.
 -- The ⊤-inner fast path is exact (compact ⊤ = ⊤) and keeps the hot knowledge-free case free.
+-- The environment test is skipped when either side still mentions type variables: the meet
+-- would re-enter this clause on a var reachable from its own value, and a variable-valued
+-- binding (including the self-referential entry an unconstrained var acquires) carries no
+-- concrete value to contradict.
 compactType _ _ t@(TypeVar _ _ PTopType) = t
 compactType typeEnv vaenv (TypeVar v loc i) = case compactType typeEnv vaenv i of
   i'@BottomType -> i'
-  i'            -> TypeVar v loc i'
+  i' | envRejects i' -> BottomType
+     | otherwise     -> TypeVar v loc i'
+  where
+    envRejects i'
+      | typeHasTypeVars i' = False
+      | l <- vaenvLookup vaenv v, not (typeHasTypeVars l) =
+          isBottomType $ intersectTypesEnv typeEnv vaenv l i'
+      | otherwise = False
 -- PosPartials with constants: compact leafs, remove constants covered by leafs
 compactType typeEnv vaenv (UnionType Nothing partials consts) =
   let -- Compact the nested argument/variable types (bottom-up) so a recursive arg already
@@ -5483,13 +5498,30 @@ intersectTypesWithVarEnv typeEnv vaenv (TypeVar v loc i) (TypeVar v' loc' i')
 -- operand; distributing @$a ∩ (top ∪ pos)@ would record @$a@ against each union ALTERNATIVE
 -- separately and the env merge would MEET them ('mergeVarEnvs'), narrowing the binding to
 -- @top ∩ pos@.
-intersectTypesWithVarEnv typeEnv vaenv tv@(TypeVar v _ _) t
+--
+-- The occurrence's own inner takes part in the EMPTINESS decision but is not folded into the
+-- result: an occurrence denotes @⟦var⟧ ⊓ ⟦inner⟧@, so the meet is empty as soon as
+-- @binding ⊓ inner ⊓ t@ is, even when @binding ⊓ t@ alone is inhabited. Leaving the inner out
+-- of that test lets an occurrence survive a meet with a type it cannot possibly hold, and a
+-- self-difference @x − x@ (which is @x ∩ ¬x@, where the complement DOES resolve the inner)
+-- then returns @x@ instead of ∅. The returned occurrence keeps its inner untouched rather than
+-- absorbing @t@: narrowing it here would make the meet a producer of occurrence-local knowledge
+-- on every constraint step, which grows without bound in the solver.
+intersectTypesWithVarEnv typeEnv vaenv tv@(TypeVar v _ inner) t
   | Just l <- H.lookup v vaenv, not (isSelfVar v l) =
       let i = intersectTypesEnv typeEnv vaenv l t
-      in if isBottomType i then (vaenv, BottomType) else (H.insert v i vaenv, tv)
+      in if isBottomType i || innerRejects i then (vaenv, BottomType) else (H.insert v i vaenv, tv)
+  | innerRejects t = (vaenv, BottomType)
   | otherwise = (H.insert v t vaenv, tv)
   where isSelfVar var (TypeVar var' _ _) = var' == var
         isSelfVar _   _                  = False
+        -- A ⊤ inner adds no knowledge, so the test is skipped on the (hot) knowledge-free
+        -- occurrence. An inner that itself mentions type variables is skipped too: its meet
+        -- would re-enter this clause (a var reachable from its own inner loops), and an inner is
+        -- expected to be closed anyway.
+        innerRejects other
+          | inner == PTopType || typeHasTypeVars inner = False
+          | otherwise = isBottomType $ intersectTypesEnv typeEnv vaenv inner other
 intersectTypesWithVarEnv typeEnv vaenv t tv@TypeVar{} = intersectTypesWithVarEnv typeEnv vaenv tv t
 -- Mixed type (both top and pos non-empty): distribute intersection over union
 -- (top ∪ pos) ∩ t = (top ∩ t) ∪ (pos ∩ t)
