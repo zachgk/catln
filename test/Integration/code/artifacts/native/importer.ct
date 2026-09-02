@@ -2,16 +2,17 @@ import hsrawprgm()
 
 
 module(Spike)
-  # # A declaration shaped like an importer
-    Not an importer — nothing marks it as one, and the annotation which would is not declared yet.
-    What it is, is a declaration of the shape an importer has to have: it takes the path of a file
-    and answers with a [/Catln/ImportResult]. That is enough to ask the one question this fixture
-    exists for, which is whether the compiler can call such a declaration and get an evaluated value
-    back.
+  # # An importer, for the compiler to find and to run
+    It takes the path of a file and answers with a [/Catln/ImportResult], which is what an importer
+    is. What it does with the file is nothing — it answers with an empty program and reports the
+    path it was given — because what the cases over it ask is whether the compiler can find such a
+    declaration, decide it must be built first, build it, and run it. What a real importer does with
+    the bytes is the Python one's business.
     It lives under @artifacts/@ so that the integration suite does not compile it: that suite reads
     the top level of @test/Integration/code/@ only, and this page reaches @hsrawprgm()@, which is a
     page worth compiling once rather than on every run.
   mkResult(path -> String) -> /Catln/ImportResult
+    #importer(name= "spike", extensions= "spikefile")
     # Answers with a program holding nothing, and reports the [path] it was given as the source it
       read. The path is echoed back rather than ignored so that a caller can tell an answer that
       came from the argument from one that came from anywhere else.

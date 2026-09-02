@@ -38,6 +38,20 @@ module(Catln)
     # [#noCore] is used not include the core library as an automatic dependency of a file
   annot(#runtime(k -> String))
     # [#runtime] is used to mark a runtime declaration. The key [k] is used to match the declaration to the equivalent function in the evaluator runtime.
+  annot(#importer(name -> String, extensions -> String))
+    # [#importer] marks a declaration as a way of reading files written in another syntax.
+      The declaration it is written on takes the [path] of a file and answers with a
+      [/Catln/ImportResult], which is the program that file holds and what reading it read. An
+      `import` written with [name] at its head is read with it, and so is a file whose extension is
+      one of the [extensions].
+      This is what makes the import system extensible without editing the compiler: a syntax the
+      compiler has never heard of is a declaration somebody wrote, on a page that a file imports
+      before it uses it.
+      [extensions] is written as the extensions separated by spaces, without their dots. A list
+      would be the natural shape and is refused for the reason the whole of this file is written the
+      way it is: every program reaches this page through the annotations above, so a list-typed
+      argument here would give it a path to @core/list.ct@. See @core/result.ct@, which measures what
+      one such edge costs.
   annot(#argStart)
     # [#argStart] is used internally to annotate the first argument in a parenthesis.
   annot(#argEnd)

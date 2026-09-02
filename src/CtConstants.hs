@@ -192,6 +192,18 @@ argStartAnnot, argEndAnnot :: String
 argStartAnnot = "/Catln/#argStart"
 argEndAnnot = "/Catln/#argEnd"
 
+-- | The annotation marking a declaration as a way of reading files written in another syntax.
+--
+-- Given relative as well as absolute, which is unlike the annotations above and like 'noCoreAnnot'.
+-- Both are read off a program that has been PARSED and not desugared — this one so that which
+-- importer reads a file can be decided while the imports are being resolved, long before anything
+-- has been desugared — and a parsed annotation carries the name as it was written.
+importerAnnot, importerAnnotAbs, importerAnnotName, importerAnnotExts :: String
+importerAnnot = "#importer"
+importerAnnotAbs = "/Catln/#importer"
+importerAnnotName = "name"
+importerAnnotExts = "extensions"
+
 -- | Every annotation name the compiler itself emits or recognizes: doc comments desugar to
 -- @#md@, @>@ statements to @#print@\/@#example@\/@#assert@, parenthesized arguments to
 -- @#argStart@\/@#argEnd@, and so on. These names are part of the compiler's vocabulary and
@@ -203,9 +215,11 @@ builtinAnnotNames :: [String]
 builtinAnnotNames =
   [ assertStr, testAnnot, exampleAnnot, mdAnnot, printAnnot, ctxAnnot, elseAnnot
   , refineAnnot, runtimeAnnot, argStartAnnot, argEndAnnot, "/Catln/#noCore", "/Catln/#name"
+  , importerAnnotAbs
   -- The annotations' argument keywords are emitted alongside them (@#md(text= ...)@), so they
   -- are part of the same vocabulary.
   , assertTestStr, assertMsgStr, mdAnnotText, printAnnotText, resultAnnotText, runtimeAnnotK, "name"
+  , importerAnnotName, importerAnnotExts
   ]
 
 anonStr :: String

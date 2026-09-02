@@ -25,10 +25,12 @@ import qualified Data.HashMap.Strict as H
 import           GHC.Generics        (Generic)
 
 import           Control.Exception   (IOException, try)
+import           CtConstants
 import           Data.Aeson          hiding (Object)
 import           Data.IORef          (IORef, modifyIORef', newIORef, readIORef)
 import           Data.List           (isInfixOf, isPrefixOf, sort, stripPrefix)
-import           Data.Maybe          (catMaybes, fromJust, isJust, mapMaybe)
+import           Data.Maybe          (catMaybes, fromJust, isJust, listToMaybe,
+                                      mapMaybe)
 import           Data.Time.Clock     (UTCTime)
 import           Semantics
 import           Semantics.Annots    (isAnnot)
@@ -885,6 +887,54 @@ roaVarArgs RawObjArr{roaArr=(Just (Just argVal, _))} = exprVarArgs argVal
 roaVarArgs RawObjArr{roaObj=(Just obj), roaArr= Nothing} = H.singleton (TVArg $ rawInExprSingleton obj) [(obj, emptyMetaE obj)]
 roaVarArgs RawObjArr{roaObj=(Just obj), roaArr= Just (Nothing, _)} = H.singleton (TVArg $ rawInExprSingleton obj) [(obj, emptyMetaE obj)]
 roaVarArgs oa = error $ printf "exprVarArgs not defined for arg %s" (show oa)
+
+-- | The importers a page declares: what each is called in an import, which extensions it reads, and
+-- the name to call it by.
+--
+-- Read off the PARSED program rather than a compiled one, which is the whole point of the
+-- @#importer@ annotation being an annotation. Deciding which importer reads a file happens while a
+-- page's imports are being resolved — before anything has been desugared, let alone typechecked —
+-- so the answer has to be available from a parse and nothing more.
+--
+-- The name given is the one written on the page (@parsePython@) rather than the absolute one
+-- (@\/Python\/parsePython@), because the absolute name is not known until the page has been
+-- desugared and that is after this is wanted. 'Eval.evalCallTo' resolves a relative name when the
+-- importer is eventually run.
+--
+-- Walks the whole forest, so a declaration written inside a @module@ is found: a module is a
+-- declaration whose contents are its children, and an importer is normally written in one.
+rawPrgmImporters :: RawPrgm () -> [(String, String, [String])]
+rawPrgmImporters (RawPrgm _ statements) = concatMap fromTree statements
+  where
+    fromTree t@(RawStatementTree (RawDeclStatement oa) children) =
+      [ (fn, name, words exts)
+      | Just fn <- [nameStr <$> maybeExprPath (fromJust $ roaObj oa)]
+      , isJust (roaObj oa)
+      , a <- annotsOf t
+      , isImporterAnnot a
+      , Just name <- [rawAnnotStrArg importerAnnotName a]
+      , Just exts <- [rawAnnotStrArg importerAnnotExts a]
+      ] ++ concatMap fromTree children
+    fromTree (RawStatementTree _ children) = concatMap fromTree children
+
+    -- Written on the declaration, or indented beneath it. The second is how one is actually written
+    -- and the first is what the desugar would make of it, and this runs before the desugar — so both
+    -- are read rather than relying on which form a given page happens to be in.
+    annotsOf (RawStatementTree (RawDeclStatement oa) children) =
+      roaAnnots oa ++ [a | RawStatementTree (RawAnnot a) _ <- children]
+    annotsOf _ = []
+
+    isImporterAnnot a = case nameStr <$> maybeExprPath a of
+      Just n  -> n `elem` [importerAnnot, importerAnnotAbs]
+      Nothing -> False
+
+-- | A string written as a named argument of a raw annotation.
+rawAnnotStrArg :: String -> RawExpr () -> Maybe String
+rawAnnotStrArg name a = listToMaybe
+  [ s
+  | RawObjArr{roaObj=Just obj, roaArr=Just (Just (RawCExpr _ (CStr s)), _)} <- rawExprAppliedArgs a
+  , (nameStr <$> maybeExprPath obj) `elem` [Just name, Just ('/':name)]
+  ]
 
 -- | Checks whether a program has a global annot
 rawPrgmHasAnnot :: RawPrgm m -> String -> Bool

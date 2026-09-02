@@ -661,7 +661,7 @@ Prgm
                     , /meta=/Catln/Meta
                     )
                 ]
-            , cgcDoc = Just "An expression as it was written, before the compiler reduces what was written to what it means.Where a [/Catln/Expr] is six arms, this is twenty: the sugar is still here. A [RawMethod] is `a.b`, a [RawList] is `[a, b]`, a [RawFmtStrExpr] is a format string, a [RawTheExpr] is `:Name`, and a [RawParen] is a bracket that was written. Each of them becomes a [TupleApply] of something once desugaring is done.So this is what a program BUILDING a program writes, and [/Catln/Expr] is what a program READING one reads. An importer writes this."
+            , cgcDoc = Just "An expression as it was written, before the compiler reduces what was written to what it means.Where a [/Catln/Expr] is six arms, this is sixteen: the sugar is still here. A [RawMethod] is `a.b`, a [RawList] is `[a, b]`, a [RawFmtStrExpr] is a format string, a [RawTheExpr] is `:Name`, and a [RawParen] is a bracket that was written. Each of them becomes a [TupleApply] of something once desugaring is done.So this is what a program BUILDING a program writes, and [/Catln/Expr] is what a program READING one reads. An importer writes this."
             }
         , CGClass
             { cgcSealed = True
@@ -711,7 +711,7 @@ Prgm
             )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr
-                { csValue = "Where `core/hsprgm.ct` declares the six kinds of expression a program has been reduced to, this declares the twenty it was written as: a method call, a list, a format string, a bracket. Each of those becomes an application of the others once desugaring has run." }
+                { csValue = "Where `core/hsprgm.ct` declares the six kinds of expression a program has been reduced to, this declares the sixteen it was written as: a method call, a list, a format string, a bracket. Each of those becomes an application of the others once desugaring has run." }
             )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr
@@ -739,7 +739,7 @@ Prgm
             )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr
-                { csValue = "Where a [/Catln/Expr] is six arms, this is twenty: the sugar is still here. A [RawMethod] is `a.b`, a [RawList] is `[a, b]`, a [RawFmtStrExpr] is a format string, a [RawTheExpr] is `:Name`, and a [RawParen] is a bracket that was written. Each of them becomes a [TupleApply] of something once desugaring is done." }
+                { csValue = "Where a [/Catln/Expr] is six arms, this is sixteen: the sugar is still here. A [RawMethod] is `a.b`, a [RawList] is `[a, b]`, a [RawFmtStrExpr] is a format string, a [RawTheExpr] is `:Name`, and a [RawParen] is a bracket that was written. Each of them becomes a [TupleApply] of something once desugaring is done." }
             )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr

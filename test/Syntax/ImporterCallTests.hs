@@ -1,21 +1,21 @@
--- | Whether the compiler can call a declaration shaped like an importer and get a value back.
+-- | The compiler finding an importer, calling it, and reading a page with it.
 --
--- This is the one question the whole design rests on and the one that could not be answered by
--- reading: 'Eval.dshowDestType' says, three times over, that a tree built toward an expression's own
--- type comes back as the unevaluated application, and an importer's declared return type IS what a
--- caller wants of it. Every existing caller sidesteps this by building toward @DShow@, which is a
--- display class and not something the compiler should have to make a program's result belong to in
--- order to run it.
+-- Three things the design rests on, each of which had to be established rather than assumed. That an
+-- importer can be FOUND by reading its page and not by compiling it, which is what the @#importer@
+-- annotation is for. That the compiler can CALL such a declaration and get an evaluated value back,
+-- which the documentation on 'Eval.dshowDestType' suggests it cannot -- it says three times that a
+-- tree built toward an expression's own type comes back unevaluated, and every other caller
+-- sidesteps that by building toward @DShow@. And that a page whose importer is not built yet WAITS
+-- for it, gets it built, and is then read.
 --
--- So the cases below call one declaration two ways and compare. What they establish is which
--- destination 'Eval.evalCallTo' must be given, which is what the service's invocation is written
--- against.
+-- Driven against a real service rather than a stub, which is what has made these worth having: every
+-- defect they found lay between two pieces that each passed their own tests.
 module Syntax.ImporterCallTests where
 
 import           CRes                (CRes (..), prettyCNotes, runCResT)
 import           CtService           (CTSS, ctssBaseFiles, ctssBuildFrom,
-                                      ctssCached, ctssEvaluableFrom, ctssLoad,
-                                      getSource)
+                                      ctssCached, ctssEvaluableFrom,
+                                      ctssImporterEnv, ctssLoad, getSource)
 import qualified Data.HashMap.Strict as H
 import           Eval                (evalBaseEnv, evalCallTo,
                                       prgmFromGraphData)
@@ -23,12 +23,13 @@ import           Eval.Common         (SSF (..), Val)
 import           Semantics           (testCtssConfig)
 import           Semantics.Types     (Type)
 import           Semantics.Val       hiding (Val)
-import           Syntax.Ct.Prgm      (importResultType)
+import           Syntax.Ct.Prgm      (ImporterDecl (..), ImporterEnv (..),
+                                      importResultType)
 import           Syntax.Parsers      (mkDesCanonicalImportStr)
 import           Test.Tasty
 import           Test.Tasty.HUnit
 
--- | The fixture page: a declaration of an importer's shape, and nothing marking it as one.
+-- | The fixture page, which declares one importer and does nothing with the file it is given.
 importerPage :: FilePath
 importerPage = "test/Integration/code/artifacts/native/importer.ct"
 
@@ -98,8 +99,39 @@ testDeferredPageIsEventuallyRead = testCase "a page waits for its importer, whic
     CErr notes -> assertFailure $ "the page has no source: " ++ prettyCNotes notes
     CRes _ s -> assertEqual "the importer was run over the file the import named" "read-me.py" s
 
+-- | An importer is found by reading the page, and not by compiling it.
+--
+-- That is what the @#importer@ annotation buys and it is the reason it is an annotation. Which
+-- importer reads a file has to be decided while a page's imports are being resolved, which is before
+-- anything has been desugared — so the case asks for the declaration from a service that has read
+-- the page and has NOT been told to build anything.
+testImporterIsFoundByReadingAlone :: TestTree
+testImporterIsFoundByReadingAlone = testCase "an importer is found without compiling its page" $ do
+  ctss <- ctssBaseFiles testCtssConfig [importerPage] :: IO CTSS
+  name <- mkDesCanonicalImportStr testCtssConfig importerPage
+
+  found <- ieDeclared (ctssImporterEnv ctss) [name]
+  case found of
+    [d] -> do
+      assertEqual "the name an import writes to be read with it" "spike" (idName d)
+      assertEqual "the declaration to run" "mkResult" (idFn d)
+      assertEqual "the extensions it reads" ["spikefile"] (idExts d)
+      assertEqual "the page it is declared on" name (idPage d)
+    ds -> assertFailure $ "expected one importer, found " ++ show (length ds)
+
+  -- Said explicitly, because the whole point is that this needed no build. A page which had been
+  -- built would find the declaration too, and would not be evidence of anything.
+  built <- ctssCached (Just . pure . ssfBuilt) name ctss
+  assertEqual "and its page was never built" (Just False) (fmap (orElse True) built)
+
+-- | Whatever a computed value came to, for an assertion that is about something else.
+orElse :: a -> CRes a -> a
+orElse _ (CRes _ v) = v
+orElse d _          = d
+
 importerCallTests :: TestTree
 importerCallTests = testGroup "ImporterCall" [
+  testImporterIsFoundByReadingAlone,
   testCallTowardDeclaredType,
   testDeferredPageIsEventuallyRead
                                              ]

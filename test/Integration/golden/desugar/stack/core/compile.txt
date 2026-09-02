@@ -184,6 +184,16 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/#importer"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/#importer( Value /name -> /Data/String )( Value /extensions -> /Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/classPlaceholder"
                 , ObjectMapItem
                     { omiDecls =
@@ -225,6 +235,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

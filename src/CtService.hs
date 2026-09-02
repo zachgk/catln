@@ -1433,8 +1433,21 @@ ctssCallDShow ctss scope fun args = do
 -- from inside the read is safe. It stays safe only while nothing takes the read lock while holding
 -- 'ssmv', which nothing does.
 ctssImporterEnv :: CTSS -> ImporterEnv
-ctssImporterEnv (CTSS ssmv _) = noImporters{ieReady, ieInvoke}
+ctssImporterEnv (CTSS ssmv _) = noImporters{ieDeclared, ieReady, ieInvoke}
   where
+    -- The importers these pages declare, read off the parse each already holds. Nothing is read from
+    -- disk and nothing is built: a page whose program the service does not hold declares nothing as
+    -- far as this is concerned, which is right, because a page has to be imported to be asked and
+    -- importing it is what reads it.
+    ieDeclared pages = do
+      CTSSDat{ctssData} <- readMVar ssmv
+      return [ ImporterDecl page fn name exts
+             | page <- pages
+             , Just ssf <- [graphLookup page ctssData]
+             , Just (CRes _ raw) <- [ssfRaw ssf]
+             , (fn, name, exts) <- rawPrgmImporters raw
+             ]
+
     -- The page a path names, out of the pages the service holds. Pages are keyed by the import which
     -- names them, so this is the reverse of 'Syntax.Ct.Prgm.importPath'.
     --
