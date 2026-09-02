@@ -502,35 +502,35 @@ typeVarLost (UnionType _ oldLeafs _) (UnionType _ newLeafs _) =
       || or [ typeVarLost ov nv | (k, ov) <- H.toList (ptVars op), Just nv <- [H.lookup k (ptVars np)] ]
 typeVarLost _ _ = False
 
--- | Structurally detects whether @new@ carries a type-variable /binding/ — a non-trivial 'ptVars'
--- entry — at a position where @old@ has no entry for that variable at all. Intersecting a partial
--- against a more-resolved form folds the discovered binding into the enclosing partial's 'ptVars'
--- (e.g. @cmap(lst=Cons[T=$_A])@ ∩ @cmap(lst=Cons[T=Integer])@ = @cmap[A=Integer](lst=Cons[T=$_A])@,
--- see 'intersectPartialsBase'), but 'eqScheme' cannot see the gained entry: subtype comparison
--- checks only keys present on BOTH sides, so the write looks like a no-op and is dropped. A
--- Top-valued or self-referential entry carries no information, so only a real binding counts.
--- Mirrors the matching discipline of 'typeVarLost' (single same-name partial on each side; nested
--- positions compared only on shared keys).
-typeVarBindingGained :: Type -> Type -> Bool
-typeVarBindingGained (UnionType _ oldLeafs _) (UnionType _ newLeafs _) =
-  or [ partialBindingGained op np
+-- | Structurally detects whether a SLOT gained a var pointer where @old@ held ⊤ — a
+-- declaration's @/fn(..)=Top@ becoming the internal pointer @/fn(..)=$B@ (see 'updateTypeProp').
+-- 'eqScheme' cannot see that: a FREE type variable denotes ⊤, so the two spellings are the same
+-- set and the write would be dropped as a no-op, leaving the explicit link unlanded.
+--
+-- A gained 'ptVars' KEY needs no rule here. An unspelled parameter is ⊤ (see 'PartialType' in
+-- "Semantics.Types"), so resolving one is a strict narrowing that 'eqScheme' sees by itself,
+-- both at the top level and nested inside an arg. Detecting it structurally would also
+-- misfire where the partial's own field determines the parameter — @/Pair(first=Integer)@ and
+-- @/Pair[/A=Integer](first=Integer)@ are the same set, since @/Pair@ declares @first -> $A@ —
+-- and force a commit for no change.
+--
+-- Gain-only, like its neighbors: a slot losing its pointer stays a no-op under the 'eqScheme'
+-- path, so the variable is not widened back to ⊤ and there is no set/lose oscillation.
+-- Mirrors the matching discipline of 'typeVarLost' (single same-name partial on each side;
+-- nested positions compared only on shared keys).
+varPointerGained :: Type -> Type -> Bool
+varPointerGained (UnionType _ oldLeafs _) (UnionType _ newLeafs _) =
+  or [ partialPointerGained op np
      | (name, [op]) <- H.toList (splitUnionTypeByName oldLeafs)
      , Just [np] <- [H.lookup name (splitUnionTypeByName newLeafs)] ]
   where
-    partialBindingGained op np =
-      or [ informative k nv | (k, nv) <- H.toList (ptVars np), not (k `H.member` ptVars op) ]
-      || or [ slotGained ov nv | (k, ov) <- H.toList (ptArgs op), Just nv <- [H.lookup k (ptArgs np)] ]
+    partialPointerGained op np =
+      or [ slotGained ov nv | (k, ov) <- H.toList (ptArgs op), Just nv <- [H.lookup k (ptArgs np)] ]
       || or [ slotGained ov nv | (k, ov) <- H.toList (ptVars op), Just nv <- [H.lookup k (ptVars np)] ]
-    -- A slot gaining a var pointer where @old@ had Top (a declaration's @/fn(..)=Top@ becoming
-    -- the internal pointer @/fn(..)=$B@, see 'updateTypeProp') is likewise a real change
-    -- 'eqScheme' cannot see (a free var behaves like Top in the comparison). Slot-level only:
-    -- a whole-type Top-to-TypeVar transition stays under 'eqScheme'. Gain-only, like the rest.
+    -- Slot-level only: a whole-type Top-to-TypeVar transition stays under 'eqScheme'.
     slotGained PTopType TypeVar{} = True
-    slotGained ov nv              = typeVarBindingGained ov nv
-    informative _ PTopType                 = False
-    informative k (TypeVar (TVVar k') _ _) = k' /= k
-    informative _ _                        = True
-typeVarBindingGained _ _ = False
+    slotGained ov nv              = varPointerGained ov nv
+varPointerGained _ _ = False
 
 -- | Structurally detects whether @new@ strictly NARROWS a nested 'ptVars' dimension that @old@
 -- spells wider (e.g. under an outer @Cons[T=Integer]@, the declaration-clamped tail
@@ -570,7 +570,7 @@ nestedVarNarrowed _ _ _ = False
 -- happens to resolve), and is refused as a pure respelling ever after. ⊤→content ONLY —
 -- pure syntax, no subtype calls (the general narrower-spelling rule is measured
 -- intractable, see 'nestedSlotSettled'); a bare var link is not content (gaining one is
--- 'typeVarBindingGained''s rule). Gain-only like the neighboring rules (a content→⊤ write
+-- 'varPointerGained''s rule). Gain-only like the neighboring rules (a content→⊤ write
 -- stays a no-op under the 'eqScheme' path), so the filled spelling is kept once found and
 -- there is no oscillation.
 -- | Whether @x@ IS @d@ with some positions still ⊤ — the lossless-adoption guard for the
@@ -719,12 +719,13 @@ setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch} con m@M
       -- 'eqScheme' path below), so once set the variable is not widened back to Top — which both
       -- keeps the information and avoids a set/lose oscillation that would never converge.
       (TypeCheckResult _ (SType a1 _ _ _ _), TypeCheckResult _ (SType a2 _ _ _ _)) | typeVarLost a2 a1 -> True
-      -- GAINING a 'ptVars' binding (@new@ resolves an enclosing partial's variable that @old@
-      -- does not mention, e.g. @cmap(…)@ → @cmap[A=Integer](…)@) is likewise invisible to
-      -- 'eqScheme' (only shared keys are compared) yet is a real narrowing that must commit.
-      -- Gain-only for the same convergence reason as above: dropping the binding later stays a
+      -- GAINING a var POINTER in a slot that held ⊤ (see 'varPointerGained') is invisible to
+      -- 'eqScheme' — a free variable denotes ⊤, so the two spellings are the same set — yet the
+      -- link must land. A gained 'ptVars' key needs no rule here: an unspelled parameter is ⊤,
+      -- so 'eqScheme' sees that narrowing itself.
+      -- Gain-only for the same convergence reason as above: dropping the pointer later stays a
       -- no-op, so the resolved value is kept once found.
-      (TypeCheckResult _ (SType a1 _ _ _ _), TypeCheckResult _ (SType a2 _ _ _ _)) | typeVarBindingGained a1 a2 -> True
+      (TypeCheckResult _ (SType a1 _ _ _ _), TypeCheckResult _ (SType a2 _ _ _ _)) | varPointerGained a1 a2 -> True
       -- STRICTLY NARROWING a nested 'ptVars' dimension (see 'nestedVarNarrowed') is a spelling
       -- improvement of the same set that 'eqScheme' judges equal, but the finer spelling is what
       -- consumers read — it must commit. Gain-only like the two rules above.

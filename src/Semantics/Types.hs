@@ -180,9 +180,22 @@ instance Hashable TypePredicate where
 -- A particle type describes a simple set of types.
 -- It corresponds to what could be matched by a single object or data declaration.
 -- The arguments are treated independently except for type variables and properties.
+--
+-- A type denotes a set of values, so every dimension a value has is accounted for. A partial's
+-- 'ptVars' keys are its declaration's type parameters and every value of the name carries all of
+-- them, so a parameter the partial does not spell is @PTopType@ there: the partial allows every
+-- value along that dimension. @/Some@ and @/Some[/T=⊤]@ denote the same set, and @/Some[/T=/Nil]@
+-- is a proper subset of both.
+--
+-- 'ptArgs' is different: an unspelled ARG is governed by 'ptArgMode', because a partial
+-- application genuinely lacks the field rather than holding every value of it. The arg-set
+-- interval algebra ('argModeCovers', 'ptIntervalArgKeys') decides those, and comparing arg VALUES
+-- over shared keys is right once the modes agree.
 data PartialType = PartialType {
   ptName    :: TypeName,
+  -- | Declared type parameters. A parameter that is not spelled is ⊤ — see above.
   ptVars    :: H.HashMap TypeVarName Type,
+  -- | Arguments. An unspelled arg is governed by 'ptArgMode', not read as ⊤.
   ptArgs    :: H.HashMap ArgName Type,
   ptPreds   :: TypePredicates,
   ptArgMode :: PtArgMode
@@ -1583,9 +1596,9 @@ predImpliesAtom typeEnv vaenvB (PredClass c1) (PredClass c2)
 -- subtype rule for a shared class name with a type-var vs. a wider element bound (e.g. @Eqv[$T] ⟹
 -- Eqv[⊤]@, @Functor[Integer] ⟹ Functor[$A]@), which the name-only 'classDeclaredSubclassOf' above
 -- and the member-enumeration below never compare. Checked covariantly over each bound @c2@ declares,
--- with an absent @c1@ var/arg defaulting to ⊤: this is DIRECTIONAL (unlike the shared-keys-only
--- 'isSubPartialOfWithEnv', which would vacuously make @C ⟹ C[/T=∀Ord]@ True when @c1@ omits @/T@ and
--- so drop the tighter bound from an intersection like @C[/T=∀Ord] ∧ C@).
+-- with an unspelled @c1@ var/arg defaulting to ⊤ (see 'PartialType'): every bound @c2@ declares
+-- must be asked about, or @C ⟹ C[/T=∀Ord]@ holds vacuously when @c1@ omits @/T@ and the tighter
+-- bound drops out of an intersection like @C[/T=∀Ord] ∧ C@.
 -- Slots are compared under 'comparedPartialsEnv', NOT the bare ambient env: a @$/E@ in either
 -- side's slot names that side's own 'ptVars' binding, and reading it as ⊤ would widen the
 -- comparison into vacuously proving @C[/T=⊤] ⟹ C[/T=$/E]@.
@@ -2666,6 +2679,11 @@ argModeCovers PartialType{ptArgs=supArgs, ptArgMode=PtArgMode supLb supUb} Parti
     ubOk = not supUb || (subUb && subKeys `S.isSubsetOf` supKeys)
 
 -- | SAT(a ∧ b) for two concrete shapes; conservative towards 'True'.
+--
+-- Only the SHARED 'ptVars' keys need comparing. An unspelled parameter is ⊤ (see 'PartialType')
+-- and @⊤ ⊓ x@ is inhabited for every inhabited @x@, so a dimension only one side constrains can
+-- never refute an overlap. That equivalence is specific to this ∃ direction: the ∀ directions
+-- ('partialCoversSat', 'isSubPartialOfWithEnv') must ask about every key the other side spells.
 partialsOverlapSat :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> PartialType -> PartialType -> Bool
 partialsOverlapSat typeEnv vaenv satUse hyps a b =
   ptName a == ptName b
@@ -2684,10 +2702,14 @@ partialsOverlapSat typeEnv vaenv satUse hyps a b =
 
 -- | Proven cover of a shape by another: every value matching @sub@ matches @sup@.
 -- Conservative towards 'False' (unproven cover), the safe direction for escape checks.
--- Mirrors 'isSubPartialOfWithEnv': only vars/args present on BOTH sides are compared (a
--- super-side binding absent from sub is instantiation information, not a constraint), and a
--- sub-side element that is an unresolved type variable is flexible - it can be bound to the
--- super's element (as 'intersectTypesWithVarEnv' would) - so it does not defeat the cover.
+-- Mirrors 'isSubPartialOfWithEnv'. A sub-side element that is an unresolved type variable is
+-- flexible - it can be bound to the super's element (as 'intersectTypesWithVarEnv' would) - so
+-- it does not defeat the cover.
+--
+-- This is a ∀-cover, so a sup-side parameter the sub does not spell is checked against the sub's
+-- ⊤ there (see 'PartialType'): @/Some@ is covered by @/Some[/T=/Nil]@ only if @⊤ ⊆ /Nil@, i.e.
+-- never. Skipping it would make the two mutually cover, hence equal. 'ptArgs' compares shared
+-- keys only — unspelled args are 'ptArgMode' business, decided by 'argModeCovers' above.
 partialCoversSat :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> PartialType -> PartialType -> Bool
 partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
   ptName sup == ptName sub
@@ -2695,12 +2717,17 @@ partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
   -- vacuous interval bound must not defeat a cover (e.g. @/x..@ with no larger declared
   -- arg-set is one set with @/x@).
   && argModeCovers (normalizePtArgMode typeEnv sup) (normalizePtArgMode typeEnv sub)
-  && all varCovered (H.elems (H.intersectionWith (,) (ptVars sub) (ptVars sup)))
+  && all varCovered (H.elems (H.intersectionWith (,) subVarsFull (ptVars sup)))
   && all elemCovered (H.elems (H.intersectionWith (,) (ptArgs sub) (ptArgs sup)))
   && supPredsCover
   where
     sup = sup0
     sub = sub0
+    -- Unspelled sub-side parameters materialize as ⊤ so every sup key is actually asked about.
+    -- Under projection they stay unspelled: there a ⊤-valued parameter carries no dispatch
+    -- information, which is what 'varCovered' states for the spelled-⊤ case below.
+    subVarsFull | teArgModeProjection typeEnv = ptVars sub
+                | otherwise                   = H.union (ptVars sub) (PTopType <$ ptVars sup)
     -- A sub-side slot holding an internal POINTER (@/head=$T@, an arg or var naming one of
     -- the partial's own parameters, 'TVInt') denotes that parameter's binding: read it
     -- through before deciding (single step, as 'compactOwnVarRefs' materializes). SUB side
@@ -2718,10 +2745,11 @@ partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
     subSlot t = t
     -- Under projection (matching/dispatch consumers, 'teArgModeProjection'), a Top-valued type
     -- parameter on the value side carries no information — it is equivalent to the parameter
-    -- being absent, which the shared-keys discipline already skips. A definition whose element
+    -- being unspelled. A definition whose element
     -- parameter could not be narrowed (e.g. a mapped element fed by a higher-order argument)
     -- completes to an explicit @[T=Top]@, and must dispatch exactly like the key-free form.
-    -- The precise set algebra (projection off) keeps Top ⊄ concrete.
+    -- The precise set algebra (projection off) keeps Top ⊄ concrete, which is why an unspelled
+    -- parameter is materialized as ⊤ there rather than skipped.
     varCovered (PTopType, _) | teArgModeProjection typeEnv = True
     varCovered p             = elemCovered p
     -- This is the ∀-cover primitive (every sub value within sup — the escape/coverage
@@ -3375,8 +3403,14 @@ isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subAr
         argOk k sbVal spVal = isSubtypeOfWithEnv typeEnv vaenv' sbVal spVal
           || any (\d -> isSubtypeOfWithEnv typeEnv vaenv' (intersectTypesEnv typeEnv vaenv' sbVal d) spVal) (declArgBounds k)
         declArgBounds k = [freeTVIntToTopDeep typeEnv vaenv sub d | PartialType{ptArgs=dArgs} <- typeGraphData typeEnv (ptName sub), Just d <- [H.lookup k dArgs]]
-    -- Type parameters: mirrors 'partialCoversSat' — under projection a Top-valued parameter on
-    -- the sub side is no constraint (≡ absent, which the shared-keys intersection skips).
+    -- Type parameters: mirrors 'partialCoversSat'. Under projection a Top-valued parameter on
+    -- the sub side is no constraint, and is equivalent to the parameter being absent.
+    --
+    -- Outside projection a super-side parameter the sub omits is compared against the sub's ⊤
+    -- there (see 'PartialType'). Skipping it proves @/Some ⊆ /Some[/T=/Nil]@ vacuously, and since
+    -- the converse genuinely holds the two become equal — which absorbs @/Some ∪ /Some[/T=X]@ to
+    -- the narrow side and puts @a∩(b∪c)@ strictly below @(a∩b)∪(a∩c)@. Under projection a
+    -- ⊤-valued parameter carries no dispatch information, so the skip is right there.
     -- A sub-side slot still FLEXIBLE after reading through the sub's own scope (a self-entry
     -- @/T=$/T@ or an env-unbound var) ranges over every binding, so it is a subtype only of a
     -- super slot that itself admits every binding (⊤ or another flexible variable) — resolving
@@ -3392,7 +3426,9 @@ isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subAr
       [ av | (ak, av) <- H.toList subArgs, not (isTypeVar av)
            , dp <- typeGraphData typeEnv (ptName sub)
            , Just (TypeVar (TVVar k') TVInt _) <- [H.lookup ak (ptArgs dp)], k' == k ]
-    hasAllVars sb sp = and $ H.elems $ H.intersectionWith varOk (H.mapWithKey subVarEff sb) sp
+    hasAllVars sb sp = and $ H.elems $ H.intersectionWith varOk (H.mapWithKey subVarEff sbFull) sp
+      where sbFull | teArgModeProjection typeEnv = sb
+                   | otherwise                   = H.union sb (PTopType <$ sp)
     varOk PTopType _ | teArgModeProjection typeEnv = True
     varOk a b
       | not (teArgModeProjection typeEnv)
@@ -3897,6 +3933,14 @@ compactJoinPartials typeEnv vaenv partials = joinUnionType $ concat $ H.elems $ 
       Nothing     -> joinMatchArgPartialsAux curPartial toTrys (toTry:tried)
 
     -- if two partials differ by only one arg or var, joins them else Nothing
+    -- 'numDifferences'/'differingPairs' compare shared keys only, which is safe here because
+    -- 'prepGroupJoinable' keys the group on @H.keysSet ptVars@: two partials whose parameter key
+    -- sets differ are never in the same group and never reach 'tryJoin', so a one-sided key
+    -- cannot be miscounted as no difference. Within a group the key sets are equal, where
+    -- 'H.unionWith' and 'H.intersectionWith' agree. Spellings that differ only by an unspelled
+    -- vs ⊤-valued parameter (@/Some@ vs @/Some[/T=⊤]@) land in different groups and are merged
+    -- by 'partialAlreadyCovered' absorption, which covers them both ways through
+    -- 'isSubtypeOfWithEnv'.
     -- The join is exact only when the differing slot's union is itself exactly representable:
     -- with a bare type-var on one side (a partial-local pointer such as @/m=$/M@ against a
     -- concrete @/m=Cons(..)@), 'unionTypes' resolves the var through the (empty) env to ⊤,
@@ -4832,8 +4876,10 @@ foldRecursiveType typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv t@(UnionType
         predsCover ownVars (PredsOne (PredRel r))   = relativeNameMatches (ptName r) cName && elemAgreesPred (ptVars r) ownVars
         predsCover _ _                              = False
         -- A member LEAF without the class-param key has no element dimension (@Nil@) — vacuous;
-        -- a key it does carry must resolve equal to the encloser's. A PRED's absent key defaults
-        -- to ⊤ (an element-free @∀C@ admits every element), so it is compared over BOTH key sets.
+        -- a key it does carry must resolve equal to the encloser's. A name that declares no such
+        -- parameter has no dimension to read as ⊤ at all, which is why this differs from an
+        -- unspelled parameter of a name that does declare it. A PRED's unspelled key IS ⊤ (an
+        -- element-free @∀C@ admits every element), so it is compared over both key sets.
         elemAgreesLeaf inner outer = and [resolveFlex v == resolveFlexAt k outer | (k, v) <- H.toList inner]
         elemAgreesPred inner outer = and [resolveFlexAt k inner == resolveFlexAt k outer | k <- H.keys inner ++ H.keys outer]
         resolveFlexAt k m = maybe PTopType resolveFlex (H.lookup k m)
@@ -5230,6 +5276,8 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
   if null partials' then Nothing else Just (mergeAllVarEnvs typeEnv varsVaenvs, partials')
   where
     -- intersectMap unions so that all typeVars from either a or b are kept
+    -- The key maps are UNIONed: a parameter only one side spells is ⊤ on the other (see
+    -- 'PartialType'), and @⊤ ⊓ x = x@, so the spelled value survives unchanged.
     intersectMapVars vev a b = traverse subValidate $ H.unionWith subUnionVar (fmap (vev,) a) (fmap (vev,) b)
     -- A bare partial-local ('TVInt') reference stored in a VAR slot is a pointer within the
     -- partial itself (a partial-local element var, flexible per value): it is
@@ -5683,12 +5731,25 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
             vars' = H.unionWith (intersectTypesEnv typeEnv vaenv) (ptVars piece) stamped
             resolveWithheld t@(TypeVar (TVVar n) TVInt _) = fromMaybe t (H.lookup n withheld)
             resolveWithheld t = t
-        -- Mirror 'subtractArg': skip a neg type-parameter the pos partial does not itself
-        -- constrain. Defaulting a missing pos var to ⊤ and subtracting (⊤ − negVar) manufactured
-        -- a spurious narrowed leaf — e.g. the universe @Cons{}@ minus the class member
-        -- @Cons(…, /T=$T)@ produced @Cons[/T = ⊤−$T = ∅]@, a bottom-element partial that then
-        -- emptied any intersection against it (a partial-application subset @Cons(head)@ read as
-        -- ⊆ its class by difference while intersect/subtype correctly read it as disjoint).
+        -- A neg type-parameter the pos partial does not spell still subtracts: the pos side is ⊤
+        -- on that dimension (see 'PartialType') and escapes any neg slot that is a proper subset.
+        -- Skipping it would make @P − P[/T=X]@ empty for every X, so @A−(A−B)@ would return A
+        -- where @A∩B@ narrows.
+        --
+        -- Two conditions keep the subtraction honest, and both are load-bearing.
+        --
+        -- The neg slot must denote a PROPER subset. A neg slot that itself denotes ⊤ — a bare
+        -- @$T@ that is unbound, ⊤-bound or var-valued — leaves no escape on that dimension, and
+        -- subtracting it anyway manufactures a bottom-element leaf: the universe @Cons{}@ minus
+        -- the class member @Cons(…, /T=$T)@ gives @Cons[/T = ⊤−$T = ∅]@, which then empties every
+        -- intersection against it (a partial-application subset @Cons(head)@ reading as ⊆ its
+        -- class by difference while intersect/subtype correctly read it as disjoint). The test is
+        -- the same "only a CONCRETE binding resolves" one 'partialCoversSat'.'ambientRef' and
+        -- 'isSubPartialOfWithEnv'.'flexibleVar' use.
+        --
+        -- The parameter must be one the pos partial's DECLARATION has ('declaresVar'). This also
+        -- bounds the cost: only declared dimensions can produce an escape piece, and the pieces
+        -- multiply per dimension.
         subtractVar (_, PTopType) = Nothing
         subtractVar (varName, negVarVal) = case H.lookup varName (ptVars p1) of
           -- A var-valued pos slot (a flexible self-entry @/T=$/T@) subtracts like a
@@ -5698,7 +5759,27 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
           Just posVarVal -> case differenceTypeWithEnv typeEnv vaenv posVarVal negVarVal of
             (_, BottomType)   -> Nothing
             (outEnv, varVal') -> narrowPiece p1{ptVars=H.insert varName varVal' (ptVars p1)} outEnv
-          Nothing -> Nothing
+          Nothing
+            | declaresVar varName, negProperSubset negVarVal ->
+                case differenceTypeWithEnv typeEnv vaenv PTopType (negValSet negVarVal) of
+                  (_, BottomType)   -> Nothing
+                  (outEnv, varVal') -> narrowPiece p1{ptVars=H.insert varName varVal' (ptVars p1)} outEnv
+            | otherwise -> Nothing
+        -- Only a parameter the pos partial's declaration has is a dimension of its values. A neg
+        -- spelling can carry names the pos name never declares (a class member's own binder, an
+        -- enclosing scope's parameter); those are not unspelled-at-⊤ but not dimensions of @p1@
+        -- at all, as @/Nil@ has no element dimension inside @ConsList[$T]@.
+        declaresVar n = any (H.member n . ptVars) (typeGraphData typeEnv (ptName p1))
+        -- Does the neg parameter denote a proper subset of ⊤? A knowledge-carrying occurrence
+        -- (@$_a∩{X}@) always does; a bare variable does only when the env binds it to a concrete
+        -- value — a ⊤-bound, self-bound or var-valued entry stays bindable per value, i.e. ⊤.
+        negProperSubset t0 = case negValSet t0 of
+          PTopType                 -> False
+          t@(TypeVar v _ PTopType) -> case vaenvLookup vaenv v of
+            PTopType                  -> False
+            b | b == t || isTypeVar b -> False
+              | otherwise             -> True
+          _                        -> True
 
 -- | Difference of two types (t1 − t2 = t1 ∩ ¬t2).
 differenceTypeWithEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> (TypeVarArgEnv, Type)
