@@ -5769,6 +5769,14 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
         -- through the NEG partial's slots ('resolveOwnScopeRefs' — @head=$/T@ under the
         -- neg's @/T=X@ excludes @X@, not the ambient reading of a bare @$/T@).
         negValSet = resolveOwnScopeRefs typeEnv vaenv p2
+        -- The pos side resolves the references the POS partial itself binds, through its own
+        -- slots and nothing else ('substituteKeep' over 'ptVarArg'). That is the narrowest
+        -- reading that makes the two sides spell a bound parameter alike: it leaves partial-local
+        -- ('TVInt') pointers alone, so the declaration's own field pointer still subtracts on the
+        -- var slot via 'narrowPiece', and it does not substitute the AMBIENT env — resolving a
+        -- generated type's ambient vars at every depth materializes the whole nesting and the
+        -- subtraction stops terminating.
+        posValSet v = freeTVIntToTop p1 (substituteKeep typeEnv (ptVarArg p1) v)
         subtractArg (argName, negArgValRaw) = case H.lookup argName (ptArgs p1) of
           Nothing -> Nothing
           -- IDENTICAL linked forms on both sides (@tail=∀ConsList[/T=$/T]@) whose every
@@ -5782,9 +5790,16 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
           -- The pos value subtracts as the value SET it denotes: a free reference reads as
           -- ⊤ ('freeTVIntToTop' — @Cons(head=$/T)@ with no @/T@ slot escapes on @⊤ − neg@),
           -- while a DECLARED-var reference subtracts on the var slot via 'narrowPiece'.
+          -- A reference NESTED in the value is instead read through the pos partial's own
+          -- slots ('posValSet'), the same reading the neg side gets: both sides must spell a
+          -- bound parameter the same way or the slot difference cannot cancel. A recursive
+          -- @tail -> ∀ConsList[/T=$^/T]@ under @/T=$_a@ otherwise leaves the pos at @$^/T@
+          -- while the neg reads @$_a@, and the difference of the two spellings is a ¬-formula
+          -- over the class rather than the plain type they both denote — which then trips the
+          -- symbolic-attach gate below and loses the exact answer entirely.
           Just posArgVal -> case negValSet negArgValRaw of
             PTopType  -> Nothing -- a ⊤-valued neg element excludes nothing
-            negArgVal -> case differenceTypeWithEnv typeEnv vaenv (freeTVIntToTop p1 posArgVal) negArgVal of
+            negArgVal -> case differenceTypeWithEnv typeEnv vaenv (posValSet posArgVal) negArgVal of
               (_, BottomType)    -> Nothing
               (outEnv, argVal')  -> narrowPiece p1{ptArgs=H.insert argName argVal' (ptArgs p1)} outEnv
         -- An arg valued by a var reference (@head=$/T@) subtracts on the partial's own var
