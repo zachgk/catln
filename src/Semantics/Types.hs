@@ -5852,7 +5852,19 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
           -- narrows the piece to @/T=X@ rather than keeping the full flexible piece).
           Just posVarVal -> case differenceTypeWithEnv typeEnv vaenv posVarVal negVarVal of
             (_, BottomType)   -> Nothing
-            (outEnv, varVal') -> narrowPiece p1{ptVars=H.insert varName varVal' (ptVars p1)} outEnv
+            -- Resolve the narrowing back into the SLOT, the same resolve-meets-back rule
+            -- 'intersectTypesEnv' applies: a slot holding an EXTERNAL occurrence (@/T=$_b@)
+            -- comes back as the bare var with its narrowing only in the env, recorded under
+            -- the AMBIENT name @/b@ — which is not one of this partial's own parameters, so
+            -- 'narrowPiece' below (which folds only the partial's own names) drops it and the
+            -- escape piece reads exactly as the unsubtracted original. Folding the discovered
+            -- CONCRETE bindings into the slot keeps the narrowing where the piece can carry it;
+            -- a binding to another variable stays a link, as everywhere else.
+            (outEnv, varVal') ->
+              let resolved = H.filter (not . isTypeVar) $ H.difference outEnv vaenv
+                  varVal'' | H.null resolved = varVal'
+                           | otherwise       = substituteKeep typeEnv resolved varVal'
+              in narrowPiece p1{ptVars=H.insert varName varVal'' (ptVars p1)} outEnv
           Nothing
             | declaresVar varName, negProperSubset negVarVal ->
                 case differenceTypeWithEnv typeEnv vaenv PTopType (negValSet negVarVal) of
