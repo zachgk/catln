@@ -2629,8 +2629,17 @@ freeTVIntToTopDeep typeEnv vaenv p = goT
 -- field's declared type admits no constructible value (@Cons(tail=#noCore)@ denotes ∅ — every
 -- @Cons@ tail is declared @∀ConsList@), making the partial set-equal to the empty set. Only a
 -- concrete non-⊤ value differing from its declared bound pays the disjointness meet; ⊤ and
--- symbolic (variable) values, a ⊤/variable declared bound, and a value equal to its bound are
--- trivially inside, so member-form and field-completed partials decide without any meet.
+-- symbolic (variable) values, and a value equal to its bound, are trivially inside, so
+-- member-form and field-completed partials decide without any meet.
+--
+-- A declared bound that is a PARAMETER REFERENCE (@head -> $T@) is instantiated before the test:
+-- the partial's own binding for that parameter is what bounds the field HERE, so
+-- @Cons[/T=Integer](head=/String)@ is uninhabited even though the raw bound @$T@ says nothing.
+-- The instantiation ('freeTVIntToTopDeep') reads a reference the partial does not bind as ⊤, and
+-- the meet resolves any remaining variable through the ambient env, so an unresolvable bound
+-- still decides "inside" — but the meet's own pointer clamp ('intersectPartialsBase'.'varBoundFor')
+-- reads the bound this way, and a reader that stopped at the bare reference would call inhabited
+-- what the meet calls ∅.
 partialUninhabitedByDecl :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> Bool
 partialUninhabitedByDecl typeEnv vaenv p@PartialType{ptName, ptArgs}
   | H.null ptArgs = False
@@ -2644,9 +2653,10 @@ partialUninhabitedByDecl typeEnv vaenv p@PartialType{ptName, ptArgs}
     clampEmpty PTopType _  = False
     clampEmpty TypeVar{} _ = False
     clampEmpty _ PTopType  = False
-    clampEmpty _ TypeVar{} = False
     clampEmpty v d | v == d = False
-                   | otherwise = isBottomType (intersectTypesEnv typeEnv vaenv v (freeTVIntToTopDeep typeEnv vaenv p d))
+                   | otherwise = case freeTVIntToTopDeep typeEnv vaenv p d of
+                       PTopType -> False
+                       d'       -> v /= d' && isBottomType (intersectTypesEnv typeEnv vaenv v d')
 
 -- | Whether a partial is uninhabited because one of its arg\/var SLOT VALUES is itself empty: no
 -- constructible value has an ∅-typed field or type-parameter (@Cons[/T=∅]@, @Data(field=∅)@ denote
@@ -5118,18 +5128,41 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
   -- it just drops the arg, leaving the smaller arg-sets of the interval valid.
   -- A pointer occurrence's realizable value-set is bounded by its var's DECLARED bound (the
   -- met var slot): @r -> $T@ under @[/T: ∀Eq]@ realizes @evidence ∩ ∀Eq@ — bare evidence would
-  -- DROP the declared requirement (@r=mempty@ giving @∀Monoid@ must store @∀Monoid ∩ ∀Eq@). A
-  -- var-valued slot (a flexible per-value pointer, 'subUnionVar') adds no bound.
-  let varBoundFor n = case H.lookup n vars' of
+  -- DROP the declared requirement (@r=mempty@ giving @∀Monoid@ must store @∀Monoid ∩ ∀Eq@).
+  --
+  -- The slot is read through 'substituteTVExt', so a slot bound to an EXTERNAL occurrence
+  -- (@/T=$_v@) bounds the pointer by that occurrence's ambient VALUE: @Cons[/T=$_v](head=$/T)@
+  -- with @v ↦ /Cons@ has a @/Cons@-valued head, and meeting it against a disjoint head must
+  -- empty the partial. 'subUnion'\'s pointer clause deliberately does not consult the ambient
+  -- env under the pointer's own name (a like-named var of the enclosing scope is a DIFFERENT
+  -- var), so this is the only route by which the partial's OWN binding reaches it. Reading such
+  -- a slot as "no bound" instead lets the arg meet report the other side verbatim and stamp it
+  -- over the parameter the partial already spells, answering with a partial that contradicts
+  -- its own operands.
+  --
+  -- A slot that is STILL a var after resolution is a flexible per-value pointer
+  -- ('subUnionVar') and adds no bound.
+  let varBoundFor n = case fmap (substituteTVExt typeEnv vaenv) (H.lookup n vars') of
         Just b | not (isTypeVar b) -> b
         _                          -> PTopType
   -- The nested arg meets run under the ambient env EXTENDED with this partial's own met var
   -- bindings: a TVInt reference to THIS partial's parameter sitting inside a nested value
   -- (@binsert[/MK=Integer](m= …Node[/K=$/MK]…)@ — the parser spells a declaration parameter's
   -- nested occurrence 'TVInt' context-free) is resolvable only through the enclosing partial's
-  -- bindings, which the plain ambient env does not carry. Only concrete bindings ride along
-  -- (a var-valued or ⊤ slot adds no reading).
-  let deepVaenv = H.union (H.fromList [(TVVar n, v) | (n, v) <- H.toList vars', not (isTypeVar v), v /= PTopType]) vaenv
+  -- bindings, which the plain ambient env does not carry.
+  --
+  -- A slot is read through 'substituteTVExt' first, so a slot bound to an EXTERNAL occurrence
+  -- (@/T=$_v@) contributes its ambient value rather than being written off as a bare link:
+  -- @Cons[/T=$_v](head=$/T)@ with @v ↦ /Cons@ has a @/Cons@-valued head, and meeting it against
+  -- a disjoint head must empty the partial. Reading the slot as "no binding" instead lets the
+  -- arg meet DISCOVER a value for @/T@ and stamp it over the slot the partial already spells,
+  -- so the meet answers with a partial whose parameter contradicts its own operands.
+  -- What still adds no reading, after resolution: ⊤, and a value that is STILL a bare var
+  -- (a genuine unresolved link — defaulting it would read as ⊤).
+  let deepVaenv = H.union (H.fromList [ (TVVar n, r)
+                                      | (n, v) <- H.toList vars'
+                                      , let r = substituteTVExt typeEnv vaenv v
+                                      , not (isTypeVar r), r /= PTopType ]) vaenv
   let argsMap = H.unionWith (subUnion varBoundFor) (fmap (deepVaenv,) aArgs) (fmap (deepVaenv,) bArgs)
   let args' = fmap snd argsMap
   let bottomKeys = H.keysSet $ H.filter (isBottomType . snd) argsMap
@@ -5783,7 +5816,16 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
         -- spelling can carry names the pos name never declares (a class member's own binder, an
         -- enclosing scope's parameter); those are not unspelled-at-⊤ but not dimensions of @p1@
         -- at all, as @/Nil@ has no element dimension inside @ConsList[$T]@.
-        declaresVar n = any (H.member n . ptVars) (typeGraphData typeEnv (ptName p1))
+        --
+        -- With NO declaration in the graph the name's dimensions are unknown, and the neg's own
+        -- spelling is the only evidence there is. Both partials carry the SAME name here (the
+        -- leafs subtract name-grouped), so a parameter the neg spells IS a dimension of that
+        -- name; reading "no declaration" as "no dimensions" instead drops every escape and
+        -- makes @a − b@ empty for a @b@ that is a proper subset of @a@. Declarations are what
+        -- bound the cost, so the enumeration stays bounded wherever the graph has one.
+        declaresVar n = case typeGraphData typeEnv (ptName p1) of
+          []    -> True
+          decls -> any (H.member n . ptVars) decls
         -- Does the neg parameter denote a proper subset of ⊤? A knowledge-carrying occurrence
         -- (@$_a∩{X}@) always does; a bare variable does only when the env binds it to a concrete
         -- value — a ⊤-bound, self-bound or var-valued entry stays bindable per value, i.e. ⊤.
