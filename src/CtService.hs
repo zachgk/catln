@@ -20,13 +20,14 @@ import           Control.Concurrent      (MVar, forkIO, modifyMVar, modifyMVar_,
 import           Control.Concurrent.STM  (STM, TVar, atomically, modifyTVar',
                                           newTVarIO, readTVar, readTVarIO,
                                           retry, writeTVar)
-import           Control.Exception       (bracket, bracket_)
+import           Control.Exception       (bracket, bracket_, evaluate)
 import           Control.Monad           (forM, forM_, forever, unless, void,
                                           when)
 import           Control.Monad.Trans     (lift)
 import           CRes
 import           Data.Aeson              (ToJSON)
 import           Data.Graph
+import           Data.Hashable           (hash)
 import qualified Data.HashMap.Strict     as H
 import qualified Data.HashSet            as S
 import           Data.IORef              (modifyIORef', newIORef, readIORef)
@@ -36,8 +37,9 @@ import           Data.Maybe
 import           Data.Time.Calendar      (Day)
 import           Data.Time.Clock         (getCurrentTime, utctDay)
 import           Data.UUID               (UUID)
-import           Eval                    (evalAnnots, evalBaseEnvService,
-                                          evalBuild, evalBuildAllOf,
+import           Eval                    (evalAnnots, evalBaseEnv,
+                                          evalBaseEnvService, evalBuild,
+                                          evalBuildAllOf, evalCallTo,
                                           evalDShowCall, evalDebugExprPrgm,
                                           evalDebugPrgm, evalPageAsk,
                                           evalPageValues, evalRun, evalRunMock,
@@ -55,8 +57,10 @@ import           FileWatch               (Watch, Watcher, allCovered,
 import           GHC.Generics            (Generic)
 import           MapMeta                 (parseMetaIDScope)
 import           Semantics               (CTSSConfig, ctssCachePath, ctssToday)
+import           Semantics.CtType        (fromCt)
 import           Semantics.Prgm
 import           Semantics.Types         (Name)
+import           Semantics.Val           hiding (Val)
 import           Syntax.Ct.Desugarf      (desFinalPass, desFinalPasses, desPrgm,
                                           validPrgm)
 import           Syntax.Ct.Desugarf.Expr (desFileImport)
@@ -555,7 +559,7 @@ ctssReadOf ctss@(CTSS ssmv _) load = do
     withWritten ctssWatcher $ \written -> do
       unchanged <- ctssUnchanged ctssWatcher written [(prgmName, ssfRead ssf) | (prgmName, ssf) <- H.toList before]
       let held = [prgmName | (prgmName, ssf) <- H.toList before, isJust (ssfRaw ssf)]
-      reading <- newReading (ctssCachePath ctssConfig) noImporters
+      reading <- newReading (ctssCachePath ctssConfig) (ctssImporterEnv ctss)
       rqRestart ctssReadQueue =<< mapM (canonicalImport ctssConfig (rootImportCtx noImporters) . mkRawImportStr) ctssBaseFileNames
       -- Gathered up as the read goes and acted on once at the end. Which pages an invalidation
       -- reaches is the import graph walked the other way, and mid-read that is a graph some of whose
@@ -1363,6 +1367,62 @@ ctssCallDShow ctss scope fun args = do
   -- forgotten, and there is no kept value to be dropped when the answer changes.
   svc <- lift $ newEvalService ctss scope =<< serviceToday ctss
   asCResT $ evalDShowCall (evalBaseEnvService (Just svc) prgm) fun args
+
+-- | The service, as a read asks it about importers written in Catln.
+--
+-- Everything here is answered out of a snapshot and nothing here builds, reads, or takes a lock.
+-- That is not an optimisation but the condition of the thing working at all: this runs INSIDE
+-- 'ctssReadOf''s hold of 'ctssReadLock', and building would reach 'ctssLoadOf' and take that lock
+-- again. An MVar is not re-entrant, so a callback which went and built something would hang rather
+-- than be slow. Whoever drives the read is what builds ('ctssLoadOf'); this only ever reports what
+-- has been built already.
+--
+-- The lock order is the one everything else here uses -- read lock, then 'ssmv' -- so taking 'ssmv'
+-- from inside the read is safe. It stays safe only while nothing takes the read lock while holding
+-- 'ssmv', which nothing does.
+ctssImporterEnv :: CTSS -> ImporterEnv
+ctssImporterEnv (CTSS ssmv _) = noImporters{ieReady, ieInvoke}
+  where
+    -- The page a path names, out of the pages the service holds. Pages are keyed by the import which
+    -- names them, so this is the reverse of 'Syntax.Ct.Prgm.importPath'.
+    pageAt ctssData at = listToMaybe [prgmName | (_, prgmName, _) <- graphToNodes ctssData, importPath prgmName == Just at]
+
+    ieReady page = do
+      CTSSDat{ctssData} <- readMVar ssmv
+      return $ case pageAt ctssData page >>= (`graphLookup` ctssData) of
+        Nothing -> Just $ ImportBlocked page "has not been read"
+        Just ssf
+          | not (ssfBuilt ssf) -> Just $ ImportBlocked page "has not been built"
+          -- A page marked built with no typechecked program is a @ctx@ page, which
+          -- 'buildSCCPipeline' deliberately skips. It will never gain one, so this is a page that
+          -- waits for ever rather than one that waits: reported as such, so that 'ctssLoadOf' retires
+          -- it instead of building it again and again.
+          | isNothing (ssfTPrgm ssf) -> Just $ ImportBlocked page "declares no program, so nothing on it can be run"
+          | otherwise -> Nothing
+
+    ieInvoke page fun readPath args = do
+      CTSSDat{ctssData} <- readMVar ssmv
+      case pageAt ctssData page of
+        Nothing -> return $ Left $ ImportBlocked page "has not been read"
+        Just prgmName -> do
+          let scope = graphToNodes $ graphFilterReaches prgmName ctssData
+          let called = do
+                tprgms <- evaluablePages ssfTPrgm True scope
+                prgm <- prgmFromGraphData prgmName tprgms
+                -- No 'EvalService'. An importer must not be able to ask the service anything: every
+                -- way of asking reaches 'ctssBuildAll' and so 'ctssReadOf', which is the deadlock
+                -- above. It is the same reason 'Eval.evalPageValues' takes none.
+                val <- evalCallTo (evalBaseEnv prgm) importResultType fun (("path", StrVal readPath) : [(k, StrVal v) | (k, v) <- args])
+                either fail return (fromCt val)
+          -- Forced before this returns. 'Eval.Common.CtServiceApi' states the rule: a lazy value
+          -- carrying an unforced ask is forced by whoever reads it, which here would be
+          -- 'buildSCCPipeline' inside @modifyMVar_ ssmv@ -- where the 'readMVar' above would hang
+          -- rather than fail.
+          case called of
+            CErr notes -> return $ Left $ ImportBlocked page $ prettyCNotes notes
+            CRes _ parsed -> do
+              _ <- evaluate (hash $ piPrgm parsed)
+              return $ Right parsed
 
 -- | Read a page's computed item, without building the page or computing anything.
 ctssCached :: (SSF -> Maybe (CRes a)) -> FileImport -> CTSS -> IO (Maybe (CRes a))

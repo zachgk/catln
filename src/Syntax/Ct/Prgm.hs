@@ -509,6 +509,17 @@ data ParsedImport = ParsedImport {
 -- All three fields matter and none may be dropped. Without [reads] the page is read again on every
 -- read of the service, so the importer is evaluated again every time; without [source] a natively
 -- read page has no text for the doc server to show or the editor to save.
+-- | The type an importer answers with, as a caller building a call to one names it.
+--
+-- @PtArgAny@ rather than the @PtArgExact@ 'Semantics.Types.partialVal' gives, and the difference is
+-- not a detail: an exact partial listing no arguments is the type of an @ImportResult@ carrying NO
+-- arguments, which nothing is. A call answering one with three was reported as not reaching the
+-- destination at all, which reads like the tree builder refusing to evaluate and is really the
+-- destination naming a type nothing inhabits. What a caller means is an @ImportResult@ whatever it
+-- holds.
+importResultType :: Type
+importResultType = singletonType (partialVal (mkName $ ctBuiltinNamespace ++ "ImportResult")){ptArgMode = PtArgMode True False}
+
 instance CtType ParsedImport where
   ctPath _ = ctBuiltinNamespace ++ "ImportResult"
   ctDoc _ = [

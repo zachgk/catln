@@ -479,16 +479,38 @@ dshowDestType = classPartial $ partialVal $ mkName dshowClassName
 -- rather than a note, and an @error@ raised answering a request is a failed connection rather than
 -- something the reader can be shown.
 evalDShowCall :: Env -> String -> [(String, Val)] -> CRes Val
-evalDShowCall env@Env{evTbEnv, evTypeEnv} fun args = do
-  fun' <- case maybeGetSingleton $ expandRelPartial evTypeEnv H.empty (partialVal (mkName fun)) of
-    Just f -> return $ nameStr $ ptName f
-    -- Both no match and several are reported as the name not being one function, since what the
-    -- caller has to do about either is the same: name the one they meant, absolutely.
-    Nothing -> fail $ printf "The doc server holds no single function named %s to call" fun
+evalDShowCall env@Env{evTypeEnv} fun args = do
+  fun' <- evalCallName env fun
   let input = foldl (\base (argName, argVal) -> eApply base ('/' : argName, valToEExpr argVal)) (eVal fun') args
   unless (reachesTo evTypeEnv H.empty (getExprType input) dshowDestType) $
     fail $ printf "Calling %s with %s does not reach %s, so it is not something the webdocs can show" fun' (show $ map fst args) dshowClassName
-  tree <- toTExprDest evTbEnv [] input (emptyMetaT dshowDestType)
+  evalCallTo env dshowDestType fun args
+
+-- | The one function of the program written under this name, or why the name is not one function.
+evalCallName :: Env -> String -> CRes String
+evalCallName Env{evTypeEnv} fun = case maybeGetSingleton $ expandRelPartial evTypeEnv H.empty (partialVal (mkName fun)) of
+  Just f -> return $ nameStr $ ptName f
+  -- Both no match and several are reported as the name not being one function, since what the
+  -- caller has to do about either is the same: name the one they meant, absolutely.
+  Nothing -> fail $ printf "The program holds no single function named %s to call" fun
+
+-- | Build and evaluate a call to a named function of the program, toward the destination given.
+--
+-- 'evalDShowCall' above is this with @DShow@ as the destination and the check that the call reaches
+-- it. Split out because not every caller is a display: an importer written in Catln is called for
+-- the program it answers with, which is a thing to be read rather than shown, and a caller that had
+-- to make its result displayable in order to be called at all would be a display class deciding what
+-- the compiler may run.
+--
+-- The destination is what makes the call evaluate, and choosing it is the caller's whole
+-- responsibility — see 'dshowDestType': a tree built toward the expression's OWN type comes back as
+-- the unevaluated application. A caller wanting the value of a function declared to return @T@ must
+-- therefore ask for something @T@ resolves to rather than for @T@.
+evalCallTo :: Env -> Type -> String -> [(String, Val)] -> CRes Val
+evalCallTo env@Env{evTbEnv} dest fun args = do
+  fun' <- evalCallName env fun
+  let input = foldl (\base (argName, argVal) -> eApply base ('/' : argName, valToEExpr argVal)) (eVal fun') args
+  tree <- toTExprDest evTbEnv [] input (emptyMetaT dest)
   evalStateT (evalExpr tree) env
 
 -- | Evaluate the annotations a page WRITES, in the program that page COMPILES TO. The two scopes
