@@ -1531,7 +1531,7 @@ predsPositiveSealed typeEnv = go
     -- values carrying that name — fixed the moment it is declared, so no later file can widen
     -- it. 'predsSealed' reports False there only because it asks the class graph a class
     -- question and gets no answer; sealedness is simply not the right question for a data name.
-    atomEnumerable (PredExpr _) = False
+    atomEnumerable (PredExpr _)    = False
     atomEnumerable p@(PredClass c) = enumerableName (ptName c) p
     atomEnumerable p@(PredRel c)   = enumerableName (ptName c) p
     enumerableName n p = not (nameIsClass n) || predsSealed typeEnv (PredsOne p)
@@ -5768,7 +5768,22 @@ intersectTypesEnv typeEnv vaenv t1 t2 =
       -- the var's loc. 'substituteKeep' would keep a 'TVInt' (inside a partial that names a
       -- partial-scoped parameter), but at the RESULT's top level the var is this operation's
       -- own operand and its standalone reading would wrongly widen to ⊤.
-      TypeVar v _ _ | Just b <- H.lookup v newBindings -> b
+      -- ...but the occurrence denotes @⟦v⟧ ⊓ ⟦inner⟧@, so its VALUE is the discovered
+      -- binding MET WITH THE INNER, not the binding alone. Returning @b@ bare drops the
+      -- inner and can widen the meet past an operand: with @v@ unbound,
+      -- @$_c∩{#noCore} ∩ (⊤−/Point)@ bound @c ↦ ⊤−/Point@ and returned that, so a
+      -- difference stamping the result onto a var slot produced @/T=⊤−/Point@ where the
+      -- operand's own @/T@ was @#noCore@ — a piece WIDER than the minuend, breaking
+      -- @a−b ⊆ a@ (propDifferenceShrinks). The bound case never showed it: re-inserting an
+      -- unchanged binding leaves 'newBindings' empty, so this branch only fires when the
+      -- var was previously FREE, which is exactly when the inner is the only bound there is.
+      --
+      -- An inner mentioning type variables is left alone, for the same reason
+      -- 'intersectTypesWithVarEnv'.'innerRejects' skips it: meeting it re-enters the var
+      -- clause and a var reachable from its own inner loops.
+      TypeVar v _ i
+        | Just b <- H.lookup v newBindings ->
+            if i == PTopType || typeHasTypeVars i then b else intersectTypesEnv typeEnv vaenv b i
       _ -> substituteKeep typeEnv newBindings t
 
 -- | Takes the intersection of two 'Type' (∩).
