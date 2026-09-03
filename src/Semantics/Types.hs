@@ -1524,9 +1524,18 @@ predImplies typeEnv vaenv (PredsOne a1) (PredsOne a2) = predImpliesAtom typeEnv 
 predsPositiveSealed :: (TypeGraph tg) => TypeEnv tg -> TypePredicates -> Bool
 predsPositiveSealed typeEnv = go
   where
-    go (PredsOne p)  = predsSealed typeEnv (PredsOne p)
+    go (PredsOne p)  = atomEnumerable p
     go (PredsAnd ps) = not (null ps) && all go ps -- PredsNone = PredsAnd [] ↦ False: ⊤ is not enumerable
     go (PredsNot _)  = True -- negated: an unsealed class here only shrinks the set
+    -- An atom over a name that is not a CLASS is a DATA name, and its extent is exactly the
+    -- values carrying that name — fixed the moment it is declared, so no later file can widen
+    -- it. 'predsSealed' reports False there only because it asks the class graph a class
+    -- question and gets no answer; sealedness is simply not the right question for a data name.
+    atomEnumerable (PredExpr _) = False
+    atomEnumerable p@(PredClass c) = enumerableName (ptName c) p
+    atomEnumerable p@(PredRel c)   = enumerableName (ptName c) p
+    enumerableName n p = not (nameIsClass n) || predsSealed typeEnv (PredsOne p)
+    nameIsClass n = any (relativeNameMatches n) (listClassNames typeEnv)
 
 -- | True when every class referenced by the predicates is sealed, so the predicates may be
 -- soundly expanded to their declared constituents irrespective of the open/closed-world
@@ -3690,6 +3699,29 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (p1, n1, _)) (H.null -> Tru
     -- (U_p1 - n1 - nc1) ⊆ (U_p2 - n2). The universe implication alone is NOT sufficient:
     -- an n2 leaf inside U_p1 but not in n1 stays in t1 while t2 excludes it.
   | predsEmpty typeEnv vaenv p1 = True  -- t1 = ∅ by class-graph disjointness ⊆ anything (fallback: expansion is costly)
+  -- The SUBTRACTION can be what brings t1 inside t2, with no implication between the universes
+  -- at all: @(U_p1 − n1) ⊆ (U_p2 − n2)@ holds as soon as @n1@ already excludes everything
+  -- @U_p1@ has OUTSIDE @U_p2@ — that residue is @U_(p1 ∧ ¬p2)@, and asking whether @n1@ covers
+  -- it is a plain 'Just'-top ⊆ positive-union query.
+  --
+  -- The union reaches this shape by association alone: folding the same three operands the
+  -- other way spells one side's negation as a @PredRel@ over the whole name and the other's as
+  -- explicit excluded leafs. Both are correct, and both denote the same set once the shared
+  -- positive leaf is added back, but the guard above only ever proves the case where @U_p1@ is
+  -- already inside @U_p2@ — so the two spellings compared unequal and commutativity failed on
+  -- them.
+  --
+  -- Restricted to an EMPTY @n2@: with leafs excluded on the t2 side as well, a t1 value
+  -- surviving @n1@ could still land in @n2@, which this test does not check.
+  -- Only when something IS subtracted: with an empty @n1@ the reasoning cannot apply (nothing
+  -- was removed), and firing anyway ran a full subtype query on every such comparison — the
+  -- overwhelmingly common shape, and enough on its own to take the property suite from 235s to
+  -- an OOM kill.
+  | not (H.null n1), H.null n2
+  , isSubtypeOfWithEnv typeEnv vaenv
+      (UnionType (Just (predsAnd p1 (predsNot p2), H.empty, [])) H.empty [])
+      (UnionType Nothing n1 [])
+  = True
   -- Symbolic decision (emptiness of @t1 ∧ ¬t2@); the engine's positive gate reproduces the
   -- 'tePrgmEnv'/'predsSealed' enumeration gate of the re-expression fallback. Decided on t1
   -- WITHOUT its excluded constants (which are outside the DNF fragment): dropping them only
@@ -3839,13 +3871,25 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing subPartials []) (UnionType N
     -- at the matching slot value, so excluding it on a mode mismatch would miss the joint cover.
     -- The slot cover is decided through the type-level union, so it is whatever the algebra proves.
     coveredBySlotUnion sub sup =
-      any (coverSlot ptArgs (\p m -> p{ptArgs=m})) (H.keys (ptArgs sub))
-      || any (coverSlot ptVars (\p m -> p{ptVars=m})) (H.keys (ptVars sub))
+      any (coverSlot ptArgs (\p m -> p{ptArgs=m})) (slotKeys ptArgs)
+      || any (coverSlot ptVars (\p m -> p{ptVars=m})) (slotKeys ptVars)
       where
-        coverSlot get set k = case H.lookup k (get sub) of
-          Nothing -> False
-          Just sv ->
-            let erase p = (set p (H.insert k PTopType (get p))){ptArgMode = PtArgExact}
+        -- Only when the sub spells NOTHING on this axis. That is the case the rule exists for (a
+        -- bare leaf against a family that partitions the dimension), and confining it there keeps
+        -- every other comparison bit-identical: unioning the supers' keys in generally re-runs the
+        -- family scan and its type-level union for keys the sub already answers for, which at
+        -- 10000 left propOwnVarBindingRespected spinning for 30 min against 12s.
+        slotKeys get | H.null (get sub) = L.nub (concatMap (H.keys . get) sup)
+                     | otherwise        = H.keys (get sub)
+        -- The dimension may be spelled only on the SUPER side: a parameter the sub leaves
+        -- unspelled is ⊤ there (see 'PartialType'), so a family of supers that partitions that
+        -- dimension still covers it. Iterating the sub's own keys alone missed every such case —
+        -- a bare @/x@ has no keys at all, so @/x ⊆ /x[/p=A] ∪ /x[/p=⊤−A]@ read False while the
+        -- spelled-out @/x[/p=⊤]@ read True, and the union's two equally valid spellings of one
+        -- set compared unequal.
+        coverSlot get set k =
+            let sv = H.lookupDefault PTopType k (get sub)
+                erase p = (set p (H.insert k PTopType (get p))){ptArgMode = PtArgExact}
                 -- Normalise both modes before 'argModeCovers': an exact super does not literally
                 -- cover a sub carrying a vacuous @..@\/'PtArgAny' (@subUb@=False) — even though that
                 -- @..@ admits no arg-set beyond the sub's own declared keys — so without this the
