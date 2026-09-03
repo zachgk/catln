@@ -1513,6 +1513,21 @@ predImplies _       _     (PredsNot _) _        = False  -- conservative
 -- Atom cases
 predImplies typeEnv vaenv (PredsOne a1) (PredsOne a2) = predImpliesAtom typeEnv vaenv a1 a2
 
+-- | Like 'predsSealed', but only the POSITIVE part must be enumerable, and there must be one:
+-- the expansion bounds the universe by the positive atoms, so those must be sealed for it to be
+-- exact, while a NEGATED atom's class gaining a member in some future file only SHRINKS
+-- @U_preds@ — a cover proved against today's members therefore stays valid.
+--
+-- @'predsSealed'@ is the wrong test for that: it descends through 'PredsNot' as well, so a
+-- conjunction like @PredRel /ConsList ∧ ¬(PredClass /EqCO)@ is refused for the unsealed @/EqCO@
+-- even though @/ConsList@ — the atom that actually bounds the set — is sealed.
+predsPositiveSealed :: (TypeGraph tg) => TypeEnv tg -> TypePredicates -> Bool
+predsPositiveSealed typeEnv = go
+  where
+    go (PredsOne p)  = predsSealed typeEnv (PredsOne p)
+    go (PredsAnd ps) = not (null ps) && all go ps -- PredsNone = PredsAnd [] ↦ False: ⊤ is not enumerable
+    go (PredsNot _)  = True -- negated: an unsealed class here only shrinks the set
+
 -- | True when every class referenced by the predicates is sealed, so the predicates may be
 -- soundly expanded to their declared constituents irrespective of the open/closed-world
 -- ('tePrgmEnv') setting. For a sealed class @C@, @U_C@ is exactly the union of @C@'s declared
@@ -1715,15 +1730,24 @@ predImpliesPartials typeEnv vaenv preds partials
         (expanded, False) -> isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing expanded []) (UnionType Nothing partials [])
         (_,        True)  -> False
 
--- | Predicates made only of positive atoms (no negation, at least one atom): exactly the forms
--- whose value set is confined to the atoms' name-keyed members, so a name-materialized
--- expansion can exhaust them. 'PredsNone' and negation-containing forms are open-ended - they
--- contain constants of unlisted kinds and (open-world) values of names not yet declared - so
--- no finite leaf expansion is ever exhaustive of them.
+-- | Whether the predicate conjunction is BOUNDED by at least one positive atom, so that its
+-- value set is confined to that atom's name-keyed members and a name-materialized expansion can
+-- exhaust it. 'PredsNone' and purely negated forms are open-ended — they contain constants of
+-- unlisted kinds and (open-world) values of names not yet declared — so no finite leaf expansion
+-- is ever exhaustive of them.
+--
+-- A negated conjunct alongside a positive one does NOT reopen the universe: @A ∧ ¬B ⊆ A@, so the
+-- bound still holds and the extra conjunct only shrinks the set. Requiring EVERY atom to be
+-- positive instead refused the whole conjunction, and the caller's exact-flagged expansion then
+-- returned a conservative False — @(~ConsList ∧ ¬EqCO) ∪ /Nil ⊆ (Cons[…]|¬EqCO) ∪ /Nil@ came out
+-- False although the two spell the same set, and distributivity failed on it.
+--
+-- Exhaustiveness of the atom's own members is a separate question, already answered by the
+-- caller's expansion flag: an unsealed class expands approximately and is rejected there.
 predsPositiveAtoms :: TypePredicates -> Bool
-predsPositiveAtoms preds = case tryPredsToList preds of
-  Just (_:_) -> True
-  _          -> False
+predsPositiveAtoms (PredsOne _)  = True
+predsPositiveAtoms (PredsNot _)  = False
+predsPositiveAtoms (PredsAnd ps) = any predsPositiveAtoms ps
 
 -- | Returns only the 'PartialLeafs' of a type whose names are in 'allowedNames'.
 expandTypeWithNames :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> S.HashSet TypeName -> PartialLeafs
@@ -3710,8 +3734,30 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (preds, negLeafs, _)) (H.nu
    -- any future @isa Bag@ declaration, and inconsistent with the open-world emptiness oracle, which
    -- collapses @∀Bag ∩ (¬Nil − Cons)@ to ∅ while the union side keeps it (a difference-subset law
    -- failure). In the closed-world coverage environment ('tePrgmEnv') the gate still enumerates.
-   predsCovered = fromMaybe predsCoveredExpand
-     (typeCoveredSymbolic typeEnv vaenv ProveEmpty (UnionType (Just (preds, negLeafs, [])) H.empty []) t2)
+   -- Only a symbolic PROOF short-circuits. A symbolic refusal falls through to the materialized
+   -- expansion, which is a second, independent prover — not a formatting of the same answer.
+   --
+   -- The engine reports "not covered" by exhibiting an escape witness, and it builds that witness
+   -- from the leaf-cover check alone, without the goal's own NEGATIVE atoms in hand. Against a
+   -- cover leaf carrying a refinement it therefore offers a value the goal already excludes:
+   -- for @(~ConsList ∧ ¬EqCO) ⊆ (Cons[…]|¬EqCO) ∪ Nil@ it answers @Just False@ on the strength of
+   -- "a Cons that IS an EqCO", which the goal's own @¬EqCO@ forbids. Taking that refusal as final
+   -- discarded the expansion, which decides the same query correctly.
+   --
+   -- Same shape as the fragment fix: one prover's inability to decide must never present itself as
+   -- a decision. Here the engine is IN fragment but incomplete, so the boundary check cannot catch
+   -- it — only refusing to treat a negative as final can.
+   predsCovered = case typeCoveredSymbolic typeEnv vaenv ProveEmpty (UnionType (Just (preds, negLeafs, [])) H.empty []) t2 of
+     Just True                       -> True
+     Just False | not expansionExact -> False
+     _                               -> predsCoveredExpand
+   -- A symbolic refusal is only ever INCOMPLETENESS where the expansion is entitled to decide.
+   -- When the POSITIVE atoms are unsealed the refusal is the open-world gate doing real work:
+   -- @∀/Bag ⊆ (/Cons + /Nil)@ must stay False however many of Bag's current members happen to be
+   -- ConsLists, and enumerating Bag to "prove" it is exactly the violation this clause's gate
+   -- exists to prevent. Falling through unconditionally proved it and broke
+   -- @a ⊆ b ⟺ a∩b = a@.
+   expansionExact = tePrgmEnv typeEnv || predsPositiveSealed typeEnv preds
    predsCoveredExpand = case expandTypesWithNamesFull typeEnv vaenv t1 (H.keysSet superPartials) of
     (_, True)      | isPredsContradictory preds -> True
     (_, True)      | predImpliesPartials typeEnv vaenv preds superPartials -> True
