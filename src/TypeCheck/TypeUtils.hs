@@ -15,6 +15,7 @@
 
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns   #-}
+{-# LANGUAGE ViewPatterns     #-}
 
 module TypeCheck.TypeUtils where
 
@@ -636,8 +637,27 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
         (UnionType Nothing aLs [], UnionType mt bLs cs) -> UnionType mt (H.unionWith S.union aLs bLs) cs
         (UnionType mt aLs cs, UnionType Nothing bLs []) -> UnionType mt (H.unionWith S.union aLs bLs) cs
         _ -> unionTypesWithEnv feTypeEnv vaenv' a b
+  -- A constant reaching an ARGUMENT SLOT is held there at its TYPE, not as itself: an argument
+  -- in expression position gets its slot through 'ArrowTo', whose forward reach reads a constant
+  -- source through 'constantPartialType' (@CStr "x"@ arrives as @/Data/String@). A DECLARATION's
+  -- fields keep their constants — its arguments are tied to their values by 'EqPoints', not by a
+  -- reach — so a met against a declared value imports a constant the actual it constrains can
+  -- never carry. Monotonicity then locks the requirement below the actual for good, and the two
+  -- disagree at TreeBuild ("no arrows from @Cons(/head=/Data/String)@" toward
+  -- @Cons(/head=CStr "x")@ — the shape @maybeField.ct@\/@listField.ct@\/@valueDeclFields.ct@ fail).
+  -- So read the met's nested constants in the same currency as the source: at their type. Only
+  -- NESTED ones — a constant the source itself is stays whatever it is, and the type parameters
+  -- the met discovers (@/T=Integer@ out of @(l::$T == r::$T)@) are untouched.
+  let widenSlotConsts t = case t of
+        UnionType mTop leafs tConsts -> UnionType mTop (joinUnionType (map onLeaf (splitUnionType leafs))) tConsts
+        _ -> t
+        where
+          onLeaf l@PartialType{ptArgs} = l{ptArgs = fmap atSlot ptArgs}
+          atSlot (UnionType Nothing (H.null -> True) cs@(_:_)) =
+            unionAllTypes feTypeEnv (map (singletonType . constantPartialType) cs)
+          atSlot v = widenSlotConsts v
   let viableMet key =
-        let arrowMets = [ metSrc | (_, metSrc, _) <- typeGraphQueryAllWithReason reachesTypeEnv vaenv' key ]
+        let arrowMets = [ widenSlotConsts metSrc | (_, metSrc, _) <- typeGraphQueryAllWithReason reachesTypeEnv vaenv' key ]
             arrowMet = case arrowMets of
               []   -> Nothing
               mets -> Just (unionAllTypesWithEnv feTypeEnv vaenv' mets)

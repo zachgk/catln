@@ -93,14 +93,7 @@ Prgm
         , /Catln/#print
             ( Value /p -> ∀/Catln/Doc/DShow = /Dated
                 ( Value /name -> /Data/String = CStr "has one" )
-                ( Value /due -> /Data/Maybe/Some
-                    ( /value=UnionType
-                        ( Nothing
-                        , ∅
-                        ,
-                            [ CStr "2026-01-01" ]
-                        )
-                    ) = /Data/Maybe/Some
+                ( Value /due -> /Data/Maybe/Some( /value=/Data/String ) = /Data/Maybe/Some
                     ( Value /value -> /Data/String = CStr "2026-01-01" )
                 )
             )

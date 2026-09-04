@@ -95,6 +95,13 @@ Prgm
             ( EAppArg Value /text -> /Data/String = "Printed so that the values are evaluated and not only built." )
         , /Catln/#print
             ( EAppArg Value /p -> ∀/Catln/Doc/DShow = /Dated
+                ( EAppArg Value /name -> /Data/String = "has one" )
+                ( EAppArg Value /due -> /Data/Maybe/Some( /value=/Data/String ) = /Data/Maybe/Some
+                    ( EAppArg Value /value -> /Data/String = "2026-01-01" )
+                )
+            )
+        , /Catln/#print
+            ( EAppArg Value /p -> ∀/Catln/Doc/DShow = /Dated
                 ( EAppArg Value /name -> /Data/String = "has none" )( EAppArg Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
             )
         ]
