@@ -50,7 +50,21 @@ leafsFromMeta m = error $ printf "leafFromMeta with invalid type: %s" (show m)
 buildTBEnv :: ResBuildPrims -> TBPrgm -> TBEnv
 buildTBEnv primEnv prgm@Prgm{prgmObjMap} = baseEnv
   where
-    baseEnv = TBEnv "" resEnv prgm (mkTypeEnv prgm){tePrgmEnv=True, teArgModeProjection=True} untyped
+    baseEnv = TBEnv "" resEnv prgm tbTypeEnv' untyped
+    -- The tree build asks the same set-algebra questions over and over — a dispatch decides one
+    -- call site by intersecting the source against every arm of the name, and the arms of a class
+    -- method re-expand the same handful of classes each time. Those answers are memoized, but only
+    -- for an env carrying an identity token, and 'mkTypeEnv' mints none; without one the build ran
+    -- every query raw. Two objects paid for it alone: @/Data/Map/containedIn@ and
+    -- @/Data/Map/mapEqual@, whose @==@ over a recursive parameterized type took ~95s each while no
+    -- other object in the standard library reached 250ms.
+    --
+    -- The token's contract is one token per identical immutable env VALUE. This env is built once
+    -- here, is never derived from (no site modifies it beyond the flags the memos key on), and
+    -- lives for the whole build of one program — exactly the shape the typechecker's per-epoch
+    -- reaches env has.
+    tbTypeEnv0 = (mkTypeEnv prgm){tePrgmEnv=True, teArgModeProjection=True}
+    tbTypeEnv' = tbTypeEnv0{teQueryCacheKey = Just (unsafeFreshQueryToken (teTypeGraph tbTypeEnv0))}
     resEnv = H.fromListWith (++) $ mapMaybe resFromArrow $ flatObjectMap prgmObjMap
 
     -- | A definition with no type at all, which is what a definition that failed to typecheck leaves
@@ -530,3 +544,4 @@ buildRoot env input src dest = do
   let emptyObj = ObjArr (Just input) FunctionObj Nothing [] Nothing
   let objSrc = (src, emptyObj)
   toTExprDest env' [objSrc] input  (emptyMetaT dest)
+
