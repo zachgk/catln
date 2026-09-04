@@ -33,7 +33,8 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /defInt( EAppArg Value /x -> /Data/Primitive/Integer ) -> TVArg /x = ( Value /x ↦ TVArg /x )
-                        , /defInt( EAppArg Value /x -> ~Nothing = Value /Nothing ) -> /Data/Primitive/Integer = 0
+                        , /defInt
+                            ( EAppArg Value /x -> ( /Data/Maybe/Nothing + /Nothing ) = Value /Nothing ) -> /Data/Primitive/Integer = 0
                         ]
                     }
                 )
@@ -59,7 +60,7 @@ Prgm
                 [ $_/T
                 , /Nothing
                 ]
-            , Just ""
+            , Just "   "
             )
         ]
     , prgmAnnots =

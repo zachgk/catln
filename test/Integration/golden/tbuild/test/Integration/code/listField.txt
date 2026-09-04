@@ -126,7 +126,7 @@ Prgm
                 [ /Tagged..
                 , /ConsTagged..
                 ]
-            , Just " "
+            , Just "       "
             )
         ]
     , prgmAnnots =
@@ -152,28 +152,8 @@ Prgm
                 ( EAppArg Value /name -> /Data/String = "none" )( EAppArg Value /tags -> /Data/List/Nil = Value /Data/List/Nil )
             )
         , /Catln/#print
-            ( EAppArg Value /p -> ∀/Catln/Doc/DShow = /Tagged
-                ( EAppArg Value /name -> /Data/String = "one" )
-                ( EAppArg Value /tags -> /Data/List/Cons
-                    ( /head=/Data/String
-                    , /tail=/Data/List/Nil
-                    ) = /Data/List/Cons
-                    ( EAppArg Value /head -> /Data/String = "x" )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
-                )
-            )
-        , /Catln/#print
             ( EAppArg Value /p -> ∀/Catln/Doc/DShow = /ConsTagged
                 ( EAppArg Value /name -> /Data/String = "none" )( EAppArg Value /tags -> /Data/List/Nil = Value /Data/List/Nil )
-            )
-        , /Catln/#print
-            ( EAppArg Value /p -> ∀/Catln/Doc/DShow = /ConsTagged
-                ( EAppArg Value /name -> /Data/String = "one" )
-                ( EAppArg Value /tags -> /Data/List/Cons
-                    ( /head=/Data/String
-                    , /tail=/Data/List/Nil
-                    ) = /Data/List/Cons
-                    ( EAppArg Value /head -> /Data/String = "x" )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
-                )
             )
         ]
     }

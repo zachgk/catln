@@ -47,19 +47,36 @@ Prgm
                                 , []
                                 )
                             , /Data/List/append
-                                ( /a=
-                                    ( /Data/List/Nil + /Data/List/Cons[ /T=TopType ]
-                                        ( /head=TopType
+                                ( /a=UnionType
+                                    ( Just
+                                        ( PredClass /Data/List/ConsList[ /T=TopType ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /Data/List/Cons[ /T=TopType ]
+                                        ( /head=$/T
                                         , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                         )
+                                    , []
                                     )
-                                , /b=∀/Data/List/ConsList[ /T=TopType ]
+                                , /b=UnionType
+                                    ( Just
+                                        ( PredClass /Data/List/ConsList[ /T=TopType ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /Data/List/Cons[ /T=TopType ]
+                                        ( /head=$/T
+                                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                        )
+                                    , []
+                                    )
                                 )
                             , []
                             ) =
                             ( /Data/bindap
                                 ( EAppArg Value /m -> TVArg /m = ( Value /m ↦ TVArg /m ) )
-                                ( EAppArg /fn( EAppArg Value /v ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) =
+                                ( EAppArg /fn( EAppArg Value /v -> /Data/Primitive/Integer ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) =
                                     ( /bindWithLocal.$b5054c
                                         ( EAppArg Value /m -> TVArg /m = ( Value /m ↦ TVArg /m ) )
                                         ( EAppArg Value /$b5054c-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) ) ↦ /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
@@ -75,7 +92,7 @@ Prgm
                                     , []
                                     )
                                 , /Data/List/Cons[ /T=TopType ]
-                                    ( /head=TopType
+                                    ( /head=$/T
                                     , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                     )
                                 , []

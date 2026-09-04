@@ -217,10 +217,12 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/compare( Value /a )( Value /b )( Value /this -> /Data/Primitive/IntOrdering ) -> ∀/Data/Algebra/Comparison = /Data/Algebra/mkComparison
+                        [ /Data/Algebra/compare( Value /a )( Value /b )
+                            ( Value /this -> /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Algebra/Comparison = /Data/Algebra/mkComparison
                             ( Value /lt -> ∀/Data/Primitive/Boolean = /Data/Primitive/intLt( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) )
                             ( Value /eq -> ∀/Data/Primitive/Boolean = /Data/Primitive/intEq( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) )
-                        , /Data/Algebra/compare( Value /a )( Value /b )( Value /this -> /Data/Primitive/FloatOrdering ) -> ∀/Data/Algebra/Comparison = /Data/Algebra/mkComparison
+                        , /Data/Algebra/compare( Value /a )( Value /b )
+                            ( Value /this -> /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] ) -> ∀/Data/Algebra/Comparison = /Data/Algebra/mkComparison
                             ( Value /lt -> ∀/Data/Primitive/Boolean = /Data/Primitive/floatLt( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) )
                             ( Value /eq -> ∀/Data/Primitive/Boolean = /Data/Primitive/floatEq( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) )
                         ]
@@ -275,9 +277,27 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/equal( Value /other -> ∀/Data/Algebra/Eq )( Value /this -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean = /rel( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
-                            ( Value /this -> ∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ] = /eq( Value /this -> TVArg /this = Value /this ) )
+                            ( Value /this -> UnionType
+                                ( Just
+                                    ( PredClass /Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ]
+                                , []
+                                ) = /eq( Value /this -> TVArg /this = Value /this )
+                            )
                         , /Data/Algebra/equal( Value /other -> ∀/Data/Algebra/Eq )( Value /this -> /Data/Primitive/Float ) -> ∀/Data/Primitive/Boolean = /rel( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
-                            ( Value /this -> ∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Float ] = /eq( Value /this -> TVArg /this = Value /this ) )
+                            ( Value /this -> UnionType
+                                ( Just
+                                    ( PredClass /Data/Algebra/Eqv[ /T=/Data/Primitive/Float ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ]
+                                , []
+                                ) = /eq( Value /this -> TVArg /this = Value /this )
+                            )
                         ]
                     }
                 )
@@ -319,11 +339,11 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/compareTo( Value /other -> ∀/Data/Algebra/Ord )( Value /this -> /Data/Primitive/Integer ) -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /compare( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
+                        [ /Data/Algebra/compareTo( Value /other -> ∀/Data/Algebra/Ord )( Value /this -> /Data/Primitive/Integer ) -> ∀/Data/Algebra/Comparison = /compare( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
                             ( Value /this ->
                                 ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] ) = /ord( Value /this -> TVArg /this = Value /this )
                             )
-                        , /Data/Algebra/compareTo( Value /other -> ∀/Data/Algebra/Ord )( Value /this -> /Data/Primitive/Float ) -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /compare( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
+                        , /Data/Algebra/compareTo( Value /other -> ∀/Data/Algebra/Ord )( Value /this -> /Data/Primitive/Float ) -> ∀/Data/Algebra/Comparison = /compare( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
                             ( Value /this ->
                                 ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] ) = /ord( Value /this -> TVArg /this = Value /this )
                             )
@@ -366,19 +386,19 @@ Prgm
             ( False
             , /Data/Primitive/Integer
             , [ /Data/Primitive/Integer ]
-            , Just ""
+            , Just "                                                                                      "
             )
         , CGClass
             ( False
             , /Data/Primitive/Number
             , [ ∀/Data/Primitive/Number ]
-            , Just ""
+            , Just "                                                                                      "
             )
         , CGClass
             ( False
             , /Data/Primitive/Integer
             , [ /Data/Primitive/Integer ]
-            , Just ""
+            , Just "                                                                                      "
             )
         , CGClass
             ( False
@@ -401,7 +421,7 @@ Prgm
                 [ /Data/Primitive/Integer
                 , /Data/Primitive/Float
                 ]
-            , Just ""
+            , Just "                                                                                      "
             )
         ]
     , prgmAnnots =

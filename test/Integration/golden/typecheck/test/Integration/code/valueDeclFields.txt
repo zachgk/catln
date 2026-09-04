@@ -90,7 +90,7 @@ Prgm
             ( False
             , /Noted
             , [ /Noted.. ]
-            , Just ""
+            , Just "  "
             )
         ]
     , prgmAnnots =
@@ -119,7 +119,14 @@ Prgm
                     ) = /Data/List/Cons
                     ( Value /head -> /Data/String = CStr "x" )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                 )
-                ( Value /due -> /Data/Maybe/Some( /value=/Data/String ) = /Data/Maybe/Some
+                ( Value /due -> /Data/Maybe/Some
+                    ( /value=UnionType
+                        ( Nothing
+                        , ∅
+                        ,
+                            [ CStr "2026-01-01" ]
+                        )
+                    ) = /Data/Maybe/Some
                     ( Value /value -> /Data/String = CStr "2026-01-01" )
                 )
             )

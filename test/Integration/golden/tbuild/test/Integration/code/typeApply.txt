@@ -48,13 +48,22 @@ Prgm
                         [ /strMaybe
                             ( EAppArg Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> UnionType
                             ( Just
-                                ( PredClass /Data/Functor[ /T=∀/Data/Algebra/Semigroup ] && PredClass /Data/Maybe[ /T=∀/Data/Algebra/Semigroup ]
+                                ( PredClass /Data/Functor[ /T=TopType ]
                                 , fromList []
                                 , []
                                 )
-                            , /applyInc
-                                ( /fn( /v=TopType )=∀/Data/Algebra/Semigroup
-                                , /lst=∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
+                            ,
+                                ( /applyInc
+                                    ( /fn( /v=TopType )=∀/Data/Algebra/Semigroup
+                                    , /lst=∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
+                                    ) + /Data/Functor/fmap
+                                    [ /F=∀/Data/Functor[ /T=TopType ]
+                                    , /B=TopType
+                                    , /A=TopType
+                                    ]
+                                    ( /fn( /v=TopType )=TopType
+                                    , /lst=∀/Data/Functor[ /T=TopType ]
+                                    )
                                 )
                             , []
                             ) =
@@ -66,15 +75,17 @@ Prgm
                                     )
                                 ) ↦ UnionType
                                 ( Just
-                                    ( PredClass /Data/Functor[ /T=∀/Data/Algebra/Semigroup ] && PredClass /Data/Maybe[ /T=∀/Data/Algebra/Semigroup ]
+                                    ( PredClass /Data/Functor[ /T=TopType ]
                                     , fromList []
                                     , []
                                     )
-                                ,
-                                    ( /Data/List/Nil + /Data/List/Cons
-                                        ( /head=TopType
-                                        , /tail=∀/Data/Functor[ /T=TopType ]
-                                        )
+                                , /Data/Functor/fmap
+                                    [ /F=∀/Data/Functor[ /T=TopType ]
+                                    , /B=TopType
+                                    , /A=TopType
+                                    ]
+                                    ( /fn( /v=TopType )=TopType
+                                    , /lst=∀/Data/Functor[ /T=TopType ]
                                     )
                                 , []
                                 )
@@ -102,13 +113,22 @@ Prgm
                         [ /incMaybe
                             ( EAppArg Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> UnionType
                             ( Just
-                                ( PredClass /Data/Functor[ /T=/Data/Primitive/Integer ] && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
+                                ( PredClass /Data/Functor[ /T=TopType ]
                                 , fromList []
                                 , []
                                 )
-                            , /applyInc
-                                ( /fn( /v=TopType )=/Data/Primitive/Integer
-                                , /lst=∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
+                            ,
+                                ( /applyInc
+                                    ( /fn( /v=TopType )=/Data/Primitive/Integer
+                                    , /lst=∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
+                                    ) + /Data/Functor/fmap
+                                    [ /F=∀/Data/Functor[ /T=TopType ]
+                                    , /B=TopType
+                                    , /A=TopType
+                                    ]
+                                    ( /fn( /v=TopType )=TopType
+                                    , /lst=∀/Data/Functor[ /T=TopType ]
+                                    )
                                 )
                             , []
                             ) =
@@ -121,15 +141,17 @@ Prgm
                                     )
                                 ) ↦ UnionType
                                 ( Just
-                                    ( PredClass /Data/Functor[ /T=/Data/Primitive/Integer ] && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
+                                    ( PredClass /Data/Functor[ /T=TopType ]
                                     , fromList []
                                     , []
                                     )
-                                ,
-                                    ( /Data/List/Nil + /Data/List/Cons
-                                        ( /head=TopType
-                                        , /tail=∀/Data/Functor[ /T=TopType ]
-                                        )
+                                , /Data/Functor/fmap
+                                    [ /F=∀/Data/Functor[ /T=TopType ]
+                                    , /B=TopType
+                                    , /A=TopType
+                                    ]
+                                    ( /fn( /v=TopType )=TopType
+                                    , /lst=∀/Data/Functor[ /T=TopType ]
                                     )
                                 , []
                                 )

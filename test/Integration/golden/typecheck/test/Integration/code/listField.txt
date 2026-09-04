@@ -123,7 +123,7 @@ Prgm
                 [ /Tagged..
                 , /ConsTagged..
                 ]
-            , Just " "
+            , Just "       "
             )
         ]
     , prgmAnnots =
@@ -152,7 +152,12 @@ Prgm
             ( Value /p -> ∀/Catln/Doc/DShow = /Tagged
                 ( Value /name -> /Data/String = CStr "one" )
                 ( Value /tags -> /Data/List/Cons
-                    ( /head=/Data/String
+                    ( /head=UnionType
+                        ( Nothing
+                        , ∅
+                        ,
+                            [ CStr "x" ]
+                        )
                     , /tail=/Data/List/Nil
                     ) = /Data/List/Cons
                     ( Value /head -> /Data/String = CStr "x" )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
@@ -166,7 +171,12 @@ Prgm
             ( Value /p -> ∀/Catln/Doc/DShow = /ConsTagged
                 ( Value /name -> /Data/String = CStr "one" )
                 ( Value /tags -> /Data/List/Cons
-                    ( /head=/Data/String
+                    ( /head=UnionType
+                        ( Nothing
+                        , ∅
+                        ,
+                            [ CStr "x" ]
+                        )
                     , /tail=/Data/List/Nil
                     ) = /Data/List/Cons
                     ( Value /head -> /Data/String = CStr "x" )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )

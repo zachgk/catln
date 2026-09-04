@@ -75,8 +75,8 @@ Prgm
                         , /len
                             ( EAppArg Value /this -> /IntCons
                                 ( /head=/Data/Primitive/Integer
-                                , /tail=∀/IntList
-                                ) = /IntCons( EAppArg Value /head -> /Data/Primitive/Integer )( EAppArg Value /tail -> ∀/IntList )
+                                , /tail=TopType
+                                ) = /IntCons( EAppArg Value /head -> /Data/Primitive/Integer )( EAppArg Value /tail )
                             ) -> /Data/Primitive/Integer =
                             ( /operator+
                                 ( EAppArg Value /l -> /Data/Primitive/Integer = 1 )
@@ -106,7 +106,7 @@ Prgm
                     )
                 , /IntNil
                 ]
-            , Just ""
+            , Just "   "
             )
         ]
     , prgmAnnots =

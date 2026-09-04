@@ -99,11 +99,11 @@ Prgm
                         [ /Data/Algebra/rel( EAppArg Value /a )( EAppArg Value /b )
                             ( EAppArg Value /this -> ∀/Data/Algebra/Ordering[ /T=$_/T ] ) -> ∀/Data/Primitive/Boolean =
                             ( /Data/Algebra/isEq
-                                ( EAppArg Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
+                                ( EAppArg Value /this -> ∀/Data/Algebra/Comparison =
                                     ( /compare
                                         ( EAppArg Value /a -> TVArg /a = ( Value /a ↦ TVArg /a ) )
                                         ( EAppArg Value /b -> TVArg /b = ( Value /b ↦ TVArg /b ) )
-                                        ( EAppArg Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                        ( EAppArg Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) ) ↦ ∀/Data/Algebra/Comparison
                                     )
                                 ) ↦ ∀/Data/Primitive/Boolean
                             )
@@ -323,32 +323,32 @@ Prgm
                 , /Data/Algebra/Equal
                 , /Data/Algebra/GreaterThan
                 ]
-            , Just ""
+            , Just "                                                                                      "
             )
         , CGClass
             ( False
             , /Data/Algebra/Ord
             , [ ∀/Data/Algebra/Ord ]
-            , Just ""
+            , Just "                                                                                      "
             )
         , CGClass
             ( False
             , /Data/Algebra/Ordering
             ,
                 [ ∀/Data/Algebra/Ordering[ /T=$_/T ] ]
-            , Just ""
+            , Just "                                                                                      "
             )
         , CGClass
             ( False
             , /Data/Algebra/Ord
             , [ ∀/Data/Primitive/Number ]
-            , Just " "
+            , Just "                                                                                                                                                                             "
             )
         , CGClass
             ( False
             , /Data/Algebra/Ordering[ /T=TopType ]
             , []
-            , Just ""
+            , Just "                                                                                      "
             )
         , CGClass
             ( True
@@ -357,13 +357,13 @@ Prgm
                 [ ∀/Data/Algebra/Comparison
                 , /Data/Algebra/NoOrdering
                 ]
-            , Just ""
+            , Just "                                                                                      "
             )
         , CGClass
             ( False
             , /Data/Algebra/POrd
             , []
-            , Just ""
+            , Just "                                                                                      "
             )
         ]
     , prgmAnnots =

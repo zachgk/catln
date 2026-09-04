@@ -40,12 +40,12 @@ Prgm
                     , omiDefs =
                         [ /pureList( EAppArg Value /v -> /Data/Primitive/Integer ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
-                            , /tail=/Data/List/Nil
+                            , /tail=∀/Data/List/ConsList[ /T=TopType ]
                             ) =
                             ( /Data/Monad/pure
                                 ( EAppArg Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) ) ↦ /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                 ( /head=/Data/Primitive/Integer
-                                , /tail=/Data/List/Nil
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                 )
                             )
                         ]

@@ -16,17 +16,34 @@ Prgm
                                 , []
                                 )
                             , /Data/List/append
-                                ( /a=
-                                    ( /Data/List/Nil + /Data/List/Cons[ /T=TopType ]
-                                        ( /head=TopType
+                                ( /a=UnionType
+                                    ( Just
+                                        ( PredClass /Data/List/ConsList[ /T=TopType ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /Data/List/Cons[ /T=TopType ]
+                                        ( /head=$/T
                                         , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                         )
+                                    , []
                                     )
-                                , /b=∀/Data/List/ConsList[ /T=TopType ]
+                                , /b=UnionType
+                                    ( Just
+                                        ( PredClass /Data/List/ConsList[ /T=TopType ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /Data/List/Cons[ /T=TopType ]
+                                        ( /head=$/T
+                                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                        )
+                                    , []
+                                    )
                                 )
                             , []
                             ) = /Data/bindap( Value /m -> TVArg /m = Value /m )
-                            ( /fn( Value /v ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /maybeBind.$b5054c( Value /m -> TVArg /m = Value /m )( Value /$b5054c-arg -> TVArg /v = Value /v ) )
+                            ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /maybeBind.$b5054c( Value /m -> TVArg /m = Value /m )( Value /$b5054c-arg -> TVArg /v = Value /v ) )
                         ]
                     }
                 )

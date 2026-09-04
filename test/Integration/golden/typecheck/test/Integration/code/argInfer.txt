@@ -25,75 +25,7 @@ Prgm
                                 , []
                                 )
                             ,
-                                ( /operator==[ /T=∀/Data/Algebra/Eq ]
-                                    ( /r=∀/Data/Algebra/Eq
-                                    , /l=∀/Data/Algebra/Eq
-                                    ) + /Data/strEqual
-                                    ( /r=/Data/String
-                                    , /l=/Data/String
-                                    ) + /Data/Algebra/rel[ /T=∀/Data/Primitive/Boolean ]
-                                    ( /this=∀/Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
-                                    , /a=∀/Data/Primitive/Boolean
-                                    , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Integer ]
-                                    ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
-                                    , /a=/Data/Primitive/Integer
-                                    , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel[ /T=/Data/Primitive/Float ]
-                                    ( /this=∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Float ]
-                                    , /a=/Data/Primitive/Float
-                                    , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel[ /T=/Data/String ]
-                                    ( /this=∀/Data/Algebra/Eqv[ /T=/Data/String ]
-                                    , /a=/Data/String
-                                    , /b=∀/Data/Algebra/Eq
-                                    ) + /operator&&
-                                    ( /r=∀/Data/Primitive/Boolean
-                                    , /l=∀/Data/Primitive/Boolean
-                                    ) + /Data/Set/setEqual[ /E=∀/Data/Algebra/Ord ]
-                                    ( /a=/Data/Set/MkSet
-                                        [ /K=TopType
-                                        , /V=TopType
-                                        ]
-                                        ( /map=∀/Data/Map
-                                            [ /K=TopType
-                                            , /V=TopType
-                                            ]
-                                        )
-                                    , /b=
-                                        ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/Set[ /T=$/E ] )
-                                    ) + /Data/Map/mapEqual
-                                    [ /MV=∀/Data/Algebra/Eq
-                                    , /MK=∀/Data/Algebra/Ord
-                                    ]
-                                    ( /a=
-                                        ( /Data/Map/Node
-                                            [ /K=∀/Data/Algebra/Ord
-                                            , /V=∀/Data/Algebra/Eq
-                                            ]
-                                            ( /value=∀/Data/Algebra/Eq
-                                            , /key=∀/Data/Algebra/Ord
-                                            , /right=∀/Data/Map/BinTree
-                                                [ /K=$/MK
-                                                , /V=$/MV
-                                                ]
-                                            , /left=∀/Data/Map/BinTree
-                                                [ /K=$/MK
-                                                , /V=$/MV
-                                                ]
-                                            ) + /Data/Map/Leaf
-                                        )
-                                    , /b=
-                                        ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/Map/BinTree
-                                            [ /K=∀/Data/Algebra/Ord
-                                            , /V=∀/Data/Algebra/Eq
-                                            ]
-                                        )
-                                    ) + /Data/Primitive/boolEq
-                                    ( /r=∀/Data/Primitive/Boolean
-                                    , /l=∀/Data/Primitive/Boolean
-                                    ) + /Data/Algebra/isEq
-                                    ( /this=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) ) + /Data/Primitive/intEq
+                                ( /operator==
                                     ( /r=/Data/Primitive/Integer
                                     , /l=/Data/Primitive/Integer
                                     ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]

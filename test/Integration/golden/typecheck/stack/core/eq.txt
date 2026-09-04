@@ -67,8 +67,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/rel( Value /a )( Value /b )( Value /this -> /Data/Algebra/IntEqExample ) -> ∀/Data/Primitive/Boolean = /Data/Primitive/intEq( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
-                        , /Data/Algebra/rel( Value /a )( Value /b )( Value /this -> /Data/Algebra/AllEqv ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        [ /Data/Algebra/rel( Value /a )( Value /b )
+                            ( Value /this -> /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Primitive/Boolean = /Data/Primitive/intEq( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
+                        , /Data/Algebra/rel( Value /a )( Value /b )
+                            ( Value /this -> /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         ]
                     }
                 )
@@ -131,7 +133,7 @@ Prgm
             ( False
             , /Data/Algebra/Eq
             , []
-            , Just ""
+            , Just "                                                                                      "
             )
         , CGClass
             ( False
@@ -140,7 +142,7 @@ Prgm
                 [ /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ]
                 , /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ]
                 ]
-            , Just ""
+            , Just "                                                                                      "
             )
         ]
     , prgmAnnots =

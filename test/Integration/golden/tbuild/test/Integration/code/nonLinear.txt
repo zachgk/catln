@@ -20,10 +20,37 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /diag( EAppArg Value /a@Value /x -> /Data/Primitive/Integer )( EAppArg Value /b@Value /x -> /Data/Primitive/Integer ) -> /Data/Primitive/True = Value /Data/Primitive/True
-                        , /diag( EAppArg Value /a -> /Data/Primitive/Integer )( EAppArg Value /b -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean =
+                        , /diag( EAppArg Value /a -> /Data/Primitive/Integer )( EAppArg Value /b -> /Data/Primitive/Integer ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                , []
+                                )
+                            , /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
+                                ( /this=∀/Data/Algebra/Eq
+                                , /other=∀/Data/Algebra/Eq
+                                )
+                            , []
+                            ) =
                             ( /operator==
                                 ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
-                                ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) ) ↦ ∀/Data/Primitive/Boolean
+                                ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) ) ↦ UnionType
+                                ( Just
+                                    ( PredClass /Data/Primitive/Boolean
+                                    , fromList []
+                                    , []
+                                    )
+                                ,
+                                    ( /operator&&
+                                        ( /r=∀/Data/Primitive/Boolean
+                                        , /l=∀/Data/Primitive/Boolean
+                                        ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
+                                        ( /this=∀/Data/Algebra/Eq
+                                        , /other=∀/Data/Algebra/Eq
+                                        )
+                                    )
+                                , []
+                                )
                             )
                         ]
                     }

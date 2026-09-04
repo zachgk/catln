@@ -44,7 +44,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/rel( EAppArg Value /a )( EAppArg Value /b )( EAppArg Value /this -> /Data/Primitive/BoolEqv ) -> ∀/Data/Primitive/Boolean =
+                        [ /Data/Algebra/rel( EAppArg Value /a )( EAppArg Value /b )
+                            ( EAppArg Value /this -> /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] ) -> ∀/Data/Primitive/Boolean =
                             ( /Data/Primitive/boolEq
                                 ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
                                 ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) ) ↦ ∀/Data/Primitive/Boolean
@@ -147,9 +148,25 @@ Prgm
                             ( /rel
                                 ( EAppArg Value /a -> TVArg /this = ( Value /this ↦ TVArg /this ) )
                                 ( EAppArg Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) )
-                                ( EAppArg Value /this -> ∀/Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ] =
+                                ( EAppArg Value /this -> UnionType
+                                    ( Just
+                                        ( PredClass /Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ]
+                                    , []
+                                    ) =
                                     ( /eq
-                                        ( EAppArg Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) ) ↦ ∀/Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
+                                        ( EAppArg Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) ) ↦ UnionType
+                                        ( Just
+                                            ( PredClass /Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
+                                            , fromList []
+                                            , []
+                                            )
+                                        , /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ]
+                                        , []
+                                        )
                                     )
                                 ) ↦ ∀/Data/Primitive/Boolean
                             )
@@ -175,7 +192,7 @@ Prgm
             ( False
             , /Data/Primitive/Boolean
             , [ ∀/Data/Primitive/Boolean ]
-            , Just ""
+            , Just "                                                                                      "
             )
         , CGClass
             ( False
@@ -191,13 +208,13 @@ Prgm
                 [ /Data/Primitive/True
                 , /Data/Primitive/False
                 ]
-            , Just ""
+            , Just "                                                                                      "
             )
         , CGClass
             ( False
             , /Data/Primitive/Boolean
             , [ ∀/Data/Primitive/Boolean ]
-            , Just "A [Boolean] renders as the text of its constructor."
+            , Just "A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor. A [Boolean] renders as the text of its constructor."
             )
         ]
     , prgmAnnots =

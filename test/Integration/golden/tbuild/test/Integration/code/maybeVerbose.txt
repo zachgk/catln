@@ -26,7 +26,7 @@ Prgm
                             ( /Catln/exit
                                 ( EAppArg Value /val -> /Data/Primitive/Integer =
                                     ( /defInt
-                                        ( EAppArg Value /x -> /Just( /val=/Data/Primitive/Integer ) = /Just
+                                        ( EAppArg Value /x -> /Just[ /T=/Data/Primitive/Integer ]( /val=/Data/Primitive/Integer ) = /Just
                                             ( EAppArg Value /val -> /Data/Primitive/Integer = 0 )
                                         ) ↦ /Data/Primitive/Integer
                                     )
@@ -44,7 +44,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /defInt
-                            ( EAppArg Value /x -> /Just( /val=/Data/Primitive/Integer ) = /Just( EAppArg Value /val -> /Data/Primitive/Integer ) ) -> TVArg /val = ( Value /val ↦ TVArg /val )
+                            ( EAppArg Value /x -> /Just[ /T=/Data/Primitive/Integer ]( /val=/Data/Primitive/Integer ) = /Just( EAppArg Value /val -> /Data/Primitive/Integer ) ) -> TVArg /val = ( Value /val ↦ TVArg /val )
                         , /defInt( EAppArg Value /x -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing ) -> /Data/Primitive/Integer = 0
                         ]
                     }
@@ -73,7 +73,7 @@ Prgm
                 [ /Just[ /T=TopType ]( /val=$_/T )
                 , /Data/Maybe/Nothing
                 ]
-            , Just ""
+            , Just "   "
             )
         ]
     , prgmAnnots =

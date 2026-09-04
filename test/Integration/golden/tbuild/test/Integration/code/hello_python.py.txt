@@ -65,31 +65,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /make_range( EAppArg Value /n -> /Data/Primitive/Integer ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/List[ /T=/Data/Primitive/Integer ]
-                                , fromList []
-                                , []
-                                )
-                            , /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                                ( /head=/Data/Primitive/Integer
-                                , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
-                                )
-                            , []
-                            ) =
+                        [ /make_range( EAppArg Value /n -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Data/Primitive/Integer ] =
                             ( /range
-                                ( EAppArg Value /stop -> TVArg /n = ( Value /n ↦ TVArg /n ) ) ↦ UnionType
-                                ( Just
-                                    ( PredClass /Data/List[ /T=/Data/Primitive/Integer ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                                    ( /head=/Data/Primitive/Integer
-                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
-                                    )
-                                , []
-                                )
+                                ( EAppArg Value /stop -> TVArg /n = ( Value /n ↦ TVArg /n ) ) ↦ ∀/Data/List[ /T=/Data/Primitive/Integer ]
                             )
                         ]
                     }
@@ -124,17 +102,11 @@ Prgm
                                 )
                             , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                                 ( /head=∀/Data/Algebra/Ord
-                                , /tail=UnionType
-                                    ( Just
-                                        ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                , /tail=
+                                    ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                                         ( /head=∀/Data/Algebra/Ord
                                         , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                         )
-                                    , []
                                     )
                                 )
                             , []
@@ -148,17 +120,11 @@ Prgm
                                     )
                                 , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                                     ( /head=∀/Data/Algebra/Ord
-                                    , /tail=UnionType
-                                        ( Just
-                                            ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                    , /tail=
+                                        ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                                             ( /head=∀/Data/Algebra/Ord
                                             , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                             )
-                                        , []
                                         )
                                     )
                                 , []
@@ -760,7 +726,7 @@ Prgm
             ( False
             , /Point
             , []
-            , Just ""
+            , Just "                                       "
             )
         ]
     , prgmAnnots = []

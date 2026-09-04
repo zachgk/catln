@@ -13,30 +13,16 @@ Prgm
                                 ( /published=/Data/String
                                 , /link=/Data/String
                                 , /title=/Data/String
-                                , /description=∀/Data/Algebra/Semigroup
-                                ) = /Data/RSS/Item( EAppArg Value /title -> /Data/String )( EAppArg Value /link -> /Data/String )( EAppArg Value /published -> /Data/String )( EAppArg Value /description -> ∀/Data/Algebra/Semigroup )
-                            ) -> /Catln/Doc/Show/Html( /contents=/Data/String ) = /Catln/Doc/Show/Html
+                                , /description=/Data/String
+                                ) = /Data/RSS/Item( EAppArg Value /title -> /Data/String )( EAppArg Value /link -> /Data/String )( EAppArg Value /published -> /Data/String )( EAppArg Value /description -> /Data/String )
+                            ) -> /Catln/Doc/Show/Html( /contents=∀/Data/Algebra/Semigroup ) = /Catln/Doc/Show/Html
                             ( EAppArg Value /contents -> /Data/String =
                                 ( /operator++
-                                    ( EAppArg Value /l -> ∀/Data/Algebra/Semigroup =
+                                    ( EAppArg Value /l -> /Data/String =
                                         ( /operator++
-                                            ( EAppArg Value /l -> UnionType
-                                                ( Just
-                                                    ( PredClass /Data/Algebra/Semigroup
-                                                    , fromList []
-                                                    )
-                                                , /Data/Primitive/Integer
-                                                , []
-                                                ) =
+                                            ( EAppArg Value /l -> /Data/String =
                                                 ( /operator++
-                                                    ( EAppArg Value /l -> UnionType
-                                                        ( Just
-                                                            ( PredClass /Data/Algebra/Semigroup
-                                                            , fromList []
-                                                            )
-                                                        , /Data/Primitive/Integer
-                                                        , []
-                                                        ) =
+                                                    ( EAppArg Value /l -> /Data/String =
                                                         ( /operator++
                                                             ( EAppArg Value /l -> /Data/String = "<p>" )
                                                             ( EAppArg Value /r -> /Data/String =
@@ -46,14 +32,7 @@ Prgm
                                                                     ( EAppArg Value /title -> TVArg /title = ( Value /title ↦ TVArg /title ) )
                                                                     ( EAppArg Value /link -> TVArg /link = ( Value /link ↦ TVArg /link ) ) ↦ /Data/String
                                                                 )
-                                                            ) ↦ UnionType
-                                                            ( Just
-                                                                ( PredClass /Data/Algebra/Semigroup
-                                                                , fromList []
-                                                                )
-                                                            , /Data/Primitive/Integer
-                                                            , []
-                                                            )
+                                                            ) ↦ /Data/String
                                                         )
                                                     )
                                                     ( EAppArg Value /r -> /Data/String =
@@ -63,17 +42,10 @@ Prgm
                                                             ( EAppArg Value /description -> TVArg /description = ( Value /description ↦ TVArg /description ) )
                                                             ( EAppArg Value /published -> TVArg /published = ( Value /published ↦ TVArg /published ) ) ↦ /Data/String
                                                         )
-                                                    ) ↦ UnionType
-                                                    ( Just
-                                                        ( PredClass /Data/Algebra/Semigroup
-                                                        , fromList []
-                                                        )
-                                                    , /Data/Primitive/Integer
-                                                    , []
-                                                    )
+                                                    ) ↦ /Data/String
                                                 )
                                             )
-                                            ( EAppArg Value /r -> /Data/String = "</p>" ) ↦ ∀/Data/Algebra/Semigroup
+                                            ( EAppArg Value /r -> /Data/String = "</p>" ) ↦ /Data/String
                                         )
                                     )
                                     ( EAppArg Value /r -> TVArg /description = ( Value /description ↦ TVArg /description ) ) ↦ /Data/String
@@ -102,84 +74,36 @@ Prgm
                     , omiDefs =
                         [ /Catln/Doc/dshow./Data/RSS/titleOf( EAppArg Value /published )( EAppArg Value /description )( EAppArg Value /title -> /Data/String )( EAppArg Value /link -> /Data/String ) | /operator==
                             ( EAppArg Value /l -> TVArg /link = ( Value /link ↦ TVArg /link ) )
-                            ( EAppArg Value /r -> /Data/String = "" ) ->
-                            ( /operator++[ /T=/Data/String ]
-                                ( /r=/Data/String
-                                , /l=∀/Data/Algebra/Semigroup
-                                ) + /Data/String
-                            ) = /operator++
-                            ( EAppArg Value /l -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Algebra/Semigroup
-                                    , fromList []
-                                    )
-                                , /Data/Primitive/Integer
-                                , []
-                                ) =
-                                ( /operator++
-                                    ( EAppArg Value /l -> /Data/String = "<strong>" )
-                                    ( EAppArg Value /r -> TVArg /title = ( Value /title ↦ TVArg /title ) ) ↦ UnionType
-                                    ( Just
-                                        ( PredClass /Data/Algebra/Semigroup
-                                        , fromList []
-                                        )
-                                    , /Data/Primitive/Integer
-                                    , []
+                            ( EAppArg Value /r -> /Data/String = "" ) -> /Data/String =
+                            ( /operator++
+                                ( EAppArg Value /l -> /Data/String =
+                                    ( /operator++
+                                        ( EAppArg Value /l -> /Data/String = "<strong>" )
+                                        ( EAppArg Value /r -> TVArg /title = ( Value /title ↦ TVArg /title ) ) ↦ /Data/String
                                     )
                                 )
+                                ( EAppArg Value /r -> /Data/String = "</strong>" ) ↦ /Data/String
                             )
-                            ( EAppArg Value /r -> /Data/String = "</strong>" )
-                        , /Catln/Doc/dshow./Data/RSS/titleOf( EAppArg Value /published )( EAppArg Value /description )( EAppArg Value /title -> /Data/String )( EAppArg Value /link -> /Data/String ) ->
-                            ( /operator++[ /T=/Data/String ]
-                                ( /r=/Data/String
-                                , /l=∀/Data/Algebra/Semigroup
-                                ) + /Data/String
-                            ) = /operator++
-                            ( EAppArg Value /l -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Algebra/Semigroup
-                                    , fromList []
-                                    )
-                                , /Data/Primitive/Integer
-                                , []
-                                ) =
-                                ( /operator++
-                                    ( EAppArg Value /l -> ∀/Data/Algebra/Semigroup =
-                                        ( /operator++
-                                            ( EAppArg Value /l -> UnionType
-                                                ( Just
-                                                    ( PredClass /Data/Algebra/Semigroup
-                                                    , fromList []
-                                                    )
-                                                , /Data/Primitive/Integer
-                                                , []
-                                                ) =
-                                                ( /operator++
-                                                    ( EAppArg Value /l -> /Data/String = "<strong><a href="" )
-                                                    ( EAppArg Value /r -> TVArg /link = ( Value /link ↦ TVArg /link ) ) ↦ UnionType
-                                                    ( Just
-                                                        ( PredClass /Data/Algebra/Semigroup
-                                                        , fromList []
-                                                        )
-                                                    , /Data/Primitive/Integer
-                                                    , []
+                        , /Catln/Doc/dshow./Data/RSS/titleOf( EAppArg Value /published )( EAppArg Value /description )( EAppArg Value /title -> /Data/String )( EAppArg Value /link -> /Data/String ) -> /Data/String =
+                            ( /operator++
+                                ( EAppArg Value /l -> /Data/String =
+                                    ( /operator++
+                                        ( EAppArg Value /l -> /Data/String =
+                                            ( /operator++
+                                                ( EAppArg Value /l -> /Data/String =
+                                                    ( /operator++
+                                                        ( EAppArg Value /l -> /Data/String = "<strong><a href="" )
+                                                        ( EAppArg Value /r -> TVArg /link = ( Value /link ↦ TVArg /link ) ) ↦ /Data/String
                                                     )
                                                 )
+                                                ( EAppArg Value /r -> /Data/String = "">" ) ↦ /Data/String
                                             )
-                                            ( EAppArg Value /r -> /Data/String = "">" ) ↦ ∀/Data/Algebra/Semigroup
                                         )
-                                    )
-                                    ( EAppArg Value /r -> TVArg /title = ( Value /title ↦ TVArg /title ) ) ↦ UnionType
-                                    ( Just
-                                        ( PredClass /Data/Algebra/Semigroup
-                                        , fromList []
-                                        )
-                                    , /Data/Primitive/Integer
-                                    , []
+                                        ( EAppArg Value /r -> TVArg /title = ( Value /title ↦ TVArg /title ) ) ↦ /Data/String
                                     )
                                 )
+                                ( EAppArg Value /r -> /Data/String = "</a></strong>" ) ↦ /Data/String
                             )
-                            ( EAppArg Value /r -> /Data/String = "</a></strong>" )
                         ]
                     }
                 )
@@ -194,33 +118,16 @@ Prgm
                         [ /Catln/Doc/dshow./Data/RSS/publishedOf( EAppArg Value /link )( EAppArg Value /title )( EAppArg Value /description )( EAppArg Value /published -> /Data/String ) | /operator==
                             ( EAppArg Value /l -> TVArg /published = ( Value /published ↦ TVArg /published ) )
                             ( EAppArg Value /r -> /Data/String = "" ) -> /Data/String = ""
-                        , /Catln/Doc/dshow./Data/RSS/publishedOf( EAppArg Value /link )( EAppArg Value /title )( EAppArg Value /description )( EAppArg Value /published -> /Data/String ) ->
-                            ( /operator++[ /T=/Data/String ]
-                                ( /r=/Data/String
-                                , /l=∀/Data/Algebra/Semigroup
-                                ) + /Data/String
-                            ) = /operator++
-                            ( EAppArg Value /l -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Algebra/Semigroup
-                                    , fromList []
-                                    )
-                                , /Data/Primitive/Integer
-                                , []
-                                ) =
-                                ( /operator++
-                                    ( EAppArg Value /l -> /Data/String = " <small>" )
-                                    ( EAppArg Value /r -> TVArg /published = ( Value /published ↦ TVArg /published ) ) ↦ UnionType
-                                    ( Just
-                                        ( PredClass /Data/Algebra/Semigroup
-                                        , fromList []
-                                        )
-                                    , /Data/Primitive/Integer
-                                    , []
+                        , /Catln/Doc/dshow./Data/RSS/publishedOf( EAppArg Value /link )( EAppArg Value /title )( EAppArg Value /description )( EAppArg Value /published -> /Data/String ) -> /Data/String =
+                            ( /operator++
+                                ( EAppArg Value /l -> /Data/String =
+                                    ( /operator++
+                                        ( EAppArg Value /l -> /Data/String = " <small>" )
+                                        ( EAppArg Value /r -> TVArg /published = ( Value /published ↦ TVArg /published ) ) ↦ /Data/String
                                     )
                                 )
+                                ( EAppArg Value /r -> /Data/String = "</small>" ) ↦ /Data/String
                             )
-                            ( EAppArg Value /r -> /Data/String = "</small>" )
                         ]
                     }
                 )
