@@ -52,15 +52,16 @@ import           Syntax.HsBuiltins.Parser (hsBuiltins, hsBuiltinsSyntax, hsPrgm,
                                            hsPrgmSyntax, hsRawPrgm,
                                            hsRawPrgmSyntax)
 import           Syntax.InferImport       (dirSyntax, findImportPath,
-                                           inferRawImportStr, parserImport,
-                                           stackPath)
+                                           inferRawImportStrMaybe, parserImport,
+                                           resolveImportPath, stackPath)
 import           Syntax.Md.Parser         (mdSyntax)
-import           Syntax.Native.Parser     (nativeReference, nativeSyntax)
+import           Syntax.Native.Parser     (nativeImportExpr, nativeReference,
+                                           nativeSyntax)
 import           Syntax.Obsidian.Parser   (obsidian, obsidianSyntax)
-import           Syntax.Python.Parser     (pySyntax)
 import           Syntax.Rss.Parser        (rss, rssSyntax)
-import           System.Directory         (makeAbsolute)
-import           System.FilePath          (isAbsolute, joinPath, takeDirectory)
+import           System.Directory         (doesFileExist, makeAbsolute)
+import           System.FilePath          (isAbsolute, joinPath, takeDirectory,
+                                           takeExtension)
 import           Text.Megaparsec          (runParser)
 import           Text.Printf
 import           Utils
@@ -75,7 +76,6 @@ importSyntaxes = H.fromList [
   (rss, rssSyntax),
   (fileDirReference, fileDirSyntax),
   ("haskell", hsSyntax),
-  ("python", pySyntax),
   (hsBuiltins, hsBuiltinsSyntax),
   (hsPrgm, hsPrgmSyntax),
   (hsRawPrgm, hsRawPrgmSyntax),
@@ -116,8 +116,9 @@ setRawImportPath _ e = e
 -- Processes an import, producing the rawImpAbs and rawImpDisp
 canonicalImport :: CTSSConfig -> ImportCtx -> RawFileImport -> IO FileImport
 canonicalImport config ctx imp@AFileImport{impAbs=(RawCExpr _ (CStr name))} = do
-  inferred <- inferRawImportStr config (icCaller ctx) name
-  canonicalImport config ctx imp{impAbs=inferred}
+  inferred <- inferRawImportStrMaybe config (icCaller ctx) name
+  inferred' <- maybe (registryImport config ctx name) return inferred
+  canonicalImport config ctx imp{impAbs=inferred'}
 -- The metas are cleared because 'impAbs' is the identity of a page: 'AFileImport' compares by it and
 -- 'MapMeta.parseMetaIDScope' names a file's meta-id scope by it. A written @import parser("path")@
 -- is the one import form which reaches here carrying the positions and types its parse gave it, and
@@ -143,10 +144,104 @@ canonicalImport config ctx imp = case maybeExprPath impAbs0 of
       (Just a, Just b)           -> return $ Just $ takeDirectory $ joinPath [a, b]
       _                          -> return Nothing
     let impAbs'' = maybe impAbs' (`setRawImportPath` impAbs') resolved
-    return $ desFileImport $ imp{impAbs=impAbs'', impDisp=disp', impCalledDir=calledDir', impDir=impDir'}
+    -- After the path has been resolved and written back, never before: 'setRawImportPath' rewrites
+    -- the first string argument it finds, and the arguments a native import carries are strings too.
+    impAbs''' <- nativeImport ctx (nameStr impPath) impAbs''
+    return $ desFileImport $ imp{impAbs=impAbs''', impDisp=disp', impCalledDir=calledDir', impDir=impDir'}
   where
     impAbs0 = mapMeta (\_ _ -> Identity emptyMetaN) ImportMeta $ impAbs imp
     calledDir' = impDir =<< icCaller ctx
+
+-- | The page the standard library's importers are listed on, relative to the stack root.
+importerRegistryPage :: FilePath
+importerRegistryPage = "importers.ct"
+
+-- | The importers the standard library supplies.
+--
+-- Read by parsing, and by nothing else: the registry page and each page it imports are parsed, and
+-- what they declare is read off that. No service, no lock and no build, so this answers the same
+-- whether or not there is a compiler running — which is what lets a file's extension be resolved by
+-- @catln fmt@ and by a doc server alike.
+--
+-- Reached only when no syntax the compiler supplies reads the extension, so an ordinary program of
+-- @.ct@ files never parses it at all. A page which will not parse contributes nothing rather than
+-- failing whoever asked: it is not this caller's business to report what is wrong with it.
+registryImporters :: CTSSConfig -> IO [ImporterDecl]
+registryImporters config = do
+  at <- stackPath config importerRegistryPage
+  found <- doesFileExist at
+  if not found then return [] else do
+    reg <- canonicalImport config (rootImportCtx noImporters) (mkRawFileImport $ rawStr at)
+    parsed <- tryParse reg
+    case parsed of
+      Nothing -> return []
+      Just ParsedImport{piPrgm=RawPrgm imports _} -> do
+        pages <- mapM (canonicalImport config (pageImportCtx noImporters reg)) imports
+        concat <$> mapM declaredOn pages
+  where
+    tryParse page = either (const Nothing) Just <$> (try (parseImportAlone page) :: IO (Either IOException ParsedImport))
+    declaredOn page = do
+      parsed <- tryParse page
+      return $ case parsed of
+        Nothing -> []
+        Just p  -> [ImporterDecl page fn name exts | (fn, name, exts) <- rawPrgmImporters (piPrgm p)]
+
+-- | The import a file whose extension no builtin syntax reads means: the one that runs the importer
+-- which declared that extension.
+--
+-- The registry ALONE, never the importing page's own imports, and that is a rule with a reason. A
+-- page is identified by the import which names it ('MapMeta.parseMetaIDScope' scopes meta ids by it),
+-- so if which importer read a @.py@ file depended on who named it, one file reached from two places
+-- would become two pages at one display path. It is the same reason
+-- 'Syntax.InferImport.inferFileParser' decides a note's parser from where the file is rather than
+-- from who imported it.
+registryImport :: CTSSConfig -> ImportCtx -> String -> IO (RawExpr ())
+registryImport config ctx name = do
+  at <- resolveImportPath config (icCaller ctx) name
+  decls <- registryImporters config
+  let ext = drop 1 $ takeExtension at
+  case [(d, page) | d <- decls, ext `elem` idExts d, Just page <- [importPath (idPage d)]] of
+    ((d, page):_) -> return $ nativeImportExpr at page (idFn d) []
+    [] -> fail $ printf "Unexpected file extension in import %s. The standard library's importers read %s"
+                   at (show $ concatMap idExts decls)
+
+-- | An import whose head names no syntax the compiler supplies, rewritten as the one that runs the
+-- importer somebody declared.
+--
+-- This is where the import system stops being a fixed table. A head the compiler knows is left
+-- exactly as it was — builtins are checked FIRST, so no program can shadow @ct@ or @md@ by declaring
+-- something of that name. A head it does not know is looked for among the importers declared by the
+-- pages imported ABOVE this one, which is what lets a file bring in an importer on one line and use
+-- it on the next.
+--
+-- Only the pages imported above, and only what they declare directly. An importer has to be
+-- imported to be used, which is a rule worth having for its own sake — what an import means is
+-- decided by what the file has already said, rather than by what some page far away happens to
+-- declare.
+--
+-- The importer's page is named by its absolute path, since that is what identifies a page and the
+-- reader has only this expression to find it from.
+nativeImport :: ImportCtx -> String -> RawExpr () -> IO (RawExpr ())
+nativeImport ctx headName e
+  | H.member headName importSyntaxes = return e
+  | otherwise = do
+      decls <- ieDeclared (icImporters ctx) (icPreceding ctx)
+      case [d | d <- decls, idName d == headName] of
+        (d:_) | Just page <- importPath (idPage d) ->
+          return $ nativeImportExpr (fromMaybe "" $ rawImportPath e) page (idFn d) (rawImportNamedArgs e)
+        (d:_) -> fail $ printf "The importer %s is declared in %s, which is not a page with a path" headName (show $ impRaw $ idPage d)
+        [] -> fail $ printf "No parser available for %s. The pages imported above it declare %s" headName (show $ map idName decls)
+
+-- | The named string arguments an import was written with, which are the importer's own: the
+-- syntax's two are added by 'nativeImportExpr' and are not among these yet.
+rawImportNamedArgs :: RawExpr () -> [(String, String)]
+rawImportNamedArgs e =
+  [ (n, s)
+  | RawObjArr{roaObj=Just obj, roaArr=Just (Just (RawCExpr _ (CStr s)), _)} <- rawExprAppliedArgs e
+  , Just n <- [stripSlash . nameStr <$> maybeExprPath obj]
+  ]
+  where stripSlash ('/':n) = n
+        stripSlash n       = n
 
 -- | Resolve the imports a page writes, in the order it writes them, each seeing the ones above it.
 --

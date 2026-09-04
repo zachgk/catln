@@ -83,8 +83,11 @@ runConvertGoldenTest fileName rawPrgms step =
   case graphLookup fileName rawPrgms of
     Nothing -> assertFailure $ printf "File not in raw prgm graph: %s" (show $ impRaw fileName)
     Just prgm ->
+      -- The working directory is written out as a fixed string, as 'runGoldenTest' writes it. A page
+      -- read by an importer imports the page declaring that importer, by the absolute path it was
+      -- resolved to — so without this the golden holds the path of whoever last wrote it.
       runGoldenTestGen "convert"
-        (\_cwd p -> formatRootPrgm p)
+        (\cwd p -> T.unpack $ T.replace (T.pack cwd) "/repo/dir" $ T.pack $ formatRootPrgm p)
         (\relPath -> goldenConvertDir ++ relPath ++ ".ct")
         (graphFromEdges [(prgm, fileName, [])])
         step

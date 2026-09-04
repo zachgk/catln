@@ -16,7 +16,8 @@ import           CRes                 (CRes (..), prettyCNotes, runCResT)
 import           CtConstants          (runtimeArgKey)
 import           CtService            (CTSS, ctssBaseFiles, ctssBuildFrom,
                                        ctssCached, ctssEvaluableFrom,
-                                       ctssImporterEnv, ctssLoad, getSource)
+                                       ctssImporterEnv, ctssKeys, ctssLoad,
+                                       getSource)
 import qualified Data.HashMap.Strict  as H
 import           Data.List            (isInfixOf)
 import           Eval                 (evalBaseEnv, evalCallTo,
@@ -25,10 +26,13 @@ import           Eval.Common          (EPrim (..), SSF (..), Val)
 import           Eval.Runtime.Import  (importPathArg, pyImport)
 import           Semantics            (testCtssConfig)
 import           Semantics.CtType     (fromCt)
+import           Semantics.Prgm       (impRaw)
 import           Semantics.Types      (Type)
 import           Semantics.Val        hiding (Val)
 import           Syntax.Ct.Prgm       (ImporterDecl (..), ImporterEnv (..),
-                                       ParsedImport (..), importResultType)
+                                       ParsedImport (..), RawPrgm (..),
+                                       importPath, importResultType)
+import           Syntax.Native.Parser (isNativeImport)
 import           Syntax.Parsers       (mkDesCanonicalImportStr)
 import           Syntax.Python.Parser (pyParseFile)
 import           Test.Tasty
@@ -164,6 +168,44 @@ testPyImportReportsAMissingFile = testCase "a Python file that is not there is r
       EPrim _ f    -> f
       EEnvPrim _ _ -> const $ Left "the Python importer is not an environment primitive"
 
+-- | An importer declared in Catln, used by the line after the one that imports it.
+--
+-- This is the thing the whole change is for. The compiler does not know what @python@ means when it
+-- reads the second line: it looks for it among the importers declared by the pages imported above,
+-- finds the declaration in @stack\/python\/importer.ct@, and rewrites the import to run it. Then it
+-- has to build that page before it can read the Python file, which is the deferral loop, and run it,
+-- which is the primitive.
+--
+-- Asserted on the program the Python file was read AS, rather than on the read merely succeeding.
+-- @simple.py@ declares functions, so the page holding no statements would mean the importer ran and
+-- read nothing — which a check for "was it read" would pass.
+testImporterDeclaredInCatlnIsUsed :: TestTree
+testImporterDeclaredInCatlnIsUsed = testCase "an importer declared in Catln reads a file" $ do
+  let page = "test/Integration/code/artifacts/native/usesPython.ct"
+  ctss <- ctssBaseFiles testCtssConfig [page] :: IO CTSS
+  name <- mkDesCanonicalImportStr testCtssConfig page
+  -- Asking for what the page REACHES, and not only for the page. The page itself reads fine on the
+  -- first pass; it is the file it imports that has to wait for an importer to be built, and asking
+  -- only for the page would leave that one sitting in the graph unread with nothing driving the loop.
+  ctssBuildFrom ctss name
+
+  -- Found by the path it reads rather than by naming the import, because the page is keyed by the
+  -- import it resolved TO -- the native form carrying which importer runs it -- and not by the
+  -- @python("...")@ that was written.
+  keys <- ctssKeys ctss
+  case [k | k <- keys, maybe False ("simple.py" `isInfixOf`) (importPath k)] of
+    [] -> assertFailure $ "no page was read from the Python file. The service holds: "
+                       ++ show (map (show . impRaw) keys)
+    (py:_) -> do
+      raw <- ctssCached ssfRaw py ctss
+      case raw of
+        Nothing -> assertFailure $ "the page is in the graph but was never read: " ++ show (impRaw py)
+        Just (CErr notes) -> assertFailure $ "reading it failed: " ++ prettyCNotes notes
+        Just (CRes _ (RawPrgm _ statements)) -> do
+          assertBool ("it is read by a declared importer, not the builtin syntax: " ++ show (impRaw py))
+            (isNativeImport py)
+          assertBool "and what it read holds the file's declarations" (not $ null statements)
+
 -- | Whatever a computed value came to, for an assertion that is about something else.
 orElse :: a -> CRes a -> a
 orElse _ (CRes _ v) = v
@@ -174,6 +216,7 @@ importerCallTests = testGroup "ImporterCall" [
   testImporterIsFoundByReadingAlone,
   testPyImportReadsAsTheSyntaxDoes,
   testPyImportReportsAMissingFile,
+  testImporterDeclaredInCatlnIsUsed,
   testCallTowardDeclaredType,
   testDeferredPageIsEventuallyRead
                                              ]

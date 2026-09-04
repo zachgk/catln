@@ -36,8 +36,9 @@
 module Syntax.Native.Parser where
 
 import           Semantics.Prgm
-import           Semantics.Types   (Constant (CStr), nameStr)
-import           Syntax.Ct.Builder (rawStr)
+import           Semantics.Types   (Constant (CStr), mkName, nameStr,
+                                    partialKey)
+import           Syntax.Ct.Builder (applyRawArgs, rawStr, rawVal)
 import           Syntax.Ct.Prgm
 import           Text.Printf
 
@@ -52,6 +53,19 @@ nativeImporterArg = "importer"
 -- | The argument naming the declaration to run on that page, as it is written there.
 nativeFnArg :: String
 nativeFnArg = "fn"
+
+-- | The import that reads a file with a declared importer.
+--
+-- The file first and unnamed, because that is where every import keeps its path and what
+-- 'Syntax.Parsers.rawImportPath' reads. The rest named, so that reading the path back is unaffected
+-- by them — the same shape @haskell@ uses to carry its Stack root.
+nativeImportExpr :: FilePath -> FilePath -> String -> [(String, String)] -> RawExpr ()
+nativeImportExpr path importer fn others = rawVal nativeReference `applyRawArgs` (
+  [(Nothing, rawStr path)]
+  ++ [(Just $ partialKey (mkName nativeImporterArg), rawStr importer)]
+  ++ [(Just $ partialKey (mkName nativeFnArg), rawStr fn)]
+  ++ [(Just $ partialKey (mkName k), rawStr v) | (k, v) <- others, k `notElem` [nativeImporterArg, nativeFnArg]]
+                                                                                )
 
 -- | Whether a page is one read by an importer written in Catln.
 --

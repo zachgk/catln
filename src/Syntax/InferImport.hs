@@ -38,8 +38,7 @@ fileExtensionParsers = H.fromList [
   ("ctc", "ct"),
   ("ctx", "ctx"),
   ("md", "md"),
-  ("hs", "haskell"),
-  ("py", "python")
+  ("hs", "haskell")
                              ]
 
 -- | Imports a path with a named parser, as an import naming its own parser is written.
@@ -187,14 +186,27 @@ inferDirParser path = do
 
 inferRawImportStr :: CTSSConfig -> Maybe FileImport -> String -> IO (RawExpr ())
 inferRawImportStr config caller name = do
+  inferred <- inferRawImportStrMaybe config caller name
+  case inferred of
+    Just e -> return e
+    Nothing -> do
+      name' <- resolveImportPath config caller name
+      fail $ printf "Unexpected file extension in import %s" name'
+
+-- | The import a path means, or nothing where no syntax the compiler supplies reads that extension.
+--
+-- Nothing rather than a failure, because an extension the compiler does not know is not necessarily
+-- one nothing reads: an importer declared in a @.ct@ file may read it, and finding that out means
+-- reading pages, which is 'Syntax.Parsers.registryImporters' and is above this module. So this
+-- answers what it can and leaves the rest to a caller that can look further.
+inferRawImportStrMaybe :: CTSSConfig -> Maybe FileImport -> String -> IO (Maybe (RawExpr ()))
+inferRawImportStrMaybe config caller name = do
   name' <- resolveImportPath config caller name
   isFile <- doesFileExist name'
   if isFile
     then do
       parser <- inferFileParser name'
-      case parser of
-        Just parser' -> return $ parserImport parser' name'
-        Nothing -> fail $ printf "Unexpected file extension in import %s" name'
+      return $ (`parserImport` name') <$> parser
     else do
       parser <- inferDirParser name'
-      return $ parserImport parser name'
+      return $ Just $ parserImport parser name'

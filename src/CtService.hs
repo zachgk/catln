@@ -20,7 +20,8 @@ import           Control.Concurrent      (MVar, forkIO, modifyMVar, modifyMVar_,
 import           Control.Concurrent.STM  (STM, TVar, atomically, modifyTVar',
                                           newTVarIO, readTVar, readTVarIO,
                                           retry, writeTVar)
-import           Control.Exception       (bracket, bracket_, evaluate)
+import           Control.Exception       (SomeException, bracket, bracket_,
+                                          evaluate, try)
 import           Control.Monad           (forM, forM_, forever, unless, void,
                                           when)
 import           Control.Monad.Trans     (lift)
@@ -1441,12 +1442,29 @@ ctssImporterEnv (CTSS ssmv _) = noImporters{ieDeclared, ieReady, ieInvoke}
     -- importing it is what reads it.
     ieDeclared pages = do
       CTSSDat{ctssData} <- readMVar ssmv
-      return [ ImporterDecl page fn name exts
-             | page <- pages
-             , Just ssf <- [graphLookup page ctssData]
-             , Just (CRes _ raw) <- [ssfRaw ssf]
-             , (fn, name, exts) <- rawPrgmImporters raw
-             ]
+      concat <$> mapM (declaredOn ctssData) pages
+
+    declaredOn ctssData page = case graphLookup page ctssData >>= ssfRaw of
+      Just (CRes _ raw) -> return $ declsOf page raw
+      -- The page the service holds is preferred, and a page it does not hold yet is PARSED here.
+      --
+      -- Which looks like the service doing a read behind its own back, and is the thing that makes
+      -- the whole ordering work. An import is canonicalized as the page writing it is read, and the
+      -- page it names on the line above has not been reached yet at that moment -- it is queued
+      -- behind this one. Waiting for it is not open: what an import MEANS is what says which pages
+      -- there are to read, so it has to be settled now.
+      --
+      -- Parsing is what settles it, and parsing is all it costs. A .ct file is read and parsed with
+      -- no lock, no service and no build -- which is the whole claim #importer makes, that finding
+      -- an importer is a read. A page that cannot be parsed declares nothing rather than failing the
+      -- read that asked: it is about to be read properly, and whatever is wrong with it will be
+      -- reported then, by the reader whose business it is.
+      _ | isNativeImport page -> return []
+      _ -> do
+        parsed <- try (parseImportAlone page) :: IO (Either SomeException ParsedImport)
+        return $ either (const []) (declsOf page . piPrgm) parsed
+
+    declsOf page raw = [ImporterDecl page fn name exts | (fn, name, exts) <- rawPrgmImporters raw]
 
     -- The page a path names, out of the pages the service holds. Pages are keyed by the import which
     -- names them, so this is the reverse of 'Syntax.Ct.Prgm.importPath'.

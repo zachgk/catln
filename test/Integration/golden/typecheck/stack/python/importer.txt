@@ -1,0 +1,40 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Python/parsePython"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Python/parsePython( Value /path -> /Data/String ) -> /Catln/ImportResult
+                            ( /prgm=TopType
+                            , /reads=TopType
+                            , /source=TopType
+                            )
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg = [ CGType ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String = CStr
+                { csValue = "# Reading Python
+                An importer: a way of reading files written in another syntax, declared in Catln rather than
+                built into the compiler. A file which writes `import "python/importer.ct"` on one line may write
+                `import python("thing.py")` on the next, and the compiler will read that file by building this
+                page and running what is declared below.
+                The reading itself is still the compiler's, behind [#runtime]. A Python file is read with
+                TreeSitter, which is not something to rewrite in Catln for the sake of saying it was — what has
+                moved is where the importer is DECLARED, from a table in the compiler to a page a program can
+                import. The same Haskell reads the file either way: [Syntax.Python.Parser.pyParseFile] is called
+                both by the syntax the compiler still registers and by the primitive below.
+                This page writes `import hsrawprgm()`, because that is where [/Catln/ImportResult] and the raw
+                program inside it are declared. No page of @stack/core/@ may write that import — see
+                @core/hsprgm.ct@, which says why — and this page is not one of them." }
+            )
+        ]
+    }

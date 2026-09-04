@@ -1,0 +1,11 @@
+import "python/importer.ct"
+import python("../../simple.py")
+
+
+module(UsesPython)
+  # # Using an importer declared in Catln
+    The thing the whole change is for, in two lines. The first brings in a page which declares an
+    importer; the second uses that importer by the name it declared. Nothing in the compiler knows
+    what `python` means at the point the second line is read — it is looked for among the importers
+    declared by the pages imported above it, which is exactly one page, which declares exactly one.
+    It lives under @artifacts/@ so the integration suite does not compile it on every run.

@@ -119,9 +119,18 @@ xDoc prgmNames apiOnly readonly = if apiOnly
   then lift $ docApi readonly prgmNames
   else lift $ docServe readonly prgmNames
 
+-- | Show a file of another syntax as the Catln page it is read as.
+--
+-- Through the compilation service rather than through a lone parse, because reading a file of
+-- another syntax may now mean running an importer declared in a @.ct@ file — which has to be built
+-- before it can be run, and building is what a service does. A syntax the compiler supplies itself
+-- would still be readable without one; going through the service is what makes the two the same
+-- command.
 xConvert :: String -> Maybe String -> CResT IO ()
 xConvert prgmName _outFname = do
-  (prgm, _fileName, _) <- parseFile buildCtssConfig $ mkRawImportStr prgmName
+  prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
+  ctss <- lift $ ctssBaseFiles buildCtssConfig [prgmName]
+  prgm <- getRawPrgmOf ctss prgmName'
   -- TODO Print to file if outFname
   let prgm' = formatRootPrgm prgm
   lift $ print prgmName

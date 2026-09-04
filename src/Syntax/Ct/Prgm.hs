@@ -624,11 +624,16 @@ readPageVisits page = rpExtras page ++ rpImports page ++ rpBlocked page
 -- Of 'impAbs', which is the path the import resolved to and so the one a page is the same page by,
 -- rather than of 'impRaw', which is whatever was written to reach it. Both forms an import takes are
 -- read: a bare path, and a path handed to a named parser.
+-- The first UNNAMED string argument, wherever in the application it sits, which is what
+-- 'Syntax.Parsers.rawImportPath' reads on the raw side and for the same reason: an import carries
+-- its path unnamed and everything else named. Matching the outermost application instead answered
+-- with whatever argument happened to be written last -- the @fn@ of a @native@ import, or the
+-- @stackRoot@ of a @haskell@ one -- which is a path that names no page, and so a page nothing could
+-- find by the file it was read from.
 importPath :: FileImport -> Maybe String
 importPath imp = case impAbs imp of
   CExpr _ (CStr n) -> Just n
-  TupleApply _ _ (EAppArg ObjArr{oaArr=Just (Just (CExpr _ (CStr n)), _)}) -> Just n
-  _ -> Nothing
+  e -> listToMaybe [n | ObjArr{oaObj=Nothing, oaArr=Just (Just (CExpr _ (CStr n)), _)} <- exprAppliedArgs e]
 
 -- | Whether a page is part of the standard library.
 --

@@ -1,0 +1,13 @@
+import "python/importer.ct"
+
+
+# # The importers the standard library supplies
+  A file reached without an import line above it — one the compiler was given to compile, or one
+  found in the listing of a directory — has no page to look on for the importer that reads it. This
+  is the page it looks on instead: the importers a program gets without asking for them.
+  It declares none itself and imports the pages that do, so that finding an importer here is the
+  same act as finding one among a file's own imports. One rule, in one place.
+  It is deliberately not under @core/@, and nothing under @core/@ may import it. Naming an importer
+  means importing the page declaring it, and every importer page imports @hsrawprgm()@ — so a
+  registry the standard library reached would put the whole of the compiler's own syntax into every
+  program, which is the import cycle @core/result.ct@ measures at seven hundred seconds.
