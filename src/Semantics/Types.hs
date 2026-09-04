@@ -5890,14 +5890,36 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
         -- through the NEG partial's slots ('resolveOwnScopeRefs' — @head=$/T@ under the
         -- neg's @/T=X@ excludes @X@, not the ambient reading of a bare @$/T@).
         negValSet = resolveOwnScopeRefs typeEnv vaenv p2
-        -- The pos side resolves the references the POS partial itself binds, through its own
-        -- slots and nothing else ('substituteKeep' over 'ptVarArg'). That is the narrowest
-        -- reading that makes the two sides spell a bound parameter alike: it leaves partial-local
-        -- ('TVInt') pointers alone, so the declaration's own field pointer still subtracts on the
-        -- var slot via 'narrowPiece', and it does not substitute the AMBIENT env — resolving a
-        -- generated type's ambient vars at every depth materializes the whole nesting and the
-        -- subtraction stops terminating.
-        posValSet v = freeTVIntToTop p1 (substituteKeep typeEnv (ptVarArg p1) v)
+        -- The pos side must denote its value SET the same way the neg side does, or the two
+        -- spellings of one set compare unequal and the subtraction invents an escape. The two
+        -- positions a reference can sit in want DIFFERENT treatment, though:
+        --
+        --   TOP LEVEL (@/head=$/T@, the arg value IS the reference). Kept as a pointer, and
+        --   deliberately: this is the dimension 'subtractVar' subtracts on, and 'narrowPiece'
+        --   folds the discovered narrowing back onto the var slot. Resolving it here would
+        --   subtract on the arg instead and lose that machinery.
+        --
+        --   NESTED (@/second=/Pair[/B=$/A]@, the reference is inside a nested partial). No
+        --   var-slot machinery reaches it, so leaving it symbolic while the neg side spells it
+        --   concretely is pure asymmetry. It read as the canonical value set on one side and a
+        --   bare pointer on the other, and the difference of the two spellings is a spurious
+        --   escape: @/Pair[/A=#noCore](/second=/Pair[/B=$/A])@ minus the same partial writing
+        --   that nested slot as @#noCore@ came out NON-empty, though the nested @/Pair@ does not
+        --   spell @/A@ and its @$/A@ therefore reads against the enclosing @/A=#noCore@ — the
+        --   two operands denote one set. Found by 'propOwnVarBindingRespected'.
+        --
+        -- So a bare reference keeps the old reading, and anything else resolves through the pos
+        -- partial's OWN slots at depth.
+        --
+        -- Own slots and NOT the ambient env, which is the one part of the old reading that has to
+        -- survive: resolving generated ambient vars at every depth materialises the whole nesting.
+        -- Handing this the neg side's full 'resolveOwnScopeRefs' (own slots ∪ ambient) took
+        -- propIntersectionDistributesUnion from 11s to over 4.5 minutes at 10000 with a 2.5GB
+        -- working set. The asymmetry that produced the wrong answer is entirely about the
+        -- partial's own parameters — a nested @$/A@ under the enclosing @/A=#noCore@ — so the
+        -- ambient half buys nothing here and costs everything.
+        posValSet v@TypeVar{} = freeTVIntToTop p1 (substituteKeep typeEnv (ptVarArg p1) v)
+        posValSet v           = substituteTVExt typeEnv (ptVarArg p1) v
         subtractArg (argName, negArgValRaw) = case H.lookup argName (ptArgs p1) of
           Nothing -> Nothing
           -- IDENTICAL linked forms on both sides (@tail=∀ConsList[/T=$/T]@) whose every
