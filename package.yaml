@@ -101,5 +101,21 @@ tests:
       - -threaded
       - -rtsopts
       - -Wall
+      # An async exception is only delivered at a yield point, and GHC omits yield points
+      # from loops that do not allocate. 'forceTimed' wraps every property stage in a 5s
+      # `timeout`, but a non-allocating livelock in the type algebra never reaches a point
+      # where that exception can land: one such run spun for 10h22m at a FLAT 941MB
+      # residency, ignoring its own budget, and only ended when the process was killed.
+      # This restores the yield points so the existing budget actually fires and hedgehog
+      # can shrink the offending input.
+      #
+      # Test-only, and free for production: this suite compiles `src` itself (see
+      # source-dirs above), so the library code linked into the test binary gets the flag
+      # while the `library` and `catln` stanzas are untouched.
+      - -fno-omit-yields
+      # A hard heap cap turns a runaway ALLOCATION into a HeapOverflow exception — which
+      # hedgehog reports as a failing property with a shrunk counterexample — instead of
+      # exhausting a swapless 15GB machine. One such run required a physical restart.
+      - "-with-rtsopts=-M6G"
     # dependencies:
       # - catln
