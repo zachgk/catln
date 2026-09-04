@@ -642,13 +642,30 @@ flatObjectMapItem (ObjectMapItem decls runtimeDecls refineDecls defs) = decls ++
 flatObjectMap :: ObjectMap e m -> [ObjArr e m]
 flatObjectMap (ObjectMap objMap) = concatMap flatObjectMapItem (H.elems objMap)
 
+-- | Whether an object arrow carries the given annotation, by its ABSOLUTE path.
+--
+-- The annotation path may still be relative (@#refine@\/@#runtime@) before name resolution or
+-- already resolved to the absolute @\/Catln\/#refine@, so match either form. Every reader that
+-- classifies an object by an annotation must ask this way: an exact compare against the absolute
+-- name silently answers 'False' for every not-yet-resolved object, and the classification then
+-- disagrees with the one 'singletonObjectMap' made (a runtime declaration read as a plain
+-- declaration keeps declaration precedence and so enters the object universe beside the real
+-- declaration, where it bounds itself and erases the declaration's type parameters).
+oaHasAnnotRel :: (ExprClass e) => String -> ObjArr e m -> Bool
+oaHasAnnotRel name oa = any (\a -> relativeNameMatches (exprPath a) (mkName name)) (oaAnnots oa)
+
+-- | Whether an object arrow is a runtime declaration (a declaration whose body is supplied by the
+-- evaluator runtime). It is DEFINITION-like: it needs no separate definition to fulfill a
+-- declaration, and it must not widen the object universe the way a declaration does.
+isRuntimeDecl :: (ExprClass e) => ObjArr e m -> Bool
+isRuntimeDecl oa@ObjArr{oaArr=Just (Nothing, _)} = oaHasAnnotRel runtimeAnnot oa
+isRuntimeDecl _                                  = False
+
 singletonObjectMap :: (ExprClass e, MetaDat m, Show (e m), Show m) => ObjArr e m -> ObjectMap e m
 singletonObjectMap oa = ObjectMap $ H.singleton (makeAbsoluteName $ oaObjPath oa) omi
   where
-    -- The annotation path may still be relative (@#refine@/@#runtime@) at this stage or already
-    -- resolved to the absolute @/Catln/#refine@, so match either form.
-    isRefine = any (\a -> relativeNameMatches (exprPath a) (mkName refineAnnot)) (oaAnnots oa)
-    isRuntime = any (\a -> relativeNameMatches (exprPath a) (mkName runtimeAnnot)) (oaAnnots oa)
+    isRefine = oaHasAnnotRel refineAnnot oa
+    isRuntime = oaHasAnnotRel runtimeAnnot oa
     omi = case oa of
       ObjArr{oaArr=Nothing}            | isRefine  -> ObjectMapItem [] [] [oa] [] -- refine type object
       ObjArr{oaArr=Nothing}                        -> ObjectMapItem [oa] [] [] [] -- type object

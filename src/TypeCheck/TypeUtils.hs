@@ -23,14 +23,12 @@ import qualified Data.HashSet        as S
 
 import           Control.Monad
 import           Control.Monad.State
-import           CtConstants         (runtimeAnnot)
 import           Data.Bifunctor      (Bifunctor (bimap))
 import           Data.List           (find, intercalate, nub, partition)
 import           Data.Maybe          (fromMaybe, isJust, isNothing, mapMaybe)
 import           Data.UUID           (nil)
 import           MapMeta
 import           Semantics
-import           Semantics.Annots    (hasAnnot)
 import           Semantics.Prgm
 import           Semantics.TypeGraph
 import           Semantics.Types
@@ -49,7 +47,14 @@ objectPrecedence :: (ExprClass e, Show m, Show (e m)) => ObjArr e m -> [Int]
 objectPrecedence ObjArr{oaBasis=TypeObj}=                             [1]
 objectPrecedence ObjArr{oaBasis=FunctionObj, oaArr=Nothing}           = [2, 1] -- Type objects have priority
 objectPrecedence oa@ObjArr{oaBasis=FunctionObj, oaArr=Just (Nothing, _)}
-  | hasAnnot runtimeAnnot oa                                          = [2, 3] -- Runtime declarations operate at definition precedence
+  -- 'isRuntimeDecl', not an exact-name annotation test: the annotation path is still RELATIVE
+  -- here, so an exact compare against @/Catln/#runtime@ answers False for every runtime
+  -- declaration and hands it declaration precedence. It then survives 'filterBestPrecedence'
+  -- into 'feUnionAllObjs' beside the real declaration, where 'BoundedByObjs' bounds it by
+  -- ITSELF; the self-meet carries no type parameters and absorbs the declaration's
+  -- instantiation, so the object decodes without them (@/operator++(/r=/Str, /l=/Str)@ rather
+  -- than @/operator++[/T=/Str](…)@) and the declaration-coverage check then rejects it.
+  | isRuntimeDecl oa                                                  = [2, 3] -- Runtime declarations operate at definition precedence
   | otherwise                                                         = [2, 2] -- Declaration objects have priority [2,2], better than definitions
 objectPrecedence ObjArr{oaBasis=FunctionObj, oaArr=Just (Just{}, _)}  = [2, 3] -- Definition objects have priority [2,3]
 objectPrecedence ObjArr{oaBasis=PatternObj}                           = [3]
