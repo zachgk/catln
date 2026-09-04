@@ -37,7 +37,7 @@ import           Data.Time.Calendar      (Day)
 import           Data.Time.Clock         (getCurrentTime, utctDay)
 import           Data.UUID               (UUID)
 import           Eval                    (evalAnnots, evalBaseEnvService,
-                                          evalBuild, evalBuildAll,
+                                          evalBuild, evalBuildAllOf,
                                           evalDShowCall, evalDebugExprPrgm,
                                           evalDebugPrgm, evalPageAsk,
                                           evalPageValues, evalRun, evalRunMock,
@@ -860,11 +860,14 @@ buildSCCPipeline ctss ctssData sccNamesSet sccNodes pages = do
             ) (graphToNodes pages)
       let tprgmGraph = graphFromEdges (sccTPrgmNodes ++ depTPrgmNodes)
 
-      -- Step 7: Eval build all (processes SCC + deps, we extract SCC results).
+      -- Step 7: Eval build the SCC's pages. The dependency pages stay in the graph, because the
+      -- SCC's eval environments are assembled from the whole reachable set, but their own trees are
+      -- NOT rebuilt: each was built when its own fragment was solved and is cached in its
+      -- 'ssfTBPrgm', and step 8 below reads back only the SCC's names.
       -- Tolerate failure: a type-erroneous program cannot build a tree, but we
       -- still want to cache the desugar/typecheck artifacts (including the trace)
       -- for tooling. Any eval-build error is deferred into ssfTBPrgm below.
-      let tbprgmGraphRes = evalBuildAll tprgmGraph
+      let tbprgmGraphRes = evalBuildAllOf (`S.member` sccNamesSet) tprgmGraph
 
       -- Step 8: Assemble updated SSFs
       let validUpdates = [(name, ssf{

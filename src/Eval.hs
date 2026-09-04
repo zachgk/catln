@@ -357,15 +357,30 @@ prgmFromGraphData prgmName (prgmGraph, nodeFromVertex, vertexFromKey) = case ver
 
 -- | Tries to TreeBuild all ObjArrs, returning all built successfully
 evalBuildAll :: EPrgmGraphData -> CRes (GraphData (Prgm TExpr EvalMetaDat) FileImport)
-evalBuildAll prgmGraphData = do
+evalBuildAll = evalBuildAllOf (const True)
+
+-- | 'evalBuildAll' restricted to the pages a caller is actually going to read back.
+--
+-- A page the selector rejects keeps its place in the graph — the selected pages' eval environments
+-- are assembled from the whole reachable set ('prgmFromGraphData') — but its own object map is
+-- returned EMPTY rather than built. Its arrow trees were built when its own fragment was solved and
+-- are cached in that page's 'ssfTBPrgm'; building them again for every dependent fragment is work
+-- whose result is dropped on the floor, since only the fragment's own names are ever looked up in
+-- the result. That made a whole-build quadratic in the number of pages: each of the ~50 integration
+-- files rebuilt all ~20 standard-library pages' trees before building its own.
+evalBuildAllOf :: (FileImport -> Bool) -> EPrgmGraphData -> CRes (GraphData (Prgm TExpr EvalMetaDat) FileImport)
+evalBuildAllOf selected prgmGraphData = do
   let prgms = graphToNodes prgmGraphData
-  prgms' <- forM prgms $ \(Prgm objMap cg annots, prgmName, deps) -> do
-    evalPrgm <- prgmFromGraphData prgmName prgmGraphData
-    let Env{evTbEnv} = evalBaseEnv evalPrgm
-    objMap' <- catCRes (buildRootOA evTbEnv <$> flatObjectMap objMap)
-    annots' <- catCRes $ fmap (toTExpr evTbEnv []) annots
-    let objMap'' = objectMapFromList objMap'
-    return (Prgm objMap'' cg annots', prgmName, deps)
+  prgms' <- forM prgms $ \(Prgm objMap cg annots, prgmName, deps) ->
+    if not (selected prgmName)
+      then return (Prgm (objectMapFromList []) cg [], prgmName, deps)
+      else do
+        evalPrgm <- prgmFromGraphData prgmName prgmGraphData
+        let Env{evTbEnv} = evalBaseEnv evalPrgm
+        objMap' <- catCRes (buildRootOA evTbEnv <$> flatObjectMap objMap)
+        annots' <- catCRes $ fmap (toTExpr evTbEnv []) annots
+        let objMap'' = objectMapFromList objMap'
+        return (Prgm objMap'' cg annots', prgmName, deps)
   return $ graphFromEdges prgms'
 
 evalBuildPrgm :: EExpr -> PartialType -> Type -> EPrgm -> CRes (TExpr EvalMetaDat, Env)
