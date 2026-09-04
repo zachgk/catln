@@ -3826,7 +3826,7 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing subPartials []) (UnionType N
     subGroupCovered n subs = case H.lookup n supersByName of
       Just sups -> all (isSubPartial sups) subs
       Nothing   -> all (partialUninhabited typeEnv vaenv) subs
-    isSubPartial sup sub = directCheck || coveredByArgSets || coveredBySlotUnion sub sup || coveredBySplit (splitPartialByUnionVarArgs sub) || coveredBySplit (splitPartialByUnionVarArgs expandedSub) || partialUninhabited typeEnv vaenv sub
+    isSubPartial sup sub = directCheck || coveredByArgSets || coveredBySlotUnion sub sup || coveredBySplit (splitPartialByUnionVarArgs sub) || coveredBySplit (splitPartialByUnionVarArgs expandedSub) || partialUninhabited typeEnv vaenv sub || coveredBySlotPartition sub sup
       where
         directCheck = any (isSubPartialOfWithEnv typeEnv vaenv sub) sup
         -- A moded sub leaf IS the union of its arg-set interval's exact pieces
@@ -3900,6 +3900,48 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing subPartials []) (UnionType N
                             , erase supP == erase sub
                             , argModeCovers (normalizePtArgMode typeEnv supP) (normalizePtArgMode typeEnv sub)]
             in length family > 1 && isSubtypeOfWithEnv typeEnv vaenv sv (unionAllTypesWithEnv typeEnv vaenv family)
+    -- A super family that PARTITIONS one slot covers the sub jointly even when its members also
+    -- differ from the sub at OTHER slots, because those other slots may be REFERENCES to the
+    -- partitioned one. A diagonal declaration is exactly that shape: @ord[/T=∀Ord](/this=$/T)@
+    -- against its per-member definitions @ord[/T=Integer](/this=Integer)@ and
+    -- @ord[/T=Float](/this=Float)@. Erasing @/T@ leaves @/this@ still differing, so
+    -- 'coveredBySlotUnion' (which delimits its family by equality outside the slot) finds no
+    -- family and the cover is missed - while the difference oracle reads the same query as ∅,
+    -- so a declaration-coverage check reported a declaration unfulfilled with an EMPTY undefined
+    -- part.
+    --
+    -- Restricting the sub's slot to one super's value at it resolves the sub's own references to
+    -- that slot ('readOwnScope' reads @$/T@ under the restricted @ptVars@), so each piece is
+    -- decided by the ordinary sub-partial check. Exact in both directions: the supers' values at
+    -- the slot cover the sub's value there, so the pieces cover the sub, and each piece is
+    -- covered by the super it was cut from.
+    --
+    -- LAST in the chain, and only for a genuine family (two or more same-named supers): it runs a
+    -- type-level union, a cover check and a meet per super, which is real work to spend on every
+    -- comparison the cheaper routes already decide.
+    coveredBySlotPartition sub sup
+      | length sup < 2 = False
+      | otherwise = any (partitionSlot ptVars (\p m -> p{ptVars=m})) (partKeys ptVars)
+                 || any (partitionSlot ptArgs (\p m -> p{ptArgs=m})) (partKeys ptArgs)
+      where
+        -- The partitioned dimension may be spelled only on the super side (an unspelled
+        -- parameter is ⊤ on the sub, see 'PartialType'), so the supers' keys count too.
+        partKeys get = L.nub (H.keys (get sub) ++ concatMap (H.keys . get) sup)
+        partitionSlot get set k
+          -- A variable slot has no value to cut into pieces here: it stands for whatever its
+          -- binding says, which the scope-resolving routes above already read. A ⊤ slot is no
+          -- constraint, so cutting it changes nothing the other routes have not already tried.
+          | isTypeVar sv || sv == PTopType = False
+          | otherwise =
+              isSubtypeOfWithEnv typeEnv vaenv sv (unionAllTypesWithEnv typeEnv vaenv supVals)
+              && all pieceCovered sup
+          where
+            sv = H.lookupDefault PTopType k (get sub)
+            supVals = [H.lookupDefault PTopType k (get supP) | supP <- sup]
+            pieceCovered supP =
+              let piece = intersectTypesEnv typeEnv vaenv sv (H.lookupDefault PTopType k (get supP))
+              in isBottomType piece
+                 || isSubPartialOfWithEnv typeEnv vaenv (set sub (H.insert k piece (get sub))) supP
     msg = printf "[SUBTYPE] %s ⊆ %s = %s" (show $ UnionType Nothing subPartials []) (show $ UnionType Nothing superPartials []) (show result)
 -- partials ⊆ (superLeafs ∪ constants): constants in supertype don't help cover partials
 isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing _ []) (UnionType Nothing superLeafs (_:_)) =
