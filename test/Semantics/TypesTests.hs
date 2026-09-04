@@ -439,7 +439,11 @@ propDifferenceByIntersection gPrgm = property $ do
 propSubtypeUnionVarSplit :: IO GenPrgm -> Property
 propSubtypeUnionVarSplit gPrgm = property $ do
   gPrgm' <- lift gPrgm
-  prgm <- forAll gPrgm'
+  -- Pick a program 'genPartialType' can actually draw from, by retrying INSIDE the generator.
+  -- Drawing one that cannot and letting the draw discard spends the property's discard budget:
+  -- at 10000 tests that budget ran out and the property reported "gave up", a FAIL saying
+  -- nothing about the algebra.
+  prgm <- forAll $ HG.filter prgmHasPartial gPrgm'
 
   let typeEnv = mkTypeEnv prgm
 

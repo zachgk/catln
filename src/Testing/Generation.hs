@@ -115,6 +115,13 @@ declHasPlacement = go (0 :: Int) (0 :: Int)
 prgmHasPlacement :: Prgm Expr () -> Bool
 prgmHasPlacement (Prgm om _ _) = any (maybe False declHasPlacement . oaObj) (flatObjectMap om)
 
+-- | A program 'genPartialType' can draw from at all. With neither a data node nor an object
+-- declaration it has nothing to build a positive leaf out of and discards every draw, spending
+-- the property's budget instead of the generator's retries — the give-up FAIL
+-- propSubtypeUnionVarSplit reported once the test count reached 10000.
+prgmHasPartial :: Prgm Expr () -> Bool
+prgmHasPartial (Prgm om cg _) = not (null (dataNodeNames cg)) || not (nullObjectMap om)
+
 -- TODO: a sibling generator should place the nested reference as a 'TVParent' (@$^T@) — the
 -- spelling @/Cons@'s own declaration uses for @/tail -> ∀/ConsList[/T=$^/T]@ — which reaches an
 -- enclosing parameter THROUGH a shadowing inner scope rather than avoiding one. That exercises the
@@ -131,7 +138,7 @@ genOwnVarBoundPair prgm@(Prgm objMap _ _) = do
   -- really a malformed input: @/Cons[/T=…, /own1=/Cons](/head=$/own1)@ (@/Cons@ declares only
   -- @/T@) failed @sub ⊆ ref@, while the identical shape keyed on the declared @/T@ passes both
   -- directions and both differences.
-  base    <- HG.filter (not . null . placements) (genPartialType prgm)
+  base    <- HG.filter (not . null . placements) (genPlacement prgm)
   (varName, slot) <- HG.element (placements base)
   -- The bound must be GROUND: a bound that itself mentions a variable would make the two members
   -- of the pair differ by more than the one reference under test.
@@ -233,30 +240,45 @@ substRecRef cName replacement = go
     goLeaf p = p{ptArgs = fmap go (ptArgs p), ptVars = fmap go (ptVars p)}
 
 genTypeFromExpr :: Prgm Expr () -> Expr () -> Gen PartialType
-genTypeFromExpr _ (CExpr _ c) = return $ constantPartialType c
-genTypeFromExpr _ (Value _ n) = return $ partialVal n
-genTypeFromExpr prgm (TupleApply _ (_, baseExpr) (EAppArg oa)) = do
-  base@PartialType{ptArgs=baseArgs} <- genTypeFromExpr prgm baseExpr
-  shouldAddArg <- HG.bool
+genTypeFromExpr = genTypeFromExprWith False
+
+-- | 'genTypeFromExpr', with a switch that forces EVERY declared parameter and field of the
+-- expression into the generated partial instead of deciding each with a coin flip.
+--
+-- The coin flips are what a general draw wants: a partial that spells only some of its
+-- declaration's slots is a legitimate value (an unspelled parameter is ⊤), and generating those
+-- is most of the point. But a caller that needs a partial of a PARTICULAR SHAPE — 'genPlacement'
+-- below needs a binder plus a payload slot — cannot get it from a coin flip: a declaration with
+-- one parameter and one field yields the shape only when both flips land, so three draws in four
+-- are unusable. Filtering those out afterwards spends the property's discard budget rather than
+-- the generator's own retries, which is how propOwnVarBindingRespected came to report
+-- "gave up after 1000 discards" once the test count reached 10000 — a FAIL that says nothing
+-- about the algebra.
+genTypeFromExprWith :: Bool -> Prgm Expr () -> Expr () -> Gen PartialType
+genTypeFromExprWith _ _ (CExpr _ c) = return $ constantPartialType c
+genTypeFromExprWith _ _ (Value _ n) = return $ partialVal n
+genTypeFromExprWith full prgm (TupleApply _ (_, baseExpr) (EAppArg oa)) = do
+  base@PartialType{ptArgs=baseArgs} <- genTypeFromExprWith full prgm baseExpr
+  shouldAddArg <- if full then return True else HG.bool
   if shouldAddArg
     then case oaArr oa of
            (Just (Just arrExpr, _)) -> do
-             arrExpr' <- genTypeFromExpr prgm arrExpr
+             arrExpr' <- genTypeFromExprWith full prgm arrExpr
              return base{ptArgs = H.insert (inExprSingleton $ oaObjExpr oa) (singletonType arrExpr') baseArgs}
            (Just (Nothing, oaM)) -> return base{ptArgs = H.insert (inExprSingleton $ oaObjExpr oa) (getMetaType oaM) baseArgs}
            Nothing -> return base
     else return base
-genTypeFromExpr prgm (TupleApply _ (_, baseExpr) (EAppVar varName m)) = do
-  base@PartialType{ptVars=baseVars} <- genTypeFromExpr prgm baseExpr
-  shouldAddVar <- HG.bool
+genTypeFromExprWith full prgm (TupleApply _ (_, baseExpr) (EAppVar varName m)) = do
+  base@PartialType{ptVars=baseVars} <- genTypeFromExprWith full prgm baseExpr
+  shouldAddVar <- if full then return True else HG.bool
   return $ if shouldAddVar
     then base{ptVars = H.insert varName (getMetaType m) baseVars}
     else base
-genTypeFromExpr prgm (EWhere _ base cond) = do
-  baseType <- genTypeFromExpr prgm base
-  condType <- genTypeFromExpr prgm cond
+genTypeFromExprWith full prgm (EWhere _ base cond) = do
+  baseType <- genTypeFromExprWith full prgm base
+  condType <- genTypeFromExprWith full prgm cond
   return $ partialAddPreds baseType (PredsOne $ PredExpr condType)
-genTypeFromExpr _ e = error $ printf "Unimplemented genTypeFromExpr for %s" (show e)
+genTypeFromExprWith _ _ e = error $ printf "Unimplemented genTypeFromExpr for %s" (show e)
 
 -- | Generates a 'Type' from the program. A bare argument-less reference like @/Cons@ (exact
 -- mode, no fields) is a legitimate standalone value — the partial-application form a @/Cons@
@@ -495,6 +517,49 @@ genRelatedType prgm a = case a of
       newVal  <- HG.choice [return PTopType, singletonType <$> genPartialType prgm]
       return p{ptArgs = H.insert k newVal (ptArgs p)}
 
+-- | Wraps a base partial generator and randomly adds a 'TVExt'-tagged type variable to one of
+-- its 'ptVars'. This exercises the external variable resolution path in
+-- substitution\/intersection. The external variable name is drawn from 'varNamePool' (shared with
+-- 'genTypeVar' and 'genVaenv') so a bound fraction of these slots actually resolve when a
+-- generated 'TypeVarArgEnv' is threaded through the operations.
+--
+-- Top-level so callers other than 'genPartialType' — 'genPlacement' — keep this coverage.
+genWithTVExtOn :: Prgm Expr () -> Gen PartialType -> Gen PartialType
+genWithTVExtOn prgm baseGen = do
+  base <- baseGen
+  extName <- HG.element varNamePool
+  -- ~1/3 of injected slots carry occurrence-local knowledge, so the drop/substitute
+  -- family's inner handling is exercised where it actually traverses (nested slots).
+  inner <- HG.frequency [(2, return PTopType), (1, HG.small (HG.filter concreteishInner (genType prgm)))]
+  let extVar = TypeVar (TVVar (partialKey extName)) TVExt inner
+  -- Fill a DECLARED type parameter; never invent one. A partial's 'ptVars' keys are the
+  -- parameters its declaration has — @Cons[$T -> $_T]@ fills @Cons@'s own @/T@ — and a key no
+  -- declaration mentions is not a slot any value carries (declaration-boundedness). Inventing
+  -- one produced leaves like @\/Dog[xyz=$_a]@; harmless while these partials only appeared
+  -- nested, and 5 law failures the moment 'genType' drew from this generator.
+  if H.null (ptVars base)
+    then return base
+    else do
+      varName <- HG.element (H.keys (ptVars base))
+      return base{ptVars = H.insert varName extVar (ptVars base)}
+
+-- | A partial that is GUARANTEED to offer a (binder, payload-slot) placement: drawn from the
+-- declarations 'declHasPlacement' accepts, with every declared slot forced in.
+--
+-- This replaces @HG.filter (not . null . placements) (genPartialType prgm)@. That filter drew
+-- from ALL declarations — most are nullary — and then coin-flipped each slot, so a qualifying
+-- shape needed a qualifying declaration AND every flip to land. Hedgehog\'s filter retries a
+-- bounded number of times and then discards, which at 10000 tests exhausted the property\'s
+-- 1000-discard budget and reported a give-up FAIL carrying no information about the algebra.
+genPlacement :: Prgm Expr () -> Gen PartialType
+genPlacement prgm@(Prgm objMap _ _) =
+  case [oe | oa <- flatObjectMap objMap, Just oe <- [oaObj oa], declHasPlacement oe] of
+    []    -> HG.discard -- caller filtered on 'prgmHasPlacement', so this is unreachable
+    decls -> do
+      oe   <- HG.element decls
+      base <- genTypeFromExprWith True prgm oe
+      HG.choice [return base, genWithTVExtOn prgm (return base)]
+
 genPartialType :: Prgm Expr () -> Gen PartialType
 genPartialType prgm@(Prgm objMap _ _) = do
   gen <- if null dataNodes
@@ -527,23 +592,7 @@ genPartialType prgm@(Prgm objMap _ _) = do
     -- 'genVaenv') so a bound fraction of these slots actually resolve when a
     -- generated 'TypeVarArgEnv' is threaded through the operations.
     genWithTVExt :: Gen PartialType -> Gen PartialType
-    genWithTVExt baseGen = do
-      base <- baseGen
-      extName <- HG.element varNamePool
-      -- ~1/3 of injected slots carry occurrence-local knowledge, so the drop/substitute
-      -- family's inner handling is exercised where it actually traverses (nested slots).
-      inner <- HG.frequency [(2, return PTopType), (1, HG.small (HG.filter concreteishInner (genType prgm)))]
-      let extVar = TypeVar (TVVar (partialKey extName)) TVExt inner
-      -- Fill a DECLARED type parameter; never invent one. A partial's 'ptVars' keys are the
-      -- parameters its declaration has — @Cons[$T -> $_T]@ fills @Cons@'s own @/T@ — and a key no
-      -- declaration mentions is not a slot any value carries (declaration-boundedness). Inventing
-      -- one produced leaves like @\/Dog[xyz=$_a]@; harmless while these partials only appeared
-      -- nested, and 5 law failures the moment 'genType' drew from this generator.
-      if H.null (ptVars base)
-        then return base
-        else do
-          varName <- HG.element (H.keys (ptVars base))
-          return base{ptVars = H.insert varName extVar (ptVars base)}
+    genWithTVExt = genWithTVExtOn prgm
 
 genInputExpr :: Gen (Expr ())
 genInputExpr = do
