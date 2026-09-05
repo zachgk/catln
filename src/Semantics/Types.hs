@@ -6919,8 +6919,16 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
       -- so the projection must read the declared bound out of the name-only spelling itself
       -- (an argument slot requirement, e.g. an annotation's @test -> ∀Boolean@, stays ⊤
       -- otherwise). Free template parameters of the declared bound read ⊤ ('freeTVIntToTopDeep').
+      -- A slot PRESENT AS ⊤ is the same spelling: an object pattern's binder
+      -- (@:Node[$K -> Ord, $V -> Eq](left, key, value, right).equal(other)@) stores
+      -- @Node[/K=∀Ord, /V=∀Eq](left=⊤, ..)@, which denotes @left=∀BinTree[/K=∀Ord, /V=∀Eq]@ and
+      -- is judged equal to it, so no narrowing ever respells the store — and read literally
+      -- the binder became ⊤, the body's @Node(left= left, ..)@ was constructed ⊤-slotted, and
+      -- the eval-time build found no arrows from it. Only the knowledge-free ⊤ reads through
+      -- the declaration: a spelled value keeps its own forms (an unsettled call form in a slot
+      -- is the settle machinery's to decide, not a projection's).
       let slotRead sup = case (rawSlot propName sup, typeGetAux propName sup) of
-            (Nothing, Just supProp) | TVArg k <- propName ->
+            (raw, Just supProp) | TVArg k <- propName, raw == Nothing || raw == Just PTopType ->
               case [freeTVIntToTopDeep typeEnv vaenv sup d | PartialType{ptArgs=dArgs} <- typeGraphData typeEnv (ptName sup), Just d <- [H.lookup k dArgs]] of
                 [] -> Just supProp
                 ds -> Just $ intersectTypesEnv typeEnv vaenv supProp (unionAllTypesWithEnv typeEnv vaenv ds)
