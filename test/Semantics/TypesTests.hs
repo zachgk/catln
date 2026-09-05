@@ -875,6 +875,52 @@ propParamIsaEdgeCovariant ioPrgms = property $ do
   assertTimed "ConsList[Point] − Bag[Integer] ≠ ∅" $ not $ diffEmpty (clsOver consPt pointT) (clsOver bagPt intT)
   assertTimed "ConsList[⊤] − Bag[Integer] ≠ ∅" $ not $ diffEmpty (clsOver consPt PTopType) (clsOver bagPt intT)
 
+-- | Class membership reads a member's fields DECLARATION-BOUNDED, as the partial subtype does:
+-- @Cons[/T=Integer](head=Integer ∪ Point, ..)@ denotes @head=Integer@ (no constructible @Cons@
+-- holds a head outside its declared @$T@), so it is a @ConsList[/T=Integer]@ — the two provers
+-- must agree, or a value proven inside the class's own member template is refused by the
+-- class. A genuinely wider element parameter is still refused.
+propDeclClampClassMembership :: IO Prgms -> Property
+propDeclClampClassMembership ioPrgms = property $ do
+  prgms <- lift ioPrgms
+  prgm <- case [v | (k, v) <- H.toList prgms, "containers" `isInfixOf` k] of
+    (prgm:_) -> return prgm
+    []       -> fail "containers.ct program not found"
+  let typeEnv@TypeEnv{teClassGraph=ClassGraph cgData, teNames} = mkTypeEnv prgm
+  let findClass n = case [cpt | (CGClass (_, cpt, _, _), _, _) <- graphToNodes cgData, n `isInfixOf` nameStr (ptName cpt)] of
+        (cpt:_) -> return cpt
+        []      -> fail $ printf "%s class not found" n
+  let findName n = case [nm | nm <- S.toList teNames, n `isInfixOf` nameStr nm] of
+        (nm:_) -> return nm
+        []     -> fail $ printf "%s type not found" n
+  consListPt <- findClass "ConsList"
+  consN <- findName "Cons"
+  intT <- singletonType . partialVal <$> findName "Integer"
+  pointT <- singletonType . partialVal <$> findName "Point"
+  tKey <- case H.keys (ptVars consListPt) of
+    (k:_) -> return k
+    []    -> fail "ConsList has no type parameter"
+  (headKey, tailKey) <- case [(hk, tk) | PartialType{ptArgs=dArgs} <- typeGraphData typeEnv consN
+                                       , hk <- H.keys dArgs, "head" `isInfixOf` nameStr (pkName hk)
+                                       , tk <- H.keys dArgs, "tail" `isInfixOf` nameStr (pkName tk)] of
+    (ks:_) -> return ks
+    []     -> fail "Cons declares no head/tail"
+  let consList elemT = UnionType (Just (PredsOne (PredClass consListPt{ptVars=H.singleton tKey elemT}), H.empty, [])) H.empty []
+  let cons elemT h t = singletonType (partialVal consN){ptVars=H.singleton tKey elemT, ptArgs=H.fromList [(headKey, h), (tailKey, t)]}
+  let wide = unionTypes typeEnv intT pointT
+  let sub a b = isSubtypeOf typeEnv a b
+  let diffEmpty a b = isBottomType $ snd $ differenceTypeWithEnv typeEnv H.empty a b
+  let clamped = cons intT wide (consList wide)
+  let clean = cons intT intT (consList intT)
+  let wider = cons wide pointT (consList wide)
+  annotate $ printf "clamped = %s" (show clamped)
+  assertTimed "clean ⊆ ConsList[Integer]" $ sub clean (consList intT)
+  assertTimed "clamped ⊆ ConsList[Integer]" $ sub clamped (consList intT)
+  assertTimed "clamped ⊆ clean" $ sub clamped clean
+  assertTimed "clamped − ConsList[Integer] = ∅" $ diffEmpty clamped (consList intT)
+  assertTimed "wider ⊄ ConsList[Integer]" $ not $ sub wider (consList intT)
+  assertTimed "wider − ConsList[Integer] ≠ ∅" $ not $ diffEmpty wider (consList intT)
+
 typeTests :: TestTree
 typeTests = withResource findPrgms (const $ pure ()) tests
   where
@@ -908,6 +954,7 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propConjMemberClassSubtype" (withTests 1 $ propConjMemberClassSubtype ioPrgms)
       , HG.testProperty "propNegRecursiveClassMeet" (withTests 1 $ propNegRecursiveClassMeet ioPrgms)
       , HG.testProperty "propParamIsaEdgeCovariant" (withTests 1 $ propParamIsaEdgeCovariant ioPrgms)
+      , HG.testProperty "propDeclClampClassMembership" (withTests 1 $ propDeclClampClassMembership ioPrgms)
       , HG.testProperty "propOutOfScopeParity" (p $ propOutOfScopeParity gPrgm)
       , HG.testProperty "propOccurrenceReadingSound" (p $ propOccurrenceReadingSound gPrgm)
       , HG.testProperty "propOwnVarBindingRespected" (withDiscards 1000 $ p $ propOwnVarBindingRespected gPrgm)

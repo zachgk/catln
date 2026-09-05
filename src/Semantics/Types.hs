@@ -2805,11 +2805,21 @@ partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
   -- arg-set is one set with @/x@).
   && argModeCovers (normalizePtArgMode typeEnv sup) (normalizePtArgMode typeEnv sub)
   && all varCovered (H.elems (H.intersectionWith (,) subVarsFull (ptVars sup)))
-  && all elemCovered (H.elems (H.intersectionWith (,) (ptArgs sub) (ptArgs sup)))
+  && and (H.elems (H.intersectionWithKey argCovered (ptArgs sub) (ptArgs sup)))
   && supPredsCover
   where
     sup = sup0
     sub = sub0
+    -- A field's value set is DECLARATION-BOUNDED (the same clamp 'isSubPartialOfWithEnv'
+    -- applies): when the literal cover fails, the sub value is re-read met with the field's
+    -- declared type instantiated in the sub's own scope. A materialized member spelling such
+    -- as @Cons[/T=Integer](head=∀Ord, ..)@ (an arm body's module-generic presentation met
+    -- with a concrete call's element) denotes @head=Integer@ and IS a @ConsList[/T=Integer]@;
+    -- refusing it here contradicted the partial subtype (which proved it inside the class's
+    -- own member template) and left a concrete list with no path to its display class.
+    argCovered k tSub tSup = elemCovered (tSub, tSup)
+      || any (\d -> elemCovered (intersectTypesEnv typeEnv vaenv tSub d, tSup)) (declArgBounds k)
+    declArgBounds k = [freeTVIntToTopDeep typeEnv vaenv sub d | PartialType{ptArgs=dArgs} <- typeGraphData typeEnv (ptName sub), Just d <- [H.lookup k dArgs]]
     -- Unspelled sub-side parameters materialize as ⊤ so every sup key is actually asked about.
     -- Under projection they stay unspelled: there a ⊤-valued parameter carries no dispatch
     -- information, which is what 'varCovered' states for the spelled-⊤ case below.
