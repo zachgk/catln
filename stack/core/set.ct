@@ -34,13 +34,13 @@ module(Data/Set)
   empty= MkSet(map= /Data/Map/Leaf)
 
   # ## Membership
-  contains[$E -> /Data/Algebra/Ord](s -> /Data/Set[$T -> $E], item -> $E) -> Boolean
+  contains[$E -> /Data/Algebra/Ord](s -> /Data/Set[$T -> $_E], item -> $E) -> Boolean
     # [contains] reports whether [item] is in the set, by looking the item up as a key in the backing
       map ([containsKey]).
   contains(s= MkSet(map), item)= /Data/Map/containsKey(m= map, key= item)
 
   # ## Insertion
-  add[$E -> /Data/Algebra/Ord](s -> /Data/Set[$T -> $E], item -> $E) -> /Data/Set[$T -> $E]
+  add[$E -> /Data/Algebra/Ord](s -> /Data/Set[$T -> $_E], item -> $E) -> /Data/Set[$T -> $_E]
     # [add] inserts [item], returning the updated set (unchanged if the item is already present, since
       a set holds each item at most once). It stores the item as a key with a [()] value.
   add(s= MkSet(map), item)= MkSet(map= /Data/Map/insert(m= map, key= item, value= ()))
@@ -79,7 +79,7 @@ module(Data/Set)
   #   same frontier stops [sorted]/[reversed] in [Data/list] from printing directly. Verify a set's
   #   contents with [elements] and [operator==] (as above) instead.
   # ## Removal
-  remove[$E -> /Data/Algebra/Ord](s -> /Data/Set[$T -> $E], item -> $E) -> /Data/Set[$T -> $E]
+  remove[$E -> /Data/Algebra/Ord](s -> /Data/Set[$T -> $_E], item -> $E) -> /Data/Set[$T -> $_E]
     # [remove] deletes [item] from the set (unchanged if it is absent), delegating to the backing
       map's [remove].
   remove(s= MkSet(map), item)= MkSet(map= /Data/Map/remove(m= map, key= item))
@@ -89,12 +89,12 @@ module(Data/Set)
   > contains(s= remove(s= add(s= add(s= empty, item= 1), item= 2), item= 1), item= 2)
     >>> True
   # ## Union
-  addAll[$E -> /Data/Algebra/Ord](s -> /Data/Set[$T -> $E], items -> /Data/List/ConsList[$T -> $E]) -> /Data/Set[$T -> $E]
+  addAll[$E -> /Data/Algebra/Ord](s -> /Data/Set[$T -> $_E], items -> /Data/List/ConsList[$T -> $_E]) -> /Data/Set[$T -> $_E]
     # [addAll] adds every item of a list into a set, one at a time. [union] builds on it.
   addAll(s, items= /Data/List/Nil)= s
   addAll(s, items= /Data/List/Cons(head, tail))= addAll(s= add(s= s, item= head), items= tail)
 
-  union[$E -> /Data/Algebra/Ord](a -> /Data/Set[$T -> $E], b -> /Data/Set[$T -> $E]) -> /Data/Set[$T -> $E]
+  union[$E -> /Data/Algebra/Ord](a -> /Data/Set[$T -> $_E], b -> /Data/Set[$T -> $_E]) -> /Data/Set[$T -> $_E]
     # [union] is the set of items in either [a] or [b], built by adding every item of [b] into [a].
   union(a, b)= addAll(s= a, items= elements(s= b))
 
@@ -103,12 +103,12 @@ module(Data/Set)
   > contains(s= union(a= add(s= empty, item= 1), b= add(s= empty, item= 2)), item= 1)
     >>> True
   # ## Difference
-  removeAll[$E -> /Data/Algebra/Ord](s -> /Data/Set[$T -> $E], items -> /Data/List/ConsList[$T -> $E]) -> /Data/Set[$T -> $E]
+  removeAll[$E -> /Data/Algebra/Ord](s -> /Data/Set[$T -> $_E], items -> /Data/List/ConsList[$T -> $_E]) -> /Data/Set[$T -> $_E]
     # [removeAll] removes every item of a list from a set, one at a time. [difference] builds on it.
   removeAll(s, items= /Data/List/Nil)= s
   removeAll(s, items= /Data/List/Cons(head, tail))= removeAll(s= remove(s= s, item= head), items= tail)
 
-  difference[$E -> /Data/Algebra/Ord](a -> /Data/Set[$T -> $E], b -> /Data/Set[$T -> $E]) -> /Data/Set[$T -> $E]
+  difference[$E -> /Data/Algebra/Ord](a -> /Data/Set[$T -> $_E], b -> /Data/Set[$T -> $_E]) -> /Data/Set[$T -> $_E]
     # [difference] is the set of items in [a] but not [b], built by removing every item of [b] from
       [a].
   difference(a, b)= removeAll(s= a, items= elements(s= b))
@@ -120,17 +120,17 @@ module(Data/Set)
   > contains(s= difference(a= add(s= add(s= empty, item= 1), item= 2), b= add(s= empty, item= 2)), item= 2)
     >>> False
   # ## Intersection
-  addIf[$E -> /Data/Algebra/Ord](cond -> Boolean, s -> /Data/Set[$T -> $E], item -> $E) -> /Data/Set[$T -> $E]
+  addIf[$E -> /Data/Algebra/Ord](cond -> Boolean, s -> /Data/Set[$T -> $_E], item -> $E) -> /Data/Set[$T -> $_E]
     # [addIf] adds [item] to [s] when [cond] is [True], and leaves [s] unchanged otherwise.
   addIf(cond= /Data/Primitive/True, s, item)= add(s= s, item= item)
   addIf(cond= /Data/Primitive/False, s, item)= s
 
-  intersectInto[$E -> /Data/Algebra/Ord](items -> /Data/List/ConsList[$T -> $E], b -> /Data/Set[$T -> $E], acc -> /Data/Set[$T -> $E]) -> /Data/Set[$T -> $E]
+  intersectInto[$E -> /Data/Algebra/Ord](items -> /Data/List/ConsList[$T -> $_E], b -> /Data/Set[$T -> $_E], acc -> /Data/Set[$T -> $_E]) -> /Data/Set[$T -> $_E]
     # [intersectInto] accumulates into [acc] each item of [items] that is also in [b].
   intersectInto(items= /Data/List/Nil, b, acc)= acc
   intersectInto(items= /Data/List/Cons(head, tail), b, acc)= intersectInto(items= tail, b= b, acc= addIf(cond= contains(s= b, item= head), s= acc, item= head))
 
-  intersection[$E -> /Data/Algebra/Ord](a -> /Data/Set[$T -> $E], b -> /Data/Set[$T -> $E]) -> /Data/Set[$T -> $E]
+  intersection[$E -> /Data/Algebra/Ord](a -> /Data/Set[$T -> $_E], b -> /Data/Set[$T -> $_E]) -> /Data/Set[$T -> $_E]
     # [intersection] is the set of items in both [a] and [b] — [a]'s items kept when they are also in
       [b].
   intersection(a, b)= intersectInto(items= elements(s= a), b= b, acc= empty)
@@ -142,12 +142,12 @@ module(Data/Set)
   > contains(s= intersection(a= add(s= add(s= empty, item= 1), item= 2), b= add(s= add(s= empty, item= 2), item= 3)), item= 1)
     >>> False
   # ## Subset
-  allIn[$E -> /Data/Algebra/Ord](items -> /Data/List/ConsList[$T -> $E], s -> /Data/Set[$T -> $E]) -> Boolean
+  allIn[$E -> /Data/Algebra/Ord](items -> /Data/List/ConsList[$T -> $_E], s -> /Data/Set[$T -> $_E]) -> Boolean
     # [allIn] is [True] when every item of [items] is in [s]. [isSubsetOf] builds on it.
   allIn(items= /Data/List/Nil, s)= /Data/Primitive/True
   allIn(items= /Data/List/Cons(head, tail), s)= contains(s= s, item= head) && allIn(items= tail, s= s)
 
-  isSubsetOf[$E -> /Data/Algebra/Ord](a -> /Data/Set[$T -> $E], b -> /Data/Set[$T -> $E]) -> Boolean
+  isSubsetOf[$E -> /Data/Algebra/Ord](a -> /Data/Set[$T -> $_E], b -> /Data/Set[$T -> $_E]) -> Boolean
     # [isSubsetOf] is [True] when every item of [a] is in [b].
   isSubsetOf(a, b)= allIn(items= elements(s= a), s= b)
 
@@ -166,7 +166,7 @@ module(Data/Set)
 module(Data)
   every(/Data/Set/MapSet[$K -> /Data/Algebra/Ord, $V -> $_V], isa= [/Data/Algebra/Eq])
 module(Data/Set)
-  setEqual[$E -> /Data/Algebra/Ord](a -> /Data/Set[$T -> $E], b -> /Data/Set[$T -> $E]) -> Boolean
+  setEqual[$E -> /Data/Algebra/Ord](a -> /Data/Set[$T -> $_E], b -> /Data/Set[$T -> $_E]) -> Boolean
     # [setEqual] decides order-independent set equality: equal [size] and every item of [a] present
       in [b] ([isSubsetOf]). Since the sizes are equal, one-directional containment is enough — [b]
       can hold no extra item [a] lacks.

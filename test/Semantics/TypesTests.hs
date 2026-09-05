@@ -831,6 +831,50 @@ propOwnVarBindingRespected gPrgm = property $ do
   annotate $ printf "sub - ref = %s" (show subMinusRef)
   assertTimed "sub - ref = ∅" $ isBottomType subMinusRef
 
+-- | A declared subclass edge with a parameter mapping — @every(ConsList[$T -> $_T], isa= [/Bag])@,
+-- recorded under @Bag[$T]@ as the member template @∀ConsList[/T=$_/T]@ whose @$_/T@ names Bag's own
+-- @/T@ — asserts @ConsList[T=k] ⊆ Bag[T=k]@ for EVERY @k@. So it proves @∀ConsList[/T=a] ⊆ ∀Bag[/T=b]@
+-- exactly when @a ⊆ b@, and never for an unrelated or wider left element. The bounded declared-edge
+-- fast path ('classDeclaredSubclassOfBounded') compared the left side against the RAW template (every
+-- @$_/T@ read as ⊤) and proved the edge for ANY instantiation of the right side; the typechecker then
+-- judged @Node(left=⊤) ≡ Node(left=∀Map[/K=Ord] ∪ …)@, refused a genuine requirement narrowing as a
+-- no-op, and unrolled core/map.ct's recursive @insert@ result one level per epoch. The subtype walk
+-- and the difference oracle must agree ('verifyScheme' backs one with the other).
+propParamIsaEdgeCovariant :: IO Prgms -> Property
+propParamIsaEdgeCovariant ioPrgms = property $ do
+  prgms <- lift ioPrgms
+  prgm <- case [v | (k, v) <- H.toList prgms, "containers" `isInfixOf` k] of
+    (prgm:_) -> return prgm
+    []       -> fail "containers.ct program not found"
+  let typeEnv@TypeEnv{teClassGraph=ClassGraph cgData, teNames} = mkTypeEnv prgm
+  let findClass n = case [cpt | (CGClass (_, cpt, _, _), _, _) <- graphToNodes cgData, n `isInfixOf` nameStr (ptName cpt)] of
+        (cpt:_) -> return cpt
+        []      -> fail $ printf "%s class not found" n
+  let findData n = case [nm | nm <- S.toList teNames, n `isInfixOf` nameStr nm] of
+        (nm:_) -> return $ singletonType $ partialVal nm
+        []     -> fail $ printf "%s type not found" n
+  consPt <- findClass "ConsList"
+  bagPt <- findClass "Bag"
+  intT <- findData "Integer"
+  pointT <- findData "Point"
+  tKey <- case H.keys (ptVars consPt) of
+    (k:_) | H.member k (ptVars bagPt) -> return k
+    _ -> fail "ConsList and Bag do not share a type parameter"
+  let clsOver cpt elemT = UnionType (Just (PredsOne (PredClass cpt{ptVars=H.singleton tKey elemT}), H.empty, [])) H.empty []
+  let bare cpt = UnionType (Just (PredsOne (PredClass cpt{ptVars=H.empty}), H.empty, [])) H.empty []
+  let sub a b = isSubtypeOf typeEnv a b
+  let diffEmpty a b = isBottomType $ snd $ differenceTypeWithEnv typeEnv H.empty a b
+  annotate $ printf "ConsList[Integer] = %s" (show (clsOver consPt intT))
+  annotate $ printf "Bag[Integer] = %s" (show (clsOver bagPt intT))
+  assertTimed "ConsList[Integer] ⊆ Bag[Integer]" $ sub (clsOver consPt intT) (clsOver bagPt intT)
+  assertTimed "ConsList[Integer] ⊆ Bag" $ sub (clsOver consPt intT) (bare bagPt)
+  assertTimed "ConsList[Point] ⊄ Bag[Integer]" $ not $ sub (clsOver consPt pointT) (clsOver bagPt intT)
+  assertTimed "ConsList[⊤] ⊄ Bag[Integer]" $ not $ sub (clsOver consPt PTopType) (clsOver bagPt intT)
+  assertTimed "ConsList ⊄ Bag[Integer]" $ not $ sub (bare consPt) (clsOver bagPt intT)
+  assertTimed "ConsList[Integer] − Bag[Integer] = ∅" $ diffEmpty (clsOver consPt intT) (clsOver bagPt intT)
+  assertTimed "ConsList[Point] − Bag[Integer] ≠ ∅" $ not $ diffEmpty (clsOver consPt pointT) (clsOver bagPt intT)
+  assertTimed "ConsList[⊤] − Bag[Integer] ≠ ∅" $ not $ diffEmpty (clsOver consPt PTopType) (clsOver bagPt intT)
+
 typeTests :: TestTree
 typeTests = withResource findPrgms (const $ pure ()) tests
   where
@@ -863,6 +907,7 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propParamClassIntersectAbsorb" (withTests 1 $ propParamClassIntersectAbsorb ioPrgms)
       , HG.testProperty "propConjMemberClassSubtype" (withTests 1 $ propConjMemberClassSubtype ioPrgms)
       , HG.testProperty "propNegRecursiveClassMeet" (withTests 1 $ propNegRecursiveClassMeet ioPrgms)
+      , HG.testProperty "propParamIsaEdgeCovariant" (withTests 1 $ propParamIsaEdgeCovariant ioPrgms)
       , HG.testProperty "propOutOfScopeParity" (p $ propOutOfScopeParity gPrgm)
       , HG.testProperty "propOccurrenceReadingSound" (p $ propOccurrenceReadingSound gPrgm)
       , HG.testProperty "propOwnVarBindingRespected" (withDiscards 1000 $ p $ propOwnVarBindingRespected gPrgm)

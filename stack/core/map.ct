@@ -37,14 +37,14 @@ module(Data/Map)
   > size(m= Leaf)
     >>> 0
   # ## Lookup
-  get[$MK -> /Data/Algebra/Ord, $MV](m -> /Data/Map[$K -> $MK, $V -> $MV], key -> $MK) -> /Data/Maybe[$T -> $MV]
+  get[$MK -> /Data/Algebra/Ord, $MV](m -> /Data/Map[$K -> $_MK, $V -> $_MV], key -> $MK) -> /Data/Maybe[$T -> $_MV]
     # [get] finds the [value] stored under [key], or [Nothing] if the key is absent. It compares
       [key] against the node's key and, guided by [getStep], returns the value on [Equal] or descends
       into the [left] (smaller) or [right] (larger) subtree.
   get(m= Leaf, key)= /Data/Maybe/Nothing
   get(m= Node(left, key@nk, value, right), key)= getStep(cmp= key.compareTo(other= nk), key= key, left= left, value= value, right= right)
 
-  getStep[$MK -> /Data/Algebra/Ord, $MV](cmp -> /Data/Algebra/Comparison, key -> $MK, left -> BinTree[$K -> $MK, $V -> $MV], value -> $MV, right -> BinTree[$K -> $MK, $V -> $MV]) -> /Data/Maybe[$T -> $MV]
+  getStep[$MK -> /Data/Algebra/Ord, $MV](cmp -> /Data/Algebra/Comparison, key -> $MK, left -> BinTree[$K -> $_MK, $V -> $_MV], value -> $MV, right -> BinTree[$K -> $_MK, $V -> $_MV]) -> /Data/Maybe[$T -> $_MV]
     # [getStep] carries the [key <=> nodeKey] decision for [get]: the node's [value] on [Equal], and
       otherwise the lookup continued in the subtree that could hold the key.
   getStep(cmp= /Data/Algebra/Equal, key, left, value, right)= /Data/Maybe/Some(value= value)
@@ -56,7 +56,7 @@ module(Data/Map)
   > get(m= insert(m= Leaf, key= 1, value= 10), key= 9) == /Data/Maybe/Nothing
     >>> True
   # ## Membership
-  containsKey[$MK -> /Data/Algebra/Ord, $MV](m -> /Data/Map[$K -> $MK, $V -> $MV], key -> $MK) -> Boolean
+  containsKey[$MK -> /Data/Algebra/Ord, $MV](m -> /Data/Map[$K -> $_MK, $V -> $_MV], key -> $MK) -> Boolean
     # [containsKey] reports whether the map has an entry for [key]. It reuses [get]: a key is present
       exactly when the lookup finds a value (a [Some] rather than a [Nothing]).
   containsKey(m, key)= maybeContains(r= get(m= m, key= key))
@@ -72,14 +72,14 @@ module(Data/Map)
   > containsKey(m= insert(m= Leaf, key= 1, value= 10), key= 3)
     >>> False
   # ## Insertion
-  insert[$MK -> /Data/Algebra/Ord, $MV](m -> /Data/Map[$K -> $MK, $V -> $MV], key -> $MK, value -> $MV) -> /Data/Map[$K -> $MK, $V -> $MV]
+  insert[$MK -> /Data/Algebra/Ord, $MV](m -> /Data/Map[$K -> $_MK, $V -> $_MV], key -> $MK, value -> $MV) -> /Data/Map[$K -> $_MK, $V -> $_MV]
     # [insert] adds an entry, or replaces the value if the key is already present, returning the
       updated map. It compares [key] against the node's key and, guided by [insertStep], rebuilds the
       node with the entry placed into the correct subtree (or the value replaced on [Equal]).
   insert(m= Leaf, key, value)= Node(left= Leaf, key= key, value= value, right= Leaf)
   insert(m= Node(left, key@nk, value@nv, right), key, value)= insertStep(cmp= key.compareTo(other= nk), left= left, nk= nk, nv= nv, right= right, key= key, value= value)
 
-  insertStep[$MK -> /Data/Algebra/Ord, $MV](cmp -> /Data/Algebra/Comparison, left -> BinTree[$K -> $MK, $V -> $MV], nk -> $MK, nv -> $MV, right -> BinTree[$K -> $MK, $V -> $MV], key -> $MK, value -> $MV) -> BinTree[$K -> $MK, $V -> $MV]
+  insertStep[$MK -> /Data/Algebra/Ord, $MV](cmp -> /Data/Algebra/Comparison, left -> BinTree[$K -> $_MK, $V -> $_MV], nk -> $MK, nv -> $MV, right -> BinTree[$K -> $_MK, $V -> $_MV], key -> $MK, value -> $MV) -> BinTree[$K -> $_MK, $V -> $_MV]
     # [insertStep] carries the [key <=> nodeKey] decision for [insert]: on [Equal] the node keeps its
       key but takes the new [value]; on [LessThan]/[GreaterThan] the entry is inserted into the
       [left]/[right] subtree and the node is rebuilt around the result.
@@ -90,14 +90,14 @@ module(Data/Map)
   > get(m= insert(m= insert(m= Leaf, key= 1, value= 10), key= 1, value= 99), key= 1) == /Data/Maybe/Some(value= 99)
     >>> True
   # ## Removal
-  remove[$MK -> /Data/Algebra/Ord, $MV](m -> /Data/Map[$K -> $MK, $V -> $MV], key -> $MK) -> /Data/Map[$K -> $MK, $V -> $MV]
+  remove[$MK -> /Data/Algebra/Ord, $MV](m -> /Data/Map[$K -> $_MK, $V -> $_MV], key -> $MK) -> /Data/Map[$K -> $_MK, $V -> $_MV]
     # [remove] deletes the entry for [key], returning the updated map (unchanged if the key is
       absent). It compares [key] against the node's key and, guided by [removeStep], descends into a
       subtree or — on [Equal] — drops the node.
   remove(m= Leaf, key)= Leaf
   remove(m= Node(left, key@nk, value@nv, right), key)= removeStep(cmp= key.compareTo(other= nk), left= left, nk= nk, nv= nv, right= right, key= key)
 
-  removeStep[$MK -> /Data/Algebra/Ord, $MV](cmp -> /Data/Algebra/Comparison, left -> BinTree[$K -> $MK, $V -> $MV], nk -> $MK, nv -> $MV, right -> BinTree[$K -> $MK, $V -> $MV], key -> $MK) -> /Data/Map[$K -> $MK, $V -> $MV]
+  removeStep[$MK -> /Data/Algebra/Ord, $MV](cmp -> /Data/Algebra/Comparison, left -> BinTree[$K -> $_MK, $V -> $_MV], nk -> $MK, nv -> $MV, right -> BinTree[$K -> $_MK, $V -> $_MV], key -> $MK) -> /Data/Map[$K -> $_MK, $V -> $_MV]
     # [removeStep] carries the [key <=> nodeKey] decision for [remove]: [LessThan]/[GreaterThan]
       rebuild the node with [key] removed from the [left]/[right] subtree. [Equal] drops this node,
       replacing it with the merge of its two subtrees — [graft]ing all of the [left] subtree's
@@ -108,7 +108,7 @@ module(Data/Map)
   removeStep(cmp= /Data/Algebra/GreaterThan, left, nk, nv, right, key)= Node(left= left, key= nk, value= nv, right= remove(m= right, key= key))
   removeStep(cmp= /Data/Algebra/Equal, left, nk, nv, right, key)= graft(from= left, into= right)
 
-  graft[$MK -> /Data/Algebra/Ord, $MV](from -> BinTree[$K -> $MK, $V -> $MV], into -> /Data/Map[$K -> $MK, $V -> $MV]) -> /Data/Map[$K -> $MK, $V -> $MV]
+  graft[$MK -> /Data/Algebra/Ord, $MV](from -> BinTree[$K -> $_MK, $V -> $_MV], into -> /Data/Map[$K -> $_MK, $V -> $_MV]) -> /Data/Map[$K -> $_MK, $V -> $_MV]
     # [graft] inserts every entry of the [from] tree into the [into] map, walking [from] in order and
       [insert]ing each node's [key]/[value]. [removeStep] uses it to merge a deleted node's subtrees.
   graft(from= Leaf, into)= into
@@ -156,13 +156,13 @@ module(Data/Map)
 module(Data/Map)
   every(BinTree[$K -> /Data/Algebra/Ord, $V -> /Data/Algebra/Eq], isa= [/Data/Algebra/Eq])
 
-  mapEqual[$MK -> /Data/Algebra/Ord, $MV -> /Data/Algebra/Eq](a -> BinTree[$K -> $MK, $V -> $MV], b -> BinTree[$K -> $MK, $V -> $MV]) -> Boolean
+  mapEqual[$MK -> /Data/Algebra/Ord, $MV -> /Data/Algebra/Eq](a -> BinTree[$K -> $_MK, $V -> $_MV], b -> BinTree[$K -> $_MK, $V -> $_MV]) -> Boolean
     # [mapEqual] decides order-independent map equality: equal [size] and every entry of [a] present
       in [b] with an equal value ([containedIn]). Since the sizes are equal, one-directional
       containment is enough — [b] can hold no extra entry [a] lacks.
   mapEqual(a, b)= (size(m= a) == size(m= b)) && containedIn(a= a, b= b)
 
-  containedIn[$MK -> /Data/Algebra/Ord, $MV -> /Data/Algebra/Eq](a -> BinTree[$K -> $MK, $V -> $MV], b -> BinTree[$K -> $MK, $V -> $MV]) -> Boolean
+  containedIn[$MK -> /Data/Algebra/Ord, $MV -> /Data/Algebra/Eq](a -> BinTree[$K -> $_MK, $V -> $_MV], b -> BinTree[$K -> $_MK, $V -> $_MV]) -> Boolean
     # [containedIn] is [True] when every entry of [a] appears in [b] with an equal value. It walks
       [a]'s nodes and, for each, looks the key up in [b] ([get]) and checks the result equals
       [Some(value)] through the [Maybe] [Eq] instance.
@@ -188,7 +188,7 @@ module(Data/Map)
   [Functor] class cannot yet track re-typing one parameter while preserving the other — so the class
   instance awaits two-parameter [Functor] support. The operation itself works generically.)
 module(Data/Map)
-  mapValues[$MK, $MV, $MW](m -> BinTree[$K -> $MK, $V -> $MV], fn(v -> $MV) -> $MW) -> BinTree[$K -> $MK, $V -> $MW]
+  mapValues[$MK, $MV, $MW](m -> BinTree[$K -> $_MK, $V -> $_MV], fn(v -> $MV) -> $MW) -> BinTree[$K -> $_MK, $V -> $_MW]
     # [mapValues] rebuilds the tree, applying [fn] to each node's value and recursing into both
       subtrees; the keys and shape are carried through unchanged, and the value type may change from
       the function's input type to its output type.

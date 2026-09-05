@@ -1582,29 +1582,46 @@ classDeclaredSubclassOf TypeEnv{teClassGraph=ClassGraph cg} c1 c2 = go S.empty c
             in any (\s -> relativeNameMatches c1 s || go (S.insert cName visited) s) subs
           _ -> False
 
--- | 'classDeclaredSubclassOf' where the LEFT side carries element bounds: a var-carrying
--- declared member (@every(BinTree[$K -> Ord, $V -> Eq], isa= [Eq])@) proves @c1 ⟹ c2@ at
--- the DIRECT step when @c1@'s name matches the member and each bound the member declares
--- covers @c1@'s corresponding bound (covariant, absent = ⊤ — the same rule as the
--- same-name class covariance in 'predImpliesAtom'). The TRANSITIVE walk stays var-free:
--- composing bounds through a second var-carrying edge would need bound substitution,
--- which is left to the SAT route. Subsumes the name-only walk (a var-free member's
--- 'directMatch' is exactly the name match). NOT used inside the SAT engine's
+-- | 'classDeclaredSubclassOf' where BOTH sides may carry element bounds. A declared member
+-- of the target's class node is a TEMPLATE spelled in the target class's own parameters: the
+-- desugarer records @every(RTree[$K -> $_K, $V -> $_V], isa= [RIMap[$K -> $_K, $V -> $_V]])@
+-- under @RIMap[$K, $V]@ as the member @∀RTree[/K=$_/K, /V=$_/V]@, whose @$_/K@ names RIMap's
+-- own @/K@ (the same convention the class expansion reads — 'expandClassPartialWithNamesFullAux').
+-- So the edge asserts @RTree[K=k] ⊆ RIMap[K=k]@ for EVERY @k@, and whether it proves
+-- @c1 ⟹ c2@ depends on @c2@'s instantiation: each member is first INSTANTIATED at @c2@'s
+-- bounds ('substitutePartialExit' under @c2@'s vars, exactly as expansion instantiates a
+-- member before use), and only then compared. A member spelled @RTree[/K=$_/K]@ under
+-- @RIMap[/K=∀Ord]@ becomes @RTree[/K=∀Ord]@, and @RTree[/K=Integer] ⟹ RIMap[/K=∀Ord]@ holds
+-- while @RTree[/K=∀Show] ⟹ RIMap[/K=∀Ord]@ does not. Comparing @c1@ against the RAW template
+-- read every @$_/K@ as ⊤ and proved the edge for any instantiation of @c2@ — a set-algebra
+-- law failure (@RTree[K=RVal] ⊆ RIMap[K=ROrd]@ answered True) that made the typechecker judge
+-- @RNode(left=⊤)@ and @RNode(left=∀RIMap[K=Ord] ∪ …)@ equal, refuse a genuine requirement
+-- narrowing as a no-op, and unroll a recursive result one level per epoch (core/map.ct).
+-- The DIRECT step: @c1@'s name matches the instantiated member and each bound the member
+-- declares covers @c1@'s corresponding bound (covariant, absent = ⊤ — the same rule as the
+-- same-name class covariance in 'predImpliesAtom', under the same 'comparedPartialsEnv').
+-- The TRANSITIVE step continues into the instantiated member as the next target, so bounds
+-- compose through a chain of parameterized edges by the same substitution; a class re-entered
+-- on its own walk stops (False — conservative). A plain @c2@ instantiates every member
+-- parameter at ⊤, which is the previous var-free behavior. NOT used inside the SAT engine's
 -- declared-edge check — 'directMatch' runs algebra code ('isSubtypeOfWithEnv'), and
 -- 'satAtomImpliesDeclared' must stay engine- and algebra-free.
-classDeclaredSubclassOfBounded :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> TypeName -> Bool
+classDeclaredSubclassOfBounded :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Bool
 classDeclaredSubclassOfBounded typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv c1 c2 = go S.empty c2
   where
-    go visited cName
+    go visited target@PartialType{ptName=cName}
       | S.member cName visited = False
       | otherwise = case graphLookup (PClassName cName) cg of
-          Just (CGClass (_, _, classTypes, _)) ->
-            let subs = [ sc | t <- classTypes, Just sc <- [maybeGetClassSingleton t] ]
-            in any (\sc -> directMatch sc || (H.null (ptVars sc) && go (S.insert cName visited) (ptName sc))) subs
+          Just (CGClass (_, PartialType{ptVars=classVarsDecl}, classTypes, _)) ->
+            let classVars = H.unionWith (intersectTypesEnv typeEnv vaenv) (ptVars target) (cleanDeclSelfRefs classVarsDecl)
+                subs = [ substitutePartialExit typeEnv (joinVarArgEnv classVars H.empty) sc
+                       | t <- classTypes, Just sc <- [maybeGetClassSingleton t] ]
+            in any (\sc -> directMatch sc || go (S.insert cName visited) sc) subs
           _ -> False
     directMatch sc = relativeNameMatches (ptName c1) (ptName sc)
-      && all (\(k, v) -> isSubtypeOfWithEnv typeEnv vaenv (H.lookupDefault PTopType k (ptVars c1)) v) (H.toList (ptVars sc))
-      && all (\(k, v) -> isSubtypeOfWithEnv typeEnv vaenv (H.lookupDefault PTopType k (ptArgs c1)) v) (H.toList (ptArgs sc))
+      && all (\(k, v) -> isSubtypeOfWithEnv typeEnv vaenv' (H.lookupDefault PTopType k (ptVars c1)) v) (H.toList (ptVars sc))
+      && all (\(k, v) -> isSubtypeOfWithEnv typeEnv vaenv' (H.lookupDefault PTopType k (ptArgs c1)) v) (H.toList (ptArgs sc))
+      where vaenv' = comparedPartialsEnv typeEnv vaenv c1 sc
 
 predImpliesAtom :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicate -> TypePredicate -> Bool
 -- A declared subclass edge @every(c1 isa c2)@ proves @c1 ⊆ c2@ directly, without enumerating
@@ -1614,7 +1631,7 @@ predImpliesAtom typeEnv vaenvB (PredClass c1) (PredClass c2)
   | classDeclaredSubclassOf typeEnv (ptName c1) (ptName c2) = True
   -- The bounded direct edge: @BinTree[K→Ord,V→Eq] ⟹ Eq@ by the var-carrying member the
   -- name-only walk skips — short-circuits the engine route below on map.ct's hot shape.
-  | classDeclaredSubclassOfBounded typeEnv vaenvB c1 (ptName c2) = True
+  | classDeclaredSubclassOfBounded typeEnv vaenvB c1 c2 = True
 -- Same class, covariant element bound: @hasClass C[/T=a] ⟹ hasClass C[/T=b]@ when @a ⊆ b@. A value
 -- whose class-C element is within @a@ is also within the wider @b@. This is the parameterized-class
 -- subtype rule for a shared class name with a type-var vs. a wider element bound (e.g. @Eqv[$T] ⟹
@@ -1654,7 +1671,7 @@ predImpliesAtom typeEnv vaenv (PredRel r1) (PredRel r2)
   | plainPartial r1 && plainPartial r2 && classDeclaredSubclassOf typeEnv (ptName r1) (ptName r2) = True
   -- Bounded-left form of the same edge (the right side must still be plain — the walk
   -- targets nullary edges).
-  | plainPartial r2 && classDeclaredSubclassOfBounded typeEnv vaenv r1 (ptName r2) = True
+  | plainPartial r2 && classDeclaredSubclassOfBounded typeEnv vaenv r1 r2 = True
   -- Symbolic emptiness of @r1 ∧ ¬r2@ replaces expanding both relations (which for a recursive
   -- parameterized class universe re-expands the element class combinatorially). Gated open-world
   -- ('ProveEmpty'), like every other kind of implication here: @isa r1 ⟹ isa r2@ must NOT be proved by
@@ -1697,7 +1714,7 @@ predImpliesAtom typeEnv vaenv (PredClass c) (PredRel r)
   -- (a narrower element bound on @c@ only shrinks the left).
   | plainPartial r && classDeclaredSubclassOf typeEnv (ptName c) (ptName r) = True
   -- Bounded-left form: @hasClass BinTree[K→Ord,V→Eq] ⟹ isa Eq@ by the var-carrying edge.
-  | plainPartial r && classDeclaredSubclassOfBounded typeEnv vaenv c (ptName r) = True
+  | plainPartial r && classDeclaredSubclassOfBounded typeEnv vaenv c r = True
   | otherwise = satAtomImplies typeEnv vaenv ProveEmpty (SatClass c) (SatRel r)
 -- PredRel r implies PredClass c when every type matching r is a member of c.
 -- Fast path (mirrors the @PredClass c ⟹ PredRel r@ same-name case above): for the SAME plain class
@@ -1710,7 +1727,7 @@ predImpliesAtom typeEnv vaenv (PredRel r) (PredClass c)
   , sameClass || classDeclaredSubclassOf typeEnv (ptName r) (ptName c) = True
   -- Bounded-left form of the declared-edge route only (the same-class route keeps its
   -- plain-r guard: @isa c ⟹ hasClass c@ is a same-entity reading, not an edge).
-  | plainPartial c, classDeclaredSubclassOfBounded typeEnv vaenv r (ptName c) = True
+  | plainPartial c, classDeclaredSubclassOfBounded typeEnv vaenv r c = True
   -- Gated ('ProveEmpty') like the other outermost implication decisions: a relation naming an
   -- UNSEALED class must not be enumerated closed-world here — @~List ⟹ ∀Bag@ via the current
   -- members is broken by any future @isa List@ declaration, and deciding it True while the
@@ -5370,7 +5387,29 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
   -- A 'TVInt' reference nested INSIDE an embedded partial (@/l=Cons[$T]@) names the inner
   -- partial's scope and is not hoisted at all.
   let origValuesAt k = mapMaybe (H.lookup k) [aArgs, bArgs]
-  let exactNamesAt k = S.unions $ map typeTVExtVarRefs $ origValuesAt k
+  -- A name may be stamped onto THIS partial only if its DECLARATION declares it as a parameter
+  -- ("A partial's 'ptVars' keys are its declaration's type parameters" — see 'Type'). An arg
+  -- value may reference a variable of an ENCLOSING scope: @RNode(left = ∀RTree[/K=∀Ord,
+  -- /V=$^/MV])@ carries @$^/MV@, whose @/MV@ belongs to the surrounding @insert@ declaration,
+  -- not to @RNode[$K, $V]@. 'typeTVExtVarRefs' reads 'TVOuter' — 'TVParent' as well as 'TVExt' —
+  -- so it reports that as a reference and the discovered binding gets stamped, giving
+  -- @RNode[/MV=$^/V, /MK=∀Ord, /K=∀Ord, /V=⊤]@ for a two-parameter data type. The invented slots
+  -- are then re-derived every epoch under a fresh spelling, so the point never settles and the
+  -- solve runs to 'runConstraintsLimit' (with each epoch's types larger than the last). This is
+  -- the same "invents foreign var slots" hazard the ambient-passthrough drop above guards; a
+  -- parent-scope reference is the other route to it, and only the declaration can tell the two
+  -- apart. Its own 'TVExt' wording notwithstanding, 'typeTVExtVarRefs' must keep reading
+  -- 'TVOuter' for its other callers ('comparedPartialsEnv's self-equation guard and
+  -- 'varStampSupported's occurrence census both WITHHOLD on a match, where counting parent
+  -- references is the conservative direction), so the restriction belongs here.
+  --
+  -- A name with no template in the graph is unconstrained — an applied call partial
+  -- (@/rput(..)@) legitimately carries its own parameters — so the filter engages only where the
+  -- declaration is actually known.
+  let declaredParamNames = S.unions $ map (H.keysSet . ptVars) $ typeGraphData typeEnv name' ++ typeGraphArrowTemplates typeEnv name'
+  let declaresOwnParams = not $ null $ typeGraphData typeEnv name' ++ typeGraphArrowTemplates typeEnv name'
+  let stampableName n = not declaresOwnParams || S.member n declaredParamNames
+  let exactNamesAt k = S.filter stampableName $ S.unions $ map typeTVExtVarRefs $ origValuesAt k
   let pointerNamesAt k = S.fromList [n | TypeVar (TVVar n) TVInt _ <- origValuesAt k]
   -- A hoisted binding is stored in its canonical 'substituteTVExt' reading (the same one
   -- 'mergeVarEnvVal' gives every merged env binding), so a binding that only passed through
