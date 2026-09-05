@@ -5764,11 +5764,13 @@ intersectTypesWithVarEnv typeEnv vaenv tv@(TypeVar v _ inner) t
   where isSelfVar var (TypeVar var' _ _) = var' == var
         isSelfVar _   _                  = False
         -- A ⊤ inner adds no knowledge, so the test is skipped on the (hot) knowledge-free
-        -- occurrence. An inner that itself mentions type variables is skipped too: its meet
-        -- would re-enter this clause (a var reachable from its own inner loops), and an inner is
-        -- expected to be closed anyway.
+        -- occurrence. An OPEN inner ('innerOpen' — one mentioning an ambient variable) is
+        -- skipped too: its meet would re-enter this clause (a var reachable from its own inner
+        -- loops). A closed inner whose only variables are partial-local (@Some(value=$/T)@)
+        -- is met: skipping it left the self-difference @x − x@ of such an occurrence
+        -- non-empty (its complement DOES resolve the inner).
         innerRejects other
-          | inner == PTopType || typeHasTypeVars inner = False
+          | inner == PTopType || innerOpen v inner = False
           | otherwise = isBottomType $ intersectTypesEnv typeEnv vaenv inner other
 intersectTypesWithVarEnv typeEnv vaenv t tv@TypeVar{} = intersectTypesWithVarEnv typeEnv vaenv tv t
 -- Mixed type (both top and pos non-empty): distribute intersection over union
@@ -5925,7 +5927,7 @@ intersectTypesEnv typeEnv vaenv t1 t2 =
       -- clause and a var reachable from its own inner loops.
       TypeVar v _ i
         | Just b <- H.lookup v newBindings ->
-            if i == PTopType || typeHasTypeVars i then b else intersectTypesEnv typeEnv vaenv b i
+            if i == PTopType || innerOpen v i then b else intersectTypesEnv typeEnv vaenv b i
       _ -> substituteKeep typeEnv newBindings t
 
 -- | Takes the intersection of two 'Type' (∩).
@@ -6371,6 +6373,38 @@ substitutePartialKeep typeEnv vaenv partial@PartialType{ptVars, ptArgs, ptPreds}
 -- again, so only closed bindings are safe for the cross-epoch 'substituteFreeDeep'
 -- frame-closure (a self-referential discovered binding like @/T → Cons[/T=$/T]@ would
 -- otherwise embed a fresh occurrence each epoch and grow without bound).
+-- | Whether an occurrence-local inner is OPEN — meeting it against the ambient env could
+-- re-enter the var clause on an ambient variable: a bare variable, a 'TVOuter' reference
+-- anywhere inside, or a reference to the occurrence's own variable under any spelling. A
+-- closed inner's only variables are partial-local (@Some(value=$/T)@ resolves @$/T@ through
+-- @Some@'s own parameters), which the meet reads without consulting the ambient env.
+innerOpen :: TypeVarAux -> Type -> Bool
+innerOpen _ TypeVar{} = True
+innerOpen v i         = not (S.null (typeTVExtVarRefs i)) || typeMentionsVar v i
+
+-- | Whether a type refers to the variable @v@ (by name, under any location spelling) anywhere.
+typeMentionsVar :: TypeVarAux -> Type -> Bool
+typeMentionsVar v (TypeVar v' _ i) = sameVarName v v' || typeMentionsVar v i
+  where
+    sameVarName (TVVar a) (TVVar b) = a == b
+    sameVarName (TVArg a) (TVArg b) = a == b
+    sameVarName (TVApplied a _) b   = sameVarName a b
+    sameVarName a (TVApplied b _)   = sameVarName a b
+    sameVarName _ _                 = False
+typeMentionsVar v (UnionType mtop leafs _) = any partialHas (splitUnionType leafs) || topHas
+  where
+    topHas = case mtop of
+      Just (preds, negLeafs, _) -> predsHas preds || any partialHas (splitUnionType negLeafs)
+      Nothing                   -> False
+    predsHas (PredsOne p)  = predHas p
+    predsHas (PredsAnd ps) = any predsHas ps
+    predsHas (PredsNot ps) = predsHas ps
+    predHas (PredClass p) = partialHas p
+    predHas (PredRel p)   = partialHas p
+    predHas (PredExpr p)  = partialHas p
+    partialHas PartialType{ptVars, ptArgs, ptPreds} =
+      any (typeMentionsVar v) (H.elems ptVars) || any (typeMentionsVar v) (H.elems ptArgs) || predsHas ptPreds
+
 typeHasTypeVars :: Type -> Bool
 typeHasTypeVars TypeVar{} = True
 typeHasTypeVars (UnionType mtop leafs _) = any partialHas (splitUnionType leafs) || topHas
