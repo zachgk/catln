@@ -24,7 +24,7 @@ class(RTree[$K, $V], [RNode[$K -> $_K, $V -> $_V](left -> RTree[$K -> $_K, $V ->
 every(RTree[$K -> $_K, $V -> $_V], isa= [/RIMap[$K -> $_K, $V -> $_V]])
 
 rcmp(a -> RKey, b -> RKey) -> RCmp
-rcmp(a= RKey, b= RKey)= REq
+rcmp(a= RKey, b= RKey)= RGt
 
 rput[$MK -> /ROrd, $MV](m -> /RIMap[$K -> $_MK, $V -> $_MV], key -> $MK, value -> $MV) -> /RIMap[$K -> $_MK, $V -> $_MV]
 rput(m= RLeaf, key, value)= RNode(left= RLeaf, key= key, value= value, right= RLeaf)
@@ -39,6 +39,16 @@ risNode[$MK -> /ROrd, $MV](m -> /RIMap[$K -> $_MK, $V -> $_MV]) -> /Data/Primiti
 risNode(m= RNode(left, key, value, right))= True
 risNode(m= RLeaf)= False
 
+rsize[$MK -> /ROrd, $MV](m -> /RIMap[$K -> $_MK, $V -> $_MV]) -> Integer
+rsize(m= RNode(left, key, value, right))= 1 + rsize(m= left) + rsize(m= right)
+rsize(m= RLeaf)= 0
+
+# The second `rput` compares `RGt` and so constructs `RNode(right= rput(m= right, ..))`: a RECURSIVE
+  call stored in a field of the arm's constructed value. The arm is built at eval time against the
+  runtime source, whose `left= RLeaf` is a bare atom member of `RTree`; reading that atom as a
+  binding `$MV = ∅` made the field's raw call source uninhabited, so the call was never rewritten and
+  the unevaluated `rput` flowed through as the field's runtime value (`rsize` then found no arm).
 main{io -> IO} =
   #assert(test= risNode(m= rput(m= rput(m= RLeaf, key= RKey, value= RVal), key= RKey, value= RVal)))
+  #assert(test= rsize(m= rput(m= rput(m= RLeaf, key= RKey, value= RVal), key= RKey, value= RVal)) == 2)
   io

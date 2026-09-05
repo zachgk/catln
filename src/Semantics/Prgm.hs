@@ -24,6 +24,7 @@ import           Data.Hashable
 import qualified Data.HashMap.Strict as H
 import           GHC.Generics        (Generic)
 
+import           Control.Monad       (join)
 import           CtConstants
 import           Data.Aeson          hiding (Object)
 import           Data.Bifunctor      (first)
@@ -489,15 +490,27 @@ linkedDimBinds typeEnv declT content = case declT of
       | (k', TypeVar (TVVar k) _ _) <- H.toList (ptVars q)
       , Just dim <- [contentDim k']
       , dim /= PTopType ]
+    -- The join is over the leaves that CARRY the dimension. A bare atom member (@Nil@, @Leaf@)
+    -- has no parameters, so it says nothing about the variable rather than saying it is empty:
+    -- read as ∅ it would be a binding, and a binding to ∅ makes every occurrence of the variable
+    -- uninhabited — an arm's field built against a @$MV = ∅@ destination has an empty raw call
+    -- source, which is vacuously already at the destination, so the call is never rewritten and
+    -- flows through as a runtime value. Content made only of atoms binds nothing.
     contentDim k' = case content of
-      UnionType Nothing leafs [] -> unionAllTypes typeEnv <$> mapM (leafDim k') (splitUnionType leafs)
+      UnionType Nothing leafs [] -> do
+        dims <- mapM (leafDim k') (splitUnionType leafs)
+        case catMaybes dims of
+          [] -> Nothing
+          ds -> Just (unionAllTypes typeEnv ds)
       UnionType (Just (PredsOne (PredClass q'), negs, [])) pos []
-        | H.null negs, H.null pos -> leafDim k' q'
+        | H.null negs, H.null pos -> join (leafDim k' q')
       _ -> Nothing
+    -- @Nothing@: a shape the projection does not read (no binding at all); @Just Nothing@: an atom,
+    -- which carries no dimension; @Just (Just d)@: the leaf's dimension.
     leafDim k' l = case H.lookup k' (ptVars l) of
-      Just e | not (typeHasVars e) -> Just e
+      Just e | not (typeHasVars e) -> Just (Just e)
              | otherwise -> Nothing
-      Nothing | H.null (ptVars l) && H.null (ptArgs l) -> Just BottomType
+      Nothing | H.null (ptVars l) && H.null (ptArgs l) -> Just Nothing
               | otherwise -> Nothing
 
 mergeVarArgMetaWithSrcItem :: (TypeGraph tg) => TypeEnv tg -> ([(Expr m, Meta m)], Type) -> ([(Expr m, Meta m)], Type) -> ([(Expr m, Meta m)], Type)
