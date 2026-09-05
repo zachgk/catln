@@ -24,6 +24,7 @@
 module Semantics.Types where
 
 import           Control.Exception   (evaluate)
+import           Control.Monad       (foldM)
 import           CtConstants
 import           Data.Aeson
 import           Data.Aeson.Types    (contramapToJSONKeyFunction)
@@ -935,6 +936,11 @@ constantPartialType CInt{}   = intLeaf
 constantPartialType CFloat{} = floatLeaf
 constantPartialType CStr{}   = strLeaf
 constantPartialType CChar{}  = charLeaf
+
+-- | Whether a leaf's name is one of the primitive types whose values include constants
+-- (@Integer@, @Float@, @String@, @Char@). Any other leaf denotes only constructed values.
+leafHoldsConstants :: PartialType -> Bool
+leafHoldsConstants PartialType{ptName=n} = n `elem` map ptName [intLeaf, floatLeaf, strLeaf, charLeaf]
 
 -- | The singleton type containing exactly one constant value.
 -- For example, @constantType (CInt 5)@ represents the type @{5}@, a subtype of @Integer@.
@@ -2304,20 +2310,43 @@ typeSatDNF _ (UnionType (Just (_, _, _:_)) _ _) = Nothing -- excluded constants:
 -- Two leaves that are syntactically EQUAL still cover each other through the earlier equality
 -- check, which is why this stayed latent: only a pair that differs in spelling but not in
 -- denotation (@/P[/A=$_v∩{c}]@ against @/P[/A={c}]@) reaches the slot comparison and loses.
+-- A leaf's own predicates (@Cons|¬EqCO@, the meet of a leaf with a predicate top) are LIFTED
+-- out of the leaf into the goal as their own atoms: the leaf is @Cons ∧ ¬EqCO@, and only as
+-- separate atoms does its negation split into @¬Cons ∨ EqCO@. Kept inside the leaf, the
+-- negation was one opaque atom and @Cons ⊆ U_EqCO ∪ Cons|¬EqCO@ — every Cons is an EqCO or
+-- is not — was undecidable, refusing the distributive law's own result. Predicate-free leaves
+-- stay grouped in one 'SatLeafs' atom as before; a predicated leaf becomes its own goal.
 typeSatDNF vaenv (UnionType Nothing leafs []) = case splitUnionType leafs of
   [] -> Just [] -- bottom: unsatisfiable
-  ls | all leafInFragment ls -> Just [SatGoal [SatLeafs ls] []]
+  ls | all leafInFragment ls -> do
+         let (predicated, plain) = partition (\l -> ptPreds l /= PredsNone) ls
+         lifted <- mapM liftLeaf predicated
+         Just $ [SatGoal [SatLeafs plain] [] | not (null plain)] ++ concat lifted
      | otherwise             -> Nothing
   where
     leafInFragment PartialType{ptVars, ptArgs} =
       all slotInFragment (H.elems ptVars ++ H.elems ptArgs)
     slotInFragment t = isJust (typeSatDNF vaenv t)
+    liftLeaf l = do
+      predGoals <- predsSatDNF True (ptPreds l)
+      satDNFConj [[SatGoal [SatLeafs [l{ptPreds=PredsNone}]] []], predGoals]
+-- An EXCLUDED predicated leaf (@U − Cons|¬EqCO@) is likewise lifted: excluding @Cons ∧ ¬EqCO@
+-- is @¬Cons ∨ EqCO@, a disjunction, so the top's goals split — one branch excludes the bare
+-- leaf, the other conjoins the predicates' negation. Predicate-free exclusions stay one
+-- negative 'SatLeafs' atom.
 typeSatDNF vaenv (UnionType (Just (preds, negLeafs, [])) pos []) = do
   topGoals <- predsSatDNF True preds
-  let negAtoms = [SatLeafs (splitUnionType negLeafs) | not (H.null negLeafs)]
+  let (predicatedNegs, plainNegs) = partition (\l -> ptPreds l /= PredsNone) (splitUnionType negLeafs)
+  let negAtoms = [SatLeafs plainNegs | not (null plainNegs)]
   let topGoals' = map (\g -> g{sgNeg = sgNeg g ++ negAtoms}) topGoals
+  topGoals'' <- foldM excludeLifted topGoals' predicatedNegs
   posGoals <- typeSatDNF vaenv (UnionType Nothing pos [])
-  Just (topGoals' ++ posGoals)
+  Just (topGoals'' ++ posGoals)
+  where
+    excludeLifted goals l = do
+      notPreds <- predsSatDNF True (PredsNot (ptPreds l))
+      withoutPreds <- satDNFConj [goals, notPreds]
+      Just $ map (\g -> g{sgNeg = sgNeg g ++ [SatLeafs [l{ptPreds=PredsNone}]]}) goals ++ withoutPreds
 
 -- | DNF of an OCCURRENCE @⟦var⟧ ⊓ ⟦inner⟧@: the variable's own constraint conjoined with the
 -- occurrence-local inner's. Dropping the inner reads the occurrence as the bare variable, which
@@ -3699,6 +3728,21 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing subLeafs []) t2@(UnionTyp
 -- PosPartials ⊆ NegPartials: filter by name.
 -- filteredLeafs is always exact for names in allowedNames; hasOutside only means the type
 -- has additional elements outside those names, which cannot affect subtype checking here.
+-- Constants on the super side are irrelevant to a sub made only of data leaves: a constant
+-- value belongs to its primitive type alone, so a data leaf (@Cons(..)@) neither reaches a
+-- positive constant nor loses anything to an excluded one — @Cons ⊆ (U_EqCO − {-100}) ∪ pos@
+-- is exactly @Cons ⊆ U_EqCO ∪ pos@. The engine's fragment has no constants, so a super
+-- carrying one fell to the materialized expansion, whose leaf-wise cover cannot split a data
+-- leaf between an overlapping class top and a predicated sibling (@Cons ⊆ U_EqCO ∪ Cons|¬EqCO@,
+-- which the difference oracle proves), and the distributive law failed on exactly that shape.
+-- Only a sub with no primitive-typed leaf drops them; a primitive leaf (@Integer@) does hold
+-- constants and keeps the full super.
+isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing subPartials []) (UnionType (Just (preds, negLeafs, _:_)) pos cs)
+  | not (any leafHoldsConstants (splitUnionType subPartials)) =
+      isSubtypeOfWithEnv typeEnv vaenv t1 (UnionType (Just (preds, negLeafs, [])) pos cs)
+isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing subPartials []) (UnionType (Just topData) pos (_:_))
+  | not (any leafHoldsConstants (splitUnionType subPartials)) =
+      isSubtypeOfWithEnv typeEnv vaenv t1 (UnionType (Just topData) pos [])
 isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing subPartials []) t2@(UnionType (Just _) _ _) =
   -- Symbolic decision (emptiness of @t1 ∧ ¬t2@ against the class graph) avoids materializing
   -- the predicate expansion; fall back to expansion outside the fragment.

@@ -921,6 +921,53 @@ propDeclClampClassMembership ioPrgms = property $ do
   assertTimed "wider ⊄ ConsList[Integer]" $ not $ sub wider (consList intT)
   assertTimed "wider − ConsList[Integer] ≠ ∅" $ not $ diffEmpty wider (consList intT)
 
+-- | A constant excluded from a class top is irrelevant to a data leaf: @Cons(..)@ never holds a
+-- constant, so @Cons ⊆ (U_EqCO − {-100}) ∪ Cons|¬EqCO@ exactly as @Cons ⊆ U_EqCO ∪ Cons|¬EqCO@
+-- (every Cons is either an EqCO or not). The distributive law found the excluded constant
+-- pushing the decision out of the engine's fragment, where the materialized cover could not
+-- split the leaf between the overlapping class top and its predicated sibling. Fixture:
+-- recursiveClassBounds.ct (@every(ConsList[$T -> EqCO], isa= [EqCO])@).
+propExcludedConstantIrrelevantToData :: IO Prgms -> Property
+propExcludedConstantIrrelevantToData ioPrgms = property $ do
+  prgms <- lift ioPrgms
+  prgm <- case [v | (k, v) <- H.toList prgms, "recursiveClassBounds" `isInfixOf` k] of
+    (prgm:_) -> return prgm
+    []       -> fail "recursiveClassBounds.ct program not found"
+  let typeEnv@TypeEnv{teClassGraph=ClassGraph cgData, teNames} = mkTypeEnv prgm
+  let findClass n = case [cpt | (CGClass (_, cpt, _, _), _, _) <- graphToNodes cgData, n `isInfixOf` nameStr (ptName cpt)] of
+        (cpt:_) -> return cpt
+        []      -> fail $ printf "%s class not found" n
+  let findName n = case [nm | nm <- S.toList teNames, n `isInfixOf` nameStr nm] of
+        (nm:_) -> return nm
+        []     -> fail $ printf "%s type not found" n
+  eqcoPt <- findClass "EqCO"
+  consListPt <- findClass "ConsList"
+  consN <- findName "Cons"
+  (headKey, tailKey) <- case [(hk, tk) | PartialType{ptArgs=dArgs} <- typeGraphData typeEnv consN
+                                       , hk <- H.keys dArgs, "head" `isInfixOf` nameStr (pkName hk)
+                                       , tk <- H.keys dArgs, "tail" `isInfixOf` nameStr (pkName tk)] of
+    (ks:_) -> return ks
+    []     -> fail "Cons declares no head/tail"
+  tKey <- case H.keys (ptVars consListPt) of
+    (k:_) -> return k
+    []    -> fail "ConsList has no type parameter"
+  let eqco = PredsOne (PredClass eqcoPt{ptVars=H.empty})
+  let eqcoTop = UnionType (Just (eqco, H.empty, [])) H.empty []
+  let eqcoTopMinus = UnionType (Just (eqco, H.empty, [CInt (-100)])) H.empty []
+  let notEqco = UnionType (Just (PredsNot eqco, H.empty, [])) H.empty []
+  let consList elemT = UnionType (Just (PredsOne (PredClass consListPt{ptVars=H.singleton tKey elemT}), H.empty, [])) H.empty []
+  let cons = singletonType (partialVal consN){ptVars=H.singleton tKey PTopType, ptArgs=H.fromList [(headKey, TypeVar (TVVar tKey) TVInt PTopType), (tailKey, consList PTopType)]}
+  let consNot = intersectTypes typeEnv cons notEqco
+  let sub a b = isSubtypeOf typeEnv a b
+  let diffEmpty a b = isBottomType $ snd $ differenceTypeWithEnv typeEnv H.empty a b
+  annotate $ printf "Cons|¬EqCO = %s" (show consNot)
+  assertTimed "Cons ⊆ EqCO ∪ Cons|¬EqCO" $ sub cons (unionTypes typeEnv eqcoTop consNot)
+  assertTimed "Cons ⊆ (EqCO − {-100}) ∪ Cons|¬EqCO" $ sub cons (unionTypes typeEnv eqcoTopMinus consNot)
+  assertTimed "Cons − ((EqCO − {-100}) ∪ Cons|¬EqCO) = ∅" $ diffEmpty cons (unionTypes typeEnv eqcoTopMinus consNot)
+  assertTimed "Cons ⊄ (EqCO − {-100})" $ not $ sub cons eqcoTopMinus
+  assertTimed "(EqCO − {-100}) ∪ Cons ≡ (EqCO − {-100}) ∪ Cons|¬EqCO" $
+    isEqType typeEnv (unionTypes typeEnv eqcoTopMinus cons) (unionTypes typeEnv eqcoTopMinus consNot)
+
 typeTests :: TestTree
 typeTests = withResource findPrgms (const $ pure ()) tests
   where
@@ -955,6 +1002,7 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propNegRecursiveClassMeet" (withTests 1 $ propNegRecursiveClassMeet ioPrgms)
       , HG.testProperty "propParamIsaEdgeCovariant" (withTests 1 $ propParamIsaEdgeCovariant ioPrgms)
       , HG.testProperty "propDeclClampClassMembership" (withTests 1 $ propDeclClampClassMembership ioPrgms)
+      , HG.testProperty "propExcludedConstantIrrelevantToData" (withTests 1 $ propExcludedConstantIrrelevantToData ioPrgms)
       , HG.testProperty "propOutOfScopeParity" (p $ propOutOfScopeParity gPrgm)
       , HG.testProperty "propOccurrenceReadingSound" (p $ propOccurrenceReadingSound gPrgm)
       , HG.testProperty "propOwnVarBindingRespected" (withDiscards 1000 $ p $ propOwnVarBindingRespected gPrgm)
