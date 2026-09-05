@@ -45,9 +45,9 @@ Prgm
                     , omiDefs =
                         [ /real
                             ( Value /c -> /Complex
-                                ( /a=TopType
-                                , /b=TopType
-                                ) = /Complex( Value /a )( Value /b )
+                                ( /a=∀/Data/Primitive/Number
+                                , /b=∀/Data/Primitive/Number
+                                ) = /Complex( Value /a -> ∀/Data/Primitive/Number )( Value /b -> ∀/Data/Primitive/Number )
                             ) -> TVArg /a = Value /a
                         ]
                     }

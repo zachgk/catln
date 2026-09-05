@@ -100,7 +100,7 @@ Prgm
                             ( EAppArg Value /this -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( EAppArg Value /value ) ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/Algebra/equal
                             ( EAppArg Value /other -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( EAppArg Value /value@Value /bv ) )
-                            ( EAppArg Value /this -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=TopType ) = /Data/Maybe/Some( EAppVar /T ∀/Data/Algebra/Eq )( EAppArg Value /value@Value /av ) ) -> ∀/Data/Primitive/Boolean =
+                            ( EAppArg Value /this -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Maybe/Some( EAppVar /T ∀/Data/Algebra/Eq )( EAppArg Value /value@Value /av -> ∀/Data/Algebra/Eq ) ) -> ∀/Data/Primitive/Boolean =
                             ( /operator==
                                 ( EAppArg Value /l -> TVArg /av = ( Value /av ↦ TVArg /av ) )
                                 ( EAppArg Value /r -> TVArg /bv = ( Value /bv ↦ TVArg /bv ) ) ↦ ∀/Data/Primitive/Boolean
@@ -122,7 +122,7 @@ Prgm
                             ( EAppArg Value /this -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( EAppArg Value /value ) ) -> /Data/Algebra/GreaterThan = Value /Data/Algebra/GreaterThan
                         , /Data/Algebra/compareTo
                             ( EAppArg Value /other -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( EAppArg Value /value@Value /bv ) )
-                            ( EAppArg Value /this -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Ord ]( /value=TopType ) = /Data/Maybe/Some( EAppVar /T ∀/Data/Algebra/Ord )( EAppArg Value /value@Value /av ) ) -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
+                            ( EAppArg Value /this -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Ord ]( /value=∀/Data/Algebra/Ord ) = /Data/Maybe/Some( EAppVar /T ∀/Data/Algebra/Ord )( EAppArg Value /value@Value /av -> ∀/Data/Algebra/Ord ) ) -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
                             ( /Data/Algebra/compareTo
                                 ( EAppArg Value /other -> TVArg /bv = ( Value /bv ↦ TVArg /bv ) )
                                 ( EAppArg Value /this -> TVArg /av = ( Value /av ↦ TVArg /av ) ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )

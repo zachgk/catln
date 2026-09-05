@@ -22,13 +22,13 @@ Prgm
                         , /Catln/Doc/dshow
                             ( Value /s -> /Catln/#md( /text=/Data/String ) = /Catln/#md( Value /text -> /Data/String ) ) -> /Catln/Doc/Show/MD( /text=/Data/String ) = /Catln/Doc/Show/MD( Value /text -> TVArg /text = Value /text )
                         , /Catln/Doc/dshow
-                            ( Value /s -> /Catln/#print( /p=TopType ) = /Catln/#print( Value /p ) ) -> TVArg /p = Value /p
+                            ( Value /s -> /Catln/#print( /p=∀/Catln/Doc/DShow ) = /Catln/#print( Value /p -> ∀/Catln/Doc/DShow ) ) -> TVArg /p = Value /p
                         , /Catln/Doc/dshow
                             ( Value /s -> /Catln/Doc/#overlay( /url=/Data/String ) = /Catln/Doc/#overlay( Value /url -> /Data/String ) ) -> /Catln/Doc/Show/Overlay( /url=/Data/String ) = /Catln/Doc/Show/Overlay( Value /url -> TVArg /url = Value /url )
                         , /Catln/Doc/dshow
-                            ( Value /s -> /Catln/Doc/#listProgram( /mode=TopType ) = /Catln/Doc/#listProgram( Value /mode ) ) -> /Catln/Doc/Show/ListProgram
+                            ( Value /s -> /Catln/Doc/#listProgram( /mode=∀/Catln/Doc/ListProgramMode ) = /Catln/Doc/#listProgram( Value /mode -> ∀/Catln/Doc/ListProgramMode ) ) -> /Catln/Doc/Show/ListProgram
                             ( /prgm=/Data/String
-                            , /mode=TopType
+                            , /mode=∀/Catln/Doc/ListProgramMode
                             ) = /Catln/Doc/Show/ListProgram
                             ( Value /prgm -> /Data/String = /dshow./Catln/Doc/listProgram( Value /mode -> TVArg /mode = Value /mode )( Value /annot -> /s = Value /s ) )( Value /mode -> TVArg /mode = Value /mode )
                         , /Catln/Doc/dshow

@@ -113,13 +113,20 @@ Prgm
         , /Catln/#print
             ( Value /p -> ∀/Catln/Doc/DShow = /Noted
                 ( Value /name -> /Data/String = CStr "has both" )
-                ( Value /tags -> /Data/List/Cons
+                ( Value /tags -> /Data/List/Cons[ /T=/Data/String ]
                     ( /head=/Data/String
                     , /tail=/Data/List/Nil
                     ) = /Data/List/Cons
                     ( Value /head -> /Data/String = CStr "x" )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                 )
-                ( Value /due -> /Data/Maybe/Some( /value=/Data/String ) = /Data/Maybe/Some
+                ( Value /due -> /Data/Maybe/Some
+                    [ /T=UnionType
+                        ( Nothing
+                        , ∅
+                        ,
+                            [ CStr "2026-01-01" ]
+                        )
+                    ]( /value=/Data/String ) = /Data/Maybe/Some
                     ( Value /value -> /Data/String = CStr "2026-01-01" )
                 )
             )

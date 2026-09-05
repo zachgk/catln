@@ -6,8 +6,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Set/allIn[ /E : ∀/Data/Algebra/Ord ]
-                            ( Value items -> ∀/Data/List/ConsList[ /T=$/E ] )
-                            ( Value s -> ∀/Data/Set[ /T=$/E ] ) -> ∀/Data/Primitive/Boolean
+                            ( Value items -> ∀/Data/List/ConsList[ /T=$^/E ] )
+                            ( Value s -> ∀/Data/Set[ /T=$^/E ] ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -35,8 +35,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Set/intersection[ /E : ∀/Data/Algebra/Ord ]
-                            ( Value a -> ∀/Data/Set[ /T=$/E ] )
-                            ( Value b -> ∀/Data/Set[ /T=$/E ] ) -> ∀/Data/Set[ /T=$/E ]
+                            ( Value a -> ∀/Data/Set[ /T=$^/E ] )
+                            ( Value b -> ∀/Data/Set[ /T=$^/E ] ) -> ∀/Data/Set[ /T=$^/E ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -51,8 +51,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Set/union[ /E : ∀/Data/Algebra/Ord ]
-                            ( Value a -> ∀/Data/Set[ /T=$/E ] )
-                            ( Value b -> ∀/Data/Set[ /T=$/E ] ) -> ∀/Data/Set[ /T=$/E ]
+                            ( Value a -> ∀/Data/Set[ /T=$^/E ] )
+                            ( Value b -> ∀/Data/Set[ /T=$^/E ] ) -> ∀/Data/Set[ /T=$^/E ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -67,7 +67,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Set/add[ /E : ∀/Data/Algebra/Ord ]
-                            ( Value s -> ∀/Data/Set[ /T=$/E ] )( Value item -> $/E ) -> ∀/Data/Set[ /T=$/E ]
+                            ( Value s -> ∀/Data/Set[ /T=$^/E ] )( Value item -> $/E ) -> ∀/Data/Set[ /T=$^/E ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -83,9 +83,9 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Set/intersectInto[ /E : ∀/Data/Algebra/Ord ]
-                            ( Value items -> ∀/Data/List/ConsList[ /T=$/E ] )
-                            ( Value b -> ∀/Data/Set[ /T=$/E ] )
-                            ( Value acc -> ∀/Data/Set[ /T=$/E ] ) -> ∀/Data/Set[ /T=$/E ]
+                            ( Value items -> ∀/Data/List/ConsList[ /T=$^/E ] )
+                            ( Value b -> ∀/Data/Set[ /T=$^/E ] )
+                            ( Value acc -> ∀/Data/Set[ /T=$^/E ] ) -> ∀/Data/Set[ /T=$^/E ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -119,8 +119,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Set/isSubsetOf[ /E : ∀/Data/Algebra/Ord ]
-                            ( Value a -> ∀/Data/Set[ /T=$/E ] )
-                            ( Value b -> ∀/Data/Set[ /T=$/E ] ) -> ∀/Data/Primitive/Boolean
+                            ( Value a -> ∀/Data/Set[ /T=$^/E ] )
+                            ( Value b -> ∀/Data/Set[ /T=$^/E ] ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -135,7 +135,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Set/addIf[ /E : ∀/Data/Algebra/Ord ]( Value cond -> ∀/Data/Primitive/Boolean )
-                            ( Value s -> ∀/Data/Set[ /T=$/E ] )( Value item -> $/E ) -> ∀/Data/Set[ /T=$/E ]
+                            ( Value s -> ∀/Data/Set[ /T=$^/E ] )( Value item -> $/E ) -> ∀/Data/Set[ /T=$^/E ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -150,8 +150,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Set/removeAll[ /E : ∀/Data/Algebra/Ord ]
-                            ( Value s -> ∀/Data/Set[ /T=$/E ] )
-                            ( Value items -> ∀/Data/List/ConsList[ /T=$/E ] ) -> ∀/Data/Set[ /T=$/E ]
+                            ( Value s -> ∀/Data/Set[ /T=$^/E ] )
+                            ( Value items -> ∀/Data/List/ConsList[ /T=$^/E ] ) -> ∀/Data/Set[ /T=$^/E ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -199,8 +199,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Set/setEqual[ /E : ∀/Data/Algebra/Ord ]
-                            ( Value a -> ∀/Data/Set[ /T=$/E ] )
-                            ( Value b -> ∀/Data/Set[ /T=$/E ] ) -> ∀/Data/Primitive/Boolean
+                            ( Value a -> ∀/Data/Set[ /T=$^/E ] )
+                            ( Value b -> ∀/Data/Set[ /T=$^/E ] ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -235,8 +235,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Set/addAll[ /E : ∀/Data/Algebra/Ord ]
-                            ( Value s -> ∀/Data/Set[ /T=$/E ] )
-                            ( Value items -> ∀/Data/List/ConsList[ /T=$/E ] ) -> ∀/Data/Set[ /T=$/E ]
+                            ( Value s -> ∀/Data/Set[ /T=$^/E ] )
+                            ( Value items -> ∀/Data/List/ConsList[ /T=$^/E ] ) -> ∀/Data/Set[ /T=$^/E ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -253,7 +253,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Set/contains[ /E : ∀/Data/Algebra/Ord ]
-                            ( Value s -> ∀/Data/Set[ /T=$/E ] )( Value item -> $/E ) -> ∀/Data/Primitive/Boolean
+                            ( Value s -> ∀/Data/Set[ /T=$^/E ] )( Value item -> $/E ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -268,8 +268,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Set/difference[ /E : ∀/Data/Algebra/Ord ]
-                            ( Value a -> ∀/Data/Set[ /T=$/E ] )
-                            ( Value b -> ∀/Data/Set[ /T=$/E ] ) -> ∀/Data/Set[ /T=$/E ]
+                            ( Value a -> ∀/Data/Set[ /T=$^/E ] )
+                            ( Value b -> ∀/Data/Set[ /T=$^/E ] ) -> ∀/Data/Set[ /T=$^/E ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -297,7 +297,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Set/remove[ /E : ∀/Data/Algebra/Ord ]
-                            ( Value s -> ∀/Data/Set[ /T=$/E ] )( Value item -> $/E ) -> ∀/Data/Set[ /T=$/E ]
+                            ( Value s -> ∀/Data/Set[ /T=$^/E ] )( Value item -> $/E ) -> ∀/Data/Set[ /T=$^/E ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

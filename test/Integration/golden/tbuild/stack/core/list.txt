@@ -63,8 +63,9 @@ Prgm
                         , /Data/List/length
                             ( EAppArg Value /this -> /Data/List/Cons
                                 ( /head=TopType
-                                , /tail=TopType
-                                ) = /Data/List/Cons( EAppArg Value /head )( EAppArg Value /tail )
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                ) = /Data/List/Cons( EAppArg Value /head )
+                                ( EAppArg Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
                             ) -> /Data/Primitive/Integer =
                             ( /operator+
                                 ( EAppArg Value /l -> /Data/Primitive/Integer = 1 )
@@ -139,8 +140,9 @@ Prgm
                         , /Data/List/append
                             ( EAppArg Value /a -> /Data/List/Cons
                                 ( /head=TopType
-                                , /tail=TopType
-                                ) = /Data/List/Cons( EAppArg Value /head )( EAppArg Value /tail )
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                ) = /Data/List/Cons( EAppArg Value /head )
+                                ( EAppArg Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
                             )
                             ( EAppArg Value /b -> ∀/Data/List/ConsList[ /T=TopType ] ) -> /Data/List/Cons
                             ( /head=TopType
@@ -168,9 +170,11 @@ Prgm
                         , /reversed./Data/List/reverseOnto
                             ( EAppArg Value /lst -> /Data/List/Cons
                                 ( /head=TopType
-                                , /tail=TopType
-                                ) = /Data/List/Cons( EAppArg Value /head )( EAppArg Value /tail )
-                            )( EAppArg Value /acc -> ∀/Data/List/ConsList ) -> ∀/Data/List/ConsList =
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                ) = /Data/List/Cons( EAppArg Value /head )
+                                ( EAppArg Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
+                            )
+                            ( EAppArg Value /acc -> ∀/Data/List/ConsList[ /T=TopType ] ) -> ∀/Data/List/ConsList =
                             ( /reversed./Data/List/reverseOnto
                                 ( EAppArg Value /lst -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) )
                                 ( EAppArg Value /acc -> /Data/List/Cons[ /T=TopType ]
@@ -201,9 +205,10 @@ Prgm
                             ( EAppArg Value /head -> TVArg /x = ( Value /x ↦ TVArg /x ) )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                         , /sorted./Data/List/insert( EAppArg Value /t )( EAppArg Value /h )( EAppArg Value /x -> ∀/Data/Algebra/Ord )
                             ( EAppArg Value /lst -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                ( /head=TopType
-                                , /tail=TopType
-                                ) = /Data/List/Cons( EAppVar /T ∀/Data/Algebra/Ord )( EAppArg Value /head )( EAppArg Value /tail )
+                                ( /head=∀/Data/Algebra/Ord
+                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                ) = /Data/List/Cons( EAppVar /T ∀/Data/Algebra/Ord )( EAppArg Value /head -> ∀/Data/Algebra/Ord )
+                                ( EAppArg Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
                             ) -> UnionType
                             ( Just
                                 ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
@@ -213,24 +218,13 @@ Prgm
                             ,
                                 ( /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                                     ( /head=∀/Data/Algebra/Ord
-                                    , /tail=UnionType
-                                        ( Just
-                                            ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                            ( /head=∀/Data/Algebra/Ord
-                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                            )
-                                        , []
-                                        )
+                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                     ) + /sorted./Data/List/insertStep
-                                    ( /head=TopType
+                                    ( /head=∀/Data/Algebra/Ord
                                     , /before=∀/Data/Primitive/Boolean
                                     , /t=TopType
                                     , /x=∀/Data/Algebra/Ord
-                                    , /tail=TopType
+                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                     , /h=TopType
                                     )
                                 )
@@ -291,15 +285,16 @@ Prgm
                         [ /Data/List/sum( EAppArg Value /lst -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/Primitive/Integer = 0
                         , /Data/List/sum
                             ( EAppArg Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                                ( /head=TopType
-                                , /tail=TopType
-                                ) = /Data/List/Cons( EAppVar /T /Data/Primitive/Integer )( EAppArg Value /head )( EAppArg Value /tail )
+                                ( /head=/Data/Primitive/Integer
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                                ) = /Data/List/Cons( EAppVar /T /Data/Primitive/Integer )( EAppArg Value /head -> /Data/Primitive/Integer )
+                                ( EAppArg Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] )
                             ) -> /Data/Primitive/Integer =
                             ( /operator+
                                 ( EAppArg Value /l -> TVArg /head = ( Value /head ↦ TVArg /head ) )
-                                ( EAppArg Value /r -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) =
+                                ( EAppArg Value /r -> /Data/Primitive/Integer =
                                     ( /Data/List/sum
-                                        ( EAppArg Value /lst -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) ) ↦ ( /Data/Primitive/Integer + /Data/Primitive/Float )
+                                        ( EAppArg Value /lst -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) ) ↦ /Data/Primitive/Integer
                                     )
                                 ) ↦ /Data/Primitive/Integer
                             )
@@ -418,9 +413,10 @@ Prgm
                         [ /Data/List/any( EAppArg Value /lst -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/List/any
                             ( EAppArg Value /lst -> /Data/List/Cons[ /T=∀/Data/Primitive/Boolean ]
-                                ( /head=TopType
-                                , /tail=TopType
-                                ) = /Data/List/Cons( EAppVar /T ∀/Data/Primitive/Boolean )( EAppArg Value /head )( EAppArg Value /tail )
+                                ( /head=∀/Data/Primitive/Boolean
+                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Primitive/Boolean ]
+                                ) = /Data/List/Cons( EAppVar /T ∀/Data/Primitive/Boolean )( EAppArg Value /head -> ∀/Data/Primitive/Boolean )
+                                ( EAppArg Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Primitive/Boolean ] )
                             ) -> ∀/Data/Primitive/Boolean =
                             ( /operator||
                                 ( EAppArg Value /l -> TVArg /head = ( Value /head ↦ TVArg /head ) )
@@ -446,9 +442,10 @@ Prgm
                         [ /Data/List/sorted( EAppArg Value /lst -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/List/Nil = Value /Data/List/Nil
                         , /Data/List/sorted
                             ( EAppArg Value /lst -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                ( /head=TopType
-                                , /tail=TopType
-                                ) = /Data/List/Cons( EAppVar /T ∀/Data/Algebra/Ord )( EAppArg Value /head@Value /h )( EAppArg Value /tail@Value /t )
+                                ( /head=∀/Data/Algebra/Ord
+                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                ) = /Data/List/Cons( EAppVar /T ∀/Data/Algebra/Ord )( EAppArg Value /head@Value /h -> ∀/Data/Algebra/Ord )
+                                ( EAppArg Value /tail@Value /t -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
                             ) -> UnionType
                             ( Just
                                 ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
@@ -457,8 +454,8 @@ Prgm
                                 )
                             ,
                                 ( /sorted./Data/List/insert
-                                    ( /t=TopType
-                                    , /x=TopType
+                                    ( /t=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                    , /x=∀/Data/Algebra/Ord
                                     , /lst=UnionType
                                         ( Just
                                             ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=∀/Data/Algebra/Ord ]
@@ -476,7 +473,7 @@ Prgm
                                             )
                                         , []
                                         )
-                                    , /h=TopType
+                                    , /h=∀/Data/Algebra/Ord
                                     ) + /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                                     ( /head=∀/Data/Algebra/Ord
                                     , /tail=
@@ -487,7 +484,7 @@ Prgm
                                         )
                                     ) + /sorted./Data/List/insertStep[ /T=∀/Data/Algebra/Ord ]
                                     ( /head=∀/Data/Algebra/Ord
-                                    , /before=( /Data/Primitive/True + /Data/Primitive/False )
+                                    , /before=∀/Data/Primitive/Boolean
                                     , /t=TopType
                                     , /x=∀/Data/Algebra/Ord
                                     , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
@@ -553,7 +550,7 @@ Prgm
                                             )
                                         ) + /sorted./Data/List/insertStep[ /T=∀/Data/Algebra/Ord ]
                                         ( /head=∀/Data/Algebra/Ord
-                                        , /before=( /Data/Primitive/True + /Data/Primitive/False )
+                                        , /before=∀/Data/Primitive/Boolean
                                         , /t=TopType
                                         , /x=∀/Data/Algebra/Ord
                                         , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
@@ -590,41 +587,27 @@ Prgm
                         , /Data/Functor/fmap
                             ( EAppArg Value /lst -> /Data/List/Cons
                                 ( /head=TopType
-                                , /tail=TopType
-                                ) = /Data/List/Cons( EAppArg Value /head )( EAppArg Value /tail )
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                ) = /Data/List/Cons( EAppArg Value /head )
+                                ( EAppArg Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
                             )
                             ( EAppArg /fn( EAppArg Value /v ) ) -> /Data/List/Cons
                             ( /head=TopType
-                            , /tail=
-                                ( /Data/List/Nil + /Data/List/Cons[ /T=TopType ]
-                                    ( /head=$/T
-                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                    )
-                                )
+                            , /tail=∀/Data/List/ConsList[ /T=TopType ]
                             ) = /Data/List/Cons
                             ( EAppArg Value /head=
                                 ( /fn
                                     ( EAppArg Value /v -> TVArg /head = ( Value /head ↦ TVArg /head ) ) ↦ TopType
                                 )
                             )
-                            ( EAppArg Value /tail ->
-                                ( /Data/List/Nil + /Data/List/Cons[ /T=TopType ]
-                                    ( /head=$/T
-                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                    )
-                                ) =
+                            ( EAppArg Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] =
                                 ( /Data/Functor/fmap
                                     ( EAppArg Value /lst -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) )
                                     ( EAppArg /fn( EAppArg Value /v )=
                                         ( /fn
                                             ( EAppArg Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) ) ↦ TopType
                                         )
-                                    ) ↦
-                                    ( /Data/List/Nil + /Data/List/Cons[ /T=TopType ]
-                                        ( /head=$/T
-                                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                        )
-                                    )
+                                    ) ↦ ∀/Data/List/ConsList[ /T=TopType ]
                                 )
                             )
                         ]
@@ -655,9 +638,10 @@ Prgm
                         [ /Data/List/all( EAppArg Value /lst -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         , /Data/List/all
                             ( EAppArg Value /lst -> /Data/List/Cons[ /T=∀/Data/Primitive/Boolean ]
-                                ( /head=TopType
-                                , /tail=TopType
-                                ) = /Data/List/Cons( EAppVar /T ∀/Data/Primitive/Boolean )( EAppArg Value /head )( EAppArg Value /tail )
+                                ( /head=∀/Data/Primitive/Boolean
+                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Primitive/Boolean ]
+                                ) = /Data/List/Cons( EAppVar /T ∀/Data/Primitive/Boolean )( EAppArg Value /head -> ∀/Data/Primitive/Boolean )
+                                ( EAppArg Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Primitive/Boolean ] )
                             ) -> ∀/Data/Primitive/Boolean =
                             ( /operator&&
                                 ( EAppArg Value /l -> TVArg /head = ( Value /head ↦ TVArg /head ) )
@@ -699,9 +683,10 @@ Prgm
                         [ /toString./Data/List/restToString( EAppArg Value /t )( EAppArg Value /h )( EAppArg Value /lst -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/String = ""
                         , /toString./Data/List/restToString( EAppArg Value /t )( EAppArg Value /h )
                             ( EAppArg Value /lst -> /Data/List/Cons[ /T=∀/Data/ToString ]
-                                ( /head=TopType
-                                , /tail=TopType
-                                ) = /Data/List/Cons( EAppVar /T ∀/Data/ToString )( EAppArg Value /head )( EAppArg Value /tail )
+                                ( /head=∀/Data/ToString
+                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
+                                ) = /Data/List/Cons( EAppVar /T ∀/Data/ToString )( EAppArg Value /head -> ∀/Data/ToString )
+                                ( EAppArg Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
                             ) -> /Data/String =
                             ( /operator++
                                 ( EAppArg Value /l -> ∀/Data/Algebra/Semigroup =
@@ -738,13 +723,13 @@ Prgm
                         [ /sorted./Data/List/insertStep( EAppArg Value /t )( EAppArg Value /h )( EAppVar /T ∀/Data/Algebra/Ord )( EAppArg Value /before -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /x -> ∀/Data/Algebra/Ord )( EAppArg Value /head -> ∀/Data/Algebra/Ord )
                             ( EAppArg Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> /Data/List/Cons
                             ( /head=∀/Data/Algebra/Ord
-                            , /tail=/Data/List/Cons
+                            , /tail=/Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                                 ( /head=∀/Data/Algebra/Ord
                                 , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                 )
                             ) = /Data/List/Cons
                             ( EAppArg Value /head -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-                            ( EAppArg Value /tail -> /Data/List/Cons
+                            ( EAppArg Value /tail -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                                 ( /head=∀/Data/Algebra/Ord
                                 , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                 ) = /Data/List/Cons
@@ -794,25 +779,29 @@ Prgm
                         , /Data/Algebra/equal
                             ( EAppArg Value /other -> /Data/List/Cons
                                 ( /head=TopType
-                                , /tail=TopType
-                                ) = /Data/List/Cons( EAppArg Value /head )( EAppArg Value /tail )
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                ) = /Data/List/Cons( EAppArg Value /head )
+                                ( EAppArg Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
                             )( EAppArg Value /this -> /Data/List/Nil ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/Algebra/equal( EAppArg Value /other -> /Data/List/Nil = Value /Data/List/Nil )
                             ( EAppArg Value /this -> /Data/List/Cons
                                 ( /head=TopType
-                                , /tail=TopType
-                                ) = /Data/List/Cons( EAppArg Value /head )( EAppArg Value /tail )
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                ) = /Data/List/Cons( EAppArg Value /head )
+                                ( EAppArg Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
                             ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/Algebra/equal
                             ( EAppArg Value /other -> /Data/List/Cons
                                 ( /head=TopType
-                                , /tail=TopType
-                                ) = /Data/List/Cons( EAppArg Value /head@Value /bh )( EAppArg Value /tail@Value /bt )
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                ) = /Data/List/Cons( EAppArg Value /head@Value /bh )
+                                ( EAppArg Value /tail@Value /bt -> ∀/Data/List/ConsList[ /T=TopType ] )
                             )
                             ( EAppArg Value /this -> /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
-                                ( /head=TopType
-                                , /tail=TopType
-                                ) = /Data/List/Cons( EAppVar /T ∀/Data/Algebra/Eq )( EAppArg Value /head@Value /ah )( EAppArg Value /tail@Value /at )
+                                ( /head=∀/Data/Algebra/Eq
+                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ]
+                                ) = /Data/List/Cons( EAppVar /T ∀/Data/Algebra/Eq )( EAppArg Value /head@Value /ah -> ∀/Data/Algebra/Eq )
+                                ( EAppArg Value /tail@Value /at -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ] )
                             ) -> ∀/Data/Primitive/Boolean =
                             ( /operator&&
                                 ( EAppArg Value /l -> ∀/Data/Primitive/Boolean =
@@ -856,25 +845,29 @@ Prgm
                         , /Data/Algebra/compareTo
                             ( EAppArg Value /other -> /Data/List/Cons
                                 ( /head=TopType
-                                , /tail=TopType
-                                ) = /Data/List/Cons( EAppArg Value /head )( EAppArg Value /tail )
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                ) = /Data/List/Cons( EAppArg Value /head )
+                                ( EAppArg Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
                             )( EAppArg Value /this -> /Data/List/Nil ) -> /Data/Algebra/LessThan = Value /Data/Algebra/LessThan
                         , /Data/Algebra/compareTo( EAppArg Value /other -> /Data/List/Nil = Value /Data/List/Nil )
                             ( EAppArg Value /this -> /Data/List/Cons
                                 ( /head=TopType
-                                , /tail=TopType
-                                ) = /Data/List/Cons( EAppArg Value /head )( EAppArg Value /tail )
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                ) = /Data/List/Cons( EAppArg Value /head )
+                                ( EAppArg Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
                             ) -> /Data/Algebra/GreaterThan = Value /Data/Algebra/GreaterThan
                         , /Data/Algebra/compareTo
                             ( EAppArg Value /other -> /Data/List/Cons
                                 ( /head=TopType
-                                , /tail=TopType
-                                ) = /Data/List/Cons( EAppArg Value /head@Value /bh )( EAppArg Value /tail@Value /bt )
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                ) = /Data/List/Cons( EAppArg Value /head@Value /bh )
+                                ( EAppArg Value /tail@Value /bt -> ∀/Data/List/ConsList[ /T=TopType ] )
                             )
                             ( EAppArg Value /this -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                ( /head=TopType
-                                , /tail=TopType
-                                ) = /Data/List/Cons( EAppVar /T ∀/Data/Algebra/Ord )( EAppArg Value /head@Value /ah )( EAppArg Value /tail@Value /at )
+                                ( /head=∀/Data/Algebra/Ord
+                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                ) = /Data/List/Cons( EAppVar /T ∀/Data/Algebra/Ord )( EAppArg Value /head@Value /ah -> ∀/Data/Algebra/Ord )
+                                ( EAppArg Value /tail@Value /at -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
                             ) -> ∀/Data/Algebra/Comparison =
                             ( /Data/List/consThen
                                 ( EAppArg Value /first -> ∀/Data/Algebra/Comparison =
@@ -1113,7 +1106,7 @@ Prgm
                     ( PredExpr /operator==
                         ( /r=/Data/Primitive/True
                         , /l=~nonNeg( /this=~/$this )
-                        ) && PredRel Integer
+                        ) && PredRel Integer && PredClass /Catln/Doc/DShow
                     , fromList []
                     , []
                     )
@@ -1132,15 +1125,15 @@ Prgm
                             )
                         ) = /Data/List/Cons
                         ( EAppArg Value /head -> /Data/Primitive/Integer = 10 )
-                        ( EAppArg Value /tail -> /Data/List/Cons
+                        ( EAppArg Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
-                            , /tail=/Data/List/Cons
+                            , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                 ( /head=/Data/Primitive/Integer
                                 , /tail=/Data/List/Nil
                                 )
                             ) = /Data/List/Cons
                             ( EAppArg Value /head -> /Data/Primitive/Integer = 20 )
-                            ( EAppArg Value /tail -> /Data/List/Cons
+                            ( EAppArg Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                 ( /head=/Data/Primitive/Integer
                                 , /tail=/Data/List/Nil
                                 ) = /Data/List/Cons
@@ -1152,7 +1145,7 @@ Prgm
                         ( PredExpr /operator==
                             ( /r=/Data/Primitive/True
                             , /l=~nonNeg( /this=~/$this )
-                            ) && PredRel Integer
+                            ) && PredRel Integer && PredClass /Catln/Doc/DShow
                         , fromList []
                         , []
                         )
@@ -1165,7 +1158,7 @@ Prgm
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "## Summing" )
         , /Catln/#print
-            ( EAppArg Value /p -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) =
+            ( EAppArg Value /p -> /Data/Primitive/Integer =
                 ( /Data/List/sum
                     ( EAppArg Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                         ( /head=/Data/Primitive/Integer
@@ -1178,22 +1171,22 @@ Prgm
                             )
                         ) = /Data/List/Cons
                         ( EAppArg Value /head -> /Data/Primitive/Integer = 1 )
-                        ( EAppArg Value /tail -> /Data/List/Cons
+                        ( EAppArg Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
-                            , /tail=/Data/List/Cons
+                            , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                 ( /head=/Data/Primitive/Integer
                                 , /tail=/Data/List/Nil
                                 )
                             ) = /Data/List/Cons
                             ( EAppArg Value /head -> /Data/Primitive/Integer = 2 )
-                            ( EAppArg Value /tail -> /Data/List/Cons
+                            ( EAppArg Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                 ( /head=/Data/Primitive/Integer
                                 , /tail=/Data/List/Nil
                                 ) = /Data/List/Cons
                                 ( EAppArg Value /head -> /Data/Primitive/Integer = 3 )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                             )
                         )
-                    ) ↦ ( /Data/Primitive/Integer + /Data/Primitive/Float )
+                    ) ↦ /Data/Primitive/Integer
                 )
             )
             ( EAppArg Value /result -> /Data/String = "6" )
@@ -1214,7 +1207,7 @@ Prgm
                             , /tail=/Data/List/Nil
                             )
                         ) = /Data/List/Cons( EAppArg Value /head -> /Data/Primitive/True = Value /Data/Primitive/True )
-                        ( EAppArg Value /tail -> /Data/List/Cons
+                        ( EAppArg Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/True ]
                             ( /head=/Data/Primitive/True
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons( EAppArg Value /head -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
@@ -1255,7 +1248,7 @@ Prgm
                             , /tail=/Data/List/Nil
                             )
                         ) = /Data/List/Cons( EAppArg Value /head -> /Data/Primitive/False = Value /Data/Primitive/False )
-                        ( EAppArg Value /tail -> /Data/List/Cons
+                        ( EAppArg Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/False ]
                             ( /head=/Data/Primitive/False
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons( EAppArg Value /head -> /Data/Primitive/False = Value /Data/Primitive/False )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
@@ -1269,13 +1262,13 @@ Prgm
         , /Catln/#print
             ( EAppArg Value /p -> UnionType
                 ( Just
-                    ( PredClass /Data/List
+                    ( PredClass /Catln/Doc/DShow && PredClass /Data/List
                     , fromList []
                     , []
                     )
-                , /Data/List/Cons[ /T=TopType ]
+                , /Data/List/Cons[ /T=∀/Data/ToString ]
                     ( /head=$/T
-                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                     )
                 , []
                 ) =
@@ -1291,15 +1284,15 @@ Prgm
                             )
                         ) = /Data/List/Cons
                         ( EAppArg Value /head -> /Data/Primitive/Integer = 1 )
-                        ( EAppArg Value /tail -> /Data/List/Cons
+                        ( EAppArg Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
-                            , /tail=/Data/List/Cons
+                            , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                 ( /head=/Data/Primitive/Integer
                                 , /tail=/Data/List/Nil
                                 )
                             ) = /Data/List/Cons
                             ( EAppArg Value /head -> /Data/Primitive/Integer = 2 )
-                            ( EAppArg Value /tail -> /Data/List/Cons
+                            ( EAppArg Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                 ( /head=/Data/Primitive/Integer
                                 , /tail=/Data/List/Nil
                                 ) = /Data/List/Cons
@@ -1308,13 +1301,13 @@ Prgm
                         )
                     ) ↦ UnionType
                     ( Just
-                        ( PredClass /Data/List
+                        ( PredClass /Catln/Doc/DShow && PredClass /Data/List
                         , fromList []
                         , []
                         )
-                    , /Data/List/Cons[ /T=TopType ]
+                    , /Data/List/Cons[ /T=∀/Data/ToString ]
                         ( /head=$/T
-                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                         )
                     , []
                     )
@@ -1324,25 +1317,25 @@ Prgm
         , /Catln/#print
             ( EAppArg Value /p -> UnionType
                 ( Just
-                    ( PredClass /Data/List
+                    ( PredClass /Catln/Doc/DShow && PredClass /Data/List
                     , fromList []
                     , []
                     )
-                , /Data/List/Cons[ /T=TopType ]
+                , /Data/List/Cons[ /T=∀/Data/ToString ]
                     ( /head=$/T
-                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                     )
                 , []
                 ) =
                 ( /Data/List/reversed( EAppArg Value /lst -> /Data/List/Nil = Value /Data/List/Nil ) ↦ UnionType
                     ( Just
-                        ( PredClass /Data/List
+                        ( PredClass /Catln/Doc/DShow && PredClass /Data/List
                         , fromList []
                         , []
                         )
-                    , /Data/List/Cons[ /T=TopType ]
+                    , /Data/List/Cons[ /T=∀/Data/ToString ]
                         ( /head=$/T
-                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                         )
                     , []
                     )
@@ -1354,16 +1347,23 @@ Prgm
         , /Catln/#print
             ( EAppArg Value /p -> UnionType
                 ( Just
-                    ( PredClass /Data/List[ /T=/Data/Primitive/Integer ]
+                    ( !
+                        ( !
+                            ( PredClass /Data/List[ /T=/Data/Primitive/Integer ] ) && !
+                            ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
+                        ) && PredClass /Catln/Doc/DShow && PredClass /Data/List[ /T=∀/Data/Algebra/Ord ]
                     , fromList []
                     , []
                     )
-                , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                    ( /head=∀/Data/Algebra/Ord
+                , /Data/List/Cons
+                    [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString ) ]
+                    ( /head=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString )
                     , /tail=
-                        ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                            ( /head=∀/Data/Algebra/Ord
-                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                        ( /Data/List/Nil + /Data/List/Cons
+                            [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString ) ]
+                            ( /head=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString )
+                            , /tail=∀/Data/List/ConsList
+                                [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString ) ]
                             )
                         )
                     )
@@ -1381,15 +1381,15 @@ Prgm
                             )
                         ) = /Data/List/Cons
                         ( EAppArg Value /head -> /Data/Primitive/Integer = 3 )
-                        ( EAppArg Value /tail -> /Data/List/Cons
+                        ( EAppArg Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
-                            , /tail=/Data/List/Cons
+                            , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                 ( /head=/Data/Primitive/Integer
                                 , /tail=/Data/List/Nil
                                 )
                             ) = /Data/List/Cons
                             ( EAppArg Value /head -> /Data/Primitive/Integer = 1 )
-                            ( EAppArg Value /tail -> /Data/List/Cons
+                            ( EAppArg Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                 ( /head=/Data/Primitive/Integer
                                 , /tail=/Data/List/Nil
                                 ) = /Data/List/Cons
@@ -1398,16 +1398,23 @@ Prgm
                         )
                     ) ↦ UnionType
                     ( Just
-                        ( PredClass /Data/List[ /T=/Data/Primitive/Integer ]
+                        ( !
+                            ( !
+                                ( PredClass /Data/List[ /T=/Data/Primitive/Integer ] ) && !
+                                ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
+                            ) && PredClass /Catln/Doc/DShow && PredClass /Data/List[ /T=∀/Data/Algebra/Ord ]
                         , fromList []
                         , []
                         )
-                    , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                        ( /head=∀/Data/Algebra/Ord
+                    , /Data/List/Cons
+                        [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString ) ]
+                        ( /head=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString )
                         , /tail=
-                            ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                ( /head=∀/Data/Algebra/Ord
-                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                            ( /Data/List/Nil + /Data/List/Cons
+                                [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString ) ]
+                                ( /head=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString )
+                                , /tail=∀/Data/List/ConsList
+                                    [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString ) ]
                                 )
                             )
                         )
@@ -1419,16 +1426,23 @@ Prgm
         , /Catln/#print
             ( EAppArg Value /p -> UnionType
                 ( Just
-                    ( PredClass /Data/List[ /T=/Data/Primitive/Integer ]
+                    ( !
+                        ( !
+                            ( PredClass /Data/List[ /T=/Data/Primitive/Integer ] ) && !
+                            ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
+                        ) && PredClass /Catln/Doc/DShow && PredClass /Data/List[ /T=∀/Data/Algebra/Ord ]
                     , fromList []
                     , []
                     )
-                , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                    ( /head=∀/Data/Algebra/Ord
+                , /Data/List/Cons
+                    [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString ) ]
+                    ( /head=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString )
                     , /tail=
-                        ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                            ( /head=∀/Data/Algebra/Ord
-                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                        ( /Data/List/Nil + /Data/List/Cons
+                            [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString ) ]
+                            ( /head=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString )
+                            , /tail=∀/Data/List/ConsList
+                                [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString ) ]
                             )
                         )
                     )
@@ -1449,26 +1463,26 @@ Prgm
                             )
                         ) = /Data/List/Cons
                         ( EAppArg Value /head -> /Data/Primitive/Integer = 5 )
-                        ( EAppArg Value /tail -> /Data/List/Cons
+                        ( EAppArg Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
-                            , /tail=/Data/List/Cons
+                            , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                 ( /head=/Data/Primitive/Integer
-                                , /tail=/Data/List/Cons
+                                , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                     ( /head=/Data/Primitive/Integer
                                     , /tail=/Data/List/Nil
                                     )
                                 )
                             ) = /Data/List/Cons
                             ( EAppArg Value /head -> /Data/Primitive/Integer = 4 )
-                            ( EAppArg Value /tail -> /Data/List/Cons
+                            ( EAppArg Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                 ( /head=/Data/Primitive/Integer
-                                , /tail=/Data/List/Cons
+                                , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                     ( /head=/Data/Primitive/Integer
                                     , /tail=/Data/List/Nil
                                     )
                                 ) = /Data/List/Cons
                                 ( EAppArg Value /head -> /Data/Primitive/Integer = 4 )
-                                ( EAppArg Value /tail -> /Data/List/Cons
+                                ( EAppArg Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                     ( /head=/Data/Primitive/Integer
                                     , /tail=/Data/List/Nil
                                     ) = /Data/List/Cons
@@ -1478,16 +1492,23 @@ Prgm
                         )
                     ) ↦ UnionType
                     ( Just
-                        ( PredClass /Data/List[ /T=/Data/Primitive/Integer ]
+                        ( !
+                            ( !
+                                ( PredClass /Data/List[ /T=/Data/Primitive/Integer ] ) && !
+                                ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
+                            ) && PredClass /Catln/Doc/DShow && PredClass /Data/List[ /T=∀/Data/Algebra/Ord ]
                         , fromList []
                         , []
                         )
-                    , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                        ( /head=∀/Data/Algebra/Ord
+                    , /Data/List/Cons
+                        [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString ) ]
+                        ( /head=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString )
                         , /tail=
-                            ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                ( /head=∀/Data/Algebra/Ord
-                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                            ( /Data/List/Nil + /Data/List/Cons
+                                [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString ) ]
+                                ( /head=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString )
+                                , /tail=∀/Data/List/ConsList
+                                    [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString ) ]
                                 )
                             )
                         )
@@ -1499,16 +1520,20 @@ Prgm
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "## Counting ranges" )
         , /Catln/#print
-            ( EAppArg Value /p -> ∀/Data/List[ /T=/Data/Primitive/Integer ] =
+            ( EAppArg Value /p ->
+                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/List[ /T=/Data/Primitive/Integer ] ) =
                 ( /Data/List/range
-                    ( EAppArg Value /stop -> /Data/Primitive/Integer = 3 ) ↦ ∀/Data/List[ /T=/Data/Primitive/Integer ]
+                    ( EAppArg Value /stop -> /Data/Primitive/Integer = 3 ) ↦
+                    ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/List[ /T=/Data/Primitive/Integer ] )
                 )
             )
             ( EAppArg Value /result -> /Data/String = "[0, 1, 2]" )
         , /Catln/#print
-            ( EAppArg Value /p -> ∀/Data/List[ /T=/Data/Primitive/Integer ] =
+            ( EAppArg Value /p ->
+                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/List[ /T=/Data/Primitive/Integer ] ) =
                 ( /Data/List/range
-                    ( EAppArg Value /stop -> /Data/Primitive/Integer = 0 ) ↦ ∀/Data/List[ /T=/Data/Primitive/Integer ]
+                    ( EAppArg Value /stop -> /Data/Primitive/Integer = 0 ) ↦
+                    ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/List[ /T=/Data/Primitive/Integer ] )
                 )
             )
             ( EAppArg Value /result -> /Data/String = "[]" )
@@ -1520,26 +1545,26 @@ Prgm
             [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
             implement it." )
         , /Catln/#print
-            ( EAppArg Value /p -> /Data/List/Cons
+            ( EAppArg Value /p -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                 ( /head=/Data/Primitive/Integer
-                , /tail=/Data/List/Cons
+                , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
                     ( /head=/Data/Primitive/Integer
-                    , /tail=/Data/List/Cons
+                    , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
                         ( /head=/Data/Primitive/Integer
                         , /tail=/Data/List/Nil
                         )
                     )
                 ) = /Data/List/Cons
                 ( EAppArg Value /head -> /Data/Primitive/Integer = 1 )
-                ( EAppArg Value /tail -> /Data/List/Cons
+                ( EAppArg Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                     ( /head=/Data/Primitive/Integer
-                    , /tail=/Data/List/Cons
+                    , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
                         ( /head=/Data/Primitive/Integer
                         , /tail=/Data/List/Nil
                         )
                     ) = /Data/List/Cons
                     ( EAppArg Value /head -> /Data/Primitive/Integer = 2 )
-                    ( EAppArg Value /tail -> /Data/List/Cons
+                    ( EAppArg Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                         ( /head=/Data/Primitive/Integer
                         , /tail=/Data/List/Nil
                         ) = /Data/List/Cons
@@ -1565,36 +1590,31 @@ Prgm
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "totally covered while still resolving for [fmap] calls on a [ConsList]." )
         , /Catln/#print
-            ( EAppArg Value /p -> /Data/List/Cons[ /T=TopType ]
+            ( EAppArg Value /p -> /Data/List/Cons[ /T=∀/Data/ToString ]
                 ( /head=$/T
-                , /tail=
-                    ( /Data/List/Nil + /Data/List/Cons[ /T=TopType ]
-                        ( /head=$/T
-                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                        )
-                    )
+                , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                 ) =
                 ( /Data/Functor/fmap
                     ( EAppArg Value /lst -> /Data/List/Cons
                         ( /head=/Data/Primitive/Integer
-                        , /tail=/Data/List/Cons
+                        , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
-                            , /tail=/Data/List/Cons
+                            , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                 ( /head=/Data/Primitive/Integer
                                 , /tail=/Data/List/Nil
                                 )
                             )
                         ) = /Data/List/Cons
                         ( EAppArg Value /head -> /Data/Primitive/Integer = 1 )
-                        ( EAppArg Value /tail -> /Data/List/Cons
+                        ( EAppArg Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
-                            , /tail=/Data/List/Cons
+                            , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                 ( /head=/Data/Primitive/Integer
                                 , /tail=/Data/List/Nil
                                 )
                             ) = /Data/List/Cons
                             ( EAppArg Value /head -> /Data/Primitive/Integer = 2 )
-                            ( EAppArg Value /tail -> /Data/List/Cons
+                            ( EAppArg Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                 ( /head=/Data/Primitive/Integer
                                 , /tail=/Data/List/Nil
                                 ) = /Data/List/Cons
@@ -1607,14 +1627,9 @@ Prgm
                             ( EAppArg Value /l -> TVArg /v = ( Value /v ↦ TVArg /v ) )
                             ( EAppArg Value /r -> /Data/Primitive/Integer = 1 ) ↦ /Data/Primitive/Integer
                         )
-                    ) ↦ /Data/List/Cons[ /T=TopType ]
+                    ) ↦ /Data/List/Cons[ /T=∀/Data/ToString ]
                     ( /head=$/T
-                    , /tail=
-                        ( /Data/List/Nil + /Data/List/Cons[ /T=TopType ]
-                            ( /head=$/T
-                            , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                            )
-                        )
+                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                     )
                 )
             )
@@ -1642,7 +1657,7 @@ Prgm
                             )
                         ) = /Data/List/Cons
                         ( EAppArg Value /head -> /Data/Primitive/Integer = 1 )
-                        ( EAppArg Value /tail -> /Data/List/Cons
+                        ( EAppArg Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
@@ -1657,7 +1672,7 @@ Prgm
                             )
                         ) = /Data/List/Cons
                         ( EAppArg Value /head -> /Data/Primitive/Integer = 1 )
-                        ( EAppArg Value /tail -> /Data/List/Cons
+                        ( EAppArg Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
@@ -1678,7 +1693,7 @@ Prgm
                             )
                         ) = /Data/List/Cons
                         ( EAppArg Value /head -> /Data/Primitive/Integer = 1 )
-                        ( EAppArg Value /tail -> /Data/List/Cons
+                        ( EAppArg Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
@@ -1693,7 +1708,7 @@ Prgm
                             )
                         ) = /Data/List/Cons
                         ( EAppArg Value /head -> /Data/Primitive/Integer = 1 )
-                        ( EAppArg Value /tail -> /Data/List/Cons
+                        ( EAppArg Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
@@ -1714,7 +1729,7 @@ Prgm
                             )
                         ) = /Data/List/Cons
                         ( EAppArg Value /head -> /Data/Primitive/Integer = 1 )
-                        ( EAppArg Value /tail -> /Data/List/Cons
+                        ( EAppArg Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
@@ -1769,13 +1784,13 @@ Prgm
                         ( /Data/Algebra/compareTo
                             ( EAppArg Value /other -> /Data/List/Cons
                                 ( /head=/Data/Primitive/Integer
-                                , /tail=/Data/List/Cons
+                                , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                     ( /head=/Data/Primitive/Integer
                                     , /tail=/Data/List/Nil
                                     )
                                 ) = /Data/List/Cons
                                 ( EAppArg Value /head -> /Data/Primitive/Integer = 1 )
-                                ( EAppArg Value /tail -> /Data/List/Cons
+                                ( EAppArg Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                     ( /head=/Data/Primitive/Integer
                                     , /tail=/Data/List/Nil
                                     ) = /Data/List/Cons
@@ -1800,28 +1815,28 @@ Prgm
                         ( /Data/Algebra/compareTo
                             ( EAppArg Value /other -> /Data/List/Cons
                                 ( /head=/Data/Primitive/Integer
-                                , /tail=/Data/List/Cons
+                                , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                     ( /head=/Data/Primitive/Integer
                                     , /tail=/Data/List/Nil
                                     )
                                 ) = /Data/List/Cons
                                 ( EAppArg Value /head -> /Data/Primitive/Integer = 1 )
-                                ( EAppArg Value /tail -> /Data/List/Cons
+                                ( EAppArg Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                     ( /head=/Data/Primitive/Integer
                                     , /tail=/Data/List/Nil
                                     ) = /Data/List/Cons
                                     ( EAppArg Value /head -> /Data/Primitive/Integer = 2 )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                                 )
                             )
-                            ( EAppArg Value /this -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                            ( EAppArg Value /this -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                 ( /head=/Data/Primitive/Integer
-                                , /tail=/Data/List/Cons
+                                , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                     ( /head=/Data/Primitive/Integer
                                     , /tail=/Data/List/Nil
                                     )
                                 ) = /Data/List/Cons
                                 ( EAppArg Value /head -> /Data/Primitive/Integer = 1 )
-                                ( EAppArg Value /tail -> /Data/List/Cons
+                                ( EAppArg Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                     ( /head=/Data/Primitive/Integer
                                     , /tail=/Data/List/Nil
                                     ) = /Data/List/Cons
@@ -1850,7 +1865,8 @@ Prgm
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "[append] joins two lists end to end." )
         , /Catln/#print
-            ( EAppArg Value /p -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] =
+            ( EAppArg Value /p ->
+                ( TopType | PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ] && PredClass /Catln/Doc/DShow ) =
                 ( /Data/List/append
                     ( EAppArg Value /a -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                         ( /head=/Data/Primitive/Integer
@@ -1863,7 +1879,8 @@ Prgm
                         , /tail=/Data/List/Nil
                         ) = /Data/List/Cons
                         ( EAppArg Value /head -> /Data/Primitive/Integer = 2 )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
-                    ) ↦ ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                    ) ↦
+                    ( TopType | PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ] && PredClass /Catln/Doc/DShow )
                 )
             )
             ( EAppArg Value /result -> /Data/String = "[1, 2]" )
@@ -1876,13 +1893,13 @@ Prgm
         , /Catln/#print
             ( EAppArg Value /p -> UnionType
                 ( Just
-                    ( PredClass /Data/List/ConsList[ /T=TopType ]
+                    ( PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Catln/Doc/DShow
                     , fromList []
                     , []
                     )
-                , /Data/List/Cons[ /T=TopType ]
+                , /Data/List/Cons[ /T=∀/Data/ToString ]
                     ( /head=$/T
-                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                     )
                 , []
                 ) =
@@ -1900,13 +1917,13 @@ Prgm
                         ( EAppArg Value /head -> /Data/Primitive/Integer = 2 )( EAppArg Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                     ) ↦ UnionType
                     ( Just
-                        ( PredClass /Data/List/ConsList[ /T=TopType ]
+                        ( PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Catln/Doc/DShow
                         , fromList []
                         , []
                         )
-                    , /Data/List/Cons[ /T=TopType ]
+                    , /Data/List/Cons[ /T=∀/Data/ToString ]
                         ( /head=$/T
-                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                         )
                     , []
                     )
@@ -1932,12 +1949,12 @@ Prgm
         , /Catln/#print
             ( EAppArg Value /p -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                 ( /head=/Data/Primitive/Integer
-                , /tail=TopType
+                , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                 ) =
                 ( /Data/List/pureConsInt
                     ( EAppArg Value /v -> /Data/Primitive/Integer = 1 ) ↦ /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                     ( /head=/Data/Primitive/Integer
-                    , /tail=TopType
+                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                     )
                 )
             )

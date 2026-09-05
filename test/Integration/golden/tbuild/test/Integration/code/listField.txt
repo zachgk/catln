@@ -155,6 +155,13 @@ Prgm
             ( EAppArg Value /p -> ∀/Catln/Doc/DShow = /Tagged
                 ( EAppArg Value /name -> /Data/String = "one" )
                 ( EAppArg Value /tags -> /Data/List/Cons
+                    [ /T=UnionType
+                        ( Nothing
+                        , ∅
+                        ,
+                            [ CStr "x" ]
+                        )
+                    ]
                     ( /head=/Data/String
                     , /tail=/Data/List/Nil
                     ) = /Data/List/Cons
@@ -169,6 +176,13 @@ Prgm
             ( EAppArg Value /p -> ∀/Catln/Doc/DShow = /ConsTagged
                 ( EAppArg Value /name -> /Data/String = "one" )
                 ( EAppArg Value /tags -> /Data/List/Cons
+                    [ /T=UnionType
+                        ( Nothing
+                        , ∅
+                        ,
+                            [ CStr "x" ]
+                        )
+                    ]
                     ( /head=/Data/String
                     , /tail=/Data/List/Nil
                     ) = /Data/List/Cons

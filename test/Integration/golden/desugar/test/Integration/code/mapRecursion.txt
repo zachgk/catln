@@ -1,0 +1,290 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/rputStep"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ rputStep[ /MV : TopType ][ /MK : ∀/ROrd ]( Value cmp -> ∀/RCmp )
+                            ( Value left -> ∀/RTree
+                                [ /K=$^/MK
+                                , /V=$^/MV
+                                ]
+                            )( Value nk -> $/MK )( Value nv -> $/MV )
+                            ( Value right -> ∀/RTree
+                                [ /K=$^/MK
+                                , /V=$^/MV
+                                ]
+                            )( Value key -> $/MK )( Value value -> $/MV ) -> ∀/RTree
+                            [ /K=$^/MK
+                            , /V=$^/MV
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ rputStep( Value cmp= Value REq )( Value left )( Value nk )( Value nv )( Value right )( Value key )( Value value )= RNode( Value left= Value left )( Value key= Value nk )( Value value= Value value )( Value right= Value right )
+                        , rputStep( Value cmp= Value RLt )( Value left )( Value nk )( Value nv )( Value right )( Value key )( Value value )= RNode
+                            ( Value left= rput( Value m= Value left )( Value key= Value key )( Value value= Value value ) )( Value key= Value nk )( Value value= Value nv )( Value right= Value right )
+                        , rputStep( Value cmp= Value RGt )( Value left )( Value nk )( Value nv )( Value right )( Value key )( Value value )= RNode( Value left= Value left )( Value key= Value nk )( Value value= Value nv )
+                            ( Value right= rput( Value m= Value right )( Value key= Value key )( Value value= Value value ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/rcmp"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ rcmp( Value a -> /RKey )( Value b -> /RKey ) -> ∀/RCmp ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ rcmp( Value a= Value RKey )( Value b= Value RKey ) -> ∀/RCmp = Value RGt ]
+                    }
+                )
+            ,
+                ( "/REq"
+                , ObjectMapItem
+                    { omiDecls = [ Value REq ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
+                    }
+                )
+            ,
+                ( "/risNode"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ risNode[ /MV : TopType ][ /MK : ∀/ROrd ]
+                            ( Value m -> ∀/RIMap
+                                [ /K=$^/MK
+                                , /V=$^/MV
+                                ]
+                            ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ risNode
+                            ( Value m= RNode( Value left )( Value key )( Value value )( Value right ) ) -> ∀/Data/Primitive/Boolean = Value True
+                        , risNode( Value m= Value RLeaf ) -> ∀/Data/Primitive/Boolean = Value False
+                        ]
+                    }
+                )
+            ,
+                ( "/rsize"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ rsize[ /MV : TopType ][ /MK : ∀/ROrd ]
+                            ( Value m -> ∀/RIMap
+                                [ /K=$^/MK
+                                , /V=$^/MV
+                                ]
+                            ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ rsize
+                            ( Value m= RNode( Value left )( Value key )( Value value )( Value right ) ) -> /Data/Primitive/Integer = /operator+
+                            ( Value /l= /operator+
+                                ( Value /l= CInt 1 )
+                                ( Value /r= rsize( Value m= Value left ) )
+                            )
+                            ( Value /r= rsize( Value m= Value right ) )
+                        , rsize( Value m= Value RLeaf ) -> /Data/Primitive/Integer = CInt 0
+                        ]
+                    }
+                )
+            ,
+                ( "/RNode"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ RNode[ /V : TopType ][ /K : TopType ]
+                            ( Value /left -> ∀/RTree
+                                [ /K=$^/K
+                                , /V=$^/V
+                                ]
+                            )( Value /key -> $/K )( Value /value -> $/V )
+                            ( Value /right -> ∀/RTree
+                                [ /K=$^/K
+                                , /V=$^/V
+                                ]
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/RLeaf"
+                , ObjectMapItem
+                    { omiDecls = [ Value RLeaf ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/RLt"
+                , ObjectMapItem
+                    { omiDecls = [ Value RLt ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/RVal"
+                , ObjectMapItem
+                    { omiDecls = [ Value RVal ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/RKey"
+                , ObjectMapItem
+                    { omiDecls = [ Value RKey ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/rput"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ rput[ /MV : TopType ][ /MK : ∀/ROrd ]
+                            ( Value m -> ∀/RIMap
+                                [ /K=$^/MK
+                                , /V=$^/MV
+                                ]
+                            )( Value key -> $/MK )( Value value -> $/MV ) -> ∀/RIMap
+                            [ /K=$^/MK
+                            , /V=$^/MV
+                            ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ rput( Value m= Value RLeaf )( Value key )( Value value )= RNode( Value left= Value RLeaf )( Value key= Value key )( Value value= Value value )( Value right= Value RLeaf )
+                        , rput
+                            ( Value m= RNode( Value left )( Value key@Value nk )( Value value@Value nv )( Value right ) )( Value key )( Value value )= rputStep
+                            ( Value cmp= rcmp( Value a= Value key )( Value b= Value nk ) )( Value left= Value left )( Value nk= Value nk )( Value nv= Value nv )( Value right= Value right )( Value key= Value key )( Value value= Value value )
+                        ]
+                    }
+                )
+            ,
+                ( "/RGt"
+                , ObjectMapItem
+                    { omiDecls = [ Value RGt ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( True
+            , /RCmp
+            ,
+                [ /RLt
+                , /REq
+                , /RGt
+                ]
+            , Just ""
+            )
+        , CGClass
+            ( False
+            , /RIMap
+                [ /K=TopType
+                , /V=TopType
+                ]
+            ,
+                [ ∀/RTree
+                    [ /K=$_/K
+                    , /V=$_/V
+                    ]
+                ]
+            , Just " "
+            )
+        , CGClass
+            ( False
+            , /ROrd
+            , [ /RKey ]
+            , Just " "
+            )
+        , CGClass
+            ( True
+            , /RTree
+                [ /K=TopType
+                , /V=TopType
+                ]
+            ,
+                [ /RNode
+                    [ /K=$_/K
+                    , /V=$_/V
+                    ]
+                    ( /value=$/V
+                    , /key=$/K
+                    , /right=∀/RTree
+                        [ /K=$_/K
+                        , /V=$_/V
+                        ]
+                    , /left=∀/RTree
+                        [ /K=$_/K
+                        , /V=$_/V
+                        ]
+                    )
+                , /RLeaf
+                ]
+            , Just ""
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "Regression for the recursion blow-up behind core/map.ct: an interface class (RIMap) with a
+            parameterised subclass edge from a sealed recursive data class (RTree), and a function declared
+            over the INTERFACE whose definition arm constructs the data type with a RECURSIVE call in one of
+            its fields. Before the parameterised `isa` edge compared type parameters
+            (`classDeclaredSubclassOfBounded`), `RNode(left=⊤)` and `RNode(left=∀RIMap[K=ROrd] ∪ …)` were
+            judged equal, the requirement narrowing on the constructor was refused as a no-op, and the
+            recursive call's result grew one nesting level per constraint epoch (doubling the epoch cost)
+            instead of settling to the class expansion. Without a core dependency in the shape itself, this
+            typechecks in seconds; the `main` exercises dispatch on the recursive result." )
+        , /Catln/#md
+            ( Value /text= CStr "The second `rput` compares `RGt` and so constructs `RNode(right= rput(m= right, ..))`: a RECURSIVE
+            call stored in a field of the arm's constructed value. The arm is built at eval time against the
+            runtime source, whose `left= RLeaf` is a bare atom member of `RTree`; reading that atom as a
+            binding `$MV = ∅` made the field's raw call source uninhabited, so the call was never rewritten and
+            the unevaluated `rput` flowed through as the field's runtime value (`rsize` then found no arm)." )
+        ]
+    }

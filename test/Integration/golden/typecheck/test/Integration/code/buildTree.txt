@@ -10,11 +10,21 @@ Prgm
                     , omiDefs =
                         [ Value /main -> /Catln/CatlnResult
                             ( /files=/Data/List/Cons
+                                [ /T=/Catln/BuildFile
+                                    ( /path=/Data/String
+                                    , /contents=/Data/String
+                                    )
+                                ]
                                 ( /head=/Catln/BuildFile
                                     ( /path=/Data/String
                                     , /contents=/Data/String
                                     )
                                 , /tail=/Data/List/Cons
+                                    [ /T=/Catln/BuildFile
+                                        ( /path=/Data/String
+                                        , /contents=/Data/String
+                                        )
+                                    ]
                                     ( /head=/Catln/BuildFile
                                         ( /path=/Data/String
                                         , /contents=/Data/String
@@ -24,11 +34,21 @@ Prgm
                                 )
                             ) = /Catln/CatlnResult
                             ( Value /files -> /Data/List/Cons
+                                [ /T=/Catln/BuildFile
+                                    ( /path=/Data/String
+                                    , /contents=/Data/String
+                                    )
+                                ]
                                 ( /head=/Catln/BuildFile
                                     ( /path=/Data/String
                                     , /contents=/Data/String
                                     )
                                 , /tail=/Data/List/Cons
+                                    [ /T=/Catln/BuildFile
+                                        ( /path=/Data/String
+                                        , /contents=/Data/String
+                                        )
+                                    ]
                                     ( /head=/Catln/BuildFile
                                         ( /path=/Data/String
                                         , /contents=/Data/String
@@ -44,6 +64,11 @@ Prgm
                                     ( Value /contents -> /Data/String = CStr "<html><body>tree test</body></html>" )
                                 )
                                 ( Value /tail -> /Data/List/Cons
+                                    [ /T=/Catln/BuildFile
+                                        ( /path=/Data/String
+                                        , /contents=/Data/String
+                                        )
+                                    ]
                                     ( /head=/Catln/BuildFile
                                         ( /path=/Data/String
                                         , /contents=/Data/String
@@ -75,11 +100,21 @@ Prgm
         , /Catln/#print
             ( Value /p -> /Catln/CatlnResult
                 ( /files=/Data/List/Cons
+                    [ /T=/Catln/BuildFile
+                        ( /path=/Data/String
+                        , /contents=/Data/String
+                        )
+                    ]
                     ( /head=/Catln/BuildFile
                         ( /path=/Data/String
                         , /contents=/Data/String
                         )
                     , /tail=/Data/List/Cons
+                        [ /T=/Catln/BuildFile
+                            ( /path=/Data/String
+                            , /contents=/Data/String
+                            )
+                        ]
                         ( /head=/Catln/BuildFile
                             ( /path=/Data/String
                             , /contents=/Data/String

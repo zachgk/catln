@@ -11,6 +11,11 @@ Prgm
                         [ Value /main ->
                             ( /Catln/www( /html=/Data/String ) + /Catln/CatlnResult
                                 ( /files=/Data/List/Cons
+                                    [ /T=/Catln/BuildFile
+                                        ( /path=/Data/String
+                                        , /contents=/Data/String
+                                        )
+                                    ]
                                     ( /head=/Catln/BuildFile
                                         ( /path=/Data/String
                                         , /contents=/Data/String
@@ -22,6 +27,11 @@ Prgm
                             ( /Catln/www
                                 ( EAppArg Value /html -> /Data/String = "<html><body>web test</body></html>" ) ↦ /Catln/CatlnResult
                                 ( /files=/Data/List/Cons
+                                    [ /T=/Catln/BuildFile
+                                        ( /path=/Data/String
+                                        , /contents=/Data/String
+                                        )
+                                    ]
                                     ( /head=/Catln/BuildFile
                                         ( /path=/Data/String
                                         , /contents=/Data/String
@@ -43,6 +53,11 @@ Prgm
         , /Catln/#print
             ( EAppArg Value /p -> /Catln/CatlnResult
                 ( /files=/Data/List/Cons
+                    [ /T=/Catln/BuildFile
+                        ( /path=/Data/String
+                        , /contents=/Data/String
+                        )
+                    ]
                     ( /head=/Catln/BuildFile
                         ( /path=/Data/String
                         , /contents=/Data/String
@@ -52,6 +67,11 @@ Prgm
                 ) =
                 ( Value /main ↦ /Catln/CatlnResult
                     ( /files=/Data/List/Cons
+                        [ /T=/Catln/BuildFile
+                            ( /path=/Data/String
+                            , /contents=/Data/String
+                            )
+                        ]
                         ( /head=/Catln/BuildFile
                             ( /path=/Data/String
                             , /contents=/Data/String

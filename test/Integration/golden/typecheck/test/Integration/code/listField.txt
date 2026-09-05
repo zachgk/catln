@@ -152,6 +152,13 @@ Prgm
             ( Value /p -> ∀/Catln/Doc/DShow = /Tagged
                 ( Value /name -> /Data/String = CStr "one" )
                 ( Value /tags -> /Data/List/Cons
+                    [ /T=UnionType
+                        ( Nothing
+                        , ∅
+                        ,
+                            [ CStr "x" ]
+                        )
+                    ]
                     ( /head=/Data/String
                     , /tail=/Data/List/Nil
                     ) = /Data/List/Cons
@@ -166,6 +173,13 @@ Prgm
             ( Value /p -> ∀/Catln/Doc/DShow = /ConsTagged
                 ( Value /name -> /Data/String = CStr "one" )
                 ( Value /tags -> /Data/List/Cons
+                    [ /T=UnionType
+                        ( Nothing
+                        , ∅
+                        ,
+                            [ CStr "x" ]
+                        )
+                    ]
                     ( /head=/Data/String
                     , /tail=/Data/List/Nil
                     ) = /Data/List/Cons

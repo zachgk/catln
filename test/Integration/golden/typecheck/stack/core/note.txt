@@ -18,7 +18,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Catln/Doc/dshow
-                            ( Value /s -> /Data/Note/Page( /title=/Data/String ) = /Data/Note/Page( Value /title -> /Data/String ) ) -> /Catln/Doc/Show/Html( /contents=∀/Data/Algebra/Semigroup ) = /Catln/Doc/Show/Html
+                            ( Value /s -> /Data/Note/Page( /title=/Data/String ) = /Data/Note/Page( Value /title -> /Data/String ) ) -> /Catln/Doc/Show/Html( /contents=/Data/String ) = /Catln/Doc/Show/Html
                             ( Value /contents -> /Data/String = /operator++
                                 ( Value /l -> /Data/String = /operator++
                                     ( Value /l -> /Data/String = CStr "<h1>" )( Value /r -> TVArg /title = Value /title )
@@ -656,8 +656,8 @@ Prgm
                 ( Value /l -> ∀/Data/Maybe[ /T=/Data/String ] = /calendarDay
                     ( Value /this -> /Data/Note/Task/Obsidian
                         ( /recurrence=/Data/Maybe/Nothing
-                        , /due=/Data/Maybe/Some( /value=/Data/String )
-                        , /start=/Data/Maybe/Some( /value=/Data/String )
+                        , /due=/Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String )
+                        , /start=/Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String )
                         , /priority=/Data/Note/Priority/None
                         , /scheduled=/Data/Maybe/Nothing
                         , /statusType=/Data/Note/StatusType/Todo
@@ -669,10 +669,10 @@ Prgm
                         ( Value /contents -> /Data/String = CStr "Water the plants" )
                         ( Value /symbol -> /Data/String = CStr " " )( Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
                         ( Value /description -> /Data/String = CStr "Water the plants" )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )
-                        ( Value /start -> /Data/Maybe/Some( /value=/Data/String ) = /Data/Maybe/Some
+                        ( Value /start -> /Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Maybe/Some
                             ( Value /value -> /Data/String = CStr "2026-01-02" )
                         )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                        ( Value /due -> /Data/Maybe/Some( /value=/Data/String ) = /Data/Maybe/Some
+                        ( Value /due -> /Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Maybe/Some
                             ( Value /value -> /Data/String = CStr "2026-01-04" )
                         )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         ( Value /rest -> /Data/String = CStr "{}" )
@@ -690,7 +690,7 @@ Prgm
                 ( Value /l -> ∀/Data/Maybe[ /T=/Data/String ] = /calendarDay
                     ( Value /this -> /Data/Note/Task/Obsidian
                         ( /recurrence=/Data/Maybe/Nothing
-                        , /due=/Data/Maybe/Some( /value=/Data/String )
+                        , /due=/Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String )
                         , /start=/Data/Maybe/Nothing
                         , /priority=/Data/Note/Priority/None
                         , /scheduled=/Data/Maybe/Nothing
@@ -703,7 +703,7 @@ Prgm
                         ( Value /contents -> /Data/String = CStr "Ship it" )
                         ( Value /symbol -> /Data/String = CStr " " )( Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
                         ( Value /description -> /Data/String = CStr "Ship it" )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                        ( Value /due -> /Data/Maybe/Some( /value=/Data/String ) = /Data/Maybe/Some
+                        ( Value /due -> /Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Maybe/Some
                             ( Value /value -> /Data/String = CStr "2026-01-04" )
                         )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         ( Value /rest -> /Data/String = CStr "{}" )

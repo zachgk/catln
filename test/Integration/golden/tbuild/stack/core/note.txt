@@ -18,7 +18,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Catln/Doc/dshow
-                            ( EAppArg Value /s -> /Data/Note/Page( /title=/Data/String ) = /Data/Note/Page( EAppArg Value /title -> /Data/String ) ) -> /Catln/Doc/Show/Html( /contents=∀/Data/Algebra/Semigroup ) = /Catln/Doc/Show/Html
+                            ( EAppArg Value /s -> /Data/Note/Page( /title=/Data/String ) = /Data/Note/Page( EAppArg Value /title -> /Data/String ) ) -> /Catln/Doc/Show/Html( /contents=/Data/String ) = /Catln/Doc/Show/Html
                             ( EAppArg Value /contents -> /Data/String =
                                 ( /operator++
                                     ( EAppArg Value /l -> /Data/String =
@@ -682,8 +682,8 @@ Prgm
                         ( /calendarDay
                             ( EAppArg Value /this -> /Data/Note/Task/Obsidian
                                 ( /recurrence=/Data/Maybe/Nothing
-                                , /due=/Data/Maybe/Some( /value=/Data/String )
-                                , /start=/Data/Maybe/Some( /value=/Data/String )
+                                , /due=/Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String )
+                                , /start=/Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String )
                                 , /priority=/Data/Note/Priority/None
                                 , /scheduled=/Data/Maybe/Nothing
                                 , /statusType=/Data/Note/StatusType/Todo
@@ -695,10 +695,10 @@ Prgm
                                 ( EAppArg Value /contents -> /Data/String = "Water the plants" )
                                 ( EAppArg Value /symbol -> /Data/String = " " )( EAppArg Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
                                 ( EAppArg Value /description -> /Data/String = "Water the plants" )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )
-                                ( EAppArg Value /start -> /Data/Maybe/Some( /value=/Data/String ) = /Data/Maybe/Some
+                                ( EAppArg Value /start -> /Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Maybe/Some
                                     ( EAppArg Value /value -> /Data/String = "2026-01-02" )
                                 )( EAppArg Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                                ( EAppArg Value /due -> /Data/Maybe/Some( /value=/Data/String ) = /Data/Maybe/Some
+                                ( EAppArg Value /due -> /Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Maybe/Some
                                     ( EAppArg Value /value -> /Data/String = "2026-01-04" )
                                 )( EAppArg Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                                 ( EAppArg Value /rest -> /Data/String = "{}" )
@@ -720,7 +720,7 @@ Prgm
                         ( /calendarDay
                             ( EAppArg Value /this -> /Data/Note/Task/Obsidian
                                 ( /recurrence=/Data/Maybe/Nothing
-                                , /due=/Data/Maybe/Some( /value=/Data/String )
+                                , /due=/Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String )
                                 , /start=/Data/Maybe/Nothing
                                 , /priority=/Data/Note/Priority/None
                                 , /scheduled=/Data/Maybe/Nothing
@@ -733,7 +733,7 @@ Prgm
                                 ( EAppArg Value /contents -> /Data/String = "Ship it" )
                                 ( EAppArg Value /symbol -> /Data/String = " " )( EAppArg Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
                                 ( EAppArg Value /description -> /Data/String = "Ship it" )( EAppArg Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( EAppArg Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( EAppArg Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                                ( EAppArg Value /due -> /Data/Maybe/Some( /value=/Data/String ) = /Data/Maybe/Some
+                                ( EAppArg Value /due -> /Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String ) = /Data/Maybe/Some
                                     ( EAppArg Value /value -> /Data/String = "2026-01-04" )
                                 )( EAppArg Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                                 ( EAppArg Value /rest -> /Data/String = "{}" )

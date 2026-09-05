@@ -12,8 +12,9 @@ Prgm
                         , /llength
                             ( EAppArg Value /this -> /Data/List/Cons
                                 ( /head=TopType
-                                , /tail=TopType
-                                ) = /Data/List/Cons( EAppArg Value /head )( EAppArg Value /tail )
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                ) = /Data/List/Cons( EAppArg Value /head )
+                                ( EAppArg Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
                             ) ->
                             ( /operator+
                                 ( /r=/Data/Primitive/Integer
@@ -51,13 +52,13 @@ Prgm
                                             ( /llength
                                                 ( EAppArg Value /this -> /Data/List/Cons
                                                     ( /head=/Data/Primitive/Integer
-                                                    , /tail=/Data/List/Cons
+                                                    , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                                         ( /head=/Data/Primitive/Integer
                                                         , /tail=/Data/List/Nil
                                                         )
                                                     ) = /Data/List/Cons
                                                     ( EAppArg Value /head -> /Data/Primitive/Integer = 5 )
-                                                    ( EAppArg Value /tail -> /Data/List/Cons
+                                                    ( EAppArg Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                                         ( /head=/Data/Primitive/Integer
                                                         , /tail=/Data/List/Nil
                                                         ) = /Data/List/Cons
