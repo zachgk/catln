@@ -4794,10 +4794,61 @@ compactPartialArgs typeEnv vaenv p = tightenDeclBoundedDims typeEnv p
   -- binding stores the ⊤-read form, and the two spellings of the same set never compare equal
   -- (the nested free ref instead CAPTURES a like-named var of the comparison's enclosing scope).
   -- Bound references — a declaration's own field pointer — are untouched.
-  { ptArgs = fmap (compactType typeEnv vaenv . freeTVIntToTop p) (ptArgs p)
+  --
+  -- A DATA partial's field value additionally folds a nested member leaf into the class top that
+  -- covers it ('foldNestedMembers'): a data field's declared type is the class, and no dispatch
+  -- keys on a value's nested structure, so the depth-1 predicate form is its canonical spelling.
+  { ptArgs = fmap (foldField . compactType typeEnv vaenv . freeTVIntToTop p) (ptArgs p)
   , ptVars = fmap (compactType typeEnv vaenv . settleSelfRefRedundant typeEnv vaenv pName) (ptVars p)
   }
-  where pName = makeAbsoluteName (ptName p)
+  where
+    pName = makeAbsoluteName (ptName p)
+    foldField | null (typeGraphData typeEnv pName) = id
+              | otherwise                          = foldNestedMembers typeEnv vaenv
+
+-- | Canonical form of a DATA partial's FIELD value: a member leaf the field's class top already
+-- covers folds into that top. A recursive result re-derived during solving arrives at a
+-- consumption point one level deeper each epoch — @Node[K=Ord](left = ∀BinTree[K=Ord] ∪
+-- Node[K=Ord](left = ∀BinTree[K=Ord] ∪ Node[K=Ord](…)))@ — and every nested level is
+-- set-theoretically redundant: a full member with a covered element lies inside the class top
+-- (@L ⊆ ∀C ⟹ ∀C ∪ L = ∀C@), so the finite form is the depth-1 expansion with each recursive
+-- field at its predicate ('hasExplicitRecursion' names the predicate form the canonical
+-- recursive reference). The top-level mixed-form absorb in 'compactType' deliberately keeps a
+-- leaf with an ABSTRACT element (eval's dispatch keys on a point's own constructor structure),
+-- and a CALL partial's argument slot keeps its members too (a @rput(m= ∀RIMap ∪ RNode(…))@ slot
+-- is what selects the @m= RNode@ arm); neither concern reaches a data value's own field, whose
+-- declared type is the class and whose value no dispatch keys on. Without this fold the nested
+-- levels carried the same ⊤-valued parameter under different spellings from different producers
+-- (@$^/MV@, @$^/V@, ⊤ — the class expansion's template, a declaration bound, a meet), the
+-- re-derivation rotated them between epochs, and 'verifyNoTypeVarLost' refused the rewrite as a
+-- lost pointer (core/map.ct's @graft@, @rput(m= rput(…))@). Only a leaf named by the top's
+-- declared constituents and provably a member (the same membership test as the absorb: class +
+-- element, the field values widened to ⊤) folds; anything else is kept verbatim.
+foldNestedMembers :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
+foldNestedMembers typeEnv vaenv (UnionType (Just topData@(preds, _, _)) pos cs)
+  | not (H.null pos)
+  , not (S.null constituentNames)
+  , ((_:_), kept) <- L.partition (leafCoveredByTop typeEnv vaenv topData constituentNames) (splitUnionType pos) =
+      UnionType (Just topData) (joinUnionType kept) cs
+  where constituentNames = predClassConstituentNames typeEnv preds
+foldNestedMembers _ _ t = t
+
+-- | The declared constituent names of a predicate's class atoms — the only names that can be
+-- members of the predicate region by declaration.
+predClassConstituentNames :: TypeGraph tg => TypeEnv tg -> TypePredicates -> S.HashSet TypeName
+predClassConstituentNames typeEnv preds = case tryPredsToList preds of
+  Just ps -> S.unions [classConstituentNames typeEnv (ptName c) | PredClass c <- ps]
+  Nothing -> S.empty
+
+-- | Whether a leaf is redundant beside a predicate top: named by the top's declared constituents
+-- and a member of the region by class and element. The arg values are widened to ⊤ for the
+-- check (sound: @leaf ⊆ leaf{args=⊤}@), since membership is by class + element, not by
+-- recursive-field value — a leaf's recursive field can otherwise spuriously fail the strict
+-- subtype (an over-unrolled tail @List@-topped where the member declares @ConsList@).
+leafCoveredByTop :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> (TypePredicates, PartialLeafs, [Constant]) -> S.HashSet TypeName -> PartialType -> Bool
+leafCoveredByTop typeEnv vaenv topData constituentNames l =
+  S.member (makeAbsoluteName (ptName l)) constituentNames
+    && isSubtypeOfWithEnv typeEnv vaenv (singletonType l{ptArgs = fmap (const PTopType) (ptArgs l)}) (UnionType (Just topData) H.empty [])
 
 -- | Canonical form: DECLARATION-BOUNDED DIM TIGHTENING. A data partial's type-variable dimension
 -- canonically absorbs what its declared occurrences already pin: a value spelled
@@ -6246,16 +6297,7 @@ meetInner typeEnv vaenv b i = intersectTypesEnv typeEnv vaenv b i
 -- supplied (and that the partial's bindings did not shadow).
 substituteTVExt :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
 substituteTVExt typeEnv vaenv (UnionType Nothing partials []) =
-  UnionType Nothing (joinUnionType $ map (substitutePartial vaenv) $ splitUnionType partials) []
-  where
-    substitutePartial pVaenv partial@PartialType{ptVars, ptArgs, ptPreds} = partial{
-        ptVars  = fmap (substituteTVExt typeEnv pVaenv) ptVars,
-        ptArgs  = fmap (substituteTVExt typeEnv innerVaenv) ptArgs,
-        ptPreds = mapTypePreds (mapTypePred (substitutePartial innerVaenv)) ptPreds
-        }
-      where
-        ptVars' = fmap (substituteTVExt typeEnv vaenv) ptVars
-        innerVaenv = joinVarArgEnv ptVars' H.empty
+  UnionType Nothing (joinUnionType $ map (substitutePartialTVExt typeEnv vaenv) $ splitUnionType partials) []
 -- Also substitute inside the predicate ('Just') component: a class/rel predicate such as
 -- @PredClass ConsList[/T=$_B]@ carries external vars that must resolve the same way as those in
 -- the positive leaves (e.g. an arrow whose result type is an abstract-class type like
@@ -6263,14 +6305,38 @@ substituteTVExt typeEnv vaenv (UnionType Nothing partials []) =
 -- kept the result abstract, so downstream completion widened the parameter to Top. Only vars that
 -- are actually bound in @vaenv@ are replaced; an external var absent from the env is *kept* (not
 -- dropped to Top), so a recursive predicate like @PredClass ConsList[/T=$_T]@ stays linked.
+-- The POSITIVE leaves beside the predicate are leaves like any other and take the plain-union
+-- substitution: a definition arm's result presented at a call site is this mixed form
+-- (@∀Map[..] ∪ Node[..](right=∀BinTree[/K=$^/MK, ..])@ — the declared result beside the
+-- constructed value), and leaving its leaves unsubstituted carried the callee's own parameter
+-- spellings into the caller, where they read as ⊤ and the value no longer proved a member of its
+-- own class (core/map.ct's @mapValues@ result refusing the @get@ requirement).
 substituteTVExt typeEnv vaenv (UnionType (Just (preds, negLeafs, negConsts)) posLeafs consts) =
-  UnionType (Just (mapTypePreds (mapTypePred (substitutePartialKeep typeEnv vaenv)) preds, negLeafs, negConsts)) posLeafs consts
+  UnionType (Just (mapTypePreds (mapTypePred (substitutePartialKeep typeEnv vaenv)) preds, negLeafs, negConsts))
+            (joinUnionType $ map (substitutePartialTVExt typeEnv vaenv) $ splitUnionType posLeafs) consts
 substituteTVExt typeEnv vaenv (TypeVar (TVApplied b overrides) loc i) =
   applyTypeVarOverrides (fmap (substituteTVExt typeEnv vaenv) overrides) (substituteTVExt typeEnv vaenv (TypeVar b loc i))
 -- The occurrence reads @var ∩ inner@: an env miss (⊤ lookup) therefore resolves to the
 -- (substituted) inner rather than ⊤ — the lossless form of the old erasure.
 substituteTVExt typeEnv vaenv (TypeVar v _ i) = meetInner typeEnv vaenv (vaenvLookup vaenv v) (substituteTVExt typeEnv vaenv i)
 substituteTVExt _typeEnv _     t             = t
+
+-- | 'substituteTVExt' over one partial. SCOPES NEST: the partial's own (substituted) bindings
+-- SHADOW the caller's inside its args and predicates — a @$/T@ there resolves to the sibling
+-- parameter, while a reference the partial does not bind (@right=∀BinTree[/K=$^/MK]@ inside a
+-- @Node[/K, /V]@, the enclosing declaration's parameter) resolves to what the caller supplied,
+-- exactly as the algebra reads it ('comparedPartialsEnv'). Dropping the caller's bindings at the
+-- arg boundary instead erased every such reference to ⊤ (an env miss reads the occurrence as its
+-- inner), so a value spelled with its declaration's parameters lost them at every call site.
+substitutePartialTVExt :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType
+substitutePartialTVExt typeEnv vaenv partial@PartialType{ptVars, ptArgs, ptPreds} = partial{
+    ptVars  = ptVars',
+    ptArgs  = fmap (substituteTVExt typeEnv innerVaenv) ptArgs,
+    ptPreds = mapTypePreds (mapTypePred (substitutePartialTVExt typeEnv innerVaenv)) ptPreds
+    }
+  where
+    ptVars' = fmap (substituteTVExt typeEnv vaenv) ptVars
+    innerVaenv = H.union (joinVarArgEnv ptVars' H.empty) vaenv
 
 -- | Substitute vars within a predicate partial, but *only* when the env resolves an external
 -- ('TVExt') var to a concrete (non-Top) type. An external var absent from the env — or bound only
@@ -6279,13 +6345,15 @@ substituteTVExt _typeEnv _     t             = t
 -- parameters and resolve through its @ptVars@, not the outer scope.
 substitutePartialKeep :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType
 substitutePartialKeep typeEnv vaenv partial@PartialType{ptVars, ptArgs, ptPreds} = partial{
-    ptVars  = fmap (substituteKeep typeEnv vaenv) ptVars,
+    ptVars  = ptVars',
     ptArgs  = fmap (substituteKeep typeEnv innerVaenv) ptArgs,
     ptPreds = mapTypePreds (mapTypePred (substitutePartialKeep typeEnv innerVaenv)) ptPreds
     }
   where
     ptVars' = fmap (substituteKeep typeEnv vaenv) ptVars
-    innerVaenv = joinVarArgEnv ptVars' H.empty
+    -- The partial's own bindings shadow the caller's; an unshadowed reference still resolves
+    -- through the caller's env (see 'substitutePartialTVExt').
+    innerVaenv = H.union (joinVarArgEnv ptVars' H.empty) vaenv
 
 -- | Whether a type contains any 'TypeVar' reference anywhere — var\/arg slot values,
 -- class-predicate dims, and negative leaves included. A type without any is CLOSED:
