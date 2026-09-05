@@ -2618,6 +2618,24 @@ freeTVIntToTop p t@(TypeVar v TVInt i) | not (H.member v (ptVarArg p)) = i  -- v
                                      | otherwise = t
 freeTVIntToTop _ t = t
 
+-- | Reads the UNBOUND ambient ('TVExt') references of a type, at any depth, as their inner
+-- (⊤ when knowledge-free): an external reference names the ambient scope and nothing else, so
+-- one the ambient env does not bind denotes ⊤ — and must not later resolve through a binding
+-- that a compared partial installs for a like-named parameter of its own. A bound reference is
+-- left for the env to resolve. 'TVInt' and 'TVParent' references are untouched.
+freeTVExtToTopDeep :: TypeVarArgEnv -> Type -> Type
+freeTVExtToTopDeep vaenv = go
+  where
+    go t@(TypeVar v TVExt i) | not (H.member v vaenv) = go i
+                             | otherwise              = t
+    go (TypeVar v loc i) = TypeVar v loc (go i)
+    go (UnionType mtop pos consts) = UnionType (fmap goTop mtop) (goLeafs pos) consts
+    goTop (preds, negLeafs, ncs) = (mapTypePreds (mapTypePred goPartial) preds, goLeafs negLeafs, ncs)
+    goLeafs = joinUnionType . map goPartial . splitUnionType
+    goPartial pt = pt{ ptVars  = fmap go (ptVars pt)
+                     , ptArgs  = fmap go (ptArgs pt)
+                     , ptPreds = mapTypePreds (mapTypePred goPartial) (ptPreds pt) }
+
 -- | All partial-local ('TVInt') references appearing in a type at any depth. Over-collects
 -- through nested scopes (a name a nested partial itself binds is still counted), the safe
 -- direction for its consumer ('subtractElems'\'s identical-form skip only becomes rarer).
@@ -3495,7 +3513,16 @@ isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subAr
     -- resolves against its own partial's scope only, so a free one must not resolve through
     -- the shared @vaenv'@'s like-named entry (which holds the COMPARED partials' var meet, a
     -- different scope) on either side.
-    hasAll sb sp = and $ H.elems $ H.intersectionWithKey argOk (fmap (freeTVIntToTop sub) sb) (fmap (freeTVIntToTop super) sp)
+    -- An UNBOUND ambient reference ('TVExt' with no binding in the ambient env, at any depth)
+    -- reads as the ⊤ it denotes BEFORE the compared partials' own bindings are installed
+    -- ('freeTVExtToTopDeep'): left symbolic, a nested call's free parameter
+    -- (@Some[/T=X](value= length(this= ∀List[/T=$_/T]))@) resolved through @vaenv'@ to the
+    -- compared @Some@'s @/T@ — capture by a binder the external spelling explicitly steps
+    -- past (the scope split) — refusing the true @a∩b ⊆ b@ the meet had just produced by
+    -- reading the same reference ambiently. A BOUND ambient reference keeps resolving through
+    -- the env, and the partials' own ('TVInt'\/'TVParent') references still read the installed
+    -- bindings.
+    hasAll sb sp = and $ H.elems $ H.intersectionWithKey argOk (fmap (freeExt . freeTVIntToTop sub) sb) (fmap (freeExt . freeTVIntToTop super) sp)
       where
         argOk k sbVal spVal = isSubtypeOfWithEnv typeEnv vaenv' sbVal spVal
           || any (\d -> isSubtypeOfWithEnv typeEnv vaenv' (intersectTypesEnv typeEnv vaenv' sbVal d) spVal) (declArgBounds k)
@@ -3523,9 +3550,10 @@ isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subAr
       [ av | (ak, av) <- H.toList subArgs, not (isTypeVar av)
            , dp <- typeGraphData typeEnv (ptName sub)
            , Just (TypeVar (TVVar k') TVInt _) <- [H.lookup ak (ptArgs dp)], k' == k ]
-    hasAllVars sb sp = and $ H.elems $ H.intersectionWith varOk (H.mapWithKey subVarEff sbFull) sp
+    hasAllVars sb sp = and $ H.elems $ H.intersectionWith varOk (H.mapWithKey subVarEff (fmap freeExt sbFull)) (fmap freeExt sp)
       where sbFull | teArgModeProjection typeEnv = sb
                    | otherwise                   = H.union sb (PTopType <$ sp)
+    freeExt = freeTVExtToTopDeep vaenv
     varOk PTopType _ | teArgModeProjection typeEnv = True
     varOk a b
       | not (teArgModeProjection typeEnv)
