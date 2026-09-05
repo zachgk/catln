@@ -1,0 +1,348 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Data/Json/Member"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Json/Member( Value /key -> /Data/String )( Value /value -> ∀/Data/Json ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Json/Bool"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Json/Bool( Value /value -> ∀/Data/Primitive/Boolean ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/typeName"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/typeName( Value value -> ∀/Data/Json ) -> /Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/typeName( Value value= Value Json/Null ) -> /Data/String = CStr
+                            { csValue = "null" }
+                        , /Data/typeName
+                            ( Value value= Json/Bool( Value value@Value b ) ) -> /Data/String = CStr
+                            { csValue = "boolean" }
+                        , /Data/typeName
+                            ( Value value= Json/Number( Value value@Value n ) ) -> /Data/String = CStr
+                            { csValue = "number" }
+                        , /Data/typeName
+                            ( Value value= Json/Str( Value value@Value s ) ) -> /Data/String = CStr
+                            { csValue = "string" }
+                        , /Data/typeName
+                            ( Value value= Json/Array( Value entries ) ) -> /Data/String = CStr
+                            { csValue = "array" }
+                        , /Data/typeName
+                            ( Value value= Json/Object( Value entries ) ) -> /Data/String = CStr
+                            { csValue = "object" }
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Json/Object"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Json/Object
+                            ( Value /entries -> ∀/Data/List[ /T=/Data/Json/Member ] )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Json/Number"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Json/Number( Value /value -> ∀/Data/Primitive/Number ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Json/Null"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Json/Null ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Json/Str"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Json/Str( Value /value -> /Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Json/Array"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Json/Array
+                            ( Value /entries -> ∀/Data/List[ /T=∀/Data/Json ] )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Json
+            , cgcExtends =
+                [ ∀/Data/Json
+                , /Data/Json/Member..
+                ]
+            , cgcDoc = Just "Every [Json] is shown in the webdocs, as the folding tree of what it holds. Said of the class
+              rather than of each arm, as [/Data/Note/Task] says it of a task however the vault it came from
+              has it read: a document is displayed because it is a document, and which of the six arms it
+              happens to be is what the display reads rather than what decides whether there is one.
+              Membership rather than an arm of [/Catln/Doc/dshow]. The webdocs render this value itself —
+              walking the arms and the lists under them — rather than a display built from it, so there is
+              nothing for an arm to build. A type may have one or the other and not both: a member is shown
+              by the identity arm of [/Catln/Doc/dshow], so both at once is two arms matching one value with
+              nothing to say which wins. A member is displayable on its own as well as within the object holding it, so that a program
+              which reaches one can show it."
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Data/Json
+            , cgcExtends =
+                [ /Data/Json/Null
+                , /Data/Json/Bool( /value=∀/Data/Primitive/Boolean )
+                , /Data/Json/Number( /value=∀/Data/Primitive/Number )
+                , /Data/Json/Str( /value=/Data/String )
+                , /Data/Json/Array
+                    ( /entries=∀/Data/List[ /T=∀/Data/Json ] )
+                , /Data/Json/Object
+                    ( /entries=∀/Data/List[ /T=/Data/Json/Member ] )
+                ]
+            , cgcDoc = Just "[Json/Str] rather than @Json/String@, because [String] is already a type and two names that
+              close together is a reader guessing which of them an arm meant.
+              [Json/Array] and [Json/Object] carry their children as lists, which is what makes this a tree
+              and what makes it recursive. An object's entries are [Json/Member]s rather than a [/Data/Map]
+              because a document's keys are written in an order and shown in it — a map would sort them, and
+              a JSON file shown with its keys rearranged is not the file that was read."
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "# JSON
+                A [Json] is what a JSON file holds, read as a value: the six things JSON says, and nothing else.
+                It is declared here so that a program handed a `.json` file has a type to read it as, in the way
+                [/Data/FileOrDir] is the type a directory is read as.
+                It is not part of the standard library and must not become part of it. This page reaches
+                @core/list.ct@, and a page every program compiles reaching that is the import cycle
+                @core/result.ct@ measures at seven hundred seconds. A program which reads no JSON has no use for
+                the type, and the page a JSON file is read as writes the import itself.
+                The six arms are JSON's own six, so a document read into this and written back out again says
+                what it said. What JSON does not distinguish, this does not either: there is one [Json/Number]
+                rather than an integer and a float, because the format has one." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "[Json/Str] rather than @Json/String@, because [String] is already a type and two names that
+                close together is a reader guessing which of them an arm meant.
+                [Json/Array] and [Json/Object] carry their children as lists, which is what makes this a tree
+                and what makes it recursive. An object's entries are [Json/Member]s rather than a [/Data/Map]
+                because a document's keys are written in an order and shown in it — a map would sort them, and
+                a JSON file shown with its keys rearranged is not the file that was read." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Every [Json] is shown in the webdocs, as the folding tree of what it holds. Said of the class
+                rather than of each arm, as [/Data/Note/Task] says it of a task however the vault it came from
+                has it read: a document is displayed because it is a document, and which of the six arms it
+                happens to be is what the display reads rather than what decides whether there is one.
+                Membership rather than an arm of [/Catln/Doc/dshow]. The webdocs render this value itself —
+                walking the arms and the lists under them — rather than a display built from it, so there is
+                nothing for an arm to build. A type may have one or the other and not both: a member is shown
+                by the identity arm of [/Catln/Doc/dshow], so both at once is two arms matching one value with
+                nothing to say which wins." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A member is displayable on its own as well as within the object holding it, so that a program
+                which reaches one can show it." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Which arm a value is" }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/typeName( Value value= Value /Data/Json/Null ) )
+            ( Value /result= CStr
+                { csValue = "null" }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/typeName
+                ( Value value= /Data/Json/Str
+                    ( Value value= CStr
+                        { csValue = "catln" }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "string" }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/typeName
+                ( Value value= /Data/Json/Array
+                    ( Value entries= /Data/List/Cons( Value /head= Value /Data/Json/Null )( Value /tail= Value /Data/List/Nil ) )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "array" }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/typeName
+                ( Value value= /Data/Json/Object
+                    ( Value entries= /Data/List/Cons
+                        ( Value /head= /Data/Json/Member
+                            ( Value key= CStr
+                                { csValue = "a" }
+                            )( Value value= Value /Data/Json/Null )
+                        )( Value /tail= Value /Data/List/Nil )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "object" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Containers of several entries
+                An array of one entry and an array of several are not the same thing to check, and neither are an
+                object and an object inside one, so each is written out rather than left to the single-entry
+                cases above to stand for." }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/typeName
+                ( Value value= /Data/Json/Array
+                    ( Value entries= /Data/List/Cons( Value /head= Value /Data/Json/Null )
+                        ( Value /tail= /Data/List/Cons
+                            ( Value /head= /Data/Json/Bool( Value value= Value True ) )
+                            ( Value /tail= /Data/List/Cons
+                                ( Value /head= /Data/Json/Str
+                                    ( Value value= CStr
+                                        { csValue = "x" }
+                                    )
+                                )( Value /tail= Value /Data/List/Nil )
+                            )
+                        )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "array" }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/typeName
+                ( Value value= /Data/Json/Array
+                    ( Value entries= /Data/List/Cons
+                        ( Value /head= /Data/Json/Str
+                            ( Value value= CStr
+                                { csValue = "x" }
+                            )
+                        )
+                        ( Value /tail= /Data/List/Cons
+                            ( Value /head= /Data/Json/Str
+                                ( Value value= CStr
+                                    { csValue = "y" }
+                                )
+                            )( Value /tail= Value /Data/List/Nil )
+                        )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "array" }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/typeName
+                ( Value value= /Data/Json/Object
+                    ( Value entries= /Data/List/Cons
+                        ( Value /head= /Data/Json/Member
+                            ( Value key= CStr
+                                { csValue = "a" }
+                            )( Value value= Value /Data/Json/Null )
+                        )
+                        ( Value /tail= /Data/List/Cons
+                            ( Value /head= /Data/Json/Member
+                                ( Value key= CStr
+                                    { csValue = "b" }
+                                )
+                                ( Value value= /Data/Json/Str
+                                    ( Value value= CStr
+                                        { csValue = "x" }
+                                    )
+                                )
+                            )( Value /tail= Value /Data/List/Nil )
+                        )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "object" }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/typeName
+                ( Value value= /Data/Json/Object
+                    ( Value entries= /Data/List/Cons
+                        ( Value /head= /Data/Json/Member
+                            ( Value key= CStr
+                                { csValue = "outer" }
+                            )
+                            ( Value value= /Data/Json/Array
+                                ( Value entries= /Data/List/Cons
+                                    ( Value /head= /Data/Json/Number
+                                        ( Value value= CFloat
+                                            { cfValue = 1.5 }
+                                        )
+                                    )
+                                    ( Value /tail= /Data/List/Cons
+                                        ( Value /head= /Data/Json/Number
+                                            ( Value value= CFloat
+                                                { cfValue = 2.5 }
+                                            )
+                                        )( Value /tail= Value /Data/List/Nil )
+                                    )
+                                )
+                            )
+                        )( Value /tail= Value /Data/List/Nil )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "object" }
+            )
+        ]
+    }

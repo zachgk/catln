@@ -1,0 +1,16 @@
+import "core"
+import "core"
+
+
+# Tests the [#debug] annotation, which records its value every time the definition it is written on
+  is evaluated.
+  Two of them on one definition, one on an argument and one on a computed expression. The computed
+  one is what checks that a record is placed by the annotation it was written as: an operator apply
+  carries no source position of its own, so a record placed by the expression inside the annotation
+  would have nowhere to say it came from.
+inc(x -> Integer) =
+  #debug(d= x)
+  #debug(d= x + 1)
+  x + 1
+
+main{io -> IO}= io.exit(val= inc(x= -1))

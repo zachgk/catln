@@ -714,6 +714,29 @@ function PartialName(props) {
   return <Link to={link} className={cls}>{name.contents}</Link>;
 }
 
+// The values of an evaluated `/Data/List`, which is a `/Data/List/Cons` chain ending in a `/Data/List/Nil`.
+//
+// A tail which is neither is carried through as an entry rather than ending the walk, so that it is
+// shown. A result quietly missing its end reads as a result that ended there, which is the one
+// thing a display of it must not say.
+//
+// Here rather than beside either of the two displays that walk a list, because both do: a build
+// result is a list of files and a JSON array is a list of values, and neither is the other. It
+// cannot live in `Value.jsx`, which `BuildResult.jsx` imports from — that would be a cycle — and
+// this module imports no display at all.
+function valList(val) {
+  const items = [];
+  let rest = val;
+  while (rest && rest.tag === 'TupleVal' && rest.name === '/Data/List/Cons') {
+    items.push(rest.args['/head']);
+    rest = rest.args['/tail'];
+  }
+  if (!(rest && rest.tag === 'TupleVal' && rest.name === '/Data/List/Nil')) {
+    items.push(rest);
+  }
+  return items;
+}
+
 function ReachesTree(props) {
   const {tree} = props;
   return (
@@ -797,5 +820,6 @@ export {
   PTypeName,
   PClassName,
   PartialName,
-  ReachesTree
+  ReachesTree,
+  valList
 };

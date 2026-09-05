@@ -1,0 +1,177 @@
+import "core"
+import hsprgm()
+
+
+module(Test)
+  # # Reading the compiler's own types
+    The page @hsprgm()@ reads declares the compiler's types for the program it is compiling, so that
+    a Catln program can be handed one and read it. This file is what typechecks those declarations:
+    a page nothing imports is a page nothing checks.
+  isType(b -> /Catln/ObjectBasis) -> Boolean
+    # [isType] answers whether an object was written as a `data` or a `class`, which is the one
+      question about an [ObjectBasis] that can be asked without anything else of the program to ask
+      it about. It is here to name every arm, so that an arm the declaration is missing is an arm
+      this does not compile against.
+  isType(b= /Catln/ObjectBasis/TypeObj)= True
+  isType(b= /Catln/ObjectBasis/FunctionObj)= False
+  isType(b= /Catln/ObjectBasis/PatternObj)= False
+  isType(b= /Catln/ObjectBasis/MatchObj)= False
+  isType(b= /Catln/ObjectBasis/ArgObj)= False
+
+  > isType(b= /Catln/ObjectBasis/TypeObj)
+    >>> True
+  > isType(b= /Catln/ObjectBasis/ArgObj)
+    >>> False
+  constantKind(c -> /Catln/Constant) -> String
+    # [constantKind] says which of the four things a constant written in a program is. It reads the
+      arm rather than the value, which is what a program reading a program mostly wants of one, and
+      it names every arm so that an arm the declaration is missing is one this does not compile
+      against.
+  constantKind(c= /Catln/Constant/CInt(value))= "int"
+  constantKind(c= /Catln/Constant/CFloat(value))= "float"
+  constantKind(c= /Catln/Constant/CStr(value))= "str"
+  constantKind(c= /Catln/Constant/CChar(value))= "char"
+
+  > constantKind(c= /Catln/Constant/CInt(value= 3))
+    >>> int
+  > constantKind(c= /Catln/Constant/CStr(value= "hi"))
+    >>> str
+  intOf(c -> /Catln/Constant) -> Integer
+    # [intOf] reads the value out of a whole-number constant, which is destructuring a field rather
+      than only matching an arm — the thing a program reading a program is actually for.
+  intOf(c= /Catln/Constant/CInt(value))= value
+  intOf(c= /Catln/Constant/CFloat(value))= 0
+  intOf(c= /Catln/Constant/CStr(value))= 0
+  intOf(c= /Catln/Constant/CChar(value))= 0
+
+  > intOf(c= /Catln/Constant/CInt(value= 42))
+    >>> 42
+  # A key is a name and two sets of keys, so reading one reads a record, a list, and a type which
+    reaches itself — the whole of what @core/hsprgm.ct@'s containers have to do.
+  keyName(k -> /Catln/PartialKey) -> String
+  keyName(k= /Catln/PartialKey(name, vars, args))= name
+
+  keyDepth(k -> /Catln/PartialKey) -> Integer
+    # [keyDepth] counts the keys a key holds beneath it, walking the [args] it is written over. One
+      for the key itself, and then the same again for each argument.
+  keyDepth(k= /Catln/PartialKey(name, vars, args))= 1 + keyDepthAll(ks= args)
+
+  keyDepthAll(ks -> /Data/List[$T -> /Catln/PartialKey]) -> Integer
+  keyDepthAll(ks= /Data/List/Nil)= 0
+  keyDepthAll(ks= /Data/List/Cons(head, tail))= keyDepth(k= head) + keyDepthAll(ks= tail)
+
+  > keyName(k= /Catln/PartialKey(name= "x", vars= [], args= []))
+    >>> x
+  > keyDepth(k= /Catln/PartialKey(name= "f", vars= [], args= [/Catln/PartialKey(name= "a", vars= [], args= [])]))
+    >>> 2
+  typeKind(t -> /Catln/Type) -> String
+    # [typeKind] says whether a type is a set of things or a variable standing for one. The two are
+      what a [Type] is, and telling them apart is the first thing anything reading one has to do.
+  typeKind(t= /Catln/Type/UnionType(top, leafs, consts))= "union"
+  typeKind(t= /Catln/Type/TypeVar(aux, loc))= "var"
+
+  constCount(t -> /Catln/Type) -> Integer
+    # [constCount] counts the constants a type holds, which reads a list field out of the type the
+      whole compiler is written in terms of.
+  constCount(t= /Catln/Type/UnionType(top, leafs, consts))= consts.length
+  constCount(t= /Catln/Type/TypeVar(aux, loc))= 0
+
+  > typeKind(t= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= []))
+    >>> union
+  > constCount(t= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= [/Catln/Constant/CInt(value= 1), /Catln/Constant/CStr(value= "s")]))
+    >>> 2
+  writtenIn(m -> /Catln/Meta) -> String
+    # [writtenIn] says which file a piece of a program was written in, or that nothing wrote it.
+      A [Meta] with no [pos] is a piece the compiler made while desugaring, which has a type and an
+      identity and no place in any file — so reading one has to answer for that case rather than
+      assume every piece came from somewhere.
+  writtenIn(m= /Catln/Meta(type, pos= /Data/Maybe/Nothing, id, dat))= "nowhere"
+  writtenIn(m= /Catln/Meta(type, pos= /Data/Maybe/Some(value), id, dat))= startFile(r= value)
+
+  startFile(r -> /Catln/Pair[$A -> /Catln/SourcePos, $B -> /Catln/SourcePos]) -> String
+    # A range is the pair of places it runs between, so the file it is in is the file its [first] is
+      in.
+  startFile(r= /Catln/Pair(first, second))= posFile(p= first)
+
+  posFile(p -> /Catln/SourcePos) -> String
+  posFile(p= /Catln/SourcePos(file, line, column))= file
+
+  posLine(p -> /Catln/SourcePos) -> Integer
+  posLine(p= /Catln/SourcePos(file, line, column))= line
+
+  > writtenIn(m= /Catln/Meta(type= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= []), pos= /Data/Maybe/Nothing, id= "", dat= /Catln/Unit))
+    >>> nowhere
+  > posLine(p= /Catln/SourcePos(file= "a.ct", line= 7, column= 3))
+    >>> 7
+  noMeta() -> /Catln/Meta
+    # [noMeta] is the metadata of a piece of program nothing wrote: no type worth naming, no place
+      in a file, and nothing the stage added. Written once here because building an [Expr] means
+      building one of these, and what is being read is the expression rather than the metadata.
+  noMeta()= /Catln/Meta(type= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= []), pos= /Data/Maybe/Nothing, id= "", dat= /Catln/Unit)
+
+  exprKind(e -> /Catln/Expr) -> String
+    # [exprKind] says which of the six an expression is. Everything a Catln program is written with
+      has become one of these by the time the compiler is done reducing it, so naming all six is
+      naming everything a program can be — which is what a program that rewrites programs starts
+      from.
+  exprKind(e= /Catln/Expr/CExpr(meta, const))= "const"
+  exprKind(e= /Catln/Expr/Value(meta, name))= "value"
+  exprKind(e= /Catln/Expr/HoleExpr(meta, hole))= "hole"
+  exprKind(e= /Catln/Expr/AliasExpr(base, alias))= "alias"
+  exprKind(e= /Catln/Expr/EWhere(meta, base, cond))= "where"
+  exprKind(e= /Catln/Expr/TupleApply(meta, base, app))= "apply"
+
+  valueName(e -> /Catln/Expr) -> String
+    # [valueName] reads the name out of an expression that is one, which is the field a rewrite of a
+      program would look at first.
+  valueName(e= /Catln/Expr/Value(meta, name))= name
+  valueName(e= /Catln/Expr/CExpr(meta, const))= ""
+  valueName(e= /Catln/Expr/HoleExpr(meta, hole))= ""
+  valueName(e= /Catln/Expr/AliasExpr(base, alias))= ""
+  valueName(e= /Catln/Expr/EWhere(meta, base, cond))= ""
+  valueName(e= /Catln/Expr/TupleApply(meta, base, app))= ""
+
+  > exprKind(e= /Catln/Expr/Value(meta= noMeta(), name= "foo"))
+    >>> value
+  > valueName(e= /Catln/Expr/Value(meta= noMeta(), name= "foo"))
+    >>> foo
+  > exprKind(e= /Catln/Expr/CExpr(meta= noMeta(), const= /Catln/Constant/CInt(value= 1)))
+    >>> const
+  declCount(p -> /Catln/Prgm) -> Integer
+    # [declCount] counts the names a program declares or defines something under. Reading a whole
+      program is what all of this was for: [objMap] is what it holds, [cg] is how its classes relate,
+      and [annots] is what is written on the program itself.
+  declCount(p= /Catln/Prgm(objMap, cg, annots))= mapSize(m= objMap)
+
+  mapSize(m -> /Catln/ObjectMap) -> Integer
+  mapSize(m= /Catln/ObjectMap(items))= items.length
+
+  > declCount(p= /Catln/Prgm(objMap= /Catln/ObjectMap(items= []), cg= [], annots= []))
+    >>> 0
+  # ## Being given a real program
+    Everything above reads a program built by hand in this file. [prgmFor] is the compiler answering
+    with the program it is actually compiling — this page and everything it reaches — narrowed to
+    the things written under a name. So [ownDeclCount] below is this file reading its own source as
+    data, through the same declarations the rest of the file exercises.
+  ownDeclCount(name -> String) -> Integer
+  ownDeclCount(name)= declCount(p= /Catln/prgmFor(name= name))
+
+  # [intOf] is defined in this file, so the compiler answers with the one name it is written under.
+  > ownDeclCount(name= "/Test/intOf")
+    >>> 1
+  # A name nothing is written under is a program holding nothing, rather than a failure.
+  > ownDeclCount(name= "/Test/notWrittenAnywhere")
+    >>> 0
+  # ## What the suite checks
+    The `>` examples above are checked by `catln test`, and the integration suite typechecks and
+    builds this file without comparing what they evaluate to — only a page under @stack/@ has its
+    examples run as cases, and no page under @stack/@ may import [hsprgm] without closing the import
+    cycle @core/result.ct@ measures. So the values are printed instead, and @hsprgm.stdout.txt@ is
+    what compares them, which is the one mechanism the integration runner already has for saying
+    what a program produced.
+  # One line per answer rather than one joined string. Joining them chained eight [operator++]s and
+  #   reached the [runConstraints] limit on [/operator++[$T -> Semigroup]] — the same non-convergence
+  #   the suite's two standing failures are, which is being worked on elsewhere. Printing each is
+  #   what the answers are for, and it does not stand on the part of the solver that is unwell.
+
+main{io -> IO}= io.println(msg= constantKind(c= /Catln/Constant/CInt(value= 3))).println(msg= intOf(c= /Catln/Constant/CInt(value= 42)).toString).println(msg= keyName(k= /Catln/PartialKey(name= "x", vars= [], args= []))).println(msg= keyDepth(k= /Catln/PartialKey(name= "f", vars= [], args= [/Catln/PartialKey(name= "a", vars= [], args= [])])).toString).println(msg= typeKind(t= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= []))).println(msg= constCount(t= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= [/Catln/Constant/CInt(value= 1)])).toString).println(msg= writtenIn(m= /Catln/Meta(type= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= []), pos= /Data/Maybe/Nothing, id= "", dat= /Catln/Unit))).println(msg= posLine(p= /Catln/SourcePos(file= "a.ct", line= 7, column= 3)).toString).println(msg= exprKind(e= /Catln/Expr/Value(meta= noMeta(), name= "foo"))).println(msg= valueName(e= /Catln/Expr/Value(meta= noMeta(), name= "foo"))).println(msg= declCount(p= /Catln/Prgm(objMap= /Catln/ObjectMap(items= []), cg= [], annots= [])).toString).println(msg= ownDeclCount(name= "/Test/intOf").toString).exit(val= 0)

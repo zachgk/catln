@@ -339,6 +339,18 @@ data ImporterEnv = ImporterEnv {
   -- place an extension is resolved against — see 'Syntax.InferImport.inferFileParser' for why
   -- resolving an extension against the caller's imports would make one file into two pages.
   ieRegistry :: IO (Maybe FileImport),
+  -- | The file extensions the importers of that registry read, without their dots.
+  --
+  -- Asked by 'Syntax.InferImport.isSupportedFileExtension', which decides whether a file found in a
+  -- directory's listing is one to read at all. Without it that question is answered from
+  -- 'Syntax.InferImport.fileExtensionParsers' alone — the syntaxes the compiler supplies — so a file
+  -- an importer reads is skipped, and a directory of Python or of JSON lists none of it.
+  --
+  -- The extensions rather than the declarations, because that is the whole of what the asking needs
+  -- and the rest of a declaration is of no use to it. A page is still read by the importer the
+  -- registry names ('Syntax.Parsers.registryImport'); this only decides whether the read is
+  -- attempted.
+  ieExtensions :: IO [String],
   -- | Whether the page at this path is built and can answer, and why not where it cannot.
   --
   -- Apart from 'ieInvoke' rather than being found out by trying, because the two are asked at
@@ -365,6 +377,10 @@ noImporters :: ImporterEnv
 noImporters = ImporterEnv{
   ieDeclared = const $ return [],
   ieRegistry = return Nothing,
+  -- No compiler, so no registry to read and no importer to name. Such a read sees the extensions
+  -- the compiler supplies and no others, which is what the formatter and @catln convert@ already
+  -- did before an importer could add one.
+  ieExtensions = return [],
   ieReady = return . Just . noCompiler,
   ieInvoke = \page _ _ _ -> return $ Left $ noCompiler page
                          }

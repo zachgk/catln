@@ -1,0 +1,18 @@
+import "json/importer.ct"
+import json("data.json")
+
+
+module(UsesJson)
+  # # Using the JSON importer
+    The same two lines @usesPython.ct@ writes, over a file of data rather than of code. The first
+    brings in a page which declares an importer; the second uses that importer by the name it
+    declared. Nothing in the compiler knows what `json` means at the point the second line is read —
+    it is looked for among the importers declared by the pages imported above it, which is exactly
+    one page, which declares exactly one.
+    What arrives is a page holding one declaration, whose body is @data.json@ as a [/Data/Json]. The
+    name it is declared under is built from the path, so it is not one written here: this page is
+    the case that the import resolves and the value is built, and reaching the value by name is what
+    the integration fixture at the top level does.
+    It lives under @artifacts/@ so the integration suite does not compile it, as @usesPython.ct@
+    does and for its reason: the page reaches @hsrawprgm()@, which is worth compiling once rather
+    than on every run.

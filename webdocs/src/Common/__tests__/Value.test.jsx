@@ -351,3 +351,30 @@ describe('tryValue', () => {
     expect(update).toHaveBeenCalledWith('#listProgram(mode= /Catln/Doc/Desugar)')
   })
 })
+
+// A piece of JSON reaches Value as the value itself, since `/Data/Json` is a member of
+// `/Catln/Doc/DShow` rather than something a `dshow` arm builds a display out of. So what is being
+// checked here is that the dispatch finds the tree component at all, rather than falling to the
+// default that writes a value out as `Name(arg = ...)`.
+describe('json values', () => {
+  const jstr = s => ({ tag: 'TupleVal', name: '/Data/Json/Str', args: { '/value': { tag: 'StrVal', contents: s } } })
+  const nil = { tag: 'TupleVal', name: '/Data/List/Nil', args: {} }
+  const cons = (head, tail) => ({ tag: 'TupleVal', name: '/Data/List/Cons', args: { '/head': head, '/tail': tail } })
+  const member = (key, value) => ({ tag: 'TupleVal', name: '/Data/Json/Member', args: { '/key': { tag: 'StrVal', contents: key }, '/value': value } })
+  const object = members => ({ tag: 'TupleVal', name: '/Data/Json/Object', args: { '/entries': members.reduceRight((t, m) => cons(m, t), nil) } })
+
+  it('shows an object as the tree of what it holds', () => {
+    const { container } = render(<Providers><Value data={object([member('name', jstr('catln'))])} /></Providers>)
+
+    expect(screen.getByText('name')).toBeInTheDocument()
+    expect(screen.getByText('"catln"')).toBeInTheDocument()
+    // The generic tuple rendering would have written the constructor path out instead.
+    expect(container.textContent).not.toContain('/Data/Json/Object')
+  })
+
+  it('shows a scalar reached on its own', () => {
+    render(<Providers><Value data={jstr('alone')} /></Providers>)
+
+    expect(screen.getByText('"alone"')).toBeInTheDocument()
+  })
+})

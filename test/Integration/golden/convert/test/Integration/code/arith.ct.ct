@@ -1,0 +1,40 @@
+import "core"
+import "core"
+import "core"
+
+
+# Tests the various integer arithmetic operations
+intAdd= 1 + 1 == 2
+
+sub= 5 - 3 == 2
+
+mul= 2 * 3 == 6
+
+modulo= 7 % 3 == 1
+
+fAdd= 1.0 + 2.0 == 3.0
+
+fSub= 5.0 - 3.0 == 2.0
+
+fMul= 2.0 * 3.0 == 6.0
+
+fDiv= 6.0 // 2.0 == 3.0
+
+# Adding zero leaves a number alone, whatever number it is. Written as a [#test] rather than an
+  [#assert] on a single value, so the test engine generates the inputs and the webdocs show how many
+  it got through.
+testAddIdentity(x -> Integer) =
+  #test
+  #assert(test= x + 0 == x)
+  0
+
+main{io -> IO} =
+  #assert(test= intAdd)
+  #assert(test= sub)
+  #assert(test= mul)
+  #assert(test= modulo)
+  #assert(test= fAdd)
+  #assert(test= fSub)
+  #assert(test= fMul)
+  #assert(test= fDiv)
+  io

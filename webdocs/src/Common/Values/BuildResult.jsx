@@ -2,30 +2,13 @@ import React from 'react';
 
 import SyntaxHighlighter from 'react-syntax-highlighter';
 
+import {valList} from '../Common';
 import {Value} from '../Value';
 import Html from './Html';
 
 // A build result, as `stack/core/result.ct` declares one: the files of the directory it is built
 // into, each carrying the path it is built at. It is flat, and the tree is said by the `/` in each
 // path, so this shows a list of paths rather than a structure walked into.
-
-// The values of an evaluated `/Data/List`, which is a `/Data/List/Cons` chain ending in a `/Data/List/Nil`.
-//
-// A tail which is neither is carried through as an entry rather than ending the walk, so that it is
-// shown. A result quietly missing its end reads as a result that ended there, which is the one
-// thing a display of it must not say.
-function valList(val) {
-  const items = [];
-  let rest = val;
-  while (rest && rest.tag === 'TupleVal' && rest.name === '/Data/List/Cons') {
-    items.push(rest.args['/head']);
-    rest = rest.args['/tail'];
-  }
-  if (!(rest && rest.tag === 'TupleVal' && rest.name === '/Data/List/Nil')) {
-    items.push(rest);
-  }
-  return items;
-}
 
 // What is written in a file, shown as whatever it is written in.
 //

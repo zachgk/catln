@@ -1434,8 +1434,15 @@ ctssCallDShow ctss scope fun args = do
 -- from inside the read is safe. It stays safe only while nothing takes the read lock while holding
 -- 'ssmv', which nothing does.
 ctssImporterEnv :: CTSS -> ImporterEnv
-ctssImporterEnv (CTSS ssmv _) = noImporters{ieDeclared, ieReady, ieInvoke}
+ctssImporterEnv (CTSS ssmv _) = noImporters{ieDeclared, ieExtensions, ieReady, ieInvoke}
   where
+    -- The extensions the standard library's importers read, so that a directory's listing includes
+    -- the files they can read. 'registryImporters' parses the registry and the pages it imports and
+    -- does nothing else — no lock, no service, no build — which is what makes it safe to ask from
+    -- inside a read, and is the same claim the registry route already rests on.
+    ieExtensions = do
+      CTSSDat{ctssConfig} <- readMVar ssmv
+      concatMap idExts <$> registryImporters ctssConfig
     -- The importers these pages declare, read off the parse each already holds. Nothing is read from
     -- disk and nothing is built: a page whose program the service does not hold declares nothing as
     -- far as this is concerned, which is right, because a page has to be imported to be asked and

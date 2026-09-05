@@ -1,0 +1,57 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/JsonFile/data/projects/catln/q2Eclaude/worktrees/mirror/test/Integration/code/configq2Ejson"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /JsonFile/data/projects/catln/q2Eclaude/worktrees/mirror/test/Integration/code/configq2Ejson= /Data/Json/Object
+                            ( Value /entries= /Data/List/Cons
+                                ( Value /head= /Data/Json/Member
+                                    ( Value /key= CStr
+                                        { csValue = "name" }
+                                    )
+                                    ( Value /value= /Data/Json/Str
+                                        ( Value /value= CStr
+                                            { csValue = "catln" }
+                                        )
+                                    )
+                                )
+                                ( Value /tail= /Data/List/Cons
+                                    ( Value /head= /Data/Json/Member
+                                        ( Value /key= CStr
+                                            { csValue = "stable" }
+                                        )
+                                        ( Value /value= /Data/Json/Bool( Value /value= Value /Data/Primitive/False ) )
+                                    )
+                                    ( Value /tail= /Data/List/Cons
+                                        ( Value /head= /Data/Json/Member
+                                            ( Value /key= CStr
+                                                { csValue = "version" }
+                                            )
+                                            ( Value /value= /Data/Json/Number
+                                                ( Value /value= CFloat
+                                                    { cfValue = 1.5 }
+                                                )
+                                            )
+                                        )( Value /tail= Value /Data/List/Nil )
+                                    )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg = [ CGType ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "The JSON in /repo/dir/test/Integration/code/config.json. Write `/JsonFile/data/projects/catln/q2Eclaude/worktrees/mirror/test/Integration/code/configq2Ejson` to reach it." }
+            )
+        , /Catln/#print( Value /p= Value /JsonFile/data/projects/catln/q2Eclaude/worktrees/mirror/test/Integration/code/configq2Ejson )
+        ]
+    }

@@ -1,0 +1,27 @@
+import "core"
+import "core"
+import "core"
+
+
+# Prerequisite for multiFieldRouting (after paramElemBound): the alias-rename variant. Same as
+# paramElemBound but the destructured field is renamed via the alias form `x@v` and the body uses
+# the alias `v`. The bare form (paramElemBound) works; isolating the alias rename here. Currently
+# the definition's argument `p` fails to resolve the `Box(x@v)` pattern (stays TopType) when the
+# body uses `v` in a bounded-member call (`unbox(b= v)`), even though the bare and the
+# simple-body (`= v`) alias forms both resolve.
+class(Boxed)
+
+unbox(b -> /Boxed) -> /Data/Primitive/Integer
+
+every(/Data/Primitive/Integer, isa= [/Boxed])
+
+unbox(b -> /Data/Primitive/Integer)= b
+
+data(Box[$A](x -> $A))
+
+useBox(p -> Box[$A -> /Boxed]) -> /Data/Primitive/Integer
+useBox(p= Box(x@v))= unbox(b= v)
+
+main{io -> IO} =
+  #assert(test= useBox(p= Box(x= 5)) == 5)
+  io

@@ -5,7 +5,8 @@ import           Test.Tasty
 import           Test.Tasty.HUnit
 import           Text.Printf
 
-import           Common.TestCommon       (findCt, findPy)
+import           Common.TestCommon       (findCt, findJson, findPy)
+import           CtConstants             (escapedPathName)
 import           Control.Monad.Trans
 import           CRes
 import           CtService
@@ -86,8 +87,16 @@ runConvertGoldenTest fileName rawPrgms step =
       -- The working directory is written out as a fixed string, as 'runGoldenTest' writes it. A page
       -- read by an importer imports the page declaring that importer, by the absolute path it was
       -- resolved to — so without this the golden holds the path of whoever last wrote it.
+      --
+      -- Twice, because a path can appear in a page in two forms. Written as a path it is the plain
+      -- string; written as a NAME built from a path ('CtConstants.escapedPathName', which is how a
+      -- JSON file's declaration and a directory's are named) every character a name may not hold has
+      -- become @q@ and two hex digits, so the plain substitution does not match it and the golden
+      -- keeps the absolute path of whoever last wrote it. The escaped form is replaced first: the two
+      -- differ wherever the working directory holds such a character, and a directory holding none
+      -- makes them the same replacement done twice, which is harmless.
       runGoldenTestGen "convert"
-        (\cwd p -> T.unpack $ T.replace (T.pack cwd) "/repo/dir" $ T.pack $ formatRootPrgm p)
+        (\cwd p -> T.unpack $ T.replace (T.pack $ escapedPathName "" cwd) "/repo/dir" $ T.replace (T.pack cwd) "/repo/dir" $ T.pack $ formatRootPrgm p)
         (\relPath -> goldenConvertDir ++ relPath ++ ".ct")
         (graphFromEdges [(prgm, fileName, [])])
         step
@@ -101,7 +110,11 @@ runTest runGolden getCtss fileNameStr = testCaseSteps fileNameStr $ \step -> do
   res <- runCResT $ do
     rawPrgm <- getRawPrgmFrom fileName ctss
 
-    when (runGolden && ".py" `isSuffixOf` fileNameStr) $ do
+    -- A convert golden for every page, whatever it was written in. For a page a reader produced it
+    -- pins the Catln that reader wrote; for a page written in Catln it pins the round trip, since
+    -- what is shown is the raw program formatted back out — so a page whose text parses to something
+    -- other than what it says is a golden that moves.
+    when runGolden $ do
       lift $ runConvertGoldenTest fileName rawPrgm step
 
     prgm <- ctssGetFrom ssfDes fileName ctss
@@ -136,8 +149,14 @@ runTest runGolden getCtss fileNameStr = testCaseSteps fileNameStr $ \step -> do
         when (actual /= expected) $
           lift $ assertFailure $ printf "stdout doesn't match %s\n  expected: %s\n  actual:   %s" stdoutPath (show expected) (show actual)
 
-    lift $ step "Eval Build..."
-    _ <- getEvalBuild ctss fileName "main"
+    -- Guarded by 'evalBuildable', as the run above is guarded by 'evalRunnable'. A page with no
+    -- `main` has nothing to build, and asking for one anyway is an error note rather than an empty
+    -- answer -- which every `.ct` and `.py` fixture hid by defining one. A page a JSON file is read
+    -- as holds a value and no functions, so it is the first fixture that cannot.
+    when (evalBuildable evalTarget) $ do
+      lift $ step "Eval Build..."
+      _ <- getEvalBuild ctss fileName "main"
+      return ()
 
     lift $ step "Eval Annots..."
     _ <- getEvalAnnots ctss fileName
@@ -171,11 +190,13 @@ integrationTests :: IO TestTree
 integrationTests = do
   ctFiles <- standardTests
   pyFiles <- findPy testDir
-  let allFiles = ctFiles ++ pyFiles
+  jsonFiles <- findJson testDir
+  let allFiles = ctFiles ++ pyFiles ++ jsonFiles
   return $ withResource (ctssBaseFiles testCtssConfig allFiles) (const $ return ()) $ \getCtss ->
     testGroup "Integration" [
       testGroup "Tests" $ map (runTest True getCtss) ctFiles,
-      testGroup "Python" $ map (runPyTest True getCtss) pyFiles
+      testGroup "Python" $ map (runPyTest True getCtss) pyFiles,
+      testGroup "Json" $ map (runTest True getCtss) jsonFiles
     ]
 
 mtFileName :: String -> IO String

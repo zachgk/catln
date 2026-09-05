@@ -1,0 +1,12 @@
+import "core"
+import "core"
+import "core"
+
+
+# Tests a simple data structure with a true union
+class(Maybe[$T], [$_T, /Nothing])
+
+defInt(x -> Integer)= x
+defInt(x= Nothing)= 0
+
+main{io -> IO}= io.exit(val= defInt(x= 0))

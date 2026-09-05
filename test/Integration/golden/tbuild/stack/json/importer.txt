@@ -1,0 +1,48 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Json/parseJson"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Json/parseJson
+                            ( EAppArg { eaaArg = Value /path -> /Data/String } ) -> /Catln/ImportResult
+                            ( /prgm=TopType
+                            , /reads=TopType
+                            , /source=TopType
+                            )
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg = [ CGType ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "# Reading JSON
+                An importer: a way of reading files written in another syntax, declared in Catln rather than
+                built into the compiler. A file which writes `import "json/importer.ct"` on one line may write
+                `import json("config.json")` on the next, and the compiler will read that file by building this
+                page and running what is declared below. A file whose name ends in `.json` which nothing
+                imported by name is read with this too, found through @importers.ct@.
+                What a JSON file is read AS is a value and not a program, which is what makes this the second
+                kind of importer rather than a second instance of the first. @python/importer.ct@ reads a file
+                for the declarations it makes, and its page holds a function per function. This reads a file for
+                the one thing it is, and its page holds one declaration whose body is the whole document as a
+                [/Data/Json]. Both go through the one route, which is what says the route carries more than
+                the shape it was written for.
+                The reading itself is behind [#runtime], as Python's is. Reading JSON is a solved problem with a
+                library already among the compiler's dependencies, and rewriting it in Catln for the sake of
+                saying it was written in Catln would be a worse reader and no more of an importer. What has
+                moved is where the importer is DECLARED, from a table in the compiler to a page a program can
+                import.
+                This page writes `import hsrawprgm()`, because that is where [/Catln/ImportResult] and the raw
+                program inside it are declared. No page of @stack/core/@ may write that import — see
+                @core/hsprgm.ct@, which says why — and this page is not one of them." }
+            )
+        ]
+    }

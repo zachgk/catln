@@ -13,3 +13,6 @@ findCt = filesWithExtension ".ct"
 
 findPy :: String -> IO [String]
 findPy = filesWithExtension ".py"
+
+findJson :: String -> IO [String]
+findJson = filesWithExtension ".json"

@@ -45,8 +45,25 @@ fileExtensionParsers = H.fromList [
 parserImport :: String -> FilePath -> RawExpr ()
 parserImport parser path = rawVal parser `applyRawArgs` [(Nothing, rawStr path)]
 
-isSupportedFileExtension :: String -> Bool
-isSupportedFileExtension fileName = any ((`isSuffixOf` fileName) . ('.':)) (H.keys fileExtensionParsers)
+-- | Whether a file found in a directory's listing is one anything can read.
+--
+-- Both tables, and it must be both. 'fileExtensionParsers' is the syntaxes the compiler supplies,
+-- and 'ieExtensions' is the ones an importer declared in a @.ct@ file reads — so a @.py@ or a
+-- @.json@ is listed because @stack\/importers.ct@ says something reads it, and not because the
+-- compiler knows what one is.
+--
+-- Answering from the first table alone is what this did, and it silently stopped listing @.py@ files
+-- when the Python importer's declaration moved out of that table and onto a page.
+--
+-- Answers with the test rather than with the answer, so that the importers are asked once and the
+-- test is then applied to every entry of a directory. Asking per entry is what a directory of a
+-- hundred files would cost a hundred times over, and what it costs is not small: 'ieExtensions'
+-- parses the registry and every page the registry imports.
+isSupportedFileExtension :: ImporterEnv -> IO (String -> Bool)
+isSupportedFileExtension importers = do
+  declared <- ieExtensions importers
+  let exts = H.keys fileExtensionParsers ++ declared
+  return $ \fileName -> any ((`isSuffixOf` fileName) . ('.':)) exts
 
 findExistingPath :: [FilePath] -> IO (Maybe FilePath)
 findExistingPath [] = return Nothing
@@ -58,8 +75,16 @@ findExistingPath (p:ps) = do
 
 -- A directory has no source text of its own to write back — the files in it are pages of their own,
 -- each written back by the syntax which read it.
+--
+-- Its reader is made from the read's 'ReadEnv' rather than being the same reader every time, which
+-- is what separates it from every other syntax the compiler supplies. What a directory holds that is
+-- worth reading depends on which importers the program declares, and that is a question only the
+-- read can answer — see 'isSupportedFileExtension'. The comment on 'Syntax.Ct.Prgm.ReadEnv' names
+-- this as the reason the importers are carried there.
 dirSyntax :: ImportSyntax
-dirSyntax = readOnlySyntax (withDirPath dirPreload) (withDirPath dirParse)
+dirSyntax = ImportSyntax dirReader (const Nothing) importedLinkDir Nothing
+  where
+    dirReader env = return $ readyReader (withDirPath $ dirPreload $ reImporters env) (withDirPath dirParse) (return ())
 
 -- | The directory an import of one names.
 withDirPath :: (FilePath -> IO a) -> Expr () -> IO a
@@ -97,17 +122,19 @@ findExistingFile (p:ps) = do
     else findExistingFile ps
 
 -- | That page, and every file and directory in it as a page the read walks on to.
-dirPreload :: FilePath -> ImportPreloadResult
-dirPreload name = do
+dirPreload :: ImporterEnv -> FilePath -> ImportPreloadResult
+dirPreload importers name = do
   files <- listDirectory name
+  -- Once for the directory, not once per entry: see 'isSupportedFileExtension'.
+  supported <- isSupportedFileExtension importers
   files' <- forM files $ \file -> do
     let file' = name ++ "/" ++ file
     isF <- doesFileExist file'
     isD <- doesDirectoryExist file'
     case (isF, isD) of
-      (True, False) -> if not ("." `isPrefixOf` file) && isSupportedFileExtension file'
-        then return (Just file')
-        else return Nothing
+      (True, False) -> return $ if not ("." `isPrefixOf` file) && supported file'
+        then Just file'
+        else Nothing
       (False, True) -> return (Just file')
       _ -> error $ printf "Found non-file or directory: %s" file'
   parsed <- dirParse name

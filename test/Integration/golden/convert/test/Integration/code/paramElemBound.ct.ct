@@ -1,0 +1,27 @@
+import "core"
+import "core"
+import "core"
+
+
+# Prerequisite for multiFieldRouting: a destructured field must inherit the bound declared on
+  its type parameter. `Box`'s field `x` has type `$A`, and `useBox` is declared over
+  Box[$A -> Boxed], so the destructured `x` is bounded by `Boxed`: `unbox(b= x)` must type-check
+  and the definition must be recognized as covering the declaration. Uses a local `Boxed` class
+  with a member so the bound gates a real operation (not the stdlib Eq class). Single field, no
+  alias rename — isolates the element-bound propagation from the multi-field/alias concerns.
+class(Boxed)
+
+unbox(b -> /Boxed) -> /Data/Primitive/Integer
+
+every(/Data/Primitive/Integer, isa= [/Boxed])
+
+unbox(b -> /Data/Primitive/Integer)= b
+
+data(Box[$A](x -> $A))
+
+useBox(p -> Box[$A -> /Boxed]) -> /Data/Primitive/Integer
+useBox(p= Box(x))= unbox(b= x)
+
+main{io -> IO} =
+  #assert(test= useBox(p= Box(x= 5)) == 5)
+  io

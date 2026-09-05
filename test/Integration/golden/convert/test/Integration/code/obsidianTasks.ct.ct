@@ -1,0 +1,22 @@
+import "core"
+import "core"
+import obsidian("artifacts/catln-tasks")
+import obsidian("artifacts/catln-tasks/Tasks.md")
+import obsidian("artifacts/catln-tasks/Query.md")
+
+
+# Tests importing an Obsidian vault which runs the Tasks community plugin. Every checkbox of such a
+  vault is read as a /Data/Note/Task/Obsidian, holding the line as it was written and the plugin's
+  own writing read out of it, where a checkbox of the vault beside this one — artifacts/catln-test,
+  which runs no plugin — is read as a /Data/Note/Task/Simple.
+  The note is named as well as the vault, for the reason obsidian.ct names its notes: a vault does
+  not import the notes it holds, so a golden test walking out from here would reach the vault and
+  stop.
+  A vault can only be set one way, so what a vault set some other way reads as — a global filter,
+  the dataview notation, a status the vault named itself — is covered by ObsidianTaskTests rather
+  than by a fixture for each.
+  Query.md holds a query over the tasks of this vault, which is what a /Data/Note/#tasks annotation
+  is read as. What that query finds is not asked here: the annotations of a page are evaluated for
+  the file a test names and not for the pages it reaches, so what is written down here is the
+  annotation and what answers it is ObsidianQueryTests.
+main{io -> IO}= io.exit(val= 0)

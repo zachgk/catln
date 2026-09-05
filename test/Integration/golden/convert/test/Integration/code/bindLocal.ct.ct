@@ -1,0 +1,18 @@
+import "core"
+import "core"
+
+
+# The bind continuation contains a local declaration ([doubled]) between the bind and the result.
+# The inline desugar could not express this (it was a desugar error); the helper desugar carries the
+# whole continuation as a sub function, so its own local decls are preprocessed normally.
+bindWithLocal(m -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe =
+  x<- m
+
+  doubled= x + x
+
+  /Data/Maybe/Some(value= doubled + 1)
+
+main{io -> IO} =
+  #assert(test= bindWithLocal(m= /Data/Maybe/Some(value= 5)) == /Data/Maybe/Some(value= 11))
+  #assert(test= bindWithLocal(m= /Data/Maybe/Nothing) == /Data/Maybe/Nothing)
+  io

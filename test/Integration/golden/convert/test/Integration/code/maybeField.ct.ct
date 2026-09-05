@@ -1,0 +1,25 @@
+import "core"
+import "core"
+
+
+# A field of a data type may be a [/Data/Maybe] of a concrete element.
+  A task read out of an Obsidian note has a due date or it has none, and having none is the
+  [/Data/Maybe/Nothing] arm rather than an empty string standing in for one. So a field has to be able to
+  hold a [/Data/Maybe], which nothing in the checked standard library does — [/Data/Maybe] is used
+  there only as what a function takes and answers with.
+  Written as values declared and never defined, since that is the whole of what a note does with
+  such a field: a checkbox is read into a declaration, and what reads the fields back out is the
+  webdocs reading the evaluated value rather than anything written in Catln. Reading a field back
+  in Catln is a gap of its own — see @test/Integration/disabled/bareDataDeclaration.ct@.
+data(Dated(name -> String, due -> /Data/Maybe[$T -> String]))
+
+# Shown as the value it is, with no display type standing in for it, as a task is.
+every(Dated.., isa= [/Catln/Doc/DShow])
+
+/Dated(name= "has one", due= /Data/Maybe/Some(value= "2026-01-01"))
+/Dated(name= "has none", due= /Data/Maybe/Nothing)
+
+# Printed so that the values are evaluated and not only built.
+> /Dated(name= "has one", due= /Data/Maybe/Some(value= "2026-01-01"))
+> /Dated(name= "has none", due= /Data/Maybe/Nothing)
+main{io -> IO}= io.exit(val= 0)

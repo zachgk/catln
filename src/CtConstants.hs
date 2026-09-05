@@ -346,7 +346,16 @@ nameInvalidChars = "-~:*%+<>()[]{}=!&|.@_,?\""
 -- The separator is left alone, since a path's @\/@ and a name's @\/@ are the same character and the
 -- one is meant to read as the other.
 fileDirName :: FilePath -> String
-fileDirName path = fileDirNamePrefix ++ concatMap esc path
+fileDirName = escapedPathName fileDirNamePrefix
+
+-- | A name built from a path, under the prefix a syntax declares its pages' values beneath.
+--
+-- The escaping is 'fileDirName''s and is described there; what is shared is the rule and not the
+-- prefix, so two syntaxes naming a page after the file it was read from cannot collide with one
+-- another. A JSON file read by @json\/importer.ct@ is named this way too, for the reason a directory
+-- is: a program may import two of them, and two files must never be one name.
+escapedPathName :: String -> FilePath -> String
+escapedPathName prefix path = prefix ++ concatMap esc path
   where
     esc '/' = "/"
     esc c
@@ -359,6 +368,50 @@ fileDirNamePrefix = "/FileDir"
 
 fileDirEscapeChar :: Char
 fileDirEscapeChar = 'q'
+
+-- | The six arms of a @\/Data\/Json@ and the fields each carries, as the reader in
+-- "Syntax.Json.Parser" builds them.
+--
+-- Named here rather than written into that module because two things must agree on them: the reader,
+-- which builds the value, and @stack\/json\/json.ct@, which declares the type it is a value of. A
+-- name that drifted apart would be a page that parses and does not typecheck.
+jsonPath, jsonNullPath, jsonBoolPath, jsonNumberPath, jsonStrPath, jsonArrayPath, jsonObjectPath, jsonMemberPath :: String
+jsonPath = "/Data/Json"
+jsonNullPath = "/Data/Json/Null"
+jsonBoolPath = "/Data/Json/Bool"
+jsonNumberPath = "/Data/Json/Number"
+jsonStrPath = "/Data/Json/Str"
+jsonArrayPath = "/Data/Json/Array"
+jsonObjectPath = "/Data/Json/Object"
+jsonMemberPath = "/Data/Json/Member"
+
+-- | The field a scalar arm carries its value in, the field a container carries its children in, and
+-- the two a member is.
+jsonValueField, jsonEntriesField, jsonMemberKeyField, jsonMemberValueField :: String
+jsonValueField = "value"
+jsonEntriesField = "entries"
+jsonMemberKeyField = "key"
+jsonMemberValueField = "value"
+
+-- | The page declaring @\/Data\/Json@, which every page a JSON file is read as imports.
+jsonTypesPage :: FilePath
+jsonTypesPage = "json/json.ct"
+
+-- | The name the value of a JSON file is declared under: @\/JsonFile@ followed by the file's path,
+-- escaped as 'escapedPathName' escapes one.
+--
+-- Named after the path for the reason 'fileDirName' is, and it is a sharper reason here: a program
+-- importing two JSON files is ordinary, and a fixed name would make the second silently the first.
+--
+-- @\/JsonFile@ and not @\/Json@, because @stack\/json\/importer.ct@ declares @parseJson@ inside
+-- @module(Json)@ and 'Syntax.Native.Parser' puts the importer's page among the read page's imports —
+-- so the two are always in one program, and a value named under @\/Json@ would sit in the namespace
+-- the importer's own declaration is in.
+jsonFileName :: FilePath -> String
+jsonFileName = escapedPathName jsonFileNamePrefix
+
+jsonFileNamePrefix :: String
+jsonFileNamePrefix = "/JsonFile"
 
 -- | The two arms of a @\/Data\/Maybe@, for building one where a value may be absent — as a date a
 -- task has or has not got is.
