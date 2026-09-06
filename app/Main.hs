@@ -8,7 +8,7 @@ import           Options.Applicative
 import           Semantics             (buildCtssConfig)
 import           Semantics.Prgm        (CodeRangeDat, FileImport, MetaDat,
                                         exprPath, getExprMeta, getMetaPos,
-                                        impDisp)
+                                        impDisp, impRaw)
 import           Semantics.Types       (mkName, nameStr, partialKey)
 import           Syntax.Ct.Builder     (applyRawArgs, rawStr, rawVal)
 import           Syntax.Ct.Formatter   (formatRootPrgm)
@@ -27,7 +27,7 @@ import           CtService
 import           Data.Foldable         (foldlM)
 import qualified Data.HashMap.Strict   as H
 import qualified Data.HashSet          as S
-import           Data.List             (isInfixOf, nub)
+import           Data.List             (isInfixOf, nub, sortOn)
 import           Data.Maybe
 import           Eval.Common           (BuiltFile (..), SSF (..),
                                         TestKind (TestPrintGolden),
@@ -43,7 +43,8 @@ import           Text.Printf
 import           TypeCheck.Common      (flipTraceConstrain,
                                         lookupEpochCountResult,
                                         lookupTraceResult)
-import           TypeCheck.Instruments (defaultInstruments, typeInfoInstruments)
+import           TypeCheck.Instruments (defaultInstruments, epochInstruments,
+                                        typeInfoInstruments)
 import           TypeCheck.TraceWrite  (renderTypeTrace)
 import           Utils                 (fst3, graphToNodes, snd3, treeBranch)
 import           WebDocs               (docApi, docServe)
@@ -155,6 +156,38 @@ xTBuild prgmName = do
   ctss <- lift $ ctssBaseFiles buildCtssConfig [prgmName]
   g <- ctssGetFrom ssfTBPrgm prgmName' ctss
   lift $ putStrLn $ printf "Built arrow trees for %d programs" (length $ graphToNodes g)
+
+-- | What the type inference of a whole compilation cost, in solver epochs.
+--
+-- An epoch is one pass of 'TypeCheck.Constrain.runConstraintsIdx' over a solve fragment's
+-- constraints, and how many a fragment needs is decided by how far a value travels through the
+-- constraint list per pass — that is, by the order 'TypeCheck.Encode' emits the constraints in. So
+-- the total over every fragment of every page is what an ordering of them is answerable to, and
+-- this is the thing that reports it.
+--
+-- Every component is watched, unlike @typetrace@, which watches the one page it was named: the
+-- epoch counter keeps a single 'Integer', so watching everything costs nothing and a total over
+-- part of a program is not a total. The build is run for its own sake ('ctssBuildAll') rather than
+-- read back, so a page that fails to typecheck still reports what its solve spent before it failed.
+xEpochs :: [String] -> CResT IO ()
+xEpochs prgmNames = do
+  ctss <- lift $ ctssBaseFiles buildCtssConfig prgmNames
+  lift $ ctssSetInstrument ctss (const epochInstruments)
+  lift $ ctssBuildAll ctss
+  counts <- lift $ ctssEpochCounts ctss
+  failed <- lift $ ctssFailedPageCount ctss
+  forM_ (sortOn (negate . fst . snd) counts) $ \(name, (n, f)) ->
+    lift $ putStrLn $ printf "%6d epochs %5d fragments  %s" n f (show $ impRaw name)
+  -- The floor beside the total, because a fragment costs two epochs however well its constraints
+  -- are ordered — the pass that changes something and the pass that finds nothing left to change.
+  -- What an ordering can win back is the distance between the two numbers, not the first of them.
+  let (totalEpochs, totalFrags) = (sum $ map (fst . snd) counts, sum $ map (snd . snd) counts)
+  lift $ putStrLn $ printf "total %d epochs over %d fragments in %d components (floor %d, headroom %d)"
+    totalEpochs totalFrags (length counts) (2 * totalFrags) (totalEpochs - 2 * totalFrags)
+  -- Said beside the total and not instead of it, because a page that failed to typecheck stops its
+  -- own fragment loop: a build that broke spends FEWER epochs than one that worked, and a total
+  -- read without this could be a regression read as an improvement.
+  when (failed > 0) $ lift $ putStrLn $ printf "WARNING: %d pages failed to typecheck" failed
 
 xTest :: String -> Bool -> CResT IO ()
 xTest prgmName update = do
@@ -273,6 +306,7 @@ exec (RefIndex fname showCore)    = xRefIndex fname showCore
 exec (TestFile fname update)      = xTest fname update
 exec (TypeTrace fname)            = xTypeTrace fname
 exec (TBuildFile fname)           = xTBuild fname
+exec (Epochs fnames)              = xEpochs fnames
 
 data Command
   = BuildFile String String
@@ -286,6 +320,7 @@ data Command
   | TestFile String Bool
   | TypeTrace String
   | TBuildFile String
+  | Epochs [String]
 
 cRun :: Parser Command
 cRun = RunFile
@@ -344,6 +379,10 @@ cTypeTrace :: Parser Command
 cTypeTrace = TypeTrace
   <$> argument str (metavar "FILE" <> help "The file to trace type inference for")
 
+cEpochs :: Parser Command
+cEpochs = Epochs
+  <$> some (argument str (metavar "FILES" <> help "The files to compile and count type inference epochs for"))
+
 main :: IO ()
 main = do
   cmd <- execParser opts
@@ -369,6 +408,7 @@ main = do
       <> subCommand "test" "Runs all tests in a program" cTest
       <> subCommand "typetrace" "Writes the type inference trace to the build directory" cTypeTrace
       <> subCommand "tbuild" "Builds the arrow trees for a program and its imports" cTBuild
+      <> subCommand "epochs" "Reports how many type inference epochs compiling a program costs" cEpochs
                              )
 
 -- | One command of the compiler, with the @--help@ describing it.

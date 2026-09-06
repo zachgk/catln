@@ -850,6 +850,13 @@ nextConstrainEpoch env@FEnv{feInstruments, feCons, feUnionAllObjs} =
 startConstrainEpoch :: FEnv -> FEnv
 startConstrainEpoch env@FEnv{feInstruments} = env{feInstruments = instEpochStart feInstruments}
 
+-- | The head of a solve fragment, before any epoch of it has run.
+--
+-- Said even for a fragment with no constraints at all, which runs no epoch: a fragment is a unit of
+-- work whether or not there is anything to do in it.
+startConstrainSolve :: FEnv -> FEnv
+startConstrainSolve env@FEnv{feInstruments} = env{feInstruments = instSolveStart feInstruments}
+
 -- | The constraint about to be executed. Said before the skip memo is consulted
 -- ('TypeCheck.Constrain.executeConstraint'), so what is reported is every constraint the epoch
 -- reached rather than only the ones it re-ran.
@@ -896,6 +903,16 @@ class Instrument i where
   onFreshPoint :: Pnt -> Scheme -> i -> i
   onFreshPoint _ _ = id
 
+  -- | A solve fragment is beginning: its constraint set is about to be run for the first time.
+  --
+  -- Fired once per fragment, where 'onEpochStart' is fired once per pass over one. The two together
+  -- are what says whether a solve is slow because it has many fragments or because its fragments
+  -- take many passes — a fragment costs at least the pass that changes something and the pass that
+  -- finds nothing left to change, so the fragment count is the floor its epoch count is read
+  -- against.
+  onSolveStart :: i -> i
+  onSolveStart = id
+
   -- | An epoch is beginning. Fired once per epoch, per solve fragment.
   onEpochStart :: i -> i
   onEpochStart = id
@@ -937,7 +954,7 @@ instance Show AnyInstrument where
 -- again. An instrument whose output is a diagnostic rather than an artifact returns 'NoResult'.
 data InstrumentResult
   = TraceResult TraceConstrain
-  | EpochCountResult Integer
+  | EpochCountResult Integer Integer
   | NoResult
   deriving (Show, Generic, ToJSON)
 
@@ -957,6 +974,9 @@ instMap f (i:is) = let !i' = f i; !is' = instMap f is in i' : is'
 
 instFreshPoint :: Pnt -> Scheme -> [AnyInstrument] -> [AnyInstrument]
 instFreshPoint p scheme = instMap (\(AnyInstrument i) -> AnyInstrument (onFreshPoint p scheme i))
+
+instSolveStart :: [AnyInstrument] -> [AnyInstrument]
+instSolveStart = instMap (\(AnyInstrument i) -> AnyInstrument (onSolveStart i))
 
 instEpochStart :: [AnyInstrument] -> [AnyInstrument]
 instEpochStart = instMap (\(AnyInstrument i) -> AnyInstrument (onEpochStart i))
@@ -984,4 +1004,9 @@ lookupTraceResult results = listToMaybe [tc | (_, TraceResult tc) <- results]
 
 -- | How many epochs a solve ran, for a caller that asked to be told.
 lookupEpochCountResult :: InstrumentResults -> Maybe Integer
-lookupEpochCountResult results = listToMaybe [n | (_, EpochCountResult n) <- results]
+lookupEpochCountResult results = listToMaybe [n | (_, EpochCountResult n _) <- results]
+
+-- | How many solve fragments those epochs were spread over, which is the floor they are read
+-- against: two epochs apiece is what a fragment costs when nothing has to travel anywhere.
+lookupFragmentCountResult :: InstrumentResults -> Maybe Integer
+lookupFragmentCountResult results = listToMaybe [f | (_, EpochCountResult _ f) <- results]

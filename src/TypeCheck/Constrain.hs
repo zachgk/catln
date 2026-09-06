@@ -507,6 +507,7 @@ runConstraints :: Integer -> [VConstraint] -> StateT FEnv TypeCheckResult Bool
 runConstraints limit cons = do
   -- Fresh skip-memo per constraint set: memo keys are positions in THIS list.
   modify $ \e -> e{feConMemo = IM.empty}
+  modify startConstrainSolve
   runConstraintsIdx limit (zip [0..] cons)
 
 runConstraintsIdx :: Integer -> [(Int, VConstraint)] -> StateT FEnv TypeCheckResult Bool

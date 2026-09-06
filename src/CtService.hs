@@ -71,8 +71,9 @@ import           Text.Megaparsec         (errorBundlePretty, runParser)
 import           Text.Printf
 import           TypeCheck               (typecheckPrgms, typecheckPrgmsWith)
 import           TypeCheck.Common        (AnyInstrument, InstrumentResults,
-                                          TPrgm, VPrgm, lookupTraceResult,
-                                          typeCheckToRes)
+                                          TPrgm, VPrgm, lookupEpochCountResult,
+                                          lookupFragmentCountResult,
+                                          lookupTraceResult, typeCheckToRes)
 import           TypeCheck.Instruments   (defaultInstruments,
                                           typeInfoInstruments)
 import           Utils
@@ -195,7 +196,14 @@ data CTSSDat = CTSSDat {
   -- which page it is going to read — @catln typetrace@, which is named a page on the command line —
   -- can have that page's component watched as it is built and every other component left alone.
   -- That page is then compiled once rather than compiled and compiled again.
-  ctssInstrument    :: [FileImport] -> [AnyInstrument]
+  ctssInstrument    :: [FileImport] -> [AnyInstrument],
+  -- | What each component's typecheck cost, for a service being measured rather than read.
+  --
+  -- One entry per COMPONENT, named by the first of its pages, because the epoch count is the count
+  -- of the solve and an SCC's pages share one solve — a per-page tally of the same solve would
+  -- count it once per page. Empty unless the instruments a build was set to run with include
+  -- 'TypeCheck.Instruments.epochCountInstrument', so an ordinary build fills nothing.
+  ctssEpochs        :: TVar [(FileImport, (Integer, Integer))]
                                        }
 
 -- | What one thing a reader has open is compiled from, which is what decides whether a read reaches
@@ -261,6 +269,7 @@ emptyCTSS config = do
 newCTSSDat :: CTSSConfig -> [String] -> IO CTSSDat
 newCTSSDat config baseFileNames = CTSSDat config baseFileNames H.empty (graphFromEdges []) <$> newReadQueue
   <*> pure Nothing <*> newMVar () <*> newTVarIO (Displays 0 H.empty) <*> pure (const defaultInstruments)
+  <*> newTVarIO []
 
 -- | Watch the typechecks of some pages with more than the default instruments.
 --
@@ -271,6 +280,26 @@ newCTSSDat config baseFileNames = CTSSDat config baseFileNames H.empty (graphFro
 -- could.
 ctssSetInstrument :: CTSS -> ([FileImport] -> [AnyInstrument]) -> IO ()
 ctssSetInstrument (CTSS ssmv _) instrument = modifyMVar_ ssmv $ \ss -> return ss{ctssInstrument=instrument}
+
+-- | What each component built so far cost in typecheck epochs, oldest build first.
+--
+-- Says nothing unless the build was set to run with an instrument that counts them
+-- ('ctssSetInstrument'), which is the point: a measurement is asked for and is otherwise not paid
+-- for.
+ctssEpochCounts :: CTSS -> IO [(FileImport, (Integer, Integer))]
+ctssEpochCounts (CTSS ssmv _) = do
+  CTSSDat{ctssEpochs} <- readMVar ssmv
+  reverse <$> readTVarIO ctssEpochs
+
+-- | How many pages the service holds that did not typecheck.
+--
+-- Judged by 'ssfTPrgm', the stage that fails a page which did not ('buildSCCPipeline' stores it
+-- through 'failOnErrorNotes'). A page never reached at all is not counted as failed: it was not
+-- asked for.
+ctssFailedPageCount :: CTSS -> IO Int
+ctssFailedPageCount (CTSS ssmv _) = do
+  CTSSDat{ctssPages} <- readMVar ssmv
+  return $ length [() | ssf <- H.elems ctssPages, Just (CErr _) <- [ssfTPrgm ssf]]
 
 -- | The service holding these pages, with the graph they make derived from them.
 --
@@ -776,7 +805,7 @@ ctssBuildSCC ctss@(CTSS ssmv _) sccNodes pages = do
   let sccNamesSet = S.fromList sccFileNames
   -- Get dep lists from the pages graph structure (stable across MVar updates)
   let pageDeps = H.fromList [(name, deps) | (_, name, deps) <- graphToNodes pages]
-  modifyMVar_ ssmv $ \ctssdat@CTSSDat{ctssPages, ctssData, ctssInstrument} -> do
+  modifyMVar_ ssmv $ \ctssdat@CTSSDat{ctssPages, ctssData, ctssInstrument, ctssEpochs} -> do
     -- Re-check with current state (another thread may have built this SCC)
     let currentSSFs = mapMaybe (`H.lookup` ctssPages) sccFileNames
     if all ssfBuilt currentSSFs
@@ -787,7 +816,10 @@ ctssBuildSCC ctss@(CTSS ssmv _) sccNodes pages = do
               ssf <- H.lookup name ctssPages
               let deps = fromMaybe [] $ H.lookup name pageDeps
               return (ssf, name, deps)) sccFileNames
-        p <- runCResT $ buildSCCPipeline ctss ctssData sccNamesSet currentSCCNodes pages (ctssInstrument sccFileNames)
+        -- The epoch tally is handed in rather than read back off the service, because this is
+        -- inside the lock the service is held under: a pipeline reading the 'MVar' it is being run
+        -- from would wait for itself.
+        p <- runCResT $ buildSCCPipeline ctss ctssData sccNamesSet currentSCCNodes pages (ctssInstrument sccFileNames) ctssEpochs
         case p of
           CRes notes updates -> do
             unless (null notes) $ putStrLn $ prettyCNotes notes
@@ -814,8 +846,8 @@ ctssBuildSCC ctss@(CTSS ssmv _) sccNodes pages = do
 -- Returns a map of updated SSFs for the SCC members.
 buildSCCPipeline :: CTSS -> GraphData SSF FileImport -> S.HashSet FileImport
                  -> [(SSF, FileImport, [FileImport])] -> GraphData SSF FileImport
-                 -> [AnyInstrument] -> CResT IO (H.HashMap FileImport SSF)
-buildSCCPipeline ctss ctssData sccNamesSet sccNodes pages instruments = do
+                 -> [AnyInstrument] -> TVar [(FileImport, (Integer, Integer))] -> CResT IO (H.HashMap FileImport SSF)
+buildSCCPipeline ctss ctssData sccNamesSet sccNodes pages instruments epochsVar = do
   -- Get raw programs for all SCC members
   rawPrgms <- forM sccNodes $ \(ssf, name, deps) -> do
     -- Read by whoever asked for the build ('ctssLoadOf'), so a page still unread here is a build of
@@ -885,6 +917,18 @@ buildSCCPipeline ctss ctssData sccNamesSet sccNodes pages instruments = do
       -- is waiting on; this only says which of them it is inside.
       lift $ ctssReportAt ctss StepTypechecking (listToMaybe $ mapMaybe (impDisp . fst) namesAndDeps)
       tcResults <- asCResT tcCRes
+
+      -- What that solve cost, for a service being measured. Recorded ONCE for the component and
+      -- named by the first of its pages: the pages of an SCC share one solve and are handed the
+      -- same results ('typecheckPrgmsWith'), so a per-page tally would count the one solve once per
+      -- page. Nothing is recorded unless the instruments this build was given count epochs, so an
+      -- ordinary build does not pay for the measurement.
+      forM_ [ (name, (n, f))
+            | (name, _) <- take 1 namesAndDeps
+            , (_, _, results) <- take 1 tcResults
+            , Just n <- [lookupEpochCountResult results]
+            , Just f <- [lookupFragmentCountResult results]
+            ] $ \e -> lift $ atomically $ modifyTVar' epochsVar (e :)
 
       -- Step 6: Construct TPrgm graph for eval (SCC results + built dep TPrgms)
       let sccTPrgmNodes = [( fst3 tc, name, deps)
