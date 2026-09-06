@@ -7043,8 +7043,24 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
       -- the eval-time build found no arrows from it. Only the knowledge-free ⊤ reads through
       -- the declaration: a spelled value keeps its own forms (an unsettled call form in a slot
       -- is the settle machinery's to decide, not a projection's).
+      --
+      -- ⊤ is only the KNOWLEDGE-FREE case of the shape this applies to. A slot holding any pure
+      -- TOP — a predicate/class form with no positive leaf of its own (@left=∀BinTree[/K=⊤]@) —
+      -- is likewise bounded by the declaration and nothing else, and reading it literally
+      -- answers with whatever that top happens to spell. Restricted to a literal ⊤ the
+      -- declaration was consultable exactly ONCE: the moment anything wrote a wider-than-
+      -- declared top into the slot the declaration was never consulted again, so a field
+      -- derived before the partial's own parameters narrowed stayed stale forever and the
+      -- partial ended up contradicting the parameter its field is declared to follow
+      -- (@Node[/K=∀Ord, /V=∀Eq](left=∀BinTree[/K=⊤, /V=⊤])@). Meeting the bound in is
+      -- denotation-preserving — no constructible value holds a field outside its declared type
+      -- — and it re-derives every time it is read, so it tracks the parameters as they narrow.
+      -- A slot with POSITIVE leaves still keeps its own forms: pruning a raw applied form is
+      -- the settle machinery's decision, not a projection's.
+      let boundedTop (UnionType Just{} pos consts) = H.null pos && null consts
+          boundedTop _                             = False
       let slotRead sup = case (rawSlot propName sup, typeGetAux propName sup) of
-            (raw, Just supProp) | TVArg k <- propName, raw == Nothing || raw == Just PTopType ->
+            (raw, Just supProp) | TVArg k <- propName, raw == Nothing || maybe False boundedTop raw ->
               case [freeTVIntToTopDeep typeEnv vaenv sup d | PartialType{ptArgs=dArgs} <- typeGraphData typeEnv (ptName sup), Just d <- [H.lookup k dArgs]] of
                 [] -> Just supProp
                 ds -> Just $ intersectTypesEnv typeEnv vaenv supProp (unionAllTypesWithEnv typeEnv vaenv ds)
