@@ -157,11 +157,8 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
   -- on exactly this). In flow order the whole chain rides one forward epoch, and its requirement
   -- mirror rides the alternated backward epochs.
   case est of
-    EncodeOut{} -> modify $ addConstraints [
-                ArrowTo 7 (getExprMeta baseExpr') baseM',
-                BoundedByObjs 9 m' PTopType
-                       ]
-    EncodeIn{} -> return ()
+    EncodeOut{} -> modify $ addConstraints [ArrowTo 7 (getExprMeta baseExpr') baseM']
+    EncodeIn{}  -> return ()
   arg'' <- case arg of
     EAppArg a -> do
       arg' <- fromObjArr est a
@@ -170,7 +167,9 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
       -- (use-narrowed) requirement. Emitting this here in the Tuple-arg handling covers every input
       -- argument form — matched-value args (@f(x= True)@, wildcards @f(x= _)@) and destructuring
       -- patterns as well as typed parameters — whereas the old 'exprVarArgs'-driven emission in
-      -- 'fromObjectMap' only reached the parameter/binding forms it collected.
+      -- 'fromObjectMap' only reached the parameter/binding forms it collected. Emitted AFTER the
+      -- argument's own links below, since the requirement it pulls the actual down to is what those
+      -- links deliver.
       let eqReqActs = [EqReqAct 34 arrM' | EncodeIn <- [est], Just (_, arrM') <- [oaArr arg']]
       let constraints = case (est, oaObj arg', oaArr arg') of
             (EncodeOut{}, Just obj, Just (Just _argExpr', arrM')) ->
@@ -218,7 +217,7 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
                         PropEq 25 (m', TVArg $ inExprSingleton obj) arrM'
                         ]
             _ -> error $ printf "Invalid fromExpr in %s mode for %s" (show est) (show arg)
-      modify $ addConstraints (eqReqActs ++ constraints)
+      modify $ addConstraints (constraints ++ eqReqActs)
       modify $ endConstraintBlock (if isJust (oaObj arg') then Just arg' else Nothing) (maybe H.empty (fmap (first getExprMeta . head) . exprVarArgs) (oaObj arg'))
       return $ EAppArg arg'
     EAppVar vn vm -> do
@@ -233,13 +232,14 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
       modify $ addConstraints [SetArgMode 11 False baseM' m']
       return $ EAppSpread a'
     EAppSpread a -> error $ printf "Not yet implemented %s" (show a)
-  let baseConstraints = case est of
-        EncodeOut{} -> [] -- emitted before the argument, see above
-        EncodeIn{} -> [
-                EqPoints 16 (getExprMeta baseExpr') baseM',
-                BoundedByObjs 17 m' PTopType
-                      ]
-  modify $ addConstraints baseConstraints
+  -- 'BoundedByObjs' narrows only @m'@'s requirement channels, and requirements travel backward, so
+  -- emitting it last is running it first in the reversed epoch — ahead of the 'PropEq' carrying the
+  -- narrowed argument slot down into the argument.
+  modify $ addConstraints $ case est of
+    EncodeOut{} -> [BoundedByObjs 9 m' PTopType]
+    EncodeIn{}  -> [ EqPoints 16 (getExprMeta baseExpr') baseM'
+                   , BoundedByObjs 17 m' PTopType
+                   ]
   return $ TupleApply m' (baseM', baseExpr') arg''
 
 -- | Non-linear matching: when a pattern binds one variable to several argument positions

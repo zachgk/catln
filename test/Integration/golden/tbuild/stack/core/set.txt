@@ -16,7 +16,7 @@ Prgm
                             ( EAppArg Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         , /Data/Set/allIn
                             ( EAppArg Value /items -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                ( /head=∀/Data/Algebra/Ord
+                                ( /head=$/T
                                 , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                 ) = /Data/List/Cons( EAppArg Value /head -> ∀/Data/Algebra/Ord )
                                 ( EAppArg Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
@@ -324,7 +324,7 @@ Prgm
                             ( EAppArg Value /acc -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] ) -> TVArg /acc = ( Value /acc ↦ TVArg /acc )
                         , /Data/Set/intersectInto
                             ( EAppArg Value /items -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                ( /head=∀/Data/Algebra/Ord
+                                ( /head=$/T
                                 , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                 ) = /Data/List/Cons( EAppArg Value /head -> ∀/Data/Algebra/Ord )
                                 ( EAppArg Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
@@ -633,7 +633,7 @@ Prgm
                         , /Data/Set/removeAll
                             ( EAppArg Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
                             ( EAppArg Value /items -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                ( /head=∀/Data/Algebra/Ord
+                                ( /head=$/T
                                 , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                 ) = /Data/List/Cons( EAppArg Value /head -> ∀/Data/Algebra/Ord )
                                 ( EAppArg Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
@@ -894,7 +894,7 @@ Prgm
                         , /Data/Set/addAll
                             ( EAppArg Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
                             ( EAppArg Value /items -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                ( /head=∀/Data/Algebra/Ord
+                                ( /head=$/T
                                 , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                 ) = /Data/List/Cons( EAppArg Value /head -> ∀/Data/Algebra/Ord )
                                 ( EAppArg Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
