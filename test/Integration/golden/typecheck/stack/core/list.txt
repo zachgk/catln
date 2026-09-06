@@ -75,8 +75,8 @@ Prgm
                                     ( /head=TopType
                                     , /tail=TopType
                                     ) + /Data/List/Cons[ /T=∀/Data/ToString ]
-                                    ( /head=TopType
-                                    , /tail=TopType
+                                    ( /head=∀/Data/ToString
+                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                                     )
                                 ) = /Cons[ /T : ∀/Data/ToString ]( Value /head@Value /h )( Value /tail@Value /t )
                             ) -> /Data/String = /operator++

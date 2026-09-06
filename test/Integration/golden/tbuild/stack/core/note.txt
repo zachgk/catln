@@ -148,7 +148,7 @@ Prgm
                             ( EAppArg Value /this ->
                                 ( /Data/Note/Task/Simple
                                     ( /contents=/Data/String
-                                    , /state=TopType
+                                    , /state=∀/Data/Primitive/Boolean
                                     ) + /Task/Simple
                                     ( /contents=TopType
                                     , /state=TopType
@@ -169,12 +169,12 @@ Prgm
                                     , /symbol=TopType
                                     , /rest=TopType
                                     ) + /Data/Note/Task/Obsidian
-                                    ( /recurrence=TopType
-                                    , /due=TopType
-                                    , /start=TopType
-                                    , /priority=TopType
-                                    , /scheduled=TopType
-                                    , /statusType=TopType
+                                    ( /recurrence=∀/Data/Maybe[ /T=/Data/String ]
+                                    , /due=∀/Data/Maybe[ /T=/Data/String ]
+                                    , /start=∀/Data/Maybe[ /T=/Data/String ]
+                                    , /priority=∀/Data/Note/Priority
+                                    , /scheduled=∀/Data/Maybe[ /T=/Data/String ]
+                                    , /statusType=∀/Data/Note/StatusType
                                     , /description=/Data/String
                                     , /contents=/Data/String
                                     , /symbol=/Data/String

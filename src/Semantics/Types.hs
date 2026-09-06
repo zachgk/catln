@@ -7065,6 +7065,14 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
                 [] -> Just supProp
                 ds -> Just $ intersectTypesEnv typeEnv vaenv supProp (unionAllTypesWithEnv typeEnv vaenv ds)
             (_, r) -> r
+      -- A slot already PRESENT as a pure top is re-read through the declaration on every
+      -- projection ('slotRead'); storing that reading back is what makes the tightening stick.
+      -- Only an existing pure-top slot is rewritten — never one with positive leaves (whose forms
+      -- are the settle machinery's), and never a slot the partial does not have (which would
+      -- invent one).
+      let tightenSup sup = case (rawSlot propName sup, slotRead sup) of
+            (Just raw, Just r) | boundedTop raw, r /= raw -> typeSetAux propName r sup
+            _                                            -> sup
       -- The value returned to the SUB point EXITS the sup partial's frame: a reference to one
       -- of @sup@'s own vars (@Node[/K=$/MK](left=∀BinTree[/K=$/MK], ..)@ projected out of
       -- @mapEqual[/MK=∀Ord, /MV=∀Eq](/a=..)@) names a frame the sub point does not carry —
@@ -7115,6 +7123,7 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
                 -- detached from @sup@ here, so the enclosing scope must be supplied explicitly.
                 else Just (typeSetAux propName (dropOutOfScopeTVExt (H.union (joinVarArgEnv supVars H.empty) vaenv) newProp) sup, closeFrame sup newProp)
             (_, Nothing) -> Nothing
+      let tightenedSuper = compactType typeEnv vaenv $ UnionType Nothing (joinUnionType (map tightenSup supPartialList)) []
       case subType of
         UnionType Nothing subPartials [] -> do
           let subPartialList = splitUnionType subPartials
@@ -7170,7 +7179,12 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
           let sub' = case mapMaybe (\sup -> closeFrame sup <$> slotRead sup) supPartialList of
                 []       -> PTopType
                 supProps -> compactType typeEnv vaenv $ unionAllTypesWithEnv typeEnv vaenv supProps
-          (vaenv, superType, sub')
+          -- The declaration-bounded reading is not only for the value handed to the sub: the slot
+          -- the super STORES is bounded the same way, so tighten it in place. Left alone, a slot
+          -- filled before the partial's parameters narrowed keeps its stale spelling for good
+          -- while every READ of it reports the tighter bound — the two disagree, and it is the
+          -- stored one that reaches Decode and TreeBuild.
+          (vaenv, tightenedSuper, sub')
         _ -> do
           let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectedPartials sup subType | sup <- supPartialList]
           (vaenv, compactType typeEnv vaenv $ UnionType Nothing (joinUnionType supPartialList') [], compactType typeEnv vaenv $ unionAllTypesWithEnv typeEnv vaenv subPartialList')
