@@ -282,10 +282,9 @@ annotResp ctss scope' annot = do
     --
     -- One fetch rather than two, so the program the annotation is checked against cannot be a
     -- different one from the program it is evaluated in.
-    tprgmsTrace <- ctssEvaluableFrom ssfTPrgmWithTrace scope' ctss
-    let tprgms = fmapGraph fst3 tprgmsTrace
+    tprgms <- ctssEvaluableFrom ssfTPrgm scope' ctss
     let annotDeps = map snd3 $ graphToNodes tprgms
-    [(annotTprgm, _, _)] <- asCResT $ typeCheckToRes $ typecheckPrgms [(annotDesPrgm', [], map fst3 $ graphToNodes tprgmsTrace)]
+    [annotTprgm] <- asCResT $ typeCheckToRes $ typecheckPrgms [(annotDesPrgm', [], map fst3 $ graphToNodes tprgms)]
     let joinedTprgms = graphFromEdges ((annotTprgm, annotPrgmName, annotDeps) : graphToNodes tprgms)
     let targetModes = evalAllTargetModes annotTprgm
     -- The service is scoped to the page the annotation was asked about rather than to the synthetic

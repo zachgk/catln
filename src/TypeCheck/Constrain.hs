@@ -19,7 +19,7 @@ module TypeCheck.Constrain where
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import qualified Data.IntMap.Strict  as IM
-import           Data.List           (partition)
+import           Data.List           (intercalate, partition)
 import           Data.Maybe
 import qualified Data.Zip            as Z
 
@@ -512,13 +512,16 @@ runConstraints limit cons = do
 runConstraintsIdx :: Integer -> [(Int, VConstraint)] -> StateT FEnv TypeCheckResult Bool
 runConstraintsIdx _ [] = return True
 runConstraintsIdx 0 _ = do
-  env@FEnv{feTrace, feUnionAllObjs} <- get
-  -- _ <- trace (printf "Trace 908: %s" (show $ showTraceConstrainPnt env 908)) (return ())
+  env@FEnv{feUnionAllObjs} <- get
   if (stypeAct <$> descriptor env feUnionAllObjs) == pure PTopType
     then lift $ TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit without determining the TopTop (unionAllObjs)"] ()
-    else lift $ TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit with still changing constraints: \n\n%s" (show $ showTraceConstrainEpoch env $ head $ tail $ tcEpochs feTrace)] ()
+    -- What was still changing is whatever the instruments watching this solve can say about it,
+    -- which for the one every typecheck carries ('TypeCheck.Instruments.LastEpochs') is the last
+    -- completed epoch. A solve watched by nothing says only that it ran out.
+    else lift $ TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit with still changing constraints: \n\n%s" (intercalate "\n\n" $ instrumentDiagnostics env)] ()
   return False
 runConstraintsIdx limit cons = do
+  modify startConstrainEpoch
   env <- get
   -- Compute the constraint-independent reaches type graph once for this epoch and cache it, so
   -- the (many) 'arrowConstrainUbs'/'mkReachesEnv' calls in this epoch reuse it instead of each
@@ -526,8 +529,8 @@ runConstraintsIdx limit cons = do
   --
   -- A failed 'setScheme' check or verification stores a 'TypeCheckResE' in the failing point,
   -- and 'buildTypeEnv' reads every object's points, so lifting its result directly would abort
-  -- the whole 'StateT' computation here on the following epoch - discarding 'feTrace' (leaving
-  -- 'catln typetrace' with nothing to write) along with all other typecheck artifacts. Instead,
+  -- the whole 'StateT' computation here on the following epoch - discarding 'feInstruments'
+  -- (leaving 'catln typetrace' with nothing to write) along with all other typecheck artifacts. Instead,
   -- demote the failure to recoverable error notes and stop constraining: decoding still surfaces
   -- the poisoned points' errors, and consumers reject the program via 'failOnErrorNotes'.
   case buildTypeEnv env of

@@ -2,47 +2,51 @@
 module Main where
 
 import           CRes
-import           CtConstants          (printAnnot, printAnnotText,
-                                       resultAnnotText)
+import           CtConstants           (printAnnot, printAnnotText,
+                                        resultAnnotText)
 import           Options.Applicative
-import           Semantics            (buildCtssConfig)
-import           Semantics.Prgm       (CodeRangeDat, FileImport, MetaDat,
-                                       exprPath, getExprMeta, getMetaPos,
-                                       impDisp)
-import           Semantics.Types      (mkName, nameStr, partialKey)
-import           Syntax.Ct.Builder    (applyRawArgs, rawStr, rawVal)
-import           Syntax.Ct.Formatter  (formatRootPrgm)
-import           Syntax.Ct.Prgm       (ParsedImport (..), RawPrgm (..),
-                                       RawStatement (..), RawStatementTree (..),
-                                       isCorePage, rawExprAppliedArgsMap)
-import           Syntax.Parsers       (canonicalImport, mkDesCanonicalImportStr,
-                                       mkRawImportStr, parseFile,
-                                       parseImportAlone, readFiles)
+import           Semantics             (buildCtssConfig)
+import           Semantics.Prgm        (CodeRangeDat, FileImport, MetaDat,
+                                        exprPath, getExprMeta, getMetaPos,
+                                        impDisp)
+import           Semantics.Types       (mkName, nameStr, partialKey)
+import           Syntax.Ct.Builder     (applyRawArgs, rawStr, rawVal)
+import           Syntax.Ct.Formatter   (formatRootPrgm)
+import           Syntax.Ct.Prgm        (ParsedImport (..), RawPrgm (..),
+                                        RawStatement (..),
+                                        RawStatementTree (..), isCorePage,
+                                        rawExprAppliedArgsMap)
+import           Syntax.Parsers        (canonicalImport,
+                                        mkDesCanonicalImportStr, mkRawImportStr,
+                                        parseFile, parseImportAlone, readFiles)
 
 import           Control.Monad
 import           Control.Monad.Trans
-import           CtRef                (printRefIndex)
+import           CtRef                 (printRefIndex)
 import           CtService
-import           Data.Foldable        (foldlM)
-import qualified Data.HashMap.Strict  as H
-import qualified Data.HashSet         as S
-import           Data.List            (isInfixOf, nub)
+import           Data.Foldable         (foldlM)
+import qualified Data.HashMap.Strict   as H
+import qualified Data.HashSet          as S
+import           Data.List             (isInfixOf, nub)
 import           Data.Maybe
-import           Eval.Common          (BuiltFile (..), SSF (..),
-                                       TestKind (TestPrintGolden),
-                                       TestResult (..), valResultFiles)
-import           Eval.Testing         (TestDesc (..), runTestDesc)
-import           LSP                  (lspRun)
+import           Eval.Common           (BuiltFile (..), SSF (..),
+                                        TestKind (TestPrintGolden),
+                                        TestResult (..), valResultFiles)
+import           Eval.Testing          (TestDesc (..), runTestDesc)
+import           LSP                   (lspRun)
 import           System.Directory
-import           System.Exit          (exitFailure)
-import           System.FilePath      (isAbsolute, splitDirectories,
-                                       takeDirectory, (</>))
-import           Text.Megaparsec      (sourceName)
+import           System.Exit           (exitFailure)
+import           System.FilePath       (isAbsolute, splitDirectories,
+                                        takeDirectory, (</>))
+import           Text.Megaparsec       (sourceName)
 import           Text.Printf
-import           TypeCheck.Common     (flipTraceConstrain)
-import           TypeCheck.TraceWrite (renderTypeTrace)
-import           Utils                (fst3, graphToNodes, snd3, treeBranch)
-import           WebDocs              (docApi, docServe)
+import           TypeCheck.Common      (flipTraceConstrain,
+                                        lookupEpochCountResult,
+                                        lookupTraceResult)
+import           TypeCheck.Instruments (defaultInstruments, typeInfoInstruments)
+import           TypeCheck.TraceWrite  (renderTypeTrace)
+import           Utils                 (fst3, graphToNodes, snd3, treeBranch)
+import           WebDocs               (docApi, docServe)
 -- import Repl (repl)
 
 xRun :: String -> String -> CResT IO ()
@@ -91,8 +95,18 @@ xTypeTrace prgmName = do
   lift $ createDirectoryIfMissing True (traceDir ++ "/pnt")
   prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
   ctss <- lift $ ctssBaseFiles buildCtssConfig [prgmName]
-  (_, vprgm, tr) <- ctssLookupReq ssfTPrgmWithTrace prgmName' ctss
-  let files = renderTypeTrace vprgm (flipTraceConstrain tr)
+  -- Said before anything is built, and about this page alone. The page named on the command line is
+  -- the one whose inference is going to be read, so its own typecheck is the one worth watching:
+  -- watched here, it is compiled once, and every other page it is compiled against — which for the
+  -- smallest program is the whole standard library — is compiled unwatched as it always is.
+  lift $ ctssSetInstrument ctss $ \names ->
+    if prgmName' `elem` names then typeInfoInstruments else defaultInstruments
+  (vprgm, results) <- ctssTypeInfo typeInfoInstruments prgmName' ctss
+  trace <- case lookupTraceResult results of
+    Just trace -> return trace
+    Nothing    -> fail $ printf "The typecheck of %s produced no trace to write" prgmName
+  let epochs = printf "epochs: %s\n" (maybe "?" show $ lookupEpochCountResult results)
+  let files = ("epochs.txt", epochs) : renderTypeTrace vprgm (flipTraceConstrain trace)
   forM_ files $ \(relPath, contents) ->
     lift $ writeFile (traceDir ++ "/" ++ relPath) contents
   lift $ putStrLn $ printf "Wrote %d typetrace files to %s" (length files) traceDir

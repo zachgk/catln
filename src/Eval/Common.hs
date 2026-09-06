@@ -43,7 +43,7 @@ import           Semantics.Types
 import           Syntax.Ct.Parser.Syntax (ParseMetaDat)
 import           Syntax.Ct.Prgm          (RawPrgm, ReadPage)
 import           Text.Printf
-import           TypeCheck.Common        (TPrgm, TraceConstrain, VPrgm)
+import           TypeCheck.Common        (InstrumentResults, TPrgm, VPrgm)
 import           Utils
 
 type EvalMetaDat = Maybe ReachesTree
@@ -71,29 +71,47 @@ type EPrgmGraphData = GraphData EPrgm FileImport
 -- costs nothing until something reads the stage it wants — merely inspecting 'ssfTBPrgm' runs an
 -- 'Eval.evalBuildAll' over the page.
 data SSF = SSF {
-  ssfSource         :: Maybe String,
+  ssfSource    :: Maybe String,
   -- | The page's program, or 'Nothing' for a page whose imports are known and whose program has not
   -- been read.
-  ssfRaw            :: Maybe (CRes (RawPrgm ParseMetaDat)),
+  ssfRaw       :: Maybe (CRes (RawPrgm ParseMetaDat)),
   -- | What the read which produced this page left: the imports it walked on from, and when the
   -- files it read were last written. Handed back to the next read, which gives this page back
   -- untouched while those files are unchanged, so a page is parsed again only when something it was
   -- read from has been written to.
-  ssfRead           :: ReadPage,
-  ssfBuilt          :: Bool,
-  ssfDes            :: Maybe (CRes (Prgm Expr ParseMetaDat)),
-  ssfTPrgmWithTrace :: Maybe (CRes (TPrgm, VPrgm, TraceConstrain)),
-  ssfTPrgm          :: Maybe (CRes TPrgm),
-  ssfTBPrgm         :: Maybe (CRes (Prgm TExpr EvalMetaDat)),
-  ssfAnnots         :: Maybe (CRes [(Expr EvalMetaDat, Val)]),
+  ssfRead      :: ReadPage,
+  ssfBuilt     :: Bool,
+  ssfDes       :: Maybe (CRes (Prgm Expr ParseMetaDat)),
+  ssfTPrgm     :: Maybe (CRes TPrgm),
+  -- | The pages this page's typecheck was solved against: the peers it was solved WITH (its
+  -- strongly connected component, whose programs are their own 'ssfDes') and the pages it was
+  -- solved AGAINST (its transitive imports, whose programs are their own 'ssfTPrgm').
+  --
+  -- Names rather than programs, so that this retains nothing: a page invalidated takes its
+  -- importers with it, so a page still built is one whose peers and dependencies are still built,
+  -- and looking them up is what keeps the two from drifting apart. Kept because a typecheck is not
+  -- reproducible from the page alone — which set it was solved with decides what it means — and
+  -- reading the inference means running it again ('CtService.ctssTypeInfo').
+  ssfTcInputs  :: Maybe ([FileImport], [FileImport]),
+  -- | The page's inference, for whoever asked to read it: the encoded program the solve was over,
+  -- and what the instruments watching it made of it.
+  --
+  -- Absent on a page built the ordinary way, which is watched by nothing worth keeping: the trace
+  -- of a solve is far larger than the program it explains, and holding one per page is holding a
+  -- multiple of the whole program for the sake of the one page someone may look at. It is filled
+  -- in when something asks — by the build itself where the asking came first, and otherwise by
+  -- typechecking the page again with the instruments attached.
+  ssfTypeInfo  :: Maybe (CRes (VPrgm, InstrumentResults)),
+  ssfTBPrgm    :: Maybe (CRes (Prgm TExpr EvalMetaDat)),
+  ssfAnnots    :: Maybe (CRes [(Expr EvalMetaDat, Val)]),
   -- | What evaluating 'ssfAnnots' asked the compilation service about, which is what decides when
   -- the answer kept there stops being an answer. Written with the annotations it came from and read
   -- only beside them, so an empty record on a page holding no annotations says nothing.
-  ssfAnnotAsks      :: AnnotAsks,
+  ssfAnnotAsks :: AnnotAsks,
   -- | The tests this page wrote, run. Running a test is not part of building a page, so this is
   -- filled in when something asks for it (see 'CtService.ctssTestsFrom') rather than by the
   -- pipeline.
-  ssfTests          :: Maybe (CRes [TestResult])
+  ssfTests     :: Maybe (CRes [TestResult])
                }
 
 -- | Joins one stage over a set of pages, left unforced.
@@ -151,6 +169,16 @@ class CtServiceApi s where
   -- service's to do because a test is decided over the whole program a page belongs to rather than
   -- over the page and its imports (@CtService.ctssTestPages@).
   csTests :: s -> FileImport -> IO (CRes [TestResult])
+
+  -- | A page's type inference: the encoded program its typecheck was over, and what the
+  -- instruments watching that typecheck recorded.
+  --
+  -- Asking for work rather than for a lookup, as 'csTests' is. A page is compiled watched by
+  -- nothing worth keeping — the inference of a solve is much larger than the program it produces —
+  -- so unless whoever built the page had already asked for this, answering it means typechecking
+  -- the page again with the instruments attached. The answer is then kept, since a reader of an
+  -- inference reads it a point at a time and would otherwise pay for the solve at every point.
+  csTypeInfo :: s -> FileImport -> IO (CRes (VPrgm, InstrumentResults))
 
   -- | Runs a named function of a page's program, for a debugger reporting on what it evaluated.
   --
@@ -285,6 +313,11 @@ esBuilt svc@(EvalService s _ _ _) scope = recordAsk svc scope >> csBuilt s scope
 -- than every page covers what can alter one.
 esTests :: EvalService -> FileImport -> IO (CRes [TestResult])
 esTests svc@(EvalService s _ _ _) prgmName = recordEvery svc >> csTests s prgmName
+
+-- | 'CtServiceApi.csTypeInfo' of a page, recorded as an ask about that page's scope: an inference
+-- is of that page's program, which is the page and what it imports.
+esTypeInfo :: EvalService -> FileImport -> IO (CRes (VPrgm, InstrumentResults))
+esTypeInfo svc@(EvalService s _ _ _) prgmName = recordAsk svc (Just prgmName) >> csTypeInfo s prgmName
 
 -- | 'CtServiceApi.csRunFun' of a page, recorded as an ask about that page's scope: a run is of that
 -- page's program, which is the page and what it imports.

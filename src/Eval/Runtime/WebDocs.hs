@@ -47,8 +47,9 @@ import           Syntax.Ct.Prgm      (isCorePage)
 import           System.FilePath     (takeFileName)
 import           System.IO.Unsafe    (unsafePerformIO)
 import           Text.Printf
-import           TypeCheck.Common    (TraceConstrain, VPrgm,
-                                      filterTraceConstrain, flipTraceConstrain)
+import           TypeCheck.Common    (InstrumentResults, VPrgm,
+                                      filterTraceConstrain, flipTraceConstrain,
+                                      lookupTraceResult)
 import           Utils
 
 -- | The primitives backing the @Catln/Doc@ display annotations.
@@ -158,16 +159,12 @@ typeInfer = EEnvPrim "typeInfer" prim
 --
 -- It hands the whole answer to its caller rather than the value inside it, because the notes a
 -- typecheck left are part of what a reader of this is asking about.
-withTypeInfer :: Env -> (CRes (VPrgm, TraceConstrain) -> Either String String) -> Either String Val
+withTypeInfer :: Env -> (CRes (VPrgm, InstrumentResults) -> Either String String) -> Either String Val
 withTypeInfer env render = case evService env of
   Nothing -> Left noService
   Just svc -> case scopedTo (esScope svc) "type inference to report on" of
     Left err       -> Left err
-    Right prgmName -> askService $ do
-      graph <- esBuilt svc (Just prgmName)
-      return $ render $ do
-        (_, vprgm, trace) <- requireComputed $ ssfTPrgmWithTrace =<< graphLookup prgmName graph
-        return (vprgm, trace)
+    Right prgmName -> askService $ render <$> esTypeInfo svc prgmName
 
 -- | Backs @/Catln/Doc/typeInferPnt@, the data carried by a @Show/TypeInferPnt@ page. It renders the
 -- part of the same trace that touches a single point: the constraints mentioning it and, per epoch,
@@ -181,8 +178,13 @@ typeInferPnt = EEnvPrim "typeInferPnt" prim
       Just (IntVal pnt) -> withTypeInfer env (render pnt)
       Just v -> Left $ printf "typeInferPnt was given %s, which is not an Integer point" (show v)
       Nothing -> Left $ printf "typeInferPnt has no %s argument, only %s" typeInferPntArg (show $ sort $ H.keys args)
-    render pnt (CRes _ (_, trace)) = Right $ encodeJsonText $ flipTraceConstrain $ filterTraceConstrain trace (fromInteger pnt)
-    render _ (CErr notes)          = Left $ prettyCNotes notes
+    render pnt (CRes _ (_, results)) = case lookupTraceResult results of
+      Just trace -> Right $ encodeJsonText $ flipTraceConstrain $ filterTraceConstrain trace (fromInteger pnt)
+      -- The service attaches the trace to every inference it is asked for, so this is a
+      -- contradiction rather than a page to report on: said as itself rather than as an empty trace,
+      -- which would read as a point nothing ever wrote to.
+      Nothing    -> Left "typeInferPnt was given an inference with no trace in it"
+    render _ (CErr notes)            = Left $ prettyCNotes notes
 
 -- | The argument of @/Catln/Doc/debugger@ naming which function to run.
 debuggerFunArg :: String

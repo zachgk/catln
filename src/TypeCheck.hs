@@ -22,24 +22,29 @@ module TypeCheck where
 
 import           Control.Monad.State
 import           CRes
-import qualified Data.HashMap.Strict as H
-import qualified Data.HashSet        as S
-import           Data.List           (transpose)
-import           Data.Maybe          (mapMaybe)
+import qualified Data.HashMap.Strict   as H
+import qualified Data.HashSet          as S
+import           Data.List             (transpose)
+import           Data.Maybe            (mapMaybe)
 import           MapMeta
 import           Semantics.Prgm
 import           Semantics.Types
 import           TypeCheck.Common
-import           TypeCheck.Constrain (runConstraints)
+import           TypeCheck.Constrain   (runConstraints)
 import           TypeCheck.Decode
 import           TypeCheck.Encode
+import           TypeCheck.Instruments (defaultInstruments)
 import           TypeCheck.Partition
-import           TypeCheck.TypeUtils (buildPrecedenceMap)
+import           TypeCheck.TypeUtils   (buildPrecedenceMap)
 import           Utils
 
-type TypecheckTuplePrgm = (TPrgm, VPrgm, TraceConstrain)
-type FinalTypecheckTuplePrgm = (TPrgm, VPrgm, TraceConstrain)
-type TypecheckFileResult = H.HashMap FileImport (GraphNodes TypecheckTuplePrgm FileImport)
+-- | What a typecheck of one page produced: its typed program, the encoded program the solve was
+-- over, and what the instruments watching that solve made of it.
+--
+-- Only the first of the three is what compiling a page is for. The other two are the inference
+-- itself rather than its result, and are what a reader of the inference — @catln typetrace@, the
+-- webdocs type view — asks for by attaching instruments.
+type TypecheckedPrgm = (TPrgm, VPrgm, InstrumentResults)
 
 runConstraintsLimit :: Integer
 -- Raised from 20: a name-ambiguous call (map.ct's @insert@ also matching list.ct's nested
@@ -63,7 +68,7 @@ depPieceOf k item = (recPiece, buildPrecedenceMap recPiece, graphPiece, mapMetaO
     graphPiece = ObjectMap (H.singleton k item)
     recPiece = mconcat $ map getRecursiveObjs $ flatObjectMapItem item
 
-typecheckPrgmsSt :: [PPrgm] -> [TPrgm] -> StateT FEnv TypeCheckResult ([TPrgm], [VPrgm], TraceConstrain)
+typecheckPrgmsSt :: [PPrgm] -> [TPrgm] -> StateT FEnv TypeCheckResult ([TPrgm], [VPrgm], InstrumentResults)
 typecheckPrgmsSt pprgms typechecked = do
   modify $ \e -> e{feLocalDefNames = prgmsLocalDefNames pprgms}
   -- Solve per function SCC in dependency order, promoting each solved fragment to a
@@ -94,10 +99,10 @@ typecheckPrgmsSt pprgms typechecked = do
   case stypeAct <$> descriptor env (feUnionAllObjs env) of
     TypeCheckResult _ PTopType -> lift $ TypeCheckResult [GenTypeCheckError Nothing "Type checking converged but unionAllObjs (the TopTop) remained TopType; an object failed to resolve"] ()
     _                          -> return ()
-  trace <- gets feTrace
+  results <- gets (instrumentResults . feInstruments)
   let tprgms = map mconcat $ transpose $ reverse tfragsRev
   let vprgms = map mconcat $ transpose $ reverse vfragsRev
-  return (tprgms, vprgms, trace)
+  return (tprgms, vprgms, results)
   where
     unObjectMap (ObjectMap m) = m
     objMapKeys = H.keys . unObjectMap
@@ -133,19 +138,25 @@ typecheckPrgmsSt pprgms typechecked = do
           let fragPieces = H.mapWithKey depPieceOf (unObjectMap (mconcat (map prgmObjMap tprgms')))
           return (tprgms':taccs, vprgms':vaccs, H.union fragPieces pieces, converged && uniOk)
 
-typecheckPrgms :: [(PPrgm, [PPrgm], [TypecheckTuplePrgm])] -> TypeCheckResult [TypecheckTuplePrgm]
-typecheckPrgms nodesWithDeps = do
+-- | Typecheck a set of programs solved together, watched by the given instruments.
+--
+-- The instruments are one list for the whole solve rather than one per program, because the solve
+-- is one: the programs of a strongly connected component share an environment, and an instrument
+-- watches that environment. So each program comes back with the same results beside it, which are
+-- the results of the solve all of them were part of.
+typecheckPrgmsWith :: [AnyInstrument] -> [(PPrgm, [PPrgm], [TPrgm])] -> TypeCheckResult [TypecheckedPrgm]
+typecheckPrgmsWith instruments nodesWithDeps = do
   let pprgms = map (\(p, _, _) -> p) nodesWithDeps
-  let allDepsTrace = concatMap (\(_, _, d) -> d) nodesWithDeps
-  let deps = map fst3 allDepsTrace
-  let baseFEnv = makeBaseFEnv (mconcat (pprgms ++ map (mapMetaPrgm clearMetaDat) deps))
-  (tprgms, vprgms, trace) <- evalStateT (typecheckPrgmsSt pprgms deps) baseFEnv
-  return $ zip3 tprgms vprgms (repeat trace)
+  let deps = concatMap (\(_, _, d) -> d) nodesWithDeps
+  let baseFEnv = makeBaseFEnv instruments (mconcat (pprgms ++ map (mapMetaPrgm clearMetaDat) deps))
+  (tprgms, vprgms, results) <- evalStateT (typecheckPrgmsSt pprgms deps) baseFEnv
+  return $ zip3 tprgms vprgms (repeat results)
 
-typecheckPrgmWithTrace :: PPrgmGraphData -> CRes (GraphData FinalTypecheckTuplePrgm FileImport)
-typecheckPrgmWithTrace pprgms = typeCheckToRes $ mapGraphWithDeps typecheckPrgms pprgms
+-- | Typecheck a set of programs for their typed programs alone, which is what compiling them is
+-- for. Watched by 'defaultInstruments', which is what a failure needs to explain itself and no
+-- more.
+typecheckPrgms :: [(PPrgm, [PPrgm], [TPrgm])] -> TypeCheckResult [TPrgm]
+typecheckPrgms nodesWithDeps = map fst3 <$> typecheckPrgmsWith defaultInstruments nodesWithDeps
 
 typecheckPrgm :: PPrgmGraphData -> CRes (GraphData TPrgm FileImport)
-typecheckPrgm pprgms = do
-  graph <- failOnErrorNotes $ typecheckPrgmWithTrace pprgms
-  return $ fmapGraph fst3 graph
+typecheckPrgm pprgms = failOnErrorNotes $ typeCheckToRes $ mapGraphWithDeps typecheckPrgms pprgms

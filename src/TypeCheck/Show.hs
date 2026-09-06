@@ -48,8 +48,13 @@ showTraceConstrainEpoch env = SConstraintEpoch . map mapConstraint . filter (not
   where
     mapConstraint (con, pnts) = (showCon env con, pnts)
 
-showTraceConstrainPnt :: FEnv -> Pnt -> SConstrainPnt
-showTraceConstrainPnt env@FEnv{feTrace=TraceConstrain{tcEpochs}} p = SConstrainPnt $ map (map (bimap (showCon env) (fromJust . lookup p)) . filter (elem p . map fst . snd)) tcEpochs
+-- | The part of a trace touching one point, as its constraints and values rather than its points.
+--
+-- Given the trace rather than read off the environment: the trace belongs to whichever instrument
+-- was asked to keep it ('TypeCheck.Instruments.TraceInstrument'), and a solve nothing asked to
+-- watch has none to read.
+showTraceConstrainPnt :: FEnv -> TraceConstrain -> Pnt -> SConstrainPnt
+showTraceConstrainPnt env TraceConstrain{tcEpochs} p = SConstrainPnt $ map (map (bimap (showCon env) (fromJust . lookup p)) . filter (elem p . map fst . snd)) tcEpochs
 
 matchingConstraintHelper :: FEnv -> VarMeta -> VarMeta -> VarMeta -> Bool
 matchingConstraintHelper env p p2 p3 = equivalent env p p2 || equivalent env p p3

@@ -69,9 +69,12 @@ import           Syntax.Parsers
 import           System.FilePath         (takeDirectory)
 import           Text.Megaparsec         (errorBundlePretty, runParser)
 import           Text.Printf
-import           TypeCheck               (typecheckPrgms)
-import           TypeCheck.Common        (TPrgm, TraceConstrain, VPrgm,
+import           TypeCheck               (typecheckPrgms, typecheckPrgmsWith)
+import           TypeCheck.Common        (AnyInstrument, InstrumentResults,
+                                          TPrgm, VPrgm, lookupTraceResult,
                                           typeCheckToRes)
+import           TypeCheck.Instruments   (defaultInstruments,
+                                          typeInfoInstruments)
 import           Utils
 
 type TBPrgm = Prgm TExpr EvalMetaDat
@@ -180,7 +183,19 @@ data CTSSDat = CTSSDat {
   ctssReadLock      :: MVar (),
   -- | What readers of the service have open, for a service read from by something which is watching
   -- rather than asking.
-  ctssShown         :: TVar Displays
+  ctssShown         :: TVar Displays,
+  -- | Which instruments each component's typecheck is watched by, given the pages of that
+  -- component ('TypeCheck.Common.Instrument').
+  --
+  -- 'TypeCheck.Instruments.defaultInstruments' for every page by default, which keeps nothing: an
+  -- inference is read by asking for it ('ctssTypeInfo'), and a build that kept one per page would
+  -- hold a multiple of the whole program for the sake of the pages nobody looks at.
+  --
+  -- It is a function of the pages rather than one list, so that something which knows in advance
+  -- which page it is going to read — @catln typetrace@, which is named a page on the command line —
+  -- can have that page's component watched as it is built and every other component left alone.
+  -- That page is then compiled once rather than compiled and compiled again.
+  ctssInstrument    :: [FileImport] -> [AnyInstrument]
                                        }
 
 -- | What one thing a reader has open is compiled from, which is what decides whether a read reaches
@@ -245,7 +260,17 @@ emptyCTSS config = do
 
 newCTSSDat :: CTSSConfig -> [String] -> IO CTSSDat
 newCTSSDat config baseFileNames = CTSSDat config baseFileNames H.empty (graphFromEdges []) <$> newReadQueue
-  <*> pure Nothing <*> newMVar () <*> newTVarIO (Displays 0 H.empty)
+  <*> pure Nothing <*> newMVar () <*> newTVarIO (Displays 0 H.empty) <*> pure (const defaultInstruments)
+
+-- | Watch the typechecks of some pages with more than the default instruments.
+--
+-- Set before anything is built, by something which knows what it is going to read: a build is done
+-- once and kept, so a page already compiled is not compiled again to be watched — asking for its
+-- inference afterwards runs its typecheck a second time instead ('ctssTypeInfo'), which is the
+-- right thing for a reader who could not have said in advance and the wrong thing for one who
+-- could.
+ctssSetInstrument :: CTSS -> ([FileImport] -> [AnyInstrument]) -> IO ()
+ctssSetInstrument (CTSS ssmv _) instrument = modifyMVar_ ssmv $ \ss -> return ss{ctssInstrument=instrument}
 
 -- | The service holding these pages, with the graph they make derived from them.
 --
@@ -286,8 +311,9 @@ newSSF rp = SSF { ssfSource = rpSource rp
                 , ssfRead = rp
                 , ssfBuilt = False
                 , ssfDes = Nothing
-                , ssfTPrgmWithTrace = Nothing
                 , ssfTPrgm = Nothing
+                , ssfTcInputs = Nothing
+                , ssfTypeInfo = Nothing
                 , ssfTBPrgm = Nothing
                 , ssfAnnots = Nothing
                 , ssfAnnotAsks = mempty
@@ -750,7 +776,7 @@ ctssBuildSCC ctss@(CTSS ssmv _) sccNodes pages = do
   let sccNamesSet = S.fromList sccFileNames
   -- Get dep lists from the pages graph structure (stable across MVar updates)
   let pageDeps = H.fromList [(name, deps) | (_, name, deps) <- graphToNodes pages]
-  modifyMVar_ ssmv $ \ctssdat@CTSSDat{ctssPages, ctssData} -> do
+  modifyMVar_ ssmv $ \ctssdat@CTSSDat{ctssPages, ctssData, ctssInstrument} -> do
     -- Re-check with current state (another thread may have built this SCC)
     let currentSSFs = mapMaybe (`H.lookup` ctssPages) sccFileNames
     if all ssfBuilt currentSSFs
@@ -761,7 +787,7 @@ ctssBuildSCC ctss@(CTSS ssmv _) sccNodes pages = do
               ssf <- H.lookup name ctssPages
               let deps = fromMaybe [] $ H.lookup name pageDeps
               return (ssf, name, deps)) sccFileNames
-        p <- runCResT $ buildSCCPipeline ctss ctssData sccNamesSet currentSCCNodes pages
+        p <- runCResT $ buildSCCPipeline ctss ctssData sccNamesSet currentSCCNodes pages (ctssInstrument sccFileNames)
         case p of
           CRes notes updates -> do
             unless (null notes) $ putStrLn $ prettyCNotes notes
@@ -777,8 +803,8 @@ ctssBuildSCC ctss@(CTSS ssmv _) sccNodes pages = do
             let failSSF ssf = ssf{
                   ssfBuilt = True,
                   ssfDes = Just $ CErr notes,
-                  ssfTPrgmWithTrace = Just $ CErr notes,
                   ssfTPrgm = Just $ CErr notes,
+                  ssfTypeInfo = Just $ CErr notes,
                   ssfTBPrgm = Just $ CErr notes
                 }
             let failedUpdates = H.fromList [(name, failSSF ssf) | (ssf, name, _) <- currentSCCNodes]
@@ -788,8 +814,8 @@ ctssBuildSCC ctss@(CTSS ssmv _) sccNodes pages = do
 -- Returns a map of updated SSFs for the SCC members.
 buildSCCPipeline :: CTSS -> GraphData SSF FileImport -> S.HashSet FileImport
                  -> [(SSF, FileImport, [FileImport])] -> GraphData SSF FileImport
-                 -> CResT IO (H.HashMap FileImport SSF)
-buildSCCPipeline ctss ctssData sccNamesSet sccNodes pages = do
+                 -> [AnyInstrument] -> CResT IO (H.HashMap FileImport SSF)
+buildSCCPipeline ctss ctssData sccNamesSet sccNodes pages instruments = do
   -- Get raw programs for all SCC members
   rawPrgms <- forM sccNodes $ \(ssf, name, deps) -> do
     -- Read by whoever asked for the build ('ctssLoadOf'), so a page still unread here is a build of
@@ -825,15 +851,26 @@ buildSCCPipeline ctss ctssData sccNamesSet sccNodes pages = do
       let finalDes = desFinalPasses desNodesForFinal
 
       -- Step 4: Collect typechecked data from already-built dependencies
+      -- Which of them those are is written down beside them, because a page's inference is read by
+      -- running its typecheck again ('ctssTypeInfo') and a typecheck means what the set it was
+      -- solved against makes it mean. A dependency that failed to typecheck is passed over here, so
+      -- the names kept are the ones taken rather than the ones looked at.
+      let extDepTCNames = [name | name <- extDepNames, isJust (graphLookup name ctssData >>= ssfTPrgm >>= cresToMaybe)]
       let extDepTC = mapMaybe (\name ->
-            graphLookup name ctssData >>= ssfTPrgmWithTrace >>= cresToMaybe
+            graphLookup name ctssData >>= ssfTPrgm >>= cresToMaybe
             ) extDepNames
 
       -- Step 5: Typecheck with SCC peers and external deps
       let tcNodesForTC = [(des, peerDes, extDepTC)
             | (des, (name, _)) <- zip finalDes namesAndDeps
             , let peerDes = [d | (d, (n, _)) <- zip finalDes namesAndDeps, n /= name]]
-      let tcCRes = typeCheckToRes $ typecheckPrgms tcNodesForTC
+      -- One instrument list for the whole component, because the solve is one: the pages of an SCC
+      -- share an environment and an instrument watches that environment, so an instrument asked for
+      -- by one of them is attached to all of them. Ordinarily this is 'defaultInstruments' and the
+      -- inference is not kept; where something asked first — @catln typetrace@ naming a page before
+      -- anything was built — the build is watched and the page is compiled once rather than
+      -- compiled and then compiled again.
+      let tcCRes = typeCheckToRes $ typecheckPrgmsWith instruments tcNodesForTC
       let tcNotes = getCNotes tcCRes
       -- Said here and nowhere above, because nothing above forces anything. Step 1's 'desPrgm' is
       -- bound through 'asCResT', which settles only whether it failed, and step 3's 'desFinalPasses'
@@ -873,18 +910,25 @@ buildSCCPipeline ctss ctssData sccNamesSet sccNodes pages = do
       let validUpdates = [(name, ssf{
               ssfBuilt = True,
               ssfDes = Just $ pure des,
-              -- Carries the notes but is deliberately not failOnErrorNotes: the whole point of
-              -- keeping the trace is to explain a program that failed to typecheck, and the notes
-              -- are what say why, so a type inference view needs both together.
-              ssfTPrgmWithTrace = Just $ CRes tcNotes tc,
               -- failOnErrorNotes so eval consumers (run/test/build) cleanly reject
-              -- a type-erroneous program, while ssfTPrgmWithTrace still carries the trace.
-              ssfTPrgm = Just $ failOnErrorNotes $ CRes tcNotes (fst3 tc),
+              -- a type-erroneous program, while the inference below still explains why.
+              ssfTPrgm = Just $ failOnErrorNotes $ CRes tcNotes tprgm,
+              -- The pages of this solve IN THE ORDER it took them, not the component as a set: the
+              -- solve is over their programs joined, and a rerun which joined them differently
+              -- would be a rerun of a different program.
+              ssfTcInputs = Just (map fst namesAndDeps, extDepTCNames),
+              -- Kept only where this solve was watched by something that produced an inference to
+              -- keep. Carries the notes but is deliberately not failOnErrorNotes: the whole point
+              -- of reading an inference is to explain a program that failed to typecheck, and the
+              -- notes are what say why, so a type inference view needs both together.
+              ssfTypeInfo = if isJust (lookupTraceResult results)
+                then Just $ CRes tcNotes (vprgm, results)
+                else Nothing,
               ssfTBPrgm = case tbprgmGraphRes of
                 CRes _ g  -> fmap pure $ graphLookup name g
                 CErr errs -> Just $ CErr errs
             })
-            | ((_, ssf, name, _), des, tc) <-
+            | ((_, ssf, name, _), des, (tprgm, vprgm, results)) <-
                 zip3 validRaws finalDes tcResults]
 
       return $ H.fromList (validUpdates ++ invalidUpdates)
@@ -1295,6 +1339,62 @@ ctssStore prgmName store (CTSS ssmv _) = modifyMVar_ ssmv $ \ctssdat ->
     keep k ssf | k == prgmName && ssfBuilt ssf = store ssf
                | otherwise = ssf
 
+-- | A page's type inference: the encoded program its typecheck was over, and what the given
+-- instruments made of that typecheck.
+--
+-- The page is built first, whatever comes of this. A build is what settles whether the page
+-- compiles at all, and what everything else about the page is read from; running a typecheck of
+-- one's own instead would answer about a page the service does not hold.
+--
+-- Then, if the build was already watched — because whoever set it up knew which page they were
+-- going to read — that is the answer. Otherwise the page is typechecked AGAIN, watched this time,
+-- from the same programs the build was given: its component's peers as they were desugared, and
+-- its dependencies as they were typechecked. Solved from the same inputs by the same code, so what
+-- comes back is the inference of the compiled page rather than of some other reading of it.
+--
+-- What comes back is kept on the page, because an inference is read a point at a time: a reader
+-- clicking through the points of one definition would otherwise pay for the whole solve at each of
+-- them.
+ctssTypeInfo :: [AnyInstrument] -> FileImport -> CTSS -> CResT IO (VPrgm, InstrumentResults)
+ctssTypeInfo instruments prgmName ctss@(CTSS ssmv _) = do
+  lift $ ctssBuildFrom ctss prgmName
+  CTSSDat{ctssData} <- lift $ readMVar ssmv
+  ssf <- case graphLookup prgmName ctssData of
+    Just ssf -> return ssf
+    Nothing  -> fail $ printf "Could not find %s" (show $ impRaw prgmName)
+  case ssfTypeInfo ssf of
+    Just kept -> asCResT kept
+    Nothing -> do
+      (sccNames, depNames) <- case ssfTcInputs ssf of
+        Just inputs -> return inputs
+        -- A page which is built but does not say what it was built against. Every page the pipeline
+        -- typechecks writes it, so this is a page the pipeline passed over — a @ctx@ page, which
+        -- has no typecheck to report on.
+        Nothing -> fail $ printf "%s was not typechecked, so it has no inference to report on" (show $ impRaw prgmName)
+      let desOf name = requireComputed (ssfDes =<< graphLookup name ctssData)
+      let tprgmOf name = requireComputed (ssfTPrgm =<< graphLookup name ctssData)
+      computed <- asCResT $ do
+        sccDes <- mapM desOf sccNames
+        depTPrgms <- mapM tprgmOf depNames
+        -- Assembled exactly as the build assembled it: one node per page of the component, each
+        -- given the same dependency set. The whole component is passed rather than the one page
+        -- asked about, because the component is what was solved — its pages share an environment,
+        -- and a page solved alone is a different program from the same page solved with its peers.
+        --
+        -- Not failOnErrorNotes, for the reason the build's own store is not: a page which failed
+        -- to typecheck is exactly the page whose inference is worth reading, and the notes are
+        -- what say why.
+        let peersOf name = [d | (n, d) <- zip sccNames sccDes, n /= name]
+        let nodes = [(des, peersOf name, depTPrgms) | (name, des) <- zip sccNames sccDes]
+        typeCheckToRes $ typecheckPrgmsWith instruments nodes
+      case [(vprgm, results) | (name, (_, vprgm, results)) <- zip sccNames computed, name == prgmName] of
+        [] -> fail $ printf "Typechecking %s again for its inference did not produce that page" (show $ impRaw prgmName)
+        info:_ -> do
+          -- Stored outside the lock the build takes, which this is: the typecheck above is the work
+          -- and it has already happened.
+          lift $ ctssStore prgmName (\s -> s{ssfTypeInfo = Just $ pure info}) ctss
+          return info
+
 -- | Forget when a page's files were last written, so the next read reads it again.
 --
 -- What a page was read from is kept, so the read still knows which files to look at; only the claim
@@ -1310,9 +1410,6 @@ ctssStale (CTSS ssmv _) prgmName = modifyMVar_ ssmv $ \ctssdat ->
 
 getPrgm :: CTSS -> CResT IO (GraphData DesPrgm FileImport)
 getPrgm = ctssGet ssfDes
-
-getTPrgmWithTrace :: CTSS -> CResT IO (GraphData (TPrgm, VPrgm, TraceConstrain) FileImport)
-getTPrgmWithTrace = ctssGet ssfTPrgmWithTrace
 
 getTPrgm :: CTSS -> CResT IO (GraphData TPrgm FileImport)
 getTPrgm = ctssGet ssfTPrgm
@@ -1341,6 +1438,11 @@ instance CtServiceApi CTSS where
     ctssData <$> readMVar ssmv
 
   csTests ctss prgmName = runCResT $ ctssTestsFrom ctss prgmName
+
+  -- With the whole trace attached, which is what a reader of an inference reads, and the epoch
+  -- count beside it. A page whose build was already watched answers out of what that build kept;
+  -- any other is typechecked again here.
+  csTypeInfo ctss prgmName = runCResT $ ctssTypeInfo typeInfoInstruments prgmName ctss
 
   -- Against the page's own typecheck program rather than the caller's, which for an annotation is
   -- that program joined with the synthetic one holding the annotation itself.
@@ -1397,9 +1499,9 @@ debugExprRun prgmName scopeNodes src = do
   let rawPrgm' = addRawPrgmMetaIDs (parseMetaIDScope exprName) rawPrgm
   (desP, desName, _) <- desPrgm (rawPrgm', exprName, [])
   let desP' = desFinalPass (desP, desName, [], [])
-  tprgmsTrace <- evaluablePages ssfTPrgmWithTrace True scopeNodes
-  let deps = graphToNodes $ fmapGraph fst3 tprgmsTrace
-  (exprTprgm, _, _) <- case typeCheckToRes $ typecheckPrgms [(desP', [], map fst3 $ graphToNodes tprgmsTrace)] of
+  scopeTPrgms <- evaluablePages ssfTPrgm True scopeNodes
+  let deps = graphToNodes scopeTPrgms
+  exprTprgm <- case typeCheckToRes $ typecheckPrgms [(desP', [], map fst3 deps)] of
     CErr notes   -> CErr notes
     CRes _ []    -> fail $ printf "The debugger could not typecheck %s" src
     CRes _ (t:_) -> return t

@@ -4,7 +4,7 @@ description: >
   Use when debugging the Catln Haskell type checker — a .ct program type-checks to the
   wrong type, resolves to TopType, fails with "ACT ∅" / "Actual type contains bottomType" /
   "buildCallTree from top type" / "Failed to get singleton for TopType" / a scheme
-  verification error, or the constraint solver does not converge (15-epoch limit / "Grows
+  verification error, or the constraint solver does not converge (the epoch limit / "Grows
   by" monotonicity). Covers writing minimal repros, the failure-signature catalog, how to
   trace points and constraints, and the constraint-solving code map.
 ---
@@ -130,8 +130,12 @@ The solver is over integer points; each `Constraint` updates a point's `Scheme`,
   | "fmap" `Data.List.isInfixOf` show x && Debug.Trace.trace (printf "...%s" (show v)) False = undefined
   ```
   (Add `import qualified Debug.Trace` / `import qualified Data.List`; remove before finishing.)
-- **`feTrace` (`TraceConstrain`)** records per-point scheme changes per epoch — useful for the
-  oscillation/monotonicity cases (`src/TypeCheck/Common.hs`, `traceConstrainChange`).
+- **Instruments (`src/TypeCheck/Instruments.hs`)** are how a solve is watched. `TraceInstrument`
+  records per-point scheme changes per epoch (the `TraceConstrain` `typetrace` writes) — useful for
+  the oscillation/monotonicity cases; `EpochCount` counts epochs; `LastEpochs` keeps only what a
+  non-convergence failure reports and is the one every typecheck carries. To add a measurement of
+  your own, write an `Instrument` instance (`src/TypeCheck/Common.hs`) and attach it — the solver
+  behaves the same whichever are attached.
 
 Goal: find the point whose ACT becomes `∅`/`TopType`, then read which constraint did it and
 why (what was intersected with what).
@@ -145,7 +149,7 @@ why (what was intersected with what).
   in `EncodeOut` (expressions/call sites) — an asymmetry behind several non-final-arg bugs.
   `AddArg`/`PropEq` attach an argument's value and type.
 - **`src/TypeCheck/Constrain.hs`** — `runConstraints` epoch loop (`Constrain.hs:239`), driven by
-  `runConstraintsLimit = 15` in `src/TypeCheck.hs`. `computeConstraint` handles each constraint kind:
+  `runConstraintsLimit` in `src/TypeCheck.hs`. `computeConstraint` handles each constraint kind:
   `EqPoints`, `AddArg`, `PropEq`, `BoundedByObjs`, `ArrowTo`, `BoundedByKnown`. `setScheme` /
   `verifyScheme` apply and check (monotonicity).
 - **`src/TypeCheck/TypeUtils.hs`** — `arrowConstrainUbs`: how `ArrowTo` recomputes a partial

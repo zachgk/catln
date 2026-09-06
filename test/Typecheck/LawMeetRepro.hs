@@ -19,38 +19,39 @@
 --   ghci> reproMain
 module Typecheck.LawMeetRepro where
 
-import           Control.Exception   (evaluate)
+import           Control.Exception     (evaluate)
 import           Control.Monad
-import           Control.Monad.State (StateT, modify, runStateT)
+import           Control.Monad.State   (StateT, modify, runStateT)
 import           CRes
-import           Data.Graph          (flattenSCC, reachable, stronglyConnCompR)
-import qualified Data.HashMap.Strict as H
-import qualified Data.HashSet        as S
-import qualified Data.IntMap.Strict  as IM
-import           Data.List           (isInfixOf, partition)
-import           Data.Maybe          (fromJust, mapMaybe)
-import           Data.Time.Clock     (diffUTCTime, getCurrentTime)
-import           System.Environment  (lookupEnv)
-import           System.Timeout      (timeout)
+import           Data.Graph            (flattenSCC, reachable,
+                                        stronglyConnCompR)
+import qualified Data.HashMap.Strict   as H
+import qualified Data.HashSet          as S
+import qualified Data.IntMap.Strict    as IM
+import           Data.List             (isInfixOf, partition)
+import           Data.Maybe            (fromJust, mapMaybe)
+import           Data.Time.Clock       (diffUTCTime, getCurrentTime)
+import           System.Environment    (lookupEnv)
+import           System.Timeout        (timeout)
 
-import           CtService           (ctssBaseFiles, getRawPrgmFrom)
-import           MapMeta             (clearMetaDat, mapMetaPrgm)
-import           Semantics           (testCtssConfig, unsafeFreshQueryToken)
+import           CtService             (ctssBaseFiles, getRawPrgmFrom)
+import           MapMeta               (clearMetaDat, mapMetaPrgm)
+import           Semantics             (testCtssConfig, unsafeFreshQueryToken)
 import           Semantics.Prgm
 import           Semantics.Types
-import           Syntax.Ct.Desugarf  (desFiles)
-import           Syntax.Parsers      (mkDesCanonicalImportStr)
-import           TypeCheck           (TypecheckTuplePrgm, depPieceOf,
-                                      typecheckPrgms)
+import           Syntax.Ct.Desugarf    (desFiles)
+import           Syntax.Parsers        (mkDesCanonicalImportStr)
+import           TypeCheck             (depPieceOf, typecheckPrgms)
 import           TypeCheck.Common
-import           TypeCheck.Constrain (computeConstraint, executeConstraint,
-                                      runConstraints, stypeConstraint)
-import           TypeCheck.Decode    (toPrgms)
-import           TypeCheck.Encode    (fromPrgmsFragment, makeBaseFEnv,
-                                      prgmsLocalDefNames)
+import           TypeCheck.Constrain   (computeConstraint, executeConstraint,
+                                        runConstraints, stypeConstraint)
+import           TypeCheck.Decode      (toPrgms)
+import           TypeCheck.Encode      (fromPrgmsFragment, makeBaseFEnv,
+                                        prgmsLocalDefNames)
+import           TypeCheck.Instruments (defaultInstruments)
 import           TypeCheck.Partition
-import           TypeCheck.Show      (showCon)
-import           TypeCheck.TypeUtils (buildTypeEnv)
+import           TypeCheck.Show        (showCon)
+import           TypeCheck.TypeUtils   (buildTypeEnv)
 import           Utils
 
 -- | Seconds each probed constraint may run before being declared a culprit.
@@ -106,14 +107,13 @@ pprgmKeys p = case prgmObjMap p of ObjectMap m -> H.keys m
 
 -- | The functor page: replicate 'typecheckPrgmsSt' with the law fragment stopped after 3
 -- epochs, then probe its constraints from the exact state the fatal epoch would see.
-probeLawPage :: (PPrgm, [PPrgm], [TypecheckTuplePrgm]) -> IO ()
-probeLawPage (page, peers, depTuples) = do
+probeLawPage :: (PPrgm, [PPrgm], [TPrgm]) -> IO ()
+probeLawPage (page, peers, deps) = do
   putStrLn "== law page reached; replaying fragments =="
   loopFrags env0 depPieces0 fragments
   where
     pprgms = page : peers
-    deps = map fst3 depTuples
-    env0 = (makeBaseFEnv (mconcat (pprgms ++ map (mapMetaPrgm clearMetaDat) deps)))
+    env0 = (makeBaseFEnv defaultInstruments (mconcat (pprgms ++ map (mapMetaPrgm clearMetaDat) deps)))
              {feLocalDefNames = prgmsLocalDefNames pprgms}
     pageObjMap = mconcat (map prgmObjMap pprgms)
     depObjMap = prgmObjMap (mconcat deps)

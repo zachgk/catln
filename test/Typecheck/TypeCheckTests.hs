@@ -10,22 +10,23 @@
 -- This is the module for testing typechecking.
 --------------------------------------------------------------------
 module Typecheck.TypeCheckTests where
-import           Control.Monad.State (evalStateT, execStateT, runStateT)
+import           Control.Monad.State   (evalStateT, execStateT, runStateT)
 import           CRes
-import           Data.Graph          (graphFromEdges)
+import           Data.Graph            (graphFromEdges)
 import           Hedgehog
-import qualified Hedgehog.Gen        as HG
+import qualified Hedgehog.Gen          as HG
 import           MapMeta
 import           Semantics.Prgm
 import           Test.Tasty
-import qualified Test.Tasty.Hedgehog as THG
-import           Testing.Generation  (genPrgms)
+import qualified Test.Tasty.Hedgehog   as THG
+import           Testing.Generation    (genPrgms)
 import           Text.Printf
-import           TypeCheck           (typecheckPrgm)
-import           TypeCheck.Common    (feCons, tcreToMaybe)
-import           TypeCheck.Constrain (executeConstraint)
-import           TypeCheck.Decode    (toPrgms)
-import           TypeCheck.Encode    (fromPrgms, makeBaseFEnv)
+import           TypeCheck             (typecheckPrgm)
+import           TypeCheck.Common      (feCons, tcreToMaybe)
+import           TypeCheck.Constrain   (executeConstraint)
+import           TypeCheck.Decode      (toPrgms)
+import           TypeCheck.Encode      (fromPrgms, makeBaseFEnv)
+import           TypeCheck.Instruments (defaultInstruments)
 import           Utils
 
 propExprEncodeDecode :: Property
@@ -34,7 +35,7 @@ propExprEncodeDecode = property $ do
   let prgms = map fst3 prgmsNodes
   annotate $ printf "Programs: \n\t%s" (show prgms)
   let prgm = mconcat prgms
-  let fenv = makeBaseFEnv prgm
+  let fenv = makeBaseFEnv defaultInstruments prgm
   (encoded, fenv') <- evalMaybe $ tcreToMaybe $ runStateT (fromPrgms prgms []) fenv
   decoded <- evalMaybe $ tcreToMaybe $ evalStateT (toPrgms encoded) fenv'
   let decodedClear = map (mapMetaPrgm clearMetaDat) decoded
@@ -46,7 +47,7 @@ propConstraint = property $ do
   prgmsNodes <- forAll genPrgms
   let prgms = map fst3 prgmsNodes
   let prgm = mconcat prgms
-  let fenv = makeBaseFEnv prgm
+  let fenv = makeBaseFEnv defaultInstruments prgm
   fenv' <- evalMaybe $ tcreToMaybe $ execStateT (fromPrgms prgms []) fenv
   let cons = feCons fenv'
   con <- forAll $ HG.element cons
@@ -58,7 +59,7 @@ propConstraints = property $ do
   prgmsNodes <- forAll genPrgms
   let prgms = map fst3 prgmsNodes
   let prgm = mconcat prgms
-  let fenv = makeBaseFEnv prgm
+  let fenv = makeBaseFEnv defaultInstruments prgm
   fenv' <- evalMaybe $ tcreToMaybe $ execStateT (fromPrgms prgms []) fenv
   let cons = feCons fenv'
   usedCons <- forAll $ HG.subsequence (concat $ replicate 4 cons)

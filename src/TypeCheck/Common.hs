@@ -11,9 +11,11 @@
 -- typechecking.
 --------------------------------------------------------------------
 
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveGeneric  #-}
-{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE BangPatterns              #-}
+{-# LANGUAGE DeriveAnyClass            #-}
+{-# LANGUAGE DeriveGeneric             #-}
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE NamedFieldPuns            #-}
 
 module TypeCheck.Common where
 
@@ -99,7 +101,7 @@ data FEnv = FEnv { fePnts                :: IM.IntMap Scheme
                  , feLocalDefNames       :: S.HashSet Name -- ^ Absolute names defined by the programs currently being encoded (not yet in 'feTypeEnv'\'s object map). Used to tell a destructuring binding variable from a reference to a same-batch definition.
                  , feEnvStamp            :: Int -- ^ Version counter for the per-epoch env inputs ('feReachesTypeEnv' graph and 'feCompletedAllObjsKey' universe): bumped at each epoch start iff either differs from the previous epoch. Constraint kinds that read those env caches skip re-execution only within the same stamp (see 'feConMemo').
                  , feConMemo             :: IM.IntMap ConMemo -- ^ Per-constraint memo of the last execution's resolved inputs, keyed by the constraint's position in the 'runConstraints' list. 'executeConstraint' skips 'computeConstraint'+'saveConstraint' when the constraint's resolved view (and, for env-reading kinds, the env stamp) is unchanged: a pure function of unchanged inputs recomputes the same stores, which 'setScheme' would refuse as unchanged — a provable no-op.
-                 , feTrace               :: TraceConstrain
+                 , feInstruments         :: [AnyInstrument] -- ^ What is watching this solve, in the order it was asked for. The solve does not read them and behaves identically whichever are attached; what they kept is read off here once it is over ('instrumentResults') or while it is failing ('instrumentDiagnostics'). Empty is a solve nothing is watching.
                  } deriving (Show)
 
 -- | A constraint's last-execution inputs and result: env stamp ('feEnvStamp'), the resolved
@@ -695,16 +697,15 @@ equivalent env m1 m2 = descriptor env m1 == descriptor env m2
 
 fresh :: Scheme -> StateT FEnv TypeCheckResult Pnt
 fresh  scheme = do
-  env@FEnv{fePnts, feTrace=tc@TraceConstrain{tcInitial}} <- get
+  env@FEnv{fePnts, feInstruments} <- get
   let pnt' = IM.size fePnts
   let pnts' = IM.insert pnt' scheme fePnts
-  let feTrace' = tc{tcInitial=H.insert pnt' scheme tcInitial}
-  put env{fePnts = pnts', feTrace=feTrace'}
+  put env{fePnts = pnts', feInstruments = instFreshPoint pnt' scheme feInstruments}
   return pnt'
 
 setDescriptor :: FEnv -> VConstraint -> VarMeta -> Scheme -> String -> FEnv
 setDescriptor env _ Meta{getMetaDat=VarMetaDat Nothing _} _ _ = env
-setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch} con m@Meta{getMetaDat=VarMetaDat (Just p) _} scheme' msg = env{fePnts = pnts', feTrace = feTrace', feUpdatedDuringEpoch = feUpdatedDuringEpoch || schemeChanged || isJust declOnlyCommit}
+setDescriptor env@FEnv{feTypeEnv, fePnts, feInstruments, feUpdatedDuringEpoch} con m@Meta{getMetaDat=VarMetaDat (Just p) _} scheme' msg = env{fePnts = pnts', feInstruments = feInstruments', feUpdatedDuringEpoch = feUpdatedDuringEpoch || schemeChanged || isJust declOnlyCommit}
   where
     scheme = descriptor env m
     vaenv = fmap stypeAct <$> mapM (descriptor env) (constraintVarArgEnv con)
@@ -792,9 +793,11 @@ setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch} con m@M
     pnts' | schemeChanged = IM.insert p scheme'' fePnts -- Only update if changed to avoid meaningless updates
           | Just declScheme <- declOnlyCommit = IM.insert p declScheme fePnts
           | otherwise = fePnts
-    feTrace' | schemeChanged = traceConstrainChange feTrace p scheme''
-             | Just declScheme <- declOnlyCommit = traceConstrainChange feTrace p declScheme
-             | otherwise = feTrace
+    -- Reported on exactly the arms that COMMIT. The refusal path is not a write and is not
+    -- reported as one: an instrument reads what the solve did, not what it considered.
+    feInstruments' | schemeChanged = instPointUpdate p scheme'' feInstruments
+                   | Just declScheme <- declOnlyCommit = instPointUpdate p declScheme feInstruments
+                   | otherwise = feInstruments
 
 pointUb :: FEnv -> VarMeta -> TypeCheckResult Type
 pointUb env p = stypeAct <$> descriptor env p
@@ -828,20 +831,30 @@ data TraceConstrain = TraceConstrain {
 mkTraceConstrain :: TraceConstrain
 mkTraceConstrain = TraceConstrain [[]] H.empty [] emptyMetaN
 
+-- | The boundary between one epoch and the next.
+--
+-- The epoch flag is cleared here and nowhere else, which is what makes an epoch's
+-- 'feUpdatedDuringEpoch' say what THAT epoch did. The instruments are told the constraint list and
+-- the universe point as they stand at every boundary, not just the first: the constraint
+-- accumulator grows per solve fragment, and an instrument reporting per point must cover them all
+-- rather than only the first fragment's.
 nextConstrainEpoch :: FEnv -> FEnv
--- Refresh the traced constraint list and universe point EVERY epoch boundary (not just the
--- first): the constraint accumulator grows per solve fragment, and the per-point trace
--- listing must cover them all, not just the first fragment's.
-nextConstrainEpoch env@FEnv{feTrace=tc@TraceConstrain{tcEpochs}, feCons, feUnionAllObjs} = case tcEpochs of
-  []         -> env'
-  prevEpochs -> env'{feTrace = tc'{tcEpochs=[]:prevEpochs}, feUpdatedDuringEpoch = False}
-  where
-    tc' = tc{tcCons=feCons, tcAllObjs=feUnionAllObjs}
-    env' = env{feTrace=tc'}
+nextConstrainEpoch env@FEnv{feInstruments, feCons, feUnionAllObjs} =
+  env{feInstruments = instEpochEnd feCons feUnionAllObjs feInstruments, feUpdatedDuringEpoch = False}
 
+-- | The head of an epoch, which is not the same event as the boundary above.
+--
+-- A boundary is crossed only when another epoch will follow, and a solve fragment crosses one of
+-- its own after converging ('TypeCheck.typecheckPrgmsSt'), so counting boundaries is not counting
+-- epochs. Whatever wants the epochs themselves is told here.
+startConstrainEpoch :: FEnv -> FEnv
+startConstrainEpoch env@FEnv{feInstruments} = env{feInstruments = instEpochStart feInstruments}
+
+-- | The constraint about to be executed. Said before the skip memo is consulted
+-- ('TypeCheck.Constrain.executeConstraint'), so what is reported is every constraint the epoch
+-- reached rather than only the ones it re-ran.
 startConstraint :: VConstraint -> FEnv -> FEnv
-startConstraint c env@FEnv{feTrace = tc@TraceConstrain{tcEpochs=curEpoch:prevEpochs}} = env{feTrace = tc{tcEpochs=((c, []):curEpoch):prevEpochs}}
-startConstraint _ _ = error "bad input to startConstraint"
+startConstraint c env@FEnv{feInstruments} = env{feInstruments = instConstraintStart c feInstruments}
 
 traceConstrainChange :: TraceConstrain -> Pnt -> Scheme -> TraceConstrain
 traceConstrainChange tc@TraceConstrain{tcEpochs=((curConstraint, curChanged):curEpoch):prevEpochs} p scheme' = tc{tcEpochs=((curConstraint, (p, scheme'):curChanged):curEpoch):prevEpochs}
@@ -860,3 +873,115 @@ flipTraceConstrain tc@TraceConstrain{tcEpochs} = tc{tcEpochs=reverse $ map rever
 
 showTraceConstrain :: [SConstraint] -> String
 showTraceConstrain epochs = intercalate "\n" $ map show $ reverse epochs
+
+-- instruments
+
+-- | Something watching a solve, told each event the solver reaches.
+--
+-- An instrument takes no part in the solve. Every handler is a function of the instrument alone,
+-- the solver reads nothing back from one while it runs, and a solve with none attached takes
+-- exactly the path a solve with all of them takes — which is the whole point: what a solve costs
+-- to WATCH is then the caller's choice rather than the compiler's, and the expensive watching can
+-- be left to whoever is going to read it.
+--
+-- Every handler has a default of keeping the instrument as it was, so an instrument implements the
+-- events it is about and says nothing about the rest. The concrete ones are in
+-- "TypeCheck.Instruments"; this is only what they have in common, and it lives here because the
+-- events are spoken in the types this module defines.
+class Instrument i where
+  -- | What this instrument is called, which is how its result is found among the others.
+  instrumentName :: i -> String
+
+  -- | A point has been allocated, with the scheme it starts at.
+  onFreshPoint :: Pnt -> Scheme -> i -> i
+  onFreshPoint _ _ = id
+
+  -- | An epoch is beginning. Fired once per epoch, per solve fragment.
+  onEpochStart :: i -> i
+  onEpochStart = id
+
+  -- | A constraint is about to be executed, whether or not it will be re-run.
+  onConstraintStart :: VConstraint -> i -> i
+  onConstraintStart _ = id
+
+  -- | A write to a point has been COMMITTED, with the value committed. A write the solve
+  -- considered and refused is not one of these.
+  onPointUpdate :: Pnt -> Scheme -> i -> i
+  onPointUpdate _ _ = id
+
+  -- | An epoch has ended, given the constraint list and universe point as they now stand.
+  onEpochEnd :: [VConstraint] -> VarMeta -> i -> i
+  onEpochEnd _ _ = id
+
+  -- | What this instrument has to say about a solve that is failing right now, for the failure to
+  -- report. Read mid-solve rather than at the end, since a solve which cannot finish has no end.
+  instrumentDiagnostic :: FEnv -> i -> Maybe String
+  instrumentDiagnostic _ _ = Nothing
+
+  -- | What this instrument made of the solve, read once it is over.
+  instrumentResult :: i -> InstrumentResult
+  instrumentResult _ = NoResult
+
+-- | An instrument, whatever it is. The solve holds a list of these and knows nothing else about
+-- them; a caller picks which to attach and reads its own back out by name.
+data AnyInstrument = forall i. Instrument i => AnyInstrument !i
+
+-- | By name. An instrument's own state is its business and is not part of showing an 'FEnv'.
+instance Show AnyInstrument where
+  show (AnyInstrument i) = instrumentName i
+
+-- | What an instrument made of a solve.
+--
+-- A closed set rather than each instrument's own type, because a caller asks for instruments by
+-- value and reads the answers back out of one list: an existential result could not be opened
+-- again. An instrument whose output is a diagnostic rather than an artifact returns 'NoResult'.
+data InstrumentResult
+  = TraceResult TraceConstrain
+  | EpochCountResult Integer
+  | NoResult
+  deriving (Show, Generic, ToJSON)
+
+-- | What the instruments of a solve made of it, by name.
+type InstrumentResults = [(String, InstrumentResult)]
+
+-- | Apply an event to each instrument, forcing as it goes.
+--
+-- Strict on purpose. Left lazy, an event would leave a thunk over the instrument it was applied to,
+-- and a solve's worth of those retains every intermediate state of an instrument written to keep
+-- only its last — which is exactly what the bounded instruments exist to avoid. The list is a
+-- handful of elements, so forcing it costs nothing worth measuring, and an empty list costs
+-- nothing at all.
+instMap :: (AnyInstrument -> AnyInstrument) -> [AnyInstrument] -> [AnyInstrument]
+instMap _ []     = []
+instMap f (i:is) = let !i' = f i; !is' = instMap f is in i' : is'
+
+instFreshPoint :: Pnt -> Scheme -> [AnyInstrument] -> [AnyInstrument]
+instFreshPoint p scheme = instMap (\(AnyInstrument i) -> AnyInstrument (onFreshPoint p scheme i))
+
+instEpochStart :: [AnyInstrument] -> [AnyInstrument]
+instEpochStart = instMap (\(AnyInstrument i) -> AnyInstrument (onEpochStart i))
+
+instConstraintStart :: VConstraint -> [AnyInstrument] -> [AnyInstrument]
+instConstraintStart c = instMap (\(AnyInstrument i) -> AnyInstrument (onConstraintStart c i))
+
+instPointUpdate :: Pnt -> Scheme -> [AnyInstrument] -> [AnyInstrument]
+instPointUpdate p scheme = instMap (\(AnyInstrument i) -> AnyInstrument (onPointUpdate p scheme i))
+
+instEpochEnd :: [VConstraint] -> VarMeta -> [AnyInstrument] -> [AnyInstrument]
+instEpochEnd cons allObjs = instMap (\(AnyInstrument i) -> AnyInstrument (onEpochEnd cons allObjs i))
+
+-- | What the instruments attached to a failing solve have to say about it.
+instrumentDiagnostics :: FEnv -> [String]
+instrumentDiagnostics env = mapMaybe (\(AnyInstrument i) -> instrumentDiagnostic env i) (feInstruments env)
+
+-- | What the instruments attached to a finished solve made of it.
+instrumentResults :: [AnyInstrument] -> InstrumentResults
+instrumentResults = map (\(AnyInstrument i) -> (instrumentName i, instrumentResult i))
+
+-- | The full inference trace among a solve's results, for a caller that asked for it.
+lookupTraceResult :: InstrumentResults -> Maybe TraceConstrain
+lookupTraceResult results = listToMaybe [tc | (_, TraceResult tc) <- results]
+
+-- | How many epochs a solve ran, for a caller that asked to be told.
+lookupEpochCountResult :: InstrumentResults -> Maybe Integer
+lookupEpochCountResult results = listToMaybe [n | (_, EpochCountResult n) <- results]

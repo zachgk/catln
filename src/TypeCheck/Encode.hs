@@ -64,13 +64,15 @@ encodeObj :: EncodeState -> Maybe VObject
 encodeObj (EncodeOut obj) = obj
 encodeObj EncodeIn{}      = Nothing
 
-makeBaseFEnv :: PPrgm -> FEnv
+-- The instruments are given rather than chosen, because which of them a solve is worth watching
+-- with is the question of whoever is going to read them and not of the solve.
+makeBaseFEnv :: [AnyInstrument] -> PPrgm -> FEnv
 -- The static env is immutable for the FEnv's lifetime, so it carries a query-cache token
 -- from birth: the set-algebra meets that deliberately keep 'feTypeEnv' (rather than the
 -- per-epoch reaches env) still reach the reach-query and sat-goal memos. Without it, the
 -- SAT engine ran un-memoized under this env and a cyclic escape derivation re-decided the
 -- same goal unboundedly.
-makeBaseFEnv prgm = FEnv{
+makeBaseFEnv instruments prgm = FEnv{
   fePnts = IM.empty,
   feConsDats = [],
   feCons = [],
@@ -88,7 +90,7 @@ makeBaseFEnv prgm = FEnv{
   feLocalDefNames = S.empty,
   feEnvStamp = 0,
   feConMemo = IM.empty,
-  feTrace = mkTraceConstrain
+  feInstruments = instruments
   }
   where
     baseTypeEnv = mkTypeEnv prgm
