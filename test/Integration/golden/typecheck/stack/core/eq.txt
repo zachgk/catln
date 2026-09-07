@@ -111,7 +111,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator!=( Value /l -> $/T )( Value /r -> $/T )[ /T : ∀/Data/Algebra/Eq ] -> ∀/Data/Primitive/Boolean = /operator~
+                        [ /operator!=( Value /l -> $/T )( Value /r -> $/T )[ /T : ∀/Data/Algebra/Eq ] -> ( /Data/Primitive/True + /Data/Primitive/False ) = /operator~
                             ( Value /a -> ∀/Data/Primitive/Boolean = /operator==( Value /l -> TVArg /l = Value /l )( Value /r -> TVArg /r = Value /r ) )
                         ]
                     }

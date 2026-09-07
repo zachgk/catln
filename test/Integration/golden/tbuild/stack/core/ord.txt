@@ -23,7 +23,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/pcompare( EAppArg Value /a -> /Data/Primitive/Integer )( EAppArg Value /b -> /Data/Primitive/Integer ) -> ∀/Data/Algebra/PComparison =
+                        [ /Data/Algebra/pcompare( EAppArg Value /a -> /Data/Primitive/Integer )( EAppArg Value /b -> /Data/Primitive/Integer ) -> ( /Data/Algebra/LessThan + /Data/Algebra/NoOrdering + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
                             ( /Data/Algebra/mkDivComparison
                                 ( EAppArg Value /aDivB -> ∀/Data/Primitive/Boolean =
                                     ( /Data/Primitive/intEq
@@ -46,7 +46,7 @@ Prgm
                                         )
                                         ( EAppArg Value /r -> /Data/Primitive/Integer = 0 ) ↦ ∀/Data/Primitive/Boolean
                                     )
-                                ) ↦ ∀/Data/Algebra/PComparison
+                                ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/NoOrdering + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
                             )
                         ]
                     }
@@ -97,15 +97,15 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/rel( EAppArg Value /a )( EAppArg Value /b )
-                            ( EAppArg Value /this -> ∀/Data/Algebra/Ordering[ /T=$_/T ] ) -> ∀/Data/Primitive/Boolean =
+                            ( EAppArg Value /this -> ∀/Data/Algebra/Ordering[ /T=$_/T ] ) -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                             ( /Data/Algebra/isEq
-                                ( EAppArg Value /this -> ∀/Data/Algebra/Comparison =
+                                ( EAppArg Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
                                     ( /compare
                                         ( EAppArg Value /a -> TVArg /a = ( Value /a ↦ TVArg /a ) )
                                         ( EAppArg Value /b -> TVArg /b = ( Value /b ↦ TVArg /b ) )
-                                        ( EAppArg Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) ) ↦ ∀/Data/Algebra/Comparison
+                                        ( EAppArg Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
                                     )
-                                ) ↦ ∀/Data/Primitive/Boolean
+                                ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
                             )
                         ]
                     }
@@ -437,76 +437,76 @@ Prgm
             [compareTo] ranks integers by size, and a type's equality agrees with its ordering: values
             compare [Equal] exactly when they are equal." )
         , /Catln/#print
-            ( EAppArg Value /p -> ∀/Data/Primitive/Boolean =
+            ( EAppArg Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                 ( /Data/Algebra/isLess
                     ( EAppArg Value /this -> ∀/Data/Algebra/Comparison =
                         ( /compareTo
                             ( EAppArg Value /other -> /Data/Primitive/Integer = 3 )
                             ( EAppArg Value /this -> /Data/Primitive/Integer = 2 ) ↦ ∀/Data/Algebra/Comparison
                         )
-                    ) ↦ ∀/Data/Primitive/Boolean
+                    ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
                 )
             )
             ( EAppArg Value /result -> /Data/String = "True" )
         , /Catln/#print
-            ( EAppArg Value /p -> ∀/Data/Primitive/Boolean =
+            ( EAppArg Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                 ( /Data/Algebra/isEq
                     ( EAppArg Value /this -> ∀/Data/Algebra/Comparison =
                         ( /compareTo
                             ( EAppArg Value /other -> /Data/Primitive/Integer = 3 )
                             ( EAppArg Value /this -> /Data/Primitive/Integer = 3 ) ↦ ∀/Data/Algebra/Comparison
                         )
-                    ) ↦ ∀/Data/Primitive/Boolean
+                    ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
                 )
             )
             ( EAppArg Value /result -> /Data/String = "True" )
         , /Catln/#print
-            ( EAppArg Value /p -> ∀/Data/Primitive/Boolean =
+            ( EAppArg Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                 ( /Data/Algebra/isGreater
                     ( EAppArg Value /this -> ∀/Data/Algebra/Comparison =
                         ( /compareTo
                             ( EAppArg Value /other -> /Data/Primitive/Integer = 3 )
                             ( EAppArg Value /this -> /Data/Primitive/Integer = 4 ) ↦ ∀/Data/Algebra/Comparison
                         )
-                    ) ↦ ∀/Data/Primitive/Boolean
+                    ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
                 )
             )
             ( EAppArg Value /result -> /Data/String = "True" )
         , /Catln/#print
-            ( EAppArg Value /p -> ∀/Data/Primitive/Boolean =
+            ( EAppArg Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                 ( /Data/Algebra/isLessEq
                     ( EAppArg Value /this -> ∀/Data/Algebra/Comparison =
                         ( /compareTo
                             ( EAppArg Value /other -> /Data/Primitive/Integer = 3 )
                             ( EAppArg Value /this -> /Data/Primitive/Integer = 2 ) ↦ ∀/Data/Algebra/Comparison
                         )
-                    ) ↦ ∀/Data/Primitive/Boolean
+                    ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
                 )
             )
             ( EAppArg Value /result -> /Data/String = "True" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "The divisibility ordering distinguishes ordered pairs from incomparable ones." )
         , /Catln/#print
-            ( EAppArg Value /p -> ∀/Data/Primitive/Boolean =
+            ( EAppArg Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                 ( /Data/Algebra/isComparable
                     ( EAppArg Value /this -> ∀/Data/Algebra/PComparison =
                         ( /Data/Algebra/pcompare
                             ( EAppArg Value /a -> /Data/Primitive/Integer = 2 )
                             ( EAppArg Value /b -> /Data/Primitive/Integer = 6 ) ↦ ∀/Data/Algebra/PComparison
                         )
-                    ) ↦ ∀/Data/Primitive/Boolean
+                    ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
                 )
             )
             ( EAppArg Value /result -> /Data/String = "True" )
         , /Catln/#print
-            ( EAppArg Value /p -> ∀/Data/Primitive/Boolean =
+            ( EAppArg Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                 ( /Data/Algebra/isNoOrdering
                     ( EAppArg Value /this -> ∀/Data/Algebra/PComparison =
                         ( /Data/Algebra/pcompare
                             ( EAppArg Value /a -> /Data/Primitive/Integer = 2 )
                             ( EAppArg Value /b -> /Data/Primitive/Integer = 3 ) ↦ ∀/Data/Algebra/PComparison
                         )
-                    ) ↦ ∀/Data/Primitive/Boolean
+                    ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
                 )
             )
             ( EAppArg Value /result -> /Data/String = "True" )

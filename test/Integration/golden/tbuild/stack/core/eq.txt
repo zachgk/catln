@@ -120,14 +120,14 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator!=( EAppArg Value /l -> $/T )( EAppArg Value /r -> $/T )( EAppVar /T ∀/Data/Algebra/Eq ) -> ∀/Data/Primitive/Boolean =
+                        [ /operator!=( EAppArg Value /l -> $/T )( EAppArg Value /r -> $/T )( EAppVar /T ∀/Data/Algebra/Eq ) -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                             ( /operator~
                                 ( EAppArg Value /a -> ∀/Data/Primitive/Boolean =
                                     ( /operator==
                                         ( EAppArg Value /l -> TVArg /l = ( Value /l ↦ TVArg /l ) )
                                         ( EAppArg Value /r -> TVArg /r = ( Value /r ↦ TVArg /r ) ) ↦ ∀/Data/Primitive/Boolean
                                     )
-                                ) ↦ ∀/Data/Primitive/Boolean
+                                ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
                             )
                         ]
                     }

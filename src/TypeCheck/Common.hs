@@ -411,8 +411,16 @@ getPnt Meta{getMetaDat=VarMetaDat p _} = p
 -- at the end of encoding; every function here maintains that reversal exactly, so the flip
 -- recovers emission order and nothing else has to think about it. See 'finalizeConstraints' for
 -- why emission order is the order the solver wants.
+--
+-- The BATCH is reversed on the way in for exactly that reason. A batch prepended as written
+-- keeps the calls in order but runs each call's own list backwards, so the flow order a caller
+-- spells out within one list — a source link before the link that reads it — is the one order
+-- it never gets. That is not a slower spelling of the same thing: a projection whose source
+-- point has not been given its shape yet reads a bare ⊤ and writes nothing at all, so the link
+-- lands only on the following (reversed) epoch, and every such pair costs an epoch it should
+-- not. A list here reads in flow order and runs in flow order.
 addConstraints :: [VConstraintDat] -> FEnv -> FEnv
-addConstraints newCons env@FEnv{feConsDats=curCons:parentCons} = env {feConsDats = (map (Constraint [] H.empty) newCons ++ curCons):parentCons}
+addConstraints newCons env@FEnv{feConsDats=curCons:parentCons} = env {feConsDats = (reverse (map (Constraint [] H.empty) newCons) ++ curCons):parentCons}
 addConstraints _ FEnv{feConsDats=[]} = error $ printf "No constraint stack found in addConstraints"
 
 -- | Starts a block of constraints, adding it to the block stack, where each block is associated with an ObjArr and its varargs

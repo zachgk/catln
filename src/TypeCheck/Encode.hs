@@ -227,7 +227,16 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
       vm' <- fromMeta BAct est vm $ printf "%s val" baseName
       -- As with the 'EAppArg' inputs above, an input type-variable application's actual is only
       -- whatever it is required to be, so pull its value slot's actual down to its requirement.
-      modify $ addConstraints ([AddArg 27 (baseM', TVVar vn) m', PropEq 27 (m', TVVar vn) vm'] ++ [EqReqAct 34 vm' | EncodeIn <- [est]])
+      -- That 'EqReqAct' is a self-loop on the value slot with no source in this layer, and the
+      -- 'PropEq' below reads the slot on BOTH channels, so it goes FIRST: run after, it leaves the
+      -- projection nothing to carry on the requirement channel for a whole epoch, and by the time
+      -- it has something the layer's own 'BoundedByObjs' has already filled that requirement from
+      -- the objects universe — which cannot carry the object's own scope, and so spells the
+      -- declaration's reference to its own variable (@[$M -> Monad[$T -> $_A]]@) as the ⊤ it
+      -- denotes. The two spellings are the same SET, so the later projection is judged a no-op and
+      -- the erased one is what every consumer then reads (measured: a lambda parameter's declared
+      -- type, which 'TypeCheck.TypeUtils.fnArgInputBound' recovers from that bound).
+      modify $ addConstraints ([EqReqAct 34 vm' | EncodeIn <- [est]] ++ [AddArg 27 (baseM', TVVar vn) m', PropEq 27 (m', TVVar vn) vm'])
       return $ EAppVar vn vm'
     EAppSpread a@HoleExpr{} -> do -- Shortcut for Hole since no need to track neglected args
       a' <- fromExpr est a
