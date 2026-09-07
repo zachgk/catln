@@ -467,6 +467,23 @@ fAddTTypeGraph oa env@FEnv{feTTypeGraph, feTTypeGraphCleared} = env
   , feTTypeGraphCleared = singletonObjectMap (mapMetaObjArr clearMetaDat Nothing oa) <> feTTypeGraphCleared
   }
 
+-- | The partials of a type BY NAME, for the structural spelling walks below ('typeVarLost',
+-- 'varPointerGained', 'nestedVarNarrowed', 'nestedSlotFilled'): each compares the same-named
+-- partial on the two sides of a write, position by position, on the keys both spell. A partial
+-- is a positive leaf OR a class atom of the type's top: a declaration-bounded slot is spelled as
+-- the class its declaration names (@left=∀BinTree[/K=⊤, /V=⊤]@ under @Node[/K=⊤, /V=⊤]@, a
+-- declared variable bound @/M=∀Monad[/T=$_A]@), and its parameters narrow, gain a pointer and
+-- lose one exactly as a leaf's do — judged the same set by 'eqScheme' for the same reason. A
+-- walk that saw leaves alone was blind to every such slot, so the first spelling written there
+-- (before the enclosing partial's parameters resolved) stayed for good, contradicting the
+-- parameter it is declared to follow. A negated or expression predicate is not a partial of the
+-- type ('tryPredsToList' declines a 'PredsNot'; 'PredRel'\/'PredExpr' atoms are not class
+-- spellings) and is left out.
+namedPartials :: Type -> H.HashMap TypeName [PartialType]
+namedPartials (UnionType mtop leafs _) = H.unionWith (++) (splitUnionTypeByName leafs) $ H.fromListWith (++)
+  [ (ptName p, [p]) | Just (preds, _, _) <- [mtop], Just atoms <- [tryPredsToList preds], PredClass p <- atoms ]
+namedPartials TypeVar{} = H.empty
+
 -- | Structurally detects whether an EXTERNAL 'TypeVar' ('TVExt') present in @old@ has been widened
 -- back to Top in @new@. Such a variable is a reference to a variable of an enclosing scope (e.g. a
 -- higher-order argument's parameter, @/fn(/v=$_A)@, tied to a container element); replacing it with
@@ -494,10 +511,10 @@ typeVarLost :: Type -> Type -> Bool
 -- knowledge-preserving erasure, and already falls to the catch-all False clause below.
 typeVarLost (TypeVar _ TVOuter _) PTopType = True
 typeVarLost (TypeVar _ _ _)     _        = False
-typeVarLost (UnionType _ oldLeafs _) (UnionType _ newLeafs _) =
+typeVarLost old@UnionType{} new@UnionType{} =
   or [ partialVarLost op np
-     | (name, [op]) <- H.toList (splitUnionTypeByName oldLeafs)
-     , Just [np] <- [H.lookup name (splitUnionTypeByName newLeafs)] ]
+     | (name, [op]) <- H.toList (namedPartials old)
+     , Just [np] <- [H.lookup name (namedPartials new)] ]
   where
     partialVarLost op np =
       or [ typeVarLost ov nv | (k, ov) <- H.toList (ptArgs op), Just nv <- [H.lookup k (ptArgs np)] ]
@@ -521,10 +538,10 @@ typeVarLost _ _ = False
 -- Mirrors the matching discipline of 'typeVarLost' (single same-name partial on each side;
 -- nested positions compared only on shared keys).
 varPointerGained :: Type -> Type -> Bool
-varPointerGained (UnionType _ oldLeafs _) (UnionType _ newLeafs _) =
+varPointerGained old@UnionType{} new@UnionType{} =
   or [ partialPointerGained op np
-     | (name, [op]) <- H.toList (splitUnionTypeByName oldLeafs)
-     , Just [np] <- [H.lookup name (splitUnionTypeByName newLeafs)] ]
+     | (name, [op]) <- H.toList (namedPartials old)
+     , Just [np] <- [H.lookup name (namedPartials new)] ]
   where
     partialPointerGained op np =
       or [ slotGained ov nv | (k, ov) <- H.toList (ptArgs op), Just nv <- [H.lookup k (ptArgs np)] ]
@@ -546,24 +563,12 @@ varPointerGained _ _ = False
 -- Mirrors the matching discipline of 'typeVarLost' (single same-name partial on each side;
 -- nested positions compared only on shared keys). Var LINKS are skipped — only two resolved
 -- dimension values are compared.
---
--- A slot's spelling may be a CLASS PREDICATE rather than a positive leaf: a declaration-bounded
--- slot is read through the declaration as the class it names (@left=∀BinTree[/K=⊤, /V=⊤]@ under
--- @Node[/K=⊤, /V=⊤]@), and its parameters follow the partial's own as they narrow
--- (@left=∀BinTree[/K=∀Ord, /V=∀Eq]@ once @/K@ and @/V@ resolve). That is the same
--- same-set-finer-spelling narrowing as a leaf's, judged equal by 'eqScheme' for the same reason,
--- so the class atoms of a top are matched by name exactly like the leaves — otherwise a slot
--- read before its partial's parameters narrowed keeps the ⊤ parameters for good, and the
--- stored binder contradicts the parameter its field is declared to follow.
 nestedVarNarrowed :: TypeGraph tg => TypeEnv tg -> Type -> Type -> Bool
 nestedVarNarrowed typeEnv old@UnionType{} new@UnionType{} =
   or [ partialNarrowed op np
      | (name, [op]) <- H.toList (namedPartials old)
      , Just [np] <- [H.lookup name (namedPartials new)] ]
   where
-    namedPartials (UnionType mtop leafs _) = H.unionWith (++) (splitUnionTypeByName leafs) $ H.fromListWith (++)
-      [ (ptName p, [p]) | Just (preds, _, _) <- [mtop], Just atoms <- [tryPredsToList preds], PredClass p <- atoms ]
-    namedPartials TypeVar{} = H.empty
     partialNarrowed op np =
       or [ dimNarrowed ov nv | (k, ov) <- H.toList (ptVars op), Just nv <- [H.lookup k (ptVars np)] ]
       || or [ nestedVarNarrowed typeEnv ov nv | (k, ov) <- H.toList (ptArgs op), Just nv <- [H.lookup k (ptArgs np)] ]
@@ -615,10 +620,10 @@ slotFillAdopt (UnionType xt xLs xCs) (UnionType dt dLs dCs) =
 slotFillAdopt _ _ = False
 
 nestedSlotFilled :: Type -> Type -> Bool
-nestedSlotFilled (UnionType _ oldLeafs _) (UnionType _ newLeafs _) =
+nestedSlotFilled old@UnionType{} new@UnionType{} =
   or [ partialFilled op np
-     | (name, [op]) <- H.toList (splitUnionTypeByName oldLeafs)
-     , Just [np] <- [H.lookup name (splitUnionTypeByName newLeafs)] ]
+     | (name, [op]) <- H.toList (namedPartials old)
+     , Just [np] <- [H.lookup name (namedPartials new)] ]
   where
     partialFilled op np =
       or [ slotFilled ov nv | (k, ov) <- H.toList (ptArgs op), Just nv <- [H.lookup k (ptArgs np)] ]

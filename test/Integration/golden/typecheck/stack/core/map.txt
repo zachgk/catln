@@ -1019,24 +1019,24 @@ Prgm
                             ( /value=TopType
                             , /key=TopType
                             , /right=∀/Data/Map/BinTree
-                                [ /K=TopType
-                                , /V=TopType
+                                [ /K=$^/MK
+                                , /V=$^/MW
                                 ]
                             , /left=∀/Data/Map/BinTree
-                                [ /K=TopType
-                                , /V=TopType
+                                [ /K=$^/MK
+                                , /V=$^/MW
                                 ]
                             ) = /Data/Map/Node
                             ( Value /left -> ∀/Data/Map/BinTree
-                                [ /K=TopType
-                                , /V=TopType
+                                [ /K=$^/MK
+                                , /V=$^/MW
                                 ] = /Data/Map/mapValues( Value /m -> TVArg /left = Value /left )
                                 ( /fn( Value /v )= /fn( Value /v -> TVArg /v = Value /v ) )
                             )( Value /key -> TVArg /key = Value /key )
                             ( Value /value= /fn( Value /v -> TVArg /value = Value /value ) )
                             ( Value /right -> ∀/Data/Map/BinTree
-                                [ /K=TopType
-                                , /V=TopType
+                                [ /K=$^/MK
+                                , /V=$^/MW
                                 ] = /Data/Map/mapValues( Value /m -> TVArg /right = Value /right )
                                 ( /fn( Value /v )= /fn( Value /v -> TVArg /v = Value /v ) )
                             )

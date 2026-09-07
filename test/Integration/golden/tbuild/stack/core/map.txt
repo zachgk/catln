@@ -1377,17 +1377,17 @@ Prgm
                             ( /value=TopType
                             , /key=TopType
                             , /right=∀/Data/Map/BinTree
-                                [ /K=TopType
-                                , /V=TopType
+                                [ /K=$^/MK
+                                , /V=$^/MW
                                 ]
                             , /left=∀/Data/Map/BinTree
-                                [ /K=TopType
-                                , /V=TopType
+                                [ /K=$^/MK
+                                , /V=$^/MW
                                 ]
                             ) = /Data/Map/Node
                             ( EAppArg Value /left -> ∀/Data/Map/BinTree
-                                [ /K=TopType
-                                , /V=TopType
+                                [ /K=$^/MK
+                                , /V=$^/MW
                                 ] =
                                 ( /Data/Map/mapValues
                                     ( EAppArg Value /m -> TVArg /left = ( Value /left ↦ TVArg /left ) )
@@ -1396,8 +1396,8 @@ Prgm
                                             ( EAppArg Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) ) ↦ TopType
                                         )
                                     ) ↦ ∀/Data/Map/BinTree
-                                    [ /K=TopType
-                                    , /V=TopType
+                                    [ /K=$^/MK
+                                    , /V=$^/MW
                                     ]
                                 )
                             )
@@ -1408,8 +1408,8 @@ Prgm
                                 )
                             )
                             ( EAppArg Value /right -> ∀/Data/Map/BinTree
-                                [ /K=TopType
-                                , /V=TopType
+                                [ /K=$^/MK
+                                , /V=$^/MW
                                 ] =
                                 ( /Data/Map/mapValues
                                     ( EAppArg Value /m -> TVArg /right = ( Value /right ↦ TVArg /right ) )
@@ -1418,8 +1418,8 @@ Prgm
                                             ( EAppArg Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) ) ↦ TopType
                                         )
                                     ) ↦ ∀/Data/Map/BinTree
-                                    [ /K=TopType
-                                    , /V=TopType
+                                    [ /K=$^/MK
+                                    , /V=$^/MW
                                     ]
                                 )
                             )
