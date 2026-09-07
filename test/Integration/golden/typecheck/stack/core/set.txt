@@ -75,7 +75,7 @@ Prgm
                                         , []
                                         )
                                     , /acc=∀/Data/Set/MapSet
-                                    , /b=∀/Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                    , /b=∀/Data/Set[ /T=$^/E ]
                                     ) + /Data/Set/MkSet
                                     [ /K=∀/Data/Algebra/Ord
                                     , /V=()
@@ -132,20 +132,30 @@ Prgm
                                         [ /K=∀/Data/Algebra/Ord
                                         , /V=()
                                         ]
-                                    ) + /Data/Set/addAll
-                                    ( /items=UnionType
+                                    ) + /Data/Set/addAll[ /E=∀/Data/Algebra/Ord ]
+                                    ( /items=
+                                        ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                            ( /head=∀/Data/Algebra/Ord
+                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                            )
+                                        )
+                                    , /s=UnionType
                                         ( Just
-                                            ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ]
+                                            ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
                                             , fromList []
                                             , []
                                             )
-                                        , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                            ( /head=$/T
-                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                        , /Data/Set/MkSet
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=()
+                                            ]
+                                            ( /map=∀/Data/Map
+                                                [ /K=∀/Data/Algebra/Ord
+                                                , /V=()
+                                                ]
                                             )
                                         , []
                                         )
-                                    , /s=∀/Data/Set[ /T=∀/Data/Algebra/Ord ]
                                     )
                                 )
                             , []
@@ -423,7 +433,7 @@ Prgm
                                 , []
                                 )
                             ,
-                                ( /Data/Set/add
+                                ( /Data/Set/add[ /E=∀/Data/Algebra/Ord ]
                                     ( /item=∀/Data/Algebra/Ord
                                     , /s=∀/Data/Set[ /T=∀/Data/Algebra/Ord ]
                                     ) + /Data/Set/MkSet
@@ -578,18 +588,7 @@ Prgm
                         [ /Data/Set/setEqual
                             ( Value /a -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
                             ( Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/Primitive/Boolean = /operator&&
-                            ( Value /l -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Primitive/Boolean
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
-                                    ( /this=∀/Data/Algebra/Eq
-                                    , /other=∀/Data/Algebra/Eq
-                                    )
-                                , []
-                                ) = /operator==
+                            ( Value /l -> ∀/Data/Primitive/Boolean = /operator==
                                 ( Value /l -> /Data/Primitive/Integer = /size( Value /s -> TVArg /a = Value /a ) )
                                 ( Value /r -> /Data/Primitive/Integer = /size( Value /s -> TVArg /b = Value /b ) )
                             )
@@ -750,20 +749,30 @@ Prgm
                                 , []
                                 )
                             ,
-                                ( /Data/Set/removeAll
-                                    ( /items=UnionType
+                                ( /Data/Set/removeAll[ /E=∀/Data/Algebra/Ord ]
+                                    ( /items=
+                                        ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                            ( /head=∀/Data/Algebra/Ord
+                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                            )
+                                        )
+                                    , /s=UnionType
                                         ( Just
-                                            ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ]
+                                            ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
                                             , fromList []
                                             , []
                                             )
-                                        , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                            ( /head=$/T
-                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                        , /Data/Set/MkSet
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=TopType
+                                            ]
+                                            ( /map=∀/Data/Map
+                                                [ /K=∀/Data/Algebra/Ord
+                                                , /V=$^/MV
+                                                ]
                                             )
                                         , []
                                         )
-                                    , /s=∀/Data/Set[ /T=∀/Data/Algebra/Ord ]
                                     ) + /Data/Set/MkSet
                                     [ /K=∀/Data/Algebra/Ord
                                     , /V=TopType

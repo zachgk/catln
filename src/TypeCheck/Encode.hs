@@ -156,9 +156,11 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
   -- call chain burned ~13 epochs reaching its head — m30/map.ct's insertStep hit the epoch limit
   -- on exactly this). In flow order the whole chain rides one forward epoch, and its requirement
   -- mirror rides the alternated backward epochs.
-  case est of
-    EncodeOut{} -> modify $ addConstraints [ArrowTo 7 (getExprMeta baseExpr') baseM']
-    EncodeIn{}  -> return ()
+  -- The input base link ('EqPoints') sits here for the same reason: @baseM'@ is the source of the
+  -- argument's 'AddArg', so it must be synced with the base subexpression before that runs.
+  modify $ addConstraints $ case est of
+    EncodeOut{} -> [ArrowTo 7 (getExprMeta baseExpr') baseM']
+    EncodeIn{}  -> [EqPoints 16 (getExprMeta baseExpr') baseM']
   arg'' <- case arg of
     EAppArg a -> do
       arg' <- fromObjArr est a
@@ -237,9 +239,7 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
   -- narrowed argument slot down into the argument.
   modify $ addConstraints $ case est of
     EncodeOut{} -> [BoundedByObjs 9 m' PTopType]
-    EncodeIn{}  -> [ EqPoints 16 (getExprMeta baseExpr') baseM'
-                   , BoundedByObjs 17 m' PTopType
-                   ]
+    EncodeIn{}  -> [BoundedByObjs 17 m' PTopType]
   return $ TupleApply m' (baseM', baseExpr') arg''
 
 -- | Non-linear matching: when a pattern binds one variable to several argument positions
