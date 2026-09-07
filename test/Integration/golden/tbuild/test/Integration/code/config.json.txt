@@ -140,43 +140,8 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> /Data/Json/Object
-                    ( /entries=/Data/List/Cons
-                        [ /T=/Data/Json/Member
-                            ( /value=/Data/Json/Str( /value=/Data/String )
-                            , /key=/Data/String
-                            )
-                        ]
-                        ( /head=/Data/Json/Member
-                            ( /value=/Data/Json/Str( /value=/Data/String )
-                            , /key=/Data/String
-                            )
-                        , /tail=/Data/List/Cons
-                            [ /T=/Data/Json/Member
-                                ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
-                                , /key=/Data/String
-                                )
-                            ]
-                            ( /head=/Data/Json/Member
-                                ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
-                                , /key=/Data/String
-                                )
-                            , /tail=/Data/List/Cons
-                                [ /T=/Data/Json/Member
-                                    ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
-                                    , /key=/Data/String
-                                    )
-                                ]
-                                ( /head=/Data/Json/Member
-                                    ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
-                                    , /key=/Data/String
-                                    )
-                                , /tail=/Data/List/Nil
-                                )
-                            )
-                        )
-                    ) =
-                    ( Value /JsonFile/data/projects/catln/q2Eclaude/worktrees/mirror/test/Integration/code/configq2Ejson ↦ /Data/Json/Object
+                { eaaArg = Value /p -> /Catln/Doc/Show/Rendered
+                    [ /V=/Data/Json/Object
                         ( /entries=/Data/List/Cons
                             [ /T=/Data/Json/Member
                                 ( /value=/Data/Json/Str( /value=/Data/String )
@@ -209,6 +174,209 @@ Prgm
                                         )
                                     , /tail=/Data/List/Nil
                                     )
+                                )
+                            )
+                        )
+                    ]
+                    ( /value=/Data/Json/Object
+                        ( /entries=/Data/List/Cons
+                            [ /T=/Data/Json/Member
+                                ( /value=/Data/Json/Str( /value=/Data/String )
+                                , /key=/Data/String
+                                )
+                            ]
+                            ( /head=/Data/Json/Member
+                                ( /value=/Data/Json/Str( /value=/Data/String )
+                                , /key=/Data/String
+                                )
+                            , /tail=/Data/List/Cons
+                                [ /T=/Data/Json/Member
+                                    ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
+                                    , /key=/Data/String
+                                    )
+                                ]
+                                ( /head=/Data/Json/Member
+                                    ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
+                                    , /key=/Data/String
+                                    )
+                                , /tail=/Data/List/Cons
+                                    [ /T=/Data/Json/Member
+                                        ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                        , /key=/Data/String
+                                        )
+                                    ]
+                                    ( /head=/Data/Json/Member
+                                        ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                        , /key=/Data/String
+                                        )
+                                    , /tail=/Data/List/Nil
+                                    )
+                                )
+                            )
+                        )
+                    , /assets=/Data/List/Cons
+                        ( /head=/Data/String
+                        , /tail=/Data/List/Cons
+                            ( /head=/Data/String
+                            , /tail=/Data/List/Nil
+                            )
+                        )
+                    ) =
+                    ( /Catln/Doc/dshow
+                        ( EAppArg
+                            { eaaArg = Value /s -> /Data/Json/Object
+                                ( /entries=/Data/List/Cons
+                                    [ /T=/Data/Json/Member
+                                        ( /value=/Data/Json/Str( /value=/Data/String )
+                                        , /key=/Data/String
+                                        )
+                                    ]
+                                    ( /head=/Data/Json/Member
+                                        ( /value=/Data/Json/Str( /value=/Data/String )
+                                        , /key=/Data/String
+                                        )
+                                    , /tail=/Data/List/Cons
+                                        [ /T=/Data/Json/Member
+                                            ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
+                                            , /key=/Data/String
+                                            )
+                                        ]
+                                        ( /head=/Data/Json/Member
+                                            ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
+                                            , /key=/Data/String
+                                            )
+                                        , /tail=/Data/List/Cons
+                                            [ /T=/Data/Json/Member
+                                                ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                                , /key=/Data/String
+                                                )
+                                            ]
+                                            ( /head=/Data/Json/Member
+                                                ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                                , /key=/Data/String
+                                                )
+                                            , /tail=/Data/List/Nil
+                                            )
+                                        )
+                                    )
+                                ) =
+                                ( Value /JsonFile/data/projects/catln/q2Eclaude/worktrees/mirror/test/Integration/code/configq2Ejson ↦ /Data/Json/Object
+                                    ( /entries=/Data/List/Cons
+                                        [ /T=/Data/Json/Member
+                                            ( /value=/Data/Json/Str( /value=/Data/String )
+                                            , /key=/Data/String
+                                            )
+                                        ]
+                                        ( /head=/Data/Json/Member
+                                            ( /value=/Data/Json/Str( /value=/Data/String )
+                                            , /key=/Data/String
+                                            )
+                                        , /tail=/Data/List/Cons
+                                            [ /T=/Data/Json/Member
+                                                ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
+                                                , /key=/Data/String
+                                                )
+                                            ]
+                                            ( /head=/Data/Json/Member
+                                                ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
+                                                , /key=/Data/String
+                                                )
+                                            , /tail=/Data/List/Cons
+                                                [ /T=/Data/Json/Member
+                                                    ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                                    , /key=/Data/String
+                                                    )
+                                                ]
+                                                ( /head=/Data/Json/Member
+                                                    ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                                    , /key=/Data/String
+                                                    )
+                                                , /tail=/Data/List/Nil
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            }
+                        ) ↦ /Catln/Doc/Show/Rendered
+                        [ /V=/Data/Json/Object
+                            ( /entries=/Data/List/Cons
+                                [ /T=/Data/Json/Member
+                                    ( /value=/Data/Json/Str( /value=/Data/String )
+                                    , /key=/Data/String
+                                    )
+                                ]
+                                ( /head=/Data/Json/Member
+                                    ( /value=/Data/Json/Str( /value=/Data/String )
+                                    , /key=/Data/String
+                                    )
+                                , /tail=/Data/List/Cons
+                                    [ /T=/Data/Json/Member
+                                        ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
+                                        , /key=/Data/String
+                                        )
+                                    ]
+                                    ( /head=/Data/Json/Member
+                                        ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
+                                        , /key=/Data/String
+                                        )
+                                    , /tail=/Data/List/Cons
+                                        [ /T=/Data/Json/Member
+                                            ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                            , /key=/Data/String
+                                            )
+                                        ]
+                                        ( /head=/Data/Json/Member
+                                            ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                            , /key=/Data/String
+                                            )
+                                        , /tail=/Data/List/Nil
+                                        )
+                                    )
+                                )
+                            )
+                        ]
+                        ( /value=/Data/Json/Object
+                            ( /entries=/Data/List/Cons
+                                [ /T=/Data/Json/Member
+                                    ( /value=/Data/Json/Str( /value=/Data/String )
+                                    , /key=/Data/String
+                                    )
+                                ]
+                                ( /head=/Data/Json/Member
+                                    ( /value=/Data/Json/Str( /value=/Data/String )
+                                    , /key=/Data/String
+                                    )
+                                , /tail=/Data/List/Cons
+                                    [ /T=/Data/Json/Member
+                                        ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
+                                        , /key=/Data/String
+                                        )
+                                    ]
+                                    ( /head=/Data/Json/Member
+                                        ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
+                                        , /key=/Data/String
+                                        )
+                                    , /tail=/Data/List/Cons
+                                        [ /T=/Data/Json/Member
+                                            ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                            , /key=/Data/String
+                                            )
+                                        ]
+                                        ( /head=/Data/Json/Member
+                                            ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                            , /key=/Data/String
+                                            )
+                                        , /tail=/Data/List/Nil
+                                        )
+                                    )
+                                )
+                            )
+                        , /assets=/Data/List/Cons
+                            ( /head=/Data/String
+                            , /tail=/Data/List/Cons
+                                ( /head=/Data/String
+                                , /tail=/Data/List/Nil
                                 )
                             )
                         )

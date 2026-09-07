@@ -53,30 +53,35 @@ module(Catln/Doc)
   dshow(s= #print(p))= p
 
   data(Show/Html(contents -> String))
-    # [Show/Html] shows markup a program wrote, laid into the page it is shown on. It is what a
-      library reaches for to say how one of its own types is displayed: an arm of [dshow] written
-      beside the declaration builds the markup, and the webdocs render it and know nothing else about
-      it. So a display belongs to the library owning the type rather than to a component of the doc
-      server named after that type.
+    # [Show/Html] shows markup a program wrote, laid into the page it is shown on. It is one of the
+      two things a library reaches for to say how one of its own types is displayed: an arm of
+      [dshow] written beside the declaration builds the markup, and the webdocs render it and know
+      nothing else about it. So a display belongs to the library owning the type rather than to a
+      component of the doc server named after that type.
+      This one when the display is a shape to lay out and nothing more. The other is
+      @core/render.ct@'s `Show/Rendered`, where the library ships the script that draws the value and
+      the value is handed to it whole — which is what a display has to be when it answers a click
+      rather than only being read. Markup cannot say what it does, and that is the whole of the line
+      between them.
       Laid in and not framed, which is what separates it from the frame a compiled result is shown
       in. That frames because what is in it is a whole document with its own styling, and laying one
       into this page would take this page's styling and give it that document's. A program's own
       display is not a document of its own, so it is meant to take this page's font, its links and
       its colours, which a frame would give it none of.
-      An entry of a feed is laid in too, and is the case where that is a judgement rather than an
-      obvious one. What an entry says is markup somebody else wrote, which was framed and sandboxed
-      while the doc server held a display of its own for it. Written as an arm here it is laid in
-      like any other markup an arm builds, so it loses that isolation and keeps only the sanitizing —
-      which is what drops the scripts and the handlers, and is the half of the pair that was doing
-      the work. What it costs is that an entry's own styling now reads against this page's rather
-      than beside it, and that is the price of a feed saying what its entries look like instead of
-      the doc server saying it.
       Markup where [Show/MD] is prose: writing which reads as a document is markdown, and writing
       which is a shape to lay out is this, because markdown cannot say how a heading or a table sits.
-      Nothing written here is escaped, and the webdocs sanitize what they are given before showing
-      it. An arm joining a string into markup is an arm whose string is read as markup, which is that
-      arm's to get right; the sanitizing keeps getting it wrong from being a page that runs what a
-      string said.
+      Nothing written here is escaped and nothing is sanitized. A library's display is that library's
+      own code, run by a doc server which already compiles and evaluates that library's pages, so
+      there is nothing markup could carry that an arm of the same library could not do first — which
+      is the whole reason the sanitizing that used to sit here is gone, and why a display may now ship
+      a script through `Show/Rendered` at all.
+      What an arm joins INTO its markup is a different matter, and it is that arm's to get right. A
+      string an arm read out of a file is not the library's writing. A note is titled by the file it
+      sits in, and an entry of a feed says whatever the feed's author published — so an arm joining
+      one of those in is joining in markup somebody else wrote, and it is joined in without a frame,
+      without a sandbox, and now without the sanitizing that had been standing in for both. An arm
+      carrying writing from outside owes it an escape or a frame of its own. See [/Data/RSS/Item],
+      which is the arm this is said about.
 
   every(Show/Html.., isa= [/Catln/Doc/DShow])
 

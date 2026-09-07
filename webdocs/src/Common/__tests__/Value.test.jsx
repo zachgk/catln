@@ -352,29 +352,35 @@ describe('tryValue', () => {
   })
 })
 
-// A piece of JSON reaches Value as the value itself, since `/Data/Json` is a member of
-// `/Catln/Doc/DShow` rather than something a `dshow` arm builds a display out of. So what is being
-// checked here is that the dispatch finds the tree component at all, rather than falling to the
-// default that writes a value out as `Name(arg = ...)`.
-describe('json values', () => {
-  const jstr = s => ({ tag: 'TupleVal', name: '/Data/Json/Str', args: { '/value': { tag: 'StrVal', contents: s } } })
+// A value drawn by the library that owns it. What is checked here is the dispatch alone — that a
+// Show/Rendered reaches the component which fetches the library's files — and not what any library
+// draws, which is that library's own test to write.
+describe('a library-rendered value', () => {
   const nil = { tag: 'TupleVal', name: '/Data/List/Nil', args: {} }
   const cons = (head, tail) => ({ tag: 'TupleVal', name: '/Data/List/Cons', args: { '/head': head, '/tail': tail } })
-  const member = (key, value) => ({ tag: 'TupleVal', name: '/Data/Json/Member', args: { '/key': { tag: 'StrVal', contents: key }, '/value': value } })
-  const object = members => ({ tag: 'TupleVal', name: '/Data/Json/Object', args: { '/entries': members.reduceRight((t, m) => cons(m, t), nil) } })
-
-  it('shows an object as the tree of what it holds', () => {
-    const { container } = render(<Providers><Value data={object([member('name', jstr('catln'))])} /></Providers>)
-
-    expect(screen.getByText('name')).toBeInTheDocument()
-    expect(screen.getByText('"catln"')).toBeInTheDocument()
-    // The generic tuple rendering would have written the constructor path out instead.
-    expect(container.textContent).not.toContain('/Data/Json/Object')
+  const strs = ss => ss.reduceRight((t, s) => cons({ tag: 'StrVal', contents: s }, t), nil)
+  const jstr = s => ({ tag: 'TupleVal', name: '/Data/Json/Str', args: { '/value': { tag: 'StrVal', contents: s } } })
+  const rendered = (value, assets) => ({
+    tag: 'TupleVal',
+    name: '/Catln/Doc/Show/Rendered',
+    args: { '/value': value, '/assets': strs(assets) }
   })
 
-  it('shows a scalar reached on its own', () => {
-    render(<Providers><Value data={jstr('alone')} /></Providers>)
+  it('hands a Show/Rendered to the component that loads the library files', () => {
+    const { container } = render(<Providers><Value data={rendered(jstr('catln'), ['json/json.js'])} /></Providers>)
 
-    expect(screen.getByText('"alone"')).toBeInTheDocument()
+    // The generic tuple rendering would have written the constructor path and the cons chain out.
+    expect(container.textContent).not.toContain('/Catln/Doc/Show/Rendered')
+    expect(container.textContent).not.toContain('/Data/List/Cons')
+  })
+
+  // The other half of moving the display into the library, asserted so that it is a decision rather
+  // than a surprise. A raw /Data/Json is no longer a case here, so one reached anywhere other than
+  // through its dshow arm — inside a debugger's evaluation tree, inside a nested argument — is
+  // written out generically. The same is already true of an RSS item.
+  it('writes a raw library value out generically, having no case for it', () => {
+    const { container } = render(<Providers><Value data={jstr('alone')} /></Providers>)
+
+    expect(container.textContent).toContain('/Data/Json/Str')
   })
 })

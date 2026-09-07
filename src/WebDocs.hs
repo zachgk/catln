@@ -37,9 +37,11 @@ import           Control.Exception             (SomeException, evaluate, try)
 import           Control.Monad                 (unless, when)
 import           Control.Monad.Trans           (lift)
 import           CRes
-import           CtConstants                   (printAnnot, printAnnotText)
+import           CtConstants                   (libraryAssetTypes, printAnnot,
+                                                printAnnotText)
 import           CtService
 import           Data.Bifunctor                (Bifunctor (first))
+import           Data.Char                     (toLower)
 import           Data.Graph
 import           Data.Maybe                    (listToMaybe)
 import           Data.UUID                     (UUID, fromText)
@@ -50,6 +52,7 @@ import           Eval.Common                   (EvalMode, SSF (..), Val,
 import           Eval.Runtime.WebDocs          (sidebarOrder)
 import           MapMeta                       (interleaveMeta, interleavePrgm,
                                                 parseMetaIDScope, zip4MetaFun)
+import           Network.HTTP.Types.Status     (notFound404)
 import           Semantics                     (buildCtssConfig)
 import           Semantics.Prgm
 import           Semantics.Types               (mkName, nameStr, partialKey)
@@ -67,8 +70,12 @@ import           Syntax.Ct.Prgm                (RawExpr (RawValue),
                                                 RawStatementTree (RawStatementTree),
                                                 mkRawFileImport,
                                                 rawExprAppliedArgsMap)
+import           Syntax.InferImport            (stackPath)
 import           Syntax.Parsers                (mkDesCanonicalImportStr,
                                                 pageLinkDir)
+import           System.Directory              (doesFileExist)
+import           System.FilePath               (isAbsolute, splitDirectories,
+                                                takeExtension)
 import           Text.Megaparsec               (errorBundlePretty, runParser)
 import           Text.Printf
 import           TypeCheck                     (typecheckPrgms)
@@ -457,6 +464,24 @@ docApiBase readonly ctss = do
     prgmName' <- liftAndCatchIO $ mkDesCanonicalImportStr buildCtssConfig prgmName
     serve ctss (Shown (Just prgmName')) (pageResp ctss prgmName')
 
+  -- A file a library ships to draw its own values, named by a '/Catln/Doc/Show/Rendered' that
+  -- library's arm of @dshow@ built. Served from the standard library on disk rather than from the
+  -- doc server's own bundle, because it belongs to whoever wrote the pages beside it.
+  --
+  -- Here in the API and not beside the static middleware in 'docServe': that middleware is rooted at
+  -- the webdocs bundle and is not mounted at all in 'docApi', which is the server the development
+  -- proxy and the integration harness talk to. A route under @\/api@ is reached by both.
+  get "/api/asset" $ do
+    assetPath <- param "path"
+    asset <- liftAndCatchIO $ libraryAsset assetPath
+    case asset of
+      Nothing -> do
+        status notFound404
+        text "No such library asset"
+      Just (contentType, fullPath) -> do
+        setHeader "Content-Type" (T.pack contentType)
+        file fullPath
+
   get "/api/annot" $ do
     annot <- param "annot"
     -- An annotation is local to the program it is written in, so evaluating a free-standing one has
@@ -509,3 +534,28 @@ docServe readonly baseFileNames = do
     middleware $ staticPolicy (noDots >-> policy handleIndex >-> addBase "webdocs/dist")
 
     get (regex ".*") $ file "webdocs/dist/index.html"
+
+-- | Where a library's asset is on disk and what it is served as, or 'Nothing' for a path this will
+-- not answer for.
+--
+-- The two rejections before the lookup are what keep the route inside the standard library, and the
+-- order matters. 'Syntax.InferImport.stackPath' joins the requested name onto the stack directory,
+-- and joining an absolute path onto anything gives back the absolute path — so @\/etc\/passwd@ has
+-- to be refused here rather than resolved and then judged. A @..@ segment is refused for the reason
+-- @noDots@ refuses one of the bundle. Scotty has already URL-decoded the parameter, so an escaped
+-- @..@ is read as one.
+--
+-- Then the extension decides, and only the extensions 'libraryAssetTypes' names are answered for. A
+-- doc server serves a @.ct@ as the page it compiles to, which is a page a reader may look at; it
+-- must not also serve one as the bytes it was written as, and every file the standard library will
+-- ever hold sits under the same directory as the assets.
+libraryAsset :: String -> IO (Maybe (String, FilePath))
+libraryAsset assetPath
+  | isAbsolute assetPath = return Nothing
+  | ".." `elem` splitDirectories assetPath = return Nothing
+  | otherwise = case lookup (map toLower $ takeExtension assetPath) libraryAssetTypes of
+      Nothing -> return Nothing
+      Just contentType -> do
+        fullPath <- stackPath buildCtssConfig assetPath
+        exists <- doesFileExist fullPath
+        return $ if exists then Just (contentType, fullPath) else Nothing

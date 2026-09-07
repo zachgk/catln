@@ -1,0 +1,63 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Catln/Doc/Show/Rendered"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Doc/Show/Rendered[ /V : TopType ]( Value /value -> $/V )
+                            ( Value /assets -> ∀/Data/List[ /T=/Data/String ] )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Catln/Doc/Show/Rendered
+            , cgcExtends = [ /Catln/Doc/Show/Rendered.. ]
+            , cgcDoc = Just ""
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String = CStr
+                { csValue = "# A display a library renders for itself
+                A [Show/Rendered] is a value together with the files that draw it. It is the third way a library
+                says what one of its types looks like, and the first that can say what one *does*.
+                The two before it each give up something. Membership of [DShow] hands the value itself to the
+                webdocs, which then need a component named after the type — so the display lives in the doc
+                server rather than in the library, which is what [Show/Html] is written against. An arm of
+                [/Catln/Doc/dshow] building a [Show/Html] keeps the display in the library, but what it builds is
+                markup and nothing more: a tree that folds when it is clicked needs a script, and markup laid
+                into a page brings none. A browser does not run a script written into markup handed to it, and an
+                arm joining strings together has nowhere to put one in any case.
+                So this carries both halves. The [value] is handed over whole, as membership would, and the
+                [assets] name the JavaScript and the CSS that turn it into a display. Both live in the library's
+                own directory beside the pages declaring the type, and the doc server fetches them without
+                knowing what they are for." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr
+                { csValue = "# Why this is not written in core/webdoc.ct
+                [assets] is a [/Data/List], and @core/webdoc.ct@ may not name one. That page is reached from
+                @core/compile.ct@, which every program reaches, so an import of @core/list.ct@ written there closes
+                the cycle @core/result.ct@ measures at seven hundred seconds. This page sits where @core/result.ct@
+                sits for the same reason and by the same arrangement: it reaches @core/list.ct@ freely, and only
+                @core/main.ct@ reaches it." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr
+                { csValue = "# What a doc server does not do with these files
+                A library's assets are not pages. Nothing reads them, nothing watches them, and the extensions a
+                read knows ([Syntax.InferImport.isSupportedFileExtension]) do not include them. So a script edited
+                while a doc server is running changes nothing until the reader loads the page again — the server
+                has not noticed, and the browser is holding the module it already fetched." }
+            )
+        ]
+    }

@@ -73,6 +73,18 @@ mdAnnotText = "text"
 dshowClassName :: String
 dshowClassName = "/Catln/Doc/DShow"
 
+-- | The function resolving a value to the display it is shown as, and the argument it takes it in,
+-- both declared in @stack\/core\/webdoc.ct@.
+--
+-- Named here because a syntax generating a page may have to write the call itself. A type displayed
+-- by an arm of this is by that fact not a member of 'dshowClassName' — the two together are two arms
+-- matching one value — so a @#print@ of such a value, whose argument is declared to /be/ a
+-- 'dshowClassName', has to be handed the display rather than the value. See
+-- 'Syntax.Json.Parser.jsonStatements', which writes one.
+dshowName, dshowArg :: String
+dshowName = "/Catln/Doc/dshow"
+dshowArg = "s"
+
 -- | The page a page is written over, declared in @stack/core/webdoc.ct@. A page carrying one is
 -- shown with the page at 'overlayAnnotUrl' beneath its own writing.
 overlayAnnot, overlayAnnotUrl :: String
@@ -437,3 +449,20 @@ ctBooleanPath, ctMaybePath, ctListPath :: String
 ctBooleanPath = "/Data/Primitive/Boolean"
 ctMaybePath = "/Data/Maybe"
 ctListPath = "/Data/List"
+
+-- | The files a library may ship beside its pages for the webdocs to load, and the content type each
+-- is served as.
+--
+-- A display a library writes is a @\/Catln\/Doc\/Show\/Rendered@ naming these by path
+-- (@stack\/core\/render.ct@), and the doc server serves them from its @\/api\/asset@ route. The list
+-- is what that route will answer for at all: a doc server already serves a @.ct@ as the page it
+-- compiles to, and this must not become a second way to read one as bytes.
+--
+-- The content type is written out rather than looked up, because a module script served without one
+-- is refused by the browser and a table of every type there is would be answering for files this
+-- does not serve.
+libraryAssetTypes :: [(String, String)]
+libraryAssetTypes =
+  [ (".js", "text/javascript; charset=utf-8")
+  , (".css", "text/css; charset=utf-8")
+  ]

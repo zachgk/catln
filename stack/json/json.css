@@ -1,0 +1,79 @@
+/* The look of a `/Data/Json`, shipped from the library declaring the type.
+ *
+ * Every rule is under `.catln-json`, and every class is prefixed, because this is laid onto a page
+ * the library does not own and must not reach anything else on it.
+ *
+ * Nothing here sets a font or a colour for the page itself. A library's display takes the page's
+ * typography, its links and its background -- that is what "laid in rather than framed" means -- and
+ * says only what is particular to itself. The three scalar kinds are coloured apart so that a string
+ * holding digits does not read as a number and a string holding `null` does not read as an absence.
+ */
+
+.catln-json {
+  display: block;
+}
+
+.catln-json .catln-json-list {
+  list-style: none;
+  margin: 0;
+  /* One indent per level, drawn on the nested list rather than per row, so a deeply nested document
+   * steps in evenly however it is built. */
+  padding-left: 1.2em;
+}
+
+.catln-json > .catln-json-list {
+  padding-left: 0;
+}
+
+.catln-json .catln-json-row {
+  display: flex;
+  align-items: baseline;
+}
+
+/* The caret, and the space a leaf keeps where a caret would be so that rows line up down the page. */
+.catln-json .catln-json-toggle {
+  width: 1.2em;
+  flex: 0 0 1.2em;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  opacity: 0.6;
+  text-align: left;
+}
+
+.catln-json .catln-json-leaf {
+  cursor: default;
+}
+
+.catln-json .catln-json-key {
+  font-weight: bold;
+  margin-right: 0.5em;
+}
+
+.catln-json .catln-json-string {
+  color: darkgreen;
+}
+
+.catln-json .catln-json-number {
+  color: darkblue;
+}
+
+.catln-json .catln-json-literal {
+  color: purple;
+  font-style: italic;
+}
+
+/* What a container holds, shown on the row that folds it, so a reader can decide whether to open it
+ * without opening it. */
+.catln-json .catln-json-count {
+  opacity: 0.6;
+}
+
+/* A value that is not one of JSON's six reached this display. Shown, and shown as not belonging. */
+.catln-json .catln-json-unknown {
+  opacity: 0.6;
+  font-style: italic;
+}

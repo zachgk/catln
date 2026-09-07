@@ -721,9 +721,13 @@ function PartialName(props) {
 // thing a display of it must not say.
 //
 // Here rather than beside either of the two displays that walk a list, because both do: a build
-// result is a list of files and a JSON array is a list of values, and neither is the other. It
-// cannot live in `Value.jsx`, which `BuildResult.jsx` imports from — that would be a cycle — and
-// this module imports no display at all.
+// result is a list of files and a library-rendered value carries a list of the files that draw it,
+// and neither is the other. It cannot live in `Value.jsx`, which `BuildResult.jsx` imports from —
+// that would be a cycle — and this module imports no display at all.
+//
+// A library's own display reaches none of this and walks its own chain: `stack/json/json.js` holds a
+// copy of this walk, because a file the doc server serves to the browser cannot import from the doc
+// server's bundle.
 function valList(val) {
   const items = [];
   let rest = val;

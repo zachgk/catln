@@ -1,0 +1,42 @@
+import "core/list.ct"
+import "core/webdoc.ct"
+
+
+module(Catln/Doc)
+  # # A display a library renders for itself
+    A [Show/Rendered] is a value together with the files that draw it. It is the third way a library
+    says what one of its types looks like, and the first that can say what one *does*.
+    The two before it each give up something. Membership of [DShow] hands the value itself to the
+    webdocs, which then need a component named after the type — so the display lives in the doc
+    server rather than in the library, which is what [Show/Html] is written against. An arm of
+    [/Catln/Doc/dshow] building a [Show/Html] keeps the display in the library, but what it builds is
+    markup and nothing more: a tree that folds when it is clicked needs a script, and markup laid
+    into a page brings none. A browser does not run a script written into markup handed to it, and an
+    arm joining strings together has nowhere to put one in any case.
+    So this carries both halves. The [value] is handed over whole, as membership would, and the
+    [assets] name the JavaScript and the CSS that turn it into a display. Both live in the library's
+    own directory beside the pages declaring the type, and the doc server fetches them without
+    knowing what they are for.
+  data(Show/Rendered[$V](value -> $V, assets -> /Data/List[$T -> String]))
+    # [value] is the value being shown, of whatever type the library is showing — a type parameter
+      and not [DShow], because a type with an arm of [/Catln/Doc/dshow] is by that fact not a member
+      of [DShow], and a field asking for one could not hold it.
+      [assets] are paths under the standard library, as an import writes them: `json/json.js` sits
+      beside `json/json.ct`. A `.js` is loaded as a module and asked for its `render(root, value)`;
+      a `.css` is laid on the page once. The doc server serves them and reads neither.
+      Nothing here says which asset renders which value. A library naming two scripts is a library
+      whose scripts sort that out between them, which is the same freedom it has over its own pages.
+
+  every(Show/Rendered.., isa= [/Catln/Doc/DShow])
+
+# # Why this is not written in core/webdoc.ct
+  [assets] is a [/Data/List], and @core/webdoc.ct@ may not name one. That page is reached from
+  @core/compile.ct@, which every program reaches, so an import of @core/list.ct@ written there closes
+  the cycle @core/result.ct@ measures at seven hundred seconds. This page sits where @core/result.ct@
+  sits for the same reason and by the same arrangement: it reaches @core/list.ct@ freely, and only
+  @core/main.ct@ reaches it.
+# # What a doc server does not do with these files
+  A library's assets are not pages. Nothing reads them, nothing watches them, and the extensions a
+  read knows ([Syntax.InferImport.isSupportedFileExtension]) do not include them. So a script edited
+  while a doc server is running changes nothing until the reader loads the page again — the server
+  has not noticed, and the browser is holding the module it already fetched.

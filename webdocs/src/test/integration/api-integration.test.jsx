@@ -1180,4 +1180,54 @@ describe('Backend API contract', () => {
       expect(after).toBe(original)
     })
   })
+
+  // The files a library ships to draw its own values, which the doc server serves from the standard
+  // library on disk. Nothing about this route depends on which pages the server was started with:
+  // the assets are read from the stack directory rather than compiled, which is the point of them.
+  describe('library assets', () => {
+    it('serves a script a library ships, as a script', async () => {
+      const res = await fetch(`${API_BASE}/api/asset?path=${encodeURIComponent('json/json.js')}`)
+
+      expect(res.status).toBe(200)
+      // A module served without this is refused by the browser, which is the whole reason the route
+      // sets it rather than letting Scotty answer with nothing.
+      expect(res.headers.get('content-type')).toContain('text/javascript')
+      expect(await res.text()).toContain('export function render')
+    })
+
+    it('serves a stylesheet a library ships, as a stylesheet', async () => {
+      const res = await fetch(`${API_BASE}/api/asset?path=${encodeURIComponent('json/json.css')}`)
+
+      expect(res.status).toBe(200)
+      expect(res.headers.get('content-type')).toContain('text/css')
+    })
+
+    // The three refusals that keep this inside the standard library. The first two are what stop it
+    // being a way to read any file on the machine; the third is what stops it being a second way to
+    // read a page as the bytes it was written as, when the server already serves it as a page.
+    it('refuses a path that climbs out of the library', async () => {
+      const res = await fetch(`${API_BASE}/api/asset?path=${encodeURIComponent('../package.yaml')}`)
+
+      expect(res.status).toBe(404)
+    })
+
+    it('refuses an absolute path', async () => {
+      const res = await fetch(`${API_BASE}/api/asset?path=${encodeURIComponent('/etc/passwd')}`)
+
+      expect(res.status).toBe(404)
+    })
+
+    it('refuses a page, which it serves as a page and not as bytes', async () => {
+      const res = await fetch(`${API_BASE}/api/asset?path=${encodeURIComponent('json/json.ct')}`)
+
+      expect(res.status).toBe(404)
+    })
+
+    it('answers a file the library does not hold with nothing', async () => {
+      const res = await fetch(`${API_BASE}/api/asset?path=${encodeURIComponent('json/nothing.js')}`)
+
+      expect(res.status).toBe(404)
+    })
+  })
+
 })

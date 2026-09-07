@@ -42,6 +42,14 @@ module(Data/RSS)
       The entry's writing is laid into the page rather than framed in one, which is a change from
       what the doc server did with it and is written down at [/Catln/Doc/Show/Html]. It is joined in
       as the markup it is and is not escaped, as nothing joined into a [/Catln/Doc/Show/Html] is.
+      [description] is the one thing on this page that came from somewhere else, and it is now joined
+      in with nothing between it and the reader. It was framed and sandboxed while the doc server
+      held a display of its own for an entry; writing the display here dropped the frame and left the
+      sanitizing, and the sanitizing has since gone too — a library's display is that library's own
+      code, and this arm's markup is trusted because arms are. What the arm joins in is not the arm.
+      So a feed served by somebody else runs that somebody's script in a doc server showing it, and
+      an escape or a frame for [description] alone is what this arm still owes. See
+      [/Catln/Doc/Show/Html], which says the same thing from the other side.
       The two pieces that make a choice are nested here rather than declared beside this, since
       neither is anything but a part of this display. A branch in Catln is a declaration and not an
       expression — guards select between arms of a function — so a choice cannot be joined into a

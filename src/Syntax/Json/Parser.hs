@@ -61,16 +61,26 @@ jsonPrgm filename value = RawPrgm [mkRawFileImport (rawStr jsonTypesPage)] (json
 --
 -- The @#print@ is what puts the document on the page as the tree it is. Without it the page shows the
 -- declaration as the source it was generated as, which is the whole file written out again on one
--- line; with it the webdocs are handed the evaluated @\/Data\/Json@ and fold it. A declaration rather
--- than a bare value statement, because a value with no name is a value nothing can be written to
--- reach, and reaching it is what reading a JSON file is for.
+-- line; with it the webdocs are handed the display of the @\/Data\/Json@ and fold it. A declaration
+-- rather than a bare value statement, because a value with no name is a value nothing can be written
+-- to reach, and reaching it is what reading a JSON file is for.
+--
+-- What is printed is @dshow(s= name)@ and not @name@, which is the part worth reading twice. A
+-- @\/Data\/Json@ is displayed by an arm of 'CtConstants.dshowName' written in @stack\/json\/json.ct@,
+-- and a type with such an arm is by that fact not a member of 'CtConstants.dshowClassName'. But
+-- @#print@ declares its argument to /be/ one ('stack\/core\/compile.ct'), and 'Eval.evalDShowAnnot'
+-- builds that argument straight toward the class rather than through the arm — so a @#print@ of the
+-- value alone would neither typecheck nor find the display. Calling the arm here is the page saying
+-- what it wants shown, which it is in a position to know: it is generated, and the type it is
+-- generated for is the one this module writes.
 jsonStatements :: FilePath -> Value -> [RawStatementTree RawExpr ()]
 jsonStatements filename value = [heading, decl, display]
   where
     name = jsonFileName filename
     heading = RawStatementTree (RawAnnot (rawComment $ printf "The JSON in %s. Write `%s` to reach it." filename name)) []
     decl = RawStatementTree (RawDeclStatement $ RawObjArr (Just (rawVal name)) FunctionObj Nothing [] (Just (Just (jsonExpr value), Nothing)) Nothing) []
-    display = RawStatementTree (RawAnnot (rawVal printAnnot `applyRawArgs` [(Just $ partialKey (mkName printAnnotText), rawVal name)])) []
+    shown = rawVal dshowName `applyRawArgs` [(Just $ partialKey (mkName dshowArg), rawVal name)]
+    display = RawStatementTree (RawAnnot (rawVal printAnnot `applyRawArgs` [(Just $ partialKey (mkName printAnnotText), shown)])) []
 
 -- | One piece of JSON as the expression building it.
 --

@@ -2,6 +2,43 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
+                ( "/Catln/Doc/dshow"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Catln/Doc/dshow( Value s -> ∀/Data/Json )= /Catln/Doc/Show/Rendered( Value value= Value s )
+                            ( Value assets= /Data/List/Cons
+                                ( Value /head= CStr
+                                    { csValue = "json/json.js" }
+                                )
+                                ( Value /tail= /Data/List/Cons
+                                    ( Value /head= CStr
+                                        { csValue = "json/json.css" }
+                                    )( Value /tail= Value /Data/List/Nil )
+                                )
+                            )
+                        , /Catln/Doc/dshow
+                            ( Value s -> /Data/Json/Member
+                                ( /value=TopType
+                                , /key=TopType
+                                )
+                            )= /Catln/Doc/Show/Rendered( Value value= Value s )
+                            ( Value assets= /Data/List/Cons
+                                ( Value /head= CStr
+                                    { csValue = "json/json.js" }
+                                )
+                                ( Value /tail= /Data/List/Cons
+                                    ( Value /head= CStr
+                                        { csValue = "json/json.css" }
+                                    )( Value /tail= Value /Data/List/Nil )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Json/Member"
                 , ObjectMapItem
                     { omiDecls =
@@ -113,24 +150,7 @@ Prgm
         , CGType
         , CGType
         , CGType
-        , CGClass
-            { cgcSealed = False
-            , cgcPartial = /Data/Json
-            , cgcExtends =
-                [ ∀/Data/Json
-                , /Data/Json/Member..
-                ]
-            , cgcDoc = Just "Every [Json] is shown in the webdocs, as the folding tree of what it holds. Said of the class
-              rather than of each arm, as [/Data/Note/Task] says it of a task however the vault it came from
-              has it read: a document is displayed because it is a document, and which of the six arms it
-              happens to be is what the display reads rather than what decides whether there is one.
-              Membership rather than an arm of [/Catln/Doc/dshow]. The webdocs render this value itself —
-              walking the arms and the lists under them — rather than a display built from it, so there is
-              nothing for an arm to build. A type may have one or the other and not both: a member is shown
-              by the identity arm of [/Catln/Doc/dshow], so both at once is two arms matching one value with
-              nothing to say which wins. A member is displayable on its own as well as within the object holding it, so that a program
-              which reaches one can show it."
-            }
+        , CGType
         , CGClass
             { cgcSealed = True
             , cgcPartial = /Data/Json
@@ -175,23 +195,6 @@ Prgm
                 and what makes it recursive. An object's entries are [Json/Member]s rather than a [/Data/Map]
                 because a document's keys are written in an order and shown in it — a map would sort them, and
                 a JSON file shown with its keys rearranged is not the file that was read." }
-            )
-        , /Catln/#md
-            ( Value /text= CStr
-                { csValue = "Every [Json] is shown in the webdocs, as the folding tree of what it holds. Said of the class
-                rather than of each arm, as [/Data/Note/Task] says it of a task however the vault it came from
-                has it read: a document is displayed because it is a document, and which of the six arms it
-                happens to be is what the display reads rather than what decides whether there is one.
-                Membership rather than an arm of [/Catln/Doc/dshow]. The webdocs render this value itself —
-                walking the arms and the lists under them — rather than a display built from it, so there is
-                nothing for an arm to build. A type may have one or the other and not both: a member is shown
-                by the identity arm of [/Catln/Doc/dshow], so both at once is two arms matching one value with
-                nothing to say which wins." }
-            )
-        , /Catln/#md
-            ( Value /text= CStr
-                { csValue = "A member is displayable on its own as well as within the object holding it, so that a program
-                which reaches one can show it." }
             )
         , /Catln/#md
             ( Value /text= CStr

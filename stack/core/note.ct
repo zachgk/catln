@@ -33,9 +33,11 @@ module(Data/Note)
       writing, the tasks and the properties are statements inside the page rather than fields of it,
       so each is shown where the note wrote it and none of them is shown twice.
       The title is not escaped. A note is titled by the file it is written in, so a note named with a
-      @<@ or an @&@ has that name read as markup. The webdocs sanitize what they are shown, so the
-      worst of it is a heading that reads wrongly rather than a page that runs what a filename said;
-      escaping it properly waits on [String] having a way to escape.
+      @<@ or an @&@ has that name read as markup. The webdocs no longer sanitize what an arm builds —
+      a library's display is that library's own code and is run as such — so what a filename says is
+      now read as the markup it looks like, and this arm is what stands between a vault and the page
+      showing it. Escaping it properly waits on [String] having a way to escape; until then a vault
+      whose filenames are not the reader's own is a vault to be careful with.
       Shown and never written. A note is titled by the file it is written in, so retitling one is
       renaming that file, which replacing an expression of the page cannot do.
 

@@ -1,7 +1,6 @@
-import React, {useMemo} from 'react';
+import React from 'react';
 
 import makeStyles from '@mui/styles/makeStyles';
-import DOMPurify from 'dompurify';
 
 const useStyles = makeStyles({
   html: {
@@ -21,31 +20,30 @@ const useStyles = makeStyles({
 // meant to take this page's styling -- its font, its links, its colours -- where a frame would give
 // it none of them, size itself wrongly, and cut the value off from the page it belongs to.
 //
-// So this is the whole of what the webdocs know about a display a library defines for its own types:
-// the library writes an arm of /Catln/Doc/dshow beside the declaration, that arm builds the markup,
-// and this renders it. Which is why there is nothing here named after any one library's type.
+// So this is one of the two ways a library says how its own types are displayed: the library writes
+// an arm of /Catln/Doc/dshow beside the declaration, that arm builds the markup, and this renders
+// it. The other is Show/Rendered, where the library ships the script that draws the value. Which is
+// why there is nothing here named after any one library's type.
 //
 // The markup is not styled here either. A generic renderer overriding the margins of markup it did
 // not write is making layout decisions for the library that did.
 //
-// Sanitized all the same, because "the program's own" is not "trusted". A page is compiled from
-// whatever file the doc server was pointed at, an arm builds its markup by joining strings, and a
-// string may be anything a file was named -- an Obsidian note is titled by its filename. So the arm
-// is responsible for markup that reads correctly, and this is responsible for markup that cannot do
-// anything: a display able to run a script is a display able to do whatever the reader can.
+// Not sanitized. A library's display is the library's own code, run by a doc server that already
+// compiles and evaluates that library's pages -- there is nothing a script in this markup could do
+// that an arm of the same library could not do first. What a library joins INTO its markup is a
+// different matter and is that arm's to get right: a value read out of a file is not the library's
+// writing, and /Catln/Doc/Show/Html says which arms carry that and what they owe it.
 function HTMLShow(props) {
   const contents = props["/contents"].contents;
   const classes = useStyles();
 
-  const clean = useMemo(() => DOMPurify.sanitize(contents), [contents]);
-
   // An arm which built nothing shows nothing, rather than an empty block opening a gap where the
   // program wrote none. Properties does the same with a block that reads as no rows.
-  if (!clean) {
+  if (!contents) {
     return null;
   }
 
-  return <span className={classes.html} dangerouslySetInnerHTML={{__html: clean}} />;
+  return <span className={classes.html} dangerouslySetInnerHTML={{__html: contents}} />;
 }
 
 export default HTMLShow;

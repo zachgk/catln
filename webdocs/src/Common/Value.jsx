@@ -20,7 +20,7 @@ import TaskQuery from './Values/TaskQuery';
 import Calendar from './Values/Calendar';
 import Overlay from './Values/Overlay';
 import Properties from './Values/Properties';
-import Json from './Values/Json';
+import Rendered from './Values/Rendered';
 import {BuildFile, CatlnResult} from './Values/BuildResult';
 
 // A Value may be given an update function by whatever rendered it. Calling update(src) asks for
@@ -108,27 +108,15 @@ function Value(props) {
     // The properties a note opens with. No update: they are shown as the note wrote them.
     case "/Data/Note/Show/Properties":
       return <Properties {...val.args} />;
-    // A piece of JSON, shown as the folding tree of what it holds.
+    // A value drawn by the library that owns it: the value itself, and the files that draw it. This
+    // is the other half of what the webdocs know about a library's own display, beside Show/Html
+    // above -- that one is markup a library built, this one is a library's script handed the value.
     //
-    // The whole value is passed rather than the spread of its arguments that every case above takes,
-    // and that is the one departure here. Json renders a union by walking it, so it needs the
-    // constructor name at each step to know which of the six it is looking at -- and a spread of the
-    // arguments is exactly the name thrown away.
-    //
-    // A member is listed as well, though one is only ever reached from inside the object holding it,
-    // so that a member shown on its own is shown rather than falling to the default below.
-    //
-    // No update. A JSON file is written back as its text, and an expression written into a page an
-    // importer generated is not something that page can keep -- the same reason an Obsidian task
-    // gets none.
-    case "/Data/Json/Null":
-    case "/Data/Json/Bool":
-    case "/Data/Json/Number":
-    case "/Data/Json/Str":
-    case "/Data/Json/Array":
-    case "/Data/Json/Object":
-    case "/Data/Json/Member":
-      return <Json data={val} />;
+    // It is why nothing here is named after a JSON type. A `.json` page shows the folding tree of
+    // what it holds because `stack/json/json.ct` says an arm of dshow builds one of these and names
+    // `json/json.js`, not because there is a component here that knows what JSON is.
+    case "/Catln/Doc/Show/Rendered":
+      return <Rendered {...val.args} />;
     default:
       let showArgs = "";
       if(Object.keys(val.args).length > 0) {

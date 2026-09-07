@@ -31,33 +31,28 @@ describe('HTMLShow', () => {
     expect(container.querySelector('iframe')).toBeNull()
   })
 
-  it('drops a script the markup carries', () => {
+  // What an arm built is laid in as it was written, attributes and all. A library's display is that
+  // library's own code, run by a doc server which already compiles and evaluates that library's
+  // pages, so there is nothing markup could carry that an arm of the same library could not do
+  // first. These three cases used to assert the opposite and are kept, inverted, because what they
+  // pin is a decision rather than an accident.
+  it('keeps a handler written on a tag', () => {
     const { container } = render(
-      <Providers><HTMLShow {...html('<h1>Tasks</h1><script>window.stolen = 1</script>')} /></Providers>
-    )
-
-    expect(screen.getByRole('heading', { level: 1, name: 'Tasks' })).toBeInTheDocument()
-    expect(container.querySelector('script')).toBeNull()
-    expect(container.innerHTML).not.toContain('<script')
-  })
-
-  it('drops a handler written on a tag, keeping the tag', () => {
-    const { container } = render(
-      <Providers><HTMLShow {...html('<img src="x.png" onerror="window.stolen = 1" />')} /></Providers>
+      <Providers><HTMLShow {...html('<img src="x.png" onerror="window.noted = 1" />')} /></Providers>
     )
 
     const img = container.querySelector('img')
     expect(img).not.toBeNull()
     expect(img.getAttribute('src')).toBe('x.png')
-    expect(img.getAttribute('onerror')).toBeNull()
+    expect(img.getAttribute('onerror')).toBe('window.noted = 1')
   })
 
-  it('drops a link that runs rather than goes somewhere', () => {
+  it('keeps a link however it was written', () => {
     const { container } = render(
-      <Providers><HTMLShow {...html('<a href="javascript:window.stolen = 1">go</a>')} /></Providers>
+      <Providers><HTMLShow {...html('<a href="/docs/thing">go</a>')} /></Providers>
     )
 
-    expect(container.querySelector('a').getAttribute('href')).toBeNull()
+    expect(container.querySelector('a').getAttribute('href')).toBe('/docs/thing')
   })
 
   // The accepted behaviour, asserted on purpose: an arm joining a string into markup is an arm whose

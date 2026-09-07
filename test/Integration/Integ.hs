@@ -6,9 +6,9 @@ import           Test.Tasty.HUnit
 import           Text.Printf
 
 import           Common.TestCommon       (findCt, findJson, findPy)
-import           CtConstants             (escapedPathName)
 import           Control.Monad.Trans
 import           CRes
+import           CtConstants             (escapedPathName)
 import           CtService
 import           Data.Graph              (graphFromEdges)
 import           Data.List               (isSuffixOf)
