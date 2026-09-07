@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/rputStep"
                 , ObjectMapItem
@@ -284,11 +284,14 @@ Prgm
                                 )
                             ) -> /Data/Primitive/Integer = /operator+
                             ( Value /l -> /Data/Primitive/Integer = /operator+
-                                ( Value /l -> /Data/Primitive/Integer = CInt 1 )
+                                ( Value /l -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 1 }
+                                )
                                 ( Value /r -> /Data/Primitive/Integer = /rsize( Value /m -> TVArg /left = Value /left ) )
                             )
                             ( Value /r -> /Data/Primitive/Integer = /rsize( Value /m -> TVArg /right = Value /right ) )
-                        , /rsize( Value /m -> /RLeaf = Value /RLeaf ) -> /Data/Primitive/Integer = CInt 0
+                        , /rsize( Value /m -> /RLeaf = Value /RLeaf ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
                         ]
                     }
                 )
@@ -459,8 +462,8 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
@@ -475,42 +478,42 @@ Prgm
         , CGType
         , CGType
         , CGClass
-            ( True
-            , /RCmp
-            ,
+            { cgcSealed = True
+            , cgcPartial = /RCmp
+            , cgcExtends =
                 [ /RLt
                 , /REq
                 , /RGt
                 ]
-            , Just "      "
-            )
+            , cgcDoc = Just "      "
+            }
         , CGClass
-            ( False
-            , /RIMap
+            { cgcSealed = False
+            , cgcPartial = /RIMap
                 [ /K=TopType
                 , /V=TopType
                 ]
-            ,
+            , cgcExtends =
                 [ ∀/RTree
                     [ /K=$_/K
                     , /V=$_/V
                     ]
                 ]
-            , Just "             "
-            )
+            , cgcDoc = Just "             "
+            }
         , CGClass
-            ( False
-            , /ROrd
-            , [ /RKey ]
-            , Just "             "
-            )
+            { cgcSealed = False
+            , cgcPartial = /ROrd
+            , cgcExtends = [ /RKey ]
+            , cgcDoc = Just "             "
+            }
         , CGClass
-            ( True
-            , /RTree
+            { cgcSealed = True
+            , cgcPartial = /RTree
                 [ /K=TopType
                 , /V=TopType
                 ]
-            ,
+            , cgcExtends =
                 [ /RNode
                     [ /K=$_/K
                     , /V=$_/V
@@ -528,25 +531,29 @@ Prgm
                     )
                 , /RLeaf
                 ]
-            , Just "      "
-            )
+            , cgcDoc = Just "      "
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "Regression for the recursion blow-up behind core/map.ct: an interface class (RIMap) with a
-            parameterised subclass edge from a sealed recursive data class (RTree), and a function declared
-            over the INTERFACE whose definition arm constructs the data type with a RECURSIVE call in one of
-            its fields. Before the parameterised `isa` edge compared type parameters
-            (`classDeclaredSubclassOfBounded`), `RNode(left=⊤)` and `RNode(left=∀RIMap[K=ROrd] ∪ …)` were
-            judged equal, the requirement narrowing on the constructor was refused as a no-op, and the
-            recursive call's result grew one nesting level per constraint epoch (doubling the epoch cost)
-            instead of settling to the class expansion. Without a core dependency in the shape itself, this
-            typechecks in seconds; the `main` exercises dispatch on the recursive result." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "Regression for the recursion blow-up behind core/map.ct: an interface class (RIMap) with a
+                parameterised subclass edge from a sealed recursive data class (RTree), and a function declared
+                over the INTERFACE whose definition arm constructs the data type with a RECURSIVE call in one of
+                its fields. Before the parameterised `isa` edge compared type parameters
+                (`classDeclaredSubclassOfBounded`), `RNode(left=⊤)` and `RNode(left=∀RIMap[K=ROrd] ∪ …)` were
+                judged equal, the requirement narrowing on the constructor was refused as a no-op, and the
+                recursive call's result grew one nesting level per constraint epoch (doubling the epoch cost)
+                instead of settling to the class expansion. Without a core dependency in the shape itself, this
+                typechecks in seconds; the `main` exercises dispatch on the recursive result." }
+            )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "The second `rput` compares `RGt` and so constructs `RNode(right= rput(m= right, ..))`: a RECURSIVE
-            call stored in a field of the arm's constructed value. The arm is built at eval time against the
-            runtime source, whose `left= RLeaf` is a bare atom member of `RTree`; reading that atom as a
-            binding `$MV = ∅` made the field's raw call source uninhabited, so the call was never rewritten and
-            the unevaluated `rput` flowed through as the field's runtime value (`rsize` then found no arm)." )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "The second `rput` compares `RGt` and so constructs `RNode(right= rput(m= right, ..))`: a RECURSIVE
+                call stored in a field of the arm's constructed value. The arm is built at eval time against the
+                runtime source, whose `left= RLeaf` is a bare atom member of `RTree`; reading that atom as a
+                binding `$MV = ∅` made the field's raw call source uninhabited, so the call was never rewritten and
+                the unevaluated `rput` flowed through as the field's runtime value (`rsize` then found no arm)." }
+            )
         ]
     }

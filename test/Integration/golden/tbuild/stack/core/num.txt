@@ -358,7 +358,9 @@ Prgm
                         [ /Data/Algebra/compare
                             ( EAppArg { eaaArg = Value /a } )
                             ( EAppArg { eaaArg = Value /b } )
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/IntOrdering } ) -> ∀/Data/Algebra/Comparison =
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] }
+                            ) -> ∀/Data/Algebra/Comparison =
                             ( /Data/Algebra/mkComparison
                                 ( EAppArg
                                     { eaaArg = Value /lt -> ∀/Data/Primitive/Boolean =
@@ -388,7 +390,9 @@ Prgm
                         , /Data/Algebra/compare
                             ( EAppArg { eaaArg = Value /a } )
                             ( EAppArg { eaaArg = Value /b } )
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/FloatOrdering } ) -> ∀/Data/Algebra/Comparison =
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] }
+                            ) -> ∀/Data/Algebra/Comparison =
                             ( /Data/Algebra/mkComparison
                                 ( EAppArg
                                     { eaaArg = Value /lt -> ∀/Data/Primitive/Boolean =
@@ -495,11 +499,27 @@ Prgm
                                     { eaaArg = Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /this -> ∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ] =
+                                    { eaaArg = Value /this -> UnionType
+                                        ( Just
+                                            ( PredClass /Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
+                                            , fromList []
+                                            , []
+                                            )
+                                        , /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ]
+                                        , []
+                                        ) =
                                         ( /eq
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) }
-                                            ) ↦ ∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
+                                            ) ↦ UnionType
+                                            ( Just
+                                                ( PredClass /Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
+                                                , fromList []
+                                                , []
+                                                )
+                                            , /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ]
+                                            , []
+                                            )
                                         )
                                     }
                                 ) ↦ ∀/Data/Primitive/Boolean
@@ -515,11 +535,27 @@ Prgm
                                     { eaaArg = Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /this -> ∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Float ] =
+                                    { eaaArg = Value /this -> UnionType
+                                        ( Just
+                                            ( PredClass /Data/Algebra/Eqv[ /T=/Data/Primitive/Float ]
+                                            , fromList []
+                                            , []
+                                            )
+                                        , /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ]
+                                        , []
+                                        ) =
                                         ( /eq
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) }
-                                            ) ↦ ∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Float ]
+                                            ) ↦ UnionType
+                                            ( Just
+                                                ( PredClass /Data/Algebra/Eqv[ /T=/Data/Primitive/Float ]
+                                                , fromList []
+                                                , []
+                                                )
+                                            , /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ]
+                                            , []
+                                            )
                                         )
                                     }
                                 ) ↦ ∀/Data/Primitive/Boolean
@@ -571,7 +607,7 @@ Prgm
                     , omiDefs =
                         [ /Data/Algebra/compareTo
                             ( EAppArg { eaaArg = Value /other -> ∀/Data/Algebra/Ord } )
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer } ) -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer } ) -> ∀/Data/Algebra/Comparison =
                             ( /compare
                                 ( EAppArg
                                     { eaaArg = Value /a -> TVArg /this = ( Value /this ↦ TVArg /this ) }
@@ -580,20 +616,18 @@ Prgm
                                     { eaaArg = Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /this ->
-                                        ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] ) =
+                                    { eaaArg = Value /this -> ∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Integer ] =
                                         ( /ord
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) }
-                                            ) ↦
-                                            ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
+                                            ) ↦ ∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Integer ]
                                         )
                                     }
-                                ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                ) ↦ ∀/Data/Algebra/Comparison
                             )
                         , /Data/Algebra/compareTo
                             ( EAppArg { eaaArg = Value /other -> ∀/Data/Algebra/Ord } )
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float } ) -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float } ) -> ∀/Data/Algebra/Comparison =
                             ( /compare
                                 ( EAppArg
                                     { eaaArg = Value /a -> TVArg /this = ( Value /this ↦ TVArg /this ) }
@@ -602,16 +636,14 @@ Prgm
                                     { eaaArg = Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /this ->
-                                        ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] ) =
+                                    { eaaArg = Value /this -> ∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Float ] =
                                         ( /ord
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) }
-                                            ) ↦
-                                            ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
+                                            ) ↦ ∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Float ]
                                         )
                                     }
-                                ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                ) ↦ ∀/Data/Algebra/Comparison
                             )
                         ]
                     }
@@ -652,19 +684,19 @@ Prgm
             { cgcSealed = False
             , cgcPartial = /Data/Primitive/Integer
             , cgcExtends = [ /Data/Primitive/Integer ]
-            , cgcDoc = Just ""
+            , cgcDoc = Just "                                                                                      "
             }
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Primitive/Number
             , cgcExtends = [ ∀/Data/Primitive/Number ]
-            , cgcDoc = Just ""
+            , cgcDoc = Just "                                                                                      "
             }
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Primitive/Integer
             , cgcExtends = [ /Data/Primitive/Integer ]
-            , cgcDoc = Just ""
+            , cgcDoc = Just "                                                                                      "
             }
         , CGClass
             { cgcSealed = False
@@ -687,7 +719,7 @@ Prgm
                 [ /Data/Primitive/Integer
                 , /Data/Primitive/Float
                 ]
-            , cgcDoc = Just ""
+            , cgcDoc = Just "                                                                                      "
             }
         ]
     , prgmAnnots =

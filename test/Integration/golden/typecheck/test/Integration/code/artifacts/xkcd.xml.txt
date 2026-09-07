@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/Data/RSS/Item"
                 , ObjectMapItem
@@ -10,144 +10,204 @@ Prgm
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Accretionary Arc" ]
-                                ) = CStr "Accretionary Arc"
+                                    [ CStr
+                                        { csValue = "Accretionary Arc" }
+                                    ]
+                                ) = CStr
+                                { csValue = "Accretionary Arc" }
                             )
                             ( Value /link -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "https://xkcd.com/3285/" ]
-                                ) = CStr "https://xkcd.com/3285/"
+                                    [ CStr
+                                        { csValue = "https://xkcd.com/3285/" }
+                                    ]
+                                ) = CStr
+                                { csValue = "https://xkcd.com/3285/" }
                             )
                             ( Value /guid -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "https://xkcd.com/3285/" ]
-                                ) = CStr "https://xkcd.com/3285/"
+                                    [ CStr
+                                        { csValue = "https://xkcd.com/3285/" }
+                                    ]
+                                ) = CStr
+                                { csValue = "https://xkcd.com/3285/" }
                             )
                             ( Value /published -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Fri, 14 Aug 2026 04:00:00 -0000" ]
-                                ) = CStr "Fri, 14 Aug 2026 04:00:00 -0000"
+                                    [ CStr
+                                        { csValue = "Fri, 14 Aug 2026 04:00:00 -0000" }
+                                    ]
+                                ) = CStr
+                                { csValue = "Fri, 14 Aug 2026 04:00:00 -0000" }
                             )
                             ( Value /description -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "<img src="https://imgs.xkcd.com/comics/accretionary_arc.png" title="The late Triassic rifting was caused by a dinosaur trying to use the control panel to escape a predator, but it was eaten before the continent could fully separate." alt="The late Triassic rifting was caused by a dinosaur trying to use the control panel to escape a predator, but it was eaten before the continent could fully separate." />" ]
-                                ) = CStr "<img src="https://imgs.xkcd.com/comics/accretionary_arc.png" title="The late Triassic rifting was caused by a dinosaur trying to use the control panel to escape a predator, but it was eaten before the continent could fully separate." alt="The late Triassic rifting was caused by a dinosaur trying to use the control panel to escape a predator, but it was eaten before the continent could fully separate." />"
+                                    [ CStr
+                                        { csValue = "<img src="https://imgs.xkcd.com/comics/accretionary_arc.png" title="The late Triassic rifting was caused by a dinosaur trying to use the control panel to escape a predator, but it was eaten before the continent could fully separate." alt="The late Triassic rifting was caused by a dinosaur trying to use the control panel to escape a predator, but it was eaten before the continent could fully separate." />" }
+                                    ]
+                                ) = CStr
+                                { csValue = "<img src="https://imgs.xkcd.com/comics/accretionary_arc.png" title="The late Triassic rifting was caused by a dinosaur trying to use the control panel to escape a predator, but it was eaten before the continent could fully separate." alt="The late Triassic rifting was caused by a dinosaur trying to use the control panel to escape a predator, but it was eaten before the continent could fully separate." />" }
                             )
                         , /Data/RSS/Item
                             ( Value /title -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Geology Building" ]
-                                ) = CStr "Geology Building"
+                                    [ CStr
+                                        { csValue = "Geology Building" }
+                                    ]
+                                ) = CStr
+                                { csValue = "Geology Building" }
                             )
                             ( Value /link -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "https://xkcd.com/3284/" ]
-                                ) = CStr "https://xkcd.com/3284/"
+                                    [ CStr
+                                        { csValue = "https://xkcd.com/3284/" }
+                                    ]
+                                ) = CStr
+                                { csValue = "https://xkcd.com/3284/" }
                             )
                             ( Value /guid -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "https://xkcd.com/3284/" ]
-                                ) = CStr "https://xkcd.com/3284/"
+                                    [ CStr
+                                        { csValue = "https://xkcd.com/3284/" }
+                                    ]
+                                ) = CStr
+                                { csValue = "https://xkcd.com/3284/" }
                             )
                             ( Value /published -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Wed, 12 Aug 2026 04:00:00 -0000" ]
-                                ) = CStr "Wed, 12 Aug 2026 04:00:00 -0000"
+                                    [ CStr
+                                        { csValue = "Wed, 12 Aug 2026 04:00:00 -0000" }
+                                    ]
+                                ) = CStr
+                                { csValue = "Wed, 12 Aug 2026 04:00:00 -0000" }
                             )
                             ( Value /description -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "<img src="https://imgs.xkcd.com/comics/geology_building.png" title="The administration thinks it's weird, but the geologists say it looks normal." alt="The administration thinks it's weird, but the geologists say it looks normal." />" ]
-                                ) = CStr "<img src="https://imgs.xkcd.com/comics/geology_building.png" title="The administration thinks it's weird, but the geologists say it looks normal." alt="The administration thinks it's weird, but the geologists say it looks normal." />"
+                                    [ CStr
+                                        { csValue = "<img src="https://imgs.xkcd.com/comics/geology_building.png" title="The administration thinks it's weird, but the geologists say it looks normal." alt="The administration thinks it's weird, but the geologists say it looks normal." />" }
+                                    ]
+                                ) = CStr
+                                { csValue = "<img src="https://imgs.xkcd.com/comics/geology_building.png" title="The administration thinks it's weird, but the geologists say it looks normal." alt="The administration thinks it's weird, but the geologists say it looks normal." />" }
                             )
                         , /Data/RSS/Item
                             ( Value /title -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Size and Lifespan" ]
-                                ) = CStr "Size and Lifespan"
+                                    [ CStr
+                                        { csValue = "Size and Lifespan" }
+                                    ]
+                                ) = CStr
+                                { csValue = "Size and Lifespan" }
                             )
                             ( Value /link -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "https://xkcd.com/3283/" ]
-                                ) = CStr "https://xkcd.com/3283/"
+                                    [ CStr
+                                        { csValue = "https://xkcd.com/3283/" }
+                                    ]
+                                ) = CStr
+                                { csValue = "https://xkcd.com/3283/" }
                             )
                             ( Value /guid -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "https://xkcd.com/3283/" ]
-                                ) = CStr "https://xkcd.com/3283/"
+                                    [ CStr
+                                        { csValue = "https://xkcd.com/3283/" }
+                                    ]
+                                ) = CStr
+                                { csValue = "https://xkcd.com/3283/" }
                             )
                             ( Value /published -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Mon, 10 Aug 2026 04:00:00 -0000" ]
-                                ) = CStr "Mon, 10 Aug 2026 04:00:00 -0000"
+                                    [ CStr
+                                        { csValue = "Mon, 10 Aug 2026 04:00:00 -0000" }
+                                    ]
+                                ) = CStr
+                                { csValue = "Mon, 10 Aug 2026 04:00:00 -0000" }
                             )
                             ( Value /description -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "<img src="https://imgs.xkcd.com/comics/size_and_lifespan.png" title="With their 13 years recording and performing together and two humans worth of mass, the White Stripes are sandwiched neatly between gray wolves and blue whales." alt="With their 13 years recording and performing together and two humans worth of mass, the White Stripes are sandwiched neatly between gray wolves and blue whales." />" ]
-                                ) = CStr "<img src="https://imgs.xkcd.com/comics/size_and_lifespan.png" title="With their 13 years recording and performing together and two humans worth of mass, the White Stripes are sandwiched neatly between gray wolves and blue whales." alt="With their 13 years recording and performing together and two humans worth of mass, the White Stripes are sandwiched neatly between gray wolves and blue whales." />"
+                                    [ CStr
+                                        { csValue = "<img src="https://imgs.xkcd.com/comics/size_and_lifespan.png" title="With their 13 years recording and performing together and two humans worth of mass, the White Stripes are sandwiched neatly between gray wolves and blue whales." alt="With their 13 years recording and performing together and two humans worth of mass, the White Stripes are sandwiched neatly between gray wolves and blue whales." />" }
+                                    ]
+                                ) = CStr
+                                { csValue = "<img src="https://imgs.xkcd.com/comics/size_and_lifespan.png" title="With their 13 years recording and performing together and two humans worth of mass, the White Stripes are sandwiched neatly between gray wolves and blue whales." alt="With their 13 years recording and performing together and two humans worth of mass, the White Stripes are sandwiched neatly between gray wolves and blue whales." />" }
                             )
                         , /Data/RSS/Item
                             ( Value /title -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Trick Play" ]
-                                ) = CStr "Trick Play"
+                                    [ CStr
+                                        { csValue = "Trick Play" }
+                                    ]
+                                ) = CStr
+                                { csValue = "Trick Play" }
                             )
                             ( Value /link -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "https://xkcd.com/3282/" ]
-                                ) = CStr "https://xkcd.com/3282/"
+                                    [ CStr
+                                        { csValue = "https://xkcd.com/3282/" }
+                                    ]
+                                ) = CStr
+                                { csValue = "https://xkcd.com/3282/" }
                             )
                             ( Value /guid -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "https://xkcd.com/3282/" ]
-                                ) = CStr "https://xkcd.com/3282/"
+                                    [ CStr
+                                        { csValue = "https://xkcd.com/3282/" }
+                                    ]
+                                ) = CStr
+                                { csValue = "https://xkcd.com/3282/" }
                             )
                             ( Value /published -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "Fri, 07 Aug 2026 04:00:00 -0000" ]
-                                ) = CStr "Fri, 07 Aug 2026 04:00:00 -0000"
+                                    [ CStr
+                                        { csValue = "Fri, 07 Aug 2026 04:00:00 -0000" }
+                                    ]
+                                ) = CStr
+                                { csValue = "Fri, 07 Aug 2026 04:00:00 -0000" }
                             )
                             ( Value /description -> UnionType
                                 ( Nothing
                                 , ∅
                                 ,
-                                    [ CStr "<img src="https://imgs.xkcd.com/comics/trick_play.png" title="I've been trying to find out whether the Laws of the Game take the axiom of choice or not, but FIFA officials keep blocking my number." alt="I've been trying to find out whether the Laws of the Game take the axiom of choice or not, but FIFA officials keep blocking my number." />" ]
-                                ) = CStr "<img src="https://imgs.xkcd.com/comics/trick_play.png" title="I've been trying to find out whether the Laws of the Game take the axiom of choice or not, but FIFA officials keep blocking my number." alt="I've been trying to find out whether the Laws of the Game take the axiom of choice or not, but FIFA officials keep blocking my number." />"
+                                    [ CStr
+                                        { csValue = "<img src="https://imgs.xkcd.com/comics/trick_play.png" title="I've been trying to find out whether the Laws of the Game take the axiom of choice or not, but FIFA officials keep blocking my number." alt="I've been trying to find out whether the Laws of the Game take the axiom of choice or not, but FIFA officials keep blocking my number." />" }
+                                    ]
+                                ) = CStr
+                                { csValue = "<img src="https://imgs.xkcd.com/comics/trick_play.png" title="I've been trying to find out whether the Laws of the Game take the axiom of choice or not, but FIFA officials keep blocking my number." alt="I've been trying to find out whether the Laws of the Game take the axiom of choice or not, but FIFA officials keep blocking my number." />" }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -156,10 +216,12 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG = [ CGType ]
+        }
+    , prgmCg = [ CGType ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "xkcd.com" )
+            ( Value /text -> /Data/String = CStr
+                { csValue = "xkcd.com" }
+            )
         ]
     }

@@ -30,7 +30,8 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /defInt( Value /x -> /Data/Primitive/Integer ) -> TVArg /x = Value /x
-                        , /defInt( Value /x -> ~Nothing = Value /Nothing ) -> /Data/Primitive/Integer = CInt
+                        , /defInt
+                            ( Value /x -> ( /Data/Maybe/Nothing + /Nothing ) = Value /Nothing ) -> /Data/Primitive/Integer = CInt
                             { ciValue = 0 }
                         ]
                     }
@@ -57,7 +58,7 @@ Prgm
                 [ $_/T
                 , /Nothing
                 ]
-            , cgcDoc = Just ""
+            , cgcDoc = Just "   "
             }
         ]
     , prgmAnnots =

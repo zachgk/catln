@@ -59,13 +59,30 @@ Prgm
                                 , []
                                 )
                             , /Data/List/append
-                                ( /a=
-                                    ( /Data/List/Nil + /Data/List/Cons[ /T=TopType ]
+                                ( /a=UnionType
+                                    ( Just
+                                        ( PredClass /Data/List/ConsList[ /T=TopType ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /Data/List/Cons[ /T=TopType ]
                                         ( /head=TopType
                                         , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                         )
+                                    , []
                                     )
-                                , /b=∀/Data/List/ConsList[ /T=TopType ]
+                                , /b=UnionType
+                                    ( Just
+                                        ( PredClass /Data/List/ConsList[ /T=TopType ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /Data/List/Cons[ /T=TopType ]
+                                        ( /head=TopType
+                                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                        )
+                                    , []
+                                    )
                                 )
                             , []
                             ) =
@@ -75,7 +92,7 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = /fn
-                                        ( EAppArg { eaaArg = Value /v } ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) =
+                                        ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) =
                                         ( /bindWithLocal.$b5054c
                                             ( EAppArg
                                                 { eaaArg = Value /m -> TVArg /m = ( Value /m ↦ TVArg /m ) }

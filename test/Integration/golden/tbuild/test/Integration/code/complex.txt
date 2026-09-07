@@ -66,11 +66,11 @@ Prgm
                         [ /real
                             ( EAppArg
                                 { eaaArg = Value /c -> /Complex
-                                    ( /a=TopType
-                                    , /b=TopType
+                                    ( /a=∀/Data/Primitive/Number
+                                    , /b=∀/Data/Primitive/Number
                                     ) = /Complex
-                                    ( EAppArg { eaaArg = Value /a } )
-                                    ( EAppArg { eaaArg = Value /b } )
+                                    ( EAppArg { eaaArg = Value /a -> ∀/Data/Primitive/Number } )
+                                    ( EAppArg { eaaArg = Value /b -> ∀/Data/Primitive/Number } )
                                 }
                             ) -> TVArg /a = ( Value /a ↦ TVArg /a )
                         ]

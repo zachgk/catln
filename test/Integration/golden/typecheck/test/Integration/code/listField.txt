@@ -147,7 +147,7 @@ Prgm
                 [ /Tagged..
                 , /ConsTagged..
                 ]
-            , cgcDoc = Just " "
+            , cgcDoc = Just "       "
             }
         ]
     , prgmAnnots =
@@ -186,6 +186,15 @@ Prgm
                     { csValue = "one" }
                 )
                 ( Value /tags -> /Data/List/Cons
+                    [ /T=UnionType
+                        ( Nothing
+                        , ∅
+                        ,
+                            [ CStr
+                                { csValue = "x" }
+                            ]
+                        )
+                    ]
                     ( /head=/Data/String
                     , /tail=/Data/List/Nil
                     ) = /Data/List/Cons
@@ -206,6 +215,15 @@ Prgm
                     { csValue = "one" }
                 )
                 ( Value /tags -> /Data/List/Cons
+                    [ /T=UnionType
+                        ( Nothing
+                        , ∅
+                        ,
+                            [ CStr
+                                { csValue = "x" }
+                            ]
+                        )
+                    ]
                     ( /head=/Data/String
                     , /tail=/Data/List/Nil
                     ) = /Data/List/Cons

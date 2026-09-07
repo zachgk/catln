@@ -123,7 +123,9 @@ Prgm
                         [ /Data/Algebra/rel
                             ( EAppArg { eaaArg = Value /a } )
                             ( EAppArg { eaaArg = Value /b } )
-                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/IntEqExample } ) -> ∀/Data/Primitive/Boolean =
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] }
+                            ) -> ∀/Data/Primitive/Boolean =
                             ( /Data/Primitive/intEq
                                 ( EAppArg
                                     { eaaArg = Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) }
@@ -135,7 +137,9 @@ Prgm
                         , /Data/Algebra/rel
                             ( EAppArg { eaaArg = Value /a } )
                             ( EAppArg { eaaArg = Value /b } )
-                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/AllEqv } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] }
+                            ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         ]
                     }
                 )
@@ -245,7 +249,7 @@ Prgm
             { cgcSealed = False
             , cgcPartial = /Data/Algebra/Eq
             , cgcExtends = []
-            , cgcDoc = Just ""
+            , cgcDoc = Just "                                                                                      "
             }
         , CGClass
             { cgcSealed = False
@@ -254,7 +258,7 @@ Prgm
                 [ /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ]
                 , /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ]
                 ]
-            , cgcDoc = Just ""
+            , cgcDoc = Just "                                                                                      "
             }
         ]
     , prgmAnnots =

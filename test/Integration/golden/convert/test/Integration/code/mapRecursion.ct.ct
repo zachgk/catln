@@ -1,0 +1,55 @@
+import "core"
+import "core"
+
+
+# Regression for the recursion blow-up behind core/map.ct: an interface class (RIMap) with a
+  parameterised subclass edge from a sealed recursive data class (RTree), and a function declared
+  over the INTERFACE whose definition arm constructs the data type with a RECURSIVE call in one of
+  its fields. Before the parameterised `isa` edge compared type parameters
+  (`classDeclaredSubclassOfBounded`), `RNode(left=⊤)` and `RNode(left=∀RIMap[K=ROrd] ∪ …)` were
+  judged equal, the requirement narrowing on the constructor was refused as a no-op, and the
+  recursive call's result grew one nesting level per constraint epoch (doubling the epoch cost)
+  instead of settling to the class expansion. Without a core dependency in the shape itself, this
+  typechecks in seconds; the `main` exercises dispatch on the recursive result.
+class(ROrd)
+
+data(RKey)
+data(RVal)
+
+every(RKey, isa= [/ROrd])
+
+class(RCmp, [RLt, REq, RGt])
+class(RIMap[$K, $V])
+class(RTree[$K, $V], [RNode[$K -> $_K, $V -> $_V](left -> RTree[$K -> $_K, $V -> $_V], key -> $K, value -> $V, right -> RTree[$K -> $_K, $V -> $_V]), RLeaf])
+
+every(RTree[$K -> $_K, $V -> $_V], isa= [/RIMap[$K -> $_K, $V -> $_V]])
+
+rcmp(a -> RKey, b -> RKey) -> RCmp
+rcmp(a= RKey, b= RKey)= RGt
+
+rput[$MK -> /ROrd, $MV](m -> /RIMap[$K -> $_MK, $V -> $_MV], key -> $MK, value -> $MV) -> /RIMap[$K -> $_MK, $V -> $_MV]
+rput(m= RLeaf, key, value)= RNode(left= RLeaf, key= key, value= value, right= RLeaf)
+rput(m= RNode(left, key@nk, value@nv, right), key, value)= rputStep(cmp= rcmp(a= key, b= nk), left= left, nk= nk, nv= nv, right= right, key= key, value= value)
+
+rputStep[$MK -> /ROrd, $MV](cmp -> RCmp, left -> RTree[$K -> $_MK, $V -> $_MV], nk -> $MK, nv -> $MV, right -> RTree[$K -> $_MK, $V -> $_MV], key -> $MK, value -> $MV) -> RTree[$K -> $_MK, $V -> $_MV]
+rputStep(cmp= REq, left, nk, nv, right, key, value)= RNode(left= left, key= nk, value= value, right= right)
+rputStep(cmp= RLt, left, nk, nv, right, key, value)= RNode(left= rput(m= left, key= key, value= value), key= nk, value= nv, right= right)
+rputStep(cmp= RGt, left, nk, nv, right, key, value)= RNode(left= left, key= nk, value= nv, right= rput(m= right, key= key, value= value))
+
+risNode[$MK -> /ROrd, $MV](m -> /RIMap[$K -> $_MK, $V -> $_MV]) -> /Data/Primitive/Boolean
+risNode(m= RNode(left, key, value, right))= True
+risNode(m= RLeaf)= False
+
+rsize[$MK -> /ROrd, $MV](m -> /RIMap[$K -> $_MK, $V -> $_MV]) -> Integer
+rsize(m= RNode(left, key, value, right))= 1 + rsize(m= left) + rsize(m= right)
+rsize(m= RLeaf)= 0
+
+# The second `rput` compares `RGt` and so constructs `RNode(right= rput(m= right, ..))`: a RECURSIVE
+  call stored in a field of the arm's constructed value. The arm is built at eval time against the
+  runtime source, whose `left= RLeaf` is a bare atom member of `RTree`; reading that atom as a
+  binding `$MV = ∅` made the field's raw call source uninhabited, so the call was never rewritten and
+  the unevaluated `rput` flowed through as the field's runtime value (`rsize` then found no arm).
+main{io -> IO} =
+  #assert(test= risNode(m= rput(m= rput(m= RLeaf, key= RKey, value= RVal), key= RKey, value= RVal)))
+  #assert(test= rsize(m= rput(m= rput(m= RLeaf, key= RKey, value= RVal), key= RKey, value= RVal)) == 2)
+  io

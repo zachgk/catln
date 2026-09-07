@@ -125,6 +125,15 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/TypeVarLoc/TVParent"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/TypeVarLoc/TVParent ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Hole/HoleTodefine"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/Hole/HoleTodefine ]
@@ -737,6 +746,7 @@ Prgm
                         [ /Catln/Type/TypeVar
                             ( EAppArg { eaaArg = Value /aux -> ∀/Catln/TypeVarAux } )
                             ( EAppArg { eaaArg = Value /loc -> ∀/Catln/TypeVarLoc } )
+                            ( EAppArg { eaaArg = Value /inner -> ∀/Catln/Type } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -1004,6 +1014,7 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
         , CGClass
             { cgcSealed = True
             , cgcPartial = /Catln/CGNode
@@ -1016,7 +1027,7 @@ Prgm
                     )
                 , /Catln/CGNode/CGType
                 ]
-            , cgcDoc = Just "What a class graph holds at a name: a class, or a type.A [CGClass] carries whether it is [sealed] — whether a later file may add members to it — the partial [class] itself, the [extends] it is a member of, and its [doc]. A [CGType] carries nothing: a type is in the graph so that classes can point at it, and has nothing of its own to say."
+            , cgcDoc = Just "What a class graph holds at a name: a class, or a type.A [CGClass] carries whether it is [sealed] — whether a later file may add members to it — the partial [class] itself, the [extends] it is a member of, and its [doc]. A [CGType] carries nothing: a type is in the graph so that classes can point at it, and has nothing of its own to say. What a class graph holds at a name: a class, or a type.A [CGClass] carries whether it is [sealed] — whether a later file may add members to it — the partial [class] itself, the [extends] it is a member of, and its [doc]. A [CGType] carries nothing: a type is in the graph so that classes can point at it, and has nothing of its own to say. What a class graph holds at a name: a class, or a type.A [CGClass] carries whether it is [sealed] — whether a later file may add members to it — the partial [class] itself, the [extends] it is a member of, and its [doc]. A [CGType] carries nothing: a type is in the graph so that classes can point at it, and has nothing of its own to say."
             }
         , CGClass
             { cgcSealed = True
@@ -1027,7 +1038,7 @@ Prgm
                 , /Catln/Constant/CStr( /value=/Data/String )
                 , /Catln/Constant/CChar( /value=/Data/Char )
                 ]
-            , cgcDoc = Just "A value written directly in a program: a whole number, a fractional number, a string, or a character.A character constant cannot be written in Catln — the language has no character literal — but the compiler makes one where it needs to, so a program reading a program can be handed one."
+            , cgcDoc = Just "A value written directly in a program: a whole number, a fractional number, a string, or a character.A character constant cannot be written in Catln — the language has no character literal — but the compiler makes one where it needs to, so a program reading a program can be handed one. A value written directly in a program: a whole number, a fractional number, a string, or a character.A character constant cannot be written in Catln — the language has no character literal — but the compiler makes one where it needs to, so a program reading a program can be handed one. A value written directly in a program: a whole number, a fractional number, a string, or a character.A character constant cannot be written in Catln — the language has no character literal — but the compiler makes one where it needs to, so a program reading a program can be handed one."
             }
         , CGClass
             { cgcSealed = True
@@ -1040,7 +1051,7 @@ Prgm
                     )
                 , /Catln/EApp/EAppSpread( /expr=∀/Catln/Expr )
                 ]
-            , cgcDoc = Just "What is applied to an expression: an argument ([EAppArg]), a type parameter ([EAppVar], by [name] and the [meta] of what it is bound to), or the contents of another value spread into it ([EAppSpread]).An application carries one of these at a time. `f(a, b)` is `f` applied to `a` and then to `b`, so the three arms are what one step of that can be rather than what a call is."
+            , cgcDoc = Just "What is applied to an expression: an argument ([EAppArg]), a type parameter ([EAppVar], by [name] and the [meta] of what it is bound to), or the contents of another value spread into it ([EAppSpread]).An application carries one of these at a time. `f(a, b)` is `f` applied to `a` and then to `b`, so the three arms are what one step of that can be rather than what a call is. What is applied to an expression: an argument ([EAppArg]), a type parameter ([EAppVar], by [name] and the [meta] of what it is bound to), or the contents of another value spread into it ([EAppSpread]).An application carries one of these at a time. `f(a, b)` is `f` applied to `a` and then to `b`, so the three arms are what one step of that can be rather than what a call is. What is applied to an expression: an argument ([EAppArg]), a type parameter ([EAppVar], by [name] and the [meta] of what it is bound to), or the contents of another value spread into it ([EAppSpread]).An application carries one of these at a time. `f(a, b)` is `f` applied to `a` and then to `b`, so the three arms are what one step of that can be rather than what a call is."
             }
         , CGClass
             { cgcSealed = True
@@ -1076,7 +1087,7 @@ Prgm
                     , /meta=/Catln/Meta
                     )
                 ]
-            , cgcDoc = Just "An expression, after the compiler has reduced what was written to what it means.A [CExpr] is a constant, a [Value] is a name, and a [HoleExpr] is a gap. An [AliasExpr] is a value given a second name, and an [EWhere] is a value narrowed by a condition. A [TupleApply] is everything else: one thing applied to another, which is what arguments, type parameters, lists and method calls all become.So reading an expression is reading those six, however the program was written."
+            , cgcDoc = Just "An expression, after the compiler has reduced what was written to what it means.A [CExpr] is a constant, a [Value] is a name, and a [HoleExpr] is a gap. An [AliasExpr] is a value given a second name, and an [EWhere] is a value narrowed by a condition. A [TupleApply] is everything else: one thing applied to another, which is what arguments, type parameters, lists and method calls all become.So reading an expression is reading those six, however the program was written. An expression, after the compiler has reduced what was written to what it means.A [CExpr] is a constant, a [Value] is a name, and a [HoleExpr] is a gap. An [AliasExpr] is a value given a second name, and an [EWhere] is a value narrowed by a condition. A [TupleApply] is everything else: one thing applied to another, which is what arguments, type parameters, lists and method calls all become.So reading an expression is reading those six, however the program was written. An expression, after the compiler has reduced what was written to what it means.A [CExpr] is a constant, a [Value] is a name, and a [HoleExpr] is a gap. An [AliasExpr] is a value given a second name, and an [EWhere] is a value narrowed by a condition. A [TupleApply] is everything else: one thing applied to another, which is what arguments, type parameters, lists and method calls all become.So reading an expression is reading those six, however the program was written."
             }
         , CGClass
             { cgcSealed = True
@@ -1087,7 +1098,7 @@ Prgm
                 , /Catln/Hole/HoleUndefined
                 , /Catln/Hole/HoleTodefine
                 ]
-            , cgcDoc = Just "A gap where an expression should be.A [HoleActive] is one written `_` or `_name`, which is an error wherever it is found. A [HoleUndefined] is written `undefined` and is an error only if a run reaches it. A [HoleTodefine] is written `todefine` and is an error both then and when the program is committed.The three are one type because they are one thing written three ways — a place the program is not finished — and differ only in when the compiler is entitled to complain."
+            , cgcDoc = Just "A gap where an expression should be.A [HoleActive] is one written `_` or `_name`, which is an error wherever it is found. A [HoleUndefined] is written `undefined` and is an error only if a run reaches it. A [HoleTodefine] is written `todefine` and is an error both then and when the program is committed.The three are one type because they are one thing written three ways — a place the program is not finished — and differ only in when the compiler is entitled to complain. A gap where an expression should be.A [HoleActive] is one written `_` or `_name`, which is an error wherever it is found. A [HoleUndefined] is written `undefined` and is an error only if a run reaches it. A [HoleTodefine] is written `todefine` and is an error both then and when the program is committed.The three are one type because they are one thing written three ways — a place the program is not finished — and differ only in when the compiler is entitled to complain. A gap where an expression should be.A [HoleActive] is one written `_` or `_name`, which is an error wherever it is found. A [HoleUndefined] is written `undefined` and is an error only if a run reaches it. A [HoleTodefine] is written `todefine` and is an error both then and when the program is committed.The three are one type because they are one thing written three ways — a place the program is not finished — and differ only in when the compiler is entitled to complain."
             }
         , CGClass
             { cgcSealed = True
@@ -1099,7 +1110,7 @@ Prgm
                 , /Catln/ObjectBasis/MatchObj
                 , /Catln/ObjectBasis/ArgObj
                 ]
-            , cgcDoc = Just "What an object is: which of the ways of writing one it was written as.A [FunctionObj] is a definition or a declaration, a [TypeObj] is a `data` or a `class`, a [PatternObj] is an object matched against, a [MatchObj] is one arm of a match, and an [ArgObj] is an argument standing inside another object.It is declared by the compiler rather than in a `.ct` file because it is the compiler's own idea of what it is looking at. A program which reads programs is handed this, and what it is called here and what the compiler calls it are one thing."
+            , cgcDoc = Just "What an object is: which of the ways of writing one it was written as.A [FunctionObj] is a definition or a declaration, a [TypeObj] is a `data` or a `class`, a [PatternObj] is an object matched against, a [MatchObj] is one arm of a match, and an [ArgObj] is an argument standing inside another object.It is declared by the compiler rather than in a `.ct` file because it is the compiler's own idea of what it is looking at. A program which reads programs is handed this, and what it is called here and what the compiler calls it are one thing. What an object is: which of the ways of writing one it was written as.A [FunctionObj] is a definition or a declaration, a [TypeObj] is a `data` or a `class`, a [PatternObj] is an object matched against, a [MatchObj] is one arm of a match, and an [ArgObj] is an argument standing inside another object.It is declared by the compiler rather than in a `.ct` file because it is the compiler's own idea of what it is looking at. A program which reads programs is handed this, and what it is called here and what the compiler calls it are one thing. What an object is: which of the ways of writing one it was written as.A [FunctionObj] is a definition or a declaration, a [TypeObj] is a `data` or a `class`, a [PatternObj] is an object matched against, a [MatchObj] is one arm of a match, and an [ArgObj] is an argument standing inside another object.It is declared by the compiler rather than in a `.ct` file because it is the compiler's own idea of what it is looking at. A program which reads programs is handed this, and what it is called here and what the compiler calls it are one thing."
             }
         , CGClass
             { cgcSealed = True
@@ -1109,7 +1120,7 @@ Prgm
                 , /Catln/PartialName/PClassName( /name=/Data/String )
                 , /Catln/PartialName/PRelativeName( /name=/Data/String )
                 ]
-            , cgcDoc = Just "What a partial type is named by: a type, a class, or a suffix that could be either.A [PTypeName] names one declared type and a [PClassName] one declared class. A [PRelativeName] is a name written without its full path — the compiler resolves it to one of the other two, so a program reading a compiled one will not meet it."
+            , cgcDoc = Just "What a partial type is named by: a type, a class, or a suffix that could be either.A [PTypeName] names one declared type and a [PClassName] one declared class. A [PRelativeName] is a name written without its full path — the compiler resolves it to one of the other two, so a program reading a compiled one will not meet it. What a partial type is named by: a type, a class, or a suffix that could be either.A [PTypeName] names one declared type and a [PClassName] one declared class. A [PRelativeName] is a name written without its full path — the compiler resolves it to one of the other two, so a program reading a compiled one will not meet it. What a partial type is named by: a type, a class, or a suffix that could be either.A [PTypeName] names one declared type and a [PClassName] one declared class. A [PRelativeName] is a name written without its full path — the compiler resolves it to one of the other two, so a program reading a compiled one will not meet it."
             }
         , CGClass
             { cgcSealed = True
@@ -1138,10 +1149,11 @@ Prgm
                     )
                 , /Catln/Type/TypeVar
                     ( /aux=∀/Catln/TypeVarAux
+                    , /inner=∀/Catln/Type
                     , /loc=∀/Catln/TypeVarLoc
                     )
                 ]
-            , cgcDoc = Just "A set of types: what a value may be.A [UnionType] is the [leafs] and [consts] it holds, and — if it has a [top] — everything EXCEPT what that says: the [Triple] there is the conditions the universe is filtered by, the leafs taken out of it, and the constants taken out of it. So a type with no [top] is written by what it contains, and a type with one is written by what it does not.A [TypeVar] is a variable rather than a set: an [aux] saying which variable, and a [loc] saying whether it was defined on the type it is written in or outside it."
+            , cgcDoc = Just "A set of types: what a value may be.A [UnionType] is the [leafs] and [consts] it holds, and — if it has a [top] — everything EXCEPT what that says: the [Triple] there is the conditions the universe is filtered by, the leafs taken out of it, and the constants taken out of it. So a type with no [top] is written by what it contains, and a type with one is written by what it does not.A [TypeVar] is a variable rather than a set: an [aux] saying which variable, a [loc] saying whether it was defined on the type it is written in or outside it, and an [inner] the occurrence is known to be within. The occurrence is the variable and the inner together, so it means everything the variable can be that is also within the inner. A set of types: what a value may be.A [UnionType] is the [leafs] and [consts] it holds, and — if it has a [top] — everything EXCEPT what that says: the [Triple] there is the conditions the universe is filtered by, the leafs taken out of it, and the constants taken out of it. So a type with no [top] is written by what it contains, and a type with one is written by what it does not.A [TypeVar] is a variable rather than a set: an [aux] saying which variable, a [loc] saying whether it was defined on the type it is written in or outside it, and an [inner] the occurrence is known to be within. The occurrence is the variable and the inner together, so it means everything the variable can be that is also within the inner. A set of types: what a value may be.A [UnionType] is the [leafs] and [consts] it holds, and — if it has a [top] — everything EXCEPT what that says: the [Triple] there is the conditions the universe is filtered by, the leafs taken out of it, and the constants taken out of it. So a type with no [top] is written by what it contains, and a type with one is written by what it does not.A [TypeVar] is a variable rather than a set: an [aux] saying which variable, a [loc] saying whether it was defined on the type it is written in or outside it, and an [inner] the occurrence is known to be within. The occurrence is the variable and the inner together, so it means everything the variable can be that is also within the inner."
             }
         , CGClass
             { cgcSealed = True
@@ -1151,7 +1163,7 @@ Prgm
                 , /Catln/TypePredicate/PredClass( /type=/Catln/PartialType )
                 , /Catln/TypePredicate/PredRel( /type=/Catln/PartialType )
                 ]
-            , cgcDoc = Just "One condition a type is filtered by, each written over the [type] it is about.A [PredExpr] says the value is that expression, a [PredClass] that it has that class, and a [PredRel] that it is one — the `isa` written `val : classOrModuleOrType`."
+            , cgcDoc = Just "One condition a type is filtered by, each written over the [type] it is about.A [PredExpr] says the value is that expression, a [PredClass] that it has that class, and a [PredRel] that it is one — the `isa` written `val : classOrModuleOrType`. One condition a type is filtered by, each written over the [type] it is about.A [PredExpr] says the value is that expression, a [PredClass] that it has that class, and a [PredRel] that it is one — the `isa` written `val : classOrModuleOrType`. One condition a type is filtered by, each written over the [type] it is about.A [PredExpr] says the value is that expression, a [PredClass] that it has that class, and a [PredRel] that it is one — the `isa` written `val : classOrModuleOrType`."
             }
         , CGClass
             { cgcSealed = True
@@ -1162,7 +1174,7 @@ Prgm
                     ( /preds=∀/Data/List[ /T=∀/Catln/TypePredicates ] )
                 , /Catln/TypePredicates/PredsNot( /pred=∀/Catln/TypePredicates )
                 ]
-            , cgcDoc = Just "The conditions a type is filtered by: one of them, all of a list of them, or the negation of one.No condition at all is written as an empty [PredsAnd], so a type with nothing said about it and a type with everything said about it are the same shape read two ways rather than two shapes."
+            , cgcDoc = Just "The conditions a type is filtered by: one of them, all of a list of them, or the negation of one.No condition at all is written as an empty [PredsAnd], so a type with nothing said about it and a type with everything said about it are the same shape read two ways rather than two shapes. The conditions a type is filtered by: one of them, all of a list of them, or the negation of one.No condition at all is written as an empty [PredsAnd], so a type with nothing said about it and a type with everything said about it are the same shape read two ways rather than two shapes. The conditions a type is filtered by: one of them, all of a list of them, or the negation of one.No condition at all is written as an empty [PredsAnd], so a type with nothing said about it and a type with everything said about it are the same shape read two ways rather than two shapes."
             }
         , CGClass
             { cgcSealed = True
@@ -1180,16 +1192,17 @@ Prgm
                     , /base=∀/Catln/TypeVarAux
                     )
                 ]
-            , cgcDoc = Just "Which type variable a variable type is: one written on the type ([TVVar], by [name]), one standing for an argument's type ([TVArg], by the argument's [name]), or one re-applied with new parameters ([TVApplied], the [base] it was and the [vars] rebound on it).A [TVApplied] holds a variable rather than a type, so it is the one arm that reaches this type again."
+            , cgcDoc = Just "Which type variable a variable type is: one written on the type ([TVVar], by [name]), one standing for an argument's type ([TVArg], by the argument's [name]), or one re-applied with new parameters ([TVApplied], the [base] it was and the [vars] rebound on it).A [TVApplied] holds a variable rather than a type, so it is the one arm that reaches this type again. Which type variable a variable type is: one written on the type ([TVVar], by [name]), one standing for an argument's type ([TVArg], by the argument's [name]), or one re-applied with new parameters ([TVApplied], the [base] it was and the [vars] rebound on it).A [TVApplied] holds a variable rather than a type, so it is the one arm that reaches this type again. Which type variable a variable type is: one written on the type ([TVVar], by [name]), one standing for an argument's type ([TVArg], by the argument's [name]), or one re-applied with new parameters ([TVApplied], the [base] it was and the [vars] rebound on it).A [TVApplied] holds a variable rather than a type, so it is the one arm that reaches this type again."
             }
         , CGClass
             { cgcSealed = True
             , cgcPartial = /Catln/TypeVarLoc
             , cgcExtends =
                 [ /Catln/TypeVarLoc/TVInt
+                , /Catln/TypeVarLoc/TVParent
                 , /Catln/TypeVarLoc/TVExt
                 ]
-            , cgcDoc = Just "Where a type variable was defined: on the type it is written in ([TVInt], written `$T`), or on something outside it ([TVExt], written `$_T`).The difference is what the variable is resolved against, so it is part of what the variable IS rather than a note about it."
+            , cgcDoc = Just "Where a type variable was defined: on the type it is written in ([TVInt], written `$T`), on the nearest enclosing type ([TVParent]), or on the ambient object scope ([TVExt]). The latter two are both written `$_T`.The difference is what the variable is resolved against, so it is part of what the variable IS rather than a note about it. Where a type variable was defined: on the type it is written in ([TVInt], written `$T`), on the nearest enclosing type ([TVParent]), or on the ambient object scope ([TVExt]). The latter two are both written `$_T`.The difference is what the variable is resolved against, so it is part of what the variable IS rather than a note about it. Where a type variable was defined: on the type it is written in ([TVInt], written `$T`), on the nearest enclosing type ([TVParent]), or on the ambient object scope ([TVExt]). The latter two are both written `$_T`.The difference is what the variable is resolved against, so it is part of what the variable IS rather than a note about it."
             }
         ]
     , prgmAnnots =
@@ -1251,7 +1264,7 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Where a type variable was defined: on the type it is written in ([TVInt], written `$T`), or on something outside it ([TVExt], written `$_T`)." }
+                { eaaArg = Value /text -> /Data/String = "Where a type variable was defined: on the type it is written in ([TVInt], written `$T`), on the nearest enclosing type ([TVParent]), or on the ambient object scope ([TVExt]). The latter two are both written `$_T`." }
             )
         , /Catln/#md
             ( EAppArg
@@ -1267,7 +1280,7 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "A [TypeVar] is a variable rather than a set: an [aux] saying which variable, and a [loc] saying whether it was defined on the type it is written in or outside it." }
+                { eaaArg = Value /text -> /Data/String = "A [TypeVar] is a variable rather than a set: an [aux] saying which variable, a [loc] saying whether it was defined on the type it is written in or outside it, and an [inner] the occurrence is known to be within. The occurrence is the variable and the inner together, so it means everything the variable can be that is also within the inner." }
             )
         , /Catln/#md
             ( EAppArg

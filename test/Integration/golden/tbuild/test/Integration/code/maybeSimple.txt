@@ -43,7 +43,9 @@ Prgm
                         [ /defInt
                             ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) -> TVArg /x = ( Value /x ↦ TVArg /x )
                         , /defInt
-                            ( EAppArg { eaaArg = Value /x -> ~Nothing = Value /Nothing } ) -> /Data/Primitive/Integer = 0
+                            ( EAppArg
+                                { eaaArg = Value /x -> ( /Data/Maybe/Nothing + /Nothing ) = Value /Nothing }
+                            ) -> /Data/Primitive/Integer = 0
                         ]
                     }
                 )
@@ -69,7 +71,7 @@ Prgm
                 [ $_/T
                 , /Nothing
                 ]
-            , cgcDoc = Just ""
+            , cgcDoc = Just "   "
             }
         ]
     , prgmAnnots =

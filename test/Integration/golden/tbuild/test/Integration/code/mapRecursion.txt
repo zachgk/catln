@@ -1,21 +1,40 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/rputStep"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /rputStep( EAppVar /MV TopType )( EAppVar /MK ∀/ROrd )( EAppArg Value /cmp -> ∀/RCmp )
-                            ( EAppArg Value /left -> ∀/RTree
-                                [ /K=$^/MK
-                                , /V=$^/MV
-                                ]
-                            )( EAppArg Value /nk -> $/MK )( EAppArg Value /nv -> $/MV )
-                            ( EAppArg Value /right -> ∀/RTree
-                                [ /K=$^/MK
-                                , /V=$^/MV
-                                ]
-                            )( EAppArg Value /key -> $/MK )( EAppArg Value /value -> $/MV ) -> ∀/RTree
+                        [ /rputStep
+                            ( EAppVar
+                                { eavName = /MV
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppVar
+                                { eavName = /MK
+                                , eavMeta = ∀/ROrd
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /cmp -> ∀/RCmp } )
+                            ( EAppArg
+                                { eaaArg = Value /left -> ∀/RTree
+                                    [ /K=$^/MK
+                                    , /V=$^/MV
+                                    ]
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /nk -> $/MK } )
+                            ( EAppArg { eaaArg = Value /nv -> $/MV } )
+                            ( EAppArg
+                                { eaaArg = Value /right -> ∀/RTree
+                                    [ /K=$^/MK
+                                    , /V=$^/MV
+                                    ]
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /key -> $/MK } )
+                            ( EAppArg { eaaArg = Value /value -> $/MV } ) -> ∀/RTree
                             [ /K=$^/MK
                             , /V=$^/MV
                             ]
@@ -23,17 +42,26 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /rputStep( EAppArg Value /cmp -> /REq = Value /REq )
-                            ( EAppArg Value /left -> ∀/RTree
-                                [ /K=∀/ROrd
-                                , /V=$^/MV
-                                ]
-                            )( EAppArg Value /nk -> ∀/ROrd )( EAppArg Value /nv )
-                            ( EAppArg Value /right -> ∀/RTree
-                                [ /K=∀/ROrd
-                                , /V=$^/MV
-                                ]
-                            )( EAppArg Value /key -> ∀/ROrd )( EAppArg Value /value ) -> /RNode
+                        [ /rputStep
+                            ( EAppArg { eaaArg = Value /cmp -> /REq = Value /REq } )
+                            ( EAppArg
+                                { eaaArg = Value /left -> ∀/RTree
+                                    [ /K=∀/ROrd
+                                    , /V=$^/MV
+                                    ]
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /nk -> ∀/ROrd } )
+                            ( EAppArg { eaaArg = Value /nv } )
+                            ( EAppArg
+                                { eaaArg = Value /right -> ∀/RTree
+                                    [ /K=∀/ROrd
+                                    , /V=$^/MV
+                                    ]
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /key -> ∀/ROrd } )
+                            ( EAppArg { eaaArg = Value /value } ) -> /RNode
                             ( /value=TopType
                             , /key=∀/ROrd
                             , /right=∀/RTree
@@ -45,21 +73,38 @@ Prgm
                                 , /V=$^/MV
                                 ]
                             ) = /RNode
-                            ( EAppArg Value /left -> TVArg /left = ( Value /left ↦ TVArg /left ) )
-                            ( EAppArg Value /key -> TVArg /nk = ( Value /nk ↦ TVArg /nk ) )
-                            ( EAppArg Value /value -> TVArg /value = ( Value /value ↦ TVArg /value ) )
-                            ( EAppArg Value /right -> TVArg /right = ( Value /right ↦ TVArg /right ) )
-                        , /rputStep( EAppArg Value /cmp -> /RLt = Value /RLt )
-                            ( EAppArg Value /left -> ∀/RTree
-                                [ /K=∀/ROrd
-                                , /V=$^/MV
-                                ]
-                            )( EAppArg Value /nk -> ∀/ROrd )( EAppArg Value /nv )
-                            ( EAppArg Value /right -> ∀/RTree
-                                [ /K=∀/ROrd
-                                , /V=$^/MV
-                                ]
-                            )( EAppArg Value /key -> ∀/ROrd )( EAppArg Value /value ) -> /RNode
+                            ( EAppArg
+                                { eaaArg = Value /left -> TVArg /left = ( Value /left ↦ TVArg /left ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /key -> TVArg /nk = ( Value /nk ↦ TVArg /nk ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /value -> TVArg /value = ( Value /value ↦ TVArg /value ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /right -> TVArg /right = ( Value /right ↦ TVArg /right ) }
+                            )
+                        , /rputStep
+                            ( EAppArg { eaaArg = Value /cmp -> /RLt = Value /RLt } )
+                            ( EAppArg
+                                { eaaArg = Value /left -> ∀/RTree
+                                    [ /K=∀/ROrd
+                                    , /V=$^/MV
+                                    ]
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /nk -> ∀/ROrd } )
+                            ( EAppArg { eaaArg = Value /nv } )
+                            ( EAppArg
+                                { eaaArg = Value /right -> ∀/RTree
+                                    [ /K=∀/ROrd
+                                    , /V=$^/MV
+                                    ]
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /key -> ∀/ROrd } )
+                            ( EAppArg { eaaArg = Value /value } ) -> /RNode
                             ( /value=TopType
                             , /key=∀/ROrd
                             , /right=∀/RTree
@@ -76,44 +121,8 @@ Prgm
                                     ]
                                 )
                             ) = /RNode
-                            ( EAppArg Value /left -> UnionType
-                                ( Just
-                                    ( PredClass /RTree
-                                        [ /K=∀/ROrd
-                                        , /V=$^/MV
-                                        ] && PredClass /RIMap
-                                        [ /K=∀/ROrd
-                                        , /V=$^/MV
-                                        ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /RNode
-                                    [ /K=∀/ROrd
-                                    , /V=$^/V
-                                    ]
-                                    ( /value=$/V
-                                    , /key=∀/ROrd
-                                    , /right=∀/RTree
-                                        [ /K=∀/ROrd
-                                        , /V=$^/V
-                                        ]
-                                    , /left=
-                                        ( TopType | PredClass /RTree
-                                            [ /K=∀/ROrd
-                                            , /V=$^/V
-                                            ] && PredClass /RIMap
-                                            [ /K=∀/ROrd
-                                            , /V=$^/V
-                                            ]
-                                        )
-                                    )
-                                , []
-                                ) =
-                                ( /rput
-                                    ( EAppArg Value /m -> TVArg /left = ( Value /left ↦ TVArg /left ) )
-                                    ( EAppArg Value /key -> TVArg /key = ( Value /key ↦ TVArg /key ) )
-                                    ( EAppArg Value /value -> TVArg /value = ( Value /value ↦ TVArg /value ) ) ↦ UnionType
+                            ( EAppArg
+                                { eaaArg = Value /left -> UnionType
                                     ( Just
                                         ( PredClass /RTree
                                             [ /K=∀/ROrd
@@ -121,6 +130,141 @@ Prgm
                                             ] && PredClass /RIMap
                                             [ /K=∀/ROrd
                                             , /V=$^/MV
+                                            ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /RNode
+                                        [ /K=∀/ROrd
+                                        , /V=$^/MV
+                                        ]
+                                        ( /value=$/V
+                                        , /key=∀/ROrd
+                                        , /right=∀/RTree
+                                            [ /K=∀/ROrd
+                                            , /V=$^/MV
+                                            ]
+                                        , /left=
+                                            ( TopType | PredClass /RTree
+                                                [ /K=∀/ROrd
+                                                , /V=$^/MV
+                                                ] && PredClass /RIMap
+                                                [ /K=∀/ROrd
+                                                , /V=$^/MV
+                                                ]
+                                            )
+                                        )
+                                    , []
+                                    ) =
+                                    ( /rput
+                                        ( EAppArg
+                                            { eaaArg = Value /m -> TVArg /left = ( Value /left ↦ TVArg /left ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /key -> TVArg /key = ( Value /key ↦ TVArg /key ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /value -> TVArg /value = ( Value /value ↦ TVArg /value ) }
+                                        ) ↦ UnionType
+                                        ( Just
+                                            ( PredClass /RTree
+                                                [ /K=∀/ROrd
+                                                , /V=$^/MV
+                                                ] && PredClass /RIMap
+                                                [ /K=∀/ROrd
+                                                , /V=$^/MV
+                                                ]
+                                            , fromList []
+                                            , []
+                                            )
+                                        , /RNode
+                                            [ /K=∀/ROrd
+                                            , /V=$^/MV
+                                            ]
+                                            ( /value=$/V
+                                            , /key=∀/ROrd
+                                            , /right=∀/RTree
+                                                [ /K=∀/ROrd
+                                                , /V=$^/MV
+                                                ]
+                                            , /left=
+                                                ( TopType | PredClass /RTree
+                                                    [ /K=∀/ROrd
+                                                    , /V=$^/MV
+                                                    ] && PredClass /RIMap
+                                                    [ /K=∀/ROrd
+                                                    , /V=$^/MV
+                                                    ]
+                                                )
+                                            )
+                                        , []
+                                        )
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /key -> TVArg /nk = ( Value /nk ↦ TVArg /nk ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /value -> TVArg /nv = ( Value /nv ↦ TVArg /nv ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /right -> TVArg /right = ( Value /right ↦ TVArg /right ) }
+                            )
+                        , /rputStep
+                            ( EAppArg { eaaArg = Value /cmp -> /RGt = Value /RGt } )
+                            ( EAppArg
+                                { eaaArg = Value /left -> ∀/RTree
+                                    [ /K=∀/ROrd
+                                    , /V=$^/MV
+                                    ]
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /nk -> ∀/ROrd } )
+                            ( EAppArg { eaaArg = Value /nv } )
+                            ( EAppArg
+                                { eaaArg = Value /right -> ∀/RTree
+                                    [ /K=∀/ROrd
+                                    , /V=$^/MV
+                                    ]
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /key -> ∀/ROrd } )
+                            ( EAppArg { eaaArg = Value /value } ) -> /RNode
+                            ( /value=TopType
+                            , /key=∀/ROrd
+                            , /right=
+                                ( TopType | PredClass /RTree
+                                    [ /K=∀/ROrd
+                                    , /V=$^/MV
+                                    ] && PredClass /RIMap
+                                    [ /K=∀/ROrd
+                                    , /V=$^/MV
+                                    ]
+                                )
+                            , /left=∀/RTree
+                                [ /K=∀/ROrd
+                                , /V=$^/MV
+                                ]
+                            ) = /RNode
+                            ( EAppArg
+                                { eaaArg = Value /left -> TVArg /left = ( Value /left ↦ TVArg /left ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /key -> TVArg /nk = ( Value /nk ↦ TVArg /nk ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /value -> TVArg /nv = ( Value /nv ↦ TVArg /nv ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /right -> UnionType
+                                    ( Just
+                                        ( PredClass /RTree
+                                            [ /K=∀/ROrd
+                                            , /V=$^/V
+                                            ] && PredClass /RIMap
+                                            [ /K=∀/ROrd
+                                            , /V=$^/V
                                             ]
                                         , fromList []
                                         , []
@@ -146,104 +290,52 @@ Prgm
                                             )
                                         )
                                     , []
-                                    )
-                                )
-                            )
-                            ( EAppArg Value /key -> TVArg /nk = ( Value /nk ↦ TVArg /nk ) )
-                            ( EAppArg Value /value -> TVArg /nv = ( Value /nv ↦ TVArg /nv ) )
-                            ( EAppArg Value /right -> TVArg /right = ( Value /right ↦ TVArg /right ) )
-                        , /rputStep( EAppArg Value /cmp -> /RGt = Value /RGt )
-                            ( EAppArg Value /left -> ∀/RTree
-                                [ /K=∀/ROrd
-                                , /V=$^/MV
-                                ]
-                            )( EAppArg Value /nk -> ∀/ROrd )( EAppArg Value /nv )
-                            ( EAppArg Value /right -> ∀/RTree
-                                [ /K=∀/ROrd
-                                , /V=$^/MV
-                                ]
-                            )( EAppArg Value /key -> ∀/ROrd )( EAppArg Value /value ) -> /RNode
-                            ( /value=TopType
-                            , /key=∀/ROrd
-                            , /right=
-                                ( TopType | PredClass /RTree
-                                    [ /K=∀/ROrd
-                                    , /V=$^/MV
-                                    ] && PredClass /RIMap
-                                    [ /K=∀/ROrd
-                                    , /V=$^/MV
-                                    ]
-                                )
-                            , /left=∀/RTree
-                                [ /K=∀/ROrd
-                                , /V=$^/MV
-                                ]
-                            ) = /RNode
-                            ( EAppArg Value /left -> TVArg /left = ( Value /left ↦ TVArg /left ) )
-                            ( EAppArg Value /key -> TVArg /nk = ( Value /nk ↦ TVArg /nk ) )
-                            ( EAppArg Value /value -> TVArg /nv = ( Value /nv ↦ TVArg /nv ) )
-                            ( EAppArg Value /right -> UnionType
-                                ( Just
-                                    ( PredClass /RTree
-                                        [ /K=∀/ROrd
-                                        , /V=$^/MV
-                                        ] && PredClass /RIMap
-                                        [ /K=∀/ROrd
-                                        , /V=$^/MV
-                                        ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /RNode
-                                    [ /K=∀/ROrd
-                                    , /V=$^/V
-                                    ]
-                                    ( /value=$/V
-                                    , /key=∀/ROrd
-                                    , /right=∀/RTree
-                                        [ /K=∀/ROrd
-                                        , /V=$^/V
-                                        ]
-                                    , /left=∀/RTree
-                                        [ /K=∀/ROrd
-                                        , /V=$^/V
-                                        ]
-                                    )
-                                , []
-                                ) =
-                                ( /rput
-                                    ( EAppArg Value /m -> TVArg /right = ( Value /right ↦ TVArg /right ) )
-                                    ( EAppArg Value /key -> TVArg /key = ( Value /key ↦ TVArg /key ) )
-                                    ( EAppArg Value /value -> TVArg /value = ( Value /value ↦ TVArg /value ) ) ↦ UnionType
-                                    ( Just
-                                        ( PredClass /RTree
+                                    ) =
+                                    ( /rput
+                                        ( EAppArg
+                                            { eaaArg = Value /m -> TVArg /right = ( Value /right ↦ TVArg /right ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /key -> TVArg /key = ( Value /key ↦ TVArg /key ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /value -> TVArg /value = ( Value /value ↦ TVArg /value ) }
+                                        ) ↦ UnionType
+                                        ( Just
+                                            ( PredClass /RTree
+                                                [ /K=∀/ROrd
+                                                , /V=$^/V
+                                                ] && PredClass /RIMap
+                                                [ /K=∀/ROrd
+                                                , /V=$^/V
+                                                ]
+                                            , fromList []
+                                            , []
+                                            )
+                                        , /RNode
                                             [ /K=∀/ROrd
-                                            , /V=$^/MV
-                                            ] && PredClass /RIMap
-                                            [ /K=∀/ROrd
-                                            , /V=$^/MV
+                                            , /V=$^/V
                                             ]
-                                        , fromList []
+                                            ( /value=$/V
+                                            , /key=∀/ROrd
+                                            , /right=∀/RTree
+                                                [ /K=∀/ROrd
+                                                , /V=$^/V
+                                                ]
+                                            , /left=
+                                                ( TopType | PredClass /RTree
+                                                    [ /K=∀/ROrd
+                                                    , /V=$^/V
+                                                    ] && PredClass /RIMap
+                                                    [ /K=∀/ROrd
+                                                    , /V=$^/V
+                                                    ]
+                                                )
+                                            )
                                         , []
                                         )
-                                    , /RNode
-                                        [ /K=∀/ROrd
-                                        , /V=$^/V
-                                        ]
-                                        ( /value=$/V
-                                        , /key=∀/ROrd
-                                        , /right=∀/RTree
-                                            [ /K=∀/ROrd
-                                            , /V=$^/V
-                                            ]
-                                        , /left=∀/RTree
-                                            [ /K=∀/ROrd
-                                            , /V=$^/V
-                                            ]
-                                        )
-                                    , []
                                     )
-                                )
+                                }
                             )
                         ]
                     }
@@ -252,11 +344,17 @@ Prgm
                 ( "/rcmp"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /rcmp( EAppArg Value /a -> /RKey )( EAppArg Value /b -> /RKey ) -> ∀/RCmp ]
+                        [ /rcmp
+                            ( EAppArg { eaaArg = Value /a -> /RKey } )
+                            ( EAppArg { eaaArg = Value /b -> /RKey } ) -> ∀/RCmp
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /rcmp( EAppArg Value /a -> /RKey = Value /RKey )( EAppArg Value /b -> /RKey = Value /RKey ) -> /RGt = Value /RGt ]
+                        [ /rcmp
+                            ( EAppArg { eaaArg = Value /a -> /RKey = Value /RKey } )
+                            ( EAppArg { eaaArg = Value /b -> /RKey = Value /RKey } ) -> /RGt = Value /RGt
+                        ]
                     }
                 )
             ,
@@ -275,51 +373,75 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> TVArg /io = ( Value /io ↦ TVArg /io )
+                        ]
                     }
                 )
             ,
                 ( "/risNode"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /risNode( EAppVar /MV TopType )( EAppVar /MK ∀/ROrd )
-                            ( EAppArg Value /m -> ∀/RIMap
-                                [ /K=$^/MK
-                                , /V=$^/MV
-                                ]
+                        [ /risNode
+                            ( EAppVar
+                                { eavName = /MV
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppVar
+                                { eavName = /MK
+                                , eavMeta = ∀/ROrd
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /m -> ∀/RIMap
+                                    [ /K=$^/MK
+                                    , /V=$^/MV
+                                    ]
+                                }
                             ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /risNode
-                            ( EAppArg Value /m -> /RNode
-                                [ /K=∀/ROrd
-                                , /V=TopType
-                                ]
-                                ( /value=$/V
-                                , /key=∀/ROrd
-                                , /right=∀/RTree
+                            ( EAppArg
+                                { eaaArg = Value /m -> /RNode
                                     [ /K=∀/ROrd
-                                    , /V=$^/MV
+                                    , /V=TopType
                                     ]
-                                , /left=∀/RTree
-                                    [ /K=∀/ROrd
-                                    , /V=$^/MV
-                                    ]
-                                ) = /RNode
-                                ( EAppArg Value /left -> ∀/RTree
-                                    [ /K=∀/ROrd
-                                    , /V=$^/MV
-                                    ]
-                                )( EAppArg Value /key -> ∀/ROrd )( EAppArg Value /value )
-                                ( EAppArg Value /right -> ∀/RTree
-                                    [ /K=∀/ROrd
-                                    , /V=$^/MV
-                                    ]
-                                )
+                                    ( /value=$/V
+                                    , /key=∀/ROrd
+                                    , /right=∀/RTree
+                                        [ /K=∀/ROrd
+                                        , /V=$^/MV
+                                        ]
+                                    , /left=∀/RTree
+                                        [ /K=∀/ROrd
+                                        , /V=$^/MV
+                                        ]
+                                    ) = /RNode
+                                    ( EAppArg
+                                        { eaaArg = Value /left -> ∀/RTree
+                                            [ /K=∀/ROrd
+                                            , /V=$^/MV
+                                            ]
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /key -> ∀/ROrd } )
+                                    ( EAppArg { eaaArg = Value /value } )
+                                    ( EAppArg
+                                        { eaaArg = Value /right -> ∀/RTree
+                                            [ /K=∀/ROrd
+                                            , /V=$^/MV
+                                            ]
+                                        }
+                                    )
+                                }
                             ) -> /Data/Primitive/True = Value /Data/Primitive/True
-                        , /risNode( EAppArg Value /m -> /RLeaf = Value /RLeaf ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /risNode
+                            ( EAppArg { eaaArg = Value /m -> /RLeaf = Value /RLeaf } ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         ]
                     }
                 )
@@ -327,61 +449,94 @@ Prgm
                 ( "/rsize"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /rsize( EAppVar /MV TopType )( EAppVar /MK ∀/ROrd )
-                            ( EAppArg Value /m -> ∀/RIMap
-                                [ /K=$^/MK
-                                , /V=$^/MV
-                                ]
+                        [ /rsize
+                            ( EAppVar
+                                { eavName = /MV
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppVar
+                                { eavName = /MK
+                                , eavMeta = ∀/ROrd
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /m -> ∀/RIMap
+                                    [ /K=$^/MK
+                                    , /V=$^/MV
+                                    ]
+                                }
                             ) -> /Data/Primitive/Integer
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /rsize
-                            ( EAppArg Value /m -> /RNode
-                                [ /K=∀/ROrd
-                                , /V=TopType
-                                ]
-                                ( /value=$/V
-                                , /key=∀/ROrd
-                                , /right=∀/RTree
+                            ( EAppArg
+                                { eaaArg = Value /m -> /RNode
                                     [ /K=∀/ROrd
-                                    , /V=$^/MV
+                                    , /V=TopType
                                     ]
-                                , /left=∀/RTree
-                                    [ /K=∀/ROrd
-                                    , /V=$^/MV
-                                    ]
-                                ) = /RNode
-                                ( EAppArg Value /left -> ∀/RTree
-                                    [ /K=∀/ROrd
-                                    , /V=$^/MV
-                                    ]
-                                )( EAppArg Value /key -> ∀/ROrd )( EAppArg Value /value )
-                                ( EAppArg Value /right -> ∀/RTree
-                                    [ /K=∀/ROrd
-                                    , /V=$^/MV
-                                    ]
-                                )
+                                    ( /value=$/V
+                                    , /key=∀/ROrd
+                                    , /right=∀/RTree
+                                        [ /K=∀/ROrd
+                                        , /V=$^/MV
+                                        ]
+                                    , /left=∀/RTree
+                                        [ /K=∀/ROrd
+                                        , /V=$^/MV
+                                        ]
+                                    ) = /RNode
+                                    ( EAppArg
+                                        { eaaArg = Value /left -> ∀/RTree
+                                            [ /K=∀/ROrd
+                                            , /V=$^/MV
+                                            ]
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /key -> ∀/ROrd } )
+                                    ( EAppArg { eaaArg = Value /value } )
+                                    ( EAppArg
+                                        { eaaArg = Value /right -> ∀/RTree
+                                            [ /K=∀/ROrd
+                                            , /V=$^/MV
+                                            ]
+                                        }
+                                    )
+                                }
                             ) -> /Data/Primitive/Integer =
                             ( /operator+
-                                ( EAppArg Value /l -> /Data/Primitive/Integer =
-                                    ( /operator+
-                                        ( EAppArg Value /l -> /Data/Primitive/Integer = 1 )
-                                        ( EAppArg Value /r -> /Data/Primitive/Integer =
-                                            ( /rsize
-                                                ( EAppArg Value /m -> TVArg /left = ( Value /left ↦ TVArg /left ) ) ↦ /Data/Primitive/Integer
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                        ( /operator+
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer = 1 }
                                             )
-                                        ) ↦ /Data/Primitive/Integer
-                                    )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                    ( /rsize
+                                                        ( EAppArg
+                                                            { eaaArg = Value /m -> TVArg /left = ( Value /left ↦ TVArg /left ) }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
                                 )
-                                ( EAppArg Value /r -> /Data/Primitive/Integer =
-                                    ( /rsize
-                                        ( EAppArg Value /m -> TVArg /right = ( Value /right ↦ TVArg /right ) ) ↦ /Data/Primitive/Integer
-                                    )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                        ( /rsize
+                                            ( EAppArg
+                                                { eaaArg = Value /m -> TVArg /right = ( Value /right ↦ TVArg /right ) }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
                                 ) ↦ /Data/Primitive/Integer
                             )
-                        , /rsize( EAppArg Value /m -> /RLeaf = Value /RLeaf ) -> /Data/Primitive/Integer = 0
+                        , /rsize
+                            ( EAppArg { eaaArg = Value /m -> /RLeaf = Value /RLeaf } ) -> /Data/Primitive/Integer = 0
                         ]
                     }
                 )
@@ -389,16 +544,32 @@ Prgm
                 ( "/RNode"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /RNode( EAppVar /V TopType )( EAppVar /K TopType )
-                            ( EAppArg Value /left -> ∀/RTree
-                                [ /K=$^/K
-                                , /V=$^/V
-                                ]
-                            )( EAppArg Value /key -> $/K )( EAppArg Value /value -> $/V )
-                            ( EAppArg Value /right -> ∀/RTree
-                                [ /K=$^/K
-                                , /V=$^/V
-                                ]
+                        [ /RNode
+                            ( EAppVar
+                                { eavName = /V
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppVar
+                                { eavName = /K
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /left -> ∀/RTree
+                                    [ /K=$^/K
+                                    , /V=$^/V
+                                    ]
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /key -> $/K } )
+                            ( EAppArg { eaaArg = Value /value -> $/V } )
+                            ( EAppArg
+                                { eaaArg = Value /right -> ∀/RTree
+                                    [ /K=$^/K
+                                    , /V=$^/V
+                                    ]
+                                }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -446,12 +617,26 @@ Prgm
                 ( "/rput"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /rput( EAppVar /MV TopType )( EAppVar /MK ∀/ROrd )
-                            ( EAppArg Value /m -> ∀/RIMap
-                                [ /K=$^/MK
-                                , /V=$^/MV
-                                ]
-                            )( EAppArg Value /key -> $/MK )( EAppArg Value /value -> $/MV ) -> ∀/RIMap
+                        [ /rput
+                            ( EAppVar
+                                { eavName = /MV
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppVar
+                                { eavName = /MK
+                                , eavMeta = ∀/ROrd
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /m -> ∀/RIMap
+                                    [ /K=$^/MK
+                                    , /V=$^/MV
+                                    ]
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /key -> $/MK } )
+                            ( EAppArg { eaaArg = Value /value -> $/MV } ) -> ∀/RIMap
                             [ /K=$^/MK
                             , /V=$^/MV
                             ]
@@ -459,41 +644,60 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /rput( EAppArg Value /m -> /RLeaf = Value /RLeaf )( EAppArg Value /key -> ∀/ROrd )( EAppArg Value /value ) -> /RNode
+                        [ /rput
+                            ( EAppArg { eaaArg = Value /m -> /RLeaf = Value /RLeaf } )
+                            ( EAppArg { eaaArg = Value /key -> ∀/ROrd } )
+                            ( EAppArg { eaaArg = Value /value } ) -> /RNode
                             ( /value=TopType
                             , /key=∀/ROrd
                             , /right=/RLeaf
                             , /left=/RLeaf
-                            ) = /RNode( EAppArg Value /left -> /RLeaf = Value /RLeaf )
-                            ( EAppArg Value /key -> TVArg /key = ( Value /key ↦ TVArg /key ) )
-                            ( EAppArg Value /value -> TVArg /value = ( Value /value ↦ TVArg /value ) )( EAppArg Value /right -> /RLeaf = Value /RLeaf )
+                            ) = /RNode
+                            ( EAppArg { eaaArg = Value /left -> /RLeaf = Value /RLeaf } )
+                            ( EAppArg
+                                { eaaArg = Value /key -> TVArg /key = ( Value /key ↦ TVArg /key ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /value -> TVArg /value = ( Value /value ↦ TVArg /value ) }
+                            )
+                            ( EAppArg { eaaArg = Value /right -> /RLeaf = Value /RLeaf } )
                         , /rput
-                            ( EAppArg Value /m -> /RNode
-                                [ /K=∀/ROrd
-                                , /V=TopType
-                                ]
-                                ( /value=$/V
-                                , /key=∀/ROrd
-                                , /right=∀/RTree
+                            ( EAppArg
+                                { eaaArg = Value /m -> /RNode
                                     [ /K=∀/ROrd
-                                    , /V=$^/MV
+                                    , /V=TopType
                                     ]
-                                , /left=∀/RTree
-                                    [ /K=∀/ROrd
-                                    , /V=$^/MV
-                                    ]
-                                ) = /RNode
-                                ( EAppArg Value /left -> ∀/RTree
-                                    [ /K=∀/ROrd
-                                    , /V=$^/MV
-                                    ]
-                                )( EAppArg Value /key@Value /nk -> ∀/ROrd )( EAppArg Value /value@Value /nv )
-                                ( EAppArg Value /right -> ∀/RTree
-                                    [ /K=∀/ROrd
-                                    , /V=$^/MV
-                                    ]
-                                )
-                            )( EAppArg Value /key -> ∀/ROrd )( EAppArg Value /value ) -> UnionType
+                                    ( /value=$/V
+                                    , /key=∀/ROrd
+                                    , /right=∀/RTree
+                                        [ /K=∀/ROrd
+                                        , /V=$^/MV
+                                        ]
+                                    , /left=∀/RTree
+                                        [ /K=∀/ROrd
+                                        , /V=$^/MV
+                                        ]
+                                    ) = /RNode
+                                    ( EAppArg
+                                        { eaaArg = Value /left -> ∀/RTree
+                                            [ /K=∀/ROrd
+                                            , /V=$^/MV
+                                            ]
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /key@Value /nk -> ∀/ROrd } )
+                                    ( EAppArg { eaaArg = Value /value@Value /nv } )
+                                    ( EAppArg
+                                        { eaaArg = Value /right -> ∀/RTree
+                                            [ /K=∀/ROrd
+                                            , /V=$^/MV
+                                            ]
+                                        }
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /key -> ∀/ROrd } )
+                            ( EAppArg { eaaArg = Value /value } ) -> UnionType
                             ( Just
                                 ( PredClass /RTree
                                     [ /K=∀/ROrd
@@ -541,18 +745,36 @@ Prgm
                             , []
                             ) =
                             ( /rputStep
-                                ( EAppArg Value /cmp -> ∀/RCmp =
-                                    ( /rcmp
-                                        ( EAppArg Value /a -> TVArg /key = ( Value /key ↦ TVArg /key ) )
-                                        ( EAppArg Value /b -> TVArg /nk = ( Value /nk ↦ TVArg /nk ) ) ↦ ∀/RCmp
-                                    )
+                                ( EAppArg
+                                    { eaaArg = Value /cmp -> ∀/RCmp =
+                                        ( /rcmp
+                                            ( EAppArg
+                                                { eaaArg = Value /a -> TVArg /key = ( Value /key ↦ TVArg /key ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /b -> TVArg /nk = ( Value /nk ↦ TVArg /nk ) }
+                                            ) ↦ ∀/RCmp
+                                        )
+                                    }
                                 )
-                                ( EAppArg Value /left -> TVArg /left = ( Value /left ↦ TVArg /left ) )
-                                ( EAppArg Value /nk -> TVArg /nk = ( Value /nk ↦ TVArg /nk ) )
-                                ( EAppArg Value /nv -> TVArg /nv = ( Value /nv ↦ TVArg /nv ) )
-                                ( EAppArg Value /right -> TVArg /right = ( Value /right ↦ TVArg /right ) )
-                                ( EAppArg Value /key -> TVArg /key = ( Value /key ↦ TVArg /key ) )
-                                ( EAppArg Value /value -> TVArg /value = ( Value /value ↦ TVArg /value ) ) ↦ UnionType
+                                ( EAppArg
+                                    { eaaArg = Value /left -> TVArg /left = ( Value /left ↦ TVArg /left ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /nk -> TVArg /nk = ( Value /nk ↦ TVArg /nk ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /nv -> TVArg /nv = ( Value /nv ↦ TVArg /nv ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /right -> TVArg /right = ( Value /right ↦ TVArg /right ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /key -> TVArg /key = ( Value /key ↦ TVArg /key ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /value -> TVArg /value = ( Value /value ↦ TVArg /value ) }
+                                ) ↦ UnionType
                                 ( Just
                                     ( PredClass /RTree
                                         [ /K=∀/ROrd
@@ -597,8 +819,8 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
@@ -613,42 +835,42 @@ Prgm
         , CGType
         , CGType
         , CGClass
-            ( True
-            , /RCmp
-            ,
+            { cgcSealed = True
+            , cgcPartial = /RCmp
+            , cgcExtends =
                 [ /RLt
                 , /REq
                 , /RGt
                 ]
-            , Just "      "
-            )
+            , cgcDoc = Just "      "
+            }
         , CGClass
-            ( False
-            , /RIMap
+            { cgcSealed = False
+            , cgcPartial = /RIMap
                 [ /K=TopType
                 , /V=TopType
                 ]
-            ,
+            , cgcExtends =
                 [ ∀/RTree
                     [ /K=$_/K
                     , /V=$_/V
                     ]
                 ]
-            , Just "             "
-            )
+            , cgcDoc = Just "             "
+            }
         , CGClass
-            ( False
-            , /ROrd
-            , [ /RKey ]
-            , Just "             "
-            )
+            { cgcSealed = False
+            , cgcPartial = /ROrd
+            , cgcExtends = [ /RKey ]
+            , cgcDoc = Just "             "
+            }
         , CGClass
-            ( True
-            , /RTree
+            { cgcSealed = True
+            , cgcPartial = /RTree
                 [ /K=TopType
                 , /V=TopType
                 ]
-            ,
+            , cgcExtends =
                 [ /RNode
                     [ /K=$_/K
                     , /V=$_/V
@@ -666,25 +888,29 @@ Prgm
                     )
                 , /RLeaf
                 ]
-            , Just "      "
-            )
+            , cgcDoc = Just "      "
+            }
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Regression for the recursion blow-up behind core/map.ct: an interface class (RIMap) with a
-            parameterised subclass edge from a sealed recursive data class (RTree), and a function declared
-            over the INTERFACE whose definition arm constructs the data type with a RECURSIVE call in one of
-            its fields. Before the parameterised `isa` edge compared type parameters
-            (`classDeclaredSubclassOfBounded`), `RNode(left=⊤)` and `RNode(left=∀RIMap[K=ROrd] ∪ …)` were
-            judged equal, the requirement narrowing on the constructor was refused as a no-op, and the
-            recursive call's result grew one nesting level per constraint epoch (doubling the epoch cost)
-            instead of settling to the class expansion. Without a core dependency in the shape itself, this
-            typechecks in seconds; the `main` exercises dispatch on the recursive result." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Regression for the recursion blow-up behind core/map.ct: an interface class (RIMap) with a
+                parameterised subclass edge from a sealed recursive data class (RTree), and a function declared
+                over the INTERFACE whose definition arm constructs the data type with a RECURSIVE call in one of
+                its fields. Before the parameterised `isa` edge compared type parameters
+                (`classDeclaredSubclassOfBounded`), `RNode(left=⊤)` and `RNode(left=∀RIMap[K=ROrd] ∪ …)` were
+                judged equal, the requirement narrowing on the constructor was refused as a no-op, and the
+                recursive call's result grew one nesting level per constraint epoch (doubling the epoch cost)
+                instead of settling to the class expansion. Without a core dependency in the shape itself, this
+                typechecks in seconds; the `main` exercises dispatch on the recursive result." }
+            )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "The second `rput` compares `RGt` and so constructs `RNode(right= rput(m= right, ..))`: a RECURSIVE
-            call stored in a field of the arm's constructed value. The arm is built at eval time against the
-            runtime source, whose `left= RLeaf` is a bare atom member of `RTree`; reading that atom as a
-            binding `$MV = ∅` made the field's raw call source uninhabited, so the call was never rewritten and
-            the unevaluated `rput` flowed through as the field's runtime value (`rsize` then found no arm)." )
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "The second `rput` compares `RGt` and so constructs `RNode(right= rput(m= right, ..))`: a RECURSIVE
+                call stored in a field of the arm's constructed value. The arm is built at eval time against the
+                runtime source, whose `left= RLeaf` is a bare atom member of `RTree`; reading that atom as a
+                binding `$MV = ∅` made the field's raw call source uninhabited, so the call was never rewritten and
+                the unevaluated `rput` flowed through as the field's runtime value (`rsize` then found no arm)." }
+            )
         ]
     }

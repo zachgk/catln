@@ -67,13 +67,13 @@ module(Test)
     # [typeKind] says whether a type is a set of things or a variable standing for one. The two are
       what a [Type] is, and telling them apart is the first thing anything reading one has to do.
   typeKind(t= /Catln/Type/UnionType(top, leafs, consts))= "union"
-  typeKind(t= /Catln/Type/TypeVar(aux, loc))= "var"
+  typeKind(t= /Catln/Type/TypeVar(aux, loc, inner))= "var"
 
   constCount(t -> /Catln/Type) -> Integer
     # [constCount] counts the constants a type holds, which reads a list field out of the type the
       whole compiler is written in terms of.
   constCount(t= /Catln/Type/UnionType(top, leafs, consts))= consts.length
-  constCount(t= /Catln/Type/TypeVar(aux, loc))= 0
+  constCount(t= /Catln/Type/TypeVar(aux, loc, inner))= 0
 
   > typeKind(t= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= []))
     >>> union

@@ -58,7 +58,7 @@ Prgm
                             ( EAppArg { eaaArg = Value /m -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg
                                 { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/Monad[ /T=TopType ]
+                                    ( EAppArg { eaaArg = Value /v } )
                                 }
                             ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
                         , /Data/Monad/mmap
@@ -69,13 +69,13 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/Monad[ /T=TopType ]
+                                    ( EAppArg { eaaArg = Value /v } )
                                 }
-                            ) -> ∀/Data/Monad[ /T=TopType ] =
+                            )=
                             ( /fn
                                 ( EAppArg
                                     { eaaArg = Value /v -> TVArg /value = ( Value /value ↦ TVArg /value ) }
-                                ) ↦ ∀/Data/Monad[ /T=TopType ]
+                                ) ↦ TopType
                             )
                         ]
                     }
@@ -149,26 +149,26 @@ Prgm
                             ( EAppArg { eaaArg = Value /this -> /Data/Maybe/Nothing } ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         , /Data/Algebra/equal
                             ( EAppArg
-                                { eaaArg = Value /other -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) = /Data/Maybe/Some
-                                    ( EAppArg { eaaArg = Value /value -> ∀/Data/Algebra/Eq } )
+                                { eaaArg = Value /other -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some
+                                    ( EAppArg { eaaArg = Value /value } )
                                 }
                             )
                             ( EAppArg { eaaArg = Value /this -> /Data/Maybe/Nothing } ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/Algebra/equal
                             ( EAppArg { eaaArg = Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg
-                                { eaaArg = Value /this -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) = /Data/Maybe/Some
-                                    ( EAppArg { eaaArg = Value /value -> ∀/Data/Algebra/Eq } )
+                                { eaaArg = Value /this -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some
+                                    ( EAppArg { eaaArg = Value /value } )
                                 }
                             ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/Algebra/equal
                             ( EAppArg
-                                { eaaArg = Value /other -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) = /Data/Maybe/Some
-                                    ( EAppArg { eaaArg = Value /value@Value /bv -> ∀/Data/Algebra/Eq } )
+                                { eaaArg = Value /other -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some
+                                    ( EAppArg { eaaArg = Value /value@Value /bv } )
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /this -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) = /Data/Maybe/Some
+                                { eaaArg = Value /this -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Maybe/Some
                                     ( EAppVar
                                         { eavName = /T
                                         , eavMeta = ∀/Data/Algebra/Eq
@@ -200,26 +200,26 @@ Prgm
                             ( EAppArg { eaaArg = Value /this -> /Data/Maybe/Nothing } ) -> /Data/Algebra/Equal = Value /Data/Algebra/Equal
                         , /Data/Algebra/compareTo
                             ( EAppArg
-                                { eaaArg = Value /other -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Ord ]( /value=$/T ) = /Data/Maybe/Some
-                                    ( EAppArg { eaaArg = Value /value -> ∀/Data/Algebra/Ord } )
+                                { eaaArg = Value /other -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some
+                                    ( EAppArg { eaaArg = Value /value } )
                                 }
                             )
                             ( EAppArg { eaaArg = Value /this -> /Data/Maybe/Nothing } ) -> /Data/Algebra/LessThan = Value /Data/Algebra/LessThan
                         , /Data/Algebra/compareTo
                             ( EAppArg { eaaArg = Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg
-                                { eaaArg = Value /this -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Ord ]( /value=$/T ) = /Data/Maybe/Some
-                                    ( EAppArg { eaaArg = Value /value -> ∀/Data/Algebra/Ord } )
+                                { eaaArg = Value /this -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some
+                                    ( EAppArg { eaaArg = Value /value } )
                                 }
                             ) -> /Data/Algebra/GreaterThan = Value /Data/Algebra/GreaterThan
                         , /Data/Algebra/compareTo
                             ( EAppArg
-                                { eaaArg = Value /other -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Ord ]( /value=$/T ) = /Data/Maybe/Some
-                                    ( EAppArg { eaaArg = Value /value@Value /bv -> ∀/Data/Algebra/Ord } )
+                                { eaaArg = Value /other -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some
+                                    ( EAppArg { eaaArg = Value /value@Value /bv } )
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /this -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Ord ]( /value=$/T ) = /Data/Maybe/Some
+                                { eaaArg = Value /this -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Ord ]( /value=∀/Data/Algebra/Ord ) = /Data/Maybe/Some
                                     ( EAppVar
                                         { eavName = /T
                                         , eavMeta = ∀/Data/Algebra/Ord
@@ -227,14 +227,14 @@ Prgm
                                     )
                                     ( EAppArg { eaaArg = Value /value@Value /av -> ∀/Data/Algebra/Ord } )
                                 }
-                            ) -> ∀/Data/Algebra/Comparison =
+                            ) -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
                             ( /Data/Algebra/compareTo
                                 ( EAppArg
                                     { eaaArg = Value /other -> TVArg /bv = ( Value /bv ↦ TVArg /bv ) }
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /this -> TVArg /av = ( Value /av ↦ TVArg /av ) }
-                                ) ↦ ∀/Data/Algebra/Comparison
+                                ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
                             )
                         ]
                     }
@@ -255,21 +255,21 @@ Prgm
             , cgcPartial = /Data/Maybe
             , cgcExtends =
                 [ ∀/Data/Maybe[ /T=∀/Data/Algebra/Eq ] ]
-            , cgcDoc = Just ""
+            , cgcDoc = Just "       "
             }
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Maybe
             , cgcExtends =
                 [ ∀/Data/Maybe[ /T=∀/Data/Algebra/Ord ] ]
-            , cgcDoc = Just ""
+            , cgcDoc = Just "       "
             }
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Maybe
             , cgcExtends =
                 [ ∀/Data/Maybe[ /T=$_/T ] ]
-            , cgcDoc = Just ""
+            , cgcDoc = Just "       "
             }
         , CGClass
             { cgcSealed = True
@@ -278,14 +278,14 @@ Prgm
                 [ /Data/Maybe/Some[ /T=$_/T ]( /value=$/T )
                 , /Data/Maybe/Nothing
                 ]
-            , cgcDoc = Just "A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]."
+            , cgcDoc = Just "A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]. A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]. A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]. A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]. A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]. A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]. A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]. A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]."
             }
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Maybe
             , cgcExtends =
                 [ ∀/Data/Maybe[ /T=$_/T ] ]
-            , cgcDoc = Just ""
+            , cgcDoc = Just "       "
             }
         ]
     , prgmAnnots =
@@ -374,10 +374,10 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /Data/Algebra/isLess
                         ( EAppArg
-                            { eaaArg = Value /this -> ∀/Data/Algebra/Comparison =
+                            { eaaArg = Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
                                 ( /Data/Algebra/compareTo
                                     ( EAppArg
-                                        { eaaArg = Value /other -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                                        { eaaArg = Value /other -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                                             ( EAppArg
                                                 { eaaArg = Value /value -> /Data/Primitive/Integer = 2 }
                                             )
@@ -389,7 +389,7 @@ Prgm
                                                 { eaaArg = Value /value -> /Data/Primitive/Integer = 1 }
                                             )
                                         }
-                                    ) ↦ ∀/Data/Algebra/Comparison
+                                    ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
                                 )
                             }
                         ) ↦ ∀/Data/Primitive/Boolean
@@ -404,10 +404,10 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /Data/Algebra/isEq
                         ( EAppArg
-                            { eaaArg = Value /this -> ∀/Data/Algebra/Comparison =
+                            { eaaArg = Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
                                 ( /Data/Algebra/compareTo
                                     ( EAppArg
-                                        { eaaArg = Value /other -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                                        { eaaArg = Value /other -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                                             ( EAppArg
                                                 { eaaArg = Value /value -> /Data/Primitive/Integer = 2 }
                                             )
@@ -419,7 +419,7 @@ Prgm
                                                 { eaaArg = Value /value -> /Data/Primitive/Integer = 2 }
                                             )
                                         }
-                                    ) ↦ ∀/Data/Algebra/Comparison
+                                    ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
                                 )
                             }
                         ) ↦ ∀/Data/Primitive/Boolean
@@ -434,16 +434,16 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /Data/Algebra/isGreater
                         ( EAppArg
-                            { eaaArg = Value /this -> ∀/Data/Algebra/Comparison =
+                            { eaaArg = Value /this -> /Data/Algebra/GreaterThan =
                                 ( /Data/Algebra/compareTo
                                     ( EAppArg { eaaArg = Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                                     ( EAppArg
-                                        { eaaArg = Value /this -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                                        { eaaArg = Value /this -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                                             ( EAppArg
                                                 { eaaArg = Value /value -> /Data/Primitive/Integer = 1 }
                                             )
                                         }
-                                    ) ↦ ∀/Data/Algebra/Comparison
+                                    ) ↦ /Data/Algebra/GreaterThan
                                 )
                             }
                         ) ↦ ∀/Data/Primitive/Boolean
@@ -520,7 +520,7 @@ Prgm
                                     )
                                     ( EAppArg
                                         { eaaArg = /fn
-                                            ( EAppArg { eaaArg = Value /v } ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                                            ( EAppArg { eaaArg = Value /v } ) -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                                             ( EAppArg
                                                 { eaaArg = Value /value -> /Data/Primitive/Integer = 6 }
                                             )

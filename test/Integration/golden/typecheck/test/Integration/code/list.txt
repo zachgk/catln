@@ -13,8 +13,9 @@ Prgm
                         , /llength
                             ( Value /this -> /Data/List/Cons
                                 ( /head=TopType
-                                , /tail=TopType
-                                ) = /Data/List/Cons( Value /head )( Value /tail )
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                ) = /Data/List/Cons( Value /head )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
                             ) ->
                             ( /operator+
                                 ( /r=/Data/Primitive/Integer
@@ -45,7 +46,7 @@ Prgm
                                 ( Value /l -> /Data/Primitive/Integer = /llength
                                     ( Value /this -> /Data/List/Cons
                                         ( /head=/Data/Primitive/Integer
-                                        , /tail=/Data/List/Cons
+                                        , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                             ( /head=/Data/Primitive/Integer
                                             , /tail=/Data/List/Nil
                                             )
@@ -53,7 +54,7 @@ Prgm
                                         ( Value /head -> /Data/Primitive/Integer = CInt
                                             { ciValue = 5 }
                                         )
-                                        ( Value /tail -> /Data/List/Cons
+                                        ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                             ( /head=/Data/Primitive/Integer
                                             , /tail=/Data/List/Nil
                                             ) = /Data/List/Cons

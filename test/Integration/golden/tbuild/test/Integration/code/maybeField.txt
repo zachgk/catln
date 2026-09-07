@@ -101,7 +101,7 @@ Prgm
             { cgcSealed = False
             , cgcPartial = /Dated
             , cgcExtends = [ /Dated.. ]
-            , cgcDoc = Just ""
+            , cgcDoc = Just "  "
             }
         ]
     , prgmAnnots =
@@ -132,7 +132,16 @@ Prgm
                         { eaaArg = Value /name -> /Data/String = "has one" }
                     )
                     ( EAppArg
-                        { eaaArg = Value /due -> /Data/Maybe/Some( /value=/Data/String ) = /Data/Maybe/Some
+                        { eaaArg = Value /due -> /Data/Maybe/Some
+                            [ /T=UnionType
+                                ( Nothing
+                                , ∅
+                                ,
+                                    [ CStr
+                                        { csValue = "2026-01-01" }
+                                    ]
+                                )
+                            ]( /value=/Data/String ) = /Data/Maybe/Some
                             ( EAppArg
                                 { eaaArg = Value /value -> /Data/String = "2026-01-01" }
                             )

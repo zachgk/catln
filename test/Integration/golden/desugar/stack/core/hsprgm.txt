@@ -108,6 +108,15 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/TypeVarLoc/TVParent"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/TypeVarLoc/TVParent ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Hole/HoleTodefine"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/Hole/HoleTodefine ]
@@ -601,7 +610,7 @@ Prgm
                 ( "/Catln/Type/TypeVar"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/Type/TypeVar( Value /aux -> ∀/Catln/TypeVarAux )( Value /loc -> ∀/Catln/TypeVarLoc ) ]
+                        [ /Catln/Type/TypeVar( Value /aux -> ∀/Catln/TypeVarAux )( Value /loc -> ∀/Catln/TypeVarLoc )( Value /inner -> ∀/Catln/Type ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -834,6 +843,7 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
         , CGClass
             { cgcSealed = True
             , cgcPartial = /Catln/CGNode
@@ -968,10 +978,11 @@ Prgm
                     )
                 , /Catln/Type/TypeVar
                     ( /aux=∀/Catln/TypeVarAux
+                    , /inner=∀/Catln/Type
                     , /loc=∀/Catln/TypeVarLoc
                     )
                 ]
-            , cgcDoc = Just "A set of types: what a value may be.A [UnionType] is the [leafs] and [consts] it holds, and — if it has a [top] — everything EXCEPT what that says: the [Triple] there is the conditions the universe is filtered by, the leafs taken out of it, and the constants taken out of it. So a type with no [top] is written by what it contains, and a type with one is written by what it does not.A [TypeVar] is a variable rather than a set: an [aux] saying which variable, and a [loc] saying whether it was defined on the type it is written in or outside it."
+            , cgcDoc = Just "A set of types: what a value may be.A [UnionType] is the [leafs] and [consts] it holds, and — if it has a [top] — everything EXCEPT what that says: the [Triple] there is the conditions the universe is filtered by, the leafs taken out of it, and the constants taken out of it. So a type with no [top] is written by what it contains, and a type with one is written by what it does not.A [TypeVar] is a variable rather than a set: an [aux] saying which variable, a [loc] saying whether it was defined on the type it is written in or outside it, and an [inner] the occurrence is known to be within. The occurrence is the variable and the inner together, so it means everything the variable can be that is also within the inner."
             }
         , CGClass
             { cgcSealed = True
@@ -1017,9 +1028,10 @@ Prgm
             , cgcPartial = /Catln/TypeVarLoc
             , cgcExtends =
                 [ /Catln/TypeVarLoc/TVInt
+                , /Catln/TypeVarLoc/TVParent
                 , /Catln/TypeVarLoc/TVExt
                 ]
-            , cgcDoc = Just "Where a type variable was defined: on the type it is written in ([TVInt], written `$T`), or on something outside it ([TVExt], written `$_T`).The difference is what the variable is resolved against, so it is part of what the variable IS rather than a note about it."
+            , cgcDoc = Just "Where a type variable was defined: on the type it is written in ([TVInt], written `$T`), on the nearest enclosing type ([TVParent]), or on the ambient object scope ([TVExt]). The latter two are both written `$_T`.The difference is what the variable is resolved against, so it is part of what the variable IS rather than a note about it."
             }
         ]
     , prgmAnnots =
@@ -1081,7 +1093,7 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "Where a type variable was defined: on the type it is written in ([TVInt], written `$T`), or on something outside it ([TVExt], written `$_T`)." }
+                { csValue = "Where a type variable was defined: on the type it is written in ([TVInt], written `$T`), on the nearest enclosing type ([TVParent]), or on the ambient object scope ([TVExt]). The latter two are both written `$_T`." }
             )
         , /Catln/#md
             ( Value /text= CStr
@@ -1097,7 +1109,7 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "A [TypeVar] is a variable rather than a set: an [aux] saying which variable, and a [loc] saying whether it was defined on the type it is written in or outside it." }
+                { csValue = "A [TypeVar] is a variable rather than a set: an [aux] saying which variable, a [loc] saying whether it was defined on the type it is written in or outside it, and an [inner] the occurrence is known to be within. The occurrence is the variable and the inner together, so it means everything the variable can be that is also within the inner." }
             )
         , /Catln/#md
             ( Value /text= CStr

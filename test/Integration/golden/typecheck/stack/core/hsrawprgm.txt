@@ -578,7 +578,7 @@ Prgm
                 [ /Catln/RawApplyTerm/RATermDeep( /expr=∀/Catln/RawExpr )
                 , /Catln/RawApplyTerm/RATermChild( /expr=∀/Catln/RawExpr )
                 ]
-            , cgcDoc = Just ""
+            , cgcDoc = Just " "
             }
         , CGClass
             { cgcSealed = True
@@ -661,7 +661,7 @@ Prgm
                     , /meta=/Catln/Meta
                     )
                 ]
-            , cgcDoc = Just "An expression as it was written, before the compiler reduces what was written to what it means.Where a [/Catln/Expr] is six arms, this is sixteen: the sugar is still here. A [RawMethod] is `a.b`, a [RawList] is `[a, b]`, a [RawFmtStrExpr] is a format string, a [RawTheExpr] is `:Name`, and a [RawParen] is a bracket that was written. Each of them becomes a [TupleApply] of something once desugaring is done.So this is what a program BUILDING a program writes, and [/Catln/Expr] is what a program READING one reads. An importer writes this."
+            , cgcDoc = Just "An expression as it was written, before the compiler reduces what was written to what it means.Where a [/Catln/Expr] is six arms, this is sixteen: the sugar is still here. A [RawMethod] is `a.b`, a [RawList] is `[a, b]`, a [RawFmtStrExpr] is a format string, a [RawTheExpr] is `:Name`, and a [RawParen] is a bracket that was written. Each of them becomes a [TupleApply] of something once desugaring is done.So this is what a program BUILDING a program writes, and [/Catln/Expr] is what a program READING one reads. An importer writes this. An expression as it was written, before the compiler reduces what was written to what it means.Where a [/Catln/Expr] is six arms, this is sixteen: the sugar is still here. A [RawMethod] is `a.b`, a [RawList] is `[a, b]`, a [RawFmtStrExpr] is a format string, a [RawTheExpr] is `:Name`, and a [RawParen] is a bracket that was written. Each of them becomes a [TupleApply] of something once desugaring is done.So this is what a program BUILDING a program writes, and [/Catln/Expr] is what a program READING one reads. An importer writes this."
             }
         , CGClass
             { cgcSealed = True
@@ -671,7 +671,7 @@ Prgm
                 , /Catln/RawStatement/RawBindStatement( /objArr=/Catln/RawObjArr )
                 , /Catln/RawStatement/RawAnnot( /annot=∀/Catln/RawExpr )
                 ]
-            , cgcDoc = Just "One statement of a page: a declaration, a bind written with `<-`, or an annotation.A [RawAnnot] is how a page's comments reach the program, since a doc comment is written as a [#md] annotation."
+            , cgcDoc = Just "One statement of a page: a declaration, a bind written with `<-`, or an annotation.A [RawAnnot] is how a page's comments reach the program, since a doc comment is written as a [#md] annotation. One statement of a page: a declaration, a bind written with `<-`, or an annotation.A [RawAnnot] is how a page's comments reach the program, since a doc comment is written as a [#md] annotation."
             }
         , CGClass
             { cgcSealed = True
@@ -682,7 +682,7 @@ Prgm
                 , /Catln/ReadPath/ReadDir( /path=/Data/String )
                 , /Catln/ReadPath/ReadTree( /path=/Data/String )
                 ]
-            , cgcDoc = Just "Something a reading of a page looked at, and how it looked at it.A [ReadFile] is a file whose text was read; a [ReadExists] is one a reading only found, which a write to does not change what was read. A [ReadDir] is a directory whose listing was read, and a [ReadTree] is a directory and everything under it.A page is read again exactly when one of these is written to, so an importer which leaves one out is one whose page goes stale, and one which reports more than it read is a page read more often than it need be."
+            , cgcDoc = Just "Something a reading of a page looked at, and how it looked at it.A [ReadFile] is a file whose text was read; a [ReadExists] is one a reading only found, which a write to does not change what was read. A [ReadDir] is a directory whose listing was read, and a [ReadTree] is a directory and everything under it.A page is read again exactly when one of these is written to, so an importer which leaves one out is one whose page goes stale, and one which reports more than it read is a page read more often than it need be. Something a reading of a page looked at, and how it looked at it.A [ReadFile] is a file whose text was read; a [ReadExists] is one a reading only found, which a write to does not change what was read. A [ReadDir] is a directory whose listing was read, and a [ReadTree] is a directory and everything under it.A page is read again exactly when one of these is written to, so an importer which leaves one out is one whose page goes stale, and one which reports more than it read is a page read more often than it need be."
             }
         , CGClass
             { cgcSealed = True
@@ -697,7 +697,7 @@ Prgm
                     , /expr=∀/Catln/RawExpr
                     )
                 ]
-            , cgcDoc = Just "A property written about a type: a projection ([TypePropProj]) or a relation ([TypePropRel]), each by [name] and the [expr] it is written over."
+            , cgcDoc = Just "A property written about a type: a projection ([TypePropProj]) or a relation ([TypePropRel]), each by [name] and the [expr] it is written over. A property written about a type: a projection ([TypePropProj]) or a relation ([TypePropRel]), each by [name] and the [expr] it is written over."
             }
         ]
     , prgmAnnots =

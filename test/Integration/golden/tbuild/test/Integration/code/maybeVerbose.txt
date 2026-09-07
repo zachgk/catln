@@ -30,7 +30,7 @@ Prgm
                                     { eaaArg = Value /val -> /Data/Primitive/Integer =
                                         ( /defInt
                                             ( EAppArg
-                                                { eaaArg = Value /x -> /Just( /val=/Data/Primitive/Integer ) = /Just
+                                                { eaaArg = Value /x -> /Just[ /T=/Data/Primitive/Integer ]( /val=/Data/Primitive/Integer ) = /Just
                                                     ( EAppArg
                                                         { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
                                                     )
@@ -55,7 +55,7 @@ Prgm
                     , omiDefs =
                         [ /defInt
                             ( EAppArg
-                                { eaaArg = Value /x -> /Just( /val=/Data/Primitive/Integer ) = /Just
+                                { eaaArg = Value /x -> /Just[ /T=/Data/Primitive/Integer ]( /val=/Data/Primitive/Integer ) = /Just
                                     ( EAppArg { eaaArg = Value /val -> /Data/Primitive/Integer } )
                                 }
                             ) -> TVArg /val = ( Value /val ↦ TVArg /val )
@@ -95,7 +95,7 @@ Prgm
                 [ /Just[ /T=TopType ]( /val=$_/T )
                 , /Data/Maybe/Nothing
                 ]
-            , cgcDoc = Just ""
+            , cgcDoc = Just "   "
             }
         ]
     , prgmAnnots =

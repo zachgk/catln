@@ -14,10 +14,12 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /this -> /Data/List/Cons
                                     ( /head=TopType
-                                    , /tail=TopType
+                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                     ) = /Data/List/Cons
                                     ( EAppArg { eaaArg = Value /head } )
-                                    ( EAppArg { eaaArg = Value /tail } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] }
+                                    )
                                 }
                             ) ->
                             ( /operator+
@@ -67,7 +69,7 @@ Prgm
                                                         ( EAppArg
                                                             { eaaArg = Value /this -> /Data/List/Cons
                                                                 ( /head=/Data/Primitive/Integer
-                                                                , /tail=/Data/List/Cons
+                                                                , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                                                     ( /head=/Data/Primitive/Integer
                                                                     , /tail=/Data/List/Nil
                                                                     )
@@ -76,7 +78,7 @@ Prgm
                                                                     { eaaArg = Value /head -> /Data/Primitive/Integer = 5 }
                                                                 )
                                                                 ( EAppArg
-                                                                    { eaaArg = Value /tail -> /Data/List/Cons
+                                                                    { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                                                                         ( /head=/Data/Primitive/Integer
                                                                         , /tail=/Data/List/Nil
                                                                         ) = /Data/List/Cons
