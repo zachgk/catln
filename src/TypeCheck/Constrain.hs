@@ -174,17 +174,24 @@ addArgToScheme env@FEnv{feTypeEnv} vaenv SType{stypeAct=srcAct, stypeReq=srcReq,
       Nothing             -> destReqDecl
 
 -- | A helper for the 'AddArg' 'Constraint'
+-- | A helper for the 'AddInferArg' 'Constraint'. The grafted source is met INTO the destination
+-- under the constraint's own var env, as 'addArgToScheme' does: the source carries the
+-- declaration's in-scope external references (@bindap[/M=∀Monad[/T=$_A]]@), and a meet that
+-- does not know the scope reads every such reference as the ⊤ it would denote unbound
+-- (@/M=∀Monad[/T=⊤]@) — an erasure the destination then keeps for good, since it is a
+-- same-set respelling no later write can distinguish. It went unnoticed only while the
+-- destination was still ⊤ at the first graft, where the meet is the identity.
 addInferArgToScheme :: FEnv -> STypeVarArgEnv -> SType -> SType -> SType
 addInferArgToScheme env@FEnv{feTypeEnv} vaenv SType{stypeAct=srcAct, stypeReq=srcReq, stypeReqDecl=srcReqDecl} dest@SType{stypeAct=destAct, stypeReq=destReq, stypeReqDecl=destReqDecl} = dest{stypeAct=destAct', stypeReq=destReq', stypeReqDecl=destReqDecl'}
   where
     destAct' = case addInferArgToType env (fmap stypeAct vaenv) srcAct of
-      Just addDestAct -> intersectTypes feTypeEnv destAct addDestAct
+      Just addDestAct -> snd $ intersectTypesWithVarEnv feTypeEnv (fmap stypeAct vaenv) destAct addDestAct
       Nothing         -> destAct
-    destReq' = case addInferArgToType env (fmap stypeAct vaenv) srcReq of
-      Just addDestReq -> intersectTypes feTypeEnv destReq addDestReq
+    destReq' = case addInferArgToType env (fmap stypeReq vaenv) srcReq of
+      Just addDestReq -> intersectTypesEnv feTypeEnv (fmap stypeReq vaenv) destReq addDestReq
       Nothing         -> destReq
-    destReqDecl' = case addInferArgToType env (fmap stypeAct vaenv) srcReqDecl of
-      Just addDestReqDecl -> intersectTypes feTypeEnv destReqDecl addDestReqDecl
+    destReqDecl' = case addInferArgToType env (fmap stypeReqDecl vaenv) srcReqDecl of
+      Just addDestReqDecl -> intersectTypesEnv feTypeEnv (fmap stypeReqDecl vaenv) destReqDecl addDestReqDecl
       Nothing             -> destReqDecl
 
 stypeConstraint :: SConstraint -> TypeCheckResult RConstraint
