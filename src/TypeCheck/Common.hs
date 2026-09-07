@@ -546,12 +546,24 @@ varPointerGained _ _ = False
 -- Mirrors the matching discipline of 'typeVarLost' (single same-name partial on each side;
 -- nested positions compared only on shared keys). Var LINKS are skipped — only two resolved
 -- dimension values are compared.
+--
+-- A slot's spelling may be a CLASS PREDICATE rather than a positive leaf: a declaration-bounded
+-- slot is read through the declaration as the class it names (@left=∀BinTree[/K=⊤, /V=⊤]@ under
+-- @Node[/K=⊤, /V=⊤]@), and its parameters follow the partial's own as they narrow
+-- (@left=∀BinTree[/K=∀Ord, /V=∀Eq]@ once @/K@ and @/V@ resolve). That is the same
+-- same-set-finer-spelling narrowing as a leaf's, judged equal by 'eqScheme' for the same reason,
+-- so the class atoms of a top are matched by name exactly like the leaves — otherwise a slot
+-- read before its partial's parameters narrowed keeps the ⊤ parameters for good, and the
+-- stored binder contradicts the parameter its field is declared to follow.
 nestedVarNarrowed :: TypeGraph tg => TypeEnv tg -> Type -> Type -> Bool
-nestedVarNarrowed typeEnv (UnionType _ oldLeafs _) (UnionType _ newLeafs _) =
+nestedVarNarrowed typeEnv old@UnionType{} new@UnionType{} =
   or [ partialNarrowed op np
-     | (name, [op]) <- H.toList (splitUnionTypeByName oldLeafs)
-     , Just [np] <- [H.lookup name (splitUnionTypeByName newLeafs)] ]
+     | (name, [op]) <- H.toList (namedPartials old)
+     , Just [np] <- [H.lookup name (namedPartials new)] ]
   where
+    namedPartials (UnionType mtop leafs _) = H.unionWith (++) (splitUnionTypeByName leafs) $ H.fromListWith (++)
+      [ (ptName p, [p]) | Just (preds, _, _) <- [mtop], Just atoms <- [tryPredsToList preds], PredClass p <- atoms ]
+    namedPartials TypeVar{} = H.empty
     partialNarrowed op np =
       or [ dimNarrowed ov nv | (k, ov) <- H.toList (ptVars op), Just nv <- [H.lookup k (ptVars np)] ]
       || or [ nestedVarNarrowed typeEnv ov nv | (k, ov) <- H.toList (ptArgs op), Just nv <- [H.lookup k (ptArgs np)] ]
