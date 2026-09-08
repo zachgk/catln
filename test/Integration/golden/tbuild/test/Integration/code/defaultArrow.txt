@@ -1,0 +1,70 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                    }
+                )
+            ,
+                ( "/f"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [
+                            (
+                                ( Value /f ↦ /f
+                                    ( /c=/Data/Primitive/Integer
+                                    , /b=/Data/Primitive/Integer
+                                    )
+                                )
+                            )( EAppArg Value /a -> /Data/Primitive/Integer )( EAppArg Value /b -> /Data/Primitive/Integer )( EAppArg Value /c -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer =
+                            ( /operator+
+                                ( EAppArg Value /l -> /Data/Primitive/Integer =
+                                    ( /operator+
+                                        ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
+                                        ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) ) ↦ /Data/Primitive/Integer
+                                    )
+                                )
+                                ( EAppArg Value /r -> TVArg /c = ( Value /c ↦ TVArg /c ) ) ↦ /Data/Primitive/Integer
+                            )
+                        , Value /f -> /f
+                            ( /c=/Data/Primitive/Integer
+                            , /b=/Data/Primitive/Integer
+                            ) = /f
+                            ( EAppArg Value /b -> /Data/Primitive/Integer = 2 )
+                            ( EAppArg Value /c -> /Data/Primitive/Integer = 3 )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "The default arrow. A name with no arguments applied is a value in its own right — the partial
+            application `f` has before anything is given to it — so an arrow may be written from it.
+            `f= f(b= 2, c= 3)` rewrites that bare `f`, and the `a` of `f(a= 1)` is applied on top of what the
+            rewrite produced, reaching the full `f(a, b, c)`. So `b` and `c` are defaults, supplied when the
+            call site does not give them. The defaults are distinct and non-zero, so the answer distinguishes
+            a default that landed in the wrong slot.
+            The same thing written under two names is `partialApply.ct`; what this file adds is that the name
+            is the SAME on both sides, which is what makes it a default rather than a second function. That
+            costs the form a self-reference at every stage: the arrow's body is built FROM the name the arrow
+            rewrites, so without a rule saying otherwise the arrow is defined in terms of itself. The rule is
+            that an arrow does not rewrite the base of its own body — `TypeCheck.TypeUtils.dropSelfBaseReach`
+            for the inferred type (whose result would otherwise never leave `TopType`), and the `ObjSrc` gate
+            in `TreeBuild.baseBuildMeta` for the tree built from it (which would otherwise recurse without
+            bound at eval, since each eval-time rebuild starts a fresh `VisitedArrows`)." )
+        ]
+    }

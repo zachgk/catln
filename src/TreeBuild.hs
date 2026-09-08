@@ -436,7 +436,7 @@ toTExpr env os (EWhere m b a) = do
 toTExpr env os (TupleApply m (bm, be) arg) = do
   be' <- case arg of
     EAppVar _ _ -> toTExprDest env os be m
-    _           -> toTExprDest env os be (baseBuildMeta env be bm)
+    _           -> toTExprDest env os be (baseBuildMeta env os be bm)
   arg' <- case arg of
     EAppArg a     -> do
       let baseIsData = maybe False (not . null . typeGraphData (tbTypeEnv env)) (maybeExprPath be)
@@ -462,16 +462,40 @@ toTExpr env os (TupleApply m (bm, be) arg) = do
 --
 -- Only a BARE value. A base that is itself an application is a call still being assembled, and its
 -- own arrows must wait for the arguments this level is adding rather than firing an arity short of
--- them. 'metaMightReduce' is the same cheap name-lookup pre-filter used below: with no res-env
+-- them. 'mightReduce' is the same cheap name-lookup pre-filter used below: with no res-env
 -- arrow for the name there is nothing to reduce, and this runs on every eval tree rebuild.
-baseBuildMeta :: TBEnv -> Expr TBMetaDat -> EvalMeta -> EvalMeta
-baseBuildMeta TBEnv{tbTypeEnv, tbResEnv} Value{} bm
-  | metaMightReduce = mWithType (reduceAppliedTypeFix tbTypeEnv H.empty (getMetaType bm)) bm
+--
+-- AN ARROW DOES NOT REWRITE THE BASE OF ITS OWN BODY, which is the rule
+-- 'TypeCheck.TypeUtils.dropSelfBaseReach' states at the type level and 'arrowFollowup' refuses
+-- outright ("Found cyclical use of function"). For the default arrow that rule is what makes the
+-- form mean anything at all: the @f@ on the right of @f= f(b= 2, c= 3)@ is the bare value the arrow
+-- rewrites, so rewriting it again is rewriting the arrow's input into its own output. Reducing it
+-- here would do exactly that, and the tree built from it recurses without bound — @evalObjArr@
+-- enters the arrow to evaluate its own base, and the build-time 'VisitedArrows' guard cannot see it
+-- because each eval-time rebuild ('Eval.Env.evalStartEArrow') starts a fresh one. The enclosing
+-- definitions are in hand as 'ObjSrc's, so a leaf naming one of them with its argument keys is left
+-- as it is and the rest of the base still reduces.
+baseBuildMeta :: TBEnv -> [ObjSrc] -> Expr TBMetaDat -> EvalMeta -> EvalMeta
+baseBuildMeta TBEnv{tbTypeEnv, tbResEnv} os Value{} bm = case getMetaType bm of
+  UnionType mTop leafs consts | any mightReduce others -> mWithType reduced' bm
+    where
+      (selfs, others) = partition isSelf (splitUnionType leafs)
+      reduced' = case selfs of
+        [] -> reduceAppliedTypeFix tbTypeEnv H.empty (getMetaType bm)
+        _  -> unionAllTypesWithEnv tbTypeEnv H.empty
+                (reduceAppliedTypeFix tbTypeEnv H.empty (UnionType mTop (joinUnionType others) consts)
+                 : map singletonType selfs)
+  _ -> bm
   where
-    metaMightReduce = case getMetaType bm of
-      UnionType _ leafs _ -> any (\PartialType{ptName} -> isJust (suffixLookupInDict ptName tbResEnv)) (splitUnionType leafs)
-      _                   -> False
-baseBuildMeta _ _ bm = bm
+    mightReduce PartialType{ptName} = isJust (suffixLookupInDict ptName tbResEnv)
+    isSelf PartialType{ptName, ptArgs} = S.member (makeAbsoluteName ptName, H.keysSet ptArgs) selfKeys
+    -- Named from the DEFINITION's own object, never from the 'ObjSrc' src partial beside it: that
+    -- partial is an unforced @getSingleton@ ('toTEObjArr'), and a definition whose object type is a
+    -- name ambiguity (@/Data/Algebra/eq + /eq@, which core has and eval tolerates) raises the moment
+    -- anything forces it.
+    selfKeys = S.fromList [ (makeAbsoluteName (oaObjPath oa), H.keysSet $ snd $ splitVarArgEnv $ exprVarArgs $ oaObjExpr oa)
+                          | (_, oa@ObjArr{oaObj=Just{}, oaArr=Just (Just{}, _)}) <- os ]
+baseBuildMeta _ _ _ bm = bm
 
 -- | The first Bool marks an ObjArr applied inside an expression ('EAppArg') as opposed to a root
 -- definition ('buildRootOA'); the second marks the application's base as a data construction
