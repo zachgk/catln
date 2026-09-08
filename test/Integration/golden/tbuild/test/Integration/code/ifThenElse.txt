@@ -91,12 +91,12 @@ Prgm
                         [ /abs.$8209a9
                             ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } )
                             ( EAppArg
-                                { eaaArg = Value /$8209a9-arg= Hole TopType HoleActive { haName = Nothing }@Value /Catln/Then }
+                                { eaaArg = Value /$8209a9-arg -> /Catln/Then = Value /Catln/Then }
                             ) -> TVArg /x = ( Value /x ↦ TVArg /x )
                         , /abs.$8209a9
                             ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } )
                             ( EAppArg
-                                { eaaArg = Value /$8209a9-arg= Hole TopType HoleActive { haName = Nothing }@Value /Catln/Else }
+                                { eaaArg = Value /$8209a9-arg -> /Catln/Else = Value /Catln/Else }
                             ) ->
                             ( /operator*
                                 ( /r=/Data/Primitive/Integer

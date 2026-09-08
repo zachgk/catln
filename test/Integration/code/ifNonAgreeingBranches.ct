@@ -1,0 +1,28 @@
+import "core"
+
+
+# An [if] whose two branches produce different values is just an [if], not a disagreement.
+  This is a regression test for a gap where such an [if] derived an overlap-agreement test pairing
+  its two branches against each other and reporting that they disagree — asserting, in effect, that
+  the [if] must not branch.
+  @deriveOverlapTests@ pairs same-name definitions whose domains intersect. The [if] declaration
+  preprocessor rewrites the arm into a generated function of one argument —
+  @/Catln/ThenElse/fromBool(v= <the condition>)@ — with one arm per branch. Those arms ought to have
+  disjoint domains, since a [/Catln/ThenElse] is one member or the other and never both. They did
+  not: each branch's [Then]/[Else] pattern was written as the ALIAS of a hole, and
+  @TypeCheck/Encode@ bounds an alias's base by the argument variable the alias NAMES rather than by
+  the alias's type — so the constructor constrained nothing, both arms sat at ⊤, and their domains
+  intersected. The pattern now goes in the argument position, where it destructures as any other
+  argument pattern does.
+  The same fix is what makes @caseGuardWrongBranch.ct@ select correctly; both were the branch
+  preprocessors putting a pattern somewhere it could not constrain anything.
+greet(name -> String, formal -> Boolean) -> String= if(formal)
+  Then= "Dear " ++ name
+
+  Else= "Hi " ++ name
+
+> greet(name= "Ada", formal= True)
+  >>> Dear Ada
+> greet(name= "Ada", formal= False)
+  >>> Hi Ada
+main{io -> IO}= io.exit(val= 0)

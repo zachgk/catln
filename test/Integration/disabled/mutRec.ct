@@ -2,11 +2,44 @@ import "core"
 import "core"
 
 
-# Tests two functions that are recursive by mutually calling each other.
+# DISABLED — a compiler gap, kept as the repro of it.
+  Two functions that recurse by calling each other. Neither recursion happens: [odd] answers 1 and
+  [even] answers 0 for every argument, so each call takes its own base-case arm no matter what the
+  guard says.
+    > odd(x= 4)   answers 1, and so does odd(x= 3)
+    > even(x= 4)  answers 0, and so does even(x= 3)
+  This is NOT the guard-selection gap that @code/caseGuardWrongBranch.ct@ records — that one is
+  fixed, and guards select correctly here in every form that does not cross two functions:
+    f(x -> Integer) | x == 0= 100
+    f(x -> Integer) else = 200
+  answers 100 at 0 and 200 at 3, with the same @==@ guard on the same argument shape.
+  What the mutual call adds is visible in a variant whose arms return unrelated constants:
+    p(x -> Integer) | x == 0= 10
+    p(x -> Integer) else = q(x= x - 1)
+    q(x -> Integer) | x == 0= 20
+    q(x -> Integer) else = p(x= x - 1)
+  which does not even typecheck — @Required type contains bottomType@ at [p]'s else arm. So the two
+  functions' result types are not being related across the cycle, and the arm whose body is the
+  cross-call is dropped rather than selected. Above, both arms happen to be [Integer] so it
+  typechecks and silently answers from the base case instead.
+  Note the original of this file asserted only through @io.exit@, which is not checked, so nothing
+  here failed until the print-goldens above were added.
 even(x -> Integer) | x == 0= 0
 even(x -> Integer) else = odd(x= x - 1)
 
 odd(x -> Integer) | x == 0= 1
 odd(x -> Integer) else = even(x= x - 1)
 
-main{io -> IO}= io.exit(val= odd(x= 4))
+# The goldens below are the CORRECT answers, which is why this file fails: each call should bounce
+#   through the other until it reaches zero, landing on [odd(x= 0)]'s 1 for an even argument and on
+#   [even(x= 0)]'s 0 for an odd one. Today [odd(x= 3)] and [even(x= 3)] each answer from their own
+#   base case instead.
+> odd(x= 4)
+  >>> 1
+> odd(x= 3)
+  >>> 0
+> even(x= 4)
+  >>> 0
+> even(x= 3)
+  >>> 1
+main{io -> IO}= io.exit(val= 0)

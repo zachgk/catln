@@ -141,8 +141,12 @@ completeTreeSet TBEnv{tbTypeEnv} fullPartial initialOptions
                -- Non-linear pattern: guarded by the implicit equality of its shared positions,
                -- so it must not count toward coverage (see the materialized loop below).
                (Just oa) | not (null (exprNonLinearArgGroups (oaObjExpr oa))) -> engineAux (opt:accArrows) accOpts True opts
-               -- Where-condition guard: counts toward coverage (the accHasConds workaround).
-               (Just oa) | not (null (exprWhereConds (oaObjExpr oa))) -> engineAux (opt:accArrows) (optType:accOpts) True opts
+               -- Where-condition guard: like a non-linear pattern, the condition may not pass, so
+               -- the arrow must not count toward coverage. Counting it let a guarded arm whose
+               -- DOMAIN already covers the source complete the tree set on its own, so its
+               -- siblings were dropped and 'buildGuards' then emitted the lone survivor
+               -- unconditionally — the guard was never evaluated.
+               (Just oa) | not (null (exprWhereConds (oaObjExpr oa))) -> engineAux (opt:accArrows) accOpts True opts
                _ -> engineAux (opt:accArrows) (optType:accOpts) accHasConds opts
         else engineAux accArrows accOpts accHasConds opts
 
@@ -175,7 +179,7 @@ completeTreeSet TBEnv{tbTypeEnv} fullPartial initialOptions
                -- For options that are guarded by conditions, don't increase the accumulation because the condition may not pass
                -- This will fix most if/else pieces, but can struggle with multiple conditions that combine to cover everything such as <0 and >=0.
                -- TODO Remove need for this additional check by using refinement types
-               (Just oa) | not (null (exprWhereConds (oaObjExpr oa))) -> aux (opt:accArrows) accType' True opts
+               (Just oa) | not (null (exprWhereConds (oaObjExpr oa))) -> aux (opt:accArrows) accType True opts
 
                -- Increase the a
                -- Add to accumulation and add the arrow

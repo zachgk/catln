@@ -59,6 +59,24 @@ type DeclPreprocessor = PDeclTree -> CRes [DPPRes]
 showDeclTrees :: [PDeclTree] -> String
 showDeclTrees trees = intercalate "" $ map (\(d, ss) -> build $ formatStatementTree True 0 $ RawStatementTree (RawDeclStatement d) ss) trees
 
+-- | Split a guarded arm into its pattern and its conditions: @x2 | x2 >= 0@ becomes
+-- @(x2, [x2 >= 0])@.
+--
+-- A branch arm's guard belongs to the generated arm as a whole, not to the pattern nested inside
+-- its argument. 'Semantics.exprWhereConds' reads only an 'AliasExpr' base, so a guard left inside
+-- the alias is invisible to it — and that is the field both 'TreeBuild.completeTreeSet' and
+-- 'TreeBuild.buildGuards' read to know an arm is guarded. Left there, the arm looked
+-- unconditional: it covered the source on its own, its siblings were dropped as adding nothing,
+-- and it was then run without its condition ever being evaluated.
+splitWhere :: RawExpr m -> (RawExpr m, [RawExpr m])
+splitWhere (RawWhere _ base cond) = let (base', cs) = splitWhere base in (base', cs ++ [cond])
+splitWhere e                      = (e, [])
+
+-- | Re-apply an arm's guards around the generated arm's whole object, which is where
+-- 'Semantics.exprWhereConds' looks for them.
+applyWheres :: (MetaDat m) => RawExpr m -> [RawExpr m] -> RawExpr m
+applyWheres = foldl (RawWhere emptyMetaN)
+
 ifDeclPreprocessor :: DeclPreprocessor
 ifDeclPreprocessor (roa@RawObjArr{roaObj=Just declObj, roaArr=Just (Just expr, _)}, subStatements) = return [DPPStatements [RawStatementTree (RawDeclStatement decl') (matchDecls ++ subStatements')]]
   where
@@ -75,8 +93,15 @@ ifDeclPreprocessor (roa@RawObjArr{roaObj=Just declObj, roaArr=Just (Just expr, _
     (subStatements', matchDecls) = partitionEithers $ map mapEitherMatchStatements subStatements
     mapEitherMatchStatements (RawStatementTree (RawDeclStatement RawObjArr{roaObj=(Just matchObj), roaAnnots, roaArr=(Just (Just matchExpr, matchDeclM))}) matchSubStatements) = Right (RawStatementTree (RawDeclStatement matchDeclLhs') matchSubStatements)
       where
-        matchArg = [(Just $ partialKey (mkName argName), RawAliasExpr (RawHoleExpr emptyMetaN (HoleActive Nothing)) matchObj)]
-        matchDeclLhs' = RawObjArr (Just $ rawVal condName `applyRawExprVars` H.toList (Nothing <$ exprAppliedVars declObj)`applyRawArgs` matchArg) FunctionObj Nothing roaAnnots (Just (Just matchExpr, matchDeclM)) Nothing
+        -- The guard is hoisted off the pattern onto the whole generated arm (see 'splitWhere').
+        (matchPat, matchConds) = splitWhere matchObj
+        -- The arm's pattern goes in the argument position, where it destructures exactly as a
+        -- function argument's pattern does: an unbound name binds, a constructor matches. Wrapping
+        -- it as @_\@pattern@ instead made it the ALIAS of a hole, and 'TypeCheck.Encode' bounds an
+        -- alias's base by the ARG VARIABLE THE ALIAS NAMES rather than by the alias's type — so a
+        -- constructor arm ([Then]/[Else]) constrained nothing and every arm shared one ⊤ domain.
+        matchArg = [(Just $ partialKey (mkName argName), matchPat)]
+        matchDeclLhs' = RawObjArr (Just $ applyWheres (rawVal condName `applyRawExprVars` H.toList (Nothing <$ exprAppliedVars declObj)`applyRawArgs` matchArg) matchConds) FunctionObj Nothing roaAnnots (Just (Just matchExpr, matchDeclM)) Nothing
 
     mapEitherMatchStatements statementTree@(RawStatementTree RawAnnot{} _) = Left statementTree
     mapEitherMatchStatements _ = error "Invalid subStatement in matchDeclPreprocessor"
@@ -98,8 +123,10 @@ matchDeclPreprocessor (roa@RawObjArr{roaObj=Just declObj, roaArr=Just (Just expr
     (subStatements', matchDecls) = partitionEithers $ map mapEitherMatchStatements subStatements
     mapEitherMatchStatements (RawStatementTree (RawDeclStatement RawObjArr{roaObj=(Just matchObj), roaAnnots, roaArr=(Just (Just matchExpr, _matchDeclM))}) matchSubStatements) = Right (RawStatementTree (RawDeclStatement matchDeclLhs') matchSubStatements)
       where
-        matchArg = [(Just $ partialKey (mkName argName), RawAliasExpr (RawHoleExpr emptyMetaN (HoleActive Nothing)) matchObj)]
-        matchDeclLhs' = RawObjArr (Just $ rawVal condName `applyRawExprVars` H.toList (Nothing <$ exprAppliedVars declObj) `applyRawArgs` matchArg) FunctionObj Nothing roaAnnots (Just (Just matchExpr, Nothing)) Nothing
+        -- The guard is hoisted off the pattern onto the whole generated arm (see 'splitWhere').
+        (matchPat, matchConds) = splitWhere matchObj
+        matchArg = [(Just $ partialKey (mkName argName), RawAliasExpr (RawHoleExpr emptyMetaN (HoleActive Nothing)) matchPat)]
+        matchDeclLhs' = RawObjArr (Just $ applyWheres (rawVal condName `applyRawExprVars` H.toList (Nothing <$ exprAppliedVars declObj) `applyRawArgs` matchArg) matchConds) FunctionObj Nothing roaAnnots (Just (Just matchExpr, Nothing)) Nothing
 
     mapEitherMatchStatements statementTree@(RawStatementTree RawAnnot{} _) = Left statementTree
     mapEitherMatchStatements _ = error "Invalid subStatement in matchDeclPreprocessor"
@@ -127,17 +154,25 @@ caseDeclPreprocessor (roa@RawObjArr{roaArr=Just (Just expr, _)}, subStatements) 
     initCase' = zipWith (curry buildInitCase) [0..] (init cases)
     buildInitCase (i, (RawObjArr{roaObj=(Just caseObj), roaAnnots, roaArr=(Just (Just caseExpr, _caseDeclM))}, caseSubStatements)) = [matchingCase, fallthroughCase]
       where
-        declObj = rawVal (condName i) `applyRawArgs` [(Just $ partialKey (mkName argName), RawAliasExpr (RawHoleExpr emptyMetaN (HoleActive Nothing)) caseObj)]
+        -- The guard is hoisted off the pattern and applied to the whole generated arm, so
+        -- 'exprWhereConds' can see it (see 'splitWhere').
+        (casePat, caseConds) = splitWhere caseObj
+        patObj = rawVal (condName i) `applyRawArgs` [(Just $ partialKey (mkName argName), RawAliasExpr (RawHoleExpr emptyMetaN (HoleActive Nothing)) casePat)]
+        declObj = applyWheres patObj caseConds
         matchingCase = RawStatementTree (RawDeclStatement (RawObjArr (Just declObj) FunctionObj Nothing roaAnnots (Just (Just caseExpr, Nothing)) Nothing)) caseSubStatements
         fallthroughExpr = applyRawArgs (rawVal (condName $ i + 1)) [(Just $ partialKey (mkName argName), matchingExpr)]
-        fallthroughCase = RawStatementTree (RawDeclStatement (RawObjArr (Just declObj) FunctionObj Nothing [rawVal elseAnnot] (Just (Just fallthroughExpr, Nothing)) Nothing)) []
+        -- The fallthrough runs when this case does NOT apply, so it carries the pattern without
+        -- the guard. Reusing the guarded object here made the else arm conditional on the very
+        -- condition whose failure it exists to catch.
+        fallthroughCase = RawStatementTree (RawDeclStatement (RawObjArr (Just patObj) FunctionObj Nothing [rawVal elseAnnot] (Just (Just fallthroughExpr, Nothing)) Nothing)) []
     buildInitCase (_, decl) = error $ printf "Missing expression in buildInitCase %s" (show decl)
 
     (lastCaseOa, lastCaseSubStatements) = last cases
     lastCaseObj = fromJust $ roaObj lastCaseOa
     lastCaseExpr = fromJust $ fst $ fromJust $ roaArr lastCaseOa
 
-    lastCaseDeclObj = rawVal (condName $ length cases - 1) `applyRawArgs` [(Just $ partialKey (mkName argName), RawAliasExpr (RawHoleExpr emptyMetaN (HoleActive Nothing)) lastCaseObj)]
+    (lastCasePat, lastCaseConds) = splitWhere lastCaseObj
+    lastCaseDeclObj = applyWheres (rawVal (condName $ length cases - 1) `applyRawArgs` [(Just $ partialKey (mkName argName), RawAliasExpr (RawHoleExpr emptyMetaN (HoleActive Nothing)) lastCasePat)]) lastCaseConds
     lastCase' = RawStatementTree (RawDeclStatement (RawObjArr (Just lastCaseDeclObj) FunctionObj Nothing [] (Just (Just lastCaseExpr, Nothing)) Nothing)) lastCaseSubStatements
     cases' = concat initCase' ++ [lastCase']
 caseDeclPreprocessor _ = fail "Invalid caseDeclPreprocessor"

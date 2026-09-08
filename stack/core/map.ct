@@ -43,14 +43,18 @@ module(Data/Map)
       into the [left] (smaller) or [right] (larger) subtree. [getStep] dispatches on the [Comparison]
       constructors, which is ordinary pattern matching rather than a hand-rolled branch helper.
     # TODO: [insert] and [remove] below carry the same three-way decision as guards on their own
-      arms, with no step function, and [get] should read the same way. It cannot yet: with guards,
-      [get]'s [else] arm fails to dispatch when the key reaches it through a higher-order lambda
-      parameter (which is [TopType]) — [Data/Set/isSubsetOf] goes [allBy] -> [fmap] -> [contains] ->
-      [get] and dies with "Found no matching conditions in evalTree". Spelling the third arm as an
-      explicit [isGreater] guard instead of [else] trades that for "Unfulfilled Declaration", since
-      three opaque guards cannot be proven total. A `match`/`case` over the [Comparison] is no better:
-      `match` compiles and then silently selects the wrong arm, and `case` drops the [Node] arm
-      entirely. So the step function stays here until guard dispatch works off a [TopType] scrutinee.
+      arms, with no step function, and [get] should read the same way. Two separate gaps still stop
+      it, both confirmed by trying:
+      Guards fail because [get] is reachable from [Data/Set/isSubsetOf] through [allBy] -> [fmap] ->
+      [contains], so the key arrives as a higher-order lambda's parameter, which is [TopType]. The
+      [else] arm then does not dispatch and the negative [isSubsetOf] example dies with "Found no
+      matching conditions in evalTree". (An explicit [isGreater] third guard instead of [else] trades
+      that for "Unfulfilled Declaration", since a chain of opaque guards cannot be proven total.)
+      A [match] over the [Comparison] now selects correctly — that gap is fixed, see
+      [test/Integration/code/caseGuardWrongBranch.ct] — but a branch inside a GENERIC definition
+      derives an overlap-agreement test whose generated inputs are all metavariables, and it fails
+      with "eval failed". The generated branch function has no declaration of its own, which is the
+      same root the [if] note in [test/Integration/code/ifNonAgreeingBranches.ct] describes.
   get(m= Leaf, key)= /Data/Maybe/Nothing
   get(m= Node(left, key@nk, value, right), key)= getStep(cmp= key.compareTo(other= nk), key= key, left= left, value= value, right= right)
 
@@ -87,8 +91,9 @@ module(Data/Map)
       updated map. Guards on its own arms carry the [key <=> nodeKey] decision: on equal keys the
       node keeps its key but takes the new [value]; otherwise the entry is inserted into the
       [left]/[right] subtree and the node is rebuilt around the result.
-    # TODO: same as [get] above — a `match`/`case` over the [Comparison] would avoid repeating the
-      [Node] destructure on three arms, but `match` selects the wrong arm and `case` drops the arm.
+    # TODO: a `match` over the [Comparison] would avoid repeating the [Node] destructure on three
+      arms. Arm selection itself is fixed now, but a branch inside a GENERIC definition still fails
+      its derived overlap-agreement test — see the [get] TODO above.
   insert(m= Leaf, key, value)= Node(left= Leaf, key= key, value= value, right= Leaf)
   insert(m= Node(left, key@nk, value@nv, right), key, value) | key.compareTo(other= nk).isEq= Node(left= left, key= nk, value= value, right= right)
   insert(m= Node(left, key@nk, value@nv, right), key, value) | key.compareTo(other= nk).isLess= Node(left= insert(m= left, key= key, value= value), key= nk, value= nv, right= right)
@@ -105,8 +110,9 @@ module(Data/Map)
       subtree's entries into the [right] one. (Because the map is order-independent, any tree
       holding exactly the surviving entries is a correct result; this merge avoids promoting a
       synthesized successor key.)
-    # TODO: same as [get] above — a `match`/`case` over the [Comparison] would avoid repeating the
-      [Node] destructure on three arms, but `match` selects the wrong arm and `case` drops the arm.
+    # TODO: a `match` over the [Comparison] would avoid repeating the [Node] destructure on three
+      arms. Arm selection itself is fixed now, but a branch inside a GENERIC definition still fails
+      its derived overlap-agreement test — see the [get] TODO above.
   remove(m= Leaf, key)= Leaf
   remove(m= Node(left, key@nk, value@nv, right), key) | key.compareTo(other= nk).isLess= Node(left= remove(m= left, key= key), key= nk, value= nv, right= right)
   remove(m= Node(left, key@nk, value@nv, right), key) | key.compareTo(other= nk).isGreater= Node(left= left, key= nk, value= nv, right= remove(m= right, key= key))

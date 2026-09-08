@@ -49,10 +49,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /abs.$a26cc5( Value /x -> /Data/Primitive/Integer )
-                            ( Value /$a26cc5-arg= Hole TopType HoleActive { haName = Nothing }@Value /x2 | /operator>=( Value /l -> TVArg /x = Value /x )
-                                ( Value /r -> /Data/Primitive/Integer = CInt
-                                    { ciValue = 0 }
-                                )
+                            ( Value /$a26cc5-arg= Hole TopType HoleActive { haName = Nothing }@Value /x2 ) | /operator>=( Value /l -> TVArg /x = Value /x )
+                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                { ciValue = 0 }
                             ) -> TVArg /x2 = Value /x2
                         , /abs.$a26cc5( Value /x -> /Data/Primitive/Integer )
                             ( Value /$a26cc5-arg= Hole TopType HoleActive { haName = Nothing }@Value /x2 ) ->

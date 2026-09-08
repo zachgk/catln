@@ -43,9 +43,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ abs.$8209a9( Value /x -> /Data/Primitive/Integer )
-                            ( Value /$8209a9-arg= Hole TopType HoleActive { haName = Nothing }@Value Then )= Value x
+                            ( Value /$8209a9-arg= Value Then )= Value x
                         , abs.$8209a9( Value /x -> /Data/Primitive/Integer )
-                            ( Value /$8209a9-arg= Hole TopType HoleActive { haName = Nothing }@Value Else )= /operator*
+                            ( Value /$8209a9-arg= Value Else )= /operator*
                             ( Value /l= /operator-
                                 ( Value /a= CInt
                                     { ciValue = 1 }

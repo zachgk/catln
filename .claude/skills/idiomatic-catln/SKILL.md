@@ -151,11 +151,16 @@ abs(x -> Integer) else = x
 - **Prefer dispatching on constructors over testing a value** where the shape allows it. Arms
   that pattern-match `Nil`/`Cons`, `Leaf`/`Node`, `True`/`False`, or `Equal`/`LessThan`/
   `GreaterThan` need no guard at all, and they are checked for coverage.
-- **Frontier — `match` and `case` over constructors misbehave inside a multi-arm definition.**
-  Constructor patterns as `match` arms compile and then *silently select the wrong arm*; as
-  `case` arms they make the enclosing pattern arm vanish ("Failed match in eval callTree").
-  Until that is fixed, use guards, or dispatch on constructors in a separate function that
-  takes the scrutinee as an argument.
+- **Frontier — a branch inside a *generic* definition fails its derived overlap test.** The
+  preprocessors rewrite an arm into a generated function that has no declaration of its own, so
+  in a generic definition `deriveOverlapTests` generates metavariable inputs for it and the test
+  dies with "eval failed". Dispatch on constructors in a separate declared function instead —
+  that is why `Data/Map/get` still routes through a `getStep`.
+- **Test a branch by running the branch that is not taken.** All four branching forms were
+  silently broken — a guarded arm was taken whether or not its guard held — while `case.ct`,
+  `match.ct`, `ifThenElse.ct` and `cond.ct` all passed, because each only ever evaluated a point
+  where both arms return the same value. An example that cannot distinguish the arms is not a
+  test of the branch.
 - **Frontier — a guard cannot dispatch off a `TopType` scrutinee.** If the compared value
   arrives through a higher-order lambda parameter (§6), the guard's `else` arm fails to match at
   runtime: "Found no matching conditions in evalTree". A function reachable from generic

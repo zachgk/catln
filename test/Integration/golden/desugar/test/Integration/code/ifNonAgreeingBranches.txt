@@ -1,0 +1,95 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/greet.$3420d8"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ greet.$3420d8( Value /name -> /Data/String )( Value /formal -> ∀/Data/Primitive/Boolean )
+                            ( Value /$3420d8-arg= Value Then )= /operator++
+                            ( Value /l= CStr
+                                { csValue = "Dear " }
+                            )( Value /r= Value name )
+                        , greet.$3420d8( Value /name -> /Data/String )( Value /formal -> ∀/Data/Primitive/Boolean )
+                            ( Value /$3420d8-arg= Value Else )= /operator++
+                            ( Value /l= CStr
+                                { csValue = "Hi " }
+                            )( Value /r= Value name )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= CInt
+                                { ciValue = 0 }
+                            )( Value /this= Value io )
+                        ]
+                    }
+                )
+            ,
+                ( "/greet"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ greet( Value name -> /Data/String )( Value formal -> ∀/Data/Primitive/Boolean )= greet.$3420d8( Value /name= Value /name )( Value /formal= Value /formal )
+                            ( Value /$3420d8-arg= /Catln/ThenElse/fromBool( Value /v= Value formal ) )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "An [if] whose two branches produce different values is just an [if], not a disagreement.
+                This is a regression test for a gap where such an [if] derived an overlap-agreement test pairing
+                its two branches against each other and reporting that they disagree — asserting, in effect, that
+                the [if] must not branch.
+                @deriveOverlapTests@ pairs same-name definitions whose domains intersect. The [if] declaration
+                preprocessor rewrites the arm into a generated function of one argument —
+                @/Catln/ThenElse/fromBool(v= <the condition>)@ — with one arm per branch. Those arms ought to have
+                disjoint domains, since a [/Catln/ThenElse] is one member or the other and never both. They did
+                not: each branch's [Then]/[Else] pattern was written as the ALIAS of a hole, and
+                @TypeCheck/Encode@ bounds an alias's base by the argument variable the alias NAMES rather than by
+                the alias's type — so the constructor constrained nothing, both arms sat at ⊤, and their domains
+                intersected. The pattern now goes in the argument position, where it destructures as any other
+                argument pattern does.
+                The same fix is what makes @caseGuardWrongBranch.ct@ select correctly; both were the branch
+                preprocessors putting a pattern somewhere it could not constrain anything." }
+            )
+        , /Catln/#print
+            ( Value /p= greet
+                ( Value name= CStr
+                    { csValue = "Ada" }
+                )( Value formal= Value True )
+            )
+            ( Value /result= CStr
+                { csValue = "Dear Ada" }
+            )
+        , /Catln/#print
+            ( Value /p= greet
+                ( Value name= CStr
+                    { csValue = "Ada" }
+                )( Value formal= Value False )
+            )
+            ( Value /result= CStr
+                { csValue = "Hi Ada" }
+            )
+        ]
+    }
