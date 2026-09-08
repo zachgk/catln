@@ -44,7 +44,7 @@ Prgm
                             ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) ->
                             ( /abs.$8209a9
                                 ( /x=/Data/Primitive/Integer
-                                , /$8209a9-arg=∀/Catln/ThenElse
+                                , /$8209a9-arg=( /Catln/Else + /Catln/Then )
                                 ) + /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
@@ -55,7 +55,7 @@ Prgm
                                     { eaaArg = Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /$8209a9-arg -> ∀/Catln/ThenElse =
+                                    { eaaArg = Value /$8209a9-arg -> ( /Catln/Else + /Catln/Then ) =
                                         ( /Catln/ThenElse/fromBool
                                             ( EAppArg
                                                 { eaaArg = Value /v -> ∀/Data/Primitive/Boolean =
@@ -68,7 +68,7 @@ Prgm
                                                         ) ↦ ∀/Data/Primitive/Boolean
                                                     )
                                                 }
-                                            ) ↦ ∀/Catln/ThenElse
+                                            ) ↦ ( /Catln/Else + /Catln/Then )
                                         )
                                     }
                                 ) ↦

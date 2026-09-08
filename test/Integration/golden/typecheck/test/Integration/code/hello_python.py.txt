@@ -76,12 +76,7 @@ Prgm
                                 )
                             , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                                 ( /head=∀/Data/Algebra/Ord
-                                , /tail=
-                                    ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                        ( /head=∀/Data/Algebra/Ord
-                                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                        )
-                                    )
+                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                 )
                             , []
                             ) = /sorted( Value /lst -> TVArg /lst = Value /lst )

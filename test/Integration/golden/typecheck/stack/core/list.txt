@@ -79,8 +79,8 @@ Prgm
                                     ( /head=TopType
                                     , /tail=TopType
                                     ) + /Data/List/Cons[ /T=∀/Data/ToString ]
-                                    ( /head=TopType
-                                    , /tail=TopType
+                                    ( /head=∀/Data/ToString
+                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                                     )
                                 ) = /Cons[ /T : ∀/Data/ToString ]( Value /head@Value /h )( Value /tail@Value /t )
                             ) -> /Data/String = /operator++
@@ -143,7 +143,18 @@ Prgm
                                 ) = /Data/List/Cons( Value /head )
                                 ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
                             )
-                            ( Value /acc -> ∀/Data/List/ConsList[ /T=TopType ] ) -> ∀/Data/List/ConsList = /reversed./Data/List/reverseOnto( Value /lst -> TVArg /tail = Value /tail )
+                            ( Value /acc -> ∀/Data/List/ConsList[ /T=TopType ] ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/List/ConsList
+                                , fromList []
+                                , []
+                                )
+                            , /Data/List/Cons[ /T=TopType ]
+                                ( /head=$/T
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                )
+                            , []
+                            ) = /reversed./Data/List/reverseOnto( Value /lst -> TVArg /tail = Value /tail )
                             ( Value /acc -> /Data/List/Cons[ /T=TopType ]
                                 ( /head=$/T
                                 , /tail=∀/Data/List/ConsList[ /T=TopType ]
@@ -184,7 +195,7 @@ Prgm
                                     , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                     ) + /sorted./Data/List/insertStep
                                     ( /head=∀/Data/Algebra/Ord
-                                    , /before=∀/Data/Primitive/Boolean
+                                    , /before=( /Data/Primitive/True + /Data/Primitive/False )
                                     , /t=TopType
                                     , /x=∀/Data/Algebra/Ord
                                     , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
@@ -193,7 +204,7 @@ Prgm
                                 )
                             , []
                             ) = /sorted./Data/List/insertStep( Value /t -> TVArg /t = Value /t )( Value /h -> TVArg /h = Value /h )
-                            ( Value /before -> ∀/Data/Primitive/Boolean = /Data/Algebra/isLessEq
+                            ( Value /before -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isLessEq
                                 ( Value /this -> ∀/Data/Algebra/Comparison = /Data/Algebra/compareTo( Value /other -> TVArg /head = Value /head )( Value /this -> TVArg /x = Value /x ) )
                             )( Value /x -> TVArg /x = Value /x )( Value /head -> TVArg /head = Value /head )( Value /tail -> TVArg /tail = Value /tail )
                         ]
@@ -286,7 +297,8 @@ Prgm
                             ( /head=/Data/Primitive/Integer
                             , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
                             ) = /Data/List/Cons( Value /head -> TVArg /i = Value /i )
-                            ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = /range./Data/List/rangeFrom
+                            ( Value /tail ->
+                                ( TopType | PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ] && PredClass /Data/List[ /T=/Data/Primitive/Integer ] ) = /range./Data/List/rangeFrom
                                 ( Value /i -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /i = Value /i )
                                     ( Value /r -> /Data/Primitive/Integer = CInt
                                         { ciValue = 1 }
@@ -353,27 +365,17 @@ Prgm
                                             )
                                         , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                                             ( /head=∀/Data/Algebra/Ord
-                                            , /tail=
-                                                ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                                    ( /head=∀/Data/Algebra/Ord
-                                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                                    )
-                                                )
+                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                             )
                                         , []
                                         )
                                     , /h=∀/Data/Algebra/Ord
                                     ) + /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                                     ( /head=∀/Data/Algebra/Ord
-                                    , /tail=
-                                        ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                            ( /head=∀/Data/Algebra/Ord
-                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                            )
-                                        )
+                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                     ) + /sorted./Data/List/insertStep[ /T=∀/Data/Algebra/Ord ]
                                     ( /head=∀/Data/Algebra/Ord
-                                    , /before=∀/Data/Primitive/Boolean
+                                    , /before=( /Data/Primitive/True + /Data/Primitive/False )
                                     , /t=TopType
                                     , /x=∀/Data/Algebra/Ord
                                     , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
@@ -390,12 +392,7 @@ Prgm
                                     )
                                 , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                                     ( /head=∀/Data/Algebra/Ord
-                                    , /tail=
-                                        ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                            ( /head=∀/Data/Algebra/Ord
-                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                            )
-                                        )
+                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                     )
                                 , []
                                 ) = /Data/List/sorted( Value /lst -> TVArg /t = Value /t )
@@ -596,18 +593,19 @@ Prgm
                         , /sorted./Data/List/insertStep( Value /t )( Value /h )[ /T : ∀/Data/Algebra/Ord ]( Value /before -> /Data/Primitive/False = Value /Data/Primitive/False )( Value /x -> ∀/Data/Algebra/Ord )( Value /head -> ∀/Data/Algebra/Ord )
                             ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> /Data/List/Cons
                             ( /head=∀/Data/Algebra/Ord
-                            , /tail=
-                                ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                    ( /head=$/T
-                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    )
-                                )
+                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                             ) = /Data/List/Cons( Value /head -> TVArg /head = Value /head )
-                            ( Value /tail ->
-                                ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                    ( /head=$/T
+                            ( Value /tail -> UnionType
+                                ( Just
+                                    ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                    ( /head=∀/Data/Algebra/Ord
                                     , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                     )
+                                , []
                                 ) = /sorted./Data/List/insert( Value /t -> TVArg /t = Value /t )( Value /h -> TVArg /h = Value /h )( Value /x -> TVArg /x = Value /x )( Value /lst -> TVArg /tail = Value /tail )
                             )
                         ]
@@ -934,18 +932,7 @@ Prgm
                 { csValue = "## Length" }
             )
         , /Catln/#print
-            ( Value /p -> UnionType
-                ( Just
-                    ( PredExpr /operator==
-                        ( /r=/Data/Primitive/True
-                        , /l=~nonNeg( /this=~/$this )
-                        ) && PredRel Integer && PredClass /Catln/Doc/DShow
-                    , fromList []
-                    , []
-                    )
-                , /Data/Primitive/Integer
-                , []
-                ) = /Data/List/length
+            ( Value /p -> /Data/Primitive/Integer = /Data/List/length
                 ( Value /this -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
@@ -1036,7 +1023,7 @@ Prgm
                 { csValue = "## Universal and existential quantifiers" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/List/all
+            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/List/all
                 ( Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/True ]
                     ( /head=/Data/Primitive/True
                     , /tail=/Data/List/Cons[ /T=/Data/Primitive/True ]
@@ -1055,7 +1042,7 @@ Prgm
                 { csValue = "True" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/List/all
+            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/List/all
                 ( Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/False ]
                     ( /head=/Data/Primitive/False
                     , /tail=/Data/List/Nil
@@ -1066,7 +1053,7 @@ Prgm
                 { csValue = "False" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/List/any
+            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/List/any
                 ( Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/True ]
                     ( /head=/Data/Primitive/True
                     , /tail=/Data/List/Nil
@@ -1077,7 +1064,7 @@ Prgm
                 { csValue = "True" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/List/any
+            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/List/any
                 ( Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/False ]
                     ( /head=/Data/Primitive/False
                     , /tail=/Data/List/Cons[ /T=/Data/Primitive/False ]
@@ -1177,21 +1164,15 @@ Prgm
                         ( !
                             ( PredClass /Data/List[ /T=/Data/Primitive/Integer ] ) && !
                             ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
-                        ) && PredClass /Catln/Doc/DShow && PredClass /Data/List[ /T=∀/Data/Algebra/Ord ]
+                        ) && PredClass /Catln/Doc/DShow
                     , fromList []
                     , []
                     )
                 , /Data/List/Cons
                     [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString ) ]
                     ( /head=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString )
-                    , /tail=
-                        ( /Data/List/Nil + /Data/List/Cons
-                            [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString ) ]
-                            ( /head=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString )
-                            , /tail=∀/Data/List/ConsList
-                                [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString ) ]
-                            )
-                        )
+                    , /tail=∀/Data/List/ConsList
+                        [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString ) ]
                     )
                 , []
                 ) = /Data/List/sorted
@@ -1239,21 +1220,15 @@ Prgm
                         ( !
                             ( PredClass /Data/List[ /T=/Data/Primitive/Integer ] ) && !
                             ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
-                        ) && PredClass /Catln/Doc/DShow && PredClass /Data/List[ /T=∀/Data/Algebra/Ord ]
+                        ) && PredClass /Catln/Doc/DShow
                     , fromList []
                     , []
                     )
                 , /Data/List/Cons
                     [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString ) ]
                     ( /head=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString )
-                    , /tail=
-                        ( /Data/List/Nil + /Data/List/Cons
-                            [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString ) ]
-                            ( /head=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString )
-                            , /tail=∀/Data/List/ConsList
-                                [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString ) ]
-                            )
-                        )
+                    , /tail=∀/Data/List/ConsList
+                        [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/ToString ) ]
                     )
                 , []
                 ) = /Data/List/sorted
@@ -1614,7 +1589,7 @@ Prgm
                 { csValue = "  before its extension ([Nil] before any [Cons])." }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Algebra/isLess
+            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isLess
                 ( Value /this -> ∀/Data/Algebra/Comparison = /Data/Algebra/compareTo
                     ( Value /other -> /Data/List/Cons
                         ( /head=/Data/Primitive/Integer
@@ -1638,7 +1613,7 @@ Prgm
                 { csValue = "True" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Algebra/isLess
+            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isLess
                 ( Value /this -> ∀/Data/Algebra/Comparison = /Data/Algebra/compareTo
                     ( Value /other -> /Data/List/Cons
                         ( /head=/Data/Primitive/Integer
@@ -1673,7 +1648,7 @@ Prgm
                 { csValue = "True" }
             )
         , /Catln/#print
-            ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Algebra/isEq
+            ( Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isEq
                 ( Value /this -> ∀/Data/Algebra/Comparison = /Data/Algebra/compareTo
                     ( Value /other -> /Data/List/Cons
                         ( /head=/Data/Primitive/Integer
@@ -1750,8 +1725,8 @@ Prgm
             )
         , /Catln/#print
             ( Value /p ->
-                ( TopType | PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ] && PredClass /Catln/Doc/DShow ) = /Data/List/append
-                ( Value /a -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                ( TopType | PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Catln/Doc/DShow ) = /Data/List/append
+                ( Value /a -> /Data/List/Cons
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/List/Nil
                     ) = /Data/List/Cons

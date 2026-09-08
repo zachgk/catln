@@ -360,7 +360,7 @@ Prgm
                             ( EAppArg { eaaArg = Value /b } )
                             ( EAppArg
                                 { eaaArg = Value /this -> /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] }
-                            ) -> ∀/Data/Algebra/Comparison =
+                            ) -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
                             ( /Data/Algebra/mkComparison
                                 ( EAppArg
                                     { eaaArg = Value /lt -> ∀/Data/Primitive/Boolean =
@@ -385,14 +385,14 @@ Prgm
                                             ) ↦ ∀/Data/Primitive/Boolean
                                         )
                                     }
-                                ) ↦ ∀/Data/Algebra/Comparison
+                                ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
                             )
                         , /Data/Algebra/compare
                             ( EAppArg { eaaArg = Value /a } )
                             ( EAppArg { eaaArg = Value /b } )
                             ( EAppArg
                                 { eaaArg = Value /this -> /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] }
-                            ) -> ∀/Data/Algebra/Comparison =
+                            ) -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
                             ( /Data/Algebra/mkComparison
                                 ( EAppArg
                                     { eaaArg = Value /lt -> ∀/Data/Primitive/Boolean =
@@ -417,7 +417,7 @@ Prgm
                                             ) ↦ ∀/Data/Primitive/Boolean
                                         )
                                     }
-                                ) ↦ ∀/Data/Algebra/Comparison
+                                ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
                             )
                         ]
                     }
@@ -607,7 +607,7 @@ Prgm
                     , omiDefs =
                         [ /Data/Algebra/compareTo
                             ( EAppArg { eaaArg = Value /other -> ∀/Data/Algebra/Ord } )
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer } ) -> ∀/Data/Algebra/Comparison =
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer } ) -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
                             ( /compare
                                 ( EAppArg
                                     { eaaArg = Value /a -> TVArg /this = ( Value /this ↦ TVArg /this ) }
@@ -623,11 +623,11 @@ Prgm
                                             ) ↦ ∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Integer ]
                                         )
                                     }
-                                ) ↦ ∀/Data/Algebra/Comparison
+                                ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
                             )
                         , /Data/Algebra/compareTo
                             ( EAppArg { eaaArg = Value /other -> ∀/Data/Algebra/Ord } )
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float } ) -> ∀/Data/Algebra/Comparison =
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float } ) -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
                             ( /compare
                                 ( EAppArg
                                     { eaaArg = Value /a -> TVArg /this = ( Value /this ↦ TVArg /this ) }
@@ -643,7 +643,7 @@ Prgm
                                             ) ↦ ∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Float ]
                                         )
                                     }
-                                ) ↦ ∀/Data/Algebra/Comparison
+                                ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
                             )
                         ]
                     }

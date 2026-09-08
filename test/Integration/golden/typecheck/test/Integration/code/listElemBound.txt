@@ -163,7 +163,7 @@ Prgm
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /countAll
                 ( Value /ks -> /Data/List/Cons
-                    [ /T=/Item( /n=/Data/Primitive/Integer ) ]
+                    [ /T=/Item( /n=TopType ) ]
                     ( /head=/Item( /n=/Data/Primitive/Integer )
                     , /tail=/Data/List/Cons
                         [ /T=/Item( /n=/Data/Primitive/Integer ) ]
@@ -200,7 +200,7 @@ Prgm
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /countCons
                 ( Value /ks -> /Data/List/Cons
-                    [ /T=/Item( /n=/Data/Primitive/Integer ) ]
+                    [ /T=/Item( /n=TopType ) ]
                     ( /head=/Item( /n=/Data/Primitive/Integer )
                     , /tail=/Data/List/Cons
                         [ /T=/Item( /n=/Data/Primitive/Integer ) ]

@@ -214,7 +214,7 @@ Prgm
                                 { eavName = /T
                                 , eavMeta = ∀/Data/Algebra/Eq
                                 }
-                            ) -> ∀/Data/Primitive/Boolean =
+                            ) -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                             ( /operator~
                                 ( EAppArg
                                     { eaaArg = Value /a -> ∀/Data/Primitive/Boolean =
@@ -227,7 +227,7 @@ Prgm
                                             ) ↦ ∀/Data/Primitive/Boolean
                                         )
                                     }
-                                ) ↦ ∀/Data/Primitive/Boolean
+                                ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
                             )
                         ]
                     }

@@ -371,7 +371,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                { eaaArg = Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                     ( /Data/Algebra/isLess
                         ( EAppArg
                             { eaaArg = Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
@@ -392,7 +392,7 @@ Prgm
                                     ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
                                 )
                             }
-                        ) ↦ ∀/Data/Primitive/Boolean
+                        ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
                     )
                 }
             )
@@ -401,7 +401,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                { eaaArg = Value /p -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                     ( /Data/Algebra/isEq
                         ( EAppArg
                             { eaaArg = Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
@@ -422,7 +422,7 @@ Prgm
                                     ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
                                 )
                             }
-                        ) ↦ ∀/Data/Primitive/Boolean
+                        ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
                     )
                 }
             )

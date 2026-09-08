@@ -125,10 +125,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /count
-                ( Value /ks -> /Data/List/Cons
-                    [ /T=
-                        ( /Mixed/Tagged( /value=/Data/String ) + /Mixed/Plain )
-                    ]
+                ( Value /ks -> /Data/List/Cons[ /T=∀/Mixed ]
                     ( /head=/Mixed/Plain
                     , /tail=/Data/List/Cons
                         [ /T=/Mixed/Tagged( /value=/Data/String ) ]
@@ -154,10 +151,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /count
-                ( Value /ks -> /Data/List/Cons
-                    [ /T=
-                        ( /Mixed/Tagged( /value=/Data/String ) + /Mixed/Plain )
-                    ]
+                ( Value /ks -> /Data/List/Cons[ /T=∀/Mixed ]
                     ( /head=/Mixed/Tagged( /value=/Data/String )
                     , /tail=/Data/List/Cons[ /T=/Mixed/Plain ]
                         ( /head=/Mixed/Plain
@@ -181,10 +175,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /count
-                ( Value /ks -> /Data/List/Cons
-                    [ /T=
-                        ( /Mixed/Tagged( /value=/Data/String ) + /Mixed/Plain )
-                    ]
+                ( Value /ks -> /Data/List/Cons[ /T=∀/Mixed ]
                     ( /head=/Mixed/Plain
                     , /tail=/Data/List/Cons
                         [ /T=
