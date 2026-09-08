@@ -43,6 +43,21 @@ module(Data/List)
 
   > [10, 20, 30].length
     >>> 3
+  # ## Folds
+    TODO: [sum], [all], [any], [append] and [reversed] below are each a fold with a different step
+    function, and should be written that way over one [foldr]/[foldl] rather than as five separate
+    two-arm recursions. A generic fold does not compile today. The blocker is not the binary step
+    function — a function argument may take two or three parameters, and a fold whose types are all
+    concrete works — but this shape:
+      foldr[$B](lst -> ConsList[$T -> Integer], fn(v -> Integer) -> $_B, init -> $_B) -> $_B
+      foldr(lst= Nil, fn(v), init)= init
+    fails with "Definition Outside Declaration ... Undeclared part: /foldr(/init, /lst)": the
+    definition's input type comes out as a union that drops the function argument. It is the
+    combination that breaks — a plain argument typed by a bare type variable ([init -> $_B]) in the
+    same definition as a function-typed argument. Either alone is fine: two plain arguments sharing
+    a type variable works, and a function argument whose output is a type variable works when no
+    plain argument is typed by one (that is why [fmap] and [mmap] are fine). A fold needs both, so
+    it is blocked until that is fixed.
   # ## Summing
   sum(lst -> /Data/List[$T -> Integer]) -> Integer
     # [sum] adds up a list of [Integer]s. The empty list sums to zero; a non-empty list adds its
@@ -75,6 +90,67 @@ module(Data/List)
     >>> True
   > /Data/List/any(lst= [False, False])
     >>> False
+  # ## Quantifying over a predicate
+    [all] and [any] read a list that already holds [Boolean]s. [allBy] and [anyBy] are the
+    higher-order forms: they take the list and a predicate, and ask the question of every element.
+    Both are written by [fmap]ping the predicate across the list and handing the resulting
+    [Boolean] list to [all]/[any] — the elements never have to be [Boolean] themselves, so these
+    work on a list of anything. The predicate is passed onward as [fn(v)= fn(v= v)] rather than
+    bare; a bare [fn] does not typecheck (see [Data/bind] for the same re-wrap).
+  allBy[$A](lst -> /Data/List/ConsList[$T -> $_A], fn(v -> $_A) -> Boolean) -> Boolean
+    # [allBy] is [True] when every element satisfies the predicate, and vacuously [True] for the
+      empty list.
+  allBy(lst, fn(v))= all(lst= /Data/Functor/fmap(lst= lst, fn(v)= fn(v= v)))
+
+  anyBy[$A](lst -> /Data/List/ConsList[$T -> $_A], fn(v -> $_A) -> Boolean) -> Boolean
+    # [anyBy] is [True] when at least one element satisfies the predicate, and [False] for the
+      empty list.
+  anyBy(lst, fn(v))= any(lst= /Data/Functor/fmap(lst= lst, fn(v)= fn(v= v)))
+
+  > /Data/List/allBy(lst= [1, 2, 3], fn(v)= v > 0)
+    >>> True
+  > /Data/List/allBy(lst= [1, 2, 3], fn(v)= v > 2)
+    >>> False
+  > /Data/List/allBy(lst= [], fn(v)= v > 2)
+    >>> True
+  > /Data/List/anyBy(lst= [1, 2, 3], fn(v)= v > 2)
+    >>> True
+  > /Data/List/anyBy(lst= [1, 2, 3], fn(v)= v > 9)
+    >>> False
+  > /Data/List/anyBy(lst= [], fn(v)= v > 0)
+    >>> False
+  # ## Membership
+  elem[$A -> /Data/Algebra/Eq](lst -> /Data/List/ConsList[$T -> $_A], item -> $A) -> Boolean
+    # [elem] is [True] when the list holds an element equal to [item]. It is [anyBy] with equality
+      as the predicate, so it works for any [Eq] element type rather than one concrete one.
+  elem(lst, item)= anyBy(lst= lst, fn(v)= v == item)
+
+  > /Data/List/elem(lst= [1, 2, 3], item= 2)
+    >>> True
+  > /Data/List/elem(lst= [1, 2, 3], item= 9)
+    >>> False
+  > /Data/List/elem(lst= [], item= 1)
+    >>> False
+  # ## Missing combinators
+    TODO: [filter], [concat] and [count] belong here beside [allBy]/[anyBy], and none of them
+    compiles for a general element type yet.
+    [filter] fails in every spelling tried. As guards on its own arms
+    ([filter(lst= Cons(head, tail), fn(v)) | fn(v= head)= ...]) it typechecks and then dies at the
+    first recursive step with "Found no matching conditions in evalTree". Written as
+    [mmap(m= lst, fn(v)= if(fn(v= v)) ...)] it does not parse — a branch in Catln is a declaration,
+    not an expression, so an [if] cannot sit inside an argument list. Written as a [match] on the
+    predicate result in the arm body it fails at eval the same way as the guard form. Routed through
+    [mmap] with a separate two-arm helper returning [[v]] or [[]] it fails in TreeBuild with
+    "Failed to build arrow tree from /fn(/v=TopType) to ∀ConsList". The monomorphic version (element
+    fixed to [Integer]) works in all of these, so the blocker is the polymorphic element: the
+    predicate's parameter is [TopType] (see [fnArgInputBound] in the compiler, which narrows a lambda
+    parameter only from a fully concrete type), and a [TopType] value cannot reach a declared slot.
+    [concat] — [mmap(m= lst, fn(v)= v)] — typechecks but the compiler loops when it is actually
+    evaluated ([catln: <<loop>>]).
+    [count] is [filter] plus [length], so it waits on [filter].
+    Note that [allBy]/[anyBy]/[elem] above work because they only ever pass the element onward into
+    another slot that is itself unconstrained; [filter] has to *use* the predicate's answer to choose
+    a branch, which is what fails.
   # ## Reversing
   reversed(lst -> /Data/List) -> /Data/List
     # [reversed] returns a list with its items in the opposite order. Since there is no
@@ -95,18 +171,14 @@ module(Data/List)
   sorted[$T -> /Data/Algebra/Ord](lst -> /Data/List[$T -> $_T]) -> /Data/List[$T -> $_T]
     # [sorted] returns the items of an [Ord] list in ascending order using insertion sort: it sorts
       the [tail], then [insert]s the [head] into the sorted result. [insert] walks the already
-      sorted list and places [x] before the first item it is not greater than; [insertStep] carries
-      the [x <= head] decision, splicing [x] in when [True] and recursing into the [tail] when
-      [False].
+      sorted list and places [x] before the first item it is not greater than — the [x <= head]
+      decision is a guard on [insert]'s own arms, so no separate step function holds it.
   sorted(lst= Nil)= Nil
   sorted(lst= Cons[$T -> /Data/Algebra/Ord](head@h, tail@t)) =
-    insertStep[$T -> /Data/Algebra/Ord](before -> Boolean, x -> $T, head -> $T, tail -> ConsList[$T -> /Data/Algebra/Ord]) -> ConsList[$T -> $_T]
-    insertStep[$T -> /Data/Algebra/Ord](before= /Data/Primitive/True, x, head, tail)= Cons(head= x, tail= Cons(head= head, tail= tail))
-    insertStep[$T -> /Data/Algebra/Ord](before= /Data/Primitive/False, x, head, tail)= Cons(head= head, tail= insert(x= x, lst= tail))
-
     insert[$T -> /Data/Algebra/Ord](x -> $T, lst -> ConsList[$T -> /Data/Algebra/Ord]) -> ConsList[$T -> $_T]
     insert(x, lst= Nil)= Cons(head= x, tail= Nil)
-    insert(x, lst= Cons[$T -> /Data/Algebra/Ord](head, tail))= insertStep(before= x.compareTo(other= head).isLessEq, x= x, head= head, tail= tail)
+    insert(x, lst= Cons[$T -> /Data/Algebra/Ord](head, tail)) | x.compareTo(other= head).isLessEq= Cons(head= x, tail= Cons(head= head, tail= tail))
+    insert(x, lst= Cons[$T -> /Data/Algebra/Ord](head, tail)) else = Cons(head= head, tail= insert(x= x, lst= tail))
     insert(x= h, lst= sorted(lst= t))
 
   > /Data/List/sorted(lst= [3, 1, 2])
@@ -116,17 +188,13 @@ module(Data/List)
   # ## Counting ranges
   range(stop -> Integer) -> /Data/List[$T -> Integer]
     # [range] builds the counting list [[0, 1, ..., stop - 1]]. It counts up from zero with
-      [rangeFrom], and [rangeStep] carries the [i < stop] decision: while the counter is below
-      [stop] it prepends the counter and recurses, and otherwise it stops with [Nil]. A [stop] of
-      zero or less yields the empty list.
+      [rangeFrom], whose guard carries the [i < stop] decision: while the counter is below [stop] it
+      prepends the counter and recurses, and otherwise it stops with [Nil]. A [stop] of zero or less
+      yields the empty list.
   range(stop) =
-    rangeFrom(i -> Integer, stop -> Integer) -> /Data/List[$T -> Integer]
-    rangeFrom(i, stop)= rangeStep(more= i < stop, i= i, stop= stop)
-
-    rangeStep(more -> Boolean, i -> Integer, stop -> Integer) -> ConsList[$T -> Integer]
-    rangeStep(more= /Data/Primitive/False, i, stop)= Nil
-    rangeStep(more= /Data/Primitive/True, i, stop)= Cons(head= i, tail= rangeFrom(i= i + 1, stop= stop))
-
+    rangeFrom(i -> Integer, stop -> Integer) -> ConsList[$T -> Integer]
+    rangeFrom(i, stop) | i < stop= Cons(head= i, tail= rangeFrom(i= i + 1, stop= stop))
+    rangeFrom(i, stop) else = Nil
     rangeFrom(i= 0, stop= stop)
 
   > /Data/List/range(stop= 3)

@@ -91,6 +91,11 @@ module(Data/Set)
   # ## Union
   addAll[$E -> /Data/Algebra/Ord](s -> /Data/Set[$T -> $_E], items -> /Data/List/ConsList[$T -> $_E]) -> /Data/Set[$T -> $_E]
     # [addAll] adds every item of a list into a set, one at a time. [union] builds on it.
+    # TODO: [addAll], [removeAll] and [intersectInto] are three copies of one fold over a
+      [ConsList], differing only in the step, and should each be a [/Data/List/foldl] call. A generic
+      fold does not compile — see the fold TODO at the top of [Data/list] for the exact shape and
+      error. Even once it does, these have a polymorphic accumulator (a [Set], not a concrete leaf),
+      which is the harder half of that problem.
   addAll(s, items= /Data/List/Nil)= s
   addAll(s, items= /Data/List/Cons(head, tail))= addAll(s= add(s= s, item= head), items= tail)
 
@@ -120,15 +125,16 @@ module(Data/Set)
   > contains(s= difference(a= add(s= add(s= empty, item= 1), item= 2), b= add(s= empty, item= 2)), item= 2)
     >>> False
   # ## Intersection
-  addIf[$E -> /Data/Algebra/Ord](cond -> Boolean, s -> /Data/Set[$T -> $_E], item -> $E) -> /Data/Set[$T -> $_E]
-    # [addIf] adds [item] to [s] when [cond] is [True], and leaves [s] unchanged otherwise.
-  addIf(cond= /Data/Primitive/True, s, item)= add(s= s, item= item)
-  addIf(cond= /Data/Primitive/False, s, item)= s
-
   intersectInto[$E -> /Data/Algebra/Ord](items -> /Data/List/ConsList[$T -> $_E], b -> /Data/Set[$T -> $_E], acc -> /Data/Set[$T -> $_E]) -> /Data/Set[$T -> $_E]
-    # [intersectInto] accumulates into [acc] each item of [items] that is also in [b].
+    # [intersectInto] accumulates into [acc] each item of [items] that is also in [b]. A guard on its
+      own arms decides whether the [head] joins the accumulator, so no [addIf] helper is needed.
+    # TODO: this should be [/Data/List/filter] over [elements] followed by [addAll] — "keep the items
+      of [a] that are in [b]" — rather than a hand-written walk. A polymorphic [filter] does not
+      compile today; see the missing-combinators TODO in [Data/list] for the spellings tried and the
+      error each gives. Until then the walk stays, with the keep/drop decision as a guard.
   intersectInto(items= /Data/List/Nil, b, acc)= acc
-  intersectInto(items= /Data/List/Cons(head, tail), b, acc)= intersectInto(items= tail, b= b, acc= addIf(cond= contains(s= b, item= head), s= acc, item= head))
+  intersectInto(items= /Data/List/Cons(head, tail), b, acc) | contains(s= b, item= head)= intersectInto(items= tail, b= b, acc= add(s= acc, item= head))
+  intersectInto(items= /Data/List/Cons(head, tail), b, acc) else = intersectInto(items= tail, b= b, acc= acc)
 
   intersection[$E -> /Data/Algebra/Ord](a -> /Data/Set[$T -> $_E], b -> /Data/Set[$T -> $_E]) -> /Data/Set[$T -> $_E]
     # [intersection] is the set of items in both [a] and [b] — [a]'s items kept when they are also in
@@ -142,14 +148,12 @@ module(Data/Set)
   > contains(s= intersection(a= add(s= add(s= empty, item= 1), item= 2), b= add(s= add(s= empty, item= 2), item= 3)), item= 1)
     >>> False
   # ## Subset
-  allIn[$E -> /Data/Algebra/Ord](items -> /Data/List/ConsList[$T -> $_E], s -> /Data/Set[$T -> $_E]) -> Boolean
-    # [allIn] is [True] when every item of [items] is in [s]. [isSubsetOf] builds on it.
-  allIn(items= /Data/List/Nil, s)= /Data/Primitive/True
-  allIn(items= /Data/List/Cons(head, tail), s)= contains(s= s, item= head) && allIn(items= tail, s= s)
-
   isSubsetOf[$E -> /Data/Algebra/Ord](a -> /Data/Set[$T -> $_E], b -> /Data/Set[$T -> $_E]) -> Boolean
-    # [isSubsetOf] is [True] when every item of [a] is in [b].
-  isSubsetOf(a, b)= allIn(items= elements(s= a), s= b)
+    # [isSubsetOf] is [True] when every item of [a] is in [b]. It asks [allBy] to run [contains]
+      over [a]'s items rather than walking them here: the question "is every item of this list in
+      that set" is [allBy] with [contains] as the predicate, so no set-specific list recursion is
+      needed. (This replaced a hand-written [allIn] that was the same walk inlined.)
+  isSubsetOf(a, b)= /Data/List/allBy(lst= elements(s= a), fn(v)= contains(s= b, item= v))
 
   > isSubsetOf(a= add(s= empty, item= 1), b= add(s= add(s= empty, item= 1), item= 2))
     >>> True

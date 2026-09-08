@@ -2,75 +2,6 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
-                ( "/Data/Set/allIn"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/Set/allIn
-                            ( EAppVar
-                                { eavName = /E
-                                , eavMeta = ∀/Data/Algebra/Ord
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /items -> ∀/Data/List/ConsList[ /T=$^/E ] }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /s -> ∀/Data/Set[ /T=$^/E ] }
-                            ) -> ∀/Data/Primitive/Boolean
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Set/allIn
-                            ( EAppArg { eaaArg = Value /items -> /Data/List/Nil = Value /Data/List/Nil } )
-                            ( EAppArg
-                                { eaaArg = Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] }
-                            ) -> /Data/Primitive/True = Value /Data/Primitive/True
-                        , /Data/Set/allIn
-                            ( EAppArg
-                                { eaaArg = Value /items -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                    ( /head=∀/Data/Algebra/Ord
-                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    ) = /Data/List/Cons
-                                    ( EAppArg { eaaArg = Value /head -> ∀/Data/Algebra/Ord } )
-                                    ( EAppArg
-                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] }
-                                    )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] }
-                            ) -> ∀/Data/Primitive/Boolean =
-                            ( /operator&&
-                                ( EAppArg
-                                    { eaaArg = Value /l -> ∀/Data/Primitive/Boolean =
-                                        ( /Data/Set/contains
-                                            ( EAppArg
-                                                { eaaArg = Value /s -> TVArg /s = ( Value /s ↦ TVArg /s ) }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /item -> TVArg /head = ( Value /head ↦ TVArg /head ) }
-                                            ) ↦ ∀/Data/Primitive/Boolean
-                                        )
-                                    }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /r -> ∀/Data/Primitive/Boolean =
-                                        ( /Data/Set/allIn
-                                            ( EAppArg
-                                                { eaaArg = Value /items -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /s -> TVArg /s = ( Value /s ↦ TVArg /s ) }
-                                            ) ↦ ∀/Data/Primitive/Boolean
-                                        )
-                                    }
-                                ) ↦ ∀/Data/Primitive/Boolean
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/Set/empty"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Set/empty -> ∀/Data/Set/MapSet ]
@@ -317,93 +248,18 @@ Prgm
                                 }
                             )
                             ( EAppArg { eaaArg = Value /item -> ∀/Data/Algebra/Ord } ) -> /Data/Set/MkSet
-                            ( /map=UnionType
-                                ( Just
-                                    ( PredClass /Data/Map
-                                        [ /K=TopType
-                                        , /V=TopType
-                                        ] && !
-                                        ( !
-                                            ( PredClass /Data/Map/BinTree
-                                                [ /K=∀/Data/Algebra/Ord
-                                                , /V=()
-                                                ]
-                                            ) && !
-                                            ( PredClass /Data/Map
-                                                [ /K=∀/Data/Algebra/Ord
-                                                , /V=()
-                                                ]
-                                            )
-                                        ) && !
-                                        ( !
-                                            ( PredClass /Data/Map/BinTree
-                                                [ /K=∀/Data/Algebra/Ord
-                                                , /V=()
-                                                ]
-                                            ) && !
-                                            ( PredClass /Data/Map
-                                                [ /K=∀/Data/Algebra/Ord
-                                                , /V=()
-                                                ]
-                                            )
-                                        )
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Map/Node
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=()
-                                    ]
-                                    ( /value=()
-                                    , /key=∀/Data/Algebra/Ord
-                                    , /right=∀/Data/Map/BinTree
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=()
-                                        ]
-                                    , /left=
-                                        ( TopType | PredClass /Data/Map
-                                            [ /K=∀/Data/Algebra/Ord
-                                            , /V=()
-                                            ] && PredClass /Data/Map/BinTree
-                                            [ /K=∀/Data/Algebra/Ord
-                                            , /V=()
-                                            ]
-                                        )
-                                    )
-                                , []
-                                )
+                            ( /map=∀/Data/Map
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=()
+                                ]
                             ) = /Data/Set/MkSet
                             ( EAppArg
                                 { eaaArg = Value /map -> UnionType
                                     ( Just
                                         ( PredClass /Data/Map
-                                            [ /K=TopType
-                                            , /V=TopType
-                                            ] && !
-                                            ( !
-                                                ( PredClass /Data/Map/BinTree
-                                                    [ /K=∀/Data/Algebra/Ord
-                                                    , /V=()
-                                                    ]
-                                                ) && !
-                                                ( PredClass /Data/Map
-                                                    [ /K=∀/Data/Algebra/Ord
-                                                    , /V=()
-                                                    ]
-                                                )
-                                            ) && !
-                                            ( !
-                                                ( PredClass /Data/Map/BinTree
-                                                    [ /K=∀/Data/Algebra/Ord
-                                                    , /V=()
-                                                    ]
-                                                ) && !
-                                                ( PredClass /Data/Map
-                                                    [ /K=∀/Data/Algebra/Ord
-                                                    , /V=()
-                                                    ]
-                                                )
-                                            )
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=()
+                                            ]
                                         , fromList []
                                         , []
                                         )
@@ -413,11 +269,7 @@ Prgm
                                         ]
                                         ( /value=()
                                         , /key=∀/Data/Algebra/Ord
-                                        , /right=∀/Data/Map/BinTree
-                                            [ /K=∀/Data/Algebra/Ord
-                                            , /V=()
-                                            ]
-                                        , /left=
+                                        , /right=
                                             ( TopType | PredClass /Data/Map
                                                 [ /K=∀/Data/Algebra/Ord
                                                 , /V=()
@@ -426,6 +278,10 @@ Prgm
                                                 , /V=()
                                                 ]
                                             )
+                                        , /left=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=()
+                                            ]
                                         )
                                     , []
                                     ) =
@@ -441,33 +297,9 @@ Prgm
                                         ) ↦ UnionType
                                         ( Just
                                             ( PredClass /Data/Map
-                                                [ /K=TopType
-                                                , /V=TopType
-                                                ] && !
-                                                ( !
-                                                    ( PredClass /Data/Map/BinTree
-                                                        [ /K=∀/Data/Algebra/Ord
-                                                        , /V=()
-                                                        ]
-                                                    ) && !
-                                                    ( PredClass /Data/Map
-                                                        [ /K=∀/Data/Algebra/Ord
-                                                        , /V=()
-                                                        ]
-                                                    )
-                                                ) && !
-                                                ( !
-                                                    ( PredClass /Data/Map/BinTree
-                                                        [ /K=∀/Data/Algebra/Ord
-                                                        , /V=()
-                                                        ]
-                                                    ) && !
-                                                    ( PredClass /Data/Map
-                                                        [ /K=∀/Data/Algebra/Ord
-                                                        , /V=()
-                                                        ]
-                                                    )
-                                                )
+                                                [ /K=∀/Data/Algebra/Ord
+                                                , /V=()
+                                                ]
                                             , fromList []
                                             , []
                                             )
@@ -477,11 +309,7 @@ Prgm
                                             ]
                                             ( /value=()
                                             , /key=∀/Data/Algebra/Ord
-                                            , /right=∀/Data/Map/BinTree
-                                                [ /K=∀/Data/Algebra/Ord
-                                                , /V=()
-                                                ]
-                                            , /left=
+                                            , /right=
                                                 ( TopType | PredClass /Data/Map
                                                     [ /K=∀/Data/Algebra/Ord
                                                     , /V=()
@@ -490,6 +318,10 @@ Prgm
                                                     , /V=()
                                                     ]
                                                 )
+                                            , /left=∀/Data/Map/BinTree
+                                                [ /K=∀/Data/Algebra/Ord
+                                                , /V=()
+                                                ]
                                             )
                                         , []
                                         )
@@ -547,6 +379,12 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /acc -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] }
+                            ) | /Data/Set/contains
+                            ( EAppArg
+                                { eaaArg = Value /s -> TVArg /b = ( Value /b ↦ TVArg /b ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /item -> TVArg /head = ( Value /head ↦ TVArg /head ) }
                             ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
@@ -610,19 +448,7 @@ Prgm
                                         )
                                     , []
                                     ) =
-                                    ( /Data/Set/addIf
-                                        ( EAppArg
-                                            { eaaArg = Value /cond -> ∀/Data/Primitive/Boolean =
-                                                ( /Data/Set/contains
-                                                    ( EAppArg
-                                                        { eaaArg = Value /s -> TVArg /b = ( Value /b ↦ TVArg /b ) }
-                                                    )
-                                                    ( EAppArg
-                                                        { eaaArg = Value /item -> TVArg /head = ( Value /head ↦ TVArg /head ) }
-                                                    ) ↦ ∀/Data/Primitive/Boolean
-                                                )
-                                            }
-                                        )
+                                    ( /Data/Set/add
                                         ( EAppArg
                                             { eaaArg = Value /s -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
                                         )
@@ -647,6 +473,71 @@ Prgm
                                         )
                                     )
                                 }
+                            )
+                        , /Data/Set/intersectInto
+                            ( EAppArg
+                                { eaaArg = Value /items -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                    ( /head=∀/Data/Algebra/Ord
+                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head -> ∀/Data/Algebra/Ord } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /acc -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] }
+                            ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                , fromList []
+                                , []
+                                )
+                            ,
+                                ( /Data/Set/intersectInto
+                                    ( /items=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                    , /acc=UnionType
+                                        ( Just
+                                            ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                            , fromList []
+                                            , []
+                                            )
+                                        , /Data/Set/MkSet
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=()
+                                            ]
+                                            ( /map=∀/Data/Map
+                                                [ /K=∀/Data/Algebra/Ord
+                                                , /V=()
+                                                ]
+                                            )
+                                        , []
+                                        )
+                                    , /b=∀/Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                    ) + /Data/Set/MkSet
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=()
+                                    ]
+                                    ( /map=∀/Data/Map
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=()
+                                        ]
+                                    )
+                                )
+                            , []
+                            ) = /Data/Set/intersectInto
+                            ( EAppArg
+                                { eaaArg = Value /items -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /b -> TVArg /b = ( Value /b ↦ TVArg /b ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /acc -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
                             )
                         ]
                     }
@@ -780,17 +671,17 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] }
                             ) -> ∀/Data/Primitive/Boolean =
-                            ( /Data/Set/allIn
+                            ( /Data/List/allBy
                                 ( EAppArg
-                                    { eaaArg = Value /items -> UnionType
+                                    { eaaArg = Value /lst -> UnionType
                                         ( Just
-                                            ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ]
+                                            ( PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Data/List[ /T=TopType ]
                                             , fromList []
                                             , []
                                             )
-                                        , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                        , /Data/List/Cons[ /T=TopType ]
                                             ( /head=$/T
-                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                            , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                             )
                                         , []
                                         ) =
@@ -799,13 +690,13 @@ Prgm
                                                 { eaaArg = Value /s -> TVArg /a = ( Value /a ↦ TVArg /a ) }
                                             ) ↦ UnionType
                                             ( Just
-                                                ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ]
+                                                ( PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Data/List[ /T=TopType ]
                                                 , fromList []
                                                 , []
                                                 )
-                                            , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                            , /Data/List/Cons[ /T=TopType ]
                                                 ( /head=$/T
-                                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                                 )
                                             , []
                                             )
@@ -813,88 +704,19 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /s -> TVArg /b = ( Value /b ↦ TVArg /b ) }
+                                    { eaaArg = /fn
+                                        ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/Primitive/Boolean =
+                                        ( /Data/Set/contains
+                                            ( EAppArg
+                                                { eaaArg = Value /s -> TVArg /b = ( Value /b ↦ TVArg /b ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /item -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                            ) ↦ ∀/Data/Primitive/Boolean
+                                        )
+                                    }
                                 ) ↦ ∀/Data/Primitive/Boolean
                             )
-                        ]
-                    }
-                )
-            ,
-                ( "/Data/Set/addIf"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/Set/addIf
-                            ( EAppVar
-                                { eavName = /E
-                                , eavMeta = ∀/Data/Algebra/Ord
-                                }
-                            )
-                            ( EAppArg { eaaArg = Value /cond -> ∀/Data/Primitive/Boolean } )
-                            ( EAppArg
-                                { eaaArg = Value /s -> ∀/Data/Set[ /T=$^/E ] }
-                            )
-                            ( EAppArg { eaaArg = Value /item -> $/E } ) -> ∀/Data/Set[ /T=$^/E ]
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Set/addIf
-                            ( EAppArg { eaaArg = Value /cond -> /Data/Primitive/True = Value /Data/Primitive/True } )
-                            ( EAppArg
-                                { eaaArg = Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] }
-                            )
-                            ( EAppArg { eaaArg = Value /item -> ∀/Data/Algebra/Ord } ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /Data/Set/add
-                                    ( /item=∀/Data/Algebra/Ord
-                                    , /s=∀/Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                    ) + /Data/Set/MkSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=()
-                                    ]
-                                    ( /map=∀/Data/Map
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=()
-                                        ]
-                                    )
-                                )
-                            , []
-                            ) =
-                            ( /Data/Set/add
-                                ( EAppArg
-                                    { eaaArg = Value /s -> TVArg /s = ( Value /s ↦ TVArg /s ) }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /item -> TVArg /item = ( Value /item ↦ TVArg /item ) }
-                                ) ↦ UnionType
-                                ( Just
-                                    ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Set/MkSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=()
-                                    ]
-                                    ( /map=∀/Data/Map
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=()
-                                        ]
-                                    )
-                                , []
-                                )
-                            )
-                        , /Data/Set/addIf
-                            ( EAppArg { eaaArg = Value /cond -> /Data/Primitive/False = Value /Data/Primitive/False } )
-                            ( EAppArg
-                                { eaaArg = Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] }
-                            )
-                            ( EAppArg { eaaArg = Value /item -> ∀/Data/Algebra/Ord } ) -> TVArg /s = ( Value /s ↦ TVArg /s )
                         ]
                     }
                 )
@@ -1625,11 +1447,7 @@ Prgm
                                         ]
                                         ( /value=$/V
                                         , /key=∀/Data/Algebra/Ord
-                                        , /right=∀/Data/Map/BinTree
-                                            [ /K=∀/Data/Algebra/Ord
-                                            , /V=$^/MV
-                                            ]
-                                        , /left=
+                                        , /right=
                                             ( TopType | PredClass /Data/Map
                                                 [ /K=∀/Data/Algebra/Ord
                                                 , /V=$^/MV
@@ -1638,6 +1456,10 @@ Prgm
                                                 , /V=$^/MV
                                                 ]
                                             )
+                                        , /left=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=$^/MV
+                                            ]
                                         )
                                     , []
                                     ) =
@@ -1662,11 +1484,7 @@ Prgm
                                             ]
                                             ( /value=$/V
                                             , /key=∀/Data/Algebra/Ord
-                                            , /right=∀/Data/Map/BinTree
-                                                [ /K=∀/Data/Algebra/Ord
-                                                , /V=$^/MV
-                                                ]
-                                            , /left=
+                                            , /right=
                                                 ( TopType | PredClass /Data/Map
                                                     [ /K=∀/Data/Algebra/Ord
                                                     , /V=$^/MV
@@ -1675,6 +1493,10 @@ Prgm
                                                     , /V=$^/MV
                                                     ]
                                                 )
+                                            , /left=∀/Data/Map/BinTree
+                                                [ /K=∀/Data/Algebra/Ord
+                                                , /V=$^/MV
+                                                ]
                                             )
                                         , []
                                         )
@@ -1704,8 +1526,6 @@ Prgm
         , CGType
         , CGType
         , CGType
-        , CGType
-        , CGType
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Set/MapSet
@@ -1715,7 +1535,7 @@ Prgm
                     , /V=$_/V
                     ]
                 ]
-            , cgcDoc = Just "                   "
+            , cgcDoc = Just "                 "
             }
         , CGClass
             { cgcSealed = False
@@ -1727,8 +1547,6 @@ Prgm
                     ]
                 ]
             , cgcDoc = Just " Every [MapSet] is a [Set], so each [Set] operation resolves on it through the arms below. The
-              empty set is [empty].  Every [MapSet] is a [Set], so each [Set] operation resolves on it through the arms below. The
-              empty set is [empty].  Every [MapSet] is a [Set], so each [Set] operation resolves on it through the arms below. The
               empty set is [empty].  Every [MapSet] is a [Set], so each [Set] operation resolves on it through the arms below. The
               empty set is [empty].  Every [MapSet] is a [Set], so each [Set] operation resolves on it through the arms below. The
               empty set is [empty].  Every [MapSet] is a [Set], so each [Set] operation resolves on it through the arms below. The
@@ -1765,7 +1583,7 @@ Prgm
                         ]
                     )
                 ]
-            , cgcDoc = Just "                   "
+            , cgcDoc = Just "                 "
             }
         ]
     , prgmAnnots =

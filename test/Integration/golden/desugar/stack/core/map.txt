@@ -20,8 +20,15 @@ Prgm
                     , omiDefs =
                         [ /Data/Map/remove( Value m= Value Leaf )( Value key )= Value Leaf
                         , /Data/Map/remove
-                            ( Value m= Node( Value left )( Value key@Value nk )( Value value@Value nv )( Value right ) )( Value key )= removeStep
-                            ( Value cmp= compareTo( Value other= Value nk )( Value /this= Value key ) )( Value left= Value left )( Value nk= Value nk )( Value nv= Value nv )( Value right= Value right )( Value key= Value key )
+                            ( Value m= Node( Value left )( Value key@Value nk )( Value value@Value nv )( Value right ) )( Value key ) | isLess
+                            ( Value /this= compareTo( Value other= Value nk )( Value /this= Value key ) )= Node
+                            ( Value left= remove( Value m= Value left )( Value key= Value key ) )( Value key= Value nk )( Value value= Value nv )( Value right= Value right )
+                        , /Data/Map/remove
+                            ( Value m= Node( Value left )( Value key@Value nk )( Value value@Value nv )( Value right ) )( Value key ) | isGreater
+                            ( Value /this= compareTo( Value other= Value nk )( Value /this= Value key ) )= Node( Value left= Value left )( Value key= Value nk )( Value value= Value nv )
+                            ( Value right= remove( Value m= Value right )( Value key= Value key ) )
+                        , /Data/Map/remove
+                            ( Value m= Node( Value left )( Value key@Value nk )( Value value@Value nv )( Value right ) )( Value key )= graft( Value from= Value left )( Value into= Value right )
                         ]
                     }
                 )
@@ -115,36 +122,6 @@ Prgm
                     , omiDefs =
                         [ /Data/Map/containsKey( Value m )( Value key ) -> ∀/Data/Primitive/Boolean = maybeContains
                             ( Value r= get( Value m= Value m )( Value key= Value key ) )
-                        ]
-                    }
-                )
-            ,
-                ( "/Data/Map/insertStep"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/Map/insertStep[ /MV : TopType ][ /MK : ∀/Data/Algebra/Ord ]( Value cmp -> ∀/Data/Algebra/Comparison )
-                            ( Value left -> ∀/Data/Map/BinTree
-                                [ /K=$^/MK
-                                , /V=$^/MV
-                                ]
-                            )( Value nk -> $/MK )( Value nv -> $/MV )
-                            ( Value right -> ∀/Data/Map/BinTree
-                                [ /K=$^/MK
-                                , /V=$^/MV
-                                ]
-                            )( Value key -> $/MK )( Value value -> $/MV ) -> ∀/Data/Map/BinTree
-                            [ /K=$^/MK
-                            , /V=$^/MV
-                            ]
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Map/insertStep( Value cmp= Value /Data/Algebra/Equal )( Value left )( Value nk )( Value nv )( Value right )( Value key )( Value value )= Node( Value left= Value left )( Value key= Value nk )( Value value= Value value )( Value right= Value right )
-                        , /Data/Map/insertStep( Value cmp= Value /Data/Algebra/LessThan )( Value left )( Value nk )( Value nv )( Value right )( Value key )( Value value )= Node
-                            ( Value left= insert( Value m= Value left )( Value key= Value key )( Value value= Value value ) )( Value key= Value nk )( Value value= Value nv )( Value right= Value right )
-                        , /Data/Map/insertStep( Value cmp= Value /Data/Algebra/GreaterThan )( Value left )( Value nk )( Value nv )( Value right )( Value key )( Value value )= Node( Value left= Value left )( Value key= Value nk )( Value value= Value nv )
-                            ( Value right= insert( Value m= Value right )( Value key= Value key )( Value value= Value value ) )
                         ]
                     }
                 )
@@ -292,8 +269,15 @@ Prgm
                     , omiDefs =
                         [ /Data/Map/insert( Value m= Value Leaf )( Value key )( Value value )= Node( Value left= Value Leaf )( Value key= Value key )( Value value= Value value )( Value right= Value Leaf )
                         , /Data/Map/insert
-                            ( Value m= Node( Value left )( Value key@Value nk )( Value value@Value nv )( Value right ) )( Value key )( Value value )= insertStep
-                            ( Value cmp= compareTo( Value other= Value nk )( Value /this= Value key ) )( Value left= Value left )( Value nk= Value nk )( Value nv= Value nv )( Value right= Value right )( Value key= Value key )( Value value= Value value )
+                            ( Value m= Node( Value left )( Value key@Value nk )( Value value@Value nv )( Value right ) )( Value key )( Value value ) | isEq
+                            ( Value /this= compareTo( Value other= Value nk )( Value /this= Value key ) )= Node( Value left= Value left )( Value key= Value nk )( Value value= Value value )( Value right= Value right )
+                        , /Data/Map/insert
+                            ( Value m= Node( Value left )( Value key@Value nk )( Value value@Value nv )( Value right ) )( Value key )( Value value ) | isLess
+                            ( Value /this= compareTo( Value other= Value nk )( Value /this= Value key ) )= Node
+                            ( Value left= insert( Value m= Value left )( Value key= Value key )( Value value= Value value ) )( Value key= Value nk )( Value value= Value nv )( Value right= Value right )
+                        , /Data/Map/insert
+                            ( Value m= Node( Value left )( Value key@Value nk )( Value value@Value nv )( Value right ) )( Value key )( Value value )= Node( Value left= Value left )( Value key= Value nk )( Value value= Value nv )
+                            ( Value right= insert( Value m= Value right )( Value key= Value key )( Value value= Value value ) )
                         ]
                     }
                 )
@@ -368,36 +352,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/Map/removeStep"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/Map/removeStep[ /MV : TopType ][ /MK : ∀/Data/Algebra/Ord ]( Value cmp -> ∀/Data/Algebra/Comparison )
-                            ( Value left -> ∀/Data/Map/BinTree
-                                [ /K=$^/MK
-                                , /V=$^/MV
-                                ]
-                            )( Value nk -> $/MK )( Value nv -> $/MV )
-                            ( Value right -> ∀/Data/Map/BinTree
-                                [ /K=$^/MK
-                                , /V=$^/MV
-                                ]
-                            )( Value key -> $/MK ) -> ∀/Data/Map
-                            [ /K=$^/MK
-                            , /V=$^/MV
-                            ]
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Map/removeStep( Value cmp= Value /Data/Algebra/LessThan )( Value left )( Value nk )( Value nv )( Value right )( Value key )= Node
-                            ( Value left= remove( Value m= Value left )( Value key= Value key ) )( Value key= Value nk )( Value value= Value nv )( Value right= Value right )
-                        , /Data/Map/removeStep( Value cmp= Value /Data/Algebra/GreaterThan )( Value left )( Value nk )( Value nv )( Value right )( Value key )= Node( Value left= Value left )( Value key= Value nk )( Value value= Value nv )
-                            ( Value right= remove( Value m= Value right )( Value key= Value key ) )
-                        , /Data/Map/removeStep( Value cmp= Value /Data/Algebra/Equal )( Value left )( Value nk )( Value nv )( Value right )( Value key )= graft( Value from= Value left )( Value into= Value right )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/Algebra/equal"
                 , ObjectMapItem
                     { omiDecls = []
@@ -439,8 +393,6 @@ Prgm
         }
     , prgmCg =
         [ CGType
-        , CGType
-        , CGType
         , CGType
         , CGType
         , CGType
@@ -873,7 +825,14 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "## Keys and values" }
+                { csValue = "## Keys and values
+                TODO: [size], [keys], [values], [graft] and [containedIn] are five in-order traversals of the
+                same tree — [keys] and [values] differ only in which field they cons — and should all be one
+                [foldEntries(m, fn(acc, key, value), init)] with five different step functions. A three-parameter
+                function argument is fine; what blocks it is the fold shape itself (a plain argument typed by a
+                bare type variable alongside a function-typed argument) — see the fold TODO at the top of
+                [Data/list]. [size] and [containedIn] have concrete accumulators and would come first; [keys],
+                [values] and [graft] accumulate a polymorphic container and are the harder half." }
             )
         , /Catln/#print
             ( Value /p= /operator==

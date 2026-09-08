@@ -4,9 +4,10 @@ description: >
   Use when writing or restructuring Catln (.ct/.ctx) source — standard library or user code —
   and you want it to read idiomatically: literate nested doc comments, #example print-golden
   tests placed beside each component, generic class declarations implemented by member arms,
-  the [ ] list sugar, and if/case/match/guard branching. Covers the syntax that actually works
-  today and the compiler frontiers to route around (recursive if/else, rendering
-  polymorphic-element results).
+  the [ ] list sugar, if/case/match/guard branching instead of hand-rolled dispatch helpers,
+  and the existing higher-order combinators instead of a fresh Nil/Cons recursion. Covers the
+  syntax that actually works today and the compiler frontiers to route around — chiefly the
+  TopType lambda-parameter rule that constrains all higher-order code.
 ---
 
 # Writing idiomatic Catln
@@ -67,8 +68,12 @@ webdocs) and as tests.
   values are compared against a `>>>` golden**. A `DShow`-but-not-`ToString` value (a webdocs
   visualization like `Show/MD`) is still displayed; it just produces no golden test (silently
   skipped).
-- When the result type is too polymorphic to render directly (see §7), compare instead:
+- On the rare result that cannot render directly (see §8), compare instead:
   `> (expr == known)` prints the `Boolean` (`True`/`False`), which is `ToString`.
+- **These are the tests for a stdlib operation.** A new `stack/core/` definition is covered by the
+  print-goldens written beside it — don't add a parallel file under `test/Integration/code/` to
+  re-test it. That directory is for exercising *compiler* behaviour (a syntax form, a dispatch
+  path), not for re-asserting what a stdlib example already asserts.
 - `#example` (annotation on a named value, holding `#assert`s) still exists and is right when you
   want property-style assertions rather than a shown value:
   ```catln
@@ -109,7 +114,120 @@ reversed(lst)= reverseOnto(lst= lst, acc= /Data/Nil)   # ConsList arms fulfil it
 - To keep an open interface (like `Functor`) from requiring total coverage, put a type's instance
   in its **own submodule** using absolute names, e.g. `module(Data/List)` with `/Data/fmap(...)=`.
 
-## 4. Nest single-use helpers inside the function that uses them
+## 4. Branch with real syntax — don't hand-roll a dispatch helper
+
+Catln has four branching forms. Reach for one before writing a `Boolean`-dispatched step
+function; they all desugar into exactly that generated declaration
+(`Syntax/Ct/Desugarf/Preprocessors.hs`, `if` via `/Catln/ThenElse/fromBool`), so a
+hand-written one is duplicated boilerplate.
+
+```catln
+abs(x -> Integer)= if(x >= 0)     # if/Then/Else — test/Integration/code/ifThenElse.ct
+  Then= x
+
+  Else= -1 * x
+
+abs(x -> Integer)= match(x)       # match — test/Integration/code/match.ct
+  x2 | x >= 0= x2
+  x2 else = x2 * -1
+
+abs(x -> Integer)= case(x)        # case — test/Integration/code/case.ct
+  x2 | x >= 0= x2
+  x2= x2 * -1
+
+abs(x -> Integer) | x >= 0= x     # arrow guards — test/Integration/code/cond.ct, fib.ct
+abs(x -> Integer) else = x
+```
+
+- **Arrow guards are the default choice.** They are the form that works inside generic,
+  recursive definitions, and they keep the decision on the function it belongs to. Examples in
+  `stack/core/`: `Data/Map/insert`, `Data/Map/remove`, `Data/List/range`, `Data/List/sorted`,
+  `Data/Set/intersectInto`.
+- **A branch is a declaration, not an expression** (`stack/rss/main.ct`). It is a whole arm
+  body — you cannot put an `if` inside an argument list or join one into a string
+  mid-expression. `mmap(m= lst, fn(v)= if(...) ...)` is a *parse error*.
+- **End a guard chain with `else`.** Spelling the last arm as another explicit guard gives
+  "Unfulfilled Declaration" — a chain of opaque guards can't be proven total.
+- **Prefer dispatching on constructors over testing a value** where the shape allows it. Arms
+  that pattern-match `Nil`/`Cons`, `Leaf`/`Node`, `True`/`False`, or `Equal`/`LessThan`/
+  `GreaterThan` need no guard at all, and they are checked for coverage.
+- **Frontier — `match` and `case` over constructors misbehave inside a multi-arm definition.**
+  Constructor patterns as `match` arms compile and then *silently select the wrong arm*; as
+  `case` arms they make the enclosing pattern arm vanish ("Failed match in eval callTree").
+  Until that is fixed, use guards, or dispatch on constructors in a separate function that
+  takes the scrutinee as an argument.
+- **Frontier — a guard cannot dispatch off a `TopType` scrutinee.** If the compared value
+  arrives through a higher-order lambda parameter (§6), the guard's `else` arm fails to match at
+  runtime: "Found no matching conditions in evalTree". A function reachable from generic
+  higher-order code therefore has to dispatch on constructors rather than on guards.
+
+## 5. Prefer a combinator to a fresh recursion
+
+A fresh two-arm `Nil`/`Cons` recursion is for **primitives only**: a `Functor`/`Monad`
+instance, a BST descent (`get`/`insert`), an unfold (`range`), or two-list lockstep
+(`equal`/`compareTo`). Anything else that walks a list should call a combinator.
+
+The combinators live in `stack/core/`; grep `stack/core/list.ct` for the current set rather than
+assuming one exists. At the time of writing:
+
+| Combinator | What it does |
+|---|---|
+| `/Data/Functor/fmap` | map a function over any `Functor` |
+| `/Data/Monad/mmap`, `pure` | concatMap / bind |
+| `/Data/List/allBy`, `anyBy` | quantify a *predicate* over a list of any element type |
+| `/Data/List/elem` | membership, via `anyBy` + `Eq` |
+| `/Data/List/all`, `any`, `sum` | aggregate a list that already holds `Boolean`/`Integer` |
+| `/Data/Map/mapValues` | map over a `BinTree`'s values |
+
+A combinator call also states the intent. `allBy(lst= elements(s= a), fn(v)= contains(s= b,
+item= v))` says "every item of `a` is in `b`" in one line; the equivalent `Nil`/`Cons` walk makes
+the reader reconstruct that from the recursion.
+
+- **Forward a function argument as `fn(v)= fn(v= v)`, never bare `fn`.** A bare `fn` fails with
+  "Actual type contains bottomType". Reference: `bind.ct`, `test/Integration/code/typeApply.ct`.
+- **Function arguments may take more than one parameter.** `fn(acc, v)` and `fn(acc, key,
+  value)` parse, typecheck and evaluate; arity is not a limit.
+- **The combinator set is deliberately small, and the gaps are compiler-blocked, not
+  oversights.** Before adding one, check the TODO comments in `stack/core/list.ct` — the
+  missing entries (`filter`, `concat`, folds) each record the spellings already tried and the
+  error each produced. §6 explains why most of them fail.
+
+## 6. The `TopType` lambda-parameter rule
+
+The single biggest trap in writing higher-order Catln. Read this before writing any function
+that takes a function.
+
+A call-site lambda's parameter is typed from the callee's declared input for that position, and
+**only when that type is fully concrete** (`TypeCheck/TypeUtils.hs`, `fnArgInputBound`, `guard
+(typeFullyConcrete inTy)`). `typeFullyConcrete` (`Semantics/Types.hs`) rejects a type variable
+*and* a class-predicate top — so `Boolean`, `/Data/List`, `/Data/Set`, `/Data/Maybe` all fail
+it. Only bare leaves like `Integer`, `String`, `True`, `Nil` pass.
+
+When it rejects, the parameter stays `TopType`. That survives **only** if the body passes it
+straight into another unconstrained slot; feeding it to a declared slot fails with
+"buildCallTree from top type" or "Failed to build arrow tree from /fn(/v=TopType) to …".
+
+```catln
+applyInc[$F -> /Data/Functor[$T -> $_A], $A, $B](lst -> $F, fn(v -> $_A) -> $_B) -> $F[$T -> $_B]
+applyInc(lst, fn(v))= /Data/Functor/fmap(lst= lst, fn(v)= fn(v= v))   # works: pure pass-through
+```
+
+- **Write generic higher-order code as a pass-through** — hand the element to another function
+  and hand that result on — and it works (`fmap`, `mmap`, `bindap`, `allBy`, `anyBy`). Make it
+  *consume* the lambda's answer to pick a branch or fill a declared slot and it breaks.
+- **Don't type a plain argument by a bare type variable in the same definition as a
+  function-typed argument.** `f[$B](fn(v -> Integer) -> $_B, init -> $_B) -> $_B` fails with
+  "Definition Outside Declaration … Undeclared part: `/f(/init)`" — the definition's input type
+  comes out as a union that drops the function argument. Either ingredient alone is fine (two
+  plain arguments may share a type variable; a function argument's *output* may be one, which is
+  what `fmap`/`mmap` do). This is what blocks a fold-shaped signature.
+- **Fix the element type to isolate.** If a generic combinator fails, write the same thing with
+  the element pinned to `Integer`. If that version works, you have hit this rule; if it fails
+  too, you have a different bug.
+- Symptoms: "buildCallTree from top type", "Actual type contains bottomType", "Failed to build
+  arrow tree from /fn(/v=TopType)", "Found no matching conditions in evalTree".
+
+## 7. Nest single-use helpers inside the function that uses them
 
 A helper used by exactly one function does not belong in the top-level namespace. Write the arm
 with a **bare `=` and nothing after it**, then indent the helper's declaration and arms, and put the
@@ -138,25 +256,17 @@ reversed(lst) =                                              # bare '=', body co
   still clashes. If the arm destructures `Cons(head, tail)` and the helper also binds `head`/`tail`
   in its own arm patterns, rename the arm's fields with `@` first (`f(lst= Cons(head@h, tail@t))= …`)
   so the curried names don't clash. Non-colliding curried args are harmless — the helper ignores them.
-- **Mutually-recursive helpers** (A calls B, B calls A — e.g. a `rangeFrom`/`rangeStep` pair) nest
-  as **siblings** under the one arm, so both names are in scope for the cross-reference.
-- **Method arms work** (`:Cons.toString= …`). A helper under a method arm (e.g. `restToString` for
-  `toString`) nests fine — the parent's element context is curried into the helper so its own
-  element-`.toString`/`.compareTo` calls resolve. (This used to fail with `Actual type contains
-  bottomType`; fixed by the call-site currying in `currySubFunctions`.)
-- **Frontier — keep generic `Ord`/`Eq`-dispatched helpers at top level.** Nesting a helper that is
-  generic in its element (`insert[$T -> /Data/Algebra/Ord]`) or wired into the `Eq`/`Ord`/`Comparison`
-  machinery (`consThen`, used inside the generic `Cons.compareTo` arm) tips the constraint solver
-  into a global `Scheme failed verification … Grows by` that surfaces at an *unrelated* definition.
-  This is a deeper solver-instability frontier, **independent of nesting** — a monomorphic
-  (`Integer`) version of the same helper nests cleanly. When nesting produces a "Grows by" error,
-  revert to top level. Both nesting forms behave identically here (the failure is in the solver, not
-  the body syntax).
-- **Net:** non-generic helpers nest cleanly under plain *and* method arms (`reverseOnto`/`reversed`,
-  `rangeFrom`+`rangeStep`/`range`, `restToString`/`toString`); only helpers tied to generic
-  `Ord`/`Eq` dispatch (`insert`, `consThen`) stay at top level until the solver frontier is resolved.
+- **Mutually-recursive helpers** (A calls B, B calls A) nest as **siblings** under the one arm, so
+  both names are in scope for the cross-reference.
+- **Method arms work** (`:Cons.toString= …`). A helper under a method arm nests fine — the parent's
+  element context is curried into the helper, so the helper's own element-`.toString`/`.compareTo`
+  calls resolve.
+- **Helpers generic in their element nest fine too**, including ones dispatched through `Ord`/`Eq`
+  (`insert[$T -> /Data/Algebra/Ord]` sits inside `sorted` in `stack/core/list.ct`). If nesting one
+  produces a `Scheme failed verification … Grows by` at some unrelated definition, that is a bug
+  worth a fresh minimal repro, not an expected limit.
 
-## 5. Syntax quick reference & gotchas
+## 8. Syntax quick reference & gotchas
 
 - **List sugar:** `[1, 2, 3]` desugars to `Cons(1, Cons(2, Cons(3, Nil)))`; `[]` is `Nil`. Use it.
 - **Named args are the norm:** `f(x= 5)`, `Cons(head= 1, tail= Nil)`. Positional field patterns
@@ -165,27 +275,23 @@ reversed(lst) =                                              # bare '=', body co
   `field= name` means "destructure the field against pattern `name`", which is different.
 - **Higher-order args include the nested parameter:** write `fn(v)` (with its parameter), not bare
   `fn`, in a definition that takes a function-typed argument.
-- **Mixed-singleton lists DO unify** (this note previously said they don't). `[True, False]`,
-  `[Some(value= 1), Nothing]` and a `Dir` holding both a `File` and a `Dir` all type-check today,
-  given a declared element type to widen to. Verify before routing around it.
+- **Mixed-singleton lists unify.** `[True, False]`, `[Some(value= 1), Nothing]` and a `Dir` holding
+  both a `File` and a `Dir` all type-check, given a declared element type to widen to.
 - **A field is read by destructuring, not by an accessor.** `Dir(name, entries)` in an arm pattern
   reaches `entries`; `d.entries` reaches nothing, whether or not the list under it is mixed. `.name`
   works only where something is *declared* as a method (`:/Data/List.length`). This is what makes
   `/Data/FileOrDir` look unusable at first — the accessor fails, not the type.
-- **Rendering a polymorphic-element result is a frontier.** `sorted`/`reversed` return a list whose
-  element type stays generic (`Ord`/existential), and the checker cannot reduce
-  `List[Ord] ∩ List[ToString]` to the concrete element — so printing the result directly (which
-  applies `toString`) fails to type-check. Render via comparison instead: `> (sorted(xs) == known)`
-  prints `True`. A result with a *concrete* element (`range -> List[$T -> Integer]`) or a scalar
-  (`sum -> Integer`) prints directly.
-- **Element-preserving return types can trip the solver.** Returning `List[$T -> $_T]` (existential
-  element) can push downstream `==`/`toString` into a "Grows by" scheme error. When it does, fall
-  back to an erased return (`-> /Data/List`) and verify with structural `==`.
+- **Rendering a generic-element result usually works — check before routing around it.** Lists with
+  a generic element render fine: `> /Data/List/sorted(lst= [3, 1, 2])` prints `[1, 2, 3]` and
+  `reversed` likewise, both live goldens in `stack/core/list.ct`. Where a result genuinely cannot
+  render (a `Set` built through the generic `add`, whose item type stays the abstract `Ord` bound —
+  see the note in `stack/core/set.ct`), compare instead: `> (expr == known)` prints `True`, which is
+  `ToString`. Try printing first; only fall back to comparison when it actually fails.
 - **Formatting:** `stack exec catln -- fmt <file>` formats one file; `make ctformat` formats the
   whole repo (large diff — mention unrelated churn rather than committing it). `.ct` uses 2-space
   indent.
 
-## 5. Process
+## 9. Process
 
 1. Write the definition + its nested doc + a print-golden example together.
 2. `stack exec catln -- run <scratch importing core>` to type-check fast, then

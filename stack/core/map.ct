@@ -40,7 +40,17 @@ module(Data/Map)
   get[$MK -> /Data/Algebra/Ord, $MV](m -> /Data/Map[$K -> $_MK, $V -> $_MV], key -> $MK) -> /Data/Maybe[$T -> $_MV]
     # [get] finds the [value] stored under [key], or [Nothing] if the key is absent. It compares
       [key] against the node's key and, guided by [getStep], returns the value on [Equal] or descends
-      into the [left] (smaller) or [right] (larger) subtree.
+      into the [left] (smaller) or [right] (larger) subtree. [getStep] dispatches on the [Comparison]
+      constructors, which is ordinary pattern matching rather than a hand-rolled branch helper.
+    # TODO: [insert] and [remove] below carry the same three-way decision as guards on their own
+      arms, with no step function, and [get] should read the same way. It cannot yet: with guards,
+      [get]'s [else] arm fails to dispatch when the key reaches it through a higher-order lambda
+      parameter (which is [TopType]) — [Data/Set/isSubsetOf] goes [allBy] -> [fmap] -> [contains] ->
+      [get] and dies with "Found no matching conditions in evalTree". Spelling the third arm as an
+      explicit [isGreater] guard instead of [else] trades that for "Unfulfilled Declaration", since
+      three opaque guards cannot be proven total. A `match`/`case` over the [Comparison] is no better:
+      `match` compiles and then silently selects the wrong arm, and `case` drops the [Node] arm
+      entirely. So the step function stays here until guard dispatch works off a [TopType] scrutinee.
   get(m= Leaf, key)= /Data/Maybe/Nothing
   get(m= Node(left, key@nk, value, right), key)= getStep(cmp= key.compareTo(other= nk), key= key, left= left, value= value, right= right)
 
@@ -74,39 +84,33 @@ module(Data/Map)
   # ## Insertion
   insert[$MK -> /Data/Algebra/Ord, $MV](m -> /Data/Map[$K -> $_MK, $V -> $_MV], key -> $MK, value -> $MV) -> /Data/Map[$K -> $_MK, $V -> $_MV]
     # [insert] adds an entry, or replaces the value if the key is already present, returning the
-      updated map. It compares [key] against the node's key and, guided by [insertStep], rebuilds the
-      node with the entry placed into the correct subtree (or the value replaced on [Equal]).
-  insert(m= Leaf, key, value)= Node(left= Leaf, key= key, value= value, right= Leaf)
-  insert(m= Node(left, key@nk, value@nv, right), key, value)= insertStep(cmp= key.compareTo(other= nk), left= left, nk= nk, nv= nv, right= right, key= key, value= value)
-
-  insertStep[$MK -> /Data/Algebra/Ord, $MV](cmp -> /Data/Algebra/Comparison, left -> BinTree[$K -> $_MK, $V -> $_MV], nk -> $MK, nv -> $MV, right -> BinTree[$K -> $_MK, $V -> $_MV], key -> $MK, value -> $MV) -> BinTree[$K -> $_MK, $V -> $_MV]
-    # [insertStep] carries the [key <=> nodeKey] decision for [insert]: on [Equal] the node keeps its
-      key but takes the new [value]; on [LessThan]/[GreaterThan] the entry is inserted into the
+      updated map. Guards on its own arms carry the [key <=> nodeKey] decision: on equal keys the
+      node keeps its key but takes the new [value]; otherwise the entry is inserted into the
       [left]/[right] subtree and the node is rebuilt around the result.
-  insertStep(cmp= /Data/Algebra/Equal, left, nk, nv, right, key, value)= Node(left= left, key= nk, value= value, right= right)
-  insertStep(cmp= /Data/Algebra/LessThan, left, nk, nv, right, key, value)= Node(left= insert(m= left, key= key, value= value), key= nk, value= nv, right= right)
-  insertStep(cmp= /Data/Algebra/GreaterThan, left, nk, nv, right, key, value)= Node(left= left, key= nk, value= nv, right= insert(m= right, key= key, value= value))
+    # TODO: same as [get] above — a `match`/`case` over the [Comparison] would avoid repeating the
+      [Node] destructure on three arms, but `match` selects the wrong arm and `case` drops the arm.
+  insert(m= Leaf, key, value)= Node(left= Leaf, key= key, value= value, right= Leaf)
+  insert(m= Node(left, key@nk, value@nv, right), key, value) | key.compareTo(other= nk).isEq= Node(left= left, key= nk, value= value, right= right)
+  insert(m= Node(left, key@nk, value@nv, right), key, value) | key.compareTo(other= nk).isLess= Node(left= insert(m= left, key= key, value= value), key= nk, value= nv, right= right)
+  insert(m= Node(left, key@nk, value@nv, right), key, value) else = Node(left= left, key= nk, value= nv, right= insert(m= right, key= key, value= value))
 
   > get(m= insert(m= insert(m= Leaf, key= 1, value= 10), key= 1, value= 99), key= 1) == /Data/Maybe/Some(value= 99)
     >>> True
   # ## Removal
   remove[$MK -> /Data/Algebra/Ord, $MV](m -> /Data/Map[$K -> $_MK, $V -> $_MV], key -> $MK) -> /Data/Map[$K -> $_MK, $V -> $_MV]
     # [remove] deletes the entry for [key], returning the updated map (unchanged if the key is
-      absent). It compares [key] against the node's key and, guided by [removeStep], descends into a
-      subtree or — on [Equal] — drops the node.
+      absent). Guards on its own arms carry the [key <=> nodeKey] decision: a smaller or larger key
+      rebuilds the node with [key] removed from the [left]/[right] subtree, and an equal key drops
+      this node, replacing it with the merge of its two subtrees — [graft]ing all of the [left]
+      subtree's entries into the [right] one. (Because the map is order-independent, any tree
+      holding exactly the surviving entries is a correct result; this merge avoids promoting a
+      synthesized successor key.)
+    # TODO: same as [get] above — a `match`/`case` over the [Comparison] would avoid repeating the
+      [Node] destructure on three arms, but `match` selects the wrong arm and `case` drops the arm.
   remove(m= Leaf, key)= Leaf
-  remove(m= Node(left, key@nk, value@nv, right), key)= removeStep(cmp= key.compareTo(other= nk), left= left, nk= nk, nv= nv, right= right, key= key)
-
-  removeStep[$MK -> /Data/Algebra/Ord, $MV](cmp -> /Data/Algebra/Comparison, left -> BinTree[$K -> $_MK, $V -> $_MV], nk -> $MK, nv -> $MV, right -> BinTree[$K -> $_MK, $V -> $_MV], key -> $MK) -> /Data/Map[$K -> $_MK, $V -> $_MV]
-    # [removeStep] carries the [key <=> nodeKey] decision for [remove]: [LessThan]/[GreaterThan]
-      rebuild the node with [key] removed from the [left]/[right] subtree. [Equal] drops this node,
-      replacing it with the merge of its two subtrees — [graft]ing all of the [left] subtree's
-      entries into the [right] one. (Because the map is order-independent, any tree holding exactly
-      the surviving entries is a correct result; this merge avoids promoting a synthesized successor
-      key.)
-  removeStep(cmp= /Data/Algebra/LessThan, left, nk, nv, right, key)= Node(left= remove(m= left, key= key), key= nk, value= nv, right= right)
-  removeStep(cmp= /Data/Algebra/GreaterThan, left, nk, nv, right, key)= Node(left= left, key= nk, value= nv, right= remove(m= right, key= key))
-  removeStep(cmp= /Data/Algebra/Equal, left, nk, nv, right, key)= graft(from= left, into= right)
+  remove(m= Node(left, key@nk, value@nv, right), key) | key.compareTo(other= nk).isLess= Node(left= remove(m= left, key= key), key= nk, value= nv, right= right)
+  remove(m= Node(left, key@nk, value@nv, right), key) | key.compareTo(other= nk).isGreater= Node(left= left, key= nk, value= nv, right= remove(m= right, key= key))
+  remove(m= Node(left, key@nk, value@nv, right), key) else = graft(from= left, into= right)
 
   graft[$MK -> /Data/Algebra/Ord, $MV](from -> BinTree[$K -> $_MK, $V -> $_MV], into -> /Data/Map[$K -> $_MK, $V -> $_MV]) -> /Data/Map[$K -> $_MK, $V -> $_MV]
     # [graft] inserts every entry of the [from] tree into the [into] map, walking [from] in order and
@@ -127,6 +131,13 @@ module(Data/Map)
   > (keys(m= remove(m= insert(m= insert(m= insert(m= Leaf, key= 2, value= 20), key= 1, value= 10), key= 3, value= 30), key= 2)) == [1, 3])
     >>> True
   # ## Keys and values
+    TODO: [size], [keys], [values], [graft] and [containedIn] are five in-order traversals of the
+    same tree — [keys] and [values] differ only in which field they cons — and should all be one
+    [foldEntries(m, fn(acc, key, value), init)] with five different step functions. A three-parameter
+    function argument is fine; what blocks it is the fold shape itself (a plain argument typed by a
+    bare type variable alongside a function-typed argument) — see the fold TODO at the top of
+    [Data/list]. [size] and [containedIn] have concrete accumulators and would come first; [keys],
+    [values] and [graft] accumulate a polymorphic container and are the harder half.
   keys(m -> /Data/Map[$K -> $_K, $V -> $_V]) -> /Data/List[$T -> $_K]
     # [keys] lists the map's keys by an in-order traversal, so a [BinTree]'s keys come out in
       ascending order (the [left] subtree's keys, then this node's, then the [right] subtree's).

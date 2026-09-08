@@ -2,25 +2,6 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
-                ( "/Data/Set/allIn"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/Set/allIn[ /E : ∀/Data/Algebra/Ord ]
-                            ( Value items -> ∀/Data/List/ConsList[ /T=$^/E ] )
-                            ( Value s -> ∀/Data/Set[ /T=$^/E ] ) -> ∀/Data/Primitive/Boolean
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Set/allIn( Value items= Value /Data/List/Nil )( Value s ) -> ∀/Data/Primitive/Boolean = Value /Data/Primitive/True
-                        , /Data/Set/allIn
-                            ( Value items= /Data/List/Cons( Value head )( Value tail ) )( Value s ) -> ∀/Data/Primitive/Boolean = /operator&&
-                            ( Value /l= contains( Value s= Value s )( Value item= Value head ) )
-                            ( Value /r= allIn( Value items= Value tail )( Value s= Value s ) )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/Set/empty"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Set/empty -> ∀/Data/Set/MapSet ]
@@ -92,10 +73,10 @@ Prgm
                     , omiDefs =
                         [ /Data/Set/intersectInto( Value items= Value /Data/List/Nil )( Value b )( Value acc )= Value acc
                         , /Data/Set/intersectInto
-                            ( Value items= /Data/List/Cons( Value head )( Value tail ) )( Value b )( Value acc )= intersectInto( Value items= Value tail )( Value b= Value b )
-                            ( Value acc= addIf
-                                ( Value cond= contains( Value s= Value b )( Value item= Value head ) )( Value s= Value acc )( Value item= Value head )
-                            )
+                            ( Value items= /Data/List/Cons( Value head )( Value tail ) )( Value b )( Value acc ) | contains( Value s= Value b )( Value item= Value head )= intersectInto( Value items= Value tail )( Value b= Value b )
+                            ( Value acc= add( Value s= Value acc )( Value item= Value head ) )
+                        , /Data/Set/intersectInto
+                            ( Value items= /Data/List/Cons( Value head )( Value tail ) )( Value b )( Value acc )= intersectInto( Value items= Value tail )( Value b= Value b )( Value acc= Value acc )
                         ]
                     }
                 )
@@ -125,23 +106,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Set/isSubsetOf( Value a )( Value b ) -> ∀/Data/Primitive/Boolean = allIn
-                            ( Value items= elements( Value s= Value a ) )( Value s= Value b )
-                        ]
-                    }
-                )
-            ,
-                ( "/Data/Set/addIf"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/Set/addIf[ /E : ∀/Data/Algebra/Ord ]( Value cond -> ∀/Data/Primitive/Boolean )
-                            ( Value s -> ∀/Data/Set[ /T=$^/E ] )( Value item -> $/E ) -> ∀/Data/Set[ /T=$^/E ]
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Set/addIf( Value cond= Value /Data/Primitive/True )( Value s )( Value item )= add( Value s= Value s )( Value item= Value item )
-                        , /Data/Set/addIf( Value cond= Value /Data/Primitive/False )( Value s )( Value item )= Value s
+                        [ /Data/Set/isSubsetOf( Value a )( Value b ) -> ∀/Data/Primitive/Boolean = /Data/List/allBy
+                            ( Value lst= elements( Value s= Value a ) )
+                            ( fn( Value v )= contains( Value s= Value b )( Value item= Value v ) )
                         ]
                     }
                 )
@@ -314,8 +281,6 @@ Prgm
         }
     , prgmCg =
         [ CGType
-        , CGType
-        , CGType
         , CGType
         , CGType
         , CGType

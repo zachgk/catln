@@ -14,15 +14,41 @@ Prgm
                     }
                 )
             ,
-                ( "/range./Data/List/rangeFrom"
+                ( "/Data/List/allBy"
                 , ObjectMapItem
                     { omiDecls =
-                        [ range./Data/List/rangeFrom( Value i -> /Data/Primitive/Integer )( Value stop -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Data/Primitive/Integer ] ]
+                        [ /Data/List/allBy[ /A : TopType ]
+                            ( Value lst -> ∀/Data/List/ConsList[ /T=$^/A ] )
+                            ( fn( Value v -> $_/A ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ range./Data/List/rangeFrom( Value i )( Value stop ) -> ∀/Data/List[ /T=/Data/Primitive/Integer ] = rangeStep
-                            ( Value more= /operator<( Value /l= Value i )( Value /r= Value stop ) )( Value i= Value i )( Value stop= Value stop )
+                        [ /Data/List/allBy( Value lst )
+                            ( fn( Value v ) ) -> ∀/Data/Primitive/Boolean = all
+                            ( Value lst= /Data/Functor/fmap( Value lst= Value lst )
+                                ( fn( Value v )= fn( Value v= Value v ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/range./Data/List/rangeFrom"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ range./Data/List/rangeFrom( Value i -> /Data/Primitive/Integer )( Value stop -> /Data/Primitive/Integer ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ range./Data/List/rangeFrom( Value i )( Value stop ) | /operator<( Value /l= Value i )( Value /r= Value stop ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = Cons( Value head= Value i )
+                            ( Value tail= rangeFrom
+                                ( Value i= /operator+( Value /l= Value i )
+                                    ( Value /r= CInt
+                                        { ciValue = 1 }
+                                    )
+                                )( Value stop= Value stop )
+                            )
+                        , range./Data/List/rangeFrom( Value i )( Value stop ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = Value Nil
                         ]
                     }
                 )
@@ -82,6 +108,25 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/List/anyBy"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/List/anyBy[ /A : TopType ]
+                            ( Value lst -> ∀/Data/List/ConsList[ /T=$^/A ] )
+                            ( fn( Value v -> $_/A ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/List/anyBy( Value lst )
+                            ( fn( Value v ) ) -> ∀/Data/Primitive/Boolean = any
+                            ( Value lst= /Data/Functor/fmap( Value lst= Value lst )
+                                ( fn( Value v )= fn( Value v= Value v ) )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/List/append"
                 , ObjectMapItem
                     { omiDecls =
@@ -126,10 +171,12 @@ Prgm
                     , omiDefs =
                         [ sorted./Data/List/insert( Value /t )( Value /h )( Value x )( Value lst= Value Nil )= Cons( Value head= Value x )( Value tail= Value Nil )
                         , sorted./Data/List/insert( Value /t )( Value /h )( Value x )
-                            ( Value lst= Cons[ /T : ∀/Data/Algebra/Ord ]( Value head )( Value tail ) )= insertStep( Value /t= Value /t )( Value /h= Value /h )
-                            ( Value before= isLessEq
-                                ( Value /this= compareTo( Value other= Value head )( Value /this= Value x ) )
-                            )( Value x= Value x )( Value head= Value head )( Value tail= Value tail )
+                            ( Value lst= Cons[ /T : ∀/Data/Algebra/Ord ]( Value head )( Value tail ) ) | isLessEq
+                            ( Value /this= compareTo( Value other= Value head )( Value /this= Value x ) )= Cons( Value head= Value x )
+                            ( Value tail= Cons( Value head= Value head )( Value tail= Value tail ) )
+                        , sorted./Data/List/insert( Value /t )( Value /h )( Value x )
+                            ( Value lst= Cons[ /T : ∀/Data/Algebra/Ord ]( Value head )( Value tail ) )= Cons( Value head= Value head )
+                            ( Value tail= insert( Value /t= Value /t )( Value /h= Value /h )( Value x= Value x )( Value lst= Value tail ) )
                         ]
                     }
                 )
@@ -188,26 +235,6 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/List/reversed( Value lst ) -> ∀/Data/List = reverseOnto( Value lst= Value lst )( Value acc= Value Nil ) ]
-                    }
-                )
-            ,
-                ( "/range./Data/List/rangeStep"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ range./Data/List/rangeStep( Value more -> ∀/Data/Primitive/Boolean )( Value i -> /Data/Primitive/Integer )( Value stop -> /Data/Primitive/Integer ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ range./Data/List/rangeStep( Value more= Value /Data/Primitive/False )( Value i )( Value stop ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = Value Nil
-                        , range./Data/List/rangeStep( Value more= Value /Data/Primitive/True )( Value i )( Value stop ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = Cons( Value head= Value i )
-                            ( Value tail= rangeFrom
-                                ( Value i= /operator+( Value /l= Value i )
-                                    ( Value /r= CInt
-                                        { ciValue = 1 }
-                                    )
-                                )( Value stop= Value stop )
-                            )
-                        ]
                     }
                 )
             ,
@@ -283,6 +310,21 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/List/elem"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/List/elem[ /A : ∀/Data/Algebra/Eq ]
+                            ( Value lst -> ∀/Data/List/ConsList[ /T=$^/A ] )( Value item -> $/A ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/List/elem( Value lst )( Value item ) -> ∀/Data/Primitive/Boolean = anyBy( Value lst= Value lst )
+                            ( fn( Value v )= /operator==( Value /l= Value v )( Value /r= Value item ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/List/Cons"
                 , ObjectMapItem
                     { omiDecls =
@@ -351,23 +393,6 @@ Prgm
                     }
                 )
             ,
-                ( "/sorted./Data/List/insertStep"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ sorted./Data/List/insertStep( Value /t )( Value /h )[ /T : ∀/Data/Algebra/Ord ]( Value before -> ∀/Data/Primitive/Boolean )( Value x -> $/T )( Value head -> $/T )
-                            ( Value tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/List/ConsList[ /T=$^/T ]
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ sorted./Data/List/insertStep( Value /t )( Value /h )[ /T : ∀/Data/Algebra/Ord ]( Value before= Value /Data/Primitive/True )( Value x )( Value head )( Value tail )= Cons( Value head= Value x )
-                            ( Value tail= Cons( Value head= Value head )( Value tail= Value tail ) )
-                        , sorted./Data/List/insertStep( Value /t )( Value /h )[ /T : ∀/Data/Algebra/Ord ]( Value before= Value /Data/Primitive/False )( Value x )( Value head )( Value tail )= Cons( Value head= Value head )
-                            ( Value tail= insert( Value /t= Value /t )( Value /h= Value /h )( Value x= Value x )( Value lst= Value tail ) )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/Algebra/equal"
                 , ObjectMapItem
                     { omiDecls = []
@@ -425,6 +450,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -570,6 +596,24 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
+                { csValue = "## Folds
+                TODO: [sum], [all], [any], [append] and [reversed] below are each a fold with a different step
+                function, and should be written that way over one [foldr]/[foldl] rather than as five separate
+                two-arm recursions. A generic fold does not compile today. The blocker is not the binary step
+                function — a function argument may take two or three parameters, and a fold whose types are all
+                concrete works — but this shape:
+                  foldr[$B](lst -> ConsList[$T -> Integer], fn(v -> Integer) -> $_B, init -> $_B) -> $_B
+                  foldr(lst= Nil, fn(v), init)= init
+                fails with "Definition Outside Declaration ... Undeclared part: /foldr(/init, /lst)": the
+                definition's input type comes out as a union that drops the function argument. It is the
+                combination that breaks — a plain argument typed by a bare type variable ([init -> $_B]) in the
+                same definition as a function-typed argument. Either alone is fine: two plain arguments sharing
+                a type variable works, and a function argument whose output is a type variable works when no
+                plain argument is typed by one (that is why [fmap] and [mmap] are fine). A fold needs both, so
+                it is blocked until that is fixed." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
                 { csValue = "## Summing" }
             )
         , /Catln/#print
@@ -633,6 +677,226 @@ Prgm
             )
             ( Value /result= CStr
                 { csValue = "False" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Quantifying over a predicate
+                [all] and [any] read a list that already holds [Boolean]s. [allBy] and [anyBy] are the
+                higher-order forms: they take the list and a predicate, and ask the question of every element.
+                Both are written by [fmap]ping the predicate across the list and handing the resulting
+                [Boolean] list to [all]/[any] — the elements never have to be [Boolean] themselves, so these
+                work on a list of anything. The predicate is passed onward as [fn(v)= fn(v= v)] rather than
+                bare; a bare [fn] does not typecheck (see [Data/bind] for the same re-wrap)." }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/List/allBy
+                ( Value lst= /Data/List/Cons
+                    ( Value /head= CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value /tail= /Data/List/Cons
+                        ( Value /head= CInt
+                            { ciValue = 2 }
+                        )
+                        ( Value /tail= /Data/List/Cons
+                            ( Value /head= CInt
+                                { ciValue = 3 }
+                            )( Value /tail= Value /Data/List/Nil )
+                        )
+                    )
+                )
+                ( fn( Value v )= /operator>( Value /l= Value v )
+                    ( Value /r= CInt
+                        { ciValue = 0 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/List/allBy
+                ( Value lst= /Data/List/Cons
+                    ( Value /head= CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value /tail= /Data/List/Cons
+                        ( Value /head= CInt
+                            { ciValue = 2 }
+                        )
+                        ( Value /tail= /Data/List/Cons
+                            ( Value /head= CInt
+                                { ciValue = 3 }
+                            )( Value /tail= Value /Data/List/Nil )
+                        )
+                    )
+                )
+                ( fn( Value v )= /operator>( Value /l= Value v )
+                    ( Value /r= CInt
+                        { ciValue = 2 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/List/allBy( Value lst= Value /Data/List/Nil )
+                ( fn( Value v )= /operator>( Value /l= Value v )
+                    ( Value /r= CInt
+                        { ciValue = 2 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/List/anyBy
+                ( Value lst= /Data/List/Cons
+                    ( Value /head= CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value /tail= /Data/List/Cons
+                        ( Value /head= CInt
+                            { ciValue = 2 }
+                        )
+                        ( Value /tail= /Data/List/Cons
+                            ( Value /head= CInt
+                                { ciValue = 3 }
+                            )( Value /tail= Value /Data/List/Nil )
+                        )
+                    )
+                )
+                ( fn( Value v )= /operator>( Value /l= Value v )
+                    ( Value /r= CInt
+                        { ciValue = 2 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/List/anyBy
+                ( Value lst= /Data/List/Cons
+                    ( Value /head= CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value /tail= /Data/List/Cons
+                        ( Value /head= CInt
+                            { ciValue = 2 }
+                        )
+                        ( Value /tail= /Data/List/Cons
+                            ( Value /head= CInt
+                                { ciValue = 3 }
+                            )( Value /tail= Value /Data/List/Nil )
+                        )
+                    )
+                )
+                ( fn( Value v )= /operator>( Value /l= Value v )
+                    ( Value /r= CInt
+                        { ciValue = 9 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/List/anyBy( Value lst= Value /Data/List/Nil )
+                ( fn( Value v )= /operator>( Value /l= Value v )
+                    ( Value /r= CInt
+                        { ciValue = 0 }
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Membership" }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/List/elem
+                ( Value lst= /Data/List/Cons
+                    ( Value /head= CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value /tail= /Data/List/Cons
+                        ( Value /head= CInt
+                            { ciValue = 2 }
+                        )
+                        ( Value /tail= /Data/List/Cons
+                            ( Value /head= CInt
+                                { ciValue = 3 }
+                            )( Value /tail= Value /Data/List/Nil )
+                        )
+                    )
+                )
+                ( Value item= CInt
+                    { ciValue = 2 }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/List/elem
+                ( Value lst= /Data/List/Cons
+                    ( Value /head= CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value /tail= /Data/List/Cons
+                        ( Value /head= CInt
+                            { ciValue = 2 }
+                        )
+                        ( Value /tail= /Data/List/Cons
+                            ( Value /head= CInt
+                                { ciValue = 3 }
+                            )( Value /tail= Value /Data/List/Nil )
+                        )
+                    )
+                )
+                ( Value item= CInt
+                    { ciValue = 9 }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/List/elem( Value lst= Value /Data/List/Nil )
+                ( Value item= CInt
+                    { ciValue = 1 }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Missing combinators
+                TODO: [filter], [concat] and [count] belong here beside [allBy]/[anyBy], and none of them
+                compiles for a general element type yet.
+                [filter] fails in every spelling tried. As guards on its own arms
+                ([filter(lst= Cons(head, tail), fn(v)) | fn(v= head)= ...]) it typechecks and then dies at the
+                first recursive step with "Found no matching conditions in evalTree". Written as
+                [mmap(m= lst, fn(v)= if(fn(v= v)) ...)] it does not parse — a branch in Catln is a declaration,
+                not an expression, so an [if] cannot sit inside an argument list. Written as a [match] on the
+                predicate result in the arm body it fails at eval the same way as the guard form. Routed through
+                [mmap] with a separate two-arm helper returning [[v]] or [[]] it fails in TreeBuild with
+                "Failed to build arrow tree from /fn(/v=TopType) to ∀ConsList". The monomorphic version (element
+                fixed to [Integer]) works in all of these, so the blocker is the polymorphic element: the
+                predicate's parameter is [TopType] (see [fnArgInputBound] in the compiler, which narrows a lambda
+                parameter only from a fully concrete type), and a [TopType] value cannot reach a declared slot.
+                [concat] — [mmap(m= lst, fn(v)= v)] — typechecks but the compiler loops when it is actually
+                evaluated ([catln: <<loop>>]).
+                [count] is [filter] plus [length], so it waits on [filter].
+                Note that [allBy]/[anyBy]/[elem] above work because they only ever pass the element onward into
+                another slot that is itself unconstrained; [filter] has to *use* the predicate's answer to choose
+                a branch, which is what fails." }
             )
         , /Catln/#md
             ( Value /text= CStr
