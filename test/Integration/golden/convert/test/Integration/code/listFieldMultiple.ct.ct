@@ -1,0 +1,29 @@
+import "core"
+import "core"
+
+
+# A list literal of two or more elements written into a field of a data type.
+  The companion to @listField.ct@, which checks the same field holding nothing and holding one
+  thing: the second cell is what this adds, and for a long time it was what a list field could not
+  reach. Written for two of the SAME string as well as two different ones, because the two are not
+  the same check — a spine reads its element type from every cell it holds, and two of one string
+  would pass on a rule that only looked at the first.
+  What it took to hold: the [tail] a [/Data/List/Cons] carries is spelled @∀ConsList[/T=$^/T]@, a
+  parent reference naming the cons's own [/T] from a nested position. Reading that occurrence as a
+  membership position — the tail's elements are members of [/T] exactly as the [head] is — is what
+  lets the spine take its element type from the whole of itself rather than from its head, so the
+  [/T] of the inner cons is the [/Data/Primitive/String] the field was declared to hold rather than
+  the outer head's literal.
+  These values are declared and not printed, which is the boundary: the program TYPECHECKS, and
+  building the value to evaluate it does not — see
+  @test/Integration/disabled/listFieldEval.ct@. @listFieldNested.ct@ prints, because its elements
+  are data arms rather than bare constants, and the constants are what the two spellings come apart
+  over.
+data(Tagged(name -> String, tags -> /Data/List[$T -> String]))
+
+every(Tagged.., isa= [/Catln/Doc/DShow])
+
+/Tagged(name= "two of the same", tags= ["x", "x"])
+/Tagged(name= "two different", tags= ["x", "y"])
+
+main{io -> IO}= io.exit(val= 0)

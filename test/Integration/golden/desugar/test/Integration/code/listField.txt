@@ -94,10 +94,11 @@ Prgm
                 bracket literal builds, so that a failure says which of the two it is rather than only that a list
                 in a field did not work. And written as values declared and never defined, for the reason
                 [/Dated] is in @maybeField.ct@.
-                A field holding TWO OR MORE does not typecheck — see
-                @test/Integration/disabled/listFieldMultiple.ct@, which holds the signature and the boundary. So
-                what is checked here is a field with nothing in it and a field with one thing in it, which is as
-                far as a list field reaches today." }
+                What is checked here is a field with nothing in it and a field with one thing in it. A field
+                holding TWO OR MORE is @listFieldMultiple.ct@, and one whose elements carry a field of their own,
+                two lists further down, is @listFieldNested.ct@ — both of which this file's cases are the floor
+                of, since a rule that reads a spine's element type from its head alone passes here and fails
+                there." }
             )
         , /Catln/#md
             ( Value /text= CStr

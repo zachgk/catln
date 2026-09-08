@@ -1,0 +1,48 @@
+import "core"
+
+
+# DISABLED — a compiler gap, kept as the repro of it.
+  A list of two or more held in a FIELD typechecks but cannot be BUILT to evaluate, when what the
+  spine joins over is a bare constant. @listFieldMultiple.ct@ holds the typechecking half and stops
+  where this begins: it declares its values and does not print them, because printing is what
+  builds them.
+  What works, each checked on its own:
+    - The same literals as an ARGUMENT rather than a field, printed and evaluated —
+      @listHeterogeneous.ct@ and @listElemBound.ct@ both do this.
+    - The same field printed with ONE element, and with none — @listField.ct@.
+    - A field of two or more whose elements are DATA ARMS rather than bare constants, printed three
+      lists deep — @listFieldNested.ct@, whose innermost array holds two @Json/Num@s with
+      DIFFERENT float values, so it is not that the two cells agree.
+  So it is the bare constant that is not carried, not the second cell and not the elements
+  disagreeing.
+  The failure is at tree build rather than in the constraints, and what it says is that the two
+  sides spell the element in different currencies:
+    Failed to build arrow tree
+      from /Data/List/Cons(/head=/Data/String,
+             /tail=/Data/List/Cons[/T=/Data/String](/head=/Data/String, /tail=/Data/List/Nil))
+      to   /Data/List/Cons[/T=(CStr "x" + CStr "y")](/head=/Data/String,
+             /tail=/Data/List/Cons[/T=CStr "y"](/head=CStr "y", /tail=/Data/List/Nil))
+  The SOURCE carries the field's declared bound, [/Data/Primitive/String], and the TARGET carries
+  the join over the literals themselves. Both are right about what they describe — the join over a
+  spine's cells is how a list's element type is now read, and the declaration is what the field
+  says it holds — but no arrow carries a value spelled one way to a slot spelled the other, so the
+  build finds nothing. What is missing is the widening of a constant to its type on the way into a
+  declaration-bounded field.
+  The same shape with differing ARMS of a class fails identically, one level in: @Holder@ below
+  joins to @Mixed/Tagged(/value=CStr "x")@ where the declaration gives
+  @Mixed/Tagged(/value=/Data/String)@. Both are kept here because the two say together that it is
+  the constant and not the arm.
+data(Tagged(name -> String, tags -> /Data/List[$T -> String]))
+
+every(Tagged.., isa= [/Catln/Doc/DShow])
+
+class(Mixed, [Mixed/Plain, Mixed/Tagged(value -> /Data/String)])
+
+data(Holder(items -> /Data/List[$T -> Mixed]))
+
+every(Holder.., isa= [/Catln/Doc/DShow])
+
+# Printing is what builds these; declared and not printed, both typecheck.
+> /Tagged(name= "two different", tags= ["x", "y"])
+> /Holder(items= [/Mixed/Plain, /Mixed/Tagged(value= "x")])
+main{io -> IO}= io.exit(val= 0)

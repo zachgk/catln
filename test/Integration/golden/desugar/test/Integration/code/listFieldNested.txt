@@ -1,0 +1,183 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Nested"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Nested= Json/Obj
+                            ( Value entries= /Data/List/Cons
+                                ( Value /head= Json/Member
+                                    ( Value key= CStr
+                                        { csValue = "author" }
+                                    )
+                                    ( Value value= Json/Obj
+                                        ( Value entries= /Data/List/Cons
+                                            ( Value /head= Json/Member
+                                                ( Value key= CStr
+                                                    { csValue = "years" }
+                                                )
+                                                ( Value value= Json/Arr
+                                                    ( Value entries= /Data/List/Cons
+                                                        ( Value /head= Json/Num
+                                                            ( Value value= CFloat
+                                                                { cfValue = 2020.0 }
+                                                            )
+                                                        )
+                                                        ( Value /tail= /Data/List/Cons
+                                                            ( Value /head= Json/Num
+                                                                ( Value value= CFloat
+                                                                    { cfValue = 2026.0 }
+                                                                )
+                                                            )( Value /tail= Value /Data/List/Nil )
+                                                        )
+                                                    )
+                                                )
+                                            )( Value /tail= Value /Data/List/Nil )
+                                        )
+                                    )
+                                )( Value /tail= Value /Data/List/Nil )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Json/Member"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Json/Member( Value /key -> /Data/String )( Value /value -> ∀/Json ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Json/Obj"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Json/Obj
+                            ( Value /entries -> ∀/Data/List
+                                [ /T=/Json/Member
+                                    ( /value=TopType
+                                    , /key=TopType
+                                    )
+                                ]
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Json/Arr"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Json/Arr
+                            ( Value /entries -> ∀/Data/List[ /T=∀/Json ] )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= CInt
+                                { ciValue = 0 }
+                            )( Value /this= Value io )
+                        ]
+                    }
+                )
+            ,
+                ( "/Json/Null"
+                , ObjectMapItem
+                    { omiDecls = [ Value Json/Null ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Json/Num"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Json/Num( Value /value -> /Data/Primitive/Float ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Json
+            , cgcExtends =
+                [ ∀/Json
+                , /Json/Member..
+                ]
+            , cgcDoc = Just " "
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Json
+            , cgcExtends =
+                [ /Json/Null
+                , /Json/Num( /value=/Data/Primitive/Float )
+                , /Json/Arr
+                    ( /entries=∀/Data/List[ /T=∀/Json ] )
+                , /Json/Obj
+                    ( /entries=∀/Data/List[ /T=/Json/Member ] )
+                ]
+            , cgcDoc = Just ""
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A list of two or more whose elements CARRY A FIELD, sitting under two further lists.
+                The deep face of @listFieldMultiple.ct@: there the element bound has to reach a nested cons, and
+                here it has to reach that cons's element as well. The shape needs all three at once — three
+                levels of list, two or more in the innermost, and elements which carry a field — and each of the
+                three on its own was fine long before the combination was, so it is worth holding all three
+                together rather than trusting the pieces.
+                Written as the JSON value type because that is where the shape was found: an object of members, a
+                member holding an object of members, a member holding an array of numbers. What @json/json.ct@
+                can carry was bounded by this and by nothing about JSON, so a JSON file nested three deep is read
+                as a value exactly when this passes.
+                Not a question of the class-typed field: @Num@ is declared as the concrete
+                [/Data/Primitive/Float], and declaring it as the [/Data/Primitive/Number] class behaved the same
+                both before and after, so the narrowing of a class member to one of its arms is not what this is
+                about. What it was about is a spine reading its element type from its head alone — the first
+                cell's field settled and the second stayed open, epoch after epoch, until the constraint loop hit
+                its limit having had the right answer from the first epoch." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "The shape: three levels of list, two field-carrying elements in the innermost." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Printed so that the value is evaluated and not only built." }
+            )
+        , /Catln/#print( Value /p= Value /Nested )
+        ]
+    }

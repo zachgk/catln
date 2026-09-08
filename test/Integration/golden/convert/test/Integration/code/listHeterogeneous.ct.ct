@@ -1,0 +1,34 @@
+import "core"
+import "core"
+
+
+# A list literal whose elements are DIFFERENT arms of the class the list is bounded by.
+  @listFieldMultiple.ct@ holds two of one type; this holds one of each. The two are not the same
+  check: a spine binds its element parameter once for the whole of itself, so a literal of two
+  strings settles on a parameter its head alone would have given, while a literal of a [Mixed/Plain]
+  and a [Mixed/Tagged] only settles if every cell is read. What makes it reachable at all is that the elements
+  agree on the CLASS the list is declared over even though they disagree on the arm.
+  This is the shape a JSON document is — an array holding a null, a boolean and a string is three
+  arms of one class in one list — so @json/json.ct@'s own examples are the same check written over
+  a library type, and this is it written over the smallest class that shows it.
+class(Mixed, [Mixed/Plain, Mixed/Tagged(value -> /Data/String)])
+
+count(ks -> /Data/List[$T -> Mixed]) -> /Data/Primitive/Integer
+count(ks= /Data/List/Nil)= 0
+count(ks= /Data/List/Cons(head, tail))= 1 + count(ks= tail)
+
+# Homogeneous first, as the floor: this passed on the head-alone rule too.
+> count(ks= [/Mixed/Plain, /Mixed/Plain])
+  >>> 2
+# One of each arm, in both orders — the arm carrying a field is read whether it is the cell the
+  spine starts from or one it reaches through the tail.
+> count(ks= [/Mixed/Plain, /Mixed/Tagged(value= "x")])
+  >>> 2
+> count(ks= [/Mixed/Tagged(value= "x"), /Mixed/Plain])
+  >>> 2
+> count(ks= [/Mixed/Plain, /Mixed/Tagged(value= "x"), /Mixed/Plain])
+  >>> 3
+# Reached as an ARGUMENT, which is where a heterogeneous literal is bounded by the call. Held in a
+  FIELD it typechecks but cannot be built to evaluate — see
+  @test/Integration/disabled/listFieldEval.ct@, which holds that boundary.
+main{io -> IO}= io.exit(val= 0)

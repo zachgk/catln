@@ -1,0 +1,244 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
+                            ( /Catln/exit
+                                ( /this=/Catln/IO
+                                , /val=/Data/Primitive/Integer
+                                ) + /Catln/IO
+                            ) =
+                            ( /Catln/exit
+                                ( EAppArg
+                                    { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                ) ↦ /Catln/IO
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Tagged"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Tagged
+                            ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                            ( EAppArg
+                                { eaaArg = Value /tags -> ∀/Data/List[ /T=/Data/String ] }
+                            )
+                        , /Tagged
+                            ( EAppArg
+                                { eaaArg = Value /name -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "two of the same" }
+                                        ]
+                                    ) = "two of the same"
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /tags -> /Data/List/Cons
+                                    ( /head=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CStr
+                                                { csValue = "x" }
+                                            ]
+                                        )
+                                    , /tail=/Data/List/Cons
+                                        [ /T=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CStr
+                                                    { csValue = "x" }
+                                                ]
+                                            )
+                                        ]
+                                        ( /head=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CStr
+                                                    { csValue = "x" }
+                                                ]
+                                            )
+                                        , /tail=/Data/List/Nil
+                                        )
+                                    ) = /Data/List/Cons
+                                    ( EAppArg
+                                        { eaaArg = Value /head -> UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CStr
+                                                    { csValue = "x" }
+                                                ]
+                                            ) = "x"
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> /Data/List/Cons
+                                            ( /head=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CStr
+                                                        { csValue = "x" }
+                                                    ]
+                                                )
+                                            , /tail=/Data/List/Nil
+                                            ) = /Data/List/Cons
+                                            ( EAppArg
+                                                { eaaArg = Value /head -> UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CStr
+                                                            { csValue = "x" }
+                                                        ]
+                                                    ) = "x"
+                                                }
+                                            )
+                                            ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                        }
+                                    )
+                                }
+                            )
+                        , /Tagged
+                            ( EAppArg
+                                { eaaArg = Value /name -> UnionType
+                                    ( Nothing
+                                    , ∅
+                                    ,
+                                        [ CStr
+                                            { csValue = "two different" }
+                                        ]
+                                    ) = "two different"
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /tags -> /Data/List/Cons
+                                    ( /head=UnionType
+                                        ( Nothing
+                                        , ∅
+                                        ,
+                                            [ CStr
+                                                { csValue = "x" }
+                                            ]
+                                        )
+                                    , /tail=/Data/List/Cons
+                                        [ /T=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CStr
+                                                    { csValue = "y" }
+                                                ]
+                                            )
+                                        ]
+                                        ( /head=UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CStr
+                                                    { csValue = "y" }
+                                                ]
+                                            )
+                                        , /tail=/Data/List/Nil
+                                        )
+                                    ) = /Data/List/Cons
+                                    ( EAppArg
+                                        { eaaArg = Value /head -> UnionType
+                                            ( Nothing
+                                            , ∅
+                                            ,
+                                                [ CStr
+                                                    { csValue = "x" }
+                                                ]
+                                            ) = "x"
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> /Data/List/Cons
+                                            ( /head=UnionType
+                                                ( Nothing
+                                                , ∅
+                                                ,
+                                                    [ CStr
+                                                        { csValue = "y" }
+                                                    ]
+                                                )
+                                            , /tail=/Data/List/Nil
+                                            ) = /Data/List/Cons
+                                            ( EAppArg
+                                                { eaaArg = Value /head -> UnionType
+                                                    ( Nothing
+                                                    , ∅
+                                                    ,
+                                                        [ CStr
+                                                            { csValue = "y" }
+                                                        ]
+                                                    ) = "y"
+                                                }
+                                            )
+                                            ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                        }
+                                    )
+                                }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Tagged
+            , cgcExtends = [ /Tagged.. ]
+            , cgcDoc = Just "  "
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A list literal of two or more elements written into a field of a data type.
+                The companion to @listField.ct@, which checks the same field holding nothing and holding one
+                thing: the second cell is what this adds, and for a long time it was what a list field could not
+                reach. Written for two of the SAME string as well as two different ones, because the two are not
+                the same check — a spine reads its element type from every cell it holds, and two of one string
+                would pass on a rule that only looked at the first.
+                What it took to hold: the [tail] a [/Data/List/Cons] carries is spelled @∀ConsList[/T=$^/T]@, a
+                parent reference naming the cons's own [/T] from a nested position. Reading that occurrence as a
+                membership position — the tail's elements are members of [/T] exactly as the [head] is — is what
+                lets the spine take its element type from the whole of itself rather than from its head, so the
+                [/T] of the inner cons is the [/Data/Primitive/String] the field was declared to hold rather than
+                the outer head's literal.
+                These values are declared and not printed, which is the boundary: the program TYPECHECKS, and
+                building the value to evaluate it does not — see
+                @test/Integration/disabled/listFieldEval.ct@. @listFieldNested.ct@ prints, because its elements
+                are data arms rather than bare constants, and the constants are what the two spellings come apart
+                over." }
+            )
+        ]
+    }

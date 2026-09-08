@@ -1,0 +1,158 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Mixed/Tagged"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Mixed/Tagged( Value /value -> /Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= CInt
+                                { ciValue = 0 }
+                            )( Value /this= Value io )
+                        ]
+                    }
+                )
+            ,
+                ( "/Mixed/Plain"
+                , ObjectMapItem
+                    { omiDecls = [ Value Mixed/Plain ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/count"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ count
+                            ( Value ks -> ∀/Data/List[ /T=∀/Mixed ] ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ count( Value ks= Value /Data/List/Nil ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
+                        , count
+                            ( Value ks= /Data/List/Cons( Value head )( Value tail ) ) -> /Data/Primitive/Integer = /operator+
+                            ( Value /l= CInt
+                                { ciValue = 1 }
+                            )
+                            ( Value /r= count( Value ks= Value tail ) )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Mixed
+            , cgcExtends =
+                [ /Mixed/Plain
+                , /Mixed/Tagged( /value=/Data/String )
+                ]
+            , cgcDoc = Just ""
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A list literal whose elements are DIFFERENT arms of the class the list is bounded by.
+                @listFieldMultiple.ct@ holds two of one type; this holds one of each. The two are not the same
+                check: a spine binds its element parameter once for the whole of itself, so a literal of two
+                strings settles on a parameter its head alone would have given, while a literal of a [Mixed/Plain]
+                and a [Mixed/Tagged] only settles if every cell is read. What makes it reachable at all is that the elements
+                agree on the CLASS the list is declared over even though they disagree on the arm.
+                This is the shape a JSON document is — an array holding a null, a boolean and a string is three
+                arms of one class in one list — so @json/json.ct@'s own examples are the same check written over
+                a library type, and this is it written over the smallest class that shows it." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Homogeneous first, as the floor: this passed on the head-alone rule too." }
+            )
+        , /Catln/#print
+            ( Value /p= count
+                ( Value ks= /Data/List/Cons( Value /head= Value /Mixed/Plain )
+                    ( Value /tail= /Data/List/Cons( Value /head= Value /Mixed/Plain )( Value /tail= Value /Data/List/Nil ) )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "2" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "One of each arm, in both orders — the arm carrying a field is read whether it is the cell the
+                spine starts from or one it reaches through the tail." }
+            )
+        , /Catln/#print
+            ( Value /p= count
+                ( Value ks= /Data/List/Cons( Value /head= Value /Mixed/Plain )
+                    ( Value /tail= /Data/List/Cons
+                        ( Value /head= /Mixed/Tagged
+                            ( Value value= CStr
+                                { csValue = "x" }
+                            )
+                        )( Value /tail= Value /Data/List/Nil )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "2" }
+            )
+        , /Catln/#print
+            ( Value /p= count
+                ( Value ks= /Data/List/Cons
+                    ( Value /head= /Mixed/Tagged
+                        ( Value value= CStr
+                            { csValue = "x" }
+                        )
+                    )
+                    ( Value /tail= /Data/List/Cons( Value /head= Value /Mixed/Plain )( Value /tail= Value /Data/List/Nil ) )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "2" }
+            )
+        , /Catln/#print
+            ( Value /p= count
+                ( Value ks= /Data/List/Cons( Value /head= Value /Mixed/Plain )
+                    ( Value /tail= /Data/List/Cons
+                        ( Value /head= /Mixed/Tagged
+                            ( Value value= CStr
+                                { csValue = "x" }
+                            )
+                        )
+                        ( Value /tail= /Data/List/Cons( Value /head= Value /Mixed/Plain )( Value /tail= Value /Data/List/Nil ) )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "3" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Reached as an ARGUMENT, which is where a heterogeneous literal is bounded by the call. Held in a
+                FIELD it typechecks but cannot be built to evaluate — see
+                @test/Integration/disabled/listFieldEval.ct@, which holds that boundary." }
+            )
+        ]
+    }

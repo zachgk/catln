@@ -1,0 +1,193 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/countCons"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ countCons
+                            ( Value ks -> ∀/Data/List/ConsList
+                                [ /T=/Item( /n=TopType ) ]
+                            ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ countCons( Value ks= Value /Data/List/Nil ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
+                        , countCons
+                            ( Value ks= /Data/List/Cons( Value head )( Value tail ) ) -> /Data/Primitive/Integer = /operator+
+                            ( Value /l= CInt
+                                { ciValue = 1 }
+                            )
+                            ( Value /r= countCons( Value ks= Value tail ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/countBare"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ countBare
+                            ( Value ks -> ∀/Data/List[ /T=/Bare ] ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ countBare( Value ks= Value /Data/List/Nil ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
+                        , countBare
+                            ( Value ks= /Data/List/Cons( Value head )( Value tail ) ) -> /Data/Primitive/Integer = /operator+
+                            ( Value /l= CInt
+                                { ciValue = 1 }
+                            )
+                            ( Value /r= countBare( Value ks= Value tail ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= CInt
+                                { ciValue = 0 }
+                            )( Value /this= Value io )
+                        ]
+                    }
+                )
+            ,
+                ( "/Bare"
+                , ObjectMapItem
+                    { omiDecls = [ Value Bare ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/countAll"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ countAll
+                            ( Value ks -> ∀/Data/List
+                                [ /T=/Item( /n=TopType ) ]
+                            ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ countAll( Value ks= Value /Data/List/Nil ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
+                        , countAll
+                            ( Value ks= /Data/List/Cons( Value head )( Value tail ) ) -> /Data/Primitive/Integer = /operator+
+                            ( Value /l= CInt
+                                { ciValue = 1 }
+                            )
+                            ( Value /r= countAll( Value ks= Value tail ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Item"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Item( Value /n -> /Data/Primitive/Integer ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A list whose element parameter is bounded by a CONCRETE DATA TYPE, destructured.
+                Every list in the checked standard library bounds its element by a CLASS — [/Data/ToString],
+                [/Data/Algebra/Ord], [/Data/Algebra/Eq] — so a bound naming a data type directly was never
+                exercised by it, and the two read differently. A declared field is restored onto a bare partial
+                by its declaration ([Item] becoming @Item(/n=⊤)@), and the bare form and the restored form are
+                DISJOINT: a bound completed in one slot and left bare in another is one type written two ways,
+                which meets at nothing. A class has no declared fields to restore, so it reads the same both ways
+                and never showed the difference.
+                Written over the [/Data/List] interface and over the [/Data/List/ConsList] the bracket literal
+                builds, as @listField.ct@ is, so that a failure says which of the two it is." }
+            )
+        , /Catln/#print
+            ( Value /p= countAll( Value ks= Value /Data/List/Nil ) )
+            ( Value /result= CStr
+                { csValue = "0" }
+            )
+        , /Catln/#print
+            ( Value /p= countAll
+                ( Value ks= /Data/List/Cons
+                    ( Value /head= /Item
+                        ( Value n= CInt
+                            { ciValue = 1 }
+                        )
+                    )
+                    ( Value /tail= /Data/List/Cons
+                        ( Value /head= /Item
+                            ( Value n= CInt
+                                { ciValue = 2 }
+                            )
+                        )( Value /tail= Value /Data/List/Nil )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "2" }
+            )
+        , /Catln/#print
+            ( Value /p= countCons( Value ks= Value /Data/List/Nil ) )
+            ( Value /result= CStr
+                { csValue = "0" }
+            )
+        , /Catln/#print
+            ( Value /p= countCons
+                ( Value ks= /Data/List/Cons
+                    ( Value /head= /Item
+                        ( Value n= CInt
+                            { ciValue = 1 }
+                        )
+                    )
+                    ( Value /tail= /Data/List/Cons
+                        ( Value /head= /Item
+                            ( Value n= CInt
+                                { ciValue = 2 }
+                            )
+                        )( Value /tail= Value /Data/List/Nil )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "2" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A FIELDLESS data bound has nothing to restore, so it reads the same both ways and went through
+                even while the bound above did not. Held beside it so a regression says which of the two broke." }
+            )
+        , /Catln/#print
+            ( Value /p= countBare
+                ( Value ks= /Data/List/Cons( Value /head= Value /Bare )
+                    ( Value /tail= /Data/List/Cons( Value /head= Value /Bare )( Value /tail= Value /Data/List/Nil ) )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "2" }
+            )
+        ]
+    }
