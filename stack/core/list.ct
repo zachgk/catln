@@ -314,10 +314,12 @@ module(Data/List)
   > /Data/List/append(a= [1], b= [2])
     >>> [1, 2]
   # [mmap] over a [ConsList] is concatMap: the function returns a whole list per element and the
-  #   results are appended, so binding [[1]] to a function returning [[2]] yields [[2]], and binding
-  #   the empty list yields the empty list.
-  > /Data/Monad/mmap(m= [1], fn(v)= [2])
-    >>> [2]
+  #   results are appended in order, so a function ignoring its element repeats a constant list and
+  #   one reading it can grow the list. Binding the empty list yields the empty list.
+  > /Data/Monad/mmap(m= [1, 2], fn(v)= [0])
+    >>> [0, 0]
+  > /Data/Monad/mmap(m= [1, 2], fn(v)= [v, v])
+    >>> [1, 1, 2, 2]
   > /Data/Monad/mmap(m= [], fn(v)= [v])
     >>> []
   # [pure] for [ConsList] builds a singleton list; the call site's expected list type selects

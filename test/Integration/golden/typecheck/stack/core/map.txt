@@ -324,11 +324,11 @@ Prgm
                                             ( /Data/Algebra/compare
                                                 ( /this=∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Integer ]
                                                 , /a=/Data/Primitive/Integer
-                                                , /b=∀/Data/Algebra/Ord
+                                                , /b=/Data/Primitive/Integer
                                                 ) + /Data/Algebra/compare
                                                 ( /this=∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Float ]
                                                 , /a=/Data/Primitive/Float
-                                                , /b=∀/Data/Algebra/Ord
+                                                , /b=/Data/Primitive/Float
                                                 )
                                             )
                                         , []
@@ -381,11 +381,11 @@ Prgm
                                             ( /Data/Algebra/compare
                                                 ( /this=∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Integer ]
                                                 , /a=/Data/Primitive/Integer
-                                                , /b=∀/Data/Algebra/Ord
+                                                , /b=/Data/Primitive/Integer
                                                 ) + /Data/Algebra/compare
                                                 ( /this=∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Float ]
                                                 , /a=/Data/Primitive/Float
-                                                , /b=∀/Data/Algebra/Ord
+                                                , /b=/Data/Primitive/Float
                                                 )
                                             )
                                         , []
@@ -705,11 +705,11 @@ Prgm
                                             ( /Data/Algebra/compare
                                                 ( /this=∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Integer ]
                                                 , /a=/Data/Primitive/Integer
-                                                , /b=∀/Data/Algebra/Ord
+                                                , /b=/Data/Primitive/Integer
                                                 ) + /Data/Algebra/compare
                                                 ( /this=∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Float ]
                                                 , /a=/Data/Primitive/Float
-                                                , /b=∀/Data/Algebra/Ord
+                                                , /b=/Data/Primitive/Float
                                                 )
                                             )
                                         , []
@@ -742,11 +742,11 @@ Prgm
                                     ( /Data/Algebra/compare
                                         ( /this=∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Integer ]
                                         , /a=/Data/Primitive/Integer
-                                        , /b=∀/Data/Algebra/Ord
+                                        , /b=/Data/Primitive/Integer
                                         ) + /Data/Algebra/compare
                                         ( /this=∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Float ]
                                         , /a=/Data/Primitive/Float
-                                        , /b=∀/Data/Algebra/Ord
+                                        , /b=/Data/Primitive/Float
                                         )
                                     )
                                 , []
@@ -2213,6 +2213,9 @@ Prgm
                             ( !
                                 ( PredClass /Data/List[ /T=/Data/Primitive/Integer ] ) && !
                                 ( PredClass /Data/List/ConsList[ /T=TopType ] )
+                            ) && !
+                            ( !( PredClass /Data/Algebra/Ord ) && !
+                                ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Eq ] )
                             ) && PredClass /Data/Algebra/Eq
                         , fromList []
                         , []
@@ -2277,6 +2280,9 @@ Prgm
                             ( !
                                 ( PredClass /Data/List[ /T=/Data/Primitive/Integer ] ) && !
                                 ( PredClass /Data/List/ConsList[ /T=TopType ] )
+                            ) && !
+                            ( !( PredClass /Data/Algebra/Ord ) && !
+                                ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Eq ] )
                             ) && PredClass /Data/Algebra/Eq
                         , fromList []
                         , []

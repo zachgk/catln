@@ -5615,6 +5615,48 @@ intersectAllTypes _ types | null types = BottomType
 intersectAllTypes typeEnv types = foldr1 (intersectTypes typeEnv) types
 
 -- | A private helper for 'intersectPartialsBase' that intersects while ignore class expansions
+-- | The instances of a class-predicate bound that a value witnesses.
+--
+-- A variable bounded by a CLASS (@$M -> Monad@) ranges over that class's INSTANCES, not over
+-- their constructors. Evidence that an argument matched @Cons@ therefore says @$M@ is the
+-- @ConsList@ instance — not that it is @Cons@. Narrowing to the constructor would force every
+-- OTHER occurrence of the variable to that same constructor, which for a definition arm means
+-- the sibling @fn(v) -> $M@ of @mmap(m= Nil, fn(v))@ having to return @Nil@ while the recursive
+-- caller passes one returning @Cons@ — a dispatch that then matches nothing.
+--
+-- A bound that is not a class witnesses no instance and the evidence stands as written, which
+-- is every var whose bound is ⊤ or a plain type.
+boundClassInstancesFor :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Type
+boundClassInstancesFor typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv bound v = case hits of
+  [] -> v
+  hs -> unionAllTypesWithEnv typeEnv vaenv hs
+  where
+    classAtoms = case bound of
+      UnionType (Just (preds, _, _)) _ _ -> case tryPredsToList preds of
+        Just as -> [cp | PredClass cp <- as]
+        Nothing -> []
+      _ -> []
+    -- Membership is decided on NAMES alone, walked through the class graph with a visited set.
+    -- This runs INSIDE the meet, so it must not re-enter the type algebra: an intersection test
+    -- here recurses back into 'intersectPartialsBase' through the class expansion and does not
+    -- terminate.
+    headNames t = case t of
+      UnionType (Just (preds, _, _)) pos _ ->
+        [ptName cp | Just as <- [tryPredsToList preds], PredClass cp <- as] ++ map ptName (splitUnionType pos)
+      UnionType Nothing pos _ -> map ptName (splitUnionType pos)
+      _                       -> []
+    coveredNames seen n
+      | S.member n seen = S.empty
+      | otherwise = case graphLookup (PClassName n) cg of
+          Just CGClass{cgcExtends} ->
+            S.insert n $ S.unions [ coveredNames (S.insert n seen) n' | m <- cgcExtends, n' <- headNames m ]
+          _ -> S.singleton n
+    evidenceNames = S.fromList (headNames v)
+    hits = [ m | cp <- classAtoms
+               , Just CGClass{cgcExtends} <- [graphLookup (PClassName (ptName cp)) cg]
+               , m <- cgcExtends
+               , not (S.null (S.intersection evidenceNames (S.unions (map (coveredNames S.empty) (headNames m))))) ]
+
 intersectPartialsBase :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Maybe (TypeVarArgEnv, [PartialType])
 intersectPartialsBase _ _ PartialType{ptName=aName} PartialType{ptName=bName} | aName /= bName = Nothing
 intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArgMode aLb aUb)) (PartialType _ bVars bArgs bPreds (PtArgMode bLb bUb)) = do
@@ -5746,10 +5788,27 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
   -- other value set is evidence: a function-typed value is as much a data object as declared
   -- data (and declared data is as rewritable — arrows exist between data objects too), so
   -- the algebra draws no distinction between them.
+  --
+  -- Three outcomes, not two: 'Nothing' WITHHOLDS the whole join (an occurrence that is merely
+  -- unresolved may still resolve to something that widens it, so no partial join is monotone),
+  -- @Just Nothing@ is VACUOUS (the occurrence constrains nothing and does not withhold, as an
+  -- empty container does at a linked slot), and @Just (Just v)@ is evidence.
+  --
+  -- A slot holding exactly the variable's own bound ('varBoundFor') is vacuous. It is not a
+  -- reading of the occurrence at all — it is the bound, read back out of the slot the
+  -- declaration's instantiation put it in — so joining it pins the binding AT the bound: the
+  -- join can never be narrower than a value it already contains. That is self-defeating for any
+  -- occurrence, and unrecoverable for one whose content is DERIVED from the variable rather than
+  -- supplied alongside it: a higher-order argument's declared result (@fn(v) -> $M@ beside
+  -- @m -> $M@) in a DEFINITION ARM, where @fn@ is a binder carrying no value of its own and so
+  -- has no later epoch in which it resolves to anything else. The arm's own pattern
+  -- (@m= Cons(head, tail)@) is then the only real evidence, and it is what should decide the
+  -- binding.
   let discoveryAt k n = case H.lookup k liveArgsMap >>= H.lookup n . fst . splitVarArgEnv . fst of
         Just PTopType                             -> Nothing
         Just TypeVar{}                            -> Nothing
-        Just v | H.lookup n ambientVars /= Just v -> Just $ canonBinding v
+        Just v | v == varBoundFor n               -> Just Nothing
+        Just v | H.lookup n ambientVars /= Just v -> Just (Just (canonBinding v))
         _                                         -> Nothing
   -- The pointer join for an arg-set piece ranges over that piece's occurrences of the name:
   -- an occurrence on an arg OUTSIDE the piece does not constrain it (the ∅ piece of
@@ -5823,9 +5882,19 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
                                              ++ [ b | Just b <- [H.lookup n (exactEnvOf k)]
                                                 , not (isTypeVar b), b /= PTopType ])
               in case (mapM (`discoveryAt` n) ptrKs, mapM contentAt (L.nub contentKs), mapM linkedAt (linkedKsOf n ks)) of
-                (Just vals, Just cvals, Just lvalss)
-                  | let lvals = concat lvalss, not (null (vals ++ cvals ++ lvals))
-                  -> Just (n, unionAllTypesWithEnv typeEnv vaenv (vals ++ cvals ++ lvals))
+                (Just mvals, Just cvals, Just lvalss)
+                  | let vals = catMaybes mvals
+                  , let lvals = concat lvalss
+                  , not (null (vals ++ cvals ++ lvals))
+                  , let joined = unionAllTypesWithEnv typeEnv vaenv (vals ++ cvals ++ lvals)
+                  -- A vacuous occurrence is one the variable's own bound was read back out of,
+                  -- so the join is missing whatever that occurrence will really hold. Reading
+                  -- the evidence at INSTANCE granularity is what keeps the binding wide enough
+                  -- for it while still naming the instance the arm selected.
+                  , let joined' = if any isNothing mvals
+                                    then boundClassInstancesFor typeEnv vaenv (varBoundFor n) joined
+                                    else joined
+                  -> Just (n, joined')
                 _ -> Nothing
         -- The names considered are the DIRECT pointer occurrences', exactly as before: a linked
         -- occurrence AUGMENTS a join that a direct occurrence already establishes, and does not

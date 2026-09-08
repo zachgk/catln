@@ -227,28 +227,28 @@ Prgm
                             ) -> /Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> ∀/Data/Algebra/Semigroup =
+                                    { eaaArg = Value /l -> /Data/String =
                                         ( /operator++
                                             ( EAppArg
-                                                { eaaArg = Value /l -> ∀/Data/Algebra/Semigroup =
+                                                { eaaArg = Value /l -> /Data/String =
                                                     ( /operator++
                                                         ( EAppArg
                                                             { eaaArg = Value /l -> /Data/String = "[" }
                                                         )
                                                         ( EAppArg
-                                                            { eaaArg = Value /r -> ∀/Data/Algebra/Semigroup =
+                                                            { eaaArg = Value /r -> /Data/String =
                                                                 ( /toString
                                                                     ( EAppArg
                                                                         { eaaArg = Value /this -> TVArg /h = ( Value /h ↦ TVArg /h ) }
-                                                                    ) ↦ ∀/Data/Algebra/Semigroup
+                                                                    ) ↦ /Data/String
                                                                 )
                                                             }
-                                                        ) ↦ ∀/Data/Algebra/Semigroup
+                                                        ) ↦ /Data/String
                                                     )
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> ∀/Data/Algebra/Semigroup =
+                                                { eaaArg = Value /r -> /Data/String =
                                                     ( /toString./Data/List/restToString
                                                         ( EAppArg
                                                             { eaaArg = Value /t -> TVArg /t = ( Value /t ↦ TVArg /t ) }
@@ -258,10 +258,10 @@ Prgm
                                                         )
                                                         ( EAppArg
                                                             { eaaArg = Value /lst -> TVArg /t = ( Value /t ↦ TVArg /t ) }
-                                                        ) ↦ ∀/Data/Algebra/Semigroup
+                                                        ) ↦ /Data/String
                                                     )
                                                 }
-                                            ) ↦ ∀/Data/Algebra/Semigroup
+                                            ) ↦ /Data/String
                                         )
                                     }
                                 )
@@ -1176,25 +1176,25 @@ Prgm
                             ) -> /Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> ∀/Data/Algebra/Semigroup =
+                                    { eaaArg = Value /l -> /Data/String =
                                         ( /operator++
                                             ( EAppArg
                                                 { eaaArg = Value /l -> /Data/String = ", " }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> ∀/Data/Algebra/Semigroup =
+                                                { eaaArg = Value /r -> /Data/String =
                                                     ( /toString
                                                         ( EAppArg
                                                             { eaaArg = Value /this -> TVArg /head = ( Value /head ↦ TVArg /head ) }
-                                                        ) ↦ ∀/Data/Algebra/Semigroup
+                                                        ) ↦ /Data/String
                                                     )
                                                 }
-                                            ) ↦ ∀/Data/Algebra/Semigroup
+                                            ) ↦ /Data/String
                                         )
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> ∀/Data/Algebra/Semigroup =
+                                    { eaaArg = Value /r -> /Data/String =
                                         ( /toString./Data/List/restToString
                                             ( EAppArg
                                                 { eaaArg = Value /t -> TVArg /t = ( Value /t ↦ TVArg /t ) }
@@ -1204,7 +1204,7 @@ Prgm
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /lst -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
-                                            ) ↦ ∀/Data/Algebra/Semigroup
+                                            ) ↦ /Data/String
                                         )
                                     }
                                 ) ↦ /Data/String
@@ -3257,11 +3257,11 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  results are appended, so binding [[1]] to a function returning [[2]] yields [[2]], and binding" }
+                { eaaArg = Value /text -> /Data/String = "  results are appended in order, so a function ignoring its element repeats a constant list and" }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  the empty list yields the empty list." }
+                { eaaArg = Value /text -> /Data/String = "  one reading it can grow the list. Binding the empty list yields the empty list." }
             )
         , /Catln/#print
             ( EAppArg
@@ -3281,12 +3281,25 @@ Prgm
                         ( EAppArg
                             { eaaArg = Value /m -> /Data/List/Cons
                                 ( /head=/Data/Primitive/Integer
-                                , /tail=/Data/List/Nil
+                                , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                    ( /head=/Data/Primitive/Integer
+                                    , /tail=/Data/List/Nil
+                                    )
                                 ) = /Data/List/Cons
                                 ( EAppArg
                                     { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
                                 )
-                                ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                ( EAppArg
+                                    { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                        ( /head=/Data/Primitive/Integer
+                                        , /tail=/Data/List/Nil
+                                        ) = /Data/List/Cons
+                                        ( EAppArg
+                                            { eaaArg = Value /head -> /Data/Primitive/Integer = 2 }
+                                        )
+                                        ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                    }
+                                )
                             }
                         )
                         ( EAppArg
@@ -3296,7 +3309,7 @@ Prgm
                                 , /tail=/Data/List/Nil
                                 ) = /Data/List/Cons
                                 ( EAppArg
-                                    { eaaArg = Value /head -> /Data/Primitive/Integer = 2 }
+                                    { eaaArg = Value /head -> /Data/Primitive/Integer = 0 }
                                 )
                                 ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
                             }
@@ -3316,7 +3329,88 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "[2]" }
+                { eaaArg = Value /result -> /Data/String = "[0, 0]" }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> UnionType
+                    ( Just
+                        ( PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Catln/Doc/DShow
+                        , fromList []
+                        , []
+                        )
+                    , /Data/List/Cons[ /T=∀/Data/ToString ]
+                        ( /head=$/T
+                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
+                        )
+                    , []
+                    ) =
+                    ( /Data/Monad/mmap
+                        ( EAppArg
+                            { eaaArg = Value /m -> /Data/List/Cons
+                                ( /head=/Data/Primitive/Integer
+                                , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                    ( /head=/Data/Primitive/Integer
+                                    , /tail=/Data/List/Nil
+                                    )
+                                ) = /Data/List/Cons
+                                ( EAppArg
+                                    { eaaArg = Value /head -> /Data/Primitive/Integer = 1 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                        ( /head=/Data/Primitive/Integer
+                                        , /tail=/Data/List/Nil
+                                        ) = /Data/List/Cons
+                                        ( EAppArg
+                                            { eaaArg = Value /head -> /Data/Primitive/Integer = 2 }
+                                        )
+                                        ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                    }
+                                )
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = /fn
+                                ( EAppArg { eaaArg = Value /v } ) -> /Data/List/Cons
+                                ( /head=TopType
+                                , /tail=/Data/List/Cons[ /T=TopType ]
+                                    ( /head=$/T
+                                    , /tail=/Data/List/Nil
+                                    )
+                                ) = /Data/List/Cons
+                                ( EAppArg
+                                    { eaaArg = Value /head -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /tail -> /Data/List/Cons[ /T=TopType ]
+                                        ( /head=$/T
+                                        , /tail=/Data/List/Nil
+                                        ) = /Data/List/Cons
+                                        ( EAppArg
+                                            { eaaArg = Value /head -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                        )
+                                        ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                    }
+                                )
+                            }
+                        ) ↦ UnionType
+                        ( Just
+                            ( PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Catln/Doc/DShow
+                            , fromList []
+                            , []
+                            )
+                        , /Data/List/Cons[ /T=∀/Data/ToString ]
+                            ( /head=$/T
+                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
+                            )
+                        , []
+                        )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "[1, 1, 2, 2]" }
             )
         , /Catln/#print
             ( EAppArg

@@ -1311,27 +1311,51 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "  results are appended, so binding [[1]] to a function returning [[2]] yields [[2]], and binding" }
+                { csValue = "  results are appended in order, so a function ignoring its element repeats a constant list and" }
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "  the empty list yields the empty list." }
+                { csValue = "  one reading it can grow the list. Binding the empty list yields the empty list." }
             )
         , /Catln/#print
             ( Value /p= /Data/Monad/mmap
                 ( Value m= /Data/List/Cons
                     ( Value /head= CInt
                         { ciValue = 1 }
-                    )( Value /tail= Value /Data/List/Nil )
+                    )
+                    ( Value /tail= /Data/List/Cons
+                        ( Value /head= CInt
+                            { ciValue = 2 }
+                        )( Value /tail= Value /Data/List/Nil )
+                    )
                 )
                 ( fn( Value v )= /Data/List/Cons
                     ( Value /head= CInt
-                        { ciValue = 2 }
+                        { ciValue = 0 }
                     )( Value /tail= Value /Data/List/Nil )
                 )
             )
             ( Value /result= CStr
-                { csValue = "[2]" }
+                { csValue = "[0, 0]" }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/Monad/mmap
+                ( Value m= /Data/List/Cons
+                    ( Value /head= CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value /tail= /Data/List/Cons
+                        ( Value /head= CInt
+                            { ciValue = 2 }
+                        )( Value /tail= Value /Data/List/Nil )
+                    )
+                )
+                ( fn( Value v )= /Data/List/Cons( Value /head= Value v )
+                    ( Value /tail= /Data/List/Cons( Value /head= Value v )( Value /tail= Value /Data/List/Nil ) )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "[1, 1, 2, 2]" }
             )
         , /Catln/#print
             ( Value /p= /Data/Monad/mmap( Value m= Value /Data/List/Nil )
