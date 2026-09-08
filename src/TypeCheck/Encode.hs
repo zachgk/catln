@@ -189,7 +189,7 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
             (EncodeOut{}, Nothing, Just (Just _argExpr', _arrM')) ->
               -- Output with (x) infer
               [
-                            AddInferArg 13 baseM' m'
+                            AddInferArg 13 (baseM', Nothing) m'
                             ]
             (EncodeIn{}, Just obj, Just (Just _argExpr', arrM')) ->
               -- Input with (x=x)
@@ -209,7 +209,7 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
               -- @f@ is the declared arg) the argument's annotated type is still linked in;
               -- when it does not (the @Box(v)@ case) the 'PropEq' is a harmless no-op.
               [
-                        AddInferArg 24 (getExprMeta baseExpr') m',
+                        AddInferArg 24 (getExprMeta baseExpr', Just (inExprSingleton obj)) m',
                         PropEq 25 (m', TVArg $ inExprSingleton obj) arrM'
                         ]
             (EncodeIn{}, Just obj, Just (Nothing, arrM')) ->

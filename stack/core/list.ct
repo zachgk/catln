@@ -46,18 +46,16 @@ module(Data/List)
   # ## Folds
     TODO: [sum], [all], [any], [append] and [reversed] below are each a fold with a different step
     function, and should be written that way over one [foldr]/[foldl] rather than as five separate
-    two-arm recursions. A generic fold does not compile today. The blocker is not the binary step
-    function — a function argument may take two or three parameters, and a fold whose types are all
-    concrete works — but this shape:
-      foldr[$B](lst -> ConsList[$T -> Integer], fn(v -> Integer) -> $_B, init -> $_B) -> $_B
-      foldr(lst= Nil, fn(v), init)= init
-    fails with "Definition Outside Declaration ... Undeclared part: /foldr(/init, /lst)": the
-    definition's input type comes out as a union that drops the function argument. It is the
-    combination that breaks — a plain argument typed by a bare type variable ([init -> $_B]) in the
-    same definition as a function-typed argument. Either alone is fine: two plain arguments sharing
-    a type variable works, and a function argument whose output is a type variable works when no
-    plain argument is typed by one (that is why [fmap] and [mmap] are fine). A fold needs both, so
-    it is blocked until that is fixed.
+    two-arm recursions.
+    A generic fold's SIGNATURE now compiles — a function argument beside a plain argument typed by
+    the same type variable was rejected until argument inference stopped guessing at a slot the
+    pattern already names, which [test/Integration/code/inferArgNamed.ct] covers. What still stops
+    the fold is evaluation: the step function's accumulator does not bind, and
+      foldr(lst= lst, fn(acc, v)= acc + v, init= 0)
+    dies with "Invalid intOp signature" on operands that are the lambda's own parameters. That is
+    the same [TopType] lambda-parameter rule the missing-combinators TODO below describes, so the
+    folds land with it rather than before it. Arity is not involved: a function argument may take
+    two or three parameters, and a fold whose types are all concrete evaluates correctly.
   # ## Summing
   sum(lst -> /Data/List[$T -> Integer]) -> Integer
     # [sum] adds up a list of [Integer]s. The empty list sums to zero; a non-empty list adds its

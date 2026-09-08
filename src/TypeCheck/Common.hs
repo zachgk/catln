@@ -128,7 +128,7 @@ data ConstraintDat p
   | PropEq Int (p, TypeVarAux) p -- ^ Both Actual and Req
   | FnInputBound Int (p, ArgName, ArgName) p -- ^ Actual only. @FnInputBound (call, fnArgKey, inputKey) input@ bounds a call-site lambda argument's input point by the matched declarations' input type for that position (see 'fnArgInputBound')
   | AddArg Int (p, TypeVarAux) p -- ^ Both Actual and Req,
-  | AddInferArg Int p p -- ^ Both Actual and Req, AddInferArg base arg
+  | AddInferArg Int (p, Maybe ArgName) p -- ^ Both Actual and Req, @AddInferArg (base, patternKey) arg@. The pattern key is the shape the applied argument was written as ('inExprSingleton'), where there is one; when it names one of the base's declared arguments that argument is the slot being filled, and no guessing is needed (see 'addInferArgToPartial')
   | SetArgMode Int Bool p p -- ^ Actual (maybe should make it req too). Bool is true for powerset and false for spread.
   | ConWhere Int p p p -- ^ Where has a predicates
   | UnionOf Int p [p] -- ^ Both Actual and Req
@@ -183,9 +183,9 @@ mapMConDat f (FnInputBound i (p1, fnKey, inKey) p2) = do
 mapMConDat f (AddArg i (p1, argName) p2) = do
   p1' <- f p1
   AddArg i (p1', argName) <$> f p2
-mapMConDat f (AddInferArg i p1 p2) = do
+mapMConDat f (AddInferArg i (p1, patKey) p2) = do
   p1' <- f p1
-  AddInferArg i p1' <$> f p2
+  AddInferArg i (p1', patKey) <$> f p2
 mapMConDat f (SetArgMode i m p1 p2) = do
   p1' <- f p1
   SetArgMode i m p1' <$> f p2
@@ -329,7 +329,7 @@ instance (Show p) => Show (ConstraintDat p) where
   show (PropEq i (s1, n) s2) = printf "(%s).(%s) %d== %s"  (show s1) (show n) i (show s2)
   show (FnInputBound i (s, fnKey, inKey) inp) = printf "%s %d⊆_FnInput (%s).(%s).(%s)" (show inp) i (show s) (show fnKey) (show inKey)
   show (AddArg i (base, arg) res) = printf "(%s)(%s) %d== %s" (show base) (show arg) i (show res)
-  show (AddInferArg i base res) = printf "(%s)(?) %d== %s" (show base) i (show res)
+  show (AddInferArg i (base, patKey) res) = printf "(%s)(?%s) %d== %s" (show base) (maybe "" show patKey) i (show res)
   show (SetArgMode i True s t) = printf "𝒫(%s) %d⊇ %s" (show s) i (show t)
   show (SetArgMode i False s t) = printf "%s.. %d⊇ %s" (show s) i (show t)
   show (ConWhere i b c r) = printf "%s %d| %s = %s" (show b) i (show c) (show r)

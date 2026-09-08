@@ -1,0 +1,228 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
+                            ( /Catln/exit
+                                ( /this=/Catln/IO
+                                , /val=/Data/Primitive/Integer
+                                ) + /Catln/IO
+                            ) =
+                            ( /Catln/exit
+                                ( EAppArg
+                                    { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                ) ↦ /Catln/IO
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Box"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Box
+                            ( EAppArg { eaaArg = Value /v } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/f2"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /f2
+                            ( EAppVar
+                                { eavName = /B
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = /fn
+                                    ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> $_/B
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /init -> $_/B } ) -> $_/B
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /f2
+                            ( EAppArg
+                                { eaaArg = /fn
+                                    ( EAppArg { eaaArg = Value /v } )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /init } )=
+                            ( /fn
+                                ( EAppArg
+                                    { eaaArg = Value /v -> /Data/Primitive/Integer = 1 }
+                                ) ↦ TopType
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/unwrap"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /unwrap
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Box( /v=TopType ) }
+                            ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/f1"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /f1
+                            ( EAppVar
+                                { eavName = /B
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = /fn
+                                    ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> $_/B
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /init -> $_/B } ) -> $_/B
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /f1
+                            ( EAppArg
+                                { eaaArg = /fn
+                                    ( EAppArg { eaaArg = Value /v } )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /init } ) -> TVArg /init = ( Value /init ↦ TVArg /init )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A function-typed argument beside a plain argument typed by the same type variable.
+                This is the shape a fold's signature needs — @fn@ produces a @$_B@ and @init@ already is one —
+                and it used to be rejected with
+                  Definition Outside Declaration for /f1:
+                    Definition input type: (/f1(/fn(/v=TopType)=TopType, /init=TopType) + /f1(/init=TopType))
+                    Undeclared part: /f1(/init=TopType)
+                The definition's inferred input type came out as a union whose second member had dropped the
+                function argument. An applied argument written as a pattern goes through argument INFERENCE,
+                which offers one candidate per declared slot the base has not filled yet. A slot the declaration
+                spells with a bare type variable reads as ⊤ there, so the candidate "@fn(v)@ fills @init@"
+                accepted anything and nothing could refute it; the union never collapsed to one survivor, and the
+                surplus alternative reached the declaration-coverage check.
+                Nothing needed inferring: @fn(v)@ names the argument it fills. The pattern's key is now carried on
+                the constraint, and where it names one of the base's arguments that slot is the only candidate
+                offered. A genuine destructuring pattern names no argument — @/Box@ is the constructor, not the
+                slot — so it still infers by type, which @boxAccessor@ below covers." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Both arguments are reachable: [f1] answers from the plain one and [f2] from the function." }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /f1
+                        ( EAppArg
+                            { eaaArg = /fn
+                                ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                                ( /operator+
+                                    ( EAppArg
+                                        { eaaArg = Value /l -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                    ) ↦ /Data/Primitive/Integer
+                                )
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /init -> /Data/Primitive/Integer = 7 }
+                        ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "7" }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /f2
+                        ( EAppArg
+                            { eaaArg = /fn
+                                ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                                ( /operator+
+                                    ( EAppArg
+                                        { eaaArg = Value /l -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                    ) ↦ /Data/Primitive/Integer
+                                )
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /init -> /Data/Primitive/Integer = 7 }
+                        ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "2" }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A destructuring pattern still fills its slot by inference, with no name to go on." }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /unwrap
+                        ( EAppArg
+                            { eaaArg = Value /b -> /Box( /v=/Data/Primitive/Integer ) = /Box
+                                ( EAppArg
+                                    { eaaArg = Value /v -> /Data/Primitive/Integer = 3 }
+                                )
+                            }
+                        ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "3" }
+            )
+        ]
+    }

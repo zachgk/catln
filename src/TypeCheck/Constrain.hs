@@ -181,16 +181,16 @@ addArgToScheme env@FEnv{feTypeEnv} vaenv SType{stypeAct=srcAct, stypeReq=srcReq,
 -- (@/M=∀Monad[/T=⊤]@) — an erasure the destination then keeps for good, since it is a
 -- same-set respelling no later write can distinguish. It went unnoticed only while the
 -- destination was still ⊤ at the first graft, where the meet is the identity.
-addInferArgToScheme :: FEnv -> STypeVarArgEnv -> SType -> SType -> SType
-addInferArgToScheme env@FEnv{feTypeEnv} vaenv SType{stypeAct=srcAct, stypeReq=srcReq, stypeReqDecl=srcReqDecl} dest@SType{stypeAct=destAct, stypeReq=destReq, stypeReqDecl=destReqDecl} = dest{stypeAct=destAct', stypeReq=destReq', stypeReqDecl=destReqDecl'}
+addInferArgToScheme :: FEnv -> STypeVarArgEnv -> Maybe ArgName -> SType -> SType -> SType
+addInferArgToScheme env@FEnv{feTypeEnv} vaenv patKey SType{stypeAct=srcAct, stypeReq=srcReq, stypeReqDecl=srcReqDecl} dest@SType{stypeAct=destAct, stypeReq=destReq, stypeReqDecl=destReqDecl} = dest{stypeAct=destAct', stypeReq=destReq', stypeReqDecl=destReqDecl'}
   where
-    destAct' = case addInferArgToType env (fmap stypeAct vaenv) srcAct of
+    destAct' = case addInferArgToType env (fmap stypeAct vaenv) patKey srcAct of
       Just addDestAct -> snd $ intersectTypesWithVarEnv feTypeEnv (fmap stypeAct vaenv) destAct addDestAct
       Nothing         -> destAct
-    destReq' = case addInferArgToType env (fmap stypeReq vaenv) srcReq of
+    destReq' = case addInferArgToType env (fmap stypeReq vaenv) patKey srcReq of
       Just addDestReq -> intersectTypesEnv feTypeEnv (fmap stypeReq vaenv) destReq addDestReq
       Nothing         -> destReq
-    destReqDecl' = case addInferArgToType env (fmap stypeReqDecl vaenv) srcReqDecl of
+    destReqDecl' = case addInferArgToType env (fmap stypeReqDecl vaenv) patKey srcReqDecl of
       Just addDestReqDecl -> intersectTypesEnv feTypeEnv (fmap stypeReqDecl vaenv) destReqDecl addDestReqDecl
       Nothing             -> destReqDecl
 
@@ -405,9 +405,9 @@ computeConstraint env@FEnv{feTypeEnv} con@(Constraint _ _ (FnInputBound i (callP
 computeConstraint env con@(Constraint _ vaenv (AddArg i (src, newArgName) dest)) = (False, con{conDat=AddArg i (src, newArgName) dest'})
   where
     dest' = addArgToScheme env (fmap snd vaenv) src newArgName dest
-computeConstraint env con@(Constraint _ vaenv (AddInferArg i src dest)) = (False, con{conDat=AddInferArg i src dest'})
+computeConstraint env con@(Constraint _ vaenv (AddInferArg i (src, patKey) dest)) = (False, con{conDat=AddInferArg i (src, patKey) dest'})
   where
-    dest' = addInferArgToScheme env (fmap snd vaenv) src dest
+    dest' = addInferArgToScheme env (fmap snd vaenv) patKey src dest
 computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (SetArgMode i mode src@SType{stypeAct=srcAct, stypeReq=srcReq, stypeReqDecl=srcReqDecl} dest@SType{stypeAct=destAct, stypeReq=destReq, stypeReqDecl=destReqDecl})) = (False, con{conDat=SetArgMode i mode src dest{stypeAct=destAct', stypeReq=destReq', stypeReqDecl=destReqDecl'}})
   where
     vaenv' = fmap (stypeAct . snd) vaenv
