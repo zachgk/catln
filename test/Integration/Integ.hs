@@ -69,10 +69,26 @@ runGoldenTestGen goldenType serialize buildPath prgms step = do
         createDirectoryIfMissing True (takeDirectory goldenPath)
         writeFile goldenPath content
 
+-- | The working directory written out as a fixed string, so a golden holds the same text wherever
+-- it was written. A page read by an importer imports the page declaring that importer by the
+-- absolute path it was resolved to, and a JSON file's declaration is NAMED after its own absolute
+-- path — so without this a golden holds the working directory of whoever last wrote it, and every
+-- other checkout rewrites it back.
+--
+-- Both forms a path appears in, because they are different strings. Written as a path it is the
+-- plain one. Written as a name built from a path ('CtConstants.escapedPathName', which is how a
+-- JSON file's declaration and a directory's are named) every character a name may not hold has
+-- become @q@ and two hex digits — so a working directory with a dot in it (@.claude/worktrees/…@,
+-- which is where these run) does not match the plain substitution at all. The two replacements are
+-- disjoint wherever the directory holds such a character, and are the same replacement done twice
+-- where it does not, so neither order nor overlap matters.
+withoutCwd :: FilePath -> T.Text -> T.Text
+withoutCwd cwd = T.replace (T.pack $ escapedPathName "" cwd) "/repo/dir" . T.replace (T.pack cwd) "/repo/dir"
+
 runGoldenTest :: (Show em, Show prgm) => String -> String -> String -> GraphData prgm (AFileImport em) -> (String -> IO ()) -> IO ()
 runGoldenTest goldenType goldenDir _fileNameStr =
   runGoldenTestGen goldenType
-    (\cwd prgm -> T.unpack $ T.replace (T.pack cwd) "/repo/dir" $ pShowNoColor prgm)
+    (\cwd prgm -> T.unpack $ withoutCwd cwd $ pShowNoColor prgm)
     (\relPath ->
       let p = goldenDir ++ T.unpack (T.replace (T.pack ".ct") ".txt" (T.pack relPath))
       in if ".txt" `isSuffixOf` p then p else p ++ ".txt")
@@ -84,19 +100,8 @@ runConvertGoldenTest fileName rawPrgms step =
   case graphLookup fileName rawPrgms of
     Nothing -> assertFailure $ printf "File not in raw prgm graph: %s" (show $ impRaw fileName)
     Just prgm ->
-      -- The working directory is written out as a fixed string, as 'runGoldenTest' writes it. A page
-      -- read by an importer imports the page declaring that importer, by the absolute path it was
-      -- resolved to — so without this the golden holds the path of whoever last wrote it.
-      --
-      -- Twice, because a path can appear in a page in two forms. Written as a path it is the plain
-      -- string; written as a NAME built from a path ('CtConstants.escapedPathName', which is how a
-      -- JSON file's declaration and a directory's are named) every character a name may not hold has
-      -- become @q@ and two hex digits, so the plain substitution does not match it and the golden
-      -- keeps the absolute path of whoever last wrote it. The escaped form is replaced first: the two
-      -- differ wherever the working directory holds such a character, and a directory holding none
-      -- makes them the same replacement done twice, which is harmless.
       runGoldenTestGen "convert"
-        (\cwd p -> T.unpack $ T.replace (T.pack $ escapedPathName "" cwd) "/repo/dir" $ T.replace (T.pack cwd) "/repo/dir" $ T.pack $ formatRootPrgm p)
+        (\cwd p -> T.unpack $ withoutCwd cwd $ T.pack $ formatRootPrgm p)
         (\relPath -> goldenConvertDir ++ relPath ++ ".ct")
         (graphFromEdges [(prgm, fileName, [])])
         step
