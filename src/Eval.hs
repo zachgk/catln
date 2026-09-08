@@ -157,6 +157,44 @@ simplifyArgKeys (UnionType m pos cs) = UnionType m (joinUnionType $ map reKey $ 
   where reKey p = p{ptArgs = H.mapKeys (partialKey . pkName) (ptArgs p)}
 simplifyArgKeys t = t
 
+-- | The output type a closure value carries, read from what its body actually forwards.
+--
+-- A closure is built from the typed tree as it stands, so its output is spelled as the enclosing
+-- DEFINITION wrote it. Where the definition is generic that spelling is the declaration variable's
+-- BOUND, not what the call bound it to: a wrapper generic over its monad forwards its own function
+-- argument onward, and the forwarded closure's output reads as the whole class however the wrapper
+-- was called. A bound is not a fact about the value, and everything downstream reads it as one --
+-- dispatch asks whether the closure meets the selected arm's requirement, and TreeBuild expands the
+-- bound into every member and asks each to reach that arm's destination. A Maybe arm asks its
+-- function for a Maybe, and the ConsList member of the bound cannot reach it, so the wrapper is
+-- rejected for being imprecise rather than for being wrong.
+--
+-- The variable itself is gone by here (the typed meta holds the bound, and the arrow's source
+-- partial reads the variable as the top), so there is nothing to substitute. What is in hand is
+-- the forwarded argument as a VALUE, carrying the output its own creation site gave it, which is
+-- the instantiation the bound stands in for. A closure body that forwards nothing keeps its
+-- spelling.
+closureOutInstantiated :: ObjArr TExpr EvalMetaDat -> StateT Env CRes (ObjArr TExpr EvalMetaDat)
+closureOutInstantiated oa = do
+  Env{evArgs} <- get
+  return $ case oaArr oa of
+    Just (Just body, arrM) | Just out <- forwardedOut evArgs body ->
+      oa{oaArr = Just (Just body, mWithType out arrM)}
+    _ -> oa
+  where
+    -- The closure's body is an application of a function-typed ARGUMENT of the enclosing arrow
+    -- (the mandatory re-wrap, written @fn(v)= fn(v= v)@ — a bare @fn@ does not typecheck), so what
+    -- this closure returns is what that argument returns. The argument is in hand as a value, and
+    -- its output is the one its own creation site gave it, so reading it here replaces the bound
+    -- with the instantiation without needing the erased variable back.
+    forwardedOut args body = do
+      basePath <- maybeExprPath body
+      case H.lookup (nameStr basePath) args of
+        Just (ObjArrVal inner _) -> do
+          (_, innerArrM) <- oaArr inner
+          return $ getMetaType innerArrM
+        _ -> Nothing
+
 evalCallTree :: Val -> TCallTree -> StateT Env CRes Val
 -- evalCallTree v ct | trace (printf "evalCallTree %s using %s" (show v) (show ct)) False = undefined
 evalCallTree v TCTId = return v
@@ -298,7 +336,8 @@ evalExpr (TTupleApply m (_, b) (EAppArg oa)) = do
       Just TValue{} -> evalExpr oaExpr
       Just TTupleApply{} -> do
         Env{evArgs=creationArgs} <- get
-        return $ ObjArrVal oa creationArgs
+        oa' <- closureOutInstantiated oa
+        return $ ObjArrVal oa' creationArgs
       _ -> error $ printf "Unsupported eval argument of %s" (show oa)
     Just (Nothing, _) -> error $ printf "Missing arrExpr in evalExpr TupleApply with %s - %s" (show b) (show oa)
     Nothing -> error $ printf "Missing arrExpr in evalExpr TupleApply with %s - %s" (show b) (show oa)
