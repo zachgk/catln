@@ -497,6 +497,26 @@ baseBuildMeta TBEnv{tbTypeEnv, tbResEnv} os Value{} bm = case getMetaType bm of
                           | (_, oa@ObjArr{oaObj=Just{}, oaArr=Just (Just{}, _)}) <- os ]
 baseBuildMeta _ _ _ bm = bm
 
+-- | The one type a definition's object has, which is the source partial an 'ObjSrc' carries beside
+-- the definition itself.
+--
+-- Whether a build ever looks at this is decided by what the definition turns out to need, so where
+-- the 'ObjSrc' is built ('toTEObjArr') this is left a thunk and raises wherever it is FORCED — a
+-- place that has nothing to do with the definition at fault. The message therefore has to name the
+-- definition and where it was written, because nothing around the raise will.
+--
+-- The failure is real when it happens: a definition whose object is a NAME AMBIGUITY (a bare
+-- relative name matching two declarations) has no single source to dispatch from. 'buildRootOA'
+-- reports the same thing as a 'CRes' error, where it can.
+objSrcPartial :: EObjArr -> PartialType
+objSrcPartial oa = case maybeGetSingleton objType of
+  Just p  -> p
+  Nothing -> error $ printf "The object of %s is not one type but %s, so there is no source to build it from%s"
+                            (show $ oaObjPath oa) (show objType) writtenAt
+  where
+    objType = getExprType $ oaObjExpr oa
+    writtenAt = maybe "" (printf ", written at %s" . show) (getMetaPos $ getExprMeta $ oaObjExpr oa) :: String
+
 -- | The first Bool marks an ObjArr applied inside an expression ('EAppArg') as opposed to a root
 -- definition ('buildRootOA'); the second marks the application's base as a data construction
 -- (@Box(v= ..)@) as opposed to a function call.
@@ -505,7 +525,7 @@ toTEObjArr :: TBEnv -> [ObjSrc] -> Bool -> Bool -> EObjArr -> CRes (ObjArr TExpr
 toTEObjArr env@TBEnv{tbTypeEnv, tbResEnv} os inExpr _inData oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   oaObj' <- mapM (toTExpr env os) oaObj
   let os' = case oa of
-        ObjArr{oaObj=Just{}, oaArr=Just (Just{}, _)} -> (getSingleton $ getExprType $ oaObjExpr oa, oa) : os
+        ObjArr{oaObj=Just{}, oaArr=Just (Just{}, _)} -> (objSrcPartial oa, oa) : os
         _ -> os
   -- A call-site lambda's result meta has no consumer bound to drop the raw call partial
   -- 'arrowConstrainUbs' keeps alongside the arrows' results (@fn(v)= v + 1@ infers
