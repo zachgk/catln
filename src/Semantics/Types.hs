@@ -5804,10 +5804,17 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
   -- has no later epoch in which it resolves to anything else. The arm's own pattern
   -- (@m= Cons(head, tail)@) is then the only real evidence, and it is what should decide the
   -- binding.
+  -- Restricted to a FUNCTION-typed argument, whose slot value is the function's declared
+  -- RESULT rather than a value the caller hands over. A plain argument holding the bound is
+  -- saying the caller may pass anything of that class, which is a real reading of the
+  -- occurrence and must keep counting: @equal[$T -> Eq](this -> $T, other -> $T)@ has arms
+  -- whose two constructors differ (@this=Cons, other=Nil@), and dropping either side's
+  -- reading there narrows @$T@ to the other constructor and empties the arm.
+  let isFnArg k = not (S.null (pkArgs k))
   let discoveryAt k n = case H.lookup k liveArgsMap >>= H.lookup n . fst . splitVarArgEnv . fst of
         Just PTopType                             -> Nothing
         Just TypeVar{}                            -> Nothing
-        Just v | v == varBoundFor n               -> Just Nothing
+        Just v | isFnArg k, v == varBoundFor n     -> Just Nothing
         Just v | H.lookup n ambientVars /= Just v -> Just (Just (canonBinding v))
         _                                         -> Nothing
   -- The pointer join for an arg-set piece ranges over that piece's occurrences of the name:

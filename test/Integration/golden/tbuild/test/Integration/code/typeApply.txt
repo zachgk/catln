@@ -92,7 +92,7 @@ Prgm
                                 )
                             ,
                                 ( /applyInc
-                                    ( /fn( /v=TopType )=/Data/String
+                                    ( /fn( /v=TopType )=∀/Data/Algebra/Semigroup
                                     , /lst=∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
                                     ) + /Data/Functor/fmap
                                     [ /F=∀/Data/Functor[ /T=TopType ]
@@ -111,11 +111,11 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = /fn
-                                        ( EAppArg { eaaArg = Value /v } ) -> /Data/String =
+                                        ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/Algebra/Semigroup =
                                         ( /Data/toString
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                            ) ↦ /Data/String
+                                            ) ↦ ∀/Data/Algebra/Semigroup
                                         )
                                     }
                                 ) ↦ UnionType

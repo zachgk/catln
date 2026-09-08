@@ -115,9 +115,20 @@ typecheckPrgmsSt pprgms typechecked = do
           let fragKeys = concatMap (objMapKeys . prgmObjMap) frag
           -- An annotation fragment has no items of its own and its expressions are not part
           -- of the reference graph: give it the full dependency set (it runs once, last).
+          -- A fragment's OWN keys are excluded from its closure ('closureFrom' subtracts its
+          -- seeds) because its items are the live V side and must not also arrive as
+          -- typechecked dependencies. A name can nevertheless have a dependency-side piece
+          -- under that same key: a class instance is written under the DECLARATION's absolute
+          -- name (@/Data/Monad/mmap@ declared in core/monad.ct, instanced in core/list.ct), so
+          -- the arms defining it and the declaration constraining them share one key while
+          -- living on different pages. Subtracting the seed dropped the declaration along with
+          -- the arms, leaving the arms bounded only by each other: every argument the
+          -- declaration typed with a variable read as ⊤ in the arm, and a higher-order
+          -- argument's declared result never reached 'BoundedByObjs' at all.
+          let ownDepKeys = filter (`H.member` pieces) fragKeys
           let closureKeys
                 | null fragKeys = H.keys pieces
-                | otherwise = hashNub (allDataKeys ++ S.toList (closureFrom edgeMap fragKeys))
+                | otherwise = hashNub (allDataKeys ++ ownDepKeys ++ S.toList (closureFrom edgeMap fragKeys))
           let cPieces = mapMaybe (`H.lookup` pieces) closureKeys
           let tRec = mconcat [r | (r, _, _, _) <- cPieces]
           let tPrec = foldr (H.unionWith min) H.empty [p | (_, p, _, _) <- cPieces]

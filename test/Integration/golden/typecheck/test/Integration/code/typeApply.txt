@@ -47,7 +47,7 @@ Prgm
                                 )
                             ,
                                 ( /applyInc
-                                    ( /fn( /v=TopType )=/Data/String
+                                    ( /fn( /v=TopType )=∀/Data/Algebra/Semigroup
                                     , /lst=∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
                                     ) + /Data/Functor/fmap
                                     [ /F=∀/Data/Functor[ /T=TopType ]
@@ -60,7 +60,7 @@ Prgm
                                 )
                             , []
                             ) = /applyInc( Value /lst -> TVArg /m = Value /m )
-                            ( /fn( Value /v ) -> /Data/String = /Data/toString( Value /this -> TVArg /v = Value /v ) )
+                            ( /fn( Value /v ) -> ∀/Data/Algebra/Semigroup = /Data/toString( Value /this -> TVArg /v = Value /v ) )
                         ]
                     }
                 )
