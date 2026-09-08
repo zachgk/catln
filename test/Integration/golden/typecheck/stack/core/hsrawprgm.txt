@@ -34,8 +34,25 @@ Prgm
                             ( Value /args -> ∀/Data/List
                                 [ /T=/Catln/Pair
                                     [ /B=/Catln/RawObjArr
+                                        ( /arr=TopType
+                                        , /obj=TopType
+                                        , /annots=TopType
+                                        , /doc=TopType
+                                        , /def=TopType
+                                        , /basis=TopType
+                                        )
                                     , /A=∀/Data/Primitive/Boolean
                                     ]
+                                    ( /first=∀/Data/Primitive/Boolean
+                                    , /second=/Catln/RawObjArr
+                                        ( /arr=TopType
+                                        , /obj=TopType
+                                        , /annots=TopType
+                                        , /doc=TopType
+                                        , /def=TopType
+                                        , /basis=TopType
+                                        )
+                                    )
                                 ]
                             )
                         ]
@@ -76,6 +93,9 @@ Prgm
                                     [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                                     , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                                     ]
+                                    ( /first=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                    , /second=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                    )
                                 ]
                             )
                             ( Value /def -> ∀/Data/Maybe[ /T=∀/Catln/RawExpr ] )
@@ -153,7 +173,17 @@ Prgm
                                 , /second=∀/Catln/RawExpr
                                 )
                             )
-                            ( Value /args -> ∀/Data/List[ /T=/Catln/RawObjArr ] )
+                            ( Value /args -> ∀/Data/List
+                                [ /T=/Catln/RawObjArr
+                                    ( /arr=TopType
+                                    , /obj=TopType
+                                    , /annots=TopType
+                                    , /doc=TopType
+                                    , /def=TopType
+                                    , /basis=TopType
+                                    )
+                                ]
+                            )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -229,7 +259,17 @@ Prgm
                                 , /pos=TopType
                                 )
                             )( Value /base -> ∀/Catln/RawExpr )
-                            ( Value /vars -> ∀/Data/List[ /T=/Catln/RawObjArr ] )
+                            ( Value /vars -> ∀/Data/List
+                                [ /T=/Catln/RawObjArr
+                                    ( /arr=TopType
+                                    , /obj=TopType
+                                    , /annots=TopType
+                                    , /doc=TopType
+                                    , /def=TopType
+                                    , /basis=TopType
+                                    )
+                                ]
+                            )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -353,7 +393,13 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/RawStatementTree( Value /statement -> ∀/Catln/RawStatement )
-                            ( Value /children -> ∀/Data/List[ /T=/Catln/RawStatementTree ] )
+                            ( Value /children -> ∀/Data/List
+                                [ /T=/Catln/RawStatementTree
+                                    ( /statement=TopType
+                                    , /children=TopType
+                                    )
+                                ]
+                            )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -375,8 +421,23 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/RawPrgm
-                            ( Value /imports -> ∀/Data/List[ /T=/Catln/AFileImport ] )
-                            ( Value /statements -> ∀/Data/List[ /T=/Catln/RawStatementTree ] )
+                            ( Value /imports -> ∀/Data/List
+                                [ /T=/Catln/AFileImport
+                                    ( /disp=TopType
+                                    , /calledDir=TopType
+                                    , /dir=TopType
+                                    , /abs=TopType
+                                    , /raw=TopType
+                                    )
+                                ]
+                            )
+                            ( Value /statements -> ∀/Data/List
+                                [ /T=/Catln/RawStatementTree
+                                    ( /statement=TopType
+                                    , /children=TopType
+                                    )
+                                ]
+                            )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

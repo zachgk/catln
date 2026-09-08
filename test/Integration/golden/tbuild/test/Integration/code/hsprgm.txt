@@ -198,13 +198,40 @@ Prgm
                         [ /Test/declCount
                             ( EAppArg
                                 { eaaArg = Value /p -> /Catln/Prgm
-                                    ( /cg=TopType
-                                    , /annots=TopType
-                                    , /objMap=TopType
+                                    ( /cg=∀/Data/List
+                                        [ /T=/Catln/Triple
+                                            [ /B=∀/Catln/PartialName
+                                            , /C=∀/Data/List[ /T=∀/Catln/PartialName ]
+                                            , /A=∀/Catln/CGNode
+                                            ]
+                                            ( /first=∀/Catln/CGNode
+                                            , /second=∀/Catln/PartialName
+                                            , /third=∀/Data/List[ /T=∀/Catln/PartialName ]
+                                            )
+                                        ]
+                                    , /annots=∀/Data/List[ /T=∀/Catln/Expr ]
+                                    , /objMap=/Catln/ObjectMap( /items=TopType )
                                     ) = /Catln/Prgm
-                                    ( EAppArg { eaaArg = Value /objMap } )
-                                    ( EAppArg { eaaArg = Value /cg } )
-                                    ( EAppArg { eaaArg = Value /annots } )
+                                    ( EAppArg
+                                        { eaaArg = Value /objMap -> /Catln/ObjectMap( /items=TopType ) }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /cg -> ∀/Data/List
+                                            [ /T=/Catln/Triple
+                                                [ /B=∀/Catln/PartialName
+                                                , /C=∀/Data/List[ /T=∀/Catln/PartialName ]
+                                                , /A=∀/Catln/CGNode
+                                                ]
+                                                ( /first=∀/Catln/CGNode
+                                                , /second=∀/Catln/PartialName
+                                                , /third=∀/Data/List[ /T=∀/Catln/PartialName ]
+                                                )
+                                            ]
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /annots -> ∀/Data/List[ /T=∀/Catln/Expr ] }
+                                    )
                                 }
                             ) -> /Data/Primitive/Integer =
                             ( /Test/mapSize
@@ -348,12 +375,42 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /k -> /Catln/PartialKey
                                     ( /name=/Data/String
-                                    , /vars=TopType
-                                    , /args=TopType
+                                    , /vars=∀/Data/List
+                                        [ /T=/Catln/PartialKey
+                                            ( /name=TopType
+                                            , /vars=TopType
+                                            , /args=TopType
+                                            )
+                                        ]
+                                    , /args=∀/Data/List
+                                        [ /T=/Catln/PartialKey
+                                            ( /name=TopType
+                                            , /vars=TopType
+                                            , /args=TopType
+                                            )
+                                        ]
                                     ) = /Catln/PartialKey
                                     ( EAppArg { eaaArg = Value /name -> /Data/String } )
-                                    ( EAppArg { eaaArg = Value /vars } )
-                                    ( EAppArg { eaaArg = Value /args } )
+                                    ( EAppArg
+                                        { eaaArg = Value /vars -> ∀/Data/List
+                                            [ /T=/Catln/PartialKey
+                                                ( /name=TopType
+                                                , /vars=TopType
+                                                , /args=TopType
+                                                )
+                                            ]
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /args -> ∀/Data/List
+                                            [ /T=/Catln/PartialKey
+                                                ( /name=TopType
+                                                , /vars=TopType
+                                                , /args=TopType
+                                                )
+                                            ]
+                                        }
+                                    )
                                 }
                             ) -> /Data/Primitive/Integer =
                             ( /operator+
@@ -399,33 +456,11 @@ Prgm
                                                 { eaaArg = Value /msg -> /Data/String =
                                                     ( /Data/toString
                                                         ( EAppArg
-                                                            { eaaArg = Value /this -> UnionType
-                                                                ( Just
-                                                                    ( PredExpr /operator==
-                                                                        ( /r=/Data/Primitive/True
-                                                                        , /l=~nonNeg( /this=~/$this )
-                                                                        ) && PredRel Integer && PredClass /Data/ToString
-                                                                    , fromList []
-                                                                    , []
-                                                                    )
-                                                                , /Data/Primitive/Integer
-                                                                , []
-                                                                ) =
+                                                            { eaaArg = Value /this -> /Data/Primitive/Integer =
                                                                 ( /Test/ownDeclCount
                                                                     ( EAppArg
                                                                         { eaaArg = Value /name -> /Data/String = "/Test/intOf" }
-                                                                    ) ↦ UnionType
-                                                                    ( Just
-                                                                        ( PredExpr /operator==
-                                                                            ( /r=/Data/Primitive/True
-                                                                            , /l=~nonNeg( /this=~/$this )
-                                                                            ) && PredRel Integer && PredClass /Data/ToString
-                                                                        , fromList []
-                                                                        , []
-                                                                        )
-                                                                    , /Data/Primitive/Integer
-                                                                    , []
-                                                                    )
+                                                                    ) ↦ /Data/Primitive/Integer
                                                                 )
                                                             }
                                                         ) ↦ /Data/String
@@ -439,18 +474,7 @@ Prgm
                                                             { eaaArg = Value /msg -> /Data/String =
                                                                 ( /Data/toString
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /this -> UnionType
-                                                                            ( Just
-                                                                                ( PredExpr /operator==
-                                                                                    ( /r=/Data/Primitive/True
-                                                                                    , /l=~nonNeg( /this=~/$this )
-                                                                                    ) && PredRel Integer && PredClass /Data/ToString
-                                                                                , fromList []
-                                                                                , []
-                                                                                )
-                                                                            , /Data/Primitive/Integer
-                                                                            , []
-                                                                            ) =
+                                                                        { eaaArg = Value /this -> /Data/Primitive/Integer =
                                                                             ( /Test/declCount
                                                                                 ( EAppArg
                                                                                     { eaaArg = Value /p -> /Catln/Prgm
@@ -466,18 +490,7 @@ Prgm
                                                                                         ( EAppArg { eaaArg = Value /cg -> /Data/List/Nil = Value /Data/List/Nil } )
                                                                                         ( EAppArg { eaaArg = Value /annots -> /Data/List/Nil = Value /Data/List/Nil } )
                                                                                     }
-                                                                                ) ↦ UnionType
-                                                                                ( Just
-                                                                                    ( PredExpr /operator==
-                                                                                        ( /r=/Data/Primitive/True
-                                                                                        , /l=~nonNeg( /this=~/$this )
-                                                                                        ) && PredRel Integer && PredClass /Data/ToString
-                                                                                    , fromList []
-                                                                                    , []
-                                                                                    )
-                                                                                , /Data/Primitive/Integer
-                                                                                , []
-                                                                                )
+                                                                                ) ↦ /Data/Primitive/Integer
                                                                             )
                                                                         }
                                                                     ) ↦ /Data/String
@@ -495,22 +508,22 @@ Prgm
                                                                                         ( /name=/Data/String
                                                                                         , /meta=/Catln/Meta
                                                                                             ( /type=TopType
-                                                                                            , /dat=TopType
-                                                                                            , /id=TopType
+                                                                                            , /dat=/Catln/Unit
+                                                                                            , /id=/Data/String
                                                                                             , /pos=TopType
                                                                                             )
                                                                                         ) = /Catln/Expr/Value
                                                                                         ( EAppArg
                                                                                             { eaaArg = Value /meta -> /Catln/Meta
                                                                                                 ( /type=TopType
-                                                                                                , /dat=TopType
-                                                                                                , /id=TopType
+                                                                                                , /dat=/Catln/Unit
+                                                                                                , /id=/Data/String
                                                                                                 , /pos=TopType
                                                                                                 ) =
                                                                                                 ( Value /Test/noMeta ↦ /Catln/Meta
                                                                                                     ( /type=TopType
-                                                                                                    , /dat=TopType
-                                                                                                    , /id=TopType
+                                                                                                    , /dat=/Catln/Unit
+                                                                                                    , /id=/Data/String
                                                                                                     , /pos=TopType
                                                                                                     )
                                                                                                 )
@@ -535,22 +548,22 @@ Prgm
                                                                                                     ( /name=/Data/String
                                                                                                     , /meta=/Catln/Meta
                                                                                                         ( /type=TopType
-                                                                                                        , /dat=TopType
-                                                                                                        , /id=TopType
+                                                                                                        , /dat=/Catln/Unit
+                                                                                                        , /id=/Data/String
                                                                                                         , /pos=TopType
                                                                                                         )
                                                                                                     ) = /Catln/Expr/Value
                                                                                                     ( EAppArg
                                                                                                         { eaaArg = Value /meta -> /Catln/Meta
                                                                                                             ( /type=TopType
-                                                                                                            , /dat=TopType
-                                                                                                            , /id=TopType
+                                                                                                            , /dat=/Catln/Unit
+                                                                                                            , /id=/Data/String
                                                                                                             , /pos=TopType
                                                                                                             ) =
                                                                                                             ( Value /Test/noMeta ↦ /Catln/Meta
                                                                                                                 ( /type=TopType
-                                                                                                                , /dat=TopType
-                                                                                                                , /id=TopType
+                                                                                                                , /dat=/Catln/Unit
+                                                                                                                , /id=/Data/String
                                                                                                                 , /pos=TopType
                                                                                                                 )
                                                                                                             )
@@ -641,18 +654,7 @@ Prgm
                                                                                                                         { eaaArg = Value /msg -> /Data/String =
                                                                                                                             ( /Data/toString
                                                                                                                                 ( EAppArg
-                                                                                                                                    { eaaArg = Value /this -> UnionType
-                                                                                                                                        ( Just
-                                                                                                                                            ( PredExpr /operator==
-                                                                                                                                                ( /r=/Data/Primitive/True
-                                                                                                                                                , /l=~nonNeg( /this=~/$this )
-                                                                                                                                                ) && PredRel Integer && PredClass /Data/ToString
-                                                                                                                                            , fromList []
-                                                                                                                                            , []
-                                                                                                                                            )
-                                                                                                                                        , /Data/Primitive/Integer
-                                                                                                                                        , []
-                                                                                                                                        ) =
+                                                                                                                                    { eaaArg = Value /this -> /Data/Primitive/Integer =
                                                                                                                                         ( /Test/constCount
                                                                                                                                             ( EAppArg
                                                                                                                                                 { eaaArg = Value /t -> /Catln/Type/UnionType
@@ -668,6 +670,7 @@ Prgm
                                                                                                                                                     ( EAppArg { eaaArg = Value /leafs -> /Data/List/Nil = Value /Data/List/Nil } )
                                                                                                                                                     ( EAppArg
                                                                                                                                                         { eaaArg = Value /consts -> /Data/List/Cons
+                                                                                                                                                            [ /T=/Catln/Constant/CInt( /value=/Data/Primitive/Integer ) ]
                                                                                                                                                             ( /head=/Catln/Constant/CInt( /value=/Data/Primitive/Integer )
                                                                                                                                                             , /tail=/Data/List/Nil
                                                                                                                                                             ) = /Data/List/Cons
@@ -682,18 +685,7 @@ Prgm
                                                                                                                                                         }
                                                                                                                                                     )
                                                                                                                                                 }
-                                                                                                                                            ) ↦ UnionType
-                                                                                                                                            ( Just
-                                                                                                                                                ( PredExpr /operator==
-                                                                                                                                                    ( /r=/Data/Primitive/True
-                                                                                                                                                    , /l=~nonNeg( /this=~/$this )
-                                                                                                                                                    ) && PredRel Integer && PredClass /Data/ToString
-                                                                                                                                                , fromList []
-                                                                                                                                                , []
-                                                                                                                                                )
-                                                                                                                                            , /Data/Primitive/Integer
-                                                                                                                                            , []
-                                                                                                                                            )
+                                                                                                                                            ) ↦ /Data/Primitive/Integer
                                                                                                                                         )
                                                                                                                                     }
                                                                                                                                 ) ↦ /Data/String
@@ -734,6 +726,12 @@ Prgm
                                                                                                                                                                             ( /name=/Data/String
                                                                                                                                                                             , /vars=/Data/List/Nil
                                                                                                                                                                             , /args=/Data/List/Cons
+                                                                                                                                                                                [ /T=/Catln/PartialKey
+                                                                                                                                                                                    ( /name=/Data/String
+                                                                                                                                                                                    , /vars=/Data/List/Nil
+                                                                                                                                                                                    , /args=/Data/List/Nil
+                                                                                                                                                                                    )
+                                                                                                                                                                                ]
                                                                                                                                                                                 ( /head=/Catln/PartialKey
                                                                                                                                                                                     ( /name=/Data/String
                                                                                                                                                                                     , /vars=/Data/List/Nil
@@ -748,6 +746,12 @@ Prgm
                                                                                                                                                                             ( EAppArg { eaaArg = Value /vars -> /Data/List/Nil = Value /Data/List/Nil } )
                                                                                                                                                                             ( EAppArg
                                                                                                                                                                                 { eaaArg = Value /args -> /Data/List/Cons
+                                                                                                                                                                                    [ /T=/Catln/PartialKey
+                                                                                                                                                                                        ( /name=/Data/String
+                                                                                                                                                                                        , /vars=/Data/List/Nil
+                                                                                                                                                                                        , /args=/Data/List/Nil
+                                                                                                                                                                                        )
+                                                                                                                                                                                    ]
                                                                                                                                                                                     ( /head=/Catln/PartialKey
                                                                                                                                                                                         ( /name=/Data/String
                                                                                                                                                                                         , /vars=/Data/List/Nil
@@ -1074,17 +1078,37 @@ Prgm
                             ( /Test/declCount
                                 ( EAppArg
                                     { eaaArg = Value /p -> /Catln/Prgm
-                                        ( /cg=TopType
-                                        , /annots=TopType
-                                        , /objMap=TopType
+                                        ( /cg=∀/Data/List
+                                            [ /T=/Catln/Triple
+                                                [ /B=∀/Catln/PartialName
+                                                , /C=∀/Data/List[ /T=∀/Catln/PartialName ]
+                                                , /A=∀/Catln/CGNode
+                                                ]
+                                                ( /first=∀/Catln/CGNode
+                                                , /second=∀/Catln/PartialName
+                                                , /third=∀/Data/List[ /T=∀/Catln/PartialName ]
+                                                )
+                                            ]
+                                        , /annots=∀/Data/List[ /T=∀/Catln/Expr ]
+                                        , /objMap=/Catln/ObjectMap( /items=TopType )
                                         ) =
                                         ( /Catln/prgmFor
                                             ( EAppArg
                                                 { eaaArg = Value /name -> TVArg /name = ( Value /name ↦ TVArg /name ) }
                                             ) ↦ /Catln/Prgm
-                                            ( /cg=TopType
-                                            , /annots=TopType
-                                            , /objMap=TopType
+                                            ( /cg=∀/Data/List
+                                                [ /T=/Catln/Triple
+                                                    [ /B=∀/Catln/PartialName
+                                                    , /C=∀/Data/List[ /T=∀/Catln/PartialName ]
+                                                    , /A=∀/Catln/CGNode
+                                                    ]
+                                                    ( /first=∀/Catln/CGNode
+                                                    , /second=∀/Catln/PartialName
+                                                    , /third=∀/Data/List[ /T=∀/Catln/PartialName ]
+                                                    )
+                                                ]
+                                            , /annots=∀/Data/List[ /T=∀/Catln/Expr ]
+                                            , /objMap=/Catln/ObjectMap( /items=TopType )
                                             )
                                         )
                                     }
@@ -1142,20 +1166,80 @@ Prgm
                                         [ /T=/Catln/Triple
                                             [ /B=∀/Data/List
                                                 [ /T=/Catln/Pair
-                                                    [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
+                                                    [ /B=∀/Data/List
+                                                        [ /T=/Catln/PartialArgsOption
+                                                            ( /argMode=TopType
+                                                            , /vars=TopType
+                                                            , /args=TopType
+                                                            , /preds=TopType
+                                                            )
+                                                        ]
                                                     , /A=/Data/String
                                                     ]
+                                                    ( /first=/Data/String
+                                                    , /second=∀/Data/List
+                                                        [ /T=/Catln/PartialArgsOption
+                                                            ( /argMode=TopType
+                                                            , /vars=TopType
+                                                            , /args=TopType
+                                                            , /preds=TopType
+                                                            )
+                                                        ]
+                                                    )
                                                 ]
                                             , /C=∀/Data/List[ /T=∀/Catln/Constant ]
                                             , /A=∀/Catln/TypePredicates
                                             ]
+                                            ( /first=∀/Catln/TypePredicates
+                                            , /second=∀/Data/List
+                                                [ /T=/Catln/Pair
+                                                    [ /B=∀/Data/List
+                                                        [ /T=/Catln/PartialArgsOption
+                                                            ( /argMode=TopType
+                                                            , /vars=TopType
+                                                            , /args=TopType
+                                                            , /preds=TopType
+                                                            )
+                                                        ]
+                                                    , /A=/Data/String
+                                                    ]
+                                                    ( /first=/Data/String
+                                                    , /second=∀/Data/List
+                                                        [ /T=/Catln/PartialArgsOption
+                                                            ( /argMode=TopType
+                                                            , /vars=TopType
+                                                            , /args=TopType
+                                                            , /preds=TopType
+                                                            )
+                                                        ]
+                                                    )
+                                                ]
+                                            , /third=∀/Data/List[ /T=∀/Catln/Constant ]
+                                            )
                                         ]
                                     , /consts=∀/Data/List[ /T=∀/Catln/Constant ]
                                     , /leafs=∀/Data/List
                                         [ /T=/Catln/Pair
-                                            [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
+                                            [ /B=∀/Data/List
+                                                [ /T=/Catln/PartialArgsOption
+                                                    ( /argMode=TopType
+                                                    , /vars=TopType
+                                                    , /args=TopType
+                                                    , /preds=TopType
+                                                    )
+                                                ]
                                             , /A=/Data/String
                                             ]
+                                            ( /first=/Data/String
+                                            , /second=∀/Data/List
+                                                [ /T=/Catln/PartialArgsOption
+                                                    ( /argMode=TopType
+                                                    , /vars=TopType
+                                                    , /args=TopType
+                                                    , /preds=TopType
+                                                    )
+                                                ]
+                                            )
                                         ]
                                     ) = /Catln/Type/UnionType
                                     ( EAppArg
@@ -1163,22 +1247,82 @@ Prgm
                                             [ /T=/Catln/Triple
                                                 [ /B=∀/Data/List
                                                     [ /T=/Catln/Pair
-                                                        [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
+                                                        [ /B=∀/Data/List
+                                                            [ /T=/Catln/PartialArgsOption
+                                                                ( /argMode=TopType
+                                                                , /vars=TopType
+                                                                , /args=TopType
+                                                                , /preds=TopType
+                                                                )
+                                                            ]
                                                         , /A=/Data/String
                                                         ]
+                                                        ( /first=/Data/String
+                                                        , /second=∀/Data/List
+                                                            [ /T=/Catln/PartialArgsOption
+                                                                ( /argMode=TopType
+                                                                , /vars=TopType
+                                                                , /args=TopType
+                                                                , /preds=TopType
+                                                                )
+                                                            ]
+                                                        )
                                                     ]
                                                 , /C=∀/Data/List[ /T=∀/Catln/Constant ]
                                                 , /A=∀/Catln/TypePredicates
                                                 ]
+                                                ( /first=∀/Catln/TypePredicates
+                                                , /second=∀/Data/List
+                                                    [ /T=/Catln/Pair
+                                                        [ /B=∀/Data/List
+                                                            [ /T=/Catln/PartialArgsOption
+                                                                ( /argMode=TopType
+                                                                , /vars=TopType
+                                                                , /args=TopType
+                                                                , /preds=TopType
+                                                                )
+                                                            ]
+                                                        , /A=/Data/String
+                                                        ]
+                                                        ( /first=/Data/String
+                                                        , /second=∀/Data/List
+                                                            [ /T=/Catln/PartialArgsOption
+                                                                ( /argMode=TopType
+                                                                , /vars=TopType
+                                                                , /args=TopType
+                                                                , /preds=TopType
+                                                                )
+                                                            ]
+                                                        )
+                                                    ]
+                                                , /third=∀/Data/List[ /T=∀/Catln/Constant ]
+                                                )
                                             ]
                                         }
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /leafs -> ∀/Data/List
                                             [ /T=/Catln/Pair
-                                                [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
+                                                [ /B=∀/Data/List
+                                                    [ /T=/Catln/PartialArgsOption
+                                                        ( /argMode=TopType
+                                                        , /vars=TopType
+                                                        , /args=TopType
+                                                        , /preds=TopType
+                                                        )
+                                                    ]
                                                 , /A=/Data/String
                                                 ]
+                                                ( /first=/Data/String
+                                                , /second=∀/Data/List
+                                                    [ /T=/Catln/PartialArgsOption
+                                                        ( /argMode=TopType
+                                                        , /vars=TopType
+                                                        , /args=TopType
+                                                        , /preds=TopType
+                                                        )
+                                                    ]
+                                                )
                                             ]
                                         }
                                     )
@@ -1191,10 +1335,12 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /t -> /Catln/Type/TypeVar
                                     ( /aux=∀/Catln/TypeVarAux
+                                    , /inner=∀/Catln/Type
                                     , /loc=∀/Catln/TypeVarLoc
                                     ) = /Catln/Type/TypeVar
                                     ( EAppArg { eaaArg = Value /aux -> ∀/Catln/TypeVarAux } )
                                     ( EAppArg { eaaArg = Value /loc -> ∀/Catln/TypeVarLoc } )
+                                    ( EAppArg { eaaArg = Value /inner -> ∀/Catln/Type } )
                                 }
                             ) -> /Data/String = "var"
                         ]
@@ -1221,12 +1367,42 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /k -> /Catln/PartialKey
                                     ( /name=/Data/String
-                                    , /vars=TopType
-                                    , /args=TopType
+                                    , /vars=∀/Data/List
+                                        [ /T=/Catln/PartialKey
+                                            ( /name=TopType
+                                            , /vars=TopType
+                                            , /args=TopType
+                                            )
+                                        ]
+                                    , /args=∀/Data/List
+                                        [ /T=/Catln/PartialKey
+                                            ( /name=TopType
+                                            , /vars=TopType
+                                            , /args=TopType
+                                            )
+                                        ]
                                     ) = /Catln/PartialKey
                                     ( EAppArg { eaaArg = Value /name -> /Data/String } )
-                                    ( EAppArg { eaaArg = Value /vars } )
-                                    ( EAppArg { eaaArg = Value /args } )
+                                    ( EAppArg
+                                        { eaaArg = Value /vars -> ∀/Data/List
+                                            [ /T=/Catln/PartialKey
+                                                ( /name=TopType
+                                                , /vars=TopType
+                                                , /args=TopType
+                                                )
+                                            ]
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /args -> ∀/Data/List
+                                            [ /T=/Catln/PartialKey
+                                                ( /name=TopType
+                                                , /vars=TopType
+                                                , /args=TopType
+                                                )
+                                            ]
+                                        }
+                                    )
                                 }
                             ) -> /Data/String = ( Value /name ↦ /Data/String )
                         ]
@@ -1286,20 +1462,80 @@ Prgm
                                         [ /T=/Catln/Triple
                                             [ /B=∀/Data/List
                                                 [ /T=/Catln/Pair
-                                                    [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
+                                                    [ /B=∀/Data/List
+                                                        [ /T=/Catln/PartialArgsOption
+                                                            ( /argMode=TopType
+                                                            , /vars=TopType
+                                                            , /args=TopType
+                                                            , /preds=TopType
+                                                            )
+                                                        ]
                                                     , /A=/Data/String
                                                     ]
+                                                    ( /first=/Data/String
+                                                    , /second=∀/Data/List
+                                                        [ /T=/Catln/PartialArgsOption
+                                                            ( /argMode=TopType
+                                                            , /vars=TopType
+                                                            , /args=TopType
+                                                            , /preds=TopType
+                                                            )
+                                                        ]
+                                                    )
                                                 ]
                                             , /C=∀/Data/List[ /T=∀/Catln/Constant ]
                                             , /A=∀/Catln/TypePredicates
                                             ]
+                                            ( /first=∀/Catln/TypePredicates
+                                            , /second=∀/Data/List
+                                                [ /T=/Catln/Pair
+                                                    [ /B=∀/Data/List
+                                                        [ /T=/Catln/PartialArgsOption
+                                                            ( /argMode=TopType
+                                                            , /vars=TopType
+                                                            , /args=TopType
+                                                            , /preds=TopType
+                                                            )
+                                                        ]
+                                                    , /A=/Data/String
+                                                    ]
+                                                    ( /first=/Data/String
+                                                    , /second=∀/Data/List
+                                                        [ /T=/Catln/PartialArgsOption
+                                                            ( /argMode=TopType
+                                                            , /vars=TopType
+                                                            , /args=TopType
+                                                            , /preds=TopType
+                                                            )
+                                                        ]
+                                                    )
+                                                ]
+                                            , /third=∀/Data/List[ /T=∀/Catln/Constant ]
+                                            )
                                         ]
                                     , /consts=∀/Data/List[ /T=∀/Catln/Constant ]
                                     , /leafs=∀/Data/List
                                         [ /T=/Catln/Pair
-                                            [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
+                                            [ /B=∀/Data/List
+                                                [ /T=/Catln/PartialArgsOption
+                                                    ( /argMode=TopType
+                                                    , /vars=TopType
+                                                    , /args=TopType
+                                                    , /preds=TopType
+                                                    )
+                                                ]
                                             , /A=/Data/String
                                             ]
+                                            ( /first=/Data/String
+                                            , /second=∀/Data/List
+                                                [ /T=/Catln/PartialArgsOption
+                                                    ( /argMode=TopType
+                                                    , /vars=TopType
+                                                    , /args=TopType
+                                                    , /preds=TopType
+                                                    )
+                                                ]
+                                            )
                                         ]
                                     ) = /Catln/Type/UnionType
                                     ( EAppArg
@@ -1307,22 +1543,82 @@ Prgm
                                             [ /T=/Catln/Triple
                                                 [ /B=∀/Data/List
                                                     [ /T=/Catln/Pair
-                                                        [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
+                                                        [ /B=∀/Data/List
+                                                            [ /T=/Catln/PartialArgsOption
+                                                                ( /argMode=TopType
+                                                                , /vars=TopType
+                                                                , /args=TopType
+                                                                , /preds=TopType
+                                                                )
+                                                            ]
                                                         , /A=/Data/String
                                                         ]
+                                                        ( /first=/Data/String
+                                                        , /second=∀/Data/List
+                                                            [ /T=/Catln/PartialArgsOption
+                                                                ( /argMode=TopType
+                                                                , /vars=TopType
+                                                                , /args=TopType
+                                                                , /preds=TopType
+                                                                )
+                                                            ]
+                                                        )
                                                     ]
                                                 , /C=∀/Data/List[ /T=∀/Catln/Constant ]
                                                 , /A=∀/Catln/TypePredicates
                                                 ]
+                                                ( /first=∀/Catln/TypePredicates
+                                                , /second=∀/Data/List
+                                                    [ /T=/Catln/Pair
+                                                        [ /B=∀/Data/List
+                                                            [ /T=/Catln/PartialArgsOption
+                                                                ( /argMode=TopType
+                                                                , /vars=TopType
+                                                                , /args=TopType
+                                                                , /preds=TopType
+                                                                )
+                                                            ]
+                                                        , /A=/Data/String
+                                                        ]
+                                                        ( /first=/Data/String
+                                                        , /second=∀/Data/List
+                                                            [ /T=/Catln/PartialArgsOption
+                                                                ( /argMode=TopType
+                                                                , /vars=TopType
+                                                                , /args=TopType
+                                                                , /preds=TopType
+                                                                )
+                                                            ]
+                                                        )
+                                                    ]
+                                                , /third=∀/Data/List[ /T=∀/Catln/Constant ]
+                                                )
                                             ]
                                         }
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /leafs -> ∀/Data/List
                                             [ /T=/Catln/Pair
-                                                [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
+                                                [ /B=∀/Data/List
+                                                    [ /T=/Catln/PartialArgsOption
+                                                        ( /argMode=TopType
+                                                        , /vars=TopType
+                                                        , /args=TopType
+                                                        , /preds=TopType
+                                                        )
+                                                    ]
                                                 , /A=/Data/String
                                                 ]
+                                                ( /first=/Data/String
+                                                , /second=∀/Data/List
+                                                    [ /T=/Catln/PartialArgsOption
+                                                        ( /argMode=TopType
+                                                        , /vars=TopType
+                                                        , /args=TopType
+                                                        , /preds=TopType
+                                                        )
+                                                    ]
+                                                )
                                             ]
                                         }
                                     )
@@ -1340,10 +1636,12 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /t -> /Catln/Type/TypeVar
                                     ( /aux=∀/Catln/TypeVarAux
+                                    , /inner=∀/Catln/Type
                                     , /loc=∀/Catln/TypeVarLoc
                                     ) = /Catln/Type/TypeVar
                                     ( EAppArg { eaaArg = Value /aux -> ∀/Catln/TypeVarAux } )
                                     ( EAppArg { eaaArg = Value /loc -> ∀/Catln/TypeVarLoc } )
+                                    ( EAppArg { eaaArg = Value /inner -> ∀/Catln/Type } )
                                 }
                             ) -> /Data/Primitive/Integer = 0
                         ]
@@ -1363,8 +1661,49 @@ Prgm
                     , omiDefs =
                         [ /Test/mapSize
                             ( EAppArg
-                                { eaaArg = Value /m -> /Catln/ObjectMap( /items=TopType ) = /Catln/ObjectMap
-                                    ( EAppArg { eaaArg = Value /items } )
+                                { eaaArg = Value /m -> /Catln/ObjectMap
+                                    ( /items=∀/Data/List
+                                        [ /T=/Catln/Pair
+                                            [ /B=/Catln/ObjectMapItem
+                                                ( /refineDecls=TopType
+                                                , /defs=TopType
+                                                , /runtimeDecls=TopType
+                                                , /decls=TopType
+                                                )
+                                            , /A=/Data/String
+                                            ]
+                                            ( /first=/Data/String
+                                            , /second=/Catln/ObjectMapItem
+                                                ( /refineDecls=TopType
+                                                , /defs=TopType
+                                                , /runtimeDecls=TopType
+                                                , /decls=TopType
+                                                )
+                                            )
+                                        ]
+                                    ) = /Catln/ObjectMap
+                                    ( EAppArg
+                                        { eaaArg = Value /items -> ∀/Data/List
+                                            [ /T=/Catln/Pair
+                                                [ /B=/Catln/ObjectMapItem
+                                                    ( /refineDecls=TopType
+                                                    , /defs=TopType
+                                                    , /runtimeDecls=TopType
+                                                    , /decls=TopType
+                                                    )
+                                                , /A=/Data/String
+                                                ]
+                                                ( /first=/Data/String
+                                                , /second=/Catln/ObjectMapItem
+                                                    ( /refineDecls=TopType
+                                                    , /defs=TopType
+                                                    , /runtimeDecls=TopType
+                                                    , /decls=TopType
+                                                    )
+                                                )
+                                            ]
+                                        }
+                                    )
                                 }
                             ) -> /Data/Primitive/Integer =
                             ( /Data/List/length
@@ -1381,7 +1720,14 @@ Prgm
                     { omiDecls =
                         [ /Test/keyDepthAll
                             ( EAppArg
-                                { eaaArg = Value /ks -> ∀/Data/List[ /T=/Catln/PartialKey ] }
+                                { eaaArg = Value /ks -> ∀/Data/List
+                                    [ /T=/Catln/PartialKey
+                                        ( /name=TopType
+                                        , /vars=TopType
+                                        , /args=TopType
+                                        )
+                                    ]
+                                }
                             ) -> /Data/Primitive/Integer
                         ]
                     , omiRuntimeDecls = []
@@ -1398,8 +1744,18 @@ Prgm
                                         , /args=TopType
                                         )
                                     ]
-                                    ( /head=$/T
-                                    , /tail=∀/Data/List/ConsList[ /T=/Catln/PartialKey ]
+                                    ( /head=/Catln/PartialKey
+                                        ( /name=/Data/String
+                                        , /vars=TopType
+                                        , /args=TopType
+                                        )
+                                    , /tail=∀/Data/List/ConsList
+                                        [ /T=/Catln/PartialKey
+                                            ( /name=TopType
+                                            , /vars=TopType
+                                            , /args=TopType
+                                            )
+                                        ]
                                     ) = /Data/List/Cons
                                     ( EAppArg
                                         { eaaArg = Value /head -> /Catln/PartialKey
@@ -1410,7 +1766,14 @@ Prgm
                                         }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Catln/PartialKey ] }
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList
+                                            [ /T=/Catln/PartialKey
+                                                ( /name=TopType
+                                                , /vars=TopType
+                                                , /args=TopType
+                                                )
+                                            ]
+                                        }
                                     )
                                 }
                             ) -> /Data/Primitive/Integer =
@@ -1544,12 +1907,12 @@ Prgm
                         [ /Test/writtenIn
                             ( EAppArg
                                 { eaaArg = Value /m -> /Catln/Meta
-                                    ( /type=TopType
+                                    ( /type=∀/Catln/Type
                                     , /dat=/Catln/Unit
                                     , /id=/Data/String
                                     , /pos=/Data/Maybe/Nothing
                                     ) = /Catln/Meta
-                                    ( EAppArg { eaaArg = Value /type } )
+                                    ( EAppArg { eaaArg = Value /type -> ∀/Catln/Type } )
                                     ( EAppArg { eaaArg = Value /pos -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                                     ( EAppArg { eaaArg = Value /id -> /Data/String } )
                                     ( EAppArg { eaaArg = Value /dat -> /Catln/Unit } )
@@ -1558,15 +1921,112 @@ Prgm
                         , /Test/writtenIn
                             ( EAppArg
                                 { eaaArg = Value /m -> /Catln/Meta
-                                    ( /type=TopType
+                                    ( /type=∀/Catln/Type
                                     , /dat=/Catln/Unit
                                     , /id=/Data/String
-                                    , /pos=/Data/Maybe/Some( /value=TopType )
+                                    , /pos=/Data/Maybe/Some
+                                        [ /T=/Catln/Pair
+                                            [ /B=/Catln/SourcePos
+                                                ( /file=/Data/String
+                                                , /line=/Data/Primitive/Integer
+                                                , /column=/Data/Primitive/Integer
+                                                )
+                                            , /A=/Catln/SourcePos
+                                                ( /file=/Data/String
+                                                , /line=/Data/Primitive/Integer
+                                                , /column=/Data/Primitive/Integer
+                                                )
+                                            ]
+                                            ( /first=/Catln/SourcePos
+                                                ( /file=/Data/String
+                                                , /line=/Data/Primitive/Integer
+                                                , /column=/Data/Primitive/Integer
+                                                )
+                                            , /second=/Catln/SourcePos
+                                                ( /file=/Data/String
+                                                , /line=/Data/Primitive/Integer
+                                                , /column=/Data/Primitive/Integer
+                                                )
+                                            )
+                                        ]
+                                        ( /value=/Catln/Pair
+                                            [ /B=/Catln/SourcePos
+                                                ( /file=/Data/String
+                                                , /line=/Data/Primitive/Integer
+                                                , /column=/Data/Primitive/Integer
+                                                )
+                                            , /A=/Catln/SourcePos
+                                                ( /file=/Data/String
+                                                , /line=/Data/Primitive/Integer
+                                                , /column=/Data/Primitive/Integer
+                                                )
+                                            ]
+                                            ( /first=/Catln/SourcePos
+                                                ( /file=/Data/String
+                                                , /line=/Data/Primitive/Integer
+                                                , /column=/Data/Primitive/Integer
+                                                )
+                                            , /second=/Catln/SourcePos
+                                                ( /file=/Data/String
+                                                , /line=/Data/Primitive/Integer
+                                                , /column=/Data/Primitive/Integer
+                                                )
+                                            )
+                                        )
                                     ) = /Catln/Meta
-                                    ( EAppArg { eaaArg = Value /type } )
+                                    ( EAppArg { eaaArg = Value /type -> ∀/Catln/Type } )
                                     ( EAppArg
-                                        { eaaArg = Value /pos -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some
-                                            ( EAppArg { eaaArg = Value /value } )
+                                        { eaaArg = Value /pos -> /Data/Maybe/Some
+                                            [ /T=/Catln/Pair
+                                                [ /B=/Catln/SourcePos
+                                                    ( /file=TopType
+                                                    , /line=TopType
+                                                    , /column=TopType
+                                                    )
+                                                , /A=/Catln/SourcePos
+                                                    ( /file=TopType
+                                                    , /line=TopType
+                                                    , /column=TopType
+                                                    )
+                                                ]
+                                                ( /first=/Catln/SourcePos
+                                                    ( /file=TopType
+                                                    , /line=TopType
+                                                    , /column=TopType
+                                                    )
+                                                , /second=/Catln/SourcePos
+                                                    ( /file=TopType
+                                                    , /line=TopType
+                                                    , /column=TopType
+                                                    )
+                                                )
+                                            ]( /value=$/T ) = /Data/Maybe/Some
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> /Catln/Pair
+                                                    [ /B=/Catln/SourcePos
+                                                        ( /file=/Data/String
+                                                        , /line=/Data/Primitive/Integer
+                                                        , /column=/Data/Primitive/Integer
+                                                        )
+                                                    , /A=/Catln/SourcePos
+                                                        ( /file=/Data/String
+                                                        , /line=/Data/Primitive/Integer
+                                                        , /column=/Data/Primitive/Integer
+                                                        )
+                                                    ]
+                                                    ( /first=/Catln/SourcePos
+                                                        ( /file=/Data/String
+                                                        , /line=/Data/Primitive/Integer
+                                                        , /column=/Data/Primitive/Integer
+                                                        )
+                                                    , /second=/Catln/SourcePos
+                                                        ( /file=/Data/String
+                                                        , /line=/Data/Primitive/Integer
+                                                        , /column=/Data/Primitive/Integer
+                                                        )
+                                                    )
+                                                }
+                                            )
                                         }
                                     )
                                     ( EAppArg { eaaArg = Value /id -> /Data/String } )
@@ -1745,6 +2205,12 @@ Prgm
                                 ( /name=/Data/String
                                 , /vars=/Data/List/Nil
                                 , /args=/Data/List/Cons
+                                    [ /T=/Catln/PartialKey
+                                        ( /name=/Data/String
+                                        , /vars=/Data/List/Nil
+                                        , /args=/Data/List/Nil
+                                        )
+                                    ]
                                     ( /head=/Catln/PartialKey
                                         ( /name=/Data/String
                                         , /vars=/Data/List/Nil
@@ -1759,6 +2225,12 @@ Prgm
                                 ( EAppArg { eaaArg = Value /vars -> /Data/List/Nil = Value /Data/List/Nil } )
                                 ( EAppArg
                                     { eaaArg = Value /args -> /Data/List/Cons
+                                        [ /T=/Catln/PartialKey
+                                            ( /name=/Data/String
+                                            , /vars=/Data/List/Nil
+                                            , /args=/Data/List/Nil
+                                            )
+                                        ]
                                         ( /head=/Catln/PartialKey
                                             ( /name=/Data/String
                                             , /vars=/Data/List/Nil
@@ -1813,24 +2285,15 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> UnionType
-                    ( Just
-                        ( PredExpr /operator==
-                            ( /r=/Data/Primitive/True
-                            , /l=~nonNeg( /this=~/$this )
-                            ) && PredRel Integer
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Primitive/Integer
-                    , []
-                    ) =
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
                     ( /Test/constCount
                         ( EAppArg
                             { eaaArg = Value /t -> /Catln/Type/UnionType
                                 ( /top=/Data/Maybe/Nothing
                                 , /consts=/Data/List/Cons
-                                    [ /T=/Catln/Constant/CInt( /value=/Data/Primitive/Integer ) ]
+                                    [ /T=
+                                        ( /Catln/Constant/CStr( /value=/Data/String ) + /Catln/Constant/CInt( /value=/Data/Primitive/Integer ) )
+                                    ]
                                     ( /head=/Catln/Constant/CInt( /value=/Data/Primitive/Integer )
                                     , /tail=/Data/List/Cons
                                         [ /T=/Catln/Constant/CStr( /value=/Data/String ) ]
@@ -1844,8 +2307,12 @@ Prgm
                                 ( EAppArg { eaaArg = Value /leafs -> /Data/List/Nil = Value /Data/List/Nil } )
                                 ( EAppArg
                                     { eaaArg = Value /consts -> /Data/List/Cons
+                                        [ /T=
+                                            ( /Catln/Constant/CStr( /value=/Data/String ) + /Catln/Constant/CInt( /value=/Data/Primitive/Integer ) )
+                                        ]
                                         ( /head=/Catln/Constant/CInt( /value=/Data/Primitive/Integer )
                                         , /tail=/Data/List/Cons
+                                            [ /T=/Catln/Constant/CStr( /value=/Data/String ) ]
                                             ( /head=/Catln/Constant/CStr( /value=/Data/String )
                                             , /tail=/Data/List/Nil
                                             )
@@ -1859,6 +2326,7 @@ Prgm
                                         )
                                         ( EAppArg
                                             { eaaArg = Value /tail -> /Data/List/Cons
+                                                [ /T=/Catln/Constant/CStr( /value=/Data/String ) ]
                                                 ( /head=/Catln/Constant/CStr( /value=/Data/String )
                                                 , /tail=/Data/List/Nil
                                                 ) = /Data/List/Cons
@@ -1875,18 +2343,7 @@ Prgm
                                     }
                                 )
                             }
-                        ) ↦ UnionType
-                        ( Just
-                            ( PredExpr /operator==
-                                ( /r=/Data/Primitive/True
-                                , /l=~nonNeg( /this=~/$this )
-                                ) && PredRel Integer
-                            , fromList []
-                            , []
-                            )
-                        , /Data/Primitive/Integer
-                        , []
-                        )
+                        ) ↦ /Data/Primitive/Integer
                     )
                 }
             )
@@ -1968,22 +2425,22 @@ Prgm
                                 ( /name=/Data/String
                                 , /meta=/Catln/Meta
                                     ( /type=TopType
-                                    , /dat=TopType
-                                    , /id=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
                                     , /pos=TopType
                                     )
                                 ) = /Catln/Expr/Value
                                 ( EAppArg
                                     { eaaArg = Value /meta -> /Catln/Meta
                                         ( /type=TopType
-                                        , /dat=TopType
-                                        , /id=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
                                         , /pos=TopType
                                         ) =
                                         ( Value /Test/noMeta ↦ /Catln/Meta
                                             ( /type=TopType
-                                            , /dat=TopType
-                                            , /id=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
                                             , /pos=TopType
                                             )
                                         )
@@ -2009,22 +2466,22 @@ Prgm
                                 ( /name=/Data/String
                                 , /meta=/Catln/Meta
                                     ( /type=TopType
-                                    , /dat=TopType
-                                    , /id=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
                                     , /pos=TopType
                                     )
                                 ) = /Catln/Expr/Value
                                 ( EAppArg
                                     { eaaArg = Value /meta -> /Catln/Meta
                                         ( /type=TopType
-                                        , /dat=TopType
-                                        , /id=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
                                         , /pos=TopType
                                         ) =
                                         ( Value /Test/noMeta ↦ /Catln/Meta
                                             ( /type=TopType
-                                            , /dat=TopType
-                                            , /id=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
                                             , /pos=TopType
                                             )
                                         )
@@ -2050,22 +2507,22 @@ Prgm
                                 ( /const=/Catln/Constant/CInt( /value=/Data/Primitive/Integer )
                                 , /meta=/Catln/Meta
                                     ( /type=TopType
-                                    , /dat=TopType
-                                    , /id=TopType
+                                    , /dat=/Catln/Unit
+                                    , /id=/Data/String
                                     , /pos=TopType
                                     )
                                 ) = /Catln/Expr/CExpr
                                 ( EAppArg
                                     { eaaArg = Value /meta -> /Catln/Meta
                                         ( /type=TopType
-                                        , /dat=TopType
-                                        , /id=TopType
+                                        , /dat=/Catln/Unit
+                                        , /id=/Data/String
                                         , /pos=TopType
                                         ) =
                                         ( Value /Test/noMeta ↦ /Catln/Meta
                                             ( /type=TopType
-                                            , /dat=TopType
-                                            , /id=TopType
+                                            , /dat=/Catln/Unit
+                                            , /id=/Data/String
                                             , /pos=TopType
                                             )
                                         )
@@ -2088,18 +2545,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> UnionType
-                    ( Just
-                        ( PredExpr /operator==
-                            ( /r=/Data/Primitive/True
-                            , /l=~nonNeg( /this=~/$this )
-                            ) && PredRel Integer
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Primitive/Integer
-                    , []
-                    ) =
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
                     ( /Test/declCount
                         ( EAppArg
                             { eaaArg = Value /p -> /Catln/Prgm
@@ -2115,18 +2561,7 @@ Prgm
                                 ( EAppArg { eaaArg = Value /cg -> /Data/List/Nil = Value /Data/List/Nil } )
                                 ( EAppArg { eaaArg = Value /annots -> /Data/List/Nil = Value /Data/List/Nil } )
                             }
-                        ) ↦ UnionType
-                        ( Just
-                            ( PredExpr /operator==
-                                ( /r=/Data/Primitive/True
-                                , /l=~nonNeg( /this=~/$this )
-                                ) && PredRel Integer
-                            , fromList []
-                            , []
-                            )
-                        , /Data/Primitive/Integer
-                        , []
-                        )
+                        ) ↦ /Data/Primitive/Integer
                     )
                 }
             )
@@ -2147,33 +2582,11 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> UnionType
-                    ( Just
-                        ( PredExpr /operator==
-                            ( /r=/Data/Primitive/True
-                            , /l=~nonNeg( /this=~/$this )
-                            ) && PredRel Integer
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Primitive/Integer
-                    , []
-                    ) =
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
                     ( /Test/ownDeclCount
                         ( EAppArg
                             { eaaArg = Value /name -> /Data/String = "/Test/intOf" }
-                        ) ↦ UnionType
-                        ( Just
-                            ( PredExpr /operator==
-                                ( /r=/Data/Primitive/True
-                                , /l=~nonNeg( /this=~/$this )
-                                ) && PredRel Integer
-                            , fromList []
-                            , []
-                            )
-                        , /Data/Primitive/Integer
-                        , []
-                        )
+                        ) ↦ /Data/Primitive/Integer
                     )
                 }
             )
@@ -2186,33 +2599,11 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> UnionType
-                    ( Just
-                        ( PredExpr /operator==
-                            ( /r=/Data/Primitive/True
-                            , /l=~nonNeg( /this=~/$this )
-                            ) && PredRel Integer
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Primitive/Integer
-                    , []
-                    ) =
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
                     ( /Test/ownDeclCount
                         ( EAppArg
                             { eaaArg = Value /name -> /Data/String = "/Test/notWrittenAnywhere" }
-                        ) ↦ UnionType
-                        ( Just
-                            ( PredExpr /operator==
-                                ( /r=/Data/Primitive/True
-                                , /l=~nonNeg( /this=~/$this )
-                                ) && PredRel Integer
-                            , fromList []
-                            , []
-                            )
-                        , /Data/Primitive/Integer
-                        , []
-                        )
+                        ) ↦ /Data/Primitive/Integer
                     )
                 }
             )

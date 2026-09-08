@@ -19,7 +19,18 @@ Prgm
                                 [ /T=/Catln/Pair
                                     [ /B=∀/Catln/Type
                                     , /A=/Catln/PartialKey
+                                        ( /name=TopType
+                                        , /vars=TopType
+                                        , /args=TopType
+                                        )
                                     ]
+                                    ( /first=/Catln/PartialKey
+                                        ( /name=TopType
+                                        , /vars=TopType
+                                        , /args=TopType
+                                        )
+                                    , /second=∀/Catln/Type
+                                    )
                                 ]
                             )
                         ]
@@ -134,20 +145,80 @@ Prgm
                                 [ /T=/Catln/Triple
                                     [ /B=∀/Data/List
                                         [ /T=/Catln/Pair
-                                            [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
+                                            [ /B=∀/Data/List
+                                                [ /T=/Catln/PartialArgsOption
+                                                    ( /argMode=TopType
+                                                    , /vars=TopType
+                                                    , /args=TopType
+                                                    , /preds=TopType
+                                                    )
+                                                ]
                                             , /A=/Data/String
                                             ]
+                                            ( /first=/Data/String
+                                            , /second=∀/Data/List
+                                                [ /T=/Catln/PartialArgsOption
+                                                    ( /argMode=TopType
+                                                    , /vars=TopType
+                                                    , /args=TopType
+                                                    , /preds=TopType
+                                                    )
+                                                ]
+                                            )
                                         ]
                                     , /C=∀/Data/List[ /T=∀/Catln/Constant ]
                                     , /A=∀/Catln/TypePredicates
                                     ]
+                                    ( /first=∀/Catln/TypePredicates
+                                    , /second=∀/Data/List
+                                        [ /T=/Catln/Pair
+                                            [ /B=∀/Data/List
+                                                [ /T=/Catln/PartialArgsOption
+                                                    ( /argMode=TopType
+                                                    , /vars=TopType
+                                                    , /args=TopType
+                                                    , /preds=TopType
+                                                    )
+                                                ]
+                                            , /A=/Data/String
+                                            ]
+                                            ( /first=/Data/String
+                                            , /second=∀/Data/List
+                                                [ /T=/Catln/PartialArgsOption
+                                                    ( /argMode=TopType
+                                                    , /vars=TopType
+                                                    , /args=TopType
+                                                    , /preds=TopType
+                                                    )
+                                                ]
+                                            )
+                                        ]
+                                    , /third=∀/Data/List[ /T=∀/Catln/Constant ]
+                                    )
                                 ]
                             )
                             ( Value /leafs -> ∀/Data/List
                                 [ /T=/Catln/Pair
-                                    [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
+                                    [ /B=∀/Data/List
+                                        [ /T=/Catln/PartialArgsOption
+                                            ( /argMode=TopType
+                                            , /vars=TopType
+                                            , /args=TopType
+                                            , /preds=TopType
+                                            )
+                                        ]
                                     , /A=/Data/String
                                     ]
+                                    ( /first=/Data/String
+                                    , /second=∀/Data/List
+                                        [ /T=/Catln/PartialArgsOption
+                                            ( /argMode=TopType
+                                            , /vars=TopType
+                                            , /args=TopType
+                                            , /preds=TopType
+                                            )
+                                        ]
+                                    )
                                 ]
                             )
                             ( Value /consts -> ∀/Data/List[ /T=∀/Catln/Constant ] )
@@ -383,14 +454,36 @@ Prgm
                                 [ /T=/Catln/Pair
                                     [ /B=∀/Catln/Type
                                     , /A=/Catln/PartialKey
+                                        ( /name=TopType
+                                        , /vars=TopType
+                                        , /args=TopType
+                                        )
                                     ]
+                                    ( /first=/Catln/PartialKey
+                                        ( /name=TopType
+                                        , /vars=TopType
+                                        , /args=TopType
+                                        )
+                                    , /second=∀/Catln/Type
+                                    )
                                 ]
                             )
                             ( Value /args -> ∀/Data/List
                                 [ /T=/Catln/Pair
                                     [ /B=∀/Catln/Type
                                     , /A=/Catln/PartialKey
+                                        ( /name=TopType
+                                        , /vars=TopType
+                                        , /args=TopType
+                                        )
                                     ]
+                                    ( /first=/Catln/PartialKey
+                                        ( /name=TopType
+                                        , /vars=TopType
+                                        , /args=TopType
+                                        )
+                                    , /second=∀/Catln/Type
+                                    )
                                 ]
                             )( Value /preds -> ∀/Catln/TypePredicates )
                             ( Value /argMode -> /Catln/PtArgMode
@@ -473,6 +566,10 @@ Prgm
                                     , /C=∀/Data/List[ /T=∀/Catln/PartialName ]
                                     , /A=∀/Catln/CGNode
                                     ]
+                                    ( /first=∀/Catln/CGNode
+                                    , /second=∀/Catln/PartialName
+                                    , /third=∀/Data/List[ /T=∀/Catln/PartialName ]
+                                    )
                                 ]
                             )
                             ( Value /annots -> ∀/Data/List[ /T=∀/Catln/Expr ] )
@@ -487,8 +584,22 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/PartialKey( Value /name -> /Data/String )
-                            ( Value /vars -> ∀/Data/List[ /T=/Catln/PartialKey ] )
-                            ( Value /args -> ∀/Data/List[ /T=/Catln/PartialKey ] )
+                            ( Value /vars -> ∀/Data/List
+                                [ /T=/Catln/PartialKey
+                                    ( /name=TopType
+                                    , /vars=TopType
+                                    , /args=TopType
+                                    )
+                                ]
+                            )
+                            ( Value /args -> ∀/Data/List
+                                [ /T=/Catln/PartialKey
+                                    ( /name=TopType
+                                    , /vars=TopType
+                                    , /args=TopType
+                                    )
+                                ]
+                            )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -542,8 +653,27 @@ Prgm
                             ( Value /pos -> ∀/Data/Maybe
                                 [ /T=/Catln/Pair
                                     [ /B=/Catln/SourcePos
+                                        ( /file=TopType
+                                        , /line=TopType
+                                        , /column=TopType
+                                        )
                                     , /A=/Catln/SourcePos
+                                        ( /file=TopType
+                                        , /line=TopType
+                                        , /column=TopType
+                                        )
                                     ]
+                                    ( /first=/Catln/SourcePos
+                                        ( /file=TopType
+                                        , /line=TopType
+                                        , /column=TopType
+                                        )
+                                    , /second=/Catln/SourcePos
+                                        ( /file=TopType
+                                        , /line=TopType
+                                        , /column=TopType
+                                        )
+                                    )
                                 ]
                             )( Value /id -> /Data/String )( Value /dat -> /Catln/Unit )
                         ]
@@ -561,14 +691,36 @@ Prgm
                                 [ /T=/Catln/Pair
                                     [ /B=∀/Catln/Type
                                     , /A=/Catln/PartialKey
+                                        ( /name=TopType
+                                        , /vars=TopType
+                                        , /args=TopType
+                                        )
                                     ]
+                                    ( /first=/Catln/PartialKey
+                                        ( /name=TopType
+                                        , /vars=TopType
+                                        , /args=TopType
+                                        )
+                                    , /second=∀/Catln/Type
+                                    )
                                 ]
                             )
                             ( Value /args -> ∀/Data/List
                                 [ /T=/Catln/Pair
                                     [ /B=∀/Catln/Type
                                     , /A=/Catln/PartialKey
+                                        ( /name=TopType
+                                        , /vars=TopType
+                                        , /args=TopType
+                                        )
                                     ]
+                                    ( /first=/Catln/PartialKey
+                                        ( /name=TopType
+                                        , /vars=TopType
+                                        , /args=TopType
+                                        )
+                                    , /second=∀/Catln/Type
+                                    )
                                 ]
                             )( Value /preds -> ∀/Catln/TypePredicates )
                             ( Value /argMode -> /Catln/PtArgMode
@@ -624,8 +776,21 @@ Prgm
                             ( Value /items -> ∀/Data/List
                                 [ /T=/Catln/Pair
                                     [ /B=/Catln/ObjectMapItem
+                                        ( /refineDecls=TopType
+                                        , /defs=TopType
+                                        , /runtimeDecls=TopType
+                                        , /decls=TopType
+                                        )
                                     , /A=/Data/String
                                     ]
+                                    ( /first=/Data/String
+                                    , /second=/Catln/ObjectMapItem
+                                        ( /refineDecls=TopType
+                                        , /defs=TopType
+                                        , /runtimeDecls=TopType
+                                        , /decls=TopType
+                                        )
+                                    )
                                 ]
                             )
                         ]
@@ -639,10 +804,46 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/ObjectMapItem
-                            ( Value /decls -> ∀/Data/List[ /T=/Catln/ObjArr ] )
-                            ( Value /runtimeDecls -> ∀/Data/List[ /T=/Catln/ObjArr ] )
-                            ( Value /refineDecls -> ∀/Data/List[ /T=/Catln/ObjArr ] )
-                            ( Value /defs -> ∀/Data/List[ /T=/Catln/ObjArr ] )
+                            ( Value /decls -> ∀/Data/List
+                                [ /T=/Catln/ObjArr
+                                    ( /arr=TopType
+                                    , /obj=TopType
+                                    , /annots=TopType
+                                    , /doc=TopType
+                                    , /basis=TopType
+                                    )
+                                ]
+                            )
+                            ( Value /runtimeDecls -> ∀/Data/List
+                                [ /T=/Catln/ObjArr
+                                    ( /arr=TopType
+                                    , /obj=TopType
+                                    , /annots=TopType
+                                    , /doc=TopType
+                                    , /basis=TopType
+                                    )
+                                ]
+                            )
+                            ( Value /refineDecls -> ∀/Data/List
+                                [ /T=/Catln/ObjArr
+                                    ( /arr=TopType
+                                    , /obj=TopType
+                                    , /annots=TopType
+                                    , /doc=TopType
+                                    , /basis=TopType
+                                    )
+                                ]
+                            )
+                            ( Value /defs -> ∀/Data/List
+                                [ /T=/Catln/ObjArr
+                                    ( /arr=TopType
+                                    , /obj=TopType
+                                    , /annots=TopType
+                                    , /doc=TopType
+                                    , /basis=TopType
+                                    )
+                                ]
+                            )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -680,8 +881,21 @@ Prgm
                             ( Value /arr -> ∀/Data/Maybe
                                 [ /T=/Catln/Pair
                                     [ /B=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=TopType
+                                        , /id=TopType
+                                        , /pos=TopType
+                                        )
                                     , /A=∀/Data/Maybe[ /T=∀/Catln/Expr ]
                                     ]
+                                    ( /first=∀/Data/Maybe[ /T=∀/Catln/Expr ]
+                                    , /second=/Catln/Meta
+                                        ( /type=TopType
+                                        , /dat=TopType
+                                        , /id=TopType
+                                        , /pos=TopType
+                                        )
+                                    )
                                 ]
                             )
                         ]

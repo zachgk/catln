@@ -10,16 +10,33 @@ Prgm
                     , omiDefs =
                         [ Value /JsonFile/data/projects/catln/q2Eclaude/worktrees/mirror/test/Integration/code/configq2Ejson -> /Data/Json/Object
                             ( /entries=/Data/List/Cons
+                                [ /T=/Data/Json/Member
+                                    ( /value=
+                                        ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) + /Data/Json/Str( /value=/Data/String ) )
+                                    , /key=/Data/String
+                                    )
+                                ]
                                 ( /head=/Data/Json/Member
                                     ( /value=/Data/Json/Str( /value=/Data/String )
                                     , /key=/Data/String
                                     )
                                 , /tail=/Data/List/Cons
+                                    [ /T=/Data/Json/Member
+                                        ( /value=
+                                            ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) )
+                                        , /key=/Data/String
+                                        )
+                                    ]
                                     ( /head=/Data/Json/Member
                                         ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
                                         , /key=/Data/String
                                         )
                                     , /tail=/Data/List/Cons
+                                        [ /T=/Data/Json/Member
+                                            ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                            , /key=/Data/String
+                                            )
+                                        ]
                                         ( /head=/Data/Json/Member
                                             ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
                                             , /key=/Data/String
@@ -30,16 +47,33 @@ Prgm
                                 )
                             ) = /Data/Json/Object
                             ( Value /entries -> /Data/List/Cons
+                                [ /T=/Data/Json/Member
+                                    ( /value=
+                                        ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) + /Data/Json/Str( /value=/Data/String ) )
+                                    , /key=/Data/String
+                                    )
+                                ]
                                 ( /head=/Data/Json/Member
                                     ( /value=/Data/Json/Str( /value=/Data/String )
                                     , /key=/Data/String
                                     )
                                 , /tail=/Data/List/Cons
+                                    [ /T=/Data/Json/Member
+                                        ( /value=
+                                            ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) )
+                                        , /key=/Data/String
+                                        )
+                                    ]
                                     ( /head=/Data/Json/Member
                                         ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
                                         , /key=/Data/String
                                         )
                                     , /tail=/Data/List/Cons
+                                        [ /T=/Data/Json/Member
+                                            ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                            , /key=/Data/String
+                                            )
+                                        ]
                                         ( /head=/Data/Json/Member
                                             ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
                                             , /key=/Data/String
@@ -62,11 +96,22 @@ Prgm
                                     )
                                 )
                                 ( Value /tail -> /Data/List/Cons
+                                    [ /T=/Data/Json/Member
+                                        ( /value=
+                                            ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) )
+                                        , /key=/Data/String
+                                        )
+                                    ]
                                     ( /head=/Data/Json/Member
                                         ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
                                         , /key=/Data/String
                                         )
                                     , /tail=/Data/List/Cons
+                                        [ /T=/Data/Json/Member
+                                            ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                            , /key=/Data/String
+                                            )
+                                        ]
                                         ( /head=/Data/Json/Member
                                             ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
                                             , /key=/Data/String
@@ -84,6 +129,11 @@ Prgm
                                         ( Value /value -> /Data/Json/Bool( /value=/Data/Primitive/False ) = /Data/Json/Bool( Value /value -> /Data/Primitive/False = Value /Data/Primitive/False ) )
                                     )
                                     ( Value /tail -> /Data/List/Cons
+                                        [ /T=/Data/Json/Member
+                                            ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                            , /key=/Data/String
+                                            )
+                                        ]
                                         ( /head=/Data/Json/Member
                                             ( /value=/Data/Json/Number( /value=/Data/Primitive/Float )
                                             , /key=/Data/String
@@ -122,7 +172,8 @@ Prgm
                 [ /V=/Data/Json/Object
                     ( /entries=/Data/List/Cons
                         [ /T=/Data/Json/Member
-                            ( /value=/Data/Json/Str( /value=/Data/String )
+                            ( /value=
+                                ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) + /Data/Json/Str( /value=/Data/String ) )
                             , /key=/Data/String
                             )
                         ]
@@ -132,7 +183,8 @@ Prgm
                             )
                         , /tail=/Data/List/Cons
                             [ /T=/Data/Json/Member
-                                ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
+                                ( /value=
+                                    ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) )
                                 , /key=/Data/String
                                 )
                             ]
@@ -159,7 +211,8 @@ Prgm
                 ( /value=/Data/Json/Object
                     ( /entries=/Data/List/Cons
                         [ /T=/Data/Json/Member
-                            ( /value=/Data/Json/Str( /value=/Data/String )
+                            ( /value=
+                                ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) + /Data/Json/Str( /value=/Data/String ) )
                             , /key=/Data/String
                             )
                         ]
@@ -169,7 +222,8 @@ Prgm
                             )
                         , /tail=/Data/List/Cons
                             [ /T=/Data/Json/Member
-                                ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
+                                ( /value=
+                                    ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) )
                                 , /key=/Data/String
                                 )
                             ]
@@ -192,9 +246,9 @@ Prgm
                             )
                         )
                     )
-                , /assets=/Data/List/Cons
+                , /assets=/Data/List/Cons[ /T=/Data/String ]
                     ( /head=/Data/String
-                    , /tail=/Data/List/Cons
+                    , /tail=/Data/List/Cons[ /T=/Data/String ]
                         ( /head=/Data/String
                         , /tail=/Data/List/Nil
                         )
@@ -203,7 +257,8 @@ Prgm
                 ( Value /s -> /Data/Json/Object
                     ( /entries=/Data/List/Cons
                         [ /T=/Data/Json/Member
-                            ( /value=/Data/Json/Str( /value=/Data/String )
+                            ( /value=
+                                ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) + /Data/Json/Str( /value=/Data/String ) )
                             , /key=/Data/String
                             )
                         ]
@@ -213,7 +268,8 @@ Prgm
                             )
                         , /tail=/Data/List/Cons
                             [ /T=/Data/Json/Member
-                                ( /value=/Data/Json/Bool( /value=/Data/Primitive/False )
+                                ( /value=
+                                    ( /Data/Json/Bool( /value=/Data/Primitive/False ) + /Data/Json/Number( /value=/Data/Primitive/Float ) )
                                 , /key=/Data/String
                                 )
                             ]

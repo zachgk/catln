@@ -1299,7 +1299,17 @@ completeDataPartialsTop typeEnv = go
   where
     -- Nested: complete each partial against its def, then recurse into its args/vars.
     go t@TypeVar{} = t
-    go (UnionType mPreds leafs consts) = UnionType (fmap (mapTopNegLeafs goLeafs) mPreds) (goLeafs leafs) consts
+    go (UnionType mPreds leafs consts) = UnionType (fmap goTop mPreds) (goLeafs leafs) consts
+    -- A top's PREDICATES carry parameter bounds too — @∀ConsList[/T=Item]@ is a @Just [PredClass
+    -- ConsList[/T=Item]]@ with no positive leaf — and a bound completed in one slot but left bare
+    -- in another writes one type two ways. The bare argless form and the restored field form are
+    -- DISJOINT (see this function's own note), so the two spellings meet at ∅: a list whose
+    -- element parameter is bounded by a data type WITH fields emptied on being destructured,
+    -- while a fieldless one or a class bound (nothing to restore, so one spelling) went through.
+    -- Only the predicate's parameter BOUNDS are completed here — restoring the predicate
+    -- partial's OWN fields would change what it matches, which this is not entitled to do.
+    goTop (preds, negLeafs, ncs) = (mapTypePreds (mapTypePred completePredParams) preds, goLeafs negLeafs, ncs)
+    completePredParams pt = pt{ptVars = fmap go (ptVars pt), ptArgs = fmap go (ptArgs pt)}
     goLeafs = joinUnionType . map completePartial . splitUnionType
     -- Only an argument-less partial in /exact/ mode is an ambiguous bare reference needing its
     -- declared fields restored. A non-exact mode (an authored spread like @CatlnResult..@)
@@ -5759,9 +5769,31 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
   -- @/T=Some@ from @other@ — the mixed-constructor collapse). Content that is ⊤-carrying or
   -- var-carrying withholds the join (its future narrowing could widen the true join), the
   -- same monotone-withhold as an unresolved pointer discovery. Only the templates' DIRECT
-  -- pointer occurrences read content this way: a LINKED occurrence (@tail -> ConsList[$T]@)
-  -- contributes through the external-reference env machinery ('exactEnvAt') as before.
+  -- pointer occurrences read content this way; a LINKED occurrence (@tail -> ConsList[$T]@)
+  -- reaches the join by its own route ('linkedKsOf' below).
+  let exactEnvOf k = maybe H.empty (exactEnvAt k . fst) (H.lookup k liveArgsMap)
   let declTmpls = typeGraphData typeEnv name' ++ typeGraphArrowTemplates typeEnv name'
+  -- A LINKED occurrence of this partial's OWN parameter: the declaration spells the arg as a
+  -- container carrying the parameter in one of its own slots — @tail -> ConsList[$T]@ is spelled
+  -- @∀ConsList[/T=$^/T]@, a PARENT ('TVParent') reference naming @Cons@'s @/T@ from a nested
+  -- position. Such an arg's elements are MEMBERS of the var exactly as a direct @head -> $T@
+  -- occurrence's value is, so its contribution belongs in the pointer JOIN: a spine whose
+  -- elements differ takes @/T@ from every cell rather than from its head alone. (An EXTERNAL
+  -- 'TVExt' reference names an enclosing OBJECT's scope instead and keeps meeting through
+  -- 'exactEnvAt' — var application is exact — so only the parent-scope spelling joins here.)
+  let selfPartials t = case t of
+        UnionType mtop pos _ -> splitUnionType pos ++ maybe [] (\(preds, _, _) -> predsPartials preds) mtop
+        _                    -> []
+      predsPartials (PredsOne p)  = [predPartialOf p]
+      predsPartials (PredsAnd ps) = concatMap predsPartials ps
+      predsPartials (PredsNot p)  = predsPartials p
+      predPartialOf (PredExpr p)  = p
+      predPartialOf (PredClass p) = p
+      predPartialOf (PredRel p)   = p
+  let linkedParamsOf n t = [ pn | pt <- selfPartials t
+                           , (pn, TypeVar (TVVar n') TVParent _) <- H.toList (ptVars pt), n' == n ]
+  let linkedKsOf n ks = L.nub [ (k, pn) | tmpl <- declTmpls, (k, tv) <- H.toList (ptArgs tmpl)
+                              , k `S.member` ks, pn <- linkedParamsOf n tv ]
   let pointerJoinFor ks =
         let ksL = S.toList ks
             joinFor n =
@@ -5771,11 +5803,43 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
                   contentAt k = case fmap snd (H.lookup k liveArgsMap) of
                     Just v | not (typeHasVars v), not (typeContainsBareTop v) -> Just v
                     _                                                        -> Nothing
-              in case (mapM (`discoveryAt` n) ptrKs, mapM contentAt (L.nub contentKs)) of
-                (Just vals, Just cvals) | not (null (vals ++ cvals)) -> Just (n, unionAllTypesWithEnv typeEnv vaenv (vals ++ cvals))
+                  -- BOTH readings of the occurrence feed the join: the arg's own binding at the
+                  -- linked slot, and whatever the arg's meet discovered for the name through the
+                  -- external-reference env. The latter carries the DECLARED bound a nested
+                  -- spelling supplies (@tags -> ConsList[$T -> String]@ gives @String@ where the
+                  -- literal alone gives the constant @"x"@), so dropping it rather than joining it
+                  -- would read a list's element type off its first element.
+                  --
+                  -- Content still carrying bare ⊤ withholds the whole join — its future narrowing
+                  -- could only make the true join WIDER, so stamping a partial join now would not
+                  -- be monotone — the same withhold the direct occurrences take. A resolved arg
+                  -- carrying no such slot (@Nil@ under @∀ConsList[/T=..]@) is vacuous: an empty
+                  -- container constrains no element, so it contributes nothing WITHOUT withholding.
+                  linkedAt (k, pn) = case fmap snd (H.lookup k liveArgsMap) of
+                    Nothing -> Just []
+                    Just v | typeContainsBareTop v -> Nothing
+                           | otherwise -> Just ([ b | pt <- selfPartials v, Just b <- [H.lookup pn (ptVars pt)]
+                                                , not (isTypeVar b), b /= PTopType ]
+                                             ++ [ b | Just b <- [H.lookup n (exactEnvOf k)]
+                                                , not (isTypeVar b), b /= PTopType ])
+              in case (mapM (`discoveryAt` n) ptrKs, mapM contentAt (L.nub contentKs), mapM linkedAt (linkedKsOf n ks)) of
+                (Just vals, Just cvals, Just lvalss)
+                  | let lvals = concat lvalss, not (null (vals ++ cvals ++ lvals))
+                  -> Just (n, unionAllTypesWithEnv typeEnv vaenv (vals ++ cvals ++ lvals))
                 _ -> Nothing
+        -- The names considered are the DIRECT pointer occurrences', exactly as before: a linked
+        -- occurrence AUGMENTS a join that a direct occurrence already establishes, and does not
+        -- start one of its own. Ranging over linked names too would stamp a var that previously
+        -- took no stamp at all — the content of a single-element literal ("x") standing in for the
+        -- element type its declaration gives (@String@), which is a narrowing, not a widening.
         in H.fromList $ mapMaybe joinFor $ S.toList $ S.unions $ map pointerNamesAt ksL
-  let exactEnvOf k = maybe H.empty (exactEnvAt k . fst) (H.lookup k liveArgsMap)
+  -- A name an arg contributes to the pointer JOIN through a LINKED (parent-scope) occurrence must
+  -- not ALSO meet through the exact-reference env: both readings describe the SAME occurrence, and
+  -- the meet would pull the join straight back down (@/T = (K/A + K/B) ⊓ K/B = K/B@ — the head's
+  -- element lost again), which is precisely what the join exists to prevent. The occurrence is a
+  -- membership position, so the join is its reading. Every OTHER name on the arg — an external
+  -- 'TVExt' reference naming an enclosing object's scope — keeps meeting exactly as before.
+  let exactEnvOfJoined ks k = H.filterWithKey (\n _ -> null [() | (k', _) <- linkedKsOf n ks, k' == k]) (exactEnvOf k)
   -- EVERY hoisted stamp — the pointer-occurrence join and the external-reference discoveries
   -- alike — is gated on every DECLARED occurrence of the name supporting it
   -- ('varStampSupported'): the declaration ties e.g. a recursive @tail@'s content to the var,
@@ -5784,7 +5848,7 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
   -- subset). The difference machinery obeys the same rule ('narrowPiece'), so both op
   -- families spell the unsupported case identically.
   let hoistFor ks = H.filterWithKey (\n _ -> varStampSupported typeEnv name' [aArgs, bArgs] ks args' (TVVar n)) $
-        mergeAllVarEnvs typeEnv $ pointerJoinFor ks : map exactEnvOf (S.toList ks)
+        mergeAllVarEnvs typeEnv $ pointerJoinFor ks : map (exactEnvOfJoined ks) (S.toList ks)
   let argsVarBindings = hoistFor $ H.keysSet liveArgsMap
   let venvs' = mergeAllVarEnvs typeEnv [argsVarBindings, vars']
   let preds' = predsAnd aPreds bPreds

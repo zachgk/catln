@@ -61,7 +61,13 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/CatlnResult
-                            ( Value /files -> ∀/Data/List[ /T=/Catln/BuildFile ] )
+                            ( Value /files -> ∀/Data/List
+                                [ /T=/Catln/BuildFile
+                                    ( /path=TopType
+                                    , /contents=TopType
+                                    )
+                                ]
+                            )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

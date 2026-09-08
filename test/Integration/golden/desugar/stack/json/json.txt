@@ -91,7 +91,13 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Json/Object
-                            ( Value /entries -> ∀/Data/List[ /T=/Data/Json/Member ] )
+                            ( Value /entries -> ∀/Data/List
+                                [ /T=/Data/Json/Member
+                                    ( /value=TopType
+                                    , /key=TopType
+                                    )
+                                ]
+                            )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

@@ -103,11 +103,39 @@ Prgm
                     , omiDefs =
                         [ /Test/declCount
                             ( Value /p -> /Catln/RawPrgm
-                                ( /statements=∀/Data/List[ /T=/Catln/RawStatementTree ]
-                                , /imports=∀/Data/List[ /T=/Catln/AFileImport ]
+                                ( /statements=∀/Data/List
+                                    [ /T=/Catln/RawStatementTree
+                                        ( /statement=TopType
+                                        , /children=TopType
+                                        )
+                                    ]
+                                , /imports=∀/Data/List
+                                    [ /T=/Catln/AFileImport
+                                        ( /disp=TopType
+                                        , /calledDir=TopType
+                                        , /dir=TopType
+                                        , /abs=TopType
+                                        , /raw=TopType
+                                        )
+                                    ]
                                 ) = /Catln/RawPrgm
-                                ( Value /imports -> ∀/Data/List[ /T=/Catln/AFileImport ] )
-                                ( Value /statements -> ∀/Data/List[ /T=/Catln/RawStatementTree ] )
+                                ( Value /imports -> ∀/Data/List
+                                    [ /T=/Catln/AFileImport
+                                        ( /disp=TopType
+                                        , /calledDir=TopType
+                                        , /dir=TopType
+                                        , /abs=TopType
+                                        , /raw=TopType
+                                        )
+                                    ]
+                                )
+                                ( Value /statements -> ∀/Data/List
+                                    [ /T=/Catln/RawStatementTree
+                                        ( /statement=TopType
+                                        , /children=TopType
+                                        )
+                                    ]
+                                )
                             ) -> /Data/Primitive/Integer = /Data/List/length( Value /this -> TVArg /statements = Value /statements )
                         ]
                     }
@@ -193,6 +221,9 @@ Prgm
                                         [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                                         , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                                         ]
+                                        ( /first=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                        , /second=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                        )
                                     ]
                                 , /obj=/Data/Maybe/Some[ /T=∀/Catln/RawExpr ]( /value=$/T )
                                 , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
@@ -208,6 +239,9 @@ Prgm
                                         [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                                         , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                                         ]
+                                        ( /first=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                        , /second=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                        )
                                     ]
                                 )
                                 ( Value /def -> ∀/Data/Maybe[ /T=∀/Catln/RawExpr ] )
@@ -219,6 +253,9 @@ Prgm
                                         [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                                         , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                                         ]
+                                        ( /first=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                        , /second=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                        )
                                     ]
                                 , /obj=/Data/Maybe/Nothing
                                 , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
@@ -233,6 +270,9 @@ Prgm
                                         [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                                         , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                                         ]
+                                        ( /first=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                        , /second=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                        )
                                     ]
                                 )
                                 ( Value /def -> ∀/Data/Maybe[ /T=∀/Catln/RawExpr ] )
@@ -486,8 +526,21 @@ Prgm
                                         ( Value /msg -> /Data/String = /Data/toString
                                             ( Value /this -> /Data/Primitive/Integer = /Test/declCount
                                                 ( Value /p -> /Catln/RawPrgm
-                                                    ( /statements=∀/Data/List[ /T=/Catln/RawStatementTree ]
-                                                    , /imports=∀/Data/List[ /T=/Catln/AFileImport ]
+                                                    ( /statements=∀/Data/List
+                                                        [ /T=/Catln/RawStatementTree
+                                                            ( /statement=TopType
+                                                            , /children=TopType
+                                                            )
+                                                        ]
+                                                    , /imports=∀/Data/List
+                                                        [ /T=/Catln/AFileImport
+                                                            ( /disp=TopType
+                                                            , /calledDir=TopType
+                                                            , /dir=TopType
+                                                            , /abs=TopType
+                                                            , /raw=TopType
+                                                            )
+                                                        ]
                                                     ) = /Test/onePrgm
                                                     ( Value /name -> /Data/String = CStr
                                                         { csValue = "myFn" }
@@ -529,6 +582,9 @@ Prgm
                                                                 [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                                                                 , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                                                                 ]
+                                                                ( /first=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                                , /second=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                                )
                                                             ]
                                                         , /obj=
                                                             ( /Data/Maybe/Nothing + /Data/Maybe/Some[ /T=∀/Catln/RawExpr ]( /value=$/T ) )
@@ -776,8 +832,25 @@ Prgm
                                 ( /args=∀/Data/List
                                     [ /T=/Catln/Pair
                                         [ /B=/Catln/RawObjArr
+                                            ( /arr=TopType
+                                            , /obj=TopType
+                                            , /annots=TopType
+                                            , /doc=TopType
+                                            , /def=TopType
+                                            , /basis=TopType
+                                            )
                                         , /A=∀/Data/Primitive/Boolean
                                         ]
+                                        ( /first=∀/Data/Primitive/Boolean
+                                        , /second=/Catln/RawObjArr
+                                            ( /arr=TopType
+                                            , /obj=TopType
+                                            , /annots=TopType
+                                            , /doc=TopType
+                                            , /def=TopType
+                                            , /basis=TopType
+                                            )
+                                        )
                                     ]
                                 , /base=/Catln/Pair
                                     [ /B=∀/Catln/RawExpr
@@ -831,15 +904,41 @@ Prgm
                                 ( Value /args -> ∀/Data/List
                                     [ /T=/Catln/Pair
                                         [ /B=/Catln/RawObjArr
+                                            ( /arr=TopType
+                                            , /obj=TopType
+                                            , /annots=TopType
+                                            , /doc=TopType
+                                            , /def=TopType
+                                            , /basis=TopType
+                                            )
                                         , /A=∀/Data/Primitive/Boolean
                                         ]
+                                        ( /first=∀/Data/Primitive/Boolean
+                                        , /second=/Catln/RawObjArr
+                                            ( /arr=TopType
+                                            , /obj=TopType
+                                            , /annots=TopType
+                                            , /doc=TopType
+                                            , /def=TopType
+                                            , /basis=TopType
+                                            )
+                                        )
                                     ]
                                 )
                             ) -> /Data/String = CStr
                             { csValue = "tupleApply" }
                         , /Test/exprKind
                             ( Value /e -> /Catln/RawExpr/RawVarsApply
-                                ( /vars=∀/Data/List[ /T=/Catln/RawObjArr ]
+                                ( /vars=∀/Data/List
+                                    [ /T=/Catln/RawObjArr
+                                        ( /arr=TopType
+                                        , /obj=TopType
+                                        , /annots=TopType
+                                        , /doc=TopType
+                                        , /def=TopType
+                                        , /basis=TopType
+                                        )
+                                    ]
                                 , /base=∀/Catln/RawExpr
                                 , /meta=/Catln/Meta
                                     ( /type=TopType
@@ -855,12 +954,31 @@ Prgm
                                     , /pos=TopType
                                     )
                                 )( Value /base -> ∀/Catln/RawExpr )
-                                ( Value /vars -> ∀/Data/List[ /T=/Catln/RawObjArr ] )
+                                ( Value /vars -> ∀/Data/List
+                                    [ /T=/Catln/RawObjArr
+                                        ( /arr=TopType
+                                        , /obj=TopType
+                                        , /annots=TopType
+                                        , /doc=TopType
+                                        , /def=TopType
+                                        , /basis=TopType
+                                        )
+                                    ]
+                                )
                             ) -> /Data/String = CStr
                             { csValue = "varsApply" }
                         , /Test/exprKind
                             ( Value /e -> /Catln/RawExpr/RawContextApply
-                                ( /args=∀/Data/List[ /T=/Catln/RawObjArr ]
+                                ( /args=∀/Data/List
+                                    [ /T=/Catln/RawObjArr
+                                        ( /arr=TopType
+                                        , /obj=TopType
+                                        , /annots=TopType
+                                        , /doc=TopType
+                                        , /def=TopType
+                                        , /basis=TopType
+                                        )
+                                    ]
                                 , /base=/Catln/Pair
                                     [ /B=∀/Catln/RawExpr
                                     , /A=/Catln/Meta
@@ -910,7 +1028,17 @@ Prgm
                                     , /second=∀/Catln/RawExpr
                                     )
                                 )
-                                ( Value /args -> ∀/Data/List[ /T=/Catln/RawObjArr ] )
+                                ( Value /args -> ∀/Data/List
+                                    [ /T=/Catln/RawObjArr
+                                        ( /arr=TopType
+                                        , /obj=TopType
+                                        , /annots=TopType
+                                        , /doc=TopType
+                                        , /def=TopType
+                                        , /basis=TopType
+                                        )
+                                    ]
+                                )
                             ) -> /Data/String = CStr
                             { csValue = "contextApply" }
                         , /Test/exprKind
@@ -1249,8 +1377,25 @@ Prgm
                                 ( /args=∀/Data/List
                                     [ /T=/Catln/Pair
                                         [ /B=/Catln/RawObjArr
+                                            ( /arr=TopType
+                                            , /obj=TopType
+                                            , /annots=TopType
+                                            , /doc=TopType
+                                            , /def=TopType
+                                            , /basis=TopType
+                                            )
                                         , /A=∀/Data/Primitive/Boolean
                                         ]
+                                        ( /first=∀/Data/Primitive/Boolean
+                                        , /second=/Catln/RawObjArr
+                                            ( /arr=TopType
+                                            , /obj=TopType
+                                            , /annots=TopType
+                                            , /doc=TopType
+                                            , /def=TopType
+                                            , /basis=TopType
+                                            )
+                                        )
                                     ]
                                 , /base=/Catln/Pair
                                     [ /B=∀/Catln/RawExpr
@@ -1304,15 +1449,41 @@ Prgm
                                 ( Value /args -> ∀/Data/List
                                     [ /T=/Catln/Pair
                                         [ /B=/Catln/RawObjArr
+                                            ( /arr=TopType
+                                            , /obj=TopType
+                                            , /annots=TopType
+                                            , /doc=TopType
+                                            , /def=TopType
+                                            , /basis=TopType
+                                            )
                                         , /A=∀/Data/Primitive/Boolean
                                         ]
+                                        ( /first=∀/Data/Primitive/Boolean
+                                        , /second=/Catln/RawObjArr
+                                            ( /arr=TopType
+                                            , /obj=TopType
+                                            , /annots=TopType
+                                            , /doc=TopType
+                                            , /def=TopType
+                                            , /basis=TopType
+                                            )
+                                        )
                                     ]
                                 )
                             ) -> /Data/String = CStr
                             { csValue = "" }
                         , /Test/rawValueName
                             ( Value /e -> /Catln/RawExpr/RawVarsApply
-                                ( /vars=∀/Data/List[ /T=/Catln/RawObjArr ]
+                                ( /vars=∀/Data/List
+                                    [ /T=/Catln/RawObjArr
+                                        ( /arr=TopType
+                                        , /obj=TopType
+                                        , /annots=TopType
+                                        , /doc=TopType
+                                        , /def=TopType
+                                        , /basis=TopType
+                                        )
+                                    ]
                                 , /base=∀/Catln/RawExpr
                                 , /meta=/Catln/Meta
                                     ( /type=TopType
@@ -1328,12 +1499,31 @@ Prgm
                                     , /pos=TopType
                                     )
                                 )( Value /base -> ∀/Catln/RawExpr )
-                                ( Value /vars -> ∀/Data/List[ /T=/Catln/RawObjArr ] )
+                                ( Value /vars -> ∀/Data/List
+                                    [ /T=/Catln/RawObjArr
+                                        ( /arr=TopType
+                                        , /obj=TopType
+                                        , /annots=TopType
+                                        , /doc=TopType
+                                        , /def=TopType
+                                        , /basis=TopType
+                                        )
+                                    ]
+                                )
                             ) -> /Data/String = CStr
                             { csValue = "" }
                         , /Test/rawValueName
                             ( Value /e -> /Catln/RawExpr/RawContextApply
-                                ( /args=∀/Data/List[ /T=/Catln/RawObjArr ]
+                                ( /args=∀/Data/List
+                                    [ /T=/Catln/RawObjArr
+                                        ( /arr=TopType
+                                        , /obj=TopType
+                                        , /annots=TopType
+                                        , /doc=TopType
+                                        , /def=TopType
+                                        , /basis=TopType
+                                        )
+                                    ]
                                 , /base=/Catln/Pair
                                     [ /B=∀/Catln/RawExpr
                                     , /A=/Catln/Meta
@@ -1383,7 +1573,17 @@ Prgm
                                     , /second=∀/Catln/RawExpr
                                     )
                                 )
-                                ( Value /args -> ∀/Data/List[ /T=/Catln/RawObjArr ] )
+                                ( Value /args -> ∀/Data/List
+                                    [ /T=/Catln/RawObjArr
+                                        ( /arr=TopType
+                                        , /obj=TopType
+                                        , /annots=TopType
+                                        , /doc=TopType
+                                        , /def=TopType
+                                        , /basis=TopType
+                                        )
+                                    ]
+                                )
                             ) -> /Data/String = CStr
                             { csValue = "" }
                         , /Test/rawValueName
@@ -1788,6 +1988,9 @@ Prgm
                             [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                             , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                             ]
+                            ( /first=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                            , /second=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                            )
                         ]
                     , /obj=
                         ( /Data/Maybe/Nothing + /Data/Maybe/Some[ /T=∀/Catln/RawExpr ]( /value=$/T ) )
@@ -1840,8 +2043,21 @@ Prgm
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /Test/declCount
                 ( Value /p -> /Catln/RawPrgm
-                    ( /statements=∀/Data/List[ /T=/Catln/RawStatementTree ]
-                    , /imports=∀/Data/List[ /T=/Catln/AFileImport ]
+                    ( /statements=∀/Data/List
+                        [ /T=/Catln/RawStatementTree
+                            ( /statement=TopType
+                            , /children=TopType
+                            )
+                        ]
+                    , /imports=∀/Data/List
+                        [ /T=/Catln/AFileImport
+                            ( /disp=TopType
+                            , /calledDir=TopType
+                            , /dir=TopType
+                            , /abs=TopType
+                            , /raw=TopType
+                            )
+                        ]
                     ) = Value /Test/emptyPrgm
                 )
             )
@@ -1851,8 +2067,21 @@ Prgm
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /Test/declCount
                 ( Value /p -> /Catln/RawPrgm
-                    ( /statements=∀/Data/List[ /T=/Catln/RawStatementTree ]
-                    , /imports=∀/Data/List[ /T=/Catln/AFileImport ]
+                    ( /statements=∀/Data/List
+                        [ /T=/Catln/RawStatementTree
+                            ( /statement=TopType
+                            , /children=TopType
+                            )
+                        ]
+                    , /imports=∀/Data/List
+                        [ /T=/Catln/AFileImport
+                            ( /disp=TopType
+                            , /calledDir=TopType
+                            , /dir=TopType
+                            , /abs=TopType
+                            , /raw=TopType
+                            )
+                        ]
                     ) = /Test/onePrgm
                     ( Value /name -> /Data/String = CStr
                         { csValue = "myFn" }

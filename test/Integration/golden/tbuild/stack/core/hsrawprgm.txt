@@ -39,8 +39,25 @@ Prgm
                                 { eaaArg = Value /args -> ∀/Data/List
                                     [ /T=/Catln/Pair
                                         [ /B=/Catln/RawObjArr
+                                            ( /arr=TopType
+                                            , /obj=TopType
+                                            , /annots=TopType
+                                            , /doc=TopType
+                                            , /def=TopType
+                                            , /basis=TopType
+                                            )
                                         , /A=∀/Data/Primitive/Boolean
                                         ]
+                                        ( /first=∀/Data/Primitive/Boolean
+                                        , /second=/Catln/RawObjArr
+                                            ( /arr=TopType
+                                            , /obj=TopType
+                                            , /annots=TopType
+                                            , /doc=TopType
+                                            , /def=TopType
+                                            , /basis=TopType
+                                            )
+                                        )
                                     ]
                                 }
                             )
@@ -94,6 +111,9 @@ Prgm
                                         [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                                         , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                                         ]
+                                        ( /first=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                        , /second=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                        )
                                     ]
                                 }
                             )
@@ -184,7 +204,17 @@ Prgm
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /args -> ∀/Data/List[ /T=/Catln/RawObjArr ] }
+                                { eaaArg = Value /args -> ∀/Data/List
+                                    [ /T=/Catln/RawObjArr
+                                        ( /arr=TopType
+                                        , /obj=TopType
+                                        , /annots=TopType
+                                        , /doc=TopType
+                                        , /def=TopType
+                                        , /basis=TopType
+                                        )
+                                    ]
+                                }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -279,7 +309,17 @@ Prgm
                             )
                             ( EAppArg { eaaArg = Value /base -> ∀/Catln/RawExpr } )
                             ( EAppArg
-                                { eaaArg = Value /vars -> ∀/Data/List[ /T=/Catln/RawObjArr ] }
+                                { eaaArg = Value /vars -> ∀/Data/List
+                                    [ /T=/Catln/RawObjArr
+                                        ( /arr=TopType
+                                        , /obj=TopType
+                                        , /annots=TopType
+                                        , /doc=TopType
+                                        , /def=TopType
+                                        , /basis=TopType
+                                        )
+                                    ]
+                                }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -433,7 +473,13 @@ Prgm
                         [ /Catln/RawStatementTree
                             ( EAppArg { eaaArg = Value /statement -> ∀/Catln/RawStatement } )
                             ( EAppArg
-                                { eaaArg = Value /children -> ∀/Data/List[ /T=/Catln/RawStatementTree ] }
+                                { eaaArg = Value /children -> ∀/Data/List
+                                    [ /T=/Catln/RawStatementTree
+                                        ( /statement=TopType
+                                        , /children=TopType
+                                        )
+                                    ]
+                                }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -460,10 +506,25 @@ Prgm
                     { omiDecls =
                         [ /Catln/RawPrgm
                             ( EAppArg
-                                { eaaArg = Value /imports -> ∀/Data/List[ /T=/Catln/AFileImport ] }
+                                { eaaArg = Value /imports -> ∀/Data/List
+                                    [ /T=/Catln/AFileImport
+                                        ( /disp=TopType
+                                        , /calledDir=TopType
+                                        , /dir=TopType
+                                        , /abs=TopType
+                                        , /raw=TopType
+                                        )
+                                    ]
+                                }
                             )
                             ( EAppArg
-                                { eaaArg = Value /statements -> ∀/Data/List[ /T=/Catln/RawStatementTree ] }
+                                { eaaArg = Value /statements -> ∀/Data/List
+                                    [ /T=/Catln/RawStatementTree
+                                        ( /statement=TopType
+                                        , /children=TopType
+                                        )
+                                    ]
+                                }
                             )
                         ]
                     , omiRuntimeDecls = []

@@ -444,7 +444,14 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Test/keyDepthAll
-                            ( Value ks -> ∀/Data/List[ /T=/Catln/PartialKey ] ) -> /Data/Primitive/Integer
+                            ( Value ks -> ∀/Data/List
+                                [ /T=/Catln/PartialKey
+                                    ( /name=TopType
+                                    , /vars=TopType
+                                    , /args=TopType
+                                    )
+                                ]
+                            ) -> /Data/Primitive/Integer
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

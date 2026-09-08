@@ -11,9 +11,9 @@ Prgm
                         [ /Catln/Doc/dshow
                             ( EAppArg { eaaArg = Value /s -> ∀/Data/Json } ) -> /Catln/Doc/Show/Rendered
                             ( /value=∀/Data/Json
-                            , /assets=/Data/List/Cons
+                            , /assets=/Data/List/Cons[ /T=/Data/String ]
                                 ( /head=/Data/String
-                                , /tail=/Data/List/Cons
+                                , /tail=/Data/List/Cons[ /T=/Data/String ]
                                     ( /head=/Data/String
                                     , /tail=/Data/List/Nil
                                     )
@@ -23,9 +23,9 @@ Prgm
                                 { eaaArg = Value /value -> TVArg /s = ( Value /s ↦ TVArg /s ) }
                             )
                             ( EAppArg
-                                { eaaArg = Value /assets -> /Data/List/Cons
+                                { eaaArg = Value /assets -> /Data/List/Cons[ /T=/Data/String ]
                                     ( /head=/Data/String
-                                    , /tail=/Data/List/Cons
+                                    , /tail=/Data/List/Cons[ /T=/Data/String ]
                                         ( /head=/Data/String
                                         , /tail=/Data/List/Nil
                                         )
@@ -34,7 +34,7 @@ Prgm
                                         { eaaArg = Value /head -> /Data/String = "json/json.js" }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /tail -> /Data/List/Cons
+                                        { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/String ]
                                             ( /head=/Data/String
                                             , /tail=/Data/List/Nil
                                             ) = /Data/List/Cons
@@ -58,9 +58,9 @@ Prgm
                                 ( /value=TopType
                                 , /key=/Data/String
                                 )
-                            , /assets=/Data/List/Cons
+                            , /assets=/Data/List/Cons[ /T=/Data/String ]
                                 ( /head=/Data/String
-                                , /tail=/Data/List/Cons
+                                , /tail=/Data/List/Cons[ /T=/Data/String ]
                                     ( /head=/Data/String
                                     , /tail=/Data/List/Nil
                                     )
@@ -70,9 +70,9 @@ Prgm
                                 { eaaArg = Value /value -> TVArg /s = ( Value /s ↦ TVArg /s ) }
                             )
                             ( EAppArg
-                                { eaaArg = Value /assets -> /Data/List/Cons
+                                { eaaArg = Value /assets -> /Data/List/Cons[ /T=/Data/String ]
                                     ( /head=/Data/String
-                                    , /tail=/Data/List/Cons
+                                    , /tail=/Data/List/Cons[ /T=/Data/String ]
                                         ( /head=/Data/String
                                         , /tail=/Data/List/Nil
                                         )
@@ -81,7 +81,7 @@ Prgm
                                         { eaaArg = Value /head -> /Data/String = "json/json.js" }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /tail -> /Data/List/Cons
+                                        { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/String ]
                                             ( /head=/Data/String
                                             , /tail=/Data/List/Nil
                                             ) = /Data/List/Cons
@@ -163,9 +163,21 @@ Prgm
                         , /Data/typeName
                             ( EAppArg
                                 { eaaArg = Value /value -> /Data/Json/Object
-                                    ( /entries=∀/Data/List[ /T=/Data/Json/Member ] ) = /Data/Json/Object
+                                    ( /entries=∀/Data/List
+                                        [ /T=/Data/Json/Member
+                                            ( /value=TopType
+                                            , /key=TopType
+                                            )
+                                        ]
+                                    ) = /Data/Json/Object
                                     ( EAppArg
-                                        { eaaArg = Value /entries -> ∀/Data/List[ /T=/Data/Json/Member ] }
+                                        { eaaArg = Value /entries -> ∀/Data/List
+                                            [ /T=/Data/Json/Member
+                                                ( /value=TopType
+                                                , /key=TopType
+                                                )
+                                            ]
+                                        }
                                     )
                                 }
                             ) -> /Data/String = "object"
@@ -178,7 +190,13 @@ Prgm
                     { omiDecls =
                         [ /Data/Json/Object
                             ( EAppArg
-                                { eaaArg = Value /entries -> ∀/Data/List[ /T=/Data/Json/Member ] }
+                                { eaaArg = Value /entries -> ∀/Data/List
+                                    [ /T=/Data/Json/Member
+                                        ( /value=TopType
+                                        , /key=TopType
+                                        )
+                                    ]
+                                }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -263,6 +281,21 @@ Prgm
               [Json/Array] and [Json/Object] carry their children as lists, which is what makes this a tree
               and what makes it recursive. An object's entries are [Json/Member]s rather than a [/Data/Map]
               because a document's keys are written in an order and shown in it — a map would sort them, and
+              a JSON file shown with its keys rearranged is not the file that was read. [Json/Str] rather than @Json/String@, because [String] is already a type and two names that
+              close together is a reader guessing which of them an arm meant.
+              [Json/Array] and [Json/Object] carry their children as lists, which is what makes this a tree
+              and what makes it recursive. An object's entries are [Json/Member]s rather than a [/Data/Map]
+              because a document's keys are written in an order and shown in it — a map would sort them, and
+              a JSON file shown with its keys rearranged is not the file that was read. [Json/Str] rather than @Json/String@, because [String] is already a type and two names that
+              close together is a reader guessing which of them an arm meant.
+              [Json/Array] and [Json/Object] carry their children as lists, which is what makes this a tree
+              and what makes it recursive. An object's entries are [Json/Member]s rather than a [/Data/Map]
+              because a document's keys are written in an order and shown in it — a map would sort them, and
+              a JSON file shown with its keys rearranged is not the file that was read. [Json/Str] rather than @Json/String@, because [String] is already a type and two names that
+              close together is a reader guessing which of them an arm meant.
+              [Json/Array] and [Json/Object] carry their children as lists, which is what makes this a tree
+              and what makes it recursive. An object's entries are [Json/Member]s rather than a [/Data/Map]
+              because a document's keys are written in an order and shown in it — a map would sort them, and
               a JSON file shown with its keys rearranged is not the file that was read."
             }
         ]
@@ -334,7 +367,7 @@ Prgm
                                     )
                                 ) = /Data/Json/Array
                                 ( EAppArg
-                                    { eaaArg = Value /entries -> /Data/List/Cons
+                                    { eaaArg = Value /entries -> /Data/List/Cons[ /T=/Data/Json/Null ]
                                         ( /head=/Data/Json/Null
                                         , /tail=/Data/List/Nil
                                         ) = /Data/List/Cons
@@ -359,7 +392,7 @@ Prgm
                                 ( /entries=/Data/List/Cons
                                     [ /T=/Data/Json/Member
                                         ( /value=/Data/Json/Null
-                                        , /key=TopType
+                                        , /key=/Data/String
                                         )
                                     ]
                                     ( /head=/Data/Json/Member
@@ -371,6 +404,11 @@ Prgm
                                 ) = /Data/Json/Object
                                 ( EAppArg
                                     { eaaArg = Value /entries -> /Data/List/Cons
+                                        [ /T=/Data/Json/Member
+                                            ( /value=/Data/Json/Null
+                                            , /key=/Data/String
+                                            )
+                                        ]
                                         ( /head=/Data/Json/Member
                                             ( /value=/Data/Json/Null
                                             , /key=/Data/String
@@ -412,10 +450,15 @@ Prgm
                     ( /Data/typeName
                         ( EAppArg
                             { eaaArg = Value /value -> /Data/Json/Array
-                                ( /entries=/Data/List/Cons[ /T=/Data/Json/Null ]
+                                ( /entries=/Data/List/Cons
+                                    [ /T=
+                                        ( /Data/Json/Bool( /value=/Data/Primitive/True ) + /Data/Json/Null + /Data/Json/Str( /value=/Data/String ) )
+                                    ]
                                     ( /head=/Data/Json/Null
                                     , /tail=/Data/List/Cons
-                                        [ /T=/Data/Json/Bool( /value=/Data/Primitive/True ) ]
+                                        [ /T=
+                                            ( /Data/Json/Bool( /value=/Data/Primitive/True ) + /Data/Json/Str( /value=/Data/String ) )
+                                        ]
                                         ( /head=/Data/Json/Bool( /value=/Data/Primitive/True )
                                         , /tail=/Data/List/Cons
                                             [ /T=/Data/Json/Str( /value=/Data/String ) ]
@@ -427,10 +470,17 @@ Prgm
                                 ) = /Data/Json/Array
                                 ( EAppArg
                                     { eaaArg = Value /entries -> /Data/List/Cons
+                                        [ /T=
+                                            ( /Data/Json/Bool( /value=/Data/Primitive/True ) + /Data/Json/Null + /Data/Json/Str( /value=/Data/String ) )
+                                        ]
                                         ( /head=/Data/Json/Null
                                         , /tail=/Data/List/Cons
+                                            [ /T=
+                                                ( /Data/Json/Bool( /value=/Data/Primitive/True ) + /Data/Json/Str( /value=/Data/String ) )
+                                            ]
                                             ( /head=/Data/Json/Bool( /value=/Data/Primitive/True )
                                             , /tail=/Data/List/Cons
+                                                [ /T=/Data/Json/Str( /value=/Data/String ) ]
                                                 ( /head=/Data/Json/Str( /value=/Data/String )
                                                 , /tail=/Data/List/Nil
                                                 )
@@ -439,8 +489,12 @@ Prgm
                                         ( EAppArg { eaaArg = Value /head -> /Data/Json/Null = Value /Data/Json/Null } )
                                         ( EAppArg
                                             { eaaArg = Value /tail -> /Data/List/Cons
+                                                [ /T=
+                                                    ( /Data/Json/Bool( /value=/Data/Primitive/True ) + /Data/Json/Str( /value=/Data/String ) )
+                                                ]
                                                 ( /head=/Data/Json/Bool( /value=/Data/Primitive/True )
                                                 , /tail=/Data/List/Cons
+                                                    [ /T=/Data/Json/Str( /value=/Data/String ) ]
                                                     ( /head=/Data/Json/Str( /value=/Data/String )
                                                     , /tail=/Data/List/Nil
                                                     )
@@ -452,6 +506,7 @@ Prgm
                                                 )
                                                 ( EAppArg
                                                     { eaaArg = Value /tail -> /Data/List/Cons
+                                                        [ /T=/Data/Json/Str( /value=/Data/String ) ]
                                                         ( /head=/Data/Json/Str( /value=/Data/String )
                                                         , /tail=/Data/List/Nil
                                                         ) = /Data/List/Cons
@@ -495,8 +550,10 @@ Prgm
                                 ) = /Data/Json/Array
                                 ( EAppArg
                                     { eaaArg = Value /entries -> /Data/List/Cons
+                                        [ /T=/Data/Json/Str( /value=/Data/String ) ]
                                         ( /head=/Data/Json/Str( /value=/Data/String )
                                         , /tail=/Data/List/Cons
+                                            [ /T=/Data/Json/Str( /value=/Data/String ) ]
                                             ( /head=/Data/Json/Str( /value=/Data/String )
                                             , /tail=/Data/List/Nil
                                             )
@@ -510,6 +567,7 @@ Prgm
                                         )
                                         ( EAppArg
                                             { eaaArg = Value /tail -> /Data/List/Cons
+                                                [ /T=/Data/Json/Str( /value=/Data/String ) ]
                                                 ( /head=/Data/Json/Str( /value=/Data/String )
                                                 , /tail=/Data/List/Nil
                                                 ) = /Data/List/Cons
@@ -541,7 +599,8 @@ Prgm
                             { eaaArg = Value /value -> /Data/Json/Object
                                 ( /entries=/Data/List/Cons
                                     [ /T=/Data/Json/Member
-                                        ( /value=/Data/Json/Null
+                                        ( /value=
+                                            ( /Data/Json/Null + /Data/Json/Str( /value=/Data/String ) )
                                         , /key=/Data/String
                                         )
                                     ]
@@ -551,8 +610,8 @@ Prgm
                                         )
                                     , /tail=/Data/List/Cons
                                         [ /T=/Data/Json/Member
-                                            ( /value=/Data/Json/Str( /value=TopType )
-                                            , /key=TopType
+                                            ( /value=/Data/Json/Str( /value=/Data/String )
+                                            , /key=/Data/String
                                             )
                                         ]
                                         ( /head=/Data/Json/Member
@@ -565,11 +624,22 @@ Prgm
                                 ) = /Data/Json/Object
                                 ( EAppArg
                                     { eaaArg = Value /entries -> /Data/List/Cons
+                                        [ /T=/Data/Json/Member
+                                            ( /value=
+                                                ( /Data/Json/Null + /Data/Json/Str( /value=/Data/String ) )
+                                            , /key=/Data/String
+                                            )
+                                        ]
                                         ( /head=/Data/Json/Member
                                             ( /value=/Data/Json/Null
                                             , /key=/Data/String
                                             )
                                         , /tail=/Data/List/Cons
+                                            [ /T=/Data/Json/Member
+                                                ( /value=/Data/Json/Str( /value=/Data/String )
+                                                , /key=/Data/String
+                                                )
+                                            ]
                                             ( /head=/Data/Json/Member
                                                 ( /value=/Data/Json/Str( /value=/Data/String )
                                                 , /key=/Data/String
@@ -590,6 +660,11 @@ Prgm
                                         )
                                         ( EAppArg
                                             { eaaArg = Value /tail -> /Data/List/Cons
+                                                [ /T=/Data/Json/Member
+                                                    ( /value=/Data/Json/Str( /value=/Data/String )
+                                                    , /key=/Data/String
+                                                    )
+                                                ]
                                                 ( /head=/Data/Json/Member
                                                     ( /value=/Data/Json/Str( /value=/Data/String )
                                                     , /key=/Data/String
@@ -636,8 +711,10 @@ Prgm
                                     [ /T=/Data/Json/Member
                                         ( /value=/Data/Json/Array
                                             ( /entries=/Data/List/Cons
+                                                [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                                 ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                 , /tail=/Data/List/Cons
+                                                    [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                                     ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                     , /tail=/Data/List/Nil
                                                     )
@@ -649,8 +726,10 @@ Prgm
                                     ( /head=/Data/Json/Member
                                         ( /value=/Data/Json/Array
                                             ( /entries=/Data/List/Cons
+                                                [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                                 ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                 , /tail=/Data/List/Cons
+                                                    [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                                     ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                     , /tail=/Data/List/Nil
                                                     )
@@ -663,11 +742,28 @@ Prgm
                                 ) = /Data/Json/Object
                                 ( EAppArg
                                     { eaaArg = Value /entries -> /Data/List/Cons
+                                        [ /T=/Data/Json/Member
+                                            ( /value=/Data/Json/Array
+                                                ( /entries=/Data/List/Cons
+                                                    [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
+                                                    ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                                    , /tail=/Data/List/Cons
+                                                        [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
+                                                        ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
+                                                        , /tail=/Data/List/Nil
+                                                        )
+                                                    )
+                                                )
+                                            , /key=/Data/String
+                                            )
+                                        ]
                                         ( /head=/Data/Json/Member
                                             ( /value=/Data/Json/Array
                                                 ( /entries=/Data/List/Cons
+                                                    [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                                     ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                     , /tail=/Data/List/Cons
+                                                        [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                                         ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                         , /tail=/Data/List/Nil
                                                         )
@@ -681,8 +777,10 @@ Prgm
                                             { eaaArg = Value /head -> /Data/Json/Member
                                                 ( /value=/Data/Json/Array
                                                     ( /entries=/Data/List/Cons
+                                                        [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                                         ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                         , /tail=/Data/List/Cons
+                                                            [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                                             ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                             , /tail=/Data/List/Nil
                                                             )
@@ -696,8 +794,10 @@ Prgm
                                                 ( EAppArg
                                                     { eaaArg = Value /value -> /Data/Json/Array
                                                         ( /entries=/Data/List/Cons
+                                                            [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                                             ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                             , /tail=/Data/List/Cons
+                                                                [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                                                 ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                                 , /tail=/Data/List/Nil
                                                                 )
@@ -705,8 +805,10 @@ Prgm
                                                         ) = /Data/Json/Array
                                                         ( EAppArg
                                                             { eaaArg = Value /entries -> /Data/List/Cons
+                                                                [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                                                 ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                                 , /tail=/Data/List/Cons
+                                                                    [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                                                     ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                                     , /tail=/Data/List/Nil
                                                                     )
@@ -720,6 +822,7 @@ Prgm
                                                                 )
                                                                 ( EAppArg
                                                                     { eaaArg = Value /tail -> /Data/List/Cons
+                                                                        [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                                                         ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                                         , /tail=/Data/List/Nil
                                                                         ) = /Data/List/Cons
