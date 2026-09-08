@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/ContextIn"
                 , ObjectMapItem
@@ -21,32 +21,38 @@ Prgm
                         [ f( Value a -> /Data/Primitive/Integer )( Value b -> /Data/Primitive/Integer )( Value c -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+
                             ( Value /l= /operator+( Value /l= Value a )( Value /r= Value b ) )( Value /r= Value c )
                         , Value f= f
-                            ( Value b= CInt 2 )
-                            ( Value c= CInt 3 )
+                            ( Value b= CInt
+                                { ciValue = 2 }
+                            )
+                            ( Value c= CInt
+                                { ciValue = 3 }
+                            )
                         ]
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "The default arrow. A name with no arguments applied is a value in its own right — the partial
-            application `f` has before anything is given to it — so an arrow may be written from it.
-            `f= f(b= 2, c= 3)` rewrites that bare `f`, and the `a` of `f(a= 1)` is applied on top of what the
-            rewrite produced, reaching the full `f(a, b, c)`. So `b` and `c` are defaults, supplied when the
-            call site does not give them. The defaults are distinct and non-zero, so the answer distinguishes
-            a default that landed in the wrong slot.
-            The same thing written under two names is `partialApply.ct`; what this file adds is that the name
-            is the SAME on both sides, which is what makes it a default rather than a second function. That
-            costs the form a self-reference at every stage: the arrow's body is built FROM the name the arrow
-            rewrites, so without a rule saying otherwise the arrow is defined in terms of itself. The rule is
-            that an arrow does not rewrite the base of its own body — `TypeCheck.TypeUtils.dropSelfBaseReach`
-            for the inferred type (whose result would otherwise never leave `TopType`), and the `ObjSrc` gate
-            in `TreeBuild.baseBuildMeta` for the tree built from it (which would otherwise recurse without
-            bound at eval, since each eval-time rebuild starts a fresh `VisitedArrows`)." )
+            ( Value /text= CStr
+                { csValue = "The default arrow. A name with no arguments applied is a value in its own right — the partial
+                application `f` has before anything is given to it — so an arrow may be written from it.
+                `f= f(b= 2, c= 3)` rewrites that bare `f`, and the `a` of `f(a= 1)` is applied on top of what the
+                rewrite produced, reaching the full `f(a, b, c)`. So `b` and `c` are defaults, supplied when the
+                call site does not give them. The defaults are distinct and non-zero, so the answer distinguishes
+                a default that landed in the wrong slot.
+                The same thing written under two names is `partialApply.ct`; what this file adds is that the name
+                is the SAME on both sides, which is what makes it a default rather than a second function. That
+                costs the form a self-reference at every stage: the arrow's body is built FROM the name the arrow
+                rewrites, so without a rule saying otherwise the arrow is defined in terms of itself. The rule is
+                that an arrow does not rewrite the base of its own body — `TypeCheck.TypeUtils.dropSelfBaseReach`
+                for the inferred type (whose result would otherwise never leave `TopType`), and the `ObjSrc` gate
+                in `TreeBuild.baseBuildMeta` for the tree built from it (which would otherwise recurse without
+                bound at eval, since each eval-time rebuild starts a fresh `VisitedArrows`)." }
+            )
         ]
     }

@@ -1,6 +1,6 @@
 Prgm
     { prgmObjMap = ObjectMap
-        ( fromList
+        { omItems = fromList
             [
                 ( "/ContextIn"
                 , ObjectMapItem
@@ -19,8 +19,12 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ Value g= f
-                            ( Value b= CInt 2 )
-                            ( Value c= CInt 3 )
+                            ( Value b= CInt
+                                { ciValue = 2 }
+                            )
+                            ( Value c= CInt
+                                { ciValue = 3 }
+                            )
                         ]
                     }
                 )
@@ -37,21 +41,23 @@ Prgm
                     }
                 )
             ]
-        )
-    , prgmCG =
+        }
+    , prgmCg =
         [ CGType
         , CGType
         , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text= CStr "Partial application, as `docs/philosophy/basics.md` describes it: a name may be bound to a
-            call that has only some of its arguments, and the rest are applied later.
-              baseFunctionCall = callName(arg1=1, arg2=2)
-              finalCall = baseFunctionCall(arg3=9)
-            `g` is `f` with `b` and `c` already given, so `g(a= 1)` is `f(a= 1, b= 2, c= 3)`.
-            The arguments `g` carries have to survive the later application: applying `a` extends the
-            tuple `g` already is, rather than starting a fresh one. Distinct non-zero values, so the
-            answer distinguishes an argument that landed in the wrong slot." )
+            ( Value /text= CStr
+                { csValue = "Partial application, as `docs/philosophy/basics.md` describes it: a name may be bound to a
+                call that has only some of its arguments, and the rest are applied later.
+                  baseFunctionCall = callName(arg1=1, arg2=2)
+                  finalCall = baseFunctionCall(arg3=9)
+                `g` is `f` with `b` and `c` already given, so `g(a= 1)` is `f(a= 1, b= 2, c= 3)`.
+                The arguments `g` carries have to survive the later application: applying `a` extends the
+                tuple `g` already is, rather than starting a fresh one. Distinct non-zero values, so the
+                answer distinguishes an argument that landed in the wrong slot." }
+            )
         ]
     }
