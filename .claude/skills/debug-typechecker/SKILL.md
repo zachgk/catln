@@ -5,8 +5,9 @@ description: >
   wrong type, resolves to TopType, fails with "ACT ∅" / "Actual type contains bottomType" /
   "buildCallTree from top type" / "Failed to get singleton for TopType" / a scheme
   verification error, or the constraint solver does not converge (the epoch limit / "Grows
-  by" monotonicity). Covers writing minimal repros, the failure-signature catalog, how to
-  trace points and constraints, and the constraint-solving code map.
+  by" monotonicity). Covers writing minimal repros that do not rebuild the standard library,
+  telling which pipeline stage a failure or hang is actually in, the failure-signature
+  catalog, how to trace points and constraints, and the constraint-solving code map.
 ---
 
 # Debugging the Catln type checker
@@ -46,6 +47,48 @@ unresolved (it presents ⊤ and looks like a generic declaration), so the reach 
 written incomplete — see `mostSpecificPromises` in `src/Semantics.hs`.)
 
 ## 1. Reproduce minimally
+
+**Get out of the standard library first.** Every `catln` invocation on a page that imports
+core rebuilds the whole library, which is 2.5–5 minutes per run; a repro that avoids it runs
+in well under a second. A page is given `import "core"` unless it writes `annot(#noCore)`
+and then `#noCore` (`Syntax.Parsers.pageImports`), so a repro naming nothing from the library
+still pays for it until it says so. Two things about where a repro lives: `core` resolves
+relative to the file and then to `<stackPath>/core`, so a file OUTSIDE the worktree cannot
+find the library at all (keep repros in `build/scratch/<name>/`, which is gitignored, and run
+from the worktree root); and the whole DIRECTORY is compiled, so a neighbouring file's
+`import "core"` is also yours — one repro per directory.
+
+A `#noCore` file can *run*, not just type-check. Declaring the two types eval looks for is
+enough to exercise inference, tree build and evaluation:
+
+```catln
+annot(#noCore)
+
+#noCore
+
+module(Data/Primitive)
+  data(Integer)
+
+module(Catln)
+  data(IO)
+
+g(x -> Integer) -> IO= IO
+
+main -> IO= g(x= <the expression under test>)
+```
+
+`main -> IO` reaching `/Catln/IO` is what `evalPrgmTargetMode` needs to pick `EvalRun`; the
+usual `main{io -> IO}` form needs core's whole `Context` machinery. The run ends in "Eval did
+not return an instance of IO … TupleVal /Catln/IO" — that is this harness's own tail, not a
+failure, and everything before it really ran. Where a repro has to report a value and core is
+in play anyway, `io.exit(val= …)` makes the process exit code the answer, which needs no `==`,
+`#assert` or `String`.
+
+**Which stage is at fault**, before theorising about any of them: `catln epochs FILES` stops
+after type inference (and reports epochs per component), `catln tbuild` adds the arrow-tree
+build, and `catln run` adds evaluation. Run the repro and a working control through all
+three — the first command whose time or outcome diverges from the control names the stage,
+and it is not always this one.
 
 - Write the smallest standalone `.ct` that fails, importing core, with a `#test`/`#assert`:
   ```catln
