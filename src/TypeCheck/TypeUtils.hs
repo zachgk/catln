@@ -492,7 +492,7 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
   --     body's rewrite frontier, deliberately holding raw applied forms alongside what they
   --     settle to (eval's dispatch keying reads them). There the requirement acts by ARROW
   --     CHOICE, and only when it actually FORCES one: when the plain reach already satisfies
-  --     the requirement up to settling, it must do nothing — even a semantically-no-op meet
+  --     the requirement, it must do nothing — even a semantically-no-op meet
   --     can rewrite representations (completing a bare class member @IntOrdering@ to
   --     @IntOrdering[/T=Integer]@), which eval's value matching cannot tolerate. When it does
   --     force a choice, the reach tree's choice nodes are cut to the arrows guaranteed to
@@ -511,7 +511,7 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
   -- to choose among, so the requirement cannot engage — forcing a choice there would derive
   -- a destination from the few arms that happen to have resolved, which is not an upper
   -- bound of the point's values and gets locked in by monotonicity.
-  let reqForcesChoice = destIsArrowResult && destReq /= PTopType && destByGraph0 /= PTopType && not (isSubtypeUpToSettlingOf reachesTypeEnv vaenv' destByGraph0 destReq)
+  let reqForcesChoice = destIsArrowResult && destReq /= PTopType && destByGraph0 /= PTopType && not (isSubtypeOfWithEnv reachesTypeEnv vaenv' destByGraph0 destReq)
   -- Resolve each operand's recursive self-refs before it feeds any intersection below
   -- ('resolveTypeSelfRefs'): a concrete @Cons[/T=Ord]@ leaf carrying an unresolved recursive
   -- tail top @ConsList[/T=$_T]@ reads that tail as Top, so meeting it re-derives the outer
@@ -531,33 +531,21 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
   -- meets back into the result; still-unresolved vars stay symbolic ('substituteKeep', the
   -- 'mergeVarEnvVal' doctrine).
   let (venv', dest')
-        | reqForcesChoice =
-            -- A choice-forcing requirement splits the reached union: RAW leaves (ones the graph
-            -- can still rewrite — the body's unrewritten calls, which eval's dispatch keying
-            -- reads) are bounded only by the accumulated actual; the settled remainder is
-            -- bounded by the full actual∧required meet, cutting reach over-approximation (e.g.
-            -- a generic instance result impossible for this call) down to what is required. The
-            -- raws are reattached STRUCTURALLY (a leaf-map union): an algebraic union with the
-            -- settled part's predicate top would absorb them.
-            let (rawLeafs, settledLeafs) = partition (not . isSettledLeaf reachesTypeEnv) $ case destByGraph of
-                  UnionType _ leafs _ -> splitUnionType leafs
-                  _                   -> []
-                destByGraphSettled = case destByGraph of
-                  UnionType dMTop _ dConsts -> UnionType dMTop (joinUnionType settledLeafs) dConsts
-                  t                         -> t
-                (venvRaw, destRaw') = intersectTypesWithVarEnv feTypeEnv vaenv' destActR (UnionType Nothing (joinUnionType rawLeafs) [])
-                (venvSettled, destSettled') = intersectTypesWithVarEnv feTypeEnv vaenv' destBound destByGraphSettled
-                merged = case (destRaw', destSettled') of
-                  (UnionType Nothing rawLs [], UnionType sMt sLs sCs) -> UnionType sMt (H.unionWith S.union rawLs sLs) sCs
-                  (r, s) | isBottomType r -> s
-                         | isBottomType s -> r
-                         | otherwise      -> unionTypesWithEnv feTypeEnv vaenv' r s
-            in (mergeAllVarEnvs feTypeEnv [venvRaw, venvSettled], merged)
         -- An Arrow result whose reach already satisfies the requirement: the requirement is
         -- inert; only the accumulated actual bounds it (see the policy comment above). Both
         -- operands are already self-ref-resolved ('destActR'/'destByGraph').
-        | destIsArrowResult = intersectTypesWithVarEnv feTypeEnv vaenv' destActR destByGraph
-        -- A consumption point: the committed full-meet behavior.
+        | destIsArrowResult && not reqForcesChoice = intersectTypesWithVarEnv feTypeEnv vaenv' destActR destByGraph
+        -- Everything else — a consumption point, and an Arrow result whose requirement DOES
+        -- force a choice — takes the full actual∧required meet, over the WHOLE reached union.
+        -- A form the graph can still rewrite is bounded by the requirement like any other: the
+        -- requirement names the destinations this point permits, and a form leading only to
+        -- destinations outside them leads nowhere this point can go. Exempting such forms
+        -- (they were once bounded by the accumulated actual alone, and reattached structurally)
+        -- kept the reach's over-approximation alive: a bind declared to return @∀Maybe@ held
+        -- the List instance arm's @append(..)@ beside it for having a name the graph could
+        -- rewrite, though what it rewrites TO is a @ConsList@ and no path from it lands in
+        -- @Maybe@. Meeting it drops it, which is what 'cutReachesTree' has already decided
+        -- above by keeping only the arrows guaranteed to satisfy the requirement.
         | otherwise = intersectTypesWithVarEnv feTypeEnv vaenv' destBound destByGraph
   -- Settle-forcing requirement: a FORM the DECL-ORIGIN requirement REFUSES ('reqAdmitsForm'
   -- against 'stypeReqDecl' — the unified admission rule; the declaration boundary answers

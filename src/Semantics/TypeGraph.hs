@@ -96,8 +96,9 @@ reachesHasCutSubtypeOf _ _ ReachesLeaf _ = False
 
 -- | Cuts a reaches tree to a required destination. At a source partial's choice node
 -- ('ReachesTypeTree'), a child arrow is GUARANTEED when its claimed type satisfies the
--- requirement ('isSubtypeUpToSettlingOf' — raw applied claims judged by what they settle to)
--- or its subtree can be cut to within it ('reachesHasCutSubtypeOf'). When the guaranteed
+-- requirement, or its subtree can be cut to within it ('reachesHasCutSubtypeOf' — the arrows
+-- BEYOND it reach the requirement, which is how a claim that must rewrite further is judged:
+-- by the paths leading out of it, not by exempting it from the check). When the guaranteed
 -- children jointly COVER the source partial — every value the source admits is accepted by
 -- some guaranteed arrow — only they are kept: the requirement forces the arrow choice, and
 -- no input is stranded by ignoring the others. Without joint coverage the node is left whole:
@@ -109,7 +110,7 @@ cutReachesTree typeEnv vaenv req (ReachesPartialTree children) = ReachesPartialT
   where
     cutChild srcPartial (ReachesTypeTree arms) = ReachesTypeTree $ fmap recurseArm arms'
       where
-        guaranteed key (_, subTree) = isSubtypeUpToSettlingOf typeEnv vaenv key req || reachesHasCutSubtypeOf typeEnv vaenv subTree req
+        guaranteed key (_, subTree) = isSubtypeOfWithEnv typeEnv vaenv key req || reachesHasCutSubtypeOf typeEnv vaenv subTree req
         kept = H.filterWithKey guaranteed arms
         -- The portion of the source each kept arm accepts, re-queried from the graph (the tree
         -- keeps its lean committed shape; see 'typeGraphQueryWithReason').
@@ -132,20 +133,6 @@ cutReachesTree _ _ _ ReachesLeaf = ReachesLeaf
 isSettledLeaf :: (TypeGraph tg) => TypeEnv tg -> PartialType -> Bool
 isSettledLeaf typeEnv l = not (null (typeGraphData typeEnv (ptName l)))
 
--- | @sub ⊆ sup@ up to settling: a requirement constrains what a term settles to, so a
--- positive leaf the type graph may still rewrite (a raw applied call, kept alongside its
--- settled forms for eval's dispatch keying) is exempt from the check — the results its
--- arrows produce carry their own bounds at their own points. Settled leaves (data values,
--- 'isSettledLeaf'), constants, and the predicate component are checked structurally.
-isSubtypeUpToSettlingOf :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Bool
-isSubtypeUpToSettlingOf typeEnv vaenv sub sup = case sub of
-  UnionType mTop leafs consts ->
-    isSubtypeOfWithEnv typeEnv vaenv (UnionType mTop H.empty consts) sup
-      && all leafOk (splitUnionType leafs)
-  _ -> isSubtypeOfWithEnv typeEnv vaenv sub sup
-  where
-    leafOk l = not (isSettledLeaf typeEnv l)
-             || isSubtypeOfWithEnv typeEnv vaenv (singletonType l) sup
 
 reachesPartials :: (TypeGraph tg) => ReachesEnv tg -> [PartialType] -> ReachesTree
 reachesPartials typeEnv partials = ReachesPartialTree $ H.fromList $ zip partials (map (reachesPartial typeEnv) partials)

@@ -23,7 +23,7 @@ import           Data.Maybe          (mapMaybe)
 import           MapMeta             (MetaType (ArrMeta), clearMetaDat)
 import           Semantics
 import           Semantics.Prgm
-import           Semantics.TypeGraph (isSettledLeaf, isSubtypeUpToSettlingOf)
+import           Semantics.TypeGraph (isSettledLeaf, reachesTo)
 import           Semantics.Types
 import           Text.Printf
 import           TypeCheck.Common
@@ -37,9 +37,10 @@ toMeta  m@(Meta pt pos mid _) = do
       -- and enforced here, once inference has converged: the actual must satisfy the requirement.
       -- A bare type-variable actual is a placeholder that cannot be compared without its binding
       -- (which lived in the constraint var-arg env, unavailable here), so skip it — mirroring
-      -- 'verifyScheme's 'verifySchemeActLowers'. The requirement constrains what a term settles
-      -- to, so raw applied leaves (a body's unrewritten call, kept alongside the settled forms
-      -- for eval's dispatch keying) are exempt ('isSubtypeUpToSettlingOf').
+      -- 'verifyScheme's 'verifySchemeActLowers'. No form is exempt from the check for being one
+      -- the graph could still rewrite: what a term may become is decided by the arrows it has
+      -- and by what its consumer permits, and by the time inference has converged the actual
+      -- holds what survived that.
       -- Both schemes are UPPER BOUNDS on the point's values, and under req-only
       -- 'BoundedByObjs' the REQUIREMENT can legitimately be the tighter one (a
       -- module-generic definition-body actual against a slot-refined requirement), so plain
@@ -48,10 +49,21 @@ toMeta  m@(Meta pt pos mid _) = do
       -- meet — the portion the requirement admits, which is also what the stored meta below
       -- carries onward). A leaf meeting to ⊥ (an @Integer ∪ String@ actual against an
       -- @Integer@ requirement flags the @String@ form) is the genuine error.
-      let leafCompatibleWithReq l = not $ isBottomType $ intersectTypes feTypeEnv (singletonType l) req
+      --
+      -- A form REACHING the requirement satisfies it as much as one already inside it. An arrow
+      -- is a choice, not an obligation, so a term may still be spelled as the call it has not
+      -- taken (@equal(this, other)@ beside @∀Boolean@ — the spelling eval's dispatch keying
+      -- reads), and asking whether it is CONTAINED in the requirement asks the wrong question:
+      -- what a requirement says is which destinations are permitted, and a term satisfies it by
+      -- having a path to one. So a leaf whose arrows reach the requirement is accepted, and only
+      -- a leaf that neither meets it nor reaches it is the genuine error. The reach is read from
+      -- the base env, whose unresolved arrow metas make it WIDER — the safe direction for a
+      -- check, since a wider reach can only withhold an error, never invent one.
+      let leafCompatibleWithReq l = not (isBottomType (intersectTypes feTypeEnv (singletonType l) req))
+                                  || reachesTo feTypeEnv H.empty (singletonType l) req
       let actSatisfiesReq = case ub of
             TypeVar{} -> True
-            _ | isSubtypeUpToSettlingOf feTypeEnv H.empty ub req -> True
+            _ | isSubtypeOfWithEnv feTypeEnv H.empty ub req -> True
             UnionType _ leafs _ -> all leafCompatibleWithReq (splitUnionType leafs)
       let notes' = if actSatisfiesReq
             then notes

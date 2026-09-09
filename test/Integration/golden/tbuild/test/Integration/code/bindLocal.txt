@@ -52,40 +52,8 @@ Prgm
                         [ /bindWithLocal
                             ( EAppArg
                                 { eaaArg = Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
-                            ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Maybe[ /T=TopType ]
-                                , fromList []
-                                , []
-                                )
-                            , /Data/List/append
-                                ( /a=UnionType
-                                    ( Just
-                                        ( PredClass /Data/List/ConsList[ /T=TopType ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/List/Cons[ /T=TopType ]
-                                        ( /head=TopType
-                                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                        )
-                                    , []
-                                    )
-                                , /b=UnionType
-                                    ( Just
-                                        ( PredClass /Data/List/ConsList[ /T=TopType ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/List/Cons[ /T=TopType ]
-                                        ( /head=TopType
-                                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                        )
-                                    , []
-                                    )
-                                )
-                            , []
-                            ) =
+                            ) ->
+                            ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Maybe[ /T=TopType ] ) =
                             ( /Data/bindap
                                 ( EAppArg
                                     { eaaArg = Value /m -> TVArg /m = ( Value /m ↦ TVArg /m ) }
@@ -102,22 +70,8 @@ Prgm
                                             ) ↦ /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
                                         )
                                     }
-                                ) ↦ UnionType
-                                ( Just
-                                    ( !
-                                        ( !
-                                            ( PredClass /Data/List/ConsList[ /T=TopType ] ) && !
-                                            ( PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Maybe[ /T=TopType ] )
-                                        )
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/List/Cons[ /T=TopType ]
-                                    ( /head=TopType
-                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                    )
-                                , []
-                                )
+                                ) ↦
+                                ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Maybe[ /T=TopType ] )
                             )
                         ]
                     }

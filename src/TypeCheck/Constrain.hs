@@ -273,7 +273,7 @@ computeConstraint FEnv{feTypeEnv, feCompletedAllObjsKey, feCompletedAllObjs} con
     -- argument still holding a raw applied form (an unrewritten call such as @fmap(...)@) is
     -- not yet a settled value, so meeting it against the bound's settled-value arg type
     -- (@#print@'s @p -> DShow@) would empty it spuriously — the raw form is bounded at its own
-    -- settling point ('isSubtypeUpToSettlingOf' is the checking-side analogue). Relax the
+    -- rewrite point instead. Relax the
     -- name-matching bound objects' arg slots to ⊤ at exactly those positions; settled
     -- arguments still meet the declared arg types exactly.
     argHasUnsettled t = case t of
