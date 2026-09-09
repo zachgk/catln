@@ -35,10 +35,18 @@ Prgm
                                 , []
                                 )
                             ,
-                                ( /Data/Set/intersectInto
+                                ( /Data/Set/MkSet
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=()
+                                    ]
+                                    ( /map=∀/Data/Map
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=()
+                                        ]
+                                    ) + /Data/Set/addAll
                                     ( /items=UnionType
                                         ( Just
-                                            ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ]
+                                            ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                             , fromList []
                                             , []
                                             )
@@ -48,23 +56,14 @@ Prgm
                                             )
                                         , []
                                         )
-                                    , /acc=∀/Data/Set/MapSet
-                                    , /b=∀/Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                    ) + /Data/Set/MkSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=()
-                                    ]
-                                    ( /map=∀/Data/Map
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=()
-                                        ]
+                                    , /s=∀/Data/Set/MapSet
                                     )
                                 )
                             , []
-                            ) = /Data/Set/intersectInto
+                            ) = /Data/Set/addAll( Value /s -> ∀/Data/Set/MapSet = Value /Data/Set/empty )
                             ( Value /items -> UnionType
                                 ( Just
-                                    ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ]
+                                    ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                     , fromList []
                                     , []
                                     )
@@ -73,8 +72,22 @@ Prgm
                                     , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                     )
                                 , []
-                                ) = /Data/Set/elements( Value /s -> TVArg /a = Value /a )
-                            )( Value /b -> TVArg /b = Value /b )( Value /acc -> ∀/Data/Set/MapSet = Value /Data/Set/empty )
+                                ) = /Data/List/filter
+                                ( Value /lst -> UnionType
+                                    ( Just
+                                        ( PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Data/List[ /T=TopType ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /Data/List/Cons[ /T=TopType ]
+                                        ( /head=$/T
+                                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                        )
+                                    , []
+                                    ) = /Data/Set/elements( Value /s -> TVArg /a = Value /a )
+                                )
+                                ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean = /Data/Set/contains( Value /s -> TVArg /b = Value /b )( Value /item -> TVArg /v = Value /v ) )
+                            )
                         ]
                     }
                 )
@@ -201,136 +214,6 @@ Prgm
                                 ) = /Data/Map/insert( Value /m -> TVArg /map = Value /map )( Value /key -> TVArg /item = Value /item )
                                 ( Value /value -> () = Value / )
                             )
-                        ]
-                    }
-                )
-            ,
-                ( "/Data/Set/intersectInto"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/Set/intersectInto[ /E : ∀/Data/Algebra/Ord ]
-                            ( Value /items -> ∀/Data/List/ConsList[ /T=$^/E ] )
-                            ( Value /b -> ∀/Data/Set[ /T=$^/E ] )
-                            ( Value /acc -> ∀/Data/Set[ /T=$^/E ] ) -> ∀/Data/Set[ /T=$^/E ]
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Set/intersectInto( Value /items -> /Data/List/Nil = Value /Data/List/Nil )
-                            ( Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
-                            ( Value /acc -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] ) -> TVArg /acc = Value /acc
-                        , /Data/Set/intersectInto
-                            ( Value /items -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                ( /head=∀/Data/Algebra/Ord
-                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                ) = /Data/List/Cons( Value /head -> ∀/Data/Algebra/Ord )
-                                ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
-                            )
-                            ( Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
-                            ( Value /acc -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] ) | /Data/Set/contains( Value /s -> TVArg /b = Value /b )( Value /item -> TVArg /head = Value /head ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /Data/Set/intersectInto
-                                    ( /items=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    , /acc=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Set/MkSet
-                                            [ /K=∀/Data/Algebra/Ord
-                                            , /V=()
-                                            ]
-                                            ( /map=∀/Data/Map
-                                                [ /K=∀/Data/Algebra/Ord
-                                                , /V=()
-                                                ]
-                                            )
-                                        , []
-                                        )
-                                    , /b=∀/Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                    ) + /Data/Set/MkSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=()
-                                    ]
-                                    ( /map=∀/Data/Map
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=()
-                                        ]
-                                    )
-                                )
-                            , []
-                            ) = /Data/Set/intersectInto( Value /items -> TVArg /tail = Value /tail )( Value /b -> TVArg /b = Value /b )
-                            ( Value /acc -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Set/MkSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=()
-                                    ]
-                                    ( /map=∀/Data/Map
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=()
-                                        ]
-                                    )
-                                , []
-                                ) = /Data/Set/add( Value /s -> TVArg /acc = Value /acc )( Value /item -> TVArg /head = Value /head )
-                            )
-                        , /Data/Set/intersectInto
-                            ( Value /items -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                ( /head=∀/Data/Algebra/Ord
-                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                ) = /Data/List/Cons( Value /head -> ∀/Data/Algebra/Ord )
-                                ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
-                            )
-                            ( Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
-                            ( Value /acc -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /Data/Set/intersectInto
-                                    ( /items=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    , /acc=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Set/MkSet
-                                            [ /K=∀/Data/Algebra/Ord
-                                            , /V=()
-                                            ]
-                                            ( /map=∀/Data/Map
-                                                [ /K=∀/Data/Algebra/Ord
-                                                , /V=()
-                                                ]
-                                            )
-                                        , []
-                                        )
-                                    , /b=∀/Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                    ) + /Data/Set/MkSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=()
-                                    ]
-                                    ( /map=∀/Data/Map
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=()
-                                        ]
-                                    )
-                                )
-                            , []
-                            ) = /Data/Set/intersectInto( Value /items -> TVArg /tail = Value /tail )( Value /b -> TVArg /b = Value /b )( Value /acc -> TVArg /acc = Value /acc )
                         ]
                     }
                 )
@@ -892,7 +775,6 @@ Prgm
         , CGType
         , CGType
         , CGType
-        , CGType
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Set/MapSet
@@ -902,7 +784,7 @@ Prgm
                     , /V=$_/V
                     ]
                 ]
-            , cgcDoc = Just "                 "
+            , cgcDoc = Just "                "
             }
         , CGClass
             { cgcSealed = False
@@ -914,7 +796,6 @@ Prgm
                     ]
                 ]
             , cgcDoc = Just " Every [MapSet] is a [Set], so each [Set] operation resolves on it through the arms below. The
-              empty set is [empty].  Every [MapSet] is a [Set], so each [Set] operation resolves on it through the arms below. The
               empty set is [empty].  Every [MapSet] is a [Set], so each [Set] operation resolves on it through the arms below. The
               empty set is [empty].  Every [MapSet] is a [Set], so each [Set] operation resolves on it through the arms below. The
               empty set is [empty].  Every [MapSet] is a [Set], so each [Set] operation resolves on it through the arms below. The
@@ -950,7 +831,7 @@ Prgm
                         ]
                     )
                 ]
-            , cgcDoc = Just "                 "
+            , cgcDoc = Just "                "
             }
         ]
     , prgmAnnots =

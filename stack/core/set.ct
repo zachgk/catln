@@ -91,11 +91,11 @@ module(Data/Set)
   # ## Union
   addAll[$E -> /Data/Algebra/Ord](s -> /Data/Set[$T -> $_E], items -> /Data/List/ConsList[$T -> $_E]) -> /Data/Set[$T -> $_E]
     # [addAll] adds every item of a list into a set, one at a time. [union] builds on it.
-    # TODO: [addAll], [removeAll] and [intersectInto] are three copies of one fold over a
-      [ConsList], differing only in the step, and should each be a [/Data/List/foldl] call. A generic
-      fold does not compile — see the fold TODO at the top of [Data/list] for the exact shape and
-      error. Even once it does, these have a polymorphic accumulator (a [Set], not a concrete leaf),
-      which is the harder half of that problem.
+    # TODO: [addAll] and [removeAll] are two copies of one fold over a [ConsList], differing only in
+      the step, and should each be a [/Data/List/foldl] call. A generic fold's signature compiles but
+      does not evaluate — the recursive call reaches the step function unreduced; see the fold TODO
+      at the top of [Data/list] for the trace. Even once it does, these have a polymorphic
+      accumulator (a [Set], not a concrete leaf), which is the harder half of that problem.
   addAll(s, items= /Data/List/Nil)= s
   addAll(s, items= /Data/List/Cons(head, tail))= addAll(s= add(s= s, item= head), items= tail)
 
@@ -125,21 +125,11 @@ module(Data/Set)
   > contains(s= difference(a= add(s= add(s= empty, item= 1), item= 2), b= add(s= empty, item= 2)), item= 2)
     >>> False
   # ## Intersection
-  intersectInto[$E -> /Data/Algebra/Ord](items -> /Data/List/ConsList[$T -> $_E], b -> /Data/Set[$T -> $_E], acc -> /Data/Set[$T -> $_E]) -> /Data/Set[$T -> $_E]
-    # [intersectInto] accumulates into [acc] each item of [items] that is also in [b]. A guard on its
-      own arms decides whether the [head] joins the accumulator, so no [addIf] helper is needed.
-    # TODO: this should be [/Data/List/filter] over [elements] followed by [addAll] — "keep the items
-      of [a] that are in [b]" — rather than a hand-written walk. A polymorphic [filter] does not
-      compile today; see the missing-combinators TODO in [Data/list] for the spellings tried and the
-      error each gives. Until then the walk stays, with the keep/drop decision as a guard.
-  intersectInto(items= /Data/List/Nil, b, acc)= acc
-  intersectInto(items= /Data/List/Cons(head, tail), b, acc) | contains(s= b, item= head)= intersectInto(items= tail, b= b, acc= add(s= acc, item= head))
-  intersectInto(items= /Data/List/Cons(head, tail), b, acc) else = intersectInto(items= tail, b= b, acc= acc)
-
   intersection[$E -> /Data/Algebra/Ord](a -> /Data/Set[$T -> $_E], b -> /Data/Set[$T -> $_E]) -> /Data/Set[$T -> $_E]
     # [intersection] is the set of items in both [a] and [b] — [a]'s items kept when they are also in
-      [b].
-  intersection(a, b)= intersectInto(items= elements(s= a), b= b, acc= empty)
+      [b]. That reading is the definition: [filter] keeps the elements of [a] that [b] contains, and
+      [addAll] collects them into a fresh set.
+  intersection(a, b)= addAll(s= empty, items= /Data/List/filter(lst= elements(s= a), fn(v)= contains(s= b, item= v)))
 
   > size(s= intersection(a= add(s= add(s= empty, item= 1), item= 2), b= add(s= add(s= empty, item= 2), item= 3)))
     >>> 1

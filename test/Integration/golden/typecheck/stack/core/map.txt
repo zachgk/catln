@@ -2127,10 +2127,13 @@ Prgm
                 TODO: [size], [keys], [values], [graft] and [containedIn] are five in-order traversals of the
                 same tree — [keys] and [values] differ only in which field they cons — and should all be one
                 [foldEntries(m, fn(acc, key, value), init)] with five different step functions. A three-parameter
-                function argument is fine; what blocks it is the fold shape itself (a plain argument typed by a
-                bare type variable alongside a function-typed argument) — see the fold TODO at the top of
-                [Data/list]. [size] and [containedIn] have concrete accumulators and would come first; [keys],
-                [values] and [graft] accumulate a polymorphic container and are the harder half." }
+                function argument is fine, and the fold SIGNATURE now compiles — a plain argument typed by a bare
+                type variable alongside a function-typed argument was the old blocker and it is fixed. What stops
+                it now is evaluation: the recursive call reaches the step function unreduced, because the step's
+                parameters are [TopType] and a [TopType] destination accepts a raw tuple instead of forcing it.
+                See the fold TODO at the top of [Data/list] for the trace. [size] and [containedIn] have concrete
+                accumulators and would come first; [keys], [values] and [graft] accumulate a polymorphic
+                container and are the harder half." }
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==

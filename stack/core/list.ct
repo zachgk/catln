@@ -50,12 +50,19 @@ module(Data/List)
     A generic fold's SIGNATURE now compiles — a function argument beside a plain argument typed by
     the same type variable was rejected until argument inference stopped guessing at a slot the
     pattern already names, which [test/Integration/code/inferArgNamed.ct] covers. What still stops
-    the fold is evaluation: the step function's accumulator does not bind, and
+    the fold is evaluation. With
       foldr(lst= lst, fn(acc, v)= acc + v, init= 0)
-    dies with "Invalid intOp signature" on operands that are the lambda's own parameters. That is
-    the same [TopType] lambda-parameter rule the missing-combinators TODO below describes, so the
-    folds land with it rather than before it. Arity is not involved: a function argument may take
-    two or three parameters, and a fold whose types are all concrete evaluates correctly.
+    the recursive [foldr] call reaches the step function UNREDUCED — it arrives as a data tuple
+    rather than as the [Integer] it evaluates to — so the [operator+] inside the step has nothing to
+    dispatch on and fails with "Failed match in eval callTree":
+      Val:     TupleVal /operator+(/r = 1, /l = TupleVal /Probe/foldr(/init = 0, ...))
+      Options: [+(/r=Float, /l=Float), +(/r=Integer, /l=Integer)]
+    The step's own parameters are still [/fn(/acc=TopType, /v=TopType)], and a [TopType] destination
+    accepts the unreduced call rather than forcing it, which is why nothing narrows it. So this IS a
+    [TopType] lambda-parameter problem and [fnArgInputBound] is the place to fix it — note that is
+    NOT what blocked [filter], which now works (see [filter] below). Arity is not involved: a
+    function argument may take two or three parameters, and a fold whose types are all concrete
+    evaluates correctly.
   # ## Summing
   sum(lst -> /Data/List[$T -> Integer]) -> Integer
     # [sum] adds up a list of [Integer]s. The empty list sums to zero; a non-empty list adds its
@@ -129,26 +136,44 @@ module(Data/List)
     >>> False
   > /Data/List/elem(lst= [], item= 1)
     >>> False
+  # ## Filtering
+    [filter] keeps the elements a predicate accepts, in their original order. It is written over
+    [mmap]: each element becomes a one-element list where the predicate holds and the empty list
+    where it does not, and [mmap] concatenates those — so a rejected element contributes nothing.
+    [keepIf] is local to the definition because it is an artifact of that encoding rather than an
+    operation a caller would want.
+  filter[$A](lst -> ConsList[$T -> $_A], fn(v -> $_A) -> Boolean) -> ConsList[$T -> $_A]
+  filter(lst, fn(v)) =
+    keepIf(v -> $_A, keep -> Boolean) -> ConsList[$T -> $_A]
+    keepIf(v, keep= /Data/Primitive/True)= [v]
+    keepIf(v, keep= /Data/Primitive/False)= []
+
+    /Data/Monad/mmap(m= lst, fn(v)= keepIf(v= v, keep= fn(v= v)))
+
+  > /Data/List/filter(lst= [1, 2, 3, 4], fn(v)= v > 2)
+    >>> [3, 4]
+  > /Data/List/filter(lst= ["ab", "c", "de"], fn(v)= v == "c")
+    >>> [c]
+  > /Data/List/filter(lst= [], fn(v)= v > 2)
+    >>> []
+  # ## Counting matches
+  count[$A](lst -> ConsList[$T -> $_A], fn(v -> $_A) -> Boolean) -> Integer
+    # [count] is how many elements satisfy the predicate: [filter] followed by [length].
+  count(lst, fn(v))= filter(lst= lst, fn(v)= fn(v= v)).length
+
+  > /Data/List/count(lst= [1, 2, 3, 4], fn(v)= v > 2)
+    >>> 2
+  > /Data/List/count(lst= [], fn(v)= v > 2)
+    >>> 0
   # ## Missing combinators
-    TODO: [filter], [concat] and [count] belong here beside [allBy]/[anyBy], and none of them
-    compiles for a general element type yet.
-    [filter] fails in every spelling tried. As guards on its own arms
-    ([filter(lst= Cons(head, tail), fn(v)) | fn(v= head)= ...]) it typechecks and then dies at the
-    first recursive step with "Found no matching conditions in evalTree". Written as
-    [mmap(m= lst, fn(v)= if(fn(v= v)) ...)] it does not parse — a branch in Catln is a declaration,
-    not an expression, so an [if] cannot sit inside an argument list. Written as a [match] on the
-    predicate result in the arm body it fails at eval the same way as the guard form. Routed through
-    [mmap] with a separate two-arm helper returning [[v]] or [[]] it fails in TreeBuild with
-    "Failed to build arrow tree from /fn(/v=TopType) to ∀ConsList". The monomorphic version (element
-    fixed to [Integer]) works in all of these, so the blocker is the polymorphic element: the
-    predicate's parameter is [TopType] (see [fnArgInputBound] in the compiler, which narrows a lambda
-    parameter only from a fully concrete type), and a [TopType] value cannot reach a declared slot.
-    [concat] — [mmap(m= lst, fn(v)= v)] — typechecks but the compiler loops when it is actually
-    evaluated ([catln: <<loop>>]).
-    [count] is [filter] plus [length], so it waits on [filter].
-    Note that [allBy]/[anyBy]/[elem] above work because they only ever pass the element onward into
-    another slot that is itself unconstrained; [filter] has to *use* the predicate's answer to choose
-    a branch, which is what fails.
+    TODO: [concat] — [mmap(m= lst, fn(v)= v)] — still does not compile, and it now fails
+    DIFFERENTLY from how it used to. It exhausts memory during TYPE INFERENCE: [catln epochs] on a
+    file declaring it passes 8GB of RSS in 70s and never reports, where the same file calling
+    [mmap] ordinarily finishes in 36s at 1.0GB over 804 epochs. It previously failed at EVALUATION
+    with [catln: <<loop>>]. Since type inference runs before tree building, any diagnosis resting
+    on a tree-build-time structure cannot explain the current failure and needs re-deriving.
+    The shape to isolate is that [concat] makes the element dimension the same shape as the
+    container — [fn(v)= v] forces both the monad variable and the element variable to [ConsList].
   # ## Reversing
   reversed(lst -> /Data/List) -> /Data/List
     # [reversed] returns a list with its items in the opposite order. Since there is no

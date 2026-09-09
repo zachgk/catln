@@ -12,20 +12,23 @@ import "core"
   a library type, and this is it written over the smallest class that shows it.
 class(Mixed, [Mixed/Plain, Mixed/Tagged(value -> /Data/String)])
 
-count(ks -> /Data/List[$T -> Mixed]) -> /Data/Primitive/Integer
-count(ks= /Data/List/Nil)= 0
-count(ks= /Data/List/Cons(head, tail))= 1 + count(ks= tail)
+# Named [countMixed] rather than [count] because [/Data/List/count] is declared in the imported
+  standard library, and an unqualified [count] here would resolve to it and be checked against its
+  signature. The name is incidental to what this file checks.
+countMixed(ks -> /Data/List[$T -> Mixed]) -> /Data/Primitive/Integer
+countMixed(ks= /Data/List/Nil)= 0
+countMixed(ks= /Data/List/Cons(head, tail))= 1 + countMixed(ks= tail)
 
 # Homogeneous first, as the floor: this passed on the head-alone rule too.
-> count(ks= [/Mixed/Plain, /Mixed/Plain])
+> countMixed(ks= [/Mixed/Plain, /Mixed/Plain])
   >>> 2
 # One of each arm, in both orders — the arm carrying a field is read whether it is the cell the
   spine starts from or one it reaches through the tail.
-> count(ks= [/Mixed/Plain, /Mixed/Tagged(value= "x")])
+> countMixed(ks= [/Mixed/Plain, /Mixed/Tagged(value= "x")])
   >>> 2
-> count(ks= [/Mixed/Tagged(value= "x"), /Mixed/Plain])
+> countMixed(ks= [/Mixed/Tagged(value= "x"), /Mixed/Plain])
   >>> 2
-> count(ks= [/Mixed/Plain, /Mixed/Tagged(value= "x"), /Mixed/Plain])
+> countMixed(ks= [/Mixed/Plain, /Mixed/Tagged(value= "x"), /Mixed/Plain])
   >>> 3
 # Reached as an ARGUMENT, which is where a heterogeneous literal is bounded by the call. Held in a
   FIELD it typechecks but cannot be built to evaluate — see

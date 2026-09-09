@@ -49,10 +49,18 @@ Prgm
                                 , []
                                 )
                             ,
-                                ( /Data/Set/intersectInto
+                                ( /Data/Set/MkSet
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=()
+                                    ]
+                                    ( /map=∀/Data/Map
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=()
+                                        ]
+                                    ) + /Data/Set/addAll
                                     ( /items=UnionType
                                         ( Just
-                                            ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ]
+                                            ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                             , fromList []
                                             , []
                                             )
@@ -62,24 +70,18 @@ Prgm
                                             )
                                         , []
                                         )
-                                    , /acc=∀/Data/Set/MapSet
-                                    , /b=∀/Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                    ) + /Data/Set/MkSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=()
-                                    ]
-                                    ( /map=∀/Data/Map
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=()
-                                        ]
+                                    , /s=∀/Data/Set/MapSet
                                     )
                                 )
                             , []
-                            ) = /Data/Set/intersectInto
+                            ) = /Data/Set/addAll
+                            ( EAppArg
+                                { eaaArg = Value /s -> ∀/Data/Set/MapSet = ( Value /Data/Set/empty ↦ ∀/Data/Set/MapSet ) }
+                            )
                             ( EAppArg
                                 { eaaArg = Value /items -> UnionType
                                     ( Just
-                                        ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ]
+                                        ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                         , fromList []
                                         , []
                                         )
@@ -89,12 +91,53 @@ Prgm
                                         )
                                     , []
                                     ) =
-                                    ( /Data/Set/elements
+                                    ( /Data/List/filter
                                         ( EAppArg
-                                            { eaaArg = Value /s -> TVArg /a = ( Value /a ↦ TVArg /a ) }
+                                            { eaaArg = Value /lst -> UnionType
+                                                ( Just
+                                                    ( PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Data/List[ /T=TopType ]
+                                                    , fromList []
+                                                    , []
+                                                    )
+                                                , /Data/List/Cons[ /T=TopType ]
+                                                    ( /head=$/T
+                                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                                    )
+                                                , []
+                                                ) =
+                                                ( /Data/Set/elements
+                                                    ( EAppArg
+                                                        { eaaArg = Value /s -> TVArg /a = ( Value /a ↦ TVArg /a ) }
+                                                    ) ↦ UnionType
+                                                    ( Just
+                                                        ( PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Data/List[ /T=TopType ]
+                                                        , fromList []
+                                                        , []
+                                                        )
+                                                    , /Data/List/Cons[ /T=TopType ]
+                                                        ( /head=$/T
+                                                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                                        )
+                                                    , []
+                                                    )
+                                                )
+                                            }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = /fn
+                                                ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/Primitive/Boolean =
+                                                ( /Data/Set/contains
+                                                    ( EAppArg
+                                                        { eaaArg = Value /s -> TVArg /b = ( Value /b ↦ TVArg /b ) }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /item -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                                    ) ↦ ∀/Data/Primitive/Boolean
+                                                )
+                                            }
                                         ) ↦ UnionType
                                         ( Just
-                                            ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ]
+                                            ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                             , fromList []
                                             , []
                                             )
@@ -106,12 +149,6 @@ Prgm
                                         )
                                     )
                                 }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /b -> TVArg /b = ( Value /b ↦ TVArg /b ) }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /acc -> ∀/Data/Set/MapSet = ( Value /Data/Set/empty ↦ ∀/Data/Set/MapSet ) }
                             )
                         ]
                     }
@@ -327,217 +364,6 @@ Prgm
                                         )
                                     )
                                 }
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/Data/Set/intersectInto"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/Set/intersectInto
-                            ( EAppVar
-                                { eavName = /E
-                                , eavMeta = ∀/Data/Algebra/Ord
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /items -> ∀/Data/List/ConsList[ /T=$^/E ] }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /b -> ∀/Data/Set[ /T=$^/E ] }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /acc -> ∀/Data/Set[ /T=$^/E ] }
-                            ) -> ∀/Data/Set[ /T=$^/E ]
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Set/intersectInto
-                            ( EAppArg { eaaArg = Value /items -> /Data/List/Nil = Value /Data/List/Nil } )
-                            ( EAppArg
-                                { eaaArg = Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /acc -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] }
-                            ) -> TVArg /acc = ( Value /acc ↦ TVArg /acc )
-                        , /Data/Set/intersectInto
-                            ( EAppArg
-                                { eaaArg = Value /items -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                    ( /head=∀/Data/Algebra/Ord
-                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    ) = /Data/List/Cons
-                                    ( EAppArg { eaaArg = Value /head -> ∀/Data/Algebra/Ord } )
-                                    ( EAppArg
-                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] }
-                                    )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /acc -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] }
-                            ) | /Data/Set/contains
-                            ( EAppArg
-                                { eaaArg = Value /s -> TVArg /b = ( Value /b ↦ TVArg /b ) }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /item -> TVArg /head = ( Value /head ↦ TVArg /head ) }
-                            ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /Data/Set/intersectInto
-                                    ( /items=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    , /acc=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Set/MkSet
-                                            [ /K=∀/Data/Algebra/Ord
-                                            , /V=()
-                                            ]
-                                            ( /map=∀/Data/Map
-                                                [ /K=∀/Data/Algebra/Ord
-                                                , /V=()
-                                                ]
-                                            )
-                                        , []
-                                        )
-                                    , /b=∀/Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                    ) + /Data/Set/MkSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=()
-                                    ]
-                                    ( /map=∀/Data/Map
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=()
-                                        ]
-                                    )
-                                )
-                            , []
-                            ) = /Data/Set/intersectInto
-                            ( EAppArg
-                                { eaaArg = Value /items -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /b -> TVArg /b = ( Value /b ↦ TVArg /b ) }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /acc -> UnionType
-                                    ( Just
-                                        ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/Set/MkSet
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=()
-                                        ]
-                                        ( /map=∀/Data/Map
-                                            [ /K=∀/Data/Algebra/Ord
-                                            , /V=()
-                                            ]
-                                        )
-                                    , []
-                                    ) =
-                                    ( /Data/Set/add
-                                        ( EAppArg
-                                            { eaaArg = Value /s -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /item -> TVArg /head = ( Value /head ↦ TVArg /head ) }
-                                        ) ↦ UnionType
-                                        ( Just
-                                            ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Set/MkSet
-                                            [ /K=∀/Data/Algebra/Ord
-                                            , /V=()
-                                            ]
-                                            ( /map=∀/Data/Map
-                                                [ /K=∀/Data/Algebra/Ord
-                                                , /V=()
-                                                ]
-                                            )
-                                        , []
-                                        )
-                                    )
-                                }
-                            )
-                        , /Data/Set/intersectInto
-                            ( EAppArg
-                                { eaaArg = Value /items -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                    ( /head=∀/Data/Algebra/Ord
-                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    ) = /Data/List/Cons
-                                    ( EAppArg { eaaArg = Value /head -> ∀/Data/Algebra/Ord } )
-                                    ( EAppArg
-                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] }
-                                    )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /acc -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] }
-                            ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /Data/Set/intersectInto
-                                    ( /items=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    , /acc=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Set/MkSet
-                                            [ /K=∀/Data/Algebra/Ord
-                                            , /V=()
-                                            ]
-                                            ( /map=∀/Data/Map
-                                                [ /K=∀/Data/Algebra/Ord
-                                                , /V=()
-                                                ]
-                                            )
-                                        , []
-                                        )
-                                    , /b=∀/Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                    ) + /Data/Set/MkSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=()
-                                    ]
-                                    ( /map=∀/Data/Map
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=()
-                                        ]
-                                    )
-                                )
-                            , []
-                            ) = /Data/Set/intersectInto
-                            ( EAppArg
-                                { eaaArg = Value /items -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /b -> TVArg /b = ( Value /b ↦ TVArg /b ) }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /acc -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
                             )
                         ]
                     }
@@ -1525,7 +1351,6 @@ Prgm
         , CGType
         , CGType
         , CGType
-        , CGType
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Set/MapSet
@@ -1535,7 +1360,7 @@ Prgm
                     , /V=$_/V
                     ]
                 ]
-            , cgcDoc = Just "                 "
+            , cgcDoc = Just "                "
             }
         , CGClass
             { cgcSealed = False
@@ -1547,7 +1372,6 @@ Prgm
                     ]
                 ]
             , cgcDoc = Just " Every [MapSet] is a [Set], so each [Set] operation resolves on it through the arms below. The
-              empty set is [empty].  Every [MapSet] is a [Set], so each [Set] operation resolves on it through the arms below. The
               empty set is [empty].  Every [MapSet] is a [Set], so each [Set] operation resolves on it through the arms below. The
               empty set is [empty].  Every [MapSet] is a [Set], so each [Set] operation resolves on it through the arms below. The
               empty set is [empty].  Every [MapSet] is a [Set], so each [Set] operation resolves on it through the arms below. The
@@ -1583,7 +1407,7 @@ Prgm
                         ]
                     )
                 ]
-            , cgcDoc = Just "                 "
+            , cgcDoc = Just "                "
             }
         ]
     , prgmAnnots =

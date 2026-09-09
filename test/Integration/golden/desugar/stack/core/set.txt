@@ -22,8 +22,11 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Set/intersection( Value a )( Value b )= intersectInto
-                            ( Value items= elements( Value s= Value a ) )( Value b= Value b )( Value acc= Value empty )
+                        [ /Data/Set/intersection( Value a )( Value b )= addAll( Value s= Value empty )
+                            ( Value items= /Data/List/filter
+                                ( Value lst= elements( Value s= Value a ) )
+                                ( fn( Value v )= contains( Value s= Value b )( Value item= Value v ) )
+                            )
                         ]
                     }
                 )
@@ -56,27 +59,6 @@ Prgm
                         [ /Data/Set/add
                             ( Value s= MkSet( Value map ) )( Value item )= MkSet
                             ( Value map= /Data/Map/insert( Value m= Value map )( Value key= Value item )( Value value= Value / ) )
-                        ]
-                    }
-                )
-            ,
-                ( "/Data/Set/intersectInto"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/Set/intersectInto[ /E : ∀/Data/Algebra/Ord ]
-                            ( Value items -> ∀/Data/List/ConsList[ /T=$^/E ] )
-                            ( Value b -> ∀/Data/Set[ /T=$^/E ] )
-                            ( Value acc -> ∀/Data/Set[ /T=$^/E ] ) -> ∀/Data/Set[ /T=$^/E ]
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Set/intersectInto( Value items= Value /Data/List/Nil )( Value b )( Value acc )= Value acc
-                        , /Data/Set/intersectInto
-                            ( Value items= /Data/List/Cons( Value head )( Value tail ) )( Value b )( Value acc ) | contains( Value s= Value b )( Value item= Value head )= intersectInto( Value items= Value tail )( Value b= Value b )
-                            ( Value acc= add( Value s= Value acc )( Value item= Value head ) )
-                        , /Data/Set/intersectInto
-                            ( Value items= /Data/List/Cons( Value head )( Value tail ) )( Value b )( Value acc )= intersectInto( Value items= Value tail )( Value b= Value b )( Value acc= Value acc )
                         ]
                     }
                 )
@@ -281,7 +263,6 @@ Prgm
         }
     , prgmCg =
         [ CGType
-        , CGType
         , CGType
         , CGType
         , CGType

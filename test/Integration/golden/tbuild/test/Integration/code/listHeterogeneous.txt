@@ -40,19 +40,10 @@ Prgm
                     }
                 )
             ,
-                ( "/Mixed/Plain"
-                , ObjectMapItem
-                    { omiDecls = [ Value /Mixed/Plain ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
-                ( "/count"
+                ( "/countMixed"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /count
+                        [ /countMixed
                             ( EAppArg
                                 { eaaArg = Value /ks -> ∀/Data/List[ /T=∀/Mixed ] }
                             ) -> /Data/Primitive/Integer
@@ -60,9 +51,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /count
+                        [ /countMixed
                             ( EAppArg { eaaArg = Value /ks -> /Data/List/Nil = Value /Data/List/Nil } ) -> /Data/Primitive/Integer = 0
-                        , /count
+                        , /countMixed
                             ( EAppArg
                                 { eaaArg = Value /ks -> /Data/List/Cons[ /T=∀/Mixed ]
                                     ( /head=∀/Mixed
@@ -80,7 +71,7 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /r -> /Data/Primitive/Integer =
-                                        ( /count
+                                        ( /countMixed
                                             ( EAppArg
                                                 { eaaArg = Value /ks -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
                                             ) ↦ /Data/Primitive/Integer
@@ -89,6 +80,15 @@ Prgm
                                 ) ↦ /Data/Primitive/Integer
                             )
                         ]
+                    }
+                )
+            ,
+                ( "/Mixed/Plain"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Mixed/Plain ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
                     }
                 )
             ]
@@ -123,12 +123,18 @@ Prgm
             )
         , /Catln/#md
             ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Named [countMixed] rather than [count] because [/Data/List/count] is declared in the imported
+                standard library, and an unqualified [count] here would resolve to it and be checked against its
+                signature. The name is incidental to what this file checks." }
+            )
+        , /Catln/#md
+            ( EAppArg
                 { eaaArg = Value /text -> /Data/String = "Homogeneous first, as the floor: this passed on the head-alone rule too." }
             )
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p -> /Data/Primitive/Integer =
-                    ( /count
+                    ( /countMixed
                         ( EAppArg
                             { eaaArg = Value /ks -> /Data/List/Cons[ /T=/Mixed/Plain ]
                                 ( /head=/Mixed/Plain
@@ -163,7 +169,7 @@ Prgm
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p -> /Data/Primitive/Integer =
-                    ( /count
+                    ( /countMixed
                         ( EAppArg
                             { eaaArg = Value /ks -> /Data/List/Cons[ /T=∀/Mixed ]
                                 ( /head=/Mixed/Plain
@@ -201,7 +207,7 @@ Prgm
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p -> /Data/Primitive/Integer =
-                    ( /count
+                    ( /countMixed
                         ( EAppArg
                             { eaaArg = Value /ks -> /Data/List/Cons[ /T=∀/Mixed ]
                                 ( /head=/Mixed/Tagged( /value=/Data/String )
@@ -237,7 +243,7 @@ Prgm
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p -> /Data/Primitive/Integer =
-                    ( /count
+                    ( /countMixed
                         ( EAppArg
                             { eaaArg = Value /ks -> /Data/List/Cons[ /T=∀/Mixed ]
                                 ( /head=/Mixed/Plain
