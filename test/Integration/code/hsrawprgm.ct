@@ -32,7 +32,7 @@ module(Test)
   > readKind(r= /Catln/ReadPath/ReadDir(path= "src"))
     >>> dir
   # ## The metadata every piece carries
-  noMeta() -> /Catln/Meta
+  noMeta() -> /Catln/Meta..
     # [noMeta] is the metadata of a piece of program nothing wrote. Written once here because
       building a [RawExpr] means building one of these, and what is being read is the expression
       rather than the metadata.
@@ -92,12 +92,12 @@ module(Test)
   > exprKind(e= /Catln/RawExpr/RawList(meta= noMeta(), values= []))
     >>> list
   # ## What a page holds
-  emptyObjArr(name -> String) -> /Catln/RawObjArr
+  emptyObjArr(name -> String) -> /Catln/RawObjArr..
     # A declaration of [name] with nothing said about it: the smallest thing a page can hold, and
       what an importer builds one of per definition it found in the file it read.
   emptyObjArr(name)= /Catln/RawObjArr(obj= /Data/Maybe/Some(value= /Catln/RawExpr/RawValue(meta= noMeta(), name= name)), basis= /Catln/ObjectBasis/FunctionObj, doc= /Data/Maybe/Nothing, annots= [], arr= /Data/Maybe/Nothing, def= /Data/Maybe/Nothing)
 
-  objArrName(oa -> /Catln/RawObjArr) -> String
+  objArrName(oa -> /Catln/RawObjArr(obj, basis, doc, annots, arr, def)) -> String
     # [objArrName] reads back the name a declaration is written under, through the [Maybe] that says
       a declaration need not have written an object at all.
   objArrName(oa= /Catln/RawObjArr(obj= /Data/Maybe/Some(value), basis, doc, annots, arr, def))= rawValueName(e= value)
@@ -115,16 +115,16 @@ module(Test)
   > statementKind(s= /Catln/RawStatement/RawDeclStatement(objArr= emptyObjArr(name= "myFn")))
     >>> decl
   # ## A whole page, and the result of reading one
-  emptyPrgm() -> /Catln/RawPrgm
+  emptyPrgm() -> /Catln/RawPrgm..
     # A page holding nothing: no imports and no statements. What an importer answers with for a file
       that declared nothing.
   emptyPrgm()= /Catln/RawPrgm(imports= [], statements= [])
 
-  declCount(p -> /Catln/RawPrgm) -> Integer
+  declCount(p -> /Catln/RawPrgm(imports, statements)) -> Integer
     # [declCount] counts the statements a page holds, walking the [statements] it was written with.
   declCount(p= /Catln/RawPrgm(imports, statements))= statements.length
 
-  onePrgm(name -> String) -> /Catln/RawPrgm
+  onePrgm(name -> String) -> /Catln/RawPrgm..
     # A page holding one declaration, built the way an importer builds one.
   onePrgm(name)= /Catln/RawPrgm(imports= [], statements= [/Catln/RawStatementTree(statement= /Catln/RawStatement/RawDeclStatement(objArr= emptyObjArr(name= name)), children= [])])
 
@@ -132,20 +132,20 @@ module(Test)
     >>> 0
   > declCount(p= onePrgm(name= "myFn"))
     >>> 1
-  resultDeclCount(r -> /Catln/ImportResult) -> Integer
+  resultDeclCount(r -> /Catln/ImportResult(prgm, source, reads)) -> Integer
     # [resultDeclCount] reads the program back out of an [ImportResult], which is the type an
       `#importer` declaration answers with. Reading one here is what says the shape an importer
       must produce is a shape a Catln program can actually build.
   resultDeclCount(r= /Catln/ImportResult(prgm, source, reads))= declCount(p= prgm)
 
-  readsCount(r -> /Catln/ImportResult) -> Integer
+  readsCount(r -> /Catln/ImportResult(prgm, source, reads)) -> Integer
     # [readsCount] counts what the reading looked at. A reading which says nothing is a page read
       again on every read, so an importer answering with [Nothing] here is answering that it cannot
       be cached.
   readsCount(r= /Catln/ImportResult(prgm, source, reads= /Data/Maybe/Nothing))= 0
   readsCount(r= /Catln/ImportResult(prgm, source, reads= /Data/Maybe/Some(value)))= value.length
 
-  oneResult(name -> String) -> /Catln/ImportResult
+  oneResult(name -> String) -> /Catln/ImportResult..
     # What an importer that read one file and found one declaration answers with.
   oneResult(name)= /Catln/ImportResult(prgm= onePrgm(name= name), source= /Data/Maybe/Some(value= "src"), reads= /Data/Maybe/Some(value= [/Catln/ReadPath/ReadFile(path= "a.py")]))
 

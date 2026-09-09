@@ -1,0 +1,27 @@
+import "core"
+import "core"
+
+
+# A data field whose declared type carries fields of its own.
+  What the annotation `inner -> Inner..` means is "any Inner", and the spread is how that is said.
+  A bare `Inner` is the argument-less partial application — the constructor before anything has been
+  given to it — so a field declared that way admits only that, and the value stored in it never is.
+  The two spellings of the one annotation (the `oaArr` meta and the `/inner` slot of `Outer`'s own
+  partial) then disagree, and the `PropEq` tying an argument's slot to its type meta meets them to
+  bottom in the first epoch, before the solver has done anything.
+  Held here because the shape is easy to write and was, for a while, impossible: the compiler
+  completed every bare annotation to its field form on the way past, which made `Inner` and
+  `Inner..` indistinguishable and so made neither sayable. The compiler's own declarations are read
+  out of Haskell and generated (`Syntax.HsBuiltins.Render`), and they write the spread for the same
+  reason this does.
+data(Inner(label -> Integer))
+data(Outer(inner -> Inner..))
+
+every(Inner.., isa= [/Catln/Doc/DShow])
+every(Outer.., isa= [/Catln/Doc/DShow])
+
+/Sample= Outer(inner= Inner(label= 7))
+
+# Printed so the value is evaluated and not only built.
+> /Sample
+main{io -> IO}= io.exit(val= 0)

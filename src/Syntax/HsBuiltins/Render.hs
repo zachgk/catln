@@ -60,11 +60,23 @@ renderCtCon (CtCon path vars fields) = rawVal path `withVars` map declVar vars `
     -- would have typed.
     field (argName, argType) = (rawVal argName, IArgM (Just (renderCtTypeRef argType)))
 
--- | A type as it is written where it is used: its path, with whatever it carries applied to it.
--- Applying nothing is the path alone, which is how every unparameterized type is written.
+-- | A type as it is written where it is USED — a field's declared type, or a type parameter's
+-- value — which is every value of that type, with whatever it carries applied to it.
+--
+-- Written as the spread ('rawSpread'), because that is what \"every value of the type\" is called: a
+-- bare name is the argument-less partial application, and a field declared to hold one admits only
+-- the unapplied constructor. A reference is the one position where the spread is always right, so
+-- it is put here rather than left to each caller; a constructor being DECLARED
+-- ('renderCtCon') keeps its exact authored form, as a written declaration does.
+-- A type VARIABLE is not spread. It is not a constructor, so it has no argument-less form to be
+-- confused with: it denotes whatever it is bound to, and @$A..@ would be widening that.
 renderCtTypeRef :: CtTypeRef -> PExpr
-renderCtTypeRef (CtTypeRef path vars) = rawVal path `applyRawExprEVars` map var vars
-  where var (varName, varType) = (rawVal varName, Just (renderCtTypeRef varType))
+renderCtTypeRef (CtTypeRef path vars) = base `applyRawExprEVars` map var vars
+  where
+    base = case path of
+      '$':_ -> rawVal path
+      _     -> rawSpreadVal path
+    var (varName, varType) = (rawVal varName, Just (renderCtTypeRef varType))
 
 -- | The declarations of a page, as the statements it carries.
 renderCtDecls :: CtPage -> [PStatementTree]

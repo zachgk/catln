@@ -19,7 +19,7 @@ unbox(b -> /Data/Primitive/Integer)= b
 
 data(Box[$A](x -> $A))
 
-useBox(p -> Box[$A -> /Boxed]) -> /Data/Primitive/Integer
+useBox(p -> Box[$A -> /Boxed](x)) -> /Data/Primitive/Integer
 useBox(p= Box(x))= unbox(b= x)
 
 main{io -> IO} =

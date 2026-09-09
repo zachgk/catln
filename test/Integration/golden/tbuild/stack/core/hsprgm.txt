@@ -20,19 +20,8 @@ Prgm
                                 { eaaArg = Value /vars -> ∀/Data/List
                                     [ /T=/Catln/Pair
                                         [ /B=∀/Catln/Type
-                                        , /A=/Catln/PartialKey
-                                            ( /name=TopType
-                                            , /vars=TopType
-                                            , /args=TopType
-                                            )
-                                        ]
-                                        ( /first=/Catln/PartialKey
-                                            ( /name=TopType
-                                            , /vars=TopType
-                                            , /args=TopType
-                                            )
-                                        , /second=∀/Catln/Type
-                                        )
+                                        , /A=/Catln/PartialKey..
+                                        ]..
                                     ]
                                 }
                             )
@@ -56,15 +45,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/Expr/HoleExpr
-                            ( EAppArg
-                                { eaaArg = Value /meta -> /Catln/Meta
-                                    ( /type=TopType
-                                    , /dat=/Catln/Unit
-                                    , /id=/Data/String
-                                    , /pos=TopType
-                                    )
-                                }
-                            )
+                            ( EAppArg { eaaArg = Value /meta -> /Catln/Meta.. } )
                             ( EAppArg { eaaArg = Value /hole -> ∀/Catln/Hole } )
                         ]
                     , omiRuntimeDecls = []
@@ -78,7 +59,7 @@ Prgm
                     { omiDecls =
                         [ /Catln/Hole/HoleActive
                             ( EAppArg
-                                { eaaArg = Value /name -> ∀/Data/Maybe[ /T=/Data/String ] }
+                                { eaaArg = Value /name -> ∀/Data/Maybe[ /T=/Data/String.. ] }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -101,21 +82,12 @@ Prgm
                     { omiDecls =
                         [ /Catln/CGNode/CGClass
                             ( EAppArg { eaaArg = Value /sealed -> ∀/Data/Primitive/Boolean } )
-                            ( EAppArg
-                                { eaaArg = Value /partial -> /Catln/PartialType
-                                    ( /argMode=TopType
-                                    , /name=/Data/String
-                                    , /vars=TopType
-                                    , /args=TopType
-                                    , /preds=TopType
-                                    )
-                                }
-                            )
+                            ( EAppArg { eaaArg = Value /partial -> /Catln/PartialType.. } )
                             ( EAppArg
                                 { eaaArg = Value /extends -> ∀/Data/List[ /T=∀/Catln/Type ] }
                             )
                             ( EAppArg
-                                { eaaArg = Value /doc -> ∀/Data/Maybe[ /T=/Data/String ] }
+                                { eaaArg = Value /doc -> ∀/Data/Maybe[ /T=/Data/String.. ] }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -163,82 +135,22 @@ Prgm
                                     [ /T=/Catln/Triple
                                         [ /B=∀/Data/List
                                             [ /T=/Catln/Pair
-                                                [ /B=∀/Data/List
-                                                    [ /T=/Catln/PartialArgsOption
-                                                        ( /argMode=TopType
-                                                        , /vars=TopType
-                                                        , /args=TopType
-                                                        , /preds=TopType
-                                                        )
-                                                    ]
-                                                , /A=/Data/String
-                                                ]
-                                                ( /first=/Data/String
-                                                , /second=∀/Data/List
-                                                    [ /T=/Catln/PartialArgsOption
-                                                        ( /argMode=TopType
-                                                        , /vars=TopType
-                                                        , /args=TopType
-                                                        , /preds=TopType
-                                                        )
-                                                    ]
-                                                )
+                                                [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption.. ]
+                                                , /A=/Data/String..
+                                                ]..
                                             ]
                                         , /C=∀/Data/List[ /T=∀/Catln/Constant ]
                                         , /A=∀/Catln/TypePredicates
-                                        ]
-                                        ( /first=∀/Catln/TypePredicates
-                                        , /second=∀/Data/List
-                                            [ /T=/Catln/Pair
-                                                [ /B=∀/Data/List
-                                                    [ /T=/Catln/PartialArgsOption
-                                                        ( /argMode=TopType
-                                                        , /vars=TopType
-                                                        , /args=TopType
-                                                        , /preds=TopType
-                                                        )
-                                                    ]
-                                                , /A=/Data/String
-                                                ]
-                                                ( /first=/Data/String
-                                                , /second=∀/Data/List
-                                                    [ /T=/Catln/PartialArgsOption
-                                                        ( /argMode=TopType
-                                                        , /vars=TopType
-                                                        , /args=TopType
-                                                        , /preds=TopType
-                                                        )
-                                                    ]
-                                                )
-                                            ]
-                                        , /third=∀/Data/List[ /T=∀/Catln/Constant ]
-                                        )
+                                        ]..
                                     ]
                                 }
                             )
                             ( EAppArg
                                 { eaaArg = Value /leafs -> ∀/Data/List
                                     [ /T=/Catln/Pair
-                                        [ /B=∀/Data/List
-                                            [ /T=/Catln/PartialArgsOption
-                                                ( /argMode=TopType
-                                                , /vars=TopType
-                                                , /args=TopType
-                                                , /preds=TopType
-                                                )
-                                            ]
-                                        , /A=/Data/String
-                                        ]
-                                        ( /first=/Data/String
-                                        , /second=∀/Data/List
-                                            [ /T=/Catln/PartialArgsOption
-                                                ( /argMode=TopType
-                                                , /vars=TopType
-                                                , /args=TopType
-                                                , /preds=TopType
-                                                )
-                                            ]
-                                        )
+                                        [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption.. ]
+                                        , /A=/Data/String..
+                                        ]..
                                     ]
                                 }
                             )
@@ -256,7 +168,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/PartialName/PTypeName
-                            ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /name -> /Data/String.. } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -268,16 +180,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/EApp/EAppArg
-                            ( EAppArg
-                                { eaaArg = Value /arg -> /Catln/ObjArr
-                                    ( /arr=TopType
-                                    , /obj=TopType
-                                    , /annots=TopType
-                                    , /doc=TopType
-                                    , /basis=TopType
-                                    )
-                                }
-                            )
+                            ( EAppArg { eaaArg = Value /arg -> /Catln/ObjArr.. } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -332,16 +235,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/TypePredicate/PredRel
-                            ( EAppArg
-                                { eaaArg = Value /type -> /Catln/PartialType
-                                    ( /argMode=TopType
-                                    , /name=/Data/String
-                                    , /vars=TopType
-                                    , /args=TopType
-                                    , /preds=TopType
-                                    )
-                                }
-                            )
+                            ( EAppArg { eaaArg = Value /type -> /Catln/PartialType.. } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -353,33 +247,12 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/Expr/TupleApply
-                            ( EAppArg
-                                { eaaArg = Value /meta -> /Catln/Meta
-                                    ( /type=TopType
-                                    , /dat=/Catln/Unit
-                                    , /id=/Data/String
-                                    , /pos=TopType
-                                    )
-                                }
-                            )
+                            ( EAppArg { eaaArg = Value /meta -> /Catln/Meta.. } )
                             ( EAppArg
                                 { eaaArg = Value /base -> /Catln/Pair
                                     [ /B=∀/Catln/Expr
-                                    , /A=/Catln/Meta
-                                        ( /type=TopType
-                                        , /dat=/Catln/Unit
-                                        , /id=/Data/String
-                                        , /pos=TopType
-                                        )
-                                    ]
-                                    ( /first=/Catln/Meta
-                                        ( /type=TopType
-                                        , /dat=/Catln/Unit
-                                        , /id=/Data/String
-                                        , /pos=TopType
-                                        )
-                                    , /second=∀/Catln/Expr
-                                    )
+                                    , /A=/Catln/Meta..
+                                    ]..
                                 }
                             )
                             ( EAppArg { eaaArg = Value /app -> ∀/Catln/EApp } )
@@ -394,15 +267,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/Expr/EWhere
-                            ( EAppArg
-                                { eaaArg = Value /meta -> /Catln/Meta
-                                    ( /type=TopType
-                                    , /dat=/Catln/Unit
-                                    , /id=/Data/String
-                                    , /pos=TopType
-                                    )
-                                }
-                            )
+                            ( EAppArg { eaaArg = Value /meta -> /Catln/Meta.. } )
                             ( EAppArg { eaaArg = Value /base -> ∀/Catln/Expr } )
                             ( EAppArg { eaaArg = Value /cond -> ∀/Catln/Expr } )
                         ]
@@ -425,15 +290,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/Expr/CExpr
-                            ( EAppArg
-                                { eaaArg = Value /meta -> /Catln/Meta
-                                    ( /type=TopType
-                                    , /dat=/Catln/Unit
-                                    , /id=/Data/String
-                                    , /pos=TopType
-                                    )
-                                }
-                            )
+                            ( EAppArg { eaaArg = Value /meta -> /Catln/Meta.. } )
                             ( EAppArg { eaaArg = Value /const -> ∀/Catln/Constant } )
                         ]
                     , omiRuntimeDecls = []
@@ -455,16 +312,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/TypePredicate/PredClass
-                            ( EAppArg
-                                { eaaArg = Value /type -> /Catln/PartialType
-                                    ( /argMode=TopType
-                                    , /name=/Data/String
-                                    , /vars=TopType
-                                    , /args=TopType
-                                    , /preds=TopType
-                                    )
-                                }
-                            )
+                            ( EAppArg { eaaArg = Value /type -> /Catln/PartialType.. } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -476,7 +324,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/PartialName/PClassName
-                            ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /name -> /Data/String.. } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -497,16 +345,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/TypePredicate/PredExpr
-                            ( EAppArg
-                                { eaaArg = Value /type -> /Catln/PartialType
-                                    ( /argMode=TopType
-                                    , /name=/Data/String
-                                    , /vars=TopType
-                                    , /args=TopType
-                                    , /preds=TopType
-                                    )
-                                }
-                            )
+                            ( EAppArg { eaaArg = Value /type -> /Catln/PartialType.. } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -522,19 +361,8 @@ Prgm
                                 { eaaArg = Value /vars -> ∀/Data/List
                                     [ /T=/Catln/Pair
                                         [ /B=∀/Catln/Type
-                                        , /A=/Catln/PartialKey
-                                            ( /name=TopType
-                                            , /vars=TopType
-                                            , /args=TopType
-                                            )
-                                        ]
-                                        ( /first=/Catln/PartialKey
-                                            ( /name=TopType
-                                            , /vars=TopType
-                                            , /args=TopType
-                                            )
-                                        , /second=∀/Catln/Type
-                                        )
+                                        , /A=/Catln/PartialKey..
+                                        ]..
                                     ]
                                 }
                             )
@@ -542,30 +370,13 @@ Prgm
                                 { eaaArg = Value /args -> ∀/Data/List
                                     [ /T=/Catln/Pair
                                         [ /B=∀/Catln/Type
-                                        , /A=/Catln/PartialKey
-                                            ( /name=TopType
-                                            , /vars=TopType
-                                            , /args=TopType
-                                            )
-                                        ]
-                                        ( /first=/Catln/PartialKey
-                                            ( /name=TopType
-                                            , /vars=TopType
-                                            , /args=TopType
-                                            )
-                                        , /second=∀/Catln/Type
-                                        )
+                                        , /A=/Catln/PartialKey..
+                                        ]..
                                     ]
                                 }
                             )
                             ( EAppArg { eaaArg = Value /preds -> ∀/Catln/TypePredicates } )
-                            ( EAppArg
-                                { eaaArg = Value /argMode -> /Catln/PtArgMode
-                                    ( /argUb=TopType
-                                    , /argLb=TopType
-                                    )
-                                }
-                            )
+                            ( EAppArg { eaaArg = Value /argMode -> /Catln/PtArgMode.. } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -577,14 +388,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/TypeVarAux/TVVar
-                            ( EAppArg
-                                { eaaArg = Value /name -> /Catln/PartialKey
-                                    ( /name=/Data/String
-                                    , /vars=TopType
-                                    , /args=TopType
-                                    )
-                                }
-                            )
+                            ( EAppArg { eaaArg = Value /name -> /Catln/PartialKey.. } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -619,9 +423,9 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/SourcePos
-                            ( EAppArg { eaaArg = Value /file -> /Data/String } )
-                            ( EAppArg { eaaArg = Value /line -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /column -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /file -> /Data/String.. } )
+                            ( EAppArg { eaaArg = Value /line -> /Data/Primitive/Integer.. } )
+                            ( EAppArg { eaaArg = Value /column -> /Data/Primitive/Integer.. } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -633,7 +437,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/Constant/CStr
-                            ( EAppArg { eaaArg = Value /value -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /value -> /Data/String.. } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -658,20 +462,14 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/Prgm
-                            ( EAppArg
-                                { eaaArg = Value /objMap -> /Catln/ObjectMap( /items=TopType ) }
-                            )
+                            ( EAppArg { eaaArg = Value /objMap -> /Catln/ObjectMap.. } )
                             ( EAppArg
                                 { eaaArg = Value /cg -> ∀/Data/List
                                     [ /T=/Catln/Triple
                                         [ /B=∀/Catln/PartialName
                                         , /C=∀/Data/List[ /T=∀/Catln/PartialName ]
                                         , /A=∀/Catln/CGNode
-                                        ]
-                                        ( /first=∀/Catln/CGNode
-                                        , /second=∀/Catln/PartialName
-                                        , /third=∀/Data/List[ /T=∀/Catln/PartialName ]
-                                        )
+                                        ]..
                                     ]
                                 }
                             )
@@ -689,26 +487,12 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/PartialKey
-                            ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /name -> /Data/String.. } )
                             ( EAppArg
-                                { eaaArg = Value /vars -> ∀/Data/List
-                                    [ /T=/Catln/PartialKey
-                                        ( /name=TopType
-                                        , /vars=TopType
-                                        , /args=TopType
-                                        )
-                                    ]
-                                }
+                                { eaaArg = Value /vars -> ∀/Data/List[ /T=/Catln/PartialKey.. ] }
                             )
                             ( EAppArg
-                                { eaaArg = Value /args -> ∀/Data/List
-                                    [ /T=/Catln/PartialKey
-                                        ( /name=TopType
-                                        , /vars=TopType
-                                        , /args=TopType
-                                        )
-                                    ]
-                                }
+                                { eaaArg = Value /args -> ∀/Data/List[ /T=/Catln/PartialKey.. ] }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -721,7 +505,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/Constant/CInt
-                            ( EAppArg { eaaArg = Value /value -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /value -> /Data/Primitive/Integer.. } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -742,7 +526,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/Constant/CFloat
-                            ( EAppArg { eaaArg = Value /value -> /Data/Primitive/Float } )
+                            ( EAppArg { eaaArg = Value /value -> /Data/Primitive/Float.. } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -770,33 +554,14 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /pos -> ∀/Data/Maybe
                                     [ /T=/Catln/Pair
-                                        [ /B=/Catln/SourcePos
-                                            ( /file=TopType
-                                            , /line=TopType
-                                            , /column=TopType
-                                            )
-                                        , /A=/Catln/SourcePos
-                                            ( /file=TopType
-                                            , /line=TopType
-                                            , /column=TopType
-                                            )
-                                        ]
-                                        ( /first=/Catln/SourcePos
-                                            ( /file=TopType
-                                            , /line=TopType
-                                            , /column=TopType
-                                            )
-                                        , /second=/Catln/SourcePos
-                                            ( /file=TopType
-                                            , /line=TopType
-                                            , /column=TopType
-                                            )
-                                        )
+                                        [ /B=/Catln/SourcePos..
+                                        , /A=/Catln/SourcePos..
+                                        ]..
                                     ]
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /id -> /Data/String } )
-                            ( EAppArg { eaaArg = Value /dat -> /Catln/Unit } )
+                            ( EAppArg { eaaArg = Value /id -> /Data/String.. } )
+                            ( EAppArg { eaaArg = Value /dat -> /Catln/Unit.. } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -808,24 +573,13 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/PartialType
-                            ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /name -> /Data/String.. } )
                             ( EAppArg
                                 { eaaArg = Value /vars -> ∀/Data/List
                                     [ /T=/Catln/Pair
                                         [ /B=∀/Catln/Type
-                                        , /A=/Catln/PartialKey
-                                            ( /name=TopType
-                                            , /vars=TopType
-                                            , /args=TopType
-                                            )
-                                        ]
-                                        ( /first=/Catln/PartialKey
-                                            ( /name=TopType
-                                            , /vars=TopType
-                                            , /args=TopType
-                                            )
-                                        , /second=∀/Catln/Type
-                                        )
+                                        , /A=/Catln/PartialKey..
+                                        ]..
                                     ]
                                 }
                             )
@@ -833,30 +587,13 @@ Prgm
                                 { eaaArg = Value /args -> ∀/Data/List
                                     [ /T=/Catln/Pair
                                         [ /B=∀/Catln/Type
-                                        , /A=/Catln/PartialKey
-                                            ( /name=TopType
-                                            , /vars=TopType
-                                            , /args=TopType
-                                            )
-                                        ]
-                                        ( /first=/Catln/PartialKey
-                                            ( /name=TopType
-                                            , /vars=TopType
-                                            , /args=TopType
-                                            )
-                                        , /second=∀/Catln/Type
-                                        )
+                                        , /A=/Catln/PartialKey..
+                                        ]..
                                     ]
                                 }
                             )
                             ( EAppArg { eaaArg = Value /preds -> ∀/Catln/TypePredicates } )
-                            ( EAppArg
-                                { eaaArg = Value /argMode -> /Catln/PtArgMode
-                                    ( /argUb=TopType
-                                    , /argLb=TopType
-                                    )
-                                }
-                            )
+                            ( EAppArg { eaaArg = Value /argMode -> /Catln/PtArgMode.. } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -868,23 +605,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/EApp/EAppVar
-                            ( EAppArg
-                                { eaaArg = Value /name -> /Catln/PartialKey
-                                    ( /name=/Data/String
-                                    , /vars=TopType
-                                    , /args=TopType
-                                    )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /meta -> /Catln/Meta
-                                    ( /type=TopType
-                                    , /dat=/Catln/Unit
-                                    , /id=/Data/String
-                                    , /pos=TopType
-                                    )
-                                }
-                            )
+                            ( EAppArg { eaaArg = Value /name -> /Catln/PartialKey.. } )
+                            ( EAppArg { eaaArg = Value /meta -> /Catln/Meta.. } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -913,22 +635,9 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /items -> ∀/Data/List
                                     [ /T=/Catln/Pair
-                                        [ /B=/Catln/ObjectMapItem
-                                            ( /refineDecls=TopType
-                                            , /defs=TopType
-                                            , /runtimeDecls=TopType
-                                            , /decls=TopType
-                                            )
-                                        , /A=/Data/String
-                                        ]
-                                        ( /first=/Data/String
-                                        , /second=/Catln/ObjectMapItem
-                                            ( /refineDecls=TopType
-                                            , /defs=TopType
-                                            , /runtimeDecls=TopType
-                                            , /decls=TopType
-                                            )
-                                        )
+                                        [ /B=/Catln/ObjectMapItem..
+                                        , /A=/Data/String..
+                                        ]..
                                     ]
                                 }
                             )
@@ -944,52 +653,16 @@ Prgm
                     { omiDecls =
                         [ /Catln/ObjectMapItem
                             ( EAppArg
-                                { eaaArg = Value /decls -> ∀/Data/List
-                                    [ /T=/Catln/ObjArr
-                                        ( /arr=TopType
-                                        , /obj=TopType
-                                        , /annots=TopType
-                                        , /doc=TopType
-                                        , /basis=TopType
-                                        )
-                                    ]
-                                }
+                                { eaaArg = Value /decls -> ∀/Data/List[ /T=/Catln/ObjArr.. ] }
                             )
                             ( EAppArg
-                                { eaaArg = Value /runtimeDecls -> ∀/Data/List
-                                    [ /T=/Catln/ObjArr
-                                        ( /arr=TopType
-                                        , /obj=TopType
-                                        , /annots=TopType
-                                        , /doc=TopType
-                                        , /basis=TopType
-                                        )
-                                    ]
-                                }
+                                { eaaArg = Value /runtimeDecls -> ∀/Data/List[ /T=/Catln/ObjArr.. ] }
                             )
                             ( EAppArg
-                                { eaaArg = Value /refineDecls -> ∀/Data/List
-                                    [ /T=/Catln/ObjArr
-                                        ( /arr=TopType
-                                        , /obj=TopType
-                                        , /annots=TopType
-                                        , /doc=TopType
-                                        , /basis=TopType
-                                        )
-                                    ]
-                                }
+                                { eaaArg = Value /refineDecls -> ∀/Data/List[ /T=/Catln/ObjArr.. ] }
                             )
                             ( EAppArg
-                                { eaaArg = Value /defs -> ∀/Data/List
-                                    [ /T=/Catln/ObjArr
-                                        ( /arr=TopType
-                                        , /obj=TopType
-                                        , /annots=TopType
-                                        , /doc=TopType
-                                        , /basis=TopType
-                                        )
-                                    ]
-                                }
+                                { eaaArg = Value /defs -> ∀/Data/List[ /T=/Catln/ObjArr.. ] }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -1002,7 +675,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/PartialName/PRelativeName
-                            ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /name -> /Data/String.. } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -1031,7 +704,7 @@ Prgm
                             )
                             ( EAppArg { eaaArg = Value /basis -> ∀/Catln/ObjectBasis } )
                             ( EAppArg
-                                { eaaArg = Value /doc -> ∀/Data/Maybe[ /T=/Data/String ] }
+                                { eaaArg = Value /doc -> ∀/Data/Maybe[ /T=/Data/String.. ] }
                             )
                             ( EAppArg
                                 { eaaArg = Value /annots -> ∀/Data/List[ /T=∀/Catln/Expr ] }
@@ -1039,22 +712,9 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /arr -> ∀/Data/Maybe
                                     [ /T=/Catln/Pair
-                                        [ /B=/Catln/Meta
-                                            ( /type=TopType
-                                            , /dat=TopType
-                                            , /id=TopType
-                                            , /pos=TopType
-                                            )
+                                        [ /B=/Catln/Meta..
                                         , /A=∀/Data/Maybe[ /T=∀/Catln/Expr ]
-                                        ]
-                                        ( /first=∀/Data/Maybe[ /T=∀/Catln/Expr ]
-                                        , /second=/Catln/Meta
-                                            ( /type=TopType
-                                            , /dat=TopType
-                                            , /id=TopType
-                                            , /pos=TopType
-                                            )
-                                        )
+                                        ]..
                                     ]
                                 }
                             )
@@ -1078,16 +738,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/Expr/Value
-                            ( EAppArg
-                                { eaaArg = Value /meta -> /Catln/Meta
-                                    ( /type=TopType
-                                    , /dat=/Catln/Unit
-                                    , /id=/Data/String
-                                    , /pos=TopType
-                                    )
-                                }
-                            )
-                            ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /meta -> /Catln/Meta.. } )
+                            ( EAppArg { eaaArg = Value /name -> /Data/String.. } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -1100,11 +752,7 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Catln/prgmFor
-                            ( EAppArg { eaaArg = Value /name -> /Data/String } ) -> /Catln/Prgm
-                            ( /cg=TopType
-                            , /annots=TopType
-                            , /objMap=TopType
-                            )
+                            ( EAppArg { eaaArg = Value /name -> /Data/String } ) -> /Catln/Prgm..
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -1137,14 +785,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/TypeVarAux/TVArg
-                            ( EAppArg
-                                { eaaArg = Value /name -> /Catln/PartialKey
-                                    ( /name=/Data/String
-                                    , /vars=TopType
-                                    , /args=TopType
-                                    )
-                                }
-                            )
+                            ( EAppArg { eaaArg = Value /name -> /Catln/PartialKey.. } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -1156,7 +797,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/Constant/CChar
-                            ( EAppArg { eaaArg = Value /value -> /Data/Char } )
+                            ( EAppArg { eaaArg = Value /value -> /Data/Char.. } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -1236,8 +877,8 @@ Prgm
                 [ /Catln/CGNode/CGClass
                     ( /sealed=∀/Data/Primitive/Boolean
                     , /extends=∀/Data/List[ /T=∀/Catln/Type ]
-                    , /doc=∀/Data/Maybe[ /T=/Data/String ]
-                    , /partial=/Catln/PartialType
+                    , /doc=∀/Data/Maybe[ /T=/Data/String.. ]
+                    , /partial=/Catln/PartialType..
                     )
                 , /Catln/CGNode/CGType
                 ]
@@ -1247,10 +888,10 @@ Prgm
             { cgcSealed = True
             , cgcPartial = /Catln/Constant
             , cgcExtends =
-                [ /Catln/Constant/CInt( /value=/Data/Primitive/Integer )
-                , /Catln/Constant/CFloat( /value=/Data/Primitive/Float )
-                , /Catln/Constant/CStr( /value=/Data/String )
-                , /Catln/Constant/CChar( /value=/Data/Char )
+                [ /Catln/Constant/CInt( /value=/Data/Primitive/Integer.. )
+                , /Catln/Constant/CFloat( /value=/Data/Primitive/Float.. )
+                , /Catln/Constant/CStr( /value=/Data/String.. )
+                , /Catln/Constant/CChar( /value=/Data/Char.. )
                 ]
             , cgcDoc = Just "A value written directly in a program: a whole number, a fractional number, a string, or a character.A character constant cannot be written in Catln — the language has no character literal — but the compiler makes one where it needs to, so a program reading a program can be handed one. A value written directly in a program: a whole number, a fractional number, a string, or a character.A character constant cannot be written in Catln — the language has no character literal — but the compiler makes one where it needs to, so a program reading a program can be handed one. A value written directly in a program: a whole number, a fractional number, a string, or a character.A character constant cannot be written in Catln — the language has no character literal — but the compiler makes one where it needs to, so a program reading a program can be handed one."
             }
@@ -1258,10 +899,10 @@ Prgm
             { cgcSealed = True
             , cgcPartial = /Catln/EApp
             , cgcExtends =
-                [ /Catln/EApp/EAppArg( /arg=/Catln/ObjArr )
+                [ /Catln/EApp/EAppArg( /arg=/Catln/ObjArr.. )
                 , /Catln/EApp/EAppVar
-                    ( /name=/Catln/PartialKey
-                    , /meta=/Catln/Meta
+                    ( /name=/Catln/PartialKey..
+                    , /meta=/Catln/Meta..
                     )
                 , /Catln/EApp/EAppSpread( /expr=∀/Catln/Expr )
                 ]
@@ -1273,15 +914,15 @@ Prgm
             , cgcExtends =
                 [ /Catln/Expr/CExpr
                     ( /const=∀/Catln/Constant
-                    , /meta=/Catln/Meta
+                    , /meta=/Catln/Meta..
                     )
                 , /Catln/Expr/Value
-                    ( /name=/Data/String
-                    , /meta=/Catln/Meta
+                    ( /name=/Data/String..
+                    , /meta=/Catln/Meta..
                     )
                 , /Catln/Expr/HoleExpr
                     ( /hole=∀/Catln/Hole
-                    , /meta=/Catln/Meta
+                    , /meta=/Catln/Meta..
                     )
                 , /Catln/Expr/AliasExpr
                     ( /base=∀/Catln/Expr
@@ -1290,15 +931,15 @@ Prgm
                 , /Catln/Expr/EWhere
                     ( /base=∀/Catln/Expr
                     , /cond=∀/Catln/Expr
-                    , /meta=/Catln/Meta
+                    , /meta=/Catln/Meta..
                     )
                 , /Catln/Expr/TupleApply
                     ( /app=∀/Catln/EApp
                     , /base=/Catln/Pair
                         [ /B=∀/Catln/Expr
-                        , /A=/Catln/Meta
-                        ]
-                    , /meta=/Catln/Meta
+                        , /A=/Catln/Meta..
+                        ]..
+                    , /meta=/Catln/Meta..
                     )
                 ]
             , cgcDoc = Just "An expression, after the compiler has reduced what was written to what it means.A [CExpr] is a constant, a [Value] is a name, and a [HoleExpr] is a gap. An [AliasExpr] is a value given a second name, and an [EWhere] is a value narrowed by a condition. A [TupleApply] is everything else: one thing applied to another, which is what arguments, type parameters, lists and method calls all become.So reading an expression is reading those six, however the program was written. An expression, after the compiler has reduced what was written to what it means.A [CExpr] is a constant, a [Value] is a name, and a [HoleExpr] is a gap. An [AliasExpr] is a value given a second name, and an [EWhere] is a value narrowed by a condition. A [TupleApply] is everything else: one thing applied to another, which is what arguments, type parameters, lists and method calls all become.So reading an expression is reading those six, however the program was written. An expression, after the compiler has reduced what was written to what it means.A [CExpr] is a constant, a [Value] is a name, and a [HoleExpr] is a gap. An [AliasExpr] is a value given a second name, and an [EWhere] is a value narrowed by a condition. A [TupleApply] is everything else: one thing applied to another, which is what arguments, type parameters, lists and method calls all become.So reading an expression is reading those six, however the program was written."
@@ -1308,7 +949,7 @@ Prgm
             , cgcPartial = /Catln/Hole
             , cgcExtends =
                 [ /Catln/Hole/HoleActive
-                    ( /name=∀/Data/Maybe[ /T=/Data/String ] )
+                    ( /name=∀/Data/Maybe[ /T=/Data/String.. ] )
                 , /Catln/Hole/HoleUndefined
                 , /Catln/Hole/HoleTodefine
                 ]
@@ -1330,9 +971,9 @@ Prgm
             { cgcSealed = True
             , cgcPartial = /Catln/PartialName
             , cgcExtends =
-                [ /Catln/PartialName/PTypeName( /name=/Data/String )
-                , /Catln/PartialName/PClassName( /name=/Data/String )
-                , /Catln/PartialName/PRelativeName( /name=/Data/String )
+                [ /Catln/PartialName/PTypeName( /name=/Data/String.. )
+                , /Catln/PartialName/PClassName( /name=/Data/String.. )
+                , /Catln/PartialName/PRelativeName( /name=/Data/String.. )
                 ]
             , cgcDoc = Just "What a partial type is named by: a type, a class, or a suffix that could be either.A [PTypeName] names one declared type and a [PClassName] one declared class. A [PRelativeName] is a name written without its full path — the compiler resolves it to one of the other two, so a program reading a compiled one will not meet it. What a partial type is named by: a type, a class, or a suffix that could be either.A [PTypeName] names one declared type and a [PClassName] one declared class. A [PRelativeName] is a name written without its full path — the compiler resolves it to one of the other two, so a program reading a compiled one will not meet it. What a partial type is named by: a type, a class, or a suffix that could be either.A [PTypeName] names one declared type and a [PClassName] one declared class. A [PRelativeName] is a name written without its full path — the compiler resolves it to one of the other two, so a program reading a compiled one will not meet it."
             }
@@ -1345,20 +986,20 @@ Prgm
                         [ /T=/Catln/Triple
                             [ /B=∀/Data/List
                                 [ /T=/Catln/Pair
-                                    [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
-                                    , /A=/Data/String
-                                    ]
+                                    [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption.. ]
+                                    , /A=/Data/String..
+                                    ]..
                                 ]
                             , /C=∀/Data/List[ /T=∀/Catln/Constant ]
                             , /A=∀/Catln/TypePredicates
-                            ]
+                            ]..
                         ]
                     , /consts=∀/Data/List[ /T=∀/Catln/Constant ]
                     , /leafs=∀/Data/List
                         [ /T=/Catln/Pair
-                            [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption ]
-                            , /A=/Data/String
-                            ]
+                            [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption.. ]
+                            , /A=/Data/String..
+                            ]..
                         ]
                     )
                 , /Catln/Type/TypeVar
@@ -1373,9 +1014,9 @@ Prgm
             { cgcSealed = True
             , cgcPartial = /Catln/TypePredicate
             , cgcExtends =
-                [ /Catln/TypePredicate/PredExpr( /type=/Catln/PartialType )
-                , /Catln/TypePredicate/PredClass( /type=/Catln/PartialType )
-                , /Catln/TypePredicate/PredRel( /type=/Catln/PartialType )
+                [ /Catln/TypePredicate/PredExpr( /type=/Catln/PartialType.. )
+                , /Catln/TypePredicate/PredClass( /type=/Catln/PartialType.. )
+                , /Catln/TypePredicate/PredRel( /type=/Catln/PartialType.. )
                 ]
             , cgcDoc = Just "One condition a type is filtered by, each written over the [type] it is about.A [PredExpr] says the value is that expression, a [PredClass] that it has that class, and a [PredRel] that it is one — the `isa` written `val : classOrModuleOrType`. One condition a type is filtered by, each written over the [type] it is about.A [PredExpr] says the value is that expression, a [PredClass] that it has that class, and a [PredRel] that it is one — the `isa` written `val : classOrModuleOrType`. One condition a type is filtered by, each written over the [type] it is about.A [PredExpr] says the value is that expression, a [PredClass] that it has that class, and a [PredRel] that it is one — the `isa` written `val : classOrModuleOrType`."
             }
@@ -1394,14 +1035,14 @@ Prgm
             { cgcSealed = True
             , cgcPartial = /Catln/TypeVarAux
             , cgcExtends =
-                [ /Catln/TypeVarAux/TVVar( /name=/Catln/PartialKey )
-                , /Catln/TypeVarAux/TVArg( /name=/Catln/PartialKey )
+                [ /Catln/TypeVarAux/TVVar( /name=/Catln/PartialKey.. )
+                , /Catln/TypeVarAux/TVArg( /name=/Catln/PartialKey.. )
                 , /Catln/TypeVarAux/TVApplied
                     ( /vars=∀/Data/List
                         [ /T=/Catln/Pair
                             [ /B=∀/Catln/Type
-                            , /A=/Catln/PartialKey
-                            ]
+                            , /A=/Catln/PartialKey..
+                            ]..
                         ]
                     , /base=∀/Catln/TypeVarAux
                     )

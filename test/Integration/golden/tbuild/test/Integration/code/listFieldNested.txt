@@ -377,13 +377,7 @@ Prgm
                     { omiDecls =
                         [ /Json/Obj
                             ( EAppArg
-                                { eaaArg = Value /entries -> ∀/Data/List
-                                    [ /T=/Json/Member
-                                        ( /value=TopType
-                                        , /key=TopType
-                                        )
-                                    ]
-                                }
+                                { eaaArg = Value /entries -> ∀/Data/List[ /T=/Json/Member ] }
                             )
                         ]
                     , omiRuntimeDecls = []

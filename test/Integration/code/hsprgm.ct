@@ -47,15 +47,15 @@ module(Test)
     >>> 42
   # A key is a name and two sets of keys, so reading one reads a record, a list, and a type which
     reaches itself — the whole of what @core/hsprgm.ct@'s containers have to do.
-  keyName(k -> /Catln/PartialKey) -> String
+  keyName(k -> /Catln/PartialKey(name, vars, args)) -> String
   keyName(k= /Catln/PartialKey(name, vars, args))= name
 
-  keyDepth(k -> /Catln/PartialKey) -> Integer
+  keyDepth(k -> /Catln/PartialKey(name, vars, args)) -> Integer
     # [keyDepth] counts the keys a key holds beneath it, walking the [args] it is written over. One
       for the key itself, and then the same again for each argument.
   keyDepth(k= /Catln/PartialKey(name, vars, args))= 1 + keyDepthAll(ks= args)
 
-  keyDepthAll(ks -> /Data/List[$T -> /Catln/PartialKey]) -> Integer
+  keyDepthAll(ks -> /Data/List[$T -> /Catln/PartialKey..]) -> Integer
   keyDepthAll(ks= /Data/List/Nil)= 0
   keyDepthAll(ks= /Data/List/Cons(head, tail))= keyDepth(k= head) + keyDepthAll(ks= tail)
 
@@ -79,7 +79,7 @@ module(Test)
     >>> union
   > constCount(t= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= [/Catln/Constant/CInt(value= 1), /Catln/Constant/CStr(value= "s")]))
     >>> 2
-  writtenIn(m -> /Catln/Meta) -> String
+  writtenIn(m -> /Catln/Meta(type, pos, id, dat)) -> String
     # [writtenIn] says which file a piece of a program was written in, or that nothing wrote it.
       A [Meta] with no [pos] is a piece the compiler made while desugaring, which has a type and an
       identity and no place in any file — so reading one has to answer for that case rather than
@@ -87,22 +87,22 @@ module(Test)
   writtenIn(m= /Catln/Meta(type, pos= /Data/Maybe/Nothing, id, dat))= "nowhere"
   writtenIn(m= /Catln/Meta(type, pos= /Data/Maybe/Some(value), id, dat))= startFile(r= value)
 
-  startFile(r -> /Catln/Pair[$A -> /Catln/SourcePos, $B -> /Catln/SourcePos]) -> String
+  startFile(r -> /Catln/Pair[$A -> /Catln/SourcePos.., $B -> /Catln/SourcePos..](first, second)) -> String
     # A range is the pair of places it runs between, so the file it is in is the file its [first] is
       in.
   startFile(r= /Catln/Pair(first, second))= posFile(p= first)
 
-  posFile(p -> /Catln/SourcePos) -> String
+  posFile(p -> /Catln/SourcePos(file, line, column)) -> String
   posFile(p= /Catln/SourcePos(file, line, column))= file
 
-  posLine(p -> /Catln/SourcePos) -> Integer
+  posLine(p -> /Catln/SourcePos(file, line, column)) -> Integer
   posLine(p= /Catln/SourcePos(file, line, column))= line
 
   > writtenIn(m= /Catln/Meta(type= /Catln/Type/UnionType(top= /Data/Maybe/Nothing, leafs= [], consts= []), pos= /Data/Maybe/Nothing, id= "", dat= /Catln/Unit))
     >>> nowhere
   > posLine(p= /Catln/SourcePos(file= "a.ct", line= 7, column= 3))
     >>> 7
-  noMeta() -> /Catln/Meta
+  noMeta() -> /Catln/Meta..
     # [noMeta] is the metadata of a piece of program nothing wrote: no type worth naming, no place
       in a file, and nothing the stage added. Written once here because building an [Expr] means
       building one of these, and what is being read is the expression rather than the metadata.
@@ -136,13 +136,13 @@ module(Test)
     >>> foo
   > exprKind(e= /Catln/Expr/CExpr(meta= noMeta(), const= /Catln/Constant/CInt(value= 1)))
     >>> const
-  declCount(p -> /Catln/Prgm) -> Integer
+  declCount(p -> /Catln/Prgm(objMap, cg, annots)) -> Integer
     # [declCount] counts the names a program declares or defines something under. Reading a whole
       program is what all of this was for: [objMap] is what it holds, [cg] is how its classes relate,
       and [annots] is what is written on the program itself.
   declCount(p= /Catln/Prgm(objMap, cg, annots))= mapSize(m= objMap)
 
-  mapSize(m -> /Catln/ObjectMap) -> Integer
+  mapSize(m -> /Catln/ObjectMap(items)) -> Integer
   mapSize(m= /Catln/ObjectMap(items))= items.length
 
   > declCount(p= /Catln/Prgm(objMap= /Catln/ObjectMap(items= []), cg= [], annots= []))

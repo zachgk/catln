@@ -133,6 +133,31 @@ applyExprVars = foldl addVar
 rawAnon :: PExpr
 rawAnon = rawVal anonStr
 
+-- | A type reference written as the spread @Box..@: every value of the type, whatever arguments it
+-- carries, rather than the argument-less partial application the bare name is.
+--
+-- The distinction is the language's, not a spelling convenience. A bare name is a term in its own
+-- right — the partial application a constructor is before anything has been given to it — so an
+-- annotation that writes one admits only that, and a field holding a constructed value
+-- (@data(Cv(inner -> Bv))@ where @Bv@ carries fields of its own) meets the two to bottom. What that
+-- annotation means is @Bv..@, and a generated declaration has to say it as a written one does.
+--
+-- The same shape 'Syntax.Ct.Parser.Expr.pValue' builds for a written @..@ — a spread application of
+-- an active hole — so a generated declaration and a hand-written one desugar through one path. It
+-- goes on the NAME, before any type parameters: @Box..[$T -> Integer]@ is what parses, where
+-- @Box[$T -> Integer]..@ is a parse error.
+--
+-- The base value carries the relative-name type its own name denotes, as the parser gives it: the
+-- spread is desugared by widening THAT type ('Syntax.Ct.Desugarf.Expr.semiDesExpr' over
+-- 'Semantics.Types.spreadType'), and a base built by 'rawVal' — whose meta is ⊤ until the types are
+-- propagated, which happens after — has nothing there to widen, so the spread is silently dropped
+-- and the bare name is what reaches the program.
+rawSpreadVal :: String -> PExpr
+rawSpreadVal name = RawTupleApply m (m, base) [(True, rawInObjArr True (RawHoleExpr m (HoleActive Nothing)))]
+  where
+    m = emptyMetaN
+    base = RawValue (mWithType (relTypeVal (mkName name)) m) (mkName name)
+
 rawInObjArr :: Bool -> PExpr -> PObjArr
 rawInObjArr withArr e = RawObjArr (Just e) FunctionObj Nothing [] (if withArr then Just (Nothing, Nothing) else Nothing) Nothing
 

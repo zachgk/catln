@@ -6,9 +6,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ countCons
-                            ( Value ks -> ∀/Data/List/ConsList
-                                [ /T=/Item( /n=TopType ) ]
-                            ) -> /Data/Primitive/Integer
+                            ( Value ks -> ∀/Data/List/ConsList[ /T=/Item ] ) -> /Data/Primitive/Integer
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -73,9 +71,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ countAll
-                            ( Value ks -> ∀/Data/List
-                                [ /T=/Item( /n=TopType ) ]
-                            ) -> /Data/Primitive/Integer
+                            ( Value ks -> ∀/Data/List[ /T=/Item ] ) -> /Data/Primitive/Integer
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

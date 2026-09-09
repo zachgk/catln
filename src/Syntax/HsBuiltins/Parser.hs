@@ -160,7 +160,10 @@ hsPrgmForStatement = RawStatementTree (RawDeclStatement decl) (map commentSt [
   where
     decl = RawObjArr (Just obj) FunctionObj Nothing [runtimeAnnotOf "prgmFor"] (Just (Nothing, Just returns)) Nothing
     obj = rawVal (ctBuiltinNamespace ++ "prgmFor") `applyRawIArgs` [(partialKey (mkName "name"), IArgM (Just (rawVal strPrim)))]
-    returns = rawVal (ctBuiltinNamespace ++ "Prgm")
+    -- Every value of the type, which is what a return annotation says and what the spread is for
+    -- ('Syntax.Ct.Builder.rawSpreadVal'): a bare name is the argument-less partial application, and
+    -- a program answered with carries its three fields.
+    returns = rawSpreadVal (ctBuiltinNamespace ++ "Prgm")
 
 -- | The @#runtime@ annotation naming which primitive answers a declaration.
 runtimeAnnotOf :: String -> PExpr

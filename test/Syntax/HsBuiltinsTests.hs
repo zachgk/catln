@@ -96,28 +96,28 @@ hsBuiltinsTests = testGroup "HsBuiltinsTests" [
   testGroup "a Haskell type declared as a Catln one" [
       testCase "as one data statement, with each field under the name its prefix was dropped from" $
         head (lines (declText (Proxy :: Proxy BuiltFile)))
-          @?= "data(/Catln/BuildFile(path -> /Data/String, contents -> /Data/String))"
+          @?= "data(/Catln/BuildFile(path -> /Data/String.., contents -> /Data/String..))"
 
     , testCase "at the Catln path the instance names, which is not the Haskell one" $
         ctPath (Proxy :: Proxy BuiltFile) @?= "/Catln/BuildFile"
 
     , testCase "with a field written without a prefix left as it was" $
         declText (Proxy :: Proxy Plain) @?=
-          "data(/Catln/Plain(radius -> /Data/Primitive/Integer, tags -> /Data/List[$T -> /Data/String]))\n"
+          "data(/Catln/Plain(radius -> /Data/Primitive/Integer.., tags -> /Data/List..[$T -> /Data/String..]))\n"
 
     , testCase "as one class statement where the type has several constructors" $
         declText (Proxy :: Proxy Shape) @?=
-          "class(/Catln/Shape, [/Catln/Shape/Circle(radius -> /Data/Primitive/Integer), /Catln/Shape/Point])\n"
+          "class(/Catln/Shape, [/Catln/Shape/Circle(radius -> /Data/Primitive/Integer..), /Catln/Shape/Point])\n"
 
     , testCase "declaring the type a field is, beneath the type that holds it" $
         declText (Proxy :: Proxy Outer) @?= unlines [
-          "data(/Catln/Outer(inner -> /Catln/Inner, count -> /Data/Primitive/Integer))",
-          "data(/Catln/Inner(label -> /Data/String))"
+          "data(/Catln/Outer(inner -> /Catln/Inner.., count -> /Data/Primitive/Integer..))",
+          "data(/Catln/Inner(label -> /Data/String..))"
                                                     ]
 
     , testCase "declaring a type which reaches itself once, rather than forever" $
         declText (Proxy :: Proxy Chain) @?=
-          "data(/Catln/Chain(head -> /Data/String, rest -> /Data/List[$T -> /Catln/Chain]))\n"
+          "data(/Catln/Chain(head -> /Data/String.., rest -> /Data/List..[$T -> /Catln/Chain..]))\n"
                                                      ]
 
   , testGroup "a container as the Catln shape it is handed over as" [
@@ -127,7 +127,7 @@ hsBuiltinsTests = testGroup "HsBuiltinsTests" [
       -- says rather than what it declares.
       testCase "a map as a list of pairs, a set as a list, and the pair declared beside them" $
         filter (not . isPrefixOf "  #") (lines (declText (Proxy :: Proxy Held))) @?= [
-          "data(/Catln/Held(map -> /Data/List[$T -> /Catln/Pair[$A -> /Data/String, $B -> /Data/Primitive/Integer]], set -> /Data/List[$T -> /Data/String], pair -> /Catln/Pair[$A -> /Data/String, $B -> /Data/Primitive/Integer], char -> /Data/Char))",
+          "data(/Catln/Held(map -> /Data/List..[$T -> /Catln/Pair..[$A -> /Data/String.., $B -> /Data/Primitive/Integer..]], set -> /Data/List..[$T -> /Data/String..], pair -> /Catln/Pair..[$A -> /Data/String.., $B -> /Data/Primitive/Integer..], char -> /Data/Char..))",
           "data(/Catln/Pair[$A, $B](first -> $A, second -> $B))"
                                                    ]
 

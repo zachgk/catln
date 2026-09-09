@@ -37,16 +37,8 @@ Prgm
                                     )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                                 )
                             )
-                        , /Catln/Doc/dshow
-                            ( Value /s -> /Data/Json/Member
-                                ( /value=TopType
-                                , /key=/Data/String
-                                )
-                            ) -> /Catln/Doc/Show/Rendered
+                        , /Catln/Doc/dshow( Value /s -> /Data/Json/Member ) -> /Catln/Doc/Show/Rendered
                             ( /value=/Data/Json/Member
-                                ( /value=TopType
-                                , /key=/Data/String
-                                )
                             , /assets=/Data/List/Cons[ /T=/Data/String ]
                                 ( /head=/Data/String
                                 , /tail=/Data/List/Cons[ /T=/Data/String ]
@@ -124,19 +116,23 @@ Prgm
                             { csValue = "array" }
                         , /Data/typeName
                             ( Value /value -> /Data/Json/Object
-                                ( /entries=∀/Data/List
-                                    [ /T=/Data/Json/Member
-                                        ( /value=TopType
-                                        , /key=TopType
-                                        )
-                                    ]
+                                ( /entries=
+                                    ( TopType | PredClass /Data/List[ /T=/Data/Json/Member ] && PredClass /Data/List
+                                        [ /T=/Data/Json/Member
+                                            ( /value=TopType
+                                            , /key=TopType
+                                            )
+                                        ]
+                                    )
                                 ) = /Data/Json/Object
-                                ( Value /entries -> ∀/Data/List
-                                    [ /T=/Data/Json/Member
-                                        ( /value=TopType
-                                        , /key=TopType
-                                        )
-                                    ]
+                                ( Value /entries ->
+                                    ( TopType | PredClass /Data/List[ /T=/Data/Json/Member ] && PredClass /Data/List
+                                        [ /T=/Data/Json/Member
+                                            ( /value=TopType
+                                            , /key=TopType
+                                            )
+                                        ]
+                                    )
                                 )
                             ) -> /Data/String = CStr
                             { csValue = "object" }
@@ -148,13 +144,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Json/Object
-                            ( Value /entries -> ∀/Data/List
-                                [ /T=/Data/Json/Member
-                                    ( /value=TopType
-                                    , /key=TopType
-                                    )
-                                ]
-                            )
+                            ( Value /entries -> ∀/Data/List[ /T=/Data/Json/Member ] )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

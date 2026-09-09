@@ -7,9 +7,7 @@ Prgm
                     { omiDecls =
                         [ /countCons
                             ( EAppArg
-                                { eaaArg = Value /ks -> ∀/Data/List/ConsList
-                                    [ /T=/Item( /n=TopType ) ]
-                                }
+                                { eaaArg = Value /ks -> ∀/Data/List/ConsList[ /T=/Item ] }
                             ) -> /Data/Primitive/Integer
                         ]
                     , omiRuntimeDecls = []
@@ -136,9 +134,7 @@ Prgm
                     { omiDecls =
                         [ /countAll
                             ( EAppArg
-                                { eaaArg = Value /ks -> ∀/Data/List
-                                    [ /T=/Item( /n=TopType ) ]
-                                }
+                                { eaaArg = Value /ks -> ∀/Data/List[ /T=/Item ] }
                             ) -> /Data/Primitive/Integer
                         ]
                     , omiRuntimeDecls = []

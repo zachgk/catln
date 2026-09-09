@@ -5,26 +5,11 @@ Prgm
                 ( "/Test/emptyObjArr"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Test/emptyObjArr( Value name -> /Data/String ) -> /Catln/RawObjArr
-                            ( /arr=TopType
-                            , /obj=TopType
-                            , /annots=TopType
-                            , /doc=TopType
-                            , /def=TopType
-                            , /basis=TopType
-                            )
-                        ]
+                        [ /Test/emptyObjArr( Value name -> /Data/String ) -> /Catln/RawObjArr.. ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Test/emptyObjArr( Value name ) -> /Catln/RawObjArr
-                            ( /arr=TopType
-                            , /obj=TopType
-                            , /annots=TopType
-                            , /doc=TopType
-                            , /def=TopType
-                            , /basis=TopType
-                            ) = /Catln/RawObjArr
+                        [ /Test/emptyObjArr( Value name ) -> /Catln/RawObjArr.. = /Catln/RawObjArr
                             ( Value obj= /Data/Maybe/Some
                                 ( Value value= /Catln/RawExpr/RawValue( Value meta= Value noMeta )( Value name= Value name ) )
                             )( Value basis= Value /Catln/ObjectBasis/FunctionObj )( Value doc= Value /Data/Maybe/Nothing )( Value annots= Value /Data/List/Nil )( Value arr= Value /Data/Maybe/Nothing )( Value def= Value /Data/Maybe/Nothing )
@@ -127,18 +112,11 @@ Prgm
                 ( "/Test/onePrgm"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Test/onePrgm( Value name -> /Data/String ) -> /Catln/RawPrgm
-                            ( /statements=TopType
-                            , /imports=TopType
-                            )
-                        ]
+                        [ /Test/onePrgm( Value name -> /Data/String ) -> /Catln/RawPrgm.. ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Test/onePrgm( Value name ) -> /Catln/RawPrgm
-                            ( /statements=TopType
-                            , /imports=TopType
-                            ) = /Catln/RawPrgm( Value imports= Value /Data/List/Nil )
+                        [ /Test/onePrgm( Value name ) -> /Catln/RawPrgm.. = /Catln/RawPrgm( Value imports= Value /Data/List/Nil )
                             ( Value statements= /Data/List/Cons
                                 ( Value /head= /Catln/RawStatementTree
                                     ( Value statement= /Catln/RawStatement/RawDeclStatement
@@ -152,23 +130,11 @@ Prgm
             ,
                 ( "/Test/noMeta"
                 , ObjectMapItem
-                    { omiDecls =
-                        [ Value /Test/noMeta -> /Catln/Meta
-                            ( /type=TopType
-                            , /dat=TopType
-                            , /id=TopType
-                            , /pos=TopType
-                            )
-                        ]
+                    { omiDecls = [ Value /Test/noMeta -> /Catln/Meta.. ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /Test/noMeta -> /Catln/Meta
-                            ( /type=TopType
-                            , /dat=TopType
-                            , /id=TopType
-                            , /pos=TopType
-                            ) = /Catln/Meta
+                        [ Value /Test/noMeta -> /Catln/Meta.. = /Catln/Meta
                             ( Value type= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )( Value consts= Value /Data/List/Nil ) )( Value pos= Value /Data/Maybe/Nothing )
                             ( Value id= CStr
                                 { csValue = "" }
@@ -346,40 +312,22 @@ Prgm
             ,
                 ( "/Test/emptyPrgm"
                 , ObjectMapItem
-                    { omiDecls =
-                        [ Value /Test/emptyPrgm -> /Catln/RawPrgm
-                            ( /statements=TopType
-                            , /imports=TopType
-                            )
-                        ]
+                    { omiDecls = [ Value /Test/emptyPrgm -> /Catln/RawPrgm.. ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /Test/emptyPrgm -> /Catln/RawPrgm
-                            ( /statements=TopType
-                            , /imports=TopType
-                            ) = /Catln/RawPrgm( Value imports= Value /Data/List/Nil )( Value statements= Value /Data/List/Nil )
-                        ]
+                        [ Value /Test/emptyPrgm -> /Catln/RawPrgm.. = /Catln/RawPrgm( Value imports= Value /Data/List/Nil )( Value statements= Value /Data/List/Nil ) ]
                     }
                 )
             ,
                 ( "/Test/oneResult"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Test/oneResult( Value name -> /Data/String ) -> /Catln/ImportResult
-                            ( /prgm=TopType
-                            , /reads=TopType
-                            , /source=TopType
-                            )
-                        ]
+                        [ /Test/oneResult( Value name -> /Data/String ) -> /Catln/ImportResult.. ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Test/oneResult( Value name ) -> /Catln/ImportResult
-                            ( /prgm=TopType
-                            , /reads=TopType
-                            , /source=TopType
-                            ) = /Catln/ImportResult
+                        [ /Test/oneResult( Value name ) -> /Catln/ImportResult.. = /Catln/ImportResult
                             ( Value prgm= onePrgm( Value name= Value name ) )
                             ( Value source= /Data/Maybe/Some
                                 ( Value value= CStr

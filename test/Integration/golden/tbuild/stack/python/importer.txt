@@ -7,11 +7,7 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Python/parsePython
-                            ( EAppArg { eaaArg = Value /path -> /Data/String } ) -> /Catln/ImportResult
-                            ( /prgm=TopType
-                            , /reads=TopType
-                            , /source=TopType
-                            )
+                            ( EAppArg { eaaArg = Value /path -> /Data/String } ) -> /Catln/ImportResult..
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []

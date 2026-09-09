@@ -19,12 +19,7 @@ Prgm
                                     )( Value /tail= Value /Data/List/Nil )
                                 )
                             )
-                        , /Catln/Doc/dshow
-                            ( Value s -> /Data/Json/Member
-                                ( /value=TopType
-                                , /key=TopType
-                                )
-                            )= /Catln/Doc/Show/Rendered( Value value= Value s )
+                        , /Catln/Doc/dshow( Value s -> /Data/Json/Member )= /Catln/Doc/Show/Rendered( Value value= Value s )
                             ( Value assets= /Data/List/Cons
                                 ( Value /head= CStr
                                     { csValue = "json/json.js" }
@@ -91,13 +86,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Json/Object
-                            ( Value /entries -> ∀/Data/List
-                                [ /T=/Data/Json/Member
-                                    ( /value=TopType
-                                    , /key=TopType
-                                    )
-                                ]
-                            )
+                            ( Value /entries -> ∀/Data/List[ /T=/Data/Json/Member ] )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

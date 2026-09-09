@@ -940,10 +940,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/pureConsInt
-                            ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                            ( /head=/Data/Primitive/Integer
-                            , /tail=TopType
-                            )
+                            ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]..
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

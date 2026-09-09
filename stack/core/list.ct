@@ -360,7 +360,7 @@ module(Data/List)
   # this instance (return-type-directed dispatch — see [pure] in [Data/monad]).
   /Data/Monad/pure[$M -> /Data/List/ConsList[$T -> $_T]](v)= Cons(head= v, tail= Nil)
 
-  pureConsInt(v -> Integer) -> /Data/List/Cons[$T -> Integer]
+  pureConsInt(v -> Integer) -> /Data/List/Cons..[$T -> Integer]
   pureConsInt(v)= /Data/Monad/pure(v= v)
 
   > pureConsInt(v= 1)

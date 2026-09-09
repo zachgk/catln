@@ -91,7 +91,7 @@ module(Data/Maybe)
   #   this instance (return-type-directed dispatch — see [pure] in [Data/monad]).
   /Data/Monad/pure[$M -> /Data/Maybe[$T -> $_T]](v)= /Data/Maybe/Some(value= v)
 
-  pureSomeInt(v -> Integer) -> /Data/Maybe/Some[$T -> Integer]
+  pureSomeInt(v -> Integer) -> /Data/Maybe/Some..[$T -> Integer]
   pureSomeInt(v)= /Data/Monad/pure(v= v)
 
   > (pureSomeInt(v= 5) == /Data/Maybe/Some(value= 5))

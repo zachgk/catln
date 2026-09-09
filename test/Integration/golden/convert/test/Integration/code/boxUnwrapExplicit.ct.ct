@@ -8,7 +8,7 @@ import "core"
   raw call tuple into equal's dispatch.
 data(Box[$T](v -> $T))
 
-unwrap[$U](b -> Box[$T -> $U]) -> $U
+unwrap[$U](b -> Box[$T -> $U](v)) -> $U
 unwrap(Box(v))= v
 
 main{io -> IO} =

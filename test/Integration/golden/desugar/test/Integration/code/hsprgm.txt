@@ -52,23 +52,11 @@ Prgm
             ,
                 ( "/Test/noMeta"
                 , ObjectMapItem
-                    { omiDecls =
-                        [ Value /Test/noMeta -> /Catln/Meta
-                            ( /type=TopType
-                            , /dat=TopType
-                            , /id=TopType
-                            , /pos=TopType
-                            )
-                        ]
+                    { omiDecls = [ Value /Test/noMeta -> /Catln/Meta.. ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /Test/noMeta -> /Catln/Meta
-                            ( /type=TopType
-                            , /dat=TopType
-                            , /id=TopType
-                            , /pos=TopType
-                            ) = /Catln/Meta
+                        [ Value /Test/noMeta -> /Catln/Meta.. = /Catln/Meta
                             ( Value type= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )( Value consts= Value /Data/List/Nil ) )( Value pos= Value /Data/Maybe/Nothing )
                             ( Value id= CStr
                                 { csValue = "" }
@@ -444,14 +432,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Test/keyDepthAll
-                            ( Value ks -> ∀/Data/List
-                                [ /T=/Catln/PartialKey
-                                    ( /name=TopType
-                                    , /vars=TopType
-                                    , /args=TopType
-                                    )
-                                ]
-                            ) -> /Data/Primitive/Integer
+                            ( Value ks -> ∀/Data/List[ /T=/Catln/PartialKey.. ] ) -> /Data/Primitive/Integer
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -471,27 +452,11 @@ Prgm
                     { omiDecls =
                         [ /Test/startFile
                             ( Value r -> /Catln/Pair
-                                [ /B=/Catln/SourcePos
-                                    ( /file=TopType
-                                    , /line=TopType
-                                    , /column=TopType
-                                    )
-                                , /A=/Catln/SourcePos
-                                    ( /file=TopType
-                                    , /line=TopType
-                                    , /column=TopType
-                                    )
+                                [ /B=/Catln/SourcePos..
+                                , /A=/Catln/SourcePos..
                                 ]
-                                ( /first=/Catln/SourcePos
-                                    ( /file=TopType
-                                    , /line=TopType
-                                    , /column=TopType
-                                    )
-                                , /second=/Catln/SourcePos
-                                    ( /file=TopType
-                                    , /line=TopType
-                                    , /column=TopType
-                                    )
+                                ( /first=TopType
+                                , /second=TopType
                                 )
                             ) -> /Data/String
                         ]

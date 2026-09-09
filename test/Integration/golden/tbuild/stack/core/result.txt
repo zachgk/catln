@@ -73,13 +73,7 @@ Prgm
                     { omiDecls =
                         [ /Catln/CatlnResult
                             ( EAppArg
-                                { eaaArg = Value /files -> ∀/Data/List
-                                    [ /T=/Catln/BuildFile
-                                        ( /path=TopType
-                                        , /contents=TopType
-                                        )
-                                    ]
-                                }
+                                { eaaArg = Value /files -> ∀/Data/List[ /T=/Catln/BuildFile.. ] }
                             )
                         ]
                     , omiRuntimeDecls = []

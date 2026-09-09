@@ -47,17 +47,8 @@ Prgm
                                 }
                             )
                         , /Catln/Doc/dshow
-                            ( EAppArg
-                                { eaaArg = Value /s -> /Data/Json/Member
-                                    ( /value=TopType
-                                    , /key=/Data/String
-                                    )
-                                }
-                            ) -> /Catln/Doc/Show/Rendered
+                            ( EAppArg { eaaArg = Value /s -> /Data/Json/Member } ) -> /Catln/Doc/Show/Rendered
                             ( /value=/Data/Json/Member
-                                ( /value=TopType
-                                , /key=/Data/String
-                                )
                             , /assets=/Data/List/Cons[ /T=/Data/String ]
                                 ( /head=/Data/String
                                 , /tail=/Data/List/Cons[ /T=/Data/String ]
@@ -163,20 +154,24 @@ Prgm
                         , /Data/typeName
                             ( EAppArg
                                 { eaaArg = Value /value -> /Data/Json/Object
-                                    ( /entries=∀/Data/List
-                                        [ /T=/Data/Json/Member
-                                            ( /value=TopType
-                                            , /key=TopType
-                                            )
-                                        ]
-                                    ) = /Data/Json/Object
-                                    ( EAppArg
-                                        { eaaArg = Value /entries -> ∀/Data/List
+                                    ( /entries=
+                                        ( TopType | PredClass /Data/List[ /T=/Data/Json/Member ] && PredClass /Data/List
                                             [ /T=/Data/Json/Member
                                                 ( /value=TopType
                                                 , /key=TopType
                                                 )
                                             ]
+                                        )
+                                    ) = /Data/Json/Object
+                                    ( EAppArg
+                                        { eaaArg = Value /entries ->
+                                            ( TopType | PredClass /Data/List[ /T=/Data/Json/Member ] && PredClass /Data/List
+                                                [ /T=/Data/Json/Member
+                                                    ( /value=TopType
+                                                    , /key=TopType
+                                                    )
+                                                ]
+                                            )
                                         }
                                     )
                                 }
@@ -190,13 +185,7 @@ Prgm
                     { omiDecls =
                         [ /Data/Json/Object
                             ( EAppArg
-                                { eaaArg = Value /entries -> ∀/Data/List
-                                    [ /T=/Data/Json/Member
-                                        ( /value=TopType
-                                        , /key=TopType
-                                        )
-                                    ]
-                                }
+                                { eaaArg = Value /entries -> ∀/Data/List[ /T=/Data/Json/Member ] }
                             )
                         ]
                     , omiRuntimeDecls = []

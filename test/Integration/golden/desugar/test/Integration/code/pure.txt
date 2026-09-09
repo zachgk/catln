@@ -5,11 +5,11 @@ Prgm
                 ( "/pureMaybe"
                 , ObjectMapItem
                     { omiDecls =
-                        [ pureMaybe( Value v -> /Data/Primitive/Integer ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) ]
+                        [ pureMaybe( Value v -> /Data/Primitive/Integer ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ].. ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ pureMaybe( Value v ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Monad/pure( Value v= Value v ) ]
+                        [ pureMaybe( Value v ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ].. = /Data/Monad/pure( Value v= Value v ) ]
                     }
                 )
             ,
@@ -26,19 +26,11 @@ Prgm
                 ( "/pureList"
                 , ObjectMapItem
                     { omiDecls =
-                        [ pureList( Value v -> /Data/Primitive/Integer ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                            ( /head=/Data/Primitive/Integer
-                            , /tail=TopType
-                            )
-                        ]
+                        [ pureList( Value v -> /Data/Primitive/Integer ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ].. ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ pureList( Value v ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                            ( /head=/Data/Primitive/Integer
-                            , /tail=TopType
-                            ) = /Data/Monad/pure( Value v= Value v )
-                        ]
+                        [ pureList( Value v ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ].. = /Data/Monad/pure( Value v= Value v ) ]
                     }
                 )
             ]

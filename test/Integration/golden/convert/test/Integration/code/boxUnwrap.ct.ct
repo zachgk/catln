@@ -7,7 +7,7 @@ import "core"
   unwrap(b= Box(v= 5)) should type-check to Integer (the element type), not TopType.
 data(Box[$T](v -> $T))
 
-unwrap(b -> Box[$T -> $_T]) -> $_T
+unwrap(b -> Box[$T -> $_T](v)) -> $_T
 unwrap(Box(v))= v
 
 main{io -> IO} =
