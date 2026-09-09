@@ -179,6 +179,28 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/List/foldr"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/List/foldr[ /B : TopType ][ /A : TopType ]
+                            ( Value lst -> ∀/Data/List[ /T=$^/A ] )
+                            ( fn( Value acc -> $_/B )( Value v -> $_/A ) -> $_/B )( Value init -> $_/B ) -> $_/B
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/List/foldr( Value lst= Value Nil )
+                            ( fn( Value acc )( Value v ) )( Value init )= Value init
+                        , /Data/List/foldr
+                            ( Value lst= Cons( Value head )( Value tail ) )
+                            ( fn( Value acc )( Value v ) )( Value init )= fn
+                            ( Value acc= foldr( Value lst= Value tail )
+                                ( fn( Value acc )( Value v )= fn( Value acc= Value acc )( Value v= Value v ) )( Value init= Value init )
+                            )( Value v= Value head )
+                        ]
+                    }
+                )
+            ,
                 ( "/sorted./Data/List/insert"
                 , ObjectMapItem
                     { omiDecls =
@@ -209,11 +231,11 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/List/sum( Value lst= Value Nil ) -> /Data/Primitive/Integer = CInt
-                            { ciValue = 0 }
-                        , /Data/List/sum
-                            ( Value lst= Cons[ /T : /Data/Primitive/Integer ]( Value head )( Value tail ) ) -> /Data/Primitive/Integer = /operator+( Value /l= Value head )
-                            ( Value /r= sum( Value lst= Value tail ) )
+                        [ /Data/List/sum( Value lst ) -> /Data/Primitive/Integer = foldr( Value lst= Value lst )
+                            ( fn( Value acc )( Value v )= /operator+( Value /l= Value acc )( Value /r= Value v ) )
+                            ( Value init= CInt
+                                { ciValue = 0 }
+                            )
                         ]
                     }
                 )
@@ -266,10 +288,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/List/any( Value lst= Value Nil ) -> ∀/Data/Primitive/Boolean = Value /Data/Primitive/False
-                        , /Data/List/any
-                            ( Value lst= Cons[ /T : ∀/Data/Primitive/Boolean ]( Value head )( Value tail ) ) -> ∀/Data/Primitive/Boolean = /operator||( Value /l= Value head )
-                            ( Value /r= any( Value lst= Value tail ) )
+                        [ /Data/List/any( Value lst ) -> ∀/Data/Primitive/Boolean = foldr( Value lst= Value lst )
+                            ( fn( Value acc )( Value v )= /operator||( Value /l= Value acc )( Value /r= Value v ) )( Value init= Value /Data/Primitive/False )
                         ]
                     }
                 )
@@ -378,10 +398,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/List/all( Value lst= Value Nil ) -> ∀/Data/Primitive/Boolean = Value /Data/Primitive/True
-                        , /Data/List/all
-                            ( Value lst= Cons[ /T : ∀/Data/Primitive/Boolean ]( Value head )( Value tail ) ) -> ∀/Data/Primitive/Boolean = /operator&&( Value /l= Value head )
-                            ( Value /r= all( Value lst= Value tail ) )
+                        [ /Data/List/all( Value lst ) -> ∀/Data/Primitive/Boolean = foldr( Value lst= Value lst )
+                            ( fn( Value acc )( Value v )= /operator&&( Value /l= Value acc )( Value /r= Value v ) )( Value init= Value /Data/Primitive/True )
                         ]
                     }
                 )
@@ -501,6 +519,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -651,25 +670,89 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr
                 { csValue = "## Folds
-                TODO: [sum], [all], [any], [append] and [reversed] below are each a fold with a different step
-                function, and should be written that way over one [foldr]/[foldl] rather than as five separate
-                two-arm recursions.
-                A generic fold's SIGNATURE now compiles — a function argument beside a plain argument typed by
-                the same type variable was rejected until argument inference stopped guessing at a slot the
-                pattern already names, which [test/Integration/code/inferArgNamed.ct] covers. What still stops
-                the fold is evaluation. With
-                  foldr(lst= lst, fn(acc, v)= acc + v, init= 0)
-                the recursive [foldr] call reaches the step function UNREDUCED — it arrives as a data tuple
-                rather than as the [Integer] it evaluates to — so the [operator+] inside the step has nothing to
-                dispatch on and fails with "Failed match in eval callTree":
-                  Val:     TupleVal /operator+(/r = 1, /l = TupleVal /Probe/foldr(/init = 0, ...))
-                  Options: [+(/r=Float, /l=Float), +(/r=Integer, /l=Integer)]
-                The step's own parameters are still [/fn(/acc=TopType, /v=TopType)], and a [TopType] destination
-                accepts the unreduced call rather than forcing it, which is why nothing narrows it. So this IS a
-                [TopType] lambda-parameter problem and [fnArgInputBound] is the place to fix it — note that is
-                NOT what blocked [filter], which now works (see [filter] below). Arity is not involved: a
-                function argument may take two or three parameters, and a fold whose types are all concrete
-                evaluates correctly." }
+                [foldr] collapses a list from the right: every [Cons] becomes a step function and the [Nil]
+                becomes an initial value, so [foldr(lst= [a, b], fn, init)] is [fn(acc= fn(acc= init, v= b), v=
+                a)]. The accumulator carries its own type variable, so the answer need not be the element type —
+                the examples fold [Integer]s into an [Integer] and into a [String]. The step is passed onward as
+                [fn(acc, v)= fn(acc= acc, v= v)] rather than bare, the re-wrap every higher-order argument needs
+                (see [Data/bind])." }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/List/foldr
+                ( Value lst= /Data/List/Cons
+                    ( Value /head= CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value /tail= /Data/List/Cons
+                        ( Value /head= CInt
+                            { ciValue = 2 }
+                        )
+                        ( Value /tail= /Data/List/Cons
+                            ( Value /head= CInt
+                                { ciValue = 3 }
+                            )( Value /tail= Value /Data/List/Nil )
+                        )
+                    )
+                )
+                ( fn( Value acc )( Value v )= /operator+( Value /l= Value acc )( Value /r= Value v ) )
+                ( Value init= CInt
+                    { ciValue = 0 }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "6" }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/List/foldr( Value lst= Value /Data/List/Nil )
+                ( fn( Value acc )( Value v )= /operator+( Value /l= Value acc )( Value /r= Value v ) )
+                ( Value init= CInt
+                    { ciValue = 0 }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "0" }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/List/foldr
+                ( Value lst= /Data/List/Cons
+                    ( Value /head= CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value /tail= /Data/List/Cons
+                        ( Value /head= CInt
+                            { ciValue = 2 }
+                        )( Value /tail= Value /Data/List/Nil )
+                    )
+                )
+                ( fn( Value acc )( Value v )= /operator++( Value /l= Value acc )
+                    ( Value /r= CStr
+                        { csValue = "x" }
+                    )
+                )
+                ( Value init= CStr
+                    { csValue = "s" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "sxx" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "TODO: there is no [foldl] beside [foldr], and it is a compiler gap rather than an omission.
+                Written the obvious way — [foldl(lst= Cons(head, tail), fn(acc, v), init)= foldl(lst= tail,
+                fn(acc, v)= fn(acc= acc, v= v), init= fn(acc= init, v= head))] — its own goldens evaluate but
+                PRINTING one does not build:
+                  Failed to build arrow tree from /Data/List/foldl[/B=Integer, /A=Integer](..) to ∀/Catln/Doc/DShow
+                  ..Found cyclical use of function..Arrow has indeterminate return type
+                The recursive call is in TAIL position, so the arm's result is the generic self-leaf
+                [/Data/List/foldl(/fn(..)=TopType, /init=TopType, /lst=..)], and the followup from there to the
+                print destination re-enters the same arms. [foldr] escapes it because its arm's result is the
+                step function's application rather than a self-call, and [Data/Set/addAll] escapes it because
+                its declared result is a [Set] — a settled leaf the value bound can be met into. A raw self-leaf
+                inherits the bound only through the followup recursion, which is the recursion that cycles.
+                [append] and [reversed] below are folds too and are still their own two-arm recursions;
+                [reversed] is a [foldl], and [append] is what [mmap] is built on, so rewriting it moves the
+                whole [Monad] instance with it." }
             )
         , /Catln/#md
             ( Value /text= CStr

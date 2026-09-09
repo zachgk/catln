@@ -44,31 +44,41 @@ module(Data/List)
   > [10, 20, 30].length
     >>> 3
   # ## Folds
-    TODO: [sum], [all], [any], [append] and [reversed] below are each a fold with a different step
-    function, and should be written that way over one [foldr]/[foldl] rather than as five separate
-    two-arm recursions.
-    A generic fold's SIGNATURE now compiles — a function argument beside a plain argument typed by
-    the same type variable was rejected until argument inference stopped guessing at a slot the
-    pattern already names, which [test/Integration/code/inferArgNamed.ct] covers. What still stops
-    the fold is evaluation. With
-      foldr(lst= lst, fn(acc, v)= acc + v, init= 0)
-    the recursive [foldr] call reaches the step function UNREDUCED — it arrives as a data tuple
-    rather than as the [Integer] it evaluates to — so the [operator+] inside the step has nothing to
-    dispatch on and fails with "Failed match in eval callTree":
-      Val:     TupleVal /operator+(/r = 1, /l = TupleVal /Probe/foldr(/init = 0, ...))
-      Options: [+(/r=Float, /l=Float), +(/r=Integer, /l=Integer)]
-    The step's own parameters are still [/fn(/acc=TopType, /v=TopType)], and a [TopType] destination
-    accepts the unreduced call rather than forcing it, which is why nothing narrows it. So this IS a
-    [TopType] lambda-parameter problem and [fnArgInputBound] is the place to fix it — note that is
-    NOT what blocked [filter], which now works (see [filter] below). Arity is not involved: a
-    function argument may take two or three parameters, and a fold whose types are all concrete
-    evaluates correctly.
+    [foldr] collapses a list from the right: every [Cons] becomes a step function and the [Nil]
+    becomes an initial value, so [foldr(lst= [a, b], fn, init)] is [fn(acc= fn(acc= init, v= b), v=
+    a)]. The accumulator carries its own type variable, so the answer need not be the element type —
+    the examples fold [Integer]s into an [Integer] and into a [String]. The step is passed onward as
+    [fn(acc, v)= fn(acc= acc, v= v)] rather than bare, the re-wrap every higher-order argument needs
+    (see [Data/bind]).
+  foldr[$A, $B](lst -> /Data/List[$T -> $_A], fn(acc -> $_B, v -> $_A) -> $_B, init -> $_B) -> $_B
+  foldr(lst= Nil, fn(acc, v), init)= init
+  foldr(lst= Cons(head, tail), fn(acc, v), init)= fn(acc= foldr(lst= tail, fn(acc, v)= fn(acc= acc, v= v), init= init), v= head)
+
+  > /Data/List/foldr(lst= [1, 2, 3], fn(acc, v)= acc + v, init= 0)
+    >>> 6
+  > /Data/List/foldr(lst= [], fn(acc, v)= acc + v, init= 0)
+    >>> 0
+  > /Data/List/foldr(lst= [1, 2], fn(acc, v)= acc ++ "x", init= "s")
+    >>> sxx
+  # TODO: there is no [foldl] beside [foldr], and it is a compiler gap rather than an omission.
+    Written the obvious way — [foldl(lst= Cons(head, tail), fn(acc, v), init)= foldl(lst= tail,
+    fn(acc, v)= fn(acc= acc, v= v), init= fn(acc= init, v= head))] — its own goldens evaluate but
+    PRINTING one does not build:
+      Failed to build arrow tree from /Data/List/foldl[/B=Integer, /A=Integer](..) to ∀/Catln/Doc/DShow
+      ..Found cyclical use of function..Arrow has indeterminate return type
+    The recursive call is in TAIL position, so the arm's result is the generic self-leaf
+    [/Data/List/foldl(/fn(..)=TopType, /init=TopType, /lst=..)], and the followup from there to the
+    print destination re-enters the same arms. [foldr] escapes it because its arm's result is the
+    step function's application rather than a self-call, and [Data/Set/addAll] escapes it because
+    its declared result is a [Set] — a settled leaf the value bound can be met into. A raw self-leaf
+    inherits the bound only through the followup recursion, which is the recursion that cycles.
+    [append] and [reversed] below are folds too and are still their own two-arm recursions;
+    [reversed] is a [foldl], and [append] is what [mmap] is built on, so rewriting it moves the
+    whole [Monad] instance with it.
   # ## Summing
   sum(lst -> /Data/List[$T -> Integer]) -> Integer
-    # [sum] adds up a list of [Integer]s. The empty list sums to zero; a non-empty list adds its
-      [head] to the sum of its [tail].
-  sum(lst= Nil)= 0
-  sum(lst= Cons[$T -> Integer](head, tail))= head + sum(lst= tail)
+    # [sum] adds a list of [Integer]s: [foldr] with addition, starting from zero.
+  sum(lst)= foldr(lst= lst, fn(acc, v)= acc + v, init= 0)
 
   > /Data/List/sum(lst= [1, 2, 3])
     >>> 6
@@ -77,9 +87,8 @@ module(Data/List)
   # ## Universal and existential quantifiers
   all(lst -> /Data/List[$T -> Boolean]) -> Boolean
     # [all] is [True] when every element of a list of [Boolean]s is [True]. The empty list is
-      vacuously [True], and each element is [and]ed with the result for the [tail].
-  all(lst= Nil)= /Data/Primitive/True
-  all(lst= Cons[$T -> Boolean](head, tail))= head && all(lst= tail)
+      vacuously [True], and each element is [and]ed with the result for the rest.
+  all(lst)= foldr(lst= lst, fn(acc, v)= acc && v, init= /Data/Primitive/True)
 
   > /Data/List/all(lst= [True, True])
     >>> True
@@ -88,8 +97,7 @@ module(Data/List)
   any(lst -> /Data/List[$T -> Boolean]) -> Boolean
     # [any] is [True] when at least one element is [True] — the mirror of [all], with [or] and a
       [False] base case for the empty list.
-  any(lst= Nil)= /Data/Primitive/False
-  any(lst= Cons[$T -> Boolean](head, tail))= head || any(lst= tail)
+  any(lst)= foldr(lst= lst, fn(acc, v)= acc || v, init= /Data/Primitive/False)
 
   > /Data/List/any(lst= [True])
     >>> True

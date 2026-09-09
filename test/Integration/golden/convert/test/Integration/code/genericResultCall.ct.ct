@@ -1,0 +1,52 @@
+import "core"
+import "core"
+
+
+# A call whose declared result is a declaration variable, landing where nothing requires a type.
+  A term may be handed on unrewritten — rewriting is a chain and the consumer's followup applies
+  it — so the tree build leaves a term that already reaches its destination alone. A Top
+  destination accepts everything, so it left such a term alone too, and there was no followup to
+  apply it: the applied tuple itself became the consumer's runtime value, and the consumer had
+  nothing to dispatch on.
+  A declared result spelled by a declaration variable is exactly what produces a Top destination.
+  @gidG@ returns @$_B@, which in the generic frame @useG@'s body is built in reads as Top, so
+  @useG@ answered with the raw @/gidG(/x=5)@ tuple where @operator+@ wanted an Integer:
+    Invalid intOp signature
+  @useI@ below is the same program with those three positions spelled Integer instead. It always
+  worked, and it is what says the fault was the variable rather than the shape.
+gidG[$B](x -> $_B) -> $_B
+gidG(x)= x
+
+useG[$B](fn(a -> $_B) -> $_B, x -> $_B) -> $_B
+useG(fn(a), x)= fn(a= /gidG(x= x))
+
+gidI(x -> Integer) -> Integer
+gidI(x)= x
+
+useI(fn(a -> Integer) -> Integer, x -> Integer) -> Integer
+useI(fn(a), x)= fn(a= /gidI(x= x))
+
+> useG(fn(a)= a + 1, x= 5)
+  >>> 6
+> useI(fn(a)= a + 1, x= 5)
+  >>> 6
+# The same defect is what stopped a fold over a polymorphic accumulator, which is the shape it was
+  found from. The recursive call is what reaches the step function, and it reached it as the
+  unevaluated @/foldrG(..)@ tuple:
+    Failed match in eval callTree:
+      Val: TupleVal /operator+(/r = 1, /l = TupleVal /foldrG(/init = 0, ..))
+      Options: [+(/r=Float, /l=Float), +(/r=Integer, /l=Integer)]
+  Both the element type and the accumulator are variables here, so nothing about this fold is
+  concrete until it is called.
+foldrG[$A, $B](lst -> ConsList[$T -> $_A], fn(acc -> $_B, v -> $_A) -> $_B, init -> $_B) -> $_B
+foldrG(lst= Nil, fn(acc, v), init)= init
+foldrG(lst= Cons(head, tail), fn(acc, v), init)= fn(acc= /foldrG(lst= tail, fn(acc, v)= fn(acc= acc, v= v), init= init), v= head)
+
+> foldrG(lst= [1, 2, 3], fn(acc, v)= acc + v, init= 0)
+  >>> 6
+> foldrG(lst= [], fn(acc, v)= acc + v, init= 0)
+  >>> 0
+# The accumulator need not be the element type: fold a list of Integers into a String.
+> foldrG(lst= [1, 2], fn(acc, v)= acc ++ "x", init= "s")
+  >>> sxx
+main{io -> IO}= io.exit(val= 0)

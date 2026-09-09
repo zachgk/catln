@@ -46,12 +46,18 @@ module(Data/Map)
       arms, with no step function, and [get] should read the same way. Two separate gaps still stop
       it, both confirmed by trying:
       Guards fail because [get] is reachable from [Data/Set/isSubsetOf] through [allBy] -> [fmap] ->
-      [contains], so the key arrives as a higher-order lambda's parameter, which is [TopType]. The
-      [else] arm then does not dispatch and the negative [isSubsetOf] example dies with "Found no
-      matching conditions in evalTree". Re-confirmed after [filter] landed: the trace still shows
-      [/fn(...) ↦ TopType] reaching [fmap]. This is the SAME [TopType] lambda-parameter gap that
-      blocks the folds — see the fold TODO at the top of [Data/list] — so one fix retires both. (An explicit [isGreater] third guard instead of [else] trades
-      that for "Unfulfilled Declaration", since a chain of opaque guards cannot be proven total.)
+      [contains]: the [else] arm does not dispatch and the negative [isSubsetOf] example dies with
+      "Found no matching conditions in evalTree". Re-tried once more after [foldr] landed, and it
+      still fails — the value the conditions are asked about is the unrewritten recursive call
+      [TupleVal /Data/Map/get(/m = Node(..), /key = 3)], reached through the [fmap] arm whose
+      forwarded predicate still reads [/fn(..) ↦ TopType].
+      This was recorded as the same gap that blocked the polymorphic folds, on the reasoning that
+      both showed a [TopType] lambda parameter. That was wrong: the folds were a [TopType]
+      DESTINATION leaving a call unapplied, which is fixed
+      ([test/Integration/code/genericResultCall.ct]), and [get] did not move. Whatever is left here
+      needs its own passing/failing pair rather than being read off this one. (An explicit
+      [isGreater] third guard instead of [else] trades that for "Unfulfilled Declaration", since a
+      chain of opaque guards cannot be proven total.)
       A [match] over the [Comparison] now selects correctly — that gap is fixed, see
       [test/Integration/code/caseGuardWrongBranch.ct] — but a branch inside a GENERIC definition
       derives an overlap-agreement test whose generated inputs are all metavariables, and it fails
@@ -141,14 +147,18 @@ module(Data/Map)
   # ## Keys and values
     TODO: [size], [keys], [values], [graft] and [containedIn] are five in-order traversals of the
     same tree — [keys] and [values] differ only in which field they cons — and should all be one
-    [foldEntries(m, fn(acc, key, value), init)] with five different step functions. A three-parameter
-    function argument is fine, and the fold SIGNATURE now compiles — a plain argument typed by a bare
-    type variable alongside a function-typed argument was the old blocker and it is fixed. What stops
-    it now is evaluation: the recursive call reaches the step function unreduced, because the step's
-    parameters are [TopType] and a [TopType] destination accepts a raw tuple instead of forcing it.
-    See the fold TODO at the top of [Data/list] for the trace. [size] and [containedIn] have concrete
-    accumulators and would come first; [keys], [values] and [graft] accumulate a polymorphic
-    container and are the harder half.
+    [foldEntries(m, fn(acc, k, v), init)] with five different step functions. Two of the three things
+    that used to stop it are gone: the fold SIGNATURE compiles, and the unreduced recursive call is
+    fixed — [/Data/List/foldr] is written and its accumulator may differ from the element type. A
+    three-parameter function argument is fine too.
+    What is left is the tree's own shape. A node sits BETWEEN two subtrees, so one of the two
+    recursive calls has to be outermost, which puts a self-call in tail position. Written that way
+    the [Node] arm does not build and is dropped silently, leaving the [Leaf] arm as the only option:
+      Failed match in eval callTree:
+        Val type: /Data/Map/foldEntries(/fn=/fn(/acc=Integer, /v=Integer, /k=Integer), /m=Node(..), ..)
+        Options: [foldEntries(.., /m=/Data/Map/Leaf, ..)]
+    Note the step's parameters are concrete there — this is not the [TopType] parameter story. It is
+    the same tail-position gap that stops [/Data/List/foldl]; see the [foldl] TODO beside [foldr].
   keys(m -> /Data/Map[$K -> $_K, $V -> $_V]) -> /Data/List[$T -> $_K]
     # [keys] lists the map's keys by an in-order traversal, so a [BinTree]'s keys come out in
       ascending order (the [left] subtree's keys, then this node's, then the [right] subtree's).
