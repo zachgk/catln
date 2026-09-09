@@ -653,18 +653,7 @@ Prgm
                         [ /Data/Set/setEqual
                             ( Value /a -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
                             ( Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/Primitive/Boolean = /operator&&
-                            ( Value /l -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Primitive/Boolean
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
-                                    ( /this=∀/Data/Algebra/Eq
-                                    , /other=∀/Data/Algebra/Eq
-                                    )
-                                , []
-                                ) = /operator==
+                            ( Value /l -> ∀/Data/Primitive/Boolean = /operator==
                                 ( Value /l -> /Data/Primitive/Integer = /size( Value /s -> TVArg /a = Value /a ) )
                                 ( Value /r -> /Data/Primitive/Integer = /size( Value /s -> TVArg /b = Value /b ) )
                             )

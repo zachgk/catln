@@ -17,7 +17,6 @@
 module TypeCheck.Constrain where
 
 import qualified Data.HashMap.Strict as H
-import qualified Data.HashSet        as S
 import qualified Data.IntMap.Strict  as IM
 import           Data.List           (intercalate, partition)
 import           Data.Maybe
@@ -25,7 +24,6 @@ import qualified Data.Zip            as Z
 
 import           Control.Monad.State
 import           Semantics           (unsafeFreshQueryToken)
-import           Semantics.TypeGraph (isSettledLeaf)
 import           Semantics.Types
 import           Text.Printf
 import           TypeCheck.Common
@@ -269,25 +267,6 @@ computeConstraint FEnv{feTypeEnv, feCompletedAllObjsKey, feCompletedAllObjs} con
     -- (the 'stypeReq=PTopType' guard above already short-circuits it). A named requirement instead
     -- meets only its name-matching objects, tightening the requirement's arg fields (e.g.
     -- @/f(/a=Top)@ narrows to @/f(/a=<declared>)@).
-    -- A bound object's arg type constrains what the term's argument SETTLES to. A requirement
-    -- argument still holding a raw applied form (an unrewritten call such as @fmap(...)@) is
-    -- not yet a settled value, so meeting it against the bound's settled-value arg type
-    -- (@#print@'s @p -> DShow@) would empty it spuriously — the raw form is bounded at its own
-    -- rewrite point instead. Relax the
-    -- name-matching bound objects' arg slots to ⊤ at exactly those positions; settled
-    -- arguments still meet the declared arg types exactly.
-    argHasUnsettled t = case t of
-      UnionType _ ls _ -> any (not . isSettledLeaf feTypeEnv) (splitUnionType ls)
-      _                -> False
-    relaxBoundAtUnsettledArgs l@PartialType{ptArgs=lArgs} bound@(UnionType bTop bLeafs bConsts)
-      | S.null rawKeys = bound
-      | otherwise = UnionType bTop (joinUnionType (map relaxLeaf (splitUnionType bLeafs))) bConsts
-      where
-        rawKeys = S.fromList [k | (k, v) <- H.toList lArgs, argHasUnsettled v]
-        relaxLeaf b@PartialType{ptName=bn, ptArgs=bArgs}
-          | relativeNameMatches (ptName l) bn = b{ptArgs=H.mapWithKey (\k v -> if S.member k rawKeys then PTopType else v) bArgs}
-          | otherwise = b
-    relaxBoundAtUnsettledArgs _ bound = bound
     -- The narrowing is applied per requirement channel — the accumulated 'stypeReq' and the
     -- decl-origin 'stypeReqDecl' — each against its own var-env and its own open-class
     -- components ('openClassPart'). Narrowing spelled requirement content against declared
@@ -308,7 +287,7 @@ computeConstraint FEnv{feTypeEnv, feCompletedAllObjsKey, feCompletedAllObjs} con
                  | otherwise           = case chanReq of
                      UnionType mTop leafs consts ->
                        let (knownLeafs, unknownLeafs) = partition nameKnown (splitUnionType leafs)
-                           metKnown = [ snd $ intersectTypesWithVarEnv feTypeEnv chanVaenv (singletonType l) (relaxBoundAtUnsettledArgs l boundUbReq)
+                           metKnown = [ snd $ intersectTypesWithVarEnv feTypeEnv chanVaenv (singletonType l) boundUbReq
                                       | l <- knownLeafs ]
                            metTopConsts = snd $ intersectTypesWithVarEnv feTypeEnv chanVaenv (UnionType mTop H.empty consts) boundUbReq
                        in unionAllTypes feTypeEnv (UnionType Nothing (joinUnionType unknownLeafs) [] : metTopConsts : metKnown)
