@@ -879,24 +879,17 @@ settlePropSlot env@FEnv{feTypeEnv} vaenv propName@(TVArg k) superAct@(UnionType 
       let slotDeclReq = fromMaybe PTopType $ do
             [rdp] <- H.lookup (ptName p) declReqByName
             typeGetAux propName rdp
-      -- DEFERRAL NEEDS A CONSUMER (Zach's ruling, 2026-08-16): deferring a rewritable form
-      -- is meaningful only while some arrow can still ACT on the deferred form — its own
-      -- arrows at its rewrite frontier, or an arrow whose declared INPUT spells the
-      -- unsettled form. A DATA-declared field is where deferral dies: data has no arrows,
-      -- and once a raw form is embedded in a constructed value's field no arrow path leads
-      -- back to it (TreeBuild later finds "no arrows from Some[/T=raw ∪ …]"). So at a
-      -- data-declared slot a ⊤-resolved field bound (@Some@'s @value -> $T@ with free @$T@)
-      -- means "settled content, element unconstrained" — it does NOT license unsettled
-      -- forms; only a field whose declared bound literally SPELLS the form admits it (the
-      -- metaprogramming license). Call-argument slots keep ⊤-licenses: their values remain
-      -- at positions arrows can consume.
-      let admittedAtDataField l = case declBoundU of
-            PTopType -> False
-            _        -> reqAdmitsForm reachesTypeEnv vaenv declBoundU l
-      let admitted l | not (null dataBounds) = reqAdmitsForm reachesTypeEnv vaenv slotDeclReq l
-                                             && admittedAtDataField l
-                     | otherwise = reqAdmitsForm reachesTypeEnv vaenv slotDeclReq l
-                                 && reqAdmitsForm reachesTypeEnv vaenv declBoundU l
+      -- One admission rule, whatever kind of slot this is. A data-declared field used to be
+      -- held to a stricter one, on the ground that "data has no arrows, so once a rewritable
+      -- form is embedded in a constructed value's field no arrow path leads back to it" — a
+      -- ⊤-resolved field bound therefore licensing nothing. Data does have arrows: a declared
+      -- data type is as rewritable a source as any name (see
+      -- @test\/Integration\/code\/dataArrow.ct@), so a constructed value carrying the form can
+      -- itself be rewritten, and the position is not the dead end the rule assumed. What
+      -- decides admission is the declared bound and the requirement, read the same way in
+      -- both places.
+      let admitted l = reqAdmitsForm reachesTypeEnv vaenv slotDeclReq l
+                    && reqAdmitsForm reachesTypeEnv vaenv declBoundU l
       -- The settle bound (lazy — forced only when some leaf is not admitted).
       let slotAct = UnionType aMTop aLeafs aConsts
       let bound = intersectTypesEnv feTypeEnv vaenv (intersectTypesEnv feTypeEnv vaenv slotAct slotReq) declBoundU
