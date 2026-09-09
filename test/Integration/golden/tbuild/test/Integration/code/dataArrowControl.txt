@@ -1,0 +1,139 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/isC"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /isC
+                            ( EAppArg { eaaArg = Value /c -> /C } ) -> /Yes
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /isC
+                            ( EAppArg { eaaArg = Value /c -> /C = Value /C } ) -> /Yes = Value /Yes
+                        ]
+                    }
+                )
+            ,
+                ( "/checkB"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /checkB ->
+                            ( /isC( /c=/C ) + /Yes ) =
+                            ( /isC
+                                ( EAppArg
+                                    { eaaArg = Value /c -> /C = ( Value /B ↦ /C ) }
+                                ) ↦ /Yes
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/A"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /A -> ( /C + /B ) = Value /B ]
+                    }
+                )
+            ,
+                ( "/#noCore"
+                , ObjectMapItem
+                    { omiDecls = [ Value /#noCore ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/C"
+                , ObjectMapItem
+                    { omiDecls = [ Value /C ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Yes"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Yes ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/checkC"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /checkC ->
+                            ( /isC( /c=/C ) + /Yes ) =
+                            ( /isC
+                                ( EAppArg { eaaArg = Value /c -> /C = Value /C } ) ↦ /Yes
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/checkA"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /checkA ->
+                            ( /isC( /c=/C ) + /Yes ) =
+                            ( /isC
+                                ( EAppArg
+                                    { eaaArg = Value /c -> /C = ( Value /A ↦ /C ) }
+                                ) ↦ /Yes
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/B"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = [ Value /B -> /C = Value /C ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ Value /#noCore
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "The control for `dataArrow.ct`: the same chain with the sources left undeclared.
+                `A` and `B` are arrow-only names here, the shape `recordField.ct`'s `/Sample` already had and the
+                only shape the corpus had before its sibling. The program is otherwise the one next door, down to
+                the two `data` lines it drops, so whether a source name ALSO has a data definition is the single
+                variable between the two files — which is what makes a failure in one and not the other say what
+                broke." }
+            )
+        ]
+    }

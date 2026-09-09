@@ -1,0 +1,24 @@
+annot(#noCore)
+
+#noCore
+# The control for `dataArrow.ct`: the same chain with the sources left undeclared.
+  `A` and `B` are arrow-only names here, the shape `recordField.ct`'s `/Sample` already had and the
+  only shape the corpus had before its sibling. The program is otherwise the one next door, down to
+  the two `data` lines it drops, so whether a source name ALSO has a data definition is the single
+  variable between the two files — which is what makes a failure in one and not the other say what
+  broke.
+data(C)
+data(Yes)
+
+A= B
+
+B= C
+
+isC(c -> C) -> Yes
+isC(c= C)= Yes
+
+checkC= isC(c= C)
+
+checkB= isC(c= B)
+
+checkA= isC(c= A)

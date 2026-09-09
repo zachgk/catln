@@ -1,0 +1,77 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/isC"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ isC( Value c -> /C ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ isC( Value c= Value C ) -> ∀/Data/Primitive/Boolean = Value True ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
+                    }
+                )
+            ,
+                ( "/A"
+                , ObjectMapItem
+                    { omiDecls = [ Value A ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = [ Value A= Value B ]
+                    }
+                )
+            ,
+                ( "/C"
+                , ObjectMapItem
+                    { omiDecls = [ Value C ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/B"
+                , ObjectMapItem
+                    { omiDecls = [ Value B ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = [ Value B= Value C ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "`dataArrow.ct` run, rather than only built.
+                The core-less file next to this one is the diagnostic: eleven lines, no standard library, and it
+                says whether the chain type-checks and builds a tree. What it cannot say is whether the tree
+                REWRITES. A built conversion shows as its source and its destination (`Eval.Common`'s `TCalls`
+                renders `A ↦ C` and keeps the tree to itself), so an identity that never fires and a two-hop
+                rewrite are the same line in a golden. Evaluating is what tells them apart, and evaluating needs
+                the `IO` a core-less page has not got.
+                So the same three types are written again here against the library, and the arm matches the VALUE
+                `C`: an `A` arriving unrewritten reaches an arm that cannot destructure it, and the assertion
+                fails rather than passing on a tree that did nothing. Read `dataArrow.ct` first when both break —
+                it is the one with nothing else in it." }
+            )
+        ]
+    }
