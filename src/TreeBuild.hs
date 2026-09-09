@@ -438,9 +438,7 @@ toTExpr env os (TupleApply m (bm, be) arg) = do
     EAppVar _ _ -> toTExprDest env os be m
     _           -> toTExprDest env os be (baseBuildMeta env os be bm)
   arg' <- case arg of
-    EAppArg a     -> do
-      let baseIsData = maybe False (not . null . typeGraphData (tbTypeEnv env)) (maybeExprPath be)
-      EAppArg <$> toTEObjArr env os True baseIsData a
+    EAppArg a     -> EAppArg <$> toTEObjArr env os True a
     EAppVar vn vm -> return $ EAppVar vn vm
     EAppSpread a  -> EAppSpread <$> toTExpr env os a
   return $ TTupleApply m (bm, be') arg'
@@ -517,12 +515,11 @@ objSrcPartial oa = case maybeGetSingleton objType of
     objType = getExprType $ oaObjExpr oa
     writtenAt = maybe "" (printf ", written at %s" . show) (getMetaPos $ getExprMeta $ oaObjExpr oa) :: String
 
--- | The first Bool marks an ObjArr applied inside an expression ('EAppArg') as opposed to a root
--- definition ('buildRootOA'); the second marks the application's base as a data construction
--- (@Box(v= ..)@) as opposed to a function call.
-toTEObjArr :: TBEnv -> [ObjSrc] -> Bool -> Bool -> EObjArr -> CRes (ObjArr TExpr TBMetaDat)
--- toTEObjArr _ os _ _ oa | trace (printf "toTEObjArr %s\n\twith %s" (show oa) (show os)) False = undefined
-toTEObjArr env@TBEnv{tbTypeEnv, tbResEnv} os inExpr _inData oa@ObjArr{oaObj, oaAnnots, oaArr} = do
+-- | The Bool marks an ObjArr applied inside an expression ('EAppArg') as opposed to a root
+-- definition ('buildRootOA').
+toTEObjArr :: TBEnv -> [ObjSrc] -> Bool -> EObjArr -> CRes (ObjArr TExpr TBMetaDat)
+-- toTEObjArr _ os _ oa | trace (printf "toTEObjArr %s\n\twith %s" (show oa) (show os)) False = undefined
+toTEObjArr env@TBEnv{tbTypeEnv, tbResEnv} os inExpr oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   oaObj' <- mapM (toTExpr env os) oaObj
   let os' = case oa of
         ObjArr{oaObj=Just{}, oaArr=Just (Just{}, _)} -> (objSrcPartial oa, oa) : os
@@ -655,7 +652,7 @@ buildRootOA env oa = do
   objSrc <- case maybeGetSingleton (getExprType $ oaObjExpr oa) of
     Just objType -> return (objType, oa)
     Nothing      -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Cannot build %s, whose object is not one type" (show $ oaObjPath oa)]
-  toTEObjArr env' [objSrc] False False oa
+  toTEObjArr env' [objSrc] False oa
 
 buildRoot :: TBEnv -> TBExpr -> PartialType -> Type -> CRes (TExpr TBMetaDat)
 buildRoot env input src dest = do
