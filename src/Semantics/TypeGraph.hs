@@ -126,13 +126,6 @@ cutReachesTree typeEnv vaenv req (ReachesPartialTree children) = ReachesPartialT
 cutReachesTree typeEnv vaenv req (ReachesTypeTree children) = ReachesTypeTree $ fmap (fmap (cutReachesTree typeEnv vaenv req)) children
 cutReachesTree _ _ _ ReachesLeaf = ReachesLeaf
 
--- | A SETTLED leaf is a data value: one whose name has a data definition. Everything else —
--- a function-named applied term, including one whose name is still relative (an exact graph
--- lookup would miss it) — is a term the graph may still rewrite. Only settled leaves are
--- what a requirement constrains; the rewritable ones settle at their own points.
-isSettledLeaf :: (TypeGraph tg) => TypeEnv tg -> PartialType -> Bool
-isSettledLeaf typeEnv l = not (null (typeGraphData typeEnv (ptName l)))
-
 
 reachesPartials :: (TypeGraph tg) => ReachesEnv tg -> [PartialType] -> ReachesTree
 reachesPartials typeEnv partials = ReachesPartialTree $ H.fromList $ zip partials (map (reachesPartial typeEnv) partials)

@@ -817,12 +817,6 @@ settlePropSlot env@FEnv{feTypeEnv} vaenv propName@(TVArg k) superAct@(UnionType 
       UnionType aMTop aLeafs aConsts <- H.lookup k (ptArgs p)
       let aLeafList = splitUnionType aLeafs
       guard (not (null aLeafList))
-      -- Only a REWRITABLE leaf (an unsettled name — one the graph may still rewrite) can be
-      -- settle-forced, so a slot holding only settled data content skips ALL of the work
-      -- below (declared-bound meets, arrow probes, reach queries, commit-time
-      -- verification) before any graph or engine call. This is the cheap membership check
-      -- ('isSettledLeaf'), not the per-leaf arrow probe 'settleForced' still applies.
-      guard (any (not . isSettledLeaf reachesTypeEnv) aLeafList)
       [rp] <- H.lookup (ptName p) reqByName
       slotReq <- typeGetAux propName rp
       -- Engaged requirement only; a pointer-managed (var) slot is left to the var machinery.
