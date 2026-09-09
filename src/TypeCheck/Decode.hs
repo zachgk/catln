@@ -18,12 +18,11 @@ import           Control.Monad.State
 import           CtConstants         (thisKey)
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
-import           Data.List           (partition)
 import           Data.Maybe          (mapMaybe)
 import           MapMeta             (MetaType (ArrMeta), clearMetaDat)
 import           Semantics
 import           Semantics.Prgm
-import           Semantics.TypeGraph (isSettledLeaf, reachesTo)
+import           Semantics.TypeGraph (reachesTo)
 import           Semantics.Types
 import           Text.Printf
 import           TypeCheck.Common
@@ -70,20 +69,11 @@ toMeta  m@(Meta pt pos mid _) = do
             else GenTypeCheckError (clearMetaDat ArrMeta m) (printf "Actual type %s is not a subtype of the required type %s" (show ub) (show req)) : notes
       -- The meta's preset type @pt@ is met into the final type. Under actual seeding
       -- ('TypeCheck.Encode.fromMeta' BAct) this is a no-op — the actual started at @pt@ and only
-      -- narrowed. Under requirement seeding (BReq) @pt@ constrains what the point SETTLES to, so
-      -- the meet applies to settled leaves only: a raw applied leaf (a body's unrewritten call,
-      -- kept alongside its settled forms) is what eval's dispatch keying and lazy arm-body builds
-      -- read — meeting it away would make a chained tree evaluate past its own step (the next
-      -- arrow then receives an already-settled value its pattern cannot destructure).
-      let ubMet = case (ub, pt) of
-            (UnionType mTop leafs consts, UnionType{}) | pt /= PTopType ->
-              let (rawLeafs, settledLeafs) = partition (not . isSettledLeaf feTypeEnv) $ splitUnionType leafs
-                  settledMet = intersectTypes feTypeEnv (UnionType mTop (joinUnionType settledLeafs) consts) pt
-              in case settledMet of
-                   UnionType sMt sLs sCs -> UnionType sMt (H.unionWith S.union (joinUnionType rawLeafs) sLs) sCs
-                   t | null rawLeafs -> t
-                     | otherwise -> unionTypes feTypeEnv (UnionType Nothing (joinUnionType rawLeafs) []) t
-            _ -> intersectTypes feTypeEnv ub pt
+      -- narrowed. Under requirement seeding (BReq) @pt@ is an upper bound on the point's values
+      -- like any other, and it bounds every form the point holds: a form the graph can still
+      -- rewrite is a value of the point as much as a constructed one, and a bound that skipped it
+      -- would not be a bound. Uniform over the union, as 'refineLeafByReq' below already is.
+      let ubMet = intersectTypes feTypeEnv ub pt
       -- Materialize the REQUIREMENT into the stored meta, REFINING each actual leaf in place
       -- and never multiplying the enumeration: the meta's union is eval/TreeBuild's
       -- enumeration of the FORMS the term may take, while the requirement's same-name
