@@ -149,25 +149,24 @@ reachesPartials typeEnv partials = ReachesPartialTree $ H.fromList $ zip partial
         then ReachesLeaf
         else ReachesTypeTree $ H.fromList [(dest, (reason, reaches env' dest)) | (reason, _, dest) <- ttypes]
 
--- | Present a partial's raw applied-form arguments by their declared result type (unioned onto
--- the raw form itself), so the reach follows any arrow a settled argument could match. A
--- recursive call in an argument position (@insert(lst= sorted(raw))@) matches no arrow object
--- structurally (@sorted(raw) ∩ Nil = ∅@); unioning @sorted@'s declared result — 'PTopType' until
--- inferred, else e.g. @ConsList@ — lets both @insert@ arms apply, so the reach stays a genuine
--- upper bound. Only unsettled (raw applied) leaves are widened; settled data arguments keep
--- their precise type. One level only: the query inspects direct arguments.
--- | Union a type's raw applied-form leaves with their declared result type ('raw ∪ result'), so
--- a recursive/raw applied form is recognised by what it settles to. Its declared result is a
--- class-top (@∀ConsList@, @∀Functor@) or 'PTopType' when undeclared; intersecting that against a
--- concrete member is transitive (@∀Functor ∩ Cons = Cons@ via 'expandClassPartialWithNamesFull'),
--- so the arms a settled value would reach are followed. Coverage is judged against the
--- ACCUMULATING union itself (which always contains the whole original union): a raw form whose
--- declared result is ALREADY present adds nothing (kept exact, so raw-vs-settled dispatch is
--- preserved); only a form missing its settled data is widened. Settled data leaves are left
--- untouched.
+-- | Union a type's leaves with their declared result (@leaf ∪ result@), so a form is recognised
+-- by what its arrows produce as well as by what it is. A recursive call in an argument position
+-- (@insert(lst= sorted(raw))@) matches no arrow object structurally (@sorted(raw) ∩ Nil = ∅@);
+-- unioning @sorted@'s declared result — 'PTopType' until inferred, else e.g. @ConsList@ — lets
+-- both @insert@ arms apply, so the reach stays a genuine upper bound. Intersecting a class-top
+-- result against a concrete member is transitive (@∀Functor ∩ Cons = Cons@ via
+-- 'expandClassPartialWithNamesFull'), so the arms the produced value would reach are followed.
+--
+-- Every leaf is asked, not only the function-named ones. What a name is declared as says nothing
+-- about whether arrows leave it — a data type may be the source of one — and a leaf with no
+-- arrows answers 'PTopType' and is skipped by the guard below, so asking costs nothing where
+-- there is nothing to add. Coverage is judged against the ACCUMULATING union itself (which always
+-- contains the whole original union): a form whose declared result is ALREADY present adds
+-- nothing, so a leaf standing beside what it produces is kept exact. One level only: the query
+-- inspects direct arguments.
 presentRawResult :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
 presentRawResult typeEnv vaenv t@(UnionType Nothing leafs _) =
-  foldr addResult t (filter (not . isSettledLeaf typeEnv) (splitUnionType leafs))
+  foldr addResult t (splitUnionType leafs)
   where
     -- A 'PTopType' result (a genuinely undeclared function) carries no settled data to admit and
     -- would only widen the union to Top, so it is not added; only a concrete or class-top result is.
