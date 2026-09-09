@@ -595,7 +595,17 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
       dropSettleForcedRaws t = t
   let newBindings = H.difference venv' vaenv'
   let resolveNew = if H.null newBindings then id else substituteKeep feTypeEnv newBindings
-  let destFinal = compactType feTypeEnv vaenv' (dropFree (resolveSelf (resolveNew (dropSettleForcedRaws dest'))))
+  let destFinal0 = compactType feTypeEnv vaenv' (dropFree (resolveSelf (resolveNew (dropSettleForcedRaws dest'))))
+  -- The same discipline the SOURCE side applies below ('typeVarLost src narrowedAct'), and for the
+  -- same reason: a write that drops a type-var spelling the accumulated destination carries is
+  -- refused, so 'verifyNoTypeVarLost' cannot fire. The destination is met against a requirement
+  -- whose own frame may read a pointer as the ⊤ it currently denotes (@∀Map[/K=∀Ord, /V=$^/MV]@
+  -- against a requirement spelled @∀Map[/K=⊤, /V=⊤]@ is the same set, and the meet may return
+  -- either spelling), and the pointer is what a downstream per-call read resolves — so losing it
+  -- reads WIDER at every later consumer. The refused write re-runs next epoch, as the source
+  -- side's does, once the requirement's own spelling has resolved.
+  let destFinal | typeVarLost destAct destFinal0 = destAct
+                | otherwise                      = destFinal0
   -- Return-type direction: a declaration output that is a bare declared variable is determined
   -- by the call site's destination — bind it onto the call partial (see 'outVarBoundSrc').
   let srcBound = outVarBoundSrc env destFinal src
