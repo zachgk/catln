@@ -16,13 +16,14 @@ module Semantics where
 
 import qualified Data.HashMap.Strict as H
 
-import           Control.Exception   (evaluate)
+import           Control.Exception   (bracket_, evaluate)
 import           CtConstants         (builtinAnnotNames, operatorHasArrow)
 import           Data.Graph          (graphFromEdges)
+import           Data.Hashable       (hash)
 import qualified Data.HashSet        as S
 import           Data.IORef          (IORef, atomicModifyIORef', newIORef,
                                       readIORef)
-import           Data.List           (partition, sortOn)
+import           Data.List           (foldl', partition, sortOn)
 import           Data.Maybe
 import           Data.Time.Calendar  (Day, fromGregorian)
 import           Semantics.Prgm
@@ -83,22 +84,59 @@ unsafeFreshQueryToken g = unsafePerformIO $ do
   _ <- evaluate g
   atomicModifyIORef' queryTokenRef (\n -> (n + 1, n + 1))
 
+-- | The query keys whose answers are being computed right now, by hash. See the re-entrancy note
+-- in 'objArrGraphQuery'.
+{-# NOINLINE queryInProgressRef #-}
+queryInProgressRef :: IORef (S.HashSet Int)
+queryInProgressRef = unsafePerformIO (newIORef S.empty)
+
+-- | Force a query's answer far enough that nothing left in it can ask the graph anything.
+forceQueryResult :: [(String, Type, Type)] -> ()
+forceQueryResult = foldl' (\acc (_, src, dest) -> acc `seq` forceType src `seq` forceType dest) ()
+
 objArrGraphQuery :: (ExprClass e, MetaDat m, Show m, Show (e m)) => Bool -> TypeEnv (ObjArrTypeGraph e m) -> TypeVarArgEnv -> PartialType -> [(String, Type, Type)]
 objArrGraphQuery prune typeEnv vaenv partial = case teQueryCacheKey typeEnv of
   Nothing -> objArrGraphQueryRaw prune typeEnv vaenv partial
   Just _ | teInSatDecision typeEnv -> objArrGraphQueryRaw prune typeEnv vaenv partial
   Just tok -> unsafePerformIO $ do
     let key = (tok, (prune, teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv), partial, sortOn fst (H.toList vaenv))
-    gens <- readIORef queryMemoRef
-    case lookup tok gens >>= H.lookup key of
-      Just r -> return r
-      Nothing -> do
-        let r = objArrGraphQueryRaw prune typeEnv vaenv partial
-        atomicModifyIORef' queryMemoRef $ \gens2 ->
-          let mTok = fromMaybe H.empty (lookup tok gens2)
-              rest = filter ((/= tok) . fst) gens2
-          in ((tok, H.insert key r mTok) : take 2 rest, ())
-        return r
+    -- RE-ENTRANCY. A query's own work can ask the graph about the SAME key again — resolving a
+    -- raw applied leaf reaches for what its arrows produce, which is another query. Handing such
+    -- a query the memo's entry would hand it the very thunk it is already inside, which GHC ends
+    -- as @<<loop>>@. So a key currently being computed is not served from the memo at all: the
+    -- re-entrant query recomputes, unshared. That is the answer 'reachesPartial' already gives a
+    -- cycle in the reach ('rVisited'), and the recomputation terminates — the loop was the
+    -- SHARING, never the recursion.
+    --
+    -- Tracked by hash rather than by the key itself, to keep the set monomorphic. A collision
+    -- costs a memo miss and nothing else, since the fallthrough recomputes the same answer.
+    inProgress <- readIORef queryInProgressRef
+    if S.member (hash key) inProgress
+      then return $ objArrGraphQueryRaw prune typeEnv vaenv partial
+      else do
+        gens <- readIORef queryMemoRef
+        case lookup tok gens >>= H.lookup key of
+          Just r -> return r
+          Nothing -> do
+            -- Computed HERE, inside the mark, rather than published as a thunk to be forced later.
+            -- The window to guard is while the answer is being worked out, and a thunk's forcing
+            -- happens wherever it is demanded — outside any bracket this function could hold, and
+            -- in a nested 'unsafePerformIO' that GHC is free to float or duplicate (this module
+            -- already fights full-laziness for 'unsafeFreshQueryToken'). Forcing it here makes the
+            -- mark's extent exactly the computation's, and publishes a value rather than a thunk —
+            -- a half-evaluated one would leave the same hazard one level down. 'forceType' goes
+            -- through the structure only, which is all of it that can ask the graph anything.
+            r <- bracket_
+                   (atomicModifyIORef' queryInProgressRef (\s -> (S.insert (hash key) s, ())))
+                   (atomicModifyIORef' queryInProgressRef (\s -> (S.delete (hash key) s, ())))
+                   (do let res = objArrGraphQueryRaw prune typeEnv vaenv partial
+                       _ <- evaluate (forceQueryResult res)
+                       return res)
+            atomicModifyIORef' queryMemoRef $ \gens2 ->
+              let mTok = fromMaybe H.empty (lookup tok gens2)
+                  rest = filter ((/= tok) . fst) gens2
+              in ((tok, H.insert key r mTok) : take 2 rest, ())
+            return r
 
 -- | Shared body of 'typeGraphQueryWithReason' (@prune=True@) and
 -- 'typeGraphQueryAllWithReason' (@prune=False@ — every accepting arrow contributes).

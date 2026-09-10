@@ -36,7 +36,7 @@ import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import           Data.IORef          (IORef, atomicModifyIORef', newIORef,
                                       readIORef)
-import           Data.List           (intercalate, partition)
+import           Data.List           (foldl', intercalate, partition)
 import qualified Data.List           as L
 import           Data.List.Split     (splitOn)
 import           Data.Maybe
@@ -405,6 +405,53 @@ instance Hashable Type where
                                            `hashWithSalt` H.size neg
                                            `hashWithSalt` length ncs
     in H.foldlWithKey' (\acc k _ -> acc `hashWithSalt` k) h' leafs
+
+-- | Force a type's STRUCTURE to normal form.
+--
+-- The type-graph query memo ('Semantics.objArrGraphQuery') has to publish a value rather than a
+-- thunk: a thunk shared through the memo can be handed back to a query that re-enters it while it
+-- is still being evaluated, and re-entering a thunk under evaluation is what GHC reports as
+-- @<<loop>>@. Written out because the compiler carries no 'NFData' and the 'Hashable' instances are
+-- deliberately shallow (sizes and keys only), so neither can serve.
+--
+-- Structure only: names and constants are left at WHNF. What has to be forced is everything that
+-- could still CALL BACK into the type graph, and only the nested 'Type's do that — a name or a
+-- literal computes nothing.
+forceType :: Type -> ()
+forceType (TypeVar aux loc inner)      = aux `seq` loc `seq` forceType inner
+forceType (UnionType mTop leafs consts) =
+  forceTop mTop `seq` forcePartialLeafs leafs `seq` forceSpine consts
+  where
+    forceTop Nothing                   = ()
+    forceTop (Just (preds, negs, ncs)) =
+      forceTypePredicates preds `seq` forcePartialLeafs negs `seq` forceSpine ncs
+
+forcePartialLeafs :: PartialLeafs -> ()
+forcePartialLeafs = H.foldl' (\acc opts -> acc `seq` S.foldl' forceOpt () opts) ()
+  where
+    forceOpt acc (PartialArgsOption vars args preds mode) =
+      acc `seq` forceTypeMap vars `seq` forceTypeMap args `seq` forceTypePredicates preds `seq` mode `seq` ()
+
+forcePartialType :: PartialType -> ()
+forcePartialType (PartialType n vars args preds mode) =
+  n `seq` forceTypeMap vars `seq` forceTypeMap args `seq` forceTypePredicates preds `seq` mode `seq` ()
+
+forceTypeMap :: H.HashMap k Type -> ()
+forceTypeMap = H.foldl' (\acc t -> acc `seq` forceType t) ()
+
+forceTypePredicates :: TypePredicates -> ()
+forceTypePredicates (PredsOne p)  = forceTypePredicate p
+forceTypePredicates (PredsAnd ps) = foldl' (\acc x -> acc `seq` forceTypePredicates x) () ps
+forceTypePredicates (PredsNot p)  = forceTypePredicates p
+
+forceTypePredicate :: TypePredicate -> ()
+forceTypePredicate (PredExpr p)  = forcePartialType p
+forceTypePredicate (PredClass p) = forcePartialType p
+forceTypePredicate (PredRel p)   = forcePartialType p
+
+-- | Force a list's spine, leaving its elements at WHNF.
+forceSpine :: [a] -> ()
+forceSpine = foldl' (\acc x -> acc `seq` x `seq` ()) ()
 
 -- | Backward-compat pattern: matches a complement/top type (predicates, negative partials).
 -- Corresponds to the old @TopType PartialLeafs TypePredicates@ constructor.
