@@ -473,7 +473,7 @@ Prgm
                     , omiDefs =
                         [ /Data/List/any
                             ( Value /lst -> ∀/Data/List[ /T=∀/Data/Primitive/Boolean ] ) -> ∀/Data/Primitive/Boolean = /Data/List/foldr( Value /lst -> TVArg /lst = Value /lst )
-                            ( /fn( Value /acc )( Value /v ) -> ∀/Data/Primitive/Boolean = /operator||( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )( Value /init -> /Data/Primitive/False = Value /Data/Primitive/False )
+                            ( /fn( Value /acc -> ∀/Data/Primitive/Boolean )( Value /v -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean = /operator||( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )( Value /init -> /Data/Primitive/False = Value /Data/Primitive/False )
                         ]
                     }
                 )
@@ -689,7 +689,7 @@ Prgm
                     , omiDefs =
                         [ /Data/List/elem
                             ( Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ] )( Value /item -> ∀/Data/Algebra/Eq ) -> ∀/Data/Primitive/Boolean = /Data/List/anyBy( Value /lst -> TVArg /lst = Value /lst )
-                            ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean = /operator==( Value /l -> TVArg /v = Value /v )( Value /r -> TVArg /item = Value /item ) )
+                            ( /fn( Value /v -> ∀/Data/Algebra/Eq ) -> ∀/Data/Primitive/Boolean = /operator==( Value /l -> TVArg /v = Value /v )( Value /r -> TVArg /item = Value /item ) )
                         ]
                     }
                 )
@@ -717,7 +717,7 @@ Prgm
                     , omiDefs =
                         [ /Data/List/all
                             ( Value /lst -> ∀/Data/List[ /T=∀/Data/Primitive/Boolean ] ) -> ∀/Data/Primitive/Boolean = /Data/List/foldr( Value /lst -> TVArg /lst = Value /lst )
-                            ( /fn( Value /acc )( Value /v ) -> ∀/Data/Primitive/Boolean = /operator&&( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )( Value /init -> /Data/Primitive/True = Value /Data/Primitive/True )
+                            ( /fn( Value /acc -> ∀/Data/Primitive/Boolean )( Value /v -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean = /operator&&( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )( Value /init -> /Data/Primitive/True = Value /Data/Primitive/True )
                         ]
                     }
                 )
@@ -1247,9 +1247,7 @@ Prgm
                         )
                     )
                 )
-                ( /fn
-                    ( Value /acc -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) )( Value /v ) -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v )
-                )
+                ( /fn( Value /acc -> /Data/Primitive/Integer )( Value /v -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )
                 ( Value /init -> /Data/Primitive/Integer = CInt
                     { ciValue = 0 }
                 )
@@ -1290,7 +1288,7 @@ Prgm
                         )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                     )
                 )
-                ( /fn( Value /acc )( Value /v ) -> ∀/Data/Algebra/Semigroup = /operator++( Value /l -> TVArg /acc = Value /acc )
+                ( /fn( Value /acc -> ∀/Data/Algebra/Semigroup )( Value /v -> /Data/Primitive/Integer ) -> ∀/Data/Algebra/Semigroup = /operator++( Value /l -> TVArg /acc = Value /acc )
                     ( Value /r -> /Data/String = CStr
                         { csValue = "x" }
                     )
@@ -1343,9 +1341,7 @@ Prgm
                         )
                     )
                 )
-                ( /fn
-                    ( Value /acc -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) )( Value /v ) -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v )
-                )
+                ( /fn( Value /acc -> /Data/Primitive/Integer )( Value /v -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /acc = Value /acc )( Value /r -> TVArg /v = Value /v ) )
                 ( Value /init -> /Data/Primitive/Integer = CInt
                     { ciValue = 0 }
                 )
@@ -1386,7 +1382,7 @@ Prgm
                         )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                     )
                 )
-                ( /fn( Value /acc )( Value /v ) -> ∀/Data/Algebra/Semigroup = /operator++( Value /l -> TVArg /acc = Value /acc )
+                ( /fn( Value /acc -> ∀/Data/Algebra/Semigroup )( Value /v -> /Data/Primitive/Integer ) -> ∀/Data/Algebra/Semigroup = /operator++( Value /l -> TVArg /acc = Value /acc )
                     ( Value /r -> /Data/String = CStr
                         { csValue = "x" }
                     )
@@ -1561,7 +1557,7 @@ Prgm
                         )
                     )
                 )
-                ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean = /operator>( Value /l -> TVArg /v = Value /v )
+                ( /fn( Value /v -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean = /operator>( Value /l -> TVArg /v = Value /v )
                     ( Value /r -> /Data/Primitive/Integer = CInt
                         { ciValue = 0 }
                     )
@@ -1605,7 +1601,7 @@ Prgm
                         )
                     )
                 )
-                ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean = /operator>( Value /l -> TVArg /v = Value /v )
+                ( /fn( Value /v -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean = /operator>( Value /l -> TVArg /v = Value /v )
                     ( Value /r -> /Data/Primitive/Integer = CInt
                         { ciValue = 2 }
                     )
@@ -1660,7 +1656,7 @@ Prgm
                         )
                     )
                 )
-                ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean = /operator>( Value /l -> TVArg /v = Value /v )
+                ( /fn( Value /v -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean = /operator>( Value /l -> TVArg /v = Value /v )
                     ( Value /r -> /Data/Primitive/Integer = CInt
                         { ciValue = 2 }
                     )
@@ -1704,7 +1700,7 @@ Prgm
                         )
                     )
                 )
-                ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean = /operator>( Value /l -> TVArg /v = Value /v )
+                ( /fn( Value /v -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean = /operator>( Value /l -> TVArg /v = Value /v )
                     ( Value /r -> /Data/Primitive/Integer = CInt
                         { ciValue = 9 }
                     )
@@ -1893,7 +1889,7 @@ Prgm
                         )
                     )
                 )
-                ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean = /operator>( Value /l -> TVArg /v = Value /v )
+                ( /fn( Value /v -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean = /operator>( Value /l -> TVArg /v = Value /v )
                     ( Value /r -> /Data/Primitive/Integer = CInt
                         { ciValue = 2 }
                     )
@@ -1948,7 +1944,7 @@ Prgm
                         )
                     )
                 )
-                ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean = /operator==( Value /l -> TVArg /v = Value /v )
+                ( /fn( Value /v -> /Data/String ) -> ∀/Data/Primitive/Boolean = /operator==( Value /l -> TVArg /v = Value /v )
                     ( Value /r -> /Data/String = CStr
                         { csValue = "c" }
                     )
@@ -2035,7 +2031,7 @@ Prgm
                         )
                     )
                 )
-                ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean = /operator>( Value /l -> TVArg /v = Value /v )
+                ( /fn( Value /v -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean = /operator>( Value /l -> TVArg /v = Value /v )
                     ( Value /r -> /Data/Primitive/Integer = CInt
                         { ciValue = 2 }
                     )

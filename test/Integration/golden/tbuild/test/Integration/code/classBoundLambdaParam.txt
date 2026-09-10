@@ -1,0 +1,511 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
+                            ( /Catln/exit
+                                ( /this=/Catln/IO
+                                , /val=/Data/Primitive/Integer
+                                ) + /Catln/IO
+                            ) =
+                            ( /Catln/exit
+                                ( EAppArg
+                                    { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                ) ↦ /Catln/IO
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/viaGeneric"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /viaGeneric
+                            ( EAppVar
+                                { eavName = /A
+                                , eavMeta = ∀/Data/Algebra/Eq
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /lst -> ∀/Data/List[ /T=$^/A ] }
+                            )
+                            ( EAppArg { eaaArg = Value /probe -> $_/A } ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /viaGeneric
+                            ( EAppArg
+                                { eaaArg = Value /lst -> ∀/Data/List[ /T=∀/Data/Algebra/Eq ] }
+                            )
+                            ( EAppArg { eaaArg = Value /probe -> ∀/Data/Algebra/Eq } ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                , []
+                                )
+                            , /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
+                                ( /this=∀/Data/Algebra/Eq
+                                , /other=∀/Data/Algebra/Eq
+                                )
+                            , []
+                            ) =
+                            ( /headTo
+                                ( EAppArg
+                                    { eaaArg = Value /lst -> TVArg /lst = ( Value /lst ↦ TVArg /lst ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = /fn
+                                        ( EAppArg { eaaArg = Value /w -> ∀/Data/Algebra/Eq } ) -> UnionType
+                                        ( Just
+                                            ( PredClass /Data/Primitive/Boolean
+                                            , fromList []
+                                            , []
+                                            )
+                                        , /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
+                                            ( /this=∀/Data/Algebra/Eq
+                                            , /other=∀/Data/Algebra/Eq
+                                            )
+                                        , []
+                                        ) =
+                                        ( /operator==
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) = /Data/Maybe/Some
+                                                    ( EAppArg
+                                                        { eaaArg = Value /value -> TVArg /w = ( Value /w ↦ TVArg /w ) }
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) = /Data/Maybe/Some
+                                                    ( EAppArg
+                                                        { eaaArg = Value /value -> TVArg /probe = ( Value /probe ↦ TVArg /probe ) }
+                                                    )
+                                                }
+                                            ) ↦ UnionType
+                                            ( Just
+                                                ( PredClass /Data/Primitive/Boolean
+                                                , fromList []
+                                                , []
+                                                )
+                                            ,
+                                                ( /operator&&
+                                                    ( /r=∀/Data/Primitive/Boolean
+                                                    , /l=∀/Data/Primitive/Boolean
+                                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
+                                                    ( /this=∀/Data/Algebra/Eq
+                                                    , /other=∀/Data/Algebra/Eq
+                                                    )
+                                                )
+                                            , []
+                                            )
+                                        )
+                                    }
+                                )
+                                ( EAppArg { eaaArg = Value /dflt -> /Data/Primitive/False = Value /Data/Primitive/False } ) ↦ UnionType
+                                ( Just
+                                    ( PredClass /Data/Primitive/Boolean
+                                    , fromList []
+                                    , []
+                                    )
+                                ,
+                                    ( /operator&&
+                                        ( /r=∀/Data/Primitive/Boolean
+                                        , /l=∀/Data/Primitive/Boolean
+                                        ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
+                                        ( /this=∀/Data/Algebra/Eq
+                                        , /other=∀/Data/Algebra/Eq
+                                        )
+                                    )
+                                , []
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/headTo"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /headTo
+                            ( EAppVar
+                                { eavName = /B
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppVar
+                                { eavName = /A
+                                , eavMeta = ∀/Data/Algebra/Eq
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /lst -> ∀/Data/List[ /T=$^/A ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = /fn
+                                    ( EAppArg { eaaArg = Value /w -> $_/A } ) -> $_/B
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /dflt -> $_/B } ) -> $_/B
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /headTo
+                            ( EAppArg { eaaArg = Value /lst -> /Data/List/Nil = Value /Data/List/Nil } )
+                            ( EAppArg
+                                { eaaArg = /fn
+                                    ( EAppArg { eaaArg = Value /w } )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /dflt } ) -> TVArg /dflt = ( Value /dflt ↦ TVArg /dflt )
+                        , /headTo
+                            ( EAppArg
+                                { eaaArg = Value /lst -> /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
+                                    ( /head=$/T
+                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head -> ∀/Data/Algebra/Eq } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = /fn
+                                    ( EAppArg { eaaArg = Value /w } )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /dflt } )=
+                            ( /fn
+                                ( EAppArg
+                                    { eaaArg = Value /w -> TVArg /head = ( Value /head ↦ TVArg /head ) }
+                                ) ↦ TopType
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/useEq"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /useEq
+                            ( EAppVar
+                                { eavName = /B
+                                , eavMeta = TopType
+                                }
+                            )
+                            ( EAppVar
+                                { eavName = /A
+                                , eavMeta = ∀/Data/Algebra/Eq
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /x -> $_/A } )
+                            ( EAppArg
+                                { eaaArg = /fn
+                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> $_/B
+                                }
+                            ) -> $_/B
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /useEq
+                            ( EAppArg { eaaArg = Value /x -> ∀/Data/Algebra/Eq } )
+                            ( EAppArg
+                                { eaaArg = /fn
+                                    ( EAppArg { eaaArg = Value /v } )
+                                }
+                            )=
+                            ( /fn
+                                ( EAppArg
+                                    { eaaArg = Value /v -> TVArg /x = ( Value /x ↦ TVArg /x ) }
+                                ) ↦ TopType
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A class bound on a declaration variable, reaching a higher-order argument's PARAMETER.
+                A declaration's function-typed argument keeps only its result — @headTo@'s own object type reads
+                @/fn(/w=TopType)=$/B@, with @w -> $_A@ gone — so the parameter's declared type is recovered at the
+                call by reading the declaration back ('TypeCheck.TypeUtils.fnArgInputBound'). Two things stopped
+                that here, and each needs its own row below to see.
+                A parameter left at Top is not fatal on its own; a body that never needs the bound runs fine on
+                one. It bites when the body BUILDS something whose own declaration requires the bound, since a
+                Top argument cannot meet it:
+                  Failed to build arrow tree from /Data/Maybe/Some(/value=TopType)
+                    to /Data/Maybe/Some[/T=∀/Data/Algebra/Eq](/value=$/T)
+                Both examples for each function below are the same call; only the lambda's body differs, and the
+                one that does not need the bound is what says the traversal was never the problem." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "## Bound through a container's class parameter
+                @$A@ is pinned only by @lst@, and it is pinned through a class PARAMETER rather than by being the
+                argument's whole type. A parameter that points at a variable is not itself one, so meeting
+                @List[$T -> $_A]@ against a @Cons(head= 3, ..)@ bound nothing: the value's own vars are empty
+                until the meet fills them. The meet's RESULT does carry @Cons[/T=Integer]@ — materialized through
+                the data definition's @head -> $T@ tie — and the spelling says which variable that parameter
+                names, so the two are matched up by parameter name.
+                Contrast @useEq@ further down, where the same variable is the whole type of an argument: that
+                binds directly and always worked." }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                    ( /headTo
+                        ( EAppArg
+                            { eaaArg = Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                ( /head=/Data/Primitive/Integer
+                                , /tail=/Data/List/Nil
+                                ) = /Data/List/Cons
+                                ( EAppArg
+                                    { eaaArg = Value /head -> /Data/Primitive/Integer = 3 }
+                                )
+                                ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = /fn
+                                ( EAppArg { eaaArg = Value /w -> /Data/Primitive/Integer } ) -> ∀/Data/Primitive/Boolean =
+                                ( /operator==
+                                    ( EAppArg
+                                        { eaaArg = Value /l -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> TVArg /w = ( Value /w ↦ TVArg /w ) }
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /r -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> /Data/Primitive/Integer = 3 }
+                                            )
+                                        }
+                                    ) ↦ ∀/Data/Primitive/Boolean
+                                )
+                            }
+                        )
+                        ( EAppArg { eaaArg = Value /dflt -> /Data/Primitive/False = Value /Data/Primitive/False } ) ↦ ∀/Data/Primitive/Boolean
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "True" }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/False =
+                    ( /headTo
+                        ( EAppArg { eaaArg = Value /lst -> /Data/List/Nil = Value /Data/List/Nil } )
+                        ( EAppArg
+                            { eaaArg = /fn
+                                ( EAppArg { eaaArg = Value /w -> ∀/Data/Algebra/Eq } ) -> ∀/Data/Primitive/Boolean =
+                                ( /operator==
+                                    ( EAppArg
+                                        { eaaArg = Value /l -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) = /Data/Maybe/Some
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> TVArg /w = ( Value /w ↦ TVArg /w ) }
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /r -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> /Data/Primitive/Integer = 3 }
+                                            )
+                                        }
+                                    ) ↦ ∀/Data/Primitive/Boolean
+                                )
+                            }
+                        )
+                        ( EAppArg { eaaArg = Value /dflt -> /Data/Primitive/False = Value /Data/Primitive/False } ) ↦ /Data/Primitive/False
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "False" }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /headTo
+                        ( EAppArg
+                            { eaaArg = Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                ( /head=/Data/Primitive/Integer
+                                , /tail=/Data/List/Nil
+                                ) = /Data/List/Cons
+                                ( EAppArg
+                                    { eaaArg = Value /head -> /Data/Primitive/Integer = 3 }
+                                )
+                                ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = /fn
+                                ( EAppArg { eaaArg = Value /w -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                                ( /operator+
+                                    ( EAppArg
+                                        { eaaArg = Value /l -> TVArg /w = ( Value /w ↦ TVArg /w ) }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                    ) ↦ /Data/Primitive/Integer
+                                )
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /dflt -> /Data/Primitive/Integer = 0 }
+                        ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "4" }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "## Called from inside a generic definition
+                The same call made where the element type is not yet concrete. In @viaGeneric@'s frame @$_A@
+                reads as its own bound @∀Eq@, and the parameter was refused because it was not FULLY CONCRETE.
+                A bound is resolved knowledge, not a symbolic variable: no value of @$_A@ can fall outside its
+                own class, so @∀Eq@ holds at every epoch and is enough to build a @Some@ that meets the @Maybe@
+                instance. What stays out is a symbolic variable, which may still resolve to anything." }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                    ( /viaGeneric
+                        ( EAppArg
+                            { eaaArg = Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                ( /head=/Data/Primitive/Integer
+                                , /tail=/Data/List/Nil
+                                ) = /Data/List/Cons
+                                ( EAppArg
+                                    { eaaArg = Value /head -> /Data/Primitive/Integer = 3 }
+                                )
+                                ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /probe -> /Data/Primitive/Integer = 3 }
+                        ) ↦ ∀/Data/Primitive/Boolean
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "True" }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                    ( /viaGeneric
+                        ( EAppArg
+                            { eaaArg = Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                ( /head=/Data/Primitive/Integer
+                                , /tail=/Data/List/Nil
+                                ) = /Data/List/Cons
+                                ( EAppArg
+                                    { eaaArg = Value /head -> /Data/Primitive/Integer = 4 }
+                                )
+                                ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /probe -> /Data/Primitive/Integer = 3 }
+                        ) ↦ ∀/Data/Primitive/Boolean
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "False" }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                    ( /viaGeneric
+                        ( EAppArg
+                            { eaaArg = Value /lst -> /Data/List/Cons[ /T=/Data/String ]
+                                ( /head=/Data/String
+                                , /tail=/Data/List/Nil
+                                ) = /Data/List/Cons
+                                ( EAppArg
+                                    { eaaArg = Value /head -> /Data/String = "a" }
+                                )
+                                ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /probe -> /Data/String = "a" }
+                        ) ↦ ∀/Data/Primitive/Boolean
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "True" }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "## The control: the variable IS the argument's type
+                Nothing points anywhere, so @$A@ binds directly from @x@. This passed before either fix and is
+                the passing half of the pair that pinned the cause on how the variable is bound rather than on
+                the class bound itself." }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                    ( /useEq
+                        ( EAppArg
+                            { eaaArg = Value /x -> /Data/Primitive/Integer = 3 }
+                        )
+                        ( EAppArg
+                            { eaaArg = /fn
+                                ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> ∀/Data/Primitive/Boolean =
+                                ( /operator==
+                                    ( EAppArg
+                                        { eaaArg = Value /l -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /r -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> /Data/Primitive/Integer = 3 }
+                                            )
+                                        }
+                                    ) ↦ ∀/Data/Primitive/Boolean
+                                )
+                            }
+                        ) ↦ ∀/Data/Primitive/Boolean
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String = "True" }
+            )
+        ]
+    }

@@ -474,47 +474,11 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Map/containedIn
-                            ( EAppArg { eaaArg = Value /a -> /Data/Map/Leaf = Value /Data/Map/Leaf } )
                             ( EAppArg
-                                { eaaArg = Value /b -> ∀/Data/Map/BinTree
+                                { eaaArg = Value /a -> ∀/Data/Map/BinTree
                                     [ /K=∀/Data/Algebra/Ord
                                     , /V=∀/Data/Algebra/Eq
                                     ]
-                                }
-                            ) -> /Data/Primitive/True = Value /Data/Primitive/True
-                        , /Data/Map/containedIn
-                            ( EAppArg
-                                { eaaArg = Value /a -> /Data/Map/Node
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=∀/Data/Algebra/Eq
-                                    ]
-                                    ( /value=$/V
-                                    , /key=$/K
-                                    , /right=∀/Data/Map/BinTree
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=∀/Data/Algebra/Eq
-                                        ]
-                                    , /left=∀/Data/Map/BinTree
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=∀/Data/Algebra/Eq
-                                        ]
-                                    ) = /Data/Map/Node
-                                    ( EAppArg
-                                        { eaaArg = Value /left -> ∀/Data/Map/BinTree
-                                            [ /K=∀/Data/Algebra/Ord
-                                            , /V=∀/Data/Algebra/Eq
-                                            ]
-                                        }
-                                    )
-                                    ( EAppArg { eaaArg = Value /key -> ∀/Data/Algebra/Ord } )
-                                    ( EAppArg { eaaArg = Value /value -> ∀/Data/Algebra/Eq } )
-                                    ( EAppArg
-                                        { eaaArg = Value /right -> ∀/Data/Map/BinTree
-                                            [ /K=∀/Data/Algebra/Ord
-                                            , /V=∀/Data/Algebra/Eq
-                                            ]
-                                        }
-                                    )
                                 }
                             )
                             ( EAppArg
@@ -524,23 +488,21 @@ Prgm
                                     ]
                                 }
                             ) -> ∀/Data/Primitive/Boolean =
-                            ( /operator&&
+                            ( /Data/Map/foldEntries
                                 ( EAppArg
-                                    { eaaArg = Value /l -> ∀/Data/Primitive/Boolean =
+                                    { eaaArg = Value /m -> TVArg /a = ( Value /a ↦ TVArg /a ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = /fn
+                                        ( EAppArg { eaaArg = Value /acc -> ∀/Data/Primitive/Boolean } )
+                                        ( EAppArg { eaaArg = Value /k -> ∀/Data/Algebra/Ord } )
+                                        ( EAppArg { eaaArg = Value /v -> ∀/Data/Algebra/Eq } ) -> ∀/Data/Primitive/Boolean =
                                         ( /operator&&
                                             ( EAppArg
-                                                { eaaArg = Value /l -> UnionType
-                                                    ( Just
-                                                        ( PredClass /Data/Primitive/Boolean
-                                                        , fromList []
-                                                        , []
-                                                        )
-                                                    , /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
-                                                        ( /this=∀/Data/Algebra/Eq
-                                                        , /other=∀/Data/Algebra/Eq
-                                                        )
-                                                    , []
-                                                    ) =
+                                                { eaaArg = Value /l -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> ∀/Data/Primitive/Boolean =
                                                     ( /operator==
                                                         ( EAppArg
                                                             { eaaArg = Value /l -> UnionType
@@ -557,7 +519,7 @@ Prgm
                                                                         { eaaArg = Value /m -> TVArg /b = ( Value /b ↦ TVArg /b ) }
                                                                     )
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /key -> TVArg /key = ( Value /key ↦ TVArg /key ) }
+                                                                        { eaaArg = Value /key -> TVArg /k = ( Value /k ↦ TVArg /k ) }
                                                                     ) ↦ UnionType
                                                                     ( Just
                                                                         ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq
@@ -573,37 +535,9 @@ Prgm
                                                         ( EAppArg
                                                             { eaaArg = Value /r -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) = /Data/Maybe/Some
                                                                 ( EAppArg
-                                                                    { eaaArg = Value /value -> TVArg /value = ( Value /value ↦ TVArg /value ) }
+                                                                    { eaaArg = Value /value -> TVArg /v = ( Value /v ↦ TVArg /v ) }
                                                                 )
                                                             }
-                                                        ) ↦ UnionType
-                                                        ( Just
-                                                            ( PredClass /Data/Primitive/Boolean
-                                                            , fromList []
-                                                            , []
-                                                            )
-                                                        ,
-                                                            ( /operator&&
-                                                                ( /r=∀/Data/Primitive/Boolean
-                                                                , /l=∀/Data/Primitive/Boolean
-                                                                ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
-                                                                ( /this=∀/Data/Algebra/Eq
-                                                                , /other=∀/Data/Algebra/Eq
-                                                                )
-                                                            )
-                                                        , []
-                                                        )
-                                                    )
-                                                }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /r -> ∀/Data/Primitive/Boolean =
-                                                    ( /Data/Map/containedIn
-                                                        ( EAppArg
-                                                            { eaaArg = Value /a -> TVArg /left = ( Value /left ↦ TVArg /left ) }
-                                                        )
-                                                        ( EAppArg
-                                                            { eaaArg = Value /b -> TVArg /b = ( Value /b ↦ TVArg /b ) }
                                                         ) ↦ ∀/Data/Primitive/Boolean
                                                     )
                                                 }
@@ -611,18 +545,7 @@ Prgm
                                         )
                                     }
                                 )
-                                ( EAppArg
-                                    { eaaArg = Value /r -> ∀/Data/Primitive/Boolean =
-                                        ( /Data/Map/containedIn
-                                            ( EAppArg
-                                                { eaaArg = Value /a -> TVArg /right = ( Value /right ↦ TVArg /right ) }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /b -> TVArg /b = ( Value /b ↦ TVArg /b ) }
-                                            ) ↦ ∀/Data/Primitive/Boolean
-                                        )
-                                    }
-                                ) ↦ ∀/Data/Primitive/Boolean
+                                ( EAppArg { eaaArg = Value /init -> /Data/Primitive/True = Value /Data/Primitive/True } ) ↦ ∀/Data/Primitive/Boolean
                             )
                         ]
                     }
@@ -764,12 +687,19 @@ Prgm
                                 ( EAppArg
                                     { eaaArg = /fn
                                         ( EAppArg
-                                            { eaaArg = Value /acc -> ∀/Data/List/ConsList[ /T=TopType ] }
+                                            { eaaArg = Value /acc -> /Data/List/Cons[ /T=TopType ]
+                                                ( /head=$/T
+                                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                                )
+                                            }
                                         )
-                                        ( EAppArg { eaaArg = Value /k } )
-                                        ( EAppArg { eaaArg = Value /v } ) -> /Data/List/Cons
-                                        ( /head=TopType
-                                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                        ( EAppArg { eaaArg = Value /k -> ∀/Data/Algebra/Ord } )
+                                        ( EAppArg { eaaArg = Value /v } ) -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                        ( /head=∀/Data/Algebra/Ord
+                                        , /tail=/Data/List/Cons[ /T=$^/T ]
+                                            ( /head=$/T
+                                            , /tail=∀/Data/List/ConsList[ /T=$^/T ]
+                                            )
                                         ) = /Data/List/Cons
                                         ( EAppArg
                                             { eaaArg = Value /head -> TVArg /k = ( Value /k ↦ TVArg /k ) }
@@ -936,7 +866,7 @@ Prgm
                                 ( EAppArg
                                     { eaaArg = /fn
                                         ( EAppArg { eaaArg = Value /acc -> /Data/Primitive/Integer } )
-                                        ( EAppArg { eaaArg = Value /k } )
+                                        ( EAppArg { eaaArg = Value /k -> ∀/Data/Algebra/Ord } )
                                         ( EAppArg { eaaArg = Value /v } ) -> /Data/Primitive/Integer =
                                         ( /operator+
                                             ( EAppArg
@@ -1013,7 +943,7 @@ Prgm
                                 ( EAppArg
                                     { eaaArg = /fn
                                         ( EAppArg { eaaArg = Value /acc } )
-                                        ( EAppArg { eaaArg = Value /k } )
+                                        ( EAppArg { eaaArg = Value /k -> ∀/Data/Algebra/Ord } )
                                         ( EAppArg { eaaArg = Value /v } ) -> UnionType
                                         ( Just
                                             ( PredClass /Data/Map
@@ -1194,7 +1124,7 @@ Prgm
                                 ( EAppArg
                                     { eaaArg = /fn
                                         ( EAppArg { eaaArg = Value /acc } )
-                                        ( EAppArg { eaaArg = Value /k } )
+                                        ( EAppArg { eaaArg = Value /k -> ∀/Data/Algebra/Ord } )
                                         ( EAppArg { eaaArg = Value /v } )=
                                         ( /fn
                                             ( EAppArg
@@ -1221,7 +1151,7 @@ Prgm
                                                         ( EAppArg
                                                             { eaaArg = /fn
                                                                 ( EAppArg { eaaArg = Value /acc } )
-                                                                ( EAppArg { eaaArg = Value /k } )
+                                                                ( EAppArg { eaaArg = Value /k -> ∀/Data/Algebra/Ord } )
                                                                 ( EAppArg { eaaArg = Value /v } )=
                                                                 ( /fn
                                                                     ( EAppArg
@@ -2081,12 +2011,19 @@ Prgm
                                 ( EAppArg
                                     { eaaArg = /fn
                                         ( EAppArg
-                                            { eaaArg = Value /acc -> ∀/Data/List/ConsList[ /T=TopType ] }
+                                            { eaaArg = Value /acc -> /Data/List/Cons[ /T=TopType ]
+                                                ( /head=$/T
+                                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                                )
+                                            }
                                         )
-                                        ( EAppArg { eaaArg = Value /k } )
+                                        ( EAppArg { eaaArg = Value /k -> ∀/Data/Algebra/Ord } )
                                         ( EAppArg { eaaArg = Value /v } ) -> /Data/List/Cons
                                         ( /head=TopType
-                                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                        , /tail=/Data/List/Cons[ /T=TopType ]
+                                            ( /head=$/T
+                                            , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                            )
                                         ) = /Data/List/Cons
                                         ( EAppArg
                                             { eaaArg = Value /head -> TVArg /v = ( Value /v ↦ TVArg /v ) }
@@ -2294,7 +2231,7 @@ Prgm
                                 ( EAppArg
                                     { eaaArg = Value /acc -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) }
                                 )
-                                ( EAppArg { eaaArg = Value /k } )
+                                ( EAppArg { eaaArg = Value /k -> ∀/Data/Algebra/Ord } )
                                 ( EAppArg { eaaArg = Value /v } ) -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) =
                                 ( /operator+
                                     ( EAppArg

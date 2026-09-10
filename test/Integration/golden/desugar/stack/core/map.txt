@@ -92,17 +92,13 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Map/containedIn( Value a= Value Leaf )( Value b ) -> ∀/Data/Primitive/Boolean = Value /Data/Primitive/True
-                        , /Data/Map/containedIn
-                            ( Value a= Node( Value left )( Value key )( Value value )( Value right ) )( Value b ) -> ∀/Data/Primitive/Boolean = /operator&&
-                            ( Value /l= /operator&&
-                                ( Value /l= /operator==
-                                    ( Value /l= get( Value m= Value b )( Value key= Value key ) )
-                                    ( Value /r= /Data/Maybe/Some( Value value= Value value ) )
+                        [ /Data/Map/containedIn( Value a )( Value b ) -> ∀/Data/Primitive/Boolean = foldEntries( Value m= Value a )
+                            ( fn( Value acc )( Value k )( Value v )= /operator&&( Value /l= Value acc )
+                                ( Value /r= /operator==
+                                    ( Value /l= get( Value m= Value b )( Value key= Value k ) )
+                                    ( Value /r= /Data/Maybe/Some( Value value= Value v ) )
                                 )
-                                ( Value /r= containedIn( Value a= Value left )( Value b= Value b ) )
-                            )
-                            ( Value /r= containedIn( Value a= Value right )( Value b= Value b ) )
+                            )( Value init= Value /Data/Primitive/True )
                         ]
                     }
                 )

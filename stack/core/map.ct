@@ -194,21 +194,10 @@ module(Data/Map)
   mapEqual(a, b)= (size(m= a) == size(m= b)) && containedIn(a= a, b= b)
 
   containedIn[$MK -> /Data/Algebra/Ord, $MV -> /Data/Algebra/Eq](a -> BinTree[$K -> $_MK, $V -> $_MV], b -> BinTree[$K -> $_MK, $V -> $_MV]) -> Boolean
-    # [containedIn] is [True] when every entry of [a] appears in [b] with an equal value. It walks
-      [a]'s nodes and, for each, looks the key up in [b] ([get]) and checks the result equals
-      [Some(value)] through the [Maybe] [Eq] instance.
-    # TODO: this is a [foldEntries] like the traversals above, and unlike them it does not build.
-      Written as [foldEntries(m= a, fn(acc, k, v)= acc && (get(m= b, key= k) == Some(value= v)), init=
-      True)] it fails with
-        Failed to build arrow tree from /Data/Maybe/Some(/value=TopType)
-          to /Data/Maybe/Some[/T=∀/Data/Algebra/Eq](/value=$/T)
-      because the step's own parameters arrive as [/fn(/acc=TopType, /v=TopType, /k=TopType)], so
-      [Some(value= v)] is built at [TopType] and cannot meet the [Eq] bound the [Maybe] instance
-      requires. That is the lambda-parameter narrowing gap, not the traversal — [$_MV -> Eq] never
-      reaches [v]. The other four traversals do not need their element type bounded, which is why
-      they were rewritten and this one was not.
-  containedIn(a= Leaf, b)= /Data/Primitive/True
-  containedIn(a= Node(left, key, value, right), b)= (get(m= b, key= key) == /Data/Maybe/Some(value= value)) && containedIn(a= left, b= b) && containedIn(a= right, b= b)
+    # [containedIn] is [True] when every entry of [a] appears in [b] with an equal value: the fifth
+      [foldEntries] traversal, whose step looks each key up in [b] ([get]) and checks the result
+      equals [Some(value)] through the [Maybe] [Eq] instance, [and]ing that into the accumulator.
+  containedIn(a, b)= foldEntries(m= a, fn(acc, k, v)= acc && (get(m= b, key= k) == /Data/Maybe/Some(value= v)), init= /Data/Primitive/True)
 module(Data/Algebra)
   :/Data/Map/Leaf.equal(other)= /Data/Map/mapEqual(a= /Data/Map/Leaf, b= other)
   :/Data/Map/Node[$K -> /Data/Algebra/Ord, $V -> /Data/Algebra/Eq](left, key, value, right).equal(other)= /Data/Map/mapEqual(a= /Data/Map/Node(left= left, key= key, value= value, right= right), b= other)

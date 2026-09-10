@@ -223,10 +223,18 @@ buildTypeEnv env@FEnv{feTypeEnv, feVTypeGraph, feTTypeGraphCleared} = do
 -- | The declared input type of a higher-order argument's parameter, resolved for a call site.
 -- For @apply(x= 1, fn(v)= v)@ whose matched declaration is @apply(x -> $_A, fn(v -> $_A) -> $_B)@,
 -- the lambda's parameter @v@ is typed by the declaration's @$_A@, substituted with the bindings
--- the call's arguments determine (@x=Integer ⇒ $_A=Integer@). Only a fully concrete result is
--- returned: the lambda's input point is narrowed by resolved knowledge only, never by symbolic
--- variables (writing a symbolic external var into a resolving point oscillates against later
--- epochs). Declarations only ('omiDecls') — an unannotated definition carries no input contract.
+-- the call's arguments determine (@x=Integer ⇒ $_A=Integer@).
+--
+-- Three things bind a declaration variable here, in narrowing order: an argument whose whole type
+-- IS the variable; a class PARAMETER that points at it (@lst -> List[$T -> $_A]@, recovered by
+-- 'alignClassPtrs', including one level in through a variable's own declared bound); and failing
+-- both, the variable's declared bound itself, which holds whatever the call passes.
+--
+-- The result must be RESOLVED but need not be fully concrete: a class-predicate top like @∀Eq@ is
+-- a sound upper bound at every epoch, and refusing it is what left a lambda inside a generic
+-- definition at Top. What stays out is a symbolic variable — writing one into a resolving point
+-- oscillates against later epochs — and Top itself, which says nothing.
+-- Declarations only ('omiDecls') — an unannotated definition carries no input contract.
 fnArgInputBound :: FEnv -> Type -> ArgName -> ArgName -> Maybe Type
 fnArgInputBound env callAct fnKey inKey = case callAct of
   UnionType Nothing leafs [] -> case mapMaybe partialBound (splitUnionType leafs) of
@@ -250,36 +258,54 @@ fnArgInputBound env callAct fnKey inKey = case callAct of
       inOa <- findArg inKey (exprAppliedArgs fnObj)
       (_, inM) <- oaArr inOa
       -- the bindings the call's arguments give the declaration's variables
-      let venvs = [ fst $ intersectTypesWithVarEnv typeEnv H.empty (getMetaType aM) srcV
-                  | argOa <- objArgs
-                  , Just aObj <- [oaObj argOa]
-                  , Just (_, aM) <- [oaArr argOa]
-                  , Just srcV <- [typeGetArgLoose (inExprSingleton aObj) partial] ]
-      let venv0 = mergeAllVarEnvs typeEnv venvs
-      -- An argument typed by a declaration variable (@lst -> $F@) binds only that variable;
-      -- the variable's declared bound (@$F -> Functor[$T -> $_A]@, held in the declaration
-      -- object's own var slot) is what relates the bound value to further variables.
-      -- Intersect each bound against its binding to recover them (@$_A=Integer@ from
-      -- @lst= Cons[/T=Integer]@).
+      let argActuals = [ (getMetaType aM, srcV)
+                       | argOa <- objArgs
+                       , Just aObj <- [oaObj argOa]
+                       , Just (_, aM) <- [oaArr argOa]
+                       , Just srcV <- [typeGetArgLoose (inExprSingleton aObj) partial] ]
+      let venv0 = mergeAllVarEnvs typeEnv [ fst $ intersectTypesWithVarEnv typeEnv H.empty aT srcV
+                                          | (aT, srcV) <- argActuals ]
+      -- An argument that SPELLS a class partial (@lst -> List[$T -> $_A]@) binds nothing on its
+      -- own: the parameter points at the variable rather than being one, so 'alignClassPtrs'
+      -- recovers it from the meet. An argument typed by a bare declaration variable
+      -- (@lst -> $F@) binds only that variable, and the variable's declared bound
+      -- (@$F -> Functor[$T -> $_A]@, held in the declaration object's own var slot) is what
+      -- carries the pointers on to further variables — so run the same recovery a level in.
       let declVars = maybe H.empty ptVars (maybeGetSingleton (getMetaType (getExprMeta (oaObjExpr oa))))
-      -- An argument typed by a declaration variable (@lst -> $F@) binds only that variable;
-      -- the variable's declared bound (@$F -> Functor[$T -> $_A]@, held in the declaration
-      -- object's own var slot) is what relates the bound value to further variables.
-      -- Intersecting the bound against the binding materializes the class parameter on the
-      -- result's data leaves (@Cons[/T=Integer]@ via the data def's field tie), while the
-      -- bound's class partial records which external var that parameter points at
-      -- (@/T=$_A@); aligning the two by parameter name recovers the binding (@$_A=Integer@).
-      let boundVenvs = [ H.singleton (TVVar extV) elemT
+      let argVenvs = [ v | (aT, srcV) <- argActuals, v <- alignClassPtrs aT srcV ]
+      let boundVenvs = [ v
                        | (TVVar vn, binding) <- H.toList venv0
                        , Just bound <- [H.lookup vn declVars]
-                       , bound /= PTopType
-                       , UnionType Nothing rLeafs [] <- [intersectTypes typeEnv bound binding]
-                       , (cvn, extV) <- boundClassVarPtrs bound
-                       , let elemT = unionAllTypes typeEnv (mapMaybe (H.lookup cvn . ptVars) (splitUnionType rLeafs))
-                       , not (isBottomType elemT) ]
-      let inTy = substituteTVExt typeEnv (mergeAllVarEnvs typeEnv (venv0 : boundVenvs)) (getMetaType inM)
-      guard (typeFullyConcrete inTy)
+                       , v <- alignClassPtrs bound binding ]
+      -- The variable's own declared bound, as a floor under all of the above: @$A -> Eq@ says a
+      -- parameter typed by @$_A@ is an @Eq@ whatever the call passes, and that holds even when
+      -- nothing binds the variable at all — an empty list pins no element type, but the bound is
+      -- still written on the declaration. Merging is by intersection ('mergeVarEnvs'), so a real
+      -- binding narrows past this rather than being widened by it.
+      let declBoundVenvs = [ H.singleton (TVVar vn) b | (vn, b) <- H.toList declVars, b /= PTopType ]
+      let inTy = substituteTVExt typeEnv (mergeAllVarEnvs typeEnv (venv0 : argVenvs ++ boundVenvs ++ declBoundVenvs)) (getMetaType inM)
+      -- Resolved knowledge only, which is NOT the same as fully concrete. Inside a generic
+      -- definition the element type is the declared bound — @$_A -> Eq@ read in that frame is
+      -- @∀Eq@ — and that is a sound upper bound on the parameter at every epoch, since no value
+      -- of @$_A@ can fall outside its own class. What must stay out is a SYMBOLIC variable, which
+      -- may still resolve to anything and would oscillate against later epochs, and Top, which
+      -- says nothing. Rejecting @∀Eq@ too is what left a lambda inside a generic definition at
+      -- Top, so a @Some(value= v)@ built from it could not meet the @Maybe@ instance's @Eq@ bound.
+      guard (inTy /= PTopType && not (isBottomType inTy) && not (typeHasVars inTy))
       return inTy
+    -- Recover the bindings a class parameter's var POINTER stands for, by meeting the declared
+    -- spelling against what the call passes. Meeting @List[$T -> $_A]@ with a @Cons(head= 1, ..)@
+    -- binds nothing in 'intersectTypesWithVarEnv' — the value's own 'ptVars' are empty until the
+    -- meet fills them — but the meet's RESULT holds @Cons[/T=Integer]@, materialized through the
+    -- data definition's @head -> $T@ field tie, and the spelling says which external var that
+    -- parameter names, so matching the two by parameter name recovers @$_A=Integer@.
+    alignClassPtrs spelled actual =
+      [ H.singleton (TVVar extV) elemT
+      | spelled /= PTopType
+      , UnionType Nothing rLeafs [] <- [intersectTypes typeEnv spelled actual]
+      , (cvn, extV) <- boundClassVarPtrs spelled
+      , let elemT = unionAllTypes typeEnv (mapMaybe (H.lookup cvn . ptVars) (splitUnionType rLeafs))
+      , not (isBottomType elemT) ]
     -- The (class parameter name, external var name) pointers of a bound's class partials:
     -- @Functor[$T -> $_A]@ ⇒ [(T, A)], whether the bound is a predicate top or a positive
     -- class-named leaf.

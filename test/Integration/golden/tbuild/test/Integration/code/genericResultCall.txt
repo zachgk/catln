@@ -365,17 +365,15 @@ Prgm
                         )
                         ( EAppArg
                             { eaaArg = /fn
-                                ( EAppArg
-                                    { eaaArg = Value /acc -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) }
-                                )
-                                ( EAppArg { eaaArg = Value /v } ) -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) =
+                                ( EAppArg { eaaArg = Value /acc -> /Data/Primitive/Integer } )
+                                ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
                                 ( /operator+
                                     ( EAppArg
                                         { eaaArg = Value /l -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /r -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                    ) ↦ ( /Data/Primitive/Integer + /Data/Primitive/Float )
+                                    ) ↦ /Data/Primitive/Integer
                                 )
                             }
                         )
@@ -452,8 +450,8 @@ Prgm
                         )
                         ( EAppArg
                             { eaaArg = /fn
-                                ( EAppArg { eaaArg = Value /acc } )
-                                ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/Algebra/Semigroup =
+                                ( EAppArg { eaaArg = Value /acc -> ∀/Data/Algebra/Semigroup } )
+                                ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> ∀/Data/Algebra/Semigroup =
                                 ( /operator++
                                     ( EAppArg
                                         { eaaArg = Value /l -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }

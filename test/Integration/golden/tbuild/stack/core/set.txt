@@ -388,8 +388,10 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = /fn
-                                        ( EAppArg { eaaArg = Value /acc } )
-                                        ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] =
+                                        ( EAppArg
+                                            { eaaArg = Value /acc -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] }
+                                        )
+                                        ( EAppArg { eaaArg = Value /v -> ∀/Data/Algebra/Ord } ) -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] =
                                         ( /remove
                                             ( EAppArg
                                                 { eaaArg = Value /s -> TVArg /acc = ( Value /acc ↦ TVArg /acc ) }
@@ -660,8 +662,27 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = /fn
-                                        ( EAppArg { eaaArg = Value /acc } )
-                                        ( EAppArg { eaaArg = Value /v } ) -> UnionType
+                                        ( EAppArg
+                                            { eaaArg = Value /acc -> UnionType
+                                                ( Just
+                                                    ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    , fromList []
+                                                    , []
+                                                    )
+                                                , /Data/Set/MkSet
+                                                    [ /K=∀/Data/Algebra/Ord
+                                                    , /V=()
+                                                    ]
+                                                    ( /map=∀/Data/Map
+                                                        [ /K=∀/Data/Algebra/Ord
+                                                        , /V=()
+                                                        ]
+                                                    )
+                                                , []
+                                                )
+                                            }
+                                        )
+                                        ( EAppArg { eaaArg = Value /v -> ∀/Data/Algebra/Ord } ) -> UnionType
                                         ( Just
                                             ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
                                             , fromList []

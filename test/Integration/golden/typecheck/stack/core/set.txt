@@ -188,7 +188,9 @@ Prgm
                         [ /Data/Set/removeAll
                             ( Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
                             ( Value /items -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )= /Data/List/foldl( Value /lst -> TVArg /items = Value /items )
-                            ( /fn( Value /acc )( Value /v ) -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] = /remove( Value /s -> TVArg /acc = Value /acc )( Value /item -> TVArg /v = Value /v ) )( Value /init -> TVArg /s = Value /s )
+                            ( /fn
+                                ( Value /acc -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )( Value /v -> ∀/Data/Algebra/Ord ) -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] = /remove( Value /s -> TVArg /acc = Value /acc )( Value /item -> TVArg /v = Value /v )
+                            )( Value /init -> TVArg /s = Value /s )
                         ]
                     }
                 )
@@ -311,7 +313,25 @@ Prgm
                         [ /Data/Set/addAll
                             ( Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
                             ( Value /items -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )= /Data/List/foldl( Value /lst -> TVArg /items = Value /items )
-                            ( /fn( Value /acc )( Value /v ) -> UnionType
+                            ( /fn
+                                ( Value /acc -> UnionType
+                                    ( Just
+                                        ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /Data/Set/MkSet
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=()
+                                        ]
+                                        ( /map=∀/Data/Map
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=()
+                                            ]
+                                        )
+                                    , []
+                                    )
+                                )( Value /v -> ∀/Data/Algebra/Ord ) -> UnionType
                                 ( Just
                                     ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
                                     , fromList []
