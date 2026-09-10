@@ -105,10 +105,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Set/removeAll( Value s )( Value items= Value /Data/List/Nil )= Value s
-                        , /Data/Set/removeAll( Value s )
-                            ( Value items= /Data/List/Cons( Value head )( Value tail ) )= removeAll
-                            ( Value s= remove( Value s= Value s )( Value item= Value head ) )( Value items= Value tail )
+                        [ /Data/Set/removeAll( Value s )( Value items )= /Data/List/foldl( Value lst= Value items )
+                            ( fn( Value acc )( Value v )= remove( Value s= Value acc )( Value item= Value v ) )( Value init= Value s )
                         ]
                     }
                 )
@@ -192,10 +190,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Set/addAll( Value s )( Value items= Value /Data/List/Nil )= Value s
-                        , /Data/Set/addAll( Value s )
-                            ( Value items= /Data/List/Cons( Value head )( Value tail ) )= addAll
-                            ( Value s= add( Value s= Value s )( Value item= Value head ) )( Value items= Value tail )
+                        [ /Data/Set/addAll( Value s )( Value items )= /Data/List/foldl( Value lst= Value items )
+                            ( fn( Value acc )( Value v )= add( Value s= Value acc )( Value item= Value v ) )( Value init= Value s )
                         ]
                     }
                 )

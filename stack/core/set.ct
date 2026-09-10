@@ -90,15 +90,10 @@ module(Data/Set)
     >>> True
   # ## Union
   addAll[$E -> /Data/Algebra/Ord](s -> /Data/Set[$T -> $_E], items -> /Data/List/ConsList[$T -> $_E]) -> /Data/Set[$T -> $_E]
-    # [addAll] adds every item of a list into a set, one at a time. [union] builds on it.
-    # TODO: [addAll] and [removeAll] are two copies of one fold over a [ConsList], differing only in
-      the step, and should each be a [/Data/List/foldl] call. The fold now evaluates — [foldr] is in
-      [Data/list] and its accumulator may be a different type from the element — but these two carry
-      the accumulator FORWARD, so they need [foldl], and there is no [foldl] to call: it does not
-      build. See the [foldl] TODO beside [foldr] for why, and note that [addAll]'s own tail recursion
-      works here only because its declared result is a [Set] rather than a bare variable.
-  addAll(s, items= /Data/List/Nil)= s
-  addAll(s, items= /Data/List/Cons(head, tail))= addAll(s= add(s= s, item= head), items= tail)
+    # [addAll] adds every item of a list into a set: a [foldl] over the items whose step [add]s one,
+      starting from [s]. The accumulator is the set being built, so it carries forward rather than
+      back, which is what makes this a left fold.
+  addAll(s, items)= /Data/List/foldl(lst= items, fn(acc, v)= add(s= acc, item= v), init= s)
 
   union[$E -> /Data/Algebra/Ord](a -> /Data/Set[$T -> $_E], b -> /Data/Set[$T -> $_E]) -> /Data/Set[$T -> $_E]
     # [union] is the set of items in either [a] or [b], built by adding every item of [b] into [a].
@@ -110,9 +105,9 @@ module(Data/Set)
     >>> True
   # ## Difference
   removeAll[$E -> /Data/Algebra/Ord](s -> /Data/Set[$T -> $_E], items -> /Data/List/ConsList[$T -> $_E]) -> /Data/Set[$T -> $_E]
-    # [removeAll] removes every item of a list from a set, one at a time. [difference] builds on it.
-  removeAll(s, items= /Data/List/Nil)= s
-  removeAll(s, items= /Data/List/Cons(head, tail))= removeAll(s= remove(s= s, item= head), items= tail)
+    # [removeAll] removes every item of a list from a set — [addAll]'s mirror, with [remove] as the
+      step.
+  removeAll(s, items)= /Data/List/foldl(lst= items, fn(acc, v)= remove(s= acc, item= v), init= s)
 
   difference[$E -> /Data/Algebra/Ord](a -> /Data/Set[$T -> $_E], b -> /Data/Set[$T -> $_E]) -> /Data/Set[$T -> $_E]
     # [difference] is the set of items in [a] but not [b], built by removing every item of [b] from

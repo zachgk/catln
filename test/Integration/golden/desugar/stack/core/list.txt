@@ -362,6 +362,27 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/List/foldl"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/List/foldl[ /B : TopType ][ /A : TopType ]
+                            ( Value lst -> ∀/Data/List[ /T=$^/A ] )
+                            ( fn( Value acc -> $_/B )( Value v -> $_/A ) -> $_/B )( Value init -> $_/B ) -> $_/B
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/List/foldl( Value lst= Value Nil )
+                            ( fn( Value acc )( Value v ) )( Value init )= Value init
+                        , /Data/List/foldl
+                            ( Value lst= Cons( Value head )( Value tail ) )
+                            ( fn( Value acc )( Value v ) )( Value init )= foldl( Value lst= Value tail )
+                            ( fn( Value acc )( Value v )= fn( Value acc= Value acc )( Value v= Value v ) )
+                            ( Value init= fn( Value acc= Value init )( Value v= Value head ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/List/elem"
                 , ObjectMapItem
                     { omiDecls =
@@ -519,6 +540,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -738,21 +760,74 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
-                { csValue = "TODO: there is no [foldl] beside [foldr], and it is a compiler gap rather than an omission.
-                Written the obvious way — [foldl(lst= Cons(head, tail), fn(acc, v), init)= foldl(lst= tail,
-                fn(acc, v)= fn(acc= acc, v= v), init= fn(acc= init, v= head))] — its own goldens evaluate but
-                PRINTING one does not build:
-                  Failed to build arrow tree from /Data/List/foldl[/B=Integer, /A=Integer](..) to ∀/Catln/Doc/DShow
-                  ..Found cyclical use of function..Arrow has indeterminate return type
-                The recursive call is in TAIL position, so the arm's result is the generic self-leaf
-                [/Data/List/foldl(/fn(..)=TopType, /init=TopType, /lst=..)], and the followup from there to the
-                print destination re-enters the same arms. [foldr] escapes it because its arm's result is the
-                step function's application rather than a self-call, and [Data/Set/addAll] escapes it because
-                its declared result is a [Set] — a settled leaf the value bound can be met into. A raw self-leaf
-                inherits the bound only through the followup recursion, which is the recursion that cycles.
-                [append] and [reversed] below are folds too and are still their own two-arm recursions;
-                [reversed] is a [foldl], and [append] is what [mmap] is built on, so rewriting it moves the
-                whole [Monad] instance with it." }
+                { csValue = "[foldl] collapses from the left instead, carrying the accumulator forward as it walks, so
+                [foldl(lst= [a, b], fn, init)] is [fn(acc= fn(acc= init, v= a), v= b)]. The two agree when the
+                step is associative and differ when it is not, which the [String] examples show." }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/List/foldl
+                ( Value lst= /Data/List/Cons
+                    ( Value /head= CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value /tail= /Data/List/Cons
+                        ( Value /head= CInt
+                            { ciValue = 2 }
+                        )
+                        ( Value /tail= /Data/List/Cons
+                            ( Value /head= CInt
+                                { ciValue = 3 }
+                            )( Value /tail= Value /Data/List/Nil )
+                        )
+                    )
+                )
+                ( fn( Value acc )( Value v )= /operator+( Value /l= Value acc )( Value /r= Value v ) )
+                ( Value init= CInt
+                    { ciValue = 0 }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "6" }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/List/foldl( Value lst= Value /Data/List/Nil )
+                ( fn( Value acc )( Value v )= /operator+( Value /l= Value acc )( Value /r= Value v ) )
+                ( Value init= CInt
+                    { ciValue = 0 }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "0" }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/List/foldl
+                ( Value lst= /Data/List/Cons
+                    ( Value /head= CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value /tail= /Data/List/Cons
+                        ( Value /head= CInt
+                            { ciValue = 2 }
+                        )( Value /tail= Value /Data/List/Nil )
+                    )
+                )
+                ( fn( Value acc )( Value v )= /operator++( Value /l= Value acc )
+                    ( Value /r= CStr
+                        { csValue = "x" }
+                    )
+                )
+                ( Value init= CStr
+                    { csValue = "s" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "sxx" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "TODO: [append] and [reversed] below are folds too and are still their own two-arm recursions.
+                [reversed] is a [foldl] with [Cons] as the step, and [append] is what [mmap] is built on, so
+                rewriting it moves the whole [Monad] instance with it." }
             )
         , /Catln/#md
             ( Value /text= CStr

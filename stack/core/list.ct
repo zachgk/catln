@@ -60,21 +60,22 @@ module(Data/List)
     >>> 0
   > /Data/List/foldr(lst= [1, 2], fn(acc, v)= acc ++ "x", init= "s")
     >>> sxx
-  # TODO: there is no [foldl] beside [foldr], and it is a compiler gap rather than an omission.
-    Written the obvious way — [foldl(lst= Cons(head, tail), fn(acc, v), init)= foldl(lst= tail,
-    fn(acc, v)= fn(acc= acc, v= v), init= fn(acc= init, v= head))] — its own goldens evaluate but
-    PRINTING one does not build:
-      Failed to build arrow tree from /Data/List/foldl[/B=Integer, /A=Integer](..) to ∀/Catln/Doc/DShow
-      ..Found cyclical use of function..Arrow has indeterminate return type
-    The recursive call is in TAIL position, so the arm's result is the generic self-leaf
-    [/Data/List/foldl(/fn(..)=TopType, /init=TopType, /lst=..)], and the followup from there to the
-    print destination re-enters the same arms. [foldr] escapes it because its arm's result is the
-    step function's application rather than a self-call, and [Data/Set/addAll] escapes it because
-    its declared result is a [Set] — a settled leaf the value bound can be met into. A raw self-leaf
-    inherits the bound only through the followup recursion, which is the recursion that cycles.
-    [append] and [reversed] below are folds too and are still their own two-arm recursions;
-    [reversed] is a [foldl], and [append] is what [mmap] is built on, so rewriting it moves the
-    whole [Monad] instance with it.
+  # [foldl] collapses from the left instead, carrying the accumulator forward as it walks, so
+    [foldl(lst= [a, b], fn, init)] is [fn(acc= fn(acc= init, v= a), v= b)]. The two agree when the
+    step is associative and differ when it is not, which the [String] examples show.
+  foldl[$A, $B](lst -> /Data/List[$T -> $_A], fn(acc -> $_B, v -> $_A) -> $_B, init -> $_B) -> $_B
+  foldl(lst= Nil, fn(acc, v), init)= init
+  foldl(lst= Cons(head, tail), fn(acc, v), init)= foldl(lst= tail, fn(acc, v)= fn(acc= acc, v= v), init= fn(acc= init, v= head))
+
+  > /Data/List/foldl(lst= [1, 2, 3], fn(acc, v)= acc + v, init= 0)
+    >>> 6
+  > /Data/List/foldl(lst= [], fn(acc, v)= acc + v, init= 0)
+    >>> 0
+  > /Data/List/foldl(lst= [1, 2], fn(acc, v)= acc ++ "x", init= "s")
+    >>> sxx
+  # TODO: [append] and [reversed] below are folds too and are still their own two-arm recursions.
+    [reversed] is a [foldl] with [Cons] as the step, and [append] is what [mmap] is built on, so
+    rewriting it moves the whole [Monad] instance with it.
   # ## Summing
   sum(lst -> /Data/List[$T -> Integer]) -> Integer
     # [sum] adds a list of [Integer]s: [foldr] with addition, starting from zero.

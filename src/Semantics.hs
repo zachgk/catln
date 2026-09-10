@@ -410,8 +410,25 @@ arrowDestTypeBase resolveAppFields typeEnv src oa@ObjArr{oaArr=Just (oaArrExpr, 
         -- bound before substituting: an accessor result parameterized by the receiver's own type
         -- (@:$T.eq -> Eqv[$T]@) desugars to @Eqv[/T=Top]@, dropping the @$/T@ link, so without this
         -- the element cannot follow the receiver (see 'relateArrowVars').
-        arr' = substitute $ relateArrowVars vaenv $ getMetaType oaM
-        joined = fromMaybe arr' expr'
+        arr'0 = substitute $ relateArrowVars vaenv $ getMetaType oaM
+        -- DISPATCH ONLY: the arm's own result meta can be Top, and then there is nothing to
+        -- substitute. A result spelled by a declaration variable is erased to the Top it denotes
+        -- before tree build — measured @oaM=TopType@ for @f[$B](..) -> $_B@ — while a concrete one
+        -- survives, which is the whole difference between a tail-recursive fold that builds and one
+        -- that does not. The DECLARATION still holds the result, and instantiating it at this call
+        -- is exactly 'typeGraphDeclaredResult', the same value 'TreeBuild.buildPartialCallTree'
+        -- already carries beside it as the call's value bound. Kept out of the typecheck-side
+        -- 'arrowDestType' for the reason 'arrowDestTypeDispatch' gives: a read that resolves
+        -- differently as the partial's vars narrow violates monotonicity there.
+        arr' | arr'0 /= PTopType = arr'0
+             | resolveAppFields  = typeGraphDeclaredResult typeEnv vaenv srcPartial
+             | otherwise         = arr'0
+        -- The body's type is preferred, but a Top body type is not information: an arm returning a
+        -- bare declaration variable (@foldl(lst= Nil, ..)= init@) presents one, and an arrow whose
+        -- presented dest is Top is refused outright ("Arrow has indeterminate return type").
+        joined = case expr' of
+          Just t | t /= PTopType || not resolveAppFields -> t
+          _                                              -> arr'
         -- Only rewrite a body that directly CONSTRUCTS a data value (@Cons(head=x)@): its applied
         -- arguments are the constructor's fields. A function/operator body (@a && b@, @f(a=..)@) has
         -- applied arguments that are the callee's parameters, not the result's fields, so leave it.

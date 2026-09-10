@@ -160,13 +160,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Map/keys( Value m= Value Leaf )= Value /Data/List/Nil
-                        , /Data/Map/keys
-                            ( Value m= Node( Value left )( Value key )( Value value )( Value right ) )= /Data/List/append
-                            ( Value a= keys( Value m= Value left ) )
-                            ( Value b= /Data/List/Cons( Value head= Value key )
-                                ( Value tail= keys( Value m= Value right ) )
-                            )
+                        [ /Data/Map/keys( Value m )= foldEntries( Value m= Value m )
+                            ( fn( Value acc )( Value k )( Value v )= /Data/List/Cons( Value head= Value k )( Value tail= Value acc ) )( Value init= Value /Data/List/Nil )
                         ]
                     }
                 )
@@ -205,17 +200,15 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Map/size( Value m= Value Leaf ) -> /Data/Primitive/Integer = CInt
-                            { ciValue = 0 }
-                        , /Data/Map/size
-                            ( Value m= Node( Value left )( Value key )( Value value )( Value right ) ) -> /Data/Primitive/Integer = /operator+
-                            ( Value /l= /operator+
-                                ( Value /l= CInt
+                        [ /Data/Map/size( Value m ) -> /Data/Primitive/Integer = foldEntries( Value m= Value m )
+                            ( fn( Value acc )( Value k )( Value v )= /operator+( Value /l= Value acc )
+                                ( Value /r= CInt
                                     { ciValue = 1 }
                                 )
-                                ( Value /r= size( Value m= Value left ) )
                             )
-                            ( Value /r= size( Value m= Value right ) )
+                            ( Value init= CInt
+                                { ciValue = 0 }
+                            )
                         ]
                     }
                 )
@@ -241,11 +234,36 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Map/graft( Value from= Value Leaf )( Value into )= Value into
-                        , /Data/Map/graft
-                            ( Value from= Node( Value left )( Value key@Value fk )( Value value@Value fv )( Value right ) )( Value into )= graft( Value from= Value right )
-                            ( Value into= graft( Value from= Value left )
-                                ( Value into= insert( Value m= Value into )( Value key= Value fk )( Value value= Value fv ) )
+                        [ /Data/Map/graft( Value from )( Value into )= foldEntries( Value m= Value from )
+                            ( fn( Value acc )( Value k )( Value v )= insert( Value m= Value acc )( Value key= Value k )( Value value= Value v ) )( Value init= Value into )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Map/foldEntries"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/foldEntries[ /B : TopType ][ /MV : TopType ][ /MK : ∀/Data/Algebra/Ord ]
+                            ( Value m -> ∀/Data/Map
+                                [ /K=$^/MK
+                                , /V=$^/MV
+                                ]
+                            )
+                            ( fn( Value acc -> $_/B )( Value k -> $/MK )( Value v -> $/MV ) -> $_/B )( Value init -> $_/B ) -> $_/B
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Map/foldEntries( Value m= Value Leaf )
+                            ( fn( Value acc )( Value k )( Value v ) )( Value init )= Value init
+                        , /Data/Map/foldEntries
+                            ( Value m= Node( Value left )( Value key )( Value value )( Value right ) )
+                            ( fn( Value acc )( Value k )( Value v ) )( Value init )= foldEntries( Value m= Value left )
+                            ( fn( Value acc )( Value k )( Value v )= fn( Value acc= Value acc )( Value k= Value k )( Value v= Value v ) )
+                            ( Value init= fn
+                                ( Value acc= foldEntries( Value m= Value right )
+                                    ( fn( Value acc )( Value k )( Value v )= fn( Value acc= Value acc )( Value k= Value k )( Value v= Value v ) )( Value init= Value init )
+                                )( Value k= Value key )( Value v= Value value )
                             )
                         ]
                     }
@@ -379,13 +397,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Map/values( Value m= Value Leaf )= Value /Data/List/Nil
-                        , /Data/Map/values
-                            ( Value m= Node( Value left )( Value key )( Value value )( Value right ) )= /Data/List/append
-                            ( Value a= values( Value m= Value left ) )
-                            ( Value b= /Data/List/Cons( Value head= Value value )
-                                ( Value tail= values( Value m= Value right ) )
-                            )
+                        [ /Data/Map/values( Value m )= foldEntries( Value m= Value m )
+                            ( fn( Value acc )( Value k )( Value v )= /Data/List/Cons( Value head= Value v )( Value tail= Value acc ) )( Value init= Value /Data/List/Nil )
                         ]
                     }
                 )
@@ -393,6 +406,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -490,6 +504,42 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr
                 { csValue = "## Size" }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/Map/foldEntries
+                ( Value m= insert
+                    ( Value m= insert( Value m= Value Leaf )
+                        ( Value key= CInt
+                            { ciValue = 1 }
+                        )
+                        ( Value value= CInt
+                            { ciValue = 10 }
+                        )
+                    )
+                    ( Value key= CInt
+                        { ciValue = 2 }
+                    )
+                    ( Value value= CInt
+                        { ciValue = 20 }
+                    )
+                )
+                ( fn( Value acc )( Value k )( Value v )= /operator+( Value /l= Value acc )( Value /r= Value v ) )
+                ( Value init= CInt
+                    { ciValue = 0 }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "30" }
+            )
+        , /Catln/#print
+            ( Value /p= /Data/Map/foldEntries( Value m= Value Leaf )
+                ( fn( Value acc )( Value k )( Value v )= /operator+( Value /l= Value acc )( Value /r= Value v ) )
+                ( Value init= CInt
+                    { ciValue = 0 }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "0" }
             )
         , /Catln/#print
             ( Value /p= size
@@ -826,20 +876,10 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr
                 { csValue = "## Keys and values
-                TODO: [size], [keys], [values], [graft] and [containedIn] are five in-order traversals of the
-                same tree — [keys] and [values] differ only in which field they cons — and should all be one
-                [foldEntries(m, fn(acc, k, v), init)] with five different step functions. Two of the three things
-                that used to stop it are gone: the fold SIGNATURE compiles, and the unreduced recursive call is
-                fixed — [/Data/List/foldr] is written and its accumulator may differ from the element type. A
-                three-parameter function argument is fine too.
-                What is left is the tree's own shape. A node sits BETWEEN two subtrees, so one of the two
-                recursive calls has to be outermost, which puts a self-call in tail position. Written that way
-                the [Node] arm does not build and is dropped silently, leaving the [Leaf] arm as the only option:
-                  Failed match in eval callTree:
-                    Val type: /Data/Map/foldEntries(/fn=/fn(/acc=Integer, /v=Integer, /k=Integer), /m=Node(..), ..)
-                    Options: [foldEntries(.., /m=/Data/Map/Leaf, ..)]
-                Note the step's parameters are concrete there — this is not the [TopType] parameter story. It is
-                the same tail-position gap that stops [/Data/List/foldl]; see the [foldl] TODO beside [foldr]." }
+                [keys] and [values] are the same in-order traversal as [size], differing only in what each entry
+                contributes, so all three are [foldEntries] with a different step. Because a node sits BETWEEN
+                its two subtrees, the fold walks the [right] subtree into the accumulator first, then the node,
+                then the [left] one — so consing each key on the way out leaves them in ascending order." }
             )
         , /Catln/#print
             ( Value /p= /operator==

@@ -28,39 +28,7 @@ Prgm
                     , omiDefs =
                         [ /Data/Set/intersection
                             ( Value /a -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
-                            ( Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /Data/Set/MkSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=()
-                                    ]
-                                    ( /map=∀/Data/Map
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=()
-                                        ]
-                                    ) + /Data/Set/addAll
-                                    ( /items=UnionType
-                                        ( Just
-                                            ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                            ( /head=$/T
-                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                            )
-                                        , []
-                                        )
-                                    , /s=∀/Data/Set/MapSet
-                                    )
-                                )
-                            , []
-                            ) = /Data/Set/addAll( Value /s -> ∀/Data/Set/MapSet = Value /Data/Set/empty )
+                            ( Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )= /Data/Set/addAll( Value /s -> ∀/Data/Set/MapSet = Value /Data/Set/empty )
                             ( Value /items -> UnionType
                                 ( Just
                                     ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
@@ -73,19 +41,7 @@ Prgm
                                     )
                                 , []
                                 ) = /Data/List/filter
-                                ( Value /lst -> UnionType
-                                    ( Just
-                                        ( PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Data/List[ /T=TopType ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/List/Cons[ /T=TopType ]
-                                        ( /head=$/T
-                                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                        )
-                                    , []
-                                    ) = /Data/Set/elements( Value /s -> TVArg /a = Value /a )
-                                )
+                                ( Value /lst -> ∀/Data/List/ConsList[ /T=$^/A ] = /Data/Set/elements( Value /s -> TVArg /a = Value /a ) )
                                 ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean = /Data/Set/contains( Value /s -> TVArg /b = Value /b )( Value /item -> TVArg /v = Value /v ) )
                             )
                         ]
@@ -104,52 +60,8 @@ Prgm
                     , omiDefs =
                         [ /Data/Set/union
                             ( Value /a -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
-                            ( Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /Data/Set/MkSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=()
-                                    ]
-                                    ( /map=∀/Data/Map
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=()
-                                        ]
-                                    ) + /Data/Set/addAll
-                                    ( /items=UnionType
-                                        ( Just
-                                            ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                            ( /head=$/T
-                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                            )
-                                        , []
-                                        )
-                                    , /s=∀/Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                    )
-                                )
-                            , []
-                            ) = /Data/Set/addAll( Value /s -> TVArg /a = Value /a )
-                            ( Value /items -> UnionType
-                                ( Just
-                                    ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                    ( /head=$/T
-                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    )
-                                , []
-                                ) = /Data/Set/elements( Value /s -> TVArg /b = Value /b )
-                            )
+                            ( Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )= /Data/Set/addAll( Value /s -> TVArg /a = Value /a )
+                            ( Value /items -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] = /Data/Set/elements( Value /s -> TVArg /b = Value /b ) )
                         ]
                     }
                 )
@@ -239,42 +151,7 @@ Prgm
                                     , /V=TopType
                                     ]
                                 )
-                            ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/List[ /T=TopType ]
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /Data/List/append
-                                    ( /a=UnionType
-                                        ( Just
-                                            ( PredClass /Data/List/ConsList[ /T=TopType ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/List/Cons[ /T=TopType ]
-                                            ( /head=TopType
-                                            , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                            )
-                                        , []
-                                        )
-                                    , /b=/Data/List/Cons[ /T=TopType ]
-                                        ( /head=TopType
-                                        , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                        )
-                                    ) + /Data/Map/keys
-                                    ( /m=∀/Data/Map
-                                        [ /K=TopType
-                                        , /V=TopType
-                                        ]
-                                    ) + /Data/List/Cons[ /T=TopType ]
-                                    ( /head=TopType
-                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                    )
-                                )
-                            , []
-                            ) = /Data/Map/keys( Value /m -> TVArg /map = Value /map )
+                            )= /Data/Map/keys( Value /m -> TVArg /map = Value /map )
                         ]
                     }
                 )
@@ -292,19 +169,7 @@ Prgm
                         [ /Data/Set/isSubsetOf
                             ( Value /a -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
                             ( Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/Primitive/Boolean = /Data/List/allBy
-                            ( Value /lst -> UnionType
-                                ( Just
-                                    ( PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Data/List[ /T=TopType ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/List/Cons[ /T=TopType ]
-                                    ( /head=$/T
-                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                    )
-                                , []
-                                ) = /Data/Set/elements( Value /s -> TVArg /a = Value /a )
-                            )
+                            ( Value /lst -> ∀/Data/List/ConsList[ /T=$^/A ] = /Data/Set/elements( Value /s -> TVArg /a = Value /a ) )
                             ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean = /Data/Set/contains( Value /s -> TVArg /b = Value /b )( Value /item -> TVArg /v = Value /v ) )
                         ]
                     }
@@ -321,70 +186,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Set/removeAll
-                            ( Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )( Value /items -> /Data/List/Nil = Value /Data/List/Nil ) -> TVArg /s = Value /s
-                        , /Data/Set/removeAll
                             ( Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
-                            ( Value /items -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                ( /head=∀/Data/Algebra/Ord
-                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                ) = /Data/List/Cons( Value /head -> ∀/Data/Algebra/Ord )
-                                ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
-                            ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /Data/Set/removeAll
-                                    ( /items=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    , /s=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Set/MkSet
-                                            [ /K=∀/Data/Algebra/Ord
-                                            , /V=TopType
-                                            ]
-                                            ( /map=∀/Data/Map
-                                                [ /K=∀/Data/Algebra/Ord
-                                                , /V=$^/MV
-                                                ]
-                                            )
-                                        , []
-                                        )
-                                    ) + /Data/Set/MkSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
-                                    ]
-                                    ( /map=∀/Data/Map
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=$^/MV
-                                        ]
-                                    )
-                                )
-                            , []
-                            ) = /Data/Set/removeAll
-                            ( Value /s -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Set/MkSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
-                                    ]
-                                    ( /map=∀/Data/Map
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=$^/MV
-                                        ]
-                                    )
-                                , []
-                                ) = /remove( Value /s -> TVArg /s = Value /s )( Value /item -> TVArg /head = Value /head )
-                            )( Value /items -> TVArg /tail = Value /tail )
+                            ( Value /items -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )= /Data/List/foldl( Value /lst -> TVArg /items = Value /items )
+                            ( /fn( Value /acc )( Value /v ) -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] = /remove( Value /s -> TVArg /acc = Value /acc )( Value /item -> TVArg /v = Value /v ) )( Value /init -> TVArg /s = Value /s )
                         ]
                     }
                 )
@@ -456,8 +260,8 @@ Prgm
                                     )
                                 , []
                                 ) = /operator==
-                                ( Value /l -> /Data/Primitive/Integer = /size( Value /s -> TVArg /a = Value /a ) )
-                                ( Value /r -> /Data/Primitive/Integer = /size( Value /s -> TVArg /b = Value /b ) )
+                                ( Value /l -> ∀/Data/Algebra/Eq = /size( Value /s -> TVArg /a = Value /a ) )
+                                ( Value /r -> ∀/Data/Algebra/Eq = /size( Value /s -> TVArg /b = Value /b ) )
                             )
                             ( Value /r -> ∀/Data/Primitive/Boolean = /Data/Set/isSubsetOf( Value /a -> TVArg /a = Value /a )( Value /b -> TVArg /b = Value /b ) )
                         ]
@@ -486,7 +290,7 @@ Prgm
                                 )
                             , []
                             ) = /operator==
-                            ( Value /l -> /Data/Primitive/Integer = /size( Value /s -> TVArg /s = Value /s ) )
+                            ( Value /l -> ∀/Data/Algebra/Eq = /size( Value /s -> TVArg /s = Value /s ) )
                             ( Value /r -> /Data/Primitive/Integer = CInt
                                 { ciValue = 0 }
                             )
@@ -505,53 +309,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Set/addAll
-                            ( Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )( Value /items -> /Data/List/Nil = Value /Data/List/Nil ) -> TVArg /s = Value /s
-                        , /Data/Set/addAll
                             ( Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
-                            ( Value /items -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                ( /head=∀/Data/Algebra/Ord
-                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                ) = /Data/List/Cons( Value /head -> ∀/Data/Algebra/Ord )
-                                ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
-                            ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /Data/Set/MkSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=()
-                                    ]
-                                    ( /map=∀/Data/Map
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=()
-                                        ]
-                                    ) + /Data/Set/addAll
-                                    ( /items=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    , /s=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Set/MkSet
-                                            [ /K=∀/Data/Algebra/Ord
-                                            , /V=()
-                                            ]
-                                            ( /map=∀/Data/Map
-                                                [ /K=∀/Data/Algebra/Ord
-                                                , /V=()
-                                                ]
-                                            )
-                                        , []
-                                        )
-                                    )
-                                )
-                            , []
-                            ) = /Data/Set/addAll
-                            ( Value /s -> UnionType
+                            ( Value /items -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )= /Data/List/foldl( Value /lst -> TVArg /items = Value /items )
+                            ( /fn( Value /acc )( Value /v ) -> UnionType
                                 ( Just
                                     ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
                                     , fromList []
@@ -567,8 +327,8 @@ Prgm
                                         ]
                                     )
                                 , []
-                                ) = /Data/Set/add( Value /s -> TVArg /s = Value /s )( Value /item -> TVArg /head = Value /head )
-                            )( Value /items -> TVArg /tail = Value /tail )
+                                ) = /Data/Set/add( Value /s -> TVArg /acc = Value /acc )( Value /item -> TVArg /v = Value /v )
+                            )( Value /init -> TVArg /s = Value /s )
                         ]
                     }
                 )
@@ -611,52 +371,8 @@ Prgm
                     , omiDefs =
                         [ /Data/Set/difference
                             ( Value /a -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
-                            ( Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /Data/Set/removeAll
-                                    ( /items=UnionType
-                                        ( Just
-                                            ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                            ( /head=$/T
-                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                            )
-                                        , []
-                                        )
-                                    , /s=∀/Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                    ) + /Data/Set/MkSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
-                                    ]
-                                    ( /map=∀/Data/Map
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=$^/MV
-                                        ]
-                                    )
-                                )
-                            , []
-                            ) = /Data/Set/removeAll( Value /s -> TVArg /a = Value /a )
-                            ( Value /items -> UnionType
-                                ( Just
-                                    ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                    ( /head=$/T
-                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    )
-                                , []
-                                ) = /Data/Set/elements( Value /s -> TVArg /b = Value /b )
-                            )
+                            ( Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )= /Data/Set/removeAll( Value /s -> TVArg /a = Value /a )
+                            ( Value /items -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] = /Data/Set/elements( Value /s -> TVArg /b = Value /b ) )
                         ]
                     }
                 )
@@ -717,41 +433,14 @@ Prgm
                                 )
                             )( Value /item -> ∀/Data/Algebra/Ord ) -> /Data/Set/MkSet
                             ( /map=∀/Data/Map
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=$^/MV
+                                [ /K=TopType
+                                , /V=TopType
                                 ]
                             ) = /Data/Set/MkSet
-                            ( Value /map -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Map
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=$^/MV
-                                        ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Map/Node
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=$^/MV
-                                    ]
-                                    ( /value=$/V
-                                    , /key=∀/Data/Algebra/Ord
-                                    , /right=
-                                        ( TopType | PredClass /Data/Map
-                                            [ /K=∀/Data/Algebra/Ord
-                                            , /V=$^/MV
-                                            ] && PredClass /Data/Map/BinTree
-                                            [ /K=∀/Data/Algebra/Ord
-                                            , /V=$^/MV
-                                            ]
-                                        )
-                                    , /left=∀/Data/Map/BinTree
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=$^/MV
-                                        ]
-                                    )
-                                , []
-                                ) = /Data/Map/remove( Value /m -> TVArg /map = Value /map )( Value /key -> TVArg /item = Value /item )
+                            ( Value /map -> ∀/Data/Map
+                                [ /K=TopType
+                                , /V=TopType
+                                ] = /Data/Map/remove( Value /m -> TVArg /map = Value /map )( Value /key -> TVArg /item = Value /item )
                             )
                         ]
                     }
@@ -968,7 +657,7 @@ Prgm
                 { csValue = "Adding the same item twice leaves the size at one — a set holds each item at most once." }
             )
         , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /size
+            ( Value /p -> ∀/Catln/Doc/DShow = /size
                 ( Value /s -> UnionType
                     ( Just
                         ( PredClass /Data/Set[ /T=/Data/Primitive/Integer ]
@@ -1053,18 +742,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> UnionType
-                    ( Just
-                        ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq
-                        , fromList []
-                        , []
-                        )
-                    , /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
-                        ( /head=$/T
-                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ]
-                        )
-                    , []
-                    ) = /Data/Set/elements
+                ( Value /l -> ∀/Data/Algebra/Eq = /Data/Set/elements
                     ( Value /s -> UnionType
                         ( Just
                             ( PredClass /Data/Set[ /T=/Data/Primitive/Integer ]
@@ -1157,23 +835,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Set/contains
-                ( Value /s -> UnionType
-                    ( Just
-                        ( PredClass /Data/Set[ /T=/Data/Primitive/Integer ]
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Set/MkSet
-                        [ /K=∀/Data/Algebra/Ord
-                        , /V=TopType
-                        ]
-                        ( /map=∀/Data/Map
-                            [ /K=∀/Data/Algebra/Ord
-                            , /V=$^/MV
-                            ]
-                        )
-                    , []
-                    ) = /remove
+                ( Value /s -> ∀/Data/Set[ /T=/Data/Primitive/Integer ] = /remove
                     ( Value /s -> UnionType
                         ( Just
                             ( PredClass /Data/Set[ /T=/Data/Primitive/Integer ]
@@ -1229,23 +891,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Set/contains
-                ( Value /s -> UnionType
-                    ( Just
-                        ( PredClass /Data/Set[ /T=/Data/Primitive/Integer ]
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Set/MkSet
-                        [ /K=∀/Data/Algebra/Ord
-                        , /V=TopType
-                        ]
-                        ( /map=∀/Data/Map
-                            [ /K=∀/Data/Algebra/Ord
-                            , /V=$^/MV
-                            ]
-                        )
-                    , []
-                    ) = /remove
+                ( Value /s -> ∀/Data/Set[ /T=/Data/Primitive/Integer ] = /remove
                     ( Value /s -> UnionType
                         ( Just
                             ( PredClass /Data/Set[ /T=/Data/Primitive/Integer ]
@@ -1304,24 +950,8 @@ Prgm
                 { csValue = "## Union" }
             )
         , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /size
-                ( Value /s -> UnionType
-                    ( Just
-                        ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Set/MkSet
-                        [ /K=∀/Data/Algebra/Ord
-                        , /V=()
-                        ]
-                        ( /map=∀/Data/Map
-                            [ /K=∀/Data/Algebra/Ord
-                            , /V=()
-                            ]
-                        )
-                    , []
-                    ) = /Data/Set/union
+            ( Value /p -> ∀/Catln/Doc/DShow = /size
+                ( Value /s -> ∀/Data/Set[ /T=TopType ] = /Data/Set/union
                     ( Value /a -> UnionType
                         ( Just
                             ( PredClass /Data/Set[ /T=/Data/Primitive/Integer ]
@@ -1413,23 +1043,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Set/contains
-                ( Value /s -> UnionType
-                    ( Just
-                        ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Set/MkSet
-                        [ /K=∀/Data/Algebra/Ord
-                        , /V=()
-                        ]
-                        ( /map=∀/Data/Map
-                            [ /K=∀/Data/Algebra/Ord
-                            , /V=()
-                            ]
-                        )
-                    , []
-                    ) = /Data/Set/union
+                ( Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] = /Data/Set/union
                     ( Value /a -> UnionType
                         ( Just
                             ( PredClass /Data/Set[ /T=/Data/Primitive/Integer ]
@@ -1485,24 +1099,8 @@ Prgm
                 { csValue = "## Difference" }
             )
         , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /size
-                ( Value /s -> UnionType
-                    ( Just
-                        ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Set/MkSet
-                        [ /K=∀/Data/Algebra/Ord
-                        , /V=TopType
-                        ]
-                        ( /map=∀/Data/Map
-                            [ /K=∀/Data/Algebra/Ord
-                            , /V=$^/MV
-                            ]
-                        )
-                    , []
-                    ) = /Data/Set/difference
+            ( Value /p -> ∀/Catln/Doc/DShow = /size
+                ( Value /s -> ∀/Data/Set[ /T=TopType ] = /Data/Set/difference
                     ( Value /a -> UnionType
                         ( Just
                             ( PredClass /Data/Set[ /T=/Data/Primitive/Integer ]
@@ -1573,23 +1171,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Set/contains
-                ( Value /s -> UnionType
-                    ( Just
-                        ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Set/MkSet
-                        [ /K=∀/Data/Algebra/Ord
-                        , /V=TopType
-                        ]
-                        ( /map=∀/Data/Map
-                            [ /K=∀/Data/Algebra/Ord
-                            , /V=$^/MV
-                            ]
-                        )
-                    , []
-                    ) = /Data/Set/difference
+                ( Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] = /Data/Set/difference
                     ( Value /a -> UnionType
                         ( Just
                             ( PredClass /Data/Set[ /T=/Data/Primitive/Integer ]
@@ -1663,23 +1245,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Set/contains
-                ( Value /s -> UnionType
-                    ( Just
-                        ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Set/MkSet
-                        [ /K=∀/Data/Algebra/Ord
-                        , /V=TopType
-                        ]
-                        ( /map=∀/Data/Map
-                            [ /K=∀/Data/Algebra/Ord
-                            , /V=$^/MV
-                            ]
-                        )
-                    , []
-                    ) = /Data/Set/difference
+                ( Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] = /Data/Set/difference
                     ( Value /a -> UnionType
                         ( Just
                             ( PredClass /Data/Set[ /T=/Data/Primitive/Integer ]
@@ -1756,24 +1322,8 @@ Prgm
                 { csValue = "## Intersection" }
             )
         , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /size
-                ( Value /s -> UnionType
-                    ( Just
-                        ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Set/MkSet
-                        [ /K=∀/Data/Algebra/Ord
-                        , /V=()
-                        ]
-                        ( /map=∀/Data/Map
-                            [ /K=∀/Data/Algebra/Ord
-                            , /V=()
-                            ]
-                        )
-                    , []
-                    ) = /Data/Set/intersection
+            ( Value /p -> ∀/Catln/Doc/DShow = /size
+                ( Value /s -> ∀/Data/Set[ /T=TopType ] = /Data/Set/intersection
                     ( Value /a -> UnionType
                         ( Just
                             ( PredClass /Data/Set[ /T=/Data/Primitive/Integer ]
@@ -1865,23 +1415,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Set/contains
-                ( Value /s -> UnionType
-                    ( Just
-                        ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Set/MkSet
-                        [ /K=∀/Data/Algebra/Ord
-                        , /V=()
-                        ]
-                        ( /map=∀/Data/Map
-                            [ /K=∀/Data/Algebra/Ord
-                            , /V=()
-                            ]
-                        )
-                    , []
-                    ) = /Data/Set/intersection
+                ( Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] = /Data/Set/intersection
                     ( Value /a -> UnionType
                         ( Just
                             ( PredClass /Data/Set[ /T=/Data/Primitive/Integer ]
@@ -1976,23 +1510,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /Data/Set/contains
-                ( Value /s -> UnionType
-                    ( Just
-                        ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Set/MkSet
-                        [ /K=∀/Data/Algebra/Ord
-                        , /V=()
-                        ]
-                        ( /map=∀/Data/Map
-                            [ /K=∀/Data/Algebra/Ord
-                            , /V=()
-                            ]
-                        )
-                    , []
-                    ) = /Data/Set/intersection
+                ( Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] = /Data/Set/intersection
                     ( Value /a -> UnionType
                         ( Just
                             ( PredClass /Data/Set[ /T=/Data/Primitive/Integer ]

@@ -26,11 +26,23 @@ module(Data/Map)
       empty map is written [Leaf].
 
   # ## Size
+  foldEntries[$MK -> /Data/Algebra/Ord, $MV, $B](m -> /Data/Map[$K -> $_MK, $V -> $_MV], fn(acc -> $_B, k -> $MK, v -> $MV) -> $_B, init -> $_B) -> $_B
+    # [foldEntries] collapses a map to a single value by visiting every entry in key order. A node
+      sits between its two subtrees, so the walk folds the [right] subtree into the accumulator
+      first, then the node's own entry, then the [left] subtree — which means the step sees entries
+      in DESCENDING key order and a step that prepends therefore produces ascending order.
+      [size], [keys] and [values] are all this fold with a different step.
+  foldEntries(m= Leaf, fn(acc, k, v), init)= init
+  foldEntries(m= Node(left, key, value, right), fn(acc, k, v), init)= foldEntries(m= left, fn(acc, k, v)= fn(acc= acc, k= k, v= v), init= fn(acc= foldEntries(m= right, fn(acc, k, v)= fn(acc= acc, k= k, v= v), init= init), k= key, v= value))
+
+  > /Data/Map/foldEntries(m= insert(m= insert(m= Leaf, key= 1, value= 10), key= 2, value= 20), fn(acc, k, v)= acc + v, init= 0)
+    >>> 30
+  > /Data/Map/foldEntries(m= Leaf, fn(acc, k, v)= acc + v, init= 0)
+    >>> 0
   size(m -> /Data/Map[$K -> $_K, $V -> $_V]) -> Integer
     # The number of entries in a map. Declared on [Map] (any map has a size) and implemented here for
       the [BinTree] constructors: an empty tree has none, and a node counts itself plus both subtrees.
-  size(m= Leaf)= 0
-  size(m= Node(left, key, value, right))= 1 + size(m= left) + size(m= right)
+  size(m)= foldEntries(m= m, fn(acc, k, v)= acc + 1, init= 0)
 
   > size(m= insert(m= insert(m= Leaf, key= 1, value= 10), key= 2, value= 20))
     >>> 2
@@ -127,10 +139,10 @@ module(Data/Map)
   remove(m= Node(left, key@nk, value@nv, right), key) else = graft(from= left, into= right)
 
   graft[$MK -> /Data/Algebra/Ord, $MV](from -> BinTree[$K -> $_MK, $V -> $_MV], into -> /Data/Map[$K -> $_MK, $V -> $_MV]) -> /Data/Map[$K -> $_MK, $V -> $_MV]
-    # [graft] inserts every entry of the [from] tree into the [into] map, walking [from] in order and
-      [insert]ing each node's [key]/[value]. [removeStep] uses it to merge a deleted node's subtrees.
-  graft(from= Leaf, into)= into
-  graft(from= Node(left, key@fk, value@fv, right), into)= graft(from= right, into= graft(from= left, into= insert(m= into, key= fk, value= fv)))
+    # [graft] inserts every entry of the [from] tree into the [into] map: [foldEntries] over [from]
+      with [insert] as the step, starting from [into]. [remove] uses it to merge a deleted node's
+      two subtrees.
+  graft(from, into)= foldEntries(m= from, fn(acc, k, v)= insert(m= acc, key= k, value= v), init= into)
 
   # Removing a present key drops it (the other entries stay); removing an absent key is a no-op.
   > containsKey(m= remove(m= insert(m= insert(m= Leaf, key= 1, value= 10), key= 2, value= 20), key= 1), key= 1)
@@ -145,31 +157,18 @@ module(Data/Map)
   > (keys(m= remove(m= insert(m= insert(m= insert(m= Leaf, key= 2, value= 20), key= 1, value= 10), key= 3, value= 30), key= 2)) == [1, 3])
     >>> True
   # ## Keys and values
-    TODO: [size], [keys], [values], [graft] and [containedIn] are five in-order traversals of the
-    same tree — [keys] and [values] differ only in which field they cons — and should all be one
-    [foldEntries(m, fn(acc, k, v), init)] with five different step functions. Two of the three things
-    that used to stop it are gone: the fold SIGNATURE compiles, and the unreduced recursive call is
-    fixed — [/Data/List/foldr] is written and its accumulator may differ from the element type. A
-    three-parameter function argument is fine too.
-    What is left is the tree's own shape. A node sits BETWEEN two subtrees, so one of the two
-    recursive calls has to be outermost, which puts a self-call in tail position. Written that way
-    the [Node] arm does not build and is dropped silently, leaving the [Leaf] arm as the only option:
-      Failed match in eval callTree:
-        Val type: /Data/Map/foldEntries(/fn=/fn(/acc=Integer, /v=Integer, /k=Integer), /m=Node(..), ..)
-        Options: [foldEntries(.., /m=/Data/Map/Leaf, ..)]
-    Note the step's parameters are concrete there — this is not the [TopType] parameter story. It is
-    the same tail-position gap that stops [/Data/List/foldl]; see the [foldl] TODO beside [foldr].
+    [keys] and [values] are the same in-order traversal as [size], differing only in what each entry
+    contributes, so all three are [foldEntries] with a different step. Because a node sits BETWEEN
+    its two subtrees, the fold walks the [right] subtree into the accumulator first, then the node,
+    then the [left] one — so consing each key on the way out leaves them in ascending order.
   keys(m -> /Data/Map[$K -> $_K, $V -> $_V]) -> /Data/List[$T -> $_K]
-    # [keys] lists the map's keys by an in-order traversal, so a [BinTree]'s keys come out in
-      ascending order (the [left] subtree's keys, then this node's, then the [right] subtree's).
-  keys(m= Leaf)= /Data/List/Nil
-  keys(m= Node(left, key, value, right))= /Data/List/append(a= keys(m= left), b= /Data/List/Cons(head= key, tail= keys(m= right)))
+    # [keys] lists the map's keys in ascending order.
+  keys(m)= foldEntries(m= m, fn(acc, k, v)= /Data/List/Cons(head= k, tail= acc), init= /Data/List/Nil)
 
   values(m -> /Data/Map[$K -> $_K, $V -> $_V]) -> /Data/List[$T -> $_V]
     # [values] lists the map's values in the same in-order key sequence as [keys], so [keys] and
       [values] line up position for position.
-  values(m= Leaf)= /Data/List/Nil
-  values(m= Node(left, key, value, right))= /Data/List/append(a= values(m= left), b= /Data/List/Cons(head= value, tail= values(m= right)))
+  values(m)= foldEntries(m= m, fn(acc, k, v)= /Data/List/Cons(head= v, tail= acc), init= /Data/List/Nil)
 
   > (keys(m= insert(m= insert(m= Leaf, key= 2, value= 20), key= 1, value= 10)) == [1, 2])
     >>> True
@@ -198,6 +197,16 @@ module(Data/Map)
     # [containedIn] is [True] when every entry of [a] appears in [b] with an equal value. It walks
       [a]'s nodes and, for each, looks the key up in [b] ([get]) and checks the result equals
       [Some(value)] through the [Maybe] [Eq] instance.
+    # TODO: this is a [foldEntries] like the traversals above, and unlike them it does not build.
+      Written as [foldEntries(m= a, fn(acc, k, v)= acc && (get(m= b, key= k) == Some(value= v)), init=
+      True)] it fails with
+        Failed to build arrow tree from /Data/Maybe/Some(/value=TopType)
+          to /Data/Maybe/Some[/T=∀/Data/Algebra/Eq](/value=$/T)
+      because the step's own parameters arrive as [/fn(/acc=TopType, /v=TopType, /k=TopType)], so
+      [Some(value= v)] is built at [TopType] and cannot meet the [Eq] bound the [Maybe] instance
+      requires. That is the lambda-parameter narrowing gap, not the traversal — [$_MV -> Eq] never
+      reaches [v]. The other four traversals do not need their element type bounded, which is why
+      they were rewritten and this one was not.
   containedIn(a= Leaf, b)= /Data/Primitive/True
   containedIn(a= Node(left, key, value, right), b)= (get(m= b, key= key) == /Data/Maybe/Some(value= value)) && containedIn(a= left, b= b) && containedIn(a= right, b= b)
 module(Data/Algebra)
