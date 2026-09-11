@@ -20,6 +20,7 @@
 module TypeCheck.Common where
 
 import           Data.Hashable
+import qualified Data.HashMap.Lazy          as HL
 import qualified Data.HashMap.Strict        as H
 import qualified Data.HashSet               as S
 import qualified Data.IntMap.Lazy           as IM
@@ -31,9 +32,8 @@ import           Control.Monad.State
 import           Control.Monad.Trans.Writer (execWriter, tell)
 import           CRes
 import           Data.Aeson                 (ToJSON, toJSON)
-import           Data.Maybe                 (catMaybes, fromJust, fromMaybe,
-                                             isJust, listToMaybe, mapMaybe,
-                                             maybeToList)
+import           Data.Maybe                 (catMaybes, isJust, listToMaybe,
+                                             mapMaybe, maybeToList)
 import           Data.String.Builder        (literal)
 import           MapMeta                    (MetaType (ArrMeta), clearMetaDat,
                                              mapMetaObjArr)
@@ -728,12 +728,37 @@ fresh  scheme = do
   put env{fePnts = pnts', feInstruments = instFreshPoint pnt' scheme feInstruments}
   return pnt'
 
+-- | One var-arg env entry as the type it resolves to, for the env 'setDescriptor' compares
+-- against. A point whose scheme is an error carries no type to compare with, and reads as ⊤ —
+-- the same reading 'Semantics.Types.vaenvLookup' gives a key the env does not hold at all.
+resolveVaenvEntry :: FEnv -> VarMeta -> Type
+resolveVaenvEntry env m = case descriptor env m of
+  TypeCheckResult _ st -> stypeAct st
+  TypeCheckResE _      -> PTopType
+
 setDescriptor :: FEnv -> VConstraint -> VarMeta -> Scheme -> String -> FEnv
 setDescriptor env _ Meta{getMetaDat=VarMetaDat Nothing _} _ _ = env
 setDescriptor env@FEnv{feTypeEnv, fePnts, feInstruments, feUpdatedDuringEpoch} con m@Meta{getMetaDat=VarMetaDat (Just p) _} scheme' msg = env{fePnts = pnts', feInstruments = feInstruments', feUpdatedDuringEpoch = feUpdatedDuringEpoch || schemeChanged || isJust declOnlyCommit}
   where
     scheme = descriptor env m
-    vaenv = fmap stypeAct <$> mapM (descriptor env) (constraintVarArgEnv con)
+    -- Resolved ONE KEY AT A TIME, and only where a check below actually reads that key.
+    --
+    -- The env holds an entry per argument of the object being solved, and every one of those
+    -- entries is stored through here ('saveConstraint.saveVaenv' stores both points of every
+    -- pair). Resolving the whole env for each of those stores is quadratic in an object's
+    -- WIDTH, and it was the largest single cost in the solver: at 64 arguments the two
+    -- 'setDescriptor.vaenv' sites were 30% of a profiled run, against 15% for storing what the
+    -- constraint had actually computed. The checks that read this — 'eqScheme', 'verifyScheme'
+    -- and the 'declOnlyCommit' comparisons — look up only the variables written in the two
+    -- schemes being compared, which is one or two of them, so resolving the rest is work whose
+    -- answer is thrown away.
+    --
+    -- Lazy in the VALUES (the map itself is still built, which is an entry per argument and no
+    -- type read at all). A point whose scheme is an error reads as ⊤, which is what a key the
+    -- env does not hold already reads as ('Semantics.Types.vaenvLookup'); before this, one such
+    -- point made the whole env an error and refused the store outright.
+    vaenv :: TypeVarArgEnv
+    vaenv = HL.map (resolveVaenvEntry env . snd) (constraintVarArgEnvIO con)
     schemeChanged :: Bool
     schemeChanged = case (scheme, scheme') of
       (TypeCheckResult _ SType{stypeAct=UnionType (Just _) _ _}, TypeCheckResult _ SType{stypeAct=TypeVar{}}) -> True
@@ -764,14 +789,10 @@ setDescriptor env@FEnv{feTypeEnv, fePnts, feInstruments, feUpdatedDuringEpoch} c
       -- only when 'eqScheme' judged the schemes equal — the refusal path. The actual side
       -- alone is inspected; the requirement side's tighten rides the same whole-scheme store.
       (TypeCheckResult _ (SType a1 _ _ _ _), TypeCheckResult _ (SType a2 _ _ _ _)) ->
-        fromMaybe False $ tcreToMaybe $ do
-          showVaenv <- vaenv
-          return $ not (eqScheme env showVaenv scheme scheme')
-                 || (a1 /= a2 && nestedSlotSettled feTypeEnv a1 a2)
-      _ ->  fromMaybe False $ tcreToMaybe $ do
-        showVaenv <- vaenv
-        return $ not (eqScheme env showVaenv scheme scheme')
-    scheme'' = case verifyScheme feTypeEnv (fromJust $ tcreToMaybe vaenv) m scheme scheme' of
+        not (eqScheme env vaenv scheme scheme')
+          || (a1 /= a2 && nestedSlotSettled feTypeEnv a1 a2)
+      _ -> not (eqScheme env vaenv scheme scheme')
+    scheme'' = case verifyScheme feTypeEnv vaenv m scheme scheme' of
       _ | not schemeChanged -> scheme'
       -- Just failVerification -> error $ printf "Scheme failed verification %s\n\t\tDuring typechecking of %s:\n\t\t New Scheme: %s \n\t\t Old Scheme: %s\n\t\t Obj: %s\n\t\t Con: %s" failVerification msg (show scheme') (show scheme) (show m) (show con)
       Just failVerification -> TypeCheckResE [GenTypeCheckError (clearMetaDat ArrMeta m) $ printf "Scheme failed verification %s\n\t\tDuring typechecking of %s:\n\t\t New Scheme: %s \n\t\t Old Scheme: %s\n\t\t Obj: %s\n\t\t Con: %s" failVerification msg (show scheme') (show scheme) (show m) (show con)]
@@ -789,8 +810,9 @@ setDescriptor env@FEnv{feTypeEnv, fePnts, feInstruments, feUpdatedDuringEpoch} c
     declOnlyCommit = case (scheme, scheme') of
       _ | schemeChanged -> Nothing
       (TypeCheckResult _ old@SType{stypeReqDecl=dOld}, TypeCheckResult notes SType{stypeReqDecl=dNew}) ->
-        case tcreToMaybe vaenv of
-          Just showVaenv
+        let showVaenv = vaenv
+        in case () of
+          ()
             | isEqTypeWithEnv feTypeEnv showVaenv dOld dNew -> Nothing
             | isSubtypeOfWithEnv feTypeEnv showVaenv dNew dOld ->
                 -- HARMONIZE a channel that IS the arriving decl with some positions still
@@ -813,7 +835,6 @@ setDescriptor env@FEnv{feTypeEnv, fePnts, feInstruments, feUpdatedDuringEpoch} c
                                 | otherwise = x
                 in Just (TypeCheckResult notes old{stypeReqDecl=dNew, stypeAct=harmonize (stypeAct old), stypeReq=harmonize (stypeReq old)})
             | otherwise -> Just (TypeCheckResE [GenTypeCheckError (clearMetaDat ArrMeta m) $ printf "Scheme failed verification verifySchemeReqDeclLowers (decl-only commit)\n\t\tDuring typechecking of %s:\n\t\t New Scheme: %s \n\t\t Old Scheme: %s\n\t\t Obj: %s\n\t\t Con: %s" msg (show scheme') (show scheme) (show m) (show con)])
-          Nothing -> Nothing
       _ -> Nothing
     pnts' | schemeChanged = IM.insert p scheme'' fePnts -- Only update if changed to avoid meaningless updates
           | Just declScheme <- declOnlyCommit = IM.insert p declScheme fePnts
