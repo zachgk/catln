@@ -128,16 +128,16 @@ addUnionObjToEnv vobjMap tobjMapRec tPrecedenceMap = do
   modify $ endConstraintBlock Nothing H.empty
 
 -- | A helper for the 'AddInferArg' 'Constraint'
-addInferArgToType :: FEnv -> TypeVarArgEnv -> Maybe ArgName -> Type -> Maybe Type
-addInferArgToType _ _ _ PTopType = Nothing
-addInferArgToType _ _ _ (UnionType (Just _) _ _) = Nothing
-addInferArgToType env vaenv patKey (TypeVar t _ _) = case H.lookup t vaenv of
-  Just t' -> addInferArgToType env vaenv patKey t'
+addInferArgToType :: FEnv -> TypeVarArgEnv -> Type -> Maybe Type
+addInferArgToType _ _ PTopType = Nothing
+addInferArgToType _ _ (UnionType (Just _) _ _) = Nothing
+addInferArgToType env vaenv (TypeVar t _ _) = case H.lookup t vaenv of
+  Just t' -> addInferArgToType env vaenv t'
   Nothing -> error $ printf "Failed to find %s in addInferArgToType" (show t)
-addInferArgToType env@FEnv{feTypeEnv} vaenv patKey (UnionType Nothing partials []) = Just $ unionAllTypes feTypeEnv partials'
+addInferArgToType env@FEnv{feTypeEnv} vaenv (UnionType Nothing partials []) = Just $ unionAllTypes feTypeEnv partials'
   where
-    partials' = map (addInferArgToPartial env vaenv patKey) $ splitUnionType partials
-addInferArgToType _ _ _ _ = Nothing
+    partials' = map (addInferArgToPartial env vaenv) $ splitUnionType partials
+addInferArgToType _ _ _ = Nothing
 
 -- | Builds the candidate shapes for an 'AddInferArg' 'Constraint': for each arrow of the
 -- base's name, each arg the base does not yet apply is offered as the filled slot, and the
@@ -153,8 +153,8 @@ addInferArgToType _ _ _ _ = Nothing
 -- the actual side under the req-only architecture), while an unannotated definition arg
 -- still contributes @⊤@. Spellings referencing the arrow's own scope (external vars, a
 -- bare own-var annotation) read as the @⊤@ they denote here ('dropOutOfScopeTVExt').
-addInferArgToPartial :: FEnv -> TypeVarArgEnv -> Maybe ArgName -> PartialType -> Type
-addInferArgToPartial FEnv{feVTypeGraph=ObjectMap vtypeGraph, feTTypeGraph=ObjectMap ttypeGraph, feTypeEnv} _ patKey partial@PartialType{ptName=name, ptArgs} = do
+addInferArgToPartial :: FEnv -> TypeVarArgEnv -> PartialType -> Type
+addInferArgToPartial FEnv{feVTypeGraph=ObjectMap vtypeGraph, feTTypeGraph=ObjectMap ttypeGraph, feTypeEnv} _ partial@PartialType{ptName=name, ptArgs} = do
   let vtypeArrows = flatObjectMapItem $ H.lookupDefault mempty name vtypeGraph
   let ttypeArrows = flatObjectMapItem $ H.lookupDefault mempty name ttypeGraph
   case map objectPrecedence vtypeArrows ++ map objectPrecedence ttypeArrows of
@@ -170,29 +170,9 @@ addInferArgToPartial FEnv{feVTypeGraph=ObjectMap vtypeGraph, feTTypeGraph=Object
 
     tryArrow :: (MetaDat m, Show m) => ObjArr Expr m -> Type
     tryArrow oa = if H.keysSet ptArgs `isSubsetOf` H.keysSet arrowArgs
-      then UnionType Nothing (joinUnionType $ map addArg candidates) []
+      then UnionType Nothing (joinUnionType $ map addArg $ H.toList $ H.difference arrowArgs ptArgs) []
       else BottomType
-      where
-        arrowArgs = exprAppliedArgsMap $ oaObjExpr oa
-        unfilled = H.toList $ H.difference arrowArgs ptArgs
-        -- When the applied argument was written in a shape that NAMES one of the arrow's
-        -- arguments — a higher-order parameter @fn(v)@ against a declared @fn(v -> $_A) -> $_B@ —
-        -- there is nothing to infer: that is the slot. Offer only it.
-        --
-        -- Guessing anyway is not harmless. A slot the declaration spells with a bare type
-        -- variable (@init -> $_B@) reads as ⊤ through 'spelledContent' below, so the guess
-        -- "@fn(v)@ fills @init@" accepts anything and no later evidence can refute it. The
-        -- candidate union then never collapses to one survivor, and the surplus alternative —
-        -- which has dropped the function argument entirely — reaches 'Decode.verifyObjMapItem' as
-        -- a definition outside its declaration. This is why a fold's signature (a function
-        -- argument beside a plain one typed by the same variable) could not be written.
-        --
-        -- A genuine destructuring pattern (@unwrap(Box(v))= v@) names no argument — @/Box@ is the
-        -- constructor, not the slot — so it matches nothing here and still infers by type.
-        candidates = case patKey of
-          Just k | matching@(_:_) <- filter (namesArg k) unfilled -> matching
-          _                                                       -> unfilled
-        namesArg k (arg, _) = pkName k == pkName arg
+      where arrowArgs = exprAppliedArgsMap $ oaObjExpr oa
 
     addArg :: (MetaDat m, Show m) => (ArgName, Maybe (Meta m, Maybe (Expr m))) -> PartialType
     addArg (arg, argVal) = partial{ptArgs=H.insert arg (spelledContent argVal) ptArgs}

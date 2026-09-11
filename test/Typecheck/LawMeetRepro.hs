@@ -239,7 +239,7 @@ conSTypes d = case d of
   PropEq _ (a, _) b          -> [a, b]
   FnInputBound _ (a, _, _) b -> [a, b]
   AddArg _ (a, _) b          -> [a, b]
-  AddInferArg _ (a, _) b     -> [a, b]
+  AddInferArg _ a b          -> [a, b]
   SetArgMode _ _ a b         -> [a, b]
   ConWhere _ a b c           -> [a, b, c]
   UnionOf _ p ps             -> p : ps

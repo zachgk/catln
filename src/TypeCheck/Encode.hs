@@ -161,6 +161,16 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
   modify $ addConstraints $ case est of
     EncodeOut{} -> [ArrowTo 7 (getExprMeta baseExpr') baseM']
     EncodeIn{}  -> [EqPoints 16 (getExprMeta baseExpr') baseM']
+  -- An applied argument written as a pattern (@fn(v)@, @Box(v)@) is one of two different things,
+  -- told apart by whether its head names something the program defines. @Box@ does — it is a data
+  -- type, and the argument it fills is not named anywhere in the pattern, so it must be inferred.
+  -- @fn@ does not — nothing defines it, so it is the name of the argument the pattern fills (a
+  -- higher-order parameter), and there is nothing to infer. This is the same defined-name test
+  -- 'fromObjArr' uses to tell a destructuring binding variable from a reference, and the
+  -- encode-time form of the head-vs-argument comparison 'exprVarArgsWithSrc' makes against a call
+  -- source once one is known.
+  definedNames <- getDefinedNames
+  let patternHeadIsDefined e = S.member (makeAbsoluteName $ exprPath e) definedNames
   arg'' <- case arg of
     EAppArg a -> do
       arg' <- fromObjArr est a
@@ -189,7 +199,7 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
             (EncodeOut{}, Nothing, Just (Just _argExpr', _arrM')) ->
               -- Output with (x) infer
               [
-                            AddInferArg 13 (baseM', Nothing) m'
+                            AddInferArg 13 baseM' m'
                             ]
             (EncodeIn{}, Just obj, Just (Just _argExpr', arrM')) ->
               -- Input with (x=x)
@@ -201,19 +211,19 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
                         AddArg 19 (getExprMeta baseExpr', TVArg $ inExprSingleton obj) m',
                         PropEq 21 (m', TVArg $ inExprSingleton obj) arrM'
                         ]
-            (EncodeIn{}, Just obj@TupleApply{}, Just (Nothing, arrM')) ->
-              -- Input with a destructuring pattern (e.g. @Box(v)@): the pattern's own
-              -- structure does not name the declared argument it fills, so infer which
-              -- argument it fills by type. The 'PropEq' is kept so that when the pattern's
-              -- structural key /does/ name the argument (e.g. a higher-order @f(y)@ where
-              -- @f@ is the declared arg) the argument's annotated type is still linked in;
-              -- when it does not (the @Box(v)@ case) the 'PropEq' is a harmless no-op.
+            (EncodeIn{}, Just obj@TupleApply{}, Just (Nothing, arrM'))
+              | patternHeadIsDefined obj ->
+              -- Input with a destructuring pattern (e.g. @Box(v)@): the pattern's own structure
+              -- does not name the declared argument it fills, so infer which argument it fills by
+              -- type. The 'PropEq' still links the pattern's own type into that slot.
               [
-                        AddInferArg 24 (getExprMeta baseExpr', Just (inExprSingleton obj)) m',
+                        AddInferArg 24 (getExprMeta baseExpr') m',
                         PropEq 25 (m', TVArg $ inExprSingleton obj) arrM'
                         ]
             (EncodeIn{}, Just obj, Just (Nothing, arrM')) ->
-              -- Input with (x -> T)
+              -- Input with (x -> T), and the higher-order parameter pattern @fn(v)@ whose head
+              -- names the argument it fills. Both name their argument through their own key
+              -- ('inExprSingleton'), so it is added by that name like any other.
               [
                         AddArg 24 (getExprMeta baseExpr', TVArg $ inExprSingleton obj) m',
                         PropEq 25 (m', TVArg $ inExprSingleton obj) arrM'
@@ -285,11 +295,19 @@ topArgPropEqs obj' =
   [ PropEq 47 (getExprMeta obj', TVArg $ inExprSingleton nObj) nArrM
   | ObjArr{oaObj=Just nObj, oaArr=Just (_, nArrM)} <- exprAppliedArgs obj' ]
 
-fromObjArr :: EncodeState -> PObjArr -> StateT FEnv TypeCheckResult VObjArr
-fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
+-- | The absolute names that something in the program defines: the declared types and values of
+-- the typechecked type graph, plus those the batch being encoded is adding ('feLocalDefNames').
+-- A name this does not hold defines nothing, so it names a fresh local instead — a destructuring
+-- binding variable, or the argument a pattern is written against.
+getDefinedNames :: StateT FEnv TypeCheckResult (S.HashSet Name)
+getDefinedNames = do
   ObjArrTypeGraph (ObjectMap objTg) <- gets (teTypeGraph . feTypeEnv)
   localDefNames <- gets feLocalDefNames
-  let definedNames = (S.map makeAbsoluteName $ H.keysSet objTg) <> localDefNames
+  return $ S.map makeAbsoluteName (H.keysSet objTg) <> localDefNames
+
+fromObjArr :: EncodeState -> PObjArr -> StateT FEnv TypeCheckResult VObjArr
+fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
+  definedNames <- getDefinedNames
   -- A value in a @field= value@ destructuring position is a /binding variable/ (it names a
   -- fresh local, e.g. @field= x@) rather than a /reference/ to an existing definition — a
   -- declared type\/value to pattern-match against (e.g. @field= True@) or another binding
