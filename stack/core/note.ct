@@ -106,10 +106,17 @@ module(Data/Note)
       done and cancelled dates, the tags apart from the description, the action on
       completion, the id, the ids it waits on, and the block link — are read exactly as these are
       and are carried together in [rest] as JSON, which is what [Show/TaskList] does with a whole
-      list of tasks and what [Show/Properties] does with a block of properties. Each of those should
-      be a field here like the ones above: a type this wide costs six epochs over declaring none,
-      which @test/Integration/code/wideDataScaling.ct@ holds at exactly the eighteen fields a
-      checkbox has.
+      list of tasks and what [Show/Properties] does with a block of properties. That is not because
+      they are worth less, and no longer because the width cannot be compiled: seventeen fields here
+      leave @catln epochs@ and @catln tbuild@ on a page which declares nothing within a second of
+      where they are without them, and the ten-task fixture builds in 62s against a 58s floor.
+      What they wait on is the integration suite, which does not survive the change. Made fields,
+      the suite runs over an hour against the twenty-two minutes it takes now, holds 6.5GB, and
+      writes no goldens at all before it is killed — reproduced at both @-O0@ and @-O1@, so it is
+      not a build-flag artifact. Every per-page measurement says the width is free and the suite
+      says it is not, and the two are not yet reconciled: what differs is that the suite compiles
+      every test page against one universe rather than a page at a time. Until that is understood
+      this type stays as it is, because a change that cannot be tested cannot be trusted.
       The done and the cancelled date are one thing among those, not two: a task is done or it is
       cancelled and never both, and [statusType] already says which of the two a task with such a
       date is.

@@ -3,25 +3,28 @@ import "core"
 
 # A data type eighteen fields wide, declared, shown, and printed, which is what holds that a type
   costs what its width says it costs.
-  Typechecking does not move with the width at all. This file is 9 epochs over 3 fragments, and so
-  is the same shape at twenty-four fields, at thirty-two and at forty-eight. Measured with
+  Typechecking does not CONVERGE any slower for the width. This file is 9 epochs over 3 fragments,
+  and so is the same shape at twenty-four fields, at thirty-two and at forty-eight. Measured with
   @catln epochs@ against @io.ct@, which declares nothing, the whole compilation is 799 epochs where
   that baseline is 793: six epochs for a type eighteen fields wide. A page is partitioned into solve
   fragments per function SCC, so a declaration this wide is its own small component rather than
   something the rest of the page is solved against.
-  Building the arrow trees for it is where a width still costs, and only for a value something
-  READS. Against a 54-second floor:
-    18 fields, printed     — 54s
-    20 fields, printed     — 70s
-    22 fields, printed     — 104s
-    24 fields, printed     — 245s
-    24 fields, NOT printed — 58s
-  Past twenty-four it flattens rather than running away — 32 fields is 346s and 48 is 306s, both
-  held at about half a core, which is a build spending its time in memory rather than in work. So
-  the climb sits between eighteen and twenty-four and there is a ceiling above it.
-  That is why the value below is printed and not only declared. Without the @>@ the program
-  typechecks, builds nothing for the value, and this file would pass while saying nothing about the
-  half of the cost that is real.
+  A width in the STANDARD LIBRARY costs nothing per PAGE either: widening
+  [/Data/Note/Task/Obsidian] from ten fields to seventeen leaves @catln epochs io.ct@ at 56s and
+  @catln tbuild io.ct@ at 58s, both within a second of what they are without it. It is not free
+  across a whole PROGRAM, though — that same widening takes the integration suite from twenty-two
+  minutes to over an hour and 6.5GB, which is the reason the comment on that type gives for the
+  fields it still carries as JSON. So measure a width against the thing being compiled: a page at a
+  time says one thing here and a suite of them says another.
+  Building the arrow trees for it is where a width DOES still cost, and only for a value something
+  READS. Against @catln tbuild io.ct@, which declares nothing and is 58s:
+    18 fields, printed     —  60s
+    24 fields, printed     — 252s
+    24 fields, NOT printed —  60s
+  So the same twenty-four-field declaration is free until something reads it, and eighteen is below
+  where that climb starts. That is why the value below is printed and not only declared: without the
+  @>@ the program typechecks, builds no tree for the value, and this file would pass while saying
+  nothing about the half of the cost that is real.
   Eighteen and not a round number, because that is what a checkbox is. A note in a vault running the
   Obsidian Tasks plugin carries a status, a description, tags, a priority, six dates, a recurrence,
   an action on completion, an id, the ids it waits on and a block link — eighteen things, which is
