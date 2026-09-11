@@ -1,0 +1,64 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
+                    }
+                )
+            ,
+                ( "/nameOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ nameOf( Value /this -> /Plain ) -> /Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ nameOf
+                            ( Value /this= /Plain( Value name )( Value other ) ) -> /Data/String = Value name
+                        ]
+                    }
+                )
+            ,
+                ( "/Plain"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Plain( Value /name -> /Data/String )( Value /other -> /Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A declaration naming a data type by its BARE NAME, fulfilled by a definition which destructures
+                that type's fields.
+                The two sides spell the same type differently: the declaration writes @Plain@ and says nothing
+                about what it holds, where the definition writes @/Plain(name, other)@ and binds every field. A
+                declaration is fulfilled by a definition inside it, so the bare name has to read as the type with
+                its declared fields rather than as one whose fields are unknown — a reading which once gave every
+                field [TopType], left the declaration unfulfilled, and failed with
+                @Undefined part: /nameOf(/this=(/Plain(/name=TopType - /Data/String, ...)))@.
+                A CLASS named the same way is a different thing and was never the question: @intlist.ct@ declares
+                @:IntList.len@ over a class and has always passed, because a class reference is not a partial
+                carrying fields to be widened. So what this holds is the data type, and only a data type whose
+                fields a definition reads.
+                The field is read back in Catln rather than by the webdocs, which is the other half of why this
+                is here: @maybeField.ct@ and @valueDeclFields.ct@ declare fields and never read one, because a
+                note's fields are read by the display rather than by the program." }
+            )
+        ]
+    }

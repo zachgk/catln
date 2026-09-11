@@ -9,7 +9,8 @@ import "core"
   there only as what a function takes and answers with.
   Written as values declared and never defined, since that is the whole of what a note does with
   such a field: a checkbox is read into a declaration, and what reads the fields back out is the
-  webdocs reading the evaluated value rather than anything written in Catln.
+  webdocs reading the evaluated value rather than anything written in Catln. Reading such a field
+  back in Catln is @bareDataDeclaration.ct@.
 data(Dated(name -> String, due -> /Data/Maybe[$T -> String]))
 
 # Shown as the value it is, with no display type standing in for it, as a task is.

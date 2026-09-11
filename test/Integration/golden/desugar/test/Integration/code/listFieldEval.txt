@@ -1,0 +1,140 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= CInt
+                                { ciValue = 0 }
+                            )( Value /this= Value io )
+                        ]
+                    }
+                )
+            ,
+                ( "/Tagged"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Tagged( Value /name -> /Data/String )
+                            ( Value /tags -> ∀/Data/List[ /T=/Data/String ] )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Holder"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Holder
+                            ( Value /items -> ∀/Data/List[ /T=∀/Mixed ] )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Mixed/Labelled"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Mixed/Labelled( Value /value -> /Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Mixed/Plain"
+                , ObjectMapItem
+                    { omiDecls = [ Value Mixed/Plain ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Tagged
+            , cgcExtends =
+                [ /Tagged..
+                , /Holder..
+                ]
+            , cgcDoc = Just " "
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Mixed
+            , cgcExtends =
+                [ /Mixed/Plain
+                , /Mixed/Labelled( /value=/Data/String )
+                ]
+            , cgcDoc = Just ""
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A list of two or more held in a FIELD, built and evaluated rather than only declared.
+                The printed face of @listFieldMultiple.ct@, which declares these same two cells and stops short
+                of printing them: printing is what builds a value, so a list field that typechecks and a list
+                field that can be evaluated are two different things to hold. The pair below the two of them is
+                @listField.ct@, which prints a field holding nothing and a field holding one.
+                Two shapes, because they say different things. [Tagged] holds two BARE CONSTANTS, where the
+                spine's element type is read from the cells themselves and the field's declared bound is what it
+                has to agree with — the two were once spelled in different currencies, the declaration's
+                [/Data/Primitive/String] against the join over the literals, and no arrow carried a value spelled
+                one way into a slot spelled the other. [Holder] holds two DIFFERING ARMS of a class, one carrying
+                a field and one not, which is the same question one level in. @listHeterogeneous.ct@ reaches
+                differing arms as an ARGUMENT, where the call bounds them; a field has only its declaration.
+                The arm is [Mixed/Labelled] and not @Mixed/Tagged@: a class arm sharing its last name with a data
+                type in the same page makes @every(Tagged.., ...)@ ambiguous between the two, which is a question
+                about how a relative name resolves and not about what a field may hold." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Printed so that the values are built and not only declared, which is the whole of what this adds." }
+            )
+        , /Catln/#print
+            ( Value /p= /Tagged
+                ( Value name= CStr
+                    { csValue = "two different" }
+                )
+                ( Value tags= /Data/List/Cons
+                    ( Value /head= CStr
+                        { csValue = "x" }
+                    )
+                    ( Value /tail= /Data/List/Cons
+                        ( Value /head= CStr
+                            { csValue = "y" }
+                        )( Value /tail= Value /Data/List/Nil )
+                    )
+                )
+            )
+        , /Catln/#print
+            ( Value /p= /Holder
+                ( Value items= /Data/List/Cons( Value /head= Value /Mixed/Plain )
+                    ( Value /tail= /Data/List/Cons
+                        ( Value /head= /Mixed/Labelled
+                            ( Value value= CStr
+                                { csValue = "x" }
+                            )
+                        )( Value /tail= Value /Data/List/Nil )
+                    )
+                )
+            )
+        ]
+    }

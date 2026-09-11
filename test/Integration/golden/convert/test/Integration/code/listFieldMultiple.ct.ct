@@ -15,8 +15,9 @@ import "core"
   [/T] of the inner cons is the [/Data/Primitive/String] the field was declared to hold rather than
   the outer head's literal.
   These values are declared rather than printed, so what this holds is the typechecking of a second
-  cell. Printing a list field is held beside it: @listFieldNested.ct@ prints elements which are data
-  arms, and @valueDeclFields.ct@ prints a one-element field on a type carrying three field shapes.
+  cell. Building the same two cells is @listFieldEval.ct@, printing them is what makes the
+  difference, and the two are held apart because a field which typechecks and a field which can be
+  evaluated were not always the same field.
 data(Tagged(name -> String, tags -> /Data/List[$T -> String]))
 
 every(Tagged.., isa= [/Catln/Doc/DShow])

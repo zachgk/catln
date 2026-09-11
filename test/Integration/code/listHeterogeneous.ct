@@ -30,6 +30,6 @@ countMixed(ks= /Data/List/Cons(head, tail))= 1 + countMixed(ks= tail)
   >>> 2
 > countMixed(ks= [/Mixed/Plain, /Mixed/Tagged(value= "x"), /Mixed/Plain])
   >>> 3
-# Reached as an ARGUMENT, which is where a heterogeneous literal is bounded by the call. The same
-  elements held in a FIELD are @listFieldNested.ct@.
+# Reached as an ARGUMENT, which is where a heterogeneous literal is bounded by the call. Differing
+  arms held in a FIELD, which has only its declaration to bound them, are @listFieldEval.ct@.
 main{io -> IO}= io.exit(val= 0)
