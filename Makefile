@@ -11,7 +11,7 @@ test: hs-test webdocs-test webdocs-test-integ
 
 .PHONY: hs-test
 hs-test: $(HS_SOURCES) $(CT_SOURCES)
-	stack test --fast --pedantic
+	stack test --pedantic
 
 .PHONY: install
 install: $(HS_SOURCES) $(CT_SOURCES)

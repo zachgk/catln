@@ -18,7 +18,7 @@ Ask questions rather than making assumptions and investigate thoroughly. If you 
 
 ```sh
 stack build --pedantic          # build
-stack test --fast --pedantic    # run tests
+stack test --pedantic    # run tests
 stack exec catln <file.ct>      # run a catln file
 make format                     # format Haskell code (stylish-haskell)
 make ctformat                   # format Catln .ct/.ctx files
@@ -26,7 +26,7 @@ GOLDEN_TEST_WRITE=1 stack test  # update golden tests
 ```
 
 Lessons that repeatedly cost time:
-- **`--fast` does NOT enforce `-Werror`.** `stack test --fast` / `stack build --fast` compile `-Wall` findings as warnings, so unused bindings, incomplete patterns, etc. slip through and silently land in commits — then break `--pedantic` / `make hs-test` later. Always finish a Haskell change with `stack build --pedantic` (or `make hs-test`), not just `--fast`.
+- **`stack` without pedantic does NOT enforce `-Werror`.** `stack test` / `stack build` compile `-Wall` findings as warnings, so unused bindings, incomplete patterns, etc. slip through and silently land in commits — then break `--pedantic` / `make hs-test` later. Always finish a Haskell change with `stack build --pedantic` (or `make hs-test`).
 - **`make format` and `make ctformat` reformat the ENTIRE repo, not just your files.** They produce a large diff that may have unrelated `.ct`/`.ctx`/`.hs` files if an earlier commit failed to run the formatter. In this case mention it to me and leave the other formatting changes
 - **Changes including anything in `stack/core/` can churn many golden test artifacts.** That churn is expected and helps ensure the changes are working as intended — regenerate with `GOLDEN_TEST_WRITE=1 stack test` and confirm real pass/fail by checking that individual tests' assertions still pass (a test can "fail" purely on a golden diff while its logic is correct).
 - **A passing `GOLDEN_TEST_WRITE=1 stack test` is the gate — do NOT re-run the suite afterwards to confirm.** The write run executes every test's real assertions; rewriting the goldens only removes stale-diff noise. A second run just spends another ~10 minutes proving that files written from the run match the run. Review the golden diff instead.
