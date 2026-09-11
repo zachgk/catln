@@ -49,18 +49,7 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /lst -> ∀/Data/List[ /T=∀/Data/Algebra/Eq ] }
                             )
-                            ( EAppArg { eaaArg = Value /probe -> ∀/Data/Algebra/Eq } ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Primitive/Boolean
-                                , fromList []
-                                , []
-                                )
-                            , /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
-                                ( /this=∀/Data/Algebra/Eq
-                                , /other=∀/Data/Algebra/Eq
-                                )
-                            , []
-                            ) =
+                            ( EAppArg { eaaArg = Value /probe -> ∀/Data/Algebra/Eq } ) -> ∀/Data/Primitive/Boolean =
                             ( /headTo
                                 ( EAppArg
                                     { eaaArg = Value /lst -> TVArg /lst = ( Value /lst ↦ TVArg /lst ) }
@@ -113,23 +102,7 @@ Prgm
                                         )
                                     }
                                 )
-                                ( EAppArg { eaaArg = Value /dflt -> /Data/Primitive/False = Value /Data/Primitive/False } ) ↦ UnionType
-                                ( Just
-                                    ( PredClass /Data/Primitive/Boolean
-                                    , fromList []
-                                    , []
-                                    )
-                                ,
-                                    ( /operator&&
-                                        ( /r=∀/Data/Primitive/Boolean
-                                        , /l=∀/Data/Primitive/Boolean
-                                        ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
-                                        ( /this=∀/Data/Algebra/Eq
-                                        , /other=∀/Data/Algebra/Eq
-                                        )
-                                    )
-                                , []
-                                )
+                                ( EAppArg { eaaArg = Value /dflt -> /Data/Primitive/False = Value /Data/Primitive/False } ) ↦ ∀/Data/Primitive/Boolean
                             )
                         ]
                     }
@@ -173,7 +146,7 @@ Prgm
                         , /headTo
                             ( EAppArg
                                 { eaaArg = Value /lst -> /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
-                                    ( /head=$/T
+                                    ( /head=∀/Data/Algebra/Eq
                                     , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ]
                                     ) = /Data/List/Cons
                                     ( EAppArg { eaaArg = Value /head -> ∀/Data/Algebra/Eq } )

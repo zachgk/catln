@@ -137,42 +137,28 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Calendar/calendarDay
-                            ( Value /this ->
-                                ( /Data/Note/Task/Simple
-                                    ( /contents=/Data/String
-                                    , /state=∀/Data/Primitive/Boolean
-                                    ) + /Task/Simple
-                                    ( /contents=TopType
-                                    , /state=TopType
-                                    )
-                                ) = /Task/Simple( Value /contents )( Value /state )
+                            ( Value /this -> /Data/Note/Task/Simple
+                                ( /contents=/Data/String
+                                , /state=∀/Data/Primitive/Boolean
+                                ) = /Task/Simple( Value /contents -> /Data/String )( Value /state -> ∀/Data/Primitive/Boolean )
                             ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
                         , /Data/Calendar/calendarDay
-                            ( Value /this ->
-                                ( /Task/Obsidian
-                                    ( /recurrence=TopType
-                                    , /due=TopType
-                                    , /start=TopType
-                                    , /priority=TopType
-                                    , /scheduled=TopType
-                                    , /statusType=TopType
-                                    , /description=TopType
-                                    , /contents=TopType
-                                    , /symbol=TopType
-                                    , /rest=TopType
-                                    ) + /Data/Note/Task/Obsidian
-                                    ( /recurrence=∀/Data/Maybe[ /T=/Data/String ]
-                                    , /due=∀/Data/Maybe[ /T=/Data/String ]
-                                    , /start=∀/Data/Maybe[ /T=/Data/String ]
-                                    , /priority=∀/Data/Note/Priority
-                                    , /scheduled=∀/Data/Maybe[ /T=/Data/String ]
-                                    , /statusType=∀/Data/Note/StatusType
-                                    , /description=/Data/String
-                                    , /contents=/Data/String
-                                    , /symbol=/Data/String
-                                    , /rest=/Data/String
-                                    )
-                                ) = /Task/Obsidian( Value /contents )( Value /symbol )( Value /statusType )( Value /description )( Value /priority )( Value /start )( Value /scheduled )( Value /due )( Value /recurrence )( Value /rest )
+                            ( Value /this -> /Data/Note/Task/Obsidian
+                                ( /recurrence=∀/Data/Maybe[ /T=/Data/String ]
+                                , /due=∀/Data/Maybe[ /T=/Data/String ]
+                                , /start=∀/Data/Maybe[ /T=/Data/String ]
+                                , /priority=∀/Data/Note/Priority
+                                , /scheduled=∀/Data/Maybe[ /T=/Data/String ]
+                                , /statusType=∀/Data/Note/StatusType
+                                , /description=/Data/String
+                                , /contents=/Data/String
+                                , /symbol=/Data/String
+                                , /rest=/Data/String
+                                ) = /Task/Obsidian( Value /contents -> /Data/String )( Value /symbol -> /Data/String )( Value /statusType -> ∀/Data/Note/StatusType )( Value /description -> /Data/String )( Value /priority -> ∀/Data/Note/Priority )
+                                ( Value /start -> ∀/Data/Maybe[ /T=/Data/String ] )
+                                ( Value /scheduled -> ∀/Data/Maybe[ /T=/Data/String ] )
+                                ( Value /due -> ∀/Data/Maybe[ /T=/Data/String ] )
+                                ( Value /recurrence -> ∀/Data/Maybe[ /T=/Data/String ] )( Value /rest -> /Data/String )
                             ) -> ∀/Data/Maybe[ /T=/Data/String ] = /Data/Note/firstDay( Value /a -> TVArg /start = Value /start )( Value /b -> TVArg /scheduled = Value /scheduled )( Value /c -> TVArg /due = Value /due )
                         ]
                     }

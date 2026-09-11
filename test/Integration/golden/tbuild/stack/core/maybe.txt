@@ -180,65 +180,7 @@ Prgm
                                     )
                                     ( EAppArg { eaaArg = Value /value@Value /av -> ∀/Data/Algebra/Eq } )
                                 }
-                            ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Primitive/Boolean
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /Data/Algebra/rel
-                                    ( /this=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Algebra/Eqv[ /T=∀/Data/Primitive/Boolean ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ]
-                                        , []
-                                        )
-                                    , /a=∀/Data/Primitive/Boolean
-                                    , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel
-                                    ( /this=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Algebra/Eqv[ /T=/Data/String ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ]
-                                        , []
-                                        )
-                                    , /a=/Data/String
-                                    , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel
-                                    ( /this=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Algebra/Eqv[ /T=/Data/Primitive/Float ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ]
-                                        , []
-                                        )
-                                    , /a=/Data/Primitive/Float
-                                    , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Algebra/rel
-                                    ( /this=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ]
-                                        , []
-                                        )
-                                    , /a=/Data/Primitive/Integer
-                                    , /b=∀/Data/Algebra/Eq
-                                    )
-                                )
-                            , []
-                            ) =
+                            ) -> ∀/Data/Primitive/Boolean =
                             ( /operator==
                                 ( EAppArg
                                     { eaaArg = Value /l -> TVArg /av = ( Value /av ↦ TVArg /av ) }
@@ -289,25 +231,7 @@ Prgm
                                     )
                                     ( EAppArg { eaaArg = Value /value@Value /av -> ∀/Data/Algebra/Ord } )
                                 }
-                            ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Algebra/Comparison
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /Data/Algebra/compare
-                                    ( /this=∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Integer ]
-                                    , /a=/Data/Primitive/Integer
-                                    , /b=∀/Data/Algebra/Ord
-                                    ) + /Data/Algebra/compare
-                                    ( /this=∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Float ]
-                                    , /a=/Data/Primitive/Float
-                                    , /b=∀/Data/Algebra/Ord
-                                    )
-                                )
-                            , []
-                            ) =
+                            ) -> ∀/Data/Algebra/Comparison =
                             ( /Data/Algebra/compareTo
                                 ( EAppArg
                                     { eaaArg = Value /other -> TVArg /bv = ( Value /bv ↦ TVArg /bv ) }
