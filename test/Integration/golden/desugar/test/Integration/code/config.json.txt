@@ -2,13 +2,13 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
-                ( "/JsonFile/data/projects/catln/q2Eclaude/worktrees/mirror/test/Integration/code/configq2Ejson"
+                ( "/JsonFile/repo/dir/test/Integration/code/configq2Ejson"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /JsonFile/data/projects/catln/q2Eclaude/worktrees/mirror/test/Integration/code/configq2Ejson= /Data/Json/Object
+                        [ Value /JsonFile/repo/dir/test/Integration/code/configq2Ejson= /Data/Json/Object
                             ( Value /entries= /Data/List/Cons
                                 ( Value /head= /Data/Json/Member
                                     ( Value /key= CStr
@@ -50,9 +50,9 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( Value /text= CStr
-                { csValue = "The JSON in /repo/dir/test/Integration/code/config.json. Write `/JsonFile/data/projects/catln/q2Eclaude/worktrees/mirror/test/Integration/code/configq2Ejson` to reach it." }
+                { csValue = "The JSON in /repo/dir/test/Integration/code/config.json. Write `/JsonFile/repo/dir/test/Integration/code/configq2Ejson` to reach it." }
             )
         , /Catln/#print
-            ( Value /p= /Catln/Doc/dshow( Value /s= Value /JsonFile/data/projects/catln/q2Eclaude/worktrees/mirror/test/Integration/code/configq2Ejson ) )
+            ( Value /p= /Catln/Doc/dshow( Value /s= Value /JsonFile/repo/dir/test/Integration/code/configq2Ejson ) )
         ]
     }
