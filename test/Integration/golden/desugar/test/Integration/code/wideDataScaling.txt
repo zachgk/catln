@@ -1,0 +1,189 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Wide"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Wide( Value /a -> /Data/String )( Value /b -> /Data/String )( Value /c -> /Data/String )( Value /d -> /Data/String )( Value /e -> /Data/String )( Value /f -> /Data/String )( Value /g -> /Data/String )( Value /h -> /Data/String )( Value /i -> /Data/String )( Value /j -> /Data/String )( Value /k -> /Data/String )( Value /l -> /Data/String )( Value /m -> /Data/String )( Value /n -> /Data/String )( Value /o -> /Data/String )( Value /p -> /Data/String )( Value /q -> /Data/String )( Value /r -> /Data/String )
+                        , /Wide
+                            ( Value a= CStr
+                                { csValue = "1" }
+                            )
+                            ( Value b= CStr
+                                { csValue = "2" }
+                            )
+                            ( Value c= CStr
+                                { csValue = "3" }
+                            )
+                            ( Value d= CStr
+                                { csValue = "4" }
+                            )
+                            ( Value e= CStr
+                                { csValue = "5" }
+                            )
+                            ( Value f= CStr
+                                { csValue = "6" }
+                            )
+                            ( Value g= CStr
+                                { csValue = "7" }
+                            )
+                            ( Value h= CStr
+                                { csValue = "8" }
+                            )
+                            ( Value i= CStr
+                                { csValue = "9" }
+                            )
+                            ( Value j= CStr
+                                { csValue = "10" }
+                            )
+                            ( Value k= CStr
+                                { csValue = "11" }
+                            )
+                            ( Value l= CStr
+                                { csValue = "12" }
+                            )
+                            ( Value m= CStr
+                                { csValue = "13" }
+                            )
+                            ( Value n= CStr
+                                { csValue = "14" }
+                            )
+                            ( Value o= CStr
+                                { csValue = "15" }
+                            )
+                            ( Value p= CStr
+                                { csValue = "16" }
+                            )
+                            ( Value q= CStr
+                                { csValue = "17" }
+                            )
+                            ( Value r= CStr
+                                { csValue = "18" }
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= CInt
+                                { ciValue = 0 }
+                            )( Value /this= Value io )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Wide
+            , cgcExtends = [ /Wide.. ]
+            , cgcDoc = Just ""
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A data type eighteen fields wide, declared, shown, and printed, which is what holds that a type
+                costs what its width says it costs.
+                Typechecking does not move with the width at all. This file is 9 epochs over 3 fragments, and so
+                is the same shape at twenty-four fields, at thirty-two and at forty-eight. Measured with
+                @catln epochs@ against @io.ct@, which declares nothing, the whole compilation is 799 epochs where
+                that baseline is 793: six epochs for a type eighteen fields wide. A page is partitioned into solve
+                fragments per function SCC, so a declaration this wide is its own small component rather than
+                something the rest of the page is solved against.
+                Building the arrow trees for it is where a width still costs, and only for a value something
+                READS. Against a 54-second floor:
+                  18 fields, printed     — 54s
+                  20 fields, printed     — 70s
+                  22 fields, printed     — 104s
+                  24 fields, printed     — 245s
+                  24 fields, NOT printed — 58s
+                Past twenty-four it flattens rather than running away — 32 fields is 346s and 48 is 306s, both
+                held at about half a core, which is a build spending its time in memory rather than in work. So
+                the climb sits between eighteen and twenty-four and there is a ceiling above it.
+                That is why the value below is printed and not only declared. Without the @>@ the program
+                typechecks, builds nothing for the value, and this file would pass while saying nothing about the
+                half of the cost that is real.
+                Eighteen and not a round number, because that is what a checkbox is. A note in a vault running the
+                Obsidian Tasks plugin carries a status, a description, tags, a priority, six dates, a recurrence,
+                an action on completion, an id, the ids it waits on and a block link — eighteen things, which is
+                the width below. [/Data/Note/Task/Obsidian] is the type such a checkbox is read into." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Printed so that the value is built and not only declared, as @valueDeclFields.ct@ does and for the
+                same reason: the width that costs anything is the width something reads." }
+            )
+        , /Catln/#print
+            ( Value /p= /Wide
+                ( Value a= CStr
+                    { csValue = "1" }
+                )
+                ( Value b= CStr
+                    { csValue = "2" }
+                )
+                ( Value c= CStr
+                    { csValue = "3" }
+                )
+                ( Value d= CStr
+                    { csValue = "4" }
+                )
+                ( Value e= CStr
+                    { csValue = "5" }
+                )
+                ( Value f= CStr
+                    { csValue = "6" }
+                )
+                ( Value g= CStr
+                    { csValue = "7" }
+                )
+                ( Value h= CStr
+                    { csValue = "8" }
+                )
+                ( Value i= CStr
+                    { csValue = "9" }
+                )
+                ( Value j= CStr
+                    { csValue = "10" }
+                )
+                ( Value k= CStr
+                    { csValue = "11" }
+                )
+                ( Value l= CStr
+                    { csValue = "12" }
+                )
+                ( Value m= CStr
+                    { csValue = "13" }
+                )
+                ( Value n= CStr
+                    { csValue = "14" }
+                )
+                ( Value o= CStr
+                    { csValue = "15" }
+                )
+                ( Value p= CStr
+                    { csValue = "16" }
+                )
+                ( Value q= CStr
+                    { csValue = "17" }
+                )
+                ( Value r= CStr
+                    { csValue = "18" }
+                )
+            )
+        ]
+    }

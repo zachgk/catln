@@ -208,11 +208,9 @@ Prgm
                 lets the spine take its element type from the whole of itself rather than from its head, so the
                 [/T] of the inner cons is the [/Data/Primitive/String] the field was declared to hold rather than
                 the outer head's literal.
-                These values are declared and not printed, which is the boundary: the program TYPECHECKS, and
-                building the value to evaluate it does not — see
-                @test/Integration/disabled/listFieldEval.ct@. @listFieldNested.ct@ prints, because its elements
-                are data arms rather than bare constants, and the constants are what the two spellings come apart
-                over." }
+                These values are declared rather than printed, so what this holds is the typechecking of a second
+                cell. Printing a list field is held beside it: @listFieldNested.ct@ prints elements which are data
+                arms, and @valueDeclFields.ct@ prints a one-element field on a type carrying three field shapes." }
             )
         ]
     }

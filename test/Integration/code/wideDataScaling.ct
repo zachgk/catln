@@ -1,0 +1,38 @@
+import "core"
+
+
+# A data type eighteen fields wide, declared, shown, and printed, which is what holds that a type
+  costs what its width says it costs.
+  Typechecking does not move with the width at all. This file is 9 epochs over 3 fragments, and so
+  is the same shape at twenty-four fields, at thirty-two and at forty-eight. Measured with
+  @catln epochs@ against @io.ct@, which declares nothing, the whole compilation is 799 epochs where
+  that baseline is 793: six epochs for a type eighteen fields wide. A page is partitioned into solve
+  fragments per function SCC, so a declaration this wide is its own small component rather than
+  something the rest of the page is solved against.
+  Building the arrow trees for it is where a width still costs, and only for a value something
+  READS. Against a 54-second floor:
+    18 fields, printed     — 54s
+    20 fields, printed     — 70s
+    22 fields, printed     — 104s
+    24 fields, printed     — 245s
+    24 fields, NOT printed — 58s
+  Past twenty-four it flattens rather than running away — 32 fields is 346s and 48 is 306s, both
+  held at about half a core, which is a build spending its time in memory rather than in work. So
+  the climb sits between eighteen and twenty-four and there is a ceiling above it.
+  That is why the value below is printed and not only declared. Without the @>@ the program
+  typechecks, builds nothing for the value, and this file would pass while saying nothing about the
+  half of the cost that is real.
+  Eighteen and not a round number, because that is what a checkbox is. A note in a vault running the
+  Obsidian Tasks plugin carries a status, a description, tags, a priority, six dates, a recurrence,
+  an action on completion, an id, the ids it waits on and a block link — eighteen things, which is
+  the width below. [/Data/Note/Task/Obsidian] is the type such a checkbox is read into.
+data(Wide(a -> String, b -> String, c -> String, d -> String, e -> String, f -> String, g -> String, h -> String, i -> String, j -> String, k -> String, l -> String, m -> String, n -> String, o -> String, p -> String, q -> String, r -> String))
+
+every(Wide.., isa= [/Catln/Doc/DShow])
+
+/Wide(a= "1", b= "2", c= "3", d= "4", e= "5", f= "6", g= "7", h= "8", i= "9", j= "10", k= "11", l= "12", m= "13", n= "14", o= "15", p= "16", q= "17", r= "18")
+
+# Printed so that the value is built and not only declared, as @valueDeclFields.ct@ does and for the
+  same reason: the width that costs anything is the width something reads.
+> /Wide(a= "1", b= "2", c= "3", d= "4", e= "5", f= "6", g= "7", h= "8", i= "9", j= "10", k= "11", l= "12", m= "13", n= "14", o= "15", p= "16", q= "17", r= "18")
+main{io -> IO}= io.exit(val= 0)

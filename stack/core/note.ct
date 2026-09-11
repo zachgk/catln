@@ -106,12 +106,10 @@ module(Data/Note)
       done and cancelled dates, the tags apart from the description, the action on
       completion, the id, the ids it waits on, and the block link — are read exactly as these are
       and are carried together in [rest] as JSON, which is what [Show/TaskList] does with a whole
-      list of tasks and what [Show/Properties] does with a block of properties. That is not because
-      they are worth less. It is because a data type of eighteen fields cannot be typechecked at
-      all: sixteen takes minutes and eighteen reaches the constraint limit, while ten values of a
-      nine-field type cost nothing over declaring none. The measurements and the repro are in
-      @test/Integration/disabled/wideDataScaling.ct@. When a wide type costs what a narrow one
-      does, each of those should be a field here like the ones above.
+      list of tasks and what [Show/Properties] does with a block of properties. Each of those should
+      be a field here like the ones above: a type this wide costs six epochs over declaring none,
+      which @test/Integration/code/wideDataScaling.ct@ holds at exactly the eighteen fields a
+      checkbox has.
       The done and the cancelled date are one thing among those, not two: a task is done or it is
       cancelled and never both, and [statusType] already says which of the two a task with such a
       date is.
