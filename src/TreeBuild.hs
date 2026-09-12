@@ -217,6 +217,18 @@ joinArrowsWithCond env srcType destType guards = case completeTreeSet env srcTyp
   where
     conditionFree (_, Nothing, _) = True
     conditionFree (_, Just oa, _) = null (exprWhereConds (oaObjExpr oa)) && null (exprNonLinearArgGroups (oaObjExpr oa))
+    -- Whether an arm leaves 'Eval' nothing to decide, asked of the BUILT branch. A condition whose
+    -- built type is 'trueType' has no other value it could take, so evaluating it is a formality:
+    -- that is what a compile-time proposition reduces to, and the @?->@ guarding @/Context@
+    -- ('stack/core/data.ct') is one — its 'arrExists' macro answers it during this build. A real
+    -- runtime guard is typed 'boolType' and stays a decision. Read from the built conditions rather
+    -- than from the 'ObjArr' because a non-linear arm with no where-condition produces the same
+    -- EMPTY condition list as an arm with no guard at all, so the two are told apart by asking the
+    -- object for its non-linear groups as well.
+    decidesNothing :: Maybe ([TExpr EvalMetaDat], EObjArr) -> Bool
+    decidesNothing Nothing = True
+    decidesNothing (Just (conds, oa)) =
+      all ((== trueType) . getExprType) conds && null (exprNonLinearArgGroups (oaObjExpr oa))
     buildGuards :: [ResBuildEnvItem] -> CRes TCallTree
     buildGuards arrows = do
       ifTreePairs <- forM arrows $ \(_, moa, arrTree) -> do
@@ -235,9 +247,17 @@ joinArrowsWithCond env srcType destType guards = case completeTreeSet env srcTyp
                   toTExprDest env [(srcType, oa)] ifCond (emptyMetaT boolType)
                 return (Just (ifConds', oa), arrTree)
       case ifTreePairs of
-        -- TODO Maybe need to check the [(Just{}, t)] case where there is a condition, but it is the only arrow so it has to pass
-        [(_, t)] -> return t
-        _        -> return $ TCCond destType ifTreePairs
+        -- A LONE arm still has to pass its own guard. Being the only arrow left says that no OTHER
+        -- arm could apply, not that this one does: a where-condition or a non-linear pattern is a
+        -- claim about the VALUE, which dispatch on types cannot settle either way. Returning the
+        -- tree bare here ran a guarded arm unconditionally, so a function whose every sibling arm
+        -- had been dropped — which 'buildPartialCallTree' does silently when an arm's followup
+        -- fails — answered from this arm whatever its guard said, rather than reporting that it
+        -- had nothing to run. Only a genuinely unguarded arm may skip the 'TCCond'; a guarded one
+        -- becomes a single-branch 'TCCond' so 'Eval' evaluates the condition, and says it found no
+        -- matching condition when it does not hold.
+        [(cond, t)] | decidesNothing cond -> return t
+        _ -> return $ TCCond destType ifTreePairs
 
 -- | This handles the behavior for the else arrows
 -- | It will move them to the end of the sorted list (as the last resort).
