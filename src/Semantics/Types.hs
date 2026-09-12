@@ -875,8 +875,20 @@ instance (Semigroup tg) => Semigroup (TypeEnv tg) where
       n' = S.union n1 n2
 
 
-mergeDoc :: Maybe String -> Maybe String -> Maybe String
-mergeDoc (Just a) (Just b) = Just (a ++ " " ++ b)
+-- | The separator between the distinct docs a merged class node holds.
+docSep :: String
+docSep = "\n\n"
+
+-- | Merges the docs of two class graph nodes for the same class.
+--
+-- This must be idempotent. The same base class re-merges once per importing page across an import
+-- closure (see the DEDUPED note on 'mergeClasses'), and every one of those merges offers the /same/
+-- doc again, so a plain concatenation grew one doc into 87 copies of itself on the core's algebra
+-- chain. A doc already present says nothing new, so the merged doc is the distinct docs of both
+-- sides, in order, joined by 'docSep'. Empty docs are dropped rather than joined, because
+-- 'desObjDocComment' gives an undocumented declaration @Just ""@ rather than @Nothing@.
+mergeDoc :: Maybe DocComment -> Maybe DocComment -> Maybe DocComment
+mergeDoc (Just a) (Just b) = Just $ intercalate docSep $ L.nub $ filter (not . null) $ splitOn docSep a ++ splitOn docSep b
 mergeDoc (Just a) Nothing  = Just a
 mergeDoc Nothing (Just b)  = Just b
 mergeDoc _ _               = Nothing

@@ -151,14 +151,14 @@ Prgm
             , cgcDoc = Just "The [Monoid] builds on top of the [Semigroup].
               It adds the identity value [mempty].
               The integers with addition form a [Monoid], and 0 is the value for [mempty].
-              Another example is [String] where "" is the value for [mempty]  "
+              Another example is [String] where "" is the value for [mempty]"
             }
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Algebra/Semigroup
             , cgcExtends = [ ∀/Data/Algebra/Monoid ]
             , cgcDoc = Just "A semigroup is a type combined with an associative operation called [operator++].
-              For example, integers with the addition operation are a semigroup. "
+              For example, integers with the addition operation are a semigroup."
             }
         ]
     , prgmAnnots =
