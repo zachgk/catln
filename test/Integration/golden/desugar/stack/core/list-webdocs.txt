@@ -1,0 +1,192 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Data/List/fmapSteps"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/List/fmapSteps
+                            ( Value lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
+                            ( fn( Value v -> $_/A ) -> $_/B )( Value index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/Step ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/List/fmapSteps( Value lst= Value Nil )
+                            ( fn( Value v ) )( Value index ) -> ∀/Data/List[ /T=/Catln/Doc/Show/Step ] = Value Nil
+                        , /Data/List/fmapSteps
+                            ( Value lst= Cons( Value head )( Value tail ) )
+                            ( fn( Value v ) )( Value index ) -> ∀/Data/List[ /T=/Catln/Doc/Show/Step ] = Cons
+                            ( Value head= /Catln/Doc/Show/Step( Value index= Value index )
+                                ( Value input= toString( Value /this= Value head ) )
+                                ( Value output= toString
+                                    ( Value /this= fn( Value v= Value head ) )
+                                )
+                            )
+                            ( Value tail= fmapSteps( Value lst= Value tail )
+                                ( fn( Value v )= fn( Value v= Value v ) )
+                                ( Value index= /operator+( Value /l= Value index )
+                                    ( Value /r= CInt
+                                        { ciValue = 1 }
+                                    )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/List/showSteps"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/List/showSteps
+                            ( Value steps -> ∀/Data/List[ /T=/Catln/Doc/Show/Step ] ) -> /Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/List/showSteps( Value steps= Value Nil ) -> /Data/String = CStr
+                            { csValue = "" }
+                        , /Data/List/showSteps
+                            ( Value steps= Cons
+                                ( Value head= /Catln/Doc/Show/Step( Value index )( Value input )( Value output ) )( Value tail )
+                            ) -> /Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= /operator++
+                                    ( Value /l= /operator++
+                                        ( Value /l= /operator++
+                                            ( Value /l= /operator++
+                                                ( Value /l= toString( Value /this= Value index ) )
+                                                ( Value /r= CStr
+                                                    { csValue = ":" }
+                                                )
+                                            )( Value /r= Value input )
+                                        )
+                                        ( Value /r= CStr
+                                            { csValue = "->" }
+                                        )
+                                    )( Value /r= Value output )
+                                )
+                                ( Value /r= CStr
+                                    { csValue = ";" }
+                                )
+                            )
+                            ( Value /r= showSteps( Value steps= Value tail ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/List/exampleFmapSteps"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/List/exampleFmapSteps= CInt
+                            { ciValue = 0 }
+                        ]
+                    }
+                )
+            ,
+                ( "/Catln/Doc/dshowCall"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Catln/Doc/dshowCall
+                            ( Value s= /Data/Functor/fmap
+                                ( Value lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
+                                ( fn( Value v ) )
+                            ) -> ∀/Catln/Doc/DShow = /Catln/Doc/Show/Steps
+                            ( Value steps= fmapSteps( Value lst= Value lst )
+                                ( fn( Value v )= fn( Value v= Value v ) )
+                                ( Value index= CInt
+                                    { ciValue = 0 }
+                                )
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Functor/fmap
+            , cgcExtends =
+                [ /Data/Functor/fmap
+                    ( /fn( /v=TopType )=TopType
+                    , /lst=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
+                    )
+                ]
+            , cgcDoc = Just ""
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "# The list library's displays of its own calls
+                A display of a call says what a function did, where a display of a value says what the function left
+                behind. @core/list.ct@'s combinators are the case for it: each of them returns a list, and a list is
+                the one thing about the call a reader could already see. What they cannot see is the correspondence —
+                which element became which, which was kept, what each step added to the accumulator — and that is the
+                whole of what the combinator does.
+                Each is declared by an arm of [/Catln/Doc/dshowCall] whose argument is a call of the function. There is
+                no annotation marking the function and no name derived from it: the arm is the declaration, as an arm
+                of [/Catln/Doc/dshow] is for a type. The arms here are bounded to [/Data/List/ConsList] so they are the
+                list's displays and not every container's — a [/Data/Maybe] mapped over looks nothing like a table of
+                rows and would say so in a page of its own." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "# Why this is a page of its own
+                The arms name [/Catln/Doc/dshowCall], so this page reaches @core/webdoc.ct@, and @core/list.ct@ is
+                reached by nearly every page there is. Writing them there would put the doc server's vocabulary
+                underneath the list library. So this sits where @core/render.ct@ and @core/result.ct@ sit and by the
+                same arrangement: it reaches @core/list.ct@ freely, and nothing in the library reaches it." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "[fmap] over a [ConsList] shown as the table of what each element became: a row per element, the
+                element on the left and the result of applying [fn] to it on the right.
+                This is the display of the call and not of the list it returns. The recursion that @core/list.ct@'s
+                instance is written as is the generic display — a call per element, each holding a shorter list than
+                the one above it — and it is a display of how the definition is written rather than of what it does.
+                The table is the second, and is what a reader opening a mapping wants.
+                Bounded to elements that are [/Data/ToString], which is what a row can hold (see
+                [/Catln/Doc/Show/Step]). A mapping over elements that render no text does not match this arm and is
+                shown the way it was before there was one." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A mapping over a [ConsList] of things that render text is a call with a display, which is what
+                joining [/Catln/Doc/DShowCall] says. The bound on the elements is the whole of which mappings this
+                is claimed for: a mapping over elements that render no text is not a member and keeps the display
+                every other call gets." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "The rows of that table, walking the list and applying [fn] to each element as it goes.
+                It applies [fn] rather than being handed what [fn] already returned. An arm of
+                [/Catln/Doc/dshowCall] is given the call's arguments and nothing else, so working the outputs out is
+                the show's own job — which is also what lets the arm above say what a mapping does without the
+                debugger arranging anything for it.
+                [index] is threaded rather than derived, since a [ConsList] knows nothing about where in a list it
+                sits, and the rows are wanted numbered from the front." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "The rows written out as text, which is how this page checks the ones it builds.
+                It is not an arm of [/Data/toString] and [/Catln/Doc/Show/Steps] is not a [/Data/ToString]: a value
+                that renders text is shown as that text, so making these rows one would replace the display they
+                exist to be. So this is a rendering the page keeps to itself.
+                A test and not a golden, because the arm above is reached only from a debugger and so cannot be
+                written into a [#print] here. What a [#print] could reach is [fmapSteps], and what it builds is
+                everything the arm does beyond handing it over — so that is what is asserted." }
+            )
+        ]
+    }

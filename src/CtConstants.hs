@@ -85,6 +85,20 @@ dshowName, dshowArg :: String
 dshowName = "/Catln/Doc/dshow"
 dshowArg = "s"
 
+-- | The class of calls that have a display of their own, and the function resolving a call to that
+-- display, both declared in @stack\/core\/webdoc.ct@.
+--
+-- A second pair rather than more arms of 'dshowName' because a call is not a value and cannot be
+-- passed as one: an argument is evaluated before the callee is entered, so an arm of 'dshowName'
+-- whose pattern is a call is selected for the call and handed the call's result, and dies
+-- destructuring it. Nothing calls this from a page. Its one caller is 'Eval.attachCallShows', which
+-- has a call in hand as a runtime value — the tuple an arrow was entered with — and so can hand an
+-- arm exactly what its pattern is written against.
+dshowCallClassName, dshowCallName, dshowCallArg :: String
+dshowCallClassName = "/Catln/Doc/DShowCall"
+dshowCallName = "/Catln/Doc/dshowCall"
+dshowCallArg = "/s"
+
 -- | The page a page is written over, declared in @stack/core/webdoc.ct@. A page carrying one is
 -- shown with the page at 'overlayAnnotUrl' beneath its own writing.
 overlayAnnot, overlayAnnotUrl :: String

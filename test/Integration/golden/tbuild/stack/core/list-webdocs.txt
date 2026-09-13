@@ -1,0 +1,366 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Data/List/fmapSteps"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/List/fmapSteps
+                            ( EAppArg
+                                { eaaArg = Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = /fn
+                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> $_/B
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } ) -> ∀/Data/List[ /T=/Catln/Doc/Show/Step ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/List/fmapSteps
+                            ( EAppArg { eaaArg = Value /lst -> /Data/List/Nil = Value /Data/List/Nil } )
+                            ( EAppArg
+                                { eaaArg = /fn
+                                    ( EAppArg { eaaArg = Value /v } )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } ) -> /Data/List/Nil = Value /Data/List/Nil
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/List/showSteps"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/List/showSteps
+                            ( EAppArg
+                                { eaaArg = Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/Step ] }
+                            ) -> /Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/List/showSteps
+                            ( EAppArg { eaaArg = Value /steps -> /Data/List/Nil = Value /Data/List/Nil } ) -> /Data/String = ""
+                        , /Data/List/showSteps
+                            ( EAppArg
+                                { eaaArg = Value /steps -> /Data/List/Cons
+                                    [ /T=/Catln/Doc/Show/Step
+                                        ( /output=TopType
+                                        , /input=TopType
+                                        , /index=TopType
+                                        )
+                                    ]
+                                    ( /head=/Catln/Doc/Show/Step
+                                        ( /output=/Data/String
+                                        , /input=/Data/String
+                                        , /index=/Data/Primitive/Integer
+                                        )
+                                    , /tail=∀/Data/List/ConsList
+                                        [ /T=/Catln/Doc/Show/Step
+                                            ( /output=TopType
+                                            , /input=TopType
+                                            , /index=TopType
+                                            )
+                                        ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg
+                                        { eaaArg = Value /head -> /Catln/Doc/Show/Step
+                                            ( /output=/Data/String
+                                            , /input=/Data/String
+                                            , /index=/Data/Primitive/Integer
+                                            ) = /Catln/Doc/Show/Step
+                                            ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } )
+                                            ( EAppArg { eaaArg = Value /input -> /Data/String } )
+                                            ( EAppArg { eaaArg = Value /output -> /Data/String } )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList
+                                            [ /T=/Catln/Doc/Show/Step
+                                                ( /output=TopType
+                                                , /input=TopType
+                                                , /index=TopType
+                                                )
+                                            ]
+                                        }
+                                    )
+                                }
+                            ) -> /Data/String =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/String =
+                                        ( /operator++
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/String =
+                                                    ( /operator++
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> /Data/String =
+                                                                ( /operator++
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /l -> /Data/String =
+                                                                            ( /operator++
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /l -> /Data/String =
+                                                                                        ( /operator++
+                                                                                            ( EAppArg
+                                                                                                { eaaArg = Value /l -> /Data/String =
+                                                                                                    ( /Data/toString
+                                                                                                        ( EAppArg
+                                                                                                            { eaaArg = Value /this -> TVArg /index = ( Value /index ↦ TVArg /index ) }
+                                                                                                        ) ↦ /Data/String
+                                                                                                    )
+                                                                                                }
+                                                                                            )
+                                                                                            ( EAppArg
+                                                                                                { eaaArg = Value /r -> /Data/String = ":" }
+                                                                                            ) ↦ /Data/String
+                                                                                        )
+                                                                                    }
+                                                                                )
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /r -> TVArg /input = ( Value /input ↦ TVArg /input ) }
+                                                                                ) ↦ /Data/String
+                                                                            )
+                                                                        }
+                                                                    )
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /r -> /Data/String = "->" }
+                                                                    ) ↦ /Data/String
+                                                                )
+                                                            }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> TVArg /output = ( Value /output ↦ TVArg /output ) }
+                                                        ) ↦ /Data/String
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/String = ";" }
+                                            ) ↦ /Data/String
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> ∀/Data/Algebra/Semigroup =
+                                        ( /Data/List/showSteps
+                                            ( EAppArg
+                                                { eaaArg = Value /steps -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
+                                            ) ↦ ∀/Data/Algebra/Semigroup
+                                        )
+                                    }
+                                ) ↦ /Data/String
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/List/exampleFmapSteps"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/List/exampleFmapSteps -> /Data/Primitive/Integer = 0 ]
+                    }
+                )
+            ,
+                ( "/Catln/Doc/dshowCall"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Catln/Doc/dshowCall
+                            ( EAppArg
+                                { eaaArg = Value /s -> /Data/Functor/fmap
+                                    ( /fn( /v=TopType )=TopType
+                                    , /lst=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
+                                    ) =
+                                    ( /Data/Functor/fmap
+                                        ( EAppArg
+                                            { eaaArg = Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = /fn
+                                                ( EAppArg { eaaArg = Value /v } )
+                                            }
+                                        ) ↦
+                                        ( /Data/List/Nil + /Data/List/Cons
+                                            ( /head=TopType
+                                            , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                            )
+                                        )
+                                    )
+                                }
+                            ) -> /Catln/Doc/Show/Steps
+                            ( /steps=∀/Data/List[ /T=/Catln/Doc/Show/Step ] ) = /Catln/Doc/Show/Steps
+                            ( EAppArg
+                                { eaaArg = Value /steps -> UnionType
+                                    ( Just
+                                        ( PredClass /Data/List[ /T=/Catln/Doc/Show/Step ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /Data/List/Cons
+                                        [ /T=/Catln/Doc/Show/Step
+                                            ( /output=TopType
+                                            , /input=TopType
+                                            , /index=TopType
+                                            )
+                                        ]
+                                        ( /head=/Catln/Doc/Show/Step
+                                            ( /output=/Data/String
+                                            , /input=/Data/String
+                                            , /index=/Data/Primitive/Integer
+                                            )
+                                        , /tail=
+                                            ( TopType | PredClass /Data/List/ConsList
+                                                [ /T=/Catln/Doc/Show/Step
+                                                    ( /output=TopType
+                                                    , /input=TopType
+                                                    , /index=TopType
+                                                    )
+                                                ] && PredClass /Data/List[ /T=/Catln/Doc/Show/Step ]
+                                            )
+                                        )
+                                    , []
+                                    ) =
+                                    ( /Data/List/fmapSteps
+                                        ( EAppArg
+                                            { eaaArg = Value /lst -> TVArg /lst = ( Value /lst ↦ TVArg /lst ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = /fn
+                                                ( EAppArg { eaaArg = Value /v } )=
+                                                ( /fn
+                                                    ( EAppArg
+                                                        { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                                    ) ↦ TopType
+                                                )
+                                            }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /index -> /Data/Primitive/Integer = 0 }
+                                        ) ↦ UnionType
+                                        ( Just
+                                            ( PredClass /Data/List[ /T=/Catln/Doc/Show/Step ]
+                                            , fromList []
+                                            , []
+                                            )
+                                        , /Data/List/Cons
+                                            [ /T=/Catln/Doc/Show/Step
+                                                ( /output=TopType
+                                                , /input=TopType
+                                                , /index=TopType
+                                                )
+                                            ]
+                                            ( /head=/Catln/Doc/Show/Step
+                                                ( /output=/Data/String
+                                                , /input=/Data/String
+                                                , /index=/Data/Primitive/Integer
+                                                )
+                                            , /tail=
+                                                ( TopType | PredClass /Data/List/ConsList
+                                                    [ /T=/Catln/Doc/Show/Step
+                                                        ( /output=TopType
+                                                        , /input=TopType
+                                                        , /index=TopType
+                                                        )
+                                                    ] && PredClass /Data/List[ /T=/Catln/Doc/Show/Step ]
+                                                )
+                                            )
+                                        , []
+                                        )
+                                    )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Functor/fmap
+            , cgcExtends =
+                [ /Data/Functor/fmap
+                    ( /fn( /v=TopType )=TopType
+                    , /lst=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
+                    )
+                ]
+            , cgcDoc = Just ""
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "# The list library's displays of its own calls
+                A display of a call says what a function did, where a display of a value says what the function left
+                behind. @core/list.ct@'s combinators are the case for it: each of them returns a list, and a list is
+                the one thing about the call a reader could already see. What they cannot see is the correspondence —
+                which element became which, which was kept, what each step added to the accumulator — and that is the
+                whole of what the combinator does.
+                Each is declared by an arm of [/Catln/Doc/dshowCall] whose argument is a call of the function. There is
+                no annotation marking the function and no name derived from it: the arm is the declaration, as an arm
+                of [/Catln/Doc/dshow] is for a type. The arms here are bounded to [/Data/List/ConsList] so they are the
+                list's displays and not every container's — a [/Data/Maybe] mapped over looks nothing like a table of
+                rows and would say so in a page of its own." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "# Why this is a page of its own
+                The arms name [/Catln/Doc/dshowCall], so this page reaches @core/webdoc.ct@, and @core/list.ct@ is
+                reached by nearly every page there is. Writing them there would put the doc server's vocabulary
+                underneath the list library. So this sits where @core/render.ct@ and @core/result.ct@ sit and by the
+                same arrangement: it reaches @core/list.ct@ freely, and nothing in the library reaches it." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "[fmap] over a [ConsList] shown as the table of what each element became: a row per element, the
+                element on the left and the result of applying [fn] to it on the right.
+                This is the display of the call and not of the list it returns. The recursion that @core/list.ct@'s
+                instance is written as is the generic display — a call per element, each holding a shorter list than
+                the one above it — and it is a display of how the definition is written rather than of what it does.
+                The table is the second, and is what a reader opening a mapping wants.
+                Bounded to elements that are [/Data/ToString], which is what a row can hold (see
+                [/Catln/Doc/Show/Step]). A mapping over elements that render no text does not match this arm and is
+                shown the way it was before there was one." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A mapping over a [ConsList] of things that render text is a call with a display, which is what
+                joining [/Catln/Doc/DShowCall] says. The bound on the elements is the whole of which mappings this
+                is claimed for: a mapping over elements that render no text is not a member and keeps the display
+                every other call gets." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "The rows of that table, walking the list and applying [fn] to each element as it goes.
+                It applies [fn] rather than being handed what [fn] already returned. An arm of
+                [/Catln/Doc/dshowCall] is given the call's arguments and nothing else, so working the outputs out is
+                the show's own job — which is also what lets the arm above say what a mapping does without the
+                debugger arranging anything for it.
+                [index] is threaded rather than derived, since a [ConsList] knows nothing about where in a list it
+                sits, and the rows are wanted numbered from the front." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "The rows written out as text, which is how this page checks the ones it builds.
+                It is not an arm of [/Data/toString] and [/Catln/Doc/Show/Steps] is not a [/Data/ToString]: a value
+                that renders text is shown as that text, so making these rows one would replace the display they
+                exist to be. So this is a rendering the page keeps to itself.
+                A test and not a golden, because the arm above is reached only from a debugger and so cannot be
+                written into a [#print] here. What a [#print] could reach is [fmapSteps], and what it builds is
+                everything the arm does beyond handing it over — so that is what is asserted." }
+            )
+        ]
+    }

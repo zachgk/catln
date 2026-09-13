@@ -27,10 +27,13 @@ import           TreeBuild           (buildArrow)
 
 evalStartEArrow :: PartialType -> AnyObjArr -> Args -> StateT Env CRes (TExpr EvalMetaDat, [TExpr EvalMetaDat], Args)
 evalStartEArrow srcType oa newArgs = do
-  env@Env{evExEnv, evTbEnv, evArgs, evCoverage, evTreebugOpen, evTreebugNextId} <- get
+  env@Env{evExEnv, evTbEnv, evArgs, evCoverage, evTreebugOpen, evTreebugClosed, evTreebugNextId} <- get
   let env' = env{
                 evArgs=newArgs
-                , evTreebugOpen = (show evTreebugNextId, oa) : evTreebugOpen
+                -- The enclosing call's finished calls go aside with the arrow being entered, and this
+                -- one starts with none of its own. 'evalEndEArrow' puts them back.
+                , evTreebugOpen = (show evTreebugNextId, oa, evTreebugClosed) : evTreebugOpen
+                , evTreebugClosed = []
                 , evTreebugNextId = evTreebugNextId + 1
                 }
   case oa of
@@ -56,7 +59,10 @@ evalEndEArrow :: Val -> Val -> Args -> Env -> Env
 evalEndEArrow _ _ _ Env{evTreebugOpen} | null evTreebugOpen = error $ printf "Tried to evalEndEArrow with an empty treebug open"
 evalEndEArrow input val newArgs env@Env{evTreebugOpen, evTreebugClosed} = env {
   evTreebugOpen = tail evTreebugOpen,
-  evTreebugClosed = pure $ (\(closedId, oa) -> EvalTreebugClosed oa input val evTreebugClosed closedId) (head evTreebugOpen),
+  -- The call that just finished takes what finished INSIDE it as its children, and joins what the
+  -- enclosing call had already finished. Appended rather than prepended, so the calls under a node
+  -- are in the order the run made them.
+  evTreebugClosed = (\(closedId, oa, siblings) -> siblings ++ [EvalTreebugClosed oa input val evTreebugClosed closedId Nothing]) (head evTreebugOpen),
   evArgs = newArgs
                                                             }
 
@@ -70,7 +76,7 @@ evalEndEArrow input val newArgs env@Env{evTreebugOpen, evTreebugClosed} = env {
 evalRecordDebug :: CodeRange -> Val -> Env -> Env
 evalRecordDebug _ _ Env{evTreebugOpen} | null evTreebugOpen = error $ printf "Tried to record a #debug with an empty treebug open"
 evalRecordDebug pos val env@Env{evTreebugOpen, evDebugs} = env {
-  evDebugs = EvalDebug pos val (fst $ head evTreebugOpen) : evDebugs
+  evDebugs = EvalDebug pos val ((\(openId, _, _) -> openId) $ head evTreebugOpen) : evDebugs
                                                                }
 
 evalError :: String -> StateT Env CRes v

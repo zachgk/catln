@@ -6,8 +6,10 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import {TreeItem} from '@mui/x-tree-view/TreeItem';
 import Link from '@mui/material/Link';
 
-import {ObjArr} from '../Semantics';
+import {ObjArr, exprContents} from '../Semantics';
+import {PTypeName} from '../Common';
 import {Value} from '../Value';
+import {CallStepsContext} from './Steps';
 
 function Debugger(props) {
   const fun = props["/fun"].contents;
@@ -19,7 +21,11 @@ function Debugger(props) {
 
   // An empty tree means the run never entered an arrow, which a program that failed before its first
   // call can do. Say so rather than rendering an undefined node.
-  const [root] = drResult.erTreebug;
+  //
+  // All of them and not the first: a run can enter more than one arrow at the top, which is what an
+  // expression built as a sequence of calls does. Showing only the first showed the whole of a run
+  // whose top was one call and a misleading fraction of one whose top was several.
+  const roots = drResult.erTreebug;
   const debugs = drResult.erDebugs;
 
   // The tree is controlled only so that a debug record can reveal the call it was recorded in: the
@@ -50,7 +56,7 @@ function Debugger(props) {
   return (
     <div>
       <h2>{fun}</h2>
-      {root ? (
+      {roots.length ? (
         <SimpleTreeView
           slots={{collapseIcon: ExpandMoreIcon, expandIcon: ChevronRightIcon}}
           expandedItems={expanded}
@@ -58,7 +64,7 @@ function Debugger(props) {
           selectedItems={selected}
           onSelectedItemsChange={(event, item) => setSelected(item)}
         >
-          <TreebugNode data={root} nodeRefs={nodeRefs} />
+          {roots.map(root => <TreebugNode data={root} nodeRefs={nodeRefs} key={root[4]} />)}
         </SimpleTreeView>
       ) : <p>Evaluated no arrows.</p>}
       {/* Every #debug the run recorded, in the order it recorded them: one list over the whole run,
@@ -128,8 +134,77 @@ function ancestorNodes(nodes, target) {
   return null;
 }
 
+// The definition a node is a call of, as the name its arrow is written under. A node carries that
+// arrow in either of two forms -- the program's own, or the one built for the call -- and the name is
+// read the same way out of both.
+function nodeFun(node) {
+  const [eitherOa] = node;
+  const oa = "Left" in eitherOa ? eitherOa["Left"] : eitherOa["Right"];
+  const obj = oa && oa.oaObj;
+  return obj ? exprPath(obj) : null;
+}
+
+// The head of a name expression, walking down through however many arguments were applied to it and
+// through whatever was written around it. Both the program's expressions and the built ones are
+// walked, since a node carries its arrow in either form -- which is what `exprContents` is for.
+function exprPath(expr) {
+  let e = expr;
+  for (;;) {
+    const parts = e && exprContents(e);
+    if (!parts) {
+      return null;
+    }
+    switch (e.tag) {
+    case "TupleApply":
+    case "TTupleApply":
+      e = parts[1][1];
+      break;
+    case "EWhere":
+    case "TWhere":
+      e = parts[1];
+      break;
+    case "AliasExpr":
+    case "TAliasExpr":
+      e = parts[0];
+      break;
+    case "Value":
+    case "TValue":
+      return parts[1];
+    default:
+      return null;
+    }
+  }
+}
+
+// A call with a display of its own stands for the whole chain of calls of the same definition
+// underneath it, because that is what its display describes: a mapping over three elements is four
+// nested calls of one definition, and one table of three rows.
+//
+// What each row opens onto is collected here. Walking down the chain, everything at each level that
+// is NOT the chain continuing is what that level did -- for an fmap, the one call of the mapped
+// function -- so the nth level's own calls are what the nth row expands to. A level that did more
+// than one such thing hands over all of them rather than picking, since a row that quietly showed one
+// of two would be a row that lied about what happened.
+function chainSteps(node, fun) {
+  const steps = [];
+  let current = node;
+  while (current) {
+    const children = current[3];
+    const next = children.find(child => nodeFun(child) === fun);
+    steps.push(children.filter(child => child !== next));
+    current = next;
+  }
+  // The last level of a chain is the one that ended it -- an fmap's Nil arm -- and did nothing of its
+  // own, so it contributes no row. Dropping it here rather than in the walk keeps the walk about the
+  // shape of the chain and this about what a table has rows for.
+  while (steps.length && !steps[steps.length - 1].length) {
+    steps.pop();
+  }
+  return steps;
+}
+
 function TreebugNode(props) {
-  let [eitherOa, input, val, children, id] = props.data;
+  let [eitherOa, input, val, children, id, show] = props.data;
   const {nodeRefs} = props;
 
   let oa;
@@ -137,6 +212,30 @@ function TreebugNode(props) {
     oa = eitherOa["Left"];
   } else {
     oa = eitherOa["Right"];
+  }
+
+  // A call the library gave a display of its own. The display replaces the generic label -- which is
+  // the point of it -- and it goes in the item's children rather than its label so that each of its
+  // rows can be an item that opens.
+  //
+  // The chain of calls this one stands for is folded into those rows and is not rendered beside them.
+  // It is still in the tree; what is gone is a second, worse display of the same thing next to the
+  // good one.
+  if (show) {
+    const fun = nodeFun(props.data);
+    const steps = chainSteps(props.data, fun).map(
+      level => level.map(child => <TreebugNode data={child} nodeRefs={nodeRefs} key={child[4]} />)
+    );
+    // Named rather than written out. The generic label spells the whole definition because that is
+    // all it has to say about the call; this one has the display below it saying what the call did,
+    // so the definition it was is a heading rather than the content.
+    return (
+      <TreeItem itemId={id} label={<PTypeName name={fun} />} ref={el => {nodeRefs.current[id] = el}}>
+        <CallStepsContext.Provider value={steps}>
+          <Value data={show} />
+        </CallStepsContext.Provider>
+      </TreeItem>
+    );
   }
 
   let label = <span><ObjArr oa={oa} /> |::| <Value data={input} /> =&gt; <Value data={val} /></span>;

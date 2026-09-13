@@ -21,6 +21,7 @@ import Calendar from './Values/Calendar';
 import Overlay from './Values/Overlay';
 import Properties from './Values/Properties';
 import Rendered from './Values/Rendered';
+import Steps from './Values/Steps';
 import {BuildFile, CatlnResult} from './Values/BuildResult';
 
 // A Value may be given an update function by whatever rendered it. Calling update(src) asks for
@@ -117,6 +118,12 @@ function Value(props) {
     // `json/json.js`, not because there is a component here that knows what JSON is.
     case "/Catln/Doc/Show/Rendered":
       return <Rendered {...val.args} />;
+    // A call shown as what it did, step by step. Unlike everything above it this is a display of a
+    // call rather than of a value: it arrives from an arm of /Catln/Doc/dshowCall, which the debugger
+    // asks for per call of the run it is showing. Nothing here is named after any one function -- a
+    // mapping over a list draws one of these because the list library says so.
+    case "/Catln/Doc/Show/Steps":
+      return <Steps {...val.args} />;
     default:
       let showArgs = "";
       if(Object.keys(val.args).length > 0) {

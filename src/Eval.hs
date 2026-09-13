@@ -503,6 +503,91 @@ evalDShowAnnot env0@Env{evTbEnv, evTypeEnv} os annot0
 dshowDestType :: Type
 dshowDestType = classPartial $ partialVal $ mkName dshowClassName
 
+-- | The functions that have a display of a call: those an arm of @\/Catln\/Doc\/dshowCall@ is
+-- written over.
+--
+-- Read off the arms rather than from anything marking the function, because the arm IS the
+-- declaration — a library says one of its functions has a display by writing how it is displayed,
+-- the same way it says a type has one. A function named here is one 'attachCallShows' will try; every
+-- other call in a run is left alone without anything being built for it, which is what keeps this off
+-- the overwhelming majority of an evaluation tree.
+callShowFuns :: EPrgm -> S.HashSet TypeName
+callShowFuns Prgm{prgmObjMap=ObjectMap objMap} = case H.lookup (mkName dshowCallName) objMap of
+  Nothing                     -> S.empty
+  Just ObjectMapItem{omiDefs} -> S.fromList $ mapMaybe armFun omiDefs
+  where
+    -- The call an arm displays is the call written in its @/s@, so the function it is of is that
+    -- call's own name.
+    armFun oa = do
+      obj <- oaObj oa
+      case H.lookup (partialKey (mkName dshowCallArg)) (exprAppliedArgsMap obj) of
+        Just (Just (_, Just argE)) -> Just $ makeAbsoluteName $ exprPath argE
+        _                          -> Nothing
+
+-- | Fill in each call of an evaluation tree that has a display of its own, leaving the rest as they
+-- closed.
+--
+-- This is the one caller of @\/Catln\/Doc\/dshowCall@, and the reason that function exists rather
+-- than more arms of @dshow@: the call is in hand here as the runtime tuple the arrow was entered
+-- with, so an arm whose pattern is a call is handed a call. Written from a page it would be handed
+-- the call's result instead — an argument is evaluated before the callee is entered — and would die
+-- destructuring it. See 'CtConstants.dshowCallName'.
+--
+-- A chain of calls of the SAME function gets one display, on the outermost. A display of a call
+-- speaks for the whole call including whatever that call did to reach its answer, and a recursive
+-- definition reaches its answer by calling itself: @fmap@ over a three-element list is four nested
+-- calls, and four tables each holding a shorter tail of the same one is not four displays but one,
+-- shown four times. The inner calls keep their nodes and their children — nothing is dropped from the
+-- tree — they simply have no display of their own, and whatever is showing the outermost decides what
+-- to do with what is underneath it.
+attachCallShows :: EPrgm -> [EvalTreebugClosed] -> CRes [EvalTreebugClosed]
+attachCallShows prgm nodes
+  | S.null funs = return nodes
+  | otherwise = mapM (go Nothing) nodes
+  where
+    funs = callShowFuns prgm
+    env@Env{evTbEnv} = evalBaseEnv prgm
+
+    go parentFun (EvalTreebugClosed oa input val children nodeId _) = do
+      let fun = either oaObjPath oaObjPath oa
+      children' <- mapM (go (Just fun)) children
+      showVal <- if S.member fun funs && parentFun /= Just fun
+        then buildShow fun input
+        else return Nothing
+      return $ EvalTreebugClosed oa input val children' nodeId showVal
+
+    -- The call, wrapped as the argument of a @dshowCall@, built toward @DShow@ and run.
+    buildShow fun input = do
+      let showInput = TupleVal dshowCallName (H.singleton dshowCallArg input)
+      -- Both spellings of the call's type, as 'evalCallTree' tries both when it dispatches
+      -- ('TCMatch'). A higher-order argument's slot is keyed one way on a runtime value — the bare
+      -- name, holding the closure's input signature — and the other way on a typed arm — the
+      -- signature as the key, holding the output contract. 'getValPartialTypeOut' is the second
+      -- spelling, and it is the one that matters here: it recurses, so it reaches the closure sitting
+      -- inside the call sitting inside the @/s@, which is one level deeper than any closure dispatch
+      -- normally sees and one level deeper than the top-level re-keying reaches.
+      --
+      -- @fmap@ is exactly the case. Its display cannot be selected under the first spelling and can
+      -- under the second, so both are tried rather than either being assumed.
+      case firstBuilt [getValPartialType showInput, getValPartialTypeOut showInput] of
+        -- No arm of the function's display matches THIS call, which is a display saying nothing about
+        -- this one rather than a display that broke: the list's @fmap@ display is written for elements
+        -- that render text, and a mapping over elements that render none is a mapping it does not
+        -- describe. So the call keeps the display every other call gets, and nothing is said about it.
+        Nothing -> return Nothing
+        Just tree -> case evalStateT (evalCallTree showInput tree) env of
+          -- Built and then failed to run, which is the opposite case and is worth saying: an arm was
+          -- found for this call and could not produce what it promised.
+          CErr notes -> CRes [MkCNote $ GenCErr Nothing $ printf "The display of a call of %s could not be evaluated: %s" (nameStr fun) (prettyCNotes notes)] Nothing
+          CRes _ v -> return $ Just v
+
+    -- The tree built from the first of these source spellings that builds one.
+    --
+    -- 'MustCall' rather than 'MayHold': the point is to reach the arm, and a source that already
+    -- satisfies the destination would otherwise be handed back as it stands.
+    firstBuilt srcs = listToMaybe $ mapMaybe build srcs
+      where build src = cresToMaybe $ buildCallTree evTbEnv [] S.empty PTopType MustCall (singletonType src) dshowDestType
+
 -- | Build and evaluate a call to a named function of the program, with arguments supplied as runtime
 -- values, to the value it displays as through the @DShow@ class.
 --
@@ -724,7 +809,7 @@ evalDebugPrgm function prgm = unsafePerformIO $ do
     CRes notes (code, io, res) -> do
       io
       out <- getMockIOOutput mockIO
-      return $ CRes notes (DebugRun (Just code) out Nothing res)
+      return $ CRes notes (DebugRun (Just code) out Nothing) <*> withCallShows prgm res
 
 -- | Runs one expression of a program for a debugger reporting on it: the value it evaluated to, and
 -- the tree of what it evaluated on the way.
@@ -751,7 +836,15 @@ evalDebugExprPrgm input prgm = do
   let env@Env{evTbEnv} = evalBaseEnv prgm
   tree <- toTExprDest evTbEnv [] input (emptyMetaT dshowDestType)
   (val, env') <- runStateT (evalExpr tree) env
-  return $ DebugRun Nothing "" (Just val) (evalResult env')
+  DebugRun Nothing "" (Just val) <$> withCallShows prgm (evalResult env')
+
+-- | An evaluation's result with the display filled in for each call that has one
+-- ('attachCallShows'). Both debugger entry points go through this, since which of them ran a
+-- program is not something a display of one of its calls depends on.
+withCallShows :: EPrgm -> EvalResult -> CRes EvalResult
+withCallShows prgm res@EvalResult{erTreebug} = do
+  treebug' <- attachCallShows prgm erTreebug
+  return res{erTreebug = treebug'}
 
 evalBuild :: String -> FileImport -> EPrgmGraphData -> CResT IO (Val, EvalResult)
 evalBuild function prgmName prgmGraphData = do

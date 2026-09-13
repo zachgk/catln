@@ -303,6 +303,16 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/Doc/dshowCall"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Doc/dshowCall( Value s -> ∀/Catln/Doc/DShowCall ) -> ∀/Catln/Doc/DShow ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Doc/Show/Sidebar"
                 , ObjectMapItem
                     { omiDecls =
@@ -475,6 +485,7 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Catln/Doc/DShow
@@ -502,6 +513,20 @@ Prgm
               print statement accept any [ToString] type. A [DShow] value that is not [ToString] (a
               visualization like [Show/MD]) is still printable, but only [ToString] values are compared
               against a print/result golden."
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Catln/Doc/DShowCall
+            , cgcExtends = []
+            , cgcDoc = Just "Represents calls which have a display of their own, as [DShow] represents values which do.
+              A call is not a value, and that is the whole reason this is a second class rather than more
+              members of the first. What [DShow] answers about is something the program computed and is
+              holding; what this answers about is the computing — which arguments went in, what came back,
+              and, where it matters, what happened in between. A mapping over a list is the case the first
+              of these was written for: the list it returns is a [DShow] already and says nothing a reader
+              could not see, while which element became which is the whole of what the call did.
+              Open, as [DShow] is, and joined the same way — by an arm of [/Catln/Doc/dshowCall] written
+              beside the function, not by an [every]. See [/Data/List] in @core/list-webdocs.ct@."
             }
         , CGClass
             { cgcSealed = False
@@ -582,6 +607,18 @@ Prgm
                 once per combination of their members. An annotation taking a [String] — a type name, a
                 function to run — names something only the reader knows, so marking it offers nothing until
                 there is somewhere to type that in." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Represents calls which have a display of their own, as [DShow] represents values which do.
+                A call is not a value, and that is the whole reason this is a second class rather than more
+                members of the first. What [DShow] answers about is something the program computed and is
+                holding; what this answers about is the computing — which arguments went in, what came back,
+                and, where it matters, what happened in between. A mapping over a list is the case the first
+                of these was written for: the list it returns is a [DShow] already and says nothing a reader
+                could not see, while which element became which is the whole of what the call did.
+                Open, as [DShow] is, and joined the same way — by an arm of [/Catln/Doc/dshowCall] written
+                beside the function, not by an [every]. See [/Data/List] in @core/list-webdocs.ct@." }
             )
         , /Catln/#md
             ( Value /text= CStr

@@ -37,6 +37,33 @@ module(Catln/Doc)
       value that is already [DShow] straight through; the arms below turn compiler annotations (like
       [#md] or [#type]) into their visualization types.
 
+  class(DShowCall)
+    # Represents calls which have a display of their own, as [DShow] represents values which do.
+      A call is not a value, and that is the whole reason this is a second class rather than more
+      members of the first. What [DShow] answers about is something the program computed and is
+      holding; what this answers about is the computing — which arguments went in, what came back,
+      and, where it matters, what happened in between. A mapping over a list is the case the first
+      of these was written for: the list it returns is a [DShow] already and says nothing a reader
+      could not see, while which element became which is the whole of what the call did.
+      Open, as [DShow] is, and joined the same way — by an arm of [/Catln/Doc/dshowCall] written
+      beside the function, not by an [every]. See [/Data/List] in @core/list-webdocs.ct@.
+
+  dshowCall(s -> DShowCall) -> DShow
+    # [dshowCall] resolves a call to the display of that call. A declaration and no more: there is
+      no arm here matching anything, so a call with no arm of its own has no display and whatever
+      is showing it falls back to however it shows calls in general.
+      Deliberately not an arm of [dshow], and deliberately a function nothing calls from a page.
+      An argument is evaluated before the function it is passed to is entered, so a call written
+      into a page arrives at whatever it was passed to as its RESULT. An arm whose pattern is a
+      call is still selected for it — the type it is selected on is the call, unreduced — and then
+      destructures a value that is not one. Written on [dshow] that is a trap a library can fall
+      into from a page; written here it cannot arise, because the only caller is a debugger, which
+      has the call in hand as a value and hands it over as one.
+      So an arm here is read differently from an arm of [dshow] in one way worth stating: its
+      parameters are the call's arguments, and its body may USE them — apply the function argument,
+      walk the list argument — because what it was given is the call and not the answer. A show of
+      a call works the answer out itself, which is what makes it a show of the function.
+
   every(String, isa= [/Catln/Doc/DShow])
   every(/Data/ToString, isa= [/Catln/Doc/DShow])
     # Every [/Data/ToString] value is displayable, so [ToString] is a subset of [DShow]: the

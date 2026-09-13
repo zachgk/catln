@@ -381,13 +381,30 @@ instance ToJSON EPrim where
   toJSON EEnvPrim{} = object ["type".=("EEnvPrim" :: String)]
 
 
--- | An arrow the evaluation is inside, and the id of the node it will close as. The id is assigned
--- when the arrow is ENTERED rather than derived when it closes, because what wants to name a node is
--- inside it at the time: a @#debug@ recorded partway through a call has to say which call it came
--- from, and the state a closing node is identified from does not exist yet.
-type EvalTreebugOpen = (String, AnyObjArr)
+-- | An arrow the evaluation is inside: the id of the node it will close as, the arrow itself, and
+-- the calls the ENCLOSING arrow had already finished when this one was entered.
+--
+-- The id is assigned when the arrow is ENTERED rather than derived when it closes, because what wants
+-- to name a node is inside it at the time: a @#debug@ recorded partway through a call has to say
+-- which call it came from, and the state a closing node is identified from does not exist yet.
+--
+-- The third is what makes the result a tree of calls rather than a chain of them. 'evTreebugClosed'
+-- holds the calls finished so far at ONE level, so entering an arrow has to put the enclosing level's
+-- aside and start an empty one; closing takes it back out and adds the call that just finished to it.
+-- Without it a closing arrow adopts whatever closed before it, whether or not that call happened
+-- inside it — so an arrow calling two others in sequence reads as the second one calling the first,
+-- and a run reads as a single spine however it branched.
+type EvalTreebugOpen = (String, AnyObjArr, [EvalTreebugClosed])
 
-data EvalTreebugClosed = EvalTreebugClosed AnyObjArr Val Val [EvalTreebugClosed] String
+-- | One call the evaluation made: the arrow it entered, what it was given, what it returned, the
+-- calls made inside it, the id it was entered under, and the display the call has of its own.
+--
+-- The last is 'Nothing' for every call as it closes, and is filled afterwards by
+-- 'Eval.attachCallShows' for the few whose function declares an arm of
+-- 'CtConstants.dshowCallName'. Afterwards rather than here because a display is built by evaluating,
+-- and evaluating while an evaluation is being recorded would record the display's own calls as part
+-- of the run they describe.
+data EvalTreebugClosed = EvalTreebugClosed AnyObjArr Val Val [EvalTreebugClosed] String (Maybe Val)
   deriving (Eq, Generic, Hashable, ToJSON)
 
 data Env = Env { evObjMap        :: EObjectMap
