@@ -27,7 +27,7 @@ import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Parser.Syntax
 import           Text.Printf
-import           Utils                   (graphLookup, graphToNodes)
+import           Utils                   (fmapGraph, graphLookup, graphToNodes)
 
 -- Removes objects that match classes
 -- When a class is used in the RHS of a multiTypeDef, it will create an object temporarily
@@ -243,45 +243,50 @@ reassignImportedMethodDefs (Prgm (ObjectMap fullObjMap) _ _) (Prgm (ObjectMap ob
     renameOA from to oa = oa{oaObj = fmap (mapExprPath (\(eM, eN) -> Value eM (if eN == from then to else eN))) (oaObj oa)}
 
 -- |
--- Names each type-variable reference that resolves to its object's own declared variable.
+-- Names each type-variable reference that names the partial it is written one level inside.
 --
--- A declaration may type an argument slot by one of its OWN variables — @peq[$V -> Eqq](x ->
--- Box[$T -> $_V])@ — and both that reference and a genuinely ambient one (a variable introduced
--- in the Obj and used in the Arr) are spelled @$_T@ in source. The two need different scope
--- rules: the first is in scope for as long as it sits inside its binder, the second only while
--- the ambient environment binds it. Which one a reference IS follows from the enclosing binder,
--- so it is decided here, where that binder is lexical, and carried by the reference afterwards
--- ('TVParent'). Re-deriving it later, inside the type algebra, would capture a like-named
--- variable of whatever scope the type had been carried into — the same capture
--- 'seedDefResultTypes' avoids by refusing to copy a var-carrying declared return.
+-- A reference may name a variable of the partial ENCLOSING the one it is written on — the
+-- @$_/V@ in @peq[$V -> Eqq](x -> Box[$T -> $_V])@, once that argument sits in @peq@'s own slot —
+-- or a variable of the ambient object scope. Both are spelled @$_T@ in source, so only the
+-- lexical nesting can tell them apart, and that is why the decision is made HERE. Everything
+-- downstream relies on it and must never re-derive it: doing so deep in the type algebra would
+-- capture a like-named variable of whatever scope the type had been carried into.
 --
--- The binder is the object's own variable application (@[$V -> Eqq]@), so an object that applies
--- no variables is left untouched, and the ANNOTATION metas are rewritten together ('ArrMeta' —
--- the argument annotations at every nesting level and the result).
+-- A reference is a parent reference exactly when the partial IMMEDIATELY enclosing the one it is
+-- written on binds its name ('tagParentVarRefs' states the one-level rule and why no deeper
+-- reference has a spelling); anything else keeps the 'TVExt' the parser gave it and resolves
+-- through the ambient environment.
 --
--- The object's COMPOSED input metas (the tuple-apply types 'desObj' pre-computes for non-def
--- objects, which encode seeds the object's actual from) are rewritten as well. They carry the
--- same references INSIDE their binder — the outermost partial is the object itself — so the
--- parent set is seeded empty and derived entirely from the type's own nesting: the partial's
--- 'ptVars' VALUES keep the containing scope (a class member's own bound, @Cons[$T -> $_T]@,
--- stays ambient) while its arg slots see its variables. Left unrewritten, a pre-computed
--- @Cons[..](tail=∀ConsList[/T=$_/T])@ reaches the object universe spelled ambient and the
--- scope rules read the reference as foreign, widening the field bound to ⊤ for every consumer
--- the universe bounds ('BoundedByObjs').
+-- An ANNOTATION meta ('ArrMeta') holds a FRAGMENT of the object's type — @∀List[/T=$_/T]@ on its
+-- own, with the @sorted[$T]@ that encloses it left implicit — so the enclosing partial has to be
+-- supplied rather than read off the fragment. That is what the parent set is seeded with: the
+-- object's own variable application, which is the partial the fragment sits in once the object's
+-- type is assembled. Reading the fragment's nesting alone instead spells the SAME reference
+-- 'TVExt' in the annotation and 'TVParent' in the object's composed type, and one declaration
+-- spelled two ways is two denotationally-equal forms that compare unequal: list.ct's @sorted@
+-- stops being fulfilled by its own definition.
 --
--- A variable's BOUND (@[$M -> Monad[$T -> $_A]]@) is deliberately left alone, for the reason
--- 'dropOutOfScopeTVExt' gives for a partial's 'ptVars' values: it belongs to the scope CONTAINING
--- the binder rather than inside it, and it travels without it — substituted for @$M@ wherever the
--- variable is used. Naming it a parent reference strands it: @∀Monad[/T=$^/A]@ reached TreeBuild
--- as a destination with no parent in view and nothing could reach it, where the ambient reading
--- had correctly read the reference as the ⊤ it denotes there.
+-- The object's COMPOSED input metas ('ExprMeta' 'InputMeta' — the tuple-apply types 'desObj'
+-- pre-computes) DO materialize the object as their outermost partial, so they are seeded EMPTY
+-- and the nesting decides everything. Left unrewritten, a pre-computed
+-- @Cons[..](tail=∀ConsList[/T=$_/T])@ reaches the object universe spelled ambient and the scope
+-- rules read the reference as foreign, widening the field bound to ⊤ for every consumer the
+-- universe bounds ('BoundedByObjs').
 --
--- The result is rewritten WITH the arguments rather than held back with the bounds, so that one
--- declaration spells a variable one way throughout: denotationally-equal forms that compare
--- unequal are what make accumulations flip between spellings across epochs (the hazard
--- 'dropOutOfScopeTVExt' documents), and a result is reached from its own arguments.
+-- A variable's BOUND (@[$M -> Monad[$T -> $_A]]@) is left alone, and structurally so: it is not
+-- an 'ArrMeta'. It belongs to the scope CONTAINING the binder rather than inside it and travels
+-- without it, so naming it a parent reference strands it — @∀Monad[/T=$^/A]@ reached TreeBuild as
+-- a destination with no parent in view and nothing could reach it.
+--
+-- The CLASS GRAPH is rewritten with the object map. Its declaration and member templates
+-- describe the same types the object map holds (@/Cons@'s @tail -> ∀ConsList[/T=$_/T]@), and a
+-- declaration spelled one way in one and another way in the other is two denotationally-equal
+-- forms that compare unequal — the hazard that makes accumulations flip between spellings across
+-- epochs ('dropOutOfScopeTVExt' documents it), and the reason the ambient scope rules had to keep
+-- rescuing an untagged reference by name.
 classifyParentVarRefs :: DesPrgm -> DesPrgm
-classifyParentVarRefs (Prgm (ObjectMap objMap) classGraph annots) = Prgm (ObjectMap objMap') classGraph annots
+classifyParentVarRefs (Prgm (ObjectMap objMap) (ClassGraph classGraph) annots) =
+  Prgm (ObjectMap objMap') (ClassGraph (fmapGraph classifyNode classGraph)) annots
   where
     objMap' = H.map classifyItem objMap
     classifyItem (ObjectMapItem ds rs rfs defs) =
@@ -292,3 +297,6 @@ classifyParentVarRefs (Prgm (ObjectMap objMap) classGraph annots) = Prgm (Object
         tagMeta ArrMeta m | not (S.null parentVars) = return $ mWithType (tagParentVarRefs parentVars (getMetaType m)) m
         tagMeta (ExprMeta InputMeta _) m = return $ mWithType (tagParentVarRefs S.empty (getMetaType m)) m
         tagMeta _ m = return m
+    classifyNode (CGClass sealed p extends doc) =
+      CGClass sealed (tagParentVarRefsPartial S.empty p) (map (tagParentVarRefs S.empty) extends) doc
+    classifyNode CGType = CGType

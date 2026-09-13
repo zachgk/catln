@@ -7105,13 +7105,24 @@ resolveTypeSelfRefs = go
 -- variable stays symbolic (the mergeVarEnvVal doctrine — its binding may still resolve), as
 -- does a bare top-level variable (same doctrine) and every 'TVArg'/'TVInt' reference (arg
 -- links and partial-local pointers are structural, not ambient names).
--- | Names every external reference that resolves to one of the given PARENT variables as the
--- parent reference it is ('TVParent'), so the ambient scope rules stop reading it as a foreign
--- name. The parent set is seeded by the caller with the variables the surrounding binder
--- declares — a declaration's own @[$V -> Eqq]@ application — and then nests exactly as
--- 'dropOutOfScopeTVExt' nests: descending into a partial's ARG slots (and predicates) extends
--- the set with that partial's own var names, while its 'ptVars' VALUES reference the scope
--- CONTAINING the partial and keep the un-extended set.
+-- | Names an external reference that resolves to the IMMEDIATELY enclosing partial's variables
+-- as the parent reference it is ('TVParent'), so the ambient scope rules stop reading it as a
+-- foreign name. Everything else keeps the 'TVExt' the parser gave it.
+--
+-- A 'TVParent' reaches exactly ONE level out, because that is the only depth a descent can
+-- preserve: descending into a partial's argument replaces the parent scope with that partial's
+-- own variables (a reference to the old parent is resolved to its value on the way in), so a
+-- reference naming a variable two levels out has no spelling. The scope set is therefore
+-- REPLACED at each argument boundary, not accumulated: descending into a partial's ARG slots
+-- (and predicates) makes that partial's own var names the parent set, while its 'ptVars' VALUES
+-- sit at the partial's own level and keep the set they arrived with. A name the immediately
+-- enclosing partial does not bind stays 'TVExt' and resolves through the ambient environment,
+-- which is where a declaration's own variables are registered ('TypeCheck.Encode').
+--
+-- Accumulating instead produced references that no descent can resolve — @RNode(left =
+-- ∀RTree[/V=$^/MV])@, whose @/MV@ belongs to the surrounding declaration rather than to @RNode@ —
+-- and the algebra then had to re-derive the scope class from the declaration graph to undo it
+-- ('intersectPartialsBase'\'s stamping filter).
 --
 -- Applied where the binder is known and lexical (desugar), never re-derived deep in the type
 -- algebra, where a like-named ambient variable would be captured.
@@ -7125,16 +7136,33 @@ tagParentVarRefs = onType
       (mapTypePreds (mapTypePred (onLeaf sc)) preds, joinUnionType $ map (onLeaf sc) $ splitUnionType negLeafs, ncs)
     onLeaf sc p@PartialType{ptVars, ptArgs, ptPreds} = p{
         ptVars  = fmap (onSlot sc) ptVars,
-        ptArgs  = fmap (onSlot sc') ptArgs,
+        ptArgs  = fmap (onDirect sc') ptArgs,
         ptPreds = mapTypePreds (mapTypePred (onLeaf sc')) ptPreds
       }
-      where sc' = S.union sc (S.fromList (map TVVar (H.keys ptVars)))
+      where sc' = S.fromList (map TVVar (H.keys ptVars))
+    -- A DIRECT slot value names the partial it is a slot of, and that is what 'TVInt' spells
+    -- (@/Cons(/head=$/T)@); there is no separate parent for it to name, so a bare reference here
+    -- keeps the spelling the source gave it. The set is still carried inward, because a partial
+    -- NESTED in the slot does have this one as its parent (@/tail=∀ConsList[/T=$^/T]@). Tagging
+    -- the direct position too spelled the same field 'TVParent' in the class graph and 'TVExt' in
+    -- the object map, whose annotation for it is a bare variable this traversal never reaches.
     onSlot sc (TypeVar v@(TVVar _) TVExt i) | S.member v sc = TypeVar v TVParent i
     onSlot sc (TypeVar (TVApplied b ovr) loc i) =
       applyTypeVarOverrides (fmap (onSlot sc) ovr) (onSlot sc (TypeVar b loc i))
     onSlot sc (UnionType mtop pos consts) =
       UnionType (fmap (onTop sc) mtop) (joinUnionType $ map (onLeaf sc) $ splitUnionType pos) consts
     onSlot _ t = t
+    onDirect sc (TypeVar v loc i) = TypeVar v loc (onSlot sc i)
+    onDirect sc t                 = onSlot sc t
+
+-- | 'tagParentVarRefs' for a producer holding a 'PartialType' directly — the class graph's own
+-- declaration and member templates — rather than a 'Type'. The partial is the outermost thing in
+-- view, so it has no parent of its own; only the references nested inside it can be parent
+-- references.
+tagParentVarRefsPartial :: S.HashSet TypeVarAux -> PartialType -> PartialType
+tagParentVarRefsPartial sc p = case tagParentVarRefs sc (singletonType p) of
+  UnionType Nothing leafs [] | [p'] <- splitUnionType leafs -> p'
+  _                                                         -> p
 
 dropOutOfScopeTVExt :: TypeVarArgEnv -> Type -> Type
 dropOutOfScopeTVExt vaenv = onType (S.fromList (H.keys vaenv))
