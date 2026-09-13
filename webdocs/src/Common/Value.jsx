@@ -137,6 +137,12 @@ function Value(props) {
   case "IOVal":
   case "MockIOVal":
     return <span>IOVal</span>;
+  // A function passed as an argument. The evaluator serializes it as its tag alone
+  // (`Eval.Common.rvToJSON`) -- what a closure carries is the arm it was built from and the
+  // arguments captured with it, neither of which is a value to show -- so there is nothing to render
+  // but the fact that one is here.
+  case "ObjArrVal":
+    return <span>fn</span>;
   case "NoVal":
     return <span>NoVal</span>;
   default:

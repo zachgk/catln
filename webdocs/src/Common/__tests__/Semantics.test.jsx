@@ -16,16 +16,16 @@ function Providers({ children }) {
 
 const baseMeta = {
   getMetaPos: null,
-  getMetaType: { tag: 'UnionType', contents: [[{ tag: 'PredsAnd', contents: [] }, {}], {}, []] },
+  getMetaType: { tag: 'UnionType', utTop: [{ tag: 'PredsAnd', paPreds: []}, {}, []], utLeafs: {}, utConsts: []},
   getMetaDat: [null, null, null],
-  getMetaID: 1,
+  getMetaId: 1,
 }
 
 const intMeta = {
   getMetaPos: null,
-  getMetaType: { tag: 'UnionType', contents: [null, { '/Integer': [[[], [], { tag: 'PredsAnd', contents: [] }, { ptArgLb: true, ptArgUb: true }]] }, []] },
+  getMetaType: { tag: 'UnionType', utTop: null, utLeafs: { '/Integer': [[[], [], { tag: 'PredsAnd', paPreds: []}, { ptArgLb: true, ptArgUb: true }]] }, utConsts: []},
   getMetaDat: [null, null, null],
-  getMetaID: 2,
+  getMetaId: 2,
 }
 
 function NoopMeta() {
@@ -34,45 +34,37 @@ function NoopMeta() {
 
 describe('Expr', () => {
   it('renders CExpr as constant value', () => {
-    const expr = { tag: 'CExpr', contents: [baseMeta, { tag: 'IntVal', contents: 42 }] }
+    const expr = { tag: 'CExpr', ceMeta: baseMeta, ceConst: { tag: 'CInt', ciValue: 42 }}
     const { container } = render(<Providers><Expr expr={expr} Meta={NoopMeta} /></Providers>)
     expect(container.textContent).toBe('42')
   })
 
   it('renders Value with empty name as "()"', () => {
-    const expr = { tag: 'Value', contents: [baseMeta, ''] }
+    const expr = { tag: 'Value', veMeta: baseMeta, veName: ''}
     const { container } = render(<Providers><Expr expr={expr} Meta={NoopMeta} /></Providers>)
     expect(container.textContent).toBe('()')
   })
 
   it('renders Value with name as a link', () => {
-    const expr = { tag: 'Value', contents: [baseMeta, 'myVal'] }
+    const expr = { tag: 'Value', veMeta: baseMeta, veName: 'myVal'}
     const { container } = render(<Providers><Expr expr={expr} Meta={NoopMeta} /></Providers>)
     expect(container.textContent).toBe('myVal')
     expect(container.querySelector('a')).toBeTruthy()
   })
 
   it('renders HoleExpr as "_"', () => {
-    const expr = { tag: 'HoleExpr', contents: [baseMeta] }
+    const expr = { tag: 'HoleExpr', heMeta: baseMeta, heHole: { tag: 'HoleUndefined' } }
     const { container } = render(<Providers><Expr expr={expr} Meta={NoopMeta} /></Providers>)
     expect(container.textContent).toBe('_')
   })
 
   it('renders TupleApply with anonymous base', () => {
-    const expr = {
-      tag: 'TupleApply',
-      contents: [
-        baseMeta,
-        [baseMeta, { tag: 'Value', contents: [baseMeta, ''] }],
-        {
-          tag: 'EAppArg',
-          contents: {
-            oaObj: { tag: 'CExpr', contents: [baseMeta, { tag: 'IntVal', contents: 1 }] },
+    const expr = { tag: 'TupleApply', taMeta: baseMeta, taBase: [baseMeta, { tag: 'Value', veMeta: baseMeta, veName: ''}], taApp: { tag: 'EAppArg', eaaArg: {
+            oaObj: { tag: 'CExpr', ceMeta: baseMeta, ceConst: { tag: 'CInt', ciValue: 1 }},
             oaArr: null,
             oaAnnots: [],
           },
         },
-      ],
     }
     const { container } = render(<Providers><Expr expr={expr} Meta={NoopMeta} /></Providers>)
     expect(container.textContent).toContain('(')
@@ -80,20 +72,12 @@ describe('Expr', () => {
   })
 
   it('renders TupleApply with named base', () => {
-    const expr = {
-      tag: 'TupleApply',
-      contents: [
-        baseMeta,
-        [baseMeta, { tag: 'Value', contents: [baseMeta, 'fn'] }],
-        {
-          tag: 'EAppArg',
-          contents: {
-            oaObj: { tag: 'CExpr', contents: [baseMeta, { tag: 'IntVal', contents: 5 }] },
+    const expr = { tag: 'TupleApply', taMeta: baseMeta, taBase: [baseMeta, { tag: 'Value', veMeta: baseMeta, veName: 'fn'}], taApp: { tag: 'EAppArg', eaaArg: {
+            oaObj: { tag: 'CExpr', ceMeta: baseMeta, ceConst: { tag: 'CInt', ciValue: 5 }},
             oaArr: null,
             oaAnnots: [],
           },
         },
-      ],
     }
     const { container } = render(<Providers><Expr expr={expr} Meta={NoopMeta} /></Providers>)
     expect(container.textContent).toContain('fn')
@@ -104,9 +88,9 @@ describe('Expr', () => {
 describe('ObjArr', () => {
   it('renders obj and arr parts', () => {
     const oa = {
-      oaObj: { tag: 'Value', contents: [baseMeta, 'x'] },
+      oaObj: { tag: 'Value', veMeta: baseMeta, veName: 'x'},
       oaArr: [
-        { tag: 'CExpr', contents: [baseMeta, { tag: 'IntVal', contents: 10 }] },
+        { tag: 'CExpr', ceMeta: baseMeta, ceConst: { tag: 'CInt', ciValue: 10 }},
         intMeta,
       ],
       oaAnnots: [],
@@ -118,7 +102,7 @@ describe('ObjArr', () => {
 
   it('shows type annotation when arr type is not TopType', () => {
     const oa = {
-      oaObj: { tag: 'Value', contents: [baseMeta, 'x'] },
+      oaObj: { tag: 'Value', veMeta: baseMeta, veName: 'x'},
       oaArr: [null, intMeta],
       oaAnnots: [],
     }
@@ -129,7 +113,7 @@ describe('ObjArr', () => {
 
   it('hides type annotation when arr type is TopType', () => {
     const oa = {
-      oaObj: { tag: 'Value', contents: [baseMeta, 'x'] },
+      oaObj: { tag: 'Value', veMeta: baseMeta, veName: 'x'},
       oaArr: [null, baseMeta],
       oaAnnots: [],
     }

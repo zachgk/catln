@@ -73,7 +73,7 @@ function TypeInfer(props) {
 
 let VarMeta = (notesMap) => (props) => {
   const {withPos} = props;
-  const {getMetaID, getMetaPos, getMetaDat: [pnt,]} = props.data;
+  const {getMetaId, getMetaPos, getMetaDat: [pnt,]} = props.data;
   var style = {};
 
   let showPos;
@@ -83,7 +83,7 @@ let VarMeta = (notesMap) => (props) => {
       showPos = <span>&nbsp;-&nbsp;<Pos pos={getMetaPos} /></span>;
     }
 
-    if(getMetaID in notesMap) {
+    if(getMetaId in notesMap) {
       style.background = 'lightCoral';
     }
   }
@@ -190,13 +190,26 @@ function Trace(props) {
   });
 }
 
+// The key a type variable is named by. A TypeVarAux names its field per kind, as every constructor
+// the compiler serializes does, so this reads that rather than a positional `contents`.
+function typeVarKey(aux) {
+  switch(aux.tag) {
+  case "TVVar":     return aux.tvvName;
+  case "TVArg":     return aux.tvaName;
+  case "TVApplied": return typeVarKey(aux.tvpBase);
+  default:
+    console.error("Unknown TypeVarAux", aux);
+    return undefined;
+  }
+}
+
 function Constraint(props) {
   const {constraint, Meta, tcAllObjs} = props;
   const {conDat, conVaenv} = constraint;
 
   let showConVaenv;
   if (conVaenv.length > 0) {
-    let vs = conVaenv.map((v, index) => <span key={index}><PartialKey data={v[0].contents}/> = (<Meta data={v[1][0]}/>, <Meta data={v[1][1]}/>)</span>);
+    let vs = conVaenv.map((v, index) => <span key={index}><PartialKey data={typeVarKey(v[0])}/> = (<Meta data={v[1][0]}/>, <Meta data={v[1][1]}/>)</span>);
     showConVaenv = <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; env({tagJoin(vs, ", ")})</span>;
   }
   return <span><ConDat conDat={conDat} Meta={Meta} tcAllObjs={tcAllObjs}/>{showConVaenv}</span>;
@@ -218,9 +231,9 @@ function ConDat(props) {
   case "ArrowTo":
     return (<span><Meta data={conDat.contents[1]} withPos /> <COp i={conDat.contents[0]}>-&gt;</COp> <Meta data={conDat.contents[2]} withPos /></span>);
   case "PropEq":
-    return (<span>(<Meta data={conDat.contents[1][0]} withPos />).<PartialKey data={conDat.contents[1][1].contents}/> <COp i={conDat.contents[0]}> ==</COp> <Meta data={conDat.contents[2]} withPos /></span>);
+    return (<span>(<Meta data={conDat.contents[1][0]} withPos />).<PartialKey data={typeVarKey(conDat.contents[1][1])}/> <COp i={conDat.contents[0]}> ==</COp> <Meta data={conDat.contents[2]} withPos /></span>);
   case "AddArg":
-    return (<span>(<Meta data={conDat.contents[1][0]} withPos />)(<PartialKey data={conDat.contents[1][1].contents}/>) <COp i={conDat.contents[0]}>arg==</COp> <Meta data={conDat.contents[2]} withPos /></span>);
+    return (<span>(<Meta data={conDat.contents[1][0]} withPos />)(<PartialKey data={typeVarKey(conDat.contents[1][1])}/>) <COp i={conDat.contents[0]}>arg==</COp> <Meta data={conDat.contents[2]} withPos /></span>);
   case "AddInferArg":
     return (<span>(<Meta data={conDat.contents[1]} withPos />)(?) <COp i={conDat.contents[0]}>iarg==</COp> <Meta data={conDat.contents[2]} withPos /></span>);
   case "SetArgMode":

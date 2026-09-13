@@ -13,11 +13,14 @@ const theme = createTheme()
 
 // The one statement of an /api/annot response: the annotation, carrying its compiled value.
 function annotResponse(annot, value) {
+  // A RawValue and not a Value: what a page carries is the program as it was written, so the
+  // annotation is a raw expression.
   const expr = {
-    tag: 'Value',
-    contents: [{ getMetaDat: [null, null, value], getMetaID: annot, getMetaPos: null, getMetaType: null }, `/Catln/Doc/#${annot}`],
+    tag: 'RawValue',
+    rvMeta: { getMetaDat: [null, null, value], getMetaId: annot, getMetaPos: null, getMetaType: null },
+    rvName: `/Catln/Doc/#${annot}`,
   }
-  return { tag: 'Success', contents: [[[], [[{ tag: 'RawAnnot', contents: expr }, []]]], []] }
+  return { tag: 'Success', contents: [{ rprgmImports: [], rprgmStatements: [{ rstStatement: { tag: 'RawAnnot', ranAnnot: expr }, rstChildren: [] }] }, []] }
 }
 
 const sidebarValue = {

@@ -79,10 +79,11 @@ function statementValues(statementTrees) {
   const values = [];
 
   function walkStatementTree(statementTree) {
-    const [statement, subStatements] = statementTree;
+    const statement = statementTree.rstStatement;
+    const subStatements = statementTree.rstChildren;
 
-    const expr = statement.tag === "RawDeclStatement" ? statement.contents.roaObj
-               : statement.tag === "RawAnnot" ? statement.contents
+    const expr = statement.tag === "RawDeclStatement" ? statementBody(statement).roaObj
+               : statement.tag === "RawAnnot" ? statementBody(statement)
                : null;
     if (expr) {
       const m = rawExprMeta(expr);
@@ -262,8 +263,7 @@ function DocsPage(props) {
 
     if (!editor || mode !== 'edit' || !prgmData) return;
 
-    const [, statements] = prgmData;
-    const allValues = extractLineValues(statements);
+    const allValues = extractLineValues(prgmData.rprgmStatements);
 
     if (allValues.length === 0) return;
 
@@ -316,7 +316,7 @@ function DocsPage(props) {
   // The page this one is written over, which is a shape to lay the page out in rather than a value
   // to show in the flow of it. The annotation naming it still shows where it was written, as the
   // address it names; the frame is here.
-  const overlay = prgmData ? overlayUrl(prgmData[1]) : null;
+  const overlay = prgmData ? overlayUrl(prgmData.rprgmStatements) : null;
 
   // What the page shows of itself, with the mode it is being read or written in already settled. It
   // is settled before the layout so that, on a page written over another one, the frame is a
@@ -486,9 +486,25 @@ function AnnotPage(props) {
   );
 }
 
+// What a statement holds: an ObjArr for a declaration or a binding, an expression for an annotation.
+//
+// Read by field, as everything raw is -- the compiler names the fields of every raw constructor, so
+// a positional `contents` is not what arrives. See `rawExprMeta` in Common/Syntax.jsx.
+function statementBody(statement) {
+  switch (statement.tag) {
+  case "RawDeclStatement": return statement.rdsObjArr;
+  case "RawBindStatement": return statement.rbsObjArr;
+  case "RawAnnot":         return statement.ranAnnot;
+  default:
+    console.error("Unknown statement", statement);
+    return undefined;
+  }
+}
+
 function Main(props) {
   const {data, prgmName, updateExpr} = props;
-  const [imports, statements] = data;
+  const imports = data.rprgmImports;
+  const statements = data.rprgmStatements;
 
   return (
     <div>
@@ -513,7 +529,8 @@ function Statements(props) {
 
 function StatementTree(props) {
   const {statementTree, prgmName, updateExpr} = props;
-  const [statement, subStatements] = statementTree;
+  const statement = statementTree.rstStatement;
+  const subStatements = statementTree.rstChildren;
   const classes = useStyles();
 
   // The sub-statements do inherit updateExpr, which names the expression it replaces rather than
@@ -535,12 +552,12 @@ function Statement(props) {
 
   switch(statement.tag) {
   case "RawDeclStatement":
-    let md = rawExprMeta(statement.contents.roaObj).getMetaDat;
+    let md = rawExprMeta(statementBody(statement).roaObj).getMetaDat;
     if (md[1] && md[1].tag !== "NoEval") {
       return (
         <div>
           <PlayButton prgmName={prgmName} fun={md[1].contents}/>
-          <RawObjArr roa={statement.contents} updateExpr={updateExpr} />
+          <RawObjArr roa={statementBody(statement)} updateExpr={updateExpr} />
         </div>
       );
     } else {
@@ -555,7 +572,7 @@ function Statement(props) {
       }
       return (
         <div className={classes.noPlay}>
-          <RawObjArr roa={statement.contents} updateExpr={updateExpr} />
+          <RawObjArr roa={statementBody(statement)} updateExpr={updateExpr} />
           {showNoEval}
         </div>
       );
@@ -566,8 +583,8 @@ function Statement(props) {
     // what the debugger is asked for. An annotation that is not a print has none and offers no menu.
     return (
       <div className={classes.noPlay}>
-        <DebuggerMenu expr={rawExprMeta(statement.contents).getMetaDat[3]}>
-          <RawExpr expr={statement.contents} updateExpr={updateExpr} />
+        <DebuggerMenu expr={rawExprMeta(statementBody(statement)).getMetaDat[3]}>
+          <RawExpr expr={statementBody(statement)} updateExpr={updateExpr} />
         </DebuggerMenu>
       </div>
     );

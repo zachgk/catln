@@ -396,7 +396,7 @@ function PartialType(props) {
   if (isPredsNone(ptPreds)) {
     showPreds = "";
   } else if (ptPreds.tag === "PredsOne") {
-    showPreds = <span> | <TypePredicate data={ptPreds.contents}/></span>;
+    showPreds = <span> | <TypePredicate data={ptPreds.poPred}/></span>;
   } else {
     showPreds = <span> | (<TypePredicates data={ptPreds}/>)</span>;
   }
@@ -418,11 +418,11 @@ function TypePredicate(props) {
   const {data} = props;
   switch(data.tag) {
   case "PredClass":
-    return <span>Class[{<PartialType data={data.contents}/>}]</span>;
+    return <span>Class[{<PartialType data={data.pcType}/>}]</span>;
   case "PredRel":
-    return <span>Rel[{<PartialType data={data.contents}/>}]</span>;
+    return <span>Rel[{<PartialType data={data.prType}/>}]</span>;
   case "PredExpr":
-    return <PartialType data={data.contents}/>;
+    return <PartialType data={data.peType}/>;
   default:
     console.error("Unknown TypePredicate", data);
     return "???";
@@ -433,11 +433,11 @@ function TypePredicates(props) {
   const {data} = props;
   switch(data.tag) {
   case "PredsOne":
-    return <TypePredicate data={data.contents}/>;
+    return <TypePredicate data={data.poPred}/>;
   case "PredsAnd":
-    return tagJoin(data.contents.map((ps, index) => <TypePredicates key={index} data={ps}/>), " && ");
+    return tagJoin(data.paPreds.map((ps, index) => <TypePredicates key={index} data={ps}/>), " && ");
   case "PredsNot":
-    return <span>!<TypePredicate data={data.contents}/></span>;
+    return <span>!<TypePredicates data={data.pnPred}/></span>;
   default:
     console.error("Unknown TypePredicates", data);
     return "???";
@@ -446,17 +446,17 @@ function TypePredicates(props) {
 
 // PredsNone is the empty conjunction.
 function isPredsNone(preds) {
-  return preds.tag === "PredsAnd" && preds.contents.length === 0;
+  return preds.tag === "PredsAnd" && preds.paPreds.length === 0;
 }
 
 // tryPredsToList flattens a conjunction into its predicates, or gives null for any negation.
 function tryPredsToList(preds) {
   switch(preds.tag) {
   case "PredsOne":
-    return [preds.contents];
+    return [preds.poPred];
   case "PredsAnd": {
     let out = [];
-    for(const sub of preds.contents) {
+    for(const sub of preds.paPreds) {
       const subList = tryPredsToList(sub);
       if(subList === null) return null;
       out = out.concat(subList);
@@ -493,19 +493,18 @@ function joinParts(parts) {
 // (nearest enclosing partial), or TVExt (ambient object scope). The third component is the
 // occurrence's inner knowledge (read as var ∩ inner), rendered as a ∩{…} suffix when non-top.
 function TypeVarType(props) {
-  const [aux, loc, inner] = props.data;
+  const {aux, loc, inner} = props;
   const innerSfx = (inner === undefined || inner === null || isTopType(inner))
     ? null : <span>∩{"{"}<Type data={inner}/>{"}"}</span>;
   switch(aux.tag) {
   case "TVVar":
-    return <TypeVar>{loc === "TVExt" ? "$_" : (loc === "TVParent" ? "$^" : "$")}<PartialKey data={aux.contents}/>{innerSfx}</TypeVar>;
+    return <TypeVar>{loc === "TVExt" ? "$_" : (loc === "TVParent" ? "$^" : "$")}<PartialKey data={aux.tvvName}/>{innerSfx}</TypeVar>;
   case "TVArg":
-    return <TypeVar>{loc === "TVExt" ? "TVArg(ext) " : (loc === "TVParent" ? "TVArg(parent) " : "TVArg ")}<PartialKey data={aux.contents}/>{innerSfx}</TypeVar>;
+    return <TypeVar>{loc === "TVExt" ? "TVArg(ext) " : (loc === "TVParent" ? "TVArg(parent) " : "TVArg ")}<PartialKey data={aux.tvaName}/>{innerSfx}</TypeVar>;
   case "TVApplied": {
-    const [base, overrides] = aux.contents;
-    const showOverrides = tagJoin(overrides.map((ovr, index) =>
+    const showOverrides = tagJoin(aux.tvpVars.map((ovr, index) =>
       <span key={index}><PartialKey data={ovr[0]}/>=<Type data={ovr[1]}/></span>), ", ");
-    return <span><TypeVarType data={[base, loc, null]}/>[{showOverrides}]{innerSfx}</span>;
+    return <span><TypeVarType aux={aux.tvpBase} loc={loc} inner={null}/>[{showOverrides}]{innerSfx}</span>;
   }
   default:
     console.error("Unknown TypeVarAux", aux);
@@ -517,12 +516,13 @@ function Constant(props) {
   const {data} = props;
   switch(data.tag) {
   case "CStr":
-    return <span>{JSON.stringify(data.contents)}</span>;
+    return <span>{JSON.stringify(data.csValue)}</span>;
   case "CChar":
-    return <span>{`'${data.contents}'`}</span>;
+    return <span>{`'${data.chValue}'`}</span>;
   case "CInt":
+    return <span>{String(data.ciValue)}</span>;
   case "CFloat":
-    return <span>{String(data.contents)}</span>;
+    return <span>{String(data.cfValue)}</span>;
   default:
     console.error("Unknown Constant", data);
     return "???";
@@ -533,14 +533,16 @@ function Constant(props) {
 function isTopType(t) {
   if (t.tag !== "UnionType") return false;
 
-  const [top, leafs, consts] = t.contents;
-  if (top === null) return false;
+  const top = t.utTop;
+  if (top === null || top === undefined) return false;
 
-  const [preds, negPartials] = top;
+  // The top is Top narrowed by predicates, less the partials and the constants it excludes.
+  const [preds, negPartials, negConsts] = top;
   return isPredsNone(preds)
     && Object.keys(negPartials).length === 0
-    && Object.keys(leafs).length === 0
-    && consts.length === 0;
+    && negConsts.length === 0
+    && Object.keys(t.utLeafs).length === 0
+    && t.utConsts.length === 0;
 }
 
 function TypeWithPrefix(props) {
@@ -559,9 +561,11 @@ function Type(props) {
   let t = props.data;
   switch(t.tag) {
   case "TypeVar":
-    return <TypeVarType data={t.contents}/>;
+    return <TypeVarType aux={t.tvAux} loc={t.tvLoc} inner={t.tvInner}/>;
   case "UnionType": {
-    const [top, leafs, consts] = t.contents;
+    const top = t.utTop;
+    const leafs = t.utLeafs;
+    const consts = t.utConsts;
 
     if (top === null && consts.length === 0) {
       return joinParts(partialLeafs(leafs));
@@ -570,12 +574,13 @@ function Type(props) {
     if (top !== null && Object.keys(leafs).length === 0 && consts.length === 0) {
       const [preds, negPartials] = top;
 
+
       let showTop;
       const predList = tryPredsToList(preds);
       if (predList !== null && predList.length === 1 && predList[0].tag === "PredClass") {
-        showTop = <span>∀<PartialType data={predList[0].contents}/></span>;
+        showTop = <span>∀<PartialType data={predList[0].pcType}/></span>;
       } else if (predList !== null && predList.length === 1 && predList[0].tag === "PredRel") {
-        showTop = <span>~<PartialType data={predList[0].contents}/></span>;
+        showTop = <span>~<PartialType data={predList[0].prType}/></span>;
       } else if (predList !== null && predList.length === 0) {
         // A bare top says nothing about the value, so the webdocs leave it out entirely.
         if (Object.keys(negPartials).length === 0) {
@@ -619,11 +624,11 @@ function TypeVar(props) {
 }
 
 function PTypeName(props) {
-  return <PartialName name={{tag: "PTypeName", contents: props.name}}/>;
+  return <PartialName name={{tag: "PTypeName", ptnName: props.name}}/>;
 }
 
 function PClassName(props) {
-  return <PartialName name={{tag: "PClassName", contents: props.name}}/>;
+  return <PartialName name={{tag: "PClassName", pcnName: props.name}}/>;
 }
 
 // Links to a page rendered by evaluating an annotation, rather than to a route that fetches for
@@ -690,28 +695,44 @@ function typeAnnotLink(name) {
   return annotLink(`#type(name= "${name}")`);
 }
 
+// The name a partial is written under, and how it is linked.
+//
+// Read by field rather than out of a positional `contents`: every constructor the compiler
+// serializes names its fields, because a type it hands a Catln program has to say what its arguments
+// are called (see the note above `TypeProperty` in `src/Syntax/Ct/Prgm.hs`). Everything below that
+// reads a serialized type does the same.
+function partialNameStr(name) {
+  switch(name.tag) {
+  case "PTypeName":     return name.ptnName;
+  case "PClassName":    return name.pcnName;
+  case "PRelativeName": return name.prnName;
+  default:              return undefined;
+  }
+}
+
 function PartialName(props) {
   const {name} = props;
   const classes = useStyles();
+  const str = partialNameStr(name);
 
   let cls, link;
   switch(name.tag) {
   case "PRelativeName":
     cls = classes.partialNameRelative;
-    link = `/relative/${encodeURIComponent(name.contents)}`;
+    link = `/relative/${encodeURIComponent(str)}`;
     break;
   case "PTypeName":
     cls = classes.partialNameTp;
-    link = typeAnnotLink(name.contents);
+    link = typeAnnotLink(str);
     break;
   case "PClassName":
     cls = classes.partialNameClass;
-    link = typeAnnotLink(name.contents);
+    link = typeAnnotLink(str);
     break;
   default:
     console.error("Unknown partial name", name);
   }
-  return <Link to={link} className={cls}>{name.contents}</Link>;
+  return <Link to={link} className={cls}>{str}</Link>;
 }
 
 // The values of an evaluated `/Data/List`, which is a `/Data/List/Cons` chain ending in a `/Data/List/Nil`.

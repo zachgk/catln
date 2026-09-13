@@ -16,34 +16,34 @@ function Providers({ children }) {
 
 const baseMeta = {
   getMetaPos: null,
-  getMetaType: { tag: 'UnionType', contents: [[{ tag: 'PredsAnd', contents: [] }, {}], {}, []] },
+  getMetaType: { tag: 'UnionType', utTop: [{ tag: 'PredsAnd', paPreds: []}, {}, []], utLeafs: {}, utConsts: []},
   getMetaDat: [null, null, null],
-  getMetaID: 1,
+  getMetaId: 1,
 }
 
 // --- rawExprMeta ---
 
 describe('rawExprMeta', () => {
   it('extracts meta from RawTheExpr (recursive)', () => {
-    const inner = { tag: 'RawCExpr', contents: [baseMeta, { tag: 'IntVal', contents: 1 }] }
-    const expr = { tag: 'RawTheExpr', contents: inner }
+    const inner = { tag: 'RawCExpr', rceMeta: baseMeta, rceConst: { tag: 'CInt', ciValue: 1 }}
+    const expr = { tag: 'RawTheExpr', rteExpr: inner}
     expect(rawExprMeta(expr)).toEqual(baseMeta)
   })
 
   it('extracts meta from RawAliasExpr', () => {
-    const inner = { tag: 'RawCExpr', contents: [baseMeta, { tag: 'IntVal', contents: 1 }] }
-    const alias = { tag: 'RawAliasExpr', contents: [inner, inner] }
+    const inner = { tag: 'RawCExpr', rceMeta: baseMeta, rceConst: { tag: 'CInt', ciValue: 1 }}
+    const alias = { tag: 'RawAliasExpr', raliasBase: inner, raliasAlias: inner}
     expect(rawExprMeta(alias)).toEqual(baseMeta)
   })
 
   it('extracts meta from RawParen', () => {
-    const inner = { tag: 'RawCExpr', contents: [baseMeta, { tag: 'IntVal', contents: 1 }] }
-    const paren = { tag: 'RawParen', contents: inner }
+    const inner = { tag: 'RawCExpr', rceMeta: baseMeta, rceConst: { tag: 'CInt', ciValue: 1 }}
+    const paren = { tag: 'RawParen', rpnExpr: inner}
     expect(rawExprMeta(paren)).toEqual(baseMeta)
   })
 
   it('returns contents[0] for leaf expressions', () => {
-    const expr = { tag: 'RawCExpr', contents: [baseMeta, { tag: 'IntVal', contents: 42 }] }
+    const expr = { tag: 'RawCExpr', rceMeta: baseMeta, rceConst: { tag: 'CInt', ciValue: 42 }}
     expect(rawExprMeta(expr)).toEqual(baseMeta)
   })
 })
@@ -52,37 +52,35 @@ describe('rawExprMeta', () => {
 
 describe('RawExpr', () => {
   it('renders RawCExpr as its constant value', () => {
-    const expr = { tag: 'RawCExpr', contents: [baseMeta, { tag: 'IntVal', contents: 42 }] }
+    const expr = { tag: 'RawCExpr', rceMeta: baseMeta, rceConst: { tag: 'CInt', ciValue: 42 }}
     const { container } = render(<Providers><RawExpr expr={expr} /></Providers>)
     expect(container.textContent).toBe('42')
   })
 
   it('renders RawValue with empty string as "()"', () => {
-    const expr = { tag: 'RawValue', contents: [baseMeta, ''] }
+    const expr = { tag: 'RawValue', rvMeta: baseMeta, rvName: ''}
     const { container } = render(<Providers><RawExpr expr={expr} /></Providers>)
     expect(container.textContent).toBe('()')
   })
 
   it('renders RawValue with name as a link', () => {
-    const expr = { tag: 'RawValue', contents: [baseMeta, '/Integer'] }
+    const expr = { tag: 'RawValue', rvMeta: baseMeta, rvName: '/Integer'}
     const { container } = render(<Providers><RawExpr expr={expr} /></Providers>)
     expect(container.textContent).toBe('/Integer')
     expect(container.querySelector('a')).toHaveAttribute('href', '/annot?annot=%23type(name%3D%20%22%2FInteger%22)')
   })
 
   it('renders RawHoleExpr as "_"', () => {
-    const expr = { tag: 'RawHoleExpr', contents: [baseMeta] }
+    const expr = { tag: 'RawHoleExpr', rheMeta: baseMeta, rheHole: { tag: 'HoleUndefined' } }
     const { container } = render(<Providers><RawExpr expr={expr} /></Providers>)
     expect(container.textContent).toBe('_')
   })
 
   it('renders RawTupleApply with operator as infix', () => {
-    const mkVal = (name) => ({ tag: 'RawValue', contents: [baseMeta, name] })
+    const mkVal = (name) => ({ tag: 'RawValue', rvMeta: baseMeta, rvName: name})
     const mkArg = (expr) => [false, { roaObj: null, roaArr: [expr, null], roaDef: null }]
 
-    const expr = {
-      tag: 'RawTupleApply',
-      contents: [baseMeta, [baseMeta, mkVal('/operator+')], [mkArg(mkVal('a')), mkArg(mkVal('b'))]],
+    const expr = { tag: 'RawTupleApply', rtaMeta: baseMeta, rtaBase: [baseMeta, mkVal('/operator+')], rtaArgs: [mkArg(mkVal('a')), mkArg(mkVal('b'))],
     }
     const { container } = render(<Providers><RawExpr expr={expr} /></Providers>)
     expect(container.textContent).toContain('+')
@@ -92,11 +90,9 @@ describe('RawExpr', () => {
 
   it('renders RawTupleApply anonymous tuple as (args)', () => {
     const mkArg = (expr) => [false, { roaObj: null, roaArr: [expr, null], roaDef: null }]
-    const val = { tag: 'RawCExpr', contents: [baseMeta, { tag: 'IntVal', contents: 1 }] }
+    const val = { tag: 'RawCExpr', rceMeta: baseMeta, rceConst: { tag: 'CInt', ciValue: 1 }}
 
-    const expr = {
-      tag: 'RawTupleApply',
-      contents: [baseMeta, [baseMeta, { tag: 'RawValue', contents: [baseMeta, ''] }], [mkArg(val)]],
+    const expr = { tag: 'RawTupleApply', rtaMeta: baseMeta, rtaBase: [baseMeta, { tag: 'RawValue', rvMeta: baseMeta, rvName: ''}], rtaArgs: [mkArg(val)],
     }
     const { container } = render(<Providers><RawExpr expr={expr} /></Providers>)
     expect(container.textContent).toContain('(')
@@ -106,12 +102,10 @@ describe('RawExpr', () => {
 
   it('renders RawTupleApply with named function as f(args)', () => {
     const mkArg = (expr) => [false, { roaObj: null, roaArr: [expr, null], roaDef: null }]
-    const val = { tag: 'RawCExpr', contents: [baseMeta, { tag: 'IntVal', contents: 1 }] }
-    const fn = { tag: 'RawValue', contents: [baseMeta, 'myFunc'] }
+    const val = { tag: 'RawCExpr', rceMeta: baseMeta, rceConst: { tag: 'CInt', ciValue: 1 }}
+    const fn = { tag: 'RawValue', rvMeta: baseMeta, rvName: 'myFunc'}
 
-    const expr = {
-      tag: 'RawTupleApply',
-      contents: [baseMeta, [baseMeta, fn], [mkArg(val)]],
+    const expr = { tag: 'RawTupleApply', rtaMeta: baseMeta, rtaBase: [baseMeta, fn], rtaArgs: [mkArg(val)],
     }
     const { container } = render(<Providers><RawExpr expr={expr} /></Providers>)
     expect(container.textContent).toContain('myFunc')
@@ -120,16 +114,16 @@ describe('RawExpr', () => {
   })
 
   it('renders RawParen with parens', () => {
-    const inner = { tag: 'RawCExpr', contents: [baseMeta, { tag: 'IntVal', contents: 5 }] }
-    const expr = { tag: 'RawParen', contents: inner }
+    const inner = { tag: 'RawCExpr', rceMeta: baseMeta, rceConst: { tag: 'CInt', ciValue: 5 }}
+    const expr = { tag: 'RawParen', rpnExpr: inner}
     const { container } = render(<Providers><RawExpr expr={expr} /></Providers>)
     expect(container.textContent).toBe('(5)')
   })
 
   it('renders RawList as [items]', () => {
-    const item1 = { tag: 'RawCExpr', contents: [baseMeta, { tag: 'IntVal', contents: 1 }] }
-    const item2 = { tag: 'RawCExpr', contents: [baseMeta, { tag: 'IntVal', contents: 2 }] }
-    const expr = { tag: 'RawList', contents: [baseMeta, [item1, item2]] }
+    const item1 = { tag: 'RawCExpr', rceMeta: baseMeta, rceConst: { tag: 'CInt', ciValue: 1 }}
+    const item2 = { tag: 'RawCExpr', rceMeta: baseMeta, rceConst: { tag: 'CInt', ciValue: 2 }}
+    const expr = { tag: 'RawList', rlMeta: baseMeta, rlValues: [item1, item2]}
     const { container } = render(<Providers><RawExpr expr={expr} /></Providers>)
     expect(container.textContent).toBe('[1, 2]')
   })

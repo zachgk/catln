@@ -2,39 +2,84 @@ import React  from 'react';
 
 import {PartialKey, PartialType, PTypeName, isTopType, Type, KeyWord} from './Common';
 
+// An expression's parts, in the positional order this file is written against.
+//
+// Two kinds arrive here and they are serialized differently. The desugared `Expr` names its fields
+// (`veName`, `taBase`, ...), because a type the compiler hands a Catln program has to say what its
+// arguments are called; the built `TExpr` is an ordinary positional constructor and arrives as
+// `contents`. A debugger node holds one of each -- the arrow as the program wrote it, or the one
+// built for the call -- so both are read rather than either being assumed.
+function exprContents(expr) {
+  switch (expr.tag) {
+  case "CExpr":       return [expr.ceMeta, expr.ceConst];
+  case "Value":       return [expr.veMeta, expr.veName];
+  case "HoleExpr":    return [expr.heMeta, expr.heHole];
+  case "AliasExpr":   return [expr.aeBase, expr.aeAlias];
+  case "EWhere":      return [expr.ewMeta, expr.ewBase, expr.ewCond];
+  case "TupleApply":  return [expr.taMeta, expr.taBase, expr.taApp];
+  default:            return expr.contents;
+  }
+}
+
+// The same for what is applied to an expression.
+function appContents(app) {
+  switch (app.tag) {
+  case "EAppArg":    return app.eaaArg;
+  case "EAppVar":    return [app.eavName, app.eavMeta];
+  case "EAppSpread": return app.easExpr;
+  default:           return app.contents;
+  }
+}
+
+// What a constant holds, named per kind for the reason above.
+function constantValue(c) {
+  switch (c.tag) {
+  case "CInt":   return c.ciValue;
+  case "CFloat": return c.cfValue;
+  case "CStr":   return c.csValue;
+  case "CChar":  return c.chValue;
+  default:       return c.contents;
+  }
+}
+
 function Expr(props) {
   let {expr, Meta, showMetas} = props;
+  const contents = exprContents(expr);
+  if (contents === undefined) {
+    console.error("Unknown renderExpr", expr);
+    return "";
+  }
   switch(expr.tag) {
   case "CExpr":
   case "TCExpr":
-    return "" + expr.contents[1].contents;
+    return "" + constantValue(contents[1]);
   case "Value":
   case "TValue":
     let showValM;
     if (showMetas) {
-      showValM = <Meta data={expr.contents[0]}/>;
+      showValM = <Meta data={contents[0]}/>;
     }
-    if (expr.contents[1] === "") {
+    if (contents[1] === "") {
       return <span>(){showValM}</span>;
     }
-    return <span><PTypeName name={expr.contents[1]} />{showValM}</span>;
+    return <span><PTypeName name={contents[1]} />{showValM}</span>;
   case "HoleExpr":
   case "THoleExpr":
     let showHoleM;
     if (showMetas) {
-      showHoleM = <Meta data={expr.contents[0]}/>;
+      showHoleM = <Meta data={contents[0]}/>;
     }
     return <span>_{showHoleM}</span>;
   case "AliasExpr":
   case "TAliasExpr":
-    return <span><Expr expr={expr.contents[0]} Meta={Meta} showMetas={showMetas}/>@<Expr expr={expr.contents[1]} Meta={Meta} showMetas={showMetas} /></span>;
+    return <span><Expr expr={contents[0]} Meta={Meta} showMetas={showMetas}/>@<Expr expr={contents[1]} Meta={Meta} showMetas={showMetas} /></span>;
   case "EWhere":
   case "TWhere":
-    let [,whBase, whCond] = expr.contents;
+    let [,whBase, whCond] = contents;
     return <span><Expr expr={whBase} Meta={Meta} showMetas={showMetas}/> | <Expr expr={whCond} Meta={Meta} showMetas={showMetas}/></span>;
   case "TupleApply":
   case "TTupleApply":
-    const [m, [baseM ,base], arg] = expr.contents;
+    const [m, [baseM ,base], arg] = contents;
 
     let showBaseM;
     if(showMetas) {
@@ -50,29 +95,29 @@ function Expr(props) {
     let showArg;
     switch(arg.tag) {
     case "EAppArg":
-      showArg = <span>(<ObjArr oa={arg.contents} Meta={Meta} showExprMetas={showMetas} />)</span>;
+      showArg = <span>(<ObjArr oa={appContents(arg)} Meta={Meta} showExprMetas={showMetas} />)</span>;
       break;
     case "EAppVar":
-      if (isTopType(arg.contents[1].getMetaType)) {
-        showArg = <span>[<PartialKey data={arg.contents[0]} />]</span>;
+      if (isTopType(appContents(arg)[1].getMetaType)) {
+        showArg = <span>[<PartialKey data={appContents(arg)[0]} />]</span>;
       } else {
-        showArg = <span>[<PartialKey data={arg.contents[0]} />: <Type data={arg.contents[1].getMetaType} />]</span>;
+        showArg = <span>[<PartialKey data={appContents(arg)[0]} />: <Type data={appContents(arg)[1].getMetaType} />]</span>;
       }
       break;
     case "EAppSpread":
-      showArg = <span>(..<Expr expr={arg.contents} Meta={Meta} showMetas={showMetas}/>)</span>;
+      showArg = <span>(..<Expr expr={appContents(arg)} Meta={Meta} showMetas={showMetas}/>)</span>;
       break;
     default:
       console.error("Unknown tupleApply arg", arg);
     }
 
-    if ((base.tag === "Value" || base.tag === "TValue") && base.contents[1] === "") { // Anonymous tuple
+    if ((base.tag === "Value" || base.tag === "TValue") && exprContents(base)[1] === "") { // Anonymous tuple
       return <span>{showArg}{showM}</span>;
     }
 
     return <span>{showBase}{showBaseM}{showArg}{showM}</span>;
   case "TCalls":
-    const [,callE,callTree] = expr.contents;
+    const [,callE,callTree] = contents;
     return <span><Expr expr={callE} Meta={Meta} showMetas={showMetas}/>↦<TCallTree tree={callTree} /></span>;
   default:
     console.error("Unknown renderExpr", expr);
@@ -179,6 +224,7 @@ function TCallTree(props) {
 }
 
 export {
+  exprContents,
   Expr,
   ObjArr,
 }

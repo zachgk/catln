@@ -708,11 +708,9 @@ describe('AnnotPage', () => {
         '/prgm': { tag: 'StrVal', contents: JSON.stringify({ prgmObjMap: {}, prgmCG: [{}, {}] }) },
       },
     }
-    const expr = {
-      tag: 'RawValue',
-      contents: [{ getMetaPos: null, getMetaDat: [null, null, value], getMetaID: 1 }, '#listProgram'],
+    const expr = { tag: 'RawValue', rvMeta: { getMetaPos: null, getMetaDat: [null, null, value], getMetaId: 1 }, rvName: '#listProgram',
     }
-    return { tag: 'Success', contents: [[[], [[{ tag: 'RawAnnot', contents: expr }, []]]], []] }
+    return { tag: 'Success', contents: [{ rprgmImports: [], rprgmStatements: [{ rstStatement: { tag: 'RawAnnot', ranAnnot: expr }, rstChildren: [] }] }, []] }
   }
 
   beforeEach(() => {
@@ -754,13 +752,11 @@ describe('AnnotPage', () => {
       name: '/Catln/Doc/Show/Overlay',
       args: { '/url': { tag: 'StrVal', contents: 'https://catln.dev' } },
     }
-    const expr = {
-      tag: 'RawValue',
-      contents: [{ getMetaPos: null, getMetaDat: [null, null, value], getMetaID: 1 }, '#overlay'],
+    const expr = { tag: 'RawValue', rvMeta: { getMetaPos: null, getMetaDat: [null, null, value], getMetaId: 1 }, rvName: '#overlay',
     }
     global.fetch = vi.fn(() => Promise.resolve({
       status: 200,
-      json: () => Promise.resolve({ tag: 'Success', contents: [[[], [[{ tag: 'RawAnnot', contents: expr }, []]]], []] }),
+      json: () => Promise.resolve({ tag: 'Success', contents: [{ rprgmImports: [], rprgmStatements: [{ rstStatement: { tag: 'RawAnnot', ranAnnot: expr }, rstChildren: [] }] }, []] }),
     }))
 
     const { container } = render(

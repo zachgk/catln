@@ -384,3 +384,13 @@ describe('a library-rendered value', () => {
     expect(container.textContent).toContain('/Data/Json/Str')
   })
 })
+
+// A function passed as an argument. The evaluator sends its tag and nothing else, so the display is
+// the fact that one is here -- and must not be the "Unknown Val tag" an unhandled tag gets.
+describe('Value of a closure', () => {
+  it('shows a function argument as a function', () => {
+    const { container } = render(<Providers><Value data={{ tag: 'ObjArrVal' }} /></Providers>)
+    expect(container.textContent).toBe('fn')
+    expect(container.textContent).not.toContain('Unknown')
+  })
+})

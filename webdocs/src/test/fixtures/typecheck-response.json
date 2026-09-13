@@ -1,43 +1,124 @@
 {
-  "tag": "Success",
-  "contents": [
-    {
-      "prgmObjMap": {
-        "/main": {
-          "omiDecls": [],
-          "omiRuntimeDecls": [],
-          "omiRefineDecls": [],
-          "omiDefs": [
-            {
-              "oaBasis": "FunctionObj",
-              "oaDoc": null,
-              "oaObj": {
-                "tag": "Value",
-                "contents": [
-                  { "getMetaPos": null, "getMetaType": { "tag": "UnionType", "contents": [[{ "tag": "PredsAnd", "contents": [] }, {}], {}, []] }, "getMetaDat": [null, null, null, null], "getMetaID": 1 },
-                  "main"
-                ]
+ "tag": "Success",
+ "contents": [
+  {
+   "prgmObjMap": {
+    "/main": {
+     "omiDecls": [],
+     "omiRuntimeDecls": [],
+     "omiRefineDecls": [],
+     "omiDefs": [
+      {
+       "oaBasis": "FunctionObj",
+       "oaDoc": null,
+       "oaObj": {
+        "tag": "Value",
+        "veMeta": {
+         "getMetaPos": null,
+         "getMetaType": {
+          "tag": "UnionType",
+          "utTop": [
+           {
+            "tag": "PredsAnd",
+            "paPreds": []
+           },
+           {},
+           []
+          ],
+          "utLeafs": {},
+          "utConsts": []
+         },
+         "getMetaDat": [
+          null,
+          null,
+          null,
+          null
+         ],
+         "getMetaId": 1
+        },
+        "veName": "main"
+       },
+       "oaArr": [
+        {
+         "tag": "CExpr",
+         "ceMeta": {
+          "getMetaPos": null,
+          "getMetaType": {
+           "tag": "UnionType",
+           "utTop": null,
+           "utLeafs": {
+            "/Catln/Integer": [
+             [
+              [],
+              [],
+              {
+               "tag": "PredsAnd",
+               "paPreds": []
               },
-              "oaArr": [
-                {
-                  "tag": "CExpr",
-                  "contents": [
-                    { "getMetaPos": null, "getMetaType": { "tag": "UnionType", "contents": [null, { "/Catln/Integer": [[[], [], { "tag": "PredsAnd", "contents": [] }, { "ptArgLb": true, "ptArgUb": true }]] }, []] }, "getMetaDat": [null, null, null, null], "getMetaID": 2 },
-                    { "tag": "IntVal", "contents": 42 }
-                  ]
-                },
-                { "getMetaPos": null, "getMetaType": { "tag": "UnionType", "contents": [null, { "/Catln/Integer": [[[], [], { "tag": "PredsAnd", "contents": [] }, { "ptArgLb": true, "ptArgUb": true }]] }, []] }, "getMetaDat": [null, null, null, null], "getMetaID": 3 }
-              ],
-              "oaAnnots": []
-            }
-          ]
+              {
+               "ptArgLb": true,
+               "ptArgUb": true
+              }
+             ]
+            ]
+           },
+           "utConsts": []
+          },
+          "getMetaDat": [
+           null,
+           null,
+           null,
+           null
+          ],
+          "getMetaId": 2
+         },
+         "ceConst": {
+          "tag": "IntVal",
+          "contents": 42
+         }
+        },
+        {
+         "getMetaPos": null,
+         "getMetaType": {
+          "tag": "UnionType",
+          "utTop": null,
+          "utLeafs": {
+           "/Catln/Integer": [
+            [
+             [],
+             [],
+             {
+              "tag": "PredsAnd",
+              "paPreds": []
+             },
+             {
+              "ptArgLb": true,
+              "ptArgUb": true
+             }
+            ]
+           ]
+          },
+          "utConsts": []
+         },
+         "getMetaDat": [
+          null,
+          null,
+          null,
+          null
+         ],
+         "getMetaId": 3
         }
-      },
-      "prgmCG": [
-        {},
-        {}
-      ]
-    },
-    []
-  ]
+       ],
+       "oaAnnots": []
+      }
+     ]
+    }
+   },
+   "prgmCG": [
+    {},
+    {}
+   ]
+  },
+  []
+ ]
 }

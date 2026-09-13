@@ -1,76 +1,207 @@
 {
-  "tag": "Success",
-  "contents": [
-    {
-      "pgPrgm": [
-        [
+ "tag": "Success",
+ "contents": [
+  {
+   "pgPrgm": {
+    "rprgmImports": [
+     {
+      "impRaw": {
+       "tag": "RawValue",
+       "rvMeta": {
+        "getMetaPos": null,
+        "getMetaType": {
+         "tag": "UnionType",
+         "utTop": [
           {
-            "impRaw": {
-              "tag": "RawValue",
-              "contents": [
-                { "getMetaPos": null, "getMetaType": { "tag": "UnionType", "contents": [[{ "tag": "PredsAnd", "contents": [] }, {}], {}, []] }, "getMetaDat": [null, null, null, null], "getMetaID": 1 },
-                "/test/utils"
-              ]
-            }
-          }
+           "tag": "PredsAnd",
+           "paPreds": []
+          },
+          {},
+          []
+         ],
+         "utLeafs": {},
+         "utConsts": []
+        },
+        "getMetaDat": [
+         null,
+         null,
+         null,
+         null
         ],
-        [
-          [
+        "getMetaId": 1
+       },
+       "rvName": "/test/utils"
+      }
+     }
+    ],
+    "rprgmStatements": [
+     {
+      "rstStatement": {
+       "tag": "RawDeclStatement",
+       "rdsObjArr": {
+        "roaObj": {
+         "tag": "RawValue",
+         "rvMeta": {
+          "getMetaPos": null,
+          "getMetaType": {
+           "tag": "UnionType",
+           "utTop": [
             {
-              "tag": "RawDeclStatement",
-              "contents": {
-                "roaObj": {
-                  "tag": "RawValue",
-                  "contents": [
-                    { "getMetaPos": null, "getMetaType": { "tag": "UnionType", "contents": [[{ "tag": "PredsAnd", "contents": [] }, {}], {}, []] }, "getMetaDat": [null, { "tag": "Eval", "contents": "main" }, null, null], "getMetaID": 2 },
-                    "main"
-                  ]
-                },
-                "roaArr": [
-                  {
-                    "tag": "RawCExpr",
-                    "contents": [
-                      { "getMetaPos": null, "getMetaType": { "tag": "UnionType", "contents": [[{ "tag": "PredsAnd", "contents": [] }, {}], {}, []] }, "getMetaDat": [null, null, null, null], "getMetaID": 3 },
-                      { "tag": "IntVal", "contents": 42 }
-                    ]
-                  },
-                  null
-                ],
-                "roaDef": null
-              }
+             "tag": "PredsAnd",
+             "paPreds": []
             },
+            {},
             []
+           ],
+           "utLeafs": {},
+           "utConsts": []
+          },
+          "getMetaDat": [
+           null,
+           {
+            "tag": "Eval",
+            "contents": "main"
+           },
+           null,
+           null
           ],
-          [
+          "getMetaId": 2
+         },
+         "rvName": "main"
+        },
+        "roaArr": [
+         {
+          "tag": "RawCExpr",
+          "rceMeta": {
+           "getMetaPos": null,
+           "getMetaType": {
+            "tag": "UnionType",
+            "utTop": [
+             {
+              "tag": "PredsAnd",
+              "paPreds": []
+             },
+             {},
+             []
+            ],
+            "utLeafs": {},
+            "utConsts": []
+           },
+           "getMetaDat": [
+            null,
+            null,
+            null,
+            null
+           ],
+           "getMetaId": 3
+          },
+          "rceConst": {
+           "tag": "IntVal",
+           "contents": 42
+          }
+         },
+         null
+        ],
+        "roaDef": null
+       }
+      },
+      "rstChildren": []
+     },
+     {
+      "rstStatement": {
+       "tag": "RawAnnot",
+       "ranAnnot": {
+        "tag": "RawTupleApply",
+        "rtaMeta": {
+         "getMetaPos": null,
+         "getMetaType": {
+          "tag": "UnionType",
+          "utTop": [
+           {
+            "tag": "PredsAnd",
+            "paPreds": []
+           },
+           {},
+           []
+          ],
+          "utLeafs": {},
+          "utConsts": []
+         },
+         "getMetaDat": [
+          null,
+          null,
+          {
+           "tag": "StrVal",
+           "contents": "hello world"
+          },
+          "\"hello world\""
+         ],
+         "getMetaId": 4
+        },
+        "rtaBase": [
+         {
+          "getMetaPos": null,
+          "getMetaType": {
+           "tag": "UnionType",
+           "utTop": [
             {
-              "tag": "RawAnnot",
-              "contents": {
-                "tag": "RawTupleApply",
-                "contents": [
-                  { "getMetaPos": null, "getMetaType": { "tag": "UnionType", "contents": [[{ "tag": "PredsAnd", "contents": [] }, {}], {}, []] }, "getMetaDat": [null, null, { "tag": "StrVal", "contents": "hello world" }, "\"hello world\""], "getMetaID": 4 },
-                  [
-                    { "getMetaPos": null, "getMetaType": { "tag": "UnionType", "contents": [[{ "tag": "PredsAnd", "contents": [] }, {}], {}, []] }, "getMetaDat": [null, null, null, null], "getMetaID": 5 },
-                    {
-                      "tag": "RawValue",
-                      "contents": [
-                        { "getMetaPos": null, "getMetaType": { "tag": "UnionType", "contents": [[{ "tag": "PredsAnd", "contents": [] }, {}], {}, []] }, "getMetaDat": [null, null, null, null], "getMetaID": 6 },
-                        "/Catln/#print"
-                      ]
-                    }
-                  ],
-                  []
-                ]
-              }
+             "tag": "PredsAnd",
+             "paPreds": []
             },
+            {},
             []
-          ]
-        ]
-      ],
-      "pgSource": "main = 42\n> \"hello world\"\n",
-      "pgPrev": "/test/id.ct",
-      "pgNext": "/test/utils.ct",
-      "pgDir": "/test"
-    },
-    []
-  ]
+           ],
+           "utLeafs": {},
+           "utConsts": []
+          },
+          "getMetaDat": [
+           null,
+           null,
+           null,
+           null
+          ],
+          "getMetaId": 5
+         },
+         {
+          "tag": "RawValue",
+          "rvMeta": {
+           "getMetaPos": null,
+           "getMetaType": {
+            "tag": "UnionType",
+            "utTop": [
+             {
+              "tag": "PredsAnd",
+              "paPreds": []
+             },
+             {},
+             []
+            ],
+            "utLeafs": {},
+            "utConsts": []
+           },
+           "getMetaDat": [
+            null,
+            null,
+            null,
+            null
+           ],
+           "getMetaId": 6
+          },
+          "rvName": "/Catln/#print"
+         }
+        ],
+        "rtaArgs": []
+       }
+      },
+      "rstChildren": []
+     }
+    ]
+   },
+   "pgSource": "main = 42\n> \"hello world\"\n",
+   "pgPrev": "/test/id.ct",
+   "pgNext": "/test/utils.ct",
+   "pgDir": "/test"
+  },
+  []
+ ]
 }

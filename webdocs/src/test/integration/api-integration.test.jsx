@@ -290,7 +290,7 @@ describe('Backend API contract', () => {
       if (found) return
       if (Array.isArray(o)) return o.forEach(walk)
       if (o && typeof o === 'object') {
-        if ('getMetaID' in o && o.getMetaDat !== null && !(Array.isArray(o.getMetaDat) && o.getMetaDat.length === 0)) {
+        if ('getMetaId' in o && o.getMetaDat !== null && !(Array.isArray(o.getMetaDat) && o.getMetaDat.length === 0)) {
           found = true
           return
         }
@@ -957,7 +957,7 @@ describe('Backend API contract', () => {
         const statements = (await fetchApi(`/api/page?prgmName=${encodeURIComponent(page)}`)).contents[0].pgPrgm[1]
         const found = declMetas(statements).find(m => m.getMetaDat[2]?.args?.['/contents']?.contents === TASK)
         expect(found).toBeDefined()
-        return found.getMetaID
+        return found.getMetaId
       }
 
       const check = async done => fetch(
@@ -1093,7 +1093,7 @@ describe('Backend API contract', () => {
           .map(([statement]) => statement)
           .filter(statement => statement.tag === 'RawDeclStatement')
         expect(statement).toBeDefined()
-        return [pageName, statement.contents.roaObj.contents[0].getMetaID]
+        return [pageName, statement.contents.roaObj.contents[0].getMetaId]
       }
 
       function writeExpr(prgmName, metaId, source, base = API_BASE) {
