@@ -69,12 +69,12 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/length
-                            ( Value /this -> ∀/Data/List[ /T=$_/T ] ) -> /Data/Primitive/Integer
+                            ( Value /this -> ∀/Data/List[ /T=$^/T ] ) -> /Data/Primitive/Integer
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls =
                         [ /Data/List/length
-                            ( Value /this -> ∀/Data/List[ /T=$_/T ] ) ->
+                            ( Value /this -> ∀/Data/List[ /T=$^/T ] ) ->
                             ( TopType | PredExpr /operator==
                                 ( /r=/Data/Primitive/True
                                 , /l=~nonNeg( /this=~/$this )
@@ -774,13 +774,13 @@ Prgm
                             ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean ) -> /Data/Primitive/Integer = /Data/List/length
                             ( Value /this -> UnionType
                                 ( Just
-                                    ( PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Data/List[ /T=TopType ]
+                                    ( PredClass /Data/List/ConsList[ /T=$^/T ] && PredClass /Data/List[ /T=$^/T ]
                                     , fromList []
                                     , []
                                     )
-                                , /Data/List/Cons[ /T=TopType ]
+                                , /Data/List/Cons[ /T=$^/T ]
                                     ( /head=$/T
-                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                    , /tail=∀/Data/List/ConsList[ /T=$^/T ]
                                     )
                                 , []
                                 ) = /Data/List/filter( Value /lst -> TVArg /lst = Value /lst )
