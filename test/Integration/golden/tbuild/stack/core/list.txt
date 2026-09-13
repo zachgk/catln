@@ -149,14 +149,14 @@ Prgm
                     { omiDecls =
                         [ /Data/List/length
                             ( EAppArg
-                                { eaaArg = Value /this -> ∀/Data/List[ /T=$^/T ] }
+                                { eaaArg = Value /this -> ∀/Data/List[ /T=$_/T ] }
                             ) -> /Data/Primitive/Integer
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls =
                         [ /Data/List/length
                             ( EAppArg
-                                { eaaArg = Value /this -> ∀/Data/List[ /T=$^/T ] }
+                                { eaaArg = Value /this -> ∀/Data/List[ /T=$_/T ] }
                             ) ->
                             ( TopType | PredExpr /operator==
                                 ( /r=/Data/Primitive/True
@@ -1716,13 +1716,13 @@ Prgm
                                 ( EAppArg
                                     { eaaArg = Value /this -> UnionType
                                         ( Just
-                                            ( PredClass /Data/List/ConsList[ /T=$^/T ] && PredClass /Data/List[ /T=$^/T ]
+                                            ( PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Data/List[ /T=TopType ]
                                             , fromList []
                                             , []
                                             )
-                                        , /Data/List/Cons[ /T=$^/T ]
+                                        , /Data/List/Cons[ /T=TopType ]
                                             ( /head=$/T
-                                            , /tail=∀/Data/List/ConsList[ /T=$^/T ]
+                                            , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                             )
                                         , []
                                         ) =
@@ -1741,13 +1741,13 @@ Prgm
                                                 }
                                             ) ↦ UnionType
                                             ( Just
-                                                ( PredClass /Data/List/ConsList[ /T=$^/T ] && PredClass /Data/List[ /T=$^/T ]
+                                                ( PredClass /Data/List/ConsList[ /T=TopType ] && PredClass /Data/List[ /T=TopType ]
                                                 , fromList []
                                                 , []
                                                 )
-                                            , /Data/List/Cons[ /T=$^/T ]
+                                            , /Data/List/Cons[ /T=TopType ]
                                                 ( /head=$/T
-                                                , /tail=∀/Data/List/ConsList[ /T=$^/T ]
+                                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
                                                 )
                                             , []
                                             )

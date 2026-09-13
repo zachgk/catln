@@ -85,7 +85,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/rel( Value /a )( Value /b )
-                            ( Value /this -> ∀/Data/Algebra/Ordering[ /T=$^/T ] ) -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isEq
+                            ( Value /this -> ∀/Data/Algebra/Ordering[ /T=$_/T ] ) -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isEq
                             ( Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /compare( Value /a -> TVArg /a = Value /a )( Value /b -> TVArg /b = Value /b )( Value /this -> TVArg /this = Value /this ) )
                         ]
                     }
@@ -160,7 +160,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Algebra/compare( Value /a -> $/T )( Value /b -> $/T )
-                            ( Value /this -> ∀/Data/Algebra/Ordering[ /T=$^/T ] ) -> ∀/Data/Algebra/Comparison
+                            ( Value /this -> ∀/Data/Algebra/Ordering[ /T=$_/T ] ) -> ∀/Data/Algebra/Comparison
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

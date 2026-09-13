@@ -157,17 +157,10 @@ linkClassMethodReceivers (Prgm _ (ClassGraph fullCg) _) (Prgm (ObjectMap objMap)
 
     isThisArg oe = let p = nameStr (exprPath oe) in p == thisKey || p == "this"
 
-    -- The class's parameters are named on the receiver as PARENT references: they name the
-    -- parameter the enclosing method partial carries, and this is where that is known lexically.
-    -- Spelled 'TVExt' they name nothing the ambient environment binds — a method's constraint
-    -- scope holds argument links, not type variables — and survived only because the class
-    -- partial they sit on happens to declare a parameter of the same name, which the ambient
-    -- scope rules read as in-scope ('dropOutOfScopeTVExt'). That coincidence is not the reason
-    -- they are meaningful.
     enrichReceiverType (TopType negPartials (PredsOne (PredClass p@PartialType{ptName, ptVars})))
       | Just (CGClass _ PartialType{ptVars=classVarsDecl} _ _) <- graphLookup (PClassName ptName) fullCg
       , not (H.null classVarsDecl)
-      = TopType negPartials (PredsOne (PredClass p{ptVars=H.union ptVars (H.mapWithKey (\k _ -> TypeVar (TVVar k) TVParent PTopType) classVarsDecl)}))
+      = TopType negPartials (PredsOne (PredClass p{ptVars=H.union ptVars (H.mapWithKey (\k _ -> TypeVar (TVVar k) TVExt PTopType) classVarsDecl)}))
     enrichReceiverType t = t
 
 -- |

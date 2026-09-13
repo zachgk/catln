@@ -57,12 +57,12 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/length
-                            ( Value /this -> ∀/Data/List[ /T=$^/T ] ) -> /Data/Primitive/Integer
+                            ( Value /this -> ∀/Data/List[ /T=$_/T ] ) -> /Data/Primitive/Integer
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls =
                         [ /Data/List/length
-                            ( Value /this -> ∀/Data/List[ /T=$^/T ] ) ->
+                            ( Value /this -> ∀/Data/List[ /T=$_/T ] ) ->
                             ( TopType | PredExpr /operator==
                                 ( /r=/Data/Primitive/True
                                 , /l=~nonNeg( /this=~/$this )
