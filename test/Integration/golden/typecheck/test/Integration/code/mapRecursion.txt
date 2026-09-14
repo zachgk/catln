@@ -65,10 +65,10 @@ Prgm
                             , /left=
                                 ( TopType | PredClass /RTree
                                     [ /K=∀/ROrd
-                                    , /V=$^/MV
+                                    , /V=$^/V
                                     ] && PredClass /RIMap
                                     [ /K=∀/ROrd
-                                    , /V=$^/MV
+                                    , /V=$^/V
                                     ]
                                 )
                             ) = /RNode
@@ -79,7 +79,7 @@ Prgm
                                         , /V=$^/MV
                                         ] && PredClass /RIMap
                                         [ /K=∀/ROrd
-                                        , /V=$^/MV
+                                        , /V=$^/V
                                         ]
                                     , fromList []
                                     , []
@@ -214,7 +214,7 @@ Prgm
                         [ /risNode
                             ( Value /m -> /RNode
                                 [ /K=∀/ROrd
-                                , /V=TopType
+                                , /V=$^/MV
                                 ]
                                 ( /value=$/V
                                 , /key=∀/ROrd
@@ -231,7 +231,7 @@ Prgm
                                     [ /K=∀/ROrd
                                     , /V=$^/MV
                                     ]
-                                )( Value /key -> ∀/ROrd )( Value /value )
+                                )( Value /key -> ∀/ROrd )( Value /value -> $^/MV )
                                 ( Value /right -> ∀/RTree
                                     [ /K=∀/ROrd
                                     , /V=$^/MV
@@ -259,7 +259,7 @@ Prgm
                         [ /rsize
                             ( Value /m -> /RNode
                                 [ /K=∀/ROrd
-                                , /V=TopType
+                                , /V=$^/MV
                                 ]
                                 ( /value=$/V
                                 , /key=∀/ROrd
@@ -276,7 +276,7 @@ Prgm
                                     [ /K=∀/ROrd
                                     , /V=$^/MV
                                     ]
-                                )( Value /key -> ∀/ROrd )( Value /value )
+                                )( Value /key -> ∀/ROrd )( Value /value -> $^/MV )
                                 ( Value /right -> ∀/RTree
                                     [ /K=∀/ROrd
                                     , /V=$^/MV
@@ -378,7 +378,7 @@ Prgm
                         , /rput
                             ( Value /m -> /RNode
                                 [ /K=∀/ROrd
-                                , /V=TopType
+                                , /V=$^/MV
                                 ]
                                 ( /value=$/V
                                 , /key=∀/ROrd
@@ -395,7 +395,7 @@ Prgm
                                     [ /K=∀/ROrd
                                     , /V=$^/MV
                                     ]
-                                )( Value /key@Value /nk -> ∀/ROrd )( Value /value@Value /nv )
+                                )( Value /key@Value /nk -> ∀/ROrd )( Value /value@Value /nv -> $^/MV )
                                 ( Value /right -> ∀/RTree
                                     [ /K=∀/ROrd
                                     , /V=$^/MV
@@ -416,7 +416,7 @@ Prgm
                                     , /value=TopType
                                     , /key=∀/ROrd
                                     , /cmp=∀/RCmp
-                                    , /nv=TopType
+                                    , /nv=$^/MV
                                     , /right=∀/RTree
                                         [ /K=∀/ROrd
                                         , /V=$^/MV

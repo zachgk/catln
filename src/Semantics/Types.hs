@@ -2877,6 +2877,29 @@ ptAtArgKeys :: PartialType -> S.HashSet ArgName -> PartialType
 ptAtArgKeys p@PartialType{ptArgs} ks = p{ptArgs=args', ptArgMode=PtArgExact}
   where args' = H.mapWithKey (\k _ -> H.lookupDefault PTopType k ptArgs) (S.toMap ks)
 
+-- | Reads a value DETACHED from the partial its parent references name: every 'TVParent'
+-- occurrence, at any depth, reads as the ⊤ it denotes there ('TypeVarLoc' — a parent reference is
+-- read as ⊤ exactly when genuinely detached from its parent).
+--
+-- For a caller holding a declaration's spelling with no enclosing partial in view. Reading
+-- @∀List[/T=$^/A]@ that way is what lets a meet against a concrete operand narrow it and recover
+-- the binding (@∩ Cons[/T=Integer]@ ⇒ @/A=Integer@ — 'TypeCheck.TypeUtils.fnArgInputBound'); left
+-- symbolic the meet keeps the variable and nothing is discovered. 'TVInt' and 'TVExt' references
+-- are untouched: they name scopes that are not the one being detached from.
+detachParentRefs :: Type -> Type
+detachParentRefs (TypeVar _ TVParent i) = detachParentRefs i
+detachParentRefs (TypeVar v loc i) = TypeVar v loc (detachParentRefs i)
+detachParentRefs (UnionType mtop pos consts) =
+  UnionType (fmap onTop mtop) (joinUnionType $ map onLeaf $ splitUnionType pos) consts
+  where
+    onTop (preds, negLeafs, ncs) =
+      (mapTypePreds (mapTypePred onLeaf) preds, joinUnionType $ map onLeaf $ splitUnionType negLeafs, ncs)
+    onLeaf p@PartialType{ptVars, ptArgs, ptPreds} = p{
+        ptVars  = fmap detachParentRefs ptVars,
+        ptArgs  = fmap detachParentRefs ptArgs,
+        ptPreds = mapTypePreds (mapTypePred onLeaf) ptPreds
+      }
+
 -- | Reads a partial's FREE var references as ⊤: a bare partial-local ('TVInt') reference
 -- in one of the partial's values names the partial's own var\/arg scope — and ONLY that
 -- scope; one it does not bind is free — it constrains nothing, so its value set is ⊤.
@@ -2935,7 +2958,7 @@ typeTVIntRefs _ = S.empty
 -- through the partial's slot (@head=$/T@ with @/T=X@ denotes @X@), a nested partial's
 -- references read through ITS own slots, and an unbound reference reads as ⊤.
 resolveOwnScopeRefs :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> Type -> Type
-resolveOwnScopeRefs typeEnv vaenv p = substituteTVExt typeEnv (ptVarArg p `H.union` vaenv)
+resolveOwnScopeRefs typeEnv vaenv p = substituteTVExtScoped typeEnv (ptVarArg p) vaenv
 
 -- | 'freeTVIntToTop' applied DEEP: every reference the given partial does not bind reads as ⊤
 -- at ANY depth, including class-predicate parameters (@∀ConsList[/T=$/T]@ under a partial with
@@ -6508,7 +6531,7 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
         -- partial's own parameters — a nested @$/A@ under the enclosing @/A=#noCore@ — so the
         -- ambient half buys nothing here and costs everything.
         posValSet v@TypeVar{} = freeTVIntToTop p1 (substituteKeep typeEnv (ptVarArg p1) v)
-        posValSet v           = substituteTVExt typeEnv (ptVarArg p1) v
+        posValSet v           = substituteTVExtScoped typeEnv (ptVarArg p1) H.empty v
         subtractArg (argName, negArgValRaw) = case H.lookup argName (ptArgs p1) of
           Nothing -> Nothing
           -- IDENTICAL linked forms on both sides (@tail=∀ConsList[/T=$/T]@) whose every
@@ -6753,8 +6776,34 @@ meetInner typeEnv vaenv b i = intersectTypesEnv typeEnv vaenv b i
 -- resolves to a sibling's bound value, and a 'TVExt' resolves to whatever the caller
 -- supplied (and that the partial's bindings did not shadow).
 substituteTVExt :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
-substituteTVExt typeEnv vaenv (UnionType Nothing partials []) =
-  UnionType Nothing (joinUnionType $ map (substitutePartialTVExt typeEnv vaenv) $ splitUnionType partials) []
+substituteTVExt typeEnv = substituteTVExtScoped typeEnv H.empty
+
+-- | 'substituteTVExt' carrying the SCOPE layer explicitly: the bindings of the partial a
+-- reference sits one level inside.
+--
+-- A declaration reaches an enclosing parameter STEP BY STEP, one level per hop, each mediated by
+-- the partial between:
+--
+-- > class(ConsList[$T], [Cons[$T -> $_T](head -> $T, tail -> ConsList[$T -> $^T]), Nil])
+--
+-- @Cons@'s own @/T@ comes from the class; @head@'s @$T@ names @Cons@'s @/T@ from @Cons@'s own arg
+-- position; and the nested @ConsList@'s @/T@ names @CONS@'s @/T@ — not the class's again. So at a
+-- position inside a partial's arguments, a 'TVInt' written there and a 'TVParent' one level
+-- further in BOTH name that partial, and both resolve against this layer.
+--
+-- The layer is REPLACED at each argument boundary, never unioned: descending into a partial's
+-- args makes that partial's bindings the scope, and its 'ptVars' VALUES sit at its own level and
+-- keep the layer they arrived with. The AMBIENT environment is threaded through untouched and is
+-- the only thing a 'TVExt' consults.
+--
+-- Resolving a 'TVParent' against the ambient environment instead — which the single loc-blind
+-- leaf rule did, against the rule stated at 'TypeVarLoc' — FLATTENS the chain: the hop that named
+-- @Cons@'s @/T@ resolves to the class's value directly, so @tail=∀ConsList[/T=$^/T]@ becomes
+-- @tail=∀ConsList[/T=Integer]@ and the reference stops tracking the parameter it was written to
+-- follow. Measured at 606 occurrences compiling @stack/core/list.ct@ alone.
+substituteTVExtScoped :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypeVarArgEnv -> Type -> Type
+substituteTVExtScoped typeEnv scope vaenv (UnionType Nothing partials []) =
+  UnionType Nothing (joinUnionType $ map (substitutePartialTVExtScoped typeEnv scope vaenv) $ splitUnionType partials) []
 -- Also substitute inside the predicate ('Just') component: a class/rel predicate such as
 -- @PredClass ConsList[/T=$_B]@ carries external vars that must resolve the same way as those in
 -- the positive leaves (e.g. an arrow whose result type is an abstract-class type like
@@ -6768,15 +6817,34 @@ substituteTVExt typeEnv vaenv (UnionType Nothing partials []) =
 -- constructed value), and leaving its leaves unsubstituted carried the callee's own parameter
 -- spellings into the caller, where they read as ⊤ and the value no longer proved a member of its
 -- own class (core/map.ct's @mapValues@ result refusing the @get@ requirement).
-substituteTVExt typeEnv vaenv (UnionType (Just (preds, negLeafs, negConsts)) posLeafs consts) =
+substituteTVExtScoped typeEnv scope vaenv (UnionType (Just (preds, negLeafs, negConsts)) posLeafs consts) =
   UnionType (Just (mapTypePreds (mapTypePred (substitutePartialKeep typeEnv vaenv)) preds, negLeafs, negConsts))
-            (joinUnionType $ map (substitutePartialTVExt typeEnv vaenv) $ splitUnionType posLeafs) consts
-substituteTVExt typeEnv vaenv (TypeVar (TVApplied b overrides) loc i) =
-  applyTypeVarOverrides (fmap (substituteTVExt typeEnv vaenv) overrides) (substituteTVExt typeEnv vaenv (TypeVar b loc i))
+            (joinUnionType $ map (substitutePartialTVExtScoped typeEnv scope vaenv) $ splitUnionType posLeafs) consts
+substituteTVExtScoped typeEnv scope vaenv (TypeVar (TVApplied b overrides) loc i) =
+  applyTypeVarOverrides (fmap (substituteTVExtScoped typeEnv scope vaenv) overrides) (substituteTVExtScoped typeEnv scope vaenv (TypeVar b loc i))
 -- The occurrence reads @var ∩ inner@: an env miss (⊤ lookup) therefore resolves to the
 -- (substituted) inner rather than ⊤ — the lossless form of the old erasure.
-substituteTVExt typeEnv vaenv (TypeVar v _ i) = meetInner typeEnv vaenv (vaenvLookup vaenv v) (substituteTVExt typeEnv vaenv i)
-substituteTVExt _typeEnv _     t             = t
+substituteTVExtScoped typeEnv scope vaenv (TypeVar v TVExt i) =
+  meetInner typeEnv vaenv (vaenvLookup vaenv v) (substituteTVExtScoped typeEnv scope vaenv i)
+-- A 'TVParent' consults the SCOPE layer and nothing else — never the AMBIENT environment, which
+-- is a different scope and would resolve the hop to whatever binds the name there (the flattening).
+-- A miss leaves it SYMBOLIC: the layer is supplied by the descent, so its absence means this
+-- traversal did not carry the parent rather than that the reference denotes ⊤, and erasing on that
+-- basis loses a bound the reference was tracking (@Node[/K=$^/MK]@ under @[/MK=∀Ord]@ reading
+-- @/K=⊤@). A caller that genuinely reads a value DETACHED from its parent says so by detaching it
+-- first ('detachParentRefs'); it is the caller that knows, not the leaf.
+substituteTVExtScoped typeEnv scope vaenv (TypeVar v loc@TVParent i) = case vaenvLookup scope v of
+  PTopType -> TypeVar v loc (substituteTVExtScoped typeEnv scope vaenv i)
+  b        -> meetInner typeEnv vaenv b (substituteTVExtScoped typeEnv scope vaenv i)
+-- A 'TVInt' names the partial whose slot it directly is, which is this layer. At the TOP level
+-- there is no such partial: a reference that reaches there was introduced as a fresh sentinel by
+-- an upstream caller ('TypeCheck.Encode' spells an arg link that way), so it falls back to the
+-- ambient environment that registered it.
+substituteTVExtScoped typeEnv scope vaenv (TypeVar v TVInt i) = case vaenvLookup scope v of
+  PTopType -> meetInner typeEnv vaenv (vaenvLookup vaenv v) i'
+  b        -> meetInner typeEnv vaenv b i'
+  where i' = substituteTVExtScoped typeEnv scope vaenv i
+substituteTVExtScoped _typeEnv _ _ t = t
 
 -- | 'substituteTVExt' over one partial. SCOPES NEST: the partial's own (substituted) bindings
 -- SHADOW the caller's inside its args and predicates — a @$/T@ there resolves to the sibling
@@ -6786,14 +6854,20 @@ substituteTVExt _typeEnv _     t             = t
 -- arg boundary instead erased every such reference to ⊤ (an env miss reads the occurrence as its
 -- inner), so a value spelled with its declaration's parameters lost them at every call site.
 substitutePartialTVExt :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType
-substitutePartialTVExt typeEnv vaenv partial@PartialType{ptVars, ptArgs, ptPreds} = partial{
+substitutePartialTVExt typeEnv = substitutePartialTVExtScoped typeEnv H.empty
+
+substitutePartialTVExtScoped :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypeVarArgEnv -> PartialType -> PartialType
+substitutePartialTVExtScoped typeEnv scope vaenv partial@PartialType{ptVars, ptArgs, ptPreds} = partial{
     ptVars  = ptVars',
-    ptArgs  = fmap (substituteTVExt typeEnv innerVaenv) ptArgs,
-    ptPreds = mapTypePreds (mapTypePred (substitutePartialTVExt typeEnv innerVaenv)) ptPreds
+    ptArgs  = fmap (substituteTVExtScoped typeEnv innerScope vaenv) ptArgs,
+    ptPreds = mapTypePreds (mapTypePred (substitutePartialTVExtScoped typeEnv innerScope vaenv)) ptPreds
     }
   where
-    ptVars' = fmap (substituteTVExt typeEnv vaenv) ptVars
-    innerVaenv = H.union (joinVarArgEnv ptVars' H.empty) vaenv
+    -- The partial's own values sit at ITS level, so they keep the scope they arrived with.
+    ptVars' = fmap (substituteTVExtScoped typeEnv scope vaenv) ptVars
+    -- Its arguments are one level in, where its own bindings are the scope. REPLACED, not unioned:
+    -- the layer names exactly one partial, and the hop that reaches further out was already taken.
+    innerScope = joinVarArgEnv ptVars' H.empty
 
 -- | Substitute vars within a predicate partial, but *only* when the env resolves an external
 -- ('TVExt') var to a concrete (non-Top) type. An external var absent from the env — or bound only

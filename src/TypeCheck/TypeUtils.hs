@@ -282,7 +282,10 @@ fnArgInputBound env callAct fnKey inKey = case callAct of
     alignClassPtrs spelled actual =
       [ H.singleton (TVVar extV) elemT
       | spelled /= PTopType
-      , UnionType Nothing rLeafs [] <- [intersectTypes typeEnv spelled actual]
+      -- The spelling is read DETACHED here: it is the declaration's argument type standing on its
+      -- own, with the partial its parent references name nowhere in view, so those references
+      -- denote ⊤ and the meet against the concrete operand can narrow them.
+      , UnionType Nothing rLeafs [] <- [intersectTypes typeEnv (detachParentRefs spelled) actual]
       , (cvn, extV) <- boundClassVarPtrs spelled
       , let elemT = unionAllTypes typeEnv (mapMaybe (H.lookup cvn . ptVars) (splitUnionType rLeafs))
       , not (isBottomType elemT) ]

@@ -1993,11 +1993,7 @@ Prgm
         , /Catln/#print
             ( Value /p -> UnionType
                 ( Just
-                    ( !
-                        ( !
-                            ( PredClass /Data/List[ /T=/Data/Primitive/Integer ] ) && !
-                            ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
-                        ) && PredClass /Catln/Doc/DShow
+                    ( PredClass /Catln/Doc/DShow && PredClass /Data/List[ /T=∀/Data/Algebra/Ord ]
                     , fromList []
                     , []
                     )
@@ -2049,11 +2045,7 @@ Prgm
         , /Catln/#print
             ( Value /p -> UnionType
                 ( Just
-                    ( !
-                        ( !
-                            ( PredClass /Data/List[ /T=/Data/Primitive/Integer ] ) && !
-                            ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
-                        ) && PredClass /Catln/Doc/DShow
+                    ( PredClass /Catln/Doc/DShow && PredClass /Data/List[ /T=∀/Data/Algebra/Ord ]
                     , fromList []
                     , []
                     )
