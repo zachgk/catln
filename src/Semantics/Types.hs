@@ -2913,6 +2913,20 @@ detachLevelParentRefs (UnionType mtop pos consts) =
       (mapTypePreds (mapTypePred onLeaf) preds, joinUnionType $ map onLeaf $ splitUnionType negLeafs, ncs)
     onLeaf p@PartialType{ptVars} = p{ptVars = fmap detachLevelParentRefs ptVars}
 
+-- | 'detachLevelParentRefs' for the parent references that do NOT name one of the given
+-- parameters. A value read at the level of a partial that binds @names@ spells that partial's
+-- parameters as parent references, correctly; a parent reference to any OTHER name cannot be
+-- naming that partial, so it was written for a different level and has moved — its binder is
+-- out of reach and it reads as the ⊤ it denotes.
+detachForeignParentRefs :: S.HashSet TypeVarName -> Type -> Type
+detachForeignParentRefs names = go
+  where
+    go (TypeVar (TVVar n) TVParent i) | not (S.member n names) = go i
+    go (TypeVar v loc i) = TypeVar v loc (go i)
+    go (UnionType mtop pos consts) = UnionType (fmap onTop mtop) (joinUnionType $ map onLeaf $ splitUnionType pos) consts
+    onTop (preds, negLeafs, ncs) = (mapTypePreds (mapTypePred onLeaf) preds, joinUnionType $ map onLeaf $ splitUnionType negLeafs, ncs)
+    onLeaf p@PartialType{ptVars} = p{ptVars = fmap go ptVars}
+
 -- | Reads a partial's FREE var references as ⊤: a bare partial-local ('TVInt') reference
 -- in one of the partial's values names the partial's own var\/arg scope — and ONLY that
 -- scope; one it does not bind is free — it constrains nothing, so its value set is ⊤.
@@ -5867,25 +5881,18 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
   -- A 'TVInt' reference nested INSIDE an embedded partial (@/l=Cons[$T]@) names the inner
   -- partial's scope and is not hoisted at all.
   let origValuesAt k = mapMaybe (H.lookup k) [aArgs, bArgs]
-  -- A name may be stamped onto THIS partial only if its DECLARATION declares it as a parameter
-  -- ("A partial's 'ptVars' keys are its declaration's type parameters" — see 'Type'). An arg
-  -- value may reference a variable of an ENCLOSING scope: @RNode(left = ∀RTree[/K=∀Ord,
-  -- /V=$^/MV])@ carries @$^/MV@, whose @/MV@ belongs to the surrounding @insert@ declaration,
-  -- not to @RNode[$K, $V]@. 'typeTVExtVarRefs' reads 'TVOuter' — 'TVParent' as well as 'TVExt' —
-  -- so it reports that as a reference and the discovered binding gets stamped, giving
-  -- @RNode[/MV=$^/V, /MK=∀Ord, /K=∀Ord, /V=⊤]@ for a two-parameter data type. The invented slots
-  -- are then re-derived every epoch under a fresh spelling, so the point never settles and the
-  -- solve runs to 'runConstraintsLimit' (with each epoch's types larger than the last). This is
-  -- the same "invents foreign var slots" hazard the ambient-passthrough drop above guards; a
-  -- parent-scope reference is the other route to it, and only the declaration can tell the two
-  -- apart. Its own 'TVExt' wording notwithstanding, 'typeTVExtVarRefs' must keep reading
-  -- 'TVOuter' for its other callers ('comparedPartialsEnv's self-equation guard and
-  -- 'varStampSupported's occurrence census both WITHHOLD on a match, where counting parent
-  -- references is the conservative direction), so the restriction belongs here.
-  --
-  -- A name with no template in the graph is unconstrained — an applied call partial
-  -- (@/rput(..)@) legitimately carries its own parameters — so the filter engages only where the
-  -- declaration is actually known.
+  -- Every outer reference an arg value carries ('typeTVExtVarRefs' reads 'TVOuter' — 'TVParent'
+  -- as well as 'TVExt') is a name the meet may discover a binding for, and the discovery is
+  -- stamped onto this partial. That is only right when the reference names THIS partial's
+  -- parameter (@Cons(tail=∀ConsList[/T=$^/T])@ — the declaration's own linked occurrence); a
+  -- value that reached the slot still spelled for another level (@insert@'s result
+  -- @Map[/V=$^/MV]@ arriving in @Node@'s @right@ slot) would have @/MV@ stamped onto @Node@
+  -- as @Node[/MV=$^/V]@, an invented slot re-derived under a fresh spelling every epoch. So
+  -- the rule is not a filter here but at the boundary the value crosses: the slot install
+  -- reads such a reference as the ⊤ it denotes before it enters ('updateTypePropInner',
+  -- 'detachForeignParentRefs'). Class expansion still relocates a class parameter's value into
+  -- the member's arg slots one level deeper than it was written ('substitutePartialExit'),
+  -- which is the remaining producer of such a spelling.
   let exactNamesAt k = S.unions $ map typeTVExtVarRefs $ origValuesAt k
   let pointerNamesAt k = S.fromList [n | TypeVar (TVVar n) TVInt _ <- origValuesAt k]
   -- A hoisted binding is stored in its canonical 'substituteTVExt' reading (the same one
@@ -7649,13 +7656,22 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
       -- @/V@ of the declaration. Each side is therefore read in its own scope first, in the
       -- POINT's currency: the slot's references to @sup@'s parameters are replaced by @sup@'s
       -- bindings (point-level values already) or by the ⊤ an unbound parameter denotes
-      -- ('slotAtPoint'); the point's references resolve through the ambient env, an unresolved one
-      -- staying symbolic since it is the point's own spelling. The two readings meet, and each side
-      -- then meets that result with its OWN original, which puts its own variables back
-      -- (@BinTree[/V=⊤] ∩ BinTree[/V=$^/V]@ keeps the link). Only values cross the boundary;
-      -- spellings never do.
+      -- ('slotAtPoint'); the point's references resolve through the ambient env. The point is
+      -- the slot's fragment, so a PARENT reference at its level names @sup@: one naming a
+      -- parameter @sup@ declares is spelled right and stays (@getStep@'s own @right ->
+      -- BinTree[/K=$^/MK]@); one naming anything else was written for another level and has
+      -- moved — @insert@'s result @Map[/V=$^/MV]@ arriving at @Node@'s @right@ slot — and reads
+      -- as the ⊤ it denotes ('detachForeignParentRefs'), since stored it would spell a @/MV@ of
+      -- @Node@ and the next universe meet would stamp @Node[/MV=$^/V]@. An unbound EXTERNAL
+      -- reference stays symbolic: the ambient scope is the same on both sides. The two readings
+      -- meet, and each side then meets that result with its OWN original, which puts its own
+      -- variables back (@BinTree[/V=⊤] ∩ BinTree[/V=$^/V]@ keeps the link). Only values cross
+      -- the boundary; spellings never do.
       let concreteUnder = slotAtPoint typeEnv vaenv
-      let concreteAt = substituteTVExtScoped typeEnv vaenv vaenv
+      let declaredParamsOf PartialType{ptName=n, ptVars=vs} = case typeGraphData typeEnv n ++ typeGraphArrowTemplates typeEnv n of
+            [] -> Nothing -- open world: nothing says which names the partial binds
+            ds -> Just (S.unions (H.keysSet vs : map (H.keysSet . ptVars) ds))
+      let concreteAtUnder sups = maybe id detachForeignParentRefs (S.unions <$> mapM declaredParamsOf sups) . substituteTVExtScoped typeEnv vaenv vaenv
       -- A side's original re-met with the concrete meet, with the meet's fresh discoveries folded
       -- back in: a bare variable met against a concrete value keeps the variable in the type and
       -- records the value only in the returned env ('intersectTypesEnv' drops it), so the
@@ -7680,7 +7696,7 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
               let newProp = intersectTypesEnv typeEnv vaenv supVar sub0
               Just (sup, closeFrame sup newProp)
             (_, Just supProp) -> do
-              let met = intersectTypesEnv typeEnv vaenv (concreteUnder sup supProp) (concreteAt sub0)
+              let met = intersectTypesEnv typeEnv vaenv (concreteUnder sup supProp) (concreteAtUnder [sup] sub0)
               -- The evidence the two spellings meeting AS WRITTEN discover for their variables —
               -- kept only where it is a VALUE (no scope reference: @/MK ↦ Integer@, never
               -- @/V ↦ $^/MV@) — and folded into each side before its re-meet. The concrete
@@ -7720,7 +7736,7 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
           -- their partials, the var's binding concretely under the ambient env, the meet re-met
           -- with the binding to keep its variables; the slot install re-meets it with each slot.
           let subBinding = H.lookupDefault PTopType v vaenv
-          let met = intersectTypesEnv typeEnv vaenv (concreteAt subBinding) (unionAllTypesWithEnv typeEnv vaenv $ mapMaybe (\sup -> concreteUnder sup <$> slotRead sup) supPartialList)
+          let met = intersectTypesEnv typeEnv vaenv (concreteAtUnder supPartialList subBinding) (unionAllTypesWithEnv typeEnv vaenv $ mapMaybe (\sup -> concreteUnder sup <$> slotRead sup) supPartialList)
           let tp' = resolvedMeet subBinding met
           let vaenv' = H.insert v tp' vaenv
           let updateSuperPartial p@PartialType{ptVars=pVars} = case (rawSlot propName p, typeGetAux propName p) of

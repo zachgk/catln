@@ -954,7 +954,7 @@ Prgm
                                             , []
                                             )
                                         , /Data/Map/Node
-                                            [ /MV=$^/V
+                                            [ /MV=TopType
                                             , /K=∀/Data/Algebra/Ord
                                             , /V=$^/MV
                                             ]
@@ -967,10 +967,10 @@ Prgm
                                             , /left=
                                                 ( TopType | PredClass /Data/Map
                                                     [ /K=∀/Data/Algebra/Ord
-                                                    , /V=$^/MV
+                                                    , /V=TopType
                                                     ] && PredClass /Data/Map/BinTree
                                                     [ /K=∀/Data/Algebra/Ord
-                                                    , /V=$^/MV
+                                                    , /V=$^/V
                                                     ]
                                                 )
                                             )
@@ -995,7 +995,7 @@ Prgm
                                                 , []
                                                 )
                                             , /Data/Map/Node
-                                                [ /MV=$^/V
+                                                [ /MV=TopType
                                                 , /K=∀/Data/Algebra/Ord
                                                 , /V=$^/MV
                                                 ]
@@ -1008,10 +1008,10 @@ Prgm
                                                 , /left=
                                                     ( TopType | PredClass /Data/Map
                                                         [ /K=∀/Data/Algebra/Ord
-                                                        , /V=$^/MV
+                                                        , /V=TopType
                                                         ] && PredClass /Data/Map/BinTree
                                                         [ /K=∀/Data/Algebra/Ord
-                                                        , /V=$^/MV
+                                                        , /V=$^/V
                                                         ]
                                                     )
                                                 )
@@ -1365,10 +1365,10 @@ Prgm
                             , /left=
                                 ( TopType | PredClass /Data/Map
                                     [ /K=∀/Data/Algebra/Ord
-                                    , /V=$^/MV
+                                    , /V=TopType
                                     ] && PredClass /Data/Map/BinTree
                                     [ /K=∀/Data/Algebra/Ord
-                                    , /V=$^/MV
+                                    , /V=TopType
                                     ]
                                 )
                             ) = /Data/Map/Node
@@ -1394,17 +1394,12 @@ Prgm
                                         , /key=∀/Data/Algebra/Ord
                                         , /right=∀/Data/Map/BinTree
                                             [ /K=∀/Data/Algebra/Ord
-                                            , /V=$^/V
+                                            , /V=$^/MV
                                             ]
-                                        , /left=
-                                            ( TopType | PredClass /Data/Map
-                                                [ /K=∀/Data/Algebra/Ord
-                                                , /V=$^/V
-                                                ] && PredClass /Data/Map/BinTree
-                                                [ /K=∀/Data/Algebra/Ord
-                                                , /V=$^/V
-                                                ]
-                                            )
+                                        , /left=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=$^/MV
+                                            ]
                                         )
                                     , []
                                     ) =
@@ -1438,17 +1433,12 @@ Prgm
                                             , /key=∀/Data/Algebra/Ord
                                             , /right=∀/Data/Map/BinTree
                                                 [ /K=∀/Data/Algebra/Ord
-                                                , /V=$^/V
+                                                , /V=$^/MV
                                                 ]
-                                            , /left=
-                                                ( TopType | PredClass /Data/Map
-                                                    [ /K=∀/Data/Algebra/Ord
-                                                    , /V=$^/V
-                                                    ] && PredClass /Data/Map/BinTree
-                                                    [ /K=∀/Data/Algebra/Ord
-                                                    , /V=$^/V
-                                                    ]
-                                                )
+                                            , /left=∀/Data/Map/BinTree
+                                                [ /K=∀/Data/Algebra/Ord
+                                                , /V=$^/MV
+                                                ]
                                             )
                                         , []
                                         )
@@ -1506,10 +1496,10 @@ Prgm
                             , /right=
                                 ( TopType | PredClass /Data/Map
                                     [ /K=∀/Data/Algebra/Ord
-                                    , /V=$^/MV
+                                    , /V=TopType
                                     ] && PredClass /Data/Map/BinTree
                                     [ /K=∀/Data/Algebra/Ord
-                                    , /V=$^/MV
+                                    , /V=TopType
                                     ]
                                 )
                             , /left=∀/Data/Map/BinTree
@@ -1548,17 +1538,12 @@ Prgm
                                         , /key=∀/Data/Algebra/Ord
                                         , /right=∀/Data/Map/BinTree
                                             [ /K=∀/Data/Algebra/Ord
-                                            , /V=$^/V
+                                            , /V=$^/MV
                                             ]
-                                        , /left=
-                                            ( TopType | PredClass /Data/Map
-                                                [ /K=∀/Data/Algebra/Ord
-                                                , /V=$^/V
-                                                ] && PredClass /Data/Map/BinTree
-                                                [ /K=∀/Data/Algebra/Ord
-                                                , /V=$^/V
-                                                ]
-                                            )
+                                        , /left=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=$^/MV
+                                            ]
                                         )
                                     , []
                                     ) =
@@ -1592,17 +1577,12 @@ Prgm
                                             , /key=∀/Data/Algebra/Ord
                                             , /right=∀/Data/Map/BinTree
                                                 [ /K=∀/Data/Algebra/Ord
-                                                , /V=$^/V
+                                                , /V=$^/MV
                                                 ]
-                                            , /left=
-                                                ( TopType | PredClass /Data/Map
-                                                    [ /K=∀/Data/Algebra/Ord
-                                                    , /V=$^/V
-                                                    ] && PredClass /Data/Map/BinTree
-                                                    [ /K=∀/Data/Algebra/Ord
-                                                    , /V=$^/V
-                                                    ]
-                                                )
+                                            , /left=∀/Data/Map/BinTree
+                                                [ /K=∀/Data/Algebra/Ord
+                                                , /V=$^/MV
+                                                ]
                                             )
                                         , []
                                         )
