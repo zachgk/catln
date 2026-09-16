@@ -7212,8 +7212,16 @@ resolveTypeSelfRefs = go
       UnionType (fmap (goTop env) mtop) (joinUnionType $ map (goLeaf env) $ splitUnionType pos) consts
     go env (TypeVar (TVApplied b overrides) loc i) =
       applyTypeVarOverrides (fmap (go env) overrides) (go env (TypeVar b loc i))
+    -- Only a CONCRETE binding resolves a reference ('isResolvable'). The inner env keeps a
+    -- partial's own var slot when the ambient env does not bind the name, and that slot may
+    -- itself be a reference (@RNode[/V=$^/MV]@, the arm's result read under its declaration):
+    -- substituted into the field it would spell @right=∀RTree[/V=$^/MV]@, a reference written
+    -- for RNode's level moved one level in, where it names a @/MV@ RNode does not declare. The
+    -- field keeps its own spelling (@$^/V@) and reaches the binding through RNode's slot.
+    -- Traced on build/scratch/reloc/expand.ct: 'arrowConstrainUbs' calls this with an EMPTY
+    -- env, so the own slot is the only entry.
     go env t@(TypeVar v TVOuter _) = case H.lookup v env of
-      Just b | not (isTopT b) -> b
+      Just b | isResolvable b -> b
       _                       -> t
     go _   t                   = t
     goTop env (preds, negLeafs, ncs) =
@@ -7228,8 +7236,6 @@ resolveTypeSelfRefs = go
         -- @ptVars@ — a concrete own slot wins over ambient, a still-symbolic own slot defers to it.
         ownVars  = joinVarArgEnv (fmap (go env) ptVars) H.empty
         innerEnv = H.unionWith (\o a -> if isResolvable o then o else a) ownVars env
-    isTopT PTopType = True
-    isTopT _        = False
     isResolvable (TypeVar _ _ _) = False
     isResolvable PTopType        = False
     isResolvable _               = True
