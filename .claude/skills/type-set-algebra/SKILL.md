@@ -90,8 +90,10 @@ PartialArgsOption)`.
 - `TVVar name` refers to a `ptVars` parameter; `TVArg name` refers to an argument's type.
 - `TVApplied base overrides` = a var re-applied with rebound parameter slots (`$F[$T -> $_B]`).
 - **Location** decides scope: `TVInt` (written `$T`) resolves against the *same* partial's
-  `ptVars`/`ptArgs`; `TVParent` (`$^T`) names a variable of the nearest ENCLOSING partial and never
-  consults the vaenv; `TVExt` (`$_T`) resolves against the surrounding `TypeVarArgEnv` (vaenv).
+  `ptVars`/`ptArgs`; `TVParent` names a variable of the nearest ENCLOSING partial and never
+  consults the vaenv; `TVExt` resolves against the surrounding `TypeVarArgEnv` (vaenv). Both outer
+  locs are written AND printed as `$_T` — the loc is decided at desugar (`classifyParentVarRefs`)
+  from the lexical nesting; Haskell comments write `$^T` as shorthand for the `TVParent` case.
 - The third `TypeVar` field is the occurrence-local **inner**: the occurrence denotes
   `⟦var⟧ ∩ ⟦inner⟧`, and `inner = PTopType` is the knowledge-free case. It bounds an occurrence; it
   does **not** stand in for resolving the variable (see the resolution rule below).

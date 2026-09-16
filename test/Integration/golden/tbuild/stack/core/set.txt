@@ -27,11 +27,11 @@ Prgm
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /a -> ∀/Data/Set[ /T=$^/E ] }
+                                { eaaArg = Value /a -> ∀/Data/Set[ /T=$_/E ] }
                             )
                             ( EAppArg
-                                { eaaArg = Value /b -> ∀/Data/Set[ /T=$^/E ] }
-                            ) -> ∀/Data/Set[ /T=$^/E ]
+                                { eaaArg = Value /b -> ∀/Data/Set[ /T=$_/E ] }
+                            ) -> ∀/Data/Set[ /T=$_/E ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -69,7 +69,7 @@ Prgm
                                             )
                                         , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                                             ( /head=$/T
-                                            , /tail=∀/Data/List/ConsList[ /T=$^/T ]
+                                            , /tail=∀/Data/List/ConsList[ /T=$_/T ]
                                             )
                                         , []
                                         ) =
@@ -103,7 +103,7 @@ Prgm
                                                 )
                                             , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                                                 ( /head=$/T
-                                                , /tail=∀/Data/List/ConsList[ /T=$^/T ]
+                                                , /tail=∀/Data/List/ConsList[ /T=$_/T ]
                                                 )
                                             , []
                                             )
@@ -125,11 +125,11 @@ Prgm
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /a -> ∀/Data/Set[ /T=$^/E ] }
+                                { eaaArg = Value /a -> ∀/Data/Set[ /T=$_/E ] }
                             )
                             ( EAppArg
-                                { eaaArg = Value /b -> ∀/Data/Set[ /T=$^/E ] }
-                            ) -> ∀/Data/Set[ /T=$^/E ]
+                                { eaaArg = Value /b -> ∀/Data/Set[ /T=$_/E ] }
+                            ) -> ∀/Data/Set[ /T=$_/E ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -169,9 +169,9 @@ Prgm
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /s -> ∀/Data/Set[ /T=$^/E ] }
+                                { eaaArg = Value /s -> ∀/Data/Set[ /T=$_/E ] }
                             )
-                            ( EAppArg { eaaArg = Value /item -> $/E } ) -> ∀/Data/Set[ /T=$^/E ]
+                            ( EAppArg { eaaArg = Value /item -> $/E } ) -> ∀/Data/Set[ /T=$_/E ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -184,7 +184,7 @@ Prgm
                                     ]
                                     ( /map=∀/Data/Map
                                         [ /K=∀/Data/Algebra/Ord
-                                        , /V=$^/V
+                                        , /V=$_/V
                                         ]
                                     ) = /Data/Set/MkSet
                                     ( EAppArg
@@ -224,12 +224,12 @@ Prgm
                                                 , /V=TopType
                                                 ] && PredClass /Data/Map/BinTree
                                                 [ /K=∀/Data/Algebra/Ord
-                                                , /V=$^/V
+                                                , /V=$_/V
                                                 ]
                                             )
                                         , /left=∀/Data/Map/BinTree
                                             [ /K=∀/Data/Algebra/Ord
-                                            , /V=$^/V
+                                            , /V=$_/V
                                             ]
                                         )
                                     , []
@@ -264,12 +264,12 @@ Prgm
                                                     , /V=TopType
                                                     ] && PredClass /Data/Map/BinTree
                                                     [ /K=∀/Data/Algebra/Ord
-                                                    , /V=$^/V
+                                                    , /V=$_/V
                                                     ]
                                                 )
                                             , /left=∀/Data/Map/BinTree
                                                 [ /K=∀/Data/Algebra/Ord
-                                                , /V=$^/V
+                                                , /V=$_/V
                                                 ]
                                             )
                                         , []
@@ -328,10 +328,10 @@ Prgm
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /a -> ∀/Data/Set[ /T=$^/E ] }
+                                { eaaArg = Value /a -> ∀/Data/Set[ /T=$_/E ] }
                             )
                             ( EAppArg
-                                { eaaArg = Value /b -> ∀/Data/Set[ /T=$^/E ] }
+                                { eaaArg = Value /b -> ∀/Data/Set[ /T=$_/E ] }
                             ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRuntimeDecls = []
@@ -382,11 +382,11 @@ Prgm
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /s -> ∀/Data/Set[ /T=$^/E ] }
+                                { eaaArg = Value /s -> ∀/Data/Set[ /T=$_/E ] }
                             )
                             ( EAppArg
-                                { eaaArg = Value /items -> ∀/Data/List/ConsList[ /T=$^/E ] }
-                            ) -> ∀/Data/Set[ /T=$^/E ]
+                                { eaaArg = Value /items -> ∀/Data/List/ConsList[ /T=$_/E ] }
+                            ) -> ∀/Data/Set[ /T=$_/E ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -519,8 +519,8 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /map -> ∀/Data/Map
-                                    [ /K=$^/K
-                                    , /V=$^/V
+                                    [ /K=$_/K
+                                    , /V=$_/V
                                     ]
                                 }
                             )
@@ -541,10 +541,10 @@ Prgm
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /a -> ∀/Data/Set[ /T=$^/E ] }
+                                { eaaArg = Value /a -> ∀/Data/Set[ /T=$_/E ] }
                             )
                             ( EAppArg
-                                { eaaArg = Value /b -> ∀/Data/Set[ /T=$^/E ] }
+                                { eaaArg = Value /b -> ∀/Data/Set[ /T=$_/E ] }
                             ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRuntimeDecls = []
@@ -642,11 +642,11 @@ Prgm
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /s -> ∀/Data/Set[ /T=$^/E ] }
+                                { eaaArg = Value /s -> ∀/Data/Set[ /T=$_/E ] }
                             )
                             ( EAppArg
-                                { eaaArg = Value /items -> ∀/Data/List/ConsList[ /T=$^/E ] }
-                            ) -> ∀/Data/Set[ /T=$^/E ]
+                                { eaaArg = Value /items -> ∀/Data/List/ConsList[ /T=$_/E ] }
+                            ) -> ∀/Data/Set[ /T=$_/E ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -745,7 +745,7 @@ Prgm
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /s -> ∀/Data/Set[ /T=$^/E ] }
+                                { eaaArg = Value /s -> ∀/Data/Set[ /T=$_/E ] }
                             )
                             ( EAppArg { eaaArg = Value /item -> $/E } ) -> ∀/Data/Primitive/Boolean
                         ]
@@ -760,7 +760,7 @@ Prgm
                                     ]
                                     ( /map=∀/Data/Map
                                         [ /K=∀/Data/Algebra/Ord
-                                        , /V=$^/V
+                                        , /V=$_/V
                                         ]
                                     ) = /Data/Set/MkSet
                                     ( EAppArg
@@ -795,11 +795,11 @@ Prgm
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /a -> ∀/Data/Set[ /T=$^/E ] }
+                                { eaaArg = Value /a -> ∀/Data/Set[ /T=$_/E ] }
                             )
                             ( EAppArg
-                                { eaaArg = Value /b -> ∀/Data/Set[ /T=$^/E ] }
-                            ) -> ∀/Data/Set[ /T=$^/E ]
+                                { eaaArg = Value /b -> ∀/Data/Set[ /T=$_/E ] }
+                            ) -> ∀/Data/Set[ /T=$_/E ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -866,7 +866,7 @@ Prgm
                                         ]
                                         ( /map=∀/Data/Map
                                             [ /K=∀/Data/Algebra/Ord
-                                            , /V=$^/V
+                                            , /V=$_/V
                                             ]
                                         ) = /Data/Set/MkSet
                                         ( EAppArg
@@ -892,9 +892,9 @@ Prgm
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /s -> ∀/Data/Set[ /T=$^/E ] }
+                                { eaaArg = Value /s -> ∀/Data/Set[ /T=$_/E ] }
                             )
-                            ( EAppArg { eaaArg = Value /item -> $/E } ) -> ∀/Data/Set[ /T=$^/E ]
+                            ( EAppArg { eaaArg = Value /item -> $/E } ) -> ∀/Data/Set[ /T=$_/E ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -907,7 +907,7 @@ Prgm
                                     ]
                                     ( /map=∀/Data/Map
                                         [ /K=∀/Data/Algebra/Ord
-                                        , /V=$^/V
+                                        , /V=$_/V
                                         ]
                                     ) = /Data/Set/MkSet
                                     ( EAppArg
@@ -1000,8 +1000,8 @@ Prgm
                     , /V=$_/V
                     ]
                     ( /map=∀/Data/Map
-                        [ /K=$^/K
-                        , /V=$^/V
+                        [ /K=$_/K
+                        , /V=$_/V
                         ]
                     )
                 ]
@@ -1252,8 +1252,8 @@ Prgm
                                     , /V=TopType
                                     ]
                                     ( /map=∀/Data/Map
-                                        [ /K=$^/K
-                                        , /V=$^/V
+                                        [ /K=$_/K
+                                        , /V=$_/V
                                         ]
                                     ) + /Data/Set/MkSet
                                     [ /K=∀/Data/Algebra/Ord
@@ -1331,8 +1331,8 @@ Prgm
                                         , /V=TopType
                                         ]
                                         ( /map=∀/Data/Map
-                                            [ /K=$^/K
-                                            , /V=$^/V
+                                            [ /K=$_/K
+                                            , /V=$_/V
                                             ]
                                         ) + /Data/Set/MkSet
                                         [ /K=∀/Data/Algebra/Ord
@@ -1451,8 +1451,8 @@ Prgm
                                                 , /V=TopType
                                                 ]
                                                 ( /map=∀/Data/Map
-                                                    [ /K=$^/K
-                                                    , /V=$^/V
+                                                    [ /K=$_/K
+                                                    , /V=$_/V
                                                     ]
                                                 ) + /Data/Set/MkSet
                                                 [ /K=∀/Data/Algebra/Ord
@@ -1530,8 +1530,8 @@ Prgm
                                                     , /V=TopType
                                                     ]
                                                     ( /map=∀/Data/Map
-                                                        [ /K=$^/K
-                                                        , /V=$^/V
+                                                        [ /K=$_/K
+                                                        , /V=$_/V
                                                         ]
                                                     ) + /Data/Set/MkSet
                                                     [ /K=∀/Data/Algebra/Ord
@@ -1619,8 +1619,8 @@ Prgm
                                     , /V=TopType
                                     ]
                                     ( /map=∀/Data/Map
-                                        [ /K=$^/K
-                                        , /V=$^/V
+                                        [ /K=$_/K
+                                        , /V=$_/V
                                         ]
                                     )
                                 , []
@@ -1737,8 +1737,8 @@ Prgm
                                         , /V=TopType
                                         ]
                                         ( /map=∀/Data/Map
-                                            [ /K=$^/K
-                                            , /V=$^/V
+                                            [ /K=$_/K
+                                            , /V=$_/V
                                             ]
                                         )
                                     , []
@@ -1771,8 +1771,8 @@ Prgm
                                     , /V=TopType
                                     ]
                                     ( /map=∀/Data/Map
-                                        [ /K=$^/K
-                                        , /V=$^/V
+                                        [ /K=$_/K
+                                        , /V=$_/V
                                         ]
                                     )
                                 , []
@@ -1889,8 +1889,8 @@ Prgm
                                         , /V=TopType
                                         ]
                                         ( /map=∀/Data/Map
-                                            [ /K=$^/K
-                                            , /V=$^/V
+                                            [ /K=$_/K
+                                            , /V=$_/V
                                             ]
                                         )
                                     , []

@@ -20,8 +20,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Set/intersection[ /E : ∀/Data/Algebra/Ord ]
-                            ( Value /a -> ∀/Data/Set[ /T=$^/E ] )
-                            ( Value /b -> ∀/Data/Set[ /T=$^/E ] ) -> ∀/Data/Set[ /T=$^/E ]
+                            ( Value /a -> ∀/Data/Set[ /T=$_/E ] )
+                            ( Value /b -> ∀/Data/Set[ /T=$_/E ] ) -> ∀/Data/Set[ /T=$_/E ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -44,7 +44,7 @@ Prgm
                                     )
                                 , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                                     ( /head=$/T
-                                    , /tail=∀/Data/List/ConsList[ /T=$^/T ]
+                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
                                     )
                                 , []
                                 ) = /Data/List/filter
@@ -59,8 +59,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Set/union[ /E : ∀/Data/Algebra/Ord ]
-                            ( Value /a -> ∀/Data/Set[ /T=$^/E ] )
-                            ( Value /b -> ∀/Data/Set[ /T=$^/E ] ) -> ∀/Data/Set[ /T=$^/E ]
+                            ( Value /a -> ∀/Data/Set[ /T=$_/E ] )
+                            ( Value /b -> ∀/Data/Set[ /T=$_/E ] ) -> ∀/Data/Set[ /T=$_/E ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -77,7 +77,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Set/add[ /E : ∀/Data/Algebra/Ord ]
-                            ( Value /s -> ∀/Data/Set[ /T=$^/E ] )( Value /item -> $/E ) -> ∀/Data/Set[ /T=$^/E ]
+                            ( Value /s -> ∀/Data/Set[ /T=$_/E ] )( Value /item -> $/E ) -> ∀/Data/Set[ /T=$_/E ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -89,7 +89,7 @@ Prgm
                                 ]
                                 ( /map=∀/Data/Map
                                     [ /K=∀/Data/Algebra/Ord
-                                    , /V=$^/V
+                                    , /V=$_/V
                                     ]
                                 ) = /Data/Set/MkSet
                                 ( Value /map -> ∀/Data/Map
@@ -124,12 +124,12 @@ Prgm
                                             , /V=TopType
                                             ] && PredClass /Data/Map/BinTree
                                             [ /K=∀/Data/Algebra/Ord
-                                            , /V=$^/V
+                                            , /V=$_/V
                                             ]
                                         )
                                     , /left=∀/Data/Map/BinTree
                                         [ /K=∀/Data/Algebra/Ord
-                                        , /V=$^/V
+                                        , /V=$_/V
                                         ]
                                     )
                                 , []
@@ -170,8 +170,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Set/isSubsetOf[ /E : ∀/Data/Algebra/Ord ]
-                            ( Value /a -> ∀/Data/Set[ /T=$^/E ] )
-                            ( Value /b -> ∀/Data/Set[ /T=$^/E ] ) -> ∀/Data/Primitive/Boolean
+                            ( Value /a -> ∀/Data/Set[ /T=$_/E ] )
+                            ( Value /b -> ∀/Data/Set[ /T=$_/E ] ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -189,8 +189,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Set/removeAll[ /E : ∀/Data/Algebra/Ord ]
-                            ( Value /s -> ∀/Data/Set[ /T=$^/E ] )
-                            ( Value /items -> ∀/Data/List/ConsList[ /T=$^/E ] ) -> ∀/Data/Set[ /T=$^/E ]
+                            ( Value /s -> ∀/Data/Set[ /T=$_/E ] )
+                            ( Value /items -> ∀/Data/List/ConsList[ /T=$_/E ] ) -> ∀/Data/Set[ /T=$_/E ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -263,8 +263,8 @@ Prgm
                     { omiDecls =
                         [ /Data/Set/MkSet[ /V : TopType ][ /K : TopType ]
                             ( Value /map -> ∀/Data/Map
-                                [ /K=$^/K
-                                , /V=$^/V
+                                [ /K=$_/K
+                                , /V=$_/V
                                 ]
                             )
                         ]
@@ -278,8 +278,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Set/setEqual[ /E : ∀/Data/Algebra/Ord ]
-                            ( Value /a -> ∀/Data/Set[ /T=$^/E ] )
-                            ( Value /b -> ∀/Data/Set[ /T=$^/E ] ) -> ∀/Data/Primitive/Boolean
+                            ( Value /a -> ∀/Data/Set[ /T=$_/E ] )
+                            ( Value /b -> ∀/Data/Set[ /T=$_/E ] ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -319,8 +319,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Set/addAll[ /E : ∀/Data/Algebra/Ord ]
-                            ( Value /s -> ∀/Data/Set[ /T=$^/E ] )
-                            ( Value /items -> ∀/Data/List/ConsList[ /T=$^/E ] ) -> ∀/Data/Set[ /T=$^/E ]
+                            ( Value /s -> ∀/Data/Set[ /T=$_/E ] )
+                            ( Value /items -> ∀/Data/List/ConsList[ /T=$_/E ] ) -> ∀/Data/Set[ /T=$_/E ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -372,7 +372,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Set/contains[ /E : ∀/Data/Algebra/Ord ]
-                            ( Value /s -> ∀/Data/Set[ /T=$^/E ] )( Value /item -> $/E ) -> ∀/Data/Primitive/Boolean
+                            ( Value /s -> ∀/Data/Set[ /T=$_/E ] )( Value /item -> $/E ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -384,7 +384,7 @@ Prgm
                                 ]
                                 ( /map=∀/Data/Map
                                     [ /K=∀/Data/Algebra/Ord
-                                    , /V=$^/V
+                                    , /V=$_/V
                                     ]
                                 ) = /Data/Set/MkSet
                                 ( Value /map -> ∀/Data/Map
@@ -401,8 +401,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Set/difference[ /E : ∀/Data/Algebra/Ord ]
-                            ( Value /a -> ∀/Data/Set[ /T=$^/E ] )
-                            ( Value /b -> ∀/Data/Set[ /T=$^/E ] ) -> ∀/Data/Set[ /T=$^/E ]
+                            ( Value /a -> ∀/Data/Set[ /T=$_/E ] )
+                            ( Value /b -> ∀/Data/Set[ /T=$_/E ] ) -> ∀/Data/Set[ /T=$_/E ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -440,7 +440,7 @@ Prgm
                                 ]
                                 ( /map=∀/Data/Map
                                     [ /K=∀/Data/Algebra/Ord
-                                    , /V=$^/V
+                                    , /V=$_/V
                                     ]
                                 ) = /Data/Set/MkSet( Value /map -> TVArg /m = Value /m )
                             )( Value /b -> TVArg /other = Value /other )
@@ -452,7 +452,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Set/remove[ /E : ∀/Data/Algebra/Ord ]
-                            ( Value /s -> ∀/Data/Set[ /T=$^/E ] )( Value /item -> $/E ) -> ∀/Data/Set[ /T=$^/E ]
+                            ( Value /s -> ∀/Data/Set[ /T=$_/E ] )( Value /item -> $/E ) -> ∀/Data/Set[ /T=$_/E ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -464,7 +464,7 @@ Prgm
                                 ]
                                 ( /map=∀/Data/Map
                                     [ /K=∀/Data/Algebra/Ord
-                                    , /V=$^/V
+                                    , /V=$_/V
                                     ]
                                 ) = /Data/Set/MkSet
                                 ( Value /map -> ∀/Data/Map
@@ -540,8 +540,8 @@ Prgm
                     , /V=$_/V
                     ]
                     ( /map=∀/Data/Map
-                        [ /K=$^/K
-                        , /V=$^/V
+                        [ /K=$_/K
+                        , /V=$_/V
                         ]
                     )
                 ]
@@ -703,8 +703,8 @@ Prgm
                         , /V=TopType
                         ]
                         ( /map=∀/Data/Map
-                            [ /K=$^/K
-                            , /V=$^/V
+                            [ /K=$_/K
+                            , /V=$_/V
                             ]
                         ) + /Data/Set/MkSet
                         [ /K=∀/Data/Algebra/Ord
@@ -804,8 +804,8 @@ Prgm
                             , /V=TopType
                             ]
                             ( /map=∀/Data/Map
-                                [ /K=$^/K
-                                , /V=$^/V
+                                [ /K=$_/K
+                                , /V=$_/V
                                 ]
                             ) + /Data/Set/MkSet
                             [ /K=∀/Data/Algebra/Ord
@@ -910,8 +910,8 @@ Prgm
                         , /V=TopType
                         ]
                         ( /map=∀/Data/Map
-                            [ /K=$^/K
-                            , /V=$^/V
+                            [ /K=$_/K
+                            , /V=$_/V
                             ]
                         )
                     , []
@@ -989,8 +989,8 @@ Prgm
                         , /V=TopType
                         ]
                         ( /map=∀/Data/Map
-                            [ /K=$^/K
-                            , /V=$^/V
+                            [ /K=$_/K
+                            , /V=$_/V
                             ]
                         )
                     , []

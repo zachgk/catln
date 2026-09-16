@@ -19,8 +19,8 @@ Prgm
                             ( EAppArg { eaaArg = Value /cmp -> ∀/RCmp } )
                             ( EAppArg
                                 { eaaArg = Value /left -> ∀/RTree
-                                    [ /K=$^/MK
-                                    , /V=$^/MV
+                                    [ /K=$_/MK
+                                    , /V=$_/MV
                                     ]
                                 }
                             )
@@ -28,15 +28,15 @@ Prgm
                             ( EAppArg { eaaArg = Value /nv -> $/MV } )
                             ( EAppArg
                                 { eaaArg = Value /right -> ∀/RTree
-                                    [ /K=$^/MK
-                                    , /V=$^/MV
+                                    [ /K=$_/MK
+                                    , /V=$_/MV
                                     ]
                                 }
                             )
                             ( EAppArg { eaaArg = Value /key -> $/MK } )
                             ( EAppArg { eaaArg = Value /value -> $/MV } ) -> ∀/RTree
-                            [ /K=$^/MK
-                            , /V=$^/MV
+                            [ /K=$_/MK
+                            , /V=$_/MV
                             ]
                         ]
                     , omiRuntimeDecls = []
@@ -126,27 +126,27 @@ Prgm
                                     ( Just
                                         ( PredClass /RTree
                                             [ /K=∀/ROrd
-                                            , /V=$^/MV
+                                            , /V=$_/MV
                                             ] && PredClass /RIMap
                                             [ /K=∀/ROrd
-                                            , /V=$^/MV
+                                            , /V=$_/MV
                                             ]
                                         , fromList []
                                         , []
                                         )
                                     , /RNode
                                         [ /K=∀/ROrd
-                                        , /V=$^/MV
+                                        , /V=$_/MV
                                         ]
                                         ( /value=$/V
                                         , /key=∀/ROrd
                                         , /right=∀/RTree
                                             [ /K=∀/ROrd
-                                            , /V=$^/V
+                                            , /V=$_/V
                                             ]
                                         , /left=∀/RTree
                                             [ /K=∀/ROrd
-                                            , /V=$^/V
+                                            , /V=$_/V
                                             ]
                                         )
                                     , []
@@ -164,27 +164,27 @@ Prgm
                                         ( Just
                                             ( PredClass /RTree
                                                 [ /K=∀/ROrd
-                                                , /V=$^/MV
+                                                , /V=$_/MV
                                                 ] && PredClass /RIMap
                                                 [ /K=∀/ROrd
-                                                , /V=$^/MV
+                                                , /V=$_/MV
                                                 ]
                                             , fromList []
                                             , []
                                             )
                                         , /RNode
                                             [ /K=∀/ROrd
-                                            , /V=$^/MV
+                                            , /V=$_/MV
                                             ]
                                             ( /value=$/V
                                             , /key=∀/ROrd
                                             , /right=∀/RTree
                                                 [ /K=∀/ROrd
-                                                , /V=$^/V
+                                                , /V=$_/V
                                                 ]
                                             , /left=∀/RTree
                                                 [ /K=∀/ROrd
-                                                , /V=$^/V
+                                                , /V=$_/V
                                                 ]
                                             )
                                         , []
@@ -251,27 +251,27 @@ Prgm
                                     ( Just
                                         ( PredClass /RTree
                                             [ /K=∀/ROrd
-                                            , /V=$^/MV
+                                            , /V=$_/MV
                                             ] && PredClass /RIMap
                                             [ /K=∀/ROrd
-                                            , /V=$^/MV
+                                            , /V=$_/MV
                                             ]
                                         , fromList []
                                         , []
                                         )
                                     , /RNode
                                         [ /K=∀/ROrd
-                                        , /V=$^/MV
+                                        , /V=$_/MV
                                         ]
                                         ( /value=$/V
                                         , /key=∀/ROrd
                                         , /right=∀/RTree
                                             [ /K=∀/ROrd
-                                            , /V=$^/V
+                                            , /V=$_/V
                                             ]
                                         , /left=∀/RTree
-                                            [ /K=$^/K
-                                            , /V=$^/V
+                                            [ /K=$_/K
+                                            , /V=$_/V
                                             ]
                                         )
                                     , []
@@ -289,27 +289,27 @@ Prgm
                                         ( Just
                                             ( PredClass /RTree
                                                 [ /K=∀/ROrd
-                                                , /V=$^/MV
+                                                , /V=$_/MV
                                                 ] && PredClass /RIMap
                                                 [ /K=∀/ROrd
-                                                , /V=$^/MV
+                                                , /V=$_/MV
                                                 ]
                                             , fromList []
                                             , []
                                             )
                                         , /RNode
                                             [ /K=∀/ROrd
-                                            , /V=$^/MV
+                                            , /V=$_/MV
                                             ]
                                             ( /value=$/V
                                             , /key=∀/ROrd
                                             , /right=∀/RTree
                                                 [ /K=∀/ROrd
-                                                , /V=$^/V
+                                                , /V=$_/V
                                                 ]
                                             , /left=∀/RTree
-                                                [ /K=$^/K
-                                                , /V=$^/V
+                                                [ /K=$_/K
+                                                , /V=$_/V
                                                 ]
                                             )
                                         , []
@@ -376,8 +376,8 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /m -> ∀/RIMap
-                                    [ /K=$^/MK
-                                    , /V=$^/MV
+                                    [ /K=$_/MK
+                                    , /V=$_/MV
                                     ]
                                 }
                             ) -> ∀/Data/Primitive/Boolean
@@ -395,11 +395,11 @@ Prgm
                                     , /key=∀/ROrd
                                     , /right=∀/RTree
                                         [ /K=∀/ROrd
-                                        , /V=$^/V
+                                        , /V=$_/V
                                         ]
                                     , /left=∀/RTree
                                         [ /K=∀/ROrd
-                                        , /V=$^/V
+                                        , /V=$_/V
                                         ]
                                     ) = /RNode
                                     ( EAppArg
@@ -442,8 +442,8 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /m -> ∀/RIMap
-                                    [ /K=$^/MK
-                                    , /V=$^/MV
+                                    [ /K=$_/MK
+                                    , /V=$_/MV
                                     ]
                                 }
                             ) -> /Data/Primitive/Integer
@@ -461,11 +461,11 @@ Prgm
                                     , /key=∀/ROrd
                                     , /right=∀/RTree
                                         [ /K=∀/ROrd
-                                        , /V=$^/V
+                                        , /V=$_/V
                                         ]
                                     , /left=∀/RTree
                                         [ /K=∀/ROrd
-                                        , /V=$^/V
+                                        , /V=$_/V
                                         ]
                                     ) = /RNode
                                     ( EAppArg
@@ -537,8 +537,8 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /left -> ∀/RTree
-                                    [ /K=$^/K
-                                    , /V=$^/V
+                                    [ /K=$_/K
+                                    , /V=$_/V
                                     ]
                                 }
                             )
@@ -546,8 +546,8 @@ Prgm
                             ( EAppArg { eaaArg = Value /value -> $/V } )
                             ( EAppArg
                                 { eaaArg = Value /right -> ∀/RTree
-                                    [ /K=$^/K
-                                    , /V=$^/V
+                                    [ /K=$_/K
+                                    , /V=$_/V
                                     ]
                                 }
                             )
@@ -610,15 +610,15 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /m -> ∀/RIMap
-                                    [ /K=$^/MK
-                                    , /V=$^/MV
+                                    [ /K=$_/MK
+                                    , /V=$_/MV
                                     ]
                                 }
                             )
                             ( EAppArg { eaaArg = Value /key -> $/MK } )
                             ( EAppArg { eaaArg = Value /value -> $/MV } ) -> ∀/RIMap
-                            [ /K=$^/MK
-                            , /V=$^/MV
+                            [ /K=$_/MK
+                            , /V=$_/MV
                             ]
                         ]
                     , omiRuntimeDecls = []
@@ -651,11 +651,11 @@ Prgm
                                     , /key=∀/ROrd
                                     , /right=∀/RTree
                                         [ /K=∀/ROrd
-                                        , /V=$^/V
+                                        , /V=$_/V
                                         ]
                                     , /left=∀/RTree
                                         [ /K=∀/ROrd
-                                        , /V=$^/V
+                                        , /V=$_/V
                                         ]
                                     ) = /RNode
                                     ( EAppArg
@@ -681,7 +681,7 @@ Prgm
                             ( Just
                                 ( PredClass /RTree
                                     [ /K=∀/ROrd
-                                    , /V=$^/MV
+                                    , /V=$_/MV
                                     ]
                                 , fromList []
                                 , []
@@ -703,17 +703,17 @@ Prgm
                                         ]
                                     ) + /RNode
                                     [ /K=∀/ROrd
-                                    , /V=$^/MV
+                                    , /V=$_/MV
                                     ]
                                     ( /value=$/V
                                     , /key=∀/ROrd
                                     , /right=∀/RTree
                                         [ /K=∀/ROrd
-                                        , /V=$^/V
+                                        , /V=$_/V
                                         ]
                                     , /left=∀/RTree
                                         [ /K=∀/ROrd
-                                        , /V=$^/V
+                                        , /V=$_/V
                                         ]
                                     )
                                 )
@@ -753,24 +753,24 @@ Prgm
                                 ( Just
                                     ( PredClass /RTree
                                         [ /K=∀/ROrd
-                                        , /V=$^/MV
+                                        , /V=$_/MV
                                         ]
                                     , fromList []
                                     , []
                                     )
                                 , /RNode
                                     [ /K=∀/ROrd
-                                    , /V=$^/MV
+                                    , /V=$_/MV
                                     ]
                                     ( /value=$/V
                                     , /key=∀/ROrd
                                     , /right=∀/RTree
                                         [ /K=∀/ROrd
-                                        , /V=$^/V
+                                        , /V=$_/V
                                         ]
                                     , /left=∀/RTree
                                         [ /K=∀/ROrd
-                                        , /V=$^/V
+                                        , /V=$_/V
                                         ]
                                     )
                                 , []
@@ -848,12 +848,12 @@ Prgm
                     ( /value=$/V
                     , /key=$/K
                     , /right=∀/RTree
-                        [ /K=$^/K
-                        , /V=$^/V
+                        [ /K=$_/K
+                        , /V=$_/V
                         ]
                     , /left=∀/RTree
-                        [ /K=$^/K
-                        , /V=$^/V
+                        [ /K=$_/K
+                        , /V=$_/V
                         ]
                     )
                 , /RLeaf

@@ -558,7 +558,8 @@ describe('Type', () => {
     expect(render(<Providers><Type data={int} /></Providers>).container.textContent).toBe('$a')
 
     const parent = { tag: 'TypeVar', tvAux: { tag: 'TVVar', tvvName: key('a')}, tvLoc: 'TVParent', tvInner: topJson}
-    expect(render(<Providers><Type data={parent} /></Providers>).container.textContent).toBe('$^a')
+    // A parent reference prints as the same source spelling as an external one.
+    expect(render(<Providers><Type data={parent} /></Providers>).container.textContent).toBe('$_a')
 
     const ext = { tag: 'TypeVar', tvAux: { tag: 'TVVar', tvvName: key('a')}, tvLoc: 'TVExt', tvInner: topJson}
     expect(render(<Providers><Type data={ext} /></Providers>).container.textContent).toBe('$_a')

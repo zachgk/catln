@@ -498,7 +498,9 @@ function TypeVarType(props) {
     ? null : <span>∩{"{"}<Type data={inner}/>{"}"}</span>;
   switch(aux.tag) {
   case "TVVar":
-    return <TypeVar>{loc === "TVExt" ? "$_" : (loc === "TVParent" ? "$^" : "$")}<PartialKey data={aux.tvvName}/>{innerSfx}</TypeVar>;
+    // Both outer locs render as the one source spelling `$_`; the parent/ambient split is decided
+    // at desugar and is not something the user writes.
+    return <TypeVar>{loc === "TVInt" ? "$" : "$_"}<PartialKey data={aux.tvvName}/>{innerSfx}</TypeVar>;
   case "TVArg":
     return <TypeVar>{loc === "TVExt" ? "TVArg(ext) " : (loc === "TVParent" ? "TVArg(parent) " : "TVArg ")}<PartialKey data={aux.tvaName}/>{innerSfx}</TypeVar>;
   case "TVApplied": {

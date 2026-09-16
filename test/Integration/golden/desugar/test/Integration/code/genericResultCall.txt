@@ -20,7 +20,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ foldrG[ /B : TopType ][ /A : TopType ]
-                            ( Value lst -> ∀/Data/List/ConsList[ /T=$^/A ] )
+                            ( Value lst -> ∀/Data/List/ConsList[ /T=$_/A ] )
                             ( fn( Value acc -> $_/B )( Value v -> $_/A ) -> $_/B )( Value init -> $_/B ) -> $_/B
                         ]
                     , omiRuntimeDecls = []

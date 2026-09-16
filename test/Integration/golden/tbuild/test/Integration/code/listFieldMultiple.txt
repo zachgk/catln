@@ -228,7 +228,7 @@ Prgm
                 reach. Written for two of the SAME string as well as two different ones, because the two are not
                 the same check — a spine reads its element type from every cell it holds, and two of one string
                 would pass on a rule that only looked at the first.
-                What it took to hold: the [tail] a [/Data/List/Cons] carries is spelled @∀ConsList[/T=$^/T]@, a
+                What it took to hold: the [tail] a [/Data/List/Cons] carries is spelled @∀ConsList[/T=$_/T]@, a
                 parent reference naming the cons's own [/T] from a nested position. Reading that occurrence as a
                 membership position — the tail's elements are members of [/T] exactly as the [head] is — is what
                 lets the spine take its element type from the whole of itself rather than from its head, so the

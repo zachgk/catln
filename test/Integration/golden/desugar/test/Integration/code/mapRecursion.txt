@@ -7,17 +7,17 @@ Prgm
                     { omiDecls =
                         [ rputStep[ /MV : TopType ][ /MK : ∀/ROrd ]( Value cmp -> ∀/RCmp )
                             ( Value left -> ∀/RTree
-                                [ /K=$^/MK
-                                , /V=$^/MV
+                                [ /K=$_/MK
+                                , /V=$_/MV
                                 ]
                             )( Value nk -> $/MK )( Value nv -> $/MV )
                             ( Value right -> ∀/RTree
-                                [ /K=$^/MK
-                                , /V=$^/MV
+                                [ /K=$_/MK
+                                , /V=$_/MV
                                 ]
                             )( Value key -> $/MK )( Value value -> $/MV ) -> ∀/RTree
-                            [ /K=$^/MK
-                            , /V=$^/MV
+                            [ /K=$_/MK
+                            , /V=$_/MV
                             ]
                         ]
                     , omiRuntimeDecls = []
@@ -67,8 +67,8 @@ Prgm
                     { omiDecls =
                         [ risNode[ /MV : TopType ][ /MK : ∀/ROrd ]
                             ( Value m -> ∀/RIMap
-                                [ /K=$^/MK
-                                , /V=$^/MV
+                                [ /K=$_/MK
+                                , /V=$_/MV
                                 ]
                             ) -> ∀/Data/Primitive/Boolean
                         ]
@@ -87,8 +87,8 @@ Prgm
                     { omiDecls =
                         [ rsize[ /MV : TopType ][ /MK : ∀/ROrd ]
                             ( Value m -> ∀/RIMap
-                                [ /K=$^/MK
-                                , /V=$^/MV
+                                [ /K=$_/MK
+                                , /V=$_/MV
                                 ]
                             ) -> /Data/Primitive/Integer
                         ]
@@ -115,13 +115,13 @@ Prgm
                     { omiDecls =
                         [ RNode[ /V : TopType ][ /K : TopType ]
                             ( Value /left -> ∀/RTree
-                                [ /K=$^/K
-                                , /V=$^/V
+                                [ /K=$_/K
+                                , /V=$_/V
                                 ]
                             )( Value /key -> $/K )( Value /value -> $/V )
                             ( Value /right -> ∀/RTree
-                                [ /K=$^/K
-                                , /V=$^/V
+                                [ /K=$_/K
+                                , /V=$_/V
                                 ]
                             )
                         ]
@@ -172,12 +172,12 @@ Prgm
                     { omiDecls =
                         [ rput[ /MV : TopType ][ /MK : ∀/ROrd ]
                             ( Value m -> ∀/RIMap
-                                [ /K=$^/MK
-                                , /V=$^/MV
+                                [ /K=$_/MK
+                                , /V=$_/MV
                                 ]
                             )( Value key -> $/MK )( Value value -> $/MV ) -> ∀/RIMap
-                            [ /K=$^/MK
-                            , /V=$^/MV
+                            [ /K=$_/MK
+                            , /V=$_/MV
                             ]
                         ]
                     , omiRuntimeDecls = []
@@ -259,12 +259,12 @@ Prgm
                     ( /value=$/V
                     , /key=$/K
                     , /right=∀/RTree
-                        [ /K=$^/K
-                        , /V=$^/V
+                        [ /K=$_/K
+                        , /V=$_/V
                         ]
                     , /left=∀/RTree
-                        [ /K=$^/K
-                        , /V=$^/V
+                        [ /K=$_/K
+                        , /V=$_/V
                         ]
                     )
                 , /RLeaf

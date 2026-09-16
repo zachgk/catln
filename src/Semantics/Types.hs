@@ -824,10 +824,13 @@ showTypeD d (UnionType mTop leafs consts) = "UnionType(" ++ show mTop ++ ", " ++
 -- knowledge-free occurrence prints byte-identically to the historical spelling.
 showTypeD d (TypeVar aux loc inner) = base aux ++ innerSfx
     where
+      -- Both outer locs print as the ONE source spelling, @$_n@: the parent/ambient distinction is
+      -- decided at desugar ('classifyParentVarRefs') from the lexical nesting and is never written
+      -- by the user, so a printed type round-trips through the existing @$_@ lexer rule. Comments
+      -- across this module still write @$^n@ as shorthand for a 'TVParent'-located reference.
       base (TVVar n) = case loc of
-        TVInt    -> "$" ++ show n
-        TVParent -> "$^" ++ show n
-        TVExt    -> "$_" ++ show n
+        TVInt -> "$" ++ show n
+        _     -> "$_" ++ show n
       base (TVArg n) = case loc of
         TVInt    -> "TVArg " ++ show n
         TVParent -> "TVArg(parent) " ++ show n

@@ -7,12 +7,12 @@ Prgm
                     { omiDecls =
                         [ /Data/Map/remove[ /MV : TopType ][ /MK : ∀/Data/Algebra/Ord ]
                             ( Value m -> ∀/Data/Map
-                                [ /K=$^/MK
-                                , /V=$^/MV
+                                [ /K=$_/MK
+                                , /V=$_/MV
                                 ]
                             )( Value key -> $/MK ) -> ∀/Data/Map
-                            [ /K=$^/MK
-                            , /V=$^/MV
+                            [ /K=$_/MK
+                            , /V=$_/MV
                             ]
                         ]
                     , omiRuntimeDecls = []
@@ -54,15 +54,15 @@ Prgm
                     { omiDecls =
                         [ /Data/Map/getStep[ /MV : TopType ][ /MK : ∀/Data/Algebra/Ord ]( Value cmp -> ∀/Data/Algebra/Comparison )( Value key -> $/MK )
                             ( Value left -> ∀/Data/Map/BinTree
-                                [ /K=$^/MK
-                                , /V=$^/MV
+                                [ /K=$_/MK
+                                , /V=$_/MV
                                 ]
                             )( Value value -> $/MV )
                             ( Value right -> ∀/Data/Map/BinTree
-                                [ /K=$^/MK
-                                , /V=$^/MV
+                                [ /K=$_/MK
+                                , /V=$_/MV
                                 ]
-                            ) -> ∀/Data/Maybe[ /T=$^/MV ]
+                            ) -> ∀/Data/Maybe[ /T=$_/MV ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -79,13 +79,13 @@ Prgm
                     { omiDecls =
                         [ /Data/Map/containedIn[ /MV : ∀/Data/Algebra/Eq ][ /MK : ∀/Data/Algebra/Ord ]
                             ( Value a -> ∀/Data/Map/BinTree
-                                [ /K=$^/MK
-                                , /V=$^/MV
+                                [ /K=$_/MK
+                                , /V=$_/MV
                                 ]
                             )
                             ( Value b -> ∀/Data/Map/BinTree
-                                [ /K=$^/MK
-                                , /V=$^/MV
+                                [ /K=$_/MK
+                                , /V=$_/MV
                                 ]
                             ) -> ∀/Data/Primitive/Boolean
                         ]
@@ -108,8 +108,8 @@ Prgm
                     { omiDecls =
                         [ /Data/Map/containsKey[ /MV : TopType ][ /MK : ∀/Data/Algebra/Ord ]
                             ( Value m -> ∀/Data/Map
-                                [ /K=$^/MK
-                                , /V=$^/MV
+                                [ /K=$_/MK
+                                , /V=$_/MV
                                 ]
                             )( Value key -> $/MK ) -> ∀/Data/Primitive/Boolean
                         ]
@@ -127,13 +127,13 @@ Prgm
                     { omiDecls =
                         [ /Data/Map/Node[ /V : TopType ][ /K : TopType ]
                             ( Value /left -> ∀/Data/Map/BinTree
-                                [ /K=$^/K
-                                , /V=$^/V
+                                [ /K=$_/K
+                                , /V=$_/V
                                 ]
                             )( Value /key -> $/K )( Value /value -> $/V )
                             ( Value /right -> ∀/Data/Map/BinTree
-                                [ /K=$^/K
-                                , /V=$^/V
+                                [ /K=$_/K
+                                , /V=$_/V
                                 ]
                             )
                         ]
@@ -167,10 +167,10 @@ Prgm
                     { omiDecls =
                         [ /Data/Map/get[ /MV : TopType ][ /MK : ∀/Data/Algebra/Ord ]
                             ( Value m -> ∀/Data/Map
-                                [ /K=$^/MK
-                                , /V=$^/MV
+                                [ /K=$_/MK
+                                , /V=$_/MV
                                 ]
-                            )( Value key -> $/MK ) -> ∀/Data/Maybe[ /T=$^/MV ]
+                            )( Value key -> $/MK ) -> ∀/Data/Maybe[ /T=$_/MV ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -214,17 +214,17 @@ Prgm
                     { omiDecls =
                         [ /Data/Map/graft[ /MV : TopType ][ /MK : ∀/Data/Algebra/Ord ]
                             ( Value from -> ∀/Data/Map/BinTree
-                                [ /K=$^/MK
-                                , /V=$^/MV
+                                [ /K=$_/MK
+                                , /V=$_/MV
                                 ]
                             )
                             ( Value into -> ∀/Data/Map
-                                [ /K=$^/MK
-                                , /V=$^/MV
+                                [ /K=$_/MK
+                                , /V=$_/MV
                                 ]
                             ) -> ∀/Data/Map
-                            [ /K=$^/MK
-                            , /V=$^/MV
+                            [ /K=$_/MK
+                            , /V=$_/MV
                             ]
                         ]
                     , omiRuntimeDecls = []
@@ -241,8 +241,8 @@ Prgm
                     { omiDecls =
                         [ /Data/Map/foldEntries[ /B : TopType ][ /MV : TopType ][ /MK : ∀/Data/Algebra/Ord ]
                             ( Value m -> ∀/Data/Map
-                                [ /K=$^/MK
-                                , /V=$^/MV
+                                [ /K=$_/MK
+                                , /V=$_/MV
                                 ]
                             )
                             ( fn( Value acc -> $_/B )( Value k -> $/MK )( Value v -> $/MV ) -> $_/B )( Value init -> $_/B ) -> $_/B
@@ -270,12 +270,12 @@ Prgm
                     { omiDecls =
                         [ /Data/Map/insert[ /MV : TopType ][ /MK : ∀/Data/Algebra/Ord ]
                             ( Value m -> ∀/Data/Map
-                                [ /K=$^/MK
-                                , /V=$^/MV
+                                [ /K=$_/MK
+                                , /V=$_/MV
                                 ]
                             )( Value key -> $/MK )( Value value -> $/MV ) -> ∀/Data/Map
-                            [ /K=$^/MK
-                            , /V=$^/MV
+                            [ /K=$_/MK
+                            , /V=$_/MV
                             ]
                         ]
                     , omiRuntimeDecls = []
@@ -301,13 +301,13 @@ Prgm
                     { omiDecls =
                         [ /Data/Map/mapValues[ /MW : TopType ][ /MV : TopType ][ /MK : TopType ]
                             ( Value m -> ∀/Data/Map/BinTree
-                                [ /K=$^/MK
-                                , /V=$^/MV
+                                [ /K=$_/MK
+                                , /V=$_/MV
                                 ]
                             )
                             ( fn( Value v -> $/MV ) -> $/MW ) -> ∀/Data/Map/BinTree
-                            [ /K=$^/MK
-                            , /V=$^/MW
+                            [ /K=$_/MK
+                            , /V=$_/MW
                             ]
                         ]
                     , omiRuntimeDecls = []
@@ -334,13 +334,13 @@ Prgm
                     { omiDecls =
                         [ /Data/Map/mapEqual[ /MV : ∀/Data/Algebra/Eq ][ /MK : ∀/Data/Algebra/Ord ]
                             ( Value a -> ∀/Data/Map/BinTree
-                                [ /K=$^/MK
-                                , /V=$^/MV
+                                [ /K=$_/MK
+                                , /V=$_/MV
                                 ]
                             )
                             ( Value b -> ∀/Data/Map/BinTree
-                                [ /K=$^/MK
-                                , /V=$^/MV
+                                [ /K=$_/MK
+                                , /V=$_/MV
                                 ]
                             ) -> ∀/Data/Primitive/Boolean
                         ]
@@ -458,12 +458,12 @@ Prgm
                     ( /value=$/V
                     , /key=$/K
                     , /right=∀/Data/Map/BinTree
-                        [ /K=$^/K
-                        , /V=$^/V
+                        [ /K=$_/K
+                        , /V=$_/V
                         ]
                     , /left=∀/Data/Map/BinTree
-                        [ /K=$^/K
-                        , /V=$^/V
+                        [ /K=$_/K
+                        , /V=$_/V
                         ]
                     )
                 , /Data/Map/Leaf

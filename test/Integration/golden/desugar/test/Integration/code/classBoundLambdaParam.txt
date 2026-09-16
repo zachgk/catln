@@ -20,7 +20,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ viaGeneric[ /A : ∀/Data/Algebra/Eq ]
-                            ( Value lst -> ∀/Data/List[ /T=$^/A ] )( Value probe -> $_/A ) -> ∀/Data/Primitive/Boolean
+                            ( Value lst -> ∀/Data/List[ /T=$_/A ] )( Value probe -> $_/A ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -38,7 +38,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ headTo[ /B : TopType ][ /A : ∀/Data/Algebra/Eq ]
-                            ( Value lst -> ∀/Data/List[ /T=$^/A ] )
+                            ( Value lst -> ∀/Data/List[ /T=$_/A ] )
                             ( fn( Value w -> $_/A ) -> $_/B )( Value dflt -> $_/B ) -> $_/B
                         ]
                     , omiRuntimeDecls = []

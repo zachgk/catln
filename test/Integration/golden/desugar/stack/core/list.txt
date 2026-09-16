@@ -18,7 +18,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/allBy[ /A : TopType ]
-                            ( Value lst -> ∀/Data/List/ConsList[ /T=$^/A ] )
+                            ( Value lst -> ∀/Data/List/ConsList[ /T=$_/A ] )
                             ( fn( Value v -> $_/A ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRuntimeDecls = []
@@ -112,7 +112,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/anyBy[ /A : TopType ]
-                            ( Value lst -> ∀/Data/List/ConsList[ /T=$^/A ] )
+                            ( Value lst -> ∀/Data/List/ConsList[ /T=$_/A ] )
                             ( fn( Value v -> $_/A ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRuntimeDecls = []
@@ -164,8 +164,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/filter[ /A : TopType ]
-                            ( Value lst -> ∀/Data/List/ConsList[ /T=$^/A ] )
-                            ( fn( Value v -> $_/A ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/List/ConsList[ /T=$^/A ]
+                            ( Value lst -> ∀/Data/List/ConsList[ /T=$_/A ] )
+                            ( fn( Value v -> $_/A ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/List/ConsList[ /T=$_/A ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -183,7 +183,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/foldr[ /B : TopType ][ /A : TopType ]
-                            ( Value lst -> ∀/Data/List[ /T=$^/A ] )
+                            ( Value lst -> ∀/Data/List[ /T=$_/A ] )
                             ( fn( Value acc -> $_/B )( Value v -> $_/A ) -> $_/B )( Value init -> $_/B ) -> $_/B
                         ]
                     , omiRuntimeDecls = []
@@ -205,7 +205,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ sorted./Data/List/insert( Value /t )( Value /h )[ /T : ∀/Data/Algebra/Ord ]( Value x -> $/T )
-                            ( Value lst -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/List/ConsList[ /T=$^/T ]
+                            ( Value lst -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/List/ConsList[ /T=$_/T ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -290,7 +290,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/sorted[ /T : ∀/Data/Algebra/Ord ]
-                            ( Value lst -> ∀/Data/List[ /T=$^/T ] ) -> ∀/Data/List[ /T=$^/T ]
+                            ( Value lst -> ∀/Data/List[ /T=$_/T ] ) -> ∀/Data/List[ /T=$_/T ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -358,7 +358,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/foldl[ /B : TopType ][ /A : TopType ]
-                            ( Value lst -> ∀/Data/List[ /T=$^/A ] )
+                            ( Value lst -> ∀/Data/List[ /T=$_/A ] )
                             ( fn( Value acc -> $_/B )( Value v -> $_/A ) -> $_/B )( Value init -> $_/B ) -> $_/B
                         ]
                     , omiRuntimeDecls = []
@@ -379,7 +379,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/elem[ /A : ∀/Data/Algebra/Eq ]
-                            ( Value lst -> ∀/Data/List/ConsList[ /T=$^/A ] )( Value item -> $/A ) -> ∀/Data/Primitive/Boolean
+                            ( Value lst -> ∀/Data/List/ConsList[ /T=$_/A ] )( Value item -> $/A ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -394,7 +394,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/Cons[ /T : TopType ]( Value /head -> $/T )
-                            ( Value /tail -> ∀/Data/List/ConsList[ /T=$^/T ] )
+                            ( Value /tail -> ∀/Data/List/ConsList[ /T=$_/T ] )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -460,7 +460,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/count[ /A : TopType ]
-                            ( Value lst -> ∀/Data/List/ConsList[ /T=$^/A ] )
+                            ( Value lst -> ∀/Data/List/ConsList[ /T=$_/A ] )
                             ( fn( Value v -> $_/A ) -> ∀/Data/Primitive/Boolean ) -> /Data/Primitive/Integer
                         ]
                     , omiRuntimeDecls = []
@@ -595,7 +595,7 @@ Prgm
             , cgcExtends =
                 [ /Data/List/Cons[ /T=$_/T ]
                     ( /head=$/T
-                    , /tail=∀/Data/List/ConsList[ /T=$^/T ]
+                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
                     )
                 , /Data/List/Nil
                 ]
