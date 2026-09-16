@@ -7166,10 +7166,14 @@ substituteKeep :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
 substituteKeep typeEnv vaenv (TypeVar (TVApplied b overrides) loc i) =
   applyTypeVarOverrides (fmap (substituteKeep typeEnv vaenv) overrides) (substituteKeep typeEnv vaenv (TypeVar b loc i))
 -- A concrete binding resolves the occurrence: @binding ∩ inner@. A kept occurrence keeps its
--- (substituted) inner along with the reference.
+-- (substituted) inner along with the reference. A binding that still carries a hop
+-- ('keepsHop' — @Cons[/T=$^/A]@'s own @/T@) is not flattened into the reference naming it:
+-- the descent unions the partial's own bindings over the env, so its field's @tail=
+-- ∀ConsList[/T=$^/T]@ would become @/T=$^/A@, a reference spelled for the partial's level
+-- moved one level in (282 such relocations compiling map.ct alone).
 substituteKeep typeEnv vaenv (TypeVar v loc@TVOuter i) = case H.lookup v vaenv of
-  Just b | not (isTop b) -> meetInner typeEnv vaenv b i'
-  _                      -> TypeVar v loc i'
+  Just b | not (isTop b), not (keepsHop b) -> meetInner typeEnv vaenv b i'
+  _                                        -> TypeVar v loc i'
   where
     isTop PTopType = True
     isTop _        = False

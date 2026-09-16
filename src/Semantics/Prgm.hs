@@ -627,7 +627,7 @@ linkedDimBinds typeEnv declT content = case declT of
     fromTemplate q =
       [ (TVVar k, dim)
       | (k', TypeVar (TVVar k) _ _) <- H.toList (ptVars q)
-      , Just dim <- [contentDim k']
+      , Just dim <- [contentDim (ptName q) k']
       , dim /= PTopType ]
     -- The join is over the leaves that CARRY the dimension. A bare atom member (@Nil@, @Leaf@)
     -- has no parameters, so it says nothing about the variable rather than saying it is empty:
@@ -635,7 +635,7 @@ linkedDimBinds typeEnv declT content = case declT of
     -- uninhabited — an arm's field built against a @$MV = ∅@ destination has an empty raw call
     -- source, which is vacuously already at the destination, so the call is never rewritten and
     -- flows through as a runtime value. Content made only of atoms binds nothing.
-    contentDim k' = case content of
+    contentDim qName k' = case content of
       UnionType Nothing leafs [] -> do
         dims <- mapM (leafDim k') (splitUnionType leafs)
         case catMaybes dims of
@@ -643,6 +643,14 @@ linkedDimBinds typeEnv declT content = case declT of
           ds -> Just (unionAllTypes typeEnv ds)
       UnionType (Just (PredsOne (PredClass q'), negs, [])) pos []
         | H.null negs, H.null pos -> join (leafDim k' q')
+      -- A conjunction of class predicates (@⊤ | Map[/K=Integer] ∧ BinTree[/K=Integer]@ — a value
+      -- known both by the declaration it was handed to and by the arrow that produced it) is
+      -- read at the conjunct spelling the TEMPLATE's own class; the other conjuncts are the same
+      -- value's other classes, and their dimensions are its dimensions under different names.
+      UnionType (Just (PredsAnd conjs, negs, [])) pos []
+        | H.null negs, H.null pos
+        , [q'] <- [ c | PredsOne (PredClass c) <- conjs, ptName c == qName ]
+        -> join (leafDim k' q')
       _ -> Nothing
     -- @Nothing@: a shape the projection does not read (no binding at all); @Just Nothing@: an atom,
     -- which carries no dimension; @Just (Just d)@: the leaf's dimension.
