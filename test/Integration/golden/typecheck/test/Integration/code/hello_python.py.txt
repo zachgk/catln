@@ -384,7 +384,7 @@ Prgm
                                 )
                             , /Data/List/Cons[ /T=TopType ]
                                 ( /head=$/T
-                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                , /tail=∀/Data/List/ConsList[ /T=$^/T ]
                                 )
                             , []
                             ) = /reversed( Value /lst -> TVArg /lst = Value /lst )

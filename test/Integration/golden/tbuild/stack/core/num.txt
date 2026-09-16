@@ -616,11 +616,13 @@ Prgm
                                     { eaaArg = Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /this -> ∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Integer ] =
+                                    { eaaArg = Value /this ->
+                                        ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] ) =
                                         ( /ord
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) }
-                                            ) ↦ ∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Integer ]
+                                            ) ↦
+                                            ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
                                         )
                                     }
                                 ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
@@ -636,11 +638,13 @@ Prgm
                                     { eaaArg = Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /this -> ∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Float ] =
+                                    { eaaArg = Value /this ->
+                                        ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] ) =
                                         ( /ord
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) }
-                                            ) ↦ ∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Float ]
+                                            ) ↦
+                                            ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
                                         )
                                     }
                                 ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )

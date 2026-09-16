@@ -32,7 +32,7 @@ Prgm
                     , omiDefs =
                         [ /pureList( Value /v -> /Data/Primitive/Integer ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
-                            , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
                             ) = /Data/Monad/pure( Value /v -> TVArg /v = Value /v )
                         ]
                     }

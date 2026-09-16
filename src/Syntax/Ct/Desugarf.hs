@@ -235,12 +235,30 @@ desTypeDef statementEnv@(inheritPath, _) typeExpr extends subStatements = do
 desClassDef :: StatementEnv -> Sealed -> RawClassDef ParseMetaDat -> [RawStatementTree RawExpr ParseMetaDat] -> CRes DesPrgm
 desClassDef statementEnv@(inheritPath, _) sealed (typeExpr, extends) subStatements = do
   let typeExpr' = exprPropagateTypes $ semiDesExpr SDType (Just typeExpr) typeExpr
-  let classGraph = ClassGraph $ graphFromEdges [(CGClass sealed (partialVal (mkName (show path'))) [getExprType typeExpr'] (desObjDocComment subStatements), PClassName (exprPath className), [PRelativeName $ exprPath typeExpr']) | className <- extends ]
+  let classGraph = ClassGraph $ graphFromEdges [(CGClass sealed (partialVal (mkName (show path'))) [memberUnder (exprToPartialType className) (getExprType typeExpr')] (desObjDocComment subStatements), PClassName (exprPath className), [PRelativeName $ exprPath typeExpr']) | className <- extends ]
   subPrgm <- desInheritingSubstatements statementEnv path subStatements
   return (Prgm mempty classGraph [] <> subPrgm)
   where
     path = getPath $ nameStr $ fromJust $ maybeExprPath typeExpr
     path' = relPathAddPrefix inheritPath path
+    -- A member recorded under a class is a template spelled in THAT class's own parameters (see
+    -- 'classDeclaredSubclassOfBounded'; the class expansion instantiates it under the class's
+    -- bindings). The @every@ head is spelled in the MEMBER's parameters, and the extended class
+    -- says how the two relate: @every(MapSet[$K -> $_K, $V -> $_V], isa= [Set[$T -> $_K]])@ binds
+    -- Set's @/T@ to MapSet's @/K@. So each member reference the extension binds a class parameter
+    -- to is renamed to that parameter — the member under @Set@ is @∀MapSet[/K=$_/T, /V=$_/V]@.
+    -- Stored as written (@/K=$_/K@), the reference named a @/K@ of @Set@, which has none: expanding
+    -- @Set[/T=Integer]@ gave @MkSet[/K=⊤, ..]@ and a value known as a @Set[/T=Integer]@ lost its
+    -- element type on meeting the member (core/set.ct's @size(s= add(..))@ annotations).
+    memberUnder PartialType{ptVars=edgeVars} = renameRefs
+      where
+        renames = H.fromList [ (k, t) | (t, TypeVar (TVVar k) _ _) <- H.toList edgeVars, k /= t ]
+        renameRefs (UnionType mtop pos consts) = UnionType (fmap onTop mtop) (joinUnionType $ map onLeaf $ splitUnionType pos) consts
+        renameRefs t = t
+        onTop (preds, negLeafs, ncs) = (mapTypePreds (mapTypePred onLeaf) preds, joinUnionType $ map onLeaf $ splitUnionType negLeafs, ncs)
+        onLeaf p@PartialType{ptVars} = p{ptVars = fmap onRef ptVars}
+        onRef (TypeVar (TVVar k) loc i) | Just t <- H.lookup k renames = TypeVar (TVVar t) loc i
+        onRef v = v
 
 desGlobalAnnot :: PCompAnnot -> CRes DesCompAnnot
 desGlobalAnnot = return . desExpr . semiDesExpr SDOutput Nothing

@@ -314,7 +314,8 @@ Prgm
                                             ( /prgm=/Catln/RawPrgm..
                                             , /reads=
                                                 ( /Data/Maybe/Nothing + /Data/Maybe/Some
-                                                    [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]( /value=$/T )
+                                                    [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
+                                                    ( /value=∀/Data/List[ /T=∀/Catln/ReadPath ] )
                                                 )
                                             , /source=∀/Data/Maybe[ /T=/Data/String.. ]
                                             ) = /Test/oneResult
@@ -394,7 +395,7 @@ Prgm
                                                                 ]..
                                                             ]
                                                         , /obj=
-                                                            ( /Data/Maybe/Nothing + /Data/Maybe/Some[ /T=∀/Catln/RawExpr ]( /value=$/T ) )
+                                                            ( /Data/Maybe/Nothing + /Data/Maybe/Some[ /T=∀/Catln/RawExpr ]( /value=∀/Catln/RawExpr ) )
                                                         , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
                                                         , /doc=∀/Data/Maybe[ /T=/Data/String.. ]
                                                         , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
@@ -1062,7 +1063,7 @@ Prgm
                             ]..
                         ]
                     , /obj=
-                        ( /Data/Maybe/Nothing + /Data/Maybe/Some[ /T=∀/Catln/RawExpr ]( /value=$/T ) )
+                        ( /Data/Maybe/Nothing + /Data/Maybe/Some[ /T=∀/Catln/RawExpr ]( /value=∀/Catln/RawExpr ) )
                     , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
                     , /doc=∀/Data/Maybe[ /T=/Data/String.. ]
                     , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
@@ -1173,7 +1174,8 @@ Prgm
                     ( /prgm=/Catln/RawPrgm..
                     , /reads=
                         ( /Data/Maybe/Nothing + /Data/Maybe/Some
-                            [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]( /value=$/T )
+                            [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
+                            ( /value=∀/Data/List[ /T=∀/Catln/ReadPath ] )
                         )
                     , /source=∀/Data/Maybe[ /T=/Data/String.. ]
                     ) = /Test/oneResult

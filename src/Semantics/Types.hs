@@ -2900,6 +2900,19 @@ detachParentRefs (UnionType mtop pos consts) =
         ptPreds = mapTypePreds (mapTypePred onLeaf) ptPreds
       }
 
+-- | 'detachParentRefs' restricted to the value's OWN level: a bare parent reference, and those in the
+-- 'ptVars' values of the value's top partials (which sit at the same level). References inside a
+-- partial's arguments name that partial and are left alone.
+detachLevelParentRefs :: Type -> Type
+detachLevelParentRefs (TypeVar _ TVParent i) = detachLevelParentRefs i
+detachLevelParentRefs (TypeVar v loc i) = TypeVar v loc (detachLevelParentRefs i)
+detachLevelParentRefs (UnionType mtop pos consts) =
+  UnionType (fmap onTop mtop) (joinUnionType $ map onLeaf $ splitUnionType pos) consts
+  where
+    onTop (preds, negLeafs, ncs) =
+      (mapTypePreds (mapTypePred onLeaf) preds, joinUnionType $ map onLeaf $ splitUnionType negLeafs, ncs)
+    onLeaf p@PartialType{ptVars} = p{ptVars = fmap detachLevelParentRefs ptVars}
+
 -- | Reads a partial's FREE var references as ⊤: a bare partial-local ('TVInt') reference
 -- in one of the partial's values names the partial's own var\/arg scope — and ONLY that
 -- scope; one it does not bind is free — it constrains nothing, so its value set is ⊤.
@@ -2987,9 +3000,15 @@ freeTVIntToTopDeep typeEnv vaenv p = goT
     own = ptVarArg p
     -- The occurrence's inner is occurrence-carried CONTENT, so it takes the binding-content
     -- walk 'goB' (not the template walk) and meets into every resolution of the reference.
-    goT (TypeVar v _ i) = case H.lookup v own of
+    -- A binding that is itself a parent reference (@Node[/V=$^/MV]@) is spelled at the partial's
+    -- level and has no spelling in the template position one level in, so the reference is kept
+    -- as the hop through the partial's own parameter ('keepsHop', as 'substituteTVExtScoped').
+    -- Substituted, the declared @left -> BinTree[$V -> $^V]@ read @∀BinTree[/V=$^/MV]@ — an @/MV@
+    -- of Node — and the slot's tightening stored it.
+    goT (TypeVar v loc i) = case H.lookup v own of
       Just (TypeVar v' _ _) | v' == v -> goB i
-      Just b                          -> meetInner typeEnv vaenv (goB b) (goB i)
+      Just b | keepsHop b             -> TypeVar v loc (goB i)
+             | otherwise              -> meetInner typeEnv vaenv (goB b) (goB i)
       Nothing                         -> goB i
     goT (UnionType mtop pos consts) = UnionType (fmap (goTop goPartialT) mtop) (goLeafs goPartialT pos) consts
     goB (TypeVar v loc i) | H.member v vaenv = TypeVar v loc (goB i)
@@ -3751,7 +3770,18 @@ looseArgModeRejects sub@PartialType{ptArgs=subArgs, ptArgMode=subMode} super@Par
 comparedPartialsEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> TypeVarArgEnv
 comparedPartialsEnv typeEnv vaenv a b = H.union (H.filterWithKey installable merged) vaenv
   where
-    merged = substituteTVExt typeEnv vaenv <$> H.unionWith (intersectTypesEnv typeEnv vaenv) (ptVarArg a) (ptVarArg b)
+    merged = H.mapWithKey installValue $ H.unionWith (intersectTypesEnv typeEnv vaenv) (ptVarArg a) (ptVarArg b)
+    -- Rule one at the binder. The bindings installed here are what the partials' ARGUMENTS are
+    -- compared under, one level in; a var slot's own value sits at the partial's level, so a parent
+    -- reference in it names the scope the partial sits in, which is the incoming env. That scope is
+    -- out of reach inside the arguments, so the reference is replaced by its value from there, and
+    -- one the incoming env does not bind reads as the ⊤ a detached reference denotes. Installed
+    -- verbatim instead, it resolves inside the arguments through whatever binds the NAME there —
+    -- a nested partial's like-named parameter — and a chain of such bindings closes on itself:
+    -- @/MV ↦ $^/V@ beside @/V ↦ $^/MV@ sent 'isSubtypeOfWithEnv' round the pair until the stack
+    -- exhausted the heap.
+    installValue (TVVar _) v = detachLevelParentRefs (substituteTVExtScoped typeEnv vaenv vaenv v)
+    installValue _ v         = substituteTVExt typeEnv vaenv v
     -- A binding whose VALUE still mentions the name being bound is a recursive equation, not a
     -- value, and installing it changes the operands mid-comparison: the slot value here is derived
     -- from @a@ and @b@ themselves, so an occurrence of the same name INSIDE @a@ then resolves to a
@@ -5786,8 +5816,17 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
                                       , not (isTypeVar r), r /= PTopType ]) vaenv
   let argsMap = H.unionWith (subUnion varBoundFor) (fmap (deepVaenv,) aArgs) (fmap (deepVaenv,) bArgs)
   let args' = fmap snd argsMap
-  let bottomKeys = H.keysSet $ H.filter (isBottomType . snd) argsMap
-  let liveArgsMap = H.filter (not . isBottomType . snd) argsMap
+  -- An arg whose met value denotes ∅ cannot be present (see the arg-mode reasoning below). The
+  -- value is judged as the rest of the algebra judges a slot ('partialHasEmptySlot'): RESOLVED
+  -- under its env and compacted, not as written — a value that is empty only once its variable
+  -- resolves (@/aaaaa[/aaaaa=$_/b ∩ {~/aaaaa}]@ under @b ↦ ⊤−~/aaaaa@) otherwise stayed in the
+  -- interval as an inhabited optional arg, and the later compaction collapsed the WHOLE partial
+  -- to ∅ where only the arg-sets containing that arg are empty: @a ∩ b@ lost the argless piece of
+  -- a @??@ powerset that @a − (a − b)@ keeps ('propDifferenceByIntersection').
+  let argDenotesEmpty (env, v) = isBottomType v
+        || (not (isTypeVar v) && v /= PTopType && isBottomType (compactType typeEnv env (substituteTVExt typeEnv env v)))
+  let bottomKeys = H.keysSet $ H.filter argDenotesEmpty argsMap
+  let liveArgsMap = H.filterWithKey (\k _ -> not (S.member k bottomKeys)) argsMap
   -- The args' envs are seeded with the whole incoming vaenv (extended with this partial's met
   -- vars — 'deepVaenv'), so they carry the caller's ambient bindings alongside the meets
   -- discovered here. The discovered bindings must be kept on the
@@ -5847,10 +5886,7 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
   -- A name with no template in the graph is unconstrained — an applied call partial
   -- (@/rput(..)@) legitimately carries its own parameters — so the filter engages only where the
   -- declaration is actually known.
-  let declaredParamNames = S.unions $ map (H.keysSet . ptVars) $ typeGraphData typeEnv name' ++ typeGraphArrowTemplates typeEnv name'
-  let declaresOwnParams = not $ null $ typeGraphData typeEnv name' ++ typeGraphArrowTemplates typeEnv name'
-  let stampableName n = not declaresOwnParams || S.member n declaredParamNames
-  let exactNamesAt k = S.filter stampableName $ S.unions $ map typeTVExtVarRefs $ origValuesAt k
+  let exactNamesAt k = S.unions $ map typeTVExtVarRefs $ origValuesAt k
   let pointerNamesAt k = S.fromList [n | TypeVar (TVVar n) TVInt _ <- origValuesAt k]
   -- A hoisted binding is stored in its canonical 'substituteTVExt' reading (the same one
   -- 'mergeVarEnvVal' gives every merged env binding), so a binding that only passed through
@@ -6833,18 +6869,35 @@ substituteTVExtScoped typeEnv scope vaenv (TypeVar v TVExt i) =
 -- basis loses a bound the reference was tracking (@Node[/K=$^/MK]@ under @[/MK=∀Ord]@ reading
 -- @/K=⊤@). A caller that genuinely reads a value DETACHED from its parent says so by detaching it
 -- first ('detachParentRefs'); it is the caller that knows, not the leaf.
+--
+-- A binding that is ITSELF a parent reference (@RNode[/K=$^/FK]@'s @/K@, the enclosing
+-- declaration's parameter one hop out) is spelled at the scope partial's level; the position being
+-- substituted is one level further in, where that spelling names the scope partial instead. The
+-- reference has no spelling there other than the hop through the scope partial's own parameter,
+-- so the hop is kept ('keepsHop'): @key=$/K@ stays the pointer rather than flattening to
+-- @key=$^/FK@, which the arg meet then read as an @/FK@ of RNode and stamped as an invented
+-- parameter.
 substituteTVExtScoped typeEnv scope vaenv (TypeVar v loc@TVParent i) = case vaenvLookup scope v of
-  PTopType -> TypeVar v loc (substituteTVExtScoped typeEnv scope vaenv i)
-  b        -> meetInner typeEnv vaenv b (substituteTVExtScoped typeEnv scope vaenv i)
+  PTopType -> TypeVar v loc i'
+  b | keepsHop b -> TypeVar v loc i'
+    | otherwise  -> meetInner typeEnv vaenv b i'
+  where i' = substituteTVExtScoped typeEnv scope vaenv i
 -- A 'TVInt' names the partial whose slot it directly is, which is this layer. At the TOP level
 -- there is no such partial: a reference that reaches there was introduced as a fresh sentinel by
 -- an upstream caller ('TypeCheck.Encode' spells an arg link that way), so it falls back to the
 -- ambient environment that registered it.
-substituteTVExtScoped typeEnv scope vaenv (TypeVar v TVInt i) = case vaenvLookup scope v of
+substituteTVExtScoped typeEnv scope vaenv (TypeVar v loc@TVInt i) = case vaenvLookup scope v of
   PTopType -> meetInner typeEnv vaenv (vaenvLookup vaenv v) i'
-  b        -> meetInner typeEnv vaenv b i'
+  b | keepsHop b -> TypeVar v loc i'
+    | otherwise  -> meetInner typeEnv vaenv b i'
   where i' = substituteTVExtScoped typeEnv scope vaenv i
 substituteTVExtScoped _typeEnv _ _ t = t
+
+-- | Whether a scope binding must be read THROUGH the reference that names it rather than
+-- substituted for it: it carries a parent reference at its own level, which has no spelling one
+-- level further in (see 'substituteTVExtScoped').
+keepsHop :: Type -> Bool
+keepsHop b = detachLevelParentRefs b /= b
 
 -- | 'substituteTVExt' over one partial. SCOPES NEST: the partial's own (substituted) bindings
 -- SHADOW the caller's inside its args and predicates — a @$/T@ there resolves to the sibling
@@ -7045,12 +7098,13 @@ typeTVExtVarRefs (UnionType mtop leafs _) = S.unions $ topRefs ++ map partialRef
 substituteExit :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
 substituteExit typeEnv vaenv (TypeVar (TVApplied b overrides) loc i) =
   applyTypeVarOverrides (fmap (substituteExit typeEnv vaenv) overrides) (substituteExit typeEnv vaenv (TypeVar b loc i))
-substituteExit typeEnv vaenv (TypeVar v loc@TVOuter i) = case H.lookup v vaenv of
+substituteExit typeEnv vaenv (TypeVar v loc@TVExt i) = case H.lookup v vaenv of
   Just b  -> meetInner typeEnv vaenv b i'
   Nothing -> case v of
     TVVar _ -> i'  -- the occurrence reads var ∩ inner: erasing the dead var leaves the inner
     _       -> TypeVar v loc i'
   where i' = substituteExit typeEnv vaenv i
+substituteExit typeEnv vaenv (TypeVar v loc@TVParent i) = TypeVar v loc (substituteExit typeEnv vaenv i)
 substituteExit typeEnv vaenv (TypeVar v loc@TVInt i) = TypeVar v loc (substituteExit typeEnv vaenv i)
 substituteExit typeEnv vaenv (UnionType Nothing partials consts) =
   UnionType Nothing (joinUnionType $ map (substitutePartialExit typeEnv vaenv) $ splitUnionType partials) consts
@@ -7082,7 +7136,7 @@ substitutePartialExit typeEnv vaenv partial@PartialType{ptVars, ptArgs, ptPreds}
     -- NOTE: a self-entry (@/T ↦ $/T@\/@/T ↦ $_/T@) is a producer ERROR form (a parameter is
     -- spelled as a constant, another variable, or a parent @$_T@ — never itself); these
     -- clauses are resilience while non-conformant producers remain.
-    exitVar k (TypeVar (TVVar k') loc i) | k' == k = case (vaenvLookup vaenv (TVVar k), loc) of
+    exitVar k (TypeVar (TVVar k') loc i) | k' == k, loc /= TVParent = case (vaenvLookup vaenv (TVVar k), loc) of
       (PTopType, TVInt) -> TypeVar (TVVar k') loc i'
       (PTopType, _)     -> i'  -- var ∩ inner: the dead self-spelling erases to the inner
       (b, _)            -> meetInner typeEnv vaenv b i'
@@ -7469,6 +7523,31 @@ restoreLostTVExtVars = go H.empty
     predsPartials (PredsAnd ps)            = concatMap predsPartials ps
     predsPartials (PredsNot ps)            = predsPartials ps
 
+-- | A slot's value read in the POINT's currency: a var-slot reference to a parameter of the slot's
+-- partial (@∀BinTree[/V=$^/V]@ under @Node[/V=$^/MV]@) is replaced by the partial's binding, which
+-- is a point-level value already; a parameter the partial leaves UNRESOLVED reads as the ⊤ it
+-- denotes — unbound, bound only to its own spelling, or bound to exactly its DECLARED bound
+-- (@get[/MK=∀Ord]@ is the declaration's instantiation, not a resolution: read as a value it turned
+-- the slot's @Map[/K=$^/MK]@ into @Map[/K=∀Ord]@, and the actual's @/K=Integer@ then never narrowed
+-- @/MK@ — the same vacuous-occurrence rule the arg meet's pointer join applies). References inside
+-- a nested partial's arguments name that partial and are untouched; a var-slot VALUE sits at its
+-- partial's level, so the walk continues through it. A bare pointer slot is read through the var by
+-- the slot read itself.
+slotAtPoint :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> Type -> Type
+slotAtPoint typeEnv vaenv PartialType{ptName=supName, ptVars=supVars} = level
+  where
+    declBounds = H.unions [ cleanDeclSelfRefs (ptVars t) | t <- typeGraphData typeEnv supName ++ typeGraphArrowTemplates typeEnv supName ]
+    level (UnionType mtop pos consts) = UnionType (fmap onTop mtop) (joinUnionType $ map onLeaf $ splitUnionType pos) consts
+    level t = t
+    onTop (preds, negLeafs, ncs) = (mapTypePreds (mapTypePred onLeaf) preds, joinUnionType $ map onLeaf $ splitUnionType negLeafs, ncs)
+    onLeaf p@PartialType{ptVars} = p{ptVars = fmap inVarSlot ptVars}
+    inVarSlot (TypeVar (TVVar y) loc i) | loc /= TVExt = case H.lookup y supVars of
+      Just b | b /= PTopType, not (selfNamed b), H.lookup y declBounds /= Just b -> meetInner typeEnv vaenv b i
+      _                                                                          -> level i
+      where selfNamed (TypeVar (TVVar y') _ _) = y' == y
+            selfNamed _                        = False
+    inVarSlot t = level t
+
 updateTypeProp :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> TypeVarAux -> Type -> (TypeVarArgEnv, Type, Type)
 updateTypeProp typeEnv vaenv superType propName subType =
   let (vaenv', superType', subType') = updateTypePropInner typeEnv vaenv superType propName subType
@@ -7561,7 +7640,33 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
       let closedSupEnv PartialType{ptVars=sv} = H.fromList
             [ (TVVar k, b) | (k, b) <- H.toList sv, b /= PTopType, not (typeHasTypeVars b) ]
       let closeFrame sup t = let e = closedSupEnv sup in if H.null e then t else substituteFreeDeep typeEnv e t
-      let intersectedPartials sup@PartialType{ptVars=supVars} sub = case (slotOwnVar sup, slotRead sup) of
+      -- The slot and the point are spelled in DIFFERENT scopes: a reference in the slot names
+      -- @sup@ (@∀BinTree[/V=$^/V]@), a reference on the point names the scope the point sits in
+      -- (@∀Map[/V=$^/MV]@, the enclosing declaration), and the same spelling means a different
+      -- variable on each side. So no single environment can carry a meet of the two as written:
+      -- the point's @$^/MV@ stored into the slot read as an @/MV@ OF @sup@ (which the arg meet then
+      -- stamped as an invented parameter), and the slot's @$^/V@ handed to the point read as an
+      -- @/V@ of the declaration. Each side is therefore read in its own scope first, in the
+      -- POINT's currency: the slot's references to @sup@'s parameters are replaced by @sup@'s
+      -- bindings (point-level values already) or by the ⊤ an unbound parameter denotes
+      -- ('slotAtPoint'); the point's references resolve through the ambient env, an unresolved one
+      -- staying symbolic since it is the point's own spelling. The two readings meet, and each side
+      -- then meets that result with its OWN original, which puts its own variables back
+      -- (@BinTree[/V=⊤] ∩ BinTree[/V=$^/V]@ keeps the link). Only values cross the boundary;
+      -- spellings never do.
+      let concreteUnder = slotAtPoint typeEnv vaenv
+      let concreteAt = substituteTVExtScoped typeEnv vaenv vaenv
+      -- A side's original re-met with the concrete meet, with the meet's fresh discoveries folded
+      -- back in: a bare variable met against a concrete value keeps the variable in the type and
+      -- records the value only in the returned env ('intersectTypesEnv' drops it), so the
+      -- evidence @Map[/K=Integer]@ brought to a slot @Map[/K=$^/MK]@ would otherwise vanish and
+      -- the call's @/MK@ never narrow (map's print examples found no arrow for @get@). Resolving
+      -- the discoveries is the same resolve-meets-back rule 'intersectTypesWithVarEnv' applies.
+      let resolvedMeet orig m =
+            let (env', t) = intersectTypesWithVarEnv typeEnv vaenv orig m
+                fresh = H.difference env' vaenv
+            in if H.null fresh then t else substituteKeep typeEnv fresh t
+      let intersectedPartials sup@PartialType{ptVars=supVars} sub0 = case (slotOwnVar sup, slotRead sup) of
             (Just v, _) -> do
               -- A pointer slot names a MEMBERSHIP position (@this -> $T@): a single
               -- occurrence's evidence must NOT meet-narrow the var — a sibling occurrence may
@@ -7570,33 +7675,33 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
               -- var narrows only where EVERY occurrence is visible at once — the
               -- pointer-occurrence join in 'intersectPartialsBase'. Here the child is just
               -- clamped by the var's current bound and the parent stays untouched.
+              -- The var's value sits at the point's level already.
               let supVar = H.lookupDefault PTopType v supVars
-              let newProp = intersectTypesEnv typeEnv vaenv supVar sub
+              let newProp = intersectTypesEnv typeEnv vaenv supVar sub0
               Just (sup, closeFrame sup newProp)
             (_, Just supProp) -> do
-              -- Same-class predicate intersection ('mergePredsAnd') unifies e.g.
-              -- @Functor[/T=$_A] ∧ Functor[/T=Integer]@ into @Functor[/T=$_A]@ while recording the
-              -- tighter binding @$_A ↦ Integer@ in the returned env. 'intersectTypesEnv' drops that
-              -- env, leaving the wider @Functor[/T=$_A]@ — a result NOT ⊆ either operand, which
-              -- re-widens the sub point a later epoch and breaks monotonicity ('verifySchemeActLowers').
-              -- Resolve the freshly recorded bindings back into the result so it is the true (concrete)
-              -- meet, mirroring 'intersectTypesWithVarEnv's own mixed-union recombination.
-              -- The meet can drop a var the SUB carries but the sup does not (@sub@'s fmap element
-              -- param @/A=$_T@ against a @sup@ slot that only lists @/T@) to Top, especially at a
-              -- deeper recursion level. That widens the sub point's requirement a later epoch and
-              -- breaks monotonicity ('verifySchemeReqLowers'). Restore those lost external
-              -- ('TVExt') vars from the sub, as 'updateTypeProp' already does for the super side.
-              let (ivaenv, newProp0) = restoreLostTVExtVars sub <$> intersectTypesWithVarEnv typeEnv vaenv supProp sub
-                  newBindings = H.difference ivaenv vaenv
-                  newProp | H.null newBindings = newProp0
-                          | otherwise          = substituteKeep typeEnv newBindings newProp0
-              if isBottomType newProp
+              let met = intersectTypesEnv typeEnv vaenv (concreteUnder sup supProp) (concreteAt sub0)
+              -- The evidence the two spellings meeting AS WRITTEN discover for their variables —
+              -- kept only where it is a VALUE (no scope reference: @/MK ↦ Integer@, never
+              -- @/V ↦ $^/MV@) — and folded into each side before its re-meet. The concrete
+              -- readings above erase a slot variable before it can meet the entering value's
+              -- isa-related predicate: @Map[/K=$^/MK]@ read as @Map[/K=⊤]@ never learns
+              -- @/MK ↦ Integer@ from an actual @Map[/K=∀Ord] ∧ BinTree[/K=Integer]@, whose
+              -- same-class predicate only offers the bound, and the call's @/MK@ stayed at
+              -- @∀Ord@ (map's print examples found no arrow for @get@). A value crosses the
+              -- boundary either way; a spelling never does.
+              let evidence = H.filter concreteEvidence $ H.difference (fst (intersectTypesWithVarEnv typeEnv vaenv supProp sub0)) vaenv
+                  concreteEvidence v = not (isTypeVar v) && v /= PTopType && detachParentRefs v == v
+                  withEvidence t | H.null evidence = t
+                                 | otherwise       = substituteKeep typeEnv evidence t
+              if isBottomType met
                 then Nothing
                 -- The stored value sits INSIDE @sup@'s scope (scopes nest through partials), so
                 -- the drop's in-scope set extends with @sup@'s own var names — a slot value
                 -- @∀ConsList[/T=$_/T]@ under @insertStep[/T=∀Ord]@ keeps its link. The value is
                 -- detached from @sup@ here, so the enclosing scope must be supplied explicitly.
-                else Just (typeSetAux propName (dropOutOfScopeTVExt (H.union (joinVarArgEnv supVars H.empty) vaenv) newProp) sup, closeFrame sup newProp)
+                else Just ( typeSetAux propName (dropOutOfScopeTVExt (H.union (joinVarArgEnv supVars H.empty) vaenv) (resolvedMeet (withEvidence supProp) met)) sup
+                          , closeFrame sup (resolvedMeet (withEvidence sub0) met) )
             (_, Nothing) -> Nothing
       let tightenedSuper = compactType typeEnv vaenv $ UnionType Nothing (joinUnionType (map tightenSup supPartialList)) []
       case subType of
@@ -7611,11 +7716,13 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
           -- than the existing binding, a monotonicity violation when this constraint's scope
           -- does not bind @$_T@). Resolve the meet's fresh discoveries back in, mirroring the
           -- prop intersection above ('intersectedPartials').
-          let (ivaenv, tp0) = intersectTypesWithVarEnv typeEnv vaenv (H.lookupDefault PTopType v vaenv) (unionAllTypesWithEnv typeEnv vaenv $ mapMaybe (\sup -> closeFrame sup <$> slotRead sup) supPartialList)
-          let tpBindings = H.difference ivaenv vaenv
-          let tp' = if H.null tpBindings then tp0 else substituteKeep typeEnv tpBindings tp0
+          -- The same two-scope reading as 'intersectedPartials': the slots read concretely under
+          -- their partials, the var's binding concretely under the ambient env, the meet re-met
+          -- with the binding to keep its variables; the slot install re-meets it with each slot.
+          let subBinding = H.lookupDefault PTopType v vaenv
+          let met = intersectTypesEnv typeEnv vaenv (concreteAt subBinding) (unionAllTypesWithEnv typeEnv vaenv $ mapMaybe (\sup -> concreteUnder sup <$> slotRead sup) supPartialList)
+          let tp' = resolvedMeet subBinding met
           let vaenv' = H.insert v tp' vaenv
-          let tp'' = substituteTVExt typeEnv vaenv' tp'
           let updateSuperPartial p@PartialType{ptVars=pVars} = case (rawSlot propName p, typeGetAux propName p) of
                 -- Slot is an internal pointer: keep the pointer and leave the var untouched —
                 -- a single occurrence must not meet-narrow a membership var (see
@@ -7644,14 +7751,14 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
                 -- object's var (@==(l=Integer,...)@ discovering @/T=Integer@ for dispatch).
                 (_, Just PTopType) | TVArg _ <- propName, TypeVar (TVVar vn) TVInt subI2 <- subType ->
                   Just $ typeSetAux propName (TypeVar (TVVar vn) TVInt subI2) p
-                (_, Just supTp) -> Just $ typeSetAux propName (intersectTypesEnv typeEnv vaenv supTp tp'') p
+                (_, Just supTp) -> Just $ typeSetAux propName (resolvedMeet supTp met) p
           let superType' = compactType typeEnv vaenv $ UnionType Nothing (joinUnionType $ mapMaybe updateSuperPartial $ splitUnionType supPartials) []
           (vaenv', superType', subType)
         PTopType -> do
           -- The frame-exit closure applies to the ⊤-sub SEEDING write too — this is the
           -- FIRST projection a fresh sub point receives, and delivering the raw slot here
           -- plants the dangling frame-var spelling every later epoch then preserves.
-          let sub' = case mapMaybe (\sup -> closeFrame sup <$> slotRead sup) supPartialList of
+          let sub' = case mapMaybe (\sup -> concreteUnder sup <$> slotRead sup) supPartialList of
                 []       -> PTopType
                 supProps -> compactType typeEnv vaenv $ unionAllTypesWithEnv typeEnv vaenv supProps
           -- The declaration-bounded reading is not only for the value handed to the sub: the slot

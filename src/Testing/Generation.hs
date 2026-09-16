@@ -71,6 +71,20 @@ concreteishInner _          = True
 -- A 'PredClass' over a data type errors out of 'expandPartial' (@Unknown class \/aaaaa@), and a
 -- class drawn as a bare 'PartialType' is a leaf the compiler never produces. A 'PredRel' is
 -- well-formed over either, which is why 'genCGRel' draws from all nodes.
+-- | A class-graph node's name as a positive LEAF spells it. The desugarer keys some class-graph
+-- nodes by the source's relative name (@Point@, @#noCore@ — 'desMultiTypeDef', 'desClassDecl')
+-- while the object map holds the absolute one (@/Point@, @/#noCore@), and the compiler resolves
+-- every type-position name before the algebra sees it. A relatively-spelled leaf is therefore a
+-- form the algebra never receives, and it judges it as OUTSIDE the universe (the relation route,
+-- 'relNameAdmits', admits only universe names): drawing one produced laws failing on spelling
+-- alone (@#noCore ∩ ¬~#noCore@, @~Point ∩ Point@). A node name a single object resolves is drawn
+-- under that object's spelling; relation and class atoms keep the node's own spelling, which
+-- the compiler does produce.
+leafSpelling :: Prgm Expr () -> TypeName -> TypeName
+leafSpelling (Prgm objMap _ _) n = case relativeNameFilter n (map oaObjPath (flatObjectMap objMap)) of
+  [absolute] -> absolute
+  _          -> n
+
 classNodeNames, dataNodeNames :: ClassGraph -> [TypeName]
 classNodeNames (ClassGraph cg) = [fromPartialName k | (CGClass{}, k, _) <- graphToNodes cg]
 dataNodeNames  (ClassGraph cg) = [fromPartialName k | (n, k, _) <- graphToNodes cg, notClass n]
@@ -442,14 +456,14 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
     genCGOld :: Gen Type
     genCGOld = do
       classNode <- HG.element $ graphToNodes cg
-      return $ typeVal $ fromPartialName $ snd3 classNode
+      return $ typeVal $ leafSpelling prgm $ fromPartialName $ snd3 classNode
 
     genCG :: Gen Type
     genCG = do
       classNode <- HG.element $ graphToNodes cg
       return $ case snd3 classNode of
         cls@PClassName{} -> TopType H.empty (PredsOne $ PredClass $ partialVal $ fromPartialName cls)
-        t                -> typeVal $ fromPartialName t
+        t                -> typeVal $ leafSpelling prgm $ fromPartialName t
 
     genCGRel :: Gen Type
     genCGRel = do
@@ -583,7 +597,7 @@ genPartialType prgm@(Prgm objMap _ _) = do
     -- ('classNodeNames'\/'dataNodeNames'). Drawing class nodes here produced leaves the compiler
     -- never emits, which is why they never reached the laws until 'genType' began drawing from
     -- this generator.
-    dataNodes = dataNodeNames (ClassGraph cg)
+    dataNodes = map (leafSpelling prgm) (dataNodeNames (ClassGraph cg))
     genCG :: Gen PartialType
     genCG = partialVal <$> HG.element dataNodes
 
