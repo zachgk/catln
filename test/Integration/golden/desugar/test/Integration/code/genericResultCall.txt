@@ -21,7 +21,7 @@ Prgm
                     { omiDecls =
                         [ foldrG[ /B : TopType ][ /A : TopType ]
                             ( Value lst -> ∀/Data/List/ConsList[ /T=$_/A ] )
-                            ( fn( Value acc -> $_/B )( Value v -> $_/A ) -> $_/B )( Value init -> $_/B ) -> $_/B
+                            ( fn( Value acc -> $_/B )( Value v -> $_/A ) -> $_/B )( Value init -> $/B ) -> $_/B
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -41,7 +41,7 @@ Prgm
                 ( "/gidG"
                 , ObjectMapItem
                     { omiDecls =
-                        [ gidG[ /B : TopType ]( Value x -> $_/B ) -> $_/B ]
+                        [ gidG[ /B : TopType ]( Value x -> $/B ) -> $_/B ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
@@ -69,7 +69,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ useG[ /B : TopType ]
-                            ( fn( Value a -> $_/B ) -> $_/B )( Value x -> $_/B ) -> $_/B
+                            ( fn( Value a -> $_/B ) -> $_/B )( Value x -> $/B ) -> $_/B
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

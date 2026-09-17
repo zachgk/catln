@@ -30,7 +30,7 @@ Prgm
                                     { eaaArg = Value /val -> /Data/Primitive/Integer =
                                         ( /defInt
                                             ( EAppArg
-                                                { eaaArg = Value /x -> /Just[ /T=/Data/Primitive/Integer ]( /val=/Data/Primitive/Integer ) = /Just
+                                                { eaaArg = Value /x -> /Just( /val=/Data/Primitive/Integer ) = /Just
                                                     ( EAppArg
                                                         { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
                                                     )
@@ -55,7 +55,7 @@ Prgm
                     , omiDefs =
                         [ /defInt
                             ( EAppArg
-                                { eaaArg = Value /x -> /Just[ /T=/Data/Primitive/Integer ]( /val=/Data/Primitive/Integer ) = /Just
+                                { eaaArg = Value /x -> /Just( /val=/Data/Primitive/Integer ) = /Just
                                     ( EAppArg { eaaArg = Value /val -> /Data/Primitive/Integer } )
                                 }
                             ) -> TVArg /val = ( Value /val ↦ TVArg /val )
@@ -74,7 +74,7 @@ Prgm
                                 , eavMeta = TopType
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /val -> $_/T } )
+                            ( EAppArg { eaaArg = Value /val -> $/T } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -92,7 +92,7 @@ Prgm
             { cgcSealed = True
             , cgcPartial = /Maybe[ /T=TopType ]
             , cgcExtends =
-                [ /Just[ /T=TopType ]( /val=$_/T )
+                [ /Just[ /T=TopType ]( /val=$/T )
                 , /Data/Maybe/Nothing
                 ]
             , cgcDoc = Just ""

@@ -291,12 +291,28 @@ classifyParentVarRefs (Prgm (ObjectMap objMap) (ClassGraph classGraph) annots) =
     objMap' = H.map classifyItem objMap
     classifyItem (ObjectMapItem ds rs rfs defs) =
       ObjectMapItem (map classifyOa ds) (map classifyOa rs) (map classifyOa rfs) (map classifyOa defs)
-    classifyOa oa = mapMetaObjArr tagMeta Nothing oa
+    classifyOa oa = retagDirectArgs $ mapMetaObjArr tagMeta Nothing oa
       where
         parentVars = S.fromList [v | v@TVVar{} <- H.keys $ maybe H.empty exprVarArgs (oaObj oa)]
         tagMeta ArrMeta m | not (S.null parentVars) = return $ mWithType (tagParentVarRefs parentVars (getMetaType m)) m
         tagMeta (ExprMeta InputMeta _) m = return $ mWithType (tagParentVarRefs S.empty (getMetaType m)) m
         tagMeta _ m = return m
+        -- The object's own DIRECT argument annotations: a bare outer spelling naming one of the
+        -- object's parameters (@Just[$T](val -> $_T)@) is the object's own parameter, spelled
+        -- 'TVInt' exactly as 'tagParentVarRefs' spells the same slot in the composed input type
+        -- and the class-graph template. Only a PLAIN named argument's annotation is such a slot:
+        -- a function-typed argument's annotation (@fn(v -> $_A) -> $_B@) is that function's
+        -- RESULT, written one level inside it, and a nested argument's own annotation
+        -- (@fn(v -> $_A)@) and the object's result annotation are not direct slots of it either.
+        retagDirectArgs oa'@ObjArr{oaObj=Just obj} | not (S.null parentVars) = oa'{oaObj=Just (onSpine obj)}
+        retagDirectArgs oa' = oa'
+        onSpine (TupleApply m (bm, be) (EAppArg a@ObjArr{oaObj=Just Value{}, oaArr=Just (ae, am)})) =
+          TupleApply m (bm, onSpine be) (EAppArg a{oaArr=Just (ae, retagDirect am)})
+        onSpine (TupleApply m (bm, be) app) = TupleApply m (bm, onSpine be) app
+        onSpine e = e
+        retagDirect m = case getMetaType m of
+          TypeVar v@TVVar{} TVExt i | S.member v parentVars -> mWithType (TypeVar v TVInt i) m
+          _                                                -> m
     classifyNode (CGClass sealed p extends doc) =
       CGClass sealed (tagParentVarRefsPartial S.empty p) (map (tagParentVarRefs S.empty) extends) doc
     classifyNode CGType = CGType

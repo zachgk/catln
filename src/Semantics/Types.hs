@@ -7243,16 +7243,6 @@ resolveTypeSelfRefs = go
     isResolvable PTopType        = False
     isResolvable _               = True
 
--- | Reads a type's NESTED out-of-scope external ('TVExt' 'TVVar') references as ⊤. A stored
--- point type may reference only variables its own constraint scope binds: a graph-presented
--- result carries the source declarations' own parameter spellings (@mmap@'s @$_A@, an
--- instance's @$_T@), which are meaningless names in a foreign scope — each denotes ⊤ (an
--- unbound var constrains nothing), yet keeping the NAME makes denotationally-equal forms
--- compare unequal, so accumulations flip between spellings across epochs ('compactOverlapping'
--- dedups an arbitrary one) and 'verifySchemeActLowers' reports a spurious grow. An IN-scope
--- variable stays symbolic (the mergeVarEnvVal doctrine — its binding may still resolve), as
--- does a bare top-level variable (same doctrine) and every 'TVArg'/'TVInt' reference (arg
--- links and partial-local pointers are structural, not ambient names).
 -- | Names an external reference that resolves to the IMMEDIATELY enclosing partial's variables
 -- as the parent reference it is ('TVParent'), so the ambient scope rules stop reading it as a
 -- foreign name. Everything else keeps the 'TVExt' the parser gave it.
@@ -7289,17 +7279,24 @@ tagParentVarRefs = onType
       }
       where sc' = S.fromList (map TVVar (H.keys ptVars))
     -- A DIRECT slot value names the partial it is a slot of, and that is what 'TVInt' spells
-    -- (@/Cons(/head=$/T)@); there is no separate parent for it to name, so a bare reference here
-    -- keeps the spelling the source gave it. The set is still carried inward, because a partial
-    -- NESTED in the slot does have this one as its parent (@/tail=∀ConsList[/T=$^/T]@). Tagging
-    -- the direct position too spelled the same field 'TVParent' in the class graph and 'TVExt' in
-    -- the object map, whose annotation for it is a bare variable this traversal never reaches.
+    -- (@/Cons(/head=$/T)@); there is no separate parent for it to name. So a bare outer
+    -- spelling in that position naming a parameter the partial binds (@Just[$T](val -> $_T)@,
+    -- the legacy form of @Just[$T](val -> $T)@) is the partial's OWN parameter and is spelled
+    -- 'TVInt' — a partial-local pointer that survives the template being carried into a foreign
+    -- frame, where an ambient @$_/T@ is a foreign name read as ⊤ ('dropOutOfScopeTVExt') and the
+    -- field's link to @/T@ is lost (@defInt(x= Just(val -> Integer))@ typed @/x@ without its
+    -- @/T=Integer@). It is NOT a parent reference: 'TVParent' never consults the ambient env and
+    -- has no parent in view from a bare annotation. 'classifyParentVarRefs' applies the same rule
+    -- to the object's own direct argument annotations, so the declaration has one spelling. The
+    -- set is still carried inward, because a partial NESTED in the slot does have this one as its
+    -- parent (@/tail=∀ConsList[/T=$^/T]@).
     onSlot sc (TypeVar v@(TVVar _) TVExt i) | S.member v sc = TypeVar v TVParent i
     onSlot sc (TypeVar (TVApplied b ovr) loc i) =
       applyTypeVarOverrides (fmap (onSlot sc) ovr) (onSlot sc (TypeVar b loc i))
     onSlot sc (UnionType mtop pos consts) =
       UnionType (fmap (onTop sc) mtop) (joinUnionType $ map (onLeaf sc) $ splitUnionType pos) consts
     onSlot _ t = t
+    onDirect sc (TypeVar v@(TVVar _) TVExt i) | S.member v sc = TypeVar v TVInt (onSlot sc i)
     onDirect sc (TypeVar v loc i) = TypeVar v loc (onSlot sc i)
     onDirect sc t                 = onSlot sc t
 
@@ -7312,6 +7309,25 @@ tagParentVarRefsPartial sc p = case tagParentVarRefs sc (singletonType p) of
   UnionType Nothing leafs [] | [p'] <- splitUnionType leafs -> p'
   _                                                         -> p
 
+-- | Reads a type's NESTED out-of-scope external ('TVExt' 'TVVar') references as ⊤. A stored
+-- point type may reference only variables its own constraint scope binds: a graph-presented
+-- result carries the source declarations' own parameter spellings (@mmap@'s @$_A@, an
+-- instance's @$_T@), which are meaningless names in a foreign scope — each denotes ⊤ (an
+-- unbound var constrains nothing), yet keeping the NAME makes denotationally-equal forms
+-- compare unequal, so accumulations flip between spellings across epochs ('compactOverlapping'
+-- dedups an arbitrary one) and 'verifySchemeActLowers' reports a spurious grow. An IN-scope
+-- variable stays symbolic (the mergeVarEnvVal doctrine — its binding may still resolve), as
+-- does a bare top-level variable (same doctrine) and every 'TVArg'/'TVInt' reference (arg
+-- links and partial-local pointers are structural, not ambient names).
+--
+-- The in-scope set is the ambient env's keys and NOTHING else. A reference to an enclosing
+-- partial's own parameter is spelled 'TVParent' by desugar ('tagParentVarRefs') and is never
+-- read here, so descending into a partial's arg slots does not extend the set with the
+-- partial's parameter names: an ambient spelling that merely SHARES a name with the partial it
+-- sits in is a foreign name like any other. (Extending the set once kept such a spelling alive
+-- by coincidence: @BoolEqv[/T=Boolean] | ∀Ordering[/T=$_/T]@, an open-world conjunct whose
+-- @$_/T@ is @:Ordering.compare@'s receiver parameter, was kept only because the instance also
+-- calls its own parameter @/T@. Deleting the extension changed no core result.)
 dropOutOfScopeTVExt :: TypeVarArgEnv -> Type -> Type
 dropOutOfScopeTVExt vaenv = onType (S.fromList (H.keys vaenv))
   where
@@ -7320,17 +7336,11 @@ dropOutOfScopeTVExt vaenv = onType (S.fromList (H.keys vaenv))
     onType _ t = t -- a bare top-level variable stays symbolic
     onTop sc (preds, negLeafs, ncs) =
       (mapTypePreds (mapTypePred (onLeaf sc)) preds, joinUnionType $ map (onLeaf sc) $ splitUnionType negLeafs, ncs)
-    -- SCOPES NEST through partials: a spelling one level inside a partial's ARG slot references
-    -- that partial's own vars (@insertStep[/T=∀Ord](tail=∀ConsList[/T=$_/T])@'s @$_/T@ names the
-    -- insertStep partial's @/T@), so descending into args extends the in-scope set with the
-    -- partial's var names. The partial's own 'ptVars' VALUES still reference the scope
-    -- CONTAINING the partial and keep the un-extended set.
     onLeaf sc p@PartialType{ptVars, ptArgs, ptPreds} = p{
         ptVars  = fmap (onSlot sc) ptVars,
-        ptArgs  = fmap (onSlot sc') ptArgs,
-        ptPreds = mapTypePreds (mapTypePred (onLeaf sc')) ptPreds
+        ptArgs  = fmap (onSlot sc) ptArgs,
+        ptPreds = mapTypePreds (mapTypePred (onLeaf sc)) ptPreds
       }
-      where sc' = S.union sc (S.fromList (map TVVar (H.keys ptVars)))
     -- Only an AMBIENT reference is read as ⊤ here. A 'TVParent' names a variable of a partial
     -- it sits inside, not of this scope, so it is none of the ambient env's business — erasing it
     -- is what dropped a declaration's own arg-slot pointer (@Box[/T=$_/V]@) on every descent.
@@ -7365,11 +7375,9 @@ hasOutOfScopeTVExt vaenv = onType (S.fromList (H.keys vaenv))
     predPartial (PredExpr p)  = p
     predPartial (PredClass p) = p
     predPartial (PredRel p)   = p
-    -- Mirrors 'dropOutOfScopeTVExt': scopes nest through partials, so arg slots (and preds)
-    -- are scanned with the partial's own var names added to the in-scope set.
+    -- Mirrors 'dropOutOfScopeTVExt': the in-scope set is the ambient env's keys at every depth.
     onLeaf sc PartialType{ptVars, ptArgs, ptPreds} =
-      any (onSlot sc) (H.elems ptVars) || any (onSlot sc') (H.elems ptArgs) || predsHas sc' ptPreds
-      where sc' = S.union sc (S.fromList (map TVVar (H.keys ptVars)))
+      any (onSlot sc) (H.elems ptVars) || any (onSlot sc) (H.elems ptArgs) || predsHas sc ptPreds
     -- Only an AMBIENT reference counts, matching 'dropOutOfScopeTVExt': a 'TVParent' names a
     -- variable of a partial it sits inside, not of this scope, and is never erased.
     onSlot sc (TypeVar v@(TVVar _) TVExt i)   = not (S.member v sc) || onSlot sc i
@@ -7378,7 +7386,7 @@ hasOutOfScopeTVExt vaenv = onType (S.fromList (H.keys vaenv))
     onSlot _ _                              = False
 
 -- | The NESTED external ('TVExt' 'TVVar') references not bound by the ambient env — the vars
--- 'dropOutOfScopeTVExt' would read as the ⊤ they denote. Same scope-nesting traversal as
+-- 'dropOutOfScopeTVExt' would read as the ⊤ they denote. Same traversal as
 -- 'hasOutOfScopeTVExt'. Used to find an object's IMPLICIT type variables (externals introduced
 -- through usage in its annotations rather than an explicit application) so encode can register
 -- them in the object's own constraint scope.
@@ -7394,9 +7402,9 @@ outOfScopeTVExtVars vaenv = onType (S.fromList (H.keys vaenv))
     predPartial (PredExpr p)  = p
     predPartial (PredClass p) = p
     predPartial (PredRel p)   = p
+    -- Same in-scope set at every depth as 'dropOutOfScopeTVExt'.
     onLeaf sc PartialType{ptVars, ptArgs, ptPreds} =
-      S.unions (map (onSlot sc) (H.elems ptVars)) <> S.unions (map (onSlot sc') (H.elems ptArgs)) <> predsVars sc' ptPreds
-      where sc' = S.union sc (S.fromList (map TVVar (H.keys ptVars)))
+      S.unions (map (onSlot sc) (H.elems ptVars)) <> S.unions (map (onSlot sc) (H.elems ptArgs)) <> predsVars sc ptPreds
     -- Only an AMBIENT reference is collected: a 'TVParent' resolves through the partial it sits
     -- inside, so it is not one of the object's implicit variables.
     onSlot sc (TypeVar v@(TVVar _) TVExt i) = (if S.member v sc then S.empty else S.singleton v) <> onSlot sc i

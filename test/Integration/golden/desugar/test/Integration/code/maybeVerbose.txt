@@ -46,7 +46,7 @@ Prgm
                 ( "/Just"
                 , ObjectMapItem
                     { omiDecls =
-                        [ Just[ /T : TopType ]( Value /val -> $_/T ) ]
+                        [ Just[ /T : TopType ]( Value /val -> $/T ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -63,7 +63,7 @@ Prgm
             { cgcSealed = True
             , cgcPartial = /Maybe[ /T=TopType ]
             , cgcExtends =
-                [ /Just[ /T=TopType ]( /val=$_/T )
+                [ /Just[ /T=TopType ]( /val=$/T )
                 , /Data/Maybe/Nothing
                 ]
             , cgcDoc = Just ""

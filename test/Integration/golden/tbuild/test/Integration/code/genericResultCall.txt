@@ -51,7 +51,7 @@ Prgm
                                     ( EAppArg { eaaArg = Value /v -> $_/A } ) -> $_/B
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /init -> $_/B } ) -> $_/B
+                            ( EAppArg { eaaArg = Value /init -> $/B } ) -> $_/B
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -128,7 +128,7 @@ Prgm
                                 , eavMeta = TopType
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /x -> $_/B } ) -> $_/B
+                            ( EAppArg { eaaArg = Value /x -> $/B } ) -> $_/B
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -189,7 +189,7 @@ Prgm
                                     ( EAppArg { eaaArg = Value /a -> $_/B } ) -> $_/B
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /x -> $_/B } ) -> $_/B
+                            ( EAppArg { eaaArg = Value /x -> $/B } ) -> $_/B
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

@@ -40,7 +40,7 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /lst -> ∀/Data/List[ /T=$_/A ] }
                             )
-                            ( EAppArg { eaaArg = Value /probe -> $_/A } ) -> ∀/Data/Primitive/Boolean
+                            ( EAppArg { eaaArg = Value /probe -> $/A } ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -130,7 +130,7 @@ Prgm
                                     ( EAppArg { eaaArg = Value /w -> $_/A } ) -> $_/B
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /dflt -> $_/B } ) -> $_/B
+                            ( EAppArg { eaaArg = Value /dflt -> $/B } ) -> $_/B
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -184,7 +184,7 @@ Prgm
                                 , eavMeta = ∀/Data/Algebra/Eq
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /x -> $_/A } )
+                            ( EAppArg { eaaArg = Value /x -> $/A } )
                             ( EAppArg
                                 { eaaArg = /fn
                                     ( EAppArg { eaaArg = Value /v -> $_/A } ) -> $_/B
