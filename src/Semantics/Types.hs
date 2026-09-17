@@ -3212,12 +3212,15 @@ partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
       | otherwise = not (typesSatDiff typeEnv vaenv satUse hyps tSub tSup)
       where tSub = ambientRef sub (resolveSelfRefs sub (subSlot tSub0))
             tSup = ambientRef sup (resolveSelfRefs sup tSup0)
-    -- A TVInt-spelled name the partial does NOT declare is an enclosing scope's parameter (the
-    -- parser spells a bare @$U@ context-free; the scope axis lives in the descent rule, not the
-    -- leaf rule — see 'substituteTVExt'): read it against the ambient env like a TVExt, so
-    -- @Node2[/K=$/MK]@ under a declaration's @[/MK=∀Ord]@ compares as @/K=∀Ord@ rather than as a
-    -- bindable-per-value local in 'isFlexibleVar'. Names the partial declares (including
-    -- self-entries) keep their partial-local reading.
+    -- A var-slot VALUE sits at the level of the scope CONTAINING the partial, so an internal
+    -- ('TVInt') spelling there that the partial does not declare names that scope's parameter —
+    -- @unwrap[$U](b -> Box[$T -> $U])@'s @/T=$/U@ is @unwrap@'s @/U@ — and the containing
+    -- object's own variables are what the ambient env registers ('TypeCheck.Encode'). Read it
+    -- there: under @[/U=Integer]@ the slot compares as @/T=Integer@ rather than as a
+    -- bindable-per-value local in 'isFlexibleVar'. A name the partial declares (a self-entry
+    -- @/T=$/T@ included) keeps its partial-local reading. This is the settled mirror of
+    -- 'isSubPartialOfWithEnv'.'readOwnScope'; measured 2026-09-16 it does not fire on core or
+    -- on boxUnwrapExplicit.ct (the mirror does), and it stays so the two comparators agree.
     ambientRef p t@(TypeVar tv@(TVVar n) TVInt _)
       | not (H.member n (ptVars p)) = case H.lookup tv vaenv of
           -- Only a CONCRETE binding resolves: a ⊤-bound or var-valued entry leaves the
@@ -3909,11 +3912,13 @@ isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subAr
         step t@(TypeVar tv@(TVVar n) TVInt i) = case H.lookup n (ptVars p) of
           Just v | v /= PTopType, v /= t -> meetInner typeEnv vaenv v i
           Just _                         -> t
-          -- A name the partial does NOT declare is an enclosing scope's parameter, TVInt-spelled
-          -- because the parser spells a bare @$U@ context-free (the scope axis lives in the
-          -- descent rule, not the leaf rule — see 'substituteTVExt'). It denotes the ambient
-          -- binding (@Node2[/K=$/MK]@ under a declaration's @[/MK=∀Ord]@ means @/K=∀Ord@), so it
-          -- must not read as a bindable-per-value local in 'flexibleVar' when the env binds it.
+          -- A var-slot VALUE sits at the level of the scope CONTAINING the partial, so an
+          -- internal spelling the partial does not declare names that scope's parameter
+          -- (@unwrap[$U](b -> Box[$T -> $U])@'s @/T=$/U@ is @unwrap@'s @/U@), and the containing
+          -- object's own variables are what the ambient env registers ('TypeCheck.Encode'). It
+          -- denotes that binding (@/T=Integer@ under @[/U=Integer]@), so it must not read as a
+          -- bindable-per-value local in 'flexibleVar' when the env binds it. Measured
+          -- 2026-09-16: fires only on boxUnwrapExplicit.ct (that @Box@; once resolved).
           -- Only a CONCRETE binding resolves: a ⊤-bound or var-valued entry leaves the reference
           -- flexible (mirroring the TVExt rule's "bound to Top: unconstrained, so still bindable
           -- per value") — resolving ⊤ literally would flip the slot from flexible-var to a
@@ -7760,32 +7765,25 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
           let met = intersectTypesEnv typeEnv vaenv (concreteAtUnder supPartialList subBinding) (unionAllTypesWithEnv typeEnv vaenv $ mapMaybe (\sup -> concreteUnder sup <$> slotRead sup) supPartialList)
           let tp' = resolvedMeet subBinding met
           let vaenv' = H.insert v tp' vaenv
-          let updateSuperPartial p@PartialType{ptVars=pVars} = case (rawSlot propName p, typeGetAux propName p) of
+          let updateSuperPartial p = case (rawSlot propName p, typeGetAux propName p) of
                 -- Slot is an internal pointer: keep the pointer and leave the var untouched —
                 -- a single occurrence must not meet-narrow a membership var (see
                 -- 'intersectedPartials' above; the join in 'intersectPartialsBase' narrows it).
                 (Just (TypeVar (TVVar _) TVInt _), _) -> Just p
                 (_, Nothing) -> Nothing
                 (_, Just supTp) | supTp == subType -> Just $ typeSetAux propName subType p
-                -- An unconstrained ARG slot whose sub is an EXTERNAL var naming one of this
-                -- partial's OWN vars (a declaration's @fn(v -> $_A) -> $_B@ arg under an
-                -- object declaring @$B@): initialize the slot as the partial-internal
-                -- pointer - demoting the external reference into the partial's own scope - so the declared
-                -- relationship lives in the partial itself (as a data definition's
-                -- @/head=$T@ does) and reaches the objects universe for 'BoundedByObjs' to
-                -- deliver. Resolving the generic (unbound) var through the constraint env
-                -- would store Top and sever the link. Arg slots ONLY: a VAR slot named like
-                -- the external var (builtin @ContextIn[$V]@) would become a self-pointer
-                -- (@ptVars[V]=$V@) that diverges on resolution.
-                (_, Just PTopType) | TVArg _ <- propName, TypeVar (TVVar vn) TVOuter subI <- subType, vn `H.member` pVars ->
-                  Just $ typeSetAux propName (TypeVar (TVVar vn) TVInt subI) p
                 -- A partial-internal ('TVInt') sub is BY DEFINITION a reference into this
                 -- object's own var scope — the desugared @(l :: $T == r :: $T)@ arg arrM is
-                -- @$/T@ — so store the pointer unconditionally (the var slot itself may only
-                -- arrive with a later VarApply merge; a pointer without its var reads ⊤ until
-                -- then). Falling through would store the var's resolved BOUND (@∀Eq@) and
-                -- sever the arg↔var linkage that lets call-site argument evidence bind the
-                -- object's var (@==(l=Integer,...)@ discovering @/T=Integer@ for dispatch).
+                -- @$/T@, and so is a declaration's own-parameter argument annotation,
+                -- function-typed ones included (@fmap[..$B](fn(v -> $_A) -> $_B)@'s @/fn@
+                -- slot holds the result @$/B@; 'classifyParentVarRefs' spells it so, which
+                -- retired the re-derivation this site once did by demoting an outer spelling
+                -- naming one of the partial's own vars) — so store the pointer
+                -- unconditionally (the var slot itself may only arrive with a later VarApply
+                -- merge; a pointer without its var reads ⊤ until then). Falling through would
+                -- store the var's resolved BOUND (@∀Eq@) and sever the arg↔var linkage that
+                -- lets call-site argument evidence bind the object's var (@==(l=Integer,...)@
+                -- discovering @/T=Integer@ for dispatch).
                 (_, Just PTopType) | TVArg _ <- propName, TypeVar (TVVar vn) TVInt subI2 <- subType ->
                   Just $ typeSetAux propName (TypeVar (TVVar vn) TVInt subI2) p
                 (_, Just supTp) -> Just $ typeSetAux propName (resolvedMeet supTp met) p

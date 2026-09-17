@@ -300,13 +300,17 @@ classifyParentVarRefs (Prgm (ObjectMap objMap) (ClassGraph classGraph) annots) =
         -- The object's own DIRECT argument annotations: a bare outer spelling naming one of the
         -- object's parameters (@Just[$T](val -> $_T)@) is the object's own parameter, spelled
         -- 'TVInt' exactly as 'tagParentVarRefs' spells the same slot in the composed input type
-        -- and the class-graph template. Only a PLAIN named argument's annotation is such a slot:
-        -- a function-typed argument's annotation (@fn(v -> $_A) -> $_B@) is that function's
-        -- RESULT, written one level inside it, and a nested argument's own annotation
-        -- (@fn(v -> $_A)@) and the object's result annotation are not direct slots of it either.
+        -- and the class-graph template. A function-typed argument's annotation
+        -- (@fmap[$F, $A, $B](fn(v -> $_A) -> $_B)@) is that function's RESULT, but the object's
+        -- @/fn@ slot HOLDS the result type as its value, so the same rule applies to it: the
+        -- typechecker used to re-derive exactly this at the slot install
+        -- ('updateTypePropInner', an outer reference naming the partial's own var arriving at
+        -- an arg slot was stored as the internal pointer). The nested argument's own annotation
+        -- (@v -> $_A@, one level inside @fn@) and the object's result annotation are not
+        -- direct slots of the object and are left to the nesting rule.
         retagDirectArgs oa'@ObjArr{oaObj=Just obj} | not (S.null parentVars) = oa'{oaObj=Just (onSpine obj)}
         retagDirectArgs oa' = oa'
-        onSpine (TupleApply m (bm, be) (EAppArg a@ObjArr{oaObj=Just Value{}, oaArr=Just (ae, am)})) =
+        onSpine (TupleApply m (bm, be) (EAppArg a@ObjArr{oaArr=Just (ae, am)})) =
           TupleApply m (bm, onSpine be) (EAppArg a{oaArr=Just (ae, retagDirect am)})
         onSpine (TupleApply m (bm, be) app) = TupleApply m (bm, onSpine be) app
         onSpine e = e

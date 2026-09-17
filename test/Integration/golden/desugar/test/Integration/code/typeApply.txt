@@ -7,7 +7,7 @@ Prgm
                     { omiDecls =
                         [ applyInc[ /B : TopType ][ /A : TopType ]
                             [ /F : ∀/Data/Functor[ /T=$_/A ] ]( Value lst -> $/F )
-                            ( fn( Value v -> $_/A ) -> $_/B ) -> $/F[ /T=$_/B ]
+                            ( fn( Value v -> $_/A ) -> $/B ) -> $/F[ /T=$_/B ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

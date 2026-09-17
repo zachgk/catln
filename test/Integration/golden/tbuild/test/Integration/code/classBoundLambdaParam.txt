@@ -127,7 +127,7 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /w -> $_/A } ) -> $_/B
+                                    ( EAppArg { eaaArg = Value /w -> $_/A } ) -> $/B
                                 }
                             )
                             ( EAppArg { eaaArg = Value /dflt -> $/B } ) -> $_/B
@@ -187,7 +187,7 @@ Prgm
                             ( EAppArg { eaaArg = Value /x -> $/A } )
                             ( EAppArg
                                 { eaaArg = /fn
-                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> $_/B
+                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> $/B
                                 }
                             ) -> $_/B
                         ]

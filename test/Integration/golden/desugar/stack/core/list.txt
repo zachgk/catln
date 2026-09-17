@@ -184,7 +184,7 @@ Prgm
                     { omiDecls =
                         [ /Data/List/foldr[ /B : TopType ][ /A : TopType ]
                             ( Value lst -> ∀/Data/List[ /T=$_/A ] )
-                            ( fn( Value acc -> $_/B )( Value v -> $_/A ) -> $_/B )( Value init -> $/B ) -> $_/B
+                            ( fn( Value acc -> $_/B )( Value v -> $_/A ) -> $/B )( Value init -> $/B ) -> $_/B
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -359,7 +359,7 @@ Prgm
                     { omiDecls =
                         [ /Data/List/foldl[ /B : TopType ][ /A : TopType ]
                             ( Value lst -> ∀/Data/List[ /T=$_/A ] )
-                            ( fn( Value acc -> $_/B )( Value v -> $_/A ) -> $_/B )( Value init -> $/B ) -> $_/B
+                            ( fn( Value acc -> $_/B )( Value v -> $_/A ) -> $/B )( Value init -> $/B ) -> $_/B
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
