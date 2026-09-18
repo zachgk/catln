@@ -528,6 +528,39 @@ pattern TVOuter <- (isOuterLoc -> True)
 -- splits on 'TVInt' vs 'TVOuter' is total.
 {-# COMPLETE TVInt, TVOuter #-}
 
+-- | An outer reference ('TVOuter'), whatever it refers to (a variable, an argument link, a
+-- re-applied variable): the reference itself. The name matches that ask "does this name
+-- something outside its position" go through here.
+outerVarRef :: Type -> Maybe TypeVarAux
+outerVarRef (TypeVar v TVOuter _) = Just v
+outerVarRef _                     = Nothing
+
+-- | An outer reference to a named type VARIABLE: its name. 'Nothing' for a local reference, an
+-- argument link, a re-applied variable, or a non-variable.
+outerVarName :: Type -> Maybe TypeVarName
+outerVarName t = case outerVarRef t of
+  Just (TVVar n) -> Just n
+  _              -> Nothing
+
+-- | What an env says about an outer variable reference. The leaf readers ('slotFree',
+-- 'isFlexibleVar', 'flexibleVar', 'resolveFlex', 'flexibleSpelling') classify the lookup the
+-- same way and differ only in what they make of each case; each states its rule as a case list
+-- over this type, so the rules can be compared side by side.
+data OuterBinding
+  = Unbound       -- ^ the env does not bind the name
+  | SelfLink Type -- ^ bound to its own spelling (a self-entry), with that occurrence's inner
+  | BoundTop      -- ^ bound to ⊤
+  | BoundVar Type -- ^ bound to another reference (a different variable, an argument link, a re-application)
+  | Bound Type    -- ^ bound to a concrete type
+
+outerBinding :: TypeVarArgEnv -> TypeVarAux -> OuterBinding
+outerBinding vaenv v = case H.lookup v vaenv of
+  Nothing                          -> Unbound
+  Just PTopType                    -> BoundTop
+  Just b@(TypeVar v' _ i) | v' == v   -> SelfLink i
+                          | otherwise -> BoundVar b
+  Just b                           -> Bound b
+
 -- | Where a type variable is defined, read as a Catln type. Three constructors carrying nothing, so
 -- the instance is what it says about itself.
 instance CtType TypeVarLoc where
@@ -2500,10 +2533,12 @@ satGoalUnifyPos vaenv goal@(SatGoal pos neg)
       | otherwise = Nothing
     slotFree PTopType = True
     slotFree (TypeVar _ TVInt _) = True
-    slotFree (TypeVar v TVOuter _) = case H.lookup v vaenv of
-      Nothing               -> True
-      Just (TypeVar v' _ _) -> v' == v
-      _                     -> False
+    slotFree (TypeVar v TVOuter _) = case outerBinding vaenv v of
+      Unbound    -> True
+      SelfLink _ -> True
+      BoundTop   -> False
+      BoundVar _ -> False
+      Bound _    -> False
     slotFree _ = False
 
 mergeSatGoals :: SatGoal -> SatGoal -> SatGoal
@@ -3269,11 +3304,12 @@ partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
     -- copies must agree or the symbolic and materialized provers contradict each other.
     isFlexibleVar (TypeVar _ _ i) | i /= PTopType = False
     isFlexibleVar (TypeVar _ TVInt _) = True -- partial-local var: bindable per value
-    isFlexibleVar (TypeVar v TVOuter _) = case H.lookup v vaenv of
-      Nothing               -> True
-      Just (TypeVar v' _ _) -> v' == v
-      Just PTopType         -> True -- bound to Top: unconstrained, so still bindable per value
-      _                     -> False
+    isFlexibleVar (TypeVar v TVOuter _) = case outerBinding vaenv v of
+      Unbound    -> True
+      SelfLink _ -> True
+      BoundTop   -> True -- bound to Top: unconstrained, so still bindable per value
+      BoundVar _ -> False
+      Bound _    -> False
     isFlexibleVar _ = False
     -- sup's own predicates must also hold of every sub value: sub ∧ ¬preds must be unsatisfiable
     supPredsCover = case ptPreds sup of
@@ -3960,11 +3996,12 @@ isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subAr
     -- A knowledge-free occurrence is bindable per value; a self-link env entry counts flexible
     -- only when its inner is ⊤ — a knowledge-carrying self-link is information.
     flexibleVar (TypeVar _ TVInt _) = True -- partial-local var: bindable per value
-    flexibleVar (TypeVar v TVOuter _) = case H.lookup v vaenv of
-      Nothing                -> True
-      Just (TypeVar v' _ bI) -> v' == v && bI == PTopType
-      Just PTopType          -> True -- bound to Top: unconstrained, so still bindable per value
-      _                      -> False
+    flexibleVar (TypeVar v TVOuter _) = case outerBinding vaenv v of
+      Unbound     -> True
+      SelfLink bI -> bI == PTopType
+      BoundTop    -> True -- bound to Top: unconstrained, so still bindable per value
+      BoundVar _  -> False
+      Bound _     -> False
     flexibleVar _ = False
     result = hasAll subArgs superArgs && predsOk && hasAllVars subVars superVars
     msg = printf "[SUBPARTIAL] %s ⊆ %s = %s" (show sub) (show super) (show result)
@@ -5335,7 +5372,7 @@ tightenDeclBoundedDims typeEnv p
       TypeVar (TVVar k') TVInt _ | k' == k -> do
         content <- H.lookup argName (ptArgs p)
         if typeHasVars content then Nothing else Just [content]
-      TypeVar (TVVar k') TVOuter _ | k' == k -> Nothing
+      _ | outerVarName tmplVal == Just k -> Nothing
       TypeVar{} -> Just []
       _ | Just links <- pureClassLinks k tmplVal ->
             if null links
@@ -5353,9 +5390,8 @@ tightenDeclBoundedDims typeEnv p
     pureClassLinks k (UnionType (Just (PredsOne (PredClass q), negs, ncs)) pos consts)
       | H.null negs, null ncs, H.null pos, null consts, H.null (ptArgs q)
       , all linkOrClosed (H.elems (ptVars q))
-      = Just [k' | (k', TypeVar (TVVar kk) TVOuter _) <- H.toList (ptVars q), kk == k]
-      where linkOrClosed (TypeVar (TVVar _) TVOuter _) = True
-            linkOrClosed t                             = not (typeHasVars t)
+      = Just [k' | (k', v) <- H.toList (ptVars q), outerVarName v == Just k]
+      where linkOrClosed t = isJust (outerVarName t) || not (typeHasVars t)
     pureClassLinks _ _ = Nothing
 
     -- The element dimension a linked occurrence's content pins at the class parameter @innerK@:
@@ -5561,9 +5597,12 @@ foldRecursiveType typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv t@(UnionType
         resolveFlexAt k m = maybe PTopType resolveFlex (H.lookup k m)
         -- A flexible spelling (a partial-local var, or an env-unbound external) denotes ⊤.
         resolveFlex (TypeVar _ TVInt _) = PTopType
-        resolveFlex (TypeVar tv TVOuter _) = case H.lookup tv vaenv of
-          Just b | not (isTypeVar b) -> b
-          _                          -> PTopType
+        resolveFlex (TypeVar tv TVOuter _) = case outerBinding vaenv tv of
+          Unbound    -> PTopType
+          SelfLink _ -> PTopType
+          BoundTop   -> PTopType
+          BoundVar _ -> PTopType
+          Bound b    -> b
         resolveFlex v = v
         fieldRefsClass (UnionType (Just (preds, _, _)) pos _) = predRefsName preds || anyMentions pos
         fieldRefsClass (UnionType Nothing pos _)              = anyMentions pos
@@ -5592,9 +5631,12 @@ foldRecursiveType typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv t@(UnionType
     joinedVars = H.fromListWith (unionTypesWithEnv typeEnv vaenv)
       [ (k, v) | l <- leafList, (k, v) <- H.toList (ptVars l), v /= PTopType, not (flexibleSpelling v) ]
     flexibleSpelling (TypeVar _ TVInt _) = True
-    flexibleSpelling (TypeVar tv TVOuter _) = case H.lookup tv vaenv of
-      Just b | not (isTypeVar b) -> False
-      _                          -> True
+    flexibleSpelling (TypeVar tv TVOuter _) = case outerBinding vaenv tv of
+      Unbound    -> True
+      SelfLink _ -> True
+      BoundTop   -> False
+      BoundVar _ -> True
+      Bound _    -> False
     flexibleSpelling _ = False
     withElem rp = rp{ptVars = H.union joinedVars (ptVars rp)}
 foldRecursiveType _ _ t = t
@@ -7146,8 +7188,7 @@ substituteFreeLeaf typeEnv scope env v loc i free = case H.lookup v env of
 -- by 'intersectPartialsBase' to decide which arg-meet discoveries genuinely belong to the
 -- enclosing partial's scope.
 typeOuterVarRefs :: Type -> S.HashSet TypeVarName
-typeOuterVarRefs (TypeVar (TVVar n) TVOuter _) = S.singleton n
-typeOuterVarRefs (TypeVar _ _ _) = S.empty
+typeOuterVarRefs t@TypeVar{} = maybe S.empty S.singleton (outerVarName t)
 typeOuterVarRefs PTopType = S.empty
 typeOuterVarRefs (UnionType mtop leafs _) = S.unions $ topRefs ++ map partialRefs (splitUnionType leafs)
   where
@@ -7227,7 +7268,7 @@ substitutePartialExit typeEnv vaenv partial@PartialType{ptVars, ptArgs, ptPreds}
 cleanDeclSelfRefs :: TypeVarEnv -> TypeVarEnv
 cleanDeclSelfRefs = H.mapWithKey clean
   where
-    clean k (TypeVar (TVVar k') TVOuter i) | k' == k = i  -- var ∩ inner: the self-spelling cleans to its inner
+    clean k v@(TypeVar _ _ i) | outerVarName v == Just k = i  -- var ∩ inner: the self-spelling cleans to its inner
     clean _ v = v
 
 -- | See 'substitutePartialKeep': substitutes only concrete external bindings, keeping every other
@@ -7615,7 +7656,7 @@ restoreLostTVExtVars = go H.empty
   where
     go :: H.HashMap TypeVarName Type -> Type -> Type -> Type
     go sc old new = case (old, new) of
-      (TypeVar _ TVOuter _, PTopType) -> old
+      (_, PTopType) | isJust (outerVarRef old) -> old
       (TypeVar (TVVar n) TVInt _, PTopType)
         | Just b <- H.lookup n sc, b /= PTopType -> old
       (UnionType otop oldLeafs _, UnionType ntop newLeafs ncs) ->

@@ -518,8 +518,7 @@ typeVarLost :: Type -> Type -> Bool
 -- Replacement by ⊤ drops BOTH the pointer and any occurrence-local inner — still a loss.
 -- For a future producer: replacement of an occurrence BY ITS OWN INNER is deliberate
 -- knowledge-preserving erasure, and already falls to the catch-all False clause below.
-typeVarLost (TypeVar _ TVOuter _) PTopType = True
-typeVarLost (TypeVar _ _ _)     _        = False
+typeVarLost old@TypeVar{} new = isJust (outerVarRef old) && new == PTopType
 typeVarLost old@UnionType{} new@UnionType{} =
   or [ partialVarLost op np
      | (name, [op]) <- H.toList (namedPartials old)
