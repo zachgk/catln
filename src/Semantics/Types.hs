@@ -2536,7 +2536,7 @@ satGoalUnifyPos vaenv goal@(SatGoal pos neg)
     slotFree (TypeVar v TVOuter _) = case outerBinding vaenv v of
       Unbound    -> True
       SelfLink _ -> True
-      BoundTop   -> False
+      BoundTop   -> True -- bound to ⊤: constrains nothing, exactly as an unbound one (measured 20 firings on set/mapRecursion, 2026-09-17)
       BoundVar _ -> False
       Bound _    -> False
     slotFree _ = False
@@ -3305,11 +3305,11 @@ partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
     isFlexibleVar (TypeVar _ _ i) | i /= PTopType = False
     isFlexibleVar (TypeVar _ TVInt _) = True -- partial-local var: bindable per value
     isFlexibleVar (TypeVar v TVOuter _) = case outerBinding vaenv v of
-      Unbound    -> True
-      SelfLink _ -> True
-      BoundTop   -> True -- bound to Top: unconstrained, so still bindable per value
-      BoundVar _ -> False
-      Bound _    -> False
+      Unbound     -> True
+      SelfLink bI -> bI == PTopType -- a knowledge-carrying self-link is information (as 'flexibleVar')
+      BoundTop    -> True -- bound to Top: unconstrained, so still bindable per value
+      BoundVar _  -> False
+      Bound _     -> False
     isFlexibleVar _ = False
     -- sup's own predicates must also hold of every sub value: sub ∧ ¬preds must be unsatisfiable
     supPredsCover = case ptPreds sup of
