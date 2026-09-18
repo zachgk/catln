@@ -7055,15 +7055,14 @@ typeHasInnerKnowledge (UnionType mtop leafs _) = topHas || any partialHas (split
         || any typeHasInnerKnowledge (H.elems ptArgs)
         || predsHas ptPreds
 
--- | Deep-substitute the given FOREIGN frame bindings throughout a type: every external
--- ('TVExt') reference to a bound name is replaced wherever it occurs — nested arg slot
--- types and class-predicate dims included — except under a partial that declares a
--- parameter of the same NAME, which shadows it (the reference then belongs to that
--- partial's own frame). Unlike 'substituteKeep' the walk carries NO own-parameter
--- resolution into the descent: a recursive member template's self-pointer
--- (@tail=∀ConsList[/T=$/T]@) sits under its own @/T@ binder and stays symbolic, so the
--- substitution cannot unroll a recursive spelling. Callers pass CLOSED (var-free)
--- bindings only — see 'typeHasTypeVars'.
+-- | Deep-substitute the given FOREIGN frame bindings throughout a type: every FREE reference
+-- to a bound name is replaced wherever it occurs — nested arg slot types and class-predicate
+-- dims included. Which references are free is the loc's business ('substituteFreeDeepScoped'):
+-- an ambient one always, a parent one never, an internal one unless the partial in view binds
+-- it. Unlike 'substituteKeep' the walk carries NO own-parameter resolution into the descent: a
+-- recursive member template's self-pointer (@tail=∀ConsList[/T=$/T]@) sits under its own
+-- @/T@ binder and stays symbolic, so the substitution cannot unroll a recursive spelling.
+-- Callers pass CLOSED (var-free) bindings only — see 'typeHasTypeVars'.
 --
 -- This is the frame-closure step for content ADOPTED into a stored ACTUAL from a
 -- requirement spelled in another frame (the discovered-binding resolve in
@@ -7073,33 +7072,53 @@ typeHasInnerKnowledge (UnionType mtop leafs _) = topHas || any partialHas (split
 -- constraint the frame is gone, and Decode ships a typed meta no value can satisfy
 -- ("no arrows from Node(..)" at TreeBuild).
 substituteFreeDeep :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
-substituteFreeDeep _typeEnv env t | H.null env = t
-substituteFreeDeep typeEnv env (TypeVar (TVApplied b overrides) loc i) =
-  applyTypeVarOverrides (fmap (substituteFreeDeep typeEnv env) overrides) (substituteFreeDeep typeEnv env (TypeVar b loc i))
--- Both locs substitute: the env arrives pre-SHADOWED (each partial descent removed the
--- names its ptVars bind), so a reference that still finds its name in the env is FREE at
--- this position — a TVInt self-reference (@/head=$T@ under a partial declaring @/T@) was
--- shadowed out on descent and stays a pointer, while an encoder-spelled declaration-frame
--- TVInt (@∀BinTree[/K=$/MK]@ under mapEqual's frame) is exactly the dangling reference
--- this closure exists to materialize.
-substituteFreeDeep typeEnv env (TypeVar v loc i) = case H.lookup v env of
-  Just b | b /= PTopType -> meetInner typeEnv env b i'
-  _                      -> TypeVar v loc i'
-  where i' = substituteFreeDeep typeEnv env i
-substituteFreeDeep typeEnv env (UnionType mtop leafs consts) =
-  UnionType (fmap goTop mtop) (joinUnionType $ map (goPartial env) $ splitUnionType leafs) consts
+substituteFreeDeep typeEnv = substituteFreeDeepScoped typeEnv H.empty
+
+-- | 'substituteFreeDeep' with the SCOPE in view beside the free bindings. The scope is the
+-- partial the position sits one level inside (its own parameter names; the values are not
+-- consulted here) and it decides which references are the partial's own rather than free:
+--
+--   * an ambient reference ('TVExt') is never a partial's own — it substitutes wherever the
+--     free bindings name it (the old walk shadowed it under a like-named parameter, the
+--     capture the loc split ends);
+--   * a parent reference ('TVParent') names the scope partial's parameter, so it is never free
+--     and always stays a pointer (the old walk substituted it by name when no partial in the
+--     ACCUMULATED chain bound the name);
+--   * an internal reference ('TVInt') is the partial's own where the scope binds it (@/head=$T@
+--     under a partial declaring @/T@) and free otherwise — an encoder-spelled declaration-frame
+--     pointer (@∀BinTree[/K=$/MK]@ under mapEqual's frame) is exactly what this closure exists
+--     to materialize.
+--
+-- The top-level scope is EMPTY: a reference not bound by any partial in view is free by
+-- definition, so unlike the keep walker this one does not seed the scope with the ambient env.
+-- Descent REPLACES the scope with the partial's own names (its 'ptVars' values sit at the
+-- containing level and keep the scope they arrived with).
+substituteFreeDeepScoped :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypeVarArgEnv -> Type -> Type
+substituteFreeDeepScoped _typeEnv _ env t | H.null env = t
+substituteFreeDeepScoped typeEnv scope env (TypeVar (TVApplied b overrides) loc i) =
+  applyTypeVarOverrides (fmap (substituteFreeDeepScoped typeEnv scope env) overrides) (substituteFreeDeepScoped typeEnv scope env (TypeVar b loc i))
+substituteFreeDeepScoped typeEnv scope env (TypeVar v loc@TVExt i) = substituteFreeLeaf typeEnv scope env v loc i True
+substituteFreeDeepScoped typeEnv scope env (TypeVar v loc@TVParent i) = substituteFreeLeaf typeEnv scope env v loc i False
+substituteFreeDeepScoped typeEnv scope env (TypeVar v loc@TVInt i) = substituteFreeLeaf typeEnv scope env v loc i (not (H.member v scope))
+substituteFreeDeepScoped typeEnv scope env (UnionType mtop leafs consts) =
+  UnionType (fmap goTop mtop) (joinUnionType $ map (goPartial scope) $ splitUnionType leafs) consts
   where
     goTop (preds, negLeafs, ncs) =
-      (mapTypePreds (mapTypePred (goPartial env)) preds, joinUnionType $ map (goPartial env) $ splitUnionType negLeafs, ncs)
-    goPartial e p@PartialType{ptVars, ptArgs, ptPreds} = p{
-        ptVars  = fmap (substituteFreeDeep typeEnv e) ptVars,
-        ptArgs  = fmap (substituteFreeDeep typeEnv (shadow e)) ptArgs,
-        ptPreds = mapTypePreds (mapTypePred (goPartial (shadow e))) ptPreds
+      (mapTypePreds (mapTypePred (goPartial scope)) preds, joinUnionType $ map (goPartial scope) $ splitUnionType negLeafs, ncs)
+    goPartial sc p@PartialType{ptVars, ptArgs, ptPreds} = p{
+        ptVars  = fmap (substituteFreeDeepScoped typeEnv sc env) ptVars,
+        ptArgs  = fmap (substituteFreeDeepScoped typeEnv innerScope env) ptArgs,
+        ptPreds = mapTypePreds (mapTypePred (goPartial innerScope)) ptPreds
         }
-      where
-        shadow = H.filterWithKey (\k _ -> case k of
-          TVVar n -> not (n `H.member` ptVars)
-          _       -> True)
+      where innerScope = joinVarArgEnv ptVars H.empty
+
+-- | The leaf rule of 'substituteFreeDeepScoped': a FREE reference the bindings name is
+-- replaced (@binding ∩ inner@); any other keeps its (substituted) inner along with the reference.
+substituteFreeLeaf :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypeVarArgEnv -> TypeVarAux -> TypeVarLoc -> Type -> Bool -> Type
+substituteFreeLeaf typeEnv scope env v loc i free = case H.lookup v env of
+  Just b | free, b /= PTopType -> meetInner typeEnv env b i'
+  _                            -> TypeVar v loc i'
+  where i' = substituteFreeDeepScoped typeEnv scope env i
 
 -- | The names of all external ('TVExt') type-VARIABLE references occurring anywhere in a type —
 -- var\/arg slot values of every positive and negative leaf, and predicate partials. Used by
@@ -7257,36 +7276,43 @@ substituteKeepLeaf typeEnv scope vaenv v loc i mb = case mb of
 -- declaration's requirement check. Leaves with no @/T@ param (raw applied forms kept for eval
 -- dispatch) resolve nothing.
 resolveTypeSelfRefs :: TypeVarArgEnv -> Type -> Type
-resolveTypeSelfRefs = go
+-- Two layers, as 'substituteKeepScoped': an ambient reference reads the env, a parent reference
+-- reads the SCOPE (the partial the position sits one level inside, its own resolved slots), and
+-- descent replaces the scope. The top is a fragment whose parent is the object, so the scope
+-- seeds with the env (the keep walker's rule; the one caller, 'arrowConstrainUbs', passes ∅).
+-- The old walk unioned the resolved own slots over the env, preferring a resolvable own slot:
+-- an ambient spelling was captured by a like-named own slot, and a parent reference whose own
+-- slot was unresolved fell through to the env by name.
+resolveTypeSelfRefs vaenv = go vaenv vaenv
   where
-    go env (UnionType mtop pos consts) =
-      UnionType (fmap (goTop env) mtop) (joinUnionType $ map (goLeaf env) $ splitUnionType pos) consts
-    go env (TypeVar (TVApplied b overrides) loc i) =
-      applyTypeVarOverrides (fmap (go env) overrides) (go env (TypeVar b loc i))
-    -- Only a CONCRETE binding resolves a reference ('isResolvable'). The inner env keeps a
-    -- partial's own var slot when the ambient env does not bind the name, and that slot may
-    -- itself be a reference (@RNode[/V=$^/MV]@, the arm's result read under its declaration):
-    -- substituted into the field it would spell @right=∀RTree[/V=$^/MV]@, a reference written
-    -- for RNode's level moved one level in, where it names a @/MV@ RNode does not declare. The
-    -- field keeps its own spelling (@$^/V@) and reaches the binding through RNode's slot.
-    -- Traced on build/scratch/reloc/expand.ct: 'arrowConstrainUbs' calls this with an EMPTY
-    -- env, so the own slot is the only entry.
-    go env t@(TypeVar v TVOuter _) = case H.lookup v env of
+    go scope env (UnionType mtop pos consts) =
+      UnionType (fmap (goTop scope env) mtop) (joinUnionType $ map (goLeaf scope env) $ splitUnionType pos) consts
+    go scope env (TypeVar (TVApplied b overrides) loc i) =
+      applyTypeVarOverrides (fmap (go scope env) overrides) (go scope env (TypeVar b loc i))
+    -- Only a CONCRETE binding resolves a reference ('isResolvable'). A partial's own var slot
+    -- may itself be a reference (@RNode[/V=$^/MV]@, the arm's result read under its
+    -- declaration): substituted into the field it would spell @right=∀RTree[/V=$^/MV]@, a
+    -- reference written for RNode's level moved one level in, where it names a @/MV@ RNode
+    -- does not declare. The field keeps its own spelling (@$^/V@) and reaches the binding
+    -- through RNode's slot. Traced on build/scratch/reloc/expand.ct.
+    go _     env t@(TypeVar v TVExt _) = resolvedIn env v t
+    go scope _   t@(TypeVar v TVParent _) = resolvedIn scope v t
+    go _     _   t                        = t
+    resolvedIn layer v t = case H.lookup v layer of
       Just b | isResolvable b -> b
       _                       -> t
-    go _   t                   = t
-    goTop env (preds, negLeafs, ncs) =
-      (mapTypePreds (mapTypePred (goLeaf env)) preds, joinUnionType $ map (goLeaf env) $ splitUnionType negLeafs, ncs)
-    goLeaf env p@PartialType{ptVars, ptArgs, ptPreds} = p{
-        ptVars  = fmap (go env) ptVars,
-        ptArgs  = fmap (go innerEnv) ptArgs,
-        ptPreds = mapTypePreds (mapTypePred (goLeaf innerEnv)) ptPreds
+    goTop scope env (preds, negLeafs, ncs) =
+      (mapTypePreds (mapTypePred (goLeaf scope env)) preds, joinUnionType $ map (goLeaf scope env) $ splitUnionType negLeafs, ncs)
+    goLeaf scope env p@PartialType{ptVars, ptArgs, ptPreds} = p{
+        ptVars  = ptVars',
+        ptArgs  = fmap (go innerScope env) ptArgs,
+        ptPreds = mapTypePreds (mapTypePred (goLeaf innerScope env)) ptPreds
       }
       where
-        -- Field vars resolve against the ambient env EXTENDED with this partial's own (resolved)
-        -- @ptVars@ — a concrete own slot wins over ambient, a still-symbolic own slot defers to it.
-        ownVars  = joinVarArgEnv (fmap (go env) ptVars) H.empty
-        innerEnv = H.unionWith (\o a -> if isResolvable o then o else a) ownVars env
+        -- The partial's own values sit at ITS level and keep the scope they arrived with; its
+        -- args and predicates are one level in, where its (resolved) own slots are the scope.
+        ptVars'    = fmap (go scope env) ptVars
+        innerScope = joinVarArgEnv ptVars' H.empty
     isResolvable (TypeVar _ _ _) = False
     isResolvable PTopType        = False
     isResolvable _               = True
