@@ -500,34 +500,22 @@ namedPartials TypeVar{} = H.empty
 -- This complements 'verifySchemeActLowers', which cannot see either case: in
 -- a subtype test a free 'TypeVar' behaves like Top, so the widening looks like a legal narrowing.
 --
--- An INTERNAL 'TypeVar' ('TVInt') is currently ignored, on the reasoning that it resolves through
--- its own partial's @ptVars@ so a @/value=$V@ showing as Top is equivalent. That reasoning holds
--- ONLY when the partial binds @V@ to Top. When it binds @V@ to something below Top the replacement
--- is a REAL loss, of exactly the same kind as the 'TVExt' case: it discards both the value the
--- binding carries here and the link tying this occurrence to the variable's other occurrences.
+-- An INTERNAL 'TypeVar' ('TVInt') is the partial's own pointer and resolves through its own
+-- @ptVars@, so a @/value=$V@ showing as ⊤ is the same reading (the binding-aware variant once
+-- kept for set.ct's @allIn@ measured zero firings on 2026-09-18 and is gone — see
+-- 'Semantics.Types.restoreLostTVExtVars').
 --
--- TODO(#42): make the 'TVInt' case binding-aware instead of blanket-excluded — a 'TVInt' loss
--- counts when the enclosing partial binds the name below Top. Measured live: core/set.ct's
--- @allIn[/E=∀Ord](items -> ConsList[$T -> $E], ..)@ has a requirement projection replace
--- @ConsList[/T=$/E]@ by @ConsList[/T=⊤]@; this guard is the one designed to refuse that write
--- ('updateSchemeProp'), and the blanket exclusion is why it does not fire.
--- Only partials matched unambiguously by name (a single partial of that name on each side) are
--- compared, and only argument/variable keys present on both sides, so it never false-positives on a
--- union whose set of options legitimately changed.
+-- The detection IS 'restoreLostTVExtVars': a write loses a link exactly when restoring the
+-- old type's outer references into the new one changes it. One walk answers both sides of
+-- 'updateSchemeProp' — the actual side keeps the restored slots, the requirement sides refuse
+-- the write — with one rule: partials matched unambiguously by name (a single partial of that
+-- name on each side, positive leaves, predicate partials and excluded leaves alike), and only
+-- argument/variable keys present on both sides, so a union whose set of options legitimately
+-- changed is never a false positive. Replacement by ⊤ drops BOTH the pointer and any
+-- occurrence-local inner — still a loss; replacement of an occurrence BY ITS OWN INNER is
+-- deliberate knowledge-preserving erasure and is not one.
 typeVarLost :: Type -> Type -> Bool
--- Replacement by ⊤ drops BOTH the pointer and any occurrence-local inner — still a loss.
--- For a future producer: replacement of an occurrence BY ITS OWN INNER is deliberate
--- knowledge-preserving erasure, and already falls to the catch-all False clause below.
-typeVarLost old@TypeVar{} new = isJust (outerVarRef old) && new == PTopType
-typeVarLost old@UnionType{} new@UnionType{} =
-  or [ partialVarLost op np
-     | (name, [op]) <- H.toList (namedPartials old)
-     , Just [np] <- [H.lookup name (namedPartials new)] ]
-  where
-    partialVarLost op np =
-      or [ typeVarLost ov nv | (k, ov) <- H.toList (ptArgs op), Just nv <- [H.lookup k (ptArgs np)] ]
-      || or [ typeVarLost ov nv | (k, ov) <- H.toList (ptVars op), Just nv <- [H.lookup k (ptVars np)] ]
-typeVarLost _ _ = False
+typeVarLost old new = restoreLostTVExtVars old new /= new
 
 -- | Structurally detects whether a SLOT gained a var pointer where @old@ held ⊤ — a
 -- declaration's @/fn(..)=Top@ becoming the internal pointer @/fn(..)=$B@ (see 'updateTypeProp').
