@@ -504,6 +504,23 @@ isOuterLoc TVExt    = True
 -- | Matches either outward-looking location ('isOuterLoc'). A site that must distinguish the
 -- parent from the ambient scope matches 'TVParent'\/'TVExt' directly; this is for the ones whose
 -- rule is the same for both.
+--
+-- Every substitution WALKER now matches the constructors (they carry a scope layer beside the
+-- ambient env — 'substituteTVExtScoped', 'substituteKeepScoped', 'substituteFreeDeepScoped',
+-- 'resolveTypeSelfRefs'). What still matches here are LEAF READERS and NAME MATCHES, and for
+-- them the rule is genuinely one:
+--
+--   * a leaf reader ('slotFree', 'isFlexibleVar', 'flexibleVar', 'resolveFlex',
+--     'flexibleSpelling', 'typeSatDNF') looks the name up in the env its CALLER hands it, and
+--     the caller has already put the parent's bindings there — the compared partials'
+--     ('comparedPartialsEnv') or, for a value read on its own, the object's, which is what the
+--     ambient env registers (the fragment rule of 'substituteKeep'). The two locs therefore
+--     resolve through the same lookup at these sites; they would separate only if callers
+--     carried two envs, and the capture that would guard against was measured at zero
+--     (2026-09-17, 'substituteKeepScoped''s instrument);
+--   * a name match ('typeOuterVarRefs', 'cleanDeclSelfRefs', 'tightenDeclBoundedDims',
+--     'restoreLostTVExtVars', 'typeVarLost', 'boundClassVarPtrs') asks "is this a reference to
+--     a variable outside this position", which both outer locs are.
 pattern TVOuter :: TypeVarLoc
 pattern TVOuter <- (isOuterLoc -> True)
 
@@ -2535,7 +2552,9 @@ predsSatDNF False (PredsAnd ps) = concat <$> mapM (predsSatDNF False) ps
 -- | DNF of "a value is a member of this type"; 'Nothing' outside the fragment.
 -- A 'TVInt' variable is local to its enclosing partial (e.g. a class member's own
 -- parameter): it is instantiable per value and never refers to the ambient 'vaenv', so it
--- carries no constraint here. Only a 'TVExt' variable resolves against the outer scope.
+-- carries no constraint here. An OUTER variable ('TVParent' or 'TVExt') resolves through the
+-- env the caller hands in, which carries the parent's bindings as well as the ambient ones
+-- (see 'TVOuter').
 typeSatDNF :: TypeVarArgEnv -> Type -> Maybe [SatGoal]
 typeSatDNF _ PTopType = Just [SatGoal [] []]
 typeSatDNF vaenv (TypeVar _ TVInt i) = satVarOccDNF vaenv (Just [SatGoal [] []]) i -- partial-local var: no ambient constraint
@@ -3818,7 +3837,7 @@ comparedPartialsEnv typeEnv vaenv a b = H.union (H.filterWithKey installable mer
     -- rewritten a self-reference by then (an unbound @$_/T@ becomes ⊤), so the merged value no
     -- longer shows the cycle that makes the binding unsafe to install.
     installable k@(TVVar n) _ =
-      not $ any (S.member n . typeTVExtVarRefs) $ mapMaybe (H.lookup k) [ptVarArg a, ptVarArg b]
+      not $ any (S.member n . typeOuterVarRefs) $ mapMaybe (H.lookup k) [ptVarArg a, ptVarArg b]
     installable _ _ = True
 
 -- | A private helper for 'isSubPartialOfWithEnv' that checks while ignore class expansions
@@ -4634,8 +4653,8 @@ varStampSupported typeEnv name' spellings ks metArgs (TVVar n) = declaredOccsPre
   | k <- S.toList ks, occAt k, Just v <- [H.lookup k metArgs]]
   where
     occAt k = any (declRef k) (typeGraphData typeEnv name') || any (spellRef k) spellings
-    declRef k PartialType{ptArgs=dArgs} = maybe False (S.member n . typeTVExtVarRefs) (H.lookup k dArgs)
-    spellRef k sp = maybe False (S.member n . typeTVExtVarRefs) (H.lookup k sp)
+    declRef k PartialType{ptArgs=dArgs} = maybe False (S.member n . typeOuterVarRefs) (H.lookup k dArgs)
+    spellRef k sp = maybe False (S.member n . typeOuterVarRefs) (H.lookup k sp)
     -- A declared DIRECT occurrence of the var (a template field pointer @this=$T@ — a
     -- partial-local 'TVInt' value) that the application has NOT SUPPLIED YET cannot
     -- contribute to the pointer JOIN, and its future value can force the binding WIDER
@@ -5891,7 +5910,7 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
   -- A 'TVInt' reference nested INSIDE an embedded partial (@/l=Cons[$T]@) names the inner
   -- partial's scope and is not hoisted at all.
   let origValuesAt k = mapMaybe (H.lookup k) [aArgs, bArgs]
-  -- Every outer reference an arg value carries ('typeTVExtVarRefs' reads 'TVOuter' — 'TVParent'
+  -- Every outer reference an arg value carries ('typeOuterVarRefs' reads 'TVOuter' — 'TVParent'
   -- as well as 'TVExt') is a name the meet may discover a binding for, and the discovery is
   -- stamped onto this partial. That is only right when the reference names THIS partial's
   -- parameter (@Cons(tail=∀ConsList[/T=$^/T])@ — the declaration's own linked occurrence); a
@@ -5903,7 +5922,7 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
   -- 'detachForeignParentRefs'). Class expansion still relocates a class parameter's value into
   -- the member's arg slots one level deeper than it was written ('substitutePartialExit'),
   -- which is the remaining producer of such a spelling.
-  let exactNamesAt k = S.unions $ map typeTVExtVarRefs $ origValuesAt k
+  let exactNamesAt k = S.unions $ map typeOuterVarRefs $ origValuesAt k
   let pointerNamesAt k = S.fromList [n | TypeVar (TVVar n) TVInt _ <- origValuesAt k]
   -- A hoisted binding is stored in its canonical 'substituteTVExt' reading (the same one
   -- 'mergeVarEnvVal' gives every merged env binding), so a binding that only passed through
@@ -6802,9 +6821,10 @@ applyTypeVarOverrides overrides (UnionType mNeg posLeafs consts) = UnionType mNe
 applyTypeVarOverrides overrides (TypeVar (TVApplied b ovr) loc i) = TypeVar (TVApplied b (H.union overrides ovr)) loc i
 applyTypeVarOverrides overrides (TypeVar b loc i) = TypeVar (TVApplied b overrides) loc i
 
--- | Looks up a 'TypeVarAux' in the 'TypeVarArgEnv', returning 'PTopType' on miss.
--- Treats 'TVVar' and 'TVArg' uniformly: both kinds default to 'PTopType' when absent,
--- matching the TVInt/TVExt semantics where an unconstrained TVExt is unknown (i.e. PTopType).
+-- | Looks up a 'TypeVarAux' in a 'TypeVarArgEnv' (either layer — the ambient env or a scope),
+-- returning 'PTopType' on miss. Treats 'TVVar' and 'TVArg' uniformly: both kinds default to
+-- 'PTopType' when absent, since an unconstrained variable is unknown (i.e. ⊤). Which layer a
+-- reference is looked up in is the loc's business ('TypeVarLoc'); this is only the lookup.
 -- A 'TVApplied' reference resolves its base variable, then applies its overrides to the result.
 vaenvLookup :: TypeVarArgEnv -> TypeVarAux -> Type
 vaenvLookup vaenv (TVApplied b overrides) = applyTypeVarOverrides overrides (vaenvLookup vaenv b)
@@ -6989,7 +7009,7 @@ substitutePartialKeepScoped typeEnv scope vaenv partial@PartialType{ptVars, ptAr
 -- @Some@'s own parameters), which the meet reads without consulting the ambient env.
 innerOpen :: TypeVarAux -> Type -> Bool
 innerOpen _ TypeVar{} = True
-innerOpen v i         = not (S.null (typeTVExtVarRefs i)) || typeMentionsVar v i
+innerOpen v i         = not (S.null (typeOuterVarRefs i)) || typeMentionsVar v i
 
 -- | Whether a type refers to the variable @v@ (by name, under any location spelling) anywhere.
 typeMentionsVar :: TypeVarAux -> Type -> Bool
@@ -7120,15 +7140,16 @@ substituteFreeLeaf typeEnv scope env v loc i free = case H.lookup v env of
   _                            -> TypeVar v loc i'
   where i' = substituteFreeDeepScoped typeEnv scope env i
 
--- | The names of all external ('TVExt') type-VARIABLE references occurring anywhere in a type —
--- var\/arg slot values of every positive and negative leaf, and predicate partials. Used by
--- 'intersectPartialsBase' to decide which arg-meet discoveries genuinely belong to the
+-- | The names of all OUTER type-VARIABLE references ('TVParent' or 'TVExt' — a reference to a
+-- variable outside the position it sits at, whichever scope binds it) occurring anywhere in a
+-- type: var\/arg slot values of every positive and negative leaf, and predicate partials. Used
+-- by 'intersectPartialsBase' to decide which arg-meet discoveries genuinely belong to the
 -- enclosing partial's scope.
-typeTVExtVarRefs :: Type -> S.HashSet TypeVarName
-typeTVExtVarRefs (TypeVar (TVVar n) TVOuter _) = S.singleton n
-typeTVExtVarRefs (TypeVar _ _ _) = S.empty
-typeTVExtVarRefs PTopType = S.empty
-typeTVExtVarRefs (UnionType mtop leafs _) = S.unions $ topRefs ++ map partialRefs (splitUnionType leafs)
+typeOuterVarRefs :: Type -> S.HashSet TypeVarName
+typeOuterVarRefs (TypeVar (TVVar n) TVOuter _) = S.singleton n
+typeOuterVarRefs (TypeVar _ _ _) = S.empty
+typeOuterVarRefs PTopType = S.empty
+typeOuterVarRefs (UnionType mtop leafs _) = S.unions $ topRefs ++ map partialRefs (splitUnionType leafs)
   where
     topRefs = case mtop of
       Just (preds, negLeafs, _) -> predsRefs preds : map partialRefs (splitUnionType negLeafs)
@@ -7140,7 +7161,7 @@ typeTVExtVarRefs (UnionType mtop leafs _) = S.unions $ topRefs ++ map partialRef
     predRefs (PredRel r)   = partialRefs r
     predRefs (PredExpr e)  = partialRefs e
     partialRefs PartialType{ptVars=vs, ptArgs=as, ptPreds=ps} =
-      S.unions $ predsRefs ps : map typeTVExtVarRefs (H.elems vs ++ H.elems as)
+      S.unions $ predsRefs ps : map typeOuterVarRefs (H.elems vs ++ H.elems as)
 
 -- | Substitute a class member template's EXTERNAL references at expansion EXIT: the references
 -- name the CLASS object's scope, which ceases to exist as the member leaves it, so every
@@ -7573,7 +7594,7 @@ typeSetAux (TVApplied k _) _ _ = error $ printf "Unexpected TVApplied %s used as
 -- carries (e.g. a higher-order argument's @fn(/v=$_A)@ tied to a container element) rather than
 -- dropping it to Top during intersection.
 --
--- An EXTERNAL ('TVOuter') reference is always such a link. An INTERNAL one ('TVInt') is a link only
+-- An OUTER ('TVOuter') reference is always such a link. An INTERNAL one ('TVInt') is a link only
 -- when the partial that binds the name binds it BELOW Top: a reference resolving through its own
 -- @ptVars@ to Top does denote Top, so showing as Top is the same reading, but under a binding like
 -- @allIn[/E=∀Ord]@ the slot @ConsList[/T=$/E]@ becoming @ConsList[/T=⊤]@ loses both the value and
@@ -7582,11 +7603,13 @@ typeSetAux (TVApplied k _) _ _ = error $ printf "Unexpected TVApplied %s used as
 -- after, so the point never converges (set.ct's @allIn(items= elements(s= a), s= b)@ oscillated
 -- until the epoch limit).
 --
--- Scopes NEST through partials, so the binding is looked up in the scope accumulated on the way
--- down: descending into a partial's ARGS (and its predicates) extends it with that partial's own
--- var names, while the partial's @ptVars@ VALUES reference the scope CONTAINING it and keep the
--- un-extended one — the same descent rule 'dropOutOfScopeTVExt' follows. An inner binder shadows
--- an outer one of the same name.
+-- For that 'TVInt' clause the binding is looked up in a scope ACCUMULATED on the way down:
+-- descending into a partial's ARGS (and its predicates) extends it with that partial's own var
+-- names, while the partial's @ptVars@ VALUES reference the scope CONTAINING it and keep the
+-- un-extended one; an inner binder shadows an outer one of the same name. Accumulating is the
+-- pre-split reading (the walkers now REPLACE the scope at each argument boundary, and
+-- 'dropOutOfScopeTVExt' no longer extends its set at all); it stays here until the function's
+-- own fate is decided against 'typeVarLost', which guards the same writes with a different rule.
 restoreLostTVExtVars :: Type -> Type -> Type
 restoreLostTVExtVars = go H.empty
   where

@@ -492,10 +492,11 @@ namedPartials (UnionType mtop leafs _) = H.unionWith (++) (splitUnionTypeByName 
   [ (ptName p, [p]) | Just (preds, _, _) <- [mtop], Just atoms <- [tryPredsToList preds], PredClass p <- atoms ]
 namedPartials TypeVar{} = H.empty
 
--- | Structurally detects whether an EXTERNAL 'TypeVar' ('TVExt') present in @old@ has been widened
--- back to Top in @new@. Such a variable is a reference to a variable of an enclosing scope (e.g. a
--- higher-order argument's parameter, @/fn(/v=$_A)@, tied to a container element); replacing it with
--- Top drops that cross-scope link. Resolving a variable to a concrete (narrower) type is not a loss.
+-- | Structurally detects whether an OUTER 'TypeVar' ('TVParent' or 'TVExt') present in @old@ has
+-- been widened back to Top in @new@. Such a variable is a reference to a variable of an enclosing
+-- scope (e.g. a higher-order argument's parameter, @/fn(/v=$_A)@, tied to a container element);
+-- replacing it with Top drops that cross-scope link, whichever scope binds it. Resolving a
+-- variable to a concrete (narrower) type is not a loss.
 -- This complements 'verifySchemeActLowers', which cannot see either case: in
 -- a subtype test a free 'TypeVar' behaves like Top, so the widening looks like a legal narrowing.
 --
