@@ -131,9 +131,10 @@ addUnionObjToEnv vobjMap tobjMapRec tPrecedenceMap = do
 addInferArgToType :: FEnv -> TypeVarArgEnv -> Type -> Maybe Type
 addInferArgToType _ _ PTopType = Nothing
 addInferArgToType _ _ (UnionType (Just _) _ _) = Nothing
-addInferArgToType env vaenv (TypeVar t _ _) = case H.lookup t vaenv of
-  Just t' -> addInferArgToType env vaenv t'
-  Nothing -> error $ printf "Failed to find %s in addInferArgToType" (show t)
+-- A type-variable source resolves through the constraint's env whatever its loc, and a miss is
+-- the ⊤ an unbound variable denotes — the rule and its measurement are at
+-- 'TypeCheck.Constrain.addArgToType'.
+addInferArgToType env vaenv (TypeVar t _ _) = addInferArgToType env vaenv (vaenvLookup vaenv t)
 addInferArgToType env@FEnv{feTypeEnv} vaenv (UnionType Nothing partials []) = Just $ unionAllTypes feTypeEnv partials'
   where
     partials' = map (addInferArgToPartial env vaenv) $ splitUnionType partials

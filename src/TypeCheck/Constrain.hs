@@ -128,9 +128,14 @@ updateSchemeProp env@FEnv{feTypeEnv} vaenv super@SType{stypeAct=superAct, stypeR
 addArgToType :: FEnv -> TypeVarArgEnv -> Type -> TypeVarAux -> Maybe Type
 addArgToType _ _ PTopType _ = Nothing
 addArgToType _ _ (UnionType (Just _) _ _) _ = Nothing
-addArgToType env vaenv (TypeVar v _ _) newArg = case H.lookup v vaenv of
-  Just t  -> addArgToType env vaenv t newArg
-  Nothing -> error $ printf "Unknown type in addArgToType: %s" (show v)
+-- A type-variable source is a point's own top-level type, where no partial encloses it: the
+-- parent and scope layers are both the constraint's env there (the fragment rule of
+-- 'substituteKeep'), so every loc resolves through the same lookup. A miss is the ⊤ an unbound
+-- variable denotes ('vaenvLookup'), which the ⊤ clause above already reads as "not known yet"
+-- (the constraint is retried each epoch), and a 'TVApplied' reference resolves through its
+-- base — a keyed lookup could never hit it. Measured 2026-09-18 (build/scratch/addargtrace.py,
+-- three core + five integration files): no type variable of any loc reaches this clause.
+addArgToType env vaenv (TypeVar v _ _) newArg = addArgToType env vaenv (vaenvLookup vaenv v) newArg
 addArgToType FEnv{feTypeEnv} _ (UnionType Nothing partials []) newArg = Just $ unionAllTypes feTypeEnv $ map singletonType kept
   where
     grafted = map fromPartial $ splitUnionType partials
