@@ -18,7 +18,7 @@ import "core"
   about. What it was about is a spine reading its element type from its head alone — the first
   cell's field settled and the second stayed open, epoch after epoch, until the constraint loop hit
   its limit having had the right answer from the first epoch.
-class(Json, [Json/Null, Json/Num(value -> /Data/Primitive/Float), Json/Arr(entries -> /Data/List[$T -> Json]), Json/Obj(entries -> /Data/List[$T -> Json/Member])])
+class(Json, [Json/Null, Json/Num(value -> /Data/Primitive/Float), Json/Arr(entries -> /Data/List[$T -> Json]), Json/Obj(entries -> /Data/List[$T -> Json/Member..])])
 
 data(Json/Member(key -> String, value -> Json))
 

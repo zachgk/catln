@@ -377,7 +377,7 @@ Prgm
                     { omiDecls =
                         [ /Json/Obj
                             ( EAppArg
-                                { eaaArg = Value /entries -> ∀/Data/List[ /T=/Json/Member ] }
+                                { eaaArg = Value /entries -> ∀/Data/List[ /T=/Json/Member.. ] }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -474,7 +474,7 @@ Prgm
                 , /Json/Arr
                     ( /entries=∀/Data/List[ /T=∀/Json ] )
                 , /Json/Obj
-                    ( /entries=∀/Data/List[ /T=/Json/Member ] )
+                    ( /entries=∀/Data/List[ /T=/Json/Member.. ] )
                 ]
             , cgcDoc = Just ""
             }

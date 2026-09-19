@@ -350,7 +350,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Json/Obj
-                            ( Value /entries -> ∀/Data/List[ /T=/Json/Member ] )
+                            ( Value /entries -> ∀/Data/List[ /T=/Json/Member.. ] )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -435,7 +435,7 @@ Prgm
                 , /Json/Arr
                     ( /entries=∀/Data/List[ /T=∀/Json ] )
                 , /Json/Obj
-                    ( /entries=∀/Data/List[ /T=/Json/Member ] )
+                    ( /entries=∀/Data/List[ /T=/Json/Member.. ] )
                 ]
             , cgcDoc = Just ""
             }

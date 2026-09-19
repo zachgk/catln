@@ -2230,12 +2230,7 @@ expandClassPartialWithNamesFullAux visited typeEnv@TypeEnv{teClassGraph=ClassGra
       _  ->
         let mapped = map mapClassTypeWithNamesFull classTypes
             leafs = foldl (H.unionWith S.union) H.empty (map fst mapped)
-            -- Restore each member's declared data fields so a field-form value (written with
-            -- explicit args) is recognized as a member of this class.
-            leafs' = case completeDataPartialsTop typeEnv (UnionType Nothing leafs []) of
-              UnionType Nothing l [] -> l
-              _                      -> leafs
-        in (leafs', any snd mapped)
+        in (leafs, any snd mapped)
       where
         classVars = H.unionWith (intersectTypesEnv typeEnv vaenv) classVarsP (cleanDeclSelfRefs classVarsDecl)
         visited' = S.insert ptName visited
@@ -2342,13 +2337,11 @@ expandClassPartialAuxRaw mAllowed typeEnv@TypeEnv{teClassGraph=ClassGraph cg} va
     expanded = case graphLookup className cg of
       Just (CGClass _ PartialType{ptVars=classVarsDecl} classTypes _) -> case classTypes of
         [] -> singletonType $ classPlaceholderLeaf ptName
-        -- Restore each member's declared data fields so a field-form value (written with
-        -- explicit args) is recognized as a member of this class.
         -- Single-compaction union: member templates carry no explicit recursion (the
         -- canonical recursive reference is the predicate/top form), so the union-folding
         -- compaction clauses cannot fire mid-fold and the once-compacted result is
         -- spelling-identical to the pairwise fold.
-        _  -> completeDataPartialsTop typeEnv $ unionAllTypesWithEnvOnce typeEnv vaenv $ map mapClassType classTypes
+        _  -> unionAllTypesWithEnvOnce typeEnv vaenv $ map mapClassType classTypes
         where
           classVars = H.unionWith (intersectTypesEnv typeEnv vaenv) classVarsP (cleanDeclSelfRefs classVarsDecl)
           mapClassType (TypeVar (TVVar t) _ _) = case H.lookup t classVars of
@@ -2717,7 +2710,7 @@ classSatCandidates typeEnv vaenv satUse PartialType{ptName, ptVars=classVarsP} =
         candsOfMember t = candsOfType t
         mkMemberCand tp@PartialType{ptName=tpNm}
           | H.member tpNm (scClasses (teSatCache typeEnv)) = CandGoal (SatGoal [SatClass (mapClassPartial tp)] [])
-          | otherwise = CandLeaf (completeLeaf (mapClassPartial tp))
+          | otherwise = CandLeaf (mapClassPartial tp)
         -- Apply the class's instantiated arguments to a class-typed member (e.g. @List@'s
         -- @ConsList[/T=$_T]@ member) before enumerating it, mirroring 'mapClassPartial'/'substMemberVar'
         -- on the positive-partial members: otherwise the member's element parameter stays free and the
@@ -2751,13 +2744,6 @@ classSatCandidates typeEnv vaenv satUse PartialType{ptName, ptVars=classVarsP} =
         -- 'substMemberVar' instead — an uninstantiated parameter must stay FLEXIBLE
         -- (partial-local) for the cover checks.
         mapClassPartial tp = (substitutePartialExit typeEnv (joinVarArgEnv classVars H.empty) tp){ptVars = fmap substMemberVar (ptVars tp)}
-        -- Restore declared data fields (as 'expandClassPartial' does via 'completeDataPartialsTop')
-        -- so a field-form shape is recognized against this member.
-        completeLeaf tp = case completeDataPartialsTop typeEnv (singletonType tp) of
-          UnionType Nothing leafs [] -> case splitUnionType leafs of
-            [tp'] -> tp'
-            _     -> tp
-          _ -> tp
     _ -> Nothing
 
 -- | Interprets a concrete witness shape under its data declaration. Every actual value of a

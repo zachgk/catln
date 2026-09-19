@@ -10,7 +10,7 @@ module(Data)
     The six arms are JSON's own six, so a document read into this and written back out again says
     what it said. What JSON does not distinguish, this does not either: there is one [Json/Number]
     rather than an integer and a float, because the format has one.
-  class(Json, [Json/Null, Json/Bool(value -> /Data/Primitive/Boolean), Json/Number(value -> /Data/Primitive/Number), Json/Str(value -> String), Json/Array(entries -> /Data/List[$T -> Json]), Json/Object(entries -> /Data/List[$T -> Json/Member])])
+  class(Json, [Json/Null, Json/Bool(value -> /Data/Primitive/Boolean), Json/Number(value -> /Data/Primitive/Number), Json/Str(value -> String), Json/Array(entries -> /Data/List[$T -> Json]), Json/Object(entries -> /Data/List[$T -> Json/Member..])])
     # [Json/Str] rather than @Json/String@, because [String] is already a type and two names that
       close together is a reader guessing which of them an arm meant.
       [Json/Array] and [Json/Object] carry their children as lists, which is what makes this a tree
@@ -41,7 +41,7 @@ module(Data)
       An arm and not membership of [/Catln/Doc/DShow], which is what this was. A member is shown by
       the identity arm of [/Catln/Doc/dshow], so both at once is two arms matching one value with
       nothing to say which wins.
-  /Catln/Doc/dshow(s -> Json/Member)= /Catln/Doc/Show/Rendered(value= s, assets= ["json/json.js", "json/json.css"])
+  /Catln/Doc/dshow(s -> Json/Member..)= /Catln/Doc/Show/Rendered(value= s, assets= ["json/json.js", "json/json.css"])
     # A member is displayable on its own as well as within the object holding it, so that a program
       which reaches one can show it. The same script draws it, as the row it would be inside the
       object holding it.

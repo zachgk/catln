@@ -47,8 +47,8 @@ Prgm
                                 }
                             )
                         , /Catln/Doc/dshow
-                            ( EAppArg { eaaArg = Value /s -> /Data/Json/Member } ) -> /Catln/Doc/Show/Rendered
-                            ( /value=/Data/Json/Member
+                            ( EAppArg { eaaArg = Value /s -> /Data/Json/Member.. } ) -> /Catln/Doc/Show/Rendered
+                            ( /value=/Data/Json/Member..
                             , /assets=/Data/List/Cons[ /T=/Data/String ]
                                 ( /head=/Data/String
                                 , /tail=/Data/List/Cons[ /T=/Data/String ]
@@ -154,25 +154,9 @@ Prgm
                         , /Data/typeName
                             ( EAppArg
                                 { eaaArg = Value /value -> /Data/Json/Object
-                                    ( /entries=
-                                        ( TopType | PredClass /Data/List[ /T=/Data/Json/Member ] && PredClass /Data/List
-                                            [ /T=/Data/Json/Member
-                                                ( /value=TopType
-                                                , /key=TopType
-                                                )
-                                            ]
-                                        )
-                                    ) = /Data/Json/Object
+                                    ( /entries=∀/Data/List[ /T=/Data/Json/Member.. ] ) = /Data/Json/Object
                                     ( EAppArg
-                                        { eaaArg = Value /entries ->
-                                            ( TopType | PredClass /Data/List[ /T=/Data/Json/Member ] && PredClass /Data/List
-                                                [ /T=/Data/Json/Member
-                                                    ( /value=TopType
-                                                    , /key=TopType
-                                                    )
-                                                ]
-                                            )
-                                        }
+                                        { eaaArg = Value /entries -> ∀/Data/List[ /T=/Data/Json/Member.. ] }
                                     )
                                 }
                             ) -> /Data/String = "object"
@@ -185,7 +169,7 @@ Prgm
                     { omiDecls =
                         [ /Data/Json/Object
                             ( EAppArg
-                                { eaaArg = Value /entries -> ∀/Data/List[ /T=/Data/Json/Member ] }
+                                { eaaArg = Value /entries -> ∀/Data/List[ /T=/Data/Json/Member.. ] }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -263,7 +247,7 @@ Prgm
                 , /Data/Json/Array
                     ( /entries=∀/Data/List[ /T=∀/Data/Json ] )
                 , /Data/Json/Object
-                    ( /entries=∀/Data/List[ /T=/Data/Json/Member ] )
+                    ( /entries=∀/Data/List[ /T=/Data/Json/Member.. ] )
                 ]
             , cgcDoc = Just "[Json/Str] rather than @Json/String@, because [String] is already a type and two names that
               close together is a reader guessing which of them an arm meant.

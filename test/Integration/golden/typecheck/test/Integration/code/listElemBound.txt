@@ -6,7 +6,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /countCons
-                            ( Value /ks -> ∀/Data/List/ConsList[ /T=/Item ] ) -> /Data/Primitive/Integer
+                            ( Value /ks -> ∀/Data/List/ConsList[ /T=/Item.. ] ) -> /Data/Primitive/Integer
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -14,16 +14,11 @@ Prgm
                         [ /countCons( Value /ks -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/Primitive/Integer = CInt
                             { ciValue = 0 }
                         , /countCons
-                            ( Value /ks -> /Data/List/Cons
-                                [ /T=/Item( /n=TopType ) ]
-                                ( /head=/Item( /n=/Data/Primitive/Integer )
-                                , /tail=∀/Data/List/ConsList
-                                    [ /T=/Item( /n=TopType ) ]
-                                ) = /Data/List/Cons
-                                ( Value /head -> /Item( /n=/Data/Primitive/Integer ) )
-                                ( Value /tail -> ∀/Data/List/ConsList
-                                    [ /T=/Item( /n=TopType ) ]
-                                )
+                            ( Value /ks -> /Data/List/Cons[ /T=/Item.. ]
+                                ( /head=/Item..
+                                , /tail=∀/Data/List/ConsList[ /T=/Item.. ]
+                                ) = /Data/List/Cons( Value /head -> /Item.. )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=/Item.. ] )
                             ) -> /Data/Primitive/Integer = /operator+
                             ( Value /l -> /Data/Primitive/Integer = CInt
                                 { ciValue = 1 }
@@ -91,7 +86,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /countAll
-                            ( Value /ks -> ∀/Data/List[ /T=/Item ] ) -> /Data/Primitive/Integer
+                            ( Value /ks -> ∀/Data/List[ /T=/Item.. ] ) -> /Data/Primitive/Integer
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -99,16 +94,11 @@ Prgm
                         [ /countAll( Value /ks -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/Primitive/Integer = CInt
                             { ciValue = 0 }
                         , /countAll
-                            ( Value /ks -> /Data/List/Cons
-                                [ /T=/Item( /n=TopType ) ]
-                                ( /head=/Item( /n=/Data/Primitive/Integer )
-                                , /tail=∀/Data/List/ConsList
-                                    [ /T=/Item( /n=TopType ) ]
-                                ) = /Data/List/Cons
-                                ( Value /head -> /Item( /n=/Data/Primitive/Integer ) )
-                                ( Value /tail -> ∀/Data/List/ConsList
-                                    [ /T=/Item( /n=TopType ) ]
-                                )
+                            ( Value /ks -> /Data/List/Cons[ /T=/Item.. ]
+                                ( /head=/Item..
+                                , /tail=∀/Data/List/ConsList[ /T=/Item.. ]
+                                ) = /Data/List/Cons( Value /head -> /Item.. )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=/Item.. ] )
                             ) -> /Data/Primitive/Integer = /operator+
                             ( Value /l -> /Data/Primitive/Integer = CInt
                                 { ciValue = 1 }
@@ -143,11 +133,12 @@ Prgm
                 { csValue = "A list whose element parameter is bounded by a CONCRETE DATA TYPE, destructured.
                 Every list in the checked standard library bounds its element by a CLASS — [/Data/ToString],
                 [/Data/Algebra/Ord], [/Data/Algebra/Eq] — so a bound naming a data type directly was never
-                exercised by it, and the two read differently. A declared field is restored onto a bare partial
-                by its declaration ([Item] becoming @Item(/n=⊤)@), and the bare form and the restored form are
-                DISJOINT: a bound completed in one slot and left bare in another is one type written two ways,
-                which meets at nothing. A class has no declared fields to restore, so it reads the same both ways
-                and never showed the difference.
+                exercised by it, and the two read differently. A bare data name is the argument-less value
+                ([Item] alone) and the spread is every value of the type ([Item..]), the two being disjoint; a
+                bound over the elements of a list means the latter, so it is written so. The class expansion once
+                rewrote a bare bound into its field form on one side of a comparison and not the other — one
+                type written two ways, which meets at nothing — and a bound written bare passed only through
+                that. A class has no fields, so it reads the same both ways and never showed the difference.
                 Written over the [/Data/List] interface and over the [/Data/List/ConsList] the bracket literal
                 builds, as @listField.ct@ is, so that a failure says which of the two it is." }
             )
@@ -159,7 +150,7 @@ Prgm
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /countAll
                 ( Value /ks -> /Data/List/Cons
-                    [ /T=/Item( /n=TopType ) ]
+                    [ /T=/Item( /n=/Data/Primitive/Integer ) ]
                     ( /head=/Item( /n=/Data/Primitive/Integer )
                     , /tail=/Data/List/Cons
                         [ /T=/Item( /n=/Data/Primitive/Integer ) ]
@@ -196,7 +187,7 @@ Prgm
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /countCons
                 ( Value /ks -> /Data/List/Cons
-                    [ /T=/Item( /n=TopType ) ]
+                    [ /T=/Item( /n=/Data/Primitive/Integer ) ]
                     ( /head=/Item( /n=/Data/Primitive/Integer )
                     , /tail=/Data/List/Cons
                         [ /T=/Item( /n=/Data/Primitive/Integer ) ]
