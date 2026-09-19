@@ -845,7 +845,7 @@ propParentVarBindingRespected gPrgm = property $ do
   prgm <- forAll $ HG.filter prgmHasPlacement gPrgm'
   let typeEnv = mkTypeEnv prgm
   vaenv0 <- forAll $ genVaenv prgm
-  (ref, sub, varName) <- forAll $ genParentVarBoundPair prgm
+  (ref, sub, alt, varName) <- forAll $ genParentVarBoundPair prgm
   -- Two thirds of the draws bind the parent's parameter NAME in the ambient env to something
   -- else, so a reader that resolves the parent reference by name against the ambient layer
   -- (instead of the enclosing partial's binding) reads the decoy and the pair comes apart.
@@ -863,6 +863,18 @@ propParentVarBindingRespected gPrgm = property $ do
   subMinusRef <- timed "sub-ref" $ snd $ differenceTypeWithEnv typeEnv vaenv sub ref
   annotate $ printf "sub - ref = %s" (show subMinusRef)
   assertTimed "sub - ref = ∅" $ isBottomType subMinusRef
+  -- The reference reads as its BINDING, not as a flexible slot that matches anything: against
+  -- the third member, whose nested parameter holds an unrelated bound, it answers exactly as
+  -- its binding does. The coverage guard keeps the check from being satisfied on related bounds
+  -- alone, where both answers agree for the wrong reason.
+  annotate $ printf "alt = %s" (show alt)
+  subAlt <- timed "sub⊆alt" $ isSubtypeOfWithEnv typeEnv vaenv sub alt
+  altSub <- timed "alt⊆sub" $ isSubtypeOfWithEnv typeEnv vaenv alt sub
+  cover 20 "alt unrelated to sub" (not subAlt && not altSub)
+  refAlt <- timed "ref⊆alt" $ isSubtypeOfWithEnv typeEnv vaenv ref alt
+  altRef <- timed "alt⊆ref" $ isSubtypeOfWithEnv typeEnv vaenv alt ref
+  assertTimed "ref ⊆ alt ⇔ sub ⊆ alt" $ refAlt == subAlt
+  assertTimed "alt ⊆ ref ⇔ alt ⊆ sub" $ altRef == altSub
 
 -- | A declared subclass edge with a parameter mapping — @every(ConsList[$T -> $_T], isa= [/Bag])@,
 -- recorded under @Bag[$T]@ as the member template @∀ConsList[/T=$_/T]@ whose @$_/T@ names Bag's own

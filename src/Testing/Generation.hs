@@ -259,22 +259,19 @@ declaredVars _                                   = []
 -- @ref ⊆ alt@ held where @sub ⊆ alt@ did not (seed 16335697364997014974 15371164498158892649,
 -- path 27:a13Da6Ba7, 2026-09-18). That shape is not the idiom and asserts nothing.
 --
--- Returns the parameter's name too, so the law can bind it in the ambient env to a decoy and
--- assert the reference is not captured.
+-- Returns a THIRD member too — the same shape with an unrelated ground bound in the nested
+-- parameter — and the parameter's name. The identity alone cannot tell a reference resolved to
+-- the parent's binding from one not resolved at all: an unbound variable slot is read as FLEXIBLE
+-- (bindable per value — 'isFlexibleVar') and matches anything, so a reader that lost the parent
+-- would still pass both directions. Against the third member the reference must answer exactly
+-- as its binding does. The name lets the law bind it in the ambient env to a decoy and assert
+-- the reference is not captured.
 --
--- The identity alone cannot tell a reference resolved to the parent's binding from one not
--- resolved at all: an unbound variable slot is read as FLEXIBLE (bindable per value —
--- 'isFlexibleVar') and matches anything. A third member with an UNRELATED bound in the nested
--- parameter (@N[/v=K']@, against which the reference must answer exactly as @K@ does) was tried
--- and withdrawn, 2026-09-18: on the idiom shape the prover judges @Cons[/T=Cons](tail=Cons[/T=Cons])@
--- and @Cons[/T=Cons](tail=Cons[/T=#noCore])@ EQUAL — both directions, both differences ∅, even
--- with a bare nested partial — while at the top level the same two spellings are disjoint. The
--- nested spelled parameter is read through the enclosing declaration's pointer
--- (@tail -> ConsList[$T -> $_T]@) rather than as spelled, so the third member compares equal to
--- the second for a reason unrelated to the reference, and the reference — which the prover DOES
--- resolve (@ref − alt@ spells the nested parameter as @Cons@ and answers @ref ⊄ alt@) — was the
--- odd one out. Whether a contradicting nested spelling reads as the pointer or as ∅ is an open
--- ruling; the check returns once it is made.
+-- The third member is what found e08a01df: the prover judged @Cons[/T=Cons](tail=Cons[/T=Cons])@
+-- and @Cons[/T=Cons](tail=Cons[/T=#noCore])@ EQUAL — a list of lists and a list of annotations —
+-- because the class expansion completed the element bound to its field form on one side of the
+-- declaration clamp and not the other, and the empty meet proved the field vacuously. The
+-- reference itself answered correctly throughout.
 --
 -- The bound is a ground positive LEAF ('genGroundLeafBound'), not any ground type. With the
 -- relation top @~Nil@ as the bound and the ambient env binding the same name to a predicate
@@ -292,19 +289,20 @@ declaredVars _                                   = []
 -- enclosing partial, and which layer stands in for the missing parent depends on which walker
 -- reads the fragment ('substituteKeep' seeds the ambient env, 'substituteTVExt' seeds nothing —
 -- the two fragment kinds of 2d1d1b1e), so there is no one denotation for a law to assert.
-genParentVarBoundPair :: Prgm Expr () -> Gen (Type, Type, TypeVarName)
+genParentVarBoundPair :: Prgm Expr () -> Gen (Type, Type, Type, TypeVarName)
 genParentVarBoundPair prgm@(Prgm objMap _ _) = do
   when (nullObjectMap objMap) HG.discard
   base    <- HG.filter (not . null . fieldPlacements) (genPlacement prgm)
   (varName, slot) <- HG.element (fieldPlacements base)
   bound   <- genGroundLeafBound prgm
+  other   <- genGroundLeafBound prgm
   -- Every declared slot of the nested partial is forced in ('genTypeFromExprWith' True), as for
   -- the base: the pair must differ by the one parameter value under test and nothing else.
   nested  <- HG.element [oe | (v, oe) <- decls, v == varName] >>= genTypeFromExprWith True prgm
   outer   <- HG.element [singletonType, classPartial, relPartial]
   let payload v = singletonType nested{ptVars = H.insert varName v (ptVars nested)}
       withSlot v = placeInSlot outer base varName bound slot (payload v)
-  return (withSlot (TypeVar (TVVar varName) TVParent PTopType), withSlot bound, varName)
+  return (withSlot (TypeVar (TVVar varName) TVParent PTopType), withSlot bound, withSlot other, varName)
   where
     -- The declarations that declare the name and that 'genTypeFromExprWith' can read (the
     -- same spine shape 'genPlacement' accepts); the base's own declaration is always one.
