@@ -82,7 +82,7 @@ Prgm
                             )
                         ]
                     , omiDefs =
-                        [ /Data/List/length( Value /this -> /Data/List/Nil ) -> /Data/Primitive/Integer = CInt
+                        [ /Data/List/length( Value /this -> /Data/List/Nil.. ) -> /Data/Primitive/Integer = CInt
                             { ciValue = 0 }
                         , /Data/List/length
                             ( Value /this -> /Data/List/Cons
@@ -105,7 +105,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/toString( Value /this -> /Data/List/Nil ) -> /Data/String = CStr
+                        [ /Data/toString( Value /this -> /Data/List/Nil.. ) -> /Data/String = CStr
                             { csValue = "[]" }
                         , /Data/toString
                             ( Value /this -> /Data/List/Cons[ /T=∀/Data/ToString ]
@@ -796,14 +796,14 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/equal( Value /other -> /Data/List/Nil = Value /Data/List/Nil )( Value /this -> /Data/List/Nil ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        [ /Data/Algebra/equal( Value /other -> /Data/List/Nil = Value /Data/List/Nil )( Value /this -> /Data/List/Nil.. ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         , /Data/Algebra/equal
                             ( Value /other -> /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
                                 ( /head=∀/Data/Algebra/Eq
                                 , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ]
                                 ) = /Data/List/Cons( Value /head -> ∀/Data/Algebra/Eq )
                                 ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ] )
-                            )( Value /this -> /Data/List/Nil ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                            )( Value /this -> /Data/List/Nil.. ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/Algebra/equal( Value /other -> /Data/List/Nil = Value /Data/List/Nil )
                             ( Value /this -> /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
                                 ( /head=∀/Data/Algebra/Eq
@@ -850,14 +850,14 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/compareTo( Value /other -> /Data/List/Nil = Value /Data/List/Nil )( Value /this -> /Data/List/Nil ) -> /Data/Algebra/Equal = Value /Data/Algebra/Equal
+                        [ /Data/Algebra/compareTo( Value /other -> /Data/List/Nil = Value /Data/List/Nil )( Value /this -> /Data/List/Nil.. ) -> /Data/Algebra/Equal = Value /Data/Algebra/Equal
                         , /Data/Algebra/compareTo
                             ( Value /other -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                                 ( /head=∀/Data/Algebra/Ord
                                 , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                 ) = /Data/List/Cons( Value /head -> ∀/Data/Algebra/Ord )
                                 ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
-                            )( Value /this -> /Data/List/Nil ) -> /Data/Algebra/LessThan = Value /Data/Algebra/LessThan
+                            )( Value /this -> /Data/List/Nil.. ) -> /Data/Algebra/LessThan = Value /Data/Algebra/LessThan
                         , /Data/Algebra/compareTo( Value /other -> /Data/List/Nil = Value /Data/List/Nil )
                             ( Value /this -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                                 ( /head=∀/Data/Algebra/Ord

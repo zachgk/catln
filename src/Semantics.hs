@@ -241,11 +241,16 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
   typeGraphData TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name = concatMap dataPartials $ flatObjectMapItem $ H.lookupDefault mempty name tg
     where
       -- Data definitions have no arrow (oaArr=Nothing); their object expression carries the
-      -- declared type with linked ptVars/ptArgs.
-      dataPartials oa@ObjArr{oaArr=Nothing} = case getMetaType $ getExprMeta $ oaObjExpr oa of
+      -- declared type with linked ptVars/ptArgs. A declared VALUE of the type — a note's
+      -- @Task/Simple(contents= "..", state= False)@, an arrow-less object of the same name whose
+      -- every argument is given a value ('isValueObjArr') — is not the definition: its
+      -- constants are one value's, not the type's fields, and reading them as the declaration
+      -- made the spread floor of @Task/Simple..@ that one value (only the first task of a note
+      -- was then a @DShow@).
+      dataPartials oa@ObjArr{oaArr=Nothing} | not (isValueObjArr oa) = case getMetaType $ getExprMeta $ oaObjExpr oa of
         UnionType Nothing leafs _ -> splitUnionType leafs
         _                         -> []
-      dataPartials ObjArr{oaArr=Just{}} = []
+      dataPartials _ = []
 
   -- The arrow-object complement of 'typeGraphData': input templates of declarations and
   -- definition arms. A mid-solve object whose input presentation is not yet a plain leaf

@@ -150,14 +150,14 @@ Prgm
                     , omiDefs =
                         [ /Data/Algebra/equal
                             ( EAppArg { eaaArg = Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
-                            ( EAppArg { eaaArg = Value /this -> /Data/Maybe/Nothing } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                            ( EAppArg { eaaArg = Value /this -> /Data/Maybe/Nothing.. } ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         , /Data/Algebra/equal
                             ( EAppArg
                                 { eaaArg = Value /other -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Maybe/Some
                                     ( EAppArg { eaaArg = Value /value -> ∀/Data/Algebra/Eq } )
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /this -> /Data/Maybe/Nothing } ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                            ( EAppArg { eaaArg = Value /this -> /Data/Maybe/Nothing.. } ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/Algebra/equal
                             ( EAppArg { eaaArg = Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg
@@ -201,14 +201,14 @@ Prgm
                     , omiDefs =
                         [ /Data/Algebra/compareTo
                             ( EAppArg { eaaArg = Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
-                            ( EAppArg { eaaArg = Value /this -> /Data/Maybe/Nothing } ) -> /Data/Algebra/Equal = Value /Data/Algebra/Equal
+                            ( EAppArg { eaaArg = Value /this -> /Data/Maybe/Nothing.. } ) -> /Data/Algebra/Equal = Value /Data/Algebra/Equal
                         , /Data/Algebra/compareTo
                             ( EAppArg
                                 { eaaArg = Value /other -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Ord ]( /value=∀/Data/Algebra/Ord ) = /Data/Maybe/Some
                                     ( EAppArg { eaaArg = Value /value -> ∀/Data/Algebra/Ord } )
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /this -> /Data/Maybe/Nothing } ) -> /Data/Algebra/LessThan = Value /Data/Algebra/LessThan
+                            ( EAppArg { eaaArg = Value /this -> /Data/Maybe/Nothing.. } ) -> /Data/Algebra/LessThan = Value /Data/Algebra/LessThan
                         , /Data/Algebra/compareTo
                             ( EAppArg { eaaArg = Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg

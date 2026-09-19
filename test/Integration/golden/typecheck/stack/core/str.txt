@@ -61,7 +61,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/eq( Value /this -> /Data/String ) -> /Data/StrEqv[ /T=/Data/String ] = Value /Data/StrEqv ]
+                        [ /Data/Algebra/eq( Value /this -> /Data/String.. ) -> /Data/StrEqv[ /T=/Data/String ] = Value /Data/StrEqv ]
                     }
                 )
             ,
@@ -71,7 +71,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/equal( Value /other -> ∀/Data/Algebra/Eq )( Value /this -> /Data/String ) -> ∀/Data/Primitive/Boolean = /rel( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
+                        [ /Data/Algebra/equal( Value /other -> ∀/Data/Algebra/Eq )( Value /this -> /Data/String.. ) -> ∀/Data/Primitive/Boolean = /rel( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
                             ( Value /this -> UnionType
                                 ( Just
                                     ( PredClass /Data/Algebra/Eqv[ /T=/Data/String ]

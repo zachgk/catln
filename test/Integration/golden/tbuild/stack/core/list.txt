@@ -166,7 +166,7 @@ Prgm
                         ]
                     , omiDefs =
                         [ /Data/List/length
-                            ( EAppArg { eaaArg = Value /this -> /Data/List/Nil } ) -> /Data/Primitive/Integer = 0
+                            ( EAppArg { eaaArg = Value /this -> /Data/List/Nil.. } ) -> /Data/Primitive/Integer = 0
                         , /Data/List/length
                             ( EAppArg
                                 { eaaArg = Value /this -> /Data/List/Cons
@@ -204,7 +204,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/toString
-                            ( EAppArg { eaaArg = Value /this -> /Data/List/Nil } ) -> /Data/String = "[]"
+                            ( EAppArg { eaaArg = Value /this -> /Data/List/Nil.. } ) -> /Data/String = "[]"
                         , /Data/toString
                             ( EAppArg
                                 { eaaArg = Value /this -> /Data/List/Cons[ /T=∀/Data/ToString ]
@@ -1767,7 +1767,7 @@ Prgm
                     , omiDefs =
                         [ /Data/Algebra/equal
                             ( EAppArg { eaaArg = Value /other -> /Data/List/Nil = Value /Data/List/Nil } )
-                            ( EAppArg { eaaArg = Value /this -> /Data/List/Nil } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                            ( EAppArg { eaaArg = Value /this -> /Data/List/Nil.. } ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         , /Data/Algebra/equal
                             ( EAppArg
                                 { eaaArg = Value /other -> /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
@@ -1780,7 +1780,7 @@ Prgm
                                     )
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /this -> /Data/List/Nil } ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                            ( EAppArg { eaaArg = Value /this -> /Data/List/Nil.. } ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/Algebra/equal
                             ( EAppArg { eaaArg = Value /other -> /Data/List/Nil = Value /Data/List/Nil } )
                             ( EAppArg
@@ -1883,7 +1883,7 @@ Prgm
                     , omiDefs =
                         [ /Data/Algebra/compareTo
                             ( EAppArg { eaaArg = Value /other -> /Data/List/Nil = Value /Data/List/Nil } )
-                            ( EAppArg { eaaArg = Value /this -> /Data/List/Nil } ) -> /Data/Algebra/Equal = Value /Data/Algebra/Equal
+                            ( EAppArg { eaaArg = Value /this -> /Data/List/Nil.. } ) -> /Data/Algebra/Equal = Value /Data/Algebra/Equal
                         , /Data/Algebra/compareTo
                             ( EAppArg
                                 { eaaArg = Value /other -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
@@ -1896,7 +1896,7 @@ Prgm
                                     )
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /this -> /Data/List/Nil } ) -> /Data/Algebra/LessThan = Value /Data/Algebra/LessThan
+                            ( EAppArg { eaaArg = Value /this -> /Data/List/Nil.. } ) -> /Data/Algebra/LessThan = Value /Data/Algebra/LessThan
                         , /Data/Algebra/compareTo
                             ( EAppArg { eaaArg = Value /other -> /Data/List/Nil = Value /Data/List/Nil } )
                             ( EAppArg

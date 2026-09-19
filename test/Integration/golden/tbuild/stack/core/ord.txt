@@ -12,11 +12,11 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/isGreaterEq
-                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/LessThan } ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/LessThan.. } ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/Algebra/isGreaterEq
-                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/Equal } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/Equal.. } ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         , /Data/Algebra/isGreaterEq
-                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/GreaterThan } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/GreaterThan.. } ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         ]
                     }
                 )
@@ -101,11 +101,11 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/isGreater
-                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/LessThan } ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/LessThan.. } ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/Algebra/isGreater
-                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/Equal } ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/Equal.. } ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/Algebra/isGreater
-                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/GreaterThan } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/GreaterThan.. } ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         ]
                     }
                 )
@@ -222,11 +222,11 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/isLess
-                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/LessThan } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/LessThan.. } ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         , /Data/Algebra/isLess
-                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/Equal } ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/Equal.. } ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/Algebra/isLess
-                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/GreaterThan } ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/GreaterThan.. } ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         ]
                     }
                 )
@@ -250,11 +250,11 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/isLessEq
-                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/LessThan } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/LessThan.. } ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         , /Data/Algebra/isLessEq
-                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/Equal } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/Equal.. } ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         , /Data/Algebra/isLessEq
-                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/GreaterThan } ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/GreaterThan.. } ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         ]
                     }
                 )
@@ -285,11 +285,11 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/isEq
-                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/LessThan } ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/LessThan.. } ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/Algebra/isEq
-                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/Equal } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/Equal.. } ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         , /Data/Algebra/isEq
-                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/GreaterThan } ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/GreaterThan.. } ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         ]
                     }
                 )
@@ -343,13 +343,13 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/isNoOrdering
-                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/LessThan } ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/LessThan.. } ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/Algebra/isNoOrdering
-                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/Equal } ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/Equal.. } ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/Algebra/isNoOrdering
-                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/GreaterThan } ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/GreaterThan.. } ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/Algebra/isNoOrdering
-                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/NoOrdering } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/NoOrdering.. } ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         ]
                     }
                 )
@@ -399,13 +399,13 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/isComparable
-                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/LessThan } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/LessThan.. } ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         , /Data/Algebra/isComparable
-                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/Equal } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/Equal.. } ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         , /Data/Algebra/isComparable
-                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/GreaterThan } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/GreaterThan.. } ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         , /Data/Algebra/isComparable
-                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/NoOrdering } ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                            ( EAppArg { eaaArg = Value /this -> /Data/Algebra/NoOrdering.. } ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         ]
                     }
                 )

@@ -98,11 +98,18 @@ pValue = do
         "undefined" -> RawHoleExpr m HoleUndefined
         "todefine"  -> RawHoleExpr m HoleTodefine
         _           -> case (usingTheExpr, suffix) of
+          -- A bare type receiver @:X@ is read as the spread @X..@ by the desugarer once it is
+          -- known to be bare ('semiDesExpr' on 'RawMethod'): the suffixes have not been parsed
+          -- yet here, and @:Cons[$T](head, tail)@ is a destructuring receiver, not a spread.
+          -- @:X..@ says the spread explicitly.
           (Just{}, Nothing)  -> RawTheExpr (RawValue m (mkName name))
-          (Nothing, Just Left{}) -> RawTupleApply (emptyMetaM m) (emptyMetaM m, RawValue (mWithType (relTypeVal (mkName name)) m) (mkName name)) [(True, rawInObjArr True (RawHoleExpr (emptyMetaM m) (HoleActive Nothing)))]
+          (Just{}, Just Left{}) -> RawTheExpr spread
+          (Nothing, Just Left{}) -> spread
           (Nothing, Just (Right s)) -> RawFmtStrExpr m name s
           (Nothing, Nothing) -> RawValue (mWithType (relTypeVal (mkName name)) m) (mkName name)
-          _ -> undefined
+          _ -> undefined -- a format string on a type receiver
+          where
+            spread = RawTupleApply (emptyMetaM m) (emptyMetaM m, RawValue (mWithType (relTypeVal (mkName name)) m) (mkName name)) [(True, rawInObjArr True (RawHoleExpr (emptyMetaM m) (HoleActive Nothing)))]
 
 pStringLiteral :: Parser String
 pStringLiteral = char '\"' *> manyTill L.charLiteral (char '\"')

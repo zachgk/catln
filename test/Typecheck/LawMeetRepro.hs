@@ -166,17 +166,14 @@ runStateTC action env = case runStateT action env of
   TypeCheckResE notes -> Left notes
 
 -- | Rebuild the per-epoch env caches exactly as 'runConstraintsIdx' does at the top of an
--- epoch, so probed constraints see the same 'feReachesTypeEnv'/'feCompletedAllObjs' the
+-- epoch, so probed constraints see the same 'feReachesTypeEnv'/'feUniverseKey' the
 -- fatal epoch would.
 prepareEpochEnv :: FEnv -> Either [TypeCheckError] FEnv
 prepareEpochEnv env = case buildTypeEnv env of
   TypeCheckResE notes -> Left notes
   TypeCheckResult _ (reachesVPart, reachesTypeEnv) ->
     let u = maybe BottomType stypeAct $ tcreToMaybe $ descriptor env $ feUnionAllObjs env
-        uUnchanged = u == feCompletedAllObjsKey env
-        completedAllObjs = if uUnchanged
-          then feCompletedAllObjs env
-          else unionTypes (feTypeEnv env) u (completeDataPartials (feTypeEnv env) u)
+        uUnchanged = u == feUniverseKey env
         envUnchanged = uUnchanged && reachesVPart == feReachesVPart env
         inputArrowNames = if envUnchanged then feInputArrowNames env
                           else typeGraphInputEmbeddedNames reachesTypeEnv
@@ -184,7 +181,7 @@ prepareEpochEnv env = case buildTypeEnv env of
           then feReachesTypeEnv env
           else reachesTypeEnv{teQueryCacheKey = Just (unsafeFreshQueryToken (teTypeGraph reachesTypeEnv))}
     in Right env{feReachesTypeEnv = reachesTypeEnv', feReachesVPart = reachesVPart,
-                 feCompletedAllObjsKey = u, feCompletedAllObjs = completedAllObjs,
+                 feUniverseKey = u,
                  feInputArrowNames = inputArrowNames}
 
 -- | Probe each constraint in isolation: resolve its view ('showCon'), run
@@ -337,10 +334,7 @@ probeNarrow env con0 = case stypeConstraint (showCon env con0) of
     let argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnvL vaenv' $
           UnionType Nothing (joinUnionType $ map partialToType $ H.keys $ snd $
                              splitVarArgEnv $ constraintVarArgEnv con') []
-    let objMapBoundUb'
-          | objMapBoundUb == feCompletedAllObjsKey env = feCompletedAllObjs env
-          | otherwise = unionTypes feTypeEnvL objMapBoundUb
-                          (completeDataPartials feTypeEnvL objMapBoundUb)
+    let objMapBoundUb' = objMapBoundUb
     forceStep "objMapBoundUb'" (show objMapBoundUb')
     forceStep "argsBoundUb" (show argsBoundUb)
     forM_ [("REQ", fmap (stypeReq . snd) vaenv, pReq),

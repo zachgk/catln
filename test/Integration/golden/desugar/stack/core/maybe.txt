@@ -81,9 +81,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/equal( Value other= Value /Data/Maybe/Nothing )( Value /this -> /Data/Maybe/Nothing ) -> ∀/Data/Primitive/Boolean = Value True
+                        [ /Data/Algebra/equal( Value other= Value /Data/Maybe/Nothing )( Value /this -> /Data/Maybe/Nothing.. ) -> ∀/Data/Primitive/Boolean = Value True
                         , /Data/Algebra/equal
-                            ( Value other= /Data/Maybe/Some( Value value ) )( Value /this -> /Data/Maybe/Nothing ) -> ∀/Data/Primitive/Boolean = Value False
+                            ( Value other= /Data/Maybe/Some( Value value ) )( Value /this -> /Data/Maybe/Nothing.. ) -> ∀/Data/Primitive/Boolean = Value False
                         , /Data/Algebra/equal( Value other= Value /Data/Maybe/Nothing )
                             ( Value /this= /Data/Maybe/Some( Value value ) ) -> ∀/Data/Primitive/Boolean = Value False
                         , /Data/Algebra/equal
@@ -99,9 +99,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/compareTo( Value other= Value /Data/Maybe/Nothing )( Value /this -> /Data/Maybe/Nothing ) -> ∀/Data/Algebra/Comparison = Value /Data/Algebra/Equal
+                        [ /Data/Algebra/compareTo( Value other= Value /Data/Maybe/Nothing )( Value /this -> /Data/Maybe/Nothing.. ) -> ∀/Data/Algebra/Comparison = Value /Data/Algebra/Equal
                         , /Data/Algebra/compareTo
-                            ( Value other= /Data/Maybe/Some( Value value ) )( Value /this -> /Data/Maybe/Nothing ) -> ∀/Data/Algebra/Comparison = Value /Data/Algebra/LessThan
+                            ( Value other= /Data/Maybe/Some( Value value ) )( Value /this -> /Data/Maybe/Nothing.. ) -> ∀/Data/Algebra/Comparison = Value /Data/Algebra/LessThan
                         , /Data/Algebra/compareTo( Value other= Value /Data/Maybe/Nothing )
                             ( Value /this= /Data/Maybe/Some( Value value ) ) -> ∀/Data/Algebra/Comparison = Value /Data/Algebra/GreaterThan
                         , /Data/Algebra/compareTo

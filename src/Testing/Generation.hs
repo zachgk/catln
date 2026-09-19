@@ -615,10 +615,10 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
 --
 -- The mutated leaf is returned AS-IS, exactly as 'genType' returns its own: a bare argument-less
 -- reference is a legitimate standalone value (the partial-application form before its args are
--- applied), and 'completeDataPartialsTop' is not a canonicalization — it maps that form to a
--- DIFFERENT type. Completing here would also overwrite the very 'ptArgMode' a mutation had just
--- chosen (its 'completePartial' adopts the declaration's mode whenever the partial is left
--- argless and exact), erasing the arg-mode dimension this generator exists to exercise.
+-- applied), and restoring its declared fields onto it would map that form to a DIFFERENT type
+-- (the completion that once did so is gone for that reason). It would also overwrite the very
+-- 'ptArgMode' a mutation had just chosen, erasing the arg-mode dimension this generator exists
+-- to exercise.
 genRelatedType :: Prgm Expr () -> Type -> Gen Type
 genRelatedType prgm a = case a of
   UnionType Nothing leafs [] | not (H.null leafs) -> do

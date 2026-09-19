@@ -8,10 +8,10 @@ Prgm
                     , omiRuntimeDecls =
                         [ /Python/Builtins/pow
                             ( EAppArg { eaaArg = Value /exp -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> /Data/Primitive/Integer
                         , /Python/Builtins/pow
                             ( EAppArg { eaaArg = Value /exp -> /Data/Primitive/Float } )
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float } ) -> /Data/Primitive/Float
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float.. } ) -> /Data/Primitive/Float
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -23,7 +23,7 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Python/Builtins/toInt
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float } ) -> /Data/Primitive/Integer
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float.. } ) -> /Data/Primitive/Integer
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -51,7 +51,7 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Python/Builtins/length
-                            ( EAppArg { eaaArg = Value /this -> /Data/String } ) -> /Data/Primitive/Integer
+                            ( EAppArg { eaaArg = Value /this -> /Data/String.. } ) -> /Data/Primitive/Integer
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -63,9 +63,9 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Python/Builtins/abs
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> /Data/Primitive/Integer
                         , /Python/Builtins/abs
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float } ) -> /Data/Primitive/Float
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float.. } ) -> /Data/Primitive/Float
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -77,7 +77,7 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Python/Builtins/toString
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float } ) -> /Data/String
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float.. } ) -> /Data/String
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -106,7 +106,7 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Python/Builtins/hex
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer } ) -> /Data/String
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> /Data/String
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -118,9 +118,9 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Python/Builtins/toBool
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer } ) -> ∀/Data/Primitive/Boolean
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> ∀/Data/Primitive/Boolean
                         , /Python/Builtins/toBool
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float } ) -> ∀/Data/Primitive/Boolean
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float.. } ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -132,7 +132,7 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Python/Builtins/toFloat
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer } ) -> /Data/Primitive/Float
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> /Data/Primitive/Float
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -144,7 +144,7 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Python/Builtins/oct
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer } ) -> /Data/String
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> /Data/String
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -168,7 +168,7 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Python/Builtins/ord
-                            ( EAppArg { eaaArg = Value /this -> /Data/String } ) -> /Data/Primitive/Integer
+                            ( EAppArg { eaaArg = Value /this -> /Data/String.. } ) -> /Data/Primitive/Integer
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -196,7 +196,7 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Python/Builtins/input
-                            ( EAppArg { eaaArg = Value /this -> /Catln/IO } ) -> /Data/String
+                            ( EAppArg { eaaArg = Value /this -> /Catln/IO.. } ) -> /Data/String
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -208,7 +208,7 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Python/Builtins/bin
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer } ) -> /Data/String
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> /Data/String
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []

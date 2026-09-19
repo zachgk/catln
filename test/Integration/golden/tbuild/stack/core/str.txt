@@ -81,7 +81,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/eq
-                            ( EAppArg { eaaArg = Value /this -> /Data/String } ) -> /Data/StrEqv[ /T=/Data/String ] = Value /Data/StrEqv
+                            ( EAppArg { eaaArg = Value /this -> /Data/String.. } ) -> /Data/StrEqv[ /T=/Data/String ] = Value /Data/StrEqv
                         ]
                     }
                 )
@@ -94,7 +94,7 @@ Prgm
                     , omiDefs =
                         [ /Data/Algebra/equal
                             ( EAppArg { eaaArg = Value /other -> ∀/Data/Algebra/Eq } )
-                            ( EAppArg { eaaArg = Value /this -> /Data/String } ) -> ∀/Data/Primitive/Boolean =
+                            ( EAppArg { eaaArg = Value /this -> /Data/String.. } ) -> ∀/Data/Primitive/Boolean =
                             ( /rel
                                 ( EAppArg
                                     { eaaArg = Value /a -> TVArg /this = ( Value /this ↦ TVArg /this ) }

@@ -8,9 +8,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/toString( Value /this -> /Data/Primitive/True ) -> /Data/String = CStr
+                        [ /Data/toString( Value /this -> /Data/Primitive/True.. ) -> /Data/String = CStr
                             { csValue = "True" }
-                        , /Data/toString( Value /this -> /Data/Primitive/False ) -> /Data/String = CStr
+                        , /Data/toString( Value /this -> /Data/Primitive/False.. ) -> /Data/String = CStr
                             { csValue = "False" }
                         ]
                     }
@@ -57,7 +57,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/rel( Value a )( Value b )( Value /this -> /Data/Primitive/BoolEqv ) -> ∀/Data/Primitive/Boolean = /Data/Primitive/boolEq( Value l= Value a )( Value r= Value b ) ]
+                        [ /Data/Algebra/rel( Value a )( Value b )( Value /this -> /Data/Primitive/BoolEqv.. ) -> ∀/Data/Primitive/Boolean = /Data/Primitive/boolEq( Value l= Value a )( Value r= Value b ) ]
                     }
                 )
             ,

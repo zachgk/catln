@@ -288,8 +288,8 @@ verifyObjMapItem name (ObjectMapItem decls runtimeDecls refineDecls defs) = do
       -- A declaration may write a parameterized type in /param form/ (e.g. @Box[T]@) while a
       -- destructuring definition produces it in /field form/ (e.g. @Box(v=...)@, completed to
       -- @Box[T](v=$T)@). Normalize both to the completed form so coverage compares like with like.
-      let declInputTypes = map (completeDataPartials feTypeEnv) declInputTypes0
-      let defInputTypes = map (completeDataPartials feTypeEnv) defInputTypes0
+      let declInputTypes = declInputTypes0
+      let defInputTypes = defInputTypes0
       let declUnion = unionAllTypes feTypeEnv declInputTypes
 
       -- For /coverage/ (does the union of definitions fulfill a declaration?) a destructuring
@@ -313,7 +313,7 @@ verifyObjMapItem name (ObjectMapItem decls runtimeDecls refineDecls defs) = do
       -- exempt from the fulfillment check (they still bound definitions via declUnion above).
       let fulfillableDecls = filter ((/= TypeObj) . oaBasis) decls
       forM_ fulfillableDecls $ \oa -> do
-        let declType = completeDataPartials feTypeEnv $ getMetaType $ getExprMeta $ oaObjExpr oa
+        let declType = getMetaType $ getExprMeta $ oaObjExpr oa
         let declLoc = getMetaPos $ getExprMeta $ oaObjExpr oa
         -- A diagonal declaration (every argument typed by one shared variable, e.g.
         -- @operator==($T l, $T r)@) is fulfilled iff the variable's bound is covered by the

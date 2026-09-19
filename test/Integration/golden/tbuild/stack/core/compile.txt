@@ -86,7 +86,7 @@ Prgm
                     , omiRuntimeDecls =
                         [ /Catln/exit
                             ( EAppArg { eaaArg = Value /val -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /this -> /Catln/IO } ) -> /Catln/IO
+                            ( EAppArg { eaaArg = Value /this -> /Catln/IO.. } ) -> /Catln/IO
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -246,7 +246,7 @@ Prgm
                     , omiRuntimeDecls =
                         [ /Catln/println
                             ( EAppArg { eaaArg = Value /msg -> /Data/String } )
-                            ( EAppArg { eaaArg = Value /this -> /Catln/IO } ) -> /Catln/IO
+                            ( EAppArg { eaaArg = Value /this -> /Catln/IO.. } ) -> /Catln/IO
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []

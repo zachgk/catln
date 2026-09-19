@@ -96,7 +96,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /len
-                            ( EAppArg { eaaArg = Value /this -> /IntNil } ) -> /Data/Primitive/Integer = 0
+                            ( EAppArg { eaaArg = Value /this -> /IntNil.. } ) -> /Data/Primitive/Integer = 0
                         , /len
                             ( EAppArg
                                 { eaaArg = Value /this -> /IntCons

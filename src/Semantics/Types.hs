@@ -169,9 +169,21 @@ instance CtType PtArgMode where
 pattern PtArgExact :: PtArgMode
 pattern PtArgExact = PtArgMode True True
 
--- | Matches with any additional args (lower bounded, upper unbounded).
+-- | Matches with any additional args (lower bounded, upper unbounded): the written spread
+-- @X..@. For a DATA type the lower bound is what its definition declares, read in by
+-- 'normalizePtArgMode' — @Plain..@ over @data(Plain(name, other))@ requires @name@ and
+-- @other@ and admits more (Zach, 2026-09-19: the spread refers only to the upper bound; if
+-- the definition includes @Plain.name@ then it is required).
 pattern PtArgAny :: PtArgMode
 pattern PtArgAny = PtArgMode True False
+
+-- | Every arg-set of the name (lower unbounded, upper unbounded): the argument-less value,
+-- every partial application and every full one. The algebra's OWN "any arguments" — a name's
+-- relation ('relTypeAppliedVal'), a name-only bound relaxed for an argumented value
+-- ('relaxNameBoundArgs'), ⊤ materialized as every name ('topTypeAsPartials'). Not a spelling
+-- the language writes, so it takes no declared floor.
+pattern PtArgUnbounded :: PtArgMode
+pattern PtArgUnbounded = PtArgMode False False
 
 -- | A predicate applied to a type
 data TypePredicate
@@ -1373,90 +1385,10 @@ joinUnionTypeByName leafs = H.map (S.fromList . map typeToArgOption) $ H.filter 
 singletonType :: PartialType -> Type
 singletonType partial = UnionType Nothing (joinUnionType [partial]) []
 
--- | Recursively completes /nested/ parameterized-type partials against their data definition.
---
--- A nested partial in /param form/ — non-empty 'ptVars' but no 'ptArgs', e.g. the annotation
--- @Box[T]@ inside @unwrap(b=Box[T])@ for @data Box[T](v -> T)@ — has its declared fields added
--- (linked to its vars via the def), becoming @Box[T](v=$T)@. This lets it reconcile with the
--- /field form/ @Box(v=...)@ during intersection.
---
--- The /outermost/ partials are intentionally left alone: those may be deliberate
--- partial-application subsets produced by the arg-powerset (e.g. the no-arg subset @Box[T]@ of
--- @Box[T](v=$T)@), which must keep their reduced arg-set. Likewise the bare constructor (@Box@,
--- no vars) and any partial already carrying args are untouched. So partial application is
--- unaffected.
-completeDataPartials :: (TypeGraph tg) => TypeEnv tg -> Type -> Type
-completeDataPartials typeEnv = onArgs
-  where
-    -- Top level: recurse into args/vars only; do not complete the outermost partials.
-    onArgs t@TypeVar{} = t
-    onArgs (UnionType mPreds leafs consts) = UnionType (fmap (mapTopNegLeafs onArgsLeafs) mPreds) (onArgsLeafs leafs) consts
-    onArgsLeafs = joinUnionType . map recurseArgs . splitUnionType
-    recurseArgs p@PartialType{ptVars, ptArgs} = p{ptVars = fmap (completeDataPartialsTop typeEnv) ptVars, ptArgs = fmap (completeDataPartialsTop typeEnv) ptArgs}
-
--- | Like 'completeDataPartials' but also completes the /outermost/ partials, restoring their
--- declared data fields. Used when a partial is a supertype to match against rather than a value:
--- a partial may carry only its type parameters and omit the declared fields, in which case a
--- field-form value (one written with explicit args) would not reconcile with it. Restoring the
--- fields as 'PTopType' lets such a value match on its keys. (Fields and type parameters are
--- otherwise tracked independently and are not auto-related.)
---
--- This is NOT a semantic no-op: a bare argument-less exact partial like @/Cons@ is itself a
--- value — the partial-application form a @/Cons@ has before its args are applied (arg-set @{}@,
--- disjoint from the field forms) — and completing it maps it to a DIFFERENT type. Apply this
--- only where the bare form is known to stand for the field forms (a supertype/bound to match
--- against), never as a general canonicalization of value types.
-completeDataPartialsTop :: (TypeGraph tg) => TypeEnv tg -> Type -> Type
-completeDataPartialsTop typeEnv = go
-  where
-    -- Nested: complete each partial against its def, then recurse into its args/vars.
-    go t@TypeVar{} = t
-    go (UnionType mPreds leafs consts) = UnionType (fmap goTop mPreds) (goLeafs leafs) consts
-    -- A top's PREDICATES carry parameter bounds too — @∀ConsList[/T=Item]@ is a @Just [PredClass
-    -- ConsList[/T=Item]]@ with no positive leaf — and a bound completed in one slot but left bare
-    -- in another writes one type two ways. The bare argless form and the restored field form are
-    -- DISJOINT (see this function's own note), so the two spellings meet at ∅: a list whose
-    -- element parameter is bounded by a data type WITH fields emptied on being destructured,
-    -- while a fieldless one or a class bound (nothing to restore, so one spelling) went through.
-    -- Only the predicate's parameter BOUNDS are completed here — restoring the predicate
-    -- partial's OWN fields would change what it matches, which this is not entitled to do.
-    goTop (preds, negLeafs, ncs) = (mapTypePreds (mapTypePred completePredParams) preds, goLeafs negLeafs, ncs)
-    completePredParams pt = pt{ptVars = fmap go (ptVars pt), ptArgs = fmap go (ptArgs pt)}
-    goLeafs = joinUnionType . map completePartial . splitUnionType
-    -- Only an argument-less partial in /exact/ mode is an ambiguous bare reference needing its
-    -- declared fields restored. A non-exact mode (an authored spread like @CatlnResult..@)
-    -- already admits the field forms, and overwriting its mode with the data's would narrow it.
-    completePartial p@PartialType{ptName, ptVars, ptArgs, ptArgMode}
-      | H.null ptArgs && ptArgMode == PtArgExact =
-          case [(dArgs, dMode) | PartialType{ptArgs=dArgs, ptArgMode=dMode} <- typeGraphData typeEnv ptName, not (H.null dArgs)] of
-            -- Restore the declared fields, carrying the /bound/ of the type parameter each field
-            -- is declared with (e.g. field @x : $A@ in @Box[$A -> Boxed]@ is restored as @Boxed@):
-            -- so a value/definition that narrows the field to that bound still reconciles with this
-            -- partial. Only a concrete parameter bound is carried; a field whose parameter is itself
-            -- a variable (or whose declared type is not a bare parameter) is restored as 'PTopType'
-            -- — its type is supplied by the value being matched, and carrying a variable here would
-            -- reintroduce a free parameter that can collide with a like-named one in an enclosing scope.
-            ((dArgs, dMode):_) -> p1{ptArgs = fmap restoreField dArgs, ptArgMode = dMode}
-            []                 -> p1
-      | otherwise = p1
-      where
-        completedVars = fmap go ptVars
-        p1 = p{ptVars = completedVars, ptArgs = fmap go ptArgs}
-        -- The bound is taken from the COMPLETED vars rather than the ones this was given. Both end
-        -- up in the same partial — the parameter in its var slot and the field it was declared for
-        -- in an arg slot — so taking one completed and the other not writes one type two ways, and
-        -- @Pair[$A -> SourcePos](first=$A)@ becomes @Pair[$A=SourcePos(file=⊤,..)](first=SourcePos)@,
-        -- which compacts to bottom. Reached once a parameter's bound was itself a record with
-        -- fields, which no declared type had until the compiler began declaring its own.
-        restoreField fieldDefType = case fieldDefType of
-          TypeVar (TVVar v) _ _ | Just b <- H.lookup v completedVars, not (isTypeVar b) -> b
-          _                                                                             -> PTopType
-
 -- | Narrow each partial's present fields to their /concrete/ declared type. A destructure pattern
 -- (@#md(text)@) leaves its field's actual at Top; the declaration @#md(text -> String)@ says the
--- field IS a @String@, so an LHS input actually is one. Unlike 'completeDataPartialsTop' (which
--- adds missing fields as Top for keying), this tightens an /already-present/ field to its declared
--- type. Only a 'typeFullyConcrete' declared field type is carried — a parameter-typed field
+-- field IS a @String@, so an LHS input actually is one. This adds no missing field: it tightens
+-- an /already-present/ field to its declared type. Only a 'typeFullyConcrete' declared field type is carried — a parameter-typed field
 -- (@v -> $A@, or a still-parameterized @tail -> ConsList[$T]@) is left as inference has it, so no
 -- free type parameter is reintroduced. Recurses into nested args/vars.
 completeConcreteFields :: (TypeGraph tg) => TypeEnv tg -> Type -> Type
@@ -1604,7 +1536,7 @@ relTypeVal n = TopType H.empty (PredsOne (PredRel $ partialVal n))
 -- spellings as well as its bare value ('partialVal' alone is exactly-zero-args, which would
 -- exclude an applied form such as @#runtime(k=...)@ from the relation).
 relTypeAppliedVal :: TypeName -> Type
-relTypeAppliedVal n = TopType H.empty (PredsOne (PredRel (partialVal n){ptArgMode=PtArgAny}))
+relTypeAppliedVal n = TopType H.empty (PredsOne (PredRel (partialVal n){ptArgMode=PtArgUnbounded}))
 
 -- | Relax an upper bound so an argument-less partial constrains only its name, but only
 -- where the bounded value already carries that name /with arguments/.
@@ -1629,7 +1561,7 @@ relaxNameBoundArgs act (UnionType mPreds leafs consts) = UnionType mPreds (relax
       _                      -> S.empty
     relaxLeafs = joinUnionType . map relaxPartial . splitUnionType
     relaxPartial p@PartialType{ptName, ptArgs}
-      | H.null ptArgs && ptName `S.member` actArgedNames = p{ptArgMode = PtArgAny}
+      | H.null ptArgs && ptName `S.member` actArgedNames = p{ptArgMode = PtArgUnbounded}
       | otherwise                                        = p
 relaxNameBoundArgs _ t = t
 
@@ -1717,7 +1649,7 @@ suffixLookupInDict s dict = case suffixLookup s (H.keys dict) of
   Nothing -> Nothing
 
 topTypeAsPartials :: TypeEnv tg ->[PartialType]
-topTypeAsPartials TypeEnv{teNames} = map ((\p -> p{ptArgMode=PtArgAny}) . partialVal) $ S.toList teNames
+topTypeAsPartials TypeEnv{teNames} = map ((\p -> p{ptArgMode=PtArgUnbounded}) . partialVal) $ S.toList teNames
 
 -- | Expands a 'TypePredicates' value into a 'Type' by resolving class, relation, and expression predicates.
 expandPredicates :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicates -> Type
@@ -2109,7 +2041,7 @@ expandTypesWithNamesFullAux visited typeEnv vaenv (TypeVar v _ _) allowedNames =
 expandTypesWithNamesFullAux _visited TypeEnv{teNames} _ PTopType allowedNames =
   (topFilteredLeafs, not $ S.isSubsetOf teNames allowedNames)
   where
-    topFilteredLeafs = joinUnionType $ map ((\p -> p{ptArgMode=PtArgAny}) . partialVal) $ S.toList allowedNames
+    topFilteredLeafs = joinUnionType $ map ((\p -> p{ptArgMode=PtArgUnbounded}) . partialVal) $ S.toList allowedNames
 -- Constants carry no partial-name information; drop them before filtering (both the outer
 -- positive constants and a Just-top's excluded constants — this computes leaf expansions only,
 -- and a point exclusion never removes a leaf)
@@ -2121,7 +2053,7 @@ expandTypesWithNamesFullAux visited typeEnv@TypeEnv{teNames} vaenv (TopType negP
   let (leafs, hasOutside) = expandPredsWithNamesFull preds
   in (subtractNeg leafs, hasOutside)
   where
-    topFilteredLeafs = joinUnionType $ map ((\p -> p{ptArgMode=PtArgAny}) . partialVal) $ S.toList allowedNames
+    topFilteredLeafs = joinUnionType $ map ((\p -> p{ptArgMode=PtArgUnbounded}) . partialVal) $ S.toList allowedNames
     hasUniverseOutside = not $ S.isSubsetOf teNames allowedNames
 
     expandPredsWithNamesFull :: TypePredicates -> (PartialLeafs, Bool)
@@ -2886,17 +2818,49 @@ declaredArgKeys typeEnv name = case typeGraphArgKeys typeEnv name of
 --     its floor. This is what makes e.g. @/length(this=..)..@ ('relaxNameBoundArgs' widening)
 --     one set with @/length(this=..)@ — @/length@ declares no larger arg-set to relax into.
 --
+-- The spread widens only the UPPER bound ('PtArgAny'). A lower-bounded, upper-unbounded partial
+-- of a DATA type still requires what the data definition declares (Zach, 2026-09-19: "if the
+-- definition includes @Plain.name@ then it is required"), so the declared fields it does not
+-- list are read in with their declared types and the interval's floor is listed ∪ declared:
+-- @Plain..@ over @data(Plain(name -> String, other -> String))@ is exactly
+-- @Plain(name=String, other=String)@, the values of the type — not also the partial
+-- applications @Plain@, @Plain(name)@, @Plain(other)@, which are the exact spellings and the
+-- 'PtArgUnbounded' interval. A bare exact name stays the argument-less value it is. This is a
+-- READ of what @..@ means, done where the ceiling is read; nothing stores it, and every
+-- partial-level operation reads its operands through it at entry.
+--
+-- An unset lower bound is therefore vacuous with no listed args only under an upper bound:
+-- 'PtArgUnbounded' keeps its floor at ∅ rather than becoming the spread.
+--
 -- An unknown name (open world) keeps its bounds. Exact partials return instantly.
 normalizePtArgMode :: TypeGraph tg => TypeEnv tg -> PartialType -> PartialType
-normalizePtArgMode typeEnv p@PartialType{ptName, ptArgs, ptArgMode=PtArgMode lb ub}
+normalizePtArgMode typeEnv p0@PartialType{ptName, ptArgMode=PtArgMode lb ub}
   | lb' && ub' = if ptArgMode p == PtArgExact then p else p{ptArgMode=PtArgExact}
   | otherwise = p{ptArgMode=PtArgMode lb' ub'}
   where
-    lb' = lb || H.null ptArgs
+    p@PartialType{ptArgs} = spreadFloor typeEnv p0
+    lb' = lb || (H.null ptArgs && ub)
     ub' = ub || case declaredArgKeys typeEnv ptName of
       Just kss -> not $ any (H.keysSet ptArgs `strictSubsetOf`) kss
       Nothing  -> False
     strictSubsetOf a b = S.size a < S.size b && a `S.isSubsetOf` b
+
+-- | Reads a spread's declared floor in: a lower-bounded, upper-unbounded partial ('PtArgAny')
+-- of a data type lists the declared fields it does not spell, with their declared types (a
+-- field every data definition of the name declares; the first spelling is used). The mode is
+-- untouched — the spread still admits extra args, which is what an undeclared context
+-- argument (@ContextIn(value=.., io=..)@ against @ContextIn(value=$V)..@) relies on; only
+-- 'normalizePtArgMode' also closes a vacuous ceiling. Every partial-level operation reads its
+-- operands through this at entry, so the floor takes part in the arg comparisons and meets
+-- like any listed field.
+spreadFloor :: TypeGraph tg => TypeEnv tg -> PartialType -> PartialType
+spreadFloor typeEnv p@PartialType{ptName, ptArgs, ptArgMode=PtArgMode lb ub}
+  | lb && not ub, not (H.null floorArgs) = p{ptArgs = H.union ptArgs floorArgs}
+  | otherwise = p
+  where
+    floorArgs = case [dArgs | PartialType{ptArgs=dArgs} <- typeGraphData typeEnv ptName, not (H.null dArgs)] of
+      []   -> H.empty
+      d:ds -> foldl (H.intersectionWith const) d ds `H.difference` ptArgs
 
 -- | The finite list of arg-keysets a partial's arg-mode interval admits, when enumerable:
 -- an upper-bounded interval enumerates the subsets of its listed args directly; an
@@ -3189,16 +3153,17 @@ partialsOverlapSat typeEnv vaenv satUse hyps a b =
 partialCoversSat :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> PartialType -> PartialType -> Bool
 partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
   ptName sup == ptName sub
-  -- Mode-normalized ('normalizePtArgMode') for parity with 'isSubPartialOfWithEnv': a
-  -- vacuous interval bound must not defeat a cover (e.g. @/x..@ with no larger declared
-  -- arg-set is one set with @/x@).
   && argModeCovers (normalizePtArgMode typeEnv sup) (normalizePtArgMode typeEnv sub)
   && all varCovered (H.elems (H.intersectionWith (,) subVarsFull (ptVars sup)))
   && and (H.elems (H.intersectionWithKey argCovered (ptArgs sub) (ptArgs sup)))
   && supPredsCover
   where
-    sup = sup0
-    sub = sub0
+    -- Both sides read with their spread floor ('spreadFloor') for parity with
+    -- 'isSubPartialOfWithEnv', so the floor takes part in the cover like any listed field;
+    -- the keyset check is mode-normalized ('normalizePtArgMode'): a vacuous interval bound
+    -- must not defeat a cover (@/x..@ with no larger declared arg-set is one set with @/x@).
+    sup = spreadFloor typeEnv sup0
+    sub = spreadFloor typeEnv sub0
     -- A field's value set is DECLARATION-BOUNDED (the same clamp 'isSubPartialOfWithEnv'
     -- applies): when the literal cover fails, the sub value is re-read met with the field's
     -- declared type instantiated in the sub's own scope. A materialized member spelling such
@@ -3866,22 +3831,28 @@ comparedPartialsEnv typeEnv vaenv a b = H.union (H.filterWithKey installable mer
 isSubPartialOfWithEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Bool
 isSubPartialOfWithEnv TypeEnv{teDebug=True} _ l r | trace (printf "[SUBPARTIAL] %s ⊆ %s" (show l) (show r)) False = undefined
 isSubPartialOfWithEnv _ _ PartialType{ptName=subName} PartialType{ptName=superName} | subName /= superName = False
+-- Both sides are read with their spread floor ('spreadFloor') before anything else looks at
+-- them: the floor is then a listed field for the arg comparison and the clamp below, not
+-- only for the keyset check.
+isSubPartialOfWithEnv typeEnv vaenv sub0 super0 = isSubPartialOfWithEnvN typeEnv vaenv (spreadFloor typeEnv sub0) (spreadFloor typeEnv super0)
+
+isSubPartialOfWithEnvN :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Bool
 -- Projection (loose) keyset feasibility, used by matching\/dispatch consumers via
 -- 'teArgModeProjection' (TreeBuild, Eval, scheme verification). Reproduces the historical
 -- relation in which an 'Any'\/upper-unbounded source may project onto an 'Exact' requirement
 -- by ignoring extra args. This looseness is genuine projection (not an interval relation)
 -- and is intentionally NOT applied to the precise set algebra below.
-isSubPartialOfWithEnv typeEnv _ sub super
+isSubPartialOfWithEnvN typeEnv _ sub super
   | teArgModeProjection typeEnv
   , looseArgModeRejects sub super = False
 -- Keyset feasibility on the arg-set interval (see 'PtArgMode'): sub ⊆ super requires
 -- super's lower\/upper bound to hold for every arg-set allowed by sub ('argModeCovers'),
 -- on mode-normalized partials so a vacuous bound does not read as extra arg-sets
 -- (e.g. @/length(this=..)..@ IS @/length(this=..)@ — see 'normalizePtArgMode').
-isSubPartialOfWithEnv typeEnv _ sub super
+isSubPartialOfWithEnvN typeEnv _ sub super
   | not (teArgModeProjection typeEnv)
   , not (argModeCovers (normalizePtArgMode typeEnv super) (normalizePtArgMode typeEnv sub)) = False
-isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subArgs, ptPreds=subPreds} super@PartialType{ptVars=superVars, ptArgs=superArgs, ptPreds=superPreds} = debugTrace typeEnv msg result
+isSubPartialOfWithEnvN typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subArgs, ptPreds=subPreds} super@PartialType{ptVars=superVars, ptArgs=superArgs, ptPreds=superPreds} = debugTrace typeEnv msg result
   where
     vaenv' = comparedPartialsEnv typeEnv vaenv super sub
     -- A sub-side FREE reference reads as ⊤ ('freeTVIntToTop'): it must not resolve through
@@ -5842,7 +5813,12 @@ boundClassInstancesFor typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv bound v
 
 intersectPartialsBase :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Maybe (TypeVarArgEnv, [PartialType])
 intersectPartialsBase _ _ PartialType{ptName=aName} PartialType{ptName=bName} | aName /= bName = Nothing
-intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArgMode aLb aUb)) (PartialType _ bVars bArgs bPreds (PtArgMode bLb bUb)) = do
+-- Both operands are read with their spread floor ('spreadFloor') first, so a spread's declared
+-- floor meets as listed fields; the modes are left as written (a spread still admits extras).
+intersectPartialsBase typeEnv vaenv a0 b0 = intersectPartialsBaseN typeEnv vaenv (spreadFloor typeEnv a0) (spreadFloor typeEnv b0)
+
+intersectPartialsBaseN :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Maybe (TypeVarArgEnv, [PartialType])
+intersectPartialsBaseN typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArgMode aLb aUb)) (PartialType _ bVars bArgs bPreds (PtArgMode bLb bUb)) = do
   (varsVaenvs, vars') <- unzip <$> intersectMapVars H.empty aVars bVars
   -- Args (unlike vars) are intersected without killing the partial when a value intersects to
   -- bottom: such an arg simply cannot be present. For a *required* arg (a lower-bounded side

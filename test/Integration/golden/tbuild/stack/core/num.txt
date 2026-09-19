@@ -213,7 +213,7 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Data/Primitive/round
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float } ) -> /Data/Primitive/Integer
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float.. } ) -> /Data/Primitive/Integer
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -276,7 +276,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Primitive/nonNeg
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer } ) -> ∀/Data/Primitive/Boolean =
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> ∀/Data/Primitive/Boolean =
                             ( /operator>=
                                 ( EAppArg
                                     { eaaArg = Value /l -> TVArg /this = ( Value /this ↦ TVArg /this ) }
@@ -320,9 +320,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/eq
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer } ) -> /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] = Value /Data/Primitive/IntOrdering
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] = Value /Data/Primitive/IntOrdering
                         , /Data/Algebra/eq
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float } ) -> /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] = Value /Data/Primitive/FloatOrdering
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float.. } ) -> /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] = Value /Data/Primitive/FloatOrdering
                         ]
                     }
                 )
@@ -342,7 +342,7 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Data/Primitive/floor
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float } ) -> /Data/Primitive/Integer
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float.. } ) -> /Data/Primitive/Integer
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -490,7 +490,7 @@ Prgm
                     , omiDefs =
                         [ /Data/Algebra/equal
                             ( EAppArg { eaaArg = Value /other -> ∀/Data/Algebra/Eq } )
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer } ) -> ∀/Data/Primitive/Boolean =
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> ∀/Data/Primitive/Boolean =
                             ( /rel
                                 ( EAppArg
                                     { eaaArg = Value /a -> TVArg /this = ( Value /this ↦ TVArg /this ) }
@@ -526,7 +526,7 @@ Prgm
                             )
                         , /Data/Algebra/equal
                             ( EAppArg { eaaArg = Value /other -> ∀/Data/Algebra/Eq } )
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float } ) -> ∀/Data/Primitive/Boolean =
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float.. } ) -> ∀/Data/Primitive/Boolean =
                             ( /rel
                                 ( EAppArg
                                     { eaaArg = Value /a -> TVArg /this = ( Value /this ↦ TVArg /this ) }
@@ -571,9 +571,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/ord
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer } ) -> /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] = Value /Data/Primitive/IntOrdering
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] = Value /Data/Primitive/IntOrdering
                         , /Data/Algebra/ord
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float } ) -> /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] = Value /Data/Primitive/FloatOrdering
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float.. } ) -> /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] = Value /Data/Primitive/FloatOrdering
                         ]
                     }
                 )
@@ -583,7 +583,7 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /Data/Primitive/ceil
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float } ) -> /Data/Primitive/Integer
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float.. } ) -> /Data/Primitive/Integer
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -607,7 +607,7 @@ Prgm
                     , omiDefs =
                         [ /Data/Algebra/compareTo
                             ( EAppArg { eaaArg = Value /other -> ∀/Data/Algebra/Ord } )
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer } ) -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
                             ( /compare
                                 ( EAppArg
                                     { eaaArg = Value /a -> TVArg /this = ( Value /this ↦ TVArg /this ) }
@@ -629,7 +629,7 @@ Prgm
                             )
                         , /Data/Algebra/compareTo
                             ( EAppArg { eaaArg = Value /other -> ∀/Data/Algebra/Ord } )
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float } ) -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float.. } ) -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
                             ( /compare
                                 ( EAppArg
                                     { eaaArg = Value /a -> TVArg /this = ( Value /this ↦ TVArg /this ) }

@@ -9,9 +9,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/toString
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/True } ) -> /Data/String = "True"
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/True.. } ) -> /Data/String = "True"
                         , /Data/toString
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/False } ) -> /Data/String = "False"
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/False.. } ) -> /Data/String = "False"
                         ]
                     }
                 )

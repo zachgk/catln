@@ -372,7 +372,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/equal( Value other )( Value /this -> /Data/Map/Leaf ) -> ∀/Data/Primitive/Boolean = /Data/Map/mapEqual( Value a= Value /Data/Map/Leaf )( Value b= Value other )
+                        [ /Data/Algebra/equal( Value other )( Value /this -> /Data/Map/Leaf.. ) -> ∀/Data/Primitive/Boolean = /Data/Map/mapEqual( Value a= Value /Data/Map/Leaf )( Value b= Value other )
                         , /Data/Algebra/equal( Value other )
                             ( Value /this= /Data/Map/Node[ /V : ∀/Data/Algebra/Eq ][ /K : ∀/Data/Algebra/Ord ]( Value left )( Value key )( Value value )( Value right ) ) -> ∀/Data/Primitive/Boolean = /Data/Map/mapEqual
                             ( Value a= /Data/Map/Node( Value left= Value left )( Value key= Value key )( Value value= Value value )( Value right= Value right ) )( Value b= Value other )

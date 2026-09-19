@@ -70,7 +70,7 @@ Prgm
                             )
                         ]
                     , omiDefs =
-                        [ /Data/List/length( Value /this -> /Data/List/Nil ) -> /Data/Primitive/Integer = CInt
+                        [ /Data/List/length( Value /this -> /Data/List/Nil.. ) -> /Data/Primitive/Integer = CInt
                             { ciValue = 0 }
                         , /Data/List/length
                             ( Value /this= Cons( Value head )( Value tail ) ) -> /Data/Primitive/Integer = /operator+
@@ -88,7 +88,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/toString( Value /this -> /Data/List/Nil ) -> /Data/String = CStr
+                        [ /Data/toString( Value /this -> /Data/List/Nil.. ) -> /Data/String = CStr
                             { csValue = "[]" }
                         , /Data/toString
                             ( Value /this= Cons[ /T : ∀/Data/ToString ]( Value head@Value h )( Value tail@Value t ) ) -> /Data/String = /operator++
@@ -481,9 +481,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/equal( Value other= Value /Data/List/Nil )( Value /this -> /Data/List/Nil ) -> ∀/Data/Primitive/Boolean = Value True
+                        [ /Data/Algebra/equal( Value other= Value /Data/List/Nil )( Value /this -> /Data/List/Nil.. ) -> ∀/Data/Primitive/Boolean = Value True
                         , /Data/Algebra/equal
-                            ( Value other= /Data/List/Cons( Value head )( Value tail ) )( Value /this -> /Data/List/Nil ) -> ∀/Data/Primitive/Boolean = Value False
+                            ( Value other= /Data/List/Cons( Value head )( Value tail ) )( Value /this -> /Data/List/Nil.. ) -> ∀/Data/Primitive/Boolean = Value False
                         , /Data/Algebra/equal( Value other= Value /Data/List/Nil )
                             ( Value /this= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/Primitive/Boolean = Value False
                         , /Data/Algebra/equal
@@ -515,9 +515,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/compareTo( Value other= Value /Data/List/Nil )( Value /this -> /Data/List/Nil ) -> ∀/Data/Algebra/Comparison = Value /Data/Algebra/Equal
+                        [ /Data/Algebra/compareTo( Value other= Value /Data/List/Nil )( Value /this -> /Data/List/Nil.. ) -> ∀/Data/Algebra/Comparison = Value /Data/Algebra/Equal
                         , /Data/Algebra/compareTo
-                            ( Value other= /Data/List/Cons( Value head )( Value tail ) )( Value /this -> /Data/List/Nil ) -> ∀/Data/Algebra/Comparison = Value /Data/Algebra/LessThan
+                            ( Value other= /Data/List/Cons( Value head )( Value tail ) )( Value /this -> /Data/List/Nil.. ) -> ∀/Data/Algebra/Comparison = Value /Data/Algebra/LessThan
                         , /Data/Algebra/compareTo( Value other= Value /Data/List/Nil )
                             ( Value /this= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/Algebra/Comparison = Value /Data/Algebra/GreaterThan
                         , /Data/Algebra/compareTo

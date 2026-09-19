@@ -448,11 +448,8 @@ Prgm
                                                                     ( EAppArg
                                                                         { eaaArg = Value /r -> /Catln/ImportResult
                                                                             ( /prgm=/Catln/RawPrgm..
-                                                                            , /reads=
-                                                                                ( /Data/Maybe/Nothing + /Data/Maybe/Some
-                                                                                    [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
-                                                                                    ( /value=∀/Data/List[ /T=∀/Catln/ReadPath ] )
-                                                                                )
+                                                                            , /reads=∀/Data/Maybe
+                                                                                [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
                                                                             , /source=∀/Data/Maybe[ /T=/Data/String.. ]
                                                                             ) =
                                                                             ( /Test/oneResult
@@ -460,11 +457,8 @@ Prgm
                                                                                     { eaaArg = Value /name -> /Data/String = "myFn" }
                                                                                 ) ↦ /Catln/ImportResult
                                                                                 ( /prgm=/Catln/RawPrgm..
-                                                                                , /reads=
-                                                                                    ( /Data/Maybe/Nothing + /Data/Maybe/Some
-                                                                                        [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
-                                                                                        ( /value=∀/Data/List[ /T=∀/Catln/ReadPath ] )
-                                                                                    )
+                                                                                , /reads=∀/Data/Maybe
+                                                                                    [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
                                                                                 , /source=∀/Data/Maybe[ /T=/Data/String.. ]
                                                                                 )
                                                                             )
@@ -620,8 +614,7 @@ Prgm
                                                                                                                         , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                                                                                                                         ]..
                                                                                                                     ]
-                                                                                                                , /obj=
-                                                                                                                    ( /Data/Maybe/Nothing + /Data/Maybe/Some[ /T=∀/Catln/RawExpr ]( /value=∀/Catln/RawExpr ) )
+                                                                                                                , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                                                                                                                 , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
                                                                                                                 , /doc=∀/Data/Maybe[ /T=/Data/String.. ]
                                                                                                                 , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
@@ -637,8 +630,7 @@ Prgm
                                                                                                                             , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                                                                                                                             ]..
                                                                                                                         ]
-                                                                                                                    , /obj=
-                                                                                                                        ( /Data/Maybe/Nothing + /Data/Maybe/Some[ /T=∀/Catln/RawExpr ]( /value=∀/Catln/RawExpr ) )
+                                                                                                                    , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                                                                                                                     , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
                                                                                                                     , /doc=∀/Data/Maybe[ /T=/Data/String.. ]
                                                                                                                     , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
@@ -1634,8 +1626,7 @@ Prgm
                                         , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                                         ]..
                                     ]
-                                , /obj=
-                                    ( /Data/Maybe/Nothing + /Data/Maybe/Some[ /T=∀/Catln/RawExpr ]( /value=∀/Catln/RawExpr ) )
+                                , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                                 , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
                                 , /doc=∀/Data/Maybe[ /T=/Data/String.. ]
                                 , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
@@ -1651,8 +1642,7 @@ Prgm
                                             , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                                             ]..
                                         ]
-                                    , /obj=
-                                        ( /Data/Maybe/Nothing + /Data/Maybe/Some[ /T=∀/Catln/RawExpr ]( /value=∀/Catln/RawExpr ) )
+                                    , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
                                     , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
                                     , /doc=∀/Data/Maybe[ /T=/Data/String.. ]
                                     , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
@@ -1843,11 +1833,8 @@ Prgm
                         ( EAppArg
                             { eaaArg = Value /r -> /Catln/ImportResult
                                 ( /prgm=/Catln/RawPrgm..
-                                , /reads=
-                                    ( /Data/Maybe/Nothing + /Data/Maybe/Some
-                                        [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
-                                        ( /value=∀/Data/List[ /T=∀/Catln/ReadPath ] )
-                                    )
+                                , /reads=∀/Data/Maybe
+                                    [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
                                 , /source=∀/Data/Maybe[ /T=/Data/String.. ]
                                 ) =
                                 ( /Test/oneResult
@@ -1855,11 +1842,8 @@ Prgm
                                         { eaaArg = Value /name -> /Data/String = "myFn" }
                                     ) ↦ /Catln/ImportResult
                                     ( /prgm=/Catln/RawPrgm..
-                                    , /reads=
-                                        ( /Data/Maybe/Nothing + /Data/Maybe/Some
-                                            [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
-                                            ( /value=∀/Data/List[ /T=∀/Catln/ReadPath ] )
-                                        )
+                                    , /reads=∀/Data/Maybe
+                                        [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
                                     , /source=∀/Data/Maybe[ /T=/Data/String.. ]
                                     )
                                 )

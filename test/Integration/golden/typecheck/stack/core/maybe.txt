@@ -86,9 +86,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/equal( Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /this -> /Data/Maybe/Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        [ /Data/Algebra/equal( Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /this -> /Data/Maybe/Nothing.. ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         , /Data/Algebra/equal
-                            ( Value /other -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Maybe/Some( Value /value -> ∀/Data/Algebra/Eq ) )( Value /this -> /Data/Maybe/Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                            ( Value /other -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Maybe/Some( Value /value -> ∀/Data/Algebra/Eq ) )( Value /this -> /Data/Maybe/Nothing.. ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/Algebra/equal( Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( Value /this -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) = /Data/Maybe/Some( Value /value -> ∀/Data/Algebra/Eq ) ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/Algebra/equal
@@ -104,9 +104,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/compareTo( Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /this -> /Data/Maybe/Nothing ) -> /Data/Algebra/Equal = Value /Data/Algebra/Equal
+                        [ /Data/Algebra/compareTo( Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /this -> /Data/Maybe/Nothing.. ) -> /Data/Algebra/Equal = Value /Data/Algebra/Equal
                         , /Data/Algebra/compareTo
-                            ( Value /other -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Ord ]( /value=∀/Data/Algebra/Ord ) = /Data/Maybe/Some( Value /value -> ∀/Data/Algebra/Ord ) )( Value /this -> /Data/Maybe/Nothing ) -> /Data/Algebra/LessThan = Value /Data/Algebra/LessThan
+                            ( Value /other -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Ord ]( /value=∀/Data/Algebra/Ord ) = /Data/Maybe/Some( Value /value -> ∀/Data/Algebra/Ord ) )( Value /this -> /Data/Maybe/Nothing.. ) -> /Data/Algebra/LessThan = Value /Data/Algebra/LessThan
                         , /Data/Algebra/compareTo( Value /other -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( Value /this -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Ord ]( /value=∀/Data/Algebra/Ord ) = /Data/Maybe/Some( Value /value -> ∀/Data/Algebra/Ord ) ) -> /Data/Algebra/GreaterThan = Value /Data/Algebra/GreaterThan
                         , /Data/Algebra/compareTo

@@ -236,22 +236,10 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByKnown i p@ST
     -- A known bound is a spelled type (annotation seeds enter here), so it is decl-origin.
     reqDecl' = intersectTypesEnv feTypeEnv (fmap (stypeReqDecl . snd) vaenv) reqDecl (boundFor reqDecl)
 computeConstraint _ con@(Constraint _ _ (BoundedByObjs _ SType{stypeReq=PTopType} _)) = (False, con)
-computeConstraint FEnv{feTypeEnv, feCompletedAllObjsKey, feCompletedAllObjs} con@(Constraint _ vaenv (BoundedByObjs i p@SType{stypeReq=pReq, stypeReqDecl=pReqDecl} objMapBoundUb)) = (False, con{conDat=BoundedByObjs i (p{stypeReq=pReq', stypeReqDecl=pReqDecl'}) objMapBoundUb})
+computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByObjs i p@SType{stypeReq=pReq, stypeReqDecl=pReqDecl} objMapBoundUb)) = (False, con{conDat=BoundedByObjs i (p{stypeReq=pReq', stypeReqDecl=pReqDecl'}) objMapBoundUb})
   where
     vaenv' = fmap (stypeAct . snd) vaenv
     argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnv vaenv' $ UnionType Nothing (joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con) []
-    -- Also offer the /completed/ form of each bound object: a nested param-form annotation
-    -- (e.g. @Box[T]@ inside @unwrap(b=Box[T])@ for @data Box[T](v -> T)@) gets its declared fields
-    -- restored to @Box[T](v=$T)@ (see 'completeDataPartials'), so a field-form value @Box(v=...)@
-    -- being bounded can reconcile with it. The original (uncompleted) forms are kept in the union
-    -- too, so a param-form value still matches without widening.
-    -- 'objMapBoundUb' is the 'feUnionAllObjs' descriptor (substituted uniformly by 'showCon'), so its
-    -- completion is identical across all 'BoundedByObjs' constraints whose bound equals the epoch's
-    -- cached universe 'feCompletedAllObjsKey'. Reuse the per-epoch cache EXACTLY in that case (the
-    -- common one — a converged universe), and recompute only if the bound differs (e.g. the universe
-    -- shifted mid-epoch), so the result is byte-identical to the uncached computation.
-    objMapBoundUb' | objMapBoundUb == feCompletedAllObjsKey = feCompletedAllObjs
-                   | otherwise = unionTypes feTypeEnv objMapBoundUb (completeDataPartials feTypeEnv objMapBoundUb)
     -- A type is REQUIRED to be a declared/defined object, but that does not mean it ACTUALLY is one:
     -- being one of the known objects is only a requirement. So narrow only the requirement against
     -- the object-universe bound and leave the actual untouched.
@@ -278,7 +266,7 @@ computeConstraint FEnv{feTypeEnv, feCompletedAllObjsKey, feCompletedAllObjs} con
     -- objects preserves the decl channel's origin purity: no actual-derived input enters.
     narrowChannel chanVaenv chanReq = chanReq'
       where
-        boundUbReq = relaxRecursiveSelfArgs feTypeEnv $ unionTypes feTypeEnv (unionTypes feTypeEnv objMapBoundUb' (openClassPart feTypeEnv chanReq)) argsBoundUb
+        boundUbReq = relaxRecursiveSelfArgs feTypeEnv $ unionTypes feTypeEnv (unionTypes feTypeEnv objMapBoundUb (openClassPart feTypeEnv chanReq)) argsBoundUb
         boundNames = case boundUbReq of
           UnionType _ bLeafs _ -> map ptName $ splitUnionType bLeafs
           _                    -> []
@@ -456,7 +444,7 @@ executeConstraint cid con = do
       -- @con'@ plus, for the kinds that read the per-epoch env caches, those caches
       -- ('feReachesTypeEnv' for ArrowTo/PropEq/FnInputBound via 'mkReachesEnv' /
       -- 'settlePropSlot' / 'fnArgInputBound'; the universe is already substituted INTO a
-      -- BoundedByObjs view by 'showCon', and 'feCompletedAllObjs' is an exact function of
+      -- BoundedByObjs view by 'showCon', and 'feUniverseKey' tracks
       -- it). An ArrowTo additionally resolves its 'conOs' object-side arg entries
       -- ('conOaResolveKey'). When every component of that key equals the last execution's,
       -- the recomputed stores would all be refused as unchanged by 'setScheme' — a provable
@@ -530,15 +518,10 @@ runConstraintsIdx limit cons = do
     TypeCheckResult notes (reachesVPart, reachesTypeEnv) -> do
       lift $ TypeCheckResult notes ()
       -- Every 'BoundedByObjs' constraint is bounded by the same 'feUnionAllObjs' descriptor
-      -- (substituted uniformly by 'showCon'), so the completion @unionTypes u (completeDataPartials u)@
-      -- in 'computeConstraint' is identical across all of them. Compute it once per epoch, keyed by the
-      -- universe value @u@ so 'computeConstraint' can reuse it EXACTLY (only when its bound equals @u@).
+      -- (substituted uniformly by 'showCon'); its value at the epoch's start is one of the
+      -- per-epoch env inputs the stamp below tracks.
       let u = maybe BottomType stypeAct $ tcreToMaybe $ descriptor env $ feUnionAllObjs env
-      -- The completion is an exact function of @u@: reuse last epoch's when @u@ is unchanged.
-      let uUnchanged = u == feCompletedAllObjsKey env
-      let completedAllObjs = if uUnchanged
-            then feCompletedAllObjs env
-            else unionTypes (feTypeEnv env) u (completeDataPartials (feTypeEnv env) u)
+      let uUnchanged = u == feUniverseKey env
       -- Bump the env stamp iff a per-epoch env input changed: constraint kinds that read
       -- these caches only skip re-execution within an unchanged stamp (see 'feConMemo').
       -- Only the LIVE (V-side) part of the reaches graph is compared: the typechecked side
@@ -546,7 +529,7 @@ runConstraintsIdx limit cons = do
       -- 'uUnchanged' False on the fragment's first epoch.
       let envUnchanged = uUnchanged && reachesVPart == feReachesVPart env
       -- The input-arrow name set is a pure function of the reaches graph: reuse it within an
-      -- unchanged env, recompute otherwise (same policy as the completed-universe cache).
+      -- unchanged env, recompute otherwise (same policy as the universe key).
       let inputArrowNames = if envUnchanged then feInputArrowNames env else typeGraphInputEmbeddedNames reachesTypeEnv
       -- The reach-query memo's identity: an unchanged graph KEEPS the previous epoch's env
       -- value with its existing token (the memo stays warm across quiet epochs); a changed
@@ -556,7 +539,7 @@ runConstraintsIdx limit cons = do
             then feReachesTypeEnv env
             else reachesTypeEnv{teQueryCacheKey = Just (unsafeFreshQueryToken (teTypeGraph reachesTypeEnv))}
       modify $ \e -> e{feReachesTypeEnv = reachesTypeEnv', feReachesVPart = reachesVPart,
-                       feCompletedAllObjsKey = u, feCompletedAllObjs = completedAllObjs,
+                       feUniverseKey = u,
                        feInputArrowNames = inputArrowNames,
                        feEnvStamp = if envUnchanged then feEnvStamp e else feEnvStamp e + 1}
       constraintsToPrune <- mapM (uncurry executeConstraint) cons

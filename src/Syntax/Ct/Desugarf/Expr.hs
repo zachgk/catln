@@ -140,11 +140,23 @@ semiDesExpr sdm@SDInput{} obj (RawContextApply m (_, be) ctxs) = (`setExprMeta` 
     mapCtx RawObjArr{roaObj=Just ctxObj, roaArr=Just (_, ctxM)} = (partialToKey $ exprToPartialType ctxObj, IArgM ctxM)
     mapCtx ctx = error $ printf "Invalid input context: %s" (show ctx)
 semiDesExpr sdm obj (RawParen e) = semiDesExpr sdm obj e
-semiDesExpr sdm obj (RawMethod m (RawTheExpr n) method) = (`setExprMeta` m) $ semiDesExpr sdm' obj (method `applyRawIArgs` [(partialKey "this", IArgM (Just n))]) -- Parse type methods like :Integer.toString, Only for input expressions
+semiDesExpr sdm obj (RawMethod m (RawTheExpr n) method) = (`setExprMeta` m) $ semiDesExpr sdm' obj (method `applyRawIArgs` [(partialKey "this", IArgM (Just n'))]) -- Parse type methods like :Integer.toString, Only for input expressions
   where
     sdm' = case sdm of
       SDInput _ -> SDInput True
       _         -> sdm
+    -- A BARE type receiver @:X@ is THE type: every value of it, which is the spread @X..@ (a
+    -- bare name alone is the argument-less value, so @:Plain.nameOf@ over
+    -- @data(Plain(name, other))@ would otherwise declare over a value no definition
+    -- destructuring the fields could fulfil). Only the bare form: a receiver carrying a
+    -- pattern (@:Cons[$T](head, tail)@) does not reach this clause, and a type VARIABLE
+    -- receiver (@:$T.toString@) is already every value of its binding and has no name to
+    -- spread. Built as the parser builds a written @X..@, with the base typed by its
+    -- relation so the spread has something to widen.
+    n' = case n of
+      RawValue vm vn | isNothing (parseTVVar (nameStr vn)) ->
+        RawTupleApply (emptyMetaM vm) (emptyMetaM vm, RawValue (mWithType (relTypeVal vn) vm) vn) [(True, rawInObjArr True (RawHoleExpr (emptyMetaM vm) (HoleActive Nothing)))]
+      _ -> n
 semiDesExpr sdm obj (RawMethod m base method) = (`setExprMeta` m) $ semiDesExpr sdm' obj $ applyRawArgs method [(Just $ partialKey "this", base)]
   where
     sdm' = case sdm of

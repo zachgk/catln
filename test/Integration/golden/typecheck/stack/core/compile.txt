@@ -80,7 +80,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Catln/exit( Value /val -> /Data/Primitive/Integer )( Value /this -> /Catln/IO ) -> /Catln/IO ]
+                        [ /Catln/exit( Value /val -> /Data/Primitive/Integer )( Value /this -> /Catln/IO.. ) -> /Catln/IO ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -208,7 +208,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Catln/println( Value /msg -> /Data/String )( Value /this -> /Catln/IO ) -> /Catln/IO ]
+                        [ /Catln/println( Value /msg -> /Data/String )( Value /this -> /Catln/IO.. ) -> /Catln/IO ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }

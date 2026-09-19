@@ -84,24 +84,23 @@ data SchemeActReq = SchemeAct | SchemeReq
 type Pnt = Int
 
 type FEnvTypeEnv = TypeEnv (ObjArrTypeGraph Expr ())
-data FEnv = FEnv { fePnts                :: IM.IntMap Scheme
-                 , feConsDats            :: [[VConstraint]]
-                 , feCons                :: [VConstraint]
-                 , feUnionAllObjs        :: VarMeta -- union of all TypeObj for argument inference
-                 , feVTypeGraph          :: VTypeGraph
-                 , feTTypeGraph          :: TTypeGraph
-                 , feTTypeGraphCleared   :: ObjectMap Expr () -- ^ 'feTTypeGraph' with metadata cleared, maintained incrementally by 'fAddTTypeGraph' (cleared once per arrow) so 'buildTypeEnv' does not re-clear the whole typechecked graph every epoch.
-                 , feReachesVPart        :: ObjectMap Expr () -- ^ The previous epoch's live (V-side) contribution to the reaches type graph. The typechecked side only changes between solve fragments (where the universe key change already bumps the env stamp), so comparing the small live part alone decides 'envUnchanged'.
-                 , feUpdatedDuringEpoch  :: Bool -- ^ If a pnt is updated during the epoch
-                 , feTypeEnv             :: FEnvTypeEnv
-                 , feReachesTypeEnv      :: FEnvTypeEnv -- ^ Per-epoch cache of 'buildTypeEnv' (the constraint-independent reaches type graph), recomputed once at the top of each 'runConstraints' epoch and reused across all 'mkReachesEnv' calls. Initialized to the base 'feTypeEnv' but never read until the first epoch populates it.
-                 , feCompletedAllObjsKey :: Type -- ^ The 'feUnionAllObjs' descriptor value from which 'feCompletedAllObjs' was built (recomputed each epoch). 'computeConstraint' uses the cache only when a 'BoundedByObjs' constraint's (showCon-substituted) bound equals this key, so the cache is an EXACT memo of the union+completion — no staleness. Initialized to 'BottomType'.
-                 , feCompletedAllObjs    :: Type -- ^ Per-epoch cache of the completed @feUnionAllObjs@ bound (@unionTypes key (completeDataPartials key)@ for @key = feCompletedAllObjsKey@). Every 'BoundedByObjs' constraint is bounded by the same 'feUnionAllObjs' descriptor (substituted uniformly by 'showCon'), so this otherwise-identical union+completion is computed once per epoch and reused by every constraint whose bound matches the key. Initialized to 'PTopType' but never read until the first epoch populates it.
-                 , feInputArrowNames     :: S.HashSet Name -- ^ Per-epoch cache of 'typeGraphInputEmbeddedNames' on the reaches env: every name embedded in some arrow object's input spelling — the forms some arrow can accept UNSETTLED. A rewritable form whose name is absent has no consuming arrow anywhere, so deferring it past its own rewrite frontier is meaningless ('arrowConstrainUbs'\'s consumption-dest settle forcing). Recomputed when the per-epoch env inputs change (same guard as 'feCompletedAllObjs').
-                 , feLocalDefNames       :: S.HashSet Name -- ^ Absolute names defined by the programs currently being encoded (not yet in 'feTypeEnv'\'s object map). Used to tell a destructuring binding variable from a reference to a same-batch definition.
-                 , feEnvStamp            :: Int -- ^ Version counter for the per-epoch env inputs ('feReachesTypeEnv' graph and 'feCompletedAllObjsKey' universe): bumped at each epoch start iff either differs from the previous epoch. Constraint kinds that read those env caches skip re-execution only within the same stamp (see 'feConMemo').
-                 , feConMemo             :: IM.IntMap ConMemo -- ^ Per-constraint memo of the last execution's resolved inputs, keyed by the constraint's position in the 'runConstraints' list. 'executeConstraint' skips 'computeConstraint'+'saveConstraint' when the constraint's resolved view (and, for env-reading kinds, the env stamp) is unchanged: a pure function of unchanged inputs recomputes the same stores, which 'setScheme' would refuse as unchanged — a provable no-op.
-                 , feInstruments         :: [AnyInstrument] -- ^ What is watching this solve, in the order it was asked for. The solve does not read them and behaves identically whichever are attached; what they kept is read off here once it is over ('instrumentResults') or while it is failing ('instrumentDiagnostics'). Empty is a solve nothing is watching.
+data FEnv = FEnv { fePnts               :: IM.IntMap Scheme
+                 , feConsDats           :: [[VConstraint]]
+                 , feCons               :: [VConstraint]
+                 , feUnionAllObjs       :: VarMeta -- union of all TypeObj for argument inference
+                 , feVTypeGraph         :: VTypeGraph
+                 , feTTypeGraph         :: TTypeGraph
+                 , feTTypeGraphCleared  :: ObjectMap Expr () -- ^ 'feTTypeGraph' with metadata cleared, maintained incrementally by 'fAddTTypeGraph' (cleared once per arrow) so 'buildTypeEnv' does not re-clear the whole typechecked graph every epoch.
+                 , feReachesVPart       :: ObjectMap Expr () -- ^ The previous epoch's live (V-side) contribution to the reaches type graph. The typechecked side only changes between solve fragments (where the universe key change already bumps the env stamp), so comparing the small live part alone decides 'envUnchanged'.
+                 , feUpdatedDuringEpoch :: Bool -- ^ If a pnt is updated during the epoch
+                 , feTypeEnv            :: FEnvTypeEnv
+                 , feReachesTypeEnv     :: FEnvTypeEnv -- ^ Per-epoch cache of 'buildTypeEnv' (the constraint-independent reaches type graph), recomputed once at the top of each 'runConstraints' epoch and reused across all 'mkReachesEnv' calls. Initialized to the base 'feTypeEnv' but never read until the first epoch populates it.
+                 , feUniverseKey        :: Type -- ^ The 'feUnionAllObjs' descriptor value at the last epoch's start: the per-epoch env stamp bumps when it changes.ion — no staleness. Initialized to 'BottomType'.
+                 , feInputArrowNames    :: S.HashSet Name -- ^ Per-epoch cache of 'typeGraphInputEmbeddedNames' on the reaches env: every name embedded in some arrow object's input spelling — the forms some arrow can accept UNSETTLED. A rewritable form whose name is absent has no consuming arrow anywhere, so deferring it past its own rewrite frontier is meaningless ('arrowConstrainUbs'\'s consumption-dest settle forcing). Recomputed when the per-epoch env inputs change (same guard as 'feUniverseKey').
+                 , feLocalDefNames      :: S.HashSet Name -- ^ Absolute names defined by the programs currently being encoded (not yet in 'feTypeEnv'\'s object map). Used to tell a destructuring binding variable from a reference to a same-batch definition.
+                 , feEnvStamp           :: Int -- ^ Version counter for the per-epoch env inputs ('feReachesTypeEnv' graph and 'feUniverseKey' universe): bumped at each epoch start iff either differs from the previous epoch. Constraint kinds that read those env caches skip re-execution only within the same stamp (see 'feConMemo').
+                 , feConMemo            :: IM.IntMap ConMemo -- ^ Per-constraint memo of the last execution's resolved inputs, keyed by the constraint's position in the 'runConstraints' list. 'executeConstraint' skips 'computeConstraint'+'saveConstraint' when the constraint's resolved view (and, for env-reading kinds, the env stamp) is unchanged: a pure function of unchanged inputs recomputes the same stores, which 'setScheme' would refuse as unchanged — a provable no-op.
+                 , feInstruments        :: [AnyInstrument] -- ^ What is watching this solve, in the order it was asked for. The solve does not read them and behaves identically whichever are attached; what they kept is read off here once it is over ('instrumentResults') or while it is failing ('instrumentDiagnostics'). Empty is a solve nothing is watching.
                  } deriving (Show)
 
 -- | A constraint's last-execution inputs and result: env stamp ('feEnvStamp'), the resolved

@@ -35,12 +35,12 @@ Prgm
                         ]
                     , omiRuntimeDecls =
                         [ /Data/toString
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer } ) -> /Data/String
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> /Data/String
                         ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/toString
-                            ( EAppArg { eaaArg = Value /this -> /Data/String } ) -> /Data/String = ( Value /this ↦ /Data/String )
+                            ( EAppArg { eaaArg = Value /this -> /Data/String.. } ) -> /Data/String = ( Value /this ↦ /Data/String )
                         ]
                     }
                 )

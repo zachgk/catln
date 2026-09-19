@@ -316,8 +316,8 @@ fnArgInputBound env callAct fnKey inKey = case callAct of
 -- only, and only a resolved positive destination is written — a Top, symbolic-variable, or
 -- class-predicate destination binds nothing (writing symbolic knowledge into a resolving point
 -- oscillates against later epochs). Top-valued /fields/ inside the destination's partials are
--- allowed: a completed annotation restores unbound declared fields as Top (see
--- 'completeDataPartialsTop'), and the partial names still discriminate the instances.
+-- allowed: an annotation may leave a declared field unbound at Top, and the partial names
+-- still discriminate the instances.
 outVarBoundSrc :: FEnv -> Type -> Type -> Type
 outVarBoundSrc env dest@(UnionType Nothing destLeafs _) src@(UnionType Nothing srcLeafs srcConsts)
   | not (H.null destLeafs) && not (isBottomType dest) && not (typeContainsTypeVar dest) =
@@ -586,7 +586,7 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
         Constraint _ _ (ArrowTo 10 _ _) -> True
         Constraint _ _ (ArrowTo 15 _ _) -> True
         _                               -> False
-  let settleForced l = not (null (typeGraphQueryAllWithReason reachesTypeEnv vaenv' ((partialVal (ptName l)){ptArgMode=PtArgAny})))
+  let settleForced l = not (null (typeGraphQueryAllWithReason reachesTypeEnv vaenv' ((partialVal (ptName l)){ptArgMode=PtArgUnbounded})))
                      && (not (reqAdmitsForm reachesTypeEnv vaenv' destReqDecl l)
                           || (destIsArgArm && not (S.member (ptName l) (feInputArrowNames env))))
                      && reachesTo reachesTypeEnv vaenv' (singletonType l) destBound
@@ -912,7 +912,7 @@ settlePropSlot env@FEnv{feTypeEnv} vaenv propName@(TVArg k) superAct@(UnionType 
       -- its required-node check counts a leaf already inside the bound as reaching by
       -- STAYING PUT (a deep subtype against the forced bound per data literal per epoch).
       -- The probe is the bare name with open args (no deep-argument intersects).
-      let settleForced l = not (null (typeGraphQueryAllWithReason reachesTypeEnv vaenv ((partialVal (ptName l)){ptArgMode=PtArgAny})))
+      let settleForced l = not (null (typeGraphQueryAllWithReason reachesTypeEnv vaenv ((partialVal (ptName l)){ptArgMode=PtArgUnbounded})))
                          && not (admitted l)
                          && not (isBottomType bound)
                          && reachesTo reachesTypeEnv vaenv (singletonType l) bound

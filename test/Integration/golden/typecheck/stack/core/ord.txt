@@ -9,9 +9,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/isGreaterEq( Value /this -> /Data/Algebra/LessThan ) -> /Data/Primitive/False = Value /Data/Primitive/False
-                        , /Data/Algebra/isGreaterEq( Value /this -> /Data/Algebra/Equal ) -> /Data/Primitive/True = Value /Data/Primitive/True
-                        , /Data/Algebra/isGreaterEq( Value /this -> /Data/Algebra/GreaterThan ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        [ /Data/Algebra/isGreaterEq( Value /this -> /Data/Algebra/LessThan.. ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/Algebra/isGreaterEq( Value /this -> /Data/Algebra/Equal.. ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /Data/Algebra/isGreaterEq( Value /this -> /Data/Algebra/GreaterThan.. ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         ]
                     }
                 )
@@ -56,9 +56,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/isGreater( Value /this -> /Data/Algebra/LessThan ) -> /Data/Primitive/False = Value /Data/Primitive/False
-                        , /Data/Algebra/isGreater( Value /this -> /Data/Algebra/Equal ) -> /Data/Primitive/False = Value /Data/Primitive/False
-                        , /Data/Algebra/isGreater( Value /this -> /Data/Algebra/GreaterThan ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        [ /Data/Algebra/isGreater( Value /this -> /Data/Algebra/LessThan.. ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/Algebra/isGreater( Value /this -> /Data/Algebra/Equal.. ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/Algebra/isGreater( Value /this -> /Data/Algebra/GreaterThan.. ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         ]
                     }
                 )
@@ -126,9 +126,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/isLess( Value /this -> /Data/Algebra/LessThan ) -> /Data/Primitive/True = Value /Data/Primitive/True
-                        , /Data/Algebra/isLess( Value /this -> /Data/Algebra/Equal ) -> /Data/Primitive/False = Value /Data/Primitive/False
-                        , /Data/Algebra/isLess( Value /this -> /Data/Algebra/GreaterThan ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        [ /Data/Algebra/isLess( Value /this -> /Data/Algebra/LessThan.. ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /Data/Algebra/isLess( Value /this -> /Data/Algebra/Equal.. ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/Algebra/isLess( Value /this -> /Data/Algebra/GreaterThan.. ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         ]
                     }
                 )
@@ -149,9 +149,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/isLessEq( Value /this -> /Data/Algebra/LessThan ) -> /Data/Primitive/True = Value /Data/Primitive/True
-                        , /Data/Algebra/isLessEq( Value /this -> /Data/Algebra/Equal ) -> /Data/Primitive/True = Value /Data/Primitive/True
-                        , /Data/Algebra/isLessEq( Value /this -> /Data/Algebra/GreaterThan ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        [ /Data/Algebra/isLessEq( Value /this -> /Data/Algebra/LessThan.. ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /Data/Algebra/isLessEq( Value /this -> /Data/Algebra/Equal.. ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /Data/Algebra/isLessEq( Value /this -> /Data/Algebra/GreaterThan.. ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         ]
                     }
                 )
@@ -175,9 +175,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/isEq( Value /this -> /Data/Algebra/LessThan ) -> /Data/Primitive/False = Value /Data/Primitive/False
-                        , /Data/Algebra/isEq( Value /this -> /Data/Algebra/Equal ) -> /Data/Primitive/True = Value /Data/Primitive/True
-                        , /Data/Algebra/isEq( Value /this -> /Data/Algebra/GreaterThan ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        [ /Data/Algebra/isEq( Value /this -> /Data/Algebra/LessThan.. ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/Algebra/isEq( Value /this -> /Data/Algebra/Equal.. ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /Data/Algebra/isEq( Value /this -> /Data/Algebra/GreaterThan.. ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         ]
                     }
                 )
@@ -215,10 +215,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/isNoOrdering( Value /this -> /Data/Algebra/LessThan ) -> /Data/Primitive/False = Value /Data/Primitive/False
-                        , /Data/Algebra/isNoOrdering( Value /this -> /Data/Algebra/Equal ) -> /Data/Primitive/False = Value /Data/Primitive/False
-                        , /Data/Algebra/isNoOrdering( Value /this -> /Data/Algebra/GreaterThan ) -> /Data/Primitive/False = Value /Data/Primitive/False
-                        , /Data/Algebra/isNoOrdering( Value /this -> /Data/Algebra/NoOrdering ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        [ /Data/Algebra/isNoOrdering( Value /this -> /Data/Algebra/LessThan.. ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/Algebra/isNoOrdering( Value /this -> /Data/Algebra/Equal.. ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/Algebra/isNoOrdering( Value /this -> /Data/Algebra/GreaterThan.. ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/Algebra/isNoOrdering( Value /this -> /Data/Algebra/NoOrdering.. ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         ]
                     }
                 )
@@ -258,10 +258,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/isComparable( Value /this -> /Data/Algebra/LessThan ) -> /Data/Primitive/True = Value /Data/Primitive/True
-                        , /Data/Algebra/isComparable( Value /this -> /Data/Algebra/Equal ) -> /Data/Primitive/True = Value /Data/Primitive/True
-                        , /Data/Algebra/isComparable( Value /this -> /Data/Algebra/GreaterThan ) -> /Data/Primitive/True = Value /Data/Primitive/True
-                        , /Data/Algebra/isComparable( Value /this -> /Data/Algebra/NoOrdering ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        [ /Data/Algebra/isComparable( Value /this -> /Data/Algebra/LessThan.. ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /Data/Algebra/isComparable( Value /this -> /Data/Algebra/Equal.. ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /Data/Algebra/isComparable( Value /this -> /Data/Algebra/GreaterThan.. ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /Data/Algebra/isComparable( Value /this -> /Data/Algebra/NoOrdering.. ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         ]
                     }
                 )
