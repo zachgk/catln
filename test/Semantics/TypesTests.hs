@@ -831,6 +831,39 @@ propOwnVarBindingRespected gPrgm = property $ do
   annotate $ printf "sub - ref = %s" (show subMinusRef)
   assertTimed "sub - ref = ∅" $ isBottomType subMinusRef
 
+-- | A 'TVParent' reference resolves through its IMMEDIATELY enclosing partial's binding, and
+-- through nothing else: not the like-named parameter of the nested partial it is the value of (the
+-- shadowing scope it is written across), and not a like-named ambient binding. So
+-- @B[/v=K](slot = N[/v=$^/v])@ and @B[/v=K](slot = N[/v=K])@ are ONE set — both directions of
+-- both provers, as 'propOwnVarBindingRespected' asks of the internal reference — and they stay
+-- one set when the ambient env binds @/v@ to a decoy, the capture 'TypeVarLoc' says must never
+-- happen. The pair is the core idiom @Cons[$T](tail -> ConsList[/T=$^/T])@ with the parent's
+-- parameter bound.
+propParentVarBindingRespected :: IO GenPrgm -> Property
+propParentVarBindingRespected gPrgm = property $ do
+  gPrgm' <- lift gPrgm
+  prgm <- forAll $ HG.filter prgmHasPlacement gPrgm'
+  let typeEnv = mkTypeEnv prgm
+  vaenv0 <- forAll $ genVaenv prgm
+  (ref, sub, varName) <- forAll $ genParentVarBoundPair prgm
+  -- Two thirds of the draws bind the parent's parameter NAME in the ambient env to something
+  -- else, so a reader that resolves the parent reference by name against the ambient layer
+  -- (instead of the enclosing partial's binding) reads the decoy and the pair comes apart.
+  decoy <- forAll $ HG.frequency [(2, Just <$> genGroundLeafBound prgm), (1, return Nothing)]
+  let vaenv = maybe vaenv0 (\d -> H.insert (TVVar varName) d vaenv0) decoy
+  classify "decoy bound in the ambient env" (isJust decoy)
+  annotate $ printf "vaenv = %s" (show vaenv)
+  annotate $ printf "ref = %s" (show ref)
+  annotate $ printf "sub = %s" (show sub)
+  assertTimed "ref ⊆ sub" $ isSubtypeOfWithEnv typeEnv vaenv ref sub
+  assertTimed "sub ⊆ ref" $ isSubtypeOfWithEnv typeEnv vaenv sub ref
+  refMinusSub <- timed "ref-sub" $ snd $ differenceTypeWithEnv typeEnv vaenv ref sub
+  annotate $ printf "ref - sub = %s" (show refMinusSub)
+  assertTimed "ref - sub = ∅" $ isBottomType refMinusSub
+  subMinusRef <- timed "sub-ref" $ snd $ differenceTypeWithEnv typeEnv vaenv sub ref
+  annotate $ printf "sub - ref = %s" (show subMinusRef)
+  assertTimed "sub - ref = ∅" $ isBottomType subMinusRef
+
 -- | A declared subclass edge with a parameter mapping — @every(ConsList[$T -> $_T], isa= [/Bag])@,
 -- recorded under @Bag[$T]@ as the member template @∀ConsList[/T=$_/T]@ whose @$_/T@ names Bag's own
 -- @/T@ — asserts @ConsList[T=k] ⊆ Bag[T=k]@ for EVERY @k@. So it proves @∀ConsList[/T=a] ⊆ ∀Bag[/T=b]@
@@ -1006,6 +1039,7 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propOutOfScopeParity" (p $ propOutOfScopeParity gPrgm)
       , HG.testProperty "propOccurrenceReadingSound" (p $ propOccurrenceReadingSound gPrgm)
       , HG.testProperty "propOwnVarBindingRespected" (withDiscards 1000 $ p $ propOwnVarBindingRespected gPrgm)
+      , HG.testProperty "propParentVarBindingRespected" (withDiscards 1000 $ p $ propParentVarBindingRespected gPrgm)
                                         ]
       where gPrgm = ggPrgm <$> ioPrgms
     p prop = prop

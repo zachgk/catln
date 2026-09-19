@@ -137,11 +137,8 @@ prgmHasPlacement (Prgm om _ _) = any (maybe False declHasPlacement . oaObj) (fla
 prgmHasPartial :: Prgm Expr () -> Bool
 prgmHasPartial (Prgm om cg _) = not (null (dataNodeNames cg)) || not (nullObjectMap om)
 
--- TODO: a sibling generator should place the nested reference as a 'TVParent' (@$^T@) — the
--- spelling @/Cons@'s own declaration uses for @/tail -> ∀/ConsList[/T=$^/T]@ — which reaches an
--- enclosing parameter THROUGH a shadowing inner scope rather than avoiding one. That exercises the
--- scope class this generator now deliberately steps around, and belongs with the shadowing
--- property below rather than in this law.
+-- The sibling generator that places the nested reference as a 'TVParent' — reaching the enclosing
+-- parameter THROUGH a shadowing inner scope rather than avoiding one — is 'genParentVarBoundPair'.
 genOwnVarBoundPair :: Prgm Expr () -> Gen (Type, Type)
 genOwnVarBoundPair prgm@(Prgm objMap _ _) = do
   when (nullObjectMap objMap && graphEmpty cg) HG.discard
@@ -153,34 +150,15 @@ genOwnVarBoundPair prgm@(Prgm objMap _ _) = do
   -- really a malformed input: @/Cons[/T=…, /own1=/Cons](/head=$/own1)@ (@/Cons@ declares only
   -- @/T@) failed @sub ⊆ ref@, while the identical shape keyed on the declared @/T@ passes both
   -- directions and both differences.
-  base    <- HG.filter (not . null . placements) (genPlacement prgm)
-  (varName, slot) <- HG.element (placements base)
-  -- The bound must be GROUND: a bound that itself mentions a variable would make the two members
-  -- of the pair differ by more than the one reference under test.
-  bound   <- HG.small (HG.filter (\t -> concreteishInner t && not (typeHasTypeVars t)) (genType prgm))
+  base    <- HG.filter (not . null . binderPlacements) (genPlacement prgm)
+  (varName, slot) <- HG.element (binderPlacements base)
+  bound   <- genGroundBound prgm
   wrap    <- HG.choice (bareSlot : nestedDim varName : [classPredDim varName | any ((/= [varName]) . snd) classDims])
   outer   <- HG.element [singletonType, classPartial, relPartial]
-  let withSlot v = outer base
-        { ptVars = H.insert varName bound (case slot of
-            Right k -> H.insert k (wrap v) (ptVars base)
-            Left _  -> ptVars base)
-        , ptArgs = case slot of
-            Left k  -> H.insert k (wrap v) (ptArgs base)
-            Right _ -> ptArgs base
-        }
+  let withSlot v = placeInSlot outer base varName bound slot (wrap v)
   return (withSlot (TypeVar (TVVar varName) TVInt PTopType), withSlot bound)
   where
     TypeEnv{teClassGraph=ClassGraph cg} = mkTypeEnv prgm
-    -- Where the reference can go: a (binder, payload-slot) pair, both DECLARED keys of the same
-    -- partial and necessarily distinct. The payload prefers a declared FIELD ('Left'); when the
-    -- declaration has none it takes a SECOND declared parameter ('Right'). Requiring a field
-    -- outright rejected most draws — plenty of declarations are nullary — and the property then
-    -- gave up on discards instead of testing anything.
-    placements b =
-      [ (v, Left k)  | v <- H.keys (ptVars b), k <- H.keys (ptArgs b) ] ++
-      [ (v, Right k) | v <- H.keys (ptVars b), k <- H.keys (ptVars b), k /= v ]
-    -- The @∀r[..]@ relation-predicate form, the sibling of 'classPartial'.
-    relPartial p = TopType H.empty (PredsOne (PredRel p))
     -- NO SHADOWING at the nested positions. A 'TVInt' name the enclosing partial declares and the
     -- NESTED one does not reads against the enclosing scope ('partialCoversSat'.'ambientRef'); but
     -- if the nested partial declares the SAME name it captures the reference, and the two members
@@ -189,8 +167,7 @@ genOwnVarBoundPair prgm@(Prgm objMap _ _) = do
     -- The old invented @own1@\/@own2@ names could never collide, so drawing DECLARED names (which
     -- fixed a worse problem) reintroduced capture; the nested generators below exclude the binder's
     -- name explicitly instead. Referring to an enclosing parameter from inside a nested partial
-    -- through a captured name is what 'TVParent' (@$^T@) is for, and generating that is a separate
-    -- question from this law — see the TODO below.
+    -- through a captured name is what 'TVParent' (@$^T@) is for — 'genParentVarBoundPair'.
     -- The payload IS the slot.
     bareSlot = return id
     -- The payload is a dimension of a nested positive partial — again one the nested partial
@@ -209,6 +186,130 @@ genOwnVarBoundPair prgm@(Prgm objMap _ _) = do
       (className, ks) <- HG.element [c | c@(_, ks') <- classDims, any (/= varName) ks']
       dim <- HG.element (filter (/= varName) ks)
       return $ \v -> classPartial (partialVal className){ptVars = H.singleton dim v}
+
+-- | Where a binder-and-payload pair can go in a partial: both DECLARED keys of the same partial
+-- and necessarily distinct. The payload prefers a declared FIELD ('Left'); when the declaration
+-- has none it takes a SECOND declared parameter ('Right'). Requiring a field outright rejected
+-- most draws — plenty of declarations are nullary — and the property then gave up on discards
+-- instead of testing anything.
+binderPlacements :: PartialType -> [(TypeVarName, Either ArgName TypeVarName)]
+binderPlacements b =
+  [ (v, Left k)  | v <- H.keys (ptVars b), k <- H.keys (ptArgs b) ] ++
+  [ (v, Right k) | v <- H.keys (ptVars b), k <- H.keys (ptVars b), k /= v ]
+
+-- | The base with its binder bound and the payload written into the chosen slot, under one of the
+-- three outer forms ('singletonType', 'classPartial', 'relPartial').
+placeInSlot :: (PartialType -> Type) -> PartialType -> TypeVarName -> Type -> Either ArgName TypeVarName -> Type -> Type
+placeInSlot outer base varName bound slot payload = outer base
+  { ptVars = H.insert varName bound (case slot of
+      Right k -> H.insert k payload (ptVars base)
+      Left _  -> ptVars base)
+  , ptArgs = case slot of
+      Left k  -> H.insert k payload (ptArgs base)
+      Right _ -> ptArgs base
+  }
+
+-- | The @∀r[..]@ relation-predicate form, the sibling of 'classPartial'.
+relPartial :: PartialType -> Type
+relPartial p = TopType H.empty (PredsOne (PredRel p))
+
+-- | A GROUND bound for a binder: a bound that itself mentions a variable would make the two
+-- members of a pair differ by more than the one reference under test.
+genGroundBound :: Prgm Expr () -> Gen Type
+genGroundBound prgm = HG.small (HG.filter (\t -> concreteishInner t && not (typeHasTypeVars t)) (genType prgm))
+
+-- | A ground bound that is a positive LEAF union — no predicate or relation top, no constants.
+-- 'genParentVarBoundPair' binds its parent parameter with one of these, and the law binds its
+-- decoy with one: a relation-shaped bound (@~Nil@) under an env whose like-named entry is a
+-- predicate top exposed a MEET gap unrelated to the reference (see 'genParentVarBoundPair').
+genGroundLeafBound :: Prgm Expr () -> Gen Type
+genGroundLeafBound prgm = HG.small (HG.filter groundLeaf (genType prgm))
+  where
+    groundLeaf t@(UnionType Nothing leafs []) = not (H.null leafs) && not (typeHasTypeVars t)
+    groundLeaf _                               = False
+
+-- | The type parameters an object expression declares, in application order.
+declaredVars :: Expr () -> [TypeVarName]
+declaredVars (TupleApply _ (_, b) (EAppVar v _)) = v : declaredVars b
+declaredVars (TupleApply _ (_, b) _)             = declaredVars b
+declaredVars (EWhere _ b _)                      = declaredVars b
+declaredVars _                                   = []
+
+-- | The sibling of 'genOwnVarBoundPair' for the PARENT scope: a pair that must be indistinguishable
+-- to every operation, where the reference reaches the enclosing partial's parameter THROUGH a
+-- nested partial that declares the SAME name — the spelling @/Cons@'s own declaration uses for
+-- @/tail -> ∀/ConsList[/T=$^/T]@:
+--
+-- > B[/v=K](slot = N[/v=$^/v])   ≡   B[/v=K](slot = N[/v=K])
+--
+-- The nested partial's parameter VALUE is written at the level of the slot holding it (a
+-- 'ptVars' value sits at its partial's own level — the register rule every scoped walker
+-- implements, 'substitutePartialTVExtScoped'), so a 'TVParent' there names the ENCLOSING
+-- partial's parameter: not the nested partial's like-named one (that is what the spelling is
+-- for — a 'TVInt' at the same position is the self-entry convention @/T=$/T@), and not a
+-- like-named ambient binding ('TypeVarLoc': a parent reference is never capturable by the
+-- ambient env). The nested partial is drawn from the declarations that declare the name, the
+-- base's own always among them, so the same declaration nested in itself (@Cons@ in @Cons@) is
+-- in the distribution.
+--
+-- The nested partial is placed in a FIELD of the base only. Held in a second PARAMETER of the
+-- base instead (@Pair[/A=Pair[/B=$^/B]]@), the same register rule puts the nested partial at
+-- the base's own level, so its parent reference reaches past the base to the base's parent —
+-- at a fragment's top, no definite scope — and the reference is read as a flexible slot:
+-- @ref ⊆ alt@ held where @sub ⊆ alt@ did not (seed 16335697364997014974 15371164498158892649,
+-- path 27:a13Da6Ba7, 2026-09-18). That shape is not the idiom and asserts nothing.
+--
+-- Returns the parameter's name too, so the law can bind it in the ambient env to a decoy and
+-- assert the reference is not captured.
+--
+-- The identity alone cannot tell a reference resolved to the parent's binding from one not
+-- resolved at all: an unbound variable slot is read as FLEXIBLE (bindable per value —
+-- 'isFlexibleVar') and matches anything. A third member with an UNRELATED bound in the nested
+-- parameter (@N[/v=K']@, against which the reference must answer exactly as @K@ does) was tried
+-- and withdrawn, 2026-09-18: on the idiom shape the prover judges @Cons[/T=Cons](tail=Cons[/T=Cons])@
+-- and @Cons[/T=Cons](tail=Cons[/T=#noCore])@ EQUAL — both directions, both differences ∅, even
+-- with a bare nested partial — while at the top level the same two spellings are disjoint. The
+-- nested spelled parameter is read through the enclosing declaration's pointer
+-- (@tail -> ConsList[$T -> $_T]@) rather than as spelled, so the third member compares equal to
+-- the second for a reason unrelated to the reference, and the reference — which the prover DOES
+-- resolve (@ref − alt@ spells the nested parameter as @Cons@ and answers @ref ⊄ alt@) — was the
+-- odd one out. Whether a contradicting nested spelling reads as the pointer or as ∅ is an open
+-- ruling; the check returns once it is made.
+--
+-- The bound is a ground positive LEAF ('genGroundLeafBound'), not any ground type. With the
+-- relation top @~Nil@ as the bound and the ambient env binding the same name to a predicate
+-- top (@⊤ | ~#noCore ∧ ~Cons@), the pair @Some[/T=~Nil](value=Some[/T=$^/T](value=$/T))@
+-- came apart (seed 15064677296543469091 6541914999501811919, path 2816:a15B3aBfDc2): the
+-- nested slots compare fine (the reference resolves to @~Nil@), but the OUTER parameter is
+-- read declaration-bounded through its @value@ field ('isSubPartialOfWithEnv'.'subVarEff'),
+-- @~Nil ∩ Some[/T=$^/T](value=$/T)@, and under that env the meet is left as the unreduced
+-- @Some[..] | ~Nil@ — an empty set a @Some@ can never satisfy — which the walk then cannot
+-- prove a subtype of @~Nil@. Without the env, or with a data decoy, the same meet reduces.
+-- A meet gap on relation-shaped bounds (fixed repro in build/scratch/parentrefrepro.hs), so
+-- the law keeps to leaf bounds until it is closed.
+--
+-- A BARE top-level 'TVParent' is deliberately not generated anywhere: a fragment's top has no
+-- enclosing partial, and which layer stands in for the missing parent depends on which walker
+-- reads the fragment ('substituteKeep' seeds the ambient env, 'substituteTVExt' seeds nothing —
+-- the two fragment kinds of 2d1d1b1e), so there is no one denotation for a law to assert.
+genParentVarBoundPair :: Prgm Expr () -> Gen (Type, Type, TypeVarName)
+genParentVarBoundPair prgm@(Prgm objMap _ _) = do
+  when (nullObjectMap objMap) HG.discard
+  base    <- HG.filter (not . null . fieldPlacements) (genPlacement prgm)
+  (varName, slot) <- HG.element (fieldPlacements base)
+  bound   <- genGroundLeafBound prgm
+  -- Every declared slot of the nested partial is forced in ('genTypeFromExprWith' True), as for
+  -- the base: the pair must differ by the one parameter value under test and nothing else.
+  nested  <- HG.element [oe | (v, oe) <- decls, v == varName] >>= genTypeFromExprWith True prgm
+  outer   <- HG.element [singletonType, classPartial, relPartial]
+  let payload v = singletonType nested{ptVars = H.insert varName v (ptVars nested)}
+      withSlot v = placeInSlot outer base varName bound slot (payload v)
+  return (withSlot (TypeVar (TVVar varName) TVParent PTopType), withSlot bound, varName)
+  where
+    -- The declarations that declare the name and that 'genTypeFromExprWith' can read (the
+    -- same spine shape 'genPlacement' accepts); the base's own declaration is always one.
+    decls = [ (v, oe) | oa <- flatObjectMap objMap, Just oe <- [oaObj oa], declHasPlacement oe, v <- declaredVars oe ]
+    fieldPlacements b = [ pl | pl@(_, Left _) <- binderPlacements b ]
 
 -- | A small external variable environment ('TypeVarArgEnv') mapping a subset of 'varNamePool'
 -- to concrete-ish types drawn from the program. Threading this through the @*WithEnv@ operations
