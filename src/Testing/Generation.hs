@@ -220,8 +220,7 @@ genGroundBound prgm = HG.small (HG.filter (\t -> concreteishInner t && not (type
 
 -- | A ground bound that is a positive LEAF union — no predicate or relation top, no constants.
 -- 'genParentVarBoundPair' binds its parent parameter with one of these, and the law binds its
--- decoy with one: a relation-shaped bound (@~Nil@) under an env whose like-named entry is a
--- predicate top exposed a MEET gap unrelated to the reference (see 'genParentVarBoundPair').
+-- decoy with one; see 'genParentVarBoundPair' for what the other shapes still hit.
 genGroundLeafBound :: Prgm Expr () -> Gen Type
 genGroundLeafBound prgm = HG.small (HG.filter groundLeaf (genType prgm))
   where
@@ -273,17 +272,26 @@ declaredVars _                                   = []
 -- declaration clamp and not the other, and the empty meet proved the field vacuously. The
 -- reference itself answered correctly throughout.
 --
--- The bound is a ground positive LEAF ('genGroundLeafBound'), not any ground type. With the
--- relation top @~Nil@ as the bound and the ambient env binding the same name to a predicate
--- top (@⊤ | ~#noCore ∧ ~Cons@), the pair @Some[/T=~Nil](value=Some[/T=$^/T](value=$/T))@
--- came apart (seed 15064677296543469091 6541914999501811919, path 2816:a15B3aBfDc2): the
--- nested slots compare fine (the reference resolves to @~Nil@), but the OUTER parameter is
--- read declaration-bounded through its @value@ field ('isSubPartialOfWithEnv'.'subVarEff'),
--- @~Nil ∩ Some[/T=$^/T](value=$/T)@, and under that env the meet is left as the unreduced
--- @Some[..] | ~Nil@ — an empty set a @Some@ can never satisfy — which the walk then cannot
--- prove a subtype of @~Nil@. Without the env, or with a data decoy, the same meet reduces.
--- A meet gap on relation-shaped bounds (fixed repro in build/scratch/parentrefrepro.hs), so
--- the law keeps to leaf bounds until it is closed.
+-- The bound and the decoy are ground positive LEAF unions ('genGroundLeafBound'): data leafs,
+-- bare names included, no relation or predicate top and no constants. Widening them to any
+-- ground type (2026-09-19) found, in order: three readers that resolved a partial's own
+-- parameter or a parent reference by NAME against the ambient env ('partialHasEmptySlot',
+-- 'isSubPartialOfWithEnv'.'subVarEff', the 'TVInt' clause of 'substituteTVExtScoped' and the
+-- predicate partials of its 'Just'-top clause — each one the decoy binding's capture); two
+-- open-world enumerations proving a subtype from a class's CURRENT members ('expandedSub' in
+-- the positive-partials subtype, now gated on 'predsPositiveSealed'; and the engine's
+-- 'checkCandLeaf' polarity, left as the documented D4 audit because the materialized meet
+-- still expands open classes — task #51); the linked split ('subLinked': splitting a var slot
+-- a nested parent reference links to reads only the diagonal of the sub); and the fold
+-- livelock on a bare-name element ('hasExplicitRecursion' read a @Cons@ ELEMENT in a @Cons@'s
+-- @head@ as an unrolling). All of those are fixed (repros in build/scratch/parentrefrepro.hs).
+-- The two shapes still excluded: a CLASS or RELATION bound, where the algebra decides
+-- membership of a leaf in an open class closed-world along some routes and open-world along
+-- others (the two provers disagree until #51 lands — e.g. @Cons[/T=∀OrdCO] ⊆ Cons[/T=∀EqCO]@
+-- through the engine, seed 11827421994225018972 4430736466915993151 "304:bA12kA5"); and a
+-- CONSTANT-only element bound, where @Cons[/T={-100}](head=Cons[/T={-100}](..)) ⊆
+-- Cons[/T={-100}](head=Cons[/T=#noCore](..))@ does not terminate (seed 3197102935274890048
+-- 7663213626623012835 "5:bA16b2A12", recursiveClassBounds.ct) — an open livelock.
 --
 -- A BARE top-level 'TVParent' is deliberately not generated anywhere: a fragment's top has no
 -- enclosing partial, and which layer stands in for the missing parent depends on which walker
@@ -451,7 +459,7 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
       , recursesExplicitly (ptName cpt) exp1 ]
       where
         recursesExplicitly cName exp1 = case substRecRef cName exp1 exp1 of
-          UnionType Nothing ls [] -> hasExplicitRecursion (splitUnionType ls)
+          UnionType Nothing ls [] -> hasExplicitRecursion typeEnv (splitUnionType ls)
           _                       -> False
 
     genUnrolledRecursive :: Gen Type

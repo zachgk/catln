@@ -2220,7 +2220,7 @@ Prgm
         , /Catln/#print
             ( Value /p -> /Data/List/Cons[ /T=∀/Data/ToString ]
                 ( /head=∀/Data/ToString
-                , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                , /tail=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                 ) = /Data/Functor/fmap
                 ( Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                     ( /head=/Data/Primitive/Integer

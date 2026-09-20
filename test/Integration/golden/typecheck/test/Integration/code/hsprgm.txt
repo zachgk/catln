@@ -336,7 +336,18 @@ Prgm
                                                     )
                                                     ( Value /this -> /Catln/IO = /Catln/println
                                                         ( Value /msg -> /Data/String = /Data/toString
-                                                            ( Value /this -> /Data/Primitive/Integer = /Test/constCount
+                                                            ( Value /this -> UnionType
+                                                                ( Just
+                                                                    ( PredExpr /operator==
+                                                                        ( /r=/Data/Primitive/True
+                                                                        , /l=~nonNeg( /this=~/$this )
+                                                                        ) && PredRel Integer
+                                                                    , fromList []
+                                                                    , []
+                                                                    )
+                                                                , /Data/Primitive/Integer
+                                                                , []
+                                                                ) = /Test/constCount
                                                                 ( Value /t -> /Catln/Type/UnionType
                                                                     ( /top=/Data/Maybe/Nothing
                                                                     , /consts=/Data/List/Cons
@@ -1074,7 +1085,18 @@ Prgm
                 { csValue = "union" }
             )
         , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /Test/constCount
+            ( Value /p -> UnionType
+                ( Just
+                    ( PredExpr /operator==
+                        ( /r=/Data/Primitive/True
+                        , /l=~nonNeg( /this=~/$this )
+                        ) && PredRel Integer && PredClass /Catln/Doc/DShow
+                    , fromList []
+                    , []
+                    )
+                , /Data/Primitive/Integer
+                , []
+                ) = /Test/constCount
                 ( Value /t -> /Catln/Type/UnionType
                     ( /top=/Data/Maybe/Nothing
                     , /consts=/Data/List/Cons

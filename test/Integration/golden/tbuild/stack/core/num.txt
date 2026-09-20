@@ -607,7 +607,7 @@ Prgm
                     , omiDefs =
                         [ /Data/Algebra/compareTo
                             ( EAppArg { eaaArg = Value /other -> ∀/Data/Algebra/Ord } )
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer.. } ) -> ∀/Data/Algebra/Comparison =
                             ( /compare
                                 ( EAppArg
                                     { eaaArg = Value /a -> TVArg /this = ( Value /this ↦ TVArg /this ) }
@@ -616,20 +616,18 @@ Prgm
                                     { eaaArg = Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /this ->
-                                        ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] ) =
+                                    { eaaArg = Value /this -> ∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Integer ] =
                                         ( /ord
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) }
-                                            ) ↦
-                                            ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
+                                            ) ↦ ∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Integer ]
                                         )
                                     }
-                                ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                ) ↦ ∀/Data/Algebra/Comparison
                             )
                         , /Data/Algebra/compareTo
                             ( EAppArg { eaaArg = Value /other -> ∀/Data/Algebra/Ord } )
-                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float.. } ) -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Float.. } ) -> ∀/Data/Algebra/Comparison =
                             ( /compare
                                 ( EAppArg
                                     { eaaArg = Value /a -> TVArg /this = ( Value /this ↦ TVArg /this ) }
@@ -638,16 +636,14 @@ Prgm
                                     { eaaArg = Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /this ->
-                                        ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] ) =
+                                    { eaaArg = Value /this -> ∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Float ] =
                                         ( /ord
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) }
-                                            ) ↦
-                                            ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
+                                            ) ↦ ∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Float ]
                                         )
                                     }
-                                ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                ) ↦ ∀/Data/Algebra/Comparison
                             )
                         ]
                     }

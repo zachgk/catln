@@ -229,7 +229,7 @@ Prgm
                                             )
                                         , /left=∀/Data/Map/BinTree
                                             [ /K=∀/Data/Algebra/Ord
-                                            , /V=$_/V
+                                            , /V=()
                                             ]
                                         )
                                     , []
@@ -269,7 +269,7 @@ Prgm
                                                 )
                                             , /left=∀/Data/Map/BinTree
                                                 [ /K=∀/Data/Algebra/Ord
-                                                , /V=$_/V
+                                                , /V=()
                                                 ]
                                             )
                                         , []
@@ -1246,16 +1246,13 @@ Prgm
                 { eaaArg = Value /p -> ∀/Catln/Doc/DShow =
                     ( /size
                         ( EAppArg
-                            { eaaArg = Value /s ->
-                                ( /Data/Set/MkSet
-                                    [ /K=/Data/Primitive/Integer
-                                    , /V=TopType
-                                    ]
-                                    ( /map=∀/Data/Map
-                                        [ /K=$_/K
-                                        , /V=$_/V
-                                        ]
-                                    ) + /Data/Set/MkSet
+                            { eaaArg = Value /s -> UnionType
+                                ( Just
+                                    ( PredClass /Data/Set[ /T=/Data/Primitive/Integer ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/Set/MkSet
                                     [ /K=∀/Data/Algebra/Ord
                                     , /V=()
                                     ]
@@ -1264,6 +1261,7 @@ Prgm
                                         , /V=()
                                         ]
                                     )
+                                , []
                                 ) =
                                 ( /Data/Set/add
                                     ( EAppArg
@@ -1325,16 +1323,13 @@ Prgm
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /item -> /Data/Primitive/Integer = 1 }
-                                    ) ↦
-                                    ( /Data/Set/MkSet
-                                        [ /K=/Data/Primitive/Integer
-                                        , /V=TopType
-                                        ]
-                                        ( /map=∀/Data/Map
-                                            [ /K=$_/K
-                                            , /V=$_/V
-                                            ]
-                                        ) + /Data/Set/MkSet
+                                    ) ↦ UnionType
+                                    ( Just
+                                        ( PredClass /Data/Set[ /T=/Data/Primitive/Integer ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /Data/Set/MkSet
                                         [ /K=∀/Data/Algebra/Ord
                                         , /V=()
                                         ]
@@ -1343,6 +1338,7 @@ Prgm
                                             , /V=()
                                             ]
                                         )
+                                    , []
                                     )
                                 )
                             }
@@ -1445,16 +1441,13 @@ Prgm
                             { eaaArg = Value /l -> ∀/Data/Algebra/Eq =
                                 ( /Data/Set/elements
                                     ( EAppArg
-                                        { eaaArg = Value /s ->
-                                            ( /Data/Set/MkSet
-                                                [ /K=/Data/Primitive/Integer
-                                                , /V=TopType
-                                                ]
-                                                ( /map=∀/Data/Map
-                                                    [ /K=$_/K
-                                                    , /V=$_/V
-                                                    ]
-                                                ) + /Data/Set/MkSet
+                                        { eaaArg = Value /s -> UnionType
+                                            ( Just
+                                                ( PredClass /Data/Set[ /T=/Data/Primitive/Integer ]
+                                                , fromList []
+                                                , []
+                                                )
+                                            , /Data/Set/MkSet
                                                 [ /K=∀/Data/Algebra/Ord
                                                 , /V=()
                                                 ]
@@ -1463,6 +1456,7 @@ Prgm
                                                     , /V=()
                                                     ]
                                                 )
+                                            , []
                                             ) =
                                             ( /Data/Set/add
                                                 ( EAppArg
@@ -1524,16 +1518,13 @@ Prgm
                                                 )
                                                 ( EAppArg
                                                     { eaaArg = Value /item -> /Data/Primitive/Integer = 1 }
-                                                ) ↦
-                                                ( /Data/Set/MkSet
-                                                    [ /K=/Data/Primitive/Integer
-                                                    , /V=TopType
-                                                    ]
-                                                    ( /map=∀/Data/Map
-                                                        [ /K=$_/K
-                                                        , /V=$_/V
-                                                        ]
-                                                    ) + /Data/Set/MkSet
+                                                ) ↦ UnionType
+                                                ( Just
+                                                    ( PredClass /Data/Set[ /T=/Data/Primitive/Integer ]
+                                                    , fromList []
+                                                    , []
+                                                    )
+                                                , /Data/Set/MkSet
                                                     [ /K=∀/Data/Algebra/Ord
                                                     , /V=()
                                                     ]
@@ -1542,6 +1533,7 @@ Prgm
                                                         , /V=()
                                                         ]
                                                     )
+                                                , []
                                                 )
                                             )
                                         }

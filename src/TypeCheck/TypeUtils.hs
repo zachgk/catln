@@ -272,8 +272,23 @@ fnArgInputBound env callAct fnKey inKey = case callAct of
       -- may still resolve to anything and would oscillate against later epochs, and Top, which
       -- says nothing. Rejecting @∀Eq@ too is what left a lambda inside a generic definition at
       -- Top, so a @Some(value= v)@ built from it could not meet the @Maybe@ instance's @Eq@ bound.
-      guard (inTy /= PTopType && not (isBottomType inTy) && not (typeHasVars inTy))
-      return inTy
+      let ok = inTy /= PTopType && not (isBottomType inTy) && not (typeHasVars inTy)
+      -- A field whose declared type references the container RECURSIVELY is closed at the
+      -- class, not unrolled ('relaxRecursiveSelfArgs' — the rule the object-universe bound in
+      -- 'BoundedByObjs' already applies, for this same reason). This bound is derived from the
+      -- CALL's own arguments, and for a fold one of those arguments is the lambda whose result
+      -- is the very variable being bound (@foldEntries(fn(acc -> $_B, …) -> $_B, init -> $_B)@):
+      -- the equation is self-referential, so publishing the lambda's current result as the
+      -- lambda's next input bound iterates it instead of solving it, and the accumulator gains
+      -- one explicit level per epoch until the solve gives up (core/map.ct's
+      -- @keys(m)= foldEntries(…, fn(acc,k,v)= Cons(head=k, tail=acc), …)@ — depth 24 and rising).
+      -- The unrolled levels carry no information the class does not: a deeper chain is the same
+      -- accumulator fed back through its own constructor. Relaxing is the safe direction here in
+      -- any case — this is an upper bound, so a weaker one only narrows less (measured: no epoch
+      -- change on the whole core, 782 vs 782).
+      let inTy' = relaxRecursiveSelfArgs typeEnv inTy
+      guard ok
+      return inTy'
     -- Recover the bindings a class parameter's var POINTER stands for, by meeting the declared
     -- spelling against what the call passes. Meeting @List[$T -> $_A]@ with a @Cons(head= 1, ..)@
     -- binds nothing in 'intersectTypesWithVarEnv' — the value's own 'ptVars' are empty until the

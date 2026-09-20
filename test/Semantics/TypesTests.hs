@@ -284,8 +284,11 @@ propUnionGrows gPrgm = property $ do
   b <- forAll $ HG.choice [genType prgm, genRelatedType prgm a]
   ab <- timed "a∪b" $ unionTypesWithEnv typeEnv vaenv a b
   annotate $ printf "a∪b = %s" (show ab)
-  assertTimed "a ⊆ a∪b" $ isSubtypeOfWithEnv typeEnv vaenv a ab
-  assertTimed "b ⊆ a∪b" $ isSubtypeOfWithEnv typeEnv vaenv b ab
+  aAb <- timed "a ⊆ a∪b" $ isSubtypeOfWithEnv typeEnv vaenv a ab
+  bAb <- timed "b ⊆ a∪b" $ isSubtypeOfWithEnv typeEnv vaenv b ab
+  annotate $ printf "a⊆a∪b=%s b⊆a∪b=%s" (show aAb) (show bAb)
+  assert aAb
+  assert bAb
 
 -- A∪A=U
 propUnionWithComplement :: IO GenPrgm -> Property
@@ -873,6 +876,7 @@ propParentVarBindingRespected gPrgm = property $ do
   cover 20 "alt unrelated to sub" (not subAlt && not altSub)
   refAlt <- timed "ref⊆alt" $ isSubtypeOfWithEnv typeEnv vaenv ref alt
   altRef <- timed "alt⊆ref" $ isSubtypeOfWithEnv typeEnv vaenv alt ref
+  annotate $ printf "sub⊆alt=%s alt⊆sub=%s ref⊆alt=%s alt⊆ref=%s" (show subAlt) (show altSub) (show refAlt) (show altRef)
   assertTimed "ref ⊆ alt ⇔ sub ⊆ alt" $ refAlt == subAlt
   assertTimed "alt ⊆ ref ⇔ alt ⊆ sub" $ altRef == altSub
 

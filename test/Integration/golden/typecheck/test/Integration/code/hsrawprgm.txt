@@ -309,7 +309,18 @@ Prgm
                             )
                             ( Value /this -> /Catln/IO = /Catln/println
                                 ( Value /msg -> /Data/String = /Data/toString
-                                    ( Value /this -> /Data/Primitive/Integer = /Test/readsCount
+                                    ( Value /this -> UnionType
+                                        ( Just
+                                            ( PredExpr /operator==
+                                                ( /r=/Data/Primitive/True
+                                                , /l=~nonNeg( /this=~/$this )
+                                                ) && PredRel Integer
+                                            , fromList []
+                                            , []
+                                            )
+                                        , /Data/Primitive/Integer
+                                        , []
+                                        ) = /Test/readsCount
                                         ( Value /r -> /Catln/ImportResult
                                             ( /prgm=/Catln/RawPrgm..
                                             , /reads=∀/Data/Maybe
@@ -1164,7 +1175,18 @@ Prgm
                 { csValue = "1" }
             )
         , /Catln/#print
-            ( Value /p -> /Data/Primitive/Integer = /Test/readsCount
+            ( Value /p -> UnionType
+                ( Just
+                    ( PredExpr /operator==
+                        ( /r=/Data/Primitive/True
+                        , /l=~nonNeg( /this=~/$this )
+                        ) && PredRel Integer && PredClass /Catln/Doc/DShow
+                    , fromList []
+                    , []
+                    )
+                , /Data/Primitive/Integer
+                , []
+                ) = /Test/readsCount
                 ( Value /r -> /Catln/ImportResult
                     ( /prgm=/Catln/RawPrgm..
                     , /reads=∀/Data/Maybe

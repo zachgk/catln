@@ -150,7 +150,7 @@ Prgm
                             ) -> ( /Data/Primitive/True + /Data/Primitive/False ) =
                             ( /Data/Algebra/isEq
                                 ( EAppArg
-                                    { eaaArg = Value /this -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) =
+                                    { eaaArg = Value /this -> ∀/Data/Algebra/Comparison =
                                         ( /compare
                                             ( EAppArg
                                                 { eaaArg = Value /a -> TVArg /a = ( Value /a ↦ TVArg /a ) }
@@ -160,7 +160,7 @@ Prgm
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) }
-                                            ) ↦ ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                            ) ↦ ∀/Data/Algebra/Comparison
                                         )
                                     }
                                 ) ↦ ( /Data/Primitive/True + /Data/Primitive/False )
