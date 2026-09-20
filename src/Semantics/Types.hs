@@ -2985,6 +2985,34 @@ typeTVIntRefs (UnionType mtop pos _) = S.unions $ topRefs ++ map leafRefs (split
     predPartial (PredRel p)   = p
 typeTVIntRefs _ = S.empty
 
+-- | The FREE partial-local references of a type: a 'TVInt' at a position where no partial in
+-- view declares that name. Those are exactly the ones the leaf readers resolve through the
+-- AMBIENT env ('partialCoversSat'.'ambientRef', 'isSubPartialOfWithEnv'.'readOwnScope' — a var
+-- slot's value sits at the level of the scope CONTAINING the partial, so an internal spelling
+-- the partial does not declare names that scope's parameter). A name a partial does declare is
+-- its own and is bound by descent, so it is not collected — unlike 'typeTVIntRefs', which
+-- over-collects on purpose for a different consumer.
+typeFreeTVIntRefs :: Type -> S.HashSet TypeVarName
+typeFreeTVIntRefs = go S.empty
+  where
+    go bound (TypeVar (TVVar n) TVInt i) = (if S.member n bound then S.empty else S.singleton n) `S.union` go bound i
+    go bound (TypeVar _ _ i) = go bound i
+    go bound (UnionType mtop pos _) = S.unions $ topRefs ++ map (leafRefs bound) (splitUnionType pos)
+      where topRefs = case mtop of
+              Just (preds, negLeafs, _) -> predsRefs bound preds : map (leafRefs bound) (splitUnionType negLeafs)
+              Nothing                   -> [S.empty]
+    -- A partial's own parameters bind its args and predicates; its 'ptVars' VALUES sit at the
+    -- partial's own level, so they keep the enclosing bound set (the register rule).
+    leafRefs bound PartialType{ptVars, ptArgs, ptPreds} = S.unions $
+      predsRefs bound' ptPreds : map (go bound) (H.elems ptVars) ++ map (go bound') (H.elems ptArgs)
+      where bound' = S.union bound (S.fromList (H.keys ptVars))
+    predsRefs bound (PredsOne p)  = leafRefs bound (predPartial p)
+    predsRefs bound (PredsAnd ps) = S.unions $ map (predsRefs bound) ps
+    predsRefs bound (PredsNot p)  = predsRefs bound p
+    predPartial (PredExpr p)  = p
+    predPartial (PredClass p) = p
+    predPartial (PredRel p)   = p
+
 -- | The value SET a partial's value denotes standalone: read via 'substituteTVExt' under
 -- the partial's OWN var\/arg scope over the ambient env — the codebase's canonical reading
 -- (the same one 'mergeVarEnvVal' applies to every stored env binding), so forms produced
@@ -3844,8 +3872,18 @@ comparedPartialsEnv typeEnv vaenv a b = H.union (H.filterWithKey installable mer
     -- Tested on the RAW slot values, not on 'merged': the meet and 'substituteTVExt' have already
     -- rewritten a self-reference by then (an unbound @$_/T@ becomes ⊤), so the merged value no
     -- longer shows the cycle that makes the binding unsafe to install.
-    installable k@(TVVar n) _ =
-      not $ any (S.member n . typeOuterVarRefs) $ mapMaybe (H.lookup k) [ptVarArg a, ptVarArg b]
+    -- The mention may be INTERNAL as well as outer. A free 'TVInt' — one no partial in view
+    -- declares ('typeFreeTVIntRefs') — is read through the ambient env by the same var-slot-value
+    -- rule the leaf readers implement ('partialCoversSat'.'ambientRef'), so installing a binding
+    -- whose value carries one under that very name captures it. Covariance of a parameterized
+    -- class was decided by comparing its two elements under this env, and an element that
+    -- happened to carry a free @$/T@ of its own then read as the element itself:
+    -- @C[/T=Some(value=$/T) + {-100}] ⊆ C[/T=Some(value=⊤) + {-100}]@ read False, because the
+    -- captured value carries a CONSTANT, the engine's fragment refuses it, and the refusal
+    -- surfaced as a proven non-cover ('propParamClassCovariant', seed 3294923877597123717
+    -- 1270720761501186561). The element's own name space is not the class's.
+    installable k@(TVVar n) _ = not $ any mentions $ mapMaybe (H.lookup k) [ptVarArg a, ptVarArg b]
+      where mentions v = S.member n (typeOuterVarRefs v) || S.member n (typeFreeTVIntRefs v)
     installable _ _ = True
 
 -- | A private helper for 'isSubPartialOfWithEnv' that checks while ignore class expansions
