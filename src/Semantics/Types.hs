@@ -34,8 +34,8 @@ import           Data.Graph          (graphFromEdges, vertices)
 import           Data.Hashable
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
-import           Data.IORef          (IORef, atomicModifyIORef', newIORef,
-                                      readIORef)
+import           Data.IORef          (IORef, atomicModifyIORef', modifyIORef',
+                                      newIORef, readIORef)
 import           Data.List           (foldl', intercalate, partition)
 import qualified Data.List           as L
 import           Data.List.Split     (splitOn)
@@ -3895,23 +3895,69 @@ isSubPartialOfWithEnv _ _ PartialType{ptName=subName} PartialType{ptName=superNa
 -- only for the keyset check.
 isSubPartialOfWithEnv typeEnv vaenv sub0 super0 = isSubPartialOfWithEnvN typeEnv vaenv (spreadFloor typeEnv sub0) (spreadFloor typeEnv super0)
 
+-- | One materialized sub-partial goal: the two partials, plus the env they are read under and
+-- the flags that change the reading. Compared by 'Eq' (the 'Hashable' instances on types are
+-- deliberately shallow), so a hit is the same goal, never a collision.
+type SubPartialKey = (Bool, Bool, [(TypeVarAux, Type)], PartialType, PartialType)
+
+-- | The sub-partial goals whose answer is currently BEING computed, on the (single-threaded)
+-- evaluation stack — the materialized counterpart of 'satInFlightRef'.
+--
+-- The symbolic engine terminates on a recursive class because its hypothesis stack refutes a
+-- goal that recurs on its own derivation path. The MATERIALIZED path — the fallback every
+-- engine entry takes when its operands leave the decidable fragment — had no such rule, so a
+-- self-similar comparison walked forever: @Cons[/T=X] ⊆ Cons[/T=∀EqCO]@ asks its @tail@ slots,
+-- @∀ConsList[/T=X] ⊆ ∀ConsList[/T=∀EqCO]@ expands to the members, and the @Cons@ member poses
+-- the first goal again, one level down and never equal to a previous level, so the structural
+-- @t1 == t2@ short-circuit never fires. A CONSTANT in either operand is what routes the query
+-- here in the first place ('typeSatDNF' refuses constants as out of fragment), which is why
+-- every seed that found this carried one: @(⊤ − ∀EqCO) ∩ Cons[/T=$_/a∩{#noCore + {-100}}]@ ran
+-- for over ten minutes ('propIntersectionDistributesUnion', seed 2159109592230724017
+-- 2322003845464962961) and answers in 0.01s with the rule below.
+--
+-- The re-entry answers FALSE — cover unproven along this derivation path — which is the
+-- engine's own polarity ('satInFlightRef': a goal that recurs can produce no finite witness)
+-- and the algebra's standing convention that an unproven cover is not a cover. The coinductive
+-- reading (assume the goal, answer True) was measured instead and is WRONG for these callers:
+-- the meet routes that ask "is this sub covered" then drop an operand's slot, so
+-- @∀EqCO ∩ Cons[/T=$_/a]@ returned @Cons[/T=∀EqCO]@ — wider than an operand, breaking
+-- propIntersectionShrinks and propIntersectByDifference.
+--
+-- Never reset and never capped, for the reason 'satInFlightRef' gives: its size is bounded by
+-- the recursion depth, and dropping a marker mid-derivation would re-open the cycle it refutes.
+{-# NOINLINE subPartialInFlightRef #-}
+subPartialInFlightRef :: IORef (S.HashSet SubPartialKey)
+subPartialInFlightRef = unsafePerformIO (newIORef S.empty)
+
 isSubPartialOfWithEnvN :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Bool
+isSubPartialOfWithEnvN typeEnv vaenv sub super = unsafePerformIO $ do
+  let k = (tePrgmEnv typeEnv, teArgModeProjection typeEnv, L.sort (H.toList vaenv), sub, super)
+  inflight <- readIORef subPartialInFlightRef
+  if S.member k inflight
+    then return False
+    else do
+      modifyIORef' subPartialInFlightRef (S.insert k)
+      r <- evaluate (isSubPartialOfWithEnvNRaw typeEnv vaenv sub super)
+      modifyIORef' subPartialInFlightRef (S.delete k)
+      return r
+
+isSubPartialOfWithEnvNRaw :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Bool
 -- Projection (loose) keyset feasibility, used by matching\/dispatch consumers via
 -- 'teArgModeProjection' (TreeBuild, Eval, scheme verification). Reproduces the historical
 -- relation in which an 'Any'\/upper-unbounded source may project onto an 'Exact' requirement
 -- by ignoring extra args. This looseness is genuine projection (not an interval relation)
 -- and is intentionally NOT applied to the precise set algebra below.
-isSubPartialOfWithEnvN typeEnv _ sub super
+isSubPartialOfWithEnvNRaw typeEnv _ sub super
   | teArgModeProjection typeEnv
   , looseArgModeRejects sub super = False
 -- Keyset feasibility on the arg-set interval (see 'PtArgMode'): sub ⊆ super requires
 -- super's lower\/upper bound to hold for every arg-set allowed by sub ('argModeCovers'),
 -- on mode-normalized partials so a vacuous bound does not read as extra arg-sets
 -- (e.g. @/length(this=..)..@ IS @/length(this=..)@ — see 'normalizePtArgMode').
-isSubPartialOfWithEnvN typeEnv _ sub super
+isSubPartialOfWithEnvNRaw typeEnv _ sub super
   | not (teArgModeProjection typeEnv)
   , not (argModeCovers (normalizePtArgMode typeEnv super) (normalizePtArgMode typeEnv sub)) = False
-isSubPartialOfWithEnvN typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subArgs, ptPreds=subPreds} super@PartialType{ptVars=superVars, ptArgs=superArgs, ptPreds=superPreds} = debugTrace typeEnv msg result
+isSubPartialOfWithEnvNRaw typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subArgs, ptPreds=subPreds} super@PartialType{ptVars=superVars, ptArgs=superArgs, ptPreds=superPreds} = debugTrace typeEnv msg result
   where
     vaenv' = comparedPartialsEnv typeEnv vaenv super sub
     -- A sub-side FREE reference reads as ⊤ ('freeTVIntToTop'): it must not resolve through
