@@ -6306,7 +6306,53 @@ intersectPartialsBaseN typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtAr
         in if isSubtypeOfWithEnv typeEnv vaenv r a then (env, b) else (env, intersectTypesEnv typeEnv vaenv r a)
     subUnionVar (aVaenv, TypeVar _ TVInt i) (bVaenv, b) = (mergeAllVarEnvs typeEnv [aVaenv, bVaenv], intersectTypesEnv typeEnv vaenv b i)
     subUnionVar (aVaenv, a) (bVaenv, TypeVar _ TVInt i) = (mergeAllVarEnvs typeEnv [aVaenv, bVaenv], intersectTypesEnv typeEnv vaenv a i)
+    -- A slot holding an EXTERNAL occurrence denotes its ambient binding (met with the
+    -- occurrence's own inner — 'Type'), so the meet of two such slots is the meet of their
+    -- VALUES. Without this the pair falls through to 'subUnion' below, which runs under the env
+    -- 'intersectMapVars' was seeded with — 'H.empty', where the ARG meets are seeded with the
+    -- ambient env ('deepVaenv'). Both sides then read as ⊤ ('vaenvLookup' defaults a miss to ⊤),
+    -- the meet keeps whichever spelling is on the LEFT, and a disjointness between the two
+    -- bindings is lost: @/P[/v=$_/b] ∩ /P[/v=$_/a]@ under @b ↦ {-100}, a ↦ ~/P@ answered
+    -- @/P[/v=$_/b]@ where the slot meet is ∅, and answered @/P[/v=$_/a]@ with the operands
+    -- swapped — a non-commutative meet, and a widening, so membership over-approximated and
+    -- difference under-approximated (build\/scratch\/varmeet.hs).
+    --
+    -- The rule is the one the 'TVInt' clauses above already apply to an enclosing scope's
+    -- parameter: when the reading already lies within the other side, KEEP the symbolic link
+    -- (the frame-portable spelling — materializing it would replace the call frame's narrow
+    -- reading with another frame's bound); otherwise the meet of the reading with the other side.
+    --
+    -- 'TVParent' is deliberately NOT included. A parent reference names the nearest enclosing
+    -- partial's parameter and is never capturable by a like-named ambient binding
+    -- ('TypeVarLoc'); reading one through the ambient env is the capture 'genParentVarBoundPair'
+    -- exists to catch.
+    subUnionVar (aVaenv, a) (bVaenv, b)
+      | Just r <- outerReading a
+      = let env = mergeAllVarEnvs typeEnv [aVaenv, bVaenv]
+        in if isSubtypeOfWithEnv typeEnv vaenv r b then (env, a) else (env, intersectTypesEnv typeEnv vaenv a b)
+    subUnionVar (aVaenv, a) (bVaenv, b)
+      | Just r <- outerReading b
+      = let env = mergeAllVarEnvs typeEnv [aVaenv, bVaenv]
+        in if isSubtypeOfWithEnv typeEnv vaenv r a then (env, b) else (env, intersectTypesEnv typeEnv vaenv a b)
     subUnionVar a b = subUnion (const PTopType) a b
+    -- The BINDING an external occurrence resolves to, or Nothing when the variable is unbound,
+    -- bound to ⊤ (indistinguishable from unbound) or bound to another variable — in each of
+    -- those the occurrence adds no reading and the flexible per-value behaviour of 'subUnion' is
+    -- right. Exactly 'ambientReading', keyed on the occurrence's own aux so a 'TVArg'-auxed
+    -- reference resolves too.
+    --
+    -- The occurrence's own inner is deliberately NOT met in here, for the reason the 'TVInt'
+    -- clauses above leave it out as well: an inner can hold free variables of ITS scope, and
+    -- meeting it against an env that does not bind them resolves them to ⊤ and widens the
+    -- occurrence. That is a real regression — @/Cons[/T=$_/a∩{∀/List[/T=$_/T]}]@ compacted to
+    -- @/Cons[/T=$_/a∩{∀/List[/T=⊤]}]@ and broke 'propCompactNoChanges'. The reading is used only
+    -- to decide WHETHER the link may stay symbolic (@r ⊆ other@ is sufficient for that, since
+    -- the occurrence denotes @r ∩ inner ⊆ r@); the meet itself is taken on the whole occurrence,
+    -- which carries its inner.
+    outerReading (TypeVar aux TVExt _) = case H.lookup aux vaenv of
+      Just r | not (isTypeVar r), r /= PTopType -> Just r
+      _                                         -> Nothing
+    outerReading _                              = Nothing
     -- Resolve the field meet's freshly-discovered CONCRETE bindings back into its TYPE (the same
     -- resolve-meets-back rule 'intersectTypesEnv' applies at the top level, hoisted into the
     -- recursive field meet). A recursive-tail field @tail -> ∀ConsList[/T=$_T]@ met with a concrete
