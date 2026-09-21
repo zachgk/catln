@@ -476,7 +476,7 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
       -- the like-named ones here) and was reachable only from 'genRelatedType'.'mutateArg' and
       -- 'propParamClassCovariant' — so its shapes, including every 'TVExt'-carrying slot, never fed
       -- the set-algebra laws' operands. Drawing from it here is what puts them in the corpus.
-      else [genBasic, genCGOld, genCG, genCGRel, genObjM, genObj, genConst, genMultiConst, genPredShape, genMixed, genTypeVar prgm, singletonType <$> genPartialType prgm]
+      else [genBasic, genCG, genCGRel, genObjM, genObj, genConst, genMultiConst, genPredShape, genMixed, genTypeVar prgm, singletonType <$> genPartialType prgm]
              ++ [genUnrolledRecursive | not (null recExpansions)]
 
     -- Over-unrolled recursive class expansions. A sealed recursive class (e.g. @ConsList@) expands
@@ -586,11 +586,9 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
       c <- genConstant
       return $ UnionType Nothing H.empty [c]
 
-    genCGOld :: Gen Type
-    genCGOld = do
-      classNode <- HG.element $ graphToNodes cg
-      return $ typeVal $ leafSpelling prgm $ fromPartialName $ snd3 classNode
-
+    -- A class-graph node as a positive leaf, for the DATA nodes only. The class nodes take the
+    -- predicate route below; a bare 'PartialType' cannot represent a class at all
+    -- ('classNodeNames').
     genCG :: Gen Type
     genCG = do
       classNode <- HG.element $ graphToNodes cg
