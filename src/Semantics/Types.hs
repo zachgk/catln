@@ -5336,10 +5336,26 @@ compactType typeEnv vaenv (UnionType Nothing partials consts) =
   let -- Compact the nested argument/variable types (bottom-up) so a recursive arg already
       -- in canonical predicate form is recognised one level up.
       argCompacted = joinUnionType $ map (compactPartialArgs typeEnv vaenv) $ splitUnionType partials
-      compactedLeafs = compactPartialLeafs typeEnv vaenv argCompacted
+      compactedLeafs = settleMerged argCompacted
       -- Remove constants whose parent partial type is already in the compacted leafs
       filteredConsts = filter (\c -> not $ constantCoveredByLeafs c compactedLeafs) consts
   in foldRecursiveType typeEnv vaenv $ UnionType Nothing compactedLeafs filteredConsts
+  where
+    -- The leaf stage MERGES same-named leafs ('compactJoinPartials'), and a merged leaf's slot is
+    -- a NEW value — the union of the merged leafs' values — which the per-field canonicalisation
+    -- above never saw. @Cons(tail=∀ConsList) + Cons(tail=Cons(tail=∀ConsList) + Nil)@ merges to
+    -- @Cons(tail = ∀ConsList ∪ Cons(tail=∀ConsList))@, whose tail still spells a member beside the
+    -- class top that covers it; only a SECOND 'compactType' folded it ('foldNestedMembers'), so
+    -- compaction was not idempotent (propCompactIdempotent; build\/scratch\/compactidem.hs). So a
+    -- leaf the leaf stage created gets its fields canonicalised too, and the stage runs again
+    -- while that changes anything — a folded field can make two leafs equal outside one slot
+    -- and so mergeable. Leafs the stage passed through are already canonical and are not redone.
+    settleMerged leafs =
+      let merged = compactPartialLeafs typeEnv vaenv leafs
+          before = S.fromList (splitUnionType leafs)
+          (fresh, kept) = L.partition (not . (`S.member` before)) (splitUnionType merged)
+          fresh' = map (compactPartialArgs typeEnv vaenv) fresh
+      in if fresh' == fresh then merged else settleMerged (joinUnionType (kept ++ fresh'))
 
 -- | Recurse 'compactType' into a partial's argument and variable types. Compaction
 -- otherwise only operates on the top level of a union, so without this a recursive type
