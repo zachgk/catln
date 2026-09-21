@@ -19,6 +19,7 @@ import           Data.Bifunctor          (bimap)
 import           Data.Either             (partitionEithers)
 import           Data.Graph              (graphFromEdges)
 import qualified Data.HashMap.Strict     as H
+import qualified Data.HashSet            as HS
 import           Data.List               (partition)
 import           Data.Maybe
 import qualified Data.Set                as S
@@ -330,17 +331,34 @@ genParentVarBoundPair prgm@(Prgm objMap _ _) = do
 -- the operations) and never ⊤ or ∅ (a variable bound to ⊤ is indistinguishable from an unbound one,
 -- and ∅ is not a value a program's type variable resolves to).
 genVaenv :: Prgm Expr () -> Gen TypeVarArgEnv
-genVaenv prgm = do
-  entries <- forM varNamePool $ \n -> do
-    bind <- HG.frequency [(2, return True), (1, return False)]
-    if not bind
-      then return Nothing
-      else do
-        aux <- HG.element [TVVar (partialKey n), TVArg (partialKey n)]
-        v   <- HG.filter concreteish (genType prgm)
-        return $ Just (aux, v)
-  return $ H.fromList $ catMaybes entries
+genVaenv prgm = go [] varNamePool
   where
+    -- Acyclicity, enforced at every depth rather than only at the top. A value may reference
+    -- only pool names bound EARLIER, so by induction no binding reaches itself. Checking just
+    -- the top level ('concreteish' alone) let a self-reference hide one slot down —
+    -- @/b ↦ /Pair[/A=$_/b∩{~#noCore}]..@ — and resolving that unfolds forever: it is a
+    -- recursive equation, not a value, which is exactly what 'comparedPartialsEnv' refuses to
+    -- install when the algebra builds env entries itself. Found by
+    -- propUnionDistributesIntersection (seed 11880809058551452694 14904440901166778199,
+    -- containers.ct), as a 5s timeout forcing @b∩c@; it hangs identically on the pre-change
+    -- compiler, so the ALGEBRA's missing occurs-check when resolving an ambient binding is a
+    -- real and separate gap — this only stops the generator from writing an env no legal
+    -- program produces.
+    go acc [] = return $ H.fromList acc
+    go acc (n:ns) = do
+      bind <- HG.frequency [(2, return True), (1, return False)]
+      if not bind
+        then go acc ns
+        else do
+          aux <- HG.element [TVVar (partialKey n), TVArg (partialKey n)]
+          v   <- HG.filter (acyclicUnder (map fst acc)) (genType prgm)
+          go ((aux, v) : acc) ns
+    acyclicUnder bound t = concreteish t && HS.null (HS.difference (poolRefs t) (boundNames bound))
+    -- Only POOL names matter: a reference to a declaration's own parameter (@$/T@) is not an
+    -- environment edge at all.
+    poolRefs t = HS.intersection (HS.union (typeOuterVarRefs t) (typeFreeTVIntRefs t)) poolKeys
+    poolKeys = HS.fromList (map partialKey varNamePool)
+    boundNames bound = HS.fromList [k | TVVar k <- bound] `HS.union` HS.fromList [k | TVArg k <- bound]
     concreteish TypeVar{}  = False
     concreteish PTopType   = False
     concreteish BottomType = False
