@@ -6456,6 +6456,34 @@ intersectTypesWithVarEnv typeEnv vaenv (UnionType Nothing posLeafs posConsts) t2
 intersectTypesWithVarEnv typeEnv vaenv (UnionType Nothing posPartials []) (UnionType (Just (PredsNone, negPartials, [])) (H.null -> True) [])
   | not (H.null negPartials) =
       (vaenv, compactType typeEnv vaenv $ differencePartialLeafs typeEnv vaenv posPartials negPartials)
+-- PosPartials ∩ a DISJUNCTIVE predicate universe: DISTRIBUTE over the disjuncts.
+-- 'unionTypesWithEnv' spells @p₁ ∨ p₂@ as @¬(¬p₁ ∧ ¬p₂)@ (De Morgan, kept flat), so a union's
+-- predicate reaches the meet as ONE negated conjunction. Meeting a leaf against that formula as
+-- a WHOLE hands the disjunction to the per-leaf Bool oracles, which decide it with a different
+-- prover than the per-disjunct meets use — and the two provers disagree about enumerating an
+-- open class. @Cons ∩ (∀EqCO ∪ (⊤ − ∀OrdCO))@ dropped the formula entirely (the leaf-cover
+-- engine enumerates the open @OrdCO@ to conclude every @Cons@ in it is an @EqCO@) while
+-- @(Cons ∩ ∀EqCO) ∪ (Cons ∩ (⊤ − ∀OrdCO))@ keeps the exclusion, so distributivity failed on
+-- the pair (propIntersectionDistributesUnion, recursiveClassBounds.ct, seed
+-- 18127263491109996917 4153912400641714005).
+--
+-- @X ∩ (Q₁ ∨ … ∨ Qₙ) = (X∩Q₁) ∪ … ∪ (X∩Qₙ)@ is an exact set identity — no world assumption and
+-- no enumeration — and computing the meet that way makes it agree with the union BY
+-- CONSTRUCTION, rather than by both provers happening to answer alike. It is also strictly more
+-- precise: each disjunct meets the leaf in its own right, so a disjunct the oracles cannot
+-- decide on the whole formula no longer costs the others their answer.
+--
+-- Well-founded: each @¬qᵢ@ carries one ¬-level less than the formula, and the union's
+-- normalization keeps these flat (depth 1), so the disjuncts are atoms or single negations that
+-- the clauses below decide directly — a recursive negation among them still reaches the
+-- terminal attach clause. Placed BEFORE that clause, which would otherwise take the whole
+-- formula (a disjunction holding one recursive negated atom) and attach it undistributed.
+intersectTypesWithVarEnv typeEnv vaenv t1@(UnionType Nothing partials []) (UnionType (Just (PredsNot (PredsAnd qs), (H.null -> True), [])) (H.null -> True) [])
+  | not (H.null partials), length qs >= 2 =
+      let meetDisjunct (va, acc) q =
+            let (va', r) = intersectTypesWithVarEnv typeEnv va t1 (UnionType (Just (predsNot q, H.empty, [])) H.empty [])
+            in (va', unionTypesWithEnv typeEnv va' acc r)
+      in L.foldl' meetDisjunct (vaenv, BottomType) qs
 -- PosPartials ∩ pure formula top NEGATING A RECURSIVE CLASS MEMBERSHIP: the formula is a
 -- symbolic refinement — attach it to each leaf ('partialAddPreds', the same exact
 -- leaf-refinement spelling the positive 'tryPredsToList' arm below uses) and let the Bool
