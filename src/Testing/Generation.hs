@@ -487,19 +487,9 @@ genType prgm = HG.frequency
     [ (1,  genBasic)
     , (1,  genTypeVar prgm)
     , (11, genUnionType prgm)
-    ] >>= withRandomArgModes
+    ]
   where
     genBasic = HG.element [PTopType, BottomType]
-
-    -- Randomly assign a 'PtArgMode' to the generated partials ('safeArgModes'), exercising the
-    -- lower\/upper-bound modes through the (precise) set operations. Only plain positive-partial
-    -- unions are re-moded — so a leaf in a top's exclusions, or in a mixed type, is always
-    -- 'PtArgExact'.
-    withRandomArgModes :: Type -> Gen Type
-    withRandomArgModes (UnionType Nothing leafs []) | not (H.null leafs) = do
-      leafs' <- mapM remodePartial $ splitUnionType leafs
-      return $ UnionType Nothing (joinUnionType leafs') []
-    withRandomArgModes t = return t
 
 -- | The whole 'UnionType' space: the subtractive top (predicates, negative leafs, negative
 -- constants) and the positive half (leafs, constants), each slot drawn independently from a
@@ -573,8 +563,8 @@ genUnionType prgm@(Prgm objMap _ _) = HG.frequency [(2, withTop), (5, plain)]
       -- with its slots drawn, or either carrying a 'TVExt' slot. It was once a DISJOINT family
       -- from this one — both had their own genCG\/genObj\/genWithTVExt — and reaching it from
       -- here is what first put its TVExt-carrying slots in front of the laws.
-      [ [ (8, pure <$> genPartialType prgm) | prgmHasPartial prgm       ]
-      , [ (4, genStoredMetaLeafs)           | not (nullObjectMap objMap) ]
+      [ [ (8, pure <$> genLeaf)   | prgmHasPartial prgm       ]
+      , [ (4, genStoredMetaLeafs) | not (nullObjectMap objMap) ]
       -- Depressed relative to the others: an unrolled expansion is the deepest and slowest type
       -- here and carries the livelock documented on 'genParentVarBoundPair'. At 1\/13 per group
       -- its absolute rate stays near the 1-in-13 it had as a case of its own, while now also
@@ -586,6 +576,17 @@ genUnionType prgm@(Prgm objMap _ _) = HG.frequency [(2, withTop), (5, plain)]
       -- disabled from the day it was written — "the current implementation doesn't actually make
       -- sense or produce valid PredExpr" — and is gone rather than carried dead. A 'PredExpr'
       -- still reaches the corpus from a declaration's own @where@ clause ('genTypeFromExprWith').
+
+    -- | One synthesized leaf, carrying an argument mode. Every leaf position fills from here, so
+    -- a mode reaches a top's EXCLUSIONS and a mixed type's halves, not only a plain positive
+    -- union as it did while the re-moding was a post-pass on 'genType''s result.
+    --
+    -- Re-mode what we synthesize; keep what we borrow. 'genStoredMetaLeafs' holds the mode the
+    -- DECLARATION has and 'recLeafs' the one 'expandClassPartial' produced; overwriting those
+    -- makes a leaf the program does not have, which is the declaration-boundedness rule the
+    -- TVExt slots of 'genWithTVExtOn' already follow.
+    genLeaf :: Gen PartialType
+    genLeaf = genPartialType prgm >>= remodePartial
 
     -- A union of one to three source groups. Drawing more than one is the only way a leaf slot
     -- ever holds two DIFFERENTLY-SOURCED leafs — a bare data name beside a fully-slotted partial
@@ -613,14 +614,14 @@ genUnionType prgm@(Prgm objMap _ _) = HG.frequency [(2, withTop), (5, plain)]
       oa <- HG.element (flatObjectMap objMap)
       case getExprType <$> oaObj oa of
         Just (UnionType Nothing ls []) | not (H.null ls) -> return (splitUnionType ls)
-        _                                                -> pure <$> genPartialType prgm
+        _                                                -> pure <$> genLeaf
 
     recLeafs :: Gen [PartialType]
     recLeafs = do
       t <- genUnrolledRecursive
       case t of
         UnionType Nothing ls [] | not (H.null ls) -> return (splitUnionType ls)
-        _                                         -> pure <$> genPartialType prgm
+        _                                         -> pure <$> genLeaf
 
     -- Over-unrolled recursive class expansions. A sealed recursive class (e.g. @ConsList@) expands
     -- to a depth-1 member union whose recursive field is the class-predicate form
