@@ -4446,8 +4446,13 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing subPartials []) (UnionType N
         -- every other comparison bit-identical: unioning the supers' keys in generally re-runs the
         -- family scan and its type-level union for keys the sub already answers for, which at
         -- 10000 left propOwnVarBindingRespected spinning for 30 min against 12s.
-        slotKeys get | H.null (get sub) = L.nub (concatMap (H.keys . get) sup)
-                     | otherwise        = H.keys (get sub)
+        --
+        -- "Spells nothing" is judged on what the sub DENOTES: a parameter spelled ⊤ is no
+        -- constraint (see 'PartialType'), so @/P[/pm=⊤]@ is the bare @/P@ here. Judged as written it
+        -- tried only @/pm@ and missed the @/d@ partition that covers @/P@ itself.
+        slotKeys get | H.null (get subN) = L.nub (concatMap (H.keys . get) sup)
+                     | otherwise         = H.keys (get subN)
+        subN = sub{ptVars = H.filter (/= PTopType) (ptVars sub)}
         -- The dimension may be spelled only on the SUPER side: a parameter the sub leaves
         -- unspelled is ⊤ there (see 'PartialType'), so a family of supers that partitions that
         -- dimension still covers it. Iterating the sub's own keys alone missed every such case —
@@ -4456,7 +4461,17 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing subPartials []) (UnionType N
         -- set compared unequal.
         coverSlot get set k =
             let sv = H.lookupDefault PTopType k (get sub)
-                erase p = (set p (H.insert k PTopType (get p))){ptArgMode = PtArgExact}
+                -- The family is delimited by equality OUTSIDE the slot, and that equality must be
+                -- of what the partials DENOTE: a parameter spelled ⊤ is the same set as one left
+                -- unspelled (see 'PartialType'), so ⊤-valued parameters are dropped before
+                -- comparing. Compared as written, @/P[/pm=⊤, /d=~/P]@ was excluded from a family
+                -- beside @/P[/d=$_/a]..@ that it partitions @/d@ with, and @/P ⊆@ their union read
+                -- False while @/P −@ their union read ∅ — the two provers disagreeing on one
+                -- question (propDifferenceByIntersection; build\/scratch\/diffint.hs). This is the
+                -- sub-side twin of the super-side rule on 'slotKeys' above. Only PARAMETERS: an
+                -- unspelled ARG is absent, not ⊤, so the arg map is compared as written.
+                dropTopVars p = p{ptVars = H.filter (/= PTopType) (ptVars p)}
+                erase p = dropTopVars (set p (H.insert k PTopType (get p))){ptArgMode = PtArgExact}
                 -- Normalise both modes before 'argModeCovers': an exact super does not literally
                 -- cover a sub carrying a vacuous @..@\/'PtArgAny' (@subUb@=False) — even though that
                 -- @..@ admits no arg-set beyond the sub's own declared keys — so without this the
