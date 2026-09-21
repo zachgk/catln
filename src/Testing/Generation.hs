@@ -451,14 +451,45 @@ genTypeFromExprWith full prgm (EWhere _ base cond) = do
   return $ partialAddPreds baseType (PredsOne $ PredExpr condType)
 genTypeFromExprWith _ _ e = error $ printf "Unimplemented genTypeFromExpr for %s" (show e)
 
--- | Generates a 'Type' from the program. A bare argument-less reference like @/Cons@ (exact
--- mode, no fields) is a legitimate standalone value — the partial-application form a @/Cons@
--- has before its args are applied (arg-set @{}@, disjoint from the field forms) — and is
--- generated as-is.
+-- | Generates a 'Type' from the program.
+--
+-- 'Type' has two constructors, so this has two cases — the 'UnionType' product ('genUnionType')
+-- and the 'TypeVar' occurrence ('genTypeVar') — and one more for the two EXTREMA.
+--
+-- It used to have twelve, one per shape someone wanted in the corpus: @genBasic@, @genCG@,
+-- @genCGRel@, @genObjM@, @genObj@, @genConst@, @genMultiConst@, @genPredShape@, @genMixed@,
+-- 'genTypeVar', 'genPartialType' and @genUnrolledRecursive@ (the last only for a program with a
+-- sealed recursive class, so the list was twelve or thirteen depending on the fixture). Ten of
+-- those were points of the one 'UnionType' product, each pinning the slots it did not care about,
+-- and what the pinning cost was COVERAGE: a slot an arm pins is a slot that arm can never vary,
+-- so no predicate top ever carried a 'TVExt' slot in its exclusions, no unrolled recursive union
+-- ever appeared inside a subtraction, no leaf slot ever held two differently-sourced leafs, and
+-- (until the re-moding moves into 'genLeafs') no leaf outside a plain positive union ever carried
+-- an argument mode. Drawing the slots independently from shared sources puts the product in the
+-- corpus instead of ten of its points.
+--
+-- ⊤ and ⊥ stay explicit rather than falling out of a degenerate 'genUnionType' draw. Four
+-- 'HG.filter's in this module screen this generator's output, and the one they share
+-- ('concreteishInner') rejects exactly a bare variable, ⊤ and ⊥ — so its acceptance is
+-- @1 − P(var) − P(⊤) − P(⊥)@, which pinned here is a constant (measured 0.8475 on containers.ct,
+-- 0.7695 on the mixture the properties actually draw). Left to emerge from a degenerate draw it
+-- would be a product of presence weights AND of which slot sources the program happens to offer —
+-- the empty program would emit ⊥ constantly — and a filter whose acceptance sags reports a
+-- Hedgehog GIVE-UP FAIL that says nothing about the algebra. That is the failure mode recorded at
+-- 'declHasPlacement', 'prgmHasPartial', 'genTypeFromExprWith' and 'genPlacement'. Keeping the
+-- extrema out of the product is also what lets 'genUnionType' hold its non-degeneracy invariant.
+--
+-- A bare argument-less reference like @/Cons@ (exact mode, no fields) is a legitimate standalone
+-- value — the partial-application form a @/Cons@ has before its args are applied (arg-set @{}@,
+-- disjoint from the field forms) — and is generated as-is.
 genType :: Prgm Expr () -> Gen Type
-genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
+genType prgm = HG.frequency
+    [ (1,  genBasic)
+    , (1,  genTypeVar prgm)
+    , (11, genUnionType prgm)
+    ] >>= withRandomArgModes
   where
-    typeEnv@TypeEnv{teClassGraph=ClassGraph cg} = mkTypeEnv prgm
+    genBasic = HG.element [PTopType, BottomType]
 
     -- Randomly assign a 'PtArgMode' to the generated partials ('safeArgModes'), exercising the
     -- lower\/upper-bound modes through the (precise) set operations. Only plain positive-partial
@@ -470,14 +501,126 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
       return $ UnionType Nothing (joinUnionType leafs') []
     withRandomArgModes t = return t
 
-    gens = if graphEmpty cg
-      then [genBasic, genConst, genMultiConst, genTypeVar prgm]
-      -- 'genPartialType' is its OWN family (its 'genCG'\/'genObj'\/'genWithTVExt' are distinct from
-      -- the like-named ones here) and was reachable only from 'genRelatedType'.'mutateArg' and
-      -- 'propParamClassCovariant' — so its shapes, including every 'TVExt'-carrying slot, never fed
-      -- the set-algebra laws' operands. Drawing from it here is what puts them in the corpus.
-      else [genBasic, genCG, genCGRel, genObjM, genObj, genConst, genMultiConst, genPredShape, genMixed, genTypeVar prgm, singletonType <$> genPartialType prgm]
-             ++ [genUnrolledRecursive | not (null recExpansions)]
+-- | The whole 'UnionType' space: the subtractive top (predicates, negative leafs, negative
+-- constants) and the positive half (leafs, constants), each slot drawn independently from a
+-- shared source.
+--
+-- NON-DEGENERACY is an invariant, not an accident: a top always populates at least one of its
+-- three slots (an empty top IS ⊤) and a top-less draw always populates at least one positive (an
+-- empty positive half IS ⊥). Both extrema belong to 'genType'.'genBasic', which is what keeps
+-- their rate — and therefore every filter's acceptance — independent of the program and the size.
+--
+-- EVERY SHAPE DECISION IS SIZE-INDEPENDENT. The runner sweeps size 0..99 across the test count,
+-- and @Range.linear 0 n@ has an upper bound of 0 for every size below @99\/n@ — measured,
+-- @HG.list (linear 0 2)@ yields nothing at all below size 50, and @linear 1 3@ pins to exactly 1
+-- below size 25. A composite whose slot presence came from a size-parameterised range would
+-- therefore be a different generator in the first half of the sweep, and because four 'HG.filter's
+-- screen this output, the drop shows up as retry cost and eventually as a give-up FAIL rather than
+-- as anything legible. So presence and count are drawn with 'HG.frequency' over explicit values;
+-- only constant MAGNITUDES keep a size-parameterised range.
+--
+-- What a program cannot supply is absent from the weight list rather than branched around, which
+-- is how the empty program (@mempty@ — an eighth of every draw the properties see) takes the same
+-- code path as every other: its only surviving rows are the constant ones, so it yields constant
+-- unions and @⊤ − {c}@ tops, the shape 'Semantics.TypesTests.propExcludedConstantIrrelevantToData'
+-- pins by hand.
+genUnionType :: Prgm Expr () -> Gen Type
+genUnionType prgm@(Prgm objMap _ _) = HG.frequency [(2, withTop), (5, plain)]
+  where
+    typeEnv@TypeEnv{teClassGraph=ClassGraph cg} = mkTypeEnv prgm
+    canPred = not (null (graphToNodes cg))
+    canLeaf = not (null leafSources)
+
+    plain = uncurry (UnionType Nothing) <$> genPositives
+
+    -- The canonical producer of a 'Just'-top is 'complementTypeEnv', which emits EMPTY positives,
+    -- so a mixed type is the rarer shape.
+    withTop = do
+      top      <- genTopTriple
+      (ls, cs) <- HG.frequency [(3, return (H.empty, [])), (1, genPositives)]
+      return $ UnionType (Just top) ls cs
+
+    genTopTriple :: Gen (TypePredicates, PartialLeafs, [Constant])
+    genTopTriple = HG.frequency $ concat
+      [ [ (12, (,,) <$> genPreds <*> pure H.empty <*> pure [])  | canPred            ]
+      , [ (1, (,,) <$> genPreds <*> genLeafs     <*> pure [])   | canPred && canLeaf ]
+      , [ (1, (,,) <$> genPreds <*> pure H.empty <*> genConsts) | canPred            ]
+      , [ (1, (,,) PredsNone     <$> genLeafs    <*> pure [])   | canLeaf            ]
+      , [ (1, (,,) PredsNone H.empty <$> genConsts)                                  ]
+      ]
+
+    genPositives :: Gen (PartialLeafs, [Constant])
+    genPositives = HG.frequency $ concat
+      [ [ (13, (,) <$> genLeafs <*> pure [])   | canLeaf ]
+      , [ (3,  (,) H.empty <$> genConsts)                ]
+      , [ (1,  (,) <$> genLeafs <*> genConsts) | canLeaf ]
+      ]
+
+    -- 1-3 constants, size-independently. @HG.list (linear 1 3)@ draws exactly one below size 25,
+    -- so a third of the sweep never saw a multi-constant union at all.
+    genConsts :: Gen [Constant]
+    genConsts = nubConsts <$> (count >>= \n -> replicateM n genConstant)
+      where count = HG.frequency [(6, return 1), (3, return 2), (1, return 3)]
+
+    -- | Every positive-leaf source in one place. A source yields a GROUP, not a single partial:
+    -- the unrolled expansion is only meaningful whole (its 'hasExplicitRecursion' gate needs the
+    -- recursive member and its base member in the same union) and a stored meta may itself be a
+    -- multi-leaf union. Every source returns a NON-EMPTY group, which is what makes
+    -- 'genPositives' non-degenerate.
+    leafSources :: [(Int, Gen [PartialType])]
+    leafSources = concat
+      -- 'genPartialType' is the one partial generator: a bare data name, a declaration partial
+      -- with its slots drawn, or either carrying a 'TVExt' slot. It was once a DISJOINT family
+      -- from this one — both had their own genCG\/genObj\/genWithTVExt — and reaching it from
+      -- here is what first put its TVExt-carrying slots in front of the laws.
+      [ [ (8, pure <$> genPartialType prgm) | prgmHasPartial prgm       ]
+      , [ (4, genStoredMetaLeafs)           | not (nullObjectMap objMap) ]
+      -- Depressed relative to the others: an unrolled expansion is the deepest and slowest type
+      -- here and carries the livelock documented on 'genParentVarBoundPair'. At 1\/13 per group
+      -- its absolute rate stays near the 1-in-13 it had as a case of its own, while now also
+      -- reaching the negative and mixed positions.
+      , [ (1, recLeafs)                     | not (null recExpansions)  ]
+      ]
+      -- TODO: a fourth source, a declaration refined by one of the program's type PROPERTIES
+      -- (@:Animal.fluffy@) as a 'PredExpr' on the leaf. The arm that used to sit in @genObj@ was
+      -- disabled from the day it was written — "the current implementation doesn't actually make
+      -- sense or produce valid PredExpr" — and is gone rather than carried dead. A 'PredExpr'
+      -- still reaches the corpus from a declaration's own @where@ clause ('genTypeFromExprWith').
+
+    -- A union of one to three source groups. Drawing more than one is the only way a leaf slot
+    -- ever holds two DIFFERENTLY-SOURCED leafs — a bare data name beside a fully-slotted partial
+    -- of the same name, say, which is the disjointness 'genType' claims for the argument-less
+    -- form and which no single source draw could produce.
+    genLeafs :: Gen PartialLeafs
+    genLeafs = do
+      n      <- HG.frequency [(7, return 1), (2, return 2), (1, return 3)]
+      groups <- replicateM n (HG.frequency leafSources)
+      return $ joinUnionType (concat groups)
+
+    -- | The stored outer meta of a declaration — the one leaf source whose slot values come from
+    -- the typechecker rather than from declared metas or a coin flip, so what it holds is by
+    -- construction a type the compiler produces. It is NOT 'genTypeFromExprWith' @True@: on a
+    -- 'genPrgm' program the two coincide exactly ('genInputExpr' stores @singletonType p'@ with
+    -- every slot at ⊤), but on a typechecked fixture the meta is what inference concluded and may
+    -- be a multi-leaf union or carry inferred rather than declared slot values.
+    --
+    -- A meta that is not a positive-leaf union is not forced into a leaf slot: a 'Just'-top
+    -- belongs in the predicate slot, a ⊤ meta means the node was never checked, and a bare
+    -- variable is 'genTypeVar's. Those fall back to a partial rather than to an empty group,
+    -- which would break the non-degeneracy invariant.
+    genStoredMetaLeafs :: Gen [PartialType]
+    genStoredMetaLeafs = do
+      oa <- HG.element (flatObjectMap objMap)
+      case getExprType <$> oaObj oa of
+        Just (UnionType Nothing ls []) | not (H.null ls) -> return (splitUnionType ls)
+        _                                                -> pure <$> genPartialType prgm
+
+    recLeafs :: Gen [PartialType]
+    recLeafs = do
+      t <- genUnrolledRecursive
+      case t of
+        UnionType Nothing ls [] | not (H.null ls) -> return (splitUnionType ls)
+        _                                         -> pure <$> genPartialType prgm
 
     -- Over-unrolled recursive class expansions. A sealed recursive class (e.g. @ConsList@) expands
     -- to a depth-1 member union whose recursive field is the class-predicate form
@@ -502,12 +645,14 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
     genUnrolledRecursive :: Gen Type
     genUnrolledRecursive = do
       (cName, exp1) <- HG.element recExpansions
-      depth <- HG.int (linear 1 2) -- unroll 1-2 extra levels → over-unrolled depth 2-3
+      depth <- HG.element [1, 2 :: Int] -- unroll 1-2 extra levels → over-unrolled depth 2-3
       return $ iterate (substRecRef cName exp1) exp1 !! depth
 
     -- Compound predicate formulae: conjunctions (and negated conjunctions) of PredClass/PredRel
     -- atoms drawn from the class graph. Exercises P∨¬P=⊤ / P∧¬P=∅ and the De Morgan handling of
-    -- the union/intersection/complement paths for non-atomic predicates.
+    -- the union/intersection/complement paths for non-atomic predicates. A one-atom non-negated
+    -- draw is the @∀C@ \/ @isa C@ shape that used to be two cases of its own (@genCG@'s class half
+    -- and @genCGRel@).
     --
     -- Atom kinds mirror the compiler's name resolution ('resolveRelPartial'): a CLASS name
     -- resolves to a 'PredClass' (or stays a 'PredRel' while relative), while a data-TYPE name in
@@ -515,9 +660,14 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
     -- generated only for class nodes; any node may appear as a 'PredRel'.
     genPreds :: Gen TypePredicates
     genPreds = do
-      atoms <- HG.list (linear 1 2) genAtom
-      HG.choice [ return $ foldr1 predsAnd (map PredsOne atoms)
-                , return $ predsNot $ foldr1 predsAnd (map PredsOne atoms) ]
+      n     <- HG.frequency [(4, return 1), (1, return 2)]
+      atoms <- replicateM n genAtom
+      let conj = foldr1 predsAnd (map PredsOne atoms)
+      -- A quarter negated. @genPredShape@ and @genMixed@ negated half of what they drew, but the
+      -- @∀C@ and @isa C@ cases beside them were never negated, and the net over all draws was a
+      -- quarter; routing every predicate top through here would otherwise double it at the
+      -- expense of positive class membership, which is the commoner real shape.
+      HG.frequency [(3, return conj), (1, return (predsNot conj))]
       where
         genAtom = do
           classNode <- HG.element $ graphToNodes cg
@@ -526,113 +676,6 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
               let nm = fromPartialName cls
               HG.element [PredClass (partialVal nm), PredRel (partialVal nm)]
             t -> return $ PredRel (partialVal (fromPartialName t))
-
-    genPredShape :: Gen Type
-    genPredShape = TopType H.empty <$> genPreds
-
-    -- Mixed types as direct inputs: a subtractive 'Just'-top component (predicates, negative
-    -- leafs, negative constants) unioned with positive leafs and constants. These arise as
-    -- intermediate results of the set operations; generating them directly exercises the
-    -- mixed-distribute intersection, the mixed-left subtype branch, and the mixed
-    -- compactType\/complement clauses as top-level inputs.
-    genMixed :: Gen Type
-    genMixed = do
-      preds     <- HG.choice [genPreds, genPreds, return PredsNone]
-      negLeafs  <- HG.choice [return H.empty, leafsOf genObj]
-      negConsts <- HG.choice [return [], nubConsts <$> HG.list (linear 1 2) genConstant]
-      posLeafs  <- HG.choice [return H.empty, leafsOf genObj]
-      posConsts <- HG.choice [return [], nubConsts <$> HG.list (linear 1 2) genConstant]
-      if H.null posLeafs && H.null negLeafs && preds == PredsNone && null negConsts && null posConsts
-        then genCG
-        else return $ UnionType (Just (preds, negLeafs, negConsts)) posLeafs posConsts
-      where
-        leafsOf g = do
-          t <- g
-          return $ case t of
-            UnionType Nothing ls [] -> ls
-            _                       -> H.empty
-
-    -- Unions of several constants, and constants joined with a positive partial. Single-constant
-    -- 'genConst' never exercises the multi-constant union paths or the constant-not-covered-by-top
-    -- expansion in 'unionTypesWithEnv'\/'intersectTypesWithVarEnv'.
-    genMultiConst :: Gen Type
-    genMultiConst = do
-      cs <- HG.list (linear 1 3) genConstant
-      leafs <- if nullObjectMap objMap then return H.empty else HG.choice [return H.empty, someLeafs]
-      return $ UnionType Nothing leafs (nubConsts cs)
-      where
-        someLeafs = do
-          t <- genObj
-          return $ case t of
-            UnionType Nothing ls [] -> ls
-            _                       -> H.empty
-
-    -- Find all functions with single argument having thisKey
-    typePropFunctions = mapMaybe checkFunction $ flatObjectMap objMap
-      where
-        checkFunction ObjArr{oaBasis=FunctionObj, oaObj=Just objExpr} =
-          case exprAppliedArgs objExpr of
-            [arg] -> case oaObj arg of
-              Just (Value _ n) | nameStr n == thisKey -> Just objExpr
-              _                                       -> Nothing
-            _ -> Nothing
-        checkFunction _ = Nothing
-
-    genBasic :: Gen Type
-    genBasic = HG.element [PTopType, BottomType]
-
-    genConst :: Gen Type
-    genConst = do
-      c <- genConstant
-      return $ UnionType Nothing H.empty [c]
-
-    -- A class-graph node as a positive leaf, for the DATA nodes only. The class nodes take the
-    -- predicate route below; a bare 'PartialType' cannot represent a class at all
-    -- ('classNodeNames').
-    genCG :: Gen Type
-    genCG = do
-      classNode <- HG.element $ graphToNodes cg
-      return $ case snd3 classNode of
-        cls@PClassName{} -> TopType H.empty (PredsOne $ PredClass $ partialVal $ fromPartialName cls)
-        t                -> typeVal $ leafSpelling prgm $ fromPartialName t
-
-    genCGRel :: Gen Type
-    genCGRel = do
-      classNode <- HG.element $ graphToNodes cg
-      return $ relTypeVal $ fromPartialName $ snd3 classNode
-
-    genObjM :: Gen Type
-    genObjM = do
-      oa <- HG.element $ flatObjectMap objMap
-      let objExpr = fromJust $ oaObj oa
-      return $ getExprType objExpr
-
-    genObj :: Gen Type
-    genObj = do
-      oa <- HG.element $ flatObjectMap objMap
-      let objExpr = fromJust $ oaObj oa
-      basePartial <- genTypeFromExpr prgm objExpr
-
-      -- Optionally add type properties as refinement predicates
-      if null typePropFunctions
-        then return $ singletonType basePartial
-        else do
-          -- TODO: Fix support for shouldAddProps
-          -- The current implementation of it doesn't actually make sense or produce valid PredExpr
-          let shouldAddProps = False -- HG.bool
-          if shouldAddProps
-            then do
-              -- Select a random subset of type properties
-              numProps <- HG.int (linear 0 (min 3 $ length typePropFunctions))
-              selectedProps <- take numProps <$> HG.shuffle typePropFunctions
-              -- Add each as a predicate
-              finalPartial <- foldM addPred basePartial selectedProps
-              return $ singletonType finalPartial
-            else return $ singletonType basePartial
-      where
-        addPred partial prop = do
-          propType <- genTypeFromExpr prgm prop
-          return $ partialAddPreds partial (PredsOne $ PredExpr propType)
 
 -- | Generates a type structurally RELATED to a given one. When the input is a positive-partial
 -- union, one leaf is mutated along a single dimension: its argument mode flipped among the three
