@@ -319,6 +319,39 @@ propIntersectionWithComplement gPrgm = property $ do
   assertTimed "a∩¬a = ∅" $ isEqTypeWithEnvComplete typeEnv vaenv combined BottomType
 
 -- A^c^c=A
+-- | What fraction of 'genType''s output is each region of the 'Type' product. Asserted on ONE
+-- property, because a distribution is a property of the generator and not of any single law, and
+-- because each 'cover' costs an evaluation per draw.
+--
+-- 'label' and 'classify' only print; 'cover' FAILS, which is the point — a generator change that
+-- quietly stops producing a whole region of the corpus is otherwise invisible, and the four
+-- 'HG.filter's wrapping 'genType' inside Generation.hs turn such a collapse into a give-up FAIL
+-- far from its cause.
+--
+-- Minimums are roughly half the measured rate of the mixture the properties actually see
+-- ('ggPrgm': half premade, half 'genPrgm', so the leaf-free @empty@ program is an eighth of every
+-- draw), so they cannot flake at the default 100 iterations. Measured on that mixture, sizes 0-9
+-- and 50-99 agreeing to within 0.6pp: plain leaf union 35.7-36.3%, subtractive top 27.9%
+-- (⊤ 6.0 + predicate 16.3 + pred-free 0.8 + mixed 4.8), bare variable 11.1%, constants 19.4%,
+-- non-exact arg mode 13.7-14.9%.
+coverTypeShapes :: Type -> PropertyT IO ()
+coverTypeShapes a = do
+  cover 15 "plain positive leaf union" $ case a of
+    UnionType Nothing ls [] -> not (H.null ls)
+    _                       -> False
+  cover 10 "subtractive top" $ case a of
+    UnionType Just{} _ _ -> True
+    _                    -> False
+  cover 4 "bare type variable" $ case a of
+    TypeVar{} -> True
+    _         -> False
+  cover 6 "constants" $ case a of
+    UnionType _ _ cs -> not (null cs)
+    _                -> False
+  cover 4 "non-exact arg mode" $ case a of
+    UnionType _ ls _ -> any ((/= PtArgExact) . ptArgMode) (splitUnionType ls)
+    _                -> False
+
 propComplementInverse :: IO GenPrgm -> Property
 propComplementInverse gPrgm = property $ do
   gPrgm' <- lift gPrgm
@@ -326,6 +359,7 @@ propComplementInverse gPrgm = property $ do
   let typeEnv = mkTypeEnv prgm
   vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
+  coverTypeShapes a
   a' <- timed "¬a" $ complementTypeEnv typeEnv vaenv a
   annotate $ printf "a' = %s" (show a')
   a'' <- timed "¬¬a" $ complementTypeEnv typeEnv vaenv a'

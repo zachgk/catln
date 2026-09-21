@@ -54,13 +54,46 @@ genTypeVar prgm = do
   inner <- HG.frequency [(2, return PTopType), (1, HG.small (HG.filter concreteishInner (genType prgm)))]
   return $ TypeVar aux loc inner
 
--- | The inner-value filter shared by 'genTypeVar' and 'genWithTVExt' (mirrors 'genVaenv's
--- local rule): no bare variable, no ⊤, no ⊥.
+-- | The inner-value filter shared by 'genTypeVar', 'genWithTVExt' and 'genVaenv': no bare
+-- variable, no ⊤, no ⊥. A variable bound to another variable could loop the variable-rewriting
+-- clauses of the operations; a variable bound to ⊤ is indistinguishable from an unbound one; and
+-- ∅ is not a value a program's type variable resolves to.
 concreteishInner :: Type -> Bool
 concreteishInner TypeVar{}  = False
 concreteishInner PTopType   = False
 concreteishInner BottomType = False
 concreteishInner _          = True
+
+-- | The three argument modes that are EXACT under all the set operations.
+--
+-- The fully-unbounded mode (lb=False, ub=False) is excluded for partials with args: its
+-- intersection with a lower-bounded partial of the same name is "required x, optional typed y,
+-- extras allowed", which provably cannot be expressed as positive partials (it needs a negative
+-- partial). The exclusion is REPRESENTATIONAL rather than positional, so it holds wherever a leaf
+-- sits — a top's exclusions included.
+safeArgModes :: [PtArgMode]
+safeArgModes = [PtArgExact, PtArgAny, PtArgMode False True]
+
+-- | A partial re-moded to one of the 'safeArgModes'.
+remodePartial :: PartialType -> Gen PartialType
+remodePartial p = do
+  mode <- HG.element safeArgModes
+  -- the lower bound is vacuous with no args, so keep it set then (avoids producing a
+  -- representation set-equivalent to a different one)
+  return p{ptArgMode = if H.null (ptArgs p) then mode{ptArgLb=True} else mode}
+
+-- | A constant drawn from the four constant kinds.
+genConstant :: Gen Constant
+genConstant = HG.choice [ CInt <$> HG.integral (linear (-100) 100)
+                        , CFloat <$> HG.double (linearFrac (-100) 100)
+                        , CStr <$> HG.string (linear 0 5) HG.alpha
+                        , CChar <$> HG.unicode ]
+
+-- | Constants deduplicated, keeping the first occurrence: a repeated constant in a union is not a
+-- different type, and two representations of one set would make the compaction laws compare
+-- syntactically distinct equals.
+nubConsts :: [Constant] -> [Constant]
+nubConsts = foldr (\c acc -> if c `elem` acc then acc else c : acc) []
 
 -- | Partition the class graph's nodes. 'graphToNodes' returns BOTH the classes ('CGClass') and the
 -- data types that are instances of one ('CGType'), and the two are not interchangeable in a type:
@@ -353,16 +386,14 @@ genVaenv prgm = go [] varNamePool
           aux <- HG.element [TVVar (partialKey n), TVArg (partialKey n)]
           v   <- HG.filter (acyclicUnder (map fst acc)) (genType prgm)
           go ((aux, v) : acc) ns
-    acyclicUnder bound t = concreteish t && HS.null (HS.difference (poolRefs t) (boundNames bound))
+    -- 'concreteishInner' is exactly this generator's local rule (no bare variable, no ⊤, no ⊥),
+    -- which is why the two share it rather than each spelling it out.
+    acyclicUnder bound t = concreteishInner t && HS.null (HS.difference (poolRefs t) (boundNames bound))
     -- Only POOL names matter: a reference to a declaration's own parameter (@$/T@) is not an
     -- environment edge at all.
     poolRefs t = HS.intersection (HS.union (typeOuterVarRefs t) (typeFreeTVIntRefs t)) poolKeys
     poolKeys = HS.fromList (map partialKey varNamePool)
     boundNames bound = HS.fromList [k | TVVar k <- bound] `HS.union` HS.fromList [k | TVArg k <- bound]
-    concreteish TypeVar{}  = False
-    concreteish PTopType   = False
-    concreteish BottomType = False
-    concreteish _          = True
 
 -- | Substitute every nested reference to a recursive class @cName@ (its class-predicate
 -- @∀cName@\/@~cName@ form, appearing as an argument or variable value) with @replacement@. Applied
@@ -429,26 +460,14 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
   where
     typeEnv@TypeEnv{teClassGraph=ClassGraph cg} = mkTypeEnv prgm
 
-    -- Randomly assign a 'PtArgMode' to the generated partials, exercising the new
-    -- lower\/upper-bound modes through the (precise) set operations. Only plain
-    -- positive-partial unions are re-moded.
-    --
-    -- The fully-unbounded mode (lb=False, ub=False) is excluded for partials with args:
-    -- its intersection with a lower-bounded partial of the same name is "required x,
-    -- optional typed y, extras allowed", which provably cannot be expressed as positive
-    -- partials (it needs a negative partial). The other three modes are exact under all
-    -- the set operations.
+    -- Randomly assign a 'PtArgMode' to the generated partials ('safeArgModes'), exercising the
+    -- lower\/upper-bound modes through the (precise) set operations. Only plain positive-partial
+    -- unions are re-moded — so a leaf in a top's exclusions, or in a mixed type, is always
+    -- 'PtArgExact'.
     withRandomArgModes :: Type -> Gen Type
     withRandomArgModes (UnionType Nothing leafs []) | not (H.null leafs) = do
-      leafs' <- mapM remode $ splitUnionType leafs
+      leafs' <- mapM remodePartial $ splitUnionType leafs
       return $ UnionType Nothing (joinUnionType leafs') []
-      where
-        remode p = do
-          mode <- HG.element [PtArgMode True True, PtArgMode True False, PtArgMode False True]
-          -- the lower bound is vacuous with no args, so keep it set then (avoids
-          -- producing a representation set-equivalent to a different one)
-          let mode' = if H.null (ptArgs p) then mode{ptArgLb=True} else mode
-          return p{ptArgMode = mode'}
     withRandomArgModes t = return t
 
     gens = if graphEmpty cg
@@ -527,7 +546,6 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
         then genCG
         else return $ UnionType (Just (preds, negLeafs, negConsts)) posLeafs posConsts
       where
-        nubConsts = foldr (\c acc -> if c `elem` acc then acc else c : acc) []
         leafsOf g = do
           t <- g
           return $ case t of
@@ -543,18 +561,11 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
       leafs <- if nullObjectMap objMap then return H.empty else HG.choice [return H.empty, someLeafs]
       return $ UnionType Nothing leafs (nubConsts cs)
       where
-        nubConsts = foldr (\c acc -> if c `elem` acc then acc else c : acc) []
         someLeafs = do
           t <- genObj
           return $ case t of
             UnionType Nothing ls [] -> ls
             _                       -> H.empty
-
-    genConstant :: Gen Constant
-    genConstant = HG.choice [ CInt <$> HG.integral (linear (-100) 100)
-                            , CFloat <$> HG.double (linearFrac (-100) 100)
-                            , CStr <$> HG.string (linear 0 5) HG.alpha
-                            , CChar <$> HG.unicode ]
 
     -- Find all functions with single argument having thisKey
     typePropFunctions = mapMaybe checkFunction $ flatObjectMap objMap
@@ -572,10 +583,7 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
 
     genConst :: Gen Type
     genConst = do
-      c <- HG.choice [ CInt <$> HG.integral (linear (-100) 100)
-                     , CFloat <$> HG.double (linearFrac (-100) 100)
-                     , CStr <$> HG.string (linear 0 5) HG.alpha
-                     , CChar <$> HG.unicode ]
+      c <- genConstant
       return $ UnionType Nothing H.empty [c]
 
     genCGOld :: Gen Type
@@ -653,12 +661,8 @@ genRelatedType prgm a = case a of
     return $ singletonType p'
   _ -> genType prgm
   where
-    -- the three modes that are exact under all set operations (see 'genType.withRandomArgModes')
-    safeModes = [PtArgExact, PtArgAny, PtArgMode False True]
     mutate p = HG.choice $
-      [ do m <- HG.element safeModes
-           return p{ptArgMode = if H.null (ptArgs p) then m{ptArgLb=True} else m}
-      ] ++ [ mutateArg p | not (H.null (ptArgs p)) ]
+      [ remodePartial p ] ++ [ mutateArg p | not (H.null (ptArgs p)) ]
     mutateArg p = do
       k       <- HG.element (H.keys (ptArgs p))
       newVal  <- HG.choice [return PTopType, singletonType <$> genPartialType prgm]
