@@ -7663,7 +7663,7 @@ tagParentVarRefs = onType
     onTop sc (preds, negLeafs, ncs) =
       (mapTypePreds (mapTypePred (onLeaf sc)) preds, joinUnionType $ map (onLeaf sc) $ splitUnionType negLeafs, ncs)
     onLeaf sc p@PartialType{ptVars, ptArgs, ptPreds} = p{
-        ptVars  = fmap (onSlot sc) ptVars,
+        ptVars  = H.mapWithKey (onVarSlot sc) ptVars,
         ptArgs  = fmap (onDirect sc') ptArgs,
         ptPreds = mapTypePreds (mapTypePred (onLeaf sc')) ptPreds
       }
@@ -7680,6 +7680,14 @@ tagParentVarRefs = onType
     -- to the object's own direct argument annotations, so the declaration has one spelling. The
     -- set is still carried inward, because a partial NESTED in the slot does have this one as its
     -- parent (@/tail=∀ConsList[/T=$^/T]@).
+    -- A PARAMETER value sits at its partial's own level, so a bare internal spelling there that
+    -- names a variable of the immediately enclosing partial is that partial's variable — a parent
+    -- reference — and not this partial's: @unwrap[$U](b -> Box[$T -> $U])@'s @/T=$U@ is
+    -- @unwrap@'s @/U@. The parser spells a bare @$U@ context-free as 'TVInt', and left so it broke
+    -- the 'TVInt' contract (a variable of the SAME partial), which the readers then had to rescue
+    -- by name against the ambient env. The self-entry @/T=$T@ names its own slot and stays 'TVInt'.
+    onVarSlot sc k (TypeVar v@(TVVar n) TVInt i) | n /= k, S.member v sc = TypeVar v TVParent (onSlot sc i)
+    onVarSlot sc _ t = onSlot sc t
     onSlot sc (TypeVar v@(TVVar _) TVExt i) | S.member v sc = TypeVar v TVParent i
     onSlot sc (TypeVar (TVApplied b ovr) loc i) =
       applyTypeVarOverrides (fmap (onSlot sc) ovr) (onSlot sc (TypeVar b loc i))
