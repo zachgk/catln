@@ -3372,13 +3372,31 @@ satAdmits typeEnv vaenv satUse hyps m atom = case atom of
 satEscapes :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> PartialType -> SatAtom -> Bool
 satEscapes typeEnv vaenv satUse hyps m0 atom
   | not (satEscapesAtomic typeEnv vaenv satUse hyps m0 atom) = False
-  | otherwise = case splitPartialByUnionVarArgs m0 of
-      [_] -> True -- no union-valued components: the whole-shape answer is final
+  -- Splittability is decided on the shape AS WRITTEN: resolving its links can only turn a slot
+  -- into a union by copying a var's value there, and a union-valued var splits the shape by
+  -- itself, so this misses no split — and it keeps the resolution off the path of every
+  -- union-free shape, which is most of them.
+  | [_] <- splitPartialByUnionVarArgs m0 = True -- no union-valued components: the whole-shape answer is final
+  | otherwise = case splitPartialByUnionVarArgs mLinked of
+      [_] -> True
       -- Oversized split: conservative. Checked WITHOUT 'length' — the split is a cartesian
       -- product over the union-valued slots, so forcing its full spine to count it can
       -- itself be exponential; 'drop' materializes at most @satDNFCap + 1@ pieces.
       pieces | not (null (drop satDNFCap pieces)) -> True
       pieces -> any (\m -> satEscapesAtomic typeEnv vaenv satUse hyps m atom) pieces
+  where
+    -- The links are read as their VALUES before the shape is taken apart, the rule
+    -- 'isSubtypeOfWithEnv'.'subLinked' states and for the same reason: a reference naming a
+    -- slot this split is about to replace (@Cons[/T=X](head=Cons[/T=$^/T])@) denotes X, so the
+    -- shape is @Cons[/T=X](head=Cons[/T=X])@ — every combination of an outside piece with an
+    -- inside one. Split with the link left symbolic, each piece reads the reference as its OWN
+    -- component (the diagonal, a proper subset), and "every piece is covered" is then no cover
+    -- of the shape: with @X = /Cons + /Cons..@ the diagonal was covered by
+    -- @Cons[/T=/Cons..](head=Cons[/T=/Cons..])@ and the shape read as NOT escaping it, while
+    -- its spelled-out twin @Cons[/T=X](head=Cons[/T=X])@ escaped — the same set, two answers
+    -- (propParentVarBindingRespected, seed 1646631732467754053 6805720599881127707). The
+    -- shape's own var slots are the scope of its arg values; the ambient env is not consulted.
+    mLinked = m0{ptArgs = fmap (substituteKeepScoped typeEnv (joinVarArgEnv (ptVars m0) H.empty) H.empty) (ptArgs m0)}
 
 -- | 'satEscapes' for a shape with no union-valued vars/args.
 satEscapesAtomic :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> PartialType -> SatAtom -> Bool
