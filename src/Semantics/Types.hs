@@ -3163,13 +3163,22 @@ argModeCovers PartialType{ptArgs=supArgs, ptArgMode=PtArgMode supLb supUb} Parti
 -- never refute an overlap. That equivalence is specific to this ∃ direction: the ∀ directions
 -- ('partialCoversSat', 'isSubPartialOfWithEnv') must ask about every key the other side spells.
 partialsOverlapSat :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> PartialType -> PartialType -> Bool
-partialsOverlapSat typeEnv vaenv satUse hyps a b =
+partialsOverlapSat typeEnv vaenv satUse hyps a0 b0 =
   ptName a == ptName b
   && argModesOverlap a b
   && all elemSat (H.elems (H.intersectionWith (,) (ptVars a) (ptVars b)))
   && all elemSat (H.elems (H.intersectionWith (,) (ptArgs a) (ptArgs b)))
   && predsOk
   where
+    -- Both sides read with their spread floor ('spreadFloor'), as 'partialCoversSat' and the
+    -- meet already read them. A bare @/P..@ is @/P@ with at least its DECLARED fields, so it
+    -- does not overlap the argless @/P@; compared on literal modes it did, and the engine's
+    -- admission and cover then disagreed about one value: 'satAdmits' let the argless witness
+    -- into @/P..@ while 'partialCoversSat' (floored) found it outside, manufacturing an escape
+    -- no value has. 'typeCoveredSymbolic' answered @Just False@ for @/r?? ∪ /P.. ⊆ a@ though each
+    -- leaf alone answered @Just True@ (propCompactNoChanges; build\/scratch\/compactnochange.hs).
+    a = spreadFloor typeEnv a0
+    b = spreadFloor typeEnv b0
     elemSat (ta, tb) = typesConjSat typeEnv vaenv satUse hyps [ta, tb]
     predsOk = case predsAnd (ptPreds a) (ptPreds b) of
       PredsNone -> True
