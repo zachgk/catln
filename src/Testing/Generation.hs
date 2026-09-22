@@ -127,7 +127,8 @@ dataNodeNames  (ClassGraph cg) = [fromPartialName k | (n, k, _) <- graphToNodes 
 
 -- | A pair of types that MUST be indistinguishable to every operation: the same partial, binding
 -- one of its own type variables to a ground bound, holding at one nested position either a
--- 'TVInt' reference to that variable or the bound itself.
+-- reference to that variable (spelled by its position — see 'genOwnVarBoundPair'.'bareSlot') or the
+-- bound itself.
 --
 -- 'ptVars' is a BINDER — inside the partial that declares it, @$v@ denotes its binding (the rule
 -- 'isSubPartialOfWithEnv'.'readOwnScope' implements). A traversal that descends into a partial
@@ -187,29 +188,32 @@ genOwnVarBoundPair prgm@(Prgm objMap _ _) = do
   base    <- HG.filter (not . null . binderPlacements) (genPlacement prgm)
   (varName, slot) <- HG.element (binderPlacements base)
   bound   <- genGroundBound prgm
-  wrap    <- HG.choice (bareSlot : nestedDim varName : [classPredDim varName | any ((/= [varName]) . snd) classDims])
+  (loc, wrap) <- HG.choice (bareSlot : nestedPlacements varName slot)
   outer   <- HG.element [singletonType, classPartial, relPartial]
   let withSlot v = placeInSlot outer base varName bound slot (wrap v)
-  return (withSlot (TypeVar (TVVar varName) TVInt PTopType), withSlot bound)
+  return (withSlot (TypeVar (TVVar varName) loc PTopType), withSlot bound)
   where
     TypeEnv{teClassGraph=ClassGraph cg} = mkTypeEnv prgm
-    -- NO SHADOWING at the nested positions. A 'TVInt' name the enclosing partial declares and the
-    -- NESTED one does not reads against the enclosing scope ('partialCoversSat'.'ambientRef'); but
-    -- if the nested partial declares the SAME name it captures the reference, and the two members
-    -- of the "identical" pair stop denoting the same thing —
-    -- @∀/Cons[/T=#noCore](/tail=/Some[/T=$/T])@ reads @$/T@ as @/Some@'s @/T@, not @/Cons@'s.
-    -- The old invented @own1@\/@own2@ names could never collide, so drawing DECLARED names (which
-    -- fixed a worse problem) reintroduced capture; the nested generators below exclude the binder's
-    -- name explicitly instead. Referring to an enclosing parameter from inside a nested partial
-    -- through a captured name is what 'TVParent' (@$^T@) is for — 'genParentVarBoundPair'.
+    -- The reference's SCOPE CLASS is decided by where it is placed, as the desugarer decides it
+    -- ('tagParentVarRefs'): directly in the base's slot it names the base's own parameter and is
+    -- 'TVInt'; inside a nested partial's (or class atom's) PARAMETER value it sits at that nested
+    -- partial's level, one level inside the base, and is the 'TVParent' @$^v@. It used to be
+    -- 'TVInt' in every position, which only worked because the readers resolved a 'TVInt' the
+    -- nested partial does not spell against the enclosing scope BY NAME — the rescue that let a
+    -- like-named class parameter capture an element's own reference (propParamClassCovariant),
+    -- now gone. A nested placement is drawn only when the payload slot is a FIELD: held in a
+    -- second PARAMETER of the base, the nested partial sits at the base's own level and a one-level
+    -- parent reference would name the base's parent ('genParentVarBoundPair' records the same).
+    nestedPlacements varName (Left _) = nestedDim varName : [classPredDim varName | any ((/= [varName]) . snd) classDims]
+    nestedPlacements _ (Right _)      = []
     -- The payload IS the slot.
-    bareSlot = return id
+    bareSlot = return (TVInt, id)
     -- The payload is a dimension of a nested positive partial — again one the nested partial
     -- DECLARES, not an invented @T@\/@K@\/@V@.
     nestedDim varName = do
       p <- HG.filter (\q -> not (H.null (ptVars q)) && not (H.member varName (ptVars q))) (genPartialType prgm)
       dim <- HG.element (H.keys (ptVars p))
-      return $ \v -> singletonType p{ptVars = H.insert dim v (ptVars p)}
+      return (TVParent, \v -> singletonType p{ptVars = H.insert dim v (ptVars p)})
     -- The payload is a dimension of a CLASS PREDICATE ('classPartial' builds the @∀C[..]@ form).
     -- CLASS nodes only — a 'PredClass' over a data type is not well-formed ('classNodeNames') —
     -- and the dimension must be one the CLASS declares.
@@ -219,7 +223,7 @@ genOwnVarBoundPair prgm@(Prgm objMap _ _) = do
     classPredDim varName = do
       (className, ks) <- HG.element [c | c@(_, ks') <- classDims, any (/= varName) ks']
       dim <- HG.element (filter (/= varName) ks)
-      return $ \v -> classPartial (partialVal className){ptVars = H.singleton dim v}
+      return (TVParent, \v -> classPartial (partialVal className){ptVars = H.singleton dim v})
 
 -- | Where a binder-and-payload pair can go in a partial: both DECLARED keys of the same partial
 -- and necessarily distinct. The payload prefers a declared FIELD ('Left'); when the declaration

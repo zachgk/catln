@@ -152,7 +152,7 @@ Prgm
                                         , /V=$_/V
                                         ]
                                     , /left=∀/RTree
-                                        [ /K=$_/K
+                                        [ /K=∀/ROrd
                                         , /V=$_/V
                                         ]
                                     )
@@ -430,10 +430,15 @@ Prgm
                                         [ /K=∀/ROrd
                                         , /V=$_/V
                                         ]
-                                    , /left=∀/RTree
-                                        [ /K=∀/ROrd
-                                        , /V=$_/V
-                                        ]
+                                    , /left=
+                                        ( TopType | PredClass /RTree
+                                            [ /K=∀/ROrd
+                                            , /V=$_/V
+                                            ] && PredClass /RIMap
+                                            [ /K=∀/ROrd
+                                            , /V=TopType
+                                            ]
+                                        )
                                     )
                                 )
                             , []

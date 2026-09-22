@@ -3167,8 +3167,8 @@ partialsOverlapSat :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> S
 partialsOverlapSat typeEnv vaenv satUse hyps a0 b0 =
   ptName a == ptName b
   && argModesOverlap a b
-  && all elemSat (H.elems (H.intersectionWith (,) (ptVars a) (ptVars b)))
-  && all elemSat (H.elems (H.intersectionWith (,) (ptArgs a) (ptArgs b)))
+  && all (elemSat vaenv) (H.elems (H.intersectionWith (,) (ptVars a) (ptVars b)))
+  && all (elemSat argEnv) (H.elems (H.intersectionWith (,) (ptArgs a) (ptArgs b)))
   && predsOk
   where
     -- Both sides read with their spread floor ('spreadFloor'), as 'partialCoversSat' and the
@@ -3180,7 +3180,10 @@ partialsOverlapSat typeEnv vaenv satUse hyps a0 b0 =
     -- leaf alone answered @Just True@ (propCompactNoChanges; build\/scratch\/compactnochange.hs).
     a = spreadFloor typeEnv a0
     b = spreadFloor typeEnv b0
-    elemSat (ta, tb) = typesConjSat typeEnv vaenv satUse hyps [ta, tb]
+    elemSat env (ta, tb) = typesConjSat typeEnv env satUse hyps [ta, tb]
+    -- Fields in the partials' own scope, parameter values in the containing one, as in
+    -- 'partialCoversSat' ('shadowBoundParams').
+    argEnv = shadowBoundParams typeEnv [a0, b0] vaenv
     predsOk = case predsAnd (ptPreds a) (ptPreds b) of
       PredsNone -> True
       preds -> case predsSatDNF True preds of
@@ -3198,6 +3201,39 @@ partialsOverlapSat typeEnv vaenv satUse hyps a0 b0 =
 -- ⊤ there (see 'PartialType'): @/Some@ is covered by @/Some[/T=/Nil]@ only if @⊤ ⊆ /Nil@, i.e.
 -- never. Skipping it would make the two mutually cover, hence equal. 'ptArgs' compares shared
 -- keys only — unspelled args are 'ptArgMode' business, decided by 'argModeCovers' above.
+-- | Whether a partial BINDS a parameter name: it spells the parameter, or its declaration (data or
+-- class) has it. An unspelled parameter is ⊤ (see 'PartialType') — @/Cons@ is @/Cons[/T=⊤]@ — so
+-- it is still a binder, flexible per value.
+partialBindsParam :: TypeGraph tg => TypeEnv tg -> PartialType -> TypeVarName -> Bool
+partialBindsParam typeEnv p n =
+  H.member n (ptVars p)
+  || any (H.member n . ptVars) (typeGraphData typeEnv (ptName p))
+  || maybe False (H.member n . ptVars) (classDeclPartial typeEnv (ptName p))
+
+-- | The declaration partial of a class name, when the name is a class.
+classDeclPartial :: TypeEnv tg -> TypeName -> Maybe PartialType
+classDeclPartial TypeEnv{teClassGraph=ClassGraph cg} n = case graphLookup (PClassName n) cg of
+  Just (CGClass _ p _ _) -> Just p
+  _                      -> Nothing
+
+-- | The env a traversal carries INTO a partial: the incoming env with every parameter the partial
+-- binds ('partialBindsParam') removed. The traversal then installs what the partial spells.
+--
+-- A 'TVInt' reference names a variable of the SAME partial ('TypeVarLoc'), and since
+-- 'tagParentVarRefs' spells every reference to an enclosing partial 'TVParent', that is true of
+-- every 'TVInt' the desugarer produces. So nothing below a partial may read a name it binds from
+-- an enclosing scope: a spelled value is installed; an unspelled parameter, or a spelled one whose
+-- value cannot be installed (a self-entry @/T=$T@), is the partial's own flexible ⊤, which an
+-- unbound name reads as. Carrying the incoming binding through instead captured the reference —
+-- an element @/Cons..@ read through its spread floor carries @head=$/T@, Cons's own @/T@, and
+-- compared inside a parameterized class's @[/T=…]@ it read the CLASS's element, so
+-- @C[/T=a] ⟹ C[/T=a∪b]@ was refused for a genuine @a ⊆ a∪b@ and held once the class parameter
+-- was merely renamed (propParamClassCovariant; build\/scratch\/covariant.hs).
+shadowBoundParams :: TypeGraph tg => TypeEnv tg -> [PartialType] -> TypeVarArgEnv -> TypeVarArgEnv
+shadowBoundParams typeEnv ps = H.filterWithKey keep
+  where keep (TVVar n) _ = not (any (\p -> partialBindsParam typeEnv p n) ps)
+        keep _ _         = True
+
 partialCoversSat :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> PartialType -> PartialType -> Bool
 partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
   ptName sup == ptName sub
@@ -3219,9 +3255,13 @@ partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
     -- with a concrete call's element) denotes @head=Integer@ and IS a @ConsList[/T=Integer]@;
     -- refusing it here contradicted the partial subtype (which proved it inside the class's
     -- own member template) and left a concrete list with no path to its display class.
-    argCovered k tSub tSup = elemCovered (tSub, tSup)
-      || any (\d -> elemCovered (intersectTypesEnv typeEnv vaenv tSub d, tSup)) (declArgBounds k)
-    declArgBounds k = [freeTVIntToTopDeep typeEnv vaenv sub d | PartialType{ptArgs=dArgs} <- typeGraphData typeEnv (ptName sub), Just d <- [H.lookup k dArgs]]
+    argCovered k tSub tSup = elemCoveredIn argEnv (tSub, tSup)
+      || any (\d -> elemCoveredIn argEnv (intersectTypesEnv typeEnv argEnv tSub d, tSup)) (declArgBounds k)
+    declArgBounds k = [freeTVIntToTopDeep typeEnv argEnv sub d | PartialType{ptArgs=dArgs} <- typeGraphData typeEnv (ptName sub), Just d <- [H.lookup k dArgs]]
+    -- FIELDS sit inside the partials, so the parameters they bind are theirs there and never an
+    -- enclosing scope's ('shadowBoundParams'); PARAMETER values sit at the containing scope and
+    -- keep the incoming env.
+    argEnv = shadowBoundParams typeEnv [sup0, sub0] vaenv
     -- Unspelled sub-side parameters materialize as ⊤ so every sup key is actually asked about.
     -- Under projection they stay unspelled: there a ⊤-valued parameter carries no dispatch
     -- information, which is what 'varCovered' states for the spelled-⊤ case below.
@@ -3250,7 +3290,7 @@ partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
     -- The precise set algebra (projection off) keeps Top ⊄ concrete, which is why an unspelled
     -- parameter is materialized as ⊤ there rather than skipped.
     varCovered (PTopType, _) | teArgModeProjection typeEnv = True
-    varCovered p             = elemCovered p
+    varCovered p             = elemCoveredIn vaenv p
     -- This is the ∀-cover primitive (every sub value within sup — the escape/coverage
     -- direction), so under the precise algebra a flexible slot is covered only by a cover
     -- slot that itself admits every binding (⊤ or another flexible variable): its values
@@ -3260,29 +3300,15 @@ partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
     -- ∃-overlap direction ('partialsOverlapSat', the admit checks). Under projection
     -- (matching/dispatch consumers) a flexible slot on the value side behaves like the
     -- Top-valued parameter above: it binds per value and carries no dispatch information.
-    elemCovered (tSub0, tSup0)
-      | isFlexibleVar tSub = tSup == PTopType || isFlexibleVar tSup || teArgModeProjection typeEnv
-      | otherwise = not (typesSatDiff typeEnv vaenv satUse hyps tSub tSup)
-      where tSub = ambientRef sub (resolveSelfRefs sub (subSlot tSub0))
-            tSup = ambientRef sup (resolveSelfRefs sup tSup0)
-    -- A var-slot VALUE sits at the level of the scope CONTAINING the partial, so an internal
-    -- ('TVInt') spelling there that the partial does not declare names that scope's parameter —
-    -- @unwrap[$U](b -> Box[$T -> $U])@'s @/T=$/U@ is @unwrap@'s @/U@ — and the containing
-    -- object's own variables are what the ambient env registers ('TypeCheck.Encode'). Read it
-    -- there: under @[/U=Integer]@ the slot compares as @/T=Integer@ rather than as a
-    -- bindable-per-value local in 'isFlexibleVar'. A name the partial declares (a self-entry
-    -- @/T=$/T@ included) keeps its partial-local reading. This is the settled mirror of
-    -- 'isSubPartialOfWithEnv'.'readOwnScope'; measured 2026-09-16 it does not fire on core or
-    -- on boxUnwrapExplicit.ct (the mirror does), and it stays so the two comparators agree.
-    ambientRef p t@(TypeVar tv@(TVVar n) TVInt _)
-      | not (H.member n (ptVars p)) = case H.lookup tv vaenv of
-          -- Only a CONCRETE binding resolves: a ⊤-bound or var-valued entry leaves the
-          -- reference flexible (the TVExt rule's "bound to Top: unconstrained, so still
-          -- bindable per value"), so two frames' flexible spellings for the same dimension
-          -- still compare flexible-vs-flexible rather than ⊤-vs-var.
-          Just b | b /= PTopType, not (isTypeVar b) -> b
-          _                                         -> t
-    ambientRef _ t = t
+    elemCoveredIn env (tSub0, tSup0)
+      | isFlexibleVar env tSub = tSup == PTopType || isFlexibleVar env tSup || teArgModeProjection typeEnv
+      | otherwise = not (typesSatDiff typeEnv env satUse hyps tSub tSup)
+      where tSub = resolveSelfRefs sub (subSlot tSub0)
+            tSup = resolveSelfRefs sup tSup0
+    -- A parameter value's internal ('TVInt') spelling names a variable of the partial itself —
+    -- 'tagParentVarRefs' spells a reference to the enclosing partial 'TVParent' — so it is never
+    -- read through the ambient env. (It once was, by name, for @Box[/T=$U]@ nested in
+    -- @unwrap[$U]@; that reference is now the 'TVParent' it always was.)
     -- Resolve a slot's SELF-referential recursion variable through its own partial's @ptVars@. A
     -- recursive field like @tail -> ConsList[/T=$_T]@ names the partial's own parameter @/T@ but is
     -- typed EXTERNAL ('TVExt', @$_T@) rather than the internal pointer ('TVInt', @$T@) that
@@ -3301,15 +3327,15 @@ partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
     -- expansion that would have decided it correctly never runs.
     -- This is the same rule, and the same fix, as 'isSubPartialOfWithEnv'.'flexibleVar'; the two
     -- copies must agree or the symbolic and materialized provers contradict each other.
-    isFlexibleVar (TypeVar _ _ i) | i /= PTopType = False
-    isFlexibleVar (TypeVar _ TVInt _) = True -- partial-local var: bindable per value
-    isFlexibleVar (TypeVar v TVOuter _) = case outerBinding vaenv v of
+    isFlexibleVar _ (TypeVar _ _ i) | i /= PTopType = False
+    isFlexibleVar _ (TypeVar _ TVInt _) = True -- partial-local var: bindable per value
+    isFlexibleVar env (TypeVar v TVOuter _) = case outerBinding env v of
       Unbound     -> True
       SelfLink bI -> bI == PTopType -- a knowledge-carrying self-link is information (as 'flexibleVar')
       BoundTop    -> True -- bound to Top: unconstrained, so still bindable per value
       BoundVar _  -> False
       Bound _     -> False
-    isFlexibleVar _ = False
+    isFlexibleVar _ _ = False
     -- sup's own predicates must also hold of every sub value: sub ∧ ¬preds must be unsatisfiable
     supPredsCover = case ptPreds sup of
       PredsNone -> True
@@ -3837,7 +3863,7 @@ looseArgModeRejects sub@PartialType{ptArgs=subArgs, ptArgMode=subMode} super@Par
 -- is assigned once at desugar, and is deliberately never re-derived here.) Every descent owes the
 -- correct resolution; there is no representation that excuses a traversal from doing it.
 comparedPartialsEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> TypeVarArgEnv
-comparedPartialsEnv typeEnv vaenv a b = H.union (H.filterWithKey installable merged) vaenv
+comparedPartialsEnv typeEnv vaenv a b = H.union (H.filterWithKey installable merged) (shadowBoundParams typeEnv [a, b] vaenv)
   where
     merged = H.mapWithKey installValue $ H.unionWith (intersectTypesEnv typeEnv vaenv) (ptVarArg a) (ptVarArg b)
     -- Rule one at the binder. The bindings installed here are what the partials' ARGUMENTS are
@@ -3874,8 +3900,15 @@ comparedPartialsEnv typeEnv vaenv a b = H.union (H.filterWithKey installable mer
     -- captured value carries a CONSTANT, the engine's fragment refuses it, and the refusal
     -- surfaced as a proven non-cover ('propParamClassCovariant', seed 3294923877597123717
     -- 1270720761501186561). The element's own name space is not the class's.
+    --
+    -- A 'TVParent' mention is NOT a self-reference: it names the ENCLOSING partial's variable, a
+    -- different variable that happens to share the name (@Pair[/A=$^/A]@ nested in an outer
+    -- @Pair@), and 'installValue' has already replaced it with that variable's value from the
+    -- incoming env. Counting it refused the install, and the slot then read the outer binding
+    -- only by falling through to the ambient env under the shared name — the name-based rescue
+    -- 'shadowBoundParams' now closes.
     installable k@(TVVar n) _ = not $ any mentions $ mapMaybe (H.lookup k) [ptVarArg a, ptVarArg b]
-      where mentions v = S.member n (typeOuterVarRefs v) || S.member n (typeFreeTVIntRefs v)
+      where mentions v = S.member n (typeExtVarRefs v) || S.member n (typeFreeTVIntRefs v)
     installable _ _ = True
 
 -- | A private helper for 'isSubPartialOfWithEnv' that checks while ignore class expansions
@@ -4021,29 +4054,35 @@ isSubPartialOfWithEnvNRaw typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=s
     varOk a b
       | not (teArgModeProjection typeEnv)
       , flexibleVar (readOwnScope sub a) = b == PTopType || flexibleVar (readOwnScope super b)
-    varOk a b        = isSubtypeOfWithEnv typeEnv vaenv' a b
+    -- A PARAMETER value sits at the scope containing the partial, so it is compared under the
+    -- incoming env, not under @vaenv'@ (the partials' own scope, which their FIELDS are read in).
+    -- The two share a key space: read under @vaenv'@, a parent reference @$^/A@ in a nested
+    -- @Pair[/A=$^/A]@ looked up the nested pair's OWN met @/A@ instead of the enclosing binding,
+    -- and a nested reference to @/length..@ compared inside a pair holding @#noCore@
+    -- (propParentVarBindingRespected, seed 14582582816093699996 2845129198242763667).
+    --
+    -- Within that containing-level reading, a 'TVInt' at the top of the value still names the
+    -- partial ITSELF (a sibling @Pair[/B=~Pair, /A=$/B]@, or a self-entry): the register rule puts
+    -- the value at the partial's level, which is where its own parameters live. So the value is
+    -- first stepped through the partial's own spelled parameters ('readOwnScope'.'step') and then
+    -- compared under the incoming env, which is where a 'TVParent' finds the enclosing binding.
+    varOk a b        = isSubtypeOfWithEnv typeEnv vaenv (stepOwnParam sub a) (stepOwnParam super b)
+    stepOwnParam p t@(TypeVar (TVVar n) TVInt i) = case H.lookup n (ptVars p) of
+      Just v | v /= PTopType, v /= t -> meetInner typeEnv vaenv v i
+      _                              -> t
+    stepOwnParam _ t = t
     -- Read a var slot through its OWN partial's scope: a bare internal pointer steps to its
     -- binding ('partialCoversSat'.'subSlot'), then self-spelled external refs resolve through
     -- the partial's @ptVars@ ('partialCoversSat'.'resolveSelfRefs').
     readOwnScope p t0 = substituteKeepScoped typeEnv (joinVarArgEnv (ptVars p) H.empty) H.empty (step t0)
       where
-        step t@(TypeVar tv@(TVVar n) TVInt i) = case H.lookup n (ptVars p) of
+        step t@(TypeVar (TVVar n) TVInt i) = case H.lookup n (ptVars p) of
           Just v | v /= PTopType, v /= t -> meetInner typeEnv vaenv v i
           Just _                         -> t
-          -- A var-slot VALUE sits at the level of the scope CONTAINING the partial, so an
-          -- internal spelling the partial does not declare names that scope's parameter
-          -- (@unwrap[$U](b -> Box[$T -> $U])@'s @/T=$/U@ is @unwrap@'s @/U@), and the containing
-          -- object's own variables are what the ambient env registers ('TypeCheck.Encode'). It
-          -- denotes that binding (@/T=Integer@ under @[/U=Integer]@), so it must not read as a
-          -- bindable-per-value local in 'flexibleVar' when the env binds it. Measured
-          -- 2026-09-16: fires only on boxUnwrapExplicit.ct (that @Box@; once resolved).
-          -- Only a CONCRETE binding resolves: a ⊤-bound or var-valued entry leaves the reference
-          -- flexible (mirroring the TVExt rule's "bound to Top: unconstrained, so still bindable
-          -- per value") — resolving ⊤ literally would flip the slot from flexible-var to a
-          -- non-var ⊤ and fail the flexible-vs-flexible guard against another frame's spelling.
-          Nothing                        -> case H.lookup tv vaenv of
-            Just b | b /= PTopType, not (isTypeVar b) -> meetInner typeEnv vaenv b i
-            _                                         -> t
+          -- Unspelled: the partial's own flexible ⊤ ('TypeVarLoc': a 'TVInt' names a variable of
+          -- the same partial). An enclosing scope's variable is spelled 'TVParent'
+          -- ('tagParentVarRefs'), so there is nothing to read from the ambient env here.
+          Nothing                        -> t
         step t = t
     -- FLEXIBLE means "ranges over every binding", which is why a flexible sub slot is a subtype
     -- only of a super slot that itself admits everything. An occurrence CARRYING KNOWLEDGE is not
@@ -6026,7 +6065,10 @@ intersectPartialsBaseN typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtAr
   let deepVaenv = H.union (H.fromList [ (TVVar n, r)
                                       | (n, v) <- H.toList vars'
                                       , let r = substituteTVExt typeEnv vaenv v
-                                      , not (isTypeVar r), r /= PTopType ]) vaenv
+                                      , not (isTypeVar r), r /= PTopType ])
+                          -- the fields' scope: every parameter this partial binds is its own,
+                          -- never an enclosing scope's like-named binding ('shadowBoundParams')
+                          (shadowBoundParams typeEnv [(partialVal name'){ptVars = vars'}] vaenv)
   let argsMap = H.unionWith (subUnion varBoundFor) (fmap (deepVaenv,) aArgs) (fmap (deepVaenv,) bArgs)
   let args' = fmap snd argsMap
   -- An arg whose met value denotes ∅ cannot be present (see the arg-mode reasoning below). The
@@ -7435,6 +7477,26 @@ substituteFreeLeaf typeEnv scope env v loc i free = case H.lookup v env of
   Just b | free, b /= PTopType -> meetInner typeEnv env b i'
   _                            -> TypeVar v loc i'
   where i' = substituteFreeDeepScoped typeEnv scope env i
+
+-- | The names of all 'TVExt' (object-scope) variable references anywhere in a type. Unlike
+-- 'typeOuterVarRefs' this excludes 'TVParent', which names a variable of an enclosing PARTIAL —
+-- lexically a different variable from any like-named parameter of the partial it sits in.
+typeExtVarRefs :: Type -> S.HashSet TypeVarName
+typeExtVarRefs (TypeVar (TVVar n) TVExt i) = S.insert n (typeExtVarRefs i)
+typeExtVarRefs (TypeVar _ _ i) = typeExtVarRefs i
+typeExtVarRefs (UnionType mtop leafs _) = S.unions $ topRefs ++ map partialRefs (splitUnionType leafs)
+  where
+    topRefs = case mtop of
+      Just (preds, negLeafs, _) -> predsRefs preds : map partialRefs (splitUnionType negLeafs)
+      Nothing                   -> []
+    predsRefs (PredsOne p')  = partialRefs (predPartial p')
+    predsRefs (PredsAnd ps') = S.unions (map predsRefs ps')
+    predsRefs (PredsNot p')  = predsRefs p'
+    predPartial (PredClass c) = c
+    predPartial (PredRel r)   = r
+    predPartial (PredExpr e)  = e
+    partialRefs PartialType{ptVars=vs, ptArgs=as, ptPreds=ps} =
+      S.unions $ predsRefs ps : map typeExtVarRefs (H.elems vs ++ H.elems as)
 
 -- | The names of all OUTER type-VARIABLE references ('TVParent' or 'TVExt' — a reference to a
 -- variable outside the position it sits at, whichever scope binds it) occurring anywhere in a
