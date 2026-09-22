@@ -715,17 +715,18 @@ data TypeEnv tg = TypeEnv {
   -- property tests stay sound. See 'looseArgModeRejects'.
   teArgModeProjection :: Bool,
   -- | When 'True', a symbolic satisfiability decision ('satGoal' \/ 'satLeafEscapesAll') is
-  -- in flight on this env: the decision roots set it for their entire bodies (and never read
-  -- it), and the algebra→engine entry points ('predsEmptySymbolic', 'typeCoveredSymbolic',
-  -- 'satAtomImplies', 'mostSpecificPromises') read it and answer their conservative
-  -- fail-to-prove polarity instead of starting a nested decision. Invariant: engine
-  -- decisions never nest — only completed, empty-hypothesis decisions may produce
-  -- UNSAT-derived facts (empty \/ implies \/ covered). A nested decision would re-enter with
-  -- an empty hypothesis stack and diverge on recursive class memberships (the
-  -- @every(ConsList[$T -> Eq], isa= [Eq])@ + Ord ring), while inheriting the ancestor stack
-  -- is unsound: the cycle guard's 'False' means "no finite witness along this derivation
-  -- path", which only sibling branches of the same enumeration make complete — a standalone
-  -- query has no siblings, so the guard's 'False' would become a free-standing false UNSAT.
+  -- in flight on this env: the decision roots set it for their entire bodies. It changes NO
+  -- answer. It once did — the algebra→engine entry points answered their fail-to-prove polarity
+  -- instead of starting a nested decision (b19ca5a2) — and that made the algebra wrong wherever
+  -- a question legitimately needs a nested decision: a parameterized class's covariance is
+  -- decided inside the engine, and its element subtype came back "not covered" regardless of
+  -- the elements. Nested decisions now compute. What stops a nested decision re-posing its
+  -- ancestor's goal forever (the tbuild core/list.ct ring that motivated the demotion) is
+  -- 'satGoal''s in-flight marker, which reads a goal re-posed while it is being decided as
+  -- having no finite witness along that path. Measured with the demotion removed: that
+  -- reproducer finishes (1:02, 596MB), and TypeTests at 3000 shows no timeout.
+  -- Still read by the two memo bypasses ('objArrGraphQuery', 'expandClassPartialAux'), which
+  -- no longer have a correctness reason to bypass and cost only sharing.
   teInSatDecision     :: Bool,
   -- | Identity token enabling the reach-query memo ('objArrGraphQuery'): @Just token@
   -- marks this env as a per-epoch reaches env, with @token@ a process-globally-unique
@@ -2224,8 +2225,8 @@ expandClassPartialWithinNames typeEnv vaenv allowedNames = expandClassPartialAux
 -- | Token-keyed memo for 'expandClassPartialAux', mirroring the 'objArrGraphQuery' reach-query
 -- memo: same soundness story (token-per-immutable-env), same generational retention (the
 -- static per-page, epoch reaches, and merged reaches tokens rotate), same in-flight-sat bypass
--- ('teInSatDecision' demotes graph answers that may feed the expansion's meets — those results
--- must neither be served from nor stored into the shared table). Motivation: 'compactOverlapping'
+-- (kept from when 'teInSatDecision' demoted answers; it no longer does, so the bypass costs
+-- sharing and nothing else). Motivation: 'compactOverlapping'
 -- / 'compactPartialsWithClassPred' re-expand the SAME trivial classes (Boolean, Eq, DShow, ...)
 -- tens of thousands of times per epoch through per-leaf-pair subtype checks (set.ct's page:
 -- 88k expansions before OOM), while the expansion is a pure function of the key below.
@@ -3514,12 +3515,9 @@ satGoalRaw typeEnv0 vaenv satUse hyps goal0
         Nothing         -> True -- no enumerable generator: conservative
         Just (_, cands) -> any checkCand cands
   where
-    -- The decision root marks its entire body, guards included ('negAtomCoversUniverse'
-    -- runs algebra code): any algebra call reached from here — the witness-refinement meets
-    -- below, 'classSatCandidates'' class-var meet, 'expandClassPartial' — carries
-    -- 'teInSatDecision', so the algebra→engine entry points answer conservatively instead
-    -- of nesting a fresh empty-hypothesis decision. Never read here: internal engine
-    -- recursion stays hypothesis-guarded.
+    -- The decision root marks its entire body ('teInSatDecision'); no answer depends on the
+    -- mark. Internal engine recursion stays hypothesis-guarded, and a nested decision that
+    -- re-poses a goal still being decided is stopped by the in-flight marker in 'satGoal'.
     typeEnv = typeEnv0{teInSatDecision=True}
     goal = satGoalUnifyPos vaenv (satGoalNorm goal0)
     hyps' = S.insert goal hyps
@@ -3652,14 +3650,7 @@ satGoalRaw typeEnv0 vaenv satUse hyps goal0
 predsEmptySymbolic :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> TypePredicates -> Maybe Bool
 predsEmptySymbolic typeEnv vaenv preds = do
   goals <- predsSatDNF True preds
-  -- A decision is in flight ('teInSatDecision'): starting a fresh empty-hypothesis decision
-  -- here is the nested-regress hazard, and inheriting the ancestor stack would be a false
-  -- UNSAT. Demote to the fail-to-prove polarity (not provably empty — the 'predsEmpty'
-  -- catch-all). Only the in-fragment engine call demotes: the fragment parse above still
-  -- returns 'Nothing' out of fragment, so callers' materialized fallbacks are unchanged.
-  if teInSatDecision typeEnv
-    then debugTrace typeEnv (printf "[SAT-DEMOTE:predsEmpty] %s" (show preds)) (Just False)
-    else Just (not (any (satGoal typeEnv vaenv ProveEmpty S.empty) goals))
+  Just (not (any (satGoal typeEnv vaenv ProveEmpty S.empty) goals))
 
 -- | Engine-backed subtype: @Just (t1 ⊆ t2)@, decided as emptiness of @t1 ∧ ¬t2@, when both
 -- types are within the decidable fragment. 'satUse' gates enumeration of t1's classes
@@ -3670,12 +3661,7 @@ typeCoveredSymbolic typeEnv vaenv satUse t1 t2 = do
   d2 <- typeSatDNF vaenv t2
   negConj <- satDNFConj (map satGoalNegChoices d2)
   goals <- satDNFConj [d1, negConj]
-  -- In-flight decision: demote to cover-unproven rather than nest a decision (see
-  -- 'teInSatDecision' and the 'predsEmptySymbolic' demotion). In-fragment only — the
-  -- fragment parse above still returns 'Nothing' out of fragment.
-  if teInSatDecision typeEnv
-    then debugTrace typeEnv (printf "[SAT-DEMOTE:typeCovered] %s <= %s" (show t1) (show t2)) (Just False)
-    else Just (not (any (satGoal typeEnv vaenv satUse S.empty) goals))
+  Just (not (any (satGoal typeEnv vaenv satUse S.empty) goals))
 
 -- | Engine-backed implication between two class/relation atoms: @a1 ⟹ a2@ decided as emptiness
 -- of @a1 ∧ ¬a2@. 'satUse' gates enumeration of a1's class (the open-world gate).
@@ -3689,9 +3675,6 @@ satAtomImplies typeEnv vaenv satUse a1 a2
   , sealed || tePrgmEnv typeEnv = True
   -- In-flight decision: only the engine-free declared-edge check ('satAtomImpliesDeclared'
   -- is recursion-safe by construction), else implication unproven (see 'teInSatDecision').
-  | teInSatDecision typeEnv =
-      debugTrace typeEnv (printf "[SAT-DEMOTE:atomImplies] %s => %s" (show a1) (show a2))
-        (satAtomImpliesDeclared typeEnv a1 a2)
   | otherwise = not (satGoal typeEnv vaenv satUse S.empty (SatGoal [a1] [a2]))
 
 -- | Whether a partial is within the fragment of the dispatch-coverage queries below

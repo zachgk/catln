@@ -47,9 +47,8 @@ instance Semigroup (ObjArrTypeGraph e m) where
 -- token-per-identical-env-value: every hit under a token is served from the same
 -- immutable env the entry was computed against. The table keeps one token generation and
 -- resets when a new token appears, bounding memory to one epoch's distinct queries.
--- Queries under an in-flight sat decision bypass the memo entirely: 'teInSatDecision'
--- demotes the query's own answers, which must neither be served from nor stored into the
--- shared table.
+-- Queries under an in-flight sat decision bypass the memo entirely — kept from when
+-- 'teInSatDecision' demoted answers; it no longer does, so the bypass costs only sharing.
 --
 -- HISTORY (the "time-dependence mystery", resolved 2026-08-21): the first landing of
 -- this memo produced stored-vs-recomputed divergences under identical keys, traced
@@ -178,14 +177,8 @@ objArrGraphQueryRaw prune typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap
           materializedCovers = isSubtypeOfWithEnv typeEnv vaenv (singletonType partial) (unionAllTypesWithEnv typeEnv vaenv keptSrcs)
           -- The engine sees joint covers a leafwise subtype check cannot (e.g. Nil and Cons arms
           -- jointly covering a class-typed argument); out of fragment the materialized check decides.
-          -- In-flight engine decision ('teInSatDecision', reachable via the in-decision
-          -- meets' 'compactType' → 'typeGraphQueryWithReason'): starting a fresh
-          -- empty-hypothesis 'satLeafEscapesAll' here is the nested-regress hazard. Demote
-          -- to cover-unproven — 'materializedCovers' still decides, and declining to prune
-          -- is the sound fallback above.
           symbolicCovers = case traverse unionLeafs keptSrcs of
             Just optss
-              | teInSatDecision typeEnv -> debugTrace typeEnv "[SAT-DEMOTE:symbolicCovers]" False
               | dispatchInFragment partial && all dispatchInFragment (concat optss)
               -> not (satLeafEscapesAll typeEnv vaenv S.empty partial (concat optss))
             _ -> False
