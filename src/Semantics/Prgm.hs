@@ -868,12 +868,20 @@ getRecursiveObjsExpr expr = concat [varSubObjects, argSubObjects, recursedSubObj
     recursedSubObjects = concatMap getRecursiveObjsExpr argSubObjects
 
 -- | Gets an object and all sub-objects (recursively) from it's arguments
+--
+-- A sub-object is an 'ArgObj' whatever the object it was found in. It is something written
+-- inside another object's arguments, not a declaration of its own, so it must not outrank one in
+-- 'TypeCheck.TypeUtils.objectPrecedence'. Inheriting the parent's basis made a call written as a
+-- pattern (@dshowCall(s= mmap(m -> ConsList, fn(v)))@) a bodiless 'FunctionObj', which takes
+-- the precedence of a type object. That beat @mmap@'s real declaration, which
+-- 'TypeCheck.TypeUtils.filterBestPrecedence' then dropped from the object universe, leaving every
+-- other call of @mmap@ bounded by the one pattern.
 getRecursiveObjs :: (ExprClass e, Show m, Show (e m), MetaDat m) => ObjArr e m -> ObjectMap e m
 getRecursiveObjs ObjArr{oaBasis} | oaBasis == MatchObj = mempty
-getRecursiveObjs oa@ObjArr{oaBasis, oaObj=Just objE} = objectMapFromList (oa : recursedSubObjects)
+getRecursiveObjs oa@ObjArr{oaObj=Just objE} = objectMapFromList (oa : recursedSubObjects)
   where
     recursedSubObjects = map toObjMapItem $ getRecursiveObjsExpr objE
-    toObjMapItem e = ObjArr (Just e) oaBasis Nothing [] Nothing
+    toObjMapItem e = ObjArr (Just e) ArgObj Nothing [] Nothing
 getRecursiveObjs oa = error $ printf "getRecursiveObjs with no input expression: %s" (show oa)
 
 -- | The names an object DEFINES or DECLARES: its own object path plus the variables BOUND in its

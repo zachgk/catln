@@ -1,0 +1,47 @@
+annot(#noCore)
+
+#noCore
+# A call written as a pattern is not a declaration of the function it calls.
+  An arm may match a call rather than a value: [describe] below matches an [mmap] over a [Box], which
+  is the shape of an arm of [/Catln/Doc/dshowCall] giving a call a display of its own. The call
+  inside that pattern is an object the type checker enumerates beside [describe] itself, and it is
+  enumerated as what it is — something written inside another object's arguments.
+  It used to be enumerated as a bodiless function object, which is the precedence a declaration of a
+  type gets, so it outranked the real declaration of [mmap] and the declaration was dropped from the
+  union of all objects. Every other call of [mmap] was then bounded by the one pattern, and the call
+  over a [Maybe] at the bottom met it as nothing: "Required type contains bottomType".
+  Written without the core library so that when a compiler change breaks it there is one page to
+  read rather than a standard library.
+module(Data/Primitive)
+  data(Integer)
+module(Data)
+  class(Monad[$T])
+module(Data/Monad)
+  mmap[$M -> /Data/Monad[$T -> $_A], $A](m -> $M, fn(v -> $_A) -> $M) -> $M
+module(Data)
+  class(Maybe[$T], [Maybe/Some[$T -> $_T](value -> $T), Maybe/Nothing])
+
+  every(Maybe[$T -> $_T], isa= [/Data/Monad])
+
+  class(Box[$T], [Box/Full[$T -> $_T](value -> $T)])
+
+  every(Box[$T -> $_T], isa= [/Data/Monad])
+module(Data/Maybe)
+  /Data/Monad/mmap(m= Nothing, fn(v))= Nothing
+  /Data/Monad/mmap(m= /Data/Maybe/Some(value), fn(v))= fn(v= value)
+module(Data/Box)
+  /Data/Monad/mmap(m= Full(value), fn(v))= fn(v= value)
+module(Catln/Doc)
+  # What an example is printed as. A [Maybe] is shown as itself, which is all this page needs.
+  class(DShow)
+
+  every(/Data/Maybe, isa= [/Catln/Doc/DShow])
+module(Show)
+  data(Shown)
+
+  # Matches a call of [mmap] over a [Box], not the value one evaluates to.
+  describe(s= /Data/Monad/mmap(m -> /Data/Box, fn(v)))= Shown
+
+# The call the pattern above used to break. An example rather than a definition, since examples are
+  solved last against every object of the page, which is how the pattern reaches it.
+> /Data/Monad/mmap(m= /Data/Maybe/Some(value= 5), fn(v)= /Data/Maybe/Some(value= 6))

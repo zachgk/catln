@@ -140,8 +140,14 @@ Prgm
                     , omiDefs =
                         [ /Catln/Doc/dshowCall
                             ( Value /s -> /Data/Functor/fmap
-                                ( /fn( /v=TopType )=TopType
-                                , /lst=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
+                                [ /F=
+                                    ( TopType | PredClass /Data/Functor[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] )
+                                , /B=TopType
+                                , /A=TopType
+                                ]
+                                ( /fn( /v=TopType )=$/B
+                                , /lst=
+                                    ( TopType | PredClass /Data/Functor[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] )
                                 ) = /Data/Functor/fmap
                                 ( Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
                                 ( /fn( Value /v ) )

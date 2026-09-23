@@ -158,8 +158,14 @@ Prgm
                         [ /Catln/Doc/dshowCall
                             ( EAppArg
                                 { eaaArg = Value /s -> /Data/Functor/fmap
-                                    ( /fn( /v=TopType )=TopType
-                                    , /lst=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
+                                    [ /F=
+                                        ( TopType | PredClass /Data/Functor[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] )
+                                    , /B=TopType
+                                    , /A=TopType
+                                    ]
+                                    ( /fn( /v=TopType )=$/B
+                                    , /lst=
+                                        ( TopType | PredClass /Data/Functor[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] )
                                     ) =
                                     ( /Data/Functor/fmap
                                         ( EAppArg
@@ -170,11 +176,7 @@ Prgm
                                                 ( EAppArg { eaaArg = Value /v } )
                                             }
                                         ) ↦
-                                        ( /Data/List/Nil + /Data/List/Cons
-                                            ( /head=TopType
-                                            , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                            )
-                                        )
+                                        ( TopType | PredClass /Data/Functor[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ] )
                                     )
                                 }
                             ) -> /Catln/Doc/Show/Steps

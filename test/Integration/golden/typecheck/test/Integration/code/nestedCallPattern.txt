@@ -1,0 +1,206 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Show/Shown"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Show/Shown ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Box/Full"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Box/Full[ /T : TopType ]( Value /value -> $/T ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Show/describe"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Show/describe
+                            ( Value /s -> /Data/Monad/mmap
+                                [ /M=
+                                    ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Box[ /T=TopType ] )
+                                , /A=TopType
+                                ]
+                                ( /fn( /v=TopType )=
+                                    ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Box[ /T=TopType ] )
+                                , /m=
+                                    ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Box[ /T=TopType ] )
+                                ) = /Data/Monad/mmap( Value /m -> ∀/Data/Box )
+                                ( /fn( Value /v ) ->
+                                    ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Box[ /T=TopType ] )
+                                )
+                            ) -> /Show/Shown = Value /Show/Shown
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Maybe/Nothing"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Maybe/Nothing ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/#noCore"
+                , ObjectMapItem
+                    { omiDecls = [ Value /#noCore ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Maybe/Some"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Maybe/Some[ /T : TopType ]( Value /value -> $/T ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Monad/mmap"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Monad/mmap[ /A : TopType ]
+                            [ /M : ∀/Data/Monad[ /T=$_/A ] ]( Value /m -> $/M )
+                            ( /fn( Value /v -> $_/A ) -> $/M ) -> $/M
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Monad/mmap( Value /m -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+                            ( /fn( Value /v ) ->
+                                ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Maybe[ /T=TopType ] )
+                            ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
+                        , /Data/Monad/mmap
+                            ( Value /m -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( Value /value ) )
+                            ( /fn( Value /v ) ->
+                                ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Maybe[ /T=TopType ] )
+                            ) ->
+                            ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Maybe[ /T=TopType ] ) = /fn( Value /v -> TVArg /value = Value /value )
+                        , /Data/Monad/mmap
+                            ( Value /m -> /Data/Box/Full( /value=TopType ) = /Data/Box/Full( Value /value ) )
+                            ( /fn( Value /v ) ->
+                                ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Box[ /T=TopType ] )
+                            ) ->
+                            ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Box[ /T=TopType ] ) = /fn( Value /v -> TVArg /value = Value /value )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Primitive/Integer"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Catln/Doc/DShow
+            , cgcExtends = [ ∀/Data/Maybe ]
+            , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Data/Box[ /T=TopType ]
+            , cgcExtends =
+                [ /Data/Box/Full[ /T=$_/T ]( /value=$/T ) ]
+            , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Data/Maybe[ /T=TopType ]
+            , cgcExtends =
+                [ /Data/Maybe/Some[ /T=$_/T ]( /value=$/T )
+                , /Data/Maybe/Nothing
+                ]
+            , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Monad[ /T=TopType ]
+            , cgcExtends =
+                [ ∀/Data/Maybe[ /T=$_/T ]
+                , ∀/Data/Box[ /T=$_/T ]
+                ]
+            , cgcDoc = Just ""
+            }
+        ]
+    , prgmAnnots =
+        [ Value /#noCore
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr
+                { csValue = "A call written as a pattern is not a declaration of the function it calls.
+                An arm may match a call rather than a value: [describe] below matches an [mmap] over a [Box], which
+                is the shape of an arm of [/Catln/Doc/dshowCall] giving a call a display of its own. The call
+                inside that pattern is an object the type checker enumerates beside [describe] itself, and it is
+                enumerated as what it is — something written inside another object's arguments.
+                It used to be enumerated as a bodiless function object, which is the precedence a declaration of a
+                type gets, so it outranked the real declaration of [mmap] and the declaration was dropped from the
+                union of all objects. Every other call of [mmap] was then bounded by the one pattern, and the call
+                over a [Maybe] at the bottom met it as nothing: "Required type contains bottomType".
+                Written without the core library so that when a compiler change breaks it there is one page to
+                read rather than a standard library." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr
+                { csValue = "What an example is printed as. A [Maybe] is shown as itself, which is all this page needs." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr
+                { csValue = "Matches a call of [mmap] over a [Box], not the value one evaluates to." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr
+                { csValue = "The call the pattern above used to break. An example rather than a definition, since examples are
+                solved last against every object of the page, which is how the pattern reaches it." }
+            )
+        , /Catln/#print
+            ( Value /p ->
+                ( /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) + /Data/Monad/mmap
+                    ( /fn( /v=TopType )=/Data/Maybe/Some( /value=/Data/Primitive/Integer )
+                    , /m=/Data/Maybe/Some( /value=/Data/Primitive/Integer )
+                    )
+                ) = /Data/Monad/mmap
+                ( Value /m -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                    ( Value /value -> /Data/Primitive/Integer = CInt
+                        { ciValue = 5 }
+                    )
+                )
+                ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                    ( Value /value -> /Data/Primitive/Integer = CInt
+                        { ciValue = 6 }
+                    )
+                )
+            )
+        ]
+    }
