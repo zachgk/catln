@@ -4615,18 +4615,26 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing subPartials []) (UnionType N
     -- comparison the cheaper routes already decide.
     coveredBySlotPartition sub sup
       | length sup < 2 = False
-      | otherwise = any (partitionSlot ptVars (\p m -> p{ptVars=m})) (partKeys ptVars)
-                 || any (partitionSlot ptArgs (\p m -> p{ptArgs=m})) (partKeys ptArgs)
+      | otherwise = any (partitionSlot True ptVars (\p m -> p{ptVars=m})) (partKeys ptVars)
+                 || any (partitionSlot False ptArgs (\p m -> p{ptArgs=m})) (partKeys ptArgs)
       where
         -- The partitioned dimension may be spelled only on the super side (an unspelled
         -- parameter is ⊤ on the sub, see 'PartialType'), so the supers' keys count too.
         partKeys get = L.nub (H.keys (get sub) ++ concatMap (H.keys . get) sup)
-        partitionSlot get set k
+        partitionSlot isVars get set k
           -- A variable slot has no value to cut into pieces here: it stands for whatever its
           -- binding says, which the scope-resolving routes above already read.
           | isTypeVar sv = False
-          -- A ⊤ slot IS cut. It carries no constraint of its own, but the supers may still
-          -- partition it — @/llgxxp@ against @/llgxxp[/spkbi=X](/epmnsp=⊤)@ beside
+          -- An UNSPELLED slot is cut only on the PARAMETER axis, where it denotes ⊤ (see
+          -- 'PartialType'). An unspelled ARG is ABSENT, not ⊤: writing the key in to cut it
+          -- changes the leaf's ARG-SET, and the pieces then answer for values the sub does not
+          -- contain — the bare @~/yaudgprw@ read as covered by two leafs that both carry an
+          -- @/ifxrngk@ argument it does not have, so @a ⊆ b@ and @a ∩ b@ disagreed
+          -- (propSubtypeByIntersection, seed 5851308725487963494 8542015515204088453;
+          -- build/scratch/subbyint.hs).
+          | sv == PTopType, not isVars = False
+          -- A ⊤ PARAMETER slot IS cut. It carries no constraint of its own, but the supers may
+          -- still partition it — @/llgxxp@ against @/llgxxp[/spkbi=X](/epmnsp=⊤)@ beside
           -- @/llgxxp[/spkbi=⊤−X]@ — and no other route reaches that case: 'coveredBySlotUnion'
           -- delimits its family by equality OUTSIDE the slot, which these two supers fail on
           -- their args. Left uncut, @a−b@ and @a−(a∩b)@ subtracted families denoting one set and

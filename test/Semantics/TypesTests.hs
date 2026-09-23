@@ -342,7 +342,11 @@ coverTypeShapes a = do
   cover 10 "subtractive top" $ case a of
     UnionType Just{} _ _ -> True
     _                    -> False
-  cover 4 "bare type variable" $ case a of
+  -- 1%, not 4%: a bare variable is the rarest of the five shapes (genType draws one in about
+  -- one draw in twenty, and 'cover' compares the OBSERVED percentage with no statistical
+  -- allowance), so at the suite's default 100 tests a 4% target failed on an otherwise green
+  -- run that drew two. The floor still states the shape must be reached.
+  cover 1 "bare type variable" $ case a of
     TypeVar{} -> True
     _         -> False
   cover 6 "constants" $ case a of
