@@ -3293,6 +3293,38 @@ slotUnionCovers typeEnv vaenv covers sub sup =
                         , argModeCovers (normalizePtArgMode typeEnv supP) (normalizePtArgMode typeEnv sub)]
         in length family > 1 && covers sv (unionAllTypesWithEnv typeEnv vaenv family)
 
+-- | A partial's parameters as its VALUES carry them. A parameter the DECLARATION ties to a field
+-- (@head -> $T@) is that field's value on every value of this shape, so @Cons[/T=⊤](head=W)@ and
+-- @Cons[/T=W](head=$/T)@ spell the same set (a ??-interval piece and its enumerated difference
+-- form respell the same narrowing on the slot vs the var dimension) and must compare equal.
+--
+-- The field's value is read in the partial's OWN scope: a parent reference inside it
+-- (@head=Cons[/T=$^/T](..)@) names this partial's parameter, and met as written it is out of
+-- scope — a flexible ⊤ — so the derived value differed from the spelled binding's and the pair
+-- @Cons[/T=B](head=Cons[/T=$^/T](..))@ ≡ @Cons[/T=B](head=Cons[/T=B](..))@ read False one way
+-- under a negated-class bound (the parent-reference law, 2026-09-19).
+--
+-- Derived from the partial ALONE, never from a comparison's shared env: reading the other side's
+-- binding back would narrow this partial to it and vacuously prove @Cons(head=$/T) ⊆
+-- Cons[/T=#noCore](head=#noCore)@.
+ptVarEff :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> TypeVarName -> Type -> Type
+ptVarEff typeEnv vaenv p k v = foldr (intersectTypesEnv typeEnv vaenv) v
+  [ substituteTVExtScoped typeEnv (joinVarArgEnv (ptVars p) H.empty) vaenv av
+  | (ak, av) <- H.toList (ptArgs p), not (isTypeVar av)
+  , dp <- typeGraphData typeEnv (ptName p)
+  , Just (TypeVar (TVVar k') TVInt _) <- [H.lookup ak (ptArgs dp)], k' == k ]
+
+-- | The partial re-spelled with its effective parameters ('ptVarEff'). This is the spelling a
+-- DECLARED FIELD BOUND must be instantiated in: the bound is a template over the partial's own
+-- parameters (@tail -> ConsList[$T]@), so reading it against the LITERAL @/T=⊤@ of a shape whose
+-- @head@ already pins @/T@ to @/Integer@ clamps @tail@ to @∀ConsList[⊤]@ — no clamp at all — and
+-- the difference's spelling @Cons[/T=⊤](head=/Integer, tail=~ConsList)@ then read as a proper
+-- superset of the meet's @Cons[/T=/Integer](head=/Integer, tail=∀ConsList[/T=/Integer])@, which
+-- is the same set (propIntersectByDifference, seed 8393369098288217833 17991845435361022513;
+-- build/scratch/intbydiff.hs).
+withEffectivePtVars :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType
+withEffectivePtVars typeEnv vaenv p = p{ptVars = H.mapWithKey (ptVarEff typeEnv vaenv p) (ptVars p)}
+
 partialCoversSat :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> PartialType -> PartialType -> Bool
 partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
   ptName sup == ptName sub
@@ -3316,7 +3348,10 @@ partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
     -- own member template) and left a concrete list with no path to its display class.
     argCovered k tSub tSup = elemCoveredIn argEnv (tSub, tSup)
       || any (\d -> elemCoveredIn argEnv (intersectTypesEnv typeEnv argEnv tSub d, tSup)) (declArgBounds k)
-    declArgBounds k = [freeTVIntToTopDeep typeEnv argEnv sub d | PartialType{ptArgs=dArgs} <- typeGraphData typeEnv (ptName sub), Just d <- [H.lookup k dArgs]]
+    declArgBounds k = [freeTVIntToTopDeep typeEnv argEnv subEff d | PartialType{ptArgs=dArgs} <- typeGraphData typeEnv (ptName sub), Just d <- [H.lookup k dArgs]]
+    -- The bound is a template over the SUB's own parameters, instantiated in the spelling its
+    -- values actually carry ('withEffectivePtVars').
+    subEff = withEffectivePtVars typeEnv argEnv sub
     -- FIELDS sit inside the partials, so the parameters they bind are theirs there and never an
     -- enclosing scope's ('shadowBoundParams'); PARAMETER values sit at the containing scope and
     -- keep the incoming env.
@@ -4111,7 +4146,7 @@ isSubPartialOfWithEnvNRaw typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=s
       where
         argOk k sbVal spVal = isSubtypeOfWithEnv typeEnv vaenv' sbVal spVal
           || any (\d -> isSubtypeOfWithEnv typeEnv vaenv' (intersectTypesEnv typeEnv vaenv' sbVal d) spVal) (declArgBounds k)
-        declArgBounds k = [freeTVIntToTopDeep typeEnv vaenv sub d | PartialType{ptArgs=dArgs} <- typeGraphData typeEnv (ptName sub), Just d <- [H.lookup k dArgs]]
+        declArgBounds k = [freeTVIntToTopDeep typeEnv vaenv subEff d | PartialType{ptArgs=dArgs} <- typeGraphData typeEnv (ptName sub), Just d <- [H.lookup k dArgs]]
     -- Type parameters: mirrors 'partialCoversSat'. Under projection a Top-valued parameter on
     -- the sub side is no constraint, and is equivalent to the parameter being absent.
     --
@@ -4136,12 +4171,8 @@ isSubPartialOfWithEnvNRaw typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=s
     -- scope — a flexible ⊤ — so the derived value differed from the spelled binding's and the
     -- pair @Cons[/T=B](head=Cons[/T=$^/T](..))@ ≡ @Cons[/T=B](head=Cons[/T=B](..))@ read False
     -- one way under a negated-class bound (the parent-reference law, 2026-09-19).
-    subVarEff k v = foldr (intersectTypesEnv typeEnv vaenv) v
-      [ substituteTVExtScoped typeEnv subScope vaenv av
-      | (ak, av) <- H.toList subArgs, not (isTypeVar av)
-      , dp <- typeGraphData typeEnv (ptName sub)
-      , Just (TypeVar (TVVar k') TVInt _) <- [H.lookup ak (ptArgs dp)], k' == k ]
-    subScope = joinVarArgEnv subVars H.empty
+    subVarEff = ptVarEff typeEnv vaenv sub
+    subEff = withEffectivePtVars typeEnv vaenv sub
     hasAllVars sb sp = and $ H.elems $ H.intersectionWith varOk (H.mapWithKey subVarEff (fmap freeExt sbFull)) (fmap freeExt sp)
       where sbFull | teArgModeProjection typeEnv = sb
                    | otherwise                   = H.union sb (PTopType <$ sp)
@@ -6821,9 +6852,6 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
     differencePartials poss negs = case concatMap (`differencePartialNegs` negs) poss of
       []  -> Nothing
       res -> Just res
-
-    differencePartialNegs :: PartialType -> [PartialType] -> [PartialType]
-    differencePartialNegs pos = foldr (\n ps -> concatMap (`differencePartial` n) ps) [pos]
 
     -- Exact difference on the arg-set intervals (see 'PtArgMode'), on mode-normalized
     -- partials ('normalizePtArgMode' — so a vacuous bound never reads as extra arg-sets):
