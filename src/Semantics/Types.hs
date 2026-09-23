@@ -3234,6 +3234,65 @@ shadowBoundParams typeEnv ps = H.filterWithKey keep
   where keep (TVVar n) _ = not (any (\p -> partialBindsParam typeEnv p n) ps)
         keep _ _         = True
 
+-- | A family of supers identical to the sub at every var/arg slot but ONE jointly covers the
+-- sub when the union of their values at that slot covers the sub's value there — e.g.
+-- @fluffy(∀Animal) ⊆ fluffy(Animal∧¬Fish) ∪ fluffy(∀Fish)@, the pair the exact union's
+-- negLeaf reduction produces alongside an untouched original. Erasing the slot to ⊤ on both
+-- sides delimits the family; the arg MODE is normalised out of that structural match and
+-- handled by 'argModeCovers' instead — a super whose mode is WIDER than the sub's (e.g. the
+-- @..@/'PtArgAny' leaf a difference leaves beside an exact one) still covers the sub's arg-sets
+-- at the matching slot value, so excluding it on a mode mismatch would miss the joint cover.
+-- The slot cover is decided through the type-level union, so it is whatever the algebra proves.
+-- The COVER primitive is the caller's: the materialized prover passes its own subtype check,
+-- the symbolic one the engine's ('typesSatDiff'), so a single rule serves both instead of two
+-- copies that must be kept in agreement.
+slotUnionCovers :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> (Type -> Type -> Bool) -> PartialType -> [PartialType] -> Bool
+slotUnionCovers typeEnv vaenv covers sub sup =
+  any (coverSlot ptArgs (\p m -> p{ptArgs=m})) (slotKeys ptArgs)
+  || any (coverSlot ptVars (\p m -> p{ptVars=m})) (slotKeys ptVars)
+  where
+    -- Only when the sub spells NOTHING on this axis. That is the case the rule exists for (a
+    -- bare leaf against a family that partitions the dimension), and confining it there keeps
+    -- every other comparison bit-identical: unioning the supers' keys in generally re-runs the
+    -- family scan and its type-level union for keys the sub already answers for, which at
+    -- 10000 left propOwnVarBindingRespected spinning for 30 min against 12s.
+    --
+    -- "Spells nothing" is judged on what the sub DENOTES: a parameter spelled ⊤ is no
+    -- constraint (see 'PartialType'), so @/P[/pm=⊤]@ is the bare @/P@ here. Judged as written it
+    -- tried only @/pm@ and missed the @/d@ partition that covers @/P@ itself.
+    slotKeys get | H.null (get subN) = L.nub (concatMap (H.keys . get) sup)
+                 | otherwise         = H.keys (get subN)
+    subN = sub{ptVars = H.filter (/= PTopType) (ptVars sub)}
+    -- The dimension may be spelled only on the SUPER side: a parameter the sub leaves
+    -- unspelled is ⊤ there (see 'PartialType'), so a family of supers that partitions that
+    -- dimension still covers it. Iterating the sub's own keys alone missed every such case —
+    -- a bare @/x@ has no keys at all, so @/x ⊆ /x[/p=A] ∪ /x[/p=⊤−A]@ read False while the
+    -- spelled-out @/x[/p=⊤]@ read True, and the union's two equally valid spellings of one
+    -- set compared unequal.
+    coverSlot get set k =
+        let sv = H.lookupDefault PTopType k (get sub)
+            -- The family is delimited by equality OUTSIDE the slot, and that equality must be
+            -- of what the partials DENOTE: a parameter spelled ⊤ is the same set as one left
+            -- unspelled (see 'PartialType'), so ⊤-valued parameters are dropped before
+            -- comparing. Compared as written, @/P[/pm=⊤, /d=~/P]@ was excluded from a family
+            -- beside @/P[/d=$_/a]..@ that it partitions @/d@ with, and @/P ⊆@ their union read
+            -- False while @/P −@ their union read ∅ — the two provers disagreeing on one
+            -- question (propDifferenceByIntersection; build\/scratch\/diffint.hs). This is the
+            -- sub-side twin of the super-side rule on 'slotKeys' above. Only PARAMETERS: an
+            -- unspelled ARG is absent, not ⊤, so the arg map is compared as written.
+            dropTopVars p = p{ptVars = H.filter (/= PTopType) (ptVars p)}
+            erase p = dropTopVars (set p (H.insert k PTopType (get p))){ptArgMode = PtArgExact}
+            -- Normalise both modes before 'argModeCovers': an exact super does not literally
+            -- cover a sub carrying a vacuous @..@\/'PtArgAny' (@subUb@=False) — even though that
+            -- @..@ admits no arg-set beyond the sub's own declared keys — so without this the
+            -- family is empty and the joint cover is missed (@fluffy(∀Animal).. ⊆ fluffy(∀Lizard)
+            -- ∪ fluffy(Animal∧¬Lizard)@ read False, the arg-mode-interval half of the same
+            -- normalisation every other sub-partial path already applies).
+            family = [v | supP <- sup, Just v <- [H.lookup k (get supP)]
+                        , erase supP == erase sub
+                        , argModeCovers (normalizePtArgMode typeEnv supP) (normalizePtArgMode typeEnv sub)]
+        in length family > 1 && covers sv (unionAllTypesWithEnv typeEnv vaenv family)
+
 partialCoversSat :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> PartialType -> PartialType -> Bool
 partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
   ptName sup == ptName sub
@@ -3401,7 +3460,16 @@ satEscapes typeEnv vaenv satUse hyps m0 atom
 -- | 'satEscapes' for a shape with no union-valued vars/args.
 satEscapesAtomic :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> PartialType -> SatAtom -> Bool
 satEscapesAtomic typeEnv vaenv satUse hyps m atom = case atom of
-  SatLeafs ls -> not (any (\l -> partialCoversSat typeEnv vaenv satUse hyps l m) ls)
+  -- A cover need not be by ONE leaf: a family of leafs that differ from the shape only at one
+  -- slot covers it jointly when their values there cover the shape's ('slotUnionCovers', the
+  -- rule 'isSubtypeOfWithEnv'.'coveredBySlotUnion' applies, decided here with the engine's own
+  -- cover primitive). Checking single leafs alone made the engine report an escape the
+  -- materialized prover refused: @fluffy(this=Fish∪Lizard)@ is covered by @fluffy(this=∀Fish) +
+  -- fluffy(this=∀Lizard)@ and by no one of them, so ¬¬a lost a and the complement stopped being
+  -- an involution (propComplementInverse, seed 4036401037856019178 14835952901359919483;
+  -- build/scratch/complinv.hs).
+  SatLeafs ls -> not (any (\l -> partialCoversSat typeEnv vaenv satUse hyps l m) ls
+                      || slotUnionCovers typeEnv vaenv (\a b -> not (typesSatDiff typeEnv vaenv satUse hyps a b)) m ls)
   -- Negative atoms are enumerated regardless of the positive gate (parity with
   -- 'predImpliesAtom', which expands the implied class unconditionally).
   SatClass c -> case classSatCandidates typeEnv vaenv ProveWitness c of
@@ -4477,60 +4545,7 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing subPartials []) (UnionType N
                         (UnionType Nothing pos cs)
                   | otherwise = t
                 expandArg t = t
-    -- A family of supers identical to the sub at every var/arg slot but ONE jointly covers the
-    -- sub when the union of their values at that slot covers the sub's value there — e.g.
-    -- @fluffy(∀Animal) ⊆ fluffy(Animal∧¬Fish) ∪ fluffy(∀Fish)@, the pair the exact union's
-    -- negLeaf reduction produces alongside an untouched original. Erasing the slot to ⊤ on both
-    -- sides delimits the family; the arg MODE is normalised out of that structural match and
-    -- handled by 'argModeCovers' instead — a super whose mode is WIDER than the sub's (e.g. the
-    -- @..@/'PtArgAny' leaf a difference leaves beside an exact one) still covers the sub's arg-sets
-    -- at the matching slot value, so excluding it on a mode mismatch would miss the joint cover.
-    -- The slot cover is decided through the type-level union, so it is whatever the algebra proves.
-    coveredBySlotUnion sub sup =
-      any (coverSlot ptArgs (\p m -> p{ptArgs=m})) (slotKeys ptArgs)
-      || any (coverSlot ptVars (\p m -> p{ptVars=m})) (slotKeys ptVars)
-      where
-        -- Only when the sub spells NOTHING on this axis. That is the case the rule exists for (a
-        -- bare leaf against a family that partitions the dimension), and confining it there keeps
-        -- every other comparison bit-identical: unioning the supers' keys in generally re-runs the
-        -- family scan and its type-level union for keys the sub already answers for, which at
-        -- 10000 left propOwnVarBindingRespected spinning for 30 min against 12s.
-        --
-        -- "Spells nothing" is judged on what the sub DENOTES: a parameter spelled ⊤ is no
-        -- constraint (see 'PartialType'), so @/P[/pm=⊤]@ is the bare @/P@ here. Judged as written it
-        -- tried only @/pm@ and missed the @/d@ partition that covers @/P@ itself.
-        slotKeys get | H.null (get subN) = L.nub (concatMap (H.keys . get) sup)
-                     | otherwise         = H.keys (get subN)
-        subN = sub{ptVars = H.filter (/= PTopType) (ptVars sub)}
-        -- The dimension may be spelled only on the SUPER side: a parameter the sub leaves
-        -- unspelled is ⊤ there (see 'PartialType'), so a family of supers that partitions that
-        -- dimension still covers it. Iterating the sub's own keys alone missed every such case —
-        -- a bare @/x@ has no keys at all, so @/x ⊆ /x[/p=A] ∪ /x[/p=⊤−A]@ read False while the
-        -- spelled-out @/x[/p=⊤]@ read True, and the union's two equally valid spellings of one
-        -- set compared unequal.
-        coverSlot get set k =
-            let sv = H.lookupDefault PTopType k (get sub)
-                -- The family is delimited by equality OUTSIDE the slot, and that equality must be
-                -- of what the partials DENOTE: a parameter spelled ⊤ is the same set as one left
-                -- unspelled (see 'PartialType'), so ⊤-valued parameters are dropped before
-                -- comparing. Compared as written, @/P[/pm=⊤, /d=~/P]@ was excluded from a family
-                -- beside @/P[/d=$_/a]..@ that it partitions @/d@ with, and @/P ⊆@ their union read
-                -- False while @/P −@ their union read ∅ — the two provers disagreeing on one
-                -- question (propDifferenceByIntersection; build\/scratch\/diffint.hs). This is the
-                -- sub-side twin of the super-side rule on 'slotKeys' above. Only PARAMETERS: an
-                -- unspelled ARG is absent, not ⊤, so the arg map is compared as written.
-                dropTopVars p = p{ptVars = H.filter (/= PTopType) (ptVars p)}
-                erase p = dropTopVars (set p (H.insert k PTopType (get p))){ptArgMode = PtArgExact}
-                -- Normalise both modes before 'argModeCovers': an exact super does not literally
-                -- cover a sub carrying a vacuous @..@\/'PtArgAny' (@subUb@=False) — even though that
-                -- @..@ admits no arg-set beyond the sub's own declared keys — so without this the
-                -- family is empty and the joint cover is missed (@fluffy(∀Animal).. ⊆ fluffy(∀Lizard)
-                -- ∪ fluffy(Animal∧¬Lizard)@ read False, the arg-mode-interval half of the same
-                -- normalisation every other sub-partial path already applies).
-                family = [v | supP <- sup, Just v <- [H.lookup k (get supP)]
-                            , erase supP == erase sub
-                            , argModeCovers (normalizePtArgMode typeEnv supP) (normalizePtArgMode typeEnv sub)]
-            in length family > 1 && isSubtypeOfWithEnv typeEnv vaenv sv (unionAllTypesWithEnv typeEnv vaenv family)
+    coveredBySlotUnion sub sup = slotUnionCovers typeEnv vaenv (isSubtypeOfWithEnv typeEnv vaenv) sub sup
     -- A super family that PARTITIONS one slot covers the sub jointly even when its members also
     -- differ from the sub at OTHER slots, because those other slots may be REFERENCES to the
     -- partitioned one. A diagonal declaration is exactly that shape: @ord[/T=∀Ord](/this=$/T)@
