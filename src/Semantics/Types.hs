@@ -6658,14 +6658,17 @@ intersectTypesWithVarEnv typeEnv vaenv tv@(TypeVar v _ inner) t
   where isSelfVar var (TypeVar var' _ _) = var' == var
         isSelfVar _   _                  = False
         -- A ⊤ inner adds no knowledge, so the test is skipped on the (hot) knowledge-free
-        -- occurrence. An OPEN inner ('innerOpen' — one mentioning an ambient variable) is
-        -- skipped too: its meet would re-enter this clause (a var reachable from its own inner
-        -- loops). A closed inner whose only variables are partial-local (@Some(value=$/T)@)
-        -- is met: skipping it left the self-difference @x − x@ of such an occurrence
-        -- non-empty (its complement DOES resolve the inner).
-        innerRejects other
-          | inner == PTopType || innerOpen v inner = False
-          | otherwise = isBottomType $ intersectTypesEnv typeEnv vaenv inner other
+        -- occurrence. Every other inner is MET — including one mentioning an ambient variable,
+        -- which this used to skip outright because its meet can re-enter this clause (a var
+        -- reachable from its own inner). Skipping every such inner is a wrong ANSWER, not a
+        -- termination measure: the complement resolves the occurrence, so its leaf and the
+        -- complement's disjoint twin were compared on unresolved spellings and @a ∩ ¬a@ kept a
+        -- leaf instead of reducing to ∅ (propIntersectionWithComplement, seed 837349625833214207
+        -- 17325918108894434701; build/scratch/intcompl.hs). The re-entry itself is what is
+        -- guarded, by the marker 'innerRejectsMeet' carries — a meet that recurs on its own
+        -- derivation path adds no knowledge, so it answers "does not reject", the same
+        -- conservative direction the blanket skip took but only where a cycle actually occurs.
+        innerRejects = innerRejectsMeet typeEnv vaenv v inner
 intersectTypesWithVarEnv typeEnv vaenv t tv@TypeVar{} = intersectTypesWithVarEnv typeEnv vaenv tv t
 -- Mixed type (both top and pos non-empty): distribute intersection over union
 -- (top ∪ pos) ∩ t = (top ∩ t) ∪ (pos ∩ t)
@@ -6851,6 +6854,33 @@ intersectTypesEnv typeEnv vaenv t1 t2 =
         | Just b <- H.lookup v newBindings ->
             if i == PTopType || innerOpen v i then b else intersectTypesEnv typeEnv vaenv b i
       _ -> substituteKeep typeEnv newBindings t
+
+-- | Meets in flight inside 'innerRejectsMeet', for the re-entry guard it documents. Keyed
+-- WITHOUT the environment: a cycle whose env grows each lap would never re-hit an env-keyed
+-- entry, and the marker exists to stop exactly that.
+{-# NOINLINE innerRejectsInFlightRef #-}
+innerRejectsInFlightRef :: IORef (S.HashSet (TypeVarAux, Type, Type))
+innerRejectsInFlightRef = unsafePerformIO (newIORef S.empty)
+
+-- | Whether an occurrence's own inner rules the meet out: an occurrence denotes
+-- @⟦var⟧ ⊓ ⟦inner⟧@, so @$v∩{I} ⊓ t@ is empty as soon as @I ⊓ t@ is, whatever the binding says.
+-- The inner is met under the ambient env like any other type; a re-entry on the same
+-- (variable, inner, operand) answers 'False' — no finite derivation proves emptiness along a
+-- path that re-poses its own question, and "does not reject" is the conservative direction for
+-- a meet.
+innerRejectsMeet :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypeVarAux -> Type -> Type -> Bool
+innerRejectsMeet typeEnv vaenv v inner other
+  | inner == PTopType = False
+  | otherwise = unsafePerformIO $ do
+      let k = (v, inner, other)
+      inflight <- readIORef innerRejectsInFlightRef
+      if S.member k inflight
+        then return False
+        else do
+          modifyIORef' innerRejectsInFlightRef (S.insert k)
+          r <- evaluate (isBottomType (intersectTypesEnv typeEnv vaenv inner other))
+          modifyIORef' innerRejectsInFlightRef (S.delete k)
+          return r
 
 -- | Takes the intersection of two 'Type' (∩).
 intersectTypes :: (TypeGraph tg) => TypeEnv tg -> Type -> Type -> Type
