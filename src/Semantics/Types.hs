@@ -6849,9 +6849,33 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
         slotRecNeg _ = False
         leafRecNeg p = predsHasRecNegAtom typeEnv (ptPreds p) || escapeHasRecNeg p
     differencePartials :: [PartialType] -> [PartialType] -> Maybe [PartialType]
-    differencePartials poss negs = case concatMap (`differencePartialNegs` negs) poss of
+    differencePartials poss negs = case concatMap (`differencePartialNegs` negs) (keepIrredundant poss) of
       []  -> Nothing
       res -> Just res
+
+    -- A pos leaf a SIBLING of the same name already contains contributes nothing to the
+    -- difference: @(P ∪ Q) − N = P − N@ when @Q ⊆ P@. Exact — and it leaves the subtraction on
+    -- the spelling that subtracts CLEANLY. The two spellings of one set do not subtract alike: a
+    -- list written to a fixed depth (@Cons(tail=(Cons(tail=∀ConsList) + Nil))@) spells its tail
+    -- concretely, so subtracting a neg whose tail is the bare @∀ConsList[/T=$^/T]@ produces a
+    -- per-slot escape carrying a ¬-over-recursive-class formula and falls to the symbolic
+    -- attach below, while the equal @Cons(tail=∀ConsList[/T=$^/T])@ beside it subtracts on the
+    -- element dimension alone and reduces. Keeping both left @a − (a−b)@ as an opaque
+    -- @leaf|¬(PredRel …)@ that no longer compared with the meet's @a∩b@
+    -- (propIntersectByDifference, seed 8393369098288217833 17991845435361022513;
+    -- build/scratch/intbydiff.hs). Mutually-contained leafs keep the FIRST, so one always
+    -- survives.
+    keepIrredundant :: [PartialType] -> [PartialType]
+    keepIrredundant [p] = [p]
+    keepIrredundant ps = [p | (i, p) <- ips, not (any (absorbs i p) ips)]
+      where
+        ips = Prelude.zip [(0 :: Int) ..] ps
+        absorbs i p (j, q) = j /= i
+          && isSubPartialOfWithEnv typeEnv vaenv p q
+          && (j < i || not (isSubPartialOfWithEnv typeEnv vaenv q p))
+
+    differencePartialNegs :: PartialType -> [PartialType] -> [PartialType]
+    differencePartialNegs pos = foldr (\n ps -> concatMap (`differencePartial` n) ps) [pos]
 
     -- Exact difference on the arg-set intervals (see 'PtArgMode'), on mode-normalized
     -- partials ('normalizePtArgMode' — so a vacuous bound never reads as extra arg-sets):
