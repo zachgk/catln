@@ -47,6 +47,28 @@ module(Data/List)
   fmapSteps(lst= Nil, fn(v), index)= Nil
   fmapSteps(lst= Cons(head, tail), fn(v), index)= Cons(head= /Catln/Doc/Show/Step(index= index, input= head.toString, output= fn(v= head).toString), tail= fmapSteps(lst= tail, fn(v)= fn(v= v), index= index + 1))
 
+  # [/Data/Monad/mmap] over a [ConsList] shown as the same table as a mapping: a row per element, the
+    element on the left and the list [fn] made of it on the right.
+    The result of the call is those lists joined end to end, and joined they no longer say which
+    element contributed what — or, where an element contributed the empty list, that it was there at
+    all. The table keeps each element beside its own contribution.
+    This is also how a [filter] is shown. [filter] is a single call of [mmap] whose function makes a
+    one-element list of what it keeps and the empty list of what it drops, so the call of [mmap]
+    inside it reads as the filter's verdicts: a kept element beside a list holding it, a dropped one
+    beside the empty list. The filter is not given a display of its own, since it would be this one
+    again with nothing added.
+    Bounded as the mapping is, to elements that are [/Data/ToString], and to [ConsList] so a
+    [/Data/Maybe] bound over keeps the display of any other call.
+  # A binding over a [ConsList] of things that render text is a call with a display.
+  every(/Data/Monad/mmap(m -> ConsList[$T -> /Data/ToString], fn(v)), isa= [/Catln/Doc/DShowCall])
+
+  /Catln/Doc/dshowCall(s= /Data/Monad/mmap(m -> ConsList[$T -> /Data/ToString], fn(v)))= /Catln/Doc/Show/Steps(steps= mmapSteps(m= m, fn(v)= fn(v= v), index= 0))
+
+  # The rows of that table, applying [fn] to each element as it goes, as [fmapSteps] does.
+  mmapSteps(m -> ConsList[$T -> /Data/ToString], fn(v -> $_A) -> $_B, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/Step]
+  mmapSteps(m= Nil, fn(v), index)= Nil
+  mmapSteps(m= Cons(head, tail), fn(v), index)= Cons(head= /Catln/Doc/Show/Step(index= index, input= head.toString, output= fn(v= head).toString), tail= mmapSteps(m= tail, fn(v)= fn(v= v), index= index + 1))
+
   # The rows written out as text, which is how this page checks the ones it builds.
     It is not an arm of [/Data/toString] and [/Catln/Doc/Show/Steps] is not a [/Data/ToString]: a value
     that renders text is shown as that text, so making these rows one would replace the display they
@@ -62,4 +84,11 @@ module(Data/List)
     #example
     #assert(test= showSteps(steps= fmapSteps(lst= [1, 2, 3], fn(v)= v + 1, index= 0)) == "0:1->2;1:2->3;2:3->4;")
     #assert(test= showSteps(steps= fmapSteps(lst= [], fn(v)= v + 1, index= 0)) == "")
+    0
+
+  exampleMmapSteps =
+    #example
+    #assert(test= showSteps(steps= mmapSteps(m= [1, 2], fn(v)= [v, v], index= 0)) == "0:1->[1, 1];1:2->[2, 2];")
+    #assert(test= showSteps(steps= mmapSteps(m= [1, 2, 3], fn(v)= [], index= 0)) == "0:1->[];1:2->[];2:3->[];")
+    #assert(test= showSteps(steps= mmapSteps(m= [], fn(v)= [v], index= 0)) == "")
     0

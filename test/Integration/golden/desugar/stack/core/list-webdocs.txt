@@ -35,6 +35,18 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/List/exampleMmapSteps"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/List/exampleMmapSteps= CInt
+                            { ciValue = 0 }
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/List/showSteps"
                 , ObjectMapItem
                     { omiDecls =
@@ -104,6 +116,50 @@ Prgm
                                     { ciValue = 0 }
                                 )
                             )
+                        , /Catln/Doc/dshowCall
+                            ( Value s= /Data/Monad/mmap
+                                ( Value m -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
+                                ( fn( Value v ) )
+                            ) -> ∀/Catln/Doc/DShow = /Catln/Doc/Show/Steps
+                            ( Value steps= mmapSteps( Value m= Value m )
+                                ( fn( Value v )= fn( Value v= Value v ) )
+                                ( Value index= CInt
+                                    { ciValue = 0 }
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/List/mmapSteps"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/List/mmapSteps
+                            ( Value m -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
+                            ( fn( Value v -> $_/A ) -> $_/B )( Value index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/Step ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/List/mmapSteps( Value m= Value Nil )
+                            ( fn( Value v ) )( Value index ) -> ∀/Data/List[ /T=/Catln/Doc/Show/Step ] = Value Nil
+                        , /Data/List/mmapSteps
+                            ( Value m= Cons( Value head )( Value tail ) )
+                            ( fn( Value v ) )( Value index ) -> ∀/Data/List[ /T=/Catln/Doc/Show/Step ] = Cons
+                            ( Value head= /Catln/Doc/Show/Step( Value index= Value index )
+                                ( Value input= toString( Value /this= Value head ) )
+                                ( Value output= toString
+                                    ( Value /this= fn( Value v= Value head ) )
+                                )
+                            )
+                            ( Value tail= mmapSteps( Value m= Value tail )
+                                ( fn( Value v )= fn( Value v= Value v ) )
+                                ( Value index= /operator+( Value /l= Value index )
+                                    ( Value /r= CInt
+                                        { ciValue = 1 }
+                                    )
+                                )
+                            )
                         ]
                     }
                 )
@@ -114,6 +170,8 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Functor/fmap
@@ -121,6 +179,10 @@ Prgm
                 [ /Data/Functor/fmap
                     ( /fn( /v=TopType )=TopType
                     , /lst=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
+                    )
+                , /Data/Monad/mmap
+                    ( /fn( /v=TopType )=TopType
+                    , /m=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                     )
                 ]
             , cgcDoc = Just ""
@@ -177,6 +239,29 @@ Prgm
                 debugger arranging anything for it.
                 [index] is threaded rather than derived, since a [ConsList] knows nothing about where in a list it
                 sits, and the rows are wanted numbered from the front." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "[/Data/Monad/mmap] over a [ConsList] shown as the same table as a mapping: a row per element, the
+                element on the left and the list [fn] made of it on the right.
+                The result of the call is those lists joined end to end, and joined they no longer say which
+                element contributed what — or, where an element contributed the empty list, that it was there at
+                all. The table keeps each element beside its own contribution.
+                This is also how a [filter] is shown. [filter] is a single call of [mmap] whose function makes a
+                one-element list of what it keeps and the empty list of what it drops, so the call of [mmap]
+                inside it reads as the filter's verdicts: a kept element beside a list holding it, a dropped one
+                beside the empty list. The filter is not given a display of its own, since it would be this one
+                again with nothing added.
+                Bounded as the mapping is, to elements that are [/Data/ToString], and to [ConsList] so a
+                [/Data/Maybe] bound over keeps the display of any other call." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A binding over a [ConsList] of things that render text is a call with a display." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "The rows of that table, applying [fn] to each element as it goes, as [fmapSteps] does." }
             )
         , /Catln/#md
             ( Value /text= CStr

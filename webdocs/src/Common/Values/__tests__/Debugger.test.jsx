@@ -6,6 +6,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles'
 import Debugger from '../Debugger'
 import debuggerResponse from '../../../test/fixtures/debugger-response.json'
 import fmapResponse from '../../../test/fixtures/debugger-fmap-response.json'
+import mmapResponse from '../../../test/fixtures/debugger-mmap-response.json'
 
 const theme = createTheme()
 
@@ -208,5 +209,59 @@ describe('Debugger over a call with a display of its own', () => {
     }
     await userEvent.click(within(rows[2]).getByText('↦'))
     expect(within(rows[2]).getAllByRole('treeitem').length).toBeGreaterThan(0)
+  })
+})
+
+// A real run of a binding over a list, reduced the same way as the mapping above. It is
+// `/Data/Monad/mmap(m= [1, 2], fn(v)= [v, v])`, so the table is `1 ↦ [1, 1]` and `2 ↦ [2, 2]`: each
+// element beside the list it contributed, which the joined result no longer says.
+//
+// Each level of the ConsList instance also calls append, and the run does not put every one of those
+// under the level that asked for it: the last element's append is reduced after the binding has
+// closed, so it is a root of its own beside the binding. What a row opens onto is whatever the level
+// holds besides the next level, which is why only the first row has an append in it.
+describe('Debugger over a binding, which shows as the same table', () => {
+  beforeEach(() => {
+    global.fetch = vi.fn(() => Promise.reject(new Error('Debugger must not fetch')))
+  })
+
+  function mmapRun() {
+    return {
+      '/run': { tag: 'StrVal', contents: JSON.stringify(mmapResponse) },
+      '/fun': { tag: 'StrVal', contents: '/Data/Monad/mmap(m= [1, 2], fn(v)= [v, v])' },
+    }
+  }
+
+  async function openMmap() {
+    render(<Providers><Debugger {...mmapRun()} /></Providers>)
+    const roots = screen.getAllByRole('treeitem')
+    await userEvent.click(within(roots[0]).getByText('/Data/Monad/mmap'))
+    return roots[0]
+  }
+
+  it('shows each element beside the list it contributed', async () => {
+    const mmap = await openMmap()
+
+    expect(within(mmap).getByText('[1, 1]')).toBeInTheDocument()
+    expect(within(mmap).getByText('[2, 2]')).toBeInTheDocument()
+    expect(screen.getAllByText('↦').length).toBe(2)
+  })
+
+  it('folds the chain of recursive calls into the one table', async () => {
+    const mmap = await openMmap()
+
+    expect(within(mmap).queryAllByText('/Data/Monad/mmap')).toHaveLength(1)
+    expect(within(mmap).queryByText(/\|::\|/)).not.toBeInTheDocument()
+  })
+
+  it('opens each row onto the call of the function for its element', async () => {
+    const mmap = await openMmap()
+
+    const rows = within(mmap).getAllByRole('treeitem')
+    expect(rows).toHaveLength(2)
+    for (const row of rows) {
+      await userEvent.click(within(row).getByText('↦'))
+      expect(within(row).getAllByText(/\/fn/).length).toBeGreaterThan(0)
+    }
   })
 })

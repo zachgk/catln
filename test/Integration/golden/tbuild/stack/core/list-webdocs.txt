@@ -31,6 +31,16 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/List/exampleMmapSteps"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/List/exampleMmapSteps -> /Data/Primitive/Integer = 0 ]
+                    }
+                )
+            ,
                 ( "/Data/List/showSteps"
                 , ObjectMapItem
                     { omiDecls =
@@ -203,6 +213,155 @@ Prgm
                                     )
                                 }
                             )
+                        , /Catln/Doc/dshowCall
+                            ( EAppArg
+                                { eaaArg = Value /s -> /Data/Monad/mmap
+                                    [ /B=TopType
+                                    , /M=
+                                        ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ] )
+                                    , /A=TopType
+                                    ]
+                                    ( /fn( /v=TopType )=
+                                        ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ] )
+                                    , /m=
+                                        ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] )
+                                    ) =
+                                    ( /Data/Monad/mmap
+                                        ( EAppArg
+                                            { eaaArg = Value /m -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = /fn
+                                                ( EAppArg { eaaArg = Value /v } ) ->
+                                                ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ] )
+                                            }
+                                        ) ↦ UnionType
+                                        ( Just
+                                            ( PredClass /Data/List/ConsList[ /T=TopType ]
+                                            , fromList []
+                                            , []
+                                            )
+                                        , /Data/List/Cons[ /T=TopType ]
+                                            ( /head=TopType
+                                            , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                            )
+                                        , []
+                                        )
+                                    )
+                                }
+                            ) -> /Catln/Doc/Show/Steps
+                            ( /steps=∀/Data/List[ /T=/Catln/Doc/Show/Step ] ) = /Catln/Doc/Show/Steps
+                            ( EAppArg
+                                { eaaArg = Value /steps -> UnionType
+                                    ( Just
+                                        ( PredClass /Data/List[ /T=/Catln/Doc/Show/Step ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /Data/List/Cons
+                                        [ /T=/Catln/Doc/Show/Step
+                                            ( /output=TopType
+                                            , /input=TopType
+                                            , /index=TopType
+                                            )
+                                        ]
+                                        ( /head=/Catln/Doc/Show/Step
+                                            ( /output=/Data/String
+                                            , /input=/Data/String
+                                            , /index=/Data/Primitive/Integer
+                                            )
+                                        , /tail=
+                                            ( TopType | PredClass /Data/List/ConsList
+                                                [ /T=/Catln/Doc/Show/Step
+                                                    ( /output=TopType
+                                                    , /input=TopType
+                                                    , /index=TopType
+                                                    )
+                                                ] && PredClass /Data/List[ /T=/Catln/Doc/Show/Step ]
+                                            )
+                                        )
+                                    , []
+                                    ) =
+                                    ( /Data/List/mmapSteps
+                                        ( EAppArg
+                                            { eaaArg = Value /m -> TVArg /m = ( Value /m ↦ TVArg /m ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = /fn
+                                                ( EAppArg { eaaArg = Value /v } ) ->
+                                                ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ] ) =
+                                                ( /fn
+                                                    ( EAppArg
+                                                        { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                                    ) ↦
+                                                    ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ] )
+                                                )
+                                            }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /index -> /Data/Primitive/Integer = 0 }
+                                        ) ↦ UnionType
+                                        ( Just
+                                            ( PredClass /Data/List[ /T=/Catln/Doc/Show/Step ]
+                                            , fromList []
+                                            , []
+                                            )
+                                        , /Data/List/Cons
+                                            [ /T=/Catln/Doc/Show/Step
+                                                ( /output=TopType
+                                                , /input=TopType
+                                                , /index=TopType
+                                                )
+                                            ]
+                                            ( /head=/Catln/Doc/Show/Step
+                                                ( /output=/Data/String
+                                                , /input=/Data/String
+                                                , /index=/Data/Primitive/Integer
+                                                )
+                                            , /tail=
+                                                ( TopType | PredClass /Data/List/ConsList
+                                                    [ /T=/Catln/Doc/Show/Step
+                                                        ( /output=TopType
+                                                        , /input=TopType
+                                                        , /index=TopType
+                                                        )
+                                                    ] && PredClass /Data/List[ /T=/Catln/Doc/Show/Step ]
+                                                )
+                                            )
+                                        , []
+                                        )
+                                    )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/List/mmapSteps"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/List/mmapSteps
+                            ( EAppArg
+                                { eaaArg = Value /m -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = /fn
+                                    ( EAppArg { eaaArg = Value /v -> $_/A } ) -> $_/B
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } ) -> ∀/Data/List[ /T=/Catln/Doc/Show/Step ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/List/mmapSteps
+                            ( EAppArg { eaaArg = Value /m -> /Data/List/Nil = Value /Data/List/Nil } )
+                            ( EAppArg
+                                { eaaArg = /fn
+                                    ( EAppArg { eaaArg = Value /v } )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } ) -> /Data/List/Nil = Value /Data/List/Nil
                         ]
                     }
                 )
@@ -213,6 +372,8 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Data/Functor/fmap
@@ -220,6 +381,10 @@ Prgm
                 [ /Data/Functor/fmap
                     ( /fn( /v=TopType )=TopType
                     , /lst=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
+                    )
+                , /Data/Monad/mmap
+                    ( /fn( /v=TopType )=TopType
+                    , /m=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                     )
                 ]
             , cgcDoc = Just ""
@@ -276,6 +441,29 @@ Prgm
                 debugger arranging anything for it.
                 [index] is threaded rather than derived, since a [ConsList] knows nothing about where in a list it
                 sits, and the rows are wanted numbered from the front." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "[/Data/Monad/mmap] over a [ConsList] shown as the same table as a mapping: a row per element, the
+                element on the left and the list [fn] made of it on the right.
+                The result of the call is those lists joined end to end, and joined they no longer say which
+                element contributed what — or, where an element contributed the empty list, that it was there at
+                all. The table keeps each element beside its own contribution.
+                This is also how a [filter] is shown. [filter] is a single call of [mmap] whose function makes a
+                one-element list of what it keeps and the empty list of what it drops, so the call of [mmap]
+                inside it reads as the filter's verdicts: a kept element beside a list holding it, a dropped one
+                beside the empty list. The filter is not given a display of its own, since it would be this one
+                again with nothing added.
+                Bounded as the mapping is, to elements that are [/Data/ToString], and to [ConsList] so a
+                [/Data/Maybe] bound over keeps the display of any other call." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A binding over a [ConsList] of things that render text is a call with a display." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "The rows of that table, applying [fn] to each element as it goes, as [fmapSteps] does." }
             )
         , /Catln/#md
             ( EAppArg
