@@ -4413,13 +4413,20 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (p1, n1, _)) (H.null -> Tru
   -- already inside @U_p2@ — so the two spellings compared unequal and commutativity failed on
   -- them.
   --
-  -- Restricted to an EMPTY @n2@: with leafs excluded on the t2 side as well, a t1 value
-  -- surviving @n1@ could still land in @n2@, which this test does not check.
+  -- A NON-EMPTY @n2@ needs one more thing: a t1 value surviving @n1@ could otherwise land in
+  -- @n2@, which the residue test does not check. It cannot when @n2 ⊆ n1@ — t1 already excludes
+  -- everything t2 does — and the pair is then exact: @v ∈ U_p1 − n1@ is in @U_p2@ by the residue
+  -- test and outside @n2@ by this one. The union's two associations spell one set as
+  -- @⊤ − (N + P)@ and as @(⊤|¬R) − N@, and with the shared @N@ excluded on both sides the
+  -- empty-@n2@ restriction refused the pair, so @a∪(b∩c)@ and @(a∪b)∩(a∪c)@ compared unequal
+  -- though their difference was ∅ (propUnionDistributesIntersection, seed 7136243050727631708
+  -- 1887706505672793493; build/scratch/uniondist.hs).
   -- Only when something IS subtracted: with an empty @n1@ the reasoning cannot apply (nothing
   -- was removed), and firing anyway ran a full subtype query on every such comparison — the
   -- overwhelmingly common shape, and enough on its own to take the property suite from 235s to
   -- an OOM kill.
-  | not (H.null n1), H.null n2
+  | not (H.null n1)
+  , H.null n2 || isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing n2 []) (UnionType Nothing n1 [])
   , isSubtypeOfWithEnv typeEnv vaenv
       (UnionType (Just (predsAnd p1 (predsNot p2), H.empty, [])) H.empty [])
       (UnionType Nothing n1 [])
