@@ -4616,9 +4616,15 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing subPartials []) (UnionType N
         partKeys get = L.nub (H.keys (get sub) ++ concatMap (H.keys . get) sup)
         partitionSlot get set k
           -- A variable slot has no value to cut into pieces here: it stands for whatever its
-          -- binding says, which the scope-resolving routes above already read. A ⊤ slot is no
-          -- constraint, so cutting it changes nothing the other routes have not already tried.
-          | isTypeVar sv || sv == PTopType = False
+          -- binding says, which the scope-resolving routes above already read.
+          | isTypeVar sv = False
+          -- A ⊤ slot IS cut. It carries no constraint of its own, but the supers may still
+          -- partition it — @/llgxxp@ against @/llgxxp[/spkbi=X](/epmnsp=⊤)@ beside
+          -- @/llgxxp[/spkbi=⊤−X]@ — and no other route reaches that case: 'coveredBySlotUnion'
+          -- delimits its family by equality OUTSIDE the slot, which these two supers fail on
+          -- their args. Left uncut, @a−b@ and @a−(a∩b)@ subtracted families denoting one set and
+          -- compared unequal (propDifferenceByIntersection, seed 345393548437558433
+          -- 13464755586173583387; build/scratch/diffbyint.hs).
           | otherwise =
               isSubtypeOfWithEnv typeEnv vaenv sv (unionAllTypesWithEnv typeEnv vaenv supVals)
               && all pieceCovered sup
