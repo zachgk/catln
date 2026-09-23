@@ -3713,7 +3713,17 @@ satGoalRaw typeEnv0 vaenv satUse hyps goal0
     -- @isa Animal@ on @True@ inhabits the conjunction). The two provers can only agree on
     -- that shape once the meet stops expanding open classes — task #51's gate, which does
     -- not yet converge on core. Flip this together with that gate, not before.
-    checkCandLeaf r m = all (satAdmits typeEnv vaenv ProveWitness hyps' mR) (sgPos r)
+    -- A candidate that denotes ∅ IS NO WITNESS: a shape with an empty slot value, or a field
+    -- outside its declared bound, has no value to offer ('partialUninhabited' — the same rule
+    -- 'isSubtypeOfWithEnv'.'isSubPartial' applies on the materialized side, and the same one
+    -- 'compactType' applies when it deletes such a leaf). Without it the two provers split on
+    -- exactly the leaf the compaction deletes: @/Some[/T=$_/b∩{/length..}](/value=$/T)@ under
+    -- @/b ↦ ~/Point@ has an empty element, compacts to ∅ and is a subtype of everything, while
+    -- the engine enumerated it as a witness and reported a union CONTAINING it not covered —
+    -- so @a@ and @compact a@ read as different sets (propCompactNoChanges, seed
+    -- 9128355870959387058 14616681436260751139; build/scratch/compactcollapse.hs).
+    checkCandLeaf r m = not (partialUninhabited typeEnv vaenv mR)
+                     && all (satAdmits typeEnv vaenv ProveWitness hyps' mR) (sgPos r)
                      && all (satEscapes typeEnv vaenv ProveWitness hyps' mR) (sgNeg r)
       where
         -- Refine the witness by each co-occurring positive atom it must ALSO satisfy: meeting a
