@@ -4390,11 +4390,56 @@ constantInType typeEnv vaenv c (UnionType (Just (preds, negLeafs, negConsts)) po
     constEnv = typeEnv{tePrgmEnv = True}
 constantInType _ _ _ _ = False
 
+-- | Token-keyed memo for 'isSubtypeOfWithEnv', the same shape as the 'satGoal' and
+-- 'expandClassPartialAux' memos: keyed by the env's identity token plus the behavior flags a
+-- same-token env can vary in, the var env, and the two types; the table keeps the three
+-- most-recently-used token generations; and a query under an in-flight sat decision
+-- ('teInSatDecision') bypasses it, as the reach-query memo does.
+--
+-- A failing subtype check tries every way the sub could still be covered, and each way asks
+-- again about the fields. Two of those ways re-ask about the same field in another spelling --
+-- the field clamped to its declared type ('isSubPartialOfWithEnv'), and the sub with its class
+-- tops unrolled a level ('expandedSub') -- so a check that fails at the bottom of a nested value
+-- re-asks the same few questions a number of times that doubles with each level of nesting. A
+-- list literal's call type is exactly that: one @fmap@ over twelve elements spent twenty seconds
+-- deciding whether the call's scheme had changed ('TypeCheck.Common.eqScheme'), asking 478
+-- distinct questions 66,987 times at seven. Remembered, each is asked once, and the time is
+-- linear in the depth.
+--
+-- A re-entrant query is not served its own answer, because none is published until it has
+-- been computed: it recomputes, as it did before, and only a finished 'Bool' is ever stored.
+-- Traced ('teDebug') queries bypass it so the trace shows every question asked.
+type SubtypeMemoKey = (Int, (Bool, Bool, Bool), [(TypeVarAux, Type)], Type, Type)
+
+{-# NOINLINE subtypeMemoRef #-}
+subtypeMemoRef :: IORef [(Int, H.HashMap SubtypeMemoKey Bool)]
+subtypeMemoRef = unsafePerformIO (newIORef [])
+
 -- | Checks if one type contains another type. In set terminology, it is equivalent to subset or equal to ⊆.
 isSubtypeOfWithEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Bool
-isSubtypeOfWithEnv TypeEnv{teDebug=True} _ l r | trace (printf "[SUBTYPE] %s ⊆ %s" (show l) (show r)) False = undefined
+isSubtypeOfWithEnv typeEnv@TypeEnv{teDebug=True} vaenv t1 t2 = isSubtypeOfWithEnvRaw typeEnv vaenv t1 t2
 isSubtypeOfWithEnv _ _ _ PTopType = True
 isSubtypeOfWithEnv _ _ t1 t2 | t1 == t2 = True
+isSubtypeOfWithEnv typeEnv vaenv t1 t2 = case teQueryCacheKey typeEnv of
+  Nothing -> isSubtypeOfWithEnvRaw typeEnv vaenv t1 t2
+  Just _ | teInSatDecision typeEnv -> isSubtypeOfWithEnvRaw typeEnv vaenv t1 t2
+  Just tok -> unsafePerformIO $ do
+    let key = (tok, (teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv), L.sortOn fst (H.toList vaenv), t1, t2)
+    gens <- readIORef subtypeMemoRef
+    case lookup tok gens >>= H.lookup key of
+      Just r -> return r
+      Nothing -> do
+        r <- evaluate (isSubtypeOfWithEnvRaw typeEnv vaenv t1 t2)
+        atomicModifyIORef' subtypeMemoRef $ \gens2 ->
+          let mTok = fromMaybe H.empty (lookup tok gens2)
+              rest = filter ((/= tok) . fst) gens2
+          in ((tok, H.insert key r mTok) : take 2 rest, ())
+        return r
+
+isSubtypeOfWithEnvRaw :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Bool
+isSubtypeOfWithEnvRaw TypeEnv{teDebug=True} _ l r | trace (printf "[SUBTYPE] %s ⊆ %s" (show l) (show r)) False = undefined
+isSubtypeOfWithEnvRaw _ _ _ PTopType = True
+isSubtypeOfWithEnvRaw _ _ t1 t2 | t1 == t2 = True
 -- A type var resolves to its 'vaenv' binding. A var bound to itself (a self-referential
 -- entry, which an unconstrained var may acquire during intersection) carries no information,
 -- so treat it as 'PTopType' - exactly as an unbound var already resolves via 'vaenvLookup'.
@@ -4403,19 +4448,19 @@ isSubtypeOfWithEnv _ _ t1 t2 | t1 == t2 = True
 -- even when the lookup is ⊤ (the point of occurrence-local knowledge); on the RIGHT both
 -- conjuncts must admit t1 (@t ⊆ A∩B ⟺ t ⊆ A ∧ t ⊆ B@). A ⊤ inner short-circuits both to
 -- the historical rules via the meet's and the ⊤-rhs identity clauses.
-isSubtypeOfWithEnv typeEnv vaenv (TypeVar v _ i) t2 = case vaenvLookup vaenv v of
+isSubtypeOfWithEnvRaw typeEnv vaenv (TypeVar v _ i) t2 = case vaenvLookup vaenv v of
   TypeVar v' _ _ | v' == v -> isSubtypeOfWithEnv typeEnv vaenv (meetInner typeEnv vaenv PTopType i) t2
   looked                   -> isSubtypeOfWithEnv typeEnv vaenv (intersectTypesEnv typeEnv vaenv looked i) t2
-isSubtypeOfWithEnv typeEnv vaenv t1 (TypeVar v _ i) = case vaenvLookup vaenv v of
+isSubtypeOfWithEnvRaw typeEnv vaenv t1 (TypeVar v _ i) = case vaenvLookup vaenv v of
   TypeVar v' _ _ | v' == v -> isSubtypeOfWithEnv typeEnv vaenv t1 i
   looked                   -> isSubtypeOfWithEnv typeEnv vaenv t1 looked && isSubtypeOfWithEnv typeEnv vaenv t1 i
 -- ⊤ ⊆ a positive union: never (open world - a fresh type name or constant kind escapes any
 -- finite positive listing). A 'Just'-top rhs is NOT decided here: its subtractive component may
 -- be vacuous (e.g. tautological preds ¬(A∧B) with A∧B unsatisfiable, making it ⊤), which the
 -- predicate clauses below decide exactly (⊤ is itself the pure top with 'PredsNone').
-isSubtypeOfWithEnv _ _ PTopType (UnionType Nothing _ _) = False
+isSubtypeOfWithEnvRaw _ _ PTopType (UnionType Nothing _ _) = False
 -- Mixed type on left (top + positive leafs/constants): (top ∪ pos ∪ cs) ⊆ t2 iff top ⊆ t2 ∧ (pos ∪ cs) ⊆ t2
-isSubtypeOfWithEnv typeEnv vaenv (UnionType (Just topData) pos cs) t2
+isSubtypeOfWithEnvRaw typeEnv vaenv (UnionType (Just topData) pos cs) t2
   | not (H.null pos) || not (null cs) =
       isSubtypeOfWithEnv typeEnv vaenv (UnionType (Just topData) H.empty []) t2
       && isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing pos cs) t2
@@ -4434,7 +4479,7 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType (Just topData) pos cs) t2
 -- Sound both ways: the (∧) rule is set-exact given its sub-answers; the (¬) rule's meet is
 -- exact-or-wider (the mergeVarEnvVal doctrine), so a proven-∅ is truly ∅ and a nonempty
 -- meet answers subtype-unproven, the safe polarity.
-isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing subLeafs []) t2@(UnionType (Just (PredsAnd ps, (H.null -> True), [])) (H.null -> True) []) =
+isSubtypeOfWithEnvRaw typeEnv vaenv t1@(UnionType Nothing subLeafs []) t2@(UnionType (Just (PredsAnd ps, (H.null -> True), [])) (H.null -> True) []) =
   fromMaybe
     (all (\p -> isSubtypeOfWithEnv typeEnv vaenv t1 (UnionType (Just (p, H.empty, [])) H.empty [])) ps)
     (typeCoveredSymbolic typeEnv vaenv ProveEmpty t1 t2)
@@ -4443,7 +4488,7 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing subLeafs []) t2@(UnionTyp
 -- can be uninhabited on its own (a slot whose occurrence and binding are disjoint), which is ∅
 -- as surely as a leaf the meet dropped (propSubtypeByUnion, 5672: Seed 12596496111891564273
 -- 3791529403351673635 — each leaf of the union was covered alone, the union was not).
-isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing subLeafs []) t2@(UnionType (Just (PredsNot q, (H.null -> True), [])) (H.null -> True) []) =
+isSubtypeOfWithEnvRaw typeEnv vaenv t1@(UnionType Nothing subLeafs []) t2@(UnionType (Just (PredsNot q, (H.null -> True), [])) (H.null -> True) []) =
   fromMaybe
     (meetEmpty (intersectTypesEnv typeEnv vaenv t1 (UnionType (Just (q, H.empty, [])) H.empty [])))
     (typeCoveredSymbolic typeEnv vaenv ProveEmpty t1 t2)
@@ -4463,13 +4508,13 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing subLeafs []) t2@(UnionTyp
 -- which the difference oracle proves), and the distributive law failed on exactly that shape.
 -- Only a sub with no primitive-typed leaf drops them; a primitive leaf (@Integer@) does hold
 -- constants and keeps the full super.
-isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing subPartials []) (UnionType (Just (preds, negLeafs, _:_)) pos cs)
+isSubtypeOfWithEnvRaw typeEnv vaenv t1@(UnionType Nothing subPartials []) (UnionType (Just (preds, negLeafs, _:_)) pos cs)
   | not (any leafHoldsConstants (splitUnionType subPartials)) =
       isSubtypeOfWithEnv typeEnv vaenv t1 (UnionType (Just (preds, negLeafs, [])) pos cs)
-isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing subPartials []) (UnionType (Just topData) pos (_:_))
+isSubtypeOfWithEnvRaw typeEnv vaenv t1@(UnionType Nothing subPartials []) (UnionType (Just topData) pos (_:_))
   | not (any leafHoldsConstants (splitUnionType subPartials)) =
       isSubtypeOfWithEnv typeEnv vaenv t1 (UnionType (Just topData) pos [])
-isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing subPartials []) t2@(UnionType (Just _) _ _) =
+isSubtypeOfWithEnvRaw typeEnv vaenv t1@(UnionType Nothing subPartials []) t2@(UnionType (Just _) _ _) =
   -- Symbolic decision (emptiness of @t1 ∧ ¬t2@ against the class graph) avoids materializing
   -- the predicate expansion; fall back to expansion outside the fragment.
   fromMaybe
@@ -4505,7 +4550,7 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing subPartials []) t2@(Union
       _ -> False
 -- PosPartials-with-constants ⊆ t2: partials check + each constant must be in t2
 -- (Only for PosPartials: in NegPartials, cs are excluded constants, not members)
-isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing leafs cs@(_:_)) t2 =
+isSubtypeOfWithEnvRaw typeEnv vaenv (UnionType Nothing leafs cs@(_:_)) t2 =
   isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing leafs []) t2
   && all (\c -> constantInType typeEnv vaenv c t2) cs
 -- Pure top ⊆ MIXED top: fold t2's positive components into t1's subtraction and recurse with a
@@ -4513,7 +4558,7 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing leafs cs@(_:_)) t2 =
 -- join t1's excluded leafs and the cs2 points its excluded constants — both exactly
 -- representable on a 'Just'-top. (t1 is always a pure top when both sides are 'Just'-tops:
 -- a mixed left was split by the clause above.)
-isSubtypeOfWithEnv typeEnv vaenv (UnionType (Just (p1, n1, nc1)) (H.null -> True) []) (UnionType (Just top2) pos2 cs2)
+isSubtypeOfWithEnvRaw typeEnv vaenv (UnionType (Just (p1, n1, nc1)) (H.null -> True) []) (UnionType (Just top2) pos2 cs2)
   | not (H.null pos2) || not (null cs2) =
       isSubtypeOfWithEnv typeEnv vaenv
         (UnionType (Just (p1, H.unionWith S.union n1 pos2, L.nub (nc1 ++ cs2))) H.empty [])
@@ -4521,7 +4566,7 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType (Just (p1, n1, nc1)) (H.null -> True
 -- Pure top ⊆ pure top with EXCLUDED constants on the rhs: @A ⊆ B − cs ⟺ A ⊆ B ∧ ∀c∈cs. c ∉ A@
 -- (exact). Stripping nc2 up front keeps the rhs inside the symbolic engine's constant-free
 -- fragment for the clauses below.
-isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just _) (H.null -> True) []) (UnionType (Just (p2, n2, nc2@(_:_))) (H.null -> True) []) =
+isSubtypeOfWithEnvRaw typeEnv vaenv t1@(UnionType (Just _) (H.null -> True) []) (UnionType (Just (p2, n2, nc2@(_:_))) (H.null -> True) []) =
   all (\c -> not $ constantInType typeEnv vaenv c t1) nc2
   && isSubtypeOfWithEnv typeEnv vaenv t1 (TopType n2 p2)
 -- Pure NegPartials-top ⊆ pure NegPartials-top, SAME predicates: (U_p − n1 − nc1) ⊆ (U_p − n2)
@@ -4534,7 +4579,7 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just _) (H.null -> True) []) (Un
 -- Matched only for the fully-reduced form — no positive leafs/constants on either side (mixed
 -- lefts split, mixed rights folded above) and no rhs excluded constants (stripped above) —
 -- where the identity is exact.
-isSubtypeOfWithEnv typeEnv vaenv (UnionType (Just (p1, n1, _)) (H.null -> True) []) (UnionType (Just (p2, n2, [])) (H.null -> True) [])
+isSubtypeOfWithEnvRaw typeEnv vaenv (UnionType (Just (p1, n1, _)) (H.null -> True) []) (UnionType (Just (p2, n2, [])) (H.null -> True) [])
   -- The cover is a positive-union question, and @n1@ may cover jointly only through a split on a
   -- predicate one of its leafs carries (@length(this=⊤)|¬~length(this=∀List)@ beside
   -- @length(this=∀List)@), so ask it with the complete relation — one excluded-middle split, its
@@ -4546,7 +4591,7 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType (Just (p1, n1, _)) (H.null -> True) 
 -- of t1 are captured by the @t1@ binding and consulted by the fallbacks below (not ignored);
 -- the cheap guards decide the common cases: sufficient iff predImplies p1 p2 and n2 ⊆ n1;
 -- otherwise the symbolic decision.
-isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (p1, n1, _)) (H.null -> True) []) t2@(UnionType (Just (p2, n2, [])) (H.null -> True) [])
+isSubtypeOfWithEnvRaw typeEnv vaenv t1@(UnionType (Just (p1, n1, _)) (H.null -> True) []) t2@(UnionType (Just (p2, n2, [])) (H.null -> True) [])
   | isPredsContradictory p1 = True  -- t1 = ∅ ⊆ anything
   | (isPredsContradictory (predsAnd p1 (predsNot p2)) || predImplies typeEnv vaenv p1 p2)
     && n2CoveredInP1 = True
@@ -4615,14 +4660,14 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (p1, n1, _)) (H.null -> Tru
 -- regions of the predicate universe (leaf regions are not finite constant sets — the same
 -- postulate as the nc1 treatment above), so decide against the positive leafs alone. Keeps
 -- the rhs inside the symbolic engine's constant-free fragment for the clause below.
-isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just _) (H.null -> True) []) (UnionType Nothing superPartials (_:_)) =
+isSubtypeOfWithEnvRaw typeEnv vaenv t1@(UnionType (Just _) (H.null -> True) []) (UnionType Nothing superPartials (_:_)) =
   isSubtypeOfWithEnv typeEnv vaenv t1 (UnionType Nothing superPartials [])
 -- NegPartials ⊆ PosPartials: filter t1 by superPartials names.
 -- hasOutside=True: t1 has elements outside superPartials names.
 --   True if preds are syntactically contradictory (t1 = ∅).
 --   True if predImpliesPartials establishes U_preds ⊆ superPartials (negLeafs removal can only shrink).
 --   Otherwise False (conservative: can't prove subtype without knowing predicate members).
-isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (preds, negLeafs, _)) (H.null -> True) []) t2@(UnionType Nothing superPartials []) =
+isSubtypeOfWithEnvRaw typeEnv vaenv t1@(UnionType (Just (preds, negLeafs, _)) (H.null -> True) []) t2@(UnionType Nothing superPartials []) =
   -- The predicate region (U_preds - negLeafs) must be covered by t2; the excluded constants only
   -- shrink t1 further, and a positive union cannot cover all-but-points of a leaf region, so the
   -- region check without them is exact. (Positive leaves and constants of t1 are split off by the
@@ -4685,7 +4730,7 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (preds, negLeafs, _)) (H.nu
     (leafs, False) | predsPositiveAtoms preds -> isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing leafs []) t2
                    | otherwise -> False
 -- PosPartials ⊆ PosPartials: check partials structurally
-isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing subPartials []) (UnionType Nothing superPartials []) =
+isSubtypeOfWithEnvRaw typeEnv vaenv (UnionType Nothing subPartials []) (UnionType Nothing superPartials []) =
   debugTrace typeEnv msg result
   where
     supersByName = splitUnionTypeByName superPartials
@@ -4840,13 +4885,13 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing subPartials []) (UnionType N
                  || isSubPartialOfWithEnv typeEnv vaenv (set sub (H.insert k piece (get sub))) supP
     msg = printf "[SUBTYPE] %s ⊆ %s = %s" (show $ UnionType Nothing subPartials []) (show $ UnionType Nothing superPartials []) (show result)
 -- partials ⊆ (superLeafs ∪ constants): constants in supertype don't help cover partials
-isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing _ []) (UnionType Nothing superLeafs (_:_)) =
+isSubtypeOfWithEnvRaw typeEnv vaenv t1@(UnionType Nothing _ []) (UnionType Nothing superLeafs (_:_)) =
   isSubtypeOfWithEnv typeEnv vaenv t1 (UnionType Nothing superLeafs [])
 -- Unreachable by clause flow: every 'Just'-top pairing is decomposed above (mixed left split →
 -- mixed right folded → rhs excluded constants stripped → pure pairs decided), which the
 -- coverage checker cannot see through the view patterns and guards. A genuine flow hole must
 -- fail loudly here rather than silently mis-decide a subtype.
-isSubtypeOfWithEnv _ _ t1 t2 = error $ printf "Unreachable isSubtypeOfWithEnv arguments %s ⊆ %s" (show t1) (show t2)
+isSubtypeOfWithEnvRaw _ _ t1 t2 = error $ printf "Unreachable isSubtypeOfWithEnv arguments %s ⊆ %s" (show t1) (show t2)
 
 -- | Checks if one type contains another type. In set terminology, it is equivalent to subset or equal to ⊆.
 isSubtypeOf :: TypeGraph tg => TypeEnv tg -> Type -> Type -> Bool
