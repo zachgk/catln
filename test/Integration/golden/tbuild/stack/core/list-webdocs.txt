@@ -1667,11 +1667,7 @@ Prgm
         , /Catln/#md
             ( EAppArg
                 { eaaArg = Value /text -> /Data/String = "A sum reads the same from either end, but the rows do not: a left fold's first row is handed
-                [init], and a right fold's last row is.
-                The step's parameters are typed. A step written as a lambda is handed its parameters as
-                [TopType] here, since the slots they fill are type variables, and [acc + v] over two of those
-                is an [Integer] or a [Float]. A [Float] has no [/Data/toString], so a row could not be rendered
-                from it." }
+                [init], and a right fold's last row is." }
             )
         , /Catln/#md
             ( EAppArg

@@ -168,16 +168,12 @@ module(Data/List)
 
   # A sum reads the same from either end, but the rows do not: a left fold's first row is handed
     [init], and a right fold's last row is.
-    The step's parameters are typed. A step written as a lambda is handed its parameters as
-    [TopType] here, since the slots they fill are type variables, and [acc + v] over two of those
-    is an [Integer] or a [Float]. A [Float] has no [/Data/toString], so a row could not be rendered
-    from it.
   exampleFoldSums =
     #example
-    #assert(test= showFoldSteps(steps= foldlSteps(lst= [1, 2, 3], fn(acc -> Integer, v -> Integer)= acc + v, acc= 0, index= 0)) == "0:0+1=1;1:1+2=3;2:3+3=6;")
-    #assert(test= showFoldSteps(steps= foldrSteps(lst= [1, 2, 3], fn(acc -> Integer, v -> Integer)= acc + v, init= 0, index= 0)) == "0:5+1=6;1:3+2=5;2:0+3=3;")
-    #assert(test= showFoldSteps(steps= foldlSteps(lst= [], fn(acc -> Integer, v -> Integer)= acc + v, acc= 0, index= 0)) == "")
-    #assert(test= showFoldSteps(steps= foldrSteps(lst= [], fn(acc -> Integer, v -> Integer)= acc + v, init= 0, index= 0)) == "")
+    #assert(test= showFoldSteps(steps= foldlSteps(lst= [1, 2, 3], fn(acc, v)= acc + v, acc= 0, index= 0)) == "0:0+1=1;1:1+2=3;2:3+3=6;")
+    #assert(test= showFoldSteps(steps= foldrSteps(lst= [1, 2, 3], fn(acc, v)= acc + v, init= 0, index= 0)) == "0:5+1=6;1:3+2=5;2:0+3=3;")
+    #assert(test= showFoldSteps(steps= foldlSteps(lst= [], fn(acc, v)= acc + v, acc= 0, index= 0)) == "")
+    #assert(test= showFoldSteps(steps= foldrSteps(lst= [], fn(acc, v)= acc + v, init= 0, index= 0)) == "")
     0
 
   # The result a display gives is read off its rows: the last row's for a left fold, the first row's
