@@ -5,14 +5,23 @@ import Tooltip from '@mui/material/Tooltip';
 
 import {PartialKey, PartialType, PTypeName, isTopType, Type, KeyWord} from './Common';
 
-// Whether the types an expression carries are written into it or kept for a hover.
+// How an expression is written out, which depends on what it is being read for.
 //
-// Written in is the default because a program listing is read for its declarations, and a type is
-// half of what a declaration says. A debugger reads the other way round: what it is for is which call
-// was made on which value, and every argument of every call spelling its type out -- the declared
-// one, often a union several lines long -- buried the call it belonged to. There the type is one
-// hover away, on the name it is the type of.
-const TypesOnHoverContext = createContext(false);
+// The default is for a program listing, which is read for its declarations: a type is half of what a
+// declaration says, and the call tree a built expression carries is what the TreeBuild listing exists
+// to show. A debugger reads the other way round. What it is for is which call was made on which
+// value, so it asks for both to be kept out of the way:
+//
+// - typesOnHover: every argument of every call spelling out its type -- the declared one, often a
+//   union several lines long -- buried the call it belonged to. The type is one hover away instead,
+//   on the name it is the type of.
+// - callTrees: how a built expression was resolved, written after it (`/acc↦TCArg`, or a whole
+//   dispatch table). A debugger already shows what each expression resolved to, as the calls under
+//   the node, so there the tree only says the same thing again in the compiler's terms.
+const ExprStyleContext = createContext({typesOnHover: false, callTrees: true});
+
+// The style a debugger reads a run in. See ExprStyleContext.
+const runStyle = {typesOnHover: true, callTrees: false};
 
 // A name whose type is shown when it is hovered, rather than beside it.
 //
@@ -96,7 +105,7 @@ function constantValue(c) {
 // applied to it or written around it, since that name is what the reader points at to ask.
 function Expr(props) {
   let {expr, Meta, showMetas, headTip} = props;
-  const hoverTypes = useContext(TypesOnHoverContext);
+  const {typesOnHover: hoverTypes, callTrees} = useContext(ExprStyleContext);
   const contents = exprContents(expr);
   if (contents === undefined) {
     console.error("Unknown renderExpr", expr);
@@ -175,7 +184,11 @@ function Expr(props) {
     return <span>{showBase}{showBaseM}{showArg}{showM}</span>;
   case "TCalls":
     const [,callE,callTree] = contents;
-    return <span><Expr expr={callE} Meta={Meta} showMetas={showMetas} headTip={headTip}/>↦<TCallTree tree={callTree} /></span>;
+    const showCallE = <Expr expr={callE} Meta={Meta} showMetas={showMetas} headTip={headTip}/>;
+    if (!callTrees) {
+      return showCallE;
+    }
+    return <span>{showCallE}↦<TCallTree tree={callTree} /></span>;
   default:
     console.error("Unknown renderExpr", expr);
     return "";
@@ -185,7 +198,7 @@ function Expr(props) {
 function ObjArr(props) {
   const {Meta, showExprMetas, multiLine, oa} = props;
   const {oaObj, oaArr, oaAnnots} = oa;
-  const hoverTypes = useContext(TypesOnHoverContext);
+  const {typesOnHover: hoverTypes} = useContext(ExprStyleContext);
 
   // The type this ObjArr declares, when there is one worth saying and it is hovered rather than
   // written. It goes on the object's head, or on the head of the arrow's expression when there is no
@@ -296,5 +309,6 @@ export {
   exprContents,
   Expr,
   ObjArr,
-  TypesOnHoverContext,
+  ExprStyleContext,
+  runStyle,
 }

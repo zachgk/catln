@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
-import { Expr, ObjArr, TypesOnHoverContext } from '../Semantics'
+import { Expr, ExprStyleContext, ObjArr, runStyle } from '../Semantics'
 
 const theme = createTheme()
 
@@ -123,9 +123,9 @@ describe('ObjArr', () => {
   })
 })
 
-describe('ObjArr with types on hover', () => {
+describe('ObjArr read as a run', () => {
   function Hover({ children }) {
-    return <Providers><TypesOnHoverContext.Provider value={true}>{children}</TypesOnHoverContext.Provider></Providers>
+    return <Providers><ExprStyleContext.Provider value={runStyle}>{children}</ExprStyleContext.Provider></Providers>
   }
 
   const typedX = {
@@ -133,6 +133,23 @@ describe('ObjArr with types on hover', () => {
     oaArr: [null, intMeta],
     oaAnnots: [],
   }
+
+  // A built expression carries the call tree it resolved through. A listing of the tree build shows
+  // it; a run shows what it resolved to as the calls beneath, so the label leaves it out.
+  const tcalls = {
+    tag: 'TCalls',
+    contents: [baseMeta, { tag: 'TValue', contents: [baseMeta, '/acc'] }, { tag: 'TCArg', contents: [intMeta.getMetaType, '/acc'] }],
+  }
+
+  it('writes the call tree of a built expression in a listing', () => {
+    const { container } = render(<Providers><Expr expr={tcalls} Meta={NoopMeta} /></Providers>)
+    expect(container.textContent).toBe('/acc↦TCArg')
+  })
+
+  it('leaves the call tree of a built expression out of a run', () => {
+    const { container } = render(<Hover><Expr expr={tcalls} Meta={NoopMeta} /></Hover>)
+    expect(container.textContent).toBe('/acc')
+  })
 
   it('leaves the type out of the text', () => {
     const { container } = render(<Hover><ObjArr oa={typedX} Meta={NoopMeta} /></Hover>)

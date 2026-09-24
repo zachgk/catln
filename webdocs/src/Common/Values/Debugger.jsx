@@ -6,7 +6,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import {TreeItem} from '@mui/x-tree-view/TreeItem';
 import Link from '@mui/material/Link';
 
-import {ObjArr, TypesOnHoverContext, exprContents} from '../Semantics';
+import {ExprStyleContext, ObjArr, exprContents, runStyle} from '../Semantics';
 import {PTypeName} from '../Common';
 import {Value} from '../Value';
 import {CallStepsContext} from './Steps';
@@ -53,10 +53,10 @@ function Debugger(props) {
     }
   }, [selected, expanded]);
 
-  // Types are hovered rather than written: see TypesOnHoverContext. A run is read for the calls it
-  // made, and a call whose every argument spells out its declared type is mostly types.
+  // Written for reading a run rather than a program, with its types on hover and without the call
+  // trees the tree below already shows as calls: see ExprStyleContext.
   return (
-    <TypesOnHoverContext.Provider value={true}>
+    <ExprStyleContext.Provider value={runStyle}>
       <div>
         <h2>{fun}</h2>
         {roots.length ? (
@@ -104,7 +104,7 @@ function Debugger(props) {
           </>
         )}
       </div>
-    </TypesOnHoverContext.Provider>
+    </ExprStyleContext.Provider>
   );
 }
 
