@@ -118,15 +118,41 @@ function overlayUrl(statementTrees) {
   return statementValues(statementTrees).map(({value}) => overlayValueUrl(value)).find(Boolean) ?? null;
 }
 
+// The place in a page's source a link asked for, as a Monaco range: `?line=` and optionally `col`,
+// `endLine` and `endCol`, counted as the parser counts them (from one, the end just past the last
+// character). Null when no place was asked for. This is how the debugger's ctrl-click on a call's
+// book opens the page the call's definition is written in.
+function sourceRange(query) {
+  const line = parseInt(query.get("line"), 10);
+  if (!(line > 0)) {
+    return null;
+  }
+  const num = (name, dflt) => {
+    const n = parseInt(query.get(name), 10);
+    return n > 0 ? n : dflt;
+  };
+  const endLine = num("endLine", line);
+  return {
+    startLineNumber: line,
+    startColumn: num("col", 1),
+    endLineNumber: endLine,
+    endColumn: num("endCol", query.get("endLine") ? 1 : num("col", 1)),
+  };
+}
+
 function DocsPage(props) {
   const {prgmName} = props;
+  const query = useQuery();
+  const range = sourceRange(query);
+  const rangeKey = range && JSON.stringify(range);
 
   const [reloadKey, setReloadKey] = useState(0);
   // Followed rather than asked about once: the server holds the question open and answers it again
   // whenever the page, or a page it imports, is written to. A change to any other page is one the
   // server never sends here, so the window a reader is reading is not disturbed by an edit elsewhere.
   let apiResult = useLiveApi(`/api/page?prgmName=${prgmName}`, reloadKey);
-  const [mode, setMode] = useState('view');
+  // A link to a place in the source opens on the source, which is where a place is shown.
+  const [mode, setMode] = useState(range ? 'edit' : 'view');
   const [editedSource, setEditedSource] = useState(null);
   const [editorInstance, setEditorInstance] = useState(null);
   const [lastSaved, setLastSaved] = useState(null);
@@ -141,8 +167,13 @@ function DocsPage(props) {
   const cursorListenerRef = useRef(null);
   const vimStatusBarRef = useRef(null);
   const saveRef = useRef(null);
+  // Whether the source is open because a link asked for a place in it. See the effect below.
+  const linkOpenedSource = useRef(!!range);
 
-  const toggleMode = () => setMode(m => m === 'view' ? 'edit' : 'view');
+  const toggleMode = () => {
+    linkOpenedSource.current = false;
+    setMode(m => m === 'view' ? 'edit' : 'view');
+  };
 
   // Reading the page again is what a value shown on it does after writing to the compiler, so it is
   // offered to every value rather than only to the ones this page hands an updateExpr to.
@@ -165,6 +196,29 @@ function DocsPage(props) {
     setLastSaved(null);
     setSaveState(null);
   }, [prgmName]);
+
+  // A place asked for after the page was already open, as following a second link to it is, opens
+  // the source as the first one did. The source a link opened is the link's, so arriving at the page
+  // without one goes back to reading it; a source the reader opened themselves stays open.
+  useEffect(() => {
+    if (rangeKey) {
+      linkOpenedSource.current = true;
+      setMode('edit');
+    } else if (linkOpenedSource.current) {
+      linkOpenedSource.current = false;
+      setMode('view');
+    }
+  }, [prgmName, rangeKey]);
+
+  // Selects the place asked for and scrolls it into the middle of the editor, once there is an editor
+  // holding the source to select it in.
+  useEffect(() => {
+    if (editorInstance && rangeKey) {
+      const r = JSON.parse(rangeKey);
+      editorInstance.setSelection(r);
+      editorInstance.revealRangeInCenter(r);
+    }
+  }, [editorInstance, rangeKey]);
 
   // Reassigned every render so the keybindings, which are registered once, always
   // run against the current buffer.
@@ -341,7 +395,9 @@ function DocsPage(props) {
               onChange={value => setEditedSource(value)}
               // Monaco does not watch the size of what holds it, so without this it keeps the size
               // it was laid out at and the divider moves the pane out from under it.
-              options={{ minimap: { enabled: false }, wordWrap: 'on', fontSize: 14, automaticLayout: true }}
+              // Opened to show a place on a server that cannot write, the source is read rather than
+              // written: there is nowhere for an edit to go.
+              options={{ minimap: { enabled: false }, wordWrap: 'on', fontSize: 14, automaticLayout: true, readOnly: !canEdit }}
               onMount={handleEditorMount}
             />
           </div>
@@ -362,7 +418,7 @@ function DocsPage(props) {
       <PageDirContext.Provider value={pageDir}>
        <ReloadContext.Provider value={reload}>
         <div>
-          {canEdit && (
+          {(canEdit || range) && (
             <div style={{textAlign: 'right'}}>
               {/* In edit mode the save status belongs to the buffer and sits in the editor's own
                   status row, so it is shown here only while reading, where a value is what saves. */}

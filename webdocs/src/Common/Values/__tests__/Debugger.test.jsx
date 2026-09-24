@@ -1,5 +1,5 @@
 import React from 'react'
-import { cleanup, render, screen, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
@@ -11,6 +11,10 @@ import foldlResponse from '../../../test/fixtures/debugger-foldl-response.json'
 import foldrResponse from '../../../test/fixtures/debugger-foldr-response.json'
 
 const theme = createTheme()
+
+// What starts the generic label of a call beneath another: the book behind which its definition is.
+// Beneath, because a call with a display of its own heads its display with a book too.
+const GENERIC_LABEL = '[role=group] .catln-debug-source'
 
 // The real payload the compiler produced for a page whose main prints "Hello, world" and exits 0,
 // narrowed to the fields the page reads: erCoverage is real but unread, and was half the bytes.
@@ -106,22 +110,99 @@ describe('Debugger', () => {
     expect(items[1]).toHaveAttribute('aria-selected', 'true')
   })
 
-  // A run of one expression (#debugExpr) rather than of a program: it was given no IO handle to
-  // print with, so what it ended with is a value and there is no exit code to report.
-  // A call is read for what it was called on. Its types are still there, one hover away on the name
-  // each is the type of, rather than written after every argument of every call.
-  it('keeps the types of a call out of its label and on hover instead', async () => {
+  // A call's line is what it was given and what it gave back. The definition it was a call of is
+  // where it is written, behind a book at the start of the line.
+  it('shows a call as its input and output, with its definition behind a book', () => {
     const { container } = render(<Providers><Debugger {...debug()} /></Providers>)
 
     const label = container.querySelector('.MuiTreeItem-label')
-    expect(label.textContent).not.toContain('->')
-    const typed = label.querySelector('.catln-typed')
-    expect(typed).toBeTruthy()
-
-    await userEvent.hover(typed)
-    expect(await screen.findByRole('tooltip')).toHaveTextContent(/\S/)
+    expect(label.textContent).not.toContain('|::|')
+    expect(label.textContent).toMatch(/^\/ContextIn\(.*\) => /)
+    expect(within(label).getByRole('link', { name: 'Source at scratch-debugger.ct:9' })).toBeInTheDocument()
   })
 
+  // What a ctrl-click follows, which is a link's own: the page, opened on its source at the call.
+  it('links the book to the page the definition is written in, at where it is written', () => {
+    const { container } = render(<Providers><Debugger {...debug()} /></Providers>)
+
+    const book = within(container.querySelector('.MuiTreeItem-label')).getByRole('link')
+    const [path, query] = book.getAttribute('href').split('?')
+    expect(decodeURIComponent(path)).toBe('/docs//data/projects/catln/.claude/worktrees/web/scratch-debugger.ct')
+    expect(Object.fromEntries(new URLSearchParams(query))).toEqual({ line: '9', col: '1', endLine: '9', endCol: '67' })
+  })
+
+  describe('the source behind a book', () => {
+    // The page the fixture's run was made in, as far down as the call the root is of. Only what the
+    // panel reads is here: the lines the root's span is on.
+    // Line 9 is written out to the width the root's span has -- columns 1 up to 67 -- and something
+    // after, so that where the mark ends is what is being checked rather than where the line does.
+    const CALL = 'main{io}= ContextIn(value= greet(name= "world"), io= io).exit(v=0)'
+    const SOURCE = [1, 2, 3, 4, 5, 6, 7, 8].map(n => `# line ${n}`).join('\n') + `\n${CALL} # after\n`
+
+    beforeEach(() => {
+      global.fetch = vi.fn(url => url.startsWith('/api/page')
+        ? Promise.resolve({ status: 200, json: () => Promise.resolve({ tag: 'Success', contents: [{ pgSource: SOURCE }, []] }) })
+        : Promise.reject(new Error(`Unexpected fetch ${url}`)))
+    })
+
+    async function openRootSource(user) {
+      const { container } = render(<Providers><Debugger {...debug()} /></Providers>)
+      const label = container.querySelector('.MuiTreeItem-label')
+      await user.click(within(label).getByRole('link'))
+      return label
+    }
+
+    it('opens the lines the call is written on, with the call marked', async () => {
+      const user = userEvent.setup()
+      await openRootSource(user)
+
+      const panel = await screen.findByRole('dialog', { name: 'Source' })
+      expect(panel).toHaveTextContent('scratch-debugger.ct:9')
+      await waitFor(() => expect(panel.querySelector('mark')).toBeTruthy())
+      expect(CALL).toHaveLength(66)
+      expect(panel.querySelector('mark').textContent).toBe(CALL)
+      expect(panel).toHaveTextContent('# after')
+      expect(global.fetch.mock.calls[0][0]).toContain(encodeURIComponent('/data/projects/catln/.claude/worktrees/web/scratch-debugger.ct'))
+    })
+
+    // Opened over the rows rather than over the page: the tree, and the line it came from, are still
+    // there to read, and a plain click does not follow the book's link or toggle its row.
+    it('leaves the tree and the line it was opened from as they were', async () => {
+      const user = userEvent.setup()
+      const label = await openRootSource(user)
+
+      await screen.findByRole('dialog', { name: 'Source' })
+      expect(label).toHaveTextContent('=> ')
+      expect(screen.getAllByRole('treeitem')).toHaveLength(1)
+      expect(screen.getByRole('treeitem')).toHaveAttribute('aria-expanded', 'false')
+    })
+
+    it('closes from its own button, and from the book that opened it', async () => {
+      const user = userEvent.setup()
+      const label = await openRootSource(user)
+
+      await user.click(await screen.findByRole('button', { name: 'Close source' }))
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+
+      const book = within(label).getByRole('link')
+      await user.click(book)
+      expect(await screen.findByRole('dialog', { name: 'Source' })).toBeInTheDocument()
+      await user.click(book)
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    })
+
+    it('leaves a ctrl-click to the link rather than opening the panel', async () => {
+      const { container } = render(<Providers><Debugger {...debug()} /></Providers>)
+      const book = within(container.querySelector('.MuiTreeItem-label')).getByRole('link')
+
+      const followed = fireEvent.click(book, { ctrlKey: true })
+      expect(followed).toBe(true)
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    })
+  })
+
+  // A run of one expression (#debugExpr) rather than of a program: it was given no IO handle to
+  // print with, so what it ended with is a value and there is no exit code to report.
   it('shows the value an expression run produced instead of an exit code', () => {
     const expr = {
       drExit: null,
@@ -182,10 +263,10 @@ describe('Debugger over a call with a display of its own', () => {
     render(<Providers><Debugger {...fmapRun()} /></Providers>)
 
     // The display below says what the call did, so the definition it was is a heading. The call
-    // beside it has nothing below it and keeps the generic label, which spells the definition out.
+    // beside it has nothing below it and keeps the generic label, of what it was given and gave back.
     const roots = screen.getAllByRole('treeitem')
     expect(within(roots[1]).getByText('/Data/Functor/fmap')).toBeInTheDocument()
-    expect(within(roots[1]).queryByText(/\|::\|/)).not.toBeInTheDocument()
+    expect(roots[1].querySelector(GENERIC_LABEL)).toBeNull()
   })
 
   it('shows the call as its table rather than as the generic label', async () => {
@@ -195,11 +276,12 @@ describe('Debugger over a call with a display of its own', () => {
     expect(fmap.textContent).toContain('1')
     expect(fmap.textContent).toContain('4')
     expect(screen.getAllByText('↦').length).toBe(3)
-    // The generic label of a node -- definition, input, result -- is what the table replaced, for this
+    // The generic label of a node -- source, input, result -- is what the table replaced, for this
     // call. The call beside it has no display of its own and keeps that label, which is the whole of
     // what "a call with no arm is shown the way everything else is" means.
-    expect(within(fmap).queryByText(/\|::\|/)).not.toBeInTheDocument()
-    expect(screen.getAllByText(/\|::\|/).length).toBeGreaterThan(0)
+    expect(fmap.querySelector(GENERIC_LABEL)).toBeNull()
+    const others = screen.getAllByRole('treeitem').filter(item => !item.contains(fmap) && !fmap.contains(item))
+    expect(others.some(item => /=> /.test(item.querySelector('.MuiTreeItem-label').textContent))).toBe(true)
   })
 
   it('folds the chain of recursive calls into the one table', async () => {
@@ -267,7 +349,7 @@ describe('Debugger over a binding, which shows as the same table', () => {
     const mmap = await openMmap()
 
     expect(within(mmap).queryAllByText('/Data/Monad/mmap')).toHaveLength(1)
-    expect(within(mmap).queryByText(/\|::\|/)).not.toBeInTheDocument()
+    expect(mmap.querySelector(GENERIC_LABEL)).toBeNull()
   })
 
   it('opens each row onto the call of the function for its element', async () => {
@@ -335,7 +417,7 @@ describe('Debugger over a fold, which shows as its accumulator threaded through 
     const fold = await openFold(foldrResponse, '/Data/List/foldr')
 
     expect(within(fold).queryAllByText('/Data/List/foldr')).toHaveLength(1)
-    expect(within(fold).queryByText(/\|::\|/)).not.toBeInTheDocument()
+    expect(fold.querySelector(GENERIC_LABEL)).toBeNull()
   })
 
   it('opens each row onto the call of the step for its element', async () => {

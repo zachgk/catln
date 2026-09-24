@@ -6,10 +6,11 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import {TreeItem} from '@mui/x-tree-view/TreeItem';
 import Link from '@mui/material/Link';
 
-import {ExprStyleContext, ObjArr, exprContents, runStyle} from '../Semantics';
+import {ExprStyleContext, exprContents, runStyle} from '../Semantics';
 import {PTypeName} from '../Common';
 import {Value} from '../Value';
 import {CallStepsContext} from './Steps';
+import {SourceButton, SourceContext, SourcePanel} from './DebugSource';
 
 function Debugger(props) {
   const fun = props["/fun"].contents;
@@ -37,6 +38,14 @@ function Debugger(props) {
   const [selected, setSelected] = useState(null);
   const nodeRefs = useRef({});
 
+  // The call whose source is open, if one is: which node, its arrow, and the line to lay it under.
+  // Opening the one already open closes it, which is what a second click on its book means.
+  const [source, setSource] = useState(null);
+  const toggleSource = useCallback((id, oa, anchor) => {
+    setSource(open => (!oa || open?.id === id) ? null : {id, oa, anchor});
+  }, []);
+  const sourceContext = useMemo(() => ({open: source, toggle: toggleSource, expr: fun}), [source, toggleSource, fun]);
+
   const reveal = useCallback(node => {
     setExpanded(open => {
       const closed = (ancestorNodes(drResult.erTreebug, node) || []).filter(id => !open.includes(id));
@@ -57,53 +66,56 @@ function Debugger(props) {
   // trees the tree below already shows as calls: see ExprStyleContext.
   return (
     <ExprStyleContext.Provider value={runStyle}>
-      <div>
-        <h2>{fun}</h2>
-        {roots.length ? (
-          <SimpleTreeView
-            slots={{collapseIcon: ExpandMoreIcon, expandIcon: ChevronRightIcon}}
-            expandedItems={expanded}
-            onExpandedItemsChange={(event, items) => setExpanded(items)}
-            selectedItems={selected}
-            onSelectedItemsChange={(event, item) => setSelected(item)}
-          >
-            {roots.map(root => <TreebugNode data={root} nodeRefs={nodeRefs} key={root[4]} />)}
-          </SimpleTreeView>
-        ) : <p>Evaluated no arrows.</p>}
-        {/* Every #debug the run recorded, in the order it recorded them: one list over the whole run,
-            however many definitions and however many calls they came from. Each says where it is
-            written, since that is what the compiler can name it by, and leads to the call it was
-            recorded in, which is what the tree above cannot be searched for by hand. */}
-        <h3>Debug</h3>
-        {debugs.length ? (
-          <ol>
-            {debugs.map((d, i) => (
-              <li key={i}>
-                <Link component="button" type="button" onClick={() => reveal(d.edNode)}>
-                  {showDebugPos(d.edPos)}
-                </Link>
-                {" ↦ "}
-                <Value data={d.edValue} />
-              </li>
-            ))}
-          </ol>
-        ) : <p>Recorded nothing.</p>}
-        {/* What the run ended with, which is not the same question for the two kinds of run. An
-            expression was run for its value and was given no IO handle to print with, so it has
-            neither output nor an exit code to report. */}
-        {drValue ? (
-          <>
-            <h3>Value</h3>
-            <Value data={drValue} />
-          </>
-        ) : (
-          <>
-            <h3>Output</h3>
-            {drOutput ? <pre>{drOutput}</pre> : <p>Printed nothing.</p>}
-            <p>Exited with {drExit}.</p>
-          </>
-        )}
-      </div>
+      <SourceContext.Provider value={sourceContext}>
+        <div>
+          <h2>{fun}</h2>
+          {roots.length ? (
+            <SimpleTreeView
+              slots={{collapseIcon: ExpandMoreIcon, expandIcon: ChevronRightIcon}}
+              expandedItems={expanded}
+              onExpandedItemsChange={(event, items) => setExpanded(items)}
+              selectedItems={selected}
+              onSelectedItemsChange={(event, item) => setSelected(item)}
+            >
+              {roots.map(root => <TreebugNode data={root} nodeRefs={nodeRefs} key={root[4]} />)}
+            </SimpleTreeView>
+          ) : <p>Evaluated no arrows.</p>}
+          {/* Every #debug the run recorded, in the order it recorded them: one list over the whole run,
+              however many definitions and however many calls they came from. Each says where it is
+              written, since that is what the compiler can name it by, and leads to the call it was
+              recorded in, which is what the tree above cannot be searched for by hand. */}
+          <h3>Debug</h3>
+          {debugs.length ? (
+            <ol>
+              {debugs.map((d, i) => (
+                <li key={i}>
+                  <Link component="button" type="button" onClick={() => reveal(d.edNode)}>
+                    {showDebugPos(d.edPos)}
+                  </Link>
+                  {" ↦ "}
+                  <Value data={d.edValue} />
+                </li>
+              ))}
+            </ol>
+          ) : <p>Recorded nothing.</p>}
+          {/* What the run ended with, which is not the same question for the two kinds of run. An
+              expression was run for its value and was given no IO handle to print with, so it has
+              neither output nor an exit code to report. */}
+          {drValue ? (
+            <>
+              <h3>Value</h3>
+              <Value data={drValue} />
+            </>
+          ) : (
+            <>
+              <h3>Output</h3>
+              {drOutput ? <pre>{drOutput}</pre> : <p>Printed nothing.</p>}
+              <p>Exited with {drExit}.</p>
+            </>
+          )}
+          <SourcePanel />
+        </div>
+      </SourceContext.Provider>
     </ExprStyleContext.Provider>
   );
 }
@@ -234,7 +246,7 @@ function TreebugNode(props) {
     // all it has to say about the call; this one has the display below it saying what the call did,
     // so the definition it was is a heading rather than the content.
     return (
-      <TreeItem itemId={id} label={<PTypeName name={fun} />} ref={el => {nodeRefs.current[id] = el}}>
+      <TreeItem itemId={id} label={<span><SourceButton id={id} oa={oa} /><PTypeName name={fun} /></span>} ref={el => {nodeRefs.current[id] = el}}>
         <CallStepsContext.Provider value={steps}>
           <Value data={show} />
         </CallStepsContext.Provider>
@@ -242,7 +254,10 @@ function TreebugNode(props) {
     );
   }
 
-  let label = <span><ObjArr oa={oa} /> |::| <Value data={input} /> =&gt; <Value data={val} /></span>;
+  // What the call was given and what it gave back. The definition it was a call of is behind the
+  // book, as where it is written: spelled out here it was most of the line, and the input already
+  // names the call.
+  let label = <span><SourceButton id={id} oa={oa} /><Value data={input} /> =&gt; <Value data={val} /></span>;
   return (
     <TreeItem itemId={id} label={label} ref={el => {nodeRefs.current[id] = el}}>
       {children.map(child => <TreebugNode data={child} nodeRefs={nodeRefs} key={child[4]} />)}

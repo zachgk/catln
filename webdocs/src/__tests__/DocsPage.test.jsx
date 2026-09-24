@@ -1,6 +1,6 @@
 import React from 'react'
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react'
-import { MemoryRouter, useLocation } from 'react-router-dom'
+import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { ConfigContext } from '../Common/Common'
 import { initVimMode, VimMode } from 'monaco-vim'
@@ -10,15 +10,18 @@ import notePageResponse from '../test/fixtures/note-page-response.json'
 import overlayNotePageResponse from '../test/fixtures/overlay-note-page-response.json'
 
 // Collects the keybindings DocsPage registers, so tests can fire Ctrl+S directly.
-const mocks = vi.hoisted(() => ({ commands: [] }))
+const mocks = vi.hoisted(() => ({ commands: [], selections: [], reveals: [], options: [] }))
 
 vi.mock('@monaco-editor/react', () => ({
-  default: ({ value, onChange, onMount }) => {
+  default: ({ value, onChange, onMount, options }) => {
+    mocks.options.push(options)
     React.useEffect(() => {
       onMount(
         {
           onDidDispose: () => {},
           addCommand: (keybinding, handler) => mocks.commands.push({ keybinding, handler }),
+          setSelection: range => mocks.selections.push(range),
+          revealRangeInCenter: range => mocks.reveals.push(range),
         },
         { KeyMod: { CtrlCmd: 2048 }, KeyCode: { KeyS: 49 } },
       )
@@ -94,6 +97,9 @@ async function renderEditing(newSource, props = {}) {
 describe('DocsPage', () => {
   beforeEach(() => {
     mocks.commands.length = 0
+    mocks.selections.length = 0
+    mocks.reveals.length = 0
+    mocks.options.length = 0
     initVimMode.mockClear()
     initVimMode.mockReturnValue({ dispose: vi.fn() })
     VimMode.Vim.defineEx.mockClear()
@@ -768,5 +774,81 @@ describe('AnnotPage', () => {
     })
     expect(container.querySelector('iframe')).toBeNull()
     expect(screen.queryByTestId('overlay-split')).not.toBeInTheDocument()
+  })
+})
+
+// A link to a place in a page's source, which is what a debugger's ctrl-click on a call's book is:
+// the page opens on its source rather than on what it reads as, with the place selected.
+describe('DocsPage opened at a place in its source', () => {
+  beforeEach(() => {
+    mocks.selections.length = 0
+    mocks.reveals.length = 0
+    mocks.options.length = 0
+    initVimMode.mockReturnValue({ dispose: vi.fn() })
+    global.fetch = mockFetch()
+  })
+
+  // Returns a navigate, for following a second link without leaving the page.
+  function renderAt(entry, config = writableConfig) {
+    let navigate
+    function Navigator() {
+      navigate = useNavigate()
+      return null
+    }
+    render(
+      <ThemeProvider theme={theme}>
+        <ConfigContext.Provider value={config}>
+          <MemoryRouter initialEntries={[entry]}>
+            <DocsPage prgmName="test%2Fmain.ct" />
+            <Navigator />
+          </MemoryRouter>
+        </ConfigContext.Provider>
+      </ThemeProvider>
+    )
+    return path => act(() => navigate(path))
+  }
+
+  const PLACE = { startLineNumber: 2, startColumn: 3, endLineNumber: 2, endColumn: 9 }
+
+  it('opens on the source with the place selected and in view', async () => {
+    renderAt('/docs/test%2Fmain.ct?line=2&col=3&endLine=2&endCol=9')
+
+    expect(await screen.findByTestId('monaco-editor')).toBeInTheDocument()
+    await waitFor(() => expect(mocks.selections).toContainEqual(PLACE))
+    expect(mocks.reveals).toContainEqual(PLACE)
+  })
+
+  it('selects the whole line when only the line is named', async () => {
+    renderAt('/docs/test%2Fmain.ct?line=2')
+
+    await screen.findByTestId('monaco-editor')
+    await waitFor(() => expect(mocks.selections).toContainEqual({ startLineNumber: 2, startColumn: 1, endLineNumber: 2, endColumn: 1 }))
+  })
+
+  // The source was opened by the link, so it is the link's: arriving at the page without a place goes
+  // back to what it reads as.
+  it('goes back to reading the page when it is arrived at without a place', async () => {
+    const go = renderAt('/docs/test%2Fmain.ct?line=2')
+    await screen.findByTestId('monaco-editor')
+
+    await go('/docs/test%2Fmain.ct')
+    await waitFor(() => expect(screen.queryByTestId('monaco-editor')).not.toBeInTheDocument())
+  })
+
+  it('opens on what the page reads as when no place is named', async () => {
+    renderAt('/docs/test%2Fmain.ct')
+
+    await waitFor(() => expect(screen.queryByText('Loading...')).not.toBeInTheDocument())
+    expect(screen.queryByTestId('monaco-editor')).not.toBeInTheDocument()
+  })
+
+  // A server that cannot write has no edit mode to offer, and a link to a place still opens the
+  // source: read, since there is nowhere for an edit to go, and with a way back to the page.
+  it('opens the source read-only on a server that cannot write', async () => {
+    renderAt('/docs/test%2Fmain.ct?line=2', { isLoaded: true, data: { readonly: true }, notes: [] })
+
+    await screen.findByTestId('monaco-editor')
+    expect(mocks.options[mocks.options.length - 1].readOnly).toBe(true)
+    expect(screen.getByLabelText('View')).toBeInTheDocument()
   })
 })
