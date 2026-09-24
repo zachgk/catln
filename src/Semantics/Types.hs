@@ -6932,9 +6932,42 @@ intersectTypesWithVarEnv _ _ t1 t2 = error $ printf "intersectTypesWithVarEnv: u
 intersectTypesEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Type
 intersectTypesEnv typeEnv vaenv t1 t2 =
   let (vaenv', t) = intersectTypesWithVarEnv typeEnv vaenv t1 t2
-      newBindings = H.filter (not . isTypeVar) $ H.difference vaenv' vaenv
+      -- The bindings this meet DISCOVERED: a var that was free, and a bound var the meet
+      -- genuinely narrowed. The second matters as much as the first — an occurrence of an
+      -- already-bound @$_b@ met with @∀EqCS@ keeps the bare @$_b@ while the narrowing lives in
+      -- the dropped env, so @a∩c@ read @/Cons[/T=$_b]@ at @b@'s old, wider binding and
+      -- distribution failed (propIntersectionDistributesUnion, seed 6049782834149987573
+      -- 5991311878327503467). "Narrowed" is decided as SETS: the meet also re-inserts bindings
+      -- it merely respelled (@X..@ as @X[/p=⊤]@), and substituting every such re-spelling
+      -- measured as unbounded growth (all four seeds of that family timed out at 300s).
+      --
+      -- The two kinds fold back differently. A FRESH binding folds as it always has
+      -- ('substituteKeep', whose top-level scope is the ambient env: the result is a fragment
+      -- whose parent is the object the env registers). A NARROWED binding folds into the
+      -- var's EXTERNAL occurrences only: the meet keys a parent reference by name too, so a
+      -- detached slot value's @$^/T@ narrows the ambient @/T@ — a different variable, a decoy
+      -- — and folding that back rewrote the partial's own parameter; @sub ⊆ alt@ then never
+      -- terminated (propParentVarBindingRespected, seed 14734212585406844566
+      -- 2976618052049014939; build/scratch/parentslow.hs). With the scope left empty a parent
+      -- reference reads nothing and stays symbolic.
+      concrete = H.filter (not . isTypeVar) vaenv'
+      fresh = H.difference concrete vaenv
+      -- Only a var the result still mentions externally can be folded, and deciding
+      -- "narrowed" costs a subtype test per binding. Asked of every re-inserted binding it
+      -- cascaded (the test meets, the meets re-merge and respell the env, the respelled
+      -- bindings are tested again): @a ∩ ¬a@ over a var-free @a@ ran past 30s under an env
+      -- binding two linked vars (propIntersectionWithComplement, seed 3710200022316318964
+      -- 2575223027759053033; build/scratch/intcompl1088.hs).
+      mentioned = typeExtVarAuxes t
+      narrowedB = H.filterWithKey (\k b' -> S.member k mentioned && narrowed k b') (H.intersection concrete vaenv)
+      narrowed k b' = case H.lookup k vaenv of
+        Nothing -> False
+        Just b  -> b /= b' && not (isSubtypeOfWithEnv typeEnv vaenv b b')
+      foldBack t'
+        | H.null narrowedB = t'
+        | otherwise = substituteKeepScoped typeEnv H.empty narrowedB t'
   in case t of
-      _ | H.null newBindings -> t
+      _ | H.null fresh && H.null narrowedB -> t
       -- A meet returned as a bare top-level var IS that var's discovered binding — whatever
       -- the var's loc. 'substituteKeep' would keep a 'TVInt' (inside a partial that names a
       -- partial-scoped parameter), but at the RESULT's top level the var is this operation's
@@ -6945,17 +6978,15 @@ intersectTypesEnv typeEnv vaenv t1 t2 =
       -- @$_c∩{#noCore} ∩ (⊤−/Point)@ bound @c ↦ ⊤−/Point@ and returned that, so a
       -- difference stamping the result onto a var slot produced @/T=⊤−/Point@ where the
       -- operand's own @/T@ was @#noCore@ — a piece WIDER than the minuend, breaking
-      -- @a−b ⊆ a@ (propDifferenceShrinks). The bound case never showed it: re-inserting an
-      -- unchanged binding leaves 'newBindings' empty, so this branch only fires when the
-      -- var was previously FREE, which is exactly when the inner is the only bound there is.
+      -- @a−b ⊆ a@ (propDifferenceShrinks).
       --
       -- An inner mentioning type variables is left alone, for the same reason
       -- 'intersectTypesWithVarEnv'.'innerRejects' skips it: meeting it re-enters the var
       -- clause and a var reachable from its own inner loops.
       TypeVar v _ i
-        | Just b <- H.lookup v newBindings ->
+        | Just b <- H.lookup v fresh ->
             if i == PTopType || innerOpen v i then b else intersectTypesEnv typeEnv vaenv b i
-      _ -> substituteKeep typeEnv newBindings t
+      _ -> foldBack (if H.null fresh then t else substituteKeep typeEnv fresh t)
 
 -- | Meets in flight inside 'innerRejectsMeet', for the re-entry guard it documents. Keyed
 -- WITHOUT the environment: a cycle whose env grows each lap would never re-hit an env-keyed
@@ -7746,6 +7777,25 @@ typeExtVarRefs (UnionType mtop leafs _) = S.unions $ topRefs ++ map partialRefs 
     predPartial (PredExpr e)  = e
     partialRefs PartialType{ptVars=vs, ptArgs=as, ptPreds=ps} =
       S.unions $ predsRefs ps : map typeExtVarRefs (H.elems vs ++ H.elems as)
+
+-- | 'typeExtVarRefs' keyed by the full 'TypeVarAux', so an externally-located 'TVArg' reference
+-- counts too — the key a 'TypeVarArgEnv' binds.
+typeExtVarAuxes :: Type -> S.HashSet TypeVarAux
+typeExtVarAuxes (TypeVar aux TVExt i) = S.insert aux (typeExtVarAuxes i)
+typeExtVarAuxes (TypeVar _ _ i) = typeExtVarAuxes i
+typeExtVarAuxes (UnionType mtop leafs _) = S.unions $ topRefs ++ map partialRefs (splitUnionType leafs)
+  where
+    topRefs = case mtop of
+      Just (preds, negLeafs, _) -> predsRefs preds : map partialRefs (splitUnionType negLeafs)
+      Nothing                   -> []
+    predsRefs (PredsOne p')  = partialRefs (predPartial p')
+    predsRefs (PredsAnd ps') = S.unions (map predsRefs ps')
+    predsRefs (PredsNot p')  = predsRefs p'
+    predPartial (PredClass c) = c
+    predPartial (PredRel r)   = r
+    predPartial (PredExpr e)  = e
+    partialRefs PartialType{ptVars=vs, ptArgs=as, ptPreds=ps} =
+      S.unions $ predsRefs ps : map typeExtVarAuxes (H.elems vs ++ H.elems as)
 
 -- | The names of all OUTER type-VARIABLE references ('TVParent' or 'TVExt' — a reference to a
 -- variable outside the position it sits at, whichever scope binds it) occurring anywhere in a

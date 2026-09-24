@@ -46,7 +46,7 @@ Prgm
                                 , eavMeta = TopType
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /x -> $/T } ) -> TVArg /x = ( Value /x ↦ TVArg /x )
+                            ( EAppArg { eaaArg = Value /x -> $/T } ) -> $/T = ( Value /x ↦ $/T )
                         ]
                     }
                 )
