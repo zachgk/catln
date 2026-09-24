@@ -6251,7 +6251,19 @@ intersectPartialsBaseN typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtAr
   -- reading would default an unbound one to ⊤).
   let canonBinding t@TypeVar{} = t
       canonBinding t           = substituteTVExt typeEnv vaenv t
-  let exactEnvAt k env = fmap canonBinding $ H.filterWithKey (\n v -> n `S.member` exactNamesAt k && H.lookup n ambientVars /= Just v) $ fst $ splitVarArgEnv env
+  -- "Passed through unchanged" is decided on the canonical readings of BOTH sides. An arg env
+  -- that merged gives its entry the canonical reading while the ambient entry is the slot's raw
+  -- reading, and the reading is not idempotent (it descends into the value a second time: a
+  -- member's own @/head=$/T@ reads as that member's @/T@), so an entry that merely passed
+  -- through compared unequal and was hoisted as a DISCOVERY. The hoist materialized the slot's
+  -- ambient binding into the partial (@Cons[/T=$_c]@ became @Cons[/T=⟦c⟧]@), relocating that
+  -- value's own free @$_T@ under the partial's @/T@, where the next read captured it: @⟦c⟧@ held
+  -- @/length(/this=∀/List[/T=$_T])@ and the meet re-derived it forever
+  -- (propIntersectByDifference, seed 7736633243458276538 9002453469609753741, a timeout;
+  -- build/scratch/slowmeet.hs).
+  let ambientCanon = fmap canonBinding ambientVars
+      passedThrough n v = H.lookup n ambientCanon == Just (canonBinding v)
+  let exactEnvAt k env = fmap canonBinding $ H.filterWithKey (\n v -> n `S.member` exactNamesAt k && not (passedThrough n v)) $ fst $ splitVarArgEnv env
   -- What arg @k@'s meet discovered for name @n@: a fresh env entry with actual content. ⊤
   -- carries no information, a var-valued entry is a link rather than evidence, and an entry
   -- identical to the ambient one merely passed through — none resolves the occurrence. Any
@@ -6282,11 +6294,11 @@ intersectPartialsBaseN typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtAr
   -- reading there narrows @$T@ to the other constructor and empties the arm.
   let isFnArg k = not (S.null (pkArgs k))
   let discoveryAt k n = case H.lookup k liveArgsMap >>= H.lookup n . fst . splitVarArgEnv . fst of
-        Just PTopType                             -> Nothing
-        Just TypeVar{}                            -> Nothing
-        Just v | isFnArg k, v == varBoundFor n     -> Just Nothing
-        Just v | H.lookup n ambientVars /= Just v -> Just (Just (canonBinding v))
-        _                                         -> Nothing
+        Just PTopType                          -> Nothing
+        Just TypeVar{}                         -> Nothing
+        Just v | isFnArg k, v == varBoundFor n -> Just Nothing
+        Just v | not (passedThrough n v)       -> Just (Just (canonBinding v))
+        _                                      -> Nothing
   -- The pointer join for an arg-set piece ranges over that piece's occurrences of the name:
   -- an occurrence on an arg OUTSIDE the piece does not constrain it (the ∅ piece of
   -- @Pair(first=$A, second=$B)??@ keeps @/A@ at its declared bound even when the @first@
