@@ -6930,9 +6930,15 @@ intersectTypesWithVarEnv _ _ t1 t2 = error $ printf "intersectTypesWithVarEnv: u
 -- polymorphic operator. A binding to a concrete type is a true narrowing that the free var would
 -- otherwise lose.
 intersectTypesEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Type
-intersectTypesEnv typeEnv vaenv t1 t2 =
-  let (vaenv', t) = intersectTypesWithVarEnv typeEnv vaenv t1 t2
-      -- The bindings this meet DISCOVERED: a var that was free, and a bound var the meet
+intersectTypesEnv typeEnv vaenv t1 t2 = uncurry (foldDiscovered typeEnv vaenv) (intersectTypesWithVarEnv typeEnv vaenv t1 t2)
+
+-- | Read a meet's result standalone: fold the bindings the meet DISCOVERED (its returned env
+-- @vaenv'@ against the env it was given) back into the result, so dropping the env loses
+-- nothing. The rule behind 'intersectTypesEnv', shared with every caller that runs the
+-- env-returning meet itself and then keeps only the type ('differencePartialLeafs'.'subtractVar').
+foldDiscovered :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypeVarArgEnv -> Type -> Type
+foldDiscovered typeEnv vaenv vaenv' t =
+  let -- The bindings this meet DISCOVERED: a var that was free, and a bound var the meet
       -- genuinely narrowed. The second matters as much as the first — an occurrence of an
       -- already-bound @$_b@ met with @∀EqCS@ keeps the bare @$_b@ while the narrowing lives in
       -- the dropped env, so @a∩c@ read @/Cons[/T=$_b]@ at @b@'s old, wider binding and
@@ -7245,6 +7251,11 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
           -- narrows the piece to @/T=X@ rather than keeping the full flexible piece).
           Just posVarVal -> case differenceTypeWithEnv typeEnv vaenv posVarVal negVarVal of
             (_, BottomType)   -> Nothing
+            -- ...and a var the env ALREADY binds narrows there too, not only a fresh one
+            -- ('foldDiscovered'): @Pair[/B=$_a](/second=$/B) − Pair[/B=#noCore](…)@ with @a@
+            -- bound kept the piece at @a@'s old reading and subtracted nothing
+            -- (propDifferenceByIntersection, seed 15695909844464928119 16806982160620483769;
+            -- build/scratch/diffbyint968.hs).
             -- Resolve the narrowing back into the SLOT, the same resolve-meets-back rule
             -- 'intersectTypesEnv' applies: a slot holding an EXTERNAL occurrence (@/T=$_b@)
             -- comes back as the bare var with its narrowing only in the env, recorded under
@@ -7254,10 +7265,7 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
             -- CONCRETE bindings into the slot keeps the narrowing where the piece can carry it;
             -- a binding to another variable stays a link, as everywhere else.
             (outEnv, varVal') ->
-              let resolved = H.filter (not . isTypeVar) $ H.difference outEnv vaenv
-                  varVal'' | H.null resolved = varVal'
-                           | otherwise       = substituteKeep typeEnv resolved varVal'
-              in narrowPiece p1{ptVars=H.insert varName varVal'' (ptVars p1)} outEnv
+              narrowPiece p1{ptVars=H.insert varName (foldDiscovered typeEnv vaenv outEnv varVal') (ptVars p1)} outEnv
           Nothing
             | declaresVar varName, negProperSubset negVarVal ->
                 case differenceTypeWithEnv typeEnv vaenv PTopType (negValSet negVarVal) of
