@@ -11,9 +11,9 @@ import typeInferPntResponse from '../../../test/fixtures/typeinfer-pnt-response.
 const theme = createTheme()
 
 // Both fixtures are the real payloads the compiler produced for test/Integration/code/id.ct,
-// narrowed to the one definition (/id) and the one point (31) they are asserted about.
+// narrowed to the one definition (/id) and the one point (3) they are asserted about.
 const PAGE = '/some/where/id.ct'
-const PNT = 31
+const PNT = 3
 
 function Providers({ prgmName = PAGE, children }) {
   return (
@@ -64,7 +64,8 @@ describe('TypeInfer', () => {
     const user = userEvent.setup()
     global.fetch = vi.fn(() => Promise.resolve({
       status: 200,
-      json: () => Promise.resolve({ tag: 'Success', contents: [[[], []], []] }),
+      // An empty page, as the compiler names its fields.
+      json: () => Promise.resolve({ tag: 'Success', contents: [{ rprgmImports: [], rprgmStatements: [] }, []] }),
     }))
 
     render(<Providers><TypeInfer {...typeInfer()} /></Providers>)

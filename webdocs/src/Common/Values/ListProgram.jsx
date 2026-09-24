@@ -68,26 +68,29 @@ function ListProgram(props) {
   );
 }
 
+// A program as the compiler writes one, by the names of its fields in src/Semantics/Prgm.hs: its
+// object map, its class graph (`prgmCg`) and its annotations, which a listing does not show.
 function ShowList(props) {
-  let {prgmObjMap, prgmCG} = props.data;
+  let {prgmObjMap, prgmCg} = props.data;
 
   return (
     <div>
       <ObjMap objMap={prgmObjMap} Meta={Meta}/>
       <br /> <br /> <br />
-      <ClassMap classMap={prgmCG} />
+      <ClassMap classMap={prgmCg} />
     </div>
   );
 }
 
-// The objMap is keyed by type name, each holding an ObjectMapItem with the declarations,
-// runtime declarations, refinement declarations and definitions for that name.
+// An ObjectMap, which holds its items under `omItems`: keyed by type name, each an ObjectMapItem
+// with the declarations, runtime declarations, refinement declarations and definitions for that name.
 function ObjMap(props) {
   const {objMap} = props;
+  const items = objMap.omItems;
   return (
     <List component="nav">
-      {Object.keys(objMap).sort().flatMap(name => {
-        const {omiDecls, omiRuntimeDecls, omiRefineDecls, omiDefs} = objMap[name];
+      {Object.keys(items).sort().flatMap(name => {
+        const {omiDecls, omiRuntimeDecls, omiRefineDecls, omiDefs} = items[name];
         return [...omiDecls, ...omiRuntimeDecls, ...omiRefineDecls, ...omiDefs]
           .map((oa, objIndex) =>
             <RootObjArr key={`${name}/${objIndex}`} oa={oa} Meta={props.Meta} showExprMetas={props.showExprMetas}/>

@@ -280,8 +280,9 @@ describe('Backend API contract', () => {
 
     expect(val.args['/prgm'].tag).toBe('StrVal')
     const prgm = JSON.parse(val.args['/prgm'].contents)
-    expect(prgm).toHaveProperty('prgmObjMap')
-    expect(prgm).toHaveProperty('prgmCG')
+    // Named as src/Semantics/Prgm.hs names them, the object map holding its items under omItems.
+    expect(prgm.prgmObjMap).toHaveProperty('omItems')
+    expect(prgm).toHaveProperty('prgmCg')
     return prgm
   }
 
@@ -367,8 +368,8 @@ describe('Backend API contract', () => {
 
     expect(val.args['/prgm'].tag).toBe('StrVal')
     const filtered = JSON.parse(val.args['/prgm'].contents)
-    expect(filtered).toHaveProperty('prgmObjMap')
-    expect(filtered).toHaveProperty('prgmCG')
+    expect(filtered.prgmObjMap).toHaveProperty('omItems')
+    expect(filtered).toHaveProperty('prgmCg')
 
     // The point of the filter: strictly less than the whole program the same page would list.
     const whole = await listProgram('/Catln/Doc/Typecheck')
@@ -424,14 +425,16 @@ describe('Backend API contract', () => {
     expect(val.tag).toBe('TupleVal')
     expect(val.name).toBe('/Catln/Doc/Show/TypeInfer')
 
+    // The inferred program is a tuple of its object map, class graph and annotations
+    // (TypeCheck.Common.VPrgm), and the object map holds its items under omItems.
     const [prgm, notes] = JSON.parse(val.args['/constrain'].contents)
-    const [objMap] = prgm
+    const [{omItems}] = prgm
     expect(Array.isArray(notes)).toBe(true)
 
     // The scoping is the point: this is id.ct's own inference, not every loaded page's joined.
     // id.ct defines id, so that is present while the stdlib it imports is not.
-    expect(Object.keys(objMap)).toContain('/id')
-    expect(Object.keys(objMap).length).toBeLessThan(20)
+    expect(Object.keys(omItems)).toContain('/id')
+    expect(Object.keys(omItems).length).toBeLessThan(20)
   })
 
   it('/api/annot reports #typeInfer with no page to be scoped to as an error note', async () => {

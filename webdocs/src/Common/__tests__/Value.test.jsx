@@ -311,7 +311,7 @@ const listProgramVal = {
   name: '/Catln/Doc/Show/ListProgram',
   args: {
     '/mode': { tag: 'TupleVal', name: '/Catln/Doc/Typecheck', args: {} },
-    '/prgm': { tag: 'StrVal', contents: JSON.stringify({ prgmObjMap: {}, prgmCG: [{}, {}] }) },
+    '/prgm': { tag: 'StrVal', contents: JSON.stringify({ prgmObjMap: { omItems: {} }, prgmCg: [{}, {}], prgmAnnots: [] }) },
   },
 }
 

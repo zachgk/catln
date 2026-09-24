@@ -37,7 +37,12 @@ describe('ListProgram', () => {
     render(<Providers><ListProgram {...listing(modeName)} update={vi.fn()} /></Providers>)
 
     expect(screen.getByLabelText(label)).toBeChecked()
+    // What is listed, and not only the headings around it: the fixture is id.ct's own definition
+    // and two entries each way of the class graph.
+    expect(screen.getAllByText('/id').length).toBeGreaterThan(0)
     expect(screen.getByText('Types')).toBeInTheDocument()
+    expect(screen.getAllByText('/Data/Primitive/False').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('/Catln/Doc/DShow').length).toBeGreaterThan(0)
     expect(global.fetch).not.toHaveBeenCalled()
   })
 

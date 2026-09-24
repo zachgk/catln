@@ -711,7 +711,7 @@ describe('AnnotPage', () => {
       name: '/Catln/Doc/Show/ListProgram',
       args: {
         '/mode': { tag: 'TupleVal', name: modeName, args: {} },
-        '/prgm': { tag: 'StrVal', contents: JSON.stringify({ prgmObjMap: {}, prgmCG: [{}, {}] }) },
+        '/prgm': { tag: 'StrVal', contents: JSON.stringify({ prgmObjMap: { omItems: {} }, prgmCg: [{}, {}], prgmAnnots: [] }) },
       },
     }
     const expr = { tag: 'RawValue', rvMeta: { getMetaPos: null, getMetaDat: [null, null, value], getMetaId: 1 }, rvName: '#listProgram',
