@@ -2544,15 +2544,12 @@ typeSatDNF _ (UnionType (Just (_, _, _:_)) _ _) = Nothing -- excluded constants:
 -- stay grouped in one 'SatLeafs' atom as before; a predicated leaf becomes its own goal.
 typeSatDNF vaenv (UnionType Nothing leafs []) = case splitUnionType leafs of
   [] -> Just [] -- bottom: unsatisfiable
-  ls | all leafInFragment ls -> do
+  ls | all (satLeafInFragment vaenv) ls -> do
          let (predicated, plain) = partition (\l -> ptPreds l /= PredsNone) ls
          lifted <- mapM liftLeaf predicated
          Just $ [SatGoal [SatLeafs plain] [] | not (null plain)] ++ concat lifted
      | otherwise             -> Nothing
   where
-    leafInFragment PartialType{ptVars, ptArgs} =
-      all slotInFragment (H.elems ptVars ++ H.elems ptArgs)
-    slotInFragment t = isJust (typeSatDNF vaenv t)
     liftLeaf l = do
       predGoals <- predsSatDNF True (ptPreds l)
       satDNFConj [[SatGoal [SatLeafs [l{ptPreds=PredsNone}]] []], predGoals]
@@ -2573,6 +2570,12 @@ typeSatDNF vaenv (UnionType (Just (preds, negLeafs, [])) pos []) = do
       notPreds <- predsSatDNF True (PredsNot (ptPreds l))
       withoutPreds <- satDNFConj [goals, notPreds]
       Just $ map (\g -> g{sgNeg = sgNeg g ++ [SatLeafs [l{ptPreds=PredsNone}]]}) goals ++ withoutPreds
+
+-- | Whether the engine can decide a leaf: it compares leaves SLOT BY SLOT, so a leaf is in the
+-- fragment only when every slot is.
+satLeafInFragment :: TypeVarArgEnv -> PartialType -> Bool
+satLeafInFragment vaenv PartialType{ptVars, ptArgs} =
+  all (isJust . typeSatDNF vaenv) (H.elems ptVars ++ H.elems ptArgs)
 
 -- | DNF of an OCCURRENCE @⟦var⟧ ⊓ ⟦inner⟧@: the variable's own constraint conjoined with the
 -- occurrence-local inner's. Dropping the inner reads the occurrence as the bare variable, which
@@ -2599,13 +2602,28 @@ satGoalNegChoices (SatGoal pos neg) = [SatGoal [] [p] | p <- pos] ++ [SatGoal [n
 -- | SAT of a conjunction of member-of-type constraints; conservative towards 'True'.
 typesConjSat :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> [Type] -> Bool
 typesConjSat typeEnv vaenv satUse hyps ts = case mapM (typeSatDNF vaenv) ts >>= satDNFConj of
-  Nothing    -> True
+  -- Outside the fragment, as in 'typesSatDiff': an unconditional "satisfiable" is read by the
+  -- engine as a PROVEN overlap, so a slot the engine cannot encode (@$_b@ bound to a leaf with a
+  -- constant slot) overlapped a disjoint one (@⊤ − /vm@) and the leaf was counted as excluded —
+  -- @/vm[/q=⊤ − /vm] ⊆ ~/vm − /vm[/q=$_b]..@ answered @Just False@ (propIntersectionShrinks,
+  -- seed 9529129139180470858 1415054805933738741; build/scratch/shrinks.hs). The materialized
+  -- meet decides it; a meet that does not reduce to ∅ stays "satisfiable".
+  Nothing    -> case ts of
+    [] -> True
+    _  -> not (isBottomType (compactType typeEnv vaenv (foldr1 (intersectTypesEnv typeEnv vaenv) ts)))
   Just goals -> any (satGoal typeEnv vaenv satUse hyps) goals
 
 -- | SAT of @t1 ∧ ¬t2@ (a value of @t1@ escaping @t2@); conservative towards 'True'.
 typesSatDiff :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> Type -> Type -> Bool
 typesSatDiff typeEnv vaenv satUse hyps t1 t2 = case res of
-  Nothing    -> True
+  -- Outside the fragment the engine cannot tell, and "differs" would be read by every caller as
+  -- a PROVEN escape: an excluded leaf's slot (@⊤ − /ff[/i=$_a∩{c}]@, a constant) compared this
+  -- way manufactured a witness for @/ff[/i=⊤ − /ff[/i=$_a∩{c}]] ⊆ /ff[/i=⊤ − /ff[/i={c}]]@ —
+  -- equal sets once the unbound @$_a@ reads as ⊤ — and the resulting @Just False@
+  -- short-circuited the materialized prover (propParamClassCovariant, seed
+  -- 14336279607637331055 12548352096503706029; build/scratch/covvar.hs). The pair is asked of
+  -- the materialized prover instead, which is sound in the direction the callers rely on.
+  Nothing    -> not (isSubtypeOfWithEnv typeEnv vaenv t1 t2)
   Just goals -> any (satGoal typeEnv vaenv satUse hyps) goals
   where
     res = do
