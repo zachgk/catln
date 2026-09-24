@@ -4553,9 +4553,24 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing subPartials []) (UnionType N
     subGroupCovered n subs = case H.lookup n supersByName of
       Just sups -> all (isSubPartial sups) subs
       Nothing   -> all (partialUninhabited typeEnv vaenv) subs
-    isSubPartial sup sub = directCheck || coveredByArgSets || coveredBySlotUnion sub sup || coveredBySplit (splitPartialByUnionVarArgs subLinked) || coveredBySplit (splitPartialByUnionVarArgs expandedSub) || partialUninhabited typeEnv vaenv sub || coveredBySlotPartition sub sup
+    isSubPartial sup sub = directCheck || coveredByArgSets || coveredBySlotUnion sub sup || coveredBySplit (splitPartialByUnionVarArgs subLinked) || coveredBySplit (splitPartialByUnionVarArgs expandedSub) || partialUninhabited typeEnv vaenv sub || coveredBySlotPartition sub sup || coveredByNegPred
       where
         directCheck = any (isSubPartialOfWithEnv typeEnv vaenv sub) sup
+        -- A leaf with a NEGATED predicate is its bare shape minus the predicate's members:
+        -- @l|¬q ⊆ S ⟺ l ⊆ S ∪ (l ∩ q)@, exactly. Compared as written, @l|¬q@ matches no single
+        -- super — the difference had already cut @l@ into the pieces outside @q@ — so the
+        -- prover refused a cover the difference oracle proves: @Cons|¬~Cons[/T=~Integer] ⊆
+        -- Cons[/T=⊤−Integer] + …@ (propDifferenceByIntersection, seed 14717652529638483093
+        -- 13838895941975207989; build/scratch/diffbyint2.hs). Only the negated form: a future
+        -- @isa@ only shrinks @¬q@, so the cover stays valid in the open world, while a
+        -- POSITIVE predicate's expansion is exactly the closed-world read 'predsPositiveSealed'
+        -- forbids. The subgoal's sub is predicate-free, so this route does not re-fire on it.
+        coveredByNegPred = case ptPreds sub of
+          PredsNot q ->
+            let bare = singletonType sub{ptPreds = PredsNone}
+                inQ = intersectTypesEnv typeEnv vaenv bare (expandPredicates typeEnv vaenv q)
+            in isSubtypeOfWithEnv typeEnv vaenv bare (unionTypesWithEnv typeEnv vaenv (UnionType Nothing (joinUnionType sup) []) inQ)
+          _ -> False
         -- The split routes below take a var slot apart into pieces. A parent reference in an
         -- ARG value that names that slot (@Cons[/T=X](head=Cons[/T=$^/T])@) denotes the slot's
         -- VALUE (rule one of the register machine, 'substitutePartialTVExtScoped'), so the sub
@@ -4658,9 +4673,20 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing subPartials []) (UnionType N
           -- their args. Left uncut, @a−b@ and @a−(a∩b)@ subtracted families denoting one set and
           -- compared unequal (propDifferenceByIntersection, seed 345393548437558433
           -- 13464755586173583387; build/scratch/diffbyint.hs).
+          --
+          -- The cover need not use EVERY super: one whose value spans the slot but whose piece
+          -- it does not cover (a ⊤-valued sibling constrained elsewhere) only takes part if it
+          -- has to. Only the supers that cover their own piece contribute, and those values must
+          -- cover the sub's — each piece is inside its super and the pieces fill the sub, so the
+          -- cover is exact. Demanding all of them refused @Cons[/T=⊤](…)@ against
+          -- @Cons[/T=~Integer](…) + Cons[/T=⊤−Integer](…) + Cons[/T=⊤](/tail=…/head=⊤−Integer…)@
+          -- because of the third leaf, while the difference oracle reads the pair as ∅
+          -- (propDifferenceByIntersection, seed 14717652529638483093 13838895941975207989;
+          -- build/scratch/diffbyint2.hs).
           | otherwise =
               isSubtypeOfWithEnv typeEnv vaenv sv (unionAllTypesWithEnv typeEnv vaenv supVals)
-              && all pieceCovered sup
+              && isSubtypeOfWithEnv typeEnv vaenv sv
+                   (unionAllTypesWithEnv typeEnv vaenv [v | (supP, v) <- Prelude.zip sup supVals, pieceCovered supP])
           where
             sv = H.lookupDefault PTopType k (get sub)
             supVals = [H.lookupDefault PTopType k (get supP) | supP <- sup]
