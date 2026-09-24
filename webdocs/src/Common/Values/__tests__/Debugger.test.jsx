@@ -139,14 +139,14 @@ describe('Debugger', () => {
     const CALL = 'main{io}= ContextIn(value= greet(name= "world"), io= io).exit(v=0)'
     const SOURCE = [1, 2, 3, 4, 5, 6, 7, 8].map(n => `# line ${n}`).join('\n') + `\n${CALL} # after\n`
 
-    beforeEach(() => {
-      global.fetch = vi.fn(url => url.startsWith('/api/page')
-        ? Promise.resolve({ status: 200, json: () => Promise.resolve({ tag: 'Success', contents: [{ pgSource: SOURCE }, []] }) })
-        : Promise.reject(new Error(`Unexpected fetch ${url}`)))
-    })
+    const FILE = '/data/projects/catln/.claude/worktrees/web/scratch-debugger.ct'
 
-    async function openRootSource(user) {
-      const { container } = render(<Providers><Debugger {...debug()} /></Providers>)
+    // The run as the server sends it, with the text of the file it was written in. The fixture was
+    // captured before runs carried their sources.
+    const withSources = (sources = { [FILE]: SOURCE }) => ({ ...debuggerResponse, drSources: sources })
+
+    async function openRootSource(user, run = withSources()) {
+      const { container } = render(<Providers><Debugger {...debug(run)} /></Providers>)
       const label = container.querySelector('.MuiTreeItem-label')
       await user.click(within(label).getByRole('link'))
       return label
@@ -158,11 +158,23 @@ describe('Debugger', () => {
 
       const panel = await screen.findByRole('dialog', { name: 'Source' })
       expect(panel).toHaveTextContent('scratch-debugger.ct:9')
-      await waitFor(() => expect(panel.querySelector('mark')).toBeTruthy())
       expect(CALL).toHaveLength(66)
       expect(panel.querySelector('mark').textContent).toBe(CALL)
       expect(panel).toHaveTextContent('# after')
-      expect(global.fetch.mock.calls[0][0]).toContain(encodeURIComponent('/data/projects/catln/.claude/worktrees/web/scratch-debugger.ct'))
+      // Out of the run, which is why the Debugger's beforeEach rejecting every fetch still passes.
+      expect(global.fetch).not.toHaveBeenCalled()
+    })
+
+    // A file the run came without is said to be missing, and the call is shown as the definition it
+    // was a call of -- not as a source the panel went and guessed at.
+    it('says when the run came without the source of a call', async () => {
+      const user = userEvent.setup()
+      await openRootSource(user, withSources({}))
+
+      const panel = await screen.findByRole('dialog', { name: 'Source' })
+      expect(panel).toHaveTextContent(`No source for ${FILE} came with the run.`)
+      expect(panel.querySelector('mark')).toBeNull()
+      expect(panel).toHaveTextContent('/main')
     })
 
     // Opened over the rows rather than over the page: the tree, and the line it came from, are still

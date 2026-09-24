@@ -18,7 +18,7 @@ function Debugger(props) {
 
   // The run rides on the compiled value, so nothing is fetched. It was made under a mock IO handle,
   // which is why the output below is here to show rather than on the doc server's own stdout.
-  const {drExit, drOutput, drValue, drResult} = useMemo(() => JSON.parse(run.contents), [run]);
+  const {drExit, drOutput, drValue, drResult, drSources} = useMemo(() => JSON.parse(run.contents), [run]);
 
   // An empty tree means the run never entered an arrow, which a program that failed before its first
   // call can do. Say so rather than rendering an undefined node.
@@ -44,7 +44,7 @@ function Debugger(props) {
   const toggleSource = useCallback((id, oa, anchor) => {
     setSource(open => (!oa || open?.id === id) ? null : {id, oa, anchor});
   }, []);
-  const sourceContext = useMemo(() => ({open: source, toggle: toggleSource, expr: fun}), [source, toggleSource, fun]);
+  const sourceContext = useMemo(() => ({open: source, toggle: toggleSource, sources: drSources ?? {}}), [source, toggleSource, drSources]);
 
   const reveal = useCallback(node => {
     setExpanded(open => {

@@ -49,7 +49,7 @@ import           Eval.Common             (AnnotAsks (..), CtServiceApi (..),
                                           DebugRun, EvalMetaDat, MockIO,
                                           SSF (..), TExpr, TestResult, Val,
                                           esAsks, joinedStage, newEvalService,
-                                          oaTestId)
+                                          oaTestId, withRunSources)
 import           Eval.Testing            (TestDesc (..), evalPrints, evalTest,
                                           runTestDesc)
 import           FileWatch               (Watch, Watcher, allCovered,
@@ -1655,16 +1655,22 @@ instance CtServiceApi CTSS where
 
   -- Against the page's own typecheck program rather than the caller's, which for an annotation is
   -- that program joined with the synthetic one holding the annotation itself.
-  csRunFun ctss prgmName fun = do
+  csRunFun ctss@(CTSS ssmv _) prgmName fun = do
     ssfs <- scopeSSFs ctss prgmName
-    return $ evalDebugPrgm fun =<< joinedStage ssfTPrgm ssfs
+    CTSSDat{ctssData} <- readMVar ssmv
+    let sources = scopeSources $ graphToNodes $ graphFilterReaches prgmName ctssData
+    return $ withRunSources sources <$> (evalDebugPrgm fun =<< joinedStage ssfTPrgm ssfs)
 
   -- Against the pages of the scope rather than their joined program, since compiling the expression
   -- typechecks it against them one by one, the way a page of the scope was itself typechecked.
+  --
+  -- The expression is written in no page, so its own text is offered under the name it was parsed
+  -- as, beside the pages'.
   csRunExpr ctss@(CTSS ssmv _) prgmName src = do
     ctssBuildFrom ctss prgmName
     CTSSDat{ctssData} <- readMVar ssmv
-    return $ debugExprRun prgmName (graphToNodes $ graphFilterReaches prgmName ctssData) src
+    let scopeNodes = graphToNodes $ graphFilterReaches prgmName ctssData
+    return $ withRunSources ((debugExprFile, src) : scopeSources scopeNodes) <$> debugExprRun prgmName scopeNodes src
 
   -- 'pageValues' partially applied, which is what shares the scope's typechecked programs across
   -- every page the gatherer is then asked about. Applying it per page instead is the quadratic
@@ -1678,6 +1684,15 @@ instance CtServiceApi CTSS where
   csAsk ctss scope = do
     graph <- csBuilt ctss scope
     return $ pageAsk $ maybe graph (`graphFilterReaches` graph) scope
+
+-- | The text of each page of a scope, under the name the positions of what was parsed from it carry:
+-- the path it was read from, which is what a page's syntax hands its parser ('Syntax.Ct.Parser').
+scopeSources :: [(SSF, FileImport, a)] -> [(String, String)]
+scopeSources nodes = [(file, src) | (SSF{ssfSource=Just src}, imp, _) <- nodes, Just file <- [importPath imp]]
+
+-- | The name a debugged expression is parsed under, which its positions carry in place of a page's.
+debugExprFile :: String
+debugExprFile = "<debug>"
 
 -- | The pages of a scope, built, as the pipeline records of each.
 scopeSSFs :: CTSS -> FileImport -> IO [SSF]
@@ -1700,7 +1715,7 @@ scopeSSFs ctss@(CTSS ssmv _) prgmName = do
 -- compile is a rewrite of a program that is already read and already built.
 debugExprRun :: FileImport -> [(SSF, FileImport, [FileImport])] -> String -> CRes DebugRun
 debugExprRun prgmName scopeNodes src = do
-  parsed <- case runParser pExpr "<debug>" src of
+  parsed <- case runParser pExpr debugExprFile src of
     Left err     -> fail $ errorBundlePretty err
     Right parsed -> return parsed
   let rawPrgm = RawPrgm [] [RawStatementTree (RawAnnot parsed) []]

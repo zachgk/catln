@@ -10,16 +10,16 @@ import Typography from '@mui/material/Typography';
 import CloseIcon from '@mui/icons-material/Close';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 
-import {useApi} from '../Common';
 import {ObjArr} from '../Semantics';
 
-// The file a debugged expression is parsed as (`CtService.debugExprRun`). It is no page: its source
-// is the expression the debugger was asked to run, which the debugger already holds.
+// The file a debugged expression is parsed as (`CtService.debugExprFile`). It is no page, so there is
+// no page to open it at.
 const DEBUG_FILE = "<debug>";
 
-// Which call's source is open, and how a book opens one. Held by the Debugger so that only one is
-// open at a time, whichever row it was opened from.
-const SourceContext = createContext({open: null, toggle: () => {}, expr: ""});
+// Which call's source is open, how a book opens one, and the text of every file the run names -- the
+// run's `drSources`, which the server sends with it so that opening a source asks for nothing more.
+// Held by the Debugger so that only one is open at a time, whichever row it was opened from.
+const SourceContext = createContext({open: null, toggle: () => {}, sources: {}});
 
 // Where an arrow is written: the file, and the first and last place in it, as [name, start, end] with
 // the start and end being the parser's {line, col}. Null for an arrow with nothing positioned in it.
@@ -159,34 +159,32 @@ function SourcePanel() {
           </IconButton>
         </Box>
         <Box sx={{px: 1.5, py: 1}}>
-          {span ? <SpanSource span={span} /> : <ObjArr oa={open.oa} />}
+          <SpanSource span={span} oa={open.oa} />
         </Box>
       </Paper>
     </Popper>
   );
 }
 
-// The lines a span is written on, with the span itself marked. The debugged expression is read from
-// the debugger; a page's source is asked of the server, as the page it is.
+// The lines a span is written on, with the span itself marked, out of the sources the run came
+// with. A call with no position, or in a file the run came without, is shown as the definition it was
+// a call of instead, and says why: the compiled form is what there is, and it is not the source.
 function SpanSource(props) {
-  const {span} = props;
-  const {expr} = useContext(SourceContext);
-  const isPage = span[0] !== DEBUG_FILE;
-  const page = useApi(isPage ? `/api/page?prgmName=${encodeURIComponent(span[0])}` : null);
+  const {span, oa} = props;
+  const {sources} = useContext(SourceContext);
+  const source = span ? sources[span[0]] : undefined;
 
-  if (!isPage) {
-    return <SourceLines source={expr} span={span} />;
+  if (source === undefined) {
+    return (
+      <>
+        <Typography variant="body2" sx={{fontStyle: 'italic', mb: 0.5}}>
+          {span ? `No source for ${span[0]} came with the run.` : "This call has no source position."}
+        </Typography>
+        <ObjArr oa={oa} />
+      </>
+    );
   }
-  if (page.error) {
-    return <Typography variant="body2">Could not read {span[0]}: {page.error.message}</Typography>;
-  }
-  if (!page.isLoaded) {
-    return <Typography variant="body2">Loading...</Typography>;
-  }
-  if (!page.data?.pgSource) {
-    return <Typography variant="body2">The server sent no source for {span[0]}.</Typography>;
-  }
-  return <SourceLines source={page.data.pgSource} span={span} />;
+  return <SourceLines source={source} span={span} />;
 }
 
 // Columns are the parser's: counted from one, with the end just past the last character.

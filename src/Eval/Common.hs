@@ -26,30 +26,33 @@
 module Eval.Common (module Eval.Common, module Semantics.Val) where
 
 import           Data.Hashable
-import qualified Data.HashMap.Strict     as H
-import qualified Data.HashSet            as S
-import qualified Data.Map                as Map
-import           Data.Maybe              (mapMaybe)
-import           GHC.Generics            (Generic)
+import qualified Data.HashMap.Strict        as H
+import qualified Data.HashSet               as S
+import qualified Data.Map                   as Map
+import           Data.Maybe                 (mapMaybe)
+import           GHC.Generics               (Generic)
 
 import           Control.Monad.State
+import           Control.Monad.Trans.Writer (execWriter, tell)
 import           CRes
 import           CtConstants
-import           Data.Aeson              hiding (Object)
+import           Data.Aeson                 hiding (Object)
 import           Data.IORef
-import           Data.Time.Calendar      (Day)
-import           Data.UUID               (UUID)
+import           Data.Time.Calendar         (Day)
+import           Data.UUID                  (UUID)
 -- import qualified LLVM.AST            as AST
+import           MapMeta
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.TypeGraph
 import           Semantics.Types
-import qualified Semantics.Val           as SV
-import           Semantics.Val           hiding (Args, Val)
-import           Syntax.Ct.Parser.Syntax (ParseMetaDat)
-import           Syntax.Ct.Prgm          (RawPrgm, ReadPage)
+import qualified Semantics.Val              as SV
+import           Semantics.Val              hiding (Args, Val)
+import           Syntax.Ct.Parser.Syntax    (ParseMetaDat)
+import           Syntax.Ct.Prgm             (RawPrgm, ReadPage)
+import           Text.Megaparsec            (sourceName)
 import           Text.Printf
-import           TypeCheck.Common        (InstrumentResults, TPrgm, VPrgm)
+import           TypeCheck.Common           (InstrumentResults, TPrgm, VPrgm)
 import           Utils
 
 type EvalMetaDat = Maybe ReachesTree
@@ -479,11 +482,38 @@ data EvalResult = EvalResult { erCoverage :: H.HashMap EObjArr Int
 -- are two fields rather than one because the two are not the same answer rendered differently: a
 -- reader of a program run wants to know it exited 0, and a reader of an expression run wants the
 -- value, and neither reads as the other.
-data DebugRun = DebugRun { drExit   :: Maybe Integer
-                         , drOutput :: String
-                         , drValue  :: Maybe Val
-                         , drResult :: EvalResult
+--
+-- 'drSources' is the text of every file the run's positions name, by the name they name it by, so a
+-- reader shown where a call is written can be shown what is written there without asking for each
+-- page it reached. A run evaluates whatever its page imports, and the pages a reader might open are
+-- the few it actually entered rather than every page in scope. It is filled by whoever holds the
+-- pages ('withRunSources'); a run is made empty of them.
+data DebugRun = DebugRun { drExit    :: Maybe Integer
+                         , drOutput  :: String
+                         , drValue   :: Maybe Val
+                         , drResult  :: EvalResult
+                         , drSources :: H.HashMap String String
                          } deriving (Eq, Generic, ToJSON)
+
+-- | The files a run's positions name: those of every arrow it entered and of every @#debug@ it
+-- recorded.
+runSourceNames :: DebugRun -> S.HashSet String
+runSourceNames DebugRun{drResult=EvalResult{erTreebug, erDebugs}} =
+  S.fromList $ concatMap nodeNames erTreebug ++ concatMap (rangeNames . edPos) erDebugs
+  where
+    nodeNames (EvalTreebugClosed oa _ _ children _ _) = arrowNames oa ++ concatMap nodeNames children
+    arrowNames (Left oa)  = execWriter $ mapMetaObjArrM tellNames Nothing oa
+    arrowNames (Right oa) = execWriter $ mapMetaObjArrM tellNames Nothing oa
+    tellNames _ m = tell (rangeNames $ getMetaPos m) >> return m
+    rangeNames (Just (start, end)) = [sourceName start, sourceName end]
+    rangeNames Nothing             = []
+
+-- | A run with the text of the files it names, out of the files it could name: those of the pages it
+-- was run in, by the name their positions carry. A named file with no text offered is left out, and
+-- a reader of the run is told there is no source for it rather than shown a wrong one.
+withRunSources :: [(String, String)] -> DebugRun -> DebugRun
+withRunSources offered run = run{drSources = H.fromList [(name, src) | (name, src) <- offered, name `S.member` named]}
+  where named = runSourceNames run
 
 -- | Which family of test a 'TestResult' came from. A @#test@ or @#example@ definition produces a
 -- 'TestSimple' when it takes no arguments and a 'TestProperty' when the test engine has to generate
@@ -772,6 +802,39 @@ data TExpr m
   deriving (Eq, Generic, Hashable, ToJSON)
 
 type AnyObjArr = Either EObjArr (ObjArr TExpr EvalMetaDat)
+
+-- | Walks a built expression's metas as 'Expr' has them walked, so that whatever reads every meta of
+-- a program -- where it is written, most of all -- can read a built one too.
+--
+-- A call tree is left as it is. It holds arrows of the program rather than of this expression, whose
+-- metas are the program's and are not what this expression is made of.
+instance MapMeta TExpr where
+  mapMetaM f loc (TCExpr m v) = do
+    m' <- f (ExprMeta loc ExprMetaConstant) m
+    return $ TCExpr m' v
+  mapMetaM f loc (TValue m n) = do
+    m' <- f (ExprMeta loc ExprMetaVal) m
+    return $ TValue m' n
+  mapMetaM f loc (THoleExpr m h) = do
+    m' <- f (ExprMeta loc ExprMetaHole) m
+    return $ THoleExpr m' h
+  mapMetaM f loc (TAliasExpr b a) = TAliasExpr <$> mapMetaM f loc b <*> mapMetaM f loc a
+  mapMetaM f loc (TWhere m b c) = do
+    m' <- f (ExprMeta loc ExprMetaWhere) m
+    TWhere m' <$> mapMetaM f loc b <*> mapMetaM f loc c
+  mapMetaM f loc (TTupleApply m (bm, be) arg) = do
+    m' <- f (ExprMeta loc ExprMetaApplyArg) m
+    bm' <- f (ExprMeta loc ExprMetaApplyArgBase) bm
+    be' <- mapMetaM f loc be
+    arg' <- case arg of
+      EAppArg a     -> EAppArg <$> mapMetaObjArrM f (Just loc) a
+      EAppVar vn vm -> EAppVar vn <$> f (ExprMeta loc ExprMetaApplyVarVal) vm
+      EAppSpread a  -> EAppSpread <$> mapMetaM f loc a
+    return $ TTupleApply m' (bm', be') arg'
+  mapMetaM f loc (TCalls m e t) = do
+    m' <- f (ExprMeta loc ExprMetaApplyArg) m
+    e' <- mapMetaM f loc e
+    return $ TCalls m' e' t
 
 instance ExprClass TExpr where
   getExprMeta :: TExpr m -> Meta m
