@@ -6713,14 +6713,52 @@ intersectTypesWithVarEnv typeEnv vaenv (TypeVar v loc i) (TypeVar v' loc' i')
 -- then returns @x@ instead of ∅. The returned occurrence keeps its inner untouched rather than
 -- absorbing @t@: narrowing it here would make the meet a producer of occurrence-local knowledge
 -- on every constraint step, which grows without bound in the solver.
-intersectTypesWithVarEnv typeEnv vaenv tv@(TypeVar v _ inner) t
+intersectTypesWithVarEnv typeEnv vaenv tv@(TypeVar v loc inner) t
   | Just l <- H.lookup v vaenv, not (isSelfVar v l) =
-      let i = intersectTypesEnv typeEnv vaenv l t
-      in if isBottomType i || innerRejects i then (vaenv, BottomType) else (H.insert v i vaenv, tv)
+      let (e, i) = intersectTypesWithVarEnv typeEnv vaenv l t
+      in if isBottomType i || innerRejects i then (vaenv, BottomType)
+         else case t of
+           -- The other operand is a DIFFERENT variable: the meet is @⟦v⟧ ⊓ ⟦w⟧@ bounded by
+           -- both inners, and must read so once the env is dropped whichever operand came
+           -- first. Returning @v@ bare read as @v@'s own binding — wider than the meet unless
+           -- @⟦v⟧ ⊆ ⟦w⟧@ — and which var survived depended on operand order
+           -- (@q=$a ∩ q=$c@ ≠ @q=$c ∩ q=$a@: propIntersectionCommutative, seed
+           -- 8191637382044571059 1540798260764463353; build/scratch/varvar.hs, varvar2.hs).
+           --
+           --   ⟦w⟧ ⊆ ⟦v⟧  (the meet left w's binding as it was)  → w's occurrence
+           --   ⟦v⟧ ⊆ ⟦w⟧  (w's binding narrowed to all of v's)    → v's occurrence
+           --   neither                                             → v's occurrence bounded by
+           --                                                         the narrowed binding
+           TypeVar w lw j
+             | w /= v, TypeVar w' _ _ <- i, w' == w ->
+                 let bothInners = meetInner typeEnv vaenv inner j
+                     wNew = fromMaybe PTopType (H.lookup w e)
+                     (occ, bound)
+                       | bindingUnchanged e w = (TypeVar w lw, bothInners)
+                       | isSubtypeOfWithEnv typeEnv vaenv l wNew = (TypeVar v loc, bothInners)
+                       | otherwise = (TypeVar v loc, meetInner typeEnv vaenv bothInners wNew)
+                 in if isBottomType bound then (vaenv, BottomType) else (H.insert v i e, occ bound)
+           _ -> (H.insert v i e, tv)
   | innerRejects t = (vaenv, BottomType)
+  -- An UNBOUND @v@ against a different variable: @⟦v⟧ = ⊤ ⊇ ⟦w⟧@, so the meet is @w@'s
+  -- occurrence bounded by both inners — the unbound case of the rule above. Returning @v@ read
+  -- as ⊤ bounded by its inner once the env (which holds only the link @v ↦ $w@) is dropped:
+  -- @$_b∩{¬~M} ∩ $_a@ answered @⊤−M@ where @$_a ∩ $_b∩{¬~M}@ answered @$_a∩{⊤−M}@
+  -- (propIntersectionDistributesUnion, seed 1474476966812998458 11559125460413249099;
+  -- build/scratch/distu775.hs).
+  | TypeVar w lw j <- t, w /= v =
+      let bound = meetInner typeEnv vaenv inner j
+      in if isBottomType bound then (vaenv, BottomType) else (H.insert v t vaenv, TypeVar w lw bound)
   | otherwise = (H.insert v t vaenv, tv)
   where isSelfVar var (TypeVar var' _ _) = var' == var
         isSelfVar _   _                  = False
+        -- The meet can only narrow @w@'s binding, so "unchanged" is the reverse inclusion.
+        -- Compared as SETS: the meet may respell an equal binding (@X..@ as @X[/p=⊤]@).
+        -- An unbound @w@ never qualifies: the recursive meet binds it to @l@, and the
+        -- @⟦v⟧ ⊆ ⟦w⟧@ case then keeps @v@.
+        bindingUnchanged e w = case (H.lookup w vaenv, H.lookup w e) of
+          (Just b, Just b') -> b == b' || isSubtypeOfWithEnv typeEnv vaenv b b'
+          _                 -> False
         -- A ⊤ inner adds no knowledge, so the test is skipped on the (hot) knowledge-free
         -- occurrence. Every other inner is MET — including one mentioning an ambient variable,
         -- which this used to skip outright because its meet can re-enter this clause (a var
