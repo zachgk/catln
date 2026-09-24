@@ -15,6 +15,8 @@
  *   npm run test:integration
  */
 
+import {rawExprMeta, statementBody} from '../../Common/RawPrgm'
+
 const API_BASE = 'http://localhost:31204'
 const READONLY_API_BASE = 'http://localhost:8080'
 
@@ -31,6 +33,23 @@ function writeApi(prgmName, source, base = API_BASE) {
     headers: {'Content-Type': 'text/plain'},
     body: source,
   })
+}
+
+// The meta a statement's value rides on (as getMetaDat[2]): that of its expression, which is a
+// declaration's or binding's object, or the annotation itself. Read with the webdocs' own readers,
+// so this suite reads a page the way the pages it checks are read.
+function statementMeta(statement) {
+  const body = statementBody(statement)
+  const expr = statement.tag === 'RawAnnot' ? body : body?.roaObj
+  return expr ? rawExprMeta(expr) : null
+}
+
+// The value an annotation was compiled to. /api/annot answers with a program of one statement, the
+// annotation, and the value rides on its meta.
+function annotStatementValue(prgm) {
+  const [tree] = prgm.rprgmStatements
+  expect(tree.rstStatement.tag).toBe('RawAnnot')
+  return statementMeta(tree.rstStatement).getMetaDat[2]
 }
 
 describe('Backend API contract', () => {
@@ -166,6 +185,7 @@ describe('Backend API contract', () => {
       '#listProgram(mode= /Catln/Doc/Desugar)',
       '#listProgram(mode= /Catln/Doc/TreeBuild)',
       '#listProgram(mode= /Catln/Doc/Typecheck)',
+      '#prgmGraph',
     ])
     // Offered under the name the member is picked by rather than the one it is run under.
     expect(pages.find(p => p.dpAnnot === '#listProgram(mode= /Catln/Doc/Typecheck)').dpLabel)
@@ -252,11 +272,7 @@ describe('Backend API contract', () => {
 
     // The response is a one-statement raw program; the compiled value rides on the annotation
     // expression's meta as getMetaDat[2].
-    const [, statements] = data.contents[0]
-    const [statement] = statements[0]
-    expect(statement.tag).toBe('RawAnnot')
-
-    const val = statement.contents.contents[0].getMetaDat[2]
+    const val = annotStatementValue(data.contents[0])
     expect(val.tag).toBe('TupleVal')
     expect(val.name).toBe('/Catln/Doc/Show/ListProgram')
     // The mode travels with the value, which is what the page's stage selector reads.
@@ -343,11 +359,7 @@ describe('Backend API contract', () => {
     const data = await fetchApi(`/api/annot?annot=${encodeURIComponent(annot)}`)
     expect(data.tag).toBe('Success')
 
-    const [, statements] = data.contents[0]
-    const [statement] = statements[0]
-    expect(statement.tag).toBe('RawAnnot')
-
-    const val = statement.contents.contents[0].getMetaDat[2]
+    const val = annotStatementValue(data.contents[0])
     expect(val.tag).toBe('TupleVal')
     expect(val.name).toBe('/Catln/Doc/Show/TypePage')
     // The name travels with the value, which is what the page titles itself from.
@@ -377,10 +389,7 @@ describe('Backend API contract', () => {
     if (data.tag !== 'Success') return {data, value: null, notes: data.contents}
 
     const [prgm, notes] = data.contents
-    const [, statements] = prgm
-    const [statement] = statements[0]
-    expect(statement.tag).toBe('RawAnnot')
-    return {data, value: statement.contents.contents[0].getMetaDat[2], notes}
+    return {data, value: annotStatementValue(prgm), notes}
   }
 
   async function annotValue(annot, prgmName, base = API_BASE) {
@@ -884,11 +893,8 @@ describe('Backend API contract', () => {
     // The metas of every statement of the page, at any depth: a note's own statements are declared
     // inside the page it is read as.
     function statementMetas(statementTrees, found = []) {
-      for (const [statement, subStatements] of statementTrees) {
-        const expr = statement.tag === 'RawDeclStatement' ? statement.contents.roaObj
-                   : statement.tag === 'RawAnnot' ? statement.contents
-                   : null
-        const meta = expr?.contents?.[0]
+      for (const {rstStatement: statement, rstChildren: subStatements} of statementTrees) {
+        const meta = statement.tag === 'RawDeclStatement' || statement.tag === 'RawAnnot' ? statementMeta(statement) : null
         if (meta?.getMetaDat) found.push(meta)
         statementMetas(subStatements, found)
       }
@@ -897,9 +903,9 @@ describe('Backend API contract', () => {
 
     // The metas of the declarations alone, which is where a note's tasks are.
     function declMetas(statementTrees, found = []) {
-      for (const [statement, subStatements] of statementTrees) {
+      for (const {rstStatement: statement, rstChildren: subStatements} of statementTrees) {
         if (statement.tag === 'RawDeclStatement') {
-          const meta = statement.contents.roaObj?.contents?.[0]
+          const meta = statementMeta(statement)
           if (meta?.getMetaDat) found.push(meta)
         }
         declMetas(subStatements, found)
@@ -913,7 +919,7 @@ describe('Backend API contract', () => {
 
     async function valuesOfNote() {
       const page = (await fetchApi(`/api/page?prgmName=${encodeURIComponent(await notePage())}`)).contents[0]
-      return {values: pageValues(page.pgPrgm[1]), source: page.pgSource}
+      return {values: pageValues(page.pgPrgm.rprgmStatements), source: page.pgSource}
     }
 
     // The note's own declaration is a value like its tasks are, and the note library says what one
@@ -954,7 +960,7 @@ describe('Backend API contract', () => {
 
       // The expression the note's task was declared by, which is what an edit of it names.
       const taskMetaId = async () => {
-        const statements = (await fetchApi(`/api/page?prgmName=${encodeURIComponent(page)}`)).contents[0].pgPrgm[1]
+        const statements = (await fetchApi(`/api/page?prgmName=${encodeURIComponent(page)}`)).contents[0].pgPrgm.rprgmStatements
         const found = declMetas(statements).find(m => m.getMetaDat[2]?.args?.['/contents']?.contents === TASK)
         expect(found).toBeDefined()
         return found.getMetaId
@@ -991,9 +997,9 @@ describe('Backend API contract', () => {
     expect(data.contents).toHaveLength(2)
 
     const [page] = data.contents
-    // pgPrgm is [imports, statements]
-    expect(Array.isArray(page.pgPrgm)).toBe(true)
-    expect(page.pgPrgm).toHaveLength(2)
+    // pgPrgm is the page's raw program: its imports and its statements, by name
+    expect(Array.isArray(page.pgPrgm.rprgmImports)).toBe(true)
+    expect(Array.isArray(page.pgPrgm.rprgmStatements)).toBe(true)
 
     // pgSource is a string or null
     expect(page.pgSource === null || typeof page.pgSource === 'string').toBe(true)
@@ -1088,12 +1094,11 @@ describe('Backend API contract', () => {
       async function anExprId(base = API_BASE) {
         const pageName = await idPageName(base)
         const page = (await fetchApi(`/api/page?prgmName=${encodeURIComponent(pageName)}`, base)).contents[0]
-        const [, statements] = page.pgPrgm
-        const [statement] = statements
-          .map(([statement]) => statement)
+        const [statement] = page.pgPrgm.rprgmStatements
+          .map(tree => tree.rstStatement)
           .filter(statement => statement.tag === 'RawDeclStatement')
         expect(statement).toBeDefined()
-        return [pageName, statement.contents.roaObj.contents[0].getMetaId]
+        return [pageName, statementMeta(statement).getMetaId]
       }
 
       function writeExpr(prgmName, metaId, source, base = API_BASE) {

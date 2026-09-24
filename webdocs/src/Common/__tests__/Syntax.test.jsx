@@ -2,7 +2,8 @@ import React from 'react'
 import { render } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
-import { rawExprMeta, RawExpr } from '../Syntax'
+import { RawExpr } from '../Syntax'
+import { rawExprMeta } from '../RawPrgm'
 
 const theme = createTheme()
 

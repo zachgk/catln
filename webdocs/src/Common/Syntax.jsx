@@ -1,6 +1,7 @@
 import React  from 'react';
 
 import {tryValue} from './Value';
+import {rawExprMeta} from './RawPrgm';
 import {KeyWord, PTypeName, isTopType, Type, tagJoin} from './Common';
 
 // The program as it was written, read by the names the compiler gives its parts.
@@ -49,34 +50,6 @@ function RawObjArr(props) {
   }
 
   return <span>{showObj}{showEq}{showArr}{showDef}</span>;
-}
-
-// The meta of a raw expression, whichever kind it is.
-//
-// The three that wrap another expression without carrying a meta of their own hand back the meta of
-// what they wrap, which is the expression a value shown here would belong to.
-function rawExprMeta(expr) {
-  switch(expr.tag) {
-  case "RawCExpr":        return expr.rceMeta;
-  case "RawValue":        return expr.rvMeta;
-  case "RawHoleExpr":     return expr.rheMeta;
-  case "RawMacroValue":   return expr.rmvMeta;
-  case "RawApplyExpr":    return expr.raeMeta;
-  case "RawFmtStrExpr":   return expr.rfsMeta;
-  case "RawTupleApply":   return expr.rtaMeta;
-  case "RawVarsApply":    return expr.rvaMeta;
-  case "RawContextApply": return expr.rcaMeta;
-  case "RawWhere":        return expr.rwMeta;
-  case "RawMethod":       return expr.rmMeta;
-  case "RawList":         return expr.rlMeta;
-  case "RawTypeProp":     return expr.rtpMeta;
-  case "RawTheExpr":      return rawExprMeta(expr.rteExpr);
-  case "RawAliasExpr":    return rawExprMeta(expr.raliasBase);
-  case "RawParen":        return rawExprMeta(expr.rpnExpr);
-  default:
-    console.error("Unknown rawExprMeta", expr);
-    return null;
-  }
 }
 
 // What a constant holds, named per kind for the reason the expressions are.
@@ -214,7 +187,6 @@ function RawMeta(props) {
 }
 
 export {
-  rawExprMeta,
   RawExpr,
   RawObjArr,
 }

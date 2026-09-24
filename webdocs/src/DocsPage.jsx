@@ -13,7 +13,8 @@ import Editor from '@monaco-editor/react';
 import {initVimMode, VimMode} from 'monaco-vim';
 import {Link, useNavigate} from 'react-router-dom';
 
-import {rawExprMeta, RawExpr, RawObjArr} from './Common/Syntax';
+import {RawExpr, RawObjArr} from './Common/Syntax';
+import {rawExprMeta, statementBody} from './Common/RawPrgm';
 import {useQuery, useApi, useLiveApi, Loading, KeyWord, ReachesTree, ConfigContext, PrgmNameContext, PageDirContext, ReloadContext, annotLink, annotApi, writeExpr} from './Common/Common';
 import {Value} from './Common/Value';
 import DebuggerMenu from './Common/DebuggerMenu';
@@ -540,21 +541,6 @@ function AnnotPage(props) {
       </ReloadContext.Provider>
     </PrgmNameContext.Provider>
   );
-}
-
-// What a statement holds: an ObjArr for a declaration or a binding, an expression for an annotation.
-//
-// Read by field, as everything raw is -- the compiler names the fields of every raw constructor, so
-// a positional `contents` is not what arrives. See `rawExprMeta` in Common/Syntax.jsx.
-function statementBody(statement) {
-  switch (statement.tag) {
-  case "RawDeclStatement": return statement.rdsObjArr;
-  case "RawBindStatement": return statement.rbsObjArr;
-  case "RawAnnot":         return statement.ranAnnot;
-  default:
-    console.error("Unknown statement", statement);
-    return undefined;
-  }
 }
 
 function Main(props) {
