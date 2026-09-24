@@ -447,9 +447,7 @@ evalDShowAnnot env0@Env{evTbEnv, evTypeEnv} os annot0
       -- Render the value as a @String@ through @/Data/toString@ when it is @ToString@ (the only
       -- form a golden can check); a @DShow@ value that is not @ToString@ (a webdocs visualization)
       -- keeps its raw value, so it is displayed but not golden-checked.
-      return $ Just $ case renderValString pVal of
-        CRes _ str@StrVal{} -> str
-        _                   -> pVal
+      return $ Just $ fromMaybe pVal $ renderValText env pVal
   -- Whether THIS program can display the annotation: a question about the program as written,
   -- whose classes have exactly the members it declares — the closed-world view TreeBuild then
   -- builds the display in ('tePrgmEnv'). Asked open-world, every annotation could still become a
@@ -474,25 +472,6 @@ evalDShowAnnot env0@Env{evTbEnv, evTypeEnv} os annot0
       = p
       | otherwise = annot0
     showAnnot a = eVal "/Catln/Doc/dshow" `eApply ` ("/s", a)
-    -- Render a value as text through @/Data/toString@. The value is reconstructed as a typed
-    -- constant expression ('valToEExpr', whose meta carries the concrete runtime type — e.g. a
-    -- @ConsList@ of @Integer@s), and @toString@ is built over that; the concrete receiver type
-    -- dispatches where @p@'s abstract static type could not. Fails (leaving the caller with the raw
-    -- value) for a value 'valToEExpr' cannot reconstruct or one that is not @ToString@.
-    renderValString v
-      | reconstructableVal v = do
-          let e = eVal "/Data/toString" `eApply` ("/this", valToEExpr v)
-          tree <- buildRoot evTbEnv e (getExprPartialType e) destType
-          evalStateT (evalExpr tree) env
-      | otherwise = CErr []
-    -- Whether 'valToEExpr' can rebuild this value (it errors on closures, IO, and other runtime-only
-    -- values, none of which are @ToString@).
-    reconstructableVal IntVal{}        = True
-    reconstructableVal FloatVal{}      = True
-    reconstructableVal StrVal{}        = True
-    reconstructableVal CharVal{}       = True
-    reconstructableVal (TupleVal _ as) = all reconstructableVal (H.elems as)
-    reconstructableVal _               = False
     -- Evaluate @p@ to its concrete value by building it toward @DShow@ (which certifies
     -- displayability and yields the value itself). @p@ is declared @-> DShow@, so this resolves for
     -- every valid print.
@@ -501,6 +480,33 @@ evalDShowAnnot env0@Env{evTbEnv, evTypeEnv} os annot0
       evalStateT (evalExpr tree) env
     destType = dshowDestType
     destM = emptyMetaT destType
+
+-- | A value rendered as text through @/Data/toString@, when it is @ToString@: what a @#print@ of it
+-- shows, and the only form a golden can check.
+--
+-- The value is reconstructed as a typed constant expression ('valToEExpr', whose meta carries the
+-- concrete runtime type — e.g. a @ConsList@ of @Integer@s), and @toString@ is built over that. The
+-- concrete type is what dispatches: a value an interface-typed expression computed renders by what it
+-- is rather than by what the expression said it would be. 'Nothing' for a value 'valToEExpr' cannot
+-- rebuild (closures, IO and the other runtime-only values, none of which are @ToString@) and for one
+-- that is not @ToString@.
+renderValText :: Env -> Val -> Maybe Val
+renderValText env@Env{evTbEnv} v
+  | reconstructableVal v = case run of
+      CRes _ str@StrVal{} -> Just str
+      _                   -> Nothing
+  | otherwise = Nothing
+  where
+    run = do
+      let e = eVal "/Data/toString" `eApply` ("/this", valToEExpr v)
+      tree <- buildRoot evTbEnv e (getExprPartialType e) dshowDestType
+      evalStateT (evalExpr tree) env
+    reconstructableVal IntVal{}        = True
+    reconstructableVal FloatVal{}      = True
+    reconstructableVal StrVal{}        = True
+    reconstructableVal CharVal{}       = True
+    reconstructableVal (TupleVal _ as) = all reconstructableVal (H.elems as)
+    reconstructableVal _               = False
 
 -- | The class a display is built toward, which is what forces it to be evaluated: a tree built
 -- toward an expression's own type comes back as the application itself, unevaluated.
@@ -813,7 +819,7 @@ evalDebugPrgm function prgm = unsafePerformIO $ do
     CRes notes (code, io, res) -> do
       io
       out <- getMockIOOutput mockIO
-      return $ CRes notes (\res' -> DebugRun (Just code) out Nothing res' H.empty) <*> withCallShows prgm res
+      return $ CRes notes (\res' -> showRunValues prgm $ DebugRun (Just code) out Nothing res' H.empty) <*> withCallShows prgm res
 
 -- | Runs one expression of a program for a debugger reporting on it: the value it evaluated to, and
 -- the tree of what it evaluated on the way.
@@ -840,7 +846,7 @@ evalDebugExprPrgm input prgm = do
   let env@Env{evTbEnv} = evalBaseEnv prgm
   tree <- toTExprDest evTbEnv [] input (emptyMetaT dshowDestType)
   (val, env') <- runStateT (evalExpr tree) env
-  (\res -> DebugRun Nothing "" (Just val) res H.empty) <$> withCallShows prgm (evalResult env')
+  (\res -> showRunValues prgm $ DebugRun Nothing "" (Just val) res H.empty) <$> withCallShows prgm (evalResult env')
 
 -- | An evaluation's result with the display filled in for each call that has one
 -- ('attachCallShows'). Both debugger entry points go through this, since which of them ran a
@@ -849,6 +855,44 @@ withCallShows :: EPrgm -> EvalResult -> CRes EvalResult
 withCallShows prgm res@EvalResult{erTreebug} = do
   treebug' <- attachCallShows prgm erTreebug
   return res{erTreebug = treebug'}
+
+-- | A run with every value in it shown the way a @#print@ shows it ('renderValText'): a list as
+-- @[1, 2, 3]@ rather than as the conses it is built from.
+--
+-- Afterwards, as 'attachCallShows' is, and after it: rendering is evaluation, which recorded during
+-- the run would be recorded as part of it, and a call's display is built from the call as it was
+-- entered rather than from text standing for it.
+--
+-- A value that does not render is shown by its parts, each of which may. What a call was given is
+-- always shown by its parts: it is the call rather than a value, and rendered whole it would be
+-- evaluated, showing what the call returned where what it was given belongs. Scalars are left as
+-- they are, since they already read as their text. Each distinct value is rendered once, as a run
+-- passes the same lists down a recursion many times over.
+showRunValues :: EPrgm -> DebugRun -> DebugRun
+showRunValues prgm run@DebugRun{drValue, drResult=res@EvalResult{erTreebug, erDebugs}} = evalState go H.empty
+  where
+    env = evalBaseEnv prgm
+    go = do
+      treebug' <- mapM showNode erTreebug
+      debugs' <- forM erDebugs $ \d@EvalDebug{edValue} -> (\v -> d{edValue = v}) <$> showVal edValue
+      value' <- mapM showVal drValue
+      return run{drValue = value', drResult = res{erTreebug = treebug', erDebugs = debugs'}}
+    showNode (EvalTreebugClosed oa input val children nodeId callShow) = do
+      input' <- showParts input
+      val' <- showVal val
+      children' <- mapM showNode children
+      return $ EvalTreebugClosed oa input' val' children' nodeId callShow
+    showParts (TupleVal name args) = TupleVal name <$> mapM showVal args
+    showParts v                    = return v
+    showVal v@TupleVal{} = do
+      cache <- get
+      case H.lookup v cache of
+        Just shown -> return shown
+        Nothing -> do
+          shown <- maybe (showParts v) return (renderValText env v)
+          modify (H.insert v shown)
+          return shown
+    showVal v = return v
 
 evalBuild :: String -> FileImport -> EPrgmGraphData -> CResT IO (Val, EvalResult)
 evalBuild function prgmName prgmGraphData = do

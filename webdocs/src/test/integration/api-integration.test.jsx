@@ -560,6 +560,21 @@ describe('Backend API contract', () => {
       expect(run.drValue).toEqual({tag: 'StrVal', contents: 'hi'})
     })
 
+    it('shows the values of a run as a #print shows them', async () => {
+      // A list is built from conses, and read as one it is the nesting of them. Every value of the run
+      // -- what each call was given, what it gave back, and what the run ended with -- arrives as the
+      // text its toString renders instead. What a call was given is shown by its parts, as it is the
+      // call rather than a value: rendered whole it would be the call's answer.
+      const page = await idPageName()
+      const val = await annotValue('#debugExpr(expr= "id(x= [1, 2])")', page)
+      const run = JSON.parse(val.args['/run'].contents)
+      expect(run.drValue).toEqual({tag: 'StrVal', contents: '[1, 2]'})
+      const [root] = run.drResult.erTreebug
+      const [, input, output] = root
+      expect(input).toEqual({tag: 'TupleVal', name: '/id', args: {'/x': {tag: 'StrVal', contents: '[1, 2]'}}})
+      expect(output).toEqual({tag: 'StrVal', contents: '[1, 2]'})
+    })
+
     it('reports an expression it cannot read as an error note rather than failing the request', async () => {
       // A generated test input is rendered from a value, and not every value renders as something
       // that can be read back. The reader is told which expression could not be read.
