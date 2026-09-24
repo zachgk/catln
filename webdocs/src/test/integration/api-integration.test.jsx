@@ -560,11 +560,12 @@ describe('Backend API contract', () => {
       expect(run.drValue).toEqual({tag: 'StrVal', contents: 'hi'})
     })
 
-    it('shows the values of a run as a #print shows them', async () => {
+    it('shows the values of a run as their display', async () => {
       // A list is built from conses, and read as one it is the nesting of them. Every value of the run
-      // -- what each call was given, what it gave back, and what the run ended with -- arrives as the
-      // text its toString renders instead. What a call was given is shown by its parts, as it is the
-      // call rather than a value: rendered whole it would be the call's answer.
+      // -- what each call was given, what it gave back, and what the run ended with -- arrives as its
+      // display instead, which for a list is the text its toString renders. What a call was given is
+      // shown by its parts, as it is the call rather than a value: rendered whole it would be the
+      // call's answer.
       const page = await idPageName()
       const val = await annotValue('#debugExpr(expr= "id(x= [1, 2])")', page)
       const run = JSON.parse(val.args['/run'].contents)
@@ -573,6 +574,21 @@ describe('Backend API contract', () => {
       const [, input, output] = root
       expect(input).toEqual({tag: 'TupleVal', name: '/id', args: {'/x': {tag: 'StrVal', contents: '[1, 2]'}}})
       expect(output).toEqual({tag: 'StrVal', contents: '[1, 2]'})
+    })
+
+    it('shows a value by the arm of dshow its library wrote, which need not be text', async () => {
+      // A note's Page is displayed by an arm of dshow as a heading of markup. It is inside a list here,
+      // which has no display of its own for a list of pages and so is shown by its parts.
+      const page = await idPageName()
+      const val = await annotValue('#debugExpr(expr= "[/Data/Note/Page(title= \\"Hi\\")].length")', page)
+      const run = JSON.parse(val.args['/run'].contents)
+      const [root] = run.drResult.erTreebug
+      const list = root[1].args['/this']
+      expect(list.name).toBe('/Data/List/Cons')
+      expect(list.args['/head']).toEqual({
+        tag: 'TupleVal', name: '/Catln/Doc/Show/Html',
+        args: {'/contents': {tag: 'StrVal', contents: '<h1>Hi</h1>'}},
+      })
     })
 
     it('reports an expression it cannot read as an error note rather than failing the request', async () => {

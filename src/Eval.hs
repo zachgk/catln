@@ -501,12 +501,37 @@ renderValText env@Env{evTbEnv} v
       let e = eVal "/Data/toString" `eApply` ("/this", valToEExpr v)
       tree <- buildRoot evTbEnv e (getExprPartialType e) dshowDestType
       evalStateT (evalExpr tree) env
-    reconstructableVal IntVal{}        = True
-    reconstructableVal FloatVal{}      = True
-    reconstructableVal StrVal{}        = True
-    reconstructableVal CharVal{}       = True
-    reconstructableVal (TupleVal _ as) = all reconstructableVal (H.elems as)
-    reconstructableVal _               = False
+
+-- | A value's display: what @/Catln/Doc/dshow@ makes of it, and that rendered as text when it is
+-- @ToString@ ('renderValText').
+--
+-- Through @dshow@ rather than straight to text so that a type displays as its library says. A
+-- member of @DShow@ is handed back by the identity arm, and so is shown as itself or as its text; a
+-- type with an arm of its own is shown as whatever that arm builds, which need not be text at all --
+-- a note's @Page@ is a heading of markup. 'Nothing' for a value that reaches no arm of @dshow@, or
+-- that 'valToEExpr' cannot rebuild.
+--
+-- Checked to reach @DShow@ before anything is built, as 'evalDShowAnnot' checks an annotation: a tree
+-- built for a value no arm takes is an @error@ in 'TreeBuild' rather than a note.
+dshowVal :: Env -> Val -> Maybe Val
+dshowVal env@Env{evTbEnv, evTypeEnv} v
+  | reconstructableVal v && reachesTo evTypeEnv H.empty (getExprType e) dshowDestType = do
+      shown <- cresToMaybe $ do
+        tree <- toTExprDest evTbEnv [] e (emptyMetaT dshowDestType)
+        evalStateT (evalExpr tree) env
+      return $ fromMaybe shown (renderValText env shown)
+  | otherwise = Nothing
+  where e = eVal dshowName `eApply` ('/' : dshowArg, valToEExpr v)
+
+-- | Whether 'valToEExpr' can rebuild this value (it errors on closures, IO, and other runtime-only
+-- values, none of which are @ToString@ or displayable).
+reconstructableVal :: Val -> Bool
+reconstructableVal IntVal{}        = True
+reconstructableVal FloatVal{}      = True
+reconstructableVal StrVal{}        = True
+reconstructableVal CharVal{}       = True
+reconstructableVal (TupleVal _ as) = all reconstructableVal (H.elems as)
+reconstructableVal _               = False
 
 -- | The class a display is built toward, which is what forces it to be evaluated: a tree built
 -- toward an expression's own type comes back as the application itself, unevaluated.
@@ -856,14 +881,18 @@ withCallShows prgm res@EvalResult{erTreebug} = do
   treebug' <- attachCallShows prgm erTreebug
   return res{erTreebug = treebug'}
 
--- | A run with every value in it shown the way a @#print@ shows it ('renderValText'): a list as
--- @[1, 2, 3]@ rather than as the conses it is built from.
+-- | A run with every value in it shown as its display ('dshowVal'): a list as @[1, 2, 3]@ rather
+-- than as the conses it is built from, and a value whose library displays it as something other than
+-- text -- markup, a colour, an image -- as that.
 --
 -- Afterwards, as 'attachCallShows' is, and after it: rendering is evaluation, which recorded during
 -- the run would be recorded as part of it, and a call's display is built from the call as it was
--- entered rather than from text standing for it.
+-- entered rather than from text standing for it. It is also why a display that asks the compilation
+-- service for something reports rather than re-entering: the run's environment has none.
 --
--- A value that does not render is shown by its parts, each of which may. What a call was given is
+-- A value with no display is shown by its parts, each of which may have one, and so is a value
+-- whose display is itself. A display that is something else is not looked into: it is what its
+-- library said the value looks like. What a call was given is
 -- always shown by its parts: it is the call rather than a value, and rendered whole it would be
 -- evaluated, showing what the call returned where what it was given belongs. Scalars are left as
 -- they are, since they already read as their text. Each distinct value is rendered once, as a run
@@ -889,7 +918,11 @@ showRunValues prgm run@DebugRun{drValue, drResult=res@EvalResult{erTreebug, erDe
       case H.lookup v cache of
         Just shown -> return shown
         Nothing -> do
-          shown <- maybe (showParts v) return (renderValText env v)
+          shown <- case dshowVal env v of
+            Just display | display /= v -> return display
+            -- Handed back as itself, which is how a member of @DShow@ that is not text is shown: by
+            -- its parts, as a value with no display is. So its parts are given theirs.
+            _                           -> showParts v
           modify (H.insert v shown)
           return shown
     showVal v = return v

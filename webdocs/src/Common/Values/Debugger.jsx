@@ -8,7 +8,7 @@ import Link from '@mui/material/Link';
 
 import {ExprStyleContext, exprContents, runStyle} from '../Semantics';
 import {PTypeName} from '../Common';
-import {Value} from '../Value';
+import {InlineValue, Value} from '../Value';
 import {CallStepsContext} from './Steps';
 import {SourceButton, SourceContext, SourcePanel} from './DebugSource';
 
@@ -93,7 +93,7 @@ function Debugger(props) {
                     {showDebugPos(d.edPos)}
                   </Link>
                   {" ↦ "}
-                  <Value data={d.edValue} />
+                  <InlineValue data={d.edValue} />
                 </li>
               ))}
             </ol>
@@ -257,7 +257,7 @@ function TreebugNode(props) {
   // What the call was given and what it gave back. The definition it was a call of is behind the
   // book, as where it is written: spelled out here it was most of the line, and the input already
   // names the call.
-  let label = <span><SourceButton id={id} oa={oa} /><Value data={input} /> =&gt; <Value data={val} /></span>;
+  let label = <span><SourceButton id={id} oa={oa} /><InlineValue data={input} /> =&gt; <InlineValue data={val} /></span>;
   return (
     <TreeItem itemId={id} label={label} ref={el => {nodeRefs.current[id] = el}}>
       {children.map(child => <TreebugNode data={child} nodeRefs={nodeRefs} key={child[4]} />)}

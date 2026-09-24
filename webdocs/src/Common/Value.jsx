@@ -134,7 +134,7 @@ function Value(props) {
         showArgs = (
           <span>
             (
-            {tagJoin(Object.keys(val.args).map(arg => <span key={arg}>{arg} = <Value key={arg} data={val.args[arg]}/></span>), ", ")}
+            {tagJoin(Object.keys(val.args).map(arg => <span key={arg}>{arg} = <InlineValue data={val.args[arg]}/></span>), ", ")}
             )
           </span>
         );
@@ -160,6 +160,18 @@ function Value(props) {
     console.error("Unknown val tag", val);
     return <span>Unknown Val tag</span>;
   }
+}
+
+// A value laid into a line of text: a field of a tuple, or what a debugged call was given and gave
+// back. A value's display may be block-level -- a library's markup is often a heading or a table,
+// and an image or a colour swatch is a box -- and laid in bare it would break the line it is part of
+// in two. In a box of its own it is drawn as its library draws it and stays where it is in the line.
+function InlineValue(props) {
+  return (
+    <span className="catln-inline-value" style={{display: 'inline-block', verticalAlign: 'middle'}}>
+      <Value {...props} />
+    </span>
+  );
 }
 
 function tryValue(val, update) {
@@ -254,5 +266,6 @@ function linkPath(href) {
 
 export {
   Value,
+  InlineValue,
   tryValue
 };

@@ -63,6 +63,23 @@ describe('Value', () => {
     const { container } = render(<Providers><Value data={val} /></Providers>)
     expect(container.textContent).toBe('/Unit')
   })
+
+  // A field holding a display its library draws as a block -- here a heading of markup -- is drawn as
+  // that display, in a box that keeps it in the line of the tuple it is a field of.
+  it('draws a field display inline in the tuple it is a field of', () => {
+    const val = {
+      tag: 'TupleVal',
+      name: '/Box',
+      args: {
+        '/v': { tag: 'TupleVal', name: '/Catln/Doc/Show/Html', args: { '/contents': { tag: 'StrVal', contents: '<h1>Hi</h1>' } } },
+      },
+    }
+    const { container } = render(<Providers><Value data={val} /></Providers>)
+    const heading = container.querySelector('h1')
+    expect(heading.textContent).toBe('Hi')
+    const box = heading.closest('.catln-inline-value')
+    expect(box.style.display).toBe('inline-block')
+  })
 })
 
 // A build result, as the values `stack/core/result.ct` declares. A list is a /Data/List/Cons chain
