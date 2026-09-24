@@ -1,8 +1,9 @@
 import React from 'react'
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
-import { Expr, ObjArr } from '../Semantics'
+import { Expr, ObjArr, TypesOnHoverContext } from '../Semantics'
 
 const theme = createTheme()
 
@@ -119,5 +120,63 @@ describe('ObjArr', () => {
     }
     const { container } = render(<Providers><ObjArr oa={oa} Meta={NoopMeta} /></Providers>)
     expect(container.textContent).not.toContain('->')
+  })
+})
+
+describe('ObjArr with types on hover', () => {
+  function Hover({ children }) {
+    return <Providers><TypesOnHoverContext.Provider value={true}>{children}</TypesOnHoverContext.Provider></Providers>
+  }
+
+  const typedX = {
+    oaObj: { tag: 'Value', veMeta: baseMeta, veName: 'x'},
+    oaArr: [null, intMeta],
+    oaAnnots: [],
+  }
+
+  it('leaves the type out of the text', () => {
+    const { container } = render(<Hover><ObjArr oa={typedX} Meta={NoopMeta} /></Hover>)
+    expect(container.textContent).toBe('x')
+  })
+
+  it('shows the type when its name is hovered', async () => {
+    const { container } = render(<Hover><ObjArr oa={typedX} Meta={NoopMeta} /></Hover>)
+    await userEvent.hover(container.querySelector('.catln-typed'))
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('/Integer')
+  })
+
+  it('puts no hover on a name whose type says nothing', () => {
+    const oa = { ...typedX, oaArr: [null, baseMeta] }
+    const { container } = render(<Hover><ObjArr oa={oa} Meta={NoopMeta} /></Hover>)
+    expect(container.querySelector('.catln-typed')).toBeNull()
+  })
+
+  // A call and each of its arguments are hovered separately, so that pointing at an argument shows
+  // that argument's type and not the call's as well.
+  it('gives a call and its argument a hover each, neither inside the other', async () => {
+    const strMeta = {
+      ...intMeta,
+      getMetaType: { tag: 'UnionType', utTop: null, utLeafs: { '/String': [[[], [], { tag: 'PredsAnd', paPreds: []}, { ptArgLb: true, ptArgUb: true }]] }, utConsts: []},
+    }
+    const oa = {
+      oaObj: {
+        tag: 'TupleApply',
+        taMeta: baseMeta,
+        taBase: [baseMeta, { tag: 'Value', veMeta: baseMeta, veName: 'f'}],
+        taApp: { tag: 'EAppArg', eaaArg: typedX },
+      },
+      oaArr: [null, strMeta],
+      oaAnnots: [],
+    }
+    const { container } = render(<Hover><ObjArr oa={oa} Meta={NoopMeta} /></Hover>)
+    expect(container.textContent).toBe('f(x)')
+
+    const typed = container.querySelectorAll('.catln-typed')
+    expect([...typed].map(t => t.textContent)).toEqual(['f', 'x'])
+
+    await userEvent.hover(typed[1])
+    const tip = await screen.findByRole('tooltip')
+    expect(tip).toHaveTextContent('/Integer')
+    expect(tip).not.toHaveTextContent('/String')
   })
 })

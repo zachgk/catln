@@ -6,7 +6,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import {TreeItem} from '@mui/x-tree-view/TreeItem';
 import Link from '@mui/material/Link';
 
-import {ObjArr, exprContents} from '../Semantics';
+import {ObjArr, TypesOnHoverContext, exprContents} from '../Semantics';
 import {PTypeName} from '../Common';
 import {Value} from '../Value';
 import {CallStepsContext} from './Steps';
@@ -53,54 +53,58 @@ function Debugger(props) {
     }
   }, [selected, expanded]);
 
+  // Types are hovered rather than written: see TypesOnHoverContext. A run is read for the calls it
+  // made, and a call whose every argument spells out its declared type is mostly types.
   return (
-    <div>
-      <h2>{fun}</h2>
-      {roots.length ? (
-        <SimpleTreeView
-          slots={{collapseIcon: ExpandMoreIcon, expandIcon: ChevronRightIcon}}
-          expandedItems={expanded}
-          onExpandedItemsChange={(event, items) => setExpanded(items)}
-          selectedItems={selected}
-          onSelectedItemsChange={(event, item) => setSelected(item)}
-        >
-          {roots.map(root => <TreebugNode data={root} nodeRefs={nodeRefs} key={root[4]} />)}
-        </SimpleTreeView>
-      ) : <p>Evaluated no arrows.</p>}
-      {/* Every #debug the run recorded, in the order it recorded them: one list over the whole run,
-          however many definitions and however many calls they came from. Each says where it is
-          written, since that is what the compiler can name it by, and leads to the call it was
-          recorded in, which is what the tree above cannot be searched for by hand. */}
-      <h3>Debug</h3>
-      {debugs.length ? (
-        <ol>
-          {debugs.map((d, i) => (
-            <li key={i}>
-              <Link component="button" type="button" onClick={() => reveal(d.edNode)}>
-                {showDebugPos(d.edPos)}
-              </Link>
-              {" ↦ "}
-              <Value data={d.edValue} />
-            </li>
-          ))}
-        </ol>
-      ) : <p>Recorded nothing.</p>}
-      {/* What the run ended with, which is not the same question for the two kinds of run. An
-          expression was run for its value and was given no IO handle to print with, so it has
-          neither output nor an exit code to report. */}
-      {drValue ? (
-        <>
-          <h3>Value</h3>
-          <Value data={drValue} />
-        </>
-      ) : (
-        <>
-          <h3>Output</h3>
-          {drOutput ? <pre>{drOutput}</pre> : <p>Printed nothing.</p>}
-          <p>Exited with {drExit}.</p>
-        </>
-      )}
-    </div>
+    <TypesOnHoverContext.Provider value={true}>
+      <div>
+        <h2>{fun}</h2>
+        {roots.length ? (
+          <SimpleTreeView
+            slots={{collapseIcon: ExpandMoreIcon, expandIcon: ChevronRightIcon}}
+            expandedItems={expanded}
+            onExpandedItemsChange={(event, items) => setExpanded(items)}
+            selectedItems={selected}
+            onSelectedItemsChange={(event, item) => setSelected(item)}
+          >
+            {roots.map(root => <TreebugNode data={root} nodeRefs={nodeRefs} key={root[4]} />)}
+          </SimpleTreeView>
+        ) : <p>Evaluated no arrows.</p>}
+        {/* Every #debug the run recorded, in the order it recorded them: one list over the whole run,
+            however many definitions and however many calls they came from. Each says where it is
+            written, since that is what the compiler can name it by, and leads to the call it was
+            recorded in, which is what the tree above cannot be searched for by hand. */}
+        <h3>Debug</h3>
+        {debugs.length ? (
+          <ol>
+            {debugs.map((d, i) => (
+              <li key={i}>
+                <Link component="button" type="button" onClick={() => reveal(d.edNode)}>
+                  {showDebugPos(d.edPos)}
+                </Link>
+                {" ↦ "}
+                <Value data={d.edValue} />
+              </li>
+            ))}
+          </ol>
+        ) : <p>Recorded nothing.</p>}
+        {/* What the run ended with, which is not the same question for the two kinds of run. An
+            expression was run for its value and was given no IO handle to print with, so it has
+            neither output nor an exit code to report. */}
+        {drValue ? (
+          <>
+            <h3>Value</h3>
+            <Value data={drValue} />
+          </>
+        ) : (
+          <>
+            <h3>Output</h3>
+            {drOutput ? <pre>{drOutput}</pre> : <p>Printed nothing.</p>}
+            <p>Exited with {drExit}.</p>
+          </>
+        )}
+      </div>
+    </TypesOnHoverContext.Provider>
   );
 }
 

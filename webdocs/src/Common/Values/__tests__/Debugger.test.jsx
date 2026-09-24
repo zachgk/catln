@@ -108,6 +108,20 @@ describe('Debugger', () => {
 
   // A run of one expression (#debugExpr) rather than of a program: it was given no IO handle to
   // print with, so what it ended with is a value and there is no exit code to report.
+  // A call is read for what it was called on. Its types are still there, one hover away on the name
+  // each is the type of, rather than written after every argument of every call.
+  it('keeps the types of a call out of its label and on hover instead', async () => {
+    const { container } = render(<Providers><Debugger {...debug()} /></Providers>)
+
+    const label = container.querySelector('.MuiTreeItem-label')
+    expect(label.textContent).not.toContain('->')
+    const typed = label.querySelector('.catln-typed')
+    expect(typed).toBeTruthy()
+
+    await userEvent.hover(typed)
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(/\S/)
+  })
+
   it('shows the value an expression run produced instead of an exit code', () => {
     const expr = {
       drExit: null,
