@@ -26,6 +26,7 @@ import           Control.Monad           (forM, forM_, forever, unless, void,
                                           when)
 import           Control.Monad.Trans     (lift)
 import           CRes
+import           CtConstants             (printAnnot, printAnnotText)
 import           Data.Aeson              (ToJSON)
 import           Data.Graph
 import           Data.Hashable           (hash)
@@ -60,8 +61,9 @@ import           MapMeta                 (parseMetaIDScope)
 import           Semantics               (CTSSConfig, ctssCachePath, ctssToday)
 import           Semantics.CtType        (fromCt)
 import           Semantics.Prgm
-import           Semantics.Types         (Name)
+import           Semantics.Types         (Name, mkName, partialKey)
 import           Semantics.Val           hiding (Val)
+import           Syntax.Ct.Builder       (applyRawArgs, rawVal)
 import           Syntax.Ct.Desugarf      (desFinalPass, desFinalPasses, desPrgm,
                                           validPrgm)
 import           Syntax.Ct.Desugarf.Expr (desFileImport)
@@ -1718,7 +1720,15 @@ debugExprRun prgmName scopeNodes src = do
   parsed <- case runParser pExpr debugExprFile src of
     Left err     -> fail $ errorBundlePretty err
     Right parsed -> return parsed
-  let rawPrgm = RawPrgm [] [RawStatementTree (RawAnnot parsed) []]
+  -- Written as the value of a @#print@, which is what it is: an expression evaluated toward @DShow@
+  -- ('evalDebugExprPrgm') from no enclosing object. A program's annotation statements are typed as
+  -- annotations, each required to be the annotation it names ('TypeCheck.Encode.annotSeedConstraints'),
+  -- and an expression is not one: a bare literal names nothing, and a call such as @id(x= 3)@ would
+  -- be required to be the relation its own name spells. As a print's @p@ it is typed the way a
+  -- print's value is, required to be a @DShow@, and a @> expr@ on a page and the same expression
+  -- debugged are compiled alike.
+  let printed = rawVal printAnnot `applyRawArgs` [(Just $ partialKey (mkName printAnnotText), parsed)]
+  let rawPrgm = RawPrgm [] [RawStatementTree (RawAnnot printed) []]
   let exprName = desFileImport $ mkRawFileImport $ RawValue emptyMetaN "<debug>"
   let rawPrgm' = addRawPrgmMetaIDs (parseMetaIDScope exprName) rawPrgm
   (desP, desName, _) <- desPrgm (rawPrgm', exprName, [])
@@ -1730,11 +1740,13 @@ debugExprRun prgmName scopeNodes src = do
     CRes _ []    -> fail $ printf "The debugger could not typecheck %s" src
     CRes _ (t:_) -> return t
   prgm <- prgmFromGraphData desName $ graphFromEdges ((exprTprgm, desName, map snd3 deps) : deps)
-  -- The one statement parsed above, now compiled. Read back off the program rather than kept from
-  -- before it, so what is run is what the whole pipeline produced.
+  -- The one expression parsed above, now compiled: the @p@ of the one statement. Read back off the
+  -- program rather than kept from before it, so what is run is what the whole pipeline produced.
   expr <- case prgmAnnots exprTprgm of
-    [expr] -> return expr
-    exprs  -> fail $ printf "The debugger was given %d expressions to run in %s rather than one" (length exprs) (show prgmName)
+    [annot] -> case H.lookup (partialKey (mkName printAnnotText)) (exprAppliedArgsMap annot) of
+      Just (Just (_, Just p)) -> return p
+      _ -> fail $ printf "The debugger's #print of %s compiled without the expression it prints" src
+    annots -> fail $ printf "The debugger was given %d expressions to run in %s rather than one" (length annots) (show prgmName)
   evalDebugExprPrgm expr prgm
 
 -- | The values one page declares of one type, evaluated to the values they display as. This is the
