@@ -68,6 +68,24 @@ module(Catln/Doc)
 
   every(Show/Steps.., isa= [/Catln/Doc/DShow])
 
+  data(Show/FoldStep(index -> Integer, acc -> String, input -> String, output -> String))
+    # One row of a fold: which step it is, the accumulator it was handed, the element it combined
+      into it, and the accumulator it handed on. The ends are rendered text for the reason
+      [Show/Step]'s are.
+  data(Show/FoldSteps(init -> String, steps -> /Data/List[$T -> Show/FoldStep], result -> String, fromRight -> Boolean))
+    # A fold shown as what it did: its rows, in element order, between the accumulator it started
+      from and the one it ended with.
+      A second display rather than [Show/Steps] with a column more. A step of a fold has three ends
+      rather than two, and what makes it a fold is where each step's output goes: into the next
+      step's accumulator, and from the last step into the result. That is a line between rows, not
+      anything in one, so it takes a display that draws one.
+      [fromRight] says which way that line runs, since a fold from the right starts at the last
+      element and hands each output to the step before it. It is not a glyph: which arrow says so
+      belongs to whatever draws the rows, as it does for [Show/Steps]. The rows stay in element order
+      either way, which is also the order a debugger finds the calls that made them in.
+
+  every(Show/FoldSteps.., isa= [/Catln/Doc/DShow])
+
 # # Why this is not written in core/webdoc.ct
   [assets] is a [/Data/List], and @core/webdoc.ct@ may not name one. That page is reached from
   @core/compile.ct@, which every program reaches, so an import of @core/list.ct@ written there closes

@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
@@ -7,6 +7,8 @@ import Debugger from '../Debugger'
 import debuggerResponse from '../../../test/fixtures/debugger-response.json'
 import fmapResponse from '../../../test/fixtures/debugger-fmap-response.json'
 import mmapResponse from '../../../test/fixtures/debugger-mmap-response.json'
+import foldlResponse from '../../../test/fixtures/debugger-foldl-response.json'
+import foldrResponse from '../../../test/fixtures/debugger-foldr-response.json'
 
 const theme = createTheme()
 
@@ -262,6 +264,75 @@ describe('Debugger over a binding, which shows as the same table', () => {
     for (const row of rows) {
       await userEvent.click(within(row).getByText('↦'))
       expect(within(row).getAllByText(/\/fn/).length).toBeGreaterThan(0)
+    }
+  })
+})
+
+// Real runs of a fold from each end, reduced as the mapping's is:
+// `/Data/List/foldl(lst= [1, 2, 3], fn(acc, v)= acc + v, init= 0)`, whose rows are 0+1=1, 1+2=3 and
+// 3+3=6, and `/Data/List/foldr(lst= ["a", "b", "c"], fn(acc, v)= acc ++ v, init= "")`, whose rows are
+// cb+a=cba, c+b=cb and +c=c. Both are a chain of calls of the fold with one call of the step beside
+// each link: after the next link in a left fold, and around it in a right one, where the step is
+// handed what the rest of the list folded to.
+describe('Debugger over a fold, which shows as its accumulator threaded through the rows', () => {
+  beforeEach(() => {
+    global.fetch = vi.fn(() => Promise.reject(new Error('Debugger must not fetch')))
+  })
+
+  function run(response, fun) {
+    return {
+      '/run': { tag: 'StrVal', contents: JSON.stringify(response) },
+      '/fun': { tag: 'StrVal', contents: fun },
+    }
+  }
+
+  async function openFold(response, name) {
+    render(<Providers><Debugger {...run(response, name)} /></Providers>)
+    const [root] = screen.getAllByRole('treeitem')
+    await userEvent.click(within(root).getByText(name))
+    return root
+  }
+
+  it('shows a left fold as its rows from init down to the result', async () => {
+    const fold = await openFold(foldlResponse, '/Data/List/foldl')
+
+    const rows = within(fold).getAllByRole('treeitem')
+    expect(rows).toHaveLength(3)
+    expect(rows[1].textContent).toMatch(/^11⊕2↦3↙/)
+    expect(rows[2].textContent).toMatch(/^23⊕3↦6↓/)
+    const lines = Array.from(fold.querySelectorAll('.catln-steps-row')).map(l => l.textContent)
+    expect(lines[1]).toMatch(/^init.*0↙$/)
+    expect(lines[lines.length - 1]).toMatch(/=6$/)
+  })
+
+  it('shows a right fold as its rows from init up to the result', async () => {
+    const fold = await openFold(foldrResponse, '/Data/List/foldr')
+
+    const rows = within(fold).getAllByRole('treeitem')
+    expect(rows).toHaveLength(3)
+    expect(rows[0].textContent).toMatch(/^0cb⊕a↦cba↑/)
+    expect(rows[2].textContent).toMatch(/^2⊕c↦c↖/)
+    const lines = Array.from(fold.querySelectorAll('.catln-steps-row')).map(l => l.textContent)
+    expect(lines[1]).toMatch(/=cba$/)
+    expect(lines[lines.length - 1]).toMatch(/^init.*↖$/)
+  })
+
+  it('folds the chain of recursive calls into the one table', async () => {
+    const fold = await openFold(foldrResponse, '/Data/List/foldr')
+
+    expect(within(fold).queryAllByText('/Data/List/foldr')).toHaveLength(1)
+    expect(within(fold).queryByText(/\|::\|/)).not.toBeInTheDocument()
+  })
+
+  it('opens each row onto the call of the step for its element', async () => {
+    for (const [response, name] of [[foldlResponse, '/Data/List/foldl'], [foldrResponse, '/Data/List/foldr']]) {
+      const fold = await openFold(response, name)
+      const rows = within(fold).getAllByRole('treeitem')
+      for (const row of rows) {
+        await userEvent.click(within(row).getByText('↦'))
+        expect(within(row).getAllByText(/\/fn/).length).toBeGreaterThan(0)
+      }
+      cleanup()
     }
   })
 })

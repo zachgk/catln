@@ -2,6 +2,28 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
+                ( "/Catln/Doc/Show/FoldStep"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Doc/Show/FoldStep( Value /index -> /Data/Primitive/Integer )( Value /acc -> /Data/String )( Value /input -> /Data/String )( Value /output -> /Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Doc/Show/FoldSteps"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Doc/Show/FoldSteps( Value /init -> /Data/String )
+                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep ] )( Value /result -> /Data/String )( Value /fromRight -> ∀/Data/Primitive/Boolean )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Doc/Show/Rendered"
                 , ObjectMapItem
                     { omiDecls =
@@ -41,12 +63,15 @@ Prgm
         [ CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Catln/Doc/Show/Rendered
             , cgcExtends =
                 [ /Catln/Doc/Show/Rendered..
                 , /Catln/Doc/Show/Steps..
+                , /Catln/Doc/Show/FoldSteps..
                 ]
             , cgcDoc = Just ""
             }

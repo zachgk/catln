@@ -1,5 +1,7 @@
 import React, {createContext, useContext} from 'react';
 
+import {useTheme} from '@mui/material/styles';
+
 import {TreeItem} from '@mui/x-tree-view/TreeItem';
 
 import {valList} from '../Common';
@@ -20,7 +22,8 @@ const CallStepsContext = createContext([]);
 // This draws a /Catln/Doc/Show/Steps and knows nothing about which call it is of. Which is the point:
 // a mapping over a list produces one of these because `stack/core/list-webdocs.ct` says an arm of
 // dshowCall over an fmap of a ConsList builds one, not because there is anything here that knows what
-// fmap is. A fold or a filter shown the same way reaches this same component.
+// fmap is. A binding over a list reaches this same component, and a filter through the binding it is
+// written as. A fold does not: it hands an accumulator from row to row, and draws as FoldSteps.
 //
 // Rows are tree items rather than table rows, because a row opens onto the evaluation that produced
 // it and a <table> cannot hold a TreeItem. The columns are a grid laid on each row's label, which is
@@ -35,7 +38,7 @@ function Steps(props) {
 
   return (
     <>
-      <StepRow className="catln-steps-head" cells={["#", "in", "", "out"]} />
+      <StepLine><StepRow className="catln-steps-head" cells={["#", "in", "", "out"]} /></StepLine>
       {steps.map((step, i) => {
         const args = step && step.args ? step.args : {};
         const children = rowNodes[i];
@@ -53,6 +56,23 @@ function Steps(props) {
       })}
     </>
   );
+}
+
+// A line of a step table that is not a row: its heading, or a line a table draws above or below its
+// rows. Laid where a row's label is laid and in the label's type, so its columns line up with the rows'.
+//
+// A row is a TreeItem, whose label sits after the item's own padding, its icon container and the gap
+// between them, and is set in body1 -- the offset and the type are the x-tree-view TreeItem's, read
+// from the same theme. A line written loose beside the rows gets neither: it starts at the rows' left
+// edge and in the page's smaller type, and since the columns are sized in ems it is narrower too.
+function StepLine(props) {
+  const theme = useTheme();
+  const style = {
+    display: 'block',
+    paddingLeft: `calc(${theme.spacing(2)} + 16px)`,
+    fontSize: theme.typography.body1.fontSize,
+  };
+  return <div style={style}>{props.children}</div>;
 }
 
 // One row's four columns. The arrow is drawn here and is not in the step: a row points from one end
@@ -93,4 +113,4 @@ const indexStyle = {opacity: 0.6, textAlign: 'right'};
 const arrowStyle = {opacity: 0.6, textAlign: 'center'};
 
 export default Steps;
-export {CallStepsContext};
+export {CallStepsContext, StepLine};

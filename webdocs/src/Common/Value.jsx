@@ -22,6 +22,7 @@ import Overlay from './Values/Overlay';
 import Properties from './Values/Properties';
 import Rendered from './Values/Rendered';
 import Steps from './Values/Steps';
+import FoldSteps from './Values/FoldSteps';
 import {BuildFile, CatlnResult} from './Values/BuildResult';
 
 // A Value may be given an update function by whatever rendered it. Calling update(src) asks for
@@ -124,6 +125,9 @@ function Value(props) {
     // mapping over a list draws one of these because the list library says so.
     case "/Catln/Doc/Show/Steps":
       return <Steps {...val.args} />;
+    // A fold shown the same way, with the accumulator each step was handed and handed on.
+    case "/Catln/Doc/Show/FoldSteps":
+      return <FoldSteps {...val.args} />;
     default:
       let showArgs = "";
       if(Object.keys(val.args).length > 0) {
