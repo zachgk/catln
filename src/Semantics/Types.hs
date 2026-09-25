@@ -3270,6 +3270,24 @@ partialsOverlapSat typeEnv vaenv satUse hyps a0 b0 =
         Just dnf -> any (\g -> satGoal typeEnv vaenv satUse hyps
                           (mergeSatGoals g (SatGoal [SatLeafs [a{ptPreds=PredsNone}], SatLeafs [b{ptPreds=PredsNone}]] []))) dnf
 
+-- | Everything a field of a partial can hold, by what its name's data objects declare there: the
+-- UNION of the field's declared type across all of them, instantiated in the partial's own scope.
+-- 'Nothing' when no data object of the name declares the field.
+--
+-- This is the clamp 'isSubPartialOfWithEnv' and 'partialCoversSat' re-read a sub's field through:
+-- no constructible value holds a field outside what is declared for it. It has to be the union.
+-- A name can have more than one data object -- a value a page declares is one, beside the
+-- declaration it is a value of -- and a value is built from any of them, so a field may hold what
+-- any of them allows. Clamping by each object in turn and accepting if one fit read a field as
+-- empty whenever it missed one object's field (a task's @state=True@ against another page's task
+-- with @state=False@), and an empty field made the whole sub empty: one task of a note was then a
+-- subtype of every other, and the union of a page's tasks dropped it as already covered.
+declaredArgBound :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> PartialType -> ArgName -> Maybe Type
+declaredArgBound typeEnv vaenv sub k = case bounds of
+  [] -> Nothing
+  _  -> Just $ unionAllTypesWithEnv typeEnv vaenv bounds
+  where bounds = [freeTVIntToTopDeep typeEnv vaenv sub d | PartialType{ptArgs=dArgs} <- typeGraphData typeEnv (ptName sub), Just d <- [H.lookup k dArgs]]
+
 -- | Proven cover of a shape by another: every value matching @sub@ matches @sup@.
 -- Conservative towards 'False' (unproven cover), the safe direction for escape checks.
 -- Mirrors 'isSubPartialOfWithEnv'. A sub-side element that is an unresolved type variable is
@@ -3426,8 +3444,7 @@ partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
     -- refusing it here contradicted the partial subtype (which proved it inside the class's
     -- own member template) and left a concrete list with no path to its display class.
     argCovered k tSub tSup = elemCoveredIn argEnv (tSub, tSup)
-      || any (\d -> elemCoveredIn argEnv (intersectTypesEnv typeEnv argEnv tSub d, tSup)) (declArgBounds k)
-    declArgBounds k = [freeTVIntToTopDeep typeEnv argEnv subEff d | PartialType{ptArgs=dArgs} <- typeGraphData typeEnv (ptName sub), Just d <- [H.lookup k dArgs]]
+      || maybe False (\d -> elemCoveredIn argEnv (intersectTypesEnv typeEnv argEnv tSub d, tSup)) (declaredArgBound typeEnv argEnv subEff k)
     -- The bound is a template over the SUB's own parameters, instantiated in the spelling its
     -- values actually carry ('withEffectivePtVars').
     subEff = withEffectivePtVars typeEnv argEnv sub
@@ -4258,8 +4275,7 @@ isSubPartialOfWithEnvNRaw typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=s
     hasAll sb sp = and $ H.elems $ H.intersectionWithKey argOk (fmap (freeExt . freeTVIntToTop sub) sb) (fmap (freeExt . freeTVIntToTop super) sp)
       where
         argOk k sbVal spVal = isSubtypeOfWithEnv typeEnv vaenv' sbVal spVal
-          || any (\d -> isSubtypeOfWithEnv typeEnv vaenv' (intersectTypesEnv typeEnv vaenv' sbVal d) spVal) (declArgBounds k)
-        declArgBounds k = [freeTVIntToTopDeep typeEnv vaenv subEff d | PartialType{ptArgs=dArgs} <- typeGraphData typeEnv (ptName sub), Just d <- [H.lookup k dArgs]]
+          || maybe False (\d -> isSubtypeOfWithEnv typeEnv vaenv' (intersectTypesEnv typeEnv vaenv' sbVal d) spVal) (declaredArgBound typeEnv vaenv subEff k)
     -- Type parameters: mirrors 'partialCoversSat'. Under projection a Top-valued parameter on
     -- the sub side is no constraint, and is equivalent to the parameter being absent.
     --
