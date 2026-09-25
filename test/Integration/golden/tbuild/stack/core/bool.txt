@@ -81,7 +81,7 @@ Prgm
                             ( EAppArg { eaaArg = Value /a } )
                             ( EAppArg { eaaArg = Value /b } )
                             ( EAppArg
-                                { eaaArg = Value /this -> /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] }
+                                { eaaArg = Value /this -> /Data/Primitive/BoolEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] }
                             ) -> ∀/Data/Primitive/Boolean =
                             ( /Data/Primitive/boolEq
                                 ( EAppArg
@@ -134,7 +134,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/eq
-                            ( EAppArg { eaaArg = Value /this -> ∀/Data/Primitive/Boolean } ) -> /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] = Value /Data/Primitive/BoolEqv
+                            ( EAppArg { eaaArg = Value /this -> ∀/Data/Primitive/Boolean } ) -> /Data/Primitive/BoolEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] = Value /Data/Primitive/BoolEqv
                         ]
                     }
                 )
@@ -275,7 +275,7 @@ Prgm
                                             , fromList []
                                             , []
                                             )
-                                        , /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ]
+                                        , /Data/Primitive/BoolEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ]
                                         , []
                                         ) =
                                         ( /eq
@@ -287,7 +287,7 @@ Prgm
                                                 , fromList []
                                                 , []
                                                 )
-                                            , /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ]
+                                            , /Data/Primitive/BoolEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ]
                                             , []
                                             )
                                         )

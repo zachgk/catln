@@ -11,7 +11,7 @@ Prgm
                         [ /maybeBind
                             ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) ->
                             ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Maybe[ /T=TopType ] ) = /Data/bindap( Value /m -> TVArg /m = Value /m )
-                            ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /maybeBind.$b5054c( Value /m -> TVArg /m = Value /m )( Value /$b5054c-arg -> TVArg /v = Value /v ) )
+                            ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /maybeBind.$b5054c( Value /m -> TVArg /m = Value /m )( Value /$b5054c-arg -> TVArg /v = Value /v ) )
                         ]
                     }
                 )

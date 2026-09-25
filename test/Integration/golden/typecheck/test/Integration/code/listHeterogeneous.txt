@@ -43,11 +43,11 @@ Prgm
                         [ /countMixed( Value /ks -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/Primitive/Integer = CInt
                             { ciValue = 0 }
                         , /countMixed
-                            ( Value /ks -> /Data/List/Cons[ /T=∀/Mixed ]
-                                ( /head=∀/Mixed
-                                , /tail=∀/Data/List/ConsList[ /T=∀/Mixed ]
-                                ) = /Data/List/Cons( Value /head -> ∀/Mixed )
-                                ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Mixed ] )
+                            ( Value /ks -> /Data/List/Cons
+                                ( /head=TopType
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                )| PredClass /Data/List[ /T=∀/Mixed ] = /Data/List/Cons( Value /head )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
                             ) -> /Data/Primitive/Integer = /operator+
                             ( Value /l -> /Data/Primitive/Integer = CInt
                                 { ciValue = 1 }
@@ -107,13 +107,13 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /countMixed
-                ( Value /ks -> /Data/List/Cons[ /T=/Mixed/Plain ]
+                ( Value /ks -> /Data/List/Cons
                     ( /head=/Mixed/Plain
                     , /tail=/Data/List/Cons[ /T=/Mixed/Plain ]
                         ( /head=/Mixed/Plain
                         , /tail=/Data/List/Nil
                         )
-                    ) = /Data/List/Cons( Value /head -> /Mixed/Plain = Value /Mixed/Plain )
+                    )| PredClass /Data/List[ /T=∀/Mixed ] = /Data/List/Cons( Value /head -> /Mixed/Plain = Value /Mixed/Plain )
                     ( Value /tail -> /Data/List/Cons[ /T=/Mixed/Plain ]
                         ( /head=/Mixed/Plain
                         , /tail=/Data/List/Nil
@@ -131,14 +131,14 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /countMixed
-                ( Value /ks -> /Data/List/Cons[ /T=∀/Mixed ]
+                ( Value /ks -> /Data/List/Cons
                     ( /head=/Mixed/Plain
                     , /tail=/Data/List/Cons
                         [ /T=/Mixed/Tagged( /value=/Data/String ) ]
                         ( /head=/Mixed/Tagged( /value=/Data/String )
                         , /tail=/Data/List/Nil
                         )
-                    ) = /Data/List/Cons( Value /head -> /Mixed/Plain = Value /Mixed/Plain )
+                    )| PredClass /Data/List[ /T=∀/Mixed ] = /Data/List/Cons( Value /head -> /Mixed/Plain = Value /Mixed/Plain )
                     ( Value /tail -> /Data/List/Cons
                         [ /T=/Mixed/Tagged( /value=/Data/String ) ]
                         ( /head=/Mixed/Tagged( /value=/Data/String )
@@ -157,13 +157,13 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /countMixed
-                ( Value /ks -> /Data/List/Cons[ /T=∀/Mixed ]
+                ( Value /ks -> /Data/List/Cons
                     ( /head=/Mixed/Tagged( /value=/Data/String )
                     , /tail=/Data/List/Cons[ /T=/Mixed/Plain ]
                         ( /head=/Mixed/Plain
                         , /tail=/Data/List/Nil
                         )
-                    ) = /Data/List/Cons
+                    )| PredClass /Data/List[ /T=∀/Mixed ] = /Data/List/Cons
                     ( Value /head -> /Mixed/Tagged( /value=/Data/String ) = /Mixed/Tagged
                         ( Value /value -> /Data/String = CStr
                             { csValue = "x" }
@@ -181,7 +181,7 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /countMixed
-                ( Value /ks -> /Data/List/Cons[ /T=∀/Mixed ]
+                ( Value /ks -> /Data/List/Cons
                     ( /head=/Mixed/Plain
                     , /tail=/Data/List/Cons
                         [ /T=
@@ -193,7 +193,7 @@ Prgm
                             , /tail=/Data/List/Nil
                             )
                         )
-                    ) = /Data/List/Cons( Value /head -> /Mixed/Plain = Value /Mixed/Plain )
+                    )| PredClass /Data/List[ /T=∀/Mixed ] = /Data/List/Cons( Value /head -> /Mixed/Plain = Value /Mixed/Plain )
                     ( Value /tail -> /Data/List/Cons
                         [ /T=
                             ( /Mixed/Tagged( /value=/Data/String ) + /Mixed/Plain )

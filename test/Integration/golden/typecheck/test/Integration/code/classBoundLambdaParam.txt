@@ -44,8 +44,8 @@ Prgm
                                     )
                                 , []
                                 ) = /operator==
-                                ( Value /l -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) = /Data/Maybe/Some( Value /value -> TVArg /w = Value /w ) )
-                                ( Value /r -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) = /Data/Maybe/Some( Value /value -> TVArg /probe = Value /probe ) )
+                                ( Value /l -> /Data/Maybe/Some( /value=∀/Data/Algebra/Eq )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some( Value /value -> TVArg /w = Value /w ) )
+                                ( Value /r -> /Data/Maybe/Some( /value=∀/Data/Algebra/Eq )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some( Value /value -> TVArg /probe = Value /probe ) )
                             )( Value /dflt -> /Data/Primitive/False = Value /Data/Primitive/False )
                         ]
                     }
@@ -64,11 +64,11 @@ Prgm
                         [ /headTo( Value /lst -> /Data/List/Nil = Value /Data/List/Nil )
                             ( /fn( Value /w ) )( Value /dflt ) -> TVArg /dflt = Value /dflt
                         , /headTo
-                            ( Value /lst -> /Data/List/Cons[ /T=∀/Data/Algebra/Eq ]
-                                ( /head=∀/Data/Algebra/Eq
-                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ]
-                                ) = /Data/List/Cons( Value /head -> ∀/Data/Algebra/Eq )
-                                ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ] )
+                            ( Value /lst -> /Data/List/Cons
+                                ( /head=TopType
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                )| PredClass /Data/List[ /T=∀/Data/Algebra/Eq ] = /Data/List/Cons( Value /head )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
                             )
                             ( /fn( Value /w ) )( Value /dflt )= /fn( Value /w -> TVArg /head = Value /head )
                         ]
@@ -127,17 +127,17 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /headTo
-                ( Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                ( Value /lst -> /Data/List/Cons
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/List/Nil
-                    ) = /Data/List/Cons
+                    )| PredClass /Data/List[ /T=∀/Data/Algebra/Eq ] = /Data/List/Cons
                     ( Value /head -> /Data/Primitive/Integer = CInt
                         { ciValue = 3 }
                     )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                 )
-                ( /fn( Value /w -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean = /operator==
-                    ( Value /l -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some( Value /value -> TVArg /w = Value /w ) )
-                    ( Value /r -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                ( /fn( Value /w -> ∀/Data/Algebra/Eq ) -> ∀/Data/Primitive/Boolean = /operator==
+                    ( Value /l -> /Data/Maybe/Some( /value=∀/Data/Algebra/Eq )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some( Value /value -> TVArg /w = Value /w ) )
+                    ( Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
                         ( Value /value -> /Data/Primitive/Integer = CInt
                             { ciValue = 3 }
                         )
@@ -150,8 +150,8 @@ Prgm
         , /Catln/#print
             ( Value /p -> /Data/Primitive/False = /headTo( Value /lst -> /Data/List/Nil = Value /Data/List/Nil )
                 ( /fn( Value /w -> ∀/Data/Algebra/Eq ) -> ∀/Data/Primitive/Boolean = /operator==
-                    ( Value /l -> /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) = /Data/Maybe/Some( Value /value -> TVArg /w = Value /w ) )
-                    ( Value /r -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                    ( Value /l -> /Data/Maybe/Some( /value=∀/Data/Algebra/Eq )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some( Value /value -> TVArg /w = Value /w ) )
+                    ( Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
                         ( Value /value -> /Data/Primitive/Integer = CInt
                             { ciValue = 3 }
                         )
@@ -163,15 +163,15 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /headTo
-                ( Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                ( Value /lst -> /Data/List/Cons
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/List/Nil
-                    ) = /Data/List/Cons
+                    )| PredClass /Data/List[ /T=∀/Data/Algebra/Eq ] = /Data/List/Cons
                     ( Value /head -> /Data/Primitive/Integer = CInt
                         { ciValue = 3 }
                     )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                 )
-                ( /fn( Value /w -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /w = Value /w )
+                ( /fn( Value /w -> ∀/Data/Algebra/Eq ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /w = Value /w )
                     ( Value /r -> /Data/Primitive/Integer = CInt
                         { ciValue = 1 }
                     )
@@ -194,10 +194,10 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /viaGeneric
-                ( Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                ( Value /lst -> /Data/List/Cons
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/List/Nil
-                    ) = /Data/List/Cons
+                    )| PredClass /Data/List[ /T=∀/Data/Algebra/Eq ] = /Data/List/Cons
                     ( Value /head -> /Data/Primitive/Integer = CInt
                         { ciValue = 3 }
                     )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
@@ -211,10 +211,10 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /viaGeneric
-                ( Value /lst -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                ( Value /lst -> /Data/List/Cons
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/List/Nil
-                    ) = /Data/List/Cons
+                    )| PredClass /Data/List[ /T=∀/Data/Algebra/Eq ] = /Data/List/Cons
                     ( Value /head -> /Data/Primitive/Integer = CInt
                         { ciValue = 4 }
                     )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
@@ -228,10 +228,10 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /viaGeneric
-                ( Value /lst -> /Data/List/Cons[ /T=/Data/String ]
+                ( Value /lst -> /Data/List/Cons
                     ( /head=/Data/String
                     , /tail=/Data/List/Nil
-                    ) = /Data/List/Cons
+                    )| PredClass /Data/List[ /T=∀/Data/Algebra/Eq ] = /Data/List/Cons
                     ( Value /head -> /Data/String = CStr
                         { csValue = "a" }
                     )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
@@ -256,8 +256,8 @@ Prgm
                     { ciValue = 3 }
                 )
                 ( /fn( Value /v -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean = /operator==
-                    ( Value /l -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some( Value /value -> TVArg /v = Value /v ) )
-                    ( Value /r -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                    ( Value /l -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some( Value /value -> TVArg /v = Value /v ) )
+                    ( Value /r -> /Data/Maybe/Some( /value=/Data/Primitive/Integer )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some
                         ( Value /value -> /Data/Primitive/Integer = CInt
                             { ciValue = 3 }
                         )

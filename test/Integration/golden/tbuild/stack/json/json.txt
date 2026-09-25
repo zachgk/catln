@@ -11,25 +11,25 @@ Prgm
                         [ /Catln/Doc/dshow
                             ( EAppArg { eaaArg = Value /s -> ∀/Data/Json } ) -> /Catln/Doc/Show/Rendered
                             ( /value=∀/Data/Json
-                            , /assets=/Data/List/Cons[ /T=/Data/String ]
+                            , /assets=/Data/List/Cons
                                 ( /head=/Data/String
                                 , /tail=/Data/List/Cons[ /T=/Data/String ]
                                     ( /head=/Data/String
                                     , /tail=/Data/List/Nil
                                     )
-                                )
+                                )| PredClass /Data/List[ /T=/Data/String ]
                             ) = /Catln/Doc/Show/Rendered
                             ( EAppArg
                                 { eaaArg = Value /value -> TVArg /s = ( Value /s ↦ TVArg /s ) }
                             )
                             ( EAppArg
-                                { eaaArg = Value /assets -> /Data/List/Cons[ /T=/Data/String ]
+                                { eaaArg = Value /assets -> /Data/List/Cons
                                     ( /head=/Data/String
                                     , /tail=/Data/List/Cons[ /T=/Data/String ]
                                         ( /head=/Data/String
                                         , /tail=/Data/List/Nil
                                         )
-                                    ) = /Data/List/Cons
+                                    )| PredClass /Data/List[ /T=/Data/String ] = /Data/List/Cons
                                     ( EAppArg
                                         { eaaArg = Value /head -> /Data/String = "json/json.js" }
                                     )
@@ -49,25 +49,25 @@ Prgm
                         , /Catln/Doc/dshow
                             ( EAppArg { eaaArg = Value /s -> /Data/Json/Member.. } ) -> /Catln/Doc/Show/Rendered
                             ( /value=/Data/Json/Member..
-                            , /assets=/Data/List/Cons[ /T=/Data/String ]
+                            , /assets=/Data/List/Cons
                                 ( /head=/Data/String
                                 , /tail=/Data/List/Cons[ /T=/Data/String ]
                                     ( /head=/Data/String
                                     , /tail=/Data/List/Nil
                                     )
-                                )
+                                )| PredClass /Data/List[ /T=/Data/String ]
                             ) = /Catln/Doc/Show/Rendered
                             ( EAppArg
                                 { eaaArg = Value /value -> TVArg /s = ( Value /s ↦ TVArg /s ) }
                             )
                             ( EAppArg
-                                { eaaArg = Value /assets -> /Data/List/Cons[ /T=/Data/String ]
+                                { eaaArg = Value /assets -> /Data/List/Cons
                                     ( /head=/Data/String
                                     , /tail=/Data/List/Cons[ /T=/Data/String ]
                                         ( /head=/Data/String
                                         , /tail=/Data/List/Nil
                                         )
-                                    ) = /Data/List/Cons
+                                    )| PredClass /Data/List[ /T=/Data/String ] = /Data/List/Cons
                                     ( EAppArg
                                         { eaaArg = Value /head -> /Data/String = "json/json.js" }
                                     )
@@ -319,16 +319,16 @@ Prgm
                     ( /Data/typeName
                         ( EAppArg
                             { eaaArg = Value /value -> /Data/Json/Array
-                                ( /entries=/Data/List/Cons[ /T=/Data/Json/Null ]
+                                ( /entries=/Data/List/Cons
                                     ( /head=/Data/Json/Null
                                     , /tail=/Data/List/Nil
-                                    )
+                                    )| PredClass /Data/List[ /T=∀/Data/Json ]
                                 ) = /Data/Json/Array
                                 ( EAppArg
-                                    { eaaArg = Value /entries -> /Data/List/Cons[ /T=/Data/Json/Null ]
+                                    { eaaArg = Value /entries -> /Data/List/Cons
                                         ( /head=/Data/Json/Null
                                         , /tail=/Data/List/Nil
-                                        ) = /Data/List/Cons
+                                        )| PredClass /Data/List[ /T=∀/Data/Json ] = /Data/List/Cons
                                         ( EAppArg { eaaArg = Value /head -> /Data/Json/Null = Value /Data/Json/Null } )
                                         ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
                                     }
@@ -348,31 +348,21 @@ Prgm
                         ( EAppArg
                             { eaaArg = Value /value -> /Data/Json/Object
                                 ( /entries=/Data/List/Cons
-                                    [ /T=/Data/Json/Member
-                                        ( /value=/Data/Json/Null
-                                        , /key=/Data/String
-                                        )
-                                    ]
                                     ( /head=/Data/Json/Member
                                         ( /value=/Data/Json/Null
                                         , /key=/Data/String
                                         )
                                     , /tail=/Data/List/Nil
-                                    )
+                                    )| PredClass /Data/List[ /T=/Data/Json/Member.. ]
                                 ) = /Data/Json/Object
                                 ( EAppArg
                                     { eaaArg = Value /entries -> /Data/List/Cons
-                                        [ /T=/Data/Json/Member
-                                            ( /value=/Data/Json/Null
-                                            , /key=/Data/String
-                                            )
-                                        ]
                                         ( /head=/Data/Json/Member
                                             ( /value=/Data/Json/Null
                                             , /key=/Data/String
                                             )
                                         , /tail=/Data/List/Nil
-                                        ) = /Data/List/Cons
+                                        )| PredClass /Data/List[ /T=/Data/Json/Member.. ] = /Data/List/Cons
                                         ( EAppArg
                                             { eaaArg = Value /head -> /Data/Json/Member
                                                 ( /value=/Data/Json/Null
@@ -409,9 +399,6 @@ Prgm
                         ( EAppArg
                             { eaaArg = Value /value -> /Data/Json/Array
                                 ( /entries=/Data/List/Cons
-                                    [ /T=
-                                        ( /Data/Json/Bool( /value=/Data/Primitive/True ) + /Data/Json/Null + /Data/Json/Str( /value=/Data/String ) )
-                                    ]
                                     ( /head=/Data/Json/Null
                                     , /tail=/Data/List/Cons
                                         [ /T=
@@ -424,13 +411,10 @@ Prgm
                                             , /tail=/Data/List/Nil
                                             )
                                         )
-                                    )
+                                    )| PredClass /Data/List[ /T=∀/Data/Json ]
                                 ) = /Data/Json/Array
                                 ( EAppArg
                                     { eaaArg = Value /entries -> /Data/List/Cons
-                                        [ /T=
-                                            ( /Data/Json/Bool( /value=/Data/Primitive/True ) + /Data/Json/Null + /Data/Json/Str( /value=/Data/String ) )
-                                        ]
                                         ( /head=/Data/Json/Null
                                         , /tail=/Data/List/Cons
                                             [ /T=
@@ -443,7 +427,7 @@ Prgm
                                                 , /tail=/Data/List/Nil
                                                 )
                                             )
-                                        ) = /Data/List/Cons
+                                        )| PredClass /Data/List[ /T=∀/Data/Json ] = /Data/List/Cons
                                         ( EAppArg { eaaArg = Value /head -> /Data/Json/Null = Value /Data/Json/Null } )
                                         ( EAppArg
                                             { eaaArg = Value /tail -> /Data/List/Cons
@@ -497,25 +481,23 @@ Prgm
                         ( EAppArg
                             { eaaArg = Value /value -> /Data/Json/Array
                                 ( /entries=/Data/List/Cons
-                                    [ /T=/Data/Json/Str( /value=/Data/String ) ]
                                     ( /head=/Data/Json/Str( /value=/Data/String )
                                     , /tail=/Data/List/Cons
                                         [ /T=/Data/Json/Str( /value=/Data/String ) ]
                                         ( /head=/Data/Json/Str( /value=/Data/String )
                                         , /tail=/Data/List/Nil
                                         )
-                                    )
+                                    )| PredClass /Data/List[ /T=∀/Data/Json ]
                                 ) = /Data/Json/Array
                                 ( EAppArg
                                     { eaaArg = Value /entries -> /Data/List/Cons
-                                        [ /T=/Data/Json/Str( /value=/Data/String ) ]
                                         ( /head=/Data/Json/Str( /value=/Data/String )
                                         , /tail=/Data/List/Cons
                                             [ /T=/Data/Json/Str( /value=/Data/String ) ]
                                             ( /head=/Data/Json/Str( /value=/Data/String )
                                             , /tail=/Data/List/Nil
                                             )
-                                        ) = /Data/List/Cons
+                                        )| PredClass /Data/List[ /T=∀/Data/Json ] = /Data/List/Cons
                                         ( EAppArg
                                             { eaaArg = Value /head -> /Data/Json/Str( /value=/Data/String ) = /Data/Json/Str
                                                 ( EAppArg
@@ -556,12 +538,6 @@ Prgm
                         ( EAppArg
                             { eaaArg = Value /value -> /Data/Json/Object
                                 ( /entries=/Data/List/Cons
-                                    [ /T=/Data/Json/Member
-                                        ( /value=
-                                            ( /Data/Json/Null + /Data/Json/Str( /value=/Data/String ) )
-                                        , /key=/Data/String
-                                        )
-                                    ]
                                     ( /head=/Data/Json/Member
                                         ( /value=/Data/Json/Null
                                         , /key=/Data/String
@@ -578,16 +554,10 @@ Prgm
                                             )
                                         , /tail=/Data/List/Nil
                                         )
-                                    )
+                                    )| PredClass /Data/List[ /T=/Data/Json/Member.. ]
                                 ) = /Data/Json/Object
                                 ( EAppArg
                                     { eaaArg = Value /entries -> /Data/List/Cons
-                                        [ /T=/Data/Json/Member
-                                            ( /value=
-                                                ( /Data/Json/Null + /Data/Json/Str( /value=/Data/String ) )
-                                            , /key=/Data/String
-                                            )
-                                        ]
                                         ( /head=/Data/Json/Member
                                             ( /value=/Data/Json/Null
                                             , /key=/Data/String
@@ -604,7 +574,7 @@ Prgm
                                                 )
                                             , /tail=/Data/List/Nil
                                             )
-                                        ) = /Data/List/Cons
+                                        )| PredClass /Data/List[ /T=/Data/Json/Member.. ] = /Data/List/Cons
                                         ( EAppArg
                                             { eaaArg = Value /head -> /Data/Json/Member
                                                 ( /value=/Data/Json/Null
@@ -666,83 +636,50 @@ Prgm
                         ( EAppArg
                             { eaaArg = Value /value -> /Data/Json/Object
                                 ( /entries=/Data/List/Cons
-                                    [ /T=/Data/Json/Member
-                                        ( /value=/Data/Json/Array
-                                            ( /entries=/Data/List/Cons
-                                                [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
-                                                ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
-                                                , /tail=/Data/List/Cons
-                                                    [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
-                                                    ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
-                                                    , /tail=/Data/List/Nil
-                                                    )
-                                                )
-                                            )
-                                        , /key=/Data/String
-                                        )
-                                    ]
                                     ( /head=/Data/Json/Member
                                         ( /value=/Data/Json/Array
                                             ( /entries=/Data/List/Cons
-                                                [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                                 ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                 , /tail=/Data/List/Cons
                                                     [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                                     ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                     , /tail=/Data/List/Nil
                                                     )
-                                                )
+                                                )| PredClass /Data/List[ /T=∀/Data/Json ]
                                             )
                                         , /key=/Data/String
                                         )
                                     , /tail=/Data/List/Nil
-                                    )
+                                    )| PredClass /Data/List[ /T=/Data/Json/Member.. ]
                                 ) = /Data/Json/Object
                                 ( EAppArg
                                     { eaaArg = Value /entries -> /Data/List/Cons
-                                        [ /T=/Data/Json/Member
-                                            ( /value=/Data/Json/Array
-                                                ( /entries=/Data/List/Cons
-                                                    [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
-                                                    ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
-                                                    , /tail=/Data/List/Cons
-                                                        [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
-                                                        ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
-                                                        , /tail=/Data/List/Nil
-                                                        )
-                                                    )
-                                                )
-                                            , /key=/Data/String
-                                            )
-                                        ]
                                         ( /head=/Data/Json/Member
                                             ( /value=/Data/Json/Array
                                                 ( /entries=/Data/List/Cons
-                                                    [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                                     ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                     , /tail=/Data/List/Cons
                                                         [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                                         ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                         , /tail=/Data/List/Nil
                                                         )
-                                                    )
+                                                    )| PredClass /Data/List[ /T=∀/Data/Json ]
                                                 )
                                             , /key=/Data/String
                                             )
                                         , /tail=/Data/List/Nil
-                                        ) = /Data/List/Cons
+                                        )| PredClass /Data/List[ /T=/Data/Json/Member.. ] = /Data/List/Cons
                                         ( EAppArg
                                             { eaaArg = Value /head -> /Data/Json/Member
                                                 ( /value=/Data/Json/Array
                                                     ( /entries=/Data/List/Cons
-                                                        [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                                         ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                         , /tail=/Data/List/Cons
                                                             [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                                             ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                             , /tail=/Data/List/Nil
                                                             )
-                                                        )
+                                                        )| PredClass /Data/List[ /T=∀/Data/Json ]
                                                     )
                                                 , /key=/Data/String
                                                 ) = /Data/Json/Member
@@ -752,25 +689,23 @@ Prgm
                                                 ( EAppArg
                                                     { eaaArg = Value /value -> /Data/Json/Array
                                                         ( /entries=/Data/List/Cons
-                                                            [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                                             ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                             , /tail=/Data/List/Cons
                                                                 [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                                                 ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                                 , /tail=/Data/List/Nil
                                                                 )
-                                                            )
+                                                            )| PredClass /Data/List[ /T=∀/Data/Json ]
                                                         ) = /Data/Json/Array
                                                         ( EAppArg
                                                             { eaaArg = Value /entries -> /Data/List/Cons
-                                                                [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                                                 ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                                 , /tail=/Data/List/Cons
                                                                     [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                                                     ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                                                     , /tail=/Data/List/Nil
                                                                     )
-                                                                ) = /Data/List/Cons
+                                                                )| PredClass /Data/List[ /T=∀/Data/Json ] = /Data/List/Cons
                                                                 ( EAppArg
                                                                     { eaaArg = Value /head -> /Data/Json/Number( /value=/Data/Primitive/Float ) = /Data/Json/Number
                                                                         ( EAppArg

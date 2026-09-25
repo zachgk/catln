@@ -74,9 +74,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/rel( Value /a )( Value /b )
-                            ( Value /this -> /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Primitive/Boolean = /Data/Primitive/intEq( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
+                            ( Value /this -> /Data/Algebra/IntEqExample| PredClass /Data/Algebra/Eqv[ /T=TopType ] ) -> ∀/Data/Primitive/Boolean = /Data/Primitive/intEq( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
                         , /Data/Algebra/rel( Value /a )( Value /b )
-                            ( Value /this -> /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                            ( Value /this -> /Data/Algebra/AllEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         ]
                     }
                 )
@@ -224,7 +224,7 @@ Prgm
                 ( Value /b -> /Data/Primitive/Integer = CInt
                     { ciValue = 2 }
                 )
-                ( Value /this -> /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] = Value /Data/Algebra/IntEqExample )
+                ( Value /this -> /Data/Algebra/IntEqExample| PredClass /Data/Algebra/Eqv[ /T=TopType ] = Value /Data/Algebra/IntEqExample )
             )
             ( Value /result -> /Data/String = CStr
                 { csValue = "True" }
@@ -237,7 +237,7 @@ Prgm
                 ( Value /b -> /Data/Primitive/Integer = CInt
                     { ciValue = 3 }
                 )
-                ( Value /this -> /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] = Value /Data/Algebra/IntEqExample )
+                ( Value /this -> /Data/Algebra/IntEqExample| PredClass /Data/Algebra/Eqv[ /T=TopType ] = Value /Data/Algebra/IntEqExample )
             )
             ( Value /result -> /Data/String = CStr
                 { csValue = "False" }
@@ -250,7 +250,7 @@ Prgm
                 ( Value /b -> /Data/Primitive/Integer = CInt
                     { ciValue = 3 }
                 )
-                ( Value /this -> /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] = Value /Data/Algebra/AllEqv )
+                ( Value /this -> /Data/Algebra/AllEqv| PredClass /Data/Algebra/Eqv[ /T=TopType ] = Value /Data/Algebra/AllEqv )
             )
             ( Value /result -> /Data/String = CStr
                 { csValue = "True" }

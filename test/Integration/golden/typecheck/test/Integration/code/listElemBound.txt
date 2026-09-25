@@ -40,11 +40,11 @@ Prgm
                         [ /countBare( Value /ks -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/Primitive/Integer = CInt
                             { ciValue = 0 }
                         , /countBare
-                            ( Value /ks -> /Data/List/Cons[ /T=/Bare ]
-                                ( /head=/Bare
-                                , /tail=∀/Data/List/ConsList[ /T=/Bare ]
-                                ) = /Data/List/Cons( Value /head -> /Bare )
-                                ( Value /tail -> ∀/Data/List/ConsList[ /T=/Bare ] )
+                            ( Value /ks -> /Data/List/Cons
+                                ( /head=TopType
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                )| PredClass /Data/List[ /T=/Bare ] = /Data/List/Cons( Value /head )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
                             ) -> /Data/Primitive/Integer = /operator+
                             ( Value /l -> /Data/Primitive/Integer = CInt
                                 { ciValue = 1 }
@@ -94,11 +94,11 @@ Prgm
                         [ /countAll( Value /ks -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/Primitive/Integer = CInt
                             { ciValue = 0 }
                         , /countAll
-                            ( Value /ks -> /Data/List/Cons[ /T=/Item.. ]
-                                ( /head=/Item..
-                                , /tail=∀/Data/List/ConsList[ /T=/Item.. ]
-                                ) = /Data/List/Cons( Value /head -> /Item.. )
-                                ( Value /tail -> ∀/Data/List/ConsList[ /T=/Item.. ] )
+                            ( Value /ks -> /Data/List/Cons
+                                ( /head=TopType
+                                , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                )| PredClass /Data/List[ /T=/Item.. ] = /Data/List/Cons( Value /head )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] )
                             ) -> /Data/Primitive/Integer = /operator+
                             ( Value /l -> /Data/Primitive/Integer = CInt
                                 { ciValue = 1 }
@@ -150,14 +150,13 @@ Prgm
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /countAll
                 ( Value /ks -> /Data/List/Cons
-                    [ /T=/Item( /n=/Data/Primitive/Integer ) ]
                     ( /head=/Item( /n=/Data/Primitive/Integer )
                     , /tail=/Data/List/Cons
                         [ /T=/Item( /n=/Data/Primitive/Integer ) ]
                         ( /head=/Item( /n=/Data/Primitive/Integer )
                         , /tail=/Data/List/Nil
                         )
-                    ) = /Data/List/Cons
+                    )| PredClass /Data/List[ /T=/Item.. ] = /Data/List/Cons
                     ( Value /head -> /Item( /n=/Data/Primitive/Integer ) = /Item
                         ( Value /n -> /Data/Primitive/Integer = CInt
                             { ciValue = 1 }
@@ -223,13 +222,13 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /countBare
-                ( Value /ks -> /Data/List/Cons[ /T=/Bare ]
+                ( Value /ks -> /Data/List/Cons
                     ( /head=/Bare
                     , /tail=/Data/List/Cons[ /T=/Bare ]
                         ( /head=/Bare
                         , /tail=/Data/List/Nil
                         )
-                    ) = /Data/List/Cons( Value /head -> /Bare = Value /Bare )
+                    )| PredClass /Data/List[ /T=/Bare ] = /Data/List/Cons( Value /head -> /Bare = Value /Bare )
                     ( Value /tail -> /Data/List/Cons[ /T=/Bare ]
                         ( /head=/Bare
                         , /tail=/Data/List/Nil

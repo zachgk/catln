@@ -10,21 +10,21 @@ Prgm
                     , omiDefs =
                         [ /Catln/Doc/dshow( Value /s -> ∀/Data/Json ) -> /Catln/Doc/Show/Rendered
                             ( /value=∀/Data/Json
-                            , /assets=/Data/List/Cons[ /T=/Data/String ]
+                            , /assets=/Data/List/Cons
                                 ( /head=/Data/String
                                 , /tail=/Data/List/Cons[ /T=/Data/String ]
                                     ( /head=/Data/String
                                     , /tail=/Data/List/Nil
                                     )
-                                )
+                                )| PredClass /Data/List[ /T=/Data/String ]
                             ) = /Catln/Doc/Show/Rendered( Value /value -> TVArg /s = Value /s )
-                            ( Value /assets -> /Data/List/Cons[ /T=/Data/String ]
+                            ( Value /assets -> /Data/List/Cons
                                 ( /head=/Data/String
                                 , /tail=/Data/List/Cons[ /T=/Data/String ]
                                     ( /head=/Data/String
                                     , /tail=/Data/List/Nil
                                     )
-                                ) = /Data/List/Cons
+                                )| PredClass /Data/List[ /T=/Data/String ] = /Data/List/Cons
                                 ( Value /head -> /Data/String = CStr
                                     { csValue = "json/json.js" }
                                 )
@@ -39,21 +39,21 @@ Prgm
                             )
                         , /Catln/Doc/dshow( Value /s -> /Data/Json/Member.. ) -> /Catln/Doc/Show/Rendered
                             ( /value=/Data/Json/Member..
-                            , /assets=/Data/List/Cons[ /T=/Data/String ]
+                            , /assets=/Data/List/Cons
                                 ( /head=/Data/String
                                 , /tail=/Data/List/Cons[ /T=/Data/String ]
                                     ( /head=/Data/String
                                     , /tail=/Data/List/Nil
                                     )
-                                )
+                                )| PredClass /Data/List[ /T=/Data/String ]
                             ) = /Catln/Doc/Show/Rendered( Value /value -> TVArg /s = Value /s )
-                            ( Value /assets -> /Data/List/Cons[ /T=/Data/String ]
+                            ( Value /assets -> /Data/List/Cons
                                 ( /head=/Data/String
                                 , /tail=/Data/List/Cons[ /T=/Data/String ]
                                     ( /head=/Data/String
                                     , /tail=/Data/List/Nil
                                     )
-                                ) = /Data/List/Cons
+                                )| PredClass /Data/List[ /T=/Data/String ] = /Data/List/Cons
                                 ( Value /head -> /Data/String = CStr
                                     { csValue = "json/json.js" }
                                 )
@@ -256,15 +256,15 @@ Prgm
         , /Catln/#print
             ( Value /p -> /Data/String = /Data/typeName
                 ( Value /value -> /Data/Json/Array
-                    ( /entries=/Data/List/Cons[ /T=/Data/Json/Null ]
+                    ( /entries=/Data/List/Cons
                         ( /head=/Data/Json/Null
                         , /tail=/Data/List/Nil
-                        )
+                        )| PredClass /Data/List[ /T=∀/Data/Json ]
                     ) = /Data/Json/Array
-                    ( Value /entries -> /Data/List/Cons[ /T=/Data/Json/Null ]
+                    ( Value /entries -> /Data/List/Cons
                         ( /head=/Data/Json/Null
                         , /tail=/Data/List/Nil
-                        ) = /Data/List/Cons( Value /head -> /Data/Json/Null = Value /Data/Json/Null )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                        )| PredClass /Data/List[ /T=∀/Data/Json ] = /Data/List/Cons( Value /head -> /Data/Json/Null = Value /Data/Json/Null )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                     )
                 )
             )
@@ -275,30 +275,20 @@ Prgm
             ( Value /p -> /Data/String = /Data/typeName
                 ( Value /value -> /Data/Json/Object
                     ( /entries=/Data/List/Cons
-                        [ /T=/Data/Json/Member
-                            ( /value=/Data/Json/Null
-                            , /key=/Data/String
-                            )
-                        ]
                         ( /head=/Data/Json/Member
                             ( /value=/Data/Json/Null
                             , /key=/Data/String
                             )
                         , /tail=/Data/List/Nil
-                        )
+                        )| PredClass /Data/List[ /T=/Data/Json/Member.. ]
                     ) = /Data/Json/Object
                     ( Value /entries -> /Data/List/Cons
-                        [ /T=/Data/Json/Member
-                            ( /value=/Data/Json/Null
-                            , /key=/Data/String
-                            )
-                        ]
                         ( /head=/Data/Json/Member
                             ( /value=/Data/Json/Null
                             , /key=/Data/String
                             )
                         , /tail=/Data/List/Nil
-                        ) = /Data/List/Cons
+                        )| PredClass /Data/List[ /T=/Data/Json/Member.. ] = /Data/List/Cons
                         ( Value /head -> /Data/Json/Member
                             ( /value=/Data/Json/Null
                             , /key=/Data/String
@@ -324,9 +314,6 @@ Prgm
             ( Value /p -> /Data/String = /Data/typeName
                 ( Value /value -> /Data/Json/Array
                     ( /entries=/Data/List/Cons
-                        [ /T=
-                            ( /Data/Json/Bool( /value=/Data/Primitive/True ) + /Data/Json/Null + /Data/Json/Str( /value=/Data/String ) )
-                        ]
                         ( /head=/Data/Json/Null
                         , /tail=/Data/List/Cons
                             [ /T=
@@ -339,12 +326,9 @@ Prgm
                                 , /tail=/Data/List/Nil
                                 )
                             )
-                        )
+                        )| PredClass /Data/List[ /T=∀/Data/Json ]
                     ) = /Data/Json/Array
                     ( Value /entries -> /Data/List/Cons
-                        [ /T=
-                            ( /Data/Json/Bool( /value=/Data/Primitive/True ) + /Data/Json/Null + /Data/Json/Str( /value=/Data/String ) )
-                        ]
                         ( /head=/Data/Json/Null
                         , /tail=/Data/List/Cons
                             [ /T=
@@ -357,7 +341,7 @@ Prgm
                                 , /tail=/Data/List/Nil
                                 )
                             )
-                        ) = /Data/List/Cons( Value /head -> /Data/Json/Null = Value /Data/Json/Null )
+                        )| PredClass /Data/List[ /T=∀/Data/Json ] = /Data/List/Cons( Value /head -> /Data/Json/Null = Value /Data/Json/Null )
                         ( Value /tail -> /Data/List/Cons
                             [ /T=
                                 ( /Data/Json/Bool( /value=/Data/Primitive/True ) + /Data/Json/Str( /value=/Data/String ) )
@@ -392,24 +376,22 @@ Prgm
             ( Value /p -> /Data/String = /Data/typeName
                 ( Value /value -> /Data/Json/Array
                     ( /entries=/Data/List/Cons
-                        [ /T=/Data/Json/Str( /value=/Data/String ) ]
                         ( /head=/Data/Json/Str( /value=/Data/String )
                         , /tail=/Data/List/Cons
                             [ /T=/Data/Json/Str( /value=/Data/String ) ]
                             ( /head=/Data/Json/Str( /value=/Data/String )
                             , /tail=/Data/List/Nil
                             )
-                        )
+                        )| PredClass /Data/List[ /T=∀/Data/Json ]
                     ) = /Data/Json/Array
                     ( Value /entries -> /Data/List/Cons
-                        [ /T=/Data/Json/Str( /value=/Data/String ) ]
                         ( /head=/Data/Json/Str( /value=/Data/String )
                         , /tail=/Data/List/Cons
                             [ /T=/Data/Json/Str( /value=/Data/String ) ]
                             ( /head=/Data/Json/Str( /value=/Data/String )
                             , /tail=/Data/List/Nil
                             )
-                        ) = /Data/List/Cons
+                        )| PredClass /Data/List[ /T=∀/Data/Json ] = /Data/List/Cons
                         ( Value /head -> /Data/Json/Str( /value=/Data/String ) = /Data/Json/Str
                             ( Value /value -> /Data/String = CStr
                                 { csValue = "x" }
@@ -436,12 +418,6 @@ Prgm
             ( Value /p -> /Data/String = /Data/typeName
                 ( Value /value -> /Data/Json/Object
                     ( /entries=/Data/List/Cons
-                        [ /T=/Data/Json/Member
-                            ( /value=
-                                ( /Data/Json/Null + /Data/Json/Str( /value=/Data/String ) )
-                            , /key=/Data/String
-                            )
-                        ]
                         ( /head=/Data/Json/Member
                             ( /value=/Data/Json/Null
                             , /key=/Data/String
@@ -458,15 +434,9 @@ Prgm
                                 )
                             , /tail=/Data/List/Nil
                             )
-                        )
+                        )| PredClass /Data/List[ /T=/Data/Json/Member.. ]
                     ) = /Data/Json/Object
                     ( Value /entries -> /Data/List/Cons
-                        [ /T=/Data/Json/Member
-                            ( /value=
-                                ( /Data/Json/Null + /Data/Json/Str( /value=/Data/String ) )
-                            , /key=/Data/String
-                            )
-                        ]
                         ( /head=/Data/Json/Member
                             ( /value=/Data/Json/Null
                             , /key=/Data/String
@@ -483,7 +453,7 @@ Prgm
                                 )
                             , /tail=/Data/List/Nil
                             )
-                        ) = /Data/List/Cons
+                        )| PredClass /Data/List[ /T=/Data/Json/Member.. ] = /Data/List/Cons
                         ( Value /head -> /Data/Json/Member
                             ( /value=/Data/Json/Null
                             , /key=/Data/String
@@ -528,81 +498,48 @@ Prgm
             ( Value /p -> /Data/String = /Data/typeName
                 ( Value /value -> /Data/Json/Object
                     ( /entries=/Data/List/Cons
-                        [ /T=/Data/Json/Member
-                            ( /value=/Data/Json/Array
-                                ( /entries=/Data/List/Cons
-                                    [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
-                                    ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
-                                    , /tail=/Data/List/Cons
-                                        [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
-                                        ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
-                                        , /tail=/Data/List/Nil
-                                        )
-                                    )
-                                )
-                            , /key=/Data/String
-                            )
-                        ]
                         ( /head=/Data/Json/Member
                             ( /value=/Data/Json/Array
                                 ( /entries=/Data/List/Cons
-                                    [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                     ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                     , /tail=/Data/List/Cons
                                         [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                         ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                         , /tail=/Data/List/Nil
                                         )
-                                    )
+                                    )| PredClass /Data/List[ /T=∀/Data/Json ]
                                 )
                             , /key=/Data/String
                             )
                         , /tail=/Data/List/Nil
-                        )
+                        )| PredClass /Data/List[ /T=/Data/Json/Member.. ]
                     ) = /Data/Json/Object
                     ( Value /entries -> /Data/List/Cons
-                        [ /T=/Data/Json/Member
-                            ( /value=/Data/Json/Array
-                                ( /entries=/Data/List/Cons
-                                    [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
-                                    ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
-                                    , /tail=/Data/List/Cons
-                                        [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
-                                        ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
-                                        , /tail=/Data/List/Nil
-                                        )
-                                    )
-                                )
-                            , /key=/Data/String
-                            )
-                        ]
                         ( /head=/Data/Json/Member
                             ( /value=/Data/Json/Array
                                 ( /entries=/Data/List/Cons
-                                    [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                     ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                     , /tail=/Data/List/Cons
                                         [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                         ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                         , /tail=/Data/List/Nil
                                         )
-                                    )
+                                    )| PredClass /Data/List[ /T=∀/Data/Json ]
                                 )
                             , /key=/Data/String
                             )
                         , /tail=/Data/List/Nil
-                        ) = /Data/List/Cons
+                        )| PredClass /Data/List[ /T=/Data/Json/Member.. ] = /Data/List/Cons
                         ( Value /head -> /Data/Json/Member
                             ( /value=/Data/Json/Array
                                 ( /entries=/Data/List/Cons
-                                    [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                     ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                     , /tail=/Data/List/Cons
                                         [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                         ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                         , /tail=/Data/List/Nil
                                         )
-                                    )
+                                    )| PredClass /Data/List[ /T=∀/Data/Json ]
                                 )
                             , /key=/Data/String
                             ) = /Data/Json/Member
@@ -611,24 +548,22 @@ Prgm
                             )
                             ( Value /value -> /Data/Json/Array
                                 ( /entries=/Data/List/Cons
-                                    [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                     ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                     , /tail=/Data/List/Cons
                                         [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                         ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                         , /tail=/Data/List/Nil
                                         )
-                                    )
+                                    )| PredClass /Data/List[ /T=∀/Data/Json ]
                                 ) = /Data/Json/Array
                                 ( Value /entries -> /Data/List/Cons
-                                    [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                     ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                     , /tail=/Data/List/Cons
                                         [ /T=/Data/Json/Number( /value=/Data/Primitive/Float ) ]
                                         ( /head=/Data/Json/Number( /value=/Data/Primitive/Float )
                                         , /tail=/Data/List/Nil
                                         )
-                                    ) = /Data/List/Cons
+                                    )| PredClass /Data/List[ /T=∀/Data/Json ] = /Data/List/Cons
                                     ( Value /head -> /Data/Json/Number( /value=/Data/Primitive/Float ) = /Data/Json/Number
                                         ( Value /value -> /Data/Primitive/Float = CFloat
                                             { cfValue = 1.5 }

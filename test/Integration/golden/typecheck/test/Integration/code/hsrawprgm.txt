@@ -225,31 +225,21 @@ Prgm
                     , omiDefs =
                         [ /Test/onePrgm( Value /name -> /Data/String ) -> /Catln/RawPrgm
                             ( /statements=/Data/List/Cons
-                                [ /T=/Catln/RawStatementTree
-                                    ( /statement=/Catln/RawStatement/RawDeclStatement( /objArr=/Catln/RawObjArr.. )
-                                    , /children=/Data/List/Nil
-                                    )
-                                ]
                                 ( /head=/Catln/RawStatementTree
                                     ( /statement=/Catln/RawStatement/RawDeclStatement( /objArr=/Catln/RawObjArr.. )
                                     , /children=/Data/List/Nil
                                     )
                                 , /tail=/Data/List/Nil
-                                )
+                                )| PredClass /Data/List[ /T=/Catln/RawStatementTree.. ]
                             , /imports=/Data/List/Nil
                             ) = /Catln/RawPrgm( Value /imports -> /Data/List/Nil = Value /Data/List/Nil )
                             ( Value /statements -> /Data/List/Cons
-                                [ /T=/Catln/RawStatementTree
-                                    ( /statement=/Catln/RawStatement/RawDeclStatement( /objArr=/Catln/RawObjArr.. )
-                                    , /children=/Data/List/Nil
-                                    )
-                                ]
                                 ( /head=/Catln/RawStatementTree
                                     ( /statement=/Catln/RawStatement/RawDeclStatement( /objArr=/Catln/RawObjArr.. )
                                     , /children=/Data/List/Nil
                                     )
                                 , /tail=/Data/List/Nil
-                                ) = /Data/List/Cons
+                                )| PredClass /Data/List[ /T=/Catln/RawStatementTree.. ] = /Data/List/Cons
                                 ( Value /head -> /Catln/RawStatementTree
                                     ( /statement=/Catln/RawStatement/RawDeclStatement( /objArr=/Catln/RawObjArr.. )
                                     , /children=/Data/List/Nil
@@ -651,16 +641,14 @@ Prgm
                             ( /prgm=/Catln/RawPrgm..
                             , /reads=/Data/Maybe/Some
                                 [ /T=/Data/List/Cons
-                                    [ /T=/Catln/ReadPath/ReadFile( /path=/Data/String ) ]
                                     ( /head=/Catln/ReadPath/ReadFile( /path=/Data/String )
                                     , /tail=/Data/List/Nil
-                                    )
+                                    )| PredClass /Data/List[ /T=∀/Catln/ReadPath ]
                                 ]
                                 ( /value=/Data/List/Cons
-                                    [ /T=/Catln/ReadPath/ReadFile( /path=/Data/String ) ]
                                     ( /head=/Catln/ReadPath/ReadFile( /path=/Data/String )
                                     , /tail=/Data/List/Nil
-                                    )
+                                    )| PredClass /Data/List[ /T=∀/Catln/ReadPath ]
                                 )
                             , /source=/Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String )
                             ) = /Catln/ImportResult
@@ -672,16 +660,14 @@ Prgm
                             )
                             ( Value /reads -> /Data/Maybe/Some
                                 [ /T=/Data/List/Cons
-                                    [ /T=/Catln/ReadPath/ReadFile( /path=/Data/String ) ]
                                     ( /head=/Catln/ReadPath/ReadFile( /path=/Data/String )
                                     , /tail=/Data/List/Nil
-                                    )
+                                    )| PredClass /Data/List[ /T=∀/Catln/ReadPath ]
                                 ]
                                 ( /value=/Data/List/Cons
-                                    [ /T=/Catln/ReadPath/ReadFile( /path=/Data/String ) ]
                                     ( /head=/Catln/ReadPath/ReadFile( /path=/Data/String )
                                     , /tail=/Data/List/Nil
-                                    )
+                                    )| PredClass /Data/List[ /T=∀/Catln/ReadPath ]
                                 ) = /Data/Maybe/Some
                                 ( Value /value -> /Data/List/Cons
                                     ( /head=/Catln/ReadPath/ReadFile( /path=/Data/String )
@@ -1061,7 +1047,7 @@ Prgm
                 { csValue = "## What a page holds" }
             )
         , /Catln/#print
-            ( Value /p -> /Data/String = /Test/objArrName
+            ( Value /p -> /Data/String.. = /Test/objArrName
                 ( Value /oa -> /Catln/RawObjArr
                     ( /arr=∀/Data/Maybe
                         [ /T=/Catln/Pair

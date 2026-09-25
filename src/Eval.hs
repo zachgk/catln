@@ -450,7 +450,11 @@ evalDShowAnnot env0@Env{evTbEnv, evTypeEnv} os annot0
       return $ Just $ case renderValString pVal of
         CRes _ str@StrVal{} -> str
         _                   -> pVal
-  | reachesTo evTypeEnv H.empty (getExprType $ showAnnot annot) destType = do
+  -- Whether THIS program can display the annotation: a question about the program as written,
+  -- whose classes have exactly the members it declares — the closed-world view TreeBuild then
+  -- builds the display in ('tePrgmEnv'). Asked open-world, every annotation could still become a
+  -- @DShow@ member in some later file, so each one would be sent to a build with no arm to take.
+  | reachesTo evTypeEnv{tePrgmEnv=True} H.empty (getExprType $ showAnnot annot) destType = do
       tree <- toTExprDest evTbEnv os (showAnnot annot) destM
       val <- evalStateT (evalExpr tree) env
       return (Just val)

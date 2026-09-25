@@ -227,8 +227,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/eq( Value /this -> /Data/Primitive/Integer.. ) -> /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] = Value /Data/Primitive/IntOrdering
-                        , /Data/Algebra/eq( Value /this -> /Data/Primitive/Float.. ) -> /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] = Value /Data/Primitive/FloatOrdering
+                        [ /Data/Algebra/eq( Value /this -> /Data/Primitive/Integer.. ) -> /Data/Primitive/IntOrdering| PredClass /Data/Algebra/Eqv[ /T=TopType ] = Value /Data/Primitive/IntOrdering
+                        , /Data/Algebra/eq( Value /this -> /Data/Primitive/Float.. ) -> /Data/Primitive/FloatOrdering| PredClass /Data/Algebra/Eqv[ /T=TopType ] = Value /Data/Primitive/FloatOrdering
                         ]
                     }
                 )
@@ -262,11 +262,11 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/compare( Value /a )( Value /b )
-                            ( Value /this -> /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] ) -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /Data/Algebra/mkComparison
+                            ( Value /this -> /Data/Primitive/IntOrdering| PredClass /Data/Algebra/Ordering[ /T=TopType ] ) -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /Data/Algebra/mkComparison
                             ( Value /lt -> ∀/Data/Primitive/Boolean = /Data/Primitive/intLt( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) )
                             ( Value /eq -> ∀/Data/Primitive/Boolean = /Data/Primitive/intEq( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) )
                         , /Data/Algebra/compare( Value /a )( Value /b )
-                            ( Value /this -> /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] ) -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /Data/Algebra/mkComparison
+                            ( Value /this -> /Data/Primitive/FloatOrdering| PredClass /Data/Algebra/Ordering[ /T=TopType ] ) -> ( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan ) = /Data/Algebra/mkComparison
                             ( Value /lt -> ∀/Data/Primitive/Boolean = /Data/Primitive/floatLt( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) )
                             ( Value /eq -> ∀/Data/Primitive/Boolean = /Data/Primitive/floatEq( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) )
                         ]
@@ -325,27 +325,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/equal( Value /other -> ∀/Data/Algebra/Eq )( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/Primitive/Boolean = /rel( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
-                            ( Value /this -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Algebra/Eqv[ /T=/Data/Primitive/Integer ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ]
-                                , []
-                                ) = /eq( Value /this -> TVArg /this = Value /this )
-                            )
+                            ( Value /this -> ∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Integer.. ] = /eq( Value /this -> TVArg /this = Value /this ) )
                         , /Data/Algebra/equal( Value /other -> ∀/Data/Algebra/Eq )( Value /this -> /Data/Primitive/Float.. ) -> ∀/Data/Primitive/Boolean = /rel( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
-                            ( Value /this -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Algebra/Eqv[ /T=/Data/Primitive/Float ]
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ]
-                                , []
-                                ) = /eq( Value /this -> TVArg /this = Value /this )
-                            )
+                            ( Value /this -> ∀/Data/Algebra/Eqv[ /T=/Data/Primitive/Float.. ] = /eq( Value /this -> TVArg /this = Value /this ) )
                         ]
                     }
                 )
@@ -356,8 +338,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/ord( Value /this -> /Data/Primitive/Integer.. ) -> /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] = Value /Data/Primitive/IntOrdering
-                        , /Data/Algebra/ord( Value /this -> /Data/Primitive/Float.. ) -> /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] = Value /Data/Primitive/FloatOrdering
+                        [ /Data/Algebra/ord( Value /this -> /Data/Primitive/Integer.. ) -> /Data/Primitive/IntOrdering| PredClass /Data/Algebra/Ordering[ /T=TopType ] = Value /Data/Primitive/IntOrdering
+                        , /Data/Algebra/ord( Value /this -> /Data/Primitive/Float.. ) -> /Data/Primitive/FloatOrdering| PredClass /Data/Algebra/Ordering[ /T=TopType ] = Value /Data/Primitive/FloatOrdering
                         ]
                     }
                 )
@@ -388,9 +370,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/compareTo( Value /other -> ∀/Data/Algebra/Ord )( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/Algebra/Comparison = /compare( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
-                            ( Value /this -> ∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Integer ] = /ord( Value /this -> TVArg /this = Value /this ) )
+                            ( Value /this -> ∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Integer.. ] = /ord( Value /this -> TVArg /this = Value /this ) )
                         , /Data/Algebra/compareTo( Value /other -> ∀/Data/Algebra/Ord )( Value /this -> /Data/Primitive/Float.. ) -> ∀/Data/Algebra/Comparison = /compare( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
-                            ( Value /this -> ∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Float ] = /ord( Value /this -> TVArg /this = Value /this ) )
+                            ( Value /this -> ∀/Data/Algebra/Ordering[ /T=/Data/Primitive/Float.. ] = /ord( Value /this -> TVArg /this = Value /this ) )
                         ]
                     }
                 )

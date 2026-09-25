@@ -327,33 +327,23 @@ Prgm
                         [ /Test/onePrgm
                             ( EAppArg { eaaArg = Value /name -> /Data/String } ) -> /Catln/RawPrgm
                             ( /statements=/Data/List/Cons
-                                [ /T=/Catln/RawStatementTree
-                                    ( /statement=/Catln/RawStatement/RawDeclStatement( /objArr=/Catln/RawObjArr.. )
-                                    , /children=/Data/List/Nil
-                                    )
-                                ]
                                 ( /head=/Catln/RawStatementTree
                                     ( /statement=/Catln/RawStatement/RawDeclStatement( /objArr=/Catln/RawObjArr.. )
                                     , /children=/Data/List/Nil
                                     )
                                 , /tail=/Data/List/Nil
-                                )
+                                )| PredClass /Data/List[ /T=/Catln/RawStatementTree.. ]
                             , /imports=/Data/List/Nil
                             ) = /Catln/RawPrgm
                             ( EAppArg { eaaArg = Value /imports -> /Data/List/Nil = Value /Data/List/Nil } )
                             ( EAppArg
                                 { eaaArg = Value /statements -> /Data/List/Cons
-                                    [ /T=/Catln/RawStatementTree
-                                        ( /statement=/Catln/RawStatement/RawDeclStatement( /objArr=/Catln/RawObjArr.. )
-                                        , /children=/Data/List/Nil
-                                        )
-                                    ]
                                     ( /head=/Catln/RawStatementTree
                                         ( /statement=/Catln/RawStatement/RawDeclStatement( /objArr=/Catln/RawObjArr.. )
                                         , /children=/Data/List/Nil
                                         )
                                     , /tail=/Data/List/Nil
-                                    ) = /Data/List/Cons
+                                    )| PredClass /Data/List[ /T=/Catln/RawStatementTree.. ] = /Data/List/Cons
                                     ( EAppArg
                                         { eaaArg = Value /head -> /Catln/RawStatementTree
                                             ( /statement=/Catln/RawStatement/RawDeclStatement( /objArr=/Catln/RawObjArr.. )
@@ -1044,16 +1034,14 @@ Prgm
                             ( /prgm=/Catln/RawPrgm..
                             , /reads=/Data/Maybe/Some
                                 [ /T=/Data/List/Cons
-                                    [ /T=/Catln/ReadPath/ReadFile( /path=/Data/String ) ]
                                     ( /head=/Catln/ReadPath/ReadFile( /path=/Data/String )
                                     , /tail=/Data/List/Nil
-                                    )
+                                    )| PredClass /Data/List[ /T=∀/Catln/ReadPath ]
                                 ]
                                 ( /value=/Data/List/Cons
-                                    [ /T=/Catln/ReadPath/ReadFile( /path=/Data/String ) ]
                                     ( /head=/Catln/ReadPath/ReadFile( /path=/Data/String )
                                     , /tail=/Data/List/Nil
-                                    )
+                                    )| PredClass /Data/List[ /T=∀/Catln/ReadPath ]
                                 )
                             , /source=/Data/Maybe/Some[ /T=/Data/String ]( /value=/Data/String )
                             ) = /Catln/ImportResult
@@ -1076,16 +1064,14 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /reads -> /Data/Maybe/Some
                                     [ /T=/Data/List/Cons
-                                        [ /T=/Catln/ReadPath/ReadFile( /path=/Data/String ) ]
                                         ( /head=/Catln/ReadPath/ReadFile( /path=/Data/String )
                                         , /tail=/Data/List/Nil
-                                        )
+                                        )| PredClass /Data/List[ /T=∀/Catln/ReadPath ]
                                     ]
                                     ( /value=/Data/List/Cons
-                                        [ /T=/Catln/ReadPath/ReadFile( /path=/Data/String ) ]
                                         ( /head=/Catln/ReadPath/ReadFile( /path=/Data/String )
                                         , /tail=/Data/List/Nil
-                                        )
+                                        )| PredClass /Data/List[ /T=∀/Catln/ReadPath ]
                                     ) = /Data/Maybe/Some
                                     ( EAppArg
                                         { eaaArg = Value /value -> /Data/List/Cons
@@ -1638,7 +1624,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> /Data/String =
+                { eaaArg = Value /p -> /Data/String.. =
                     ( /Test/objArrName
                         ( EAppArg
                             { eaaArg = Value /oa -> /Catln/RawObjArr
@@ -1672,7 +1658,7 @@ Prgm
                                     )
                                 )
                             }
-                        ) ↦ /Data/String
+                        ) ↦ /Data/String..
                     )
                 }
             )

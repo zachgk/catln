@@ -10,198 +10,74 @@ Prgm
                     , omiDefs =
                         [ Value /Nested -> /Json/Obj
                             ( /entries=/Data/List/Cons
-                                [ /T=/Json/Member
-                                    ( /value=/Json/Obj
-                                        ( /entries=/Data/List/Cons
-                                            [ /T=/Json/Member
-                                                ( /value=/Json/Arr
-                                                    ( /entries=/Data/List/Cons
-                                                        [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                        ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                        , /tail=/Data/List/Cons
-                                                            [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                            ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                            , /tail=/Data/List/Nil
-                                                            )
-                                                        )
-                                                    )
-                                                , /key=/Data/String
-                                                )
-                                            ]
-                                            ( /head=/Json/Member
-                                                ( /value=/Json/Arr
-                                                    ( /entries=/Data/List/Cons
-                                                        [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                        ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                        , /tail=/Data/List/Cons
-                                                            [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                            ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                            , /tail=/Data/List/Nil
-                                                            )
-                                                        )
-                                                    )
-                                                , /key=/Data/String
-                                                )
-                                            , /tail=/Data/List/Nil
-                                            )
-                                        )
-                                    , /key=/Data/String
-                                    )
-                                ]
                                 ( /head=/Json/Member
                                     ( /value=/Json/Obj
                                         ( /entries=/Data/List/Cons
-                                            [ /T=/Json/Member
-                                                ( /value=/Json/Arr
-                                                    ( /entries=/Data/List/Cons
-                                                        [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                        ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                        , /tail=/Data/List/Cons
-                                                            [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                            ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                            , /tail=/Data/List/Nil
-                                                            )
-                                                        )
-                                                    )
-                                                , /key=/Data/String
-                                                )
-                                            ]
                                             ( /head=/Json/Member
                                                 ( /value=/Json/Arr
                                                     ( /entries=/Data/List/Cons
-                                                        [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
                                                         ( /head=/Json/Num( /value=/Data/Primitive/Float )
                                                         , /tail=/Data/List/Cons
                                                             [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
                                                             ( /head=/Json/Num( /value=/Data/Primitive/Float )
                                                             , /tail=/Data/List/Nil
                                                             )
-                                                        )
+                                                        )| PredClass /Data/List[ /T=∀/Json ]
                                                     )
                                                 , /key=/Data/String
                                                 )
                                             , /tail=/Data/List/Nil
-                                            )
+                                            )| PredClass /Data/List[ /T=/Json/Member.. ]
                                         )
                                     , /key=/Data/String
                                     )
                                 , /tail=/Data/List/Nil
-                                )
+                                )| PredClass /Data/List[ /T=/Json/Member.. ]
                             ) = /Json/Obj
                             ( EAppArg
                                 { eaaArg = Value /entries -> /Data/List/Cons
-                                    [ /T=/Json/Member
-                                        ( /value=/Json/Obj
-                                            ( /entries=/Data/List/Cons
-                                                [ /T=/Json/Member
-                                                    ( /value=/Json/Arr
-                                                        ( /entries=/Data/List/Cons
-                                                            [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                            ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                            , /tail=/Data/List/Cons
-                                                                [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                                ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                                , /tail=/Data/List/Nil
-                                                                )
-                                                            )
-                                                        )
-                                                    , /key=/Data/String
-                                                    )
-                                                ]
-                                                ( /head=/Json/Member
-                                                    ( /value=/Json/Arr
-                                                        ( /entries=/Data/List/Cons
-                                                            [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                            ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                            , /tail=/Data/List/Cons
-                                                                [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                                ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                                , /tail=/Data/List/Nil
-                                                                )
-                                                            )
-                                                        )
-                                                    , /key=/Data/String
-                                                    )
-                                                , /tail=/Data/List/Nil
-                                                )
-                                            )
-                                        , /key=/Data/String
-                                        )
-                                    ]
                                     ( /head=/Json/Member
                                         ( /value=/Json/Obj
                                             ( /entries=/Data/List/Cons
-                                                [ /T=/Json/Member
-                                                    ( /value=/Json/Arr
-                                                        ( /entries=/Data/List/Cons
-                                                            [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                            ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                            , /tail=/Data/List/Cons
-                                                                [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                                ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                                , /tail=/Data/List/Nil
-                                                                )
-                                                            )
-                                                        )
-                                                    , /key=/Data/String
-                                                    )
-                                                ]
                                                 ( /head=/Json/Member
                                                     ( /value=/Json/Arr
                                                         ( /entries=/Data/List/Cons
-                                                            [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
                                                             ( /head=/Json/Num( /value=/Data/Primitive/Float )
                                                             , /tail=/Data/List/Cons
                                                                 [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
                                                                 ( /head=/Json/Num( /value=/Data/Primitive/Float )
                                                                 , /tail=/Data/List/Nil
                                                                 )
-                                                            )
+                                                            )| PredClass /Data/List[ /T=∀/Json ]
                                                         )
                                                     , /key=/Data/String
                                                     )
                                                 , /tail=/Data/List/Nil
-                                                )
+                                                )| PredClass /Data/List[ /T=/Json/Member.. ]
                                             )
                                         , /key=/Data/String
                                         )
                                     , /tail=/Data/List/Nil
-                                    ) = /Data/List/Cons
+                                    )| PredClass /Data/List[ /T=/Json/Member.. ] = /Data/List/Cons
                                     ( EAppArg
                                         { eaaArg = Value /head -> /Json/Member
                                             ( /value=/Json/Obj
                                                 ( /entries=/Data/List/Cons
-                                                    [ /T=/Json/Member
-                                                        ( /value=/Json/Arr
-                                                            ( /entries=/Data/List/Cons
-                                                                [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                                ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                                , /tail=/Data/List/Cons
-                                                                    [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                                    ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                                    , /tail=/Data/List/Nil
-                                                                    )
-                                                                )
-                                                            )
-                                                        , /key=/Data/String
-                                                        )
-                                                    ]
                                                     ( /head=/Json/Member
                                                         ( /value=/Json/Arr
                                                             ( /entries=/Data/List/Cons
-                                                                [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
                                                                 ( /head=/Json/Num( /value=/Data/Primitive/Float )
                                                                 , /tail=/Data/List/Cons
                                                                     [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
                                                                     ( /head=/Json/Num( /value=/Data/Primitive/Float )
                                                                     , /tail=/Data/List/Nil
                                                                     )
-                                                                )
+                                                                )| PredClass /Data/List[ /T=∀/Json ]
                                                             )
                                                         , /key=/Data/String
                                                         )
                                                     , /tail=/Data/List/Nil
-                                                    )
+                                                    )| PredClass /Data/List[ /T=/Json/Member.. ]
                                                 )
                                             , /key=/Data/String
                                             ) = /Json/Member
@@ -211,83 +87,50 @@ Prgm
                                             ( EAppArg
                                                 { eaaArg = Value /value -> /Json/Obj
                                                     ( /entries=/Data/List/Cons
-                                                        [ /T=/Json/Member
-                                                            ( /value=/Json/Arr
-                                                                ( /entries=/Data/List/Cons
-                                                                    [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                                    ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                                    , /tail=/Data/List/Cons
-                                                                        [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                                        ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                                        , /tail=/Data/List/Nil
-                                                                        )
-                                                                    )
-                                                                )
-                                                            , /key=/Data/String
-                                                            )
-                                                        ]
                                                         ( /head=/Json/Member
                                                             ( /value=/Json/Arr
                                                                 ( /entries=/Data/List/Cons
-                                                                    [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
                                                                     ( /head=/Json/Num( /value=/Data/Primitive/Float )
                                                                     , /tail=/Data/List/Cons
                                                                         [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
                                                                         ( /head=/Json/Num( /value=/Data/Primitive/Float )
                                                                         , /tail=/Data/List/Nil
                                                                         )
-                                                                    )
+                                                                    )| PredClass /Data/List[ /T=∀/Json ]
                                                                 )
                                                             , /key=/Data/String
                                                             )
                                                         , /tail=/Data/List/Nil
-                                                        )
+                                                        )| PredClass /Data/List[ /T=/Json/Member.. ]
                                                     ) = /Json/Obj
                                                     ( EAppArg
                                                         { eaaArg = Value /entries -> /Data/List/Cons
-                                                            [ /T=/Json/Member
-                                                                ( /value=/Json/Arr
-                                                                    ( /entries=/Data/List/Cons
-                                                                        [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                                        ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                                        , /tail=/Data/List/Cons
-                                                                            [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                                            ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                                            , /tail=/Data/List/Nil
-                                                                            )
-                                                                        )
-                                                                    )
-                                                                , /key=/Data/String
-                                                                )
-                                                            ]
                                                             ( /head=/Json/Member
                                                                 ( /value=/Json/Arr
                                                                     ( /entries=/Data/List/Cons
-                                                                        [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
                                                                         ( /head=/Json/Num( /value=/Data/Primitive/Float )
                                                                         , /tail=/Data/List/Cons
                                                                             [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
                                                                             ( /head=/Json/Num( /value=/Data/Primitive/Float )
                                                                             , /tail=/Data/List/Nil
                                                                             )
-                                                                        )
+                                                                        )| PredClass /Data/List[ /T=∀/Json ]
                                                                     )
                                                                 , /key=/Data/String
                                                                 )
                                                             , /tail=/Data/List/Nil
-                                                            ) = /Data/List/Cons
+                                                            )| PredClass /Data/List[ /T=/Json/Member.. ] = /Data/List/Cons
                                                             ( EAppArg
                                                                 { eaaArg = Value /head -> /Json/Member
                                                                     ( /value=/Json/Arr
                                                                         ( /entries=/Data/List/Cons
-                                                                            [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
                                                                             ( /head=/Json/Num( /value=/Data/Primitive/Float )
                                                                             , /tail=/Data/List/Cons
                                                                                 [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
                                                                                 ( /head=/Json/Num( /value=/Data/Primitive/Float )
                                                                                 , /tail=/Data/List/Nil
                                                                                 )
-                                                                            )
+                                                                            )| PredClass /Data/List[ /T=∀/Json ]
                                                                         )
                                                                     , /key=/Data/String
                                                                     ) = /Json/Member
@@ -297,25 +140,23 @@ Prgm
                                                                     ( EAppArg
                                                                         { eaaArg = Value /value -> /Json/Arr
                                                                             ( /entries=/Data/List/Cons
-                                                                                [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
                                                                                 ( /head=/Json/Num( /value=/Data/Primitive/Float )
                                                                                 , /tail=/Data/List/Cons
                                                                                     [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
                                                                                     ( /head=/Json/Num( /value=/Data/Primitive/Float )
                                                                                     , /tail=/Data/List/Nil
                                                                                     )
-                                                                                )
+                                                                                )| PredClass /Data/List[ /T=∀/Json ]
                                                                             ) = /Json/Arr
                                                                             ( EAppArg
                                                                                 { eaaArg = Value /entries -> /Data/List/Cons
-                                                                                    [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
                                                                                     ( /head=/Json/Num( /value=/Data/Primitive/Float )
                                                                                     , /tail=/Data/List/Cons
                                                                                         [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
                                                                                         ( /head=/Json/Num( /value=/Data/Primitive/Float )
                                                                                         , /tail=/Data/List/Nil
                                                                                         )
-                                                                                    ) = /Data/List/Cons
+                                                                                    )| PredClass /Data/List[ /T=∀/Json ] = /Data/List/Cons
                                                                                     ( EAppArg
                                                                                         { eaaArg = Value /head -> /Json/Num( /value=/Data/Primitive/Float ) = /Json/Num
                                                                                             ( EAppArg
@@ -511,163 +352,55 @@ Prgm
             ( EAppArg
                 { eaaArg = Value /p -> /Json/Obj
                     ( /entries=/Data/List/Cons
-                        [ /T=/Json/Member
-                            ( /value=/Json/Obj
-                                ( /entries=/Data/List/Cons
-                                    [ /T=/Json/Member
-                                        ( /value=/Json/Arr
-                                            ( /entries=/Data/List/Cons
-                                                [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                , /tail=/Data/List/Cons
-                                                    [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                    ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                    , /tail=/Data/List/Nil
-                                                    )
-                                                )
-                                            )
-                                        , /key=/Data/String
-                                        )
-                                    ]
-                                    ( /head=/Json/Member
-                                        ( /value=/Json/Arr
-                                            ( /entries=/Data/List/Cons
-                                                [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                , /tail=/Data/List/Cons
-                                                    [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                    ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                    , /tail=/Data/List/Nil
-                                                    )
-                                                )
-                                            )
-                                        , /key=/Data/String
-                                        )
-                                    , /tail=/Data/List/Nil
-                                    )
-                                )
-                            , /key=/Data/String
-                            )
-                        ]
                         ( /head=/Json/Member
                             ( /value=/Json/Obj
                                 ( /entries=/Data/List/Cons
-                                    [ /T=/Json/Member
-                                        ( /value=/Json/Arr
-                                            ( /entries=/Data/List/Cons
-                                                [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                , /tail=/Data/List/Cons
-                                                    [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                    ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                    , /tail=/Data/List/Nil
-                                                    )
-                                                )
-                                            )
-                                        , /key=/Data/String
-                                        )
-                                    ]
                                     ( /head=/Json/Member
                                         ( /value=/Json/Arr
                                             ( /entries=/Data/List/Cons
-                                                [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
                                                 ( /head=/Json/Num( /value=/Data/Primitive/Float )
                                                 , /tail=/Data/List/Cons
                                                     [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
                                                     ( /head=/Json/Num( /value=/Data/Primitive/Float )
                                                     , /tail=/Data/List/Nil
                                                     )
-                                                )
+                                                )| PredClass /Data/List[ /T=∀/Json ]
                                             )
                                         , /key=/Data/String
                                         )
                                     , /tail=/Data/List/Nil
-                                    )
+                                    )| PredClass /Data/List[ /T=/Json/Member.. ]
                                 )
                             , /key=/Data/String
                             )
                         , /tail=/Data/List/Nil
-                        )
+                        )| PredClass /Data/List[ /T=/Json/Member.. ]
                     ) =
                     ( Value /Nested ↦ /Json/Obj
                         ( /entries=/Data/List/Cons
-                            [ /T=/Json/Member
-                                ( /value=/Json/Obj
-                                    ( /entries=/Data/List/Cons
-                                        [ /T=/Json/Member
-                                            ( /value=/Json/Arr
-                                                ( /entries=/Data/List/Cons
-                                                    [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                    ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                    , /tail=/Data/List/Cons
-                                                        [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                        ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                        , /tail=/Data/List/Nil
-                                                        )
-                                                    )
-                                                )
-                                            , /key=/Data/String
-                                            )
-                                        ]
-                                        ( /head=/Json/Member
-                                            ( /value=/Json/Arr
-                                                ( /entries=/Data/List/Cons
-                                                    [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                    ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                    , /tail=/Data/List/Cons
-                                                        [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                        ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                        , /tail=/Data/List/Nil
-                                                        )
-                                                    )
-                                                )
-                                            , /key=/Data/String
-                                            )
-                                        , /tail=/Data/List/Nil
-                                        )
-                                    )
-                                , /key=/Data/String
-                                )
-                            ]
                             ( /head=/Json/Member
                                 ( /value=/Json/Obj
                                     ( /entries=/Data/List/Cons
-                                        [ /T=/Json/Member
-                                            ( /value=/Json/Arr
-                                                ( /entries=/Data/List/Cons
-                                                    [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                    ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                    , /tail=/Data/List/Cons
-                                                        [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
-                                                        ( /head=/Json/Num( /value=/Data/Primitive/Float )
-                                                        , /tail=/Data/List/Nil
-                                                        )
-                                                    )
-                                                )
-                                            , /key=/Data/String
-                                            )
-                                        ]
                                         ( /head=/Json/Member
                                             ( /value=/Json/Arr
                                                 ( /entries=/Data/List/Cons
-                                                    [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
                                                     ( /head=/Json/Num( /value=/Data/Primitive/Float )
                                                     , /tail=/Data/List/Cons
                                                         [ /T=/Json/Num( /value=/Data/Primitive/Float ) ]
                                                         ( /head=/Json/Num( /value=/Data/Primitive/Float )
                                                         , /tail=/Data/List/Nil
                                                         )
-                                                    )
+                                                    )| PredClass /Data/List[ /T=∀/Json ]
                                                 )
                                             , /key=/Data/String
                                             )
                                         , /tail=/Data/List/Nil
-                                        )
+                                        )| PredClass /Data/List[ /T=/Json/Member.. ]
                                     )
                                 , /key=/Data/String
                                 )
                             , /tail=/Data/List/Nil
-                            )
+                            )| PredClass /Data/List[ /T=/Json/Member.. ]
                         )
                     )
                 }

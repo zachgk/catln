@@ -408,7 +408,13 @@ buildCallTree env@TBEnv{tbTypeEnv} os visitedArrows bound force src@(UnionType (
   , expanded /= src =
       buildCallTree env os visitedArrows bound force expanded destType
 buildCallTree env@TBEnv{tbTypeEnv} os visitedArrows bound force (UnionType _ srcLeafs consts) destType = do
-  let allPartials = splitUnionType srcLeafs ++ map constantPartialType consts
+  -- Inference spells a source open-world: a leaf may still carry a class its value is not (yet)
+  -- a member of (@rel(this=MyEqv|Eqv)@, kept because a later file could declare @MyEqv isa Eqv@).
+  -- This program is the whole program ('tePrgmEnv'), where such a leaf is empty — no runtime value
+  -- has that shape, so it takes no arm. Building it anyway offers a runtime match option that a
+  -- value of the other, real, leaf can be steered into.
+  let inhabited p = not (carriesMembership p) || not (isBottomType (compactType tbTypeEnv H.empty (singletonType p)))
+  let allPartials = filter inhabited (splitUnionType srcLeafs) ++ map constantPartialType consts
   let tryBuilds = map (\srcPartial -> (srcPartial, buildPartialCallTree env os visitedArrows bound force srcPartial destType)) allPartials
   -- The type checker keeps an applied term in both its raw and settled forms (@5 + 1@ is
   -- @(/operator+(..) + Integer)@), distributed into sibling container leaves
@@ -436,6 +442,18 @@ buildCallTree env@TBEnv{tbTypeEnv} os visitedArrows bound force (UnionType _ src
   return $ case nub (map snd matchVal) of
     [t] -> t
     _   -> TCMatch destType $ H.fromList matchVal
+
+-- | Whether a leaf, or a leaf in one of its slots at any depth, carries a class\/relation
+-- membership atom attached to it (@X|C@). That is the spelling inference keeps for a value whose
+-- membership is still open, and the only one that can be empty in the whole program while
+-- inhabited in inference's open world — so only such a leaf is worth compacting before a build.
+-- (A predicate TOP in a slot, @∀ConsList@, is the class itself, not an open membership claim.)
+carriesMembership :: PartialType -> Bool
+carriesMembership PartialType{ptPreds, ptVars, ptArgs} =
+  predsHasClassRelAtom ptPreds || any typeCarries (H.elems ptVars) || any typeCarries (H.elems ptArgs)
+  where
+    typeCarries (UnionType _ leafs _) = any carriesMembership (splitUnionType leafs)
+    typeCarries (TypeVar _ _ inner) = typeCarries inner
 
 toTExpr :: TBEnv -> [ObjSrc] -> Expr TBMetaDat -> CRes (TExpr TBMetaDat)
 -- toTExpr _ os e | trace (printf "toTExpr %s \n\twith %s" (show e) (show os)) False = undefined

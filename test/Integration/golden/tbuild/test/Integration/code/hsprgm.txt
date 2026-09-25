@@ -545,20 +545,18 @@ Prgm
                                                                                                                                                 { eaaArg = Value /t -> /Catln/Type/UnionType
                                                                                                                                                     ( /top=/Data/Maybe/Nothing
                                                                                                                                                     , /consts=/Data/List/Cons
-                                                                                                                                                        [ /T=/Catln/Constant/CInt( /value=/Data/Primitive/Integer ) ]
                                                                                                                                                         ( /head=/Catln/Constant/CInt( /value=/Data/Primitive/Integer )
                                                                                                                                                         , /tail=/Data/List/Nil
-                                                                                                                                                        )
+                                                                                                                                                        )| PredClass /Data/List[ /T=∀/Catln/Constant ]
                                                                                                                                                     , /leafs=/Data/List/Nil
                                                                                                                                                     ) = /Catln/Type/UnionType
                                                                                                                                                     ( EAppArg { eaaArg = Value /top -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                                                                                                                                                     ( EAppArg { eaaArg = Value /leafs -> /Data/List/Nil = Value /Data/List/Nil } )
                                                                                                                                                     ( EAppArg
                                                                                                                                                         { eaaArg = Value /consts -> /Data/List/Cons
-                                                                                                                                                            [ /T=/Catln/Constant/CInt( /value=/Data/Primitive/Integer ) ]
                                                                                                                                                             ( /head=/Catln/Constant/CInt( /value=/Data/Primitive/Integer )
                                                                                                                                                             , /tail=/Data/List/Nil
-                                                                                                                                                            ) = /Data/List/Cons
+                                                                                                                                                            )| PredClass /Data/List[ /T=∀/Catln/Constant ] = /Data/List/Cons
                                                                                                                                                             ( EAppArg
                                                                                                                                                                 { eaaArg = Value /head -> /Catln/Constant/CInt( /value=/Data/Primitive/Integer ) = /Catln/Constant/CInt
                                                                                                                                                                     ( EAppArg
@@ -622,19 +620,13 @@ Prgm
                                                                                                                                                                             ( /name=/Data/String
                                                                                                                                                                             , /vars=/Data/List/Nil
                                                                                                                                                                             , /args=/Data/List/Cons
-                                                                                                                                                                                [ /T=/Catln/PartialKey
-                                                                                                                                                                                    ( /name=/Data/String
-                                                                                                                                                                                    , /vars=/Data/List/Nil
-                                                                                                                                                                                    , /args=/Data/List/Nil
-                                                                                                                                                                                    )
-                                                                                                                                                                                ]
                                                                                                                                                                                 ( /head=/Catln/PartialKey
                                                                                                                                                                                     ( /name=/Data/String
                                                                                                                                                                                     , /vars=/Data/List/Nil
                                                                                                                                                                                     , /args=/Data/List/Nil
                                                                                                                                                                                     )
                                                                                                                                                                                 , /tail=/Data/List/Nil
-                                                                                                                                                                                )
+                                                                                                                                                                                )| PredClass /Data/List[ /T=/Catln/PartialKey.. ]
                                                                                                                                                                             ) = /Catln/PartialKey
                                                                                                                                                                             ( EAppArg
                                                                                                                                                                                 { eaaArg = Value /name -> /Data/String = "f" }
@@ -642,19 +634,13 @@ Prgm
                                                                                                                                                                             ( EAppArg { eaaArg = Value /vars -> /Data/List/Nil = Value /Data/List/Nil } )
                                                                                                                                                                             ( EAppArg
                                                                                                                                                                                 { eaaArg = Value /args -> /Data/List/Cons
-                                                                                                                                                                                    [ /T=/Catln/PartialKey
-                                                                                                                                                                                        ( /name=/Data/String
-                                                                                                                                                                                        , /vars=/Data/List/Nil
-                                                                                                                                                                                        , /args=/Data/List/Nil
-                                                                                                                                                                                        )
-                                                                                                                                                                                    ]
                                                                                                                                                                                     ( /head=/Catln/PartialKey
                                                                                                                                                                                         ( /name=/Data/String
                                                                                                                                                                                         , /vars=/Data/List/Nil
                                                                                                                                                                                         , /args=/Data/List/Nil
                                                                                                                                                                                         )
                                                                                                                                                                                     , /tail=/Data/List/Nil
-                                                                                                                                                                                    ) = /Data/List/Cons
+                                                                                                                                                                                    )| PredClass /Data/List[ /T=/Catln/PartialKey.. ] = /Data/List/Cons
                                                                                                                                                                                     ( EAppArg
                                                                                                                                                                                         { eaaArg = Value /head -> /Catln/PartialKey
                                                                                                                                                                                             ( /name=/Data/String
@@ -1235,13 +1221,13 @@ Prgm
                             ( EAppArg { eaaArg = Value /ks -> /Data/List/Nil = Value /Data/List/Nil } ) -> /Data/Primitive/Integer = 0
                         , /Test/keyDepthAll
                             ( EAppArg
-                                { eaaArg = Value /ks -> /Data/List/Cons[ /T=/Catln/PartialKey.. ]
-                                    ( /head=/Catln/PartialKey..
-                                    , /tail=∀/Data/List/ConsList[ /T=/Catln/PartialKey.. ]
-                                    ) = /Data/List/Cons
-                                    ( EAppArg { eaaArg = Value /head -> /Catln/PartialKey.. } )
+                                { eaaArg = Value /ks -> /Data/List/Cons
+                                    ( /head=TopType
+                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                    )| PredClass /Data/List[ /T=/Catln/PartialKey.. ] = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head } )
                                     ( EAppArg
-                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Catln/PartialKey.. ] }
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] }
                                     )
                                 }
                             ) -> /Data/Primitive/Integer =
@@ -1556,19 +1542,13 @@ Prgm
                                 ( /name=/Data/String
                                 , /vars=/Data/List/Nil
                                 , /args=/Data/List/Cons
-                                    [ /T=/Catln/PartialKey
-                                        ( /name=/Data/String
-                                        , /vars=/Data/List/Nil
-                                        , /args=/Data/List/Nil
-                                        )
-                                    ]
                                     ( /head=/Catln/PartialKey
                                         ( /name=/Data/String
                                         , /vars=/Data/List/Nil
                                         , /args=/Data/List/Nil
                                         )
                                     , /tail=/Data/List/Nil
-                                    )
+                                    )| PredClass /Data/List[ /T=/Catln/PartialKey.. ]
                                 ) = /Catln/PartialKey
                                 ( EAppArg
                                     { eaaArg = Value /name -> /Data/String = "f" }
@@ -1576,19 +1556,13 @@ Prgm
                                 ( EAppArg { eaaArg = Value /vars -> /Data/List/Nil = Value /Data/List/Nil } )
                                 ( EAppArg
                                     { eaaArg = Value /args -> /Data/List/Cons
-                                        [ /T=/Catln/PartialKey
-                                            ( /name=/Data/String
-                                            , /vars=/Data/List/Nil
-                                            , /args=/Data/List/Nil
-                                            )
-                                        ]
                                         ( /head=/Catln/PartialKey
                                             ( /name=/Data/String
                                             , /vars=/Data/List/Nil
                                             , /args=/Data/List/Nil
                                             )
                                         , /tail=/Data/List/Nil
-                                        ) = /Data/List/Cons
+                                        )| PredClass /Data/List[ /T=/Catln/PartialKey.. ] = /Data/List/Cons
                                         ( EAppArg
                                             { eaaArg = Value /head -> /Catln/PartialKey
                                                 ( /name=/Data/String
@@ -1653,32 +1627,26 @@ Prgm
                             { eaaArg = Value /t -> /Catln/Type/UnionType
                                 ( /top=/Data/Maybe/Nothing
                                 , /consts=/Data/List/Cons
-                                    [ /T=
-                                        ( /Catln/Constant/CStr( /value=/Data/String ) + /Catln/Constant/CInt( /value=/Data/Primitive/Integer ) )
-                                    ]
                                     ( /head=/Catln/Constant/CInt( /value=/Data/Primitive/Integer )
                                     , /tail=/Data/List/Cons
                                         [ /T=/Catln/Constant/CStr( /value=/Data/String ) ]
                                         ( /head=/Catln/Constant/CStr( /value=/Data/String )
                                         , /tail=/Data/List/Nil
                                         )
-                                    )
+                                    )| PredClass /Data/List[ /T=∀/Catln/Constant ]
                                 , /leafs=/Data/List/Nil
                                 ) = /Catln/Type/UnionType
                                 ( EAppArg { eaaArg = Value /top -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                                 ( EAppArg { eaaArg = Value /leafs -> /Data/List/Nil = Value /Data/List/Nil } )
                                 ( EAppArg
                                     { eaaArg = Value /consts -> /Data/List/Cons
-                                        [ /T=
-                                            ( /Catln/Constant/CStr( /value=/Data/String ) + /Catln/Constant/CInt( /value=/Data/Primitive/Integer ) )
-                                        ]
                                         ( /head=/Catln/Constant/CInt( /value=/Data/Primitive/Integer )
                                         , /tail=/Data/List/Cons
                                             [ /T=/Catln/Constant/CStr( /value=/Data/String ) ]
                                             ( /head=/Catln/Constant/CStr( /value=/Data/String )
                                             , /tail=/Data/List/Nil
                                             )
-                                        ) = /Data/List/Cons
+                                        )| PredClass /Data/List[ /T=∀/Catln/Constant ] = /Data/List/Cons
                                         ( EAppArg
                                             { eaaArg = Value /head -> /Catln/Constant/CInt( /value=/Data/Primitive/Integer ) = /Catln/Constant/CInt
                                                 ( EAppArg

@@ -131,25 +131,25 @@ Prgm
             ( EAppArg
                 { eaaArg = Value /p -> /Tagged
                     ( /name=/Data/String
-                    , /tags=/Data/List/Cons[ /T=/Data/String ]
+                    , /tags=/Data/List/Cons
                         ( /head=/Data/String
                         , /tail=/Data/List/Cons[ /T=/Data/String ]
                             ( /head=/Data/String
                             , /tail=/Data/List/Nil
                             )
-                        )
+                        )| PredClass /Data/List[ /T=/Data/String ]
                     ) = /Tagged
                     ( EAppArg
                         { eaaArg = Value /name -> /Data/String = "two different" }
                     )
                     ( EAppArg
-                        { eaaArg = Value /tags -> /Data/List/Cons[ /T=/Data/String ]
+                        { eaaArg = Value /tags -> /Data/List/Cons
                             ( /head=/Data/String
                             , /tail=/Data/List/Cons[ /T=/Data/String ]
                                 ( /head=/Data/String
                                 , /tail=/Data/List/Nil
                                 )
-                            ) = /Data/List/Cons
+                            )| PredClass /Data/List[ /T=/Data/String ] = /Data/List/Cons
                             ( EAppArg
                                 { eaaArg = Value /head -> /Data/String = "x" }
                             )
@@ -172,29 +172,23 @@ Prgm
             ( EAppArg
                 { eaaArg = Value /p -> /Holder
                     ( /items=/Data/List/Cons
-                        [ /T=
-                            ( /Mixed/Labelled( /value=/Data/String ) + /Mixed/Plain )
-                        ]
                         ( /head=/Mixed/Plain
                         , /tail=/Data/List/Cons
                             [ /T=/Mixed/Labelled( /value=/Data/String ) ]
                             ( /head=/Mixed/Labelled( /value=/Data/String )
                             , /tail=/Data/List/Nil
                             )
-                        )
+                        )| PredClass /Data/List[ /T=∀/Mixed ]
                     ) = /Holder
                     ( EAppArg
                         { eaaArg = Value /items -> /Data/List/Cons
-                            [ /T=
-                                ( /Mixed/Labelled( /value=/Data/String ) + /Mixed/Plain )
-                            ]
                             ( /head=/Mixed/Plain
                             , /tail=/Data/List/Cons
                                 [ /T=/Mixed/Labelled( /value=/Data/String ) ]
                                 ( /head=/Mixed/Labelled( /value=/Data/String )
                                 , /tail=/Data/List/Nil
                                 )
-                            ) = /Data/List/Cons
+                            )| PredClass /Data/List[ /T=∀/Mixed ] = /Data/List/Cons
                             ( EAppArg { eaaArg = Value /head -> /Mixed/Plain = Value /Mixed/Plain } )
                             ( EAppArg
                                 { eaaArg = Value /tail -> /Data/List/Cons

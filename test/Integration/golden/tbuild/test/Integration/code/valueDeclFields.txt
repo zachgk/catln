@@ -62,7 +62,7 @@ Prgm
                                             ]
                                         )
                                     , /tail=/Data/List/Nil
-                                    ) = /Data/List/Cons
+                                    )| PredClass /Data/List[ /T=/Data/String ] = /Data/List/Cons
                                     ( EAppArg
                                         { eaaArg = Value /head -> UnionType
                                             ( Nothing
@@ -165,10 +165,10 @@ Prgm
                         { eaaArg = Value /name -> /Data/String = "has both" }
                     )
                     ( EAppArg
-                        { eaaArg = Value /tags -> /Data/List/Cons[ /T=/Data/String ]
+                        { eaaArg = Value /tags -> /Data/List/Cons
                             ( /head=/Data/String
                             , /tail=/Data/List/Nil
-                            ) = /Data/List/Cons
+                            )| PredClass /Data/List[ /T=/Data/String ] = /Data/List/Cons
                             ( EAppArg
                                 { eaaArg = Value /head -> /Data/String = "x" }
                             )

@@ -45,17 +45,11 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /pureList
-                            ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                            ( /head=/Data/Primitive/Integer
-                            , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
-                            ) =
+                            ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/List/Cons[ /T=/Data/Primitive/Integer ].. =
                             ( /Data/Monad/pure
                                 ( EAppArg
                                     { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                ) ↦ /Data/List/Cons[ /T=/Data/Primitive/Integer ]
-                                ( /head=/Data/Primitive/Integer
-                                , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
-                                )
+                                ) ↦ /Data/List/Cons[ /T=/Data/Primitive/Integer ]..
                             )
                         ]
                     }

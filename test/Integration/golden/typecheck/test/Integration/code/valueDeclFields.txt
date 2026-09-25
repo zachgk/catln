@@ -48,7 +48,7 @@ Prgm
                                         ]
                                     )
                                 , /tail=/Data/List/Nil
-                                ) = /Data/List/Cons
+                                )| PredClass /Data/List[ /T=/Data/String ] = /Data/List/Cons
                                 ( Value /head -> UnionType
                                     ( Nothing
                                     , ∅
@@ -140,10 +140,10 @@ Prgm
                 ( Value /name -> /Data/String = CStr
                     { csValue = "has both" }
                 )
-                ( Value /tags -> /Data/List/Cons[ /T=/Data/String ]
+                ( Value /tags -> /Data/List/Cons
                     ( /head=/Data/String
                     , /tail=/Data/List/Nil
-                    ) = /Data/List/Cons
+                    )| PredClass /Data/List[ /T=/Data/String ] = /Data/List/Cons
                     ( Value /head -> /Data/String = CStr
                         { csValue = "x" }
                     )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )

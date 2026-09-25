@@ -58,7 +58,7 @@ Prgm
                                         ]
                                     )
                                 , /tail=/Data/List/Nil
-                                ) = /Data/List/Cons
+                                )| PredClass /Data/List[ /T=/Data/String ] = /Data/List/Cons
                                 ( Value /head -> UnionType
                                     ( Nothing
                                     , ∅
@@ -187,18 +187,9 @@ Prgm
                     { csValue = "one" }
                 )
                 ( Value /tags -> /Data/List/Cons
-                    [ /T=UnionType
-                        ( Nothing
-                        , ∅
-                        ,
-                            [ CStr
-                                { csValue = "x" }
-                            ]
-                        )
-                    ]
                     ( /head=/Data/String
                     , /tail=/Data/List/Nil
-                    ) = /Data/List/Cons
+                    )| PredClass /Data/List[ /T=/Data/String ] = /Data/List/Cons
                     ( Value /head -> /Data/String = CStr
                         { csValue = "x" }
                     )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
