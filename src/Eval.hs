@@ -491,16 +491,21 @@ evalDShowAnnot env0@Env{evTbEnv, evTypeEnv} os annot0
 -- rebuild (closures, IO and the other runtime-only values, none of which are @ToString@) and for one
 -- that is not @ToString@.
 renderValText :: Env -> Val -> Maybe Val
-renderValText env@Env{evTbEnv} v
+renderValText env v = fst $ renderValTextIn env v
+
+-- | 'renderValText', also handing back the arrows the evaluation built ('evExEnv'), so that rendering
+-- many values can share them ('showRunValues').
+renderValTextIn :: Env -> Val -> (Maybe Val, ResExEnv)
+renderValTextIn env@Env{evTbEnv, evExEnv} v
   | reconstructableVal v = case run of
-      CRes _ str@StrVal{} -> Just str
-      _                   -> Nothing
-  | otherwise = Nothing
+      CRes _ (str@StrVal{}, Env{evExEnv=built}) -> (Just str, built)
+      _                                         -> (Nothing, evExEnv)
+  | otherwise = (Nothing, evExEnv)
   where
     run = do
       let e = eVal "/Data/toString" `eApply` ("/this", valToEExpr v)
       tree <- buildRoot evTbEnv e (getExprPartialType e) dshowDestType
-      evalStateT (evalExpr tree) env
+      runStateT (evalExpr tree) env
 
 -- | A value's display: what @/Catln/Doc/dshow@ makes of it, and that rendered as text when it is
 -- @ToString@ ('renderValText').
@@ -513,15 +518,26 @@ renderValText env@Env{evTbEnv} v
 --
 -- Checked to reach @DShow@ before anything is built, as 'evalDShowAnnot' checks an annotation: a tree
 -- built for a value no arm takes is an @error@ in 'TreeBuild' rather than a note.
-dshowVal :: Env -> Val -> Maybe Val
-dshowVal env@Env{evTbEnv, evTypeEnv} v
-  | reconstructableVal v && reachesTo evTypeEnv H.empty (getExprType e) dshowDestType = do
-      shown <- cresToMaybe $ do
-        tree <- toTExprDest evTbEnv [] e (emptyMetaT dshowDestType)
-        evalStateT (evalExpr tree) env
-      return $ fromMaybe shown (renderValText env shown)
-  | otherwise = Nothing
-  where e = eVal dshowName `eApply` ('/' : dshowArg, valToEExpr v)
+--
+-- The arrows the evaluation built ('evExEnv') are handed back beside it. An arrow is built per type
+-- it is entered at, and a recursion over a list enters its arrows at the type of every tail, so a
+-- list's rendering builds an arrow per element. The values of one run are largely the same lists
+-- over and over -- each tail a recursion was called with, and each list it built on the way back --
+-- and the tails of a list are the tails of every list it is a tail of, so 'showRunValues' carries
+-- these from one value to the next rather than building each tail's arrows again for every list it
+-- ends.
+dshowVal :: Env -> Val -> (Maybe Val, ResExEnv)
+dshowVal env@Env{evTbEnv, evTypeEnv, evExEnv} v
+  | reconstructableVal v && reachesTo evTypeEnv H.empty (getExprType e) dshowDestType = case run of
+      Just (shown, Env{evExEnv=built}) -> case renderValTextIn env{evExEnv=built} shown of
+        (text, built') -> (Just $ fromMaybe shown text, built')
+      Nothing -> (Nothing, evExEnv)
+  | otherwise = (Nothing, evExEnv)
+  where
+    e = eVal dshowName `eApply` ('/' : dshowArg, valToEExpr v)
+    run = cresToMaybe $ do
+      tree <- toTExprDest evTbEnv [] e (emptyMetaT dshowDestType)
+      runStateT (evalExpr tree) env
 
 -- | Whether 'valToEExpr' can rebuild this value (it errors on closures, IO, and other runtime-only
 -- values, none of which are @ToString@ or displayable).
@@ -896,9 +912,10 @@ withCallShows prgm res@EvalResult{erTreebug} = do
 -- always shown by its parts: it is the call rather than a value, and rendered whole it would be
 -- evaluated, showing what the call returned where what it was given belongs. Scalars are left as
 -- they are, since they already read as their text. Each distinct value is rendered once, as a run
--- passes the same lists down a recursion many times over.
+-- passes the same lists down a recursion many times over, and the arrows one rendering builds are
+-- kept for the next (see 'dshowVal').
 showRunValues :: EPrgm -> DebugRun -> DebugRun
-showRunValues prgm run@DebugRun{drValue, drResult=res@EvalResult{erTreebug, erDebugs}} = evalState go H.empty
+showRunValues prgm run@DebugRun{drValue, drResult=res@EvalResult{erTreebug, erDebugs}} = evalState go (H.empty, evExEnv env)
   where
     env = evalBaseEnv prgm
     go = do
@@ -914,16 +931,18 @@ showRunValues prgm run@DebugRun{drValue, drResult=res@EvalResult{erTreebug, erDe
     showParts (TupleVal name args) = TupleVal name <$> mapM showVal args
     showParts v                    = return v
     showVal v@TupleVal{} = do
-      cache <- get
+      (cache, built) <- get
       case H.lookup v cache of
         Just shown -> return shown
         Nothing -> do
-          shown <- case dshowVal env v of
-            Just display | display /= v -> return display
+          let (display, built') = dshowVal env{evExEnv=built} v
+          modify $ \(c, _) -> (c, built')
+          shown <- case display of
+            Just display' | display' /= v -> return display'
             -- Handed back as itself, which is how a member of @DShow@ that is not text is shown: by
             -- its parts, as a value with no display is. So its parts are given theirs.
-            _                           -> showParts v
-          modify (H.insert v shown)
+            _                             -> showParts v
+          modify $ \(c, b) -> (H.insert v shown c, b)
           return shown
     showVal v = return v
 
