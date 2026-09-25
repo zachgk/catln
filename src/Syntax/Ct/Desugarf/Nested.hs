@@ -159,7 +159,16 @@ subParentArgNeeds parentArgs subOwnArgs decls = go direct
     refsOf = H.fromListWith (++) [(oaObjPath d, objArrRefs d) | d <- decls]
     readsArg ref a = relativeNameMatches ref (pkName a)
     own n = H.lookupDefault S.empty n subOwnArgs
-    direct = H.mapWithKey (\n refs -> S.fromList [a | a <- H.keys parentArgs, any (`readsArg` a) refs, not (S.member a (own n))]) refsOf
+    direct = H.mapWithKey (\n refs -> S.fromList [a | a <- H.keys parentArgs, not (S.member a (own n)), opaque n || any (`readsArg` a) refs]) refsOf
+    -- A sub function whose code is not here to read -- one the runtime implements
+    -- (@#runtime@), or one with no arm to evaluate at all -- is handed every parent arg: the
+    -- runtime's implementation reads them by name (@debugExpr@ reads its parent's @/expr@), and
+    -- what it reads cannot be seen from the page.
+    opaque n = S.member n opaqueNames
+    opaqueNames = S.fromList [n | n <- H.keys refsOf, let ds = [d | d <- decls, oaObjPath d == n], any isRuntime ds || not (any hasBody ds)]
+    isRuntime ObjArr{oaAnnots} = any (\a -> maybe False (`relativeNameMatches` mkName runtimeAnnot) (maybeExprPath a)) oaAnnots
+    hasBody ObjArr{oaArr=Just (Just _, _)} = True
+    hasBody _                              = False
     callees n = [k | ref <- H.lookupDefault [] n refsOf, k <- names, relativeNameMatches ref k]
     go needs
       | needs' == needs = needs

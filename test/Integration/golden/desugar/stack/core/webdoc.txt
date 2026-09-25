@@ -27,15 +27,15 @@ Prgm
                             ( Value s= #overlay( Value url ) )= Show/Overlay( Value url= Value url )
                         , /Catln/Doc/dshow
                             ( Value s= #listProgram( Value mode ) )= Show/ListProgram
-                            ( Value prgm= listProgram( Value annot= Value s ) )( Value mode= Value mode )
+                            ( Value prgm= listProgram( Value /mode= Value /mode )( Value annot= Value s ) )( Value mode= Value mode )
                         , /Catln/Doc/dshow
                             ( Value s= #type( Value name ) )= Show/TypePage
-                            ( Value prgm= filterProgram( Value annot= Value s ) )( Value name= Value name )
+                            ( Value prgm= filterProgram( Value /name= Value /name )( Value annot= Value s ) )( Value name= Value name )
                         , /Catln/Doc/dshow( Value s= Value #typeInfer )= Show/TypeInfer
                             ( Value constrain= typeInfer( Value annot= Value s ) )
                         , /Catln/Doc/dshow
                             ( Value s= #typeInferPnt( Value pnt ) )= Show/TypeInferPnt
-                            ( Value trace= typeInferPnt( Value annot= Value s ) )( Value pnt= Value pnt )
+                            ( Value trace= typeInferPnt( Value /pnt= Value /pnt )( Value annot= Value s ) )( Value pnt= Value pnt )
                         , /Catln/Doc/dshow( Value s= Value #prgmGraph )= Show/PrgmGraph
                             ( Value graph= prgmGraph( Value annot= Value s ) )
                         , /Catln/Doc/dshow( Value s= Value #sidebar )= Show/Sidebar
@@ -48,10 +48,10 @@ Prgm
                             ( Value run= testRun( Value annot= Value s ) )
                         , /Catln/Doc/dshow
                             ( Value s= #debugger( Value fun ) )= Show/Debugger
-                            ( Value run= debugger( Value annot= Value s ) )( Value fun= Value fun )
+                            ( Value run= debugger( Value /fun= Value /fun )( Value annot= Value s ) )( Value fun= Value fun )
                         , /Catln/Doc/dshow
                             ( Value s= #debugExpr( Value expr ) )= Show/Debugger
-                            ( Value run= debugExpr( Value annot= Value s ) )( Value fun= Value expr )
+                            ( Value run= debugExpr( Value /expr= Value /expr )( Value annot= Value s ) )( Value fun= Value expr )
                         ]
                     }
                 )
@@ -98,7 +98,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ dshow./Catln/Doc/debugExpr( Value annot ) -> /Data/String ]
+                        [ dshow./Catln/Doc/debugExpr( Value /expr )( Value annot ) -> /Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -157,7 +157,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ dshow./Catln/Doc/typeInferPnt( Value annot ) -> /Data/String ]
+                        [ dshow./Catln/Doc/typeInferPnt( Value /pnt )( Value annot ) -> /Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -167,7 +167,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ dshow./Catln/Doc/debugger( Value annot ) -> /Data/String ]
+                        [ dshow./Catln/Doc/debugger( Value /fun )( Value annot ) -> /Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -356,7 +356,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ dshow./Catln/Doc/filterProgram( Value annot ) -> /Data/String ]
+                        [ dshow./Catln/Doc/filterProgram( Value /name )( Value annot ) -> /Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -366,7 +366,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ dshow./Catln/Doc/listProgram( Value annot ) -> /Data/String ]
+                        [ dshow./Catln/Doc/listProgram( Value /mode )( Value annot ) -> /Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
