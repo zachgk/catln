@@ -4433,7 +4433,23 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing subPartials []) t2@(Union
     (typeCoveredSymbolic typeEnv vaenv ProveEmpty t1 t2)
   || positiveLeafsAllUninhabited typeEnv vaenv subPartials
   || leafPredsImplyTop
+  || posPartCovers
+  || leafwise
   where
+    -- The rhs's positive leafs alone, when they cover the sub, prove the cover: they are a
+    -- subset of the rhs. The expansion above reads them together with the predicate universe's
+    -- members, a mixture in which the positive-union rules (a slot union across leafs) no
+    -- longer see the family they need.
+    posPartCovers = case t2 of
+      UnionType (Just _) pos2 _ | not (H.null pos2) -> isSubtypeOfWithEnv typeEnv vaenv t1 (UnionType Nothing pos2 [])
+      _ -> False
+    -- Each leaf of a positive union is covered on its own, and different leafs can take different
+    -- routes — one by its own predicates, another by the union's positive part — which no
+    -- whole-union rule above sees. Only a union of several leafs splits, so the per-leaf subgoal
+    -- does not re-enter this rule.
+    leafwise = case splitUnionType subPartials of
+      ls@(_:_:_) -> all (\l -> isSubtypeOfWithEnv typeEnv vaenv (singletonType l) t2) ls
+      _          -> False
     -- A leaf whose own predicates imply the predicate universe's is inside it, when that
     -- universe excludes no leafs: the formula alone decides membership, with no expansion. The
     -- expansion above reads an OPEN class through its current members only, so it cannot see
@@ -4474,7 +4490,11 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just _) (H.null -> True) []) (Un
 -- lefts split, mixed rights folded above) and no rhs excluded constants (stripped above) —
 -- where the identity is exact.
 isSubtypeOfWithEnv typeEnv vaenv (UnionType (Just (p1, n1, _)) (H.null -> True) []) (UnionType (Just (p2, n2, [])) (H.null -> True) [])
-  | p1 == p2 = isSubtypeOfWithEnv typeEnv vaenv (intersectTypesEnv typeEnv vaenv (TopType H.empty p1) (UnionType Nothing n2 [])) (UnionType Nothing n1 [])
+  -- The cover is a positive-union question, and @n1@ may cover jointly only through a split on a
+  -- predicate one of its leafs carries (@length(this=⊤)|¬~length(this=∀List)@ beside
+  -- @length(this=∀List)@), so ask it with the complete relation — one excluded-middle split, its
+  -- halves decided by the plain relation, so the subgoal stays a positive-leaf question.
+  | p1 == p2 = isSubtypeOfWithEnvComplete typeEnv vaenv (intersectTypesEnv typeEnv vaenv (TopType H.empty p1) (UnionType Nothing n2 [])) (UnionType Nothing n1 [])
 -- Pure NegPartials-top ⊆ pure NegPartials-top, DIFFERING predicates: (U_p1-n1-nc1) ⊆ (U_p2-n2).
 -- Both sides are fully reduced here (mixed lefts split, mixed rights folded, rhs excluded
 -- constants stripped, same-preds pairs decided, by the clauses above). The excluded constants
@@ -4944,7 +4964,24 @@ compactJoinPartials typeEnv vaenv partials = joinUnionType $ concat $ H.elems $ 
          && all exactSlotJoin (differingPairs args1 args2 ++ differingPairs vars1 vars2)
       then Just $ PartialType name1 (joinMap vars1 vars2) (joinMap args1 args2) PredsNone mode1
       else Nothing
+    -- Excluded middle: two leafs identical but for one conjunct held positively on one and
+    -- negated on the other are together the leaf without it (@X|P∧q ∪ X|P∧¬q = X|P@). Left
+    -- apart, the pair is a spelling of @X|P@ no single-leaf subtype check recognises, so a cover
+    -- that holds by the split (a slot partition, a difference) read as refused.
+    tryJoin p1@PartialType{ptPreds=preds1} p2@PartialType{ptPreds=preds2}
+      | p1{ptPreds=PredsNone} == p2{ptPreds=PredsNone}
+      , Just rest <- complementaryConj (conjs preds1) (conjs preds2)
+      = Just p1{ptPreds = rebuild rest}
     tryJoin _ _ = Nothing
+    conjs PredsNone     = []
+    conjs (PredsAnd qs) = concatMap conjs qs
+    conjs q             = [q]
+    rebuild []  = PredsNone
+    rebuild [q] = q
+    rebuild qs  = mkAnd qs
+    complementaryConj cs1 cs2 = case (cs1 L.\\ cs2, cs2 L.\\ cs1) of
+      ([q1], [q2]) | q2 == predsNot q1 || q1 == predsNot q2 -> Just (L.intersect cs1 cs2)
+      _ -> Nothing
 
     numDifferences m1 m2 = sum $ fromEnum <$> H.intersectionWith (/=) m1 m2
     differingPairs m1 m2 = filter (uncurry (/=)) $ H.elems $ H.intersectionWith (,) m1 m2
@@ -5226,9 +5263,10 @@ reduceNegPredLeaf typeEnv vaenv p
     qTop q = UnionType (Just (q, H.empty, [])) H.empty []
     decide q
       | not (predsHasClassRelAtom q) = Nothing
-      | isSubtypeOfWithEnv typeEnv vaenv bare (qTop q) = Just True
-      | isBottomType (intersectTypesEnv typeEnv vaenv bare (qTop q)) = Just False
-      | otherwise = Nothing
+      | otherwise = decideInFlight (p{ptPreds=PredsNone}, q) $
+          if isSubtypeOfWithEnv typeEnv vaenv bare (qTop q) then Just True
+          else if isBottomType (intersectTypesEnv typeEnv vaenv bare (qTop q)) then Just False
+          else Nothing
     -- 'decide' is attempted only where the tested formula is ¬-SMALLER than the formula
     -- being reduced: at atoms (a ¬-free test) and at each 'PredsNot' operand (one ¬-level
     -- stripped) — the same well-founded descent the pre-generalization rule had. Deciding
@@ -5262,6 +5300,27 @@ reduceNegPredLeaf typeEnv vaenv p
     rebuildConjs []  = PredsNone
     rebuildConjs [q] = q
     rebuildConjs qs  = mkAnd qs
+
+-- | The per-leaf predicate decisions of 'reduceNegPredLeaf' currently being made. Deciding @q@ on a
+-- bare leaf asks @leaf ⊆ U_q@; when that is outside the engine's fragment, the answer is read from
+-- the materialized meet @leaf ∩ ¬q@, whose compaction reduces the same leaf's @¬q@ — the same
+-- decision, one level down. A re-entered decision is left undecided: the conjunct stays attached,
+-- which spells the same set, so the marker chooses a spelling and never an answer.
+{-# NOINLINE negPredDecideInFlightRef #-}
+negPredDecideInFlightRef :: IORef (S.HashSet (PartialType, TypePredicates))
+negPredDecideInFlightRef = unsafePerformIO (newIORef S.empty)
+
+decideInFlight :: (PartialType, TypePredicates) -> Maybe Bool -> Maybe Bool
+decideInFlight k decision = unsafePerformIO $ do
+  inflight <- readIORef negPredDecideInFlightRef
+  if S.member k inflight
+    then return Nothing
+    else do
+      modifyIORef' negPredDecideInFlightRef (S.insert k)
+      r <- evaluate decision
+      modifyIORef' negPredDecideInFlightRef (S.delete k)
+      return r
+{-# NOINLINE decideInFlight #-}
 
 -- |
 -- Used to simplify and reduce the size of a 'Type'.
