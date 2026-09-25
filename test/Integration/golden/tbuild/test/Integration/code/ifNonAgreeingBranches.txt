@@ -43,15 +43,11 @@ Prgm
                                 ) + /Data/String + /greet.$c213d7
                                 ( /$c213d7-arg=( /Catln/Else + /Catln/Then )
                                 , /name=/Data/String
-                                , /formal=∀/Data/Primitive/Boolean
                                 )
                             ) =
                             ( /greet.$c213d7
                                 ( EAppArg
                                     { eaaArg = Value /name -> TVArg /name = ( Value /name ↦ TVArg /name ) }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /formal -> TVArg /formal = ( Value /formal ↦ TVArg /formal ) }
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /$c213d7-arg -> ( /Catln/Else + /Catln/Then ) =
@@ -80,7 +76,6 @@ Prgm
                     , omiDefs =
                         [ /greet.$c213d7
                             ( EAppArg { eaaArg = Value /name -> /Data/String } )
-                            ( EAppArg { eaaArg = Value /formal -> ∀/Data/Primitive/Boolean } )
                             ( EAppArg { eaaArg = Value /$c213d7-arg -> /Catln/Then = Value /Catln/Then } ) ->
                             ( /operator++
                                 ( /r=/Data/String
@@ -97,7 +92,6 @@ Prgm
                             )
                         , /greet.$c213d7
                             ( EAppArg { eaaArg = Value /name -> /Data/String } )
-                            ( EAppArg { eaaArg = Value /formal -> ∀/Data/Primitive/Boolean } )
                             ( EAppArg { eaaArg = Value /$c213d7-arg -> /Catln/Else = Value /Catln/Else } ) ->
                             ( /operator++
                                 ( /r=/Data/String

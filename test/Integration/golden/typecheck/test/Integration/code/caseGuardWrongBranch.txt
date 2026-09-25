@@ -8,7 +8,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /abs.$bfef16-1( Value /x -> /Data/Primitive/Integer )
+                        [ /abs.$bfef16-1
                             ( Value /$bfef16-arg= Hole TopType HoleActive { haName = Nothing }@Value /x2 ) ->
                             ( /operator*
                                 ( /r=/Data/Primitive/Integer
@@ -50,10 +50,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /abs( Value /x -> /Data/Primitive/Integer ) ->
-                            ( /abs.$bfef16-1
-                                ( /x=/Data/Primitive/Integer
-                                , /$bfef16-arg=/Data/Primitive/Integer
-                                ) + /abs.$bfef16-0
+                            ( /abs.$bfef16-1( /$bfef16-arg=/Data/Primitive/Integer ) + /abs.$bfef16-0
                                 ( /x=/Data/Primitive/Integer
                                 , /$bfef16-arg=/Data/Primitive/Integer
                                 ) + /operator*
@@ -78,14 +75,11 @@ Prgm
                             ) -> TVArg /x2 = Value /x2
                         , /abs.$bfef16-0( Value /x -> /Data/Primitive/Integer )
                             ( Value /$bfef16-arg= Hole TopType HoleActive { haName = Nothing }@Value /x2 ) ->
-                            ( /abs.$bfef16-1
-                                ( /x=/Data/Primitive/Integer
-                                , /$bfef16-arg=/Data/Primitive/Integer
-                                ) + /operator*
+                            ( /abs.$bfef16-1( /$bfef16-arg=/Data/Primitive/Integer ) + /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer
-                            ) = /abs.$bfef16-1( Value /x -> TVArg /x = Value /x )( Value /$bfef16-arg -> TVArg /x = Value /x )
+                            ) = /abs.$bfef16-1( Value /$bfef16-arg -> TVArg /x = Value /x )
                         ]
                     }
                 )

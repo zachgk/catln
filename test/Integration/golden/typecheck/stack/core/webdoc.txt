@@ -30,13 +30,13 @@ Prgm
                             ( /prgm=/Data/String
                             , /mode=∀/Catln/Doc/ListProgramMode
                             ) = /Catln/Doc/Show/ListProgram
-                            ( Value /prgm -> /Data/String = /dshow./Catln/Doc/listProgram( Value /mode -> TVArg /mode = Value /mode )( Value /annot -> /s = Value /s ) )( Value /mode -> TVArg /mode = Value /mode )
+                            ( Value /prgm -> /Data/String = /dshow./Catln/Doc/listProgram( Value /annot -> /s = Value /s ) )( Value /mode -> TVArg /mode = Value /mode )
                         , /Catln/Doc/dshow
                             ( Value /s -> /Catln/Doc/#type( /name=/Data/String ) = /Catln/Doc/#type( Value /name -> /Data/String ) ) -> /Catln/Doc/Show/TypePage
                             ( /name=/Data/String
                             , /prgm=/Data/String
                             ) = /Catln/Doc/Show/TypePage
-                            ( Value /prgm -> /Data/String = /dshow./Catln/Doc/filterProgram( Value /name -> TVArg /name = Value /name )( Value /annot -> /s = Value /s ) )( Value /name -> TVArg /name = Value /name )
+                            ( Value /prgm -> /Data/String = /dshow./Catln/Doc/filterProgram( Value /annot -> /s = Value /s ) )( Value /name -> TVArg /name = Value /name )
                         , /Catln/Doc/dshow( Value /s -> /Catln/Doc/#typeInfer = Value /Catln/Doc/#typeInfer ) -> /Catln/Doc/Show/TypeInfer( /constrain=/Data/String ) = /Catln/Doc/Show/TypeInfer
                             ( Value /constrain -> /Data/String = /dshow./Catln/Doc/typeInfer( Value /annot -> /s = Value /s ) )
                         , /Catln/Doc/dshow
@@ -44,7 +44,7 @@ Prgm
                             ( /pnt=/Data/Primitive/Integer
                             , /trace=/Data/String
                             ) = /Catln/Doc/Show/TypeInferPnt
-                            ( Value /trace -> /Data/String = /dshow./Catln/Doc/typeInferPnt( Value /pnt -> TVArg /pnt = Value /pnt )( Value /annot -> /s = Value /s ) )( Value /pnt -> TVArg /pnt = Value /pnt )
+                            ( Value /trace -> /Data/String = /dshow./Catln/Doc/typeInferPnt( Value /annot -> /s = Value /s ) )( Value /pnt -> TVArg /pnt = Value /pnt )
                         , /Catln/Doc/dshow( Value /s -> /Catln/Doc/#prgmGraph = Value /Catln/Doc/#prgmGraph ) -> /Catln/Doc/Show/PrgmGraph( /graph=/Data/String ) = /Catln/Doc/Show/PrgmGraph
                             ( Value /graph -> /Data/String = /dshow./Catln/Doc/prgmGraph( Value /annot -> /s = Value /s ) )
                         , /Catln/Doc/dshow( Value /s -> /Catln/Doc/#sidebar = Value /Catln/Doc/#sidebar ) -> /Catln/Doc/Show/Sidebar( /pages=/Data/String ) = /Catln/Doc/Show/Sidebar
@@ -61,13 +61,13 @@ Prgm
                             ( /fun=/Data/String
                             , /run=/Data/String
                             ) = /Catln/Doc/Show/Debugger
-                            ( Value /run -> /Data/String = /dshow./Catln/Doc/debugger( Value /fun -> TVArg /fun = Value /fun )( Value /annot -> /s = Value /s ) )( Value /fun -> TVArg /fun = Value /fun )
+                            ( Value /run -> /Data/String = /dshow./Catln/Doc/debugger( Value /annot -> /s = Value /s ) )( Value /fun -> TVArg /fun = Value /fun )
                         , /Catln/Doc/dshow
                             ( Value /s -> /Catln/Doc/#debugExpr( /expr=/Data/String ) = /Catln/Doc/#debugExpr( Value /expr -> /Data/String ) ) -> /Catln/Doc/Show/Debugger
                             ( /fun=/Data/String
                             , /run=/Data/String
                             ) = /Catln/Doc/Show/Debugger
-                            ( Value /run -> /Data/String = /dshow./Catln/Doc/debugExpr( Value /expr -> TVArg /expr = Value /expr )( Value /annot -> /s = Value /s ) )( Value /fun -> TVArg /expr = Value /expr )
+                            ( Value /run -> /Data/String = /dshow./Catln/Doc/debugExpr( Value /annot -> /s = Value /s ) )( Value /fun -> TVArg /expr = Value /expr )
                         ]
                     }
                 )
@@ -114,7 +114,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /dshow./Catln/Doc/debugExpr( Value /expr )( Value /annot ) -> /Data/String ]
+                        [ /dshow./Catln/Doc/debugExpr( Value /annot ) -> /Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -173,7 +173,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /dshow./Catln/Doc/typeInferPnt( Value /pnt )( Value /annot ) -> /Data/String ]
+                        [ /dshow./Catln/Doc/typeInferPnt( Value /annot ) -> /Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -183,7 +183,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /dshow./Catln/Doc/debugger( Value /fun )( Value /annot ) -> /Data/String ]
+                        [ /dshow./Catln/Doc/debugger( Value /annot ) -> /Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -372,7 +372,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /dshow./Catln/Doc/filterProgram( Value /name )( Value /annot ) -> /Data/String ]
+                        [ /dshow./Catln/Doc/filterProgram( Value /annot ) -> /Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -382,7 +382,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /dshow./Catln/Doc/listProgram( Value /mode )( Value /annot ) -> /Data/String ]
+                        [ /dshow./Catln/Doc/listProgram( Value /annot ) -> /Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }

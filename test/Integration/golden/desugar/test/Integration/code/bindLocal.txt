@@ -18,9 +18,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ bindWithLocal.$9471e8.doubled
-                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value /x )= /operator+( Value /l= Value x )( Value /r= Value x )
-                        ]
+                        [ bindWithLocal.$9471e8.doubled( Value /x )= /operator+( Value /l= Value x )( Value /r= Value x ) ]
                     }
                 )
             ,
@@ -31,10 +29,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ bindWithLocal.$9471e8
-                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
                             ( Value $9471e8-arg@Value x )= /Data/Maybe/Some
                             ( Value value= /operator+
-                                ( Value /l= bindWithLocal.$9471e8.doubled( Value /m= Value /m )( Value /x= Value /x ) )
+                                ( Value /l= bindWithLocal.$9471e8.doubled( Value /x= Value /x ) )
                                 ( Value /r= CInt
                                     { ciValue = 1 }
                                 )
@@ -51,7 +48,7 @@ Prgm
                     , omiDefs =
                         [ bindWithLocal
                             ( Value m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe = /Data/bindap( Value m= Value m )
-                            ( fn( Value v )= bindWithLocal.$9471e8( Value /m= Value /m )
+                            ( fn( Value v )= bindWithLocal.$9471e8
                                 ( Value /$9471e8-arg= Value v )
                             )
                         ]

@@ -40,7 +40,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ f.innerVar( Value /io -> /Catln/IO )= /operator==
+                        [ Value f.innerVar= /operator==
                             ( Value /l= /operator+
                                 ( Value /l= CInt
                                     { ciValue = 1 }

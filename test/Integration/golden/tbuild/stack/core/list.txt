@@ -247,12 +247,6 @@ Prgm
                                                 { eaaArg = Value /r -> ∀/Data/Algebra/Semigroup =
                                                     ( /toString./Data/List/restToString
                                                         ( EAppArg
-                                                            { eaaArg = Value /t -> TVArg /t = ( Value /t ↦ TVArg /t ) }
-                                                        )
-                                                        ( EAppArg
-                                                            { eaaArg = Value /h -> TVArg /h = ( Value /h ↦ TVArg /h ) }
-                                                        )
-                                                        ( EAppArg
                                                             { eaaArg = Value /lst -> TVArg /t = ( Value /t ↦ TVArg /t ) }
                                                         ) ↦ ∀/Data/Algebra/Semigroup
                                                     )
@@ -519,10 +513,6 @@ Prgm
                                         , []
                                         ) =
                                         ( /filter./Data/List/keepIf
-                                            ( EAppArg { eaaArg = Value /fn -> /fn = Value /fn } )
-                                            ( EAppArg
-                                                { eaaArg = Value /lst -> TVArg /lst = ( Value /lst ↦ TVArg /lst ) }
-                                            )
                                             ( EAppArg
                                                 { eaaArg = Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) }
                                             )
@@ -665,8 +655,6 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /sorted./Data/List/insert
-                            ( EAppArg { eaaArg = Value /t } )
-                            ( EAppArg { eaaArg = Value /h } )
                             ( EAppVar
                                 { eavName = /T
                                 , eavMeta = ∀/Data/Algebra/Ord
@@ -681,8 +669,6 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /sorted./Data/List/insert
-                            ( EAppArg { eaaArg = Value /t } )
-                            ( EAppArg { eaaArg = Value /h } )
                             ( EAppArg { eaaArg = Value /x -> ∀/Data/Algebra/Ord } )
                             ( EAppArg { eaaArg = Value /lst -> /Data/List/Nil = Value /Data/List/Nil } ) -> /Data/List/Cons
                             ( /head=∀/Data/Algebra/Ord
@@ -693,8 +679,6 @@ Prgm
                             )
                             ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
                         , /sorted./Data/List/insert
-                            ( EAppArg { eaaArg = Value /t } )
-                            ( EAppArg { eaaArg = Value /h } )
                             ( EAppArg { eaaArg = Value /x -> ∀/Data/Algebra/Ord } )
                             ( EAppArg
                                 { eaaArg = Value /lst -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
@@ -747,8 +731,6 @@ Prgm
                                 }
                             )
                         , /sorted./Data/List/insert
-                            ( EAppArg { eaaArg = Value /t } )
-                            ( EAppArg { eaaArg = Value /h } )
                             ( EAppArg { eaaArg = Value /x -> ∀/Data/Algebra/Ord } )
                             ( EAppArg
                                 { eaaArg = Value /lst -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
@@ -775,12 +757,6 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] =
                                     ( /sorted./Data/List/insert
-                                        ( EAppArg
-                                            { eaaArg = Value /t -> TVArg /t = ( Value /t ↦ TVArg /t ) }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /h -> TVArg /h = ( Value /h ↦ TVArg /h ) }
-                                        )
                                         ( EAppArg
                                             { eaaArg = Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) }
                                         )
@@ -994,8 +970,7 @@ Prgm
                                 )
                             ,
                                 ( /sorted./Data/List/insert
-                                    ( /t=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    , /x=∀/Data/Algebra/Ord
+                                    ( /x=∀/Data/Algebra/Ord
                                     , /lst=UnionType
                                         ( Just
                                             ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=∀/Data/Algebra/Ord ]
@@ -1008,7 +983,6 @@ Prgm
                                             )
                                         , []
                                         )
-                                    , /h=∀/Data/Algebra/Ord
                                     ) + /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                                     ( /head=∀/Data/Algebra/Ord
                                     , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
@@ -1017,12 +991,6 @@ Prgm
                             , []
                             ) =
                             ( /sorted./Data/List/insert
-                                ( EAppArg
-                                    { eaaArg = Value /t -> TVArg /t = ( Value /t ↦ TVArg /t ) }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /h -> TVArg /h = ( Value /h ↦ TVArg /h ) }
-                                )
                                 ( EAppArg
                                     { eaaArg = Value /x -> TVArg /h = ( Value /h ↦ TVArg /h ) }
                                 )
@@ -1172,8 +1140,6 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /filter./Data/List/keepIf
-                            ( EAppArg { eaaArg = Value /fn } )
-                            ( EAppArg { eaaArg = Value /lst } )
                             ( EAppArg { eaaArg = Value /v -> $_/A } )
                             ( EAppArg { eaaArg = Value /keep -> ∀/Data/Primitive/Boolean } ) -> ∀/Data/List/ConsList[ /T=$_/A ]
                         ]
@@ -1181,8 +1147,6 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /filter./Data/List/keepIf
-                            ( EAppArg { eaaArg = Value /fn } )
-                            ( EAppArg { eaaArg = Value /lst } )
                             ( EAppArg { eaaArg = Value /v } )
                             ( EAppArg { eaaArg = Value /keep -> /Data/Primitive/True = Value /Data/Primitive/True } ) -> /Data/List/Cons
                             ( /head=TopType
@@ -1193,8 +1157,6 @@ Prgm
                             )
                             ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
                         , /filter./Data/List/keepIf
-                            ( EAppArg { eaaArg = Value /fn } )
-                            ( EAppArg { eaaArg = Value /lst } )
                             ( EAppArg { eaaArg = Value /v } )
                             ( EAppArg { eaaArg = Value /keep -> /Data/Primitive/False = Value /Data/Primitive/False } ) -> /Data/List/Nil = Value /Data/List/Nil
                         ]
@@ -1489,8 +1451,6 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /toString./Data/List/restToString
-                            ( EAppArg { eaaArg = Value /t } )
-                            ( EAppArg { eaaArg = Value /h } )
                             ( EAppArg
                                 { eaaArg = Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] }
                             ) -> /Data/String
@@ -1499,12 +1459,8 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /toString./Data/List/restToString
-                            ( EAppArg { eaaArg = Value /t } )
-                            ( EAppArg { eaaArg = Value /h } )
                             ( EAppArg { eaaArg = Value /lst -> /Data/List/Nil = Value /Data/List/Nil } ) -> /Data/String = ""
                         , /toString./Data/List/restToString
-                            ( EAppArg { eaaArg = Value /t } )
-                            ( EAppArg { eaaArg = Value /h } )
                             ( EAppArg
                                 { eaaArg = Value /lst -> /Data/List/Cons[ /T=∀/Data/ToString ]
                                     ( /head=∀/Data/ToString
@@ -1543,12 +1499,6 @@ Prgm
                                 ( EAppArg
                                     { eaaArg = Value /r -> ∀/Data/Algebra/Semigroup =
                                         ( /toString./Data/List/restToString
-                                            ( EAppArg
-                                                { eaaArg = Value /t -> TVArg /t = ( Value /t ↦ TVArg /t ) }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /h -> TVArg /h = ( Value /h ↦ TVArg /h ) }
-                                            )
                                             ( EAppArg
                                                 { eaaArg = Value /lst -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
                                             ) ↦ ∀/Data/Algebra/Semigroup

@@ -41,12 +41,6 @@ Prgm
                                                                                 { eaaArg = Value /r -> /Data/String =
                                                                                     ( /Catln/Doc/dshow./Data/RSS/titleOf
                                                                                         ( EAppArg
-                                                                                            { eaaArg = Value /published -> TVArg /published = ( Value /published ↦ TVArg /published ) }
-                                                                                        )
-                                                                                        ( EAppArg
-                                                                                            { eaaArg = Value /description -> TVArg /description = ( Value /description ↦ TVArg /description ) }
-                                                                                        )
-                                                                                        ( EAppArg
                                                                                             { eaaArg = Value /title -> TVArg /title = ( Value /title ↦ TVArg /title ) }
                                                                                         )
                                                                                         ( EAppArg
@@ -61,15 +55,6 @@ Prgm
                                                                 ( EAppArg
                                                                     { eaaArg = Value /r -> /Data/String =
                                                                         ( /Catln/Doc/dshow./Data/RSS/publishedOf
-                                                                            ( EAppArg
-                                                                                { eaaArg = Value /link -> TVArg /link = ( Value /link ↦ TVArg /link ) }
-                                                                            )
-                                                                            ( EAppArg
-                                                                                { eaaArg = Value /title -> TVArg /title = ( Value /title ↦ TVArg /title ) }
-                                                                            )
-                                                                            ( EAppArg
-                                                                                { eaaArg = Value /description -> TVArg /description = ( Value /description ↦ TVArg /description ) }
-                                                                            )
                                                                             ( EAppArg
                                                                                 { eaaArg = Value /published -> TVArg /published = ( Value /published ↦ TVArg /published ) }
                                                                             ) ↦ /Data/String
@@ -115,8 +100,6 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/Doc/dshow./Data/RSS/titleOf
-                            ( EAppArg { eaaArg = Value /published } )
-                            ( EAppArg { eaaArg = Value /description } )
                             ( EAppArg { eaaArg = Value /title -> /Data/String } )
                             ( EAppArg { eaaArg = Value /link -> /Data/String } ) -> /Data/String
                         ]
@@ -124,8 +107,6 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Catln/Doc/dshow./Data/RSS/titleOf
-                            ( EAppArg { eaaArg = Value /published } )
-                            ( EAppArg { eaaArg = Value /description } )
                             ( EAppArg { eaaArg = Value /title -> /Data/String } )
                             ( EAppArg { eaaArg = Value /link -> /Data/String } ) | /operator==
                             ( EAppArg
@@ -152,8 +133,6 @@ Prgm
                                 ) ↦ /Data/String
                             )
                         , /Catln/Doc/dshow./Data/RSS/titleOf
-                            ( EAppArg { eaaArg = Value /published } )
-                            ( EAppArg { eaaArg = Value /description } )
                             ( EAppArg { eaaArg = Value /title -> /Data/String } )
                             ( EAppArg { eaaArg = Value /link -> /Data/String } ) -> /Data/String =
                             ( /operator++
@@ -199,18 +178,12 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/Doc/dshow./Data/RSS/publishedOf
-                            ( EAppArg { eaaArg = Value /link } )
-                            ( EAppArg { eaaArg = Value /title } )
-                            ( EAppArg { eaaArg = Value /description } )
                             ( EAppArg { eaaArg = Value /published -> /Data/String } ) -> /Data/String
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Catln/Doc/dshow./Data/RSS/publishedOf
-                            ( EAppArg { eaaArg = Value /link } )
-                            ( EAppArg { eaaArg = Value /title } )
-                            ( EAppArg { eaaArg = Value /description } )
                             ( EAppArg { eaaArg = Value /published -> /Data/String } ) | /operator==
                             ( EAppArg
                                 { eaaArg = Value /l -> TVArg /published = ( Value /published ↦ TVArg /published ) }
@@ -219,9 +192,6 @@ Prgm
                                 { eaaArg = Value /r -> /Data/String = "" }
                             ) -> /Data/String = ""
                         , /Catln/Doc/dshow./Data/RSS/publishedOf
-                            ( EAppArg { eaaArg = Value /link } )
-                            ( EAppArg { eaaArg = Value /title } )
-                            ( EAppArg { eaaArg = Value /description } )
                             ( EAppArg { eaaArg = Value /published -> /Data/String } ) -> /Data/String =
                             ( /operator++
                                 ( EAppArg

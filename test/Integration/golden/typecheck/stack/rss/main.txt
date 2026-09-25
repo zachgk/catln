@@ -23,9 +23,9 @@ Prgm
                                             ( Value /l -> /Data/String = CStr
                                                 { csValue = "<p>" }
                                             )
-                                            ( Value /r -> /Data/String = /Catln/Doc/dshow./Data/RSS/titleOf( Value /published -> TVArg /published = Value /published )( Value /description -> TVArg /description = Value /description )( Value /title -> TVArg /title = Value /title )( Value /link -> TVArg /link = Value /link ) )
+                                            ( Value /r -> /Data/String = /Catln/Doc/dshow./Data/RSS/titleOf( Value /title -> TVArg /title = Value /title )( Value /link -> TVArg /link = Value /link ) )
                                         )
-                                        ( Value /r -> /Data/String = /Catln/Doc/dshow./Data/RSS/publishedOf( Value /link -> TVArg /link = Value /link )( Value /title -> TVArg /title = Value /title )( Value /description -> TVArg /description = Value /description )( Value /published -> TVArg /published = Value /published ) )
+                                        ( Value /r -> /Data/String = /Catln/Doc/dshow./Data/RSS/publishedOf( Value /published -> TVArg /published = Value /published ) )
                                     )
                                     ( Value /r -> /Data/String = CStr
                                         { csValue = "</p>" }
@@ -49,11 +49,11 @@ Prgm
                 ( "/Catln/Doc/dshow./Data/RSS/titleOf"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/Doc/dshow./Data/RSS/titleOf( Value /published )( Value /description )( Value /title -> /Data/String )( Value /link -> /Data/String ) -> /Data/String ]
+                        [ /Catln/Doc/dshow./Data/RSS/titleOf( Value /title -> /Data/String )( Value /link -> /Data/String ) -> /Data/String ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Catln/Doc/dshow./Data/RSS/titleOf( Value /published )( Value /description )( Value /title -> /Data/String )( Value /link -> /Data/String ) | /operator==( Value /l -> TVArg /link = Value /link )
+                        [ /Catln/Doc/dshow./Data/RSS/titleOf( Value /title -> /Data/String )( Value /link -> /Data/String ) | /operator==( Value /l -> TVArg /link = Value /link )
                             ( Value /r -> /Data/String = CStr
                                 { csValue = "" }
                             ) -> /Data/String = /operator++
@@ -65,7 +65,7 @@ Prgm
                             ( Value /r -> /Data/String = CStr
                                 { csValue = "</strong>" }
                             )
-                        , /Catln/Doc/dshow./Data/RSS/titleOf( Value /published )( Value /description )( Value /title -> /Data/String )( Value /link -> /Data/String ) -> /Data/String = /operator++
+                        , /Catln/Doc/dshow./Data/RSS/titleOf( Value /title -> /Data/String )( Value /link -> /Data/String ) -> /Data/String = /operator++
                             ( Value /l -> /Data/String = /operator++
                                 ( Value /l -> /Data/String = /operator++
                                     ( Value /l -> /Data/String = /operator++
@@ -88,16 +88,16 @@ Prgm
                 ( "/Catln/Doc/dshow./Data/RSS/publishedOf"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/Doc/dshow./Data/RSS/publishedOf( Value /link )( Value /title )( Value /description )( Value /published -> /Data/String ) -> /Data/String ]
+                        [ /Catln/Doc/dshow./Data/RSS/publishedOf( Value /published -> /Data/String ) -> /Data/String ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Catln/Doc/dshow./Data/RSS/publishedOf( Value /link )( Value /title )( Value /description )( Value /published -> /Data/String ) | /operator==( Value /l -> TVArg /published = Value /published )
+                        [ /Catln/Doc/dshow./Data/RSS/publishedOf( Value /published -> /Data/String ) | /operator==( Value /l -> TVArg /published = Value /published )
                             ( Value /r -> /Data/String = CStr
                                 { csValue = "" }
                             ) -> /Data/String = CStr
                             { csValue = "" }
-                        , /Catln/Doc/dshow./Data/RSS/publishedOf( Value /link )( Value /title )( Value /description )( Value /published -> /Data/String ) -> /Data/String = /operator++
+                        , /Catln/Doc/dshow./Data/RSS/publishedOf( Value /published -> /Data/String ) -> /Data/String = /operator++
                             ( Value /l -> /Data/String = /operator++
                                 ( Value /l -> /Data/String = CStr
                                     { csValue = " <small>" }

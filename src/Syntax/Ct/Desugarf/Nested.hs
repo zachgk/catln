@@ -129,14 +129,72 @@ currySubFunctions oa@ObjArr{oaObj=Just objExpression, oaAnnots, oaArr} decls = (
     -- arg the sub function itself declares (e.g. a parent @range(stop)@ and a helper
     -- @rangeFrom(i, stop)@ that share @stop@) is not curried into it and double-applied.
     subOwnArgs = H.fromListWith S.union [(oaObjPath d, H.keysSet $ exprArgs (oaObjExpr d)) | d <- flatObjectMap decls]
-    parentArgsFor n = case [ownArgs | (k, ownArgs) <- H.toList subOwnArgs, relativeNameMatches n k] of
-      (ownArgs:_) -> H.filterWithKey (\a _ -> not $ S.member a ownArgs) parentArgs
-      []          -> parentArgs
+    -- Only the parent args a sub function reads are curried into it: a sub function closes over
+    -- what it refers to, not over everything in scope where it is written. The rest would be
+    -- arguments of every call of it that nothing reads, and an argument is part of the type the
+    -- call is entered at -- so @toString@'s @restToString@, which reads only the list it is
+    -- handed, carried the whole outer list as well, and no two calls of it on the same tail of
+    -- different lists were the same call.
+    --
+    -- Closed over the sibling sub functions it calls, since a call of a sibling is curried with
+    -- the sibling's own parent args ('currySubFunctionsUpdateExpr'), which then have to be in
+    -- scope where the call is written.
+    parentArgsFor n = case [needs | (k, needs) <- H.toList subNeeds, relativeNameMatches n k] of
+      (needs:_) -> H.filterWithKey (\a _ -> S.member a needs) parentArgs
+      []        -> parentArgs
+    subNeeds = subParentArgNeeds parentArgs subOwnArgs (flatObjectMap decls)
     decls2 = map (\d -> currySubFunctionSignature (parentArgsFor (oaObjPath d)) d) $ flatObjectMap decls
     oaArr' = fmap (first (fmap (currySubFunctionsUpdateExpr toUpdate parentArgsFor))) oaArr
     decls' = map (\doa@ObjArr{oaArr=doaArr} -> doa{oaArr=fmap (first (fmap (currySubFunctionsUpdateExpr toUpdate parentArgsFor))) doaArr}) decls2
     annots' = map (currySubFunctionsUpdateExpr toUpdate parentArgsFor) oaAnnots
 currySubFunctions oa _ = error $ printf "currySubFunctions without input expression: %s" (show oa)
+
+-- | The parent args each sub function reads, keyed by the sub function's name: the ones its arms,
+-- guards and annotations refer to, and the ones of every sibling it calls, less its own parameters.
+-- A fixed point, since siblings may call each other.
+subParentArgNeeds :: ParentArgs -> H.HashMap TypeName (S.HashSet ArgName) -> [DesObjectMapItem] -> H.HashMap TypeName (S.HashSet ArgName)
+subParentArgNeeds parentArgs subOwnArgs decls = go direct
+  where
+    names = H.keys subOwnArgs
+    refsOf = H.fromListWith (++) [(oaObjPath d, objArrRefs d) | d <- decls]
+    readsArg ref a = relativeNameMatches ref (pkName a)
+    own n = H.lookupDefault S.empty n subOwnArgs
+    direct = H.mapWithKey (\n refs -> S.fromList [a | a <- H.keys parentArgs, any (`readsArg` a) refs, not (S.member a (own n))]) refsOf
+    callees n = [k | ref <- H.lookupDefault [] n refsOf, k <- names, relativeNameMatches ref k]
+    go needs
+      | needs' == needs = needs
+      | otherwise = go needs'
+      where
+        needs' = H.mapWithKey (\n ns -> S.filter (\a -> not (S.member a (own n))) $ S.unions (ns : [H.lookupDefault S.empty c needs | c <- callees n])) needs
+
+-- | The names a definition refers to: what its arms evaluate, the guards it is matched under, and
+-- its annotations. The names it binds -- its own parameters and pattern fields, and the keys of
+-- the arguments it applies -- are not references.
+objArrRefs :: DesObjectMapItem -> [TypeName]
+objArrRefs ObjArr{oaObj, oaArr, oaAnnots} = maybe [] exprGuardRefs oaObj ++ maybe [] (maybe [] exprRefs . fst) oaArr ++ concatMap exprRefs oaAnnots
+
+-- | The names an expression refers to. An applied argument contributes its value, not its key.
+exprRefs :: PSExpr -> [TypeName]
+exprRefs CExpr{}                 = []
+exprRefs (Value _ n)             = [n]
+exprRefs HoleExpr{}              = []
+exprRefs (AliasExpr b a)         = exprRefs b ++ exprRefs a
+exprRefs (EWhere _ b c)          = exprRefs b ++ exprRefs c
+exprRefs (TupleApply _ (_, b) a) = exprRefs b ++ case a of
+  EAppArg ObjArr{oaArr} -> maybe [] (maybe [] exprRefs . fst) oaArr
+  EAppVar{}             -> []
+  EAppSpread e          -> exprRefs e
+
+-- | The names an object pattern refers to, which are those in its guards: the pattern itself only
+-- binds.
+exprGuardRefs :: PSExpr -> [TypeName]
+exprGuardRefs (EWhere _ b c)          = exprGuardRefs b ++ exprRefs c
+exprGuardRefs (AliasExpr b a)         = exprGuardRefs b ++ exprGuardRefs a
+exprGuardRefs (TupleApply _ (_, b) a) = exprGuardRefs b ++ case a of
+  EAppArg ObjArr{oaArr} -> maybe [] (maybe [] exprGuardRefs . fst) oaArr
+  EAppSpread e          -> exprGuardRefs e
+  EAppVar{}             -> []
+exprGuardRefs _                       = []
 
 desObjDocComment :: [PStatementTree] -> Maybe String
 desObjDocComment ((RawStatementTree (RawAnnot annotExpr) _):rest) | maybeExprPath annotExpr == Just (mkName mdAnnot) = case H.lookup (partialKey (mkName mdAnnotText)) $ rawExprAppliedArgsMap annotExpr of

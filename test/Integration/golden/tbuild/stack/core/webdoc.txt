@@ -58,9 +58,6 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /prgm -> /Data/String =
                                     ( /dshow./Catln/Doc/listProgram
-                                        ( EAppArg
-                                            { eaaArg = Value /mode -> TVArg /mode = ( Value /mode ↦ TVArg /mode ) }
-                                        )
                                         ( EAppArg { eaaArg = Value /annot -> /s = Value /s } ) ↦ /Data/String
                                     )
                                 }
@@ -80,9 +77,6 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /prgm -> /Data/String =
                                     ( /dshow./Catln/Doc/filterProgram
-                                        ( EAppArg
-                                            { eaaArg = Value /name -> TVArg /name = ( Value /name ↦ TVArg /name ) }
-                                        )
                                         ( EAppArg { eaaArg = Value /annot -> /s = Value /s } ) ↦ /Data/String
                                     )
                                 }
@@ -111,9 +105,6 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /trace -> /Data/String =
                                     ( /dshow./Catln/Doc/typeInferPnt
-                                        ( EAppArg
-                                            { eaaArg = Value /pnt -> TVArg /pnt = ( Value /pnt ↦ TVArg /pnt ) }
-                                        )
                                         ( EAppArg { eaaArg = Value /annot -> /s = Value /s } ) ↦ /Data/String
                                     )
                                 }
@@ -168,9 +159,6 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /run -> /Data/String =
                                     ( /dshow./Catln/Doc/debugger
-                                        ( EAppArg
-                                            { eaaArg = Value /fun -> TVArg /fun = ( Value /fun ↦ TVArg /fun ) }
-                                        )
                                         ( EAppArg { eaaArg = Value /annot -> /s = Value /s } ) ↦ /Data/String
                                     )
                                 }
@@ -190,9 +178,6 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /run -> /Data/String =
                                     ( /dshow./Catln/Doc/debugExpr
-                                        ( EAppArg
-                                            { eaaArg = Value /expr -> TVArg /expr = ( Value /expr ↦ TVArg /expr ) }
-                                        )
                                         ( EAppArg { eaaArg = Value /annot -> /s = Value /s } ) ↦ /Data/String
                                     )
                                 }
@@ -251,7 +236,6 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /dshow./Catln/Doc/debugExpr
-                            ( EAppArg { eaaArg = Value /expr } )
                             ( EAppArg { eaaArg = Value /annot } ) -> /Data/String
                         ]
                     , omiRefineDecls = []
@@ -323,7 +307,6 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /dshow./Catln/Doc/typeInferPnt
-                            ( EAppArg { eaaArg = Value /pnt } )
                             ( EAppArg { eaaArg = Value /annot } ) -> /Data/String
                         ]
                     , omiRefineDecls = []
@@ -336,7 +319,6 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /dshow./Catln/Doc/debugger
-                            ( EAppArg { eaaArg = Value /fun } )
                             ( EAppArg { eaaArg = Value /annot } ) -> /Data/String
                         ]
                     , omiRefineDecls = []
@@ -567,7 +549,6 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /dshow./Catln/Doc/filterProgram
-                            ( EAppArg { eaaArg = Value /name } )
                             ( EAppArg { eaaArg = Value /annot } ) -> /Data/String
                         ]
                     , omiRefineDecls = []
@@ -580,7 +561,6 @@ Prgm
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /dshow./Catln/Doc/listProgram
-                            ( EAppArg { eaaArg = Value /mode } )
                             ( EAppArg { eaaArg = Value /annot } ) -> /Data/String
                         ]
                     , omiRefineDecls = []

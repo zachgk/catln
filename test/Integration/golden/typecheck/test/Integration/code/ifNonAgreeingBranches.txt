@@ -34,9 +34,8 @@ Prgm
                                 ) + /Data/String + /greet.$c213d7
                                 ( /$c213d7-arg=( /Catln/Else + /Catln/Then )
                                 , /name=/Data/String
-                                , /formal=∀/Data/Primitive/Boolean
                                 )
-                            ) = /greet.$c213d7( Value /name -> TVArg /name = Value /name )( Value /formal -> TVArg /formal = Value /formal )
+                            ) = /greet.$c213d7( Value /name -> TVArg /name = Value /name )
                             ( Value /$c213d7-arg -> ( /Catln/Else + /Catln/Then ) = /Catln/ThenElse/fromBool( Value /v -> TVArg /formal = Value /formal ) )
                         ]
                     }
@@ -48,7 +47,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /greet.$c213d7( Value /name -> /Data/String )( Value /formal -> ∀/Data/Primitive/Boolean )( Value /$c213d7-arg -> /Catln/Then = Value /Catln/Then ) ->
+                        [ /greet.$c213d7( Value /name -> /Data/String )( Value /$c213d7-arg -> /Catln/Then = Value /Catln/Then ) ->
                             ( /operator++
                                 ( /r=/Data/String
                                 , /l=/Data/String
@@ -57,7 +56,7 @@ Prgm
                             ( Value /l -> /Data/String = CStr
                                 { csValue = "Dear " }
                             )( Value /r -> TVArg /name = Value /name )
-                        , /greet.$c213d7( Value /name -> /Data/String )( Value /formal -> ∀/Data/Primitive/Boolean )( Value /$c213d7-arg -> /Catln/Else = Value /Catln/Else ) ->
+                        , /greet.$c213d7( Value /name -> /Data/String )( Value /$c213d7-arg -> /Catln/Else = Value /Catln/Else ) ->
                             ( /operator++
                                 ( /r=/Data/String
                                 , /l=/Data/String

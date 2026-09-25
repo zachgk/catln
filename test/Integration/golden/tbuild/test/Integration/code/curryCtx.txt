@@ -63,8 +63,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn.innerVar
-                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) -> UnionType
+                        [ Value /ContextIn.innerVar -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
