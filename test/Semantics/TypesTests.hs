@@ -7,6 +7,7 @@ import           Control.Monad.IO.Class    (MonadIO)
 import           Control.Monad.Trans       (lift)
 import           CRes
 import           CtService
+import           Data.Graph                (graphFromEdges)
 import qualified Data.HashMap.Strict       as H
 import qualified Data.HashSet              as S
 import           Data.List                 (isInfixOf)
@@ -542,6 +543,88 @@ propParamClassCovariant gPrgm = property $ do
 -- definition, so @Cons(head=⊤, tail=⊤)@ has the same values as @Cons@ and stays inside
 -- @∀ConsList@). Regression for the symbolic engine manufacturing escape witnesses (e.g. a Cons
 -- with a non-ConsList tail) that no real value has.
+-- | What the algebra PROVES about a pair of types: @a ⊆ b@, @a ∩ b = ∅@ and @a − b = ∅@. A refusal
+-- is not a claim, so only the 'True' answers are facts to be checked elsewhere.
+data ProvedFacts = ProvedFacts { pfSubtype :: Bool, pfMeetEmpty :: Bool, pfDiffEmpty :: Bool }
+  deriving (Eq, Show)
+
+provedFacts :: (Monad m, MonadTest m, MonadIO m) => TypeEnv (ObjArrTypeGraph Expr ()) -> TypeVarArgEnv -> Type -> Type -> m ProvedFacts
+provedFacts typeEnv vaenv a b = do
+  sub <- timed "a ⊆ b" $ isSubtypeOfWithEnv typeEnv vaenv a b
+  ab <- timed "a∩b" $ intersectR typeEnv vaenv a b
+  aMinusB <- timed "a−b" $ intersectR typeEnv vaenv a (complementTypeEnv typeEnv vaenv b)
+  meetEmpty <- timed "a∩b = ∅" $ provedEmpty ab
+  diffEmpty <- timed "a−b = ∅" $ provedEmpty aMinusB
+  annotate $ printf "a∩b = %s" (show ab)
+  annotate $ printf "a−b = %s" (show aMinusB)
+  return (ProvedFacts sub meetEmpty diffEmpty)
+  where
+    provedEmpty t = isBottomType (compactType typeEnv vaenv t) || isSubtypeOfWithEnv typeEnv vaenv t BottomType
+
+-- | Every fact proved in the first reading also holds in the second: the second may prove MORE, never
+-- less. A refusal that turns into a proof is fine; a proof that turns into a refusal is not.
+assertFactsKept :: (Monad m, MonadTest m, MonadIO m) => String -> ProvedFacts -> ProvedFacts -> m ()
+assertFactsKept reading before kept = do
+  classify "a ⊆ b proved" (pfSubtype before)
+  classify "a ∩ b = ∅ proved" (pfMeetEmpty before)
+  classify "a − b = ∅ proved" (pfDiffEmpty before)
+  annotate $ printf "%s: before = %s" reading (show before)
+  annotate $ printf "%s: after  = %s" reading (show kept)
+  assertTimed (reading ++ ": a ⊆ b kept") (not (pfSubtype before) || pfSubtype kept)
+  assertTimed (reading ++ ": a ∩ b = ∅ kept") (not (pfMeetEmpty before) || pfMeetEmpty kept)
+  assertTimed (reading ++ ": a − b = ∅ kept") (not (pfDiffEmpty before) || pfDiffEmpty kept)
+
+-- | Open-world soundness: a later file may declare an existing name a member of an UNSEALED class
+-- (@every(X isa C)@), and everything proved before that declaration must still hold after it — that
+-- is what lets a program be compiled in stages. The extension adds exactly the class-graph node the
+-- declaration desugars to, merged into @C@'s existing node.
+--
+-- Primitive types are never the extended member: a constant's membership is decided by the classes
+-- as declared now, so a proof about a constant is allowed to change when its primitive type joins.
+propExtensionKeepsProofs :: IO GenPrgm -> Property
+propExtensionKeepsProofs gPrgm = property $ do
+  gPrgm' <- lift gPrgm
+  prgm <- forAll $ HG.filter (prgmHasClass (\sealed _ -> not sealed)) gPrgm'
+  let typeEnv@TypeEnv{teClassGraph=ClassGraph cg, teNames} = mkTypeEnv prgm
+  -- Parameter-free unsealed classes only: a parameterized membership would also need its
+  -- parameter bindings chosen, which is a different question.
+  let openClasses = [ cpt | (CGClass False cpt _ _, _, _) <- graphToNodes cg, H.null (ptVars cpt) ]
+  let primitives = S.fromList (map ptName [intLeaf, floatLeaf, strLeaf, charLeaf])
+  let members = [ nm | nm <- S.toList teNames, not (S.member nm primitives) ]
+  when (null openClasses || null members) discard
+  cls <- forAll $ HG.element openClasses
+  member <- forAll $ HG.element [ nm | nm <- members, nm /= ptName cls ]
+  let extension = Prgm mempty (ClassGraph (graphFromEdges
+        [ (CGClass False (partialVal (ptName cls)) [singletonType (partialVal member)] Nothing
+          , PClassName (ptName cls)
+          , [PTypeName member]) ])) []
+  let prgmExt = prgm <> extension
+  let typeEnvExt = mkTypeEnv prgmExt
+  annotate $ printf "extension: every(%s isa %s)" (show member) (show (ptName cls))
+  vaenv <- forAll $ genVaenv prgm
+  a <- forAll $ genType prgm
+  b <- forAll $ genType prgm
+  before <- provedFacts typeEnv vaenv a b
+  extended <- provedFacts typeEnvExt vaenv a b
+  assertFactsKept "extended program" before extended
+
+-- | The open world never proves more than the closed one: whatever holds for every program that
+-- might extend this one holds for this program as declared ('tePrgmEnv'), where every class has
+-- exactly its declared members. An open-world proof the closed world cannot reproduce was proved
+-- from something other than the declarations.
+propOpenProofsHoldClosed :: IO GenPrgm -> Property
+propOpenProofsHoldClosed gPrgm = property $ do
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
+  let typeEnv = mkTypeEnv prgm
+  let typeEnvClosed = typeEnv{tePrgmEnv = True}
+  vaenv <- forAll $ genVaenv prgm
+  a <- forAll $ genType prgm
+  b <- forAll $ genType prgm
+  open <- provedFacts typeEnv vaenv a b
+  closed <- provedFacts typeEnvClosed vaenv a b
+  assertFactsKept "closed world" open closed
+
 -- | Whether a program carries a class node whose (sealed, members) satisfy the predicate.
 --
 -- Drawn through 'HG.filter', this picks a QUALIFYING program by retrying INSIDE the generator
@@ -1094,6 +1177,8 @@ typeTests = withResource findPrgms (const $ pure ()) tests
       , HG.testProperty "propOccurrenceReadingSound" (p $ propOccurrenceReadingSound gPrgm)
       , HG.testProperty "propOwnVarBindingRespected" (withDiscards 1000 $ p $ propOwnVarBindingRespected gPrgm)
       , HG.testProperty "propParentVarBindingRespected" (withDiscards 1000 $ p $ propParentVarBindingRespected gPrgm)
+      , HG.testProperty "propExtensionKeepsProofs" (withDiscards 1000 $ p $ propExtensionKeepsProofs gPrgm)
+      , HG.testProperty "propOpenProofsHoldClosed" (p $ propOpenProofsHoldClosed gPrgm)
                                         ]
       where gPrgm = ggPrgm <$> ioPrgms
     p prop = prop
