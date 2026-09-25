@@ -2,36 +2,6 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
-                ( "/greet.$3420d8"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /greet.$3420d8( Value /name -> /Data/String )( Value /formal -> ∀/Data/Primitive/Boolean )
-                            ( Value /$3420d8-arg -> /Catln/Then = Value /Catln/Then ) ->
-                            ( /operator++
-                                ( /r=/Data/String
-                                , /l=/Data/String
-                                ) + /Data/String
-                            ) = /operator++
-                            ( Value /l -> /Data/String = CStr
-                                { csValue = "Dear " }
-                            )( Value /r -> TVArg /name = Value /name )
-                        , /greet.$3420d8( Value /name -> /Data/String )( Value /formal -> ∀/Data/Primitive/Boolean )
-                            ( Value /$3420d8-arg -> /Catln/Else = Value /Catln/Else ) ->
-                            ( /operator++
-                                ( /r=/Data/String
-                                , /l=/Data/String
-                                ) + /Data/String
-                            ) = /operator++
-                            ( Value /l -> /Data/String = CStr
-                                { csValue = "Hi " }
-                            )( Value /r -> TVArg /name = Value /name )
-                        ]
-                    }
-                )
-            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -61,13 +31,41 @@ Prgm
                             ( /operator++[ /T=/Data/String ]
                                 ( /r=/Data/String
                                 , /l=/Data/String
-                                ) + /greet.$3420d8
-                                ( /$3420d8-arg=( /Catln/Else + /Catln/Then )
+                                ) + /Data/String + /greet.$c213d7
+                                ( /$c213d7-arg=( /Catln/Else + /Catln/Then )
                                 , /name=/Data/String
                                 , /formal=∀/Data/Primitive/Boolean
+                                )
+                            ) = /greet.$c213d7( Value /name -> TVArg /name = Value /name )( Value /formal -> TVArg /formal = Value /formal )
+                            ( Value /$c213d7-arg -> ( /Catln/Else + /Catln/Then ) = /Catln/ThenElse/fromBool( Value /v -> TVArg /formal = Value /formal ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/greet.$c213d7"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /greet.$c213d7( Value /name -> /Data/String )( Value /formal -> ∀/Data/Primitive/Boolean )( Value /$c213d7-arg -> /Catln/Then = Value /Catln/Then ) ->
+                            ( /operator++
+                                ( /r=/Data/String
+                                , /l=/Data/String
                                 ) + /Data/String
-                            ) = /greet.$3420d8( Value /name -> TVArg /name = Value /name )( Value /formal -> TVArg /formal = Value /formal )
-                            ( Value /$3420d8-arg -> ( /Catln/Else + /Catln/Then ) = /Catln/ThenElse/fromBool( Value /v -> TVArg /formal = Value /formal ) )
+                            ) = /operator++
+                            ( Value /l -> /Data/String = CStr
+                                { csValue = "Dear " }
+                            )( Value /r -> TVArg /name = Value /name )
+                        , /greet.$c213d7( Value /name -> /Data/String )( Value /formal -> ∀/Data/Primitive/Boolean )( Value /$c213d7-arg -> /Catln/Else = Value /Catln/Else ) ->
+                            ( /operator++
+                                ( /r=/Data/String
+                                , /l=/Data/String
+                                ) + /Data/String
+                            ) = /operator++
+                            ( Value /l -> /Data/String = CStr
+                                { csValue = "Hi " }
+                            )( Value /r -> TVArg /name = Value /name )
                         ]
                     }
                 )

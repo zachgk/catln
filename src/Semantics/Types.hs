@@ -12,10 +12,13 @@
 -- operations implemented for types.
 --------------------------------------------------------------------
 
+{-# LANGUAGE DataKinds       #-}
 {-# LANGUAGE DeriveAnyClass  #-}
 {-# LANGUAGE DeriveGeneric   #-}
 {-# LANGUAGE NamedFieldPuns  #-}
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE TypeFamilies    #-}
+{-# LANGUAGE TypeOperators   #-}
 {-# LANGUAGE ViewPatterns    #-}
 -- 'isSubtypeOfWithEnv' pairs many view-pattern clauses; the default coverage-checker budget
 -- (30 models) is too small for it and degrades the check with a warning.
@@ -44,7 +47,7 @@ import           Data.Proxy          (Proxy (..))
 import           Data.String         (IsString (..))
 import           Data.Zip
 import           Debug.Trace         (trace)
-import           GHC.Generics        (Generic)
+import           GHC.Generics
 import           Prelude             hiding (unzip)
 import           Semantics.CtType
 import           Semantics.Val       (Val (StrVal))
@@ -295,14 +298,13 @@ instance CtType PartialType where
     "[vars] and [args] are tracked apart and matched apart. A field is not related to a type parameter by the declaration, so a value's field says nothing about a parameter of the type unless something else says it does."
             ]
 
--- | Hash PartialType without recursing into map *values* (which are Types containing
--- more PartialLeafs).  Key names and sizes discriminate the common cases cheaply.
--- predsTag breaks the TypePredicates→TypePredicate→PartialType cycle.
+-- | Over what the vars and args hold, as 'PartialArgsOption' is. predsTag breaks the
+-- TypePredicates→TypePredicate→PartialType cycle.
 instance Hashable PartialType where
   hashWithSalt s PartialType{ptName, ptVars, ptArgs, ptPreds, ptArgMode} =
     s `hashWithSalt` ptName
-      `hashWithSalt` H.size ptVars
-      `hashWithSalt` H.size ptArgs
+      `hashWithSalt` typeMapHash ptVars
+      `hashWithSalt` typeMapHash ptArgs
       `hashWithSalt` predsTag ptPreds
       `hashWithSalt` ptArgMode
 
@@ -344,12 +346,12 @@ instance Show PartialArgsOption where
 instance ToJSON PartialArgsOption where
   toJSON (PartialArgsOption vars args preds mode) = toJSON (vars, args, preds, mode)
 
--- | Shallow hash: map sizes + predsTag + argMode, avoiding recursive descent into Type values.
--- Mirrors the pattern used for 'PartialType' and 'Type'.
+-- | Over what the vars and args hold, through the hashes those types already carry ('typeHash'),
+-- so it costs a step per var and arg rather than a walk of everything under them.
 instance Hashable PartialArgsOption where
   hashWithSalt s (PartialArgsOption vars args preds mode) =
-    s `hashWithSalt` H.size vars
-      `hashWithSalt` H.size args
+    s `hashWithSalt` typeMapHash vars
+      `hashWithSalt` typeMapHash args
       `hashWithSalt` predsTag preds
       `hashWithSalt` mode
 
@@ -372,8 +374,12 @@ type PartialLeafs = H.HashMap TypeName (S.HashSet PartialArgsOption)
 -- are ALWAYS positive members of the union. (Previously a 'Just'-top reused the outer constant
 -- list for its exclusions, so "class-top ∪ positive constant" was unrepresentable and forced a
 -- lossy expansion of the class-top to its materialized members.)
+--
+-- Each constructor also carries its hash ('typeHash'), which is how a type is written and matched
+-- everywhere else without it: 'UnionType' and 'TypeVar' are the pattern synonyms below, and
+-- building one through them is what computes it.
 data Type
-  = UnionType { utTop :: Maybe (TypePredicates, PartialLeafs, [Constant]), utLeafs :: PartialLeafs, utConsts :: [Constant] }
+  = UnionTypeH Int (Maybe (TypePredicates, PartialLeafs, [Constant])) PartialLeafs [Constant]
   -- | A type-variable OCCURRENCE: the variable reference plus occurrence-local knowledge.
   -- The occurrence denotes @⟦var⟧ ∩ ⟦inner⟧@ — the third ('tvInner') component is an upper bound
   -- this particular occurrence is known to satisfy, carried WITH the reference so traversals
@@ -383,8 +389,92 @@ data Type
   -- knowledge) reproduces the plain-variable semantics exactly. PRODUCERS of a non-⊤ inner
   -- should install only CLOSED values ('typeHasTypeVars' — the 'substituteFreeDeep'
   -- discipline); consumers do not assume it.
-  | TypeVar { tvAux :: TypeVarAux, tvLoc :: TypeVarLoc, tvInner :: Type }
-  deriving (Eq, Ord, Generic, ToJSON, ToJSONKey)
+  | TypeVarH Int TypeVarAux TypeVarLoc Type
+
+-- | A union: its subtractive top, its positive leafs and its positive constants (see 'Type').
+pattern UnionType :: Maybe (TypePredicates, PartialLeafs, [Constant]) -> PartialLeafs -> [Constant] -> Type
+pattern UnionType top leafs consts <- UnionTypeH _ top leafs consts
+  where UnionType top leafs consts = UnionTypeH (unionTypeHash top leafs consts) top leafs consts
+
+-- | A type-variable occurrence: which variable, where it is defined, and the inner it is known to
+-- be within (see 'Type').
+pattern TypeVar :: TypeVarAux -> TypeVarLoc -> Type -> Type
+pattern TypeVar aux loc inner <- TypeVarH _ aux loc inner
+  where TypeVar aux loc inner = TypeVarH (typeVarHash aux loc inner) aux loc inner
+
+{-# COMPLETE UnionType, TypeVar #-}
+
+-- | A type's hash, over its whole structure.
+--
+-- Held on the type rather than computed when asked, and lazily: it is worked out the first time
+-- something hashes or compares the type, from the hashes its nested types already hold, so a type
+-- costs as many steps as it has direct parts however deep it goes, and nothing is paid for a type
+-- that is never hashed. The hash used to be SHALLOW instead — names and sizes, never what an arg
+-- holds — which is the same cheapness bought by giving up discrimination: every list type hashed
+-- alike whatever its length, so every table keyed by one (the subtype, sat, expansion and
+-- reach-query memos, the evaluator's arrow cache, the option sets inside every 'PartialLeafs') kept
+-- them in one bucket and told them apart with a deep '=='. A @toString@ over a sixty-element list
+-- spent sixty percent of its arrow builds doing that.
+typeHash :: Type -> Int
+typeHash (UnionTypeH h _ _ _) = h
+typeHash (TypeVarH h _ _ _)   = h
+
+-- | Order-independent, as the maps and sets it reads are equal whatever order they hold their
+-- entries in: each entry is hashed on its own and the entries summed.
+unionTypeHash :: Maybe (TypePredicates, PartialLeafs, [Constant]) -> PartialLeafs -> [Constant] -> Int
+unionTypeHash top leafs consts = (1 :: Int) `hashWithSalt` topHash top `hashWithSalt` partialLeafsHash leafs `hashWithSalt` consts
+  where
+    topHash Nothing                  = 0 :: Int
+    topHash (Just (preds, neg, ncs)) = hash (predsTag preds, partialLeafsHash neg, ncs)
+
+typeVarHash :: TypeVarAux -> TypeVarLoc -> Type -> Int
+typeVarHash aux loc inner = (0 :: Int) `hashWithSalt` aux `hashWithSalt` loc `hashWithSalt` typeHash inner
+
+-- | The hash of a set of partials sharing names, independent of the order they are held in.
+partialLeafsHash :: PartialLeafs -> Int
+partialLeafsHash = H.foldlWithKey' (\acc name opts -> acc + (hash name `hashWithSalt` S.foldl' (\a o -> a + hash o) (S.size opts) opts)) 0
+
+-- | The hash of a map of types, independent of the order it holds them in.
+typeMapHash :: Hashable k => H.HashMap k Type -> Int
+typeMapHash = H.foldlWithKey' (\acc k t -> acc + (hash k `hashWithSalt` typeHash t)) 0
+
+-- | Structural: the hash only decides a comparison when it differs, which is the common case and
+-- the cheap one. Equal hashes still compare in full.
+instance Eq Type where
+  UnionTypeH h1 t1 l1 c1 == UnionTypeH h2 t2 l2 c2 = h1 == h2 && l1 == l2 && c1 == c2 && t1 == t2
+  TypeVarH h1 a1 o1 i1 == TypeVarH h2 a2 o2 i2     = h1 == h2 && a1 == a2 && o1 == o2 && i1 == i2
+  _ == _                                           = False
+
+-- | The order of the fields as written, not the hash: a hash says nothing about which type comes
+-- first, and an order read from it would change whenever the hash does.
+instance Ord Type where
+  compare (UnionType t1 l1 c1) (UnionType t2 l2 c2) = compare t1 t2 <> compare l1 l2 <> compare c1 c2
+  compare UnionType{} TypeVar{}                     = LT
+  compare TypeVar{} UnionType{}                     = GT
+  compare (TypeVar a1 o1 i1) (TypeVar a2 o2 i2)     = compare a1 a2 <> compare o1 o2 <> compare i1 i2
+
+-- | The representation 'Type' had before it held its hash: the two constructors under their names
+-- with their three named fields each. It is what a derived instance reads — the JSON a type is
+-- sent as, and the declaration a program is handed ('CtType') — so the hash, which is a cache and
+-- not part of what a type is, stays out of both.
+instance Generic Type where
+  type Rep Type =
+    D1 ('MetaData "Type" "Semantics.Types" "catln" 'False)
+      (C1 ('MetaCons "UnionType" 'PrefixI 'True)
+         (S1 ('MetaSel ('Just "utTop") 'NoSourceUnpackedness 'NoSourceStrictness 'DecidedLazy) (Rec0 (Maybe (TypePredicates, PartialLeafs, [Constant])))
+          :*: (S1 ('MetaSel ('Just "utLeafs") 'NoSourceUnpackedness 'NoSourceStrictness 'DecidedLazy) (Rec0 PartialLeafs)
+          :*: S1 ('MetaSel ('Just "utConsts") 'NoSourceUnpackedness 'NoSourceStrictness 'DecidedLazy) (Rec0 [Constant])))
+       :+: C1 ('MetaCons "TypeVar" 'PrefixI 'True)
+         (S1 ('MetaSel ('Just "tvAux") 'NoSourceUnpackedness 'NoSourceStrictness 'DecidedLazy) (Rec0 TypeVarAux)
+          :*: (S1 ('MetaSel ('Just "tvLoc") 'NoSourceUnpackedness 'NoSourceStrictness 'DecidedLazy) (Rec0 TypeVarLoc)
+          :*: S1 ('MetaSel ('Just "tvInner") 'NoSourceUnpackedness 'NoSourceStrictness 'DecidedLazy) (Rec0 Type))))
+  from (UnionType top leafs consts) = M1 (L1 (M1 (M1 (K1 top) :*: (M1 (K1 leafs) :*: M1 (K1 consts)))))
+  from (TypeVar aux loc inner)      = M1 (R1 (M1 (M1 (K1 aux) :*: (M1 (K1 loc) :*: M1 (K1 inner)))))
+  to (M1 (L1 (M1 (M1 (K1 top) :*: (M1 (K1 leafs) :*: M1 (K1 consts)))))) = UnionType top leafs consts
+  to (M1 (R1 (M1 (M1 (K1 aux) :*: (M1 (K1 loc) :*: M1 (K1 inner))))))   = TypeVar aux loc inner
+
+instance ToJSON Type
+instance ToJSONKey Type
 
 -- | A set of types, read as a Catln type. The one the whole program is written in terms of.
 --
@@ -400,23 +490,10 @@ instance CtType Type where
     "A [TypeVar] is a variable rather than a set: an [aux] saying which variable, a [loc] saying whether it was defined on the type it is written in or outside it, and an [inner] the occurrence is known to be within. The occurrence is the variable and the inner together, so it means everything the variable can be that is also within the inner."
             ]
 
--- | Hash Type using only structural shape and key names, not the nested Type
--- values inside PartialLeafs.  This avoids the expensive recursive descent
--- through PartialLeafs → HashSet PartialArgsOption → HashMap ArgName Type → Type.
+-- | The hash the type holds ('typeHash').
 instance Hashable Type where
-  hashWithSalt s (TypeVar aux loc inner) =
-    s `hashWithSalt` (0 :: Int) `hashWithSalt` aux `hashWithSalt` loc `hashWithSalt` inner
-  hashWithSalt s (UnionType mt leafs cs) =
-    let h = s `hashWithSalt` (1 :: Int)
-              `hashWithSalt` length cs
-              `hashWithSalt` H.size leafs
-        h' = case mt of
-               Nothing                -> h `hashWithSalt` (0 :: Int)
-               Just (preds, neg, ncs) -> h `hashWithSalt` (1 :: Int)
-                                           `hashWithSalt` predsTag preds
-                                           `hashWithSalt` H.size neg
-                                           `hashWithSalt` length ncs
-    in H.foldlWithKey' (\acc k _ -> acc `hashWithSalt` k) h' leafs
+  hash = typeHash
+  hashWithSalt s t = hashWithSalt s (typeHash t)
 
 -- | Force a type's STRUCTURE to normal form.
 --

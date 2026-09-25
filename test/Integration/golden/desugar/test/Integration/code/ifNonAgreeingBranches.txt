@@ -2,26 +2,6 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
-                ( "/greet.$3420d8"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ greet.$3420d8( Value /name -> /Data/String )( Value /formal -> ∀/Data/Primitive/Boolean )
-                            ( Value /$3420d8-arg= Value Then )= /operator++
-                            ( Value /l= CStr
-                                { csValue = "Dear " }
-                            )( Value /r= Value name )
-                        , greet.$3420d8( Value /name -> /Data/String )( Value /formal -> ∀/Data/Primitive/Boolean )
-                            ( Value /$3420d8-arg= Value Else )= /operator++
-                            ( Value /l= CStr
-                                { csValue = "Hi " }
-                            )( Value /r= Value name )
-                        ]
-                    }
-                )
-            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -42,8 +22,26 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ greet( Value name -> /Data/String )( Value formal -> ∀/Data/Primitive/Boolean )= greet.$3420d8( Value /name= Value /name )( Value /formal= Value /formal )
-                            ( Value /$3420d8-arg= /Catln/ThenElse/fromBool( Value /v= Value formal ) )
+                        [ greet( Value name -> /Data/String )( Value formal -> ∀/Data/Primitive/Boolean )= greet.$c213d7( Value /name= Value /name )( Value /formal= Value /formal )
+                            ( Value /$c213d7-arg= /Catln/ThenElse/fromBool( Value /v= Value formal ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/greet.$c213d7"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ greet.$c213d7( Value /name -> /Data/String )( Value /formal -> ∀/Data/Primitive/Boolean )( Value /$c213d7-arg= Value Then )= /operator++
+                            ( Value /l= CStr
+                                { csValue = "Dear " }
+                            )( Value /r= Value name )
+                        , greet.$c213d7( Value /name -> /Data/String )( Value /formal -> ∀/Data/Primitive/Boolean )( Value /$c213d7-arg= Value Else )= /operator++
+                            ( Value /l= CStr
+                                { csValue = "Hi " }
+                            )( Value /r= Value name )
                         ]
                     }
                 )

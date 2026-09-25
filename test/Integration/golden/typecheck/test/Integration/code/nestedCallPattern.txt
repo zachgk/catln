@@ -36,7 +36,7 @@ Prgm
                                 ( /fn( /v=TopType )=
                                     ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Box[ /T=TopType ] )
                                 , /m=
-                                    ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Box[ /T=TopType ] )
+                                    ( TopType | PredClass /Data/Box[ /T=TopType ] && PredClass /Data/Monad[ /T=TopType ] )
                                 ) = /Data/Monad/mmap( Value /m -> ∀/Data/Box )
                                 ( /fn( Value /v ) ->
                                     ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Box[ /T=TopType ] )
@@ -86,14 +86,14 @@ Prgm
                     , omiDefs =
                         [ /Data/Monad/mmap( Value /m -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( /fn( Value /v ) ->
-                                ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Maybe[ /T=TopType ] )
+                                ( TopType | PredClass /Data/Maybe[ /T=TopType ] && PredClass /Data/Monad[ /T=TopType ] )
                             ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
                         , /Data/Monad/mmap
                             ( Value /m -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( Value /value ) )
                             ( /fn( Value /v ) ->
-                                ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Maybe[ /T=TopType ] )
+                                ( TopType | PredClass /Data/Maybe[ /T=TopType ] && PredClass /Data/Monad[ /T=TopType ] )
                             ) ->
-                            ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Maybe[ /T=TopType ] ) = /fn( Value /v -> TVArg /value = Value /value )
+                            ( TopType | PredClass /Data/Maybe[ /T=TopType ] && PredClass /Data/Monad[ /T=TopType ] ) = /fn( Value /v -> TVArg /value = Value /value )
                         , /Data/Monad/mmap
                             ( Value /m -> /Data/Box/Full( /value=TopType ) = /Data/Box/Full( Value /value ) )
                             ( /fn( Value /v ) ->

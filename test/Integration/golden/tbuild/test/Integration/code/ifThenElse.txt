@@ -42,20 +42,20 @@ Prgm
                     , omiDefs =
                         [ /abs
                             ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) ->
-                            ( /abs.$8209a9
-                                ( /x=/Data/Primitive/Integer
-                                , /$8209a9-arg=( /Catln/Else + /Catln/Then )
-                                ) + /operator*
+                            ( /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer + /abs.$4e99c1
+                                ( /x=/Data/Primitive/Integer
+                                , /$4e99c1-arg=( /Catln/Else + /Catln/Then )
+                                )
                             ) =
-                            ( /abs.$8209a9
+                            ( /abs.$4e99c1
                                 ( EAppArg
                                     { eaaArg = Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /$8209a9-arg -> ( /Catln/Else + /Catln/Then ) =
+                                    { eaaArg = Value /$4e99c1-arg -> ( /Catln/Else + /Catln/Then ) =
                                         ( /Catln/ThenElse/fromBool
                                             ( EAppArg
                                                 { eaaArg = Value /v -> ∀/Data/Primitive/Boolean =
@@ -82,21 +82,21 @@ Prgm
                     }
                 )
             ,
-                ( "/abs.$8209a9"
+                ( "/abs.$4e99c1"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /abs.$8209a9
+                        [ /abs.$4e99c1
                             ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } )
                             ( EAppArg
-                                { eaaArg = Value /$8209a9-arg -> /Catln/Then = Value /Catln/Then }
+                                { eaaArg = Value /$4e99c1-arg -> /Catln/Then = Value /Catln/Then }
                             ) -> TVArg /x = ( Value /x ↦ TVArg /x )
-                        , /abs.$8209a9
+                        , /abs.$4e99c1
                             ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } )
                             ( EAppArg
-                                { eaaArg = Value /$8209a9-arg -> /Catln/Else = Value /Catln/Else }
+                                { eaaArg = Value /$4e99c1-arg -> /Catln/Else = Value /Catln/Else }
                             ) ->
                             ( /operator*
                                 ( /r=/Data/Primitive/Integer

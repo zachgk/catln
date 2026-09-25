@@ -2,54 +2,6 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
-                ( "/greet.$3420d8"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /greet.$3420d8
-                            ( EAppArg { eaaArg = Value /name -> /Data/String } )
-                            ( EAppArg { eaaArg = Value /formal -> ∀/Data/Primitive/Boolean } )
-                            ( EAppArg
-                                { eaaArg = Value /$3420d8-arg -> /Catln/Then = Value /Catln/Then }
-                            ) ->
-                            ( /operator++
-                                ( /r=/Data/String
-                                , /l=/Data/String
-                                ) + /Data/String
-                            ) =
-                            ( /operator++
-                                ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String = "Dear " }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /r -> TVArg /name = ( Value /name ↦ TVArg /name ) }
-                                ) ↦ /Data/String
-                            )
-                        , /greet.$3420d8
-                            ( EAppArg { eaaArg = Value /name -> /Data/String } )
-                            ( EAppArg { eaaArg = Value /formal -> ∀/Data/Primitive/Boolean } )
-                            ( EAppArg
-                                { eaaArg = Value /$3420d8-arg -> /Catln/Else = Value /Catln/Else }
-                            ) ->
-                            ( /operator++
-                                ( /r=/Data/String
-                                , /l=/Data/String
-                                ) + /Data/String
-                            ) =
-                            ( /operator++
-                                ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String = "Hi " }
-                                )
-                                ( EAppArg
-                                    { eaaArg = Value /r -> TVArg /name = ( Value /name ↦ TVArg /name ) }
-                                ) ↦ /Data/String
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -88,13 +40,13 @@ Prgm
                             ( /operator++[ /T=/Data/String ]
                                 ( /r=/Data/String
                                 , /l=/Data/String
-                                ) + /greet.$3420d8
-                                ( /$3420d8-arg=( /Catln/Else + /Catln/Then )
+                                ) + /Data/String + /greet.$c213d7
+                                ( /$c213d7-arg=( /Catln/Else + /Catln/Then )
                                 , /name=/Data/String
                                 , /formal=∀/Data/Primitive/Boolean
-                                ) + /Data/String
+                                )
                             ) =
-                            ( /greet.$3420d8
+                            ( /greet.$c213d7
                                 ( EAppArg
                                     { eaaArg = Value /name -> TVArg /name = ( Value /name ↦ TVArg /name ) }
                                 )
@@ -102,7 +54,7 @@ Prgm
                                     { eaaArg = Value /formal -> TVArg /formal = ( Value /formal ↦ TVArg /formal ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /$3420d8-arg -> ( /Catln/Else + /Catln/Then ) =
+                                    { eaaArg = Value /$c213d7-arg -> ( /Catln/Else + /Catln/Then ) =
                                         ( /Catln/ThenElse/fromBool
                                             ( EAppArg
                                                 { eaaArg = Value /v -> TVArg /formal = ( Value /formal ↦ TVArg /formal ) }
@@ -115,6 +67,50 @@ Prgm
                                     , /l=/Data/String
                                     ) + /Data/String
                                 )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/greet.$c213d7"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /greet.$c213d7
+                            ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /formal -> ∀/Data/Primitive/Boolean } )
+                            ( EAppArg { eaaArg = Value /$c213d7-arg -> /Catln/Then = Value /Catln/Then } ) ->
+                            ( /operator++
+                                ( /r=/Data/String
+                                , /l=/Data/String
+                                ) + /Data/String
+                            ) =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/String = "Dear " }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /name = ( Value /name ↦ TVArg /name ) }
+                                ) ↦ /Data/String
+                            )
+                        , /greet.$c213d7
+                            ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /formal -> ∀/Data/Primitive/Boolean } )
+                            ( EAppArg { eaaArg = Value /$c213d7-arg -> /Catln/Else = Value /Catln/Else } ) ->
+                            ( /operator++
+                                ( /r=/Data/String
+                                , /l=/Data/String
+                                ) + /Data/String
+                            ) =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/String = "Hi " }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /name = ( Value /name ↦ TVArg /name ) }
+                                ) ↦ /Data/String
                             )
                         ]
                     }

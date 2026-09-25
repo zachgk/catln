@@ -30,15 +30,15 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /abs( Value /x -> /Data/Primitive/Integer ) ->
-                            ( /abs.$8209a9
-                                ( /x=/Data/Primitive/Integer
-                                , /$8209a9-arg=( /Catln/Else + /Catln/Then )
-                                ) + /operator*
+                            ( /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer
-                            ) = /abs.$8209a9( Value /x -> TVArg /x = Value /x )
-                            ( Value /$8209a9-arg -> ( /Catln/Else + /Catln/Then ) = /Catln/ThenElse/fromBool
+                                ) + /Data/Primitive/Integer + /abs.$4e99c1
+                                ( /x=/Data/Primitive/Integer
+                                , /$4e99c1-arg=( /Catln/Else + /Catln/Then )
+                                )
+                            ) = /abs.$4e99c1( Value /x -> TVArg /x = Value /x )
+                            ( Value /$4e99c1-arg -> ( /Catln/Else + /Catln/Then ) = /Catln/ThenElse/fromBool
                                 ( Value /v -> ∀/Data/Primitive/Boolean = /operator>=( Value /l -> TVArg /x = Value /x )
                                     ( Value /r -> /Data/Primitive/Integer = CInt
                                         { ciValue = 0 }
@@ -49,16 +49,16 @@ Prgm
                     }
                 )
             ,
-                ( "/abs.$8209a9"
+                ( "/abs.$4e99c1"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /abs.$8209a9( Value /x -> /Data/Primitive/Integer )
-                            ( Value /$8209a9-arg -> /Catln/Then = Value /Catln/Then ) -> TVArg /x = Value /x
-                        , /abs.$8209a9( Value /x -> /Data/Primitive/Integer )
-                            ( Value /$8209a9-arg -> /Catln/Else = Value /Catln/Else ) ->
+                        [ /abs.$4e99c1( Value /x -> /Data/Primitive/Integer )
+                            ( Value /$4e99c1-arg -> /Catln/Then = Value /Catln/Then ) -> TVArg /x = Value /x
+                        , /abs.$4e99c1( Value /x -> /Data/Primitive/Integer )
+                            ( Value /$4e99c1-arg -> /Catln/Else = Value /Catln/Else ) ->
                             ( /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer

@@ -2,6 +2,33 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
+                ( "/abs.$490dbb"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /abs.$490dbb( Value /x -> /Data/Primitive/Integer )
+                            ( Value /$490dbb-arg= Hole TopType HoleActive { haName = Nothing }@Value /x2 ) | /operator>=( Value /l -> TVArg /x = Value /x )
+                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                { ciValue = 0 }
+                            ) -> TVArg /x2 = Value /x2
+                        , /abs.$490dbb( Value /x -> /Data/Primitive/Integer )
+                            ( Value /$490dbb-arg= Hole TopType HoleActive { haName = Nothing }@Value /x2 ) ->
+                            ( /operator*
+                                ( /r=/Data/Primitive/Integer
+                                , /l=TopType
+                                ) + /Data/Primitive/Integer
+                            ) = /operator*( Value /l -> TVArg /x2 = Value /x2 )
+                            ( Value /r -> /Data/Primitive/Integer = /operator-
+                                ( Value /a -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -30,41 +57,15 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /abs( Value /x -> /Data/Primitive/Integer ) ->
-                            ( /operator*
+                            ( /abs.$490dbb
+                                ( /$490dbb-arg=/Data/Primitive/Integer
+                                , /x=/Data/Primitive/Integer
+                                ) + /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer + /abs.$a26cc5
-                                ( /x=/Data/Primitive/Integer
-                                , /$a26cc5-arg=/Data/Primitive/Integer
-                                )
-                            ) = /abs.$a26cc5( Value /x -> TVArg /x = Value /x )( Value /$a26cc5-arg -> TVArg /x = Value /x )
-                        ]
-                    }
-                )
-            ,
-                ( "/abs.$a26cc5"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /abs.$a26cc5( Value /x -> /Data/Primitive/Integer )
-                            ( Value /$a26cc5-arg= Hole TopType HoleActive { haName = Nothing }@Value /x2 ) | /operator>=( Value /l -> TVArg /x = Value /x )
-                            ( Value /r -> /Data/Primitive/Integer = CInt
-                                { ciValue = 0 }
-                            ) -> TVArg /x2 = Value /x2
-                        , /abs.$a26cc5( Value /x -> /Data/Primitive/Integer )
-                            ( Value /$a26cc5-arg= Hole TopType HoleActive { haName = Nothing }@Value /x2 ) ->
-                            ( /operator*
-                                ( /r=/Data/Primitive/Integer
-                                , /l=TopType
                                 ) + /Data/Primitive/Integer
-                            ) = /operator*( Value /l -> TVArg /x2 = Value /x2 )
-                            ( Value /r -> /Data/Primitive/Integer = /operator-
-                                ( Value /a -> /Data/Primitive/Integer = CInt
-                                    { ciValue = 1 }
-                                )
-                            )
+                            ) = /abs.$490dbb( Value /x -> TVArg /x = Value /x )
+                            ( Value /$490dbb-arg -> TVArg /x = Value /x )
                         ]
                     }
                 )

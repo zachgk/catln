@@ -24,8 +24,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ abs( Value x -> /Data/Primitive/Integer )= abs.$8209a9( Value /x= Value /x )
-                            ( Value /$8209a9-arg= /Catln/ThenElse/fromBool
+                        [ abs( Value x -> /Data/Primitive/Integer )= abs.$4e99c1( Value /x= Value /x )
+                            ( Value /$4e99c1-arg= /Catln/ThenElse/fromBool
                                 ( Value /v= /operator>=( Value /l= Value x )
                                     ( Value /r= CInt
                                         { ciValue = 0 }
@@ -36,16 +36,16 @@ Prgm
                     }
                 )
             ,
-                ( "/abs.$8209a9"
+                ( "/abs.$4e99c1"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ abs.$8209a9( Value /x -> /Data/Primitive/Integer )
-                            ( Value /$8209a9-arg= Value Then )= Value x
-                        , abs.$8209a9( Value /x -> /Data/Primitive/Integer )
-                            ( Value /$8209a9-arg= Value Else )= /operator*
+                        [ abs.$4e99c1( Value /x -> /Data/Primitive/Integer )
+                            ( Value /$4e99c1-arg= Value Then )= Value x
+                        , abs.$4e99c1( Value /x -> /Data/Primitive/Integer )
+                            ( Value /$4e99c1-arg= Value Else )= /operator*
                             ( Value /l= /operator-
                                 ( Value /a= CInt
                                     { ciValue = 1 }

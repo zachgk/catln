@@ -2,6 +2,28 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
+                ( "/abs.$490dbb"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ abs.$490dbb( Value /x -> /Data/Primitive/Integer )
+                            ( Value /$490dbb-arg= Hole TopType HoleActive { haName = Nothing }@Value x2 ) | /operator>=( Value /l= Value x )
+                            ( Value /r= CInt
+                                { ciValue = 0 }
+                            )= Value x2
+                        , abs.$490dbb( Value /x -> /Data/Primitive/Integer )
+                            ( Value /$490dbb-arg= Hole TopType HoleActive { haName = Nothing }@Value x2 )= /operator*( Value /l= Value x2 )
+                            ( Value /r= /operator-
+                                ( Value /a= CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -24,28 +46,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ abs( Value x -> /Data/Primitive/Integer )= abs.$a26cc5( Value /x= Value /x )( Value /$a26cc5-arg= Value x ) ]
-                    }
-                )
-            ,
-                ( "/abs.$a26cc5"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ abs.$a26cc5( Value /x -> /Data/Primitive/Integer )
-                            ( Value /$a26cc5-arg= Hole TopType HoleActive { haName = Nothing }@Value x2 ) | /operator>=( Value /l= Value x )
-                            ( Value /r= CInt
-                                { ciValue = 0 }
-                            )= Value x2
-                        , abs.$a26cc5( Value /x -> /Data/Primitive/Integer )
-                            ( Value /$a26cc5-arg= Hole TopType HoleActive { haName = Nothing }@Value x2 )= /operator*( Value /l= Value x2 )
-                            ( Value /r= /operator-
-                                ( Value /a= CInt
-                                    { ciValue = 1 }
-                                )
-                            )
+                        [ abs( Value x -> /Data/Primitive/Integer )= abs.$490dbb( Value /x= Value /x )
+                            ( Value /$490dbb-arg= Value x )
                         ]
                     }
                 )

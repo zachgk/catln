@@ -10,23 +10,8 @@ Prgm
                     , omiDefs =
                         [ maybeBind
                             ( Value m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe = /Data/bindap( Value m= Value m )
-                            ( fn( Value v )= maybeBind.$b5054c( Value /m= Value /m )( Value /$b5054c-arg= Value v ) )
-                        ]
-                    }
-                )
-            ,
-                ( "/maybeBind.$b5054c"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ maybeBind.$b5054c
-                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value $b5054c-arg@Value x )= /Data/Maybe/Some
-                            ( Value value= /operator+( Value /l= Value x )
-                                ( Value /r= CInt
-                                    { ciValue = 1 }
-                                )
+                            ( fn( Value v )= maybeBind.$9471e8( Value /m= Value /m )
+                                ( Value /$9471e8-arg= Value v )
                             )
                         ]
                     }
@@ -39,6 +24,24 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
+                    }
+                )
+            ,
+                ( "/maybeBind.$9471e8"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ maybeBind.$9471e8
+                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
+                            ( Value $9471e8-arg@Value x )= /Data/Maybe/Some
+                            ( Value value= /operator+( Value /l= Value x )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                        ]
                     }
                 )
             ]
