@@ -3,7 +3,7 @@ import React, {useContext} from 'react';
 import {TreeItem} from '@mui/x-tree-view/TreeItem';
 
 import {valList} from '../Common';
-import {CallStepsContext, StepLine} from './Steps';
+import {CallStepsContext, StepLine, StepTable} from './Steps';
 
 // A fold shown as what it did, step by step: the accumulator each step was handed, the element it
 // combined in, and the accumulator it handed on.
@@ -44,12 +44,12 @@ function FoldSteps(props) {
   });
 
   return (
-    <>
+    <StepTable>
       <StepLine><FoldRow className="catln-steps-head" cells={["#", "acc", "", "v", "", "out", ""]} /></StepLine>
       {fromRight ? result : init}
       {rows}
       {fromRight ? init : result}
-    </>
+    </StepTable>
   );
 }
 

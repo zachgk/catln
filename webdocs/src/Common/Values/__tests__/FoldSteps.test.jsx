@@ -63,6 +63,16 @@ function lines(container) {
 }
 
 describe('FoldSteps', () => {
+  it('draws the init and result lines inside the same frame as the rows', () => {
+    const { container } = render(<Providers><FoldSteps {...LEFT} /></Providers>)
+
+    const frames = container.querySelectorAll('.catln-steps-table')
+    expect(frames).toHaveLength(1)
+    expect(frames[0].querySelector('.catln-fold-init')).not.toBeNull()
+    expect(frames[0].querySelector('.catln-fold-result')).not.toBeNull()
+    expect(frames[0].querySelectorAll('[role="treeitem"]')).toHaveLength(3)
+  })
+
   it('renders a row per step with the accumulator, the element and what they made', () => {
     render(<Providers><FoldSteps {...LEFT} /></Providers>)
 

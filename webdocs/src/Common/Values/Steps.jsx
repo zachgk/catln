@@ -33,11 +33,11 @@ function Steps(props) {
   const rowNodes = useContext(CallStepsContext);
 
   if (!steps.length) {
-    return <span className="catln-steps-empty">No steps.</span>;
+    return <StepTable><span className="catln-steps-empty">No steps.</span></StepTable>;
   }
 
   return (
-    <>
+    <StepTable>
       <StepLine><StepRow className="catln-steps-head" cells={["#", "in", "", "out"]} /></StepLine>
       {steps.map((step, i) => {
         const args = step && step.args ? step.args : {};
@@ -54,8 +54,27 @@ function Steps(props) {
           </TreeItem>
         );
       })}
-    </>
+    </StepTable>
   );
+}
+
+// The frame a step table is drawn in.
+//
+// A table sits in the debugger's tree among the calls around it, and its rows are tree items too, so
+// without a frame nothing but the column layout says where the table starts and stops. The border and
+// tint mark it as one display of one call, and what a row opens onto is inside it, because that is
+// still the row. Both come from the theme so the frame follows the page into dark mode.
+function StepTable(props) {
+  const theme = useTheme();
+  const style = {
+    border: `1px solid ${theme.palette.divider}`,
+    borderRadius: theme.shape.borderRadius,
+    backgroundColor: theme.palette.action.hover,
+    padding: theme.spacing(0.5, 1),
+    margin: theme.spacing(0.5, 0),
+    width: 'fit-content',
+  };
+  return <div className="catln-steps-table" style={style}>{props.children}</div>;
 }
 
 // A line of a step table that is not a row: its heading, or a line a table draws above or below its
@@ -113,4 +132,4 @@ const indexStyle = {opacity: 0.6, textAlign: 'right'};
 const arrowStyle = {opacity: 0.6, textAlign: 'center'};
 
 export default Steps;
-export {CallStepsContext, StepLine};
+export {CallStepsContext, StepLine, StepTable};

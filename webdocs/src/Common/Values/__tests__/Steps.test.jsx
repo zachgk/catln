@@ -43,6 +43,17 @@ function Providers({ children, rowNodes, expanded }) {
 }
 
 describe('Steps', () => {
+  it('draws the whole table, its heading and every row, inside one frame', () => {
+    const steps = list([step(0, '1', '2'), step(1, '2', '3')])
+    const { container } = render(<Providers><Steps {...{ '/steps': steps }} /></Providers>)
+
+    // Framed so it reads as one display among the tree items around it, not as more of them.
+    const frames = container.querySelectorAll('.catln-steps-table')
+    expect(frames).toHaveLength(1)
+    expect(frames[0].querySelector('.catln-steps-head')).not.toBeNull()
+    expect(frames[0].querySelectorAll('[role="treeitem"]')).toHaveLength(2)
+  })
+
   it('renders a row per step, in order, with both ends and the arrow', () => {
     const steps = list([step(0, '1', '2'), step(1, '2', '3'), step(2, '3', '4')])
     render(<Providers><Steps {...{ '/steps': steps }} /></Providers>)
