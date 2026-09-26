@@ -6452,7 +6452,14 @@ intersectPartialsBaseN typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtAr
   -- build/scratch/slowmeet.hs).
   let ambientCanon = fmap canonBinding ambientVars
       passedThrough n v = H.lookup n ambientCanon == Just (canonBinding v)
-  let exactEnvAt k env = fmap canonBinding $ H.filterWithKey (\n v -> n `S.member` exactNamesAt k && not (passedThrough n v)) $ fst $ splitVarArgEnv env
+  -- A discovery is stamped onto this partial only under a name that is one of ITS parameters —
+  -- spelled on either operand, or declared on its data or arrow templates (@unwrap[$T]@'s @/T@).
+  -- An external reference nested in an arg value can name something else entirely: the free
+  -- @$_a@ of @Cons(tail=Cons[/T=$_a∩Integer])@ is a variable of the enclosing scope, and
+  -- stamping its discovery onto the outer @Cons@ invents a @/a@ parameter @Cons@ does not have.
+  let ownParams = S.unions $ H.keysSet aVars : H.keysSet bVars
+        : [H.keysSet (ptVars t) | t <- typeGraphData typeEnv name' ++ typeGraphArrowTemplates typeEnv name']
+  let exactEnvAt k env = fmap canonBinding $ H.filterWithKey (\n v -> n `S.member` exactNamesAt k && n `S.member` ownParams && not (passedThrough n v)) $ fst $ splitVarArgEnv env
   -- What arg @k@'s meet discovered for name @n@: a fresh env entry with actual content. ⊤
   -- carries no information, a var-valued entry is a link rather than evidence, and an entry
   -- identical to the ambient one merely passed through — none resolves the occurrence. Any
@@ -7349,7 +7356,7 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
             PTopType  -> Nothing -- a ⊤-valued neg element excludes nothing
             negArgVal -> case differenceTypeWithEnv typeEnv vaenv (posValSet posArgVal) negArgVal of
               (_, BottomType)    -> Nothing
-              (outEnv, argVal')  -> narrowPiece p1{ptArgs=H.insert argName argVal' (ptArgs p1)} outEnv
+              (outEnv, argVal')  -> narrowPieceAt (Just argName) p1{ptArgs=H.insert argName argVal' (ptArgs p1)} outEnv
         -- An arg valued by a var reference (@head=$/T@) subtracts on the partial's own var
         -- slot: the escape's narrowing comes back only as an env binding (the env-dropping
         -- wrappers return the bare var — the same resolve-meets-back rule as
@@ -7361,13 +7368,28 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
         -- content is withheld from 'ptVars', and its narrowing stays ON the subtracted
         -- slot instead (the bare pointer resolves to the discovered value) — the two op
         -- families then spell the unsupported case identically, keeping @A∩B = A−(A−B)@.
-        narrowPiece piece outEnv
+        -- Subtracting an ARG stamps only the variables that arg holds as a DIRECT pointer
+        -- occurrence (@head -> $T@). A LINKED occurrence (@tail -> ConsList[$T]@) contributes to
+        -- a variable by joining with the direct ones and never starts a binding on its own — the
+        -- intersection's pointer join ('pointerJoinFor') withholds on an unresolved direct
+        -- occurrence exactly so — so its narrowing stays on the subtracted slot. Stamped here, a
+        -- tail narrowed to Integer lists pinned @/T=Integer@ and with it the head, which the
+        -- meet of the same operands leaves free (propIntersectByDifference, seed
+        -- 12972497057482402089 4921690730290659585; build/scratch/s1784.hs).
+        narrowPiece = narrowPieceAt Nothing
+        narrowPieceAt mArg piece outEnv
           | H.null varBindings = Just piece
           | any isBottomType (H.elems vars') = Nothing
           | otherwise = Just piece{ptVars=vars', ptArgs=fmap resolveWithheld (ptArgs piece)}
           where
             newBindings = H.filter (not . isTypeVar) $ H.difference outEnv vaenv
-            varBindings = H.filterWithKey (\k _ -> k `H.member` ptVars piece) $ fst $ splitVarArgEnv newBindings
+            varBindings = H.filterWithKey (\k _ -> k `H.member` ptVars piece && directAt k) $ fst $ splitVarArgEnv newBindings
+            directAt n = case mArg of
+              Nothing -> True
+              Just argName -> any (\args -> case H.lookup argName args of
+                                       Just (TypeVar (TVVar n') TVInt _) -> n' == n
+                                       _                                 -> False)
+                                  (ptArgs p1 : map ptArgs (typeGraphData typeEnv (ptName p1) ++ typeGraphArrowTemplates typeEnv (ptName p1)))
             supported n = varStampSupported typeEnv (ptName piece) [ptArgs piece] (H.keysSet (ptArgs piece)) (ptArgs piece) (TVVar n)
             (stamped, withheld) = (H.filterWithKey (\n _ -> supported n) varBindings, H.filterWithKey (\n _ -> not (supported n)) varBindings)
             vars' = H.unionWith (intersectTypesEnv typeEnv vaenv) (ptVars piece) stamped
