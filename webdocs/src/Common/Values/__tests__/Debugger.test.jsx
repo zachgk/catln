@@ -226,16 +226,20 @@ describe('Debugger', () => {
     }
     render(<Providers><Debugger {...debug(expr)} /></Providers>)
 
-    expect(screen.getByRole('heading', { name: 'Value' })).toBeInTheDocument()
-    expect(screen.getByText('3')).toBeInTheDocument()
+    // Inline in the heading, as input => output the way each call in the tree is labelled, rather
+    // than under a heading of its own.
+    expect(screen.queryByRole('heading', { name: 'Value' })).not.toBeInTheDocument()
+    const heading = screen.getByRole('heading', { level: 2 })
+    expect(heading).toHaveTextContent(/=>\s*3$/)
     expect(screen.queryByText(/Exited with/)).not.toBeInTheDocument()
     expect(screen.queryByText(/Printed nothing/)).not.toBeInTheDocument()
   })
 
-  // Input then output, as each call in the tree is labelled: the heading names what was run and the
-  // value comes straight under it, before the tree of how the one became the other.
-  it('shows the value directly under the heading, above the tree', () => {
+  // A program run has no value to put in its heading; what it printed and how it exited comes straight
+  // under the heading instead, before the tree of how the run got there.
+  it("shows a program run's output under the heading, above the tree", () => {
     render(<Providers><Debugger {...debug()} /></Providers>)
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(/^\/main$/)
     const output = screen.getByRole('heading', { name: 'Output' })
     const tree = screen.getByRole('tree')
     expect(output.compareDocumentPosition(tree) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()

@@ -68,20 +68,16 @@ function Debugger(props) {
     <ExprStyleContext.Provider value={runStyle}>
       <SourceContext.Provider value={sourceContext}>
         <div>
-          <h2>{fun}</h2>
-          {/* What the run ended with, which is not the same question for the two kinds of run. An
-              expression was run for its value and was given no IO handle to print with, so it has
-              neither output nor an exit code to report.
+          {/* What the run ended with, which is not the same question for the two kinds of run.
 
-              Straight under the heading, which is what was run: the pair reads as input and output,
-              the way every call in the tree below is labelled, before the tree says how one led to
-              the other. */}
-          {drValue ? (
-            <>
-              <h3>Value</h3>
-              <Value data={drValue} />
-            </>
-          ) : (
+              An expression was run for its value, so the heading reads as input and output the way
+              every call in the tree below is labelled: what was run, then what it became. It was
+              given no IO handle to print with, so it has neither output nor an exit code to report.
+
+              A program ran for what it printed and how it exited, which is more than a heading holds,
+              so it is shown straight under the heading, before the tree says how the run got there. */}
+          <h2>{fun}{drValue ? <> =&gt; <InlineValue data={drValue} /></> : null}</h2>
+          {drValue ? null : (
             <>
               <h3>Output</h3>
               {drOutput ? <pre>{drOutput}</pre> : <p>Printed nothing.</p>}
