@@ -7,16 +7,16 @@ Prgm
                     { omiDecls =
                         [ /Data/List/fmapSteps
                             ( Value lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
-                            ( fn( Value v -> $_/A ) -> $_/B )( Value index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/Step ]
+                            ( fn( Value v -> $_/A ) -> $_/B )( Value index -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Catln/Doc/Show/Step.. ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/List/fmapSteps( Value lst= Value Nil )
-                            ( fn( Value v ) )( Value index ) -> ∀/Data/List[ /T=/Catln/Doc/Show/Step ] = Value Nil
+                            ( fn( Value v ) )( Value index ) -> ∀/Data/List[ /T=/Catln/Doc/Show/Step.. ] = Value Nil
                         , /Data/List/fmapSteps
                             ( Value lst= Cons( Value head )( Value tail ) )
-                            ( fn( Value v ) )( Value index ) -> ∀/Data/List[ /T=/Catln/Doc/Show/Step ] = Cons
+                            ( fn( Value v ) )( Value index ) -> ∀/Data/List[ /T=/Catln/Doc/Show/Step.. ] = Cons
                             ( Value head= /Catln/Doc/Show/Step( Value index= Value index )
                                 ( Value input= toString( Value /this= Value head ) )
                                 ( Value output= toString
@@ -39,7 +39,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/showSteps
-                            ( Value steps -> ∀/Data/List[ /T=/Catln/Doc/Show/Step ] ) -> /Data/String
+                            ( Value steps -> ∀/Data/List[ /T=/Catln/Doc/Show/Step.. ] ) -> /Data/String
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []

@@ -58,7 +58,7 @@ module(Catln/Doc)
       each end through [/Data/toString], which is the same rendering a [#print] of either would get.
       The cost is stated where it is paid: an arm can only show steps whose ends are [/Data/ToString],
       and is written to match only those.
-  data(Show/Steps(steps -> /Data/List[$T -> Show/Step]))
+  data(Show/Steps(steps -> /Data/List[$T -> Show/Step..]))
     # The rows, in the order the call took them.
       No columns and no headings: what the two ends of a step mean is the same question in every call
       that has steps at all — this is what went in, this is what came out — so naming them per call

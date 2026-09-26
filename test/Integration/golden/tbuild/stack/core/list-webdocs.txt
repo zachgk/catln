@@ -14,7 +14,7 @@ Prgm
                                     ( EAppArg { eaaArg = Value /v -> $_/A } ) -> $_/B
                                 }
                             )
-                            ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } ) -> ∀/Data/List[ /T=/Catln/Doc/Show/Step ]
+                            ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } ) -> ∀/Data/List[ /T=/Catln/Doc/Show/Step.. ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -36,7 +36,7 @@ Prgm
                     { omiDecls =
                         [ /Data/List/showSteps
                             ( EAppArg
-                                { eaaArg = Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/Step ] }
+                                { eaaArg = Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/Step.. ] }
                             ) -> /Data/String
                         ]
                     , omiRuntimeDecls = []
@@ -47,25 +47,13 @@ Prgm
                         , /Data/List/showSteps
                             ( EAppArg
                                 { eaaArg = Value /steps -> /Data/List/Cons
-                                    [ /T=/Catln/Doc/Show/Step
-                                        ( /output=TopType
-                                        , /input=TopType
-                                        , /index=TopType
-                                        )
-                                    ]
                                     ( /head=/Catln/Doc/Show/Step
                                         ( /output=/Data/String
                                         , /input=/Data/String
                                         , /index=/Data/Primitive/Integer
                                         )
-                                    , /tail=∀/Data/List/ConsList
-                                        [ /T=/Catln/Doc/Show/Step
-                                            ( /output=TopType
-                                            , /input=TopType
-                                            , /index=TopType
-                                            )
-                                        ]
-                                    ) = /Data/List/Cons
+                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                    )| PredClass /Data/List[ /T=/Catln/Doc/Show/Step.. ] = /Data/List/Cons
                                     ( EAppArg
                                         { eaaArg = Value /head -> /Catln/Doc/Show/Step
                                             ( /output=/Data/String
@@ -78,14 +66,7 @@ Prgm
                                         }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList
-                                            [ /T=/Catln/Doc/Show/Step
-                                                ( /output=TopType
-                                                , /input=TopType
-                                                , /index=TopType
-                                                )
-                                            ]
-                                        }
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] }
                                     )
                                 }
                             ) -> /Data/String =
@@ -197,38 +178,9 @@ Prgm
                                     )
                                 }
                             ) -> /Catln/Doc/Show/Steps
-                            ( /steps=∀/Data/List[ /T=/Catln/Doc/Show/Step ] ) = /Catln/Doc/Show/Steps
+                            ( /steps=∀/Data/List[ /T=/Catln/Doc/Show/Step.. ] ) = /Catln/Doc/Show/Steps
                             ( EAppArg
-                                { eaaArg = Value /steps -> UnionType
-                                    ( Just
-                                        ( PredClass /Data/List[ /T=/Catln/Doc/Show/Step ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/List/Cons
-                                        [ /T=/Catln/Doc/Show/Step
-                                            ( /output=TopType
-                                            , /input=TopType
-                                            , /index=TopType
-                                            )
-                                        ]
-                                        ( /head=/Catln/Doc/Show/Step
-                                            ( /output=/Data/String
-                                            , /input=/Data/String
-                                            , /index=/Data/Primitive/Integer
-                                            )
-                                        , /tail=
-                                            ( TopType | PredClass /Data/List/ConsList
-                                                [ /T=/Catln/Doc/Show/Step
-                                                    ( /output=TopType
-                                                    , /input=TopType
-                                                    , /index=TopType
-                                                    )
-                                                ] && PredClass /Data/List[ /T=/Catln/Doc/Show/Step ]
-                                            )
-                                        )
-                                    , []
-                                    ) =
+                                { eaaArg = Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/Step.. ] =
                                     ( /Data/List/fmapSteps
                                         ( EAppArg
                                             { eaaArg = Value /lst -> TVArg /lst = ( Value /lst ↦ TVArg /lst ) }
@@ -245,36 +197,7 @@ Prgm
                                         )
                                         ( EAppArg
                                             { eaaArg = Value /index -> /Data/Primitive/Integer = 0 }
-                                        ) ↦ UnionType
-                                        ( Just
-                                            ( PredClass /Data/List[ /T=/Catln/Doc/Show/Step ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/List/Cons
-                                            [ /T=/Catln/Doc/Show/Step
-                                                ( /output=TopType
-                                                , /input=TopType
-                                                , /index=TopType
-                                                )
-                                            ]
-                                            ( /head=/Catln/Doc/Show/Step
-                                                ( /output=/Data/String
-                                                , /input=/Data/String
-                                                , /index=/Data/Primitive/Integer
-                                                )
-                                            , /tail=
-                                                ( TopType | PredClass /Data/List/ConsList
-                                                    [ /T=/Catln/Doc/Show/Step
-                                                        ( /output=TopType
-                                                        , /input=TopType
-                                                        , /index=TopType
-                                                        )
-                                                    ] && PredClass /Data/List[ /T=/Catln/Doc/Show/Step ]
-                                                )
-                                            )
-                                        , []
-                                        )
+                                        ) ↦ ∀/Data/List[ /T=/Catln/Doc/Show/Step.. ]
                                     )
                                 }
                             )

@@ -43,7 +43,7 @@ module(Data/List)
     debugger arranging anything for it.
     [index] is threaded rather than derived, since a [ConsList] knows nothing about where in a list it
     sits, and the rows are wanted numbered from the front.
-  fmapSteps(lst -> ConsList[$T -> /Data/ToString], fn(v -> $_A) -> $_B, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/Step]
+  fmapSteps(lst -> ConsList[$T -> /Data/ToString], fn(v -> $_A) -> $_B, index -> Integer) -> /Data/List[$T -> /Catln/Doc/Show/Step..]
   fmapSteps(lst= Nil, fn(v), index)= Nil
   fmapSteps(lst= Cons(head, tail), fn(v), index)= Cons(head= /Catln/Doc/Show/Step(index= index, input= head.toString, output= fn(v= head).toString), tail= fmapSteps(lst= tail, fn(v)= fn(v= v), index= index + 1))
 
@@ -54,7 +54,7 @@ module(Data/List)
     A test and not a golden, because the arm above is reached only from a debugger and so cannot be
     written into a [#print] here. What a [#print] could reach is [fmapSteps], and what it builds is
     everything the arm does beyond handing it over — so that is what is asserted.
-  showSteps(steps -> /Data/List[$T -> /Catln/Doc/Show/Step]) -> String
+  showSteps(steps -> /Data/List[$T -> /Catln/Doc/Show/Step..]) -> String
   showSteps(steps= Nil)= ""
   showSteps(steps= Cons(head= /Catln/Doc/Show/Step(index, input, output), tail))= index.toString ++ ":" ++ input ++ "->" ++ output ++ ";" ++ showSteps(steps= tail)
 
