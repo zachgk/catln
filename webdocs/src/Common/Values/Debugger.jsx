@@ -69,38 +69,13 @@ function Debugger(props) {
       <SourceContext.Provider value={sourceContext}>
         <div>
           <h2>{fun}</h2>
-          {roots.length ? (
-            <SimpleTreeView
-              slots={{collapseIcon: ExpandMoreIcon, expandIcon: ChevronRightIcon}}
-              expandedItems={expanded}
-              onExpandedItemsChange={(event, items) => setExpanded(items)}
-              selectedItems={selected}
-              onSelectedItemsChange={(event, item) => setSelected(item)}
-            >
-              {roots.map(root => <TreebugNode data={root} nodeRefs={nodeRefs} key={root[4]} />)}
-            </SimpleTreeView>
-          ) : <p>Evaluated no arrows.</p>}
-          {/* Every #debug the run recorded, in the order it recorded them: one list over the whole run,
-              however many definitions and however many calls they came from. Each says where it is
-              written, since that is what the compiler can name it by, and leads to the call it was
-              recorded in, which is what the tree above cannot be searched for by hand. */}
-          <h3>Debug</h3>
-          {debugs.length ? (
-            <ol>
-              {debugs.map((d, i) => (
-                <li key={i}>
-                  <Link component="button" type="button" onClick={() => reveal(d.edNode)}>
-                    {showDebugPos(d.edPos)}
-                  </Link>
-                  {" ↦ "}
-                  <InlineValue data={d.edValue} />
-                </li>
-              ))}
-            </ol>
-          ) : <p>Recorded nothing.</p>}
           {/* What the run ended with, which is not the same question for the two kinds of run. An
               expression was run for its value and was given no IO handle to print with, so it has
-              neither output nor an exit code to report. */}
+              neither output nor an exit code to report.
+
+              Straight under the heading, which is what was run: the pair reads as input and output,
+              the way every call in the tree below is labelled, before the tree says how one led to
+              the other. */}
           {drValue ? (
             <>
               <h3>Value</h3>
@@ -113,6 +88,41 @@ function Debugger(props) {
               <p>Exited with {drExit}.</p>
             </>
           )}
+          {roots.length ? (
+            <SimpleTreeView
+              slots={{collapseIcon: ExpandMoreIcon, expandIcon: ChevronRightIcon}}
+              sx={{marginTop: 2}}
+              expandedItems={expanded}
+              onExpandedItemsChange={(event, items) => setExpanded(items)}
+              selectedItems={selected}
+              onSelectedItemsChange={(event, item) => setSelected(item)}
+            >
+              {roots.map(root => <TreebugNode data={root} nodeRefs={nodeRefs} key={root[4]} />)}
+            </SimpleTreeView>
+          ) : <p>Evaluated no arrows.</p>}
+          {/* Every #debug the run recorded, in the order it recorded them: one list over the whole run,
+              however many definitions and however many calls they came from. Each says where it is
+              written, since that is what the compiler can name it by, and leads to the call it was
+              recorded in, which is what the tree above cannot be searched for by hand.
+
+              Left out when the run recorded none, which is most runs: a program only records what
+              a #debug in it asks for, so an empty section says nothing about the run. */}
+          {debugs.length ? (
+            <>
+              <h3>Debug</h3>
+              <ol>
+                {debugs.map((d, i) => (
+                  <li key={i}>
+                    <Link component="button" type="button" onClick={() => reveal(d.edNode)}>
+                      {showDebugPos(d.edPos)}
+                    </Link>
+                    {" ↦ "}
+                    <InlineValue data={d.edValue} />
+                  </li>
+                ))}
+              </ol>
+            </>
+          ) : null}
           <SourcePanel />
         </div>
       </SourceContext.Provider>

@@ -74,7 +74,8 @@ describe('Debugger', () => {
 
     expect(screen.getByText(/Evaluated no arrows/)).toBeInTheDocument()
     expect(screen.getByText(/Printed nothing/)).toBeInTheDocument()
-    expect(screen.getByText(/Recorded nothing/)).toBeInTheDocument()
+    // A run records only what a #debug asks for, so a run without one has no Debug section at all.
+    expect(screen.queryByRole('heading', { name: 'Debug' })).not.toBeInTheDocument()
     expect(screen.getByText(/Exited with 1/)).toBeInTheDocument()
     expect(screen.queryByRole('treeitem')).not.toBeInTheDocument()
   })
@@ -84,6 +85,7 @@ describe('Debugger', () => {
   it('lists what the run recorded, in the order it recorded them', () => {
     render(<Providers><Debugger {...debug()} /></Providers>)
 
+    expect(screen.getByRole('heading', { name: 'Debug' })).toBeInTheDocument()
     // Written on greet as `#debug(d= name)` then `#debug(d= "greeting")`, so they read down the
     // definition rather than back up it.
     const records = screen.getAllByRole('listitem')
@@ -228,6 +230,15 @@ describe('Debugger', () => {
     expect(screen.getByText('3')).toBeInTheDocument()
     expect(screen.queryByText(/Exited with/)).not.toBeInTheDocument()
     expect(screen.queryByText(/Printed nothing/)).not.toBeInTheDocument()
+  })
+
+  // Input then output, as each call in the tree is labelled: the heading names what was run and the
+  // value comes straight under it, before the tree of how the one became the other.
+  it('shows the value directly under the heading, above the tree', () => {
+    render(<Providers><Debugger {...debug()} /></Providers>)
+    const output = screen.getByRole('heading', { name: 'Output' })
+    const tree = screen.getByRole('tree')
+    expect(output.compareDocumentPosition(tree) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 })
 
