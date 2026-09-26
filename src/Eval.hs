@@ -484,28 +484,21 @@ evalDShowAnnot env0@Env{evTbEnv, evTypeEnv} os annot0
 -- | A value rendered as text through @/Data/toString@, when it is @ToString@: what a @#print@ of it
 -- shows, and the only form a golden can check.
 --
--- The value is reconstructed as a typed constant expression ('valToEExpr', whose meta carries the
--- concrete runtime type — e.g. a @ConsList@ of @Integer@s), and @toString@ is built over that. The
--- concrete type is what dispatches: a value an interface-typed expression computed renders by what it
--- is rather than by what the expression said it would be. 'Nothing' for a value 'valToEExpr' cannot
--- rebuild (closures, IO and the other runtime-only values, none of which are @ToString@) and for one
--- that is not @ToString@.
+-- @toString@ is dispatched on the value itself ('valCallTree'), so its concrete type is what
+-- dispatches: a value an interface-typed expression computed renders by what it is — a @ConsList@ of
+-- @Integer@s — rather than by what the expression said it would be. 'Nothing' for a runtime-only
+-- value ('displayableVal') and for one that is not @ToString@.
 renderValText :: Env -> Val -> Maybe Val
 renderValText env v = fst $ renderValTextIn env v
 
 -- | 'renderValText', also handing back the arrows the evaluation built ('evExEnv'), so that rendering
 -- many values can share them ('showRunValues').
 renderValTextIn :: Env -> Val -> (Maybe Val, ResExEnv)
-renderValTextIn env@Env{evTbEnv, evExEnv} v
-  | reconstructableVal v = case run of
-      CRes _ (str@StrVal{}, Env{evExEnv=built}) -> (Just str, built)
-      _                                         -> (Nothing, evExEnv)
+renderValTextIn env@Env{evExEnv} v
+  | displayableVal v = case callOnVal env (TupleVal "/Data/toString" (H.singleton "/this" v)) of
+      Just (str@StrVal{}, built) -> (Just str, built)
+      _                          -> (Nothing, evExEnv)
   | otherwise = (Nothing, evExEnv)
-  where
-    run = do
-      let e = eVal "/Data/toString" `eApply` ("/this", valToEExpr v)
-      tree <- buildRoot evTbEnv e (getExprPartialType e) dshowDestType
-      runStateT (evalExpr tree) env
 
 -- | A value's display: what @/Catln/Doc/dshow@ makes of it, and that rendered as text when it is
 -- @ToString@ ('renderValText').
@@ -514,7 +507,7 @@ renderValTextIn env@Env{evTbEnv, evExEnv} v
 -- member of @DShow@ is handed back by the identity arm, and so is shown as itself or as its text; a
 -- type with an arm of its own is shown as whatever that arm builds, which need not be text at all --
 -- a note's @Page@ is a heading of markup. 'Nothing' for a value that reaches no arm of @dshow@, or
--- that 'valToEExpr' cannot rebuild.
+-- that is runtime-only ('displayableVal').
 --
 -- Checked to reach @DShow@ before anything is built, as 'evalDShowAnnot' checks an annotation: a tree
 -- built for a value no arm takes is an @error@ in 'TreeBuild' rather than a note.
@@ -527,27 +520,53 @@ renderValTextIn env@Env{evTbEnv, evExEnv} v
 -- these from one value to the next rather than building each tail's arrows again for every list it
 -- ends.
 dshowVal :: Env -> Val -> (Maybe Val, ResExEnv)
-dshowVal env@Env{evTbEnv, evTypeEnv, evExEnv} v
-  | reconstructableVal v && reachesTo evTypeEnv H.empty (getExprType e) dshowDestType = case run of
-      Just (shown, Env{evExEnv=built}) -> case renderValTextIn env{evExEnv=built} shown of
+dshowVal env@Env{evTypeEnv, evExEnv} v
+  | displayableVal v && reachesTo evTypeEnv H.empty (singletonType $ getValPartialType input) dshowDestType = case callOnVal env input of
+      Just (shown, built) -> case renderValTextIn env{evExEnv=built} shown of
         (text, built') -> (Just $ fromMaybe shown text, built')
       Nothing -> (Nothing, evExEnv)
   | otherwise = (Nothing, evExEnv)
-  where
-    e = eVal dshowName `eApply` ('/' : dshowArg, valToEExpr v)
-    run = cresToMaybe $ do
-      tree <- toTExprDest evTbEnv [] e (emptyMetaT dshowDestType)
-      runStateT (evalExpr tree) env
+  where input = TupleVal dshowName (H.singleton ('/' : dshowArg) v)
 
--- | Whether 'valToEExpr' can rebuild this value (it errors on closures, IO, and other runtime-only
--- values, none of which are @ToString@ or displayable).
-reconstructableVal :: Val -> Bool
-reconstructableVal IntVal{}        = True
-reconstructableVal FloatVal{}      = True
-reconstructableVal StrVal{}        = True
-reconstructableVal CharVal{}       = True
-reconstructableVal (TupleVal _ as) = all reconstructableVal (H.elems as)
-reconstructableVal _               = False
+-- | A call of a function on runtime values, evaluated toward @DShow@: the call's tree built from the
+-- value's own type ('valCallTree') and run on it, with the arrows the run built.
+--
+-- Built from the value rather than from an expression rebuilt out of it ('valToEExpr'). A rebuilt
+-- expression is compiled whole, one level of the tree per level of the value, and a list of forty
+-- elements is forty nested constructions compiled again for every list a debugger shows -- nearly
+-- all of what rendering a run cost. The value's type says the same thing and is dispatched on once.
+callOnVal :: Env -> Val -> Maybe (Val, ResExEnv)
+callOnVal env@Env{evTbEnv} input = do
+  tree <- valCallTree evTbEnv input
+  (val, Env{evExEnv}) <- cresToMaybe $ runStateT (evalCallTree input tree) env
+  return (val, evExEnv)
+
+-- | The call tree a runtime value takes toward @DShow@, from the first of its type's two spellings
+-- that builds one.
+--
+-- Both spellings, as 'evalCallTree' tries both when it dispatches ('TCMatch'). A higher-order
+-- argument's slot is keyed one way on a runtime value — the bare name, holding the closure's input
+-- signature — and the other way on a typed arm — the signature as the key, holding the output
+-- contract. 'getValPartialTypeOut' is the second spelling, and it recurses, so it reaches a closure
+-- nested inside the value, which is deeper than any closure dispatch normally sees and deeper than the
+-- top-level re-keying reaches. A call display's @fmap@ is exactly the case ('attachCallShows'): its
+-- display cannot be selected under the first spelling and can under the second.
+--
+-- 'MustCall' rather than 'MayHold': the point is to reach the arm, and a source that already
+-- satisfies the destination would otherwise be handed back as it stands.
+valCallTree :: TBEnv -> Val -> Maybe TCallTree
+valCallTree tbEnv input = listToMaybe $ mapMaybe build [getValPartialType input, getValPartialTypeOut input]
+  where build src = cresToMaybe $ buildCallTree tbEnv [] S.empty PTopType MustCall (singletonType src) dshowDestType
+
+-- | Whether a value is data all the way down: no closure, IO handle, or other runtime-only value in
+-- it, none of which is @ToString@ or has a display.
+displayableVal :: Val -> Bool
+displayableVal IntVal{}        = True
+displayableVal FloatVal{}      = True
+displayableVal StrVal{}        = True
+displayableVal CharVal{}       = True
+displayableVal (TupleVal _ as) = all displayableVal (H.elems as)
+displayableVal _               = False
 
 -- | The class a display is built toward, which is what forces it to be evaluated: a tree built
 -- toward an expression's own type comes back as the application itself, unevaluated.
@@ -610,17 +629,7 @@ attachCallShows prgm nodes
     -- The call, wrapped as the argument of a @dshowCall@, built toward @DShow@ and run.
     buildShow fun input = do
       let showInput = TupleVal dshowCallName (H.singleton dshowCallArg input)
-      -- Both spellings of the call's type, as 'evalCallTree' tries both when it dispatches
-      -- ('TCMatch'). A higher-order argument's slot is keyed one way on a runtime value — the bare
-      -- name, holding the closure's input signature — and the other way on a typed arm — the
-      -- signature as the key, holding the output contract. 'getValPartialTypeOut' is the second
-      -- spelling, and it is the one that matters here: it recurses, so it reaches the closure sitting
-      -- inside the call sitting inside the @/s@, which is one level deeper than any closure dispatch
-      -- normally sees and one level deeper than the top-level re-keying reaches.
-      --
-      -- @fmap@ is exactly the case. Its display cannot be selected under the first spelling and can
-      -- under the second, so both are tried rather than either being assumed.
-      case firstBuilt [getValPartialType showInput, getValPartialTypeOut showInput] of
+      case valCallTree evTbEnv showInput of
         -- No arm of the function's display matches THIS call, which is a display saying nothing about
         -- this one rather than a display that broke: the list's @fmap@ display is written for elements
         -- that render text, and a mapping over elements that render none is a mapping it does not
@@ -631,13 +640,6 @@ attachCallShows prgm nodes
           -- found for this call and could not produce what it promised.
           CErr notes -> CRes [MkCNote $ GenCErr Nothing $ printf "The display of a call of %s could not be evaluated: %s" (nameStr fun) (prettyCNotes notes)] Nothing
           CRes _ v -> return $ Just v
-
-    -- The tree built from the first of these source spellings that builds one.
-    --
-    -- 'MustCall' rather than 'MayHold': the point is to reach the arm, and a source that already
-    -- satisfies the destination would otherwise be handed back as it stands.
-    firstBuilt srcs = listToMaybe $ mapMaybe build srcs
-      where build src = cresToMaybe $ buildCallTree evTbEnv [] S.empty PTopType MustCall (singletonType src) dshowDestType
 
 -- | Build and evaluate a call to a named function of the program, with arguments supplied as runtime
 -- values, to the value it displays as through the @DShow@ class.
