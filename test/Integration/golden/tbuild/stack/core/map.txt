@@ -505,30 +505,16 @@ Prgm
                                                 { eaaArg = Value /r -> ∀/Data/Primitive/Boolean =
                                                     ( /operator==
                                                         ( EAppArg
-                                                            { eaaArg = Value /l -> UnionType
-                                                                ( Just
-                                                                    ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq
-                                                                    , fromList []
-                                                                    , []
-                                                                    )
-                                                                , /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T )
-                                                                , []
-                                                                ) =
+                                                            { eaaArg = Value /l ->
+                                                                ( TopType | PredClass /Data/Maybe[ /T=$_/MV ] && PredClass /Data/Algebra/Eq ) =
                                                                 ( /Data/Map/get
                                                                     ( EAppArg
                                                                         { eaaArg = Value /m -> TVArg /b = ( Value /b ↦ TVArg /b ) }
                                                                     )
                                                                     ( EAppArg
                                                                         { eaaArg = Value /key -> TVArg /k = ( Value /k ↦ TVArg /k ) }
-                                                                    ) ↦ UnionType
-                                                                    ( Just
-                                                                        ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq
-                                                                        , fromList []
-                                                                        , []
-                                                                        )
-                                                                    , /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T )
-                                                                    , []
-                                                                    )
+                                                                    ) ↦
+                                                                    ( TopType | PredClass /Data/Maybe[ /T=$_/MV ] && PredClass /Data/Algebra/Eq )
                                                                 )
                                                             }
                                                         )
@@ -687,16 +673,16 @@ Prgm
                                 ( EAppArg
                                     { eaaArg = /fn
                                         ( EAppArg
-                                            { eaaArg = Value /acc -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                                ( /head=∀/Data/Algebra/Ord
+                                            { eaaArg = Value /acc -> /Data/List/Cons[ /T=TopType ]
+                                                ( /head=$/T
                                                 , /tail=∀/Data/List/ConsList[ /T=$_/T ]
                                                 )
                                             }
                                         )
                                         ( EAppArg { eaaArg = Value /k -> ∀/Data/Algebra/Ord } )
-                                        ( EAppArg { eaaArg = Value /v } ) -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                        ( EAppArg { eaaArg = Value /v } ) -> /Data/List/Cons
                                         ( /head=∀/Data/Algebra/Ord
-                                        , /tail=/Data/List/Cons[ /T=$_/T ]
+                                        , /tail=/Data/List/Cons[ /T=TopType ]
                                             ( /head=$/T
                                             , /tail=∀/Data/List/ConsList[ /T=$_/T ]
                                             )
@@ -2549,15 +2535,8 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /operator==
                         ( EAppArg
-                            { eaaArg = Value /l -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T )
-                                , []
-                                ) =
+                            { eaaArg = Value /l ->
+                                ( TopType | PredClass /Data/Maybe[ /T=$_/MV ] && PredClass /Data/Algebra/Eq ) =
                                 ( /Data/Map/get
                                     ( EAppArg
                                         { eaaArg = Value /m -> UnionType
@@ -2698,15 +2677,8 @@ Prgm
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /key -> /Data/Primitive/Integer = 2 }
-                                    ) ↦ UnionType
-                                    ( Just
-                                        ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T )
-                                    , []
-                                    )
+                                    ) ↦
+                                    ( TopType | PredClass /Data/Maybe[ /T=$_/MV ] && PredClass /Data/Algebra/Eq )
                                 )
                             }
                         )
@@ -2728,15 +2700,8 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /operator==
                         ( EAppArg
-                            { eaaArg = Value /l -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T )
-                                , []
-                                ) =
+                            { eaaArg = Value /l ->
+                                ( TopType | PredClass /Data/Maybe[ /T=$_/MV ] && PredClass /Data/Algebra/Eq ) =
                                 ( /Data/Map/get
                                     ( EAppArg
                                         { eaaArg = Value /m -> ∀/Data/Map
@@ -2759,15 +2724,8 @@ Prgm
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /key -> /Data/Primitive/Integer = 9 }
-                                    ) ↦ UnionType
-                                    ( Just
-                                        ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T )
-                                    , []
-                                    )
+                                    ) ↦
+                                    ( TopType | PredClass /Data/Maybe[ /T=$_/MV ] && PredClass /Data/Algebra/Eq )
                                 )
                             }
                         )
@@ -2855,15 +2813,8 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /operator==
                         ( EAppArg
-                            { eaaArg = Value /l -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T )
-                                , []
-                                ) =
+                            { eaaArg = Value /l ->
+                                ( TopType | PredClass /Data/Maybe[ /T=$_/MV ] && PredClass /Data/Algebra/Eq ) =
                                 ( /Data/Map/get
                                     ( EAppArg
                                         { eaaArg = Value /m -> UnionType
@@ -3004,15 +2955,8 @@ Prgm
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /key -> /Data/Primitive/Integer = 1 }
-                                    ) ↦ UnionType
-                                    ( Just
-                                        ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T )
-                                    , []
-                                    )
+                                    ) ↦
+                                    ( TopType | PredClass /Data/Maybe[ /T=$_/MV ] && PredClass /Data/Algebra/Eq )
                                 )
                             }
                         )
@@ -4570,15 +4514,8 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /operator==
                         ( EAppArg
-                            { eaaArg = Value /l -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T )
-                                , []
-                                ) =
+                            { eaaArg = Value /l ->
+                                ( TopType | PredClass /Data/Maybe[ /T=$_/MV ] && PredClass /Data/Algebra/Eq ) =
                                 ( /Data/Map/get
                                     ( EAppArg
                                         { eaaArg = Value /m ->
@@ -4656,15 +4593,8 @@ Prgm
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /key -> /Data/Primitive/Integer = 1 }
-                                    ) ↦ UnionType
-                                    ( Just
-                                        ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T )
-                                    , []
-                                    )
+                                    ) ↦
+                                    ( TopType | PredClass /Data/Maybe[ /T=$_/MV ] && PredClass /Data/Algebra/Eq )
                                 )
                             }
                         )
@@ -4686,15 +4616,8 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /operator==
                         ( EAppArg
-                            { eaaArg = Value /l -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T )
-                                , []
-                                ) =
+                            { eaaArg = Value /l ->
+                                ( TopType | PredClass /Data/Maybe[ /T=$_/MV ] && PredClass /Data/Algebra/Eq ) =
                                 ( /Data/Map/get
                                     ( EAppArg
                                         { eaaArg = Value /m ->
@@ -4790,15 +4713,8 @@ Prgm
                                     )
                                     ( EAppArg
                                         { eaaArg = Value /key -> /Data/Primitive/Integer = 2 }
-                                    ) ↦ UnionType
-                                    ( Just
-                                        ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T )
-                                    , []
-                                    )
+                                    ) ↦
+                                    ( TopType | PredClass /Data/Maybe[ /T=$_/MV ] && PredClass /Data/Algebra/Eq )
                                 )
                             }
                         )

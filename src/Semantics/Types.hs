@@ -1016,7 +1016,7 @@ mkAnd ps = case uniq ps of
 -- parameterized type grows a redundant same-class conjunct each epoch and never converges. A pair
 -- that does not intersect to a single partial is left as separate conjuncts.
 mergePredsAnd :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicates -> TypePredicates -> (TypeVarArgEnv, TypePredicates)
-mergePredsAnd typeEnv vaenv0 ps1 ps2 = (vaenvF, rebuild keptF)
+mergePredsAnd typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv0 ps1 ps2 = (vaenvF, rebuild keptF)
   where
     (vaenvS, keptS) = foldl step (vaenv0, []) (conjOf ps1 ++ conjOf ps2)
     -- After merging same-name atoms, propagate an element bound carried by a superCLASS atom
@@ -1036,13 +1036,31 @@ mergePredsAnd typeEnv vaenv0 ps1 ps2 = (vaenvF, rebuild keptF)
           let (v'', ca') = foldl pinBy (v', ca) [cb | cb <- classPs, ptName cb /= ptName ca]
           in (v'', PredsOne (PredClass ca'))
         pinAtom v' other = (v', other)
-        pinBy (v', ca) cb = case classSatCandidates typeEnv v' ProveWitness cb of
+        -- Pinning reads cb's member of ca's name as the ONLY way a ca is a cb. That is the
+        -- declaration's own statement when the member merely FORWARDS cb's parameters
+        -- (@every(ConsList[$T] isa List[$T])@), and a closed-world one when it RESTRICTS them
+        -- (@every(ConsList[$T -> EqCO] isa EqCO)@): an unsealed cb can gain another member of
+        -- that name, so @EqCO ∧ ConsList@ is not @EqCO ∧ ConsList[/T=∀EqCO]@ outside
+        -- 'tePrgmEnv' (propIntersectionCommutative, seed 12377820788248047016
+        -- 9101261426483434021; build/scratch/sic.hs).
+        pinBy (v', ca) cb
+          | not (pinSound cb (ptName ca)) = (v', ca)
+          | otherwise = case classSatCandidates typeEnv v' ProveWitness cb of
           Just cands -> case [m | Just m <- map candClassPartial cands, ptName m == ptName ca] of
             (m:_) -> case intersectPartials typeEnv v' ca m of
               (vd, [r]) -> (mergeAllVarEnvs typeEnv [v', vd], r)
               _         -> (v', ca)
             []    -> (v', ca)
           Nothing -> (v', ca)
+        pinSound cb caName = tePrgmEnv typeEnv || predsSealed typeEnv (PredsOne (PredClass cb)) || forwardingMember cb caName
+        forwardingMember cb caName = case graphLookup (PClassName (ptName cb)) cg of
+          Just (CGClass _ _ members _) ->
+            let named = [ m | t <- members, m <- membersOf t, relativeNameMatches caName (ptName m) || relativeNameMatches (ptName m) caName ]
+            in not (null named) && all (all isTypeVar . H.elems . ptVars) named
+          _ -> False
+        membersOf t = case t of
+          UnionType _ leafs _ -> splitUnionType leafs ++ maybe [] pure (maybeGetClassSingleton t)
+          _                   -> []
         candClassPartial (CandGoal (SatGoal [SatClass m] [])) = Just m
         candClassPartial (CandLeaf m)                         = Just m
         candClassPartial _                                    = Nothing
@@ -2178,7 +2196,7 @@ expandClassPartialWithNamesFullAux visited _ _ PartialType{ptName} _
   | S.member ptName visited = (H.empty, True)
 expandClassPartialWithNamesFullAux visited typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv PartialType{ptName, ptVars=classVarsP} allowedNames =
   case graphLookup (PClassName ptName) cg of
-    Just (CGClass _ PartialType{ptVars=classVarsDecl} classTypes _) -> case classTypes of
+    Just (CGClass sealed PartialType{ptVars=classVarsDecl} classTypes _) -> openOutside sealed $ case classTypes of
       [] ->
         let leafs = joinUnionType [classPlaceholderLeaf ptName]
         in (H.filterWithKey (\k _ -> S.member k allowedNames) leafs,
@@ -2188,6 +2206,13 @@ expandClassPartialWithNamesFullAux visited typeEnv@TypeEnv{teClassGraph=ClassGra
             leafs = foldl (H.unionWith S.union) H.empty (map fst mapped)
         in (leafs, any snd mapped)
       where
+        -- An UNSEALED class has members beyond the ones declared so far — any later file may
+        -- add one under any name — so outside the closed-world program view its expansion always
+        -- has content outside the requested names, whatever today's members are. Reporting it
+        -- exact let the materialized cover fallback prove @∀Bag − … ⊆ Cons + Nil + …@ from Bag's
+        -- current members (propSubtypeByIntersection, seed 8403435659556066923
+        -- 9820775074966772341; build/scratch/s1956.hs).
+        openOutside sealedC (leafs, outside) = (leafs, outside || not (sealedC || tePrgmEnv typeEnv))
         classVars = H.unionWith (intersectTypesEnv typeEnv vaenv) classVarsP (cleanDeclSelfRefs classVarsDecl)
         visited' = S.insert ptName visited
         -- A class member that is itself a (parameterized) class - e.g. @List@'s sole member
@@ -4832,6 +4857,15 @@ isSubtypeOfWithEnvComplete typeEnv vaenv t1 t2 = isSubtypeOfWithEnv typeEnv vaen
       -- most once per query.
       (UnionType (Just (preds, negLeafs, [])) (H.null -> True) [], UnionType Nothing _ [])
         | H.null negLeafs -> topRewriteCover preds
+      -- Constants on either side: each sub constant is decided by membership, and the data
+      -- leafs are split without them — a constant never covers a data leaf nor lands in one,
+      -- unless a sub leaf is a primitive type holding constants (then the plain answer stands).
+      (UnionType Nothing subPartials subCs, UnionType Nothing superPartials supCs)
+        | not (null subCs && null supCs)
+        , not (any leafHoldsConstants (splitUnionType subPartials)) ->
+            all (\c -> constantInType typeEnv vaenv c t2) subCs
+            && (H.null subPartials
+                || isSubtypeOfWithEnvComplete typeEnv vaenv (UnionType Nothing subPartials []) (UnionType Nothing superPartials []))
       (UnionType Nothing subPartials [], UnionType Nothing superPartials []) ->
         all leafCovered (splitUnionType subPartials)
         where
@@ -6559,9 +6593,17 @@ intersectPartialsBaseN typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtAr
                   -- be monotone — the same withhold the direct occurrences take. A resolved arg
                   -- carrying no such slot (@Nil@ under @∀ConsList[/T=..]@) is vacuous: an empty
                   -- container constrains no element, so it contributes nothing WITHOUT withholding.
+                  -- A linked slot still holding a VARIABLE (@tail=Cons[/T=$^/T]@, the occurrence
+                  -- linked back to the very parameter being joined) is unresolved in the same way:
+                  -- its elements are whatever the stamp will say, so stamping from the other
+                  -- occurrences alone would narrow it — @Cons(head=Integer, tail=…)@ stamped
+                  -- @/T=Integer@ and turned an unconstrained tail into an Integer list
+                  -- (propDifferenceByIntersection, seed 10906447286845584137
+                  -- 7505196013999737935; build/scratch/s8047b.hs).
                   linkedAt (k, pn) = case fmap snd (H.lookup k liveArgsMap) of
                     Nothing -> Just []
                     Just v | typeContainsBareTop v -> Nothing
+                           | any (maybe False isTypeVar . H.lookup pn . ptVars) (selfPartials v) -> Nothing
                            | otherwise -> Just ([ b | pt <- selfPartials v, Just b <- [H.lookup pn (ptVars pt)]
                                                 , not (isTypeVar b), b /= PTopType ]
                                              ++ [ b | Just b <- [H.lookup n (exactEnvOf k)]

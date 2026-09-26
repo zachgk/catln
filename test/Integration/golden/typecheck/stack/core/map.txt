@@ -296,15 +296,8 @@ Prgm
                             ) -> ∀/Data/Primitive/Boolean = /Data/Map/foldEntries( Value /m -> TVArg /a = Value /a )
                             ( /fn( Value /acc -> ∀/Data/Primitive/Boolean )( Value /k -> ∀/Data/Algebra/Ord )( Value /v -> ∀/Data/Algebra/Eq ) -> ∀/Data/Primitive/Boolean = /operator&&( Value /l -> TVArg /acc = Value /acc )
                                 ( Value /r -> ∀/Data/Primitive/Boolean = /operator==
-                                    ( Value /l -> UnionType
-                                        ( Just
-                                            ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T )
-                                        , []
-                                        ) = /Data/Map/get( Value /m -> TVArg /b = Value /b )( Value /key -> TVArg /k = Value /k )
+                                    ( Value /l ->
+                                        ( TopType | PredClass /Data/Maybe[ /T=$_/MV ] && PredClass /Data/Algebra/Eq ) = /Data/Map/get( Value /m -> TVArg /b = Value /b )( Value /key -> TVArg /k = Value /k )
                                     )
                                     ( Value /r -> /Data/Maybe/Some( /value=∀/Data/Algebra/Eq )| PredClass /Data/Algebra/Eq = /Data/Maybe/Some( Value /value -> TVArg /v = Value /v ) )
                                 )
@@ -387,13 +380,13 @@ Prgm
                                 ]
                             )= /Data/Map/foldEntries( Value /m -> TVArg /m = Value /m )
                             ( /fn
-                                ( Value /acc -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                    ( /head=∀/Data/Algebra/Ord
+                                ( Value /acc -> /Data/List/Cons[ /T=TopType ]
+                                    ( /head=$/T
                                     , /tail=∀/Data/List/ConsList[ /T=$_/T ]
                                     )
-                                )( Value /k -> ∀/Data/Algebra/Ord )( Value /v ) -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                )( Value /k -> ∀/Data/Algebra/Ord )( Value /v ) -> /Data/List/Cons
                                 ( /head=∀/Data/Algebra/Ord
-                                , /tail=/Data/List/Cons[ /T=$_/T ]
+                                , /tail=/Data/List/Cons[ /T=TopType ]
                                     ( /head=$/T
                                     , /tail=∀/Data/List/ConsList[ /T=$_/T ]
                                     )
@@ -1397,15 +1390,8 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> UnionType
-                    ( Just
-                        ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T )
-                    , []
-                    ) = /Data/Map/get
+                ( Value /l ->
+                    ( TopType | PredClass /Data/Maybe[ /T=$_/MV ] && PredClass /Data/Algebra/Eq ) = /Data/Map/get
                     ( Value /m -> UnionType
                         ( Just
                             ( PredClass /Data/Map
@@ -1493,15 +1479,8 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> UnionType
-                    ( Just
-                        ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T )
-                    , []
-                    ) = /Data/Map/get
+                ( Value /l ->
+                    ( TopType | PredClass /Data/Maybe[ /T=$_/MV ] && PredClass /Data/Algebra/Eq ) = /Data/Map/get
                     ( Value /m -> ∀/Data/Map
                         [ /K=/Data/Primitive/Integer
                         , /V=/Data/Primitive/Integer
@@ -1571,15 +1550,8 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> UnionType
-                    ( Just
-                        ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T )
-                    , []
-                    ) = /Data/Map/get
+                ( Value /l ->
+                    ( TopType | PredClass /Data/Maybe[ /T=$_/MV ] && PredClass /Data/Algebra/Eq ) = /Data/Map/get
                     ( Value /m -> UnionType
                         ( Just
                             ( PredClass /Data/Map
@@ -2535,15 +2507,8 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> UnionType
-                    ( Just
-                        ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T )
-                    , []
-                    ) = /Data/Map/get
+                ( Value /l ->
+                    ( TopType | PredClass /Data/Maybe[ /T=$_/MV ] && PredClass /Data/Algebra/Eq ) = /Data/Map/get
                     ( Value /m ->
                         ( /Data/Map/Node[ /K=/Data/Primitive/Integer ]
                             ( /value=TopType
@@ -2595,15 +2560,8 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
-                ( Value /l -> UnionType
-                    ( Just
-                        ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq
-                        , fromList []
-                        , []
-                        )
-                    , /Data/Maybe/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T )
-                    , []
-                    ) = /Data/Map/get
+                ( Value /l ->
+                    ( TopType | PredClass /Data/Maybe[ /T=$_/MV ] && PredClass /Data/Algebra/Eq ) = /Data/Map/get
                     ( Value /m ->
                         ( /Data/Map/Node[ /K=/Data/Primitive/Integer ]
                             ( /value=TopType
