@@ -26,6 +26,12 @@ function step(index, acc, input, output) {
   }
 }
 
+// A row of a /Catln/Doc/Show/EntryFoldSteps: a FoldStep with the entry's key.
+function entryStep(index, key, acc, input, output) {
+  const row = step(index, acc, input, output)
+  return { ...row, name: '/Catln/Doc/Show/EntryFoldStep', args: { ...row.args, '/key': str(key) } }
+}
+
 function list(items) {
   return items.reduceRight(
     (tail, head) => ({ tag: 'TupleVal', name: '/Data/List/Cons', args: { '/head': head, '/tail': tail } }),
@@ -43,6 +49,10 @@ const LEFT = fold('0', [step(0, '0', '1', '1'), step(1, '1', '2', '3'), step(2, 
 // foldr(lst= [1, 2, 3], fn(acc, v)= acc + v, init= 0): the same rows in element order, each handed
 // what the rows after it made.
 const RIGHT = fold('0', [step(0, '5', '1', '6'), step(1, '3', '2', '5'), step(2, '0', '3', '3')], '6', true)
+
+// foldEntries(m= {1: 10, 2: 20, 3: 30}, fn(acc, k, v)= acc + v, init= 0), whose rows run in the
+// descending key order the fold visits the entries in.
+const ENTRIES = fold('0', [entryStep(0, '3', '0', '30', '30'), entryStep(1, '2', '30', '20', '50'), entryStep(2, '1', '50', '10', '60')], '60', false)
 
 function Providers({ children, rowNodes, expanded }) {
   return (
@@ -135,5 +145,25 @@ describe('FoldSteps', () => {
     expect(rows[0].textContent).toContain('first step ran')
     expect(rows[2].textContent).toContain('third step ran')
     expect(rows[0].textContent).not.toContain('third step ran')
+  })
+
+  it('draws the key of each entry as a column after the index, on every line, where it is keyed', () => {
+    const { container } = render(<Providers><FoldSteps {...ENTRIES} keyed /></Providers>)
+
+    const cells = line => Array.from(line.children).map(c => c.textContent)
+    const drawn = Array.from(container.querySelectorAll('.catln-steps-row'))
+    expect(cells(drawn[0])).toEqual(['#', 'key', 'acc', '', 'v', '', 'out', ''])
+    // The init and result lines hold no key but keep its column, so their cells stay under the rows'.
+    expect(cells(drawn[1])).toEqual(['init', '', '', '', '', '', '0', '↙'])
+    expect(cells(drawn[2])).toEqual(['0', '3', '0', '⊕', '30', '↦', '30', '↙'])
+    expect(cells(drawn[4])).toEqual(['2', '1', '50', '⊕', '10', '↦', '60', '↓'])
+    expect(cells(drawn[5])).toEqual(['', '', '', '', '', '=', '60', ''])
+  })
+
+  it('draws no key column where it is not keyed', () => {
+    const { container } = render(<Providers><FoldSteps {...LEFT} /></Providers>)
+
+    expect(screen.queryByText('key')).toBeNull()
+    expect(container.querySelector('.catln-steps-head').children).toHaveLength(7)
   })
 })

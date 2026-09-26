@@ -2,10 +2,54 @@ Prgm
     { prgmObjMap = ObjectMap
         { omItems = fromList
             [
+                ( "/Catln/Doc/Show/EntryFoldSteps"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Doc/Show/EntryFoldSteps( Value /init -> /Data/String )
+                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep ] )( Value /result -> /Data/String )( Value /fromRight -> ∀/Data/Primitive/Boolean )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Doc/Show/FoldStep"
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/Doc/Show/FoldStep( Value /index -> /Data/Primitive/Integer )( Value /acc -> /Data/String )( Value /input -> /Data/String )( Value /output -> /Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Doc/Show/EntryStep"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Doc/Show/EntryStep( Value /index -> /Data/Primitive/Integer )( Value /key -> /Data/String )( Value /input -> /Data/String )( Value /output -> /Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Doc/Show/EntrySteps"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Doc/Show/EntrySteps
+                            ( Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryStep ] )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/Doc/Show/EntryFoldStep"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Doc/Show/EntryFoldStep( Value /index -> /Data/Primitive/Integer )( Value /key -> /Data/String )( Value /acc -> /Data/String )( Value /input -> /Data/String )( Value /output -> /Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -65,6 +109,10 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Catln/Doc/Show/Rendered
@@ -72,6 +120,8 @@ Prgm
                 [ /Catln/Doc/Show/Rendered..
                 , /Catln/Doc/Show/Steps..
                 , /Catln/Doc/Show/FoldSteps..
+                , /Catln/Doc/Show/EntrySteps..
+                , /Catln/Doc/Show/EntryFoldSteps..
                 ]
             , cgcDoc = Just ""
             }
@@ -114,6 +164,19 @@ Prgm
                 result computed elsewhere and passed in — so a step's output is what the arm works out for that
                 step. That is what makes it a display of the function rather than of something the function left
                 behind, and it is why an arm needs no cooperation from whatever is showing it." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "# A call over the entries of a map
+                A step of a call over a map is a step over one of its entries, and an entry is a key as well as
+                the value the step was handed. The key is not the step's input, since the step was never handed
+                it — a mapping over a map's values applies its function to the value alone — but a row without it
+                does not say which entry it is, and the key is what a reader of a map looks an entry up by. So it
+                is a column of its own rather than folded into the input's text, where it would read as part of
+                what the step was handed.
+                These are [Show/Step] and [Show/FoldStep] with that column, and a second pair of displays rather
+                than a key field on the first pair: a key a list's rows would have to leave blank is a column
+                every list's table would draw empty. See [/Data/Map] in @core/map-webdocs.ct@, which writes them." }
             )
         , /Catln/#md
             ( Value /text= CStr

@@ -9,6 +9,8 @@ import fmapResponse from '../../../test/fixtures/debugger-fmap-response.json'
 import mmapResponse from '../../../test/fixtures/debugger-mmap-response.json'
 import foldlResponse from '../../../test/fixtures/debugger-foldl-response.json'
 import foldrResponse from '../../../test/fixtures/debugger-foldr-response.json'
+import mapValuesResponse from '../../../test/fixtures/debugger-mapvalues-response.json'
+import foldEntriesResponse from '../../../test/fixtures/debugger-foldentries-response.json'
 
 const theme = createTheme()
 
@@ -454,6 +456,94 @@ describe('Debugger over a fold, which shows as its accumulator threaded through 
       for (const row of rows) {
         await userEvent.click(within(row).getByText('↦'))
         expect(within(row).getAllByText(/\/fn/).length).toBeGreaterThan(0)
+      }
+      cleanup()
+    }
+  })
+})
+
+// Real runs over a map, reduced as the list's are. The map is {1: 10, 2: 20, 3: 30}, inserted 2
+// first so that the root has an entry on each side:
+// `/Data/Map/mapValues(m= sample, fn(v)= v + 1)`, whose rows are 10 ↦ 11, 20 ↦ 21 and 30 ↦ 31 in key
+// order, and `/Data/Map/foldEntries(m= sample, fn(acc, k, v)= acc + v, init= 0)`, whose rows are
+// 0+30=30, 30+20=50 and 50+10=60 in the descending order the fold visits the keys in.
+//
+// Neither is a chain. Each level calls itself on both subtrees -- mapValues on the left, then the
+// function, then the right; foldEntries on the right, then the step, then the left -- so which call a
+// row opens onto depends on the table reading the recursion as a tree, in the order it was made.
+describe('Debugger over a call over a map, whose recursion is a tree', () => {
+  beforeEach(() => {
+    global.fetch = vi.fn(() => Promise.reject(new Error('Debugger must not fetch')))
+  })
+
+  function run(response, fun) {
+    return {
+      '/run': { tag: 'StrVal', contents: JSON.stringify(response) },
+      '/fun': { tag: 'StrVal', contents: fun },
+    }
+  }
+
+  async function openCall(response, name) {
+    render(<Providers><Debugger {...run(response, name)} /></Providers>)
+    const [root] = screen.getAllByRole('treeitem')
+    await userEvent.click(within(root).getByText(name))
+    return root
+  }
+
+  // What a row opens onto, without the row's own label.
+  function opened(row) {
+    const group = row.querySelector('[role=group]')
+    return group ? group.textContent : ''
+  }
+
+  it('shows a mapping as a row per entry in key order, with the key in its own column', async () => {
+    const call = await openCall(mapValuesResponse, '/Data/Map/mapValues')
+
+    const rows = within(call).getAllByRole('treeitem')
+    expect(rows).toHaveLength(3)
+    expect(rows[0].textContent).toMatch(/^0110↦11/)
+    expect(rows[2].textContent).toMatch(/^2330↦31/)
+    expect(within(call).getByText('key')).toBeInTheDocument()
+  })
+
+  it('shows a fold over the entries from init down to the result, in the order it visited them', async () => {
+    const call = await openCall(foldEntriesResponse, '/Data/Map/foldEntries')
+
+    const rows = within(call).getAllByRole('treeitem')
+    expect(rows).toHaveLength(3)
+    expect(rows[0].textContent).toMatch(/^030⊕30↦30↙/)
+    expect(rows[2].textContent).toMatch(/^2150⊕10↦60↓/)
+    const lines = Array.from(call.querySelectorAll('.catln-steps-row')).map(l => l.textContent)
+    expect(lines[1]).toMatch(/^init.*0↙$/)
+    expect(lines[lines.length - 1]).toMatch(/=60$/)
+  })
+
+  it('folds both sides of the recursion into the one table', async () => {
+    for (const [response, name] of [[mapValuesResponse, '/Data/Map/mapValues'], [foldEntriesResponse, '/Data/Map/foldEntries']]) {
+      const call = await openCall(response, name)
+      expect(within(call).queryAllByText(name)).toHaveLength(1)
+      expect(call.querySelector(GENERIC_LABEL)).toBeNull()
+      cleanup()
+    }
+  })
+
+  it('opens each row onto the call of the function for its own entry', async () => {
+    // What each call of the function returned, in the order of the rows. A walk that followed one
+    // side of the tree would open the rows onto the wrong entries' calls, or onto none past the
+    // first, so each row is opened and read for its own.
+    for (const [response, name, outputs] of [
+      [mapValuesResponse, '/Data/Map/mapValues', ['11', '21', '31']],
+      [foldEntriesResponse, '/Data/Map/foldEntries', ['30', '50', '60']],
+    ]) {
+      const call = await openCall(response, name)
+      const rows = within(call).getAllByRole('treeitem')
+      for (const [i, row] of rows.entries()) {
+        await userEvent.click(within(row).getAllByText('↦')[0])
+        expect(opened(row)).toMatch(/\/fn/)
+        expect(opened(row)).toContain(`=> ${outputs[i]}`)
+        for (const other of outputs.filter(o => o !== outputs[i])) {
+          expect(opened(row)).not.toContain(`=> ${other}`)
+        }
       }
       cleanup()
     }

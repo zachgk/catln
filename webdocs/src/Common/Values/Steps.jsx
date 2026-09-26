@@ -28,9 +28,14 @@ const CallStepsContext = createContext([]);
 // Rows are tree items rather than table rows, because a row opens onto the evaluation that produced
 // it and a <table> cannot hold a TreeItem. The columns are a grid laid on each row's label, which is
 // what keeps them lined up down the table without one.
+//
+// A keyed table is a /Catln/Doc/Show/EntrySteps, a call over the entries of a map, whose rows each
+// carry the entry's key. It is drawn as a column of its own after the index, since the key is which
+// entry the row is rather than anything the step was handed.
 function Steps(props) {
   const steps = valList(props["/steps"]);
   const rowNodes = useContext(CallStepsContext);
+  const {keyed} = props;
 
   if (!steps.length) {
     return <StepTable><span className="catln-steps-empty">No steps.</span></StepTable>;
@@ -38,7 +43,7 @@ function Steps(props) {
 
   return (
     <StepTable>
-      <StepLine><StepRow className="catln-steps-head" cells={["#", "in", "", "out"]} /></StepLine>
+      <StepLine><StepRow className="catln-steps-head" keyed={keyed} cells={keyCells(keyed, ["#", "in", "", "out"], "key")} /></StepLine>
       {steps.map((step, i) => {
         const args = step && step.args ? step.args : {};
         const children = rowNodes[i];
@@ -48,7 +53,7 @@ function Steps(props) {
           <TreeItem
             key={i}
             itemId={`step-${i}`}
-            label={<StepRow cells={[cell(args["/index"]), cell(args["/input"]), "↦", cell(args["/output"])]} />}
+            label={<StepRow keyed={keyed} cells={keyCells(keyed, [cell(args["/index"]), cell(args["/input"]), "↦", cell(args["/output"])], cell(args["/key"]))} />}
           >
             {children}
           </TreeItem>
@@ -94,17 +99,21 @@ function StepLine(props) {
   return <div style={style}>{props.children}</div>;
 }
 
-// One row's four columns. The arrow is drawn here and is not in the step: a row points from one end
-// to the other by being a row, so what the glyph says is about the shape of the table rather than
-// about the call, and a library writing an arm has nothing to decide about it.
+// A row's cells with the key laid in after the index, where the table is keyed. The cells after the
+// index are the same either way, which is what keeps a keyed table the same table with a column more.
+function keyCells(keyed, cells, key) {
+  return keyed ? [cells[0], key, ...cells.slice(1)] : cells;
+}
+
+// One row's four columns, or five with a key. The arrow is drawn here and is not in the step: a row
+// points from one end to the other by being a row, so what the glyph says is about the shape of the
+// table rather than about the call, and a library writing an arm has nothing to decide about it.
 function StepRow(props) {
-  const {cells, className} = props;
+  const {cells, className, keyed} = props;
+  const styles = keyed ? keyedCellStyles : cellStyles;
   return (
-    <span className={className ? `catln-steps-row ${className}` : "catln-steps-row"} style={rowStyle}>
-      <span style={indexStyle}>{cells[0]}</span>
-      <span>{cells[1]}</span>
-      <span style={arrowStyle}>{cells[2]}</span>
-      <span>{cells[3]}</span>
+    <span className={className ? `catln-steps-row ${className}` : "catln-steps-row"} style={keyed ? keyedRowStyle : rowStyle}>
+      {cells.map((c, i) => <span key={i} style={styles[i]}>{c}</span>)}
     </span>
   );
 }
@@ -127,9 +136,26 @@ const rowStyle = {
   minWidth: '20em',
 };
 
+// The same grid with the key's column after the index, sized as the two ends are so that it lines up
+// down the table: each row is a grid of its own, and a column sized to its content would be as wide
+// as that row's key.
+const keyedRowStyle = {
+  ...rowStyle,
+  gridTemplateColumns: 'minmax(1.5em, auto) minmax(3em, 1fr) minmax(4em, 1fr) 1.5em minmax(4em, 1fr)',
+  minWidth: '24em',
+};
+
 const indexStyle = {opacity: 0.6, textAlign: 'right'};
+
+// A key names the entry a row is of, so it is set apart from the two ends of the step as the index is,
+// though less far: it is read, where the index is only counted.
+const keyStyle = {fontWeight: 600};
 
 const arrowStyle = {opacity: 0.6, textAlign: 'center'};
 
+const cellStyles = [indexStyle, undefined, arrowStyle, undefined];
+
+const keyedCellStyles = [indexStyle, keyStyle, undefined, arrowStyle, undefined];
+
 export default Steps;
-export {CallStepsContext, StepLine, StepTable};
+export {CallStepsContext, StepLine, StepTable, keyCells};

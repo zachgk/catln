@@ -22,6 +22,12 @@ function step(index, input, output) {
   }
 }
 
+// A row of a /Catln/Doc/Show/EntrySteps: a Step with the entry's key.
+function entryStep(index, key, input, output) {
+  const row = step(index, input, output)
+  return { ...row, name: '/Catln/Doc/Show/EntryStep', args: { ...row.args, '/key': str(key) } }
+}
+
 function list(items) {
   return items.reduceRight(
     (tail, head) => ({ tag: 'TupleVal', name: '/Data/List/Cons', args: { '/head': head, '/tail': tail } }),
@@ -113,5 +119,26 @@ describe('Steps', () => {
     const row = screen.getByRole('treeitem')
     expect(row.textContent).toContain('1')
     expect(row.querySelector('[role="group"]')).toBeNull()
+  })
+
+  it('draws the key of each entry as a column of its own after the index, where it is keyed', () => {
+    const steps = list([entryStep(0, 'a', '10', '11'), entryStep(1, 'b', '20', '21')])
+    const { container } = render(<Providers><Steps {...{ '/steps': steps }} keyed /></Providers>)
+
+    // A cell each rather than run into the input, since the key is which entry the row is and not
+    // anything the step was handed.
+    expect(screen.getByText('key')).toBeInTheDocument()
+    const rows = screen.getAllByRole('treeitem')
+    const cells = row => Array.from(row.querySelector('.catln-steps-row').children).map(c => c.textContent)
+    expect(cells(rows[0])).toEqual(['0', 'a', '10', '↦', '11'])
+    expect(cells(rows[1])).toEqual(['1', 'b', '20', '↦', '21'])
+    expect(Array.from(container.querySelector('.catln-steps-head').children).map(c => c.textContent)).toEqual(['#', 'key', 'in', '', 'out'])
+  })
+
+  it('draws no key column where it is not keyed', () => {
+    render(<Providers><Steps {...{ '/steps': list([step(0, '1', '2')]) }} /></Providers>)
+
+    expect(screen.queryByText('key')).toBeNull()
+    expect(screen.getByRole('treeitem').querySelector('.catln-steps-row').children).toHaveLength(4)
   })
 })

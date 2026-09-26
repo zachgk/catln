@@ -128,6 +128,12 @@ function Value(props) {
     // A fold shown the same way, with the accumulator each step was handed and handed on.
     case "/Catln/Doc/Show/FoldSteps":
       return <FoldSteps {...val.args} />;
+    // The same two over the entries of a map, whose rows each carry the entry's key as well. They draw
+    // as the displays above do, with the key as a column of its own.
+    case "/Catln/Doc/Show/EntrySteps":
+      return <Steps {...val.args} keyed />;
+    case "/Catln/Doc/Show/EntryFoldSteps":
+      return <FoldSteps {...val.args} keyed />;
     default:
       let showArgs = "";
       if(Object.keys(val.args).length > 0) {

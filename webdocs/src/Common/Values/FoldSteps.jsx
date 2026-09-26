@@ -3,7 +3,7 @@ import React, {useContext} from 'react';
 import {TreeItem} from '@mui/x-tree-view/TreeItem';
 
 import {valList} from '../Common';
-import {CallStepsContext, StepLine, StepTable} from './Steps';
+import {CallStepsContext, StepLine, StepTable, keyCells} from './Steps';
 
 // A fold shown as what it did, step by step: the accumulator each step was handed, the element it
 // combined in, and the accumulator it handed on.
@@ -19,13 +19,17 @@ import {CallStepsContext, StepLine, StepTable} from './Steps';
 // output went. A left fold hands each output down to the accumulator of the row below and the last
 // one down into the result; a right fold hands each output up to the row above, and the first row's
 // up into the result, which is why its initial accumulator is drawn at the bottom.
+//
+// A keyed table is a /Catln/Doc/Show/EntryFoldSteps, a fold over the entries of a map, and draws the
+// entry's key as a column after the index, as a keyed Steps does.
 function FoldSteps(props) {
   const steps = valList(props["/steps"]);
   const fromRight = isTrue(props["/fromRight"]);
   const rowNodes = useContext(CallStepsContext);
+  const {keyed} = props;
 
-  const init = <StepLine><FoldRow className="catln-fold-init" cells={["init", "", "", "", "", cell(props["/init"]), fromRight ? upFlow(steps.length) : downFlow(steps.length)]} /></StepLine>;
-  const result = <StepLine><FoldRow className="catln-fold-result" cells={["", "", "", "", "=", cell(props["/result"]), ""]} /></StepLine>;
+  const init = <StepLine><FoldRow className="catln-fold-init" keyed={keyed} cells={keyCells(keyed, ["init", "", "", "", "", cell(props["/init"]), fromRight ? upFlow(steps.length) : downFlow(steps.length)], "")} /></StepLine>;
+  const result = <StepLine><FoldRow className="catln-fold-result" keyed={keyed} cells={keyCells(keyed, ["", "", "", "", "=", cell(props["/result"]), ""], "")} /></StepLine>;
 
   const rows = steps.map((step, i) => {
     const args = step && step.args ? step.args : {};
@@ -36,7 +40,7 @@ function FoldSteps(props) {
       <TreeItem
         key={i}
         itemId={`step-${i}`}
-        label={<FoldRow cells={[cell(args["/index"]), cell(args["/acc"]), "⊕", cell(args["/input"]), "↦", cell(args["/output"]), flow]} />}
+        label={<FoldRow keyed={keyed} cells={keyCells(keyed, [cell(args["/index"]), cell(args["/acc"]), "⊕", cell(args["/input"]), "↦", cell(args["/output"]), flow], cell(args["/key"]))} />}
       >
         {rowNodes[i]}
       </TreeItem>
@@ -45,7 +49,7 @@ function FoldSteps(props) {
 
   return (
     <StepTable>
-      <StepLine><FoldRow className="catln-steps-head" cells={["#", "acc", "", "v", "", "out", ""]} /></StepLine>
+      <StepLine><FoldRow className="catln-steps-head" keyed={keyed} cells={keyCells(keyed, ["#", "acc", "", "v", "", "out", ""], "key")} /></StepLine>
       {fromRight ? result : init}
       {rows}
       {fromRight ? init : result}
@@ -70,18 +74,13 @@ function isTrue(val) {
   return !!val && val.name === "/Data/Primitive/True";
 }
 
-// One row's seven columns, lined up down the table by the same grid on every row.
+// One row's seven columns, or eight with a key, lined up down the table by the same grid on every row.
 function FoldRow(props) {
-  const {cells, className} = props;
+  const {cells, className, keyed} = props;
+  const styles = keyed ? keyedCellStyles : cellStyles;
   return (
-    <span className={className ? `catln-steps-row ${className}` : "catln-steps-row"} style={rowStyle}>
-      <span style={indexStyle}>{cells[0]}</span>
-      <span>{cells[1]}</span>
-      <span style={glyphStyle}>{cells[2]}</span>
-      <span>{cells[3]}</span>
-      <span style={glyphStyle}>{cells[4]}</span>
-      <span>{cells[5]}</span>
-      <span style={flowStyle}>{cells[6]}</span>
+    <span className={className ? `catln-steps-row ${className}` : "catln-steps-row"} style={keyed ? keyedRowStyle : rowStyle}>
+      {cells.map((c, i) => <span key={i} style={styles[i]}>{c}</span>)}
     </span>
   );
 }
@@ -112,5 +111,20 @@ const indexStyle = {opacity: 0.6, textAlign: 'right'};
 const glyphStyle = {opacity: 0.6, textAlign: 'center'};
 
 const flowStyle = {opacity: 0.8, textAlign: 'left'};
+
+// The same grid with the key's column after the index, sized as the other cells are so that it lines
+// up down the table.
+const keyedRowStyle = {
+  ...rowStyle,
+  gridTemplateColumns: '4ch minmax(3em, 1fr) minmax(4em, 1fr) 1.5em minmax(4em, 1fr) 1.5em minmax(4em, 1fr) 1.5em',
+  minWidth: '32em',
+};
+
+// A key is read where the index is only counted, as in Steps.
+const keyStyle = {fontWeight: 600};
+
+const cellStyles = [indexStyle, undefined, glyphStyle, undefined, glyphStyle, undefined, flowStyle];
+
+const keyedCellStyles = [indexStyle, keyStyle, undefined, glyphStyle, undefined, glyphStyle, undefined, flowStyle];
 
 export default FoldSteps;

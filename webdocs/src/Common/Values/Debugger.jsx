@@ -198,31 +198,52 @@ function exprPath(expr) {
   }
 }
 
-// A call with a display of its own stands for the whole chain of calls of the same definition
+// A call with a display of its own stands for the whole recursion of calls of the same definition
 // underneath it, because that is what its display describes: a mapping over three elements is four
 // nested calls of one definition, and one table of three rows.
 //
-// What each row opens onto is collected here. Walking down the chain, everything at each level that
-// is NOT the chain continuing is what that level did -- for an fmap, the one call of the mapped
-// function -- so the nth level's own calls are what the nth row expands to. A level that did more
-// than one such thing hands over all of them rather than picking, since a row that quietly showed one
-// of two would be a row that lied about what happened.
+// What each row opens onto is collected here. At each level, everything that is NOT the recursion
+// continuing is what that level did -- for an fmap, the one call of the mapped function -- and those
+// calls are one row. A level that did more than one such thing hands over all of them rather than
+// picking, since a row that quietly showed one of two would be a row that lied about what happened.
+//
+// The recursion need not be a chain. A definition over a tree calls itself on both subtrees, and its
+// rows are wanted in the order its levels did their own work, which is the order it made its calls
+// in: a level's row goes after the rows of the recursive calls it made before its own work and before
+// the rows of those it made after. A mapping over a map's values calls itself on the left subtree,
+// then the mapped function, then itself on the right, so its rows come out in key order; a list's
+// chain has its own work before its one recursive call, so its rows come out in element order as
+// they always have. Nothing here knows which of those it is walking.
 function chainSteps(node, fun) {
-  const steps = [];
-  let current = node;
-  while (current) {
-    const children = current[3];
-    const next = children.find(child => nodeFun(child) === fun);
-    steps.push(children.filter(child => child !== next));
-    current = next;
-  }
+  const steps = levelSteps(node, fun);
   // The last level of a chain is the one that ended it -- an fmap's Nil arm -- and did nothing of its
   // own, so it contributes no row. Dropping it here rather than in the walk keeps the walk about the
-  // shape of the chain and this about what a table has rows for.
+  // shape of the recursion and this about what a table has rows for.
   while (steps.length && !steps[steps.length - 1].length) {
     steps.pop();
   }
   return steps;
+}
+
+// The rows of one level and of every level below it, in the order the calls were made.
+//
+// A level that made no call at all -- a leaf of the recursion, such as a map's empty subtree --
+// contributes nothing, where one that recursed without doing anything of its own still contributes
+// its empty row, which keeps every row after it opening onto its own level.
+function levelSteps(node, fun) {
+  const children = node[3];
+  const own = children.filter(child => nodeFun(child) !== fun);
+  const recursive = children.filter(child => nodeFun(child) === fun);
+  if (!own.length && !recursive.length) {
+    return [];
+  }
+  const firstOwn = children.findIndex(child => nodeFun(child) !== fun);
+  const before = firstOwn < 0 ? 0 : recursive.filter(child => children.indexOf(child) < firstOwn).length;
+  return [
+    ...recursive.slice(0, before).flatMap(child => levelSteps(child, fun)),
+    own,
+    ...recursive.slice(before).flatMap(child => levelSteps(child, fun)),
+  ];
 }
 
 function TreebugNode(props) {
