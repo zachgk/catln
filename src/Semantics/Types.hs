@@ -1656,6 +1656,13 @@ splitPartialByUnionVarArgs p@PartialType{ptVars, ptArgs} =
     unionComponents (UnionType Nothing leafs []) = Just $ map singletonType $ splitUnionType leafs
     unionComponents (UnionType (Just topData) posLeafs cs)
       | not (H.null posLeafs) = Just $ UnionType (Just topData) H.empty cs : map singletonType (splitUnionType posLeafs)
+    -- A disjunctive predicate is a union too, spelled as a formula: @U_{¬(q₁ ∧ … ∧ qₙ)} − N@ is
+    -- @⋃ᵢ (U_{¬qᵢ} − N)@ (De Morgan), which is how a union spells @∀Fish ∪ ∀Lizard@. Unsplit, the
+    -- slot was compared whole, and @fluffy(this=∀Fish ∪ ∀Lizard)@ was refused by a type that holds
+    -- @fluffy(this=∀Fish)@ and @fluffy(this=∀Lizard)@ each (propUnionDistributesIntersection, 1331:
+    -- Seed 4270589556419085356 17630522071290092371).
+    unionComponents (UnionType (Just (PredsNot (PredsAnd qs@(_:_:_)), negLeafs, negConsts)) posLeafs [])
+      | H.null posLeafs = Just [UnionType (Just (predsNot q, negLeafs, negConsts)) H.empty [] | q <- qs]
     unionComponents _ = Nothing
 
 -- | Helper to create a 'PartialKey' for a value (no args, no vars)
@@ -4787,9 +4794,12 @@ isSubtypeOfWithEnvRaw typeEnv vaenv t1@(UnionType Nothing subPartials []) t2@(Un
       _ -> False
     -- Each leaf of a positive union is covered on its own, and different leafs can take different
     -- routes — one by its own predicates, another by the union's positive part — which no
-    -- whole-union rule above sees. Only a union of several leafs splits, so the per-leaf subgoal
-    -- does not re-enter this rule.
-    leafwise = case splitUnionType subPartials of
+    -- whole-union rule above sees. A leaf whose slot holds a union is such a union too, one piece
+    -- per member ('splitPartialByUnionVarArgs'): @fluffy(this=∀Fish ∪ ∀Lizard)@ is covered when
+    -- each of @fluffy(this=∀Fish)@ and @fluffy(this=∀Lizard)@ is (propUnionDistributesIntersection,
+    -- 1331). Only several pieces split, and a piece has no union slot left to split, so the
+    -- per-piece subgoal does not re-enter this rule.
+    leafwise = case concatMap splitPartialByUnionVarArgs (splitUnionType subPartials) of
       ls@(_:_:_) -> all (\l -> isSubtypeOfWithEnv typeEnv vaenv (singletonType l) t2) ls
       _          -> False
     -- A leaf whose own predicates imply the predicate universe's is inside it, when that
