@@ -1,0 +1,297 @@
+import "json/json.ct"
+import "json/encode.ct"
+
+
+module(Data)
+  # # Reading JSON text
+    [jsonParse] reads JSON text into the [Json] it says: the body a JSON API answered with, say.
+    Written in Catln over the characters of the text, as a recursive descent: each kind of value is
+    read by a function taking the characters from where it starts and answering with the value and
+    the characters after it, or with [/Data/Maybe/Nothing] where the text is not that kind of value.
+    It reads what JSON is and nothing more. Text that is not JSON — a trailing comma, a quote left
+    open, anything after the value but spaces — is answered with [/Data/Maybe/Nothing] rather than
+    with the part that could be read.
+  data(JsonParsed(value -> Json, rest -> /Data/List/ConsList[$T -> Char]))
+    # A value read from the front of some characters, and the characters after it.
+
+  jsonParse(text -> String) -> /Data/Maybe[$T -> Json]
+    # [jsonParse] is the [Json] the text [text] says, where it is JSON.
+  jsonParse(text= String/Text(chars))= jsonParsedWhole(parsed= jsonParseValue(cs= jsonSkipWs(cs= chars)))
+
+  jsonParsedWhole(parsed -> /Data/Maybe[$T -> JsonParsed]) -> /Data/Maybe[$T -> Json]
+    # [jsonParsedWhole] is the value read, where nothing but spaces was left after it.
+  jsonParsedWhole(parsed= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
+  jsonParsedWhole(parsed= /Data/Maybe/Some(value= JsonParsed(value@v, rest))) | jsonAtEnd(cs= jsonSkipWs(cs= rest))= /Data/Maybe/Some(value= v)
+  jsonParsedWhole(parsed= /Data/Maybe/Some(value= JsonParsed(value@v, rest))) else = /Data/Maybe/Nothing
+
+  jsonReencoded(text -> String) -> String
+    # [jsonReencoded] is [text] read as JSON and written back out as [jsonEncode] writes it, or
+      @not JSON@ where it is not JSON: what the text says, without the spaces and escapes it was
+      written with.
+  jsonReencoded(text)= jsonReencodedOf(parsed= jsonParse(text= text))
+
+  jsonReencodedOf(parsed -> /Data/Maybe[$T -> Json]) -> String
+  jsonReencodedOf(parsed= /Data/Maybe/Nothing)= "not JSON"
+  jsonReencodedOf(parsed= /Data/Maybe/Some(value))= jsonEncode(value= value)
+
+  > jsonReencoded(text= " [1, -2.5e1, true, null, \"a\\\"b\\u0041\"] ")
+    >>> [1,-25.0,true,null,"a\"bA"]
+  > jsonReencoded(text= "{\"k\": {\"n\": []}, \"s\": \"x\\ny\"}")
+    >>> {"k":{"n":[]},"s":"x\ny"}
+  > jsonReencoded(text= "[1, 2,]")
+    >>> not JSON
+  > jsonReencoded(text= "\"open")
+    >>> not JSON
+  > jsonReencoded(text= "1 2")
+    >>> not JSON
+  > jsonReencoded(text= "\"\\ud83d\\ude00\"")
+    >>> "😀"
+  # ## Characters
+  jsonAtEnd(cs -> /Data/List/ConsList[$T -> Char]) -> Boolean
+  jsonAtEnd(cs= /Data/List/Nil)= True
+  jsonAtEnd(cs= /Data/List/Cons(head, tail))= False
+
+  jsonSkipWs(cs -> /Data/List/ConsList[$T -> Char]) -> /Data/List/ConsList[$T -> Char]
+    # [jsonSkipWs] is [cs] without the spaces, tabs and line breaks it starts with.
+  jsonSkipWs(cs= /Data/List/Nil)= /Data/List/Nil
+  jsonSkipWs(cs= /Data/List/Cons(head, tail)) | jsonIsWs(c= head)= jsonSkipWs(cs= tail)
+  jsonSkipWs(cs= /Data/List/Cons(head, tail)) else = /Data/List/Cons(head= head, tail= tail)
+
+  jsonIsWs(c -> Char) -> Boolean
+  jsonIsWs(c)= c == ' ' || c == '\n' || c == '\r' || c == '\t'
+
+  jsonIsDigit(c -> Char) -> Boolean
+  jsonIsDigit(c)= c.code >= 48 && c.code <= 57
+
+  # ## Values
+    Which kind of value starts here is told by its first character.
+  jsonParseValue(cs -> /Data/List/ConsList[$T -> Char]) -> /Data/Maybe[$T -> JsonParsed]
+  jsonParseValue(cs= /Data/List/Nil)= /Data/Maybe/Nothing
+  jsonParseValue(cs= /Data/List/Cons(head, tail)) | head == 'n'= jsonExpect(word= ['u', 'l', 'l'], cs= tail, value= Json/Null)
+  jsonParseValue(cs= /Data/List/Cons(head, tail)) | head == 't'= jsonExpect(word= ['r', 'u', 'e'], cs= tail, value= Json/Bool(value= True))
+  jsonParseValue(cs= /Data/List/Cons(head, tail)) | head == 'f'= jsonExpect(word= ['a', 'l', 's', 'e'], cs= tail, value= Json/Bool(value= False))
+  jsonParseValue(cs= /Data/List/Cons(head, tail)) | head == '"'= jsonStrParsed(parsed= jsonParseChars(cs= tail))
+  jsonParseValue(cs= /Data/List/Cons(head, tail)) | head == '['= jsonParseArray(cs= jsonSkipWs(cs= tail))
+  jsonParseValue(cs= /Data/List/Cons(head, tail)) | head == '{'= jsonParseObject(cs= jsonSkipWs(cs= tail))
+  jsonParseValue(cs= /Data/List/Cons(head, tail)) | head == '-'= jsonNegate(parsed= jsonParseNumber(cs= tail))
+  jsonParseValue(cs= /Data/List/Cons(head, tail)) | jsonIsDigit(c= head)= jsonParseNumber(cs= /Data/List/Cons(head= head, tail= tail))
+  jsonParseValue(cs= /Data/List/Cons(head, tail)) else = /Data/Maybe/Nothing
+
+  jsonExpect(word -> /Data/List/ConsList[$T -> Char], cs -> /Data/List/ConsList[$T -> Char], value -> Json) -> /Data/Maybe[$T -> JsonParsed]
+    # [jsonExpect] is [value], where [cs] starts with the rest of its [word].
+  jsonExpect(word= /Data/List/Nil, cs, value)= /Data/Maybe/Some(value= JsonParsed(value= value, rest= cs))
+  jsonExpect(word= /Data/List/Cons(head, tail), cs= /Data/List/Nil, value)= /Data/Maybe/Nothing
+  jsonExpect(word= /Data/List/Cons(head@w, tail@ws), cs= /Data/List/Cons(head@c, tail@more), value) | w == c= jsonExpect(word= ws, cs= more, value= value)
+  jsonExpect(word= /Data/List/Cons(head@w, tail@ws), cs= /Data/List/Cons(head@c, tail@more), value) else = /Data/Maybe/Nothing
+
+  # ## Strings
+  data(JsonChars(chars -> /Data/List/ConsList[$T -> Char], rest -> /Data/List/ConsList[$T -> Char]))
+    # The characters of a string read from the front of some text, and the text after its closing
+      quote.
+
+  jsonStrParsed(parsed -> /Data/Maybe[$T -> JsonChars]) -> /Data/Maybe[$T -> JsonParsed]
+  jsonStrParsed(parsed= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
+  jsonStrParsed(parsed= /Data/Maybe/Some(value= JsonChars(chars, rest)))= /Data/Maybe/Some(value= JsonParsed(value= Json/Str(value= String/Text(chars= chars)), rest= rest))
+
+  jsonParseChars(cs -> /Data/List/ConsList[$T -> Char]) -> /Data/Maybe[$T -> JsonChars]
+    # [jsonParseChars] reads the characters of a string up to its closing quote, the opening one
+      already read.
+  jsonParseChars(cs= /Data/List/Nil)= /Data/Maybe/Nothing
+  jsonParseChars(cs= /Data/List/Cons(head, tail)) | head == '"'= /Data/Maybe/Some(value= JsonChars(chars= /Data/List/Nil, rest= tail))
+  jsonParseChars(cs= /Data/List/Cons(head, tail)) | head == '\\'= jsonParseEscape(cs= tail)
+  jsonParseChars(cs= /Data/List/Cons(head, tail)) else = jsonConsChar(c= head, parsed= jsonParseChars(cs= tail))
+
+  jsonConsChar(c -> Char, parsed -> /Data/Maybe[$T -> JsonChars]) -> /Data/Maybe[$T -> JsonChars]
+    # [jsonConsChar] is the characters read, with [c] before them.
+  jsonConsChar(c, parsed= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
+  jsonConsChar(c, parsed= /Data/Maybe/Some(value= JsonChars(chars, rest)))= /Data/Maybe/Some(value= JsonChars(chars= /Data/List/Cons(head= c, tail= chars), rest= rest))
+
+  jsonParseEscape(cs -> /Data/List/ConsList[$T -> Char]) -> /Data/Maybe[$T -> JsonChars]
+    # [jsonParseEscape] reads the rest of a string from just after a backslash.
+  jsonParseEscape(cs= /Data/List/Nil)= /Data/Maybe/Nothing
+  jsonParseEscape(cs= /Data/List/Cons(head, tail)) | head == '"'= jsonConsChar(c= '"', parsed= jsonParseChars(cs= tail))
+  jsonParseEscape(cs= /Data/List/Cons(head, tail)) | head == '\\'= jsonConsChar(c= '\\', parsed= jsonParseChars(cs= tail))
+  jsonParseEscape(cs= /Data/List/Cons(head, tail)) | head == '/'= jsonConsChar(c= '/', parsed= jsonParseChars(cs= tail))
+  jsonParseEscape(cs= /Data/List/Cons(head, tail)) | head == 'b'= jsonConsChar(c= '\b', parsed= jsonParseChars(cs= tail))
+  jsonParseEscape(cs= /Data/List/Cons(head, tail)) | head == 'f'= jsonConsChar(c= '\f', parsed= jsonParseChars(cs= tail))
+  jsonParseEscape(cs= /Data/List/Cons(head, tail)) | head == 'n'= jsonConsChar(c= '\n', parsed= jsonParseChars(cs= tail))
+  jsonParseEscape(cs= /Data/List/Cons(head, tail)) | head == 'r'= jsonConsChar(c= '\r', parsed= jsonParseChars(cs= tail))
+  jsonParseEscape(cs= /Data/List/Cons(head, tail)) | head == 't'= jsonConsChar(c= '\t', parsed= jsonParseChars(cs= tail))
+  jsonParseEscape(cs= /Data/List/Cons(head, tail)) | head == 'u'= jsonParseUnicode(code= jsonHex4(cs= tail), cs= jsonDrop4(cs= tail))
+  jsonParseEscape(cs= /Data/List/Cons(head, tail)) else = /Data/Maybe/Nothing
+
+  # A @\u@ escape names a code point by four hexadecimal digits. A code point above the first 65536
+    is written as two of them — a surrogate pair — which are joined back into the one character
+    they stand for.
+  jsonParseUnicode(code -> Integer, cs -> /Data/List/ConsList[$T -> Char]) -> /Data/Maybe[$T -> JsonChars]
+  jsonParseUnicode(code, cs) | code < 0= /Data/Maybe/Nothing
+  jsonParseUnicode(code, cs) | code >= 55296 && code <= 56319= jsonParseLowSurrogate(high= code, cs= cs)
+  jsonParseUnicode(code, cs) else = jsonConsChar(c= fromCode(code= code), parsed= jsonParseChars(cs= cs))
+
+  jsonParseLowSurrogate(high -> Integer, cs -> /Data/List/ConsList[$T -> Char]) -> /Data/Maybe[$T -> JsonChars]
+  jsonParseLowSurrogate(high, cs= /Data/List/Cons(head= '\\', tail= /Data/List/Cons(head= 'u', tail@more))) | jsonIsLowSurrogate(code= jsonHex4(cs= more))= jsonConsChar(c= fromCode(code= 65536 + (high - 55296) * 1024 + (jsonHex4(cs= more) - 56320)), parsed= jsonParseChars(cs= jsonDrop4(cs= more)))
+  jsonParseLowSurrogate(high, cs) else = /Data/Maybe/Nothing
+
+  jsonIsLowSurrogate(code -> Integer) -> Boolean
+  jsonIsLowSurrogate(code)= code >= 56320 && code <= 57343
+
+  jsonHex4(cs -> /Data/List/ConsList[$T -> Char]) -> Integer
+    # [jsonHex4] is the number the four hexadecimal digits [cs] starts with, or -1 where it does not
+      start with four.
+  jsonHex4(cs= /Data/List/Cons(head@a, tail= /Data/List/Cons(head@b, tail= /Data/List/Cons(head@c, tail= /Data/List/Cons(head@d, tail)))))= jsonHexJoin(a= jsonHexValue(c= a), b= jsonHexValue(c= b), c= jsonHexValue(c= c), d= jsonHexValue(c= d))
+  jsonHex4(cs) else = -1
+
+  jsonHexJoin(a -> Integer, b -> Integer, c -> Integer, d -> Integer) -> Integer
+  jsonHexJoin(a, b, c, d) | a < 0 || b < 0 || c < 0 || d < 0= -1
+  jsonHexJoin(a, b, c, d) else = ((a * 16 + b) * 16 + c) * 16 + d
+
+  jsonHexValue(c -> Char) -> Integer
+    # [jsonHexValue] is the value of the hexadecimal digit [c], or -1 where it is not one.
+  jsonHexValue(c) | jsonIsDigit(c= c)= c.code - 48
+  jsonHexValue(c) | c.code >= 97 && c.code <= 102= c.code - 87
+  jsonHexValue(c) | c.code >= 65 && c.code <= 70= c.code - 55
+  jsonHexValue(c) else = -1
+
+  jsonDrop4(cs -> /Data/List/ConsList[$T -> Char]) -> /Data/List/ConsList[$T -> Char]
+  jsonDrop4(cs= /Data/List/Cons(head@a, tail= /Data/List/Cons(head@b, tail= /Data/List/Cons(head@c, tail= /Data/List/Cons(head@d, tail)))))= tail
+  jsonDrop4(cs) else = /Data/List/Nil
+
+  # ## Numbers
+    A number is an [Integer] where it is written as one, and a [Float] where it has a fraction or an
+    exponent.
+  data(JsonDigits(n -> Integer, count -> Integer, rest -> /Data/List/ConsList[$T -> Char]))
+    # The number some digits make, how many digits there were, and the characters after them.
+
+  jsonDigits(n -> Integer, count -> Integer, cs -> /Data/List/ConsList[$T -> Char]) -> JsonDigits(n -> Integer, count -> Integer, rest -> /Data/List/ConsList[$T -> Char])
+    # [jsonDigits] reads the digits [cs] starts with onto [n], of which [count] were read already.
+  jsonDigits(n, count, cs= /Data/List/Nil)= JsonDigits(n= n, count= count, rest= /Data/List/Nil)
+  jsonDigits(n, count, cs= /Data/List/Cons(head, tail)) | jsonIsDigit(c= head)= jsonDigits(n= n * 10 + (head.code - 48), count= count + 1, cs= tail)
+  jsonDigits(n, count, cs= /Data/List/Cons(head, tail)) else = JsonDigits(n= n, count= count, rest= /Data/List/Cons(head= head, tail= tail))
+
+  jsonParseNumber(cs -> /Data/List/ConsList[$T -> Char]) -> /Data/Maybe[$T -> JsonParsed]
+  jsonParseNumber(cs)= jsonNumberInt(whole= jsonDigits(n= 0, count= 0, cs= cs))
+
+  jsonNumberInt(whole -> JsonDigits(n -> Integer, count -> Integer, rest -> /Data/List/ConsList[$T -> Char])) -> /Data/Maybe[$T -> JsonParsed]
+  jsonNumberInt(whole= JsonDigits(n, count, rest)) | count == 0= /Data/Maybe/Nothing
+  jsonNumberInt(whole= JsonDigits(n, count, rest= /Data/List/Cons(head, tail))) | count > 0 && head == '.'= jsonNumberFrac(n= n, frac= jsonDigits(n= 0, count= 0, cs= tail))
+  jsonNumberInt(whole= JsonDigits(n, count, rest= /Data/List/Cons(head, tail))) | count > 0 && (head == 'e' || head == 'E')= jsonNumberExp(x= n.toFloat, cs= tail)
+  jsonNumberInt(whole= JsonDigits(n, count, rest)) else = /Data/Maybe/Some(value= JsonParsed(value= Json/Number(value= n), rest= rest))
+
+  jsonNumberFrac(n -> Integer, frac -> JsonDigits(n -> Integer, count -> Integer, rest -> /Data/List/ConsList[$T -> Char])) -> /Data/Maybe[$T -> JsonParsed]
+  jsonNumberFrac(n, frac= JsonDigits(n@f, count, rest)) | count == 0= /Data/Maybe/Nothing
+  jsonNumberFrac(n, frac= JsonDigits(n@f, count, rest= /Data/List/Cons(head, tail))) | count > 0 && (head == 'e' || head == 'E')= jsonNumberExp(x= n.toFloat + f.toFloat // jsonPow10(n= count).toFloat, cs= tail)
+  jsonNumberFrac(n, frac= JsonDigits(n@f, count, rest)) else = /Data/Maybe/Some(value= JsonParsed(value= Json/Number(value= n.toFloat + f.toFloat // jsonPow10(n= count).toFloat), rest= rest))
+
+  jsonNumberExp(x -> Float, cs -> /Data/List/ConsList[$T -> Char]) -> /Data/Maybe[$T -> JsonParsed]
+    # [jsonNumberExp] is [x] scaled by the exponent [cs] starts with, the @e@ already read.
+  jsonNumberExp(x, cs= /Data/List/Cons(head, tail)) | head == '-'= jsonScaled(x= x, negative= True, e= jsonDigits(n= 0, count= 0, cs= tail))
+  jsonNumberExp(x, cs= /Data/List/Cons(head, tail)) | head == '+'= jsonScaled(x= x, negative= False, e= jsonDigits(n= 0, count= 0, cs= tail))
+  jsonNumberExp(x, cs) else = jsonScaled(x= x, negative= False, e= jsonDigits(n= 0, count= 0, cs= cs))
+
+  jsonScaled(x -> Float, negative -> Boolean, e -> JsonDigits(n -> Integer, count -> Integer, rest -> /Data/List/ConsList[$T -> Char])) -> /Data/Maybe[$T -> JsonParsed]
+  jsonScaled(x, negative, e= JsonDigits(n, count, rest)) | count == 0= /Data/Maybe/Nothing
+  jsonScaled(x, negative= True, e= JsonDigits(n, count, rest)) else = /Data/Maybe/Some(value= JsonParsed(value= Json/Number(value= x // jsonPow10(n= n).toFloat), rest= rest))
+  jsonScaled(x, negative= False, e= JsonDigits(n, count, rest)) else = /Data/Maybe/Some(value= JsonParsed(value= Json/Number(value= x * jsonPow10(n= n).toFloat), rest= rest))
+
+  jsonPow10(n -> Integer) -> Integer
+  jsonPow10(n) | n <= 0= 1
+  jsonPow10(n) else = 10 * jsonPow10(n= n - 1)
+
+  jsonNegate(parsed -> /Data/Maybe[$T -> JsonParsed]) -> /Data/Maybe[$T -> JsonParsed]
+    # [jsonNegate] is the number read, negated: what a number written after a minus sign is.
+  jsonNegate(parsed= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
+  jsonNegate(parsed= /Data/Maybe/Some(value= JsonParsed(value= Json/Number(value@n), rest)))= /Data/Maybe/Some(value= JsonParsed(value= Json/Number(value= -n), rest= rest))
+  jsonNegate(parsed) else = /Data/Maybe/Nothing
+
+  # ## Arrays and objects
+    Entries are read one at a time, each followed by a comma and another or by the closing bracket.
+  jsonParseArray(cs -> /Data/List/ConsList[$T -> Char]) -> /Data/Maybe[$T -> JsonParsed]
+    # [jsonParseArray] reads an array from just after its opening bracket.
+  jsonParseArray(cs= /Data/List/Cons(head, tail)) | head == ']'= /Data/Maybe/Some(value= JsonParsed(value= Json/Array(entries= /Data/List/Nil), rest= tail))
+  jsonParseArray(cs) else = jsonArrayOf(parsed= jsonParseEntries(cs= cs))
+
+  data(JsonEntries(entries -> /Data/List/ConsList[$T -> Json], rest -> /Data/List/ConsList[$T -> Char]))
+
+  jsonArrayOf(parsed -> /Data/Maybe[$T -> JsonEntries]) -> /Data/Maybe[$T -> JsonParsed]
+  jsonArrayOf(parsed= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
+  jsonArrayOf(parsed= /Data/Maybe/Some(value= JsonEntries(entries, rest)))= /Data/Maybe/Some(value= JsonParsed(value= Json/Array(entries= entries), rest= rest))
+
+  jsonParseEntries(cs -> /Data/List/ConsList[$T -> Char]) -> /Data/Maybe[$T -> JsonEntries]
+    # [jsonParseEntries] reads one entry and whatever follows it, up to the closing bracket.
+  jsonParseEntries(cs)= jsonEntryThen(parsed= jsonParseValue(cs= jsonSkipWs(cs= cs)))
+
+  jsonEntryThen(parsed -> /Data/Maybe[$T -> JsonParsed]) -> /Data/Maybe[$T -> JsonEntries]
+  jsonEntryThen(parsed= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
+  jsonEntryThen(parsed= /Data/Maybe/Some(value= JsonParsed(value@v, rest)))= jsonEntryAfter(v= v, cs= jsonSkipWs(cs= rest))
+
+  jsonEntryAfter(v -> Json, cs -> /Data/List/ConsList[$T -> Char]) -> /Data/Maybe[$T -> JsonEntries]
+  jsonEntryAfter(v, cs= /Data/List/Cons(head, tail)) | head == ']'= /Data/Maybe/Some(value= JsonEntries(entries= [v], rest= tail))
+  jsonEntryAfter(v, cs= /Data/List/Cons(head, tail)) | head == ','= jsonConsEntry(v= v, parsed= jsonParseEntries(cs= tail))
+  jsonEntryAfter(v, cs) else = /Data/Maybe/Nothing
+
+  jsonConsEntry(v -> Json, parsed -> /Data/Maybe[$T -> JsonEntries]) -> /Data/Maybe[$T -> JsonEntries]
+  jsonConsEntry(v, parsed= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
+  jsonConsEntry(v, parsed= /Data/Maybe/Some(value= JsonEntries(entries, rest)))= /Data/Maybe/Some(value= JsonEntries(entries= /Data/List/Cons(head= v, tail= entries), rest= rest))
+
+  jsonParseObject(cs -> /Data/List/ConsList[$T -> Char]) -> /Data/Maybe[$T -> JsonParsed]
+    # [jsonParseObject] reads an object from just after its opening brace.
+  jsonParseObject(cs= /Data/List/Cons(head, tail)) | head == '}'= /Data/Maybe/Some(value= JsonParsed(value= Json/Object(entries= /Data/List/Nil), rest= tail))
+  jsonParseObject(cs) else = jsonObjectOf(parsed= jsonParseMembers(cs= cs))
+
+  data(JsonMembers(members -> /Data/List/ConsList[$T -> Json/Member], rest -> /Data/List/ConsList[$T -> Char]))
+
+  jsonObjectOf(parsed -> /Data/Maybe[$T -> JsonMembers]) -> /Data/Maybe[$T -> JsonParsed]
+  jsonObjectOf(parsed= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
+  jsonObjectOf(parsed= /Data/Maybe/Some(value= JsonMembers(members, rest)))= /Data/Maybe/Some(value= JsonParsed(value= Json/Object(entries= members), rest= rest))
+
+  jsonParseMembers(cs -> /Data/List/ConsList[$T -> Char]) -> /Data/Maybe[$T -> JsonMembers]
+    # [jsonParseMembers] reads one member — a quoted key, a colon, a value — and whatever follows
+      it, up to the closing brace.
+  jsonParseMembers(cs= /Data/List/Cons(head, tail)) | head == '"'= jsonMemberKey(key= jsonParseChars(cs= tail))
+  jsonParseMembers(cs) else = /Data/Maybe/Nothing
+
+  jsonMemberKey(key -> /Data/Maybe[$T -> JsonChars]) -> /Data/Maybe[$T -> JsonMembers]
+  jsonMemberKey(key= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
+  jsonMemberKey(key= /Data/Maybe/Some(value= JsonChars(chars, rest)))= jsonMemberColon(key= String/Text(chars= chars), cs= jsonSkipWs(cs= rest))
+
+  jsonMemberColon(key -> String, cs -> /Data/List/ConsList[$T -> Char]) -> /Data/Maybe[$T -> JsonMembers]
+  jsonMemberColon(key, cs= /Data/List/Cons(head, tail)) | head == ':'= jsonMemberValue(key= key, parsed= jsonParseValue(cs= jsonSkipWs(cs= tail)))
+  jsonMemberColon(key, cs) else = /Data/Maybe/Nothing
+
+  jsonMemberValue(key -> String, parsed -> /Data/Maybe[$T -> JsonParsed]) -> /Data/Maybe[$T -> JsonMembers]
+  jsonMemberValue(key, parsed= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
+  jsonMemberValue(key, parsed= /Data/Maybe/Some(value= JsonParsed(value@v, rest)))= jsonMemberAfter(member= Json/Member(key= key, value= v), cs= jsonSkipWs(cs= rest))
+
+  jsonMemberAfter(member -> Json/Member(key -> String, value -> Json), cs -> /Data/List/ConsList[$T -> Char]) -> /Data/Maybe[$T -> JsonMembers]
+  jsonMemberAfter(member, cs= /Data/List/Cons(head, tail)) | head == '}'= /Data/Maybe/Some(value= JsonMembers(members= [member], rest= tail))
+  jsonMemberAfter(member, cs= /Data/List/Cons(head, tail)) | head == ','= jsonConsMember(member= member, parsed= jsonParseMembers(cs= jsonSkipWs(cs= tail)))
+  jsonMemberAfter(member, cs) else = /Data/Maybe/Nothing
+
+  jsonConsMember(member -> Json/Member(key -> String, value -> Json), parsed -> /Data/Maybe[$T -> JsonMembers]) -> /Data/Maybe[$T -> JsonMembers]
+  jsonConsMember(member, parsed= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
+  jsonConsMember(member, parsed= /Data/Maybe/Some(value= JsonMembers(members, rest)))= /Data/Maybe/Some(value= JsonMembers(members= /Data/List/Cons(head= member, tail= members), rest= rest))
+
+  # ## Reading a value
+    What an API answers with is read by the path to the part of it wanted: a member of an object by
+    its key, an entry of an array by its position.
+  jsonMember(value -> Json, key -> String) -> /Data/Maybe[$T -> Json]
+    # [jsonMember] is the value of the member [key] of the object [value], where it is an object
+      with such a member.
+  jsonMember(value= Json/Object(entries), key)= jsonMemberIn(members= entries, key= key)
+  jsonMember(value, key) else = /Data/Maybe/Nothing
+
+  jsonMemberIn(members -> /Data/List/ConsList[$T -> Json/Member], key -> String) -> /Data/Maybe[$T -> Json]
+  jsonMemberIn(members= /Data/List/Nil, key)= /Data/Maybe/Nothing
+  jsonMemberIn(members= /Data/List/Cons(head= Json/Member(key@k, value@v), tail), key) | k == key= /Data/Maybe/Some(value= v)
+  jsonMemberIn(members= /Data/List/Cons(head= Json/Member(key@k, value@v), tail), key) else = jsonMemberIn(members= tail, key= key)
+
+  jsonIndex(value -> Json, i -> Integer) -> /Data/Maybe[$T -> Json]
+    # [jsonIndex] is the entry at position [i], counting from 0, of the array [value], where it is
+      an array that long.
+  jsonIndex(value= Json/Array(entries), i)= jsonIndexIn(entries= entries, i= i)
+  jsonIndex(value, i) else = /Data/Maybe/Nothing
+
+  jsonIndexIn(entries -> /Data/List/ConsList[$T -> Json], i -> Integer) -> /Data/Maybe[$T -> Json]
+  jsonIndexIn(entries= /Data/List/Nil, i)= /Data/Maybe/Nothing
+  jsonIndexIn(entries= /Data/List/Cons(head, tail), i) | i == 0= /Data/Maybe/Some(value= head)
+  jsonIndexIn(entries= /Data/List/Cons(head, tail), i) else = jsonIndexIn(entries= tail, i= i - 1)
