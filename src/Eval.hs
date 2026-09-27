@@ -203,8 +203,10 @@ evalCallTree  m (TCMatch destType opts) = do
   -- A closure argument's slot in a typed arm holds either the closure's input signature or the
   -- output contract delivered from the declaration; the value-derived partial only carries the
   -- input signature, so also try the output form ('getValPartialTypeOut') before failing an arm.
-  let valP = reKeyP $ getValPartialType m
-  let valPOut = reKeyP $ getValPartialTypeOut m
+  -- Both are read only as deep as the arms look ('getValDispatchPartial').
+  let depth = 1 + maximum (0 : map (typePatternDepth . singletonType) (H.keys opts))
+  let valP = reKeyP $ getValDispatchPartial evTypeEnv False depth m
+  let valPOut = reKeyP $ getValDispatchPartial evTypeEnv True depth m
   let optMatches optType = isSubtypePartialOf evTypeEnv valP (singletonType $ reKeyP optType)
         || (valPOut /= valP && isSubtypePartialOf evTypeEnv valPOut (singletonType $ reKeyP optType))
   case H.toList $ H.filterWithKey (\optType _ -> optMatches optType) opts of
@@ -234,8 +236,9 @@ evalCallTree m (TCCond resType ((cond, ifThenTree):restIfTrees)) = do
   -- the output contract delivered from the declaration.
   let condMatches armOa =
         let armT = simplifyArgKeys $ clearUnionTypePreds $ getExprType $ oaObjExpr armOa
-            valT = simplifyArgKeys $ singletonType $ getValPartialType m
-            valTOut = simplifyArgKeys $ singletonType $ getValPartialTypeOut m
+            depth = 1 + typePatternDepth armT
+            valT = simplifyArgKeys $ singletonType $ getValDispatchPartial evTypeEnv False depth m
+            valTOut = simplifyArgKeys $ singletonType $ getValDispatchPartial evTypeEnv True depth m
         in isSubtypeOf evTypeEnv valT armT || (valTOut /= valT && isSubtypeOf evTypeEnv valTOut armT)
   cond' <- case cond of
     -- TODO Remove the use of clearUnionTypePreds below. It is a workaround as type predicates are not supported by subtypeOf

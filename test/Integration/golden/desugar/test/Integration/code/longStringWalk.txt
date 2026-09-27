@@ -1,0 +1,79 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= CInt
+                                { ciValue = 0 }
+                            )
+                            ( Value /this= println
+                                ( Value msg= toString
+                                    ( Value /this= lenStr
+                                        ( Value s= CStr
+                                            { csValue = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }
+                                        )
+                                    )
+                                )( Value /this= Value io )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/lenStr"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ lenStr( Value s -> ∀/Data/String ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ lenStr
+                            ( Value s= String/Text( Value chars ) ) -> /Data/Primitive/Integer = lenChars( Value cs= Value chars )
+                        ]
+                    }
+                )
+            ,
+                ( "/lenChars"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ lenChars
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ lenChars( Value cs= Value /Data/List/Nil ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
+                        , lenChars
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) -> /Data/Primitive/Integer = /operator+
+                            ( Value /l= CInt
+                                { ciValue = 1 }
+                            )
+                            ( Value /r= lenChars( Value cs= Value tail ) )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A recursion down a long string.
+                [lenChars] makes one call per character, and each call chooses between its two arms by the
+                value it is given. That choice looks at the value only as deep as the arms' patterns do, so a
+                call costs the same whatever is left of the string. Were it to read the whole of what is left,
+                as it once did, the walk over these four hundred characters would take the better part of an
+                hour rather than a moment, which is what this is here to notice." }
+            )
+        ]
+    }

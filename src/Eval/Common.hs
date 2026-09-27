@@ -918,6 +918,47 @@ getValPartialTypeOut (TupleVal name args) = (partialVal (mkName name)){ptArgs=H.
 getValPartialTypeOut v = getValPartialType v
 
 
+-- | How deep a type's constructor patterns look: one for each constructor, nested through the
+-- arguments a constructor spells, and nothing for a class, a variable or ⊤, which name no
+-- constructor to tell apart. @lenChars(cs=Cons(head=Char, tail=∀ConsList[Char]))@ looks three deep:
+-- the call, the @Cons@, and the @Char@ it holds.
+typePatternDepth :: Type -> Int
+typePatternDepth (UnionType _ leafs _) = maximum (0 : map partialDepth (splitUnionType leafs))
+  where partialDepth p = 1 + maximum (0 : map typePatternDepth (H.elems (ptArgs p)))
+typePatternDepth _ = 0
+
+-- | A value's type for choosing among arms, read only as deep as those arms' patterns look.
+--
+-- 'getValPartialType' is the whole value, a @Cons@ per element of a list. Choosing an arm by asking
+-- whether that is within the arm's type costs work as deep as the value on every call, and a
+-- recursion down a list makes one call per element: a walk over @n@ items came to @n@ cubed, and a
+-- string of two hundred characters took minutes.
+--
+-- Past the given depth a tuple is its constructor's DECLARED form, with each type parameter bound
+-- to the value of the field declared as it: the rest of a list of characters is
+-- @Cons[T=Char](head=$T, tail=ConsList[T=$T])@. What an arm asks of the value there — that the
+-- rest is a @ConsList[Char]@ — is what the typechecker already established of it, and the declared
+-- form says it without walking the list. The parameters are read from the fields, recursing only
+-- through them, so an element is typed as deeply as it is nested and never as long as the list.
+--
+-- A tuple with no data declaration (a call, a context) is read whole, as there is no declared form
+-- to stand for it.
+getValDispatchPartial :: (TypeGraph tg) => TypeEnv tg -> Bool -> Int -> Val -> PartialType
+getValDispatchPartial typeEnv out d v@(TupleVal name args)
+  | d > 0 = (partialVal (mkName name)){ptArgs=H.fromList $ map fromArg $ H.toList args}
+  | otherwise = case typeGraphData typeEnv (mkName name) of
+      (dp:_) -> dp{ptVars = H.union (boundVars dp) (ptVars dp)}
+      []     -> if out then getValPartialTypeOut v else getValPartialType v
+  where
+    fromArg (argName, argVal@(ObjArrVal oa _)) | out, Just (_, arrM) <- oaArr oa =
+      ((partialToKey (getValPartialType argVal)){pkName=mkName argName}, getMetaType arrM)
+    fromArg (argName, argVal) = (partialKey (mkName argName), singletonType $ getValDispatchPartial typeEnv out (d - 1) argVal)
+    boundVars dp = H.fromList
+      [ (k, singletonType $ getValDispatchPartial typeEnv out 0 argVal)
+      | (argName, argVal) <- H.toList args
+      , Just (TypeVar (TVVar k) TVInt _) <- [H.lookup (partialKey (mkName argName)) (ptArgs dp)] ]
+getValDispatchPartial _ out _ v = if out then getValPartialTypeOut v else getValPartialType v
+
 --- ResArrowTree
 data MacroData = MacroData {
                                mdTbEnv  :: TBEnv
