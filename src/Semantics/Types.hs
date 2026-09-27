@@ -2132,6 +2132,19 @@ expandTypesWithNamesFullAux visited typeEnv@TypeEnv{teNames} vaenv (TopType negP
     -- name whose leafs survive identically although the subtracted side overlaps them — and
     -- report the expansion as approximate-and-empty instead, so consumers fall to their
     -- symbolic paths (which subtract the atom forms exactly).
+    --
+    -- The complement is taken against @inner@'s members, which are all of @inner@ only when its
+    -- positive atoms are enumerable ('predsPositiveSealed': a data name, or a class 'tePrgmEnv'
+    -- or its declaration closes; a negation inside @inner@ is this case again, exact on its
+    -- own). An open class's members are
+    -- the ones declared SO FAR, and the universe minus them is wider than @¬inner@: for an
+    -- unsealed @Class1@ with no members yet it was the whole name, and read as the super of a
+    -- subtype it proved @bsjhhy.. ⊆ (⊤|¬Class1) ∪ …@ (propSubtypeByIntersection, 9066: Seed
+    -- 15125675710563085391 3649129441598250635). Such a complement keeps @¬inner@ attached to
+    -- each name instead — exact, as a current member is in @inner@ anyway.
+    expandPredsWithNamesFull (PredsNot inner)
+      | not (predsPositiveSealed typeEnv inner) =
+          (joinUnionType $ map (`partialAddPreds` PredsNot inner) $ splitUnionType topFilteredLeafs, hasUniverseOutside)
     expandPredsWithNamesFull (PredsNot inner) =
       let (innerLeafs, _) = expandPredsWithNamesFull inner
       in case differencePartialLeafs typeEnv vaenv topFilteredLeafs innerLeafs of
