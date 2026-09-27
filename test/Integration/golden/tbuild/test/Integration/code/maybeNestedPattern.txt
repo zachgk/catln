@@ -1,0 +1,145 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Pair"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Pair
+                            ( EAppArg { eaaArg = Value /a -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /b -> /Data/Primitive/Integer } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
+                            ( /Catln/exit
+                                ( /this=/Catln/IO
+                                , /val=/Data/Primitive/Integer
+                                ) + /Catln/IO
+                            ) =
+                            ( /Catln/exit
+                                ( EAppArg
+                                    { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /this -> /Catln/IO =
+                                        ( /Catln/println
+                                            ( EAppArg
+                                                { eaaArg = Value /msg -> ∀/Data/String =
+                                                    ( /Data/toString
+                                                        ( EAppArg
+                                                            { eaaArg = Value /this -> /Data/Primitive/Integer =
+                                                                ( /sumOf
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /m -> /Data/Maybe/Some
+                                                                            ( /value=/Pair
+                                                                                ( /a=/Data/Primitive/Integer
+                                                                                , /b=/Data/Primitive/Integer
+                                                                                )
+                                                                            ) = /Data/Maybe/Some
+                                                                            ( EAppArg
+                                                                                { eaaArg = Value /value -> /Pair
+                                                                                    ( /a=/Data/Primitive/Integer
+                                                                                    , /b=/Data/Primitive/Integer
+                                                                                    ) = /Pair
+                                                                                    ( EAppArg
+                                                                                        { eaaArg = Value /a -> /Data/Primitive/Integer = 1 }
+                                                                                    )
+                                                                                    ( EAppArg
+                                                                                        { eaaArg = Value /b -> /Data/Primitive/Integer = 2 }
+                                                                                    )
+                                                                                }
+                                                                            )
+                                                                        }
+                                                                    ) ↦ /Data/Primitive/Integer
+                                                                )
+                                                            }
+                                                        ) ↦ ∀/Data/String
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                            ) ↦ /Catln/IO
+                                        )
+                                    }
+                                ) ↦ /Catln/IO
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/sumOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /sumOf
+                            ( EAppArg
+                                { eaaArg = Value /m -> ∀/Data/Maybe[ /T=/Pair ] }
+                            ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /sumOf
+                            ( EAppArg { eaaArg = Value /m -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } ) -> /Data/Primitive/Integer = 0
+                        , /sumOf
+                            ( EAppArg
+                                { eaaArg = Value /m -> /Data/Maybe/Some
+                                    ( /value=/Pair
+                                        ( /a=/Data/Primitive/Integer
+                                        , /b=/Data/Primitive/Integer
+                                        )
+                                    ) = /Data/Maybe/Some
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> /Pair
+                                            ( /a=/Data/Primitive/Integer
+                                            , /b=/Data/Primitive/Integer
+                                            ) = /Pair
+                                            ( EAppArg { eaaArg = Value /a -> /Data/Primitive/Integer } )
+                                            ( EAppArg { eaaArg = Value /b -> /Data/Primitive/Integer } )
+                                        }
+                                    )
+                                }
+                            ) -> /Data/Primitive/Integer =
+                            ( /operator+
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A pattern destructuring a record inside a [/Data/Maybe/Some].
+                  [sumOf] takes a [/Data/Maybe] of a [Pair] and matches the [Pair] in the same pattern as the
+                  [/Data/Maybe/Some] holding it. The [Some] spells no element type of its own; its element is what
+                  its [value] field holds, so it is a [/Data/Maybe] of [Pair]s and inside the declaration."
+                }
+            )
+        ]
+    }

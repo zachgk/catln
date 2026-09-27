@@ -1,0 +1,79 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Pair"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Pair( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= CInt
+                                { ciValue = 0 }
+                            )
+                            ( Value /this= println
+                                ( Value msg= toString
+                                    ( Value /this= sumOf
+                                        ( Value m= /Data/Maybe/Some
+                                            ( Value value= Pair
+                                                ( Value a= CInt
+                                                    { ciValue = 1 }
+                                                )
+                                                ( Value b= CInt
+                                                    { ciValue = 2 }
+                                                )
+                                            )
+                                        )
+                                    )
+                                )( Value /this= Value io )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/sumOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ sumOf
+                            ( Value m -> ∀/Data/Maybe[ /T=/Pair ] ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ sumOf( Value m= Value /Data/Maybe/Nothing ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
+                        , sumOf
+                            ( Value m= /Data/Maybe/Some
+                                ( Value value= Pair( Value a )( Value b ) )
+                            ) -> /Data/Primitive/Integer = /operator+( Value /l= Value a )( Value /r= Value b )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A pattern destructuring a record inside a [/Data/Maybe/Some].
+                [sumOf] takes a [/Data/Maybe] of a [Pair] and matches the [Pair] in the same pattern as the
+                [/Data/Maybe/Some] holding it. The [Some] spells no element type of its own; its element is what
+                its [value] field holds, so it is a [/Data/Maybe] of [Pair]s and inside the declaration." }
+            )
+        ]
+    }

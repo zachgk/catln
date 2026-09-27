@@ -3553,8 +3553,21 @@ partialCoversSat typeEnv vaenv satUse hyps sup0 sub0 =
     -- Unspelled sub-side parameters materialize as ⊤ so every sup key is actually asked about.
     -- Under projection they stay unspelled: there a ⊤-valued parameter carries no dispatch
     -- information, which is what 'varCovered' states for the spelled-⊤ case below.
-    subVarsFull | teArgModeProjection typeEnv = ptVars sub
-                | otherwise                   = H.union (ptVars sub) (PTopType <$ ptVars sup)
+    --
+    -- Each is then read DECLARATION-BOUNDED through the sub's pointer-declared args, as
+    -- 'isSubPartialOfWithEnv'.'subVarEff' reads it: a field declared as the bare parameter
+    -- (@item -> $T@) makes a value's @/T@ that field's value. Without it an unspelled @/T@
+    -- stays ⊤ here while the materialized prover reads it as the field, and the two disagree:
+    -- @Has(item=Pair(..))@ is proved inside @Has[/T=Pair](item=$T)@ there and escapes it here,
+    -- so a destructuring @Has(item= Pair(a, b))@ is reported outside its declaration
+    -- @m -> Opt[$T -> Pair]@ while the undeclared part is ∅.
+    subVarsFull = H.mapWithKey subVarEff subVarsSpelled
+    subVarsSpelled | teArgModeProjection typeEnv = ptVars sub
+                   | otherwise                   = H.union (ptVars sub) (PTopType <$ ptVars sup)
+    subVarEff k v = foldr (intersectTypesEnv typeEnv vaenv) v
+      [ av | (ak, av) <- H.toList (ptArgs sub), not (isTypeVar av)
+           , dp <- typeGraphData typeEnv (ptName sub)
+           , Just (TypeVar (TVVar k') TVInt _) <- [H.lookup ak (ptArgs dp)], k' == k ]
     -- A sub-side slot holding an internal POINTER (@/head=$T@, an arg or var naming one of
     -- the partial's own parameters, 'TVInt') denotes that parameter's binding: read it
     -- through before deciding (single step, as 'compactOwnVarRefs' materializes). SUB side
