@@ -365,6 +365,38 @@ buildPartialCallTree env@TBEnv{tbTypeEnv} os visitedArrows bound _force srcType 
     let resArrows''WithPostTypes = concatMap (\item@(_, _, resArrow) -> map ((item,) . boundPost) $ resArrowDestType tbTypeEnv srcType resArrow) resArrows''
     let followups = map (arrowFollowup env os visitedArrows bound' srcType destType) resArrows''WithPostTypes
     let resArrows''' = mapMaybe cresToMaybe followups
+    -- An arm whose result cannot reach the destination is left out of the call, which is how a call
+    -- chooses among definitions by the result it needs. That is only a choice where the arm's
+    -- inputs are still answered as the arm would answer them: by another arm taking the same
+    -- inputs, as one @mempty@ is kept beside another of a different result. An arm whose inputs no
+    -- kept arm answers — a guarded arm, whose guard only it applies — would otherwise be skipped
+    -- for exactly the values it was written for, and another arm of its function would answer them
+    -- instead. That is reported rather than done.
+    -- Only among the arms of a function the call kept: where none of a function's arms is kept the
+    -- function itself was not chosen, which is a relative name choosing among the functions it
+    -- matches (a local binding @input@ beside @\/Python\/Builtins\/input@) and not an arm skipped.
+    let keptFunctions = S.fromList [ oaObjPath koa | (_, Just koa, _) <- resArrows''' ]
+    let wronglyDropped = [ (oa, postType)
+                         | ((item@(_, Just oa, resArrow), postType), CErr _) <- zip resArrows''WithPostTypes followups
+                         , S.member (oaObjPath oa) keptFunctions
+                         , not (S.member resArrow visitedArrows)
+                         , not (reachesTo tbTypeEnv H.empty postType destType)
+                         -- A result that cannot meet the destination at all is one no value this
+                         -- call needs can come from: an abstract @++@ needing a String rules out the
+                         -- Integer instance, whose inputs cannot occur here. Only a result that
+                         -- COULD be what the call needs, but cannot be shown to be, is an arm
+                         -- skipped for values it answers.
+                         , not (isBottomType (intersectTypes tbTypeEnv postType destType))
+                         , not (answeredByKept item) ]
+        guarded oa = not (null (exprWhereConds (oaObjExpr oa)))
+        answeredByKept (itemPartial, Just oa, _) = not (guarded oa) && any (covers itemPartial) resArrows'''
+        answeredByKept _ = True
+        covers itemPartial (keptPartial, Just koa, _) = not (guarded koa) && not (hasElseAnnot koa)
+          && isSubtypeOf tbTypeEnv (singletonType itemPartial) (singletonType keptPartial)
+        covers _ _ = False
+    unless (null wronglyDropped || null resArrows''') $
+      CErr [ MkCNote $ BuildTreeCErr (getMetaPos $ getExprMeta $ oaObjExpr oa) $ printf "The definition %s applies to %s but its result %s cannot be what this call needs, %s, so no other definition answers the values it is written for" (show $ oaObjPath oa) (show srcType) (show postType) (show destType)
+           | (oa, postType) <- wronglyDropped ]
     -- When every candidate arrow's followup fails, 'joinArrowsWithCond' is handed an empty guard
     -- set and 'completeTreeSet' can only report a contentless "could not find enough arrows …
     -- Tried guards:" — the actual reasons (each arrow's failed chain toward 'destType') having been

@@ -1,0 +1,140 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/digs"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ digs( Value acc -> /Data/Primitive/Integer )
+                            ( Value cs -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] ) -> /Digits
+                            ( /v=/Data/Primitive/Integer
+                            , /k=/Data/Primitive/Integer
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ digs( Value acc )( Value cs= Value /Data/List/Nil ) -> /Digits
+                            ( /v=/Data/Primitive/Integer
+                            , /k=/Data/Primitive/Integer
+                            ) = Digits( Value v= Value acc )
+                            ( Value k= CInt
+                                { ciValue = 0 }
+                            )
+                        , digs( Value acc )
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) | /operator<( Value /l= Value head )
+                            ( Value /r= CInt
+                                { ciValue = 10 }
+                            ) -> /Digits
+                            ( /v=/Data/Primitive/Integer
+                            , /k=/Data/Primitive/Integer
+                            ) = digs
+                            ( Value acc= /operator+
+                                ( Value /l= /operator*( Value /l= Value acc )
+                                    ( Value /r= CInt
+                                        { ciValue = 10 }
+                                    )
+                                )( Value /r= Value head )
+                            )( Value cs= Value tail )
+                        , digs( Value acc )
+                            ( Value cs= /Data/List/Cons( Value head )( Value tail ) ) -> /Digits
+                            ( /v=/Data/Primitive/Integer
+                            , /k=/Data/Primitive/Integer
+                            ) = Digits( Value v= Value acc )
+                            ( Value k= CInt
+                                { ciValue = 1 }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= CInt
+                                { ciValue = 0 }
+                            )
+                            ( Value /this= println
+                                ( Value msg= showD
+                                    ( Value d= digs
+                                        ( Value acc= CInt
+                                            { ciValue = 0 }
+                                        )
+                                        ( Value cs= /Data/List/Cons
+                                            ( Value /head= CInt
+                                                { ciValue = 1 }
+                                            )
+                                            ( Value /tail= /Data/List/Cons
+                                                ( Value /head= CInt
+                                                    { ciValue = 2 }
+                                                )
+                                                ( Value /tail= /Data/List/Cons
+                                                    ( Value /head= CInt
+                                                        { ciValue = 30 }
+                                                    )( Value /tail= Value /Data/List/Nil )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )( Value /this= Value io )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Digits"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Digits( Value /v -> /Data/Primitive/Integer )( Value /k -> /Data/Primitive/Integer ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/showD"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ showD( Value d -> /Digits ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ showD
+                            ( Value d= Digits( Value v )( Value k ) ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= toString( Value /this= Value v ) )
+                                ( Value /r= CStr
+                                    { csValue = "/" }
+                                )
+                            )
+                            ( Value /r= toString( Value /this= Value k ) )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A guarded arm whose body is a call of its own function, in a function answering with a record.
+                [digs] reads the digits a list starts with. Its middle arm applies only to a digit, by its guard,
+                and continues the reading by calling [digs] on the rest. That arm must be the one chosen for a
+                digit, so reading @[1, 2, 30]@ reads the first two.
+                Its result is declared with its fields written out. A bare @Digits@ as a result is the record
+                with no fields, and @Digits..@ is any application of it, including a partial one — which a caller
+                needing a whole [Digits] cannot take. Declared that way, the middle arm's result could not be
+                what [showD] needs, and building the call reports that rather than leaving the arm out and
+                answering a digit with the last arm." }
+            )
+        ]
+    }

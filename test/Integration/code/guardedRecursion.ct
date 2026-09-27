@@ -1,0 +1,23 @@
+import "core"
+
+
+# A guarded arm whose body is a call of its own function, in a function answering with a record.
+  [digs] reads the digits a list starts with. Its middle arm applies only to a digit, by its guard,
+  and continues the reading by calling [digs] on the rest. That arm must be the one chosen for a
+  digit, so reading @[1, 2, 30]@ reads the first two.
+  Its result is declared with its fields written out. A bare @Digits@ as a result is the record
+  with no fields, and @Digits..@ is any application of it, including a partial one — which a caller
+  needing a whole [Digits] cannot take. Declared that way, the middle arm's result could not be
+  what [showD] needs, and building the call reports that rather than leaving the arm out and
+  answering a digit with the last arm.
+data(Digits(v -> Integer, k -> Integer))
+
+digs(acc -> Integer, cs -> /Data/List/ConsList[$T -> Integer]) -> Digits(v -> Integer, k -> Integer)
+digs(acc, cs= /Data/List/Nil)= Digits(v= acc, k= 0)
+digs(acc, cs= /Data/List/Cons(head, tail)) | head < 10= digs(acc= acc * 10 + head, cs= tail)
+digs(acc, cs= /Data/List/Cons(head, tail)) else = Digits(v= acc, k= 1)
+
+showD(d -> Digits) -> String
+showD(d= Digits(v, k))= v.toString ++ "/" ++ k.toString
+
+main{io -> IO}= io.println(msg= showD(d= digs(acc= 0, cs= [1, 2, 30]))).exit(val= 0)

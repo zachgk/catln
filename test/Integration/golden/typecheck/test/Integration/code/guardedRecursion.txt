@@ -1,0 +1,182 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/digs"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /digs( Value /acc -> /Data/Primitive/Integer )
+                            ( Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] ) -> /Digits
+                            ( /v=/Data/Primitive/Integer
+                            , /k=/Data/Primitive/Integer
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /digs( Value /acc -> /Data/Primitive/Integer )( Value /cs -> /Data/List/Nil = Value /Data/List/Nil ) -> /Digits
+                            ( /v=/Data/Primitive/Integer
+                            , /k=/Data/Primitive/Integer
+                            ) = /Digits( Value /v -> TVArg /acc = Value /acc )
+                            ( Value /k -> /Data/Primitive/Integer = CInt
+                                { ciValue = 0 }
+                            )
+                        , /digs( Value /acc -> /Data/Primitive/Integer )
+                            ( Value /cs -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                ( /head=/Data/Primitive/Integer
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                                ) = /Data/List/Cons( Value /head -> /Data/Primitive/Integer )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] )
+                            ) | /operator<( Value /l -> TVArg /head = Value /head )
+                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                { ciValue = 10 }
+                            ) -> /Digits
+                            ( /v=/Data/Primitive/Integer
+                            , /k=/Data/Primitive/Integer
+                            ) = /digs
+                            ( Value /acc -> /Data/Primitive/Integer = /operator+
+                                ( Value /l -> /Data/Primitive/Integer = /operator*( Value /l -> TVArg /acc = Value /acc )
+                                    ( Value /r -> /Data/Primitive/Integer = CInt
+                                        { ciValue = 10 }
+                                    )
+                                )( Value /r -> TVArg /head = Value /head )
+                            )( Value /cs -> TVArg /tail = Value /tail )
+                        , /digs( Value /acc -> /Data/Primitive/Integer )
+                            ( Value /cs -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                ( /head=/Data/Primitive/Integer
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ]
+                                ) = /Data/List/Cons( Value /head -> /Data/Primitive/Integer )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] )
+                            ) -> /Digits
+                            ( /v=/Data/Primitive/Integer
+                            , /k=/Data/Primitive/Integer
+                            ) = /Digits( Value /v -> TVArg /acc = Value /acc )
+                            ( Value /k -> /Data/Primitive/Integer = CInt
+                                { ciValue = 1 }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
+                            ( /Catln/exit
+                                ( /this=/Catln/IO
+                                , /val=/Data/Primitive/Integer
+                                ) + /Catln/IO
+                            ) = /Catln/exit
+                            ( Value /val -> /Data/Primitive/Integer = CInt
+                                { ciValue = 0 }
+                            )
+                            ( Value /this -> /Catln/IO = /Catln/println
+                                ( Value /msg -> ∀/Data/String = /showD
+                                    ( Value /d -> /Digits
+                                        ( /v=/Data/Primitive/Integer
+                                        , /k=/Data/Primitive/Integer
+                                        ) = /digs
+                                        ( Value /acc -> /Data/Primitive/Integer = CInt
+                                            { ciValue = 0 }
+                                        )
+                                        ( Value /cs -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                            ( /head=/Data/Primitive/Integer
+                                            , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                                ( /head=/Data/Primitive/Integer
+                                                , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                                    ( /head=/Data/Primitive/Integer
+                                                    , /tail=/Data/List/Nil
+                                                    )
+                                                )
+                                            ) = /Data/List/Cons
+                                            ( Value /head -> /Data/Primitive/Integer = CInt
+                                                { ciValue = 1 }
+                                            )
+                                            ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                                ( /head=/Data/Primitive/Integer
+                                                , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                                    ( /head=/Data/Primitive/Integer
+                                                    , /tail=/Data/List/Nil
+                                                    )
+                                                ) = /Data/List/Cons
+                                                ( Value /head -> /Data/Primitive/Integer = CInt
+                                                    { ciValue = 2 }
+                                                )
+                                                ( Value /tail -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
+                                                    ( /head=/Data/Primitive/Integer
+                                                    , /tail=/Data/List/Nil
+                                                    ) = /Data/List/Cons
+                                                    ( Value /head -> /Data/Primitive/Integer = CInt
+                                                        { ciValue = 30 }
+                                                    )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )( Value /this -> TVArg /io = Value /io )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Digits"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Digits( Value /v -> /Data/Primitive/Integer )( Value /k -> /Data/Primitive/Integer ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/showD"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /showD( Value /d -> /Digits ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /showD
+                            ( Value /d -> /Digits
+                                ( /v=/Data/Primitive/Integer
+                                , /k=/Data/Primitive/Integer
+                                ) = /Digits( Value /v -> /Data/Primitive/Integer )( Value /k -> /Data/Primitive/Integer )
+                            ) -> ∀/Data/String = /operator++
+                            ( Value /l -> ∀/Data/String = /operator++
+                                ( Value /l -> ∀/Data/String = /Data/toString( Value /this -> TVArg /v = Value /v ) )
+                                ( Value /r -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    { csValue = "/" }
+                                )
+                            )
+                            ( Value /r -> ∀/Data/String = /Data/toString( Value /this -> TVArg /k = Value /k ) )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "A guarded arm whose body is a call of its own function, in a function answering with a record.
+                [digs] reads the digits a list starts with. Its middle arm applies only to a digit, by its guard,
+                and continues the reading by calling [digs] on the rest. That arm must be the one chosen for a
+                digit, so reading @[1, 2, 30]@ reads the first two.
+                Its result is declared with its fields written out. A bare @Digits@ as a result is the record
+                with no fields, and @Digits..@ is any application of it, including a partial one — which a caller
+                needing a whole [Digits] cannot take. Declared that way, the middle arm's result could not be
+                what [showD] needs, and building the call reports that rather than leaving the arm out and
+                answering a digit with the last arm." }
+            )
+        ]
+    }
