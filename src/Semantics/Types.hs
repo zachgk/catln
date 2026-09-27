@@ -4439,11 +4439,18 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing subLeafs []) t2@(UnionTyp
     (all (\p -> isSubtypeOfWithEnv typeEnv vaenv t1 (UnionType (Just (p, H.empty, [])) H.empty [])) ps)
     (typeCoveredSymbolic typeEnv vaenv ProveEmpty t1 t2)
   || positiveLeafsAllUninhabited typeEnv vaenv subLeafs
+-- The meet decides emptiness by what it denotes, not how it spells it: a leaf the meet keeps
+-- can be uninhabited on its own (a slot whose occurrence and binding are disjoint), which is ∅
+-- as surely as a leaf the meet dropped (propSubtypeByUnion, 5672: Seed 12596496111891564273
+-- 3791529403351673635 — each leaf of the union was covered alone, the union was not).
 isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing subLeafs []) t2@(UnionType (Just (PredsNot q, (H.null -> True), [])) (H.null -> True) []) =
   fromMaybe
-    (isBottomType (intersectTypesEnv typeEnv vaenv t1 (UnionType (Just (q, H.empty, [])) H.empty [])))
+    (meetEmpty (intersectTypesEnv typeEnv vaenv t1 (UnionType (Just (q, H.empty, [])) H.empty [])))
     (typeCoveredSymbolic typeEnv vaenv ProveEmpty t1 t2)
   || positiveLeafsAllUninhabited typeEnv vaenv subLeafs
+  where
+    meetEmpty m@(UnionType Nothing mLeafs []) = isBottomType m || positiveLeafsAllUninhabited typeEnv vaenv mLeafs
+    meetEmpty m                               = isBottomType m
 -- PosPartials ⊆ NegPartials: filter by name.
 -- filteredLeafs is always exact for names in allowedNames; hasOutside only means the type
 -- has additional elements outside those names, which cannot affect subtype checking here.
