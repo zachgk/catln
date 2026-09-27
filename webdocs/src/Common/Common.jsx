@@ -63,6 +63,11 @@ const PageDirContext = React.createContext("");
 // nothing to refetch.
 const ReloadContext = React.createContext(() => {});
 
+// Whether a name leads to the page describing it. Off inside something a click already means
+// something in: a row of the debugger's tree opens when clicked, and a name that navigated away
+// instead would take the click from it.
+const NameLinkContext = React.createContext(true);
+
 function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
@@ -715,6 +720,7 @@ function partialNameStr(name) {
 function PartialName(props) {
   const {name} = props;
   const classes = useStyles();
+  const linked = React.useContext(NameLinkContext);
   const str = partialNameStr(name);
 
   let cls, link;
@@ -734,7 +740,7 @@ function PartialName(props) {
   default:
     console.error("Unknown partial name", name);
   }
-  return <Link to={link} className={cls}>{str}</Link>;
+  return linked ? <Link to={link} className={cls}>{str}</Link> : <span className={cls}>{str}</span>;
 }
 
 // The values of an evaluated `/Data/List`, which is a `/Data/List/Cons` chain ending in a `/Data/List/Nil`.
@@ -821,6 +827,7 @@ function ReachesTreeNode(props) {
 }
 
 export {
+  NameLinkContext,
   ConfigContext,
   PrgmNameContext,
   PageDirContext,

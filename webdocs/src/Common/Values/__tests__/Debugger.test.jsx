@@ -561,66 +561,88 @@ describe('Debugger over a call over a map, whose recursion is a tree', () => {
       }
     }
 
-    // The line a statement is shown on, found by what it is written as.
-    function lineOf(container, text) {
-      const lines = [...container.querySelectorAll('.catln-debug-function [data-stmt]')]
-      return lines.find(line => line.firstChild.textContent.startsWith(text))
+    // The label of an item, without the items under it.
+    function labelOf(item) {
+      return item.querySelector(':scope > .MuiTreeItem-content .MuiTreeItem-label')
     }
 
-    function callItems() {
-      return within(screen.getByRole('heading', { name: 'Calls' }).parentElement).getAllByRole('treeitem')
+    // The item on screen whose label starts as given, or matches the given pattern.
+    function itemOf(text) {
+      const matches = label => typeof text === 'string' ? label.startsWith(text) : text.test(label)
+      const found = screen.getAllByRole('treeitem').filter(item => matches(labelOf(item).textContent))
+      expect(found).toHaveLength(1)
+      return found[0]
     }
 
-    it('shows the calls of functions as the tree, starting from the function called', () => {
+    async function open(user, item) {
+      await user.click(labelOf(item))
+    }
+
+    it('opens on the function that was called, line by line with what each came to', () => {
       render(<Providers><Debugger {...syntaxRun()} /></Providers>)
 
-      // total, and the functions of the page it called, in the order it called them.
-      expect(callItems().map(c => c.firstChild.textContent)).toEqual([
-        expect.stringMatching(/^\/total.* => 63$/),
-        expect.stringMatching(/^\/total\.helper.* => 6$/),
-        expect.stringMatching(/^\/scale.* => 60$/),
-        expect.stringMatching(/^\/sign.* => 1$/),
-      ])
-    })
-
-    it('shows each line of the function with what it came to', () => {
-      const { container } = render(<Providers><Debugger {...syntaxRun()} /></Providers>)
-
-      // The result, as what the call came to rather than the operator+ its arrow rewrote to.
-      expect(lineOf(container, 'scale').firstChild).toHaveTextContent(/=> 63$/)
+      // One tree, starting from the call: the function as written, and what the call came to rather than
+      // the operator+ its arrow rewrote to.
+      expect(labelOf(itemOf('total(a'))).toHaveTextContent(/=> 63/)
       // Used five times, by the #assert, the #debug, the helper and the result, and 3 every time.
-      expect(lineOf(container, 'sum').firstChild).toHaveTextContent(/=> 3 ×5$/)
+      expect(labelOf(itemOf('sum = a + b'))).toHaveTextContent(/=> 3 ×5$/)
       // Never used, so desugar never evaluated it.
-      expect(lineOf(container, 'unused').firstChild).toHaveTextContent('not evaluated')
+      expect(labelOf(itemOf('unused'))).toHaveTextContent('not evaluated')
       // The helper is a function of its own, whose lines are shown in its calls rather than here.
-      expect(lineOf(container, 'helper').firstChild).not.toHaveTextContent('not evaluated')
+      expect(labelOf(itemOf('helper(y'))).not.toHaveTextContent('not evaluated')
+      expect(labelOf(itemOf('scale(v = helper'))).toHaveTextContent(/=> 63$/)
     })
 
-    it('breaks a line down into what it was evaluated through, leading on to the calls it made', async () => {
+    it('opens a line onto its steps, with each function it called shown as that function', async () => {
       const user = userEvent.setup()
-      const { container } = render(<Providers><Debugger {...syntaxRun()} /></Providers>)
+      render(<Providers><Debugger {...syntaxRun()} /></Providers>)
 
-      const result = lineOf(container, 'scale')
-      await user.click(within(result.firstChild).getByRole('button'))
+      await open(user, itemOf('scale(v = helper'))
 
-      // The calls the result made are each shown where they are shown in full: a line of total, or a
-      // call of a function in the tree above.
-      expect(within(result).getAllByRole('button', { name: /↑ line/ }).length).toBeGreaterThan(0)
-      const toHelper = within(result).getAllByRole('button', { name: /→ call/ })[0]
-      await user.click(toHelper)
+      // The functions the result called, each as it is written with what the call came to.
+      expect(itemOf(/^helper\(y.*=> 6/)).toBeInTheDocument()
+      expect(itemOf(/^scale\(v -> .*=> 60/)).toBeInTheDocument()
+      expect(itemOf(/^sign\(x -> .*=> 1/)).toBeInTheDocument()
+      // A use of a line of total is not the line again, but a way back to it.
+      expect(screen.getAllByRole('button', { name: '↑ line' }).length).toBeGreaterThan(0)
+    })
 
-      // Following it shows the helper, with what its own line came to.
-      expect(lineOf(container, 'helper').firstChild).toHaveTextContent(/=> 6$/)
+    it('leads from a use of a line back to the line', async () => {
+      const user = userEvent.setup()
+      render(<Providers><Debugger {...syntaxRun()} /></Providers>)
+
+      await open(user, itemOf('scale(v = helper'))
+      await user.click(screen.getAllByRole('button', { name: '↑ line' })[0])
+
+      expect(itemOf('sum = a + b')).toHaveAttribute('aria-selected', 'true')
     })
 
     it('shows the arm a branch took, and the one it did not as not evaluated', async () => {
       const user = userEvent.setup()
+      render(<Providers><Debugger {...syntaxRun()} /></Providers>)
+
+      await open(user, itemOf('scale(v = helper'))
+      await open(user, itemOf(/^sign\(x -> /))
+
+      expect(labelOf(itemOf('Then'))).toHaveTextContent(/=> 1$/)
+      expect(labelOf(itemOf('Else'))).toHaveTextContent('not evaluated')
+    })
+
+    it('leads from a #debug record to the call it was recorded in', async () => {
+      const user = userEvent.setup()
+      render(<Providers><Debugger {...syntaxRun()} /></Providers>)
+
+      await user.click(within(screen.getAllByRole('listitem')[0]).getByRole('button'))
+
+      expect(itemOf('total(a')).toHaveAttribute('aria-selected', 'true')
+    })
+
+    // The whole run is this tree: there is no second tree of calls, nor of arrows.
+    it('shows one tree', () => {
       const { container } = render(<Providers><Debugger {...syntaxRun()} /></Providers>)
 
-      await user.click(callItems()[3].firstChild)
-
-      expect(lineOf(container, 'Then').firstChild).toHaveTextContent(/=> 1$/)
-      expect(lineOf(container, 'Else').firstChild).toHaveTextContent('not evaluated')
+      expect(container.querySelectorAll('[role=tree]')).toHaveLength(1)
+      expect(screen.queryByText('Evaluation tree')).not.toBeInTheDocument()
     })
   })
 })

@@ -1,26 +1,18 @@
-import React, {createContext, useContext, useState} from 'react';
-
-import Box from '@mui/material/Box';
-import Link from '@mui/material/Link';
-import {SimpleTreeView} from '@mui/x-tree-view/SimpleTreeView';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import React from 'react';
 
 import {RawExpr, RawObjArr} from '../Syntax';
 import {InlineValue} from '../Value';
 import {rawExprMeta, statementBody} from '../RawPrgm';
 
-// A run read by the functions its pages write (the server's `drSyntax`, see `Eval.SyntaxTree`): a
-// tree of calls of functions as written, each holding what each of the function's lines came to.
+// A run read by the functions its pages write (the server's `drSyntax`, see `Eval.SyntaxTree`), laid
+// out as the one tree the Debugger shows.
 //
-// The evaluation tree (`erTreebug`) is still what a line is broken down by. A line points at the
-// nodes it was evaluated through, and those nodes are drawn by the Debugger's own `TreebugNode`,
-// which stops where a node is a call or a line of its own (`stops` below) and links there instead of
-// drawing it a second time.
-
-// How the parts of a debugger reach each other: which node stands for a call or a line of one, what
-// each node's expression came to, and how to go to a call or a line.
-const DebugNavContext = createContext({stops: {}, resolved: {}, selectCall: () => {}, focusLine: () => {}});
+// Every call of a function is shown as the function is written, a statement per line with what the
+// line came to in the call. A line opens onto the steps it was evaluated through -- the evaluation
+// tree (`erTreebug`) below it -- and where one of those steps is a call of a function, that function
+// is shown there in the same way, so the tree reads from the function called down through the lines
+// of each function it reached. A step that is a line of a function already shown leads back to that
+// line rather than being shown twice.
 
 // The name the compiler gives the body of a declaration written over several lines, which is written
 // nowhere and is not shown (`CtConstants.nestedDeclaration`).
@@ -31,22 +23,20 @@ function syntaxIndex(drSyntax, drResult) {
   const calls = {};       // call node -> SyntaxCall
   const stops = {};       // node -> {call} for a call, {call, stmt} for a line of one
   const statements = {};  // statement id -> SyntaxStatement
-  const parents = {};     // call node -> the call node it was made in
 
   (drSyntax?.srStatements ?? []).forEach(s => {statements[s.ssId] = s;});
 
-  const walk = (call, parent) => {
+  const walk = call => {
     calls[call.scNode] = call;
-    parents[call.scNode] = parent;
     stops[call.scNode] = {call: call.scNode};
     call.scLines.forEach(line => line.slRuns.forEach(run => {
       if (run.lrNode) {
         stops[run.lrNode] = {call: call.scNode, stmt: line.slStmt};
       }
     }));
-    call.scCalls.forEach(c => walk(c, call.scNode));
+    call.scCalls.forEach(walk);
   };
-  (drSyntax?.srCalls ?? []).forEach(c => walk(c, null));
+  (drSyntax?.srCalls ?? []).forEach(walk);
 
   // What each expression came to, keyed by the call it was written as: a node's own output is the
   // term its arrow rewrote to, which a caller then goes on rewriting (see `EvalExprRun`).
@@ -57,42 +47,92 @@ function syntaxIndex(drSyntax, drResult) {
     }
   });
 
-  return {calls, stops, statements, parents, resolved};
+  return {calls, stops, statements, resolved};
 }
 
-// The calls of a run as the tree they were made in. Labelled as the evaluation tree labels a call --
-// what it was given, and what it came to -- since the given value already names the function.
-function CallItem(props) {
-  const {call, nodes, TreeItem} = props;
-  const node = nodes[call.scNode];
-  const own = call.scLines.find(line => line.slStmt === call.scStmt);
-  const value = own?.slRuns[0]?.lrValue;
-  const label = (
-    <span>
-      {node ? <InlineValue data={node[1]} /> : call.scNode}
-      {value ? <> =&gt; <InlineValue data={value} /></> : null}
-    </span>
-  );
-  return (
-    <TreeItem itemId={call.scNode} label={label}>
-      {call.scCalls.map(c => <CallItem key={c.scNode} call={c} nodes={nodes} TreeItem={TreeItem} />)}
-    </TreeItem>
-  );
+// The item a statement of a call is shown as.
+function stmtItemId(call, stmt) {
+  return `s:${call}:${stmt}`;
 }
 
-function CallTree(props) {
-  const {calls, nodes, expanded, setExpanded, selected, setSelected, TreeItem} = props;
-  return (
-    <SimpleTreeView
-      slots={{collapseIcon: ExpandMoreIcon, expandIcon: ChevronRightIcon}}
-      expandedItems={expanded}
-      onExpandedItemsChange={(event, items) => setExpanded(items)}
-      selectedItems={selected}
-      onSelectedItemsChange={(event, item) => item && setSelected(item)}
-    >
-      {calls.map(c => <CallItem key={c.scNode} call={c} nodes={nodes} TreeItem={TreeItem} />)}
-    </SimpleTreeView>
-  );
+// The tree the Debugger shows, as items: each with the id the tree knows it by, what kind of thing it
+// is, and the items under it. Built once for the run, so that what is drawn and what a link reveals
+// are the same tree: `parents` is read off the items rather than worked out again.
+//
+//   call    -- a call of a function, shown as the function's statements
+//   stmt    -- a statement of a function in one call of it, opening onto the steps it was evaluated
+//              through and then onto the statements written under it
+//   run     -- one of several evaluations of a line, which desugar makes each time the line is used
+//   step    -- a node of the evaluation tree that is no call of a function or line of one
+//   lineref -- a node that is a line of a function shown elsewhere in the tree, leading to it
+//
+// A step and a call keep the id of their node, which is what a #debug record names.
+function buildTree(roots, syntax) {
+  const {calls, stops, statements} = syntax;
+  const parents = {};
+  const byNode = {};
+
+  const item = (fields, children) => {
+    const it = {...fields, children};
+    children.forEach(c => {parents[c.id] = it.id;});
+    return it;
+  };
+
+  const stepItem = node => {
+    const id = node[4];
+    const stop = stops[id];
+    const call = calls[id];
+    let it;
+    // A call with a display of its own is shown by that display, which speaks for the whole call.
+    if (stop && !stop.stmt && call && statements[call.scStmt] && !node[5]) {
+      it = callItem(call, node);
+    } else if (stop && stop.stmt) {
+      it = item({kind: 'lineref', id: `l:${id}`, node, stop}, []);
+    } else {
+      it = item({kind: 'step', id, node}, node[3].map(stepItem));
+    }
+    byNode[id] = it;
+    return it;
+  };
+
+  // The steps a run of a line was evaluated through. Every one is a node of the run, which the server
+  // guarantees by building both from the same evaluation.
+  const innerItems = run => run.lrInner.map(n => stepItem(syntax.nodes[n]));
+  // A line evaluated several times opens onto each evaluation, unless none of them called anything, in
+  // which case there is nothing under the line but the values its label already shows.
+  const runItems = (callNode, sid, runs) => {
+    if (runs.every(run => !run.lrInner.length)) {
+      return [];
+    }
+    if (runs.length === 1) {
+      return innerItems(runs[0]);
+    }
+    return runs.map((run, i) => item({kind: 'run', id: `r:${callNode}:${sid}:${i}`, run, index: i}, innerItems(run)));
+  };
+
+  const stmtItem = (call, lines, own, tree) => {
+    const sid = statementId(tree.rstStatement);
+    const runs = lines[sid] ?? [];
+    return item(
+      {kind: 'stmt', id: stmtItemId(call.scNode, sid), call, sid, tree, runs, own: own.has(sid)},
+      [...runItems(call.scNode, sid, runs), ...tree.rstChildren.map(t => stmtItem(call, lines, own, t))]
+    );
+  };
+
+  function callItem(call, node) {
+    const statement = statements[call.scStmt];
+    const lines = {};
+    call.scLines.forEach(line => {lines[line.slStmt] = line.slRuns;});
+    const own = new Set(statement.ssLines ?? []);
+    const head = lines[call.scStmt] ?? [];
+    return item(
+      {kind: 'call', id: call.scNode, call, node, statement, runs: head},
+      [...runItems(call.scNode, call.scStmt, head), ...statement.ssTree.rstChildren.map(t => stmtItem(call, lines, own, t))]
+    );
+  }
+
+  const items = roots.map(stepItem);
+  return {items, parents, byNode};
 }
 
 // The name an expression is written under, reading through what is applied to it.
@@ -128,19 +168,24 @@ function isComment(statement) {
 function StatementText(props) {
   const {statement} = props;
   const body = statementBody(statement);
+  let text;
   switch (statement.tag) {
   case "RawDeclStatement": {
     const [arrExpr, arrType] = body.roaArr ?? [null, null];
     const roa = arrExpr && rawPath(arrExpr) === NESTED_DECLARATION ? {...body, roaArr: [null, arrType]} : body;
-    return <RawObjArr roa={roa} />;
+    text = <RawObjArr roa={roa} />;
+    break;
   }
   case "RawBindStatement":
-    return <span><RawExpr expr={body.roaObj} /> &lt;- {body.roaArr?.[0] ? <RawExpr expr={body.roaArr[0]} /> : null}</span>;
+    text = <span><RawExpr expr={body.roaObj} /> &lt;- {body.roaArr?.[0] ? <RawExpr expr={body.roaArr[0]} /> : null}</span>;
+    break;
   case "RawAnnot":
-    return <RawExpr expr={body} />;
+    text = <RawExpr expr={body} />;
+    break;
   default:
-    return null;
+    text = null;
   }
+  return <span style={{fontFamily: 'monospace'}}>{text}</span>;
 }
 
 // What the runs of a line came to. A line evaluated the same way every time it was used says so once,
@@ -158,10 +203,10 @@ function RunValues(props) {
     counts[key] += 1;
   });
   return (
-    <span>
+    <span className="catln-debug-value">
       {shown.map((v, i) => (
         <span key={i}>
-          {i ? " | " : null}
+          {i ? " | " : " => "}
           {v ? <InlineValue data={v} /> : <em>no value recorded</em>}
           {counts[JSON.stringify(v)] > 1 ? <span className="catln-debug-count"> ×{counts[JSON.stringify(v)]}</span> : null}
         </span>
@@ -170,104 +215,4 @@ function RunValues(props) {
   );
 }
 
-// One statement of the function being shown, with what it came to in this call, and the lines under it.
-//
-// A line of the function with no run was not evaluated in this call: desugar evaluates a line where it
-// is used, so an unused one never is. A statement that is no line of this function -- a helper nested
-// in it, which takes parameters of its own and is a call of its own -- is shown without values, which
-// are in its calls instead.
-function StatementLine(props) {
-  const {tree, call, lines, own, depth, InnerTree, focused} = props;
-  const statement = tree.rstStatement;
-  const sid = statementId(statement);
-  const runs = lines[sid];
-  const isLine = own.has(sid) && !isComment(statement);
-  const [open, setOpen] = useState(false);
-  const [runIndex, setRunIndex] = useState(0);
-  const inner = runs?.[Math.min(runIndex, runs.length - 1)]?.lrInner ?? [];
-
-  let value = null;
-  if (runs?.length) {
-    value = (
-      <Link component="button" type="button" underline="hover" onClick={() => setOpen(!open)} sx={{marginLeft: '1em', verticalAlign: 'baseline'}}>
-        =&gt; <RunValues runs={runs} />
-      </Link>
-    );
-  } else if (isLine) {
-    value = <em className="catln-debug-unevaluated" style={{marginLeft: '1em', opacity: 0.6}}>not evaluated</em>;
-  }
-
-  return (
-    <div data-stmt={sid}>
-      <Box sx={{
-        opacity: own.has(sid) || sid === call.scStmt ? 1 : 0.55,
-        background: focused === sid ? 'rgba(255, 213, 79, 0.35)' : undefined,
-        fontFamily: 'monospace',
-      }}>
-        <StatementText statement={statement} />
-        {value}
-      </Box>
-      {open && runs?.length ? (
-        <Box sx={{marginLeft: '2em', borderLeft: '1px solid rgba(127, 127, 127, 0.4)', paddingLeft: '0.5em'}}>
-          {runs.length > 1 ? (
-            <div>
-              {runs.map((r, i) => (
-                <Link key={i} component="button" type="button" onClick={() => setRunIndex(i)} sx={{marginRight: '0.5em', fontWeight: i === runIndex ? 'bold' : 'normal'}}>
-                  run {i + 1}
-                </Link>
-              ))}
-            </div>
-          ) : null}
-          {inner.length ? <InnerTree roots={inner} /> : <p><em>Evaluated without calling anything.</em></p>}
-        </Box>
-      ) : null}
-      <Box sx={{marginLeft: '2em'}}>
-        {tree.rstChildren.map((child, i) => (
-          <StatementLine key={i} tree={child} call={call} lines={lines} own={own} depth={depth + 1} InnerTree={InnerTree} focused={focused} />
-        ))}
-      </Box>
-    </div>
-  );
-}
-
-// The function a call is a call of, as it is written, with what each of its lines came to in the call.
-function FunctionPanel(props) {
-  const {call, statement, InnerTree, focused} = props;
-  if (!statement) {
-    return <p>The source of this function is not available.</p>;
-  }
-  const lines = {};
-  call.scLines.forEach(line => {lines[line.slStmt] = line.slRuns;});
-  const own = new Set(statement.ssLines ?? []);
-  return (
-    <div className="catln-debug-function">
-      <div style={{opacity: 0.7}}>{statement.ssFile.split("/").pop()}</div>
-      <StatementLine key={call.scNode} tree={statement.ssTree} call={call} lines={lines} own={own} depth={0} InnerTree={InnerTree} focused={focused} />
-    </div>
-  );
-}
-
-// A node of the evaluation tree that is a call or a line of its own, drawn as a link to it rather than
-// as its own breakdown, which is where it is gone to.
-function StopLabel(props) {
-  const {stop, children} = props;
-  const {selectCall, focusLine} = useContext(DebugNavContext);
-  const go = event => {
-    event.stopPropagation();
-    if (stop.stmt) {
-      focusLine(stop.call, stop.stmt);
-    } else {
-      selectCall(stop.call);
-    }
-  };
-  return (
-    <span>
-      <Link component="button" type="button" onClick={go} title={stop.stmt ? "Go to the line" : "Go to the call"}>
-        {stop.stmt ? "↑ line" : "→ call"}
-      </Link>{" "}
-      {children}
-    </span>
-  );
-}
-
-export {CallTree, DebugNavContext, FunctionPanel, StopLabel, syntaxIndex};
+export {RunValues, StatementText, buildTree, isComment, stmtItemId, syntaxIndex};
