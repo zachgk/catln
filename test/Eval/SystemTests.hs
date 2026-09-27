@@ -1,0 +1,130 @@
+--------------------------------------------------------------------
+-- |
+-- Module    :  Eval.SystemTests
+-- Copyright :  (c) Zach Kimberg 2026
+-- License   :  MIT
+-- Maintainer:  zachary@kimberg.com
+-- Stability :  experimental
+-- Portability: non-portable
+--
+-- The IO methods that reach the system a program runs on: @IO.env@ and @IO.httpPost@.
+--
+-- Each program is run against a mock, which is what says what the environment holds and what a
+-- request answers with, so the programs are checked without depending on the machine running the
+-- tests. The one thing a mock cannot check is the transport itself, so 'realHttpPost' is checked on
+-- its own against a server started here.
+--------------------------------------------------------------------
+
+module Eval.SystemTests (systemTests) where
+
+import           Control.Concurrent        (forkIO, killThread, threadDelay)
+import           Control.Exception         (bracket)
+import           CRes
+import           CtService
+import qualified Data.ByteString.Lazy.UTF8 as LBU
+import qualified Data.HashMap.Strict       as H
+import           Data.IORef
+import           Data.List                 (isInfixOf)
+import qualified Data.Text.Lazy            as TL
+import           Eval.Common               (HttpPost, MockIO, getMockIOOutput,
+                                            newMockIO, newMockIOWith)
+import           Eval.Runtime.System       (realHttpPost)
+import           Network.HTTP.Types        (status500)
+import           Semantics                 (testCtssConfig)
+import           Syntax.Parsers            (mkDesCanonicalImportStr)
+import           Test.Tasty
+import           Test.Tasty.HUnit
+import           Web.Scotty                (body, header, post, raw, scotty,
+                                            status)
+
+systemTests :: TestTree
+systemTests = withResource fixtures (const $ return ()) $ \getCtss -> testGroup "SystemTests"
+  [ testEnvReadsTheMockEnvironment getCtss
+  , testHttpPostSendsThroughTheHandle getCtss
+  , testMockRefusesTheNetwork getCtss
+  , testRealHttpPost
+  ]
+  where
+    -- One service for every fixture, so the library they import is built once rather than once
+    -- per test.
+    fixtures = ctssBaseFiles testCtssConfig [fixture "env.ct", fixture "http.ct"] :: IO CTSS
+
+fixture :: String -> FilePath
+fixture name = "test/Integration/code/artifacts/system/" ++ name
+
+-- | Runs a fixture's @main@ against the mock given: its exit code, or why it failed, and what it
+-- printed.
+runWith :: IO CTSS -> FilePath -> MockIO -> IO (CRes Integer, String)
+runWith getCtss page mockIO = do
+  ctss <- getCtss
+  name <- mkDesCanonicalImportStr testCtssConfig page
+  ctssBuildFrom ctss name
+  res <- runCResT $ getEvaluatedMock ctss mockIO name "main"
+  out <- getMockIOOutput mockIO
+  return (res, out)
+
+testEnvReadsTheMockEnvironment :: IO CTSS -> TestTree
+testEnvReadsTheMockEnvironment getCtss = testCase "IO.env reads the environment the run was given" $ do
+  mockIO <- newMockIOWith (H.singleton "CATLN_TEST_VAR" "hello") refuse
+  (res, out) <- runWith getCtss (fixture "env.ct") mockIO
+  case res of
+    CErr notes -> assertFailure $ "the run failed: " ++ prettyCNotes notes
+    CRes _ code -> do
+      assertEqual "it exits cleanly" 0 code
+      assertEqual "a set variable is its value, and an unset one is nothing" "set to hello\nnot set\n" out
+  where
+    refuse _ _ _ = return $ Left "no requests expected"
+
+testHttpPostSendsThroughTheHandle :: IO CTSS -> TestTree
+testHttpPostSendsThroughTheHandle getCtss = testCase "IO.httpPost sends through the handle and answers with the body" $ do
+  sent <- newIORef []
+  let answer :: HttpPost
+      answer url headers reqBody = do
+        modifyIORef sent ((url, headers, reqBody):)
+        return $ Right "pong"
+  mockIO <- newMockIOWith H.empty answer
+  (res, out) <- runWith getCtss (fixture "http.ct") mockIO
+  requests <- readIORef sent
+  case res of
+    CErr notes -> assertFailure $ "the run failed: " ++ prettyCNotes notes
+    CRes _ _ -> do
+      assertEqual "exactly the one request is sent, as written" [("http://example.test/echo", [("X-Test", "tok")], "héllo")] requests
+      assertEqual "and what it answered is what was printed" "pong\n" out
+
+testMockRefusesTheNetwork :: IO CTSS -> TestTree
+testMockRefusesTheNetwork getCtss = testCase "a run with the default mock makes no request" $ do
+  mockIO <- newMockIO
+  (res, _) <- runWith getCtss (fixture "http.ct") mockIO
+  case res of
+    CRes _ _ -> assertFailure "the request was answered, so something was sent"
+    CErr notes -> assertBool ("the refusal is what failed the run: " ++ prettyCNotes notes) ("makes no network requests" `isInfixOf` prettyCNotes notes)
+
+-- | The transport, against a server answering on a port of this machine: the header and the UTF-8
+-- body arrive as sent, and a status that is not a success is reported with the body it came with.
+testRealHttpPost :: TestTree
+testRealHttpPost = testCase "realHttpPost sends a request and reads the response" $
+  bracket (forkIO $ scotty port app) killThread $ \_ -> do
+    ok <- untilAnswered 50 $ realHttpPost (base ++ "/echo") [("X-Test", "tok")] "héllo"
+    assertEqual "the header and body arrive as sent" (Right "tok|héllo") ok
+    failed <- realHttpPost (base ++ "/fail") [] ""
+    case failed of
+      Right r -> assertFailure $ "a failing status was answered as a success: " ++ r
+      Left err -> assertBool ("the status and body are reported: " ++ err) ("500" `isInfixOf` err && "broken" `isInfixOf` err)
+  where
+    port = 38472
+    base = "http://127.0.0.1:" ++ show port
+    app = do
+      post "/echo" $ do
+        h <- header "X-Test"
+        b <- body
+        raw $ LBU.fromString $ maybe "" TL.unpack h ++ "|" ++ LBU.toString b
+      post "/fail" $ do
+        status status500
+        raw "broken"
+    -- The server is started on another thread, so the first requests can arrive before it listens.
+    untilAnswered :: Int -> IO (Either String String) -> IO (Either String String)
+    untilAnswered tries req = do
+      r <- req
+      case r of
+        Left err | "could not be made" `isInfixOf` err && tries > 0 -> threadDelay 100000 >> untilAnswered (tries - 1) req
+        _ -> return r

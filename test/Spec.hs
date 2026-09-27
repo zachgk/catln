@@ -1,6 +1,7 @@
 {-# LANGUAGE BlockArguments #-}
 module Main where
 import           Eval.CommonTests          (evalCommonTests)
+import           Eval.SystemTests          (systemTests)
 import           Integration.Integ
 import           Semantics.TypesTests      (typeTests)
 import           Stack.StackTests          (stackTests)
@@ -29,5 +30,5 @@ main = do
   integrationTests' <- integrationTests
   syntaxTests' <- syntaxTests
   stackTests' <- stackTests
-  let catlnTests = testGroup "CatlnTests" [integrationTests', typeTests, typecheckTests, partitionTests, syntaxTests', stackTests', obsidianTests, obsidianTaskTests, obsidianQueryTests, obsidianCacheTests, rssCacheTests, rereadTests, fileDirTests, fileWatchTests, liveReloadTests, calendarTests, prgmGraphTests, hsBuiltinsTests, evalCommonTests, nativeTests, importerCallTests, dirListingTests]
+  let catlnTests = testGroup "CatlnTests" [integrationTests', typeTests, typecheckTests, partitionTests, syntaxTests', stackTests', obsidianTests, obsidianTaskTests, obsidianQueryTests, obsidianCacheTests, rssCacheTests, rereadTests, fileDirTests, fileWatchTests, liveReloadTests, calendarTests, prgmGraphTests, hsBuiltinsTests, evalCommonTests, systemTests, nativeTests, importerCallTests, dirListingTests]
   defaultMain catlnTests

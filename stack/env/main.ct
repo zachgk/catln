@@ -1,0 +1,19 @@
+import "core"
+
+
+module(System)
+  # # Environment
+    What a program can read of the environment it was started in. It is a method of [/Catln/IO]
+    because it reaches outside the program: a run started with different variables set answers
+    differently, so reading one is an effect, and a program can only do it where it holds an IO
+    value to do it through.
+    This is not part of the standard library. A program which reads no variable has no use for it,
+    and one that does writes `import "env"`.
+  :IO.env(name -> String) -> /Data/Maybe[$T -> String]
+    # [env] is the value of the environment variable called [name], or [/Data/Maybe/Nothing] where
+      no variable of that name is set. A variable set to the empty string is set, and is answered
+      with the empty string rather than with nothing.
+      What a run sees is decided by whatever started it. A program run by `catln run` sees the
+      process's own environment; a test or the webdocs' debugger sees what it was given, which for
+      the debugger is nothing at all.
+    #runtime("ioEnv")

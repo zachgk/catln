@@ -40,7 +40,6 @@ import           Data.Aeson                 hiding (Object)
 import           Data.IORef
 import           Data.Time.Calendar         (Day)
 import           Data.UUID                  (UUID)
-import           System.IO                  (hFlush, isEOF, stdout)
 -- import qualified LLVM.AST            as AST
 import           MapMeta
 import           Semantics
@@ -719,41 +718,47 @@ oaTestId = getMetaId . getExprMeta . oaObjExpr
 --
 -- An evaluation performs an effect at the moment it evaluates the IO method asking for it, so a
 -- program's effects happen in the order its IO values are threaded through its calls. The handle is
--- what decides where those effects go: 'realIOHandle' is the process's own stdin and stdout, and
--- 'mockIOHandle' is a buffer, for a run whose output is read back rather than shown (a test, or a
--- debugger reporting on a run from inside the doc server).
+-- what decides where those effects go: 'Eval.Runtime.System.realIOHandle' is the process's own
+-- stdin, stdout, environment and network, and 'mockIOHandle' is whatever a caller reading the run
+-- back gave it (a test, or a debugger reporting on a run from inside the doc server).
 data IOHandle = IOHandle
-  { iohPutLine :: String -> IO ()
+  { iohPutLine   :: String -> IO ()
   -- | The next line of input, or why there is none.
-  , iohGetLine :: IO (Either String String)
+  , iohGetLine   :: IO (Either String String)
+  -- | The value of an environment variable, where it is set.
+  , iohLookupEnv :: String -> IO (Maybe String)
+  , iohHttpPost  :: HttpPost
   }
 
--- | The process's own stdin and stdout.
---
--- Output is flushed before a line is read, so a prompt printed just before asking is on screen by
--- the time the program waits for the answer.
-realIOHandle :: IOHandle
-realIOHandle = IOHandle putStrLn getLine'
-  where
-    getLine' = do
-      hFlush stdout
-      eof <- isEOF
-      if eof
-        then return $ Left "There is no more input to read"
-        else Right <$> getLine
+-- | Sends a POST request: the URL, the headers as name and value, and the body. Answers with the
+-- response body, or why there is none — a request that could not be made, or a response whose
+-- status is not a success.
+type HttpPost = String -> [(String, String)] -> String -> IO (Either String String)
 
 -- | A mock IO handle that captures printed lines in an internal buffer instead of writing to real
--- stdout. Create with 'newMockIO', pass to 'Eval.evalRunMock', then read captured output with
--- 'getMockIOOutput'.
-newtype MockIO = MockIO (IORef [String])
+-- stdout. Create with 'newMockIO' or 'newMockIOWith', pass to 'Eval.evalRunMock', then read
+-- captured output with 'getMockIOOutput'.
+data MockIO = MockIO
+  { mockOut  :: IORef [String]
+  -- | The whole environment the run can see.
+  , mockEnv  :: H.HashMap String String
+  , mockHttp :: HttpPost
+  }
 
+-- | A mock with an empty environment and no network: every request is refused rather than made.
 newMockIO :: IO MockIO
-newMockIO = MockIO <$> newIORef []
+newMockIO = newMockIOWith H.empty (\url _ _ -> return $ Left $ printf "A mocked run makes no network requests, so the request to %s was not sent" url)
+
+-- | A mock that sees the environment given, and sends requests through the function given.
+newMockIOWith :: H.HashMap String String -> HttpPost -> IO MockIO
+newMockIOWith env http = do
+  out <- newIORef []
+  return $ MockIO out env http
 
 -- | Returns all lines printed to the MockIO, joined with newlines
 -- (equivalent to what would have appeared on stdout).
 getMockIOOutput :: MockIO -> IO String
-getMockIOOutput (MockIO ref) = unlines . reverse <$> readIORef ref
+getMockIOOutput MockIO{mockOut} = unlines . reverse <$> readIORef mockOut
 
 -- | The handle a 'MockIO' captures through, for seeding an evaluation's 'IOVal'.
 --
@@ -761,9 +766,11 @@ getMockIOOutput (MockIO ref) = unlines . reverse <$> readIORef ref
 -- is not a person at a terminal: reading the process's real stdin from inside one would block a doc
 -- server on a line nobody is going to type.
 mockIOHandle :: MockIO -> IOHandle
-mockIOHandle (MockIO ref) = IOHandle
-  { iohPutLine = \msg -> modifyIORef ref (msg:)
+mockIOHandle MockIO{mockOut, mockEnv, mockHttp} = IOHandle
+  { iohPutLine = \msg -> modifyIORef mockOut (msg:)
   , iohGetLine = return $ Left "A mocked run has no input to read"
+  , iohLookupEnv = \name -> return $ H.lookup name mockEnv
+  , iohHttpPost = mockHttp
   }
 
 -- | The arms of a 'Semantics.Val.Val' only an evaluation knows the inside of.

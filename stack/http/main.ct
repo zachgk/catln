@@ -1,0 +1,25 @@
+import "core"
+
+
+module(Http)
+  # # HTTP
+    Requests over the network. Sending one is a method of [/Catln/IO], because it reaches outside
+    the program: what comes back is decided by whatever answers, and sending it can change what
+    answers the next one. So a program can only send a request where it holds an IO value to send it
+    through.
+    This is not part of the standard library. A program which sends no request has no use for it,
+    and one that does writes `import "http"`.
+  data(Header(name -> String, value -> String))
+    # One header of a request: its name, and what it is set to.
+
+  :IO.httpPost(url -> String, headers -> /Data/List[$T -> Header], body -> String) -> String
+    # [httpPost] sends [body] to [url] as the body of a POST request with [headers] set, and answers
+      with the body of the response. The body is sent and read as UTF-8.
+      A request that cannot be made — a URL that is not one, a host that does not answer — and a
+      response whose status is not a success both fail the evaluation with what went wrong, which
+      for a response includes the body it answered with, since that is where an API says what the
+      matter was.
+      What a run can reach is decided by whatever started it. A program run by `catln run` reaches
+      the network; the webdocs' debugger reaches none, and a request made in it fails rather than
+      being sent.
+    #runtime("ioHttpPost")

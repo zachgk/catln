@@ -34,6 +34,7 @@ import           Eval.Common
 import           Eval.Env
 import           Eval.ExprBuilder
 import           Eval.Runtime
+import           Eval.Runtime.System     (realIOHandle)
 import           Semantics
 import           Semantics.TypeGraph     (ReachesEnv (ReachesEnv),
                                           reachesHasCutSubtypeOf,
