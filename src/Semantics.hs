@@ -358,8 +358,17 @@ buildCtssConfig = unsafePerformIO $ do
 {-# NOINLINE buildCtssConfig #-}
 
 mkTypeEnv :: (ExprClass e, Show m, Show (e m), MetaDat m) => Prgm e m -> TypeEnv (ObjArrTypeGraph e m)
-mkTypeEnv (Prgm objMap classGraph _) = TypeEnv classGraph (ObjArrTypeGraph objMap) typeNames False defaultTypeEnvDebug False False False Nothing (mkSatCache classGraph typeNames)
+mkTypeEnv (Prgm objMap classGraph _) = TypeEnv classGraph (ObjArrTypeGraph objMap) typeNames boundArgKeys False defaultTypeEnvDebug False False False Nothing (mkSatCache classGraph typeNames)
   where
+    -- Every name an argument pattern binds, with the arg keys that pattern gives it, recursing
+    -- through the patterns written inside its arguments. Read by 'declaredArgKeys' for a name
+    -- with no object of its own.
+    boundArgKeys = H.fromListWith (++) [ (makeAbsoluteName $ oaObjPath a, [argKeysOf a])
+                                       | oa <- flatObjectMap objMap
+                                       , Just objE <- [oaObj oa]
+                                       , a <- boundArgsIn objE ]
+    boundArgsIn e = concat [a : maybe [] boundArgsIn (oaObj a) ++ maybe [] boundArgsIn (oaArr a >>= fst) | a <- exprAppliedArgs e]
+    argKeysOf a = S.fromList $ maybe [] (map (inExprSingleton . oaObjExpr) . exprAppliedArgs) (oaObj a)
     -- The compiler-emitted annotation names ('builtinAnnotNames') are part of every program's
     -- vocabulary: desugar injects uses of them (doc comments become @#md@, @>@ statements become
     -- @#print@, ...) whether or not their compile.ct declarations are in the import closure.

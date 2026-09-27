@@ -1,0 +1,166 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
+                            ( /Catln/exit
+                                ( /this=/Catln/IO
+                                , /val=/Data/Primitive/Integer
+                                ) + /Catln/IO
+                            ) =
+                            ( /Catln/exit
+                                ( EAppArg
+                                    { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /this -> /Catln/IO =
+                                        ( /Catln/println
+                                            ( EAppArg
+                                                { eaaArg = Value /msg -> /Data/String =
+                                                    ( /Data/toString
+                                                        ( EAppArg
+                                                            { eaaArg = Value /this -> /Data/Primitive/Integer =
+                                                                ( /f
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /x -> /Data/Primitive/Integer =
+                                                                            ( /operator-
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /a -> /Data/Primitive/Integer = 3 }
+                                                                                ) ↦ /Data/Primitive/Integer
+                                                                            )
+                                                                        }
+                                                                    ) ↦ /Data/Primitive/Integer
+                                                                )
+                                                            }
+                                                        ) ↦ /Data/String
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                            ) ↦ /Catln/IO
+                                        )
+                                    }
+                                ) ↦ /Catln/IO
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Lib/foo"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Lib/foo
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Lib/foo
+                            ( EAppArg { eaaArg = Value /this -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                            ( /operator+
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /this = ( Value /this ↦ TVArg /this ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /this = ( Value /this ↦ TVArg /this ) }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/f.n"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /f.n
+                            ( EAppArg { eaaArg = Value /x } ) ->
+                            ( /operator+
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) + /Lib/foo( /this=TopType ) + /Data/Primitive/Integer
+                            ) =
+                            ( /foo
+                                ( EAppArg
+                                    { eaaArg = Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) }
+                                ) ↦
+                                ( /operator+
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    ) + /Data/Primitive/Integer
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Rec"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Rec
+                            ( EAppArg { eaaArg = Value /foo -> /Data/Primitive/Integer } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/f"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /f
+                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /f
+                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                            ( /operator+
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                        ( /f.n
+                                            ( EAppArg
+                                                { eaaArg = Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A method and a record field that share a name, called from a local binding.
+                `x.foo` has two readings: the method [/Lib/foo] declared below, and the field `foo` of [Rec].
+                An [Integer] has no field `foo`, so only the method applies. The same call written directly in a
+                body (`x.foo + 1`) and written as a local binding (`n = x.foo`) must both resolve to the method." }
+            )
+        ]
+    }

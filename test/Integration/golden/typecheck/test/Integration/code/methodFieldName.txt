@@ -1,0 +1,105 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
+                            ( /Catln/exit
+                                ( /this=/Catln/IO
+                                , /val=/Data/Primitive/Integer
+                                ) + /Catln/IO
+                            ) = /Catln/exit
+                            ( Value /val -> /Data/Primitive/Integer = CInt
+                                { ciValue = 0 }
+                            )
+                            ( Value /this -> /Catln/IO = /Catln/println
+                                ( Value /msg -> /Data/String = /Data/toString
+                                    ( Value /this -> /Data/Primitive/Integer = /f
+                                        ( Value /x -> /Data/Primitive/Integer = /operator-
+                                            ( Value /a -> /Data/Primitive/Integer = CInt
+                                                { ciValue = 3 }
+                                            )
+                                        )
+                                    )
+                                )( Value /this -> TVArg /io = Value /io )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Lib/foo"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Lib/foo( Value /this -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Lib/foo( Value /this -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /this = Value /this )( Value /r -> TVArg /this = Value /this ) ]
+                    }
+                )
+            ,
+                ( "/f.n"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /f.n( Value /x ) ->
+                            ( /operator+
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) + /Lib/foo( /this=TopType ) + /Data/Primitive/Integer
+                            ) = /foo( Value /this -> TVArg /x = Value /x )
+                        ]
+                    }
+                )
+            ,
+                ( "/Rec"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Rec( Value /foo -> /Data/Primitive/Integer ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/f"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /f( Value /x -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /f( Value /x -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+
+                            ( Value /l -> /Data/Primitive/Integer = /f.n( Value /x -> TVArg /x = Value /x ) )
+                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                { ciValue = 1 }
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String = CStr
+                { csValue = "A method and a record field that share a name, called from a local binding.
+                `x.foo` has two readings: the method [/Lib/foo] declared below, and the field `foo` of [Rec].
+                An [Integer] has no field `foo`, so only the method applies. The same call written directly in a
+                body (`x.foo + 1`) and written as a local binding (`n = x.foo`) must both resolve to the method." }
+            )
+        ]
+    }

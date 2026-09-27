@@ -1,0 +1,19 @@
+import "core"
+
+
+# A method and a record field that share a name, called from a local binding.
+  `x.foo` has two readings: the method [/Lib/foo] declared below, and the field `foo` of [Rec].
+  An [Integer] has no field `foo`, so only the method applies. The same call written directly in a
+  body (`x.foo + 1`) and written as a local binding (`n = x.foo`) must both resolve to the method.
+module(Lib)
+  :Integer.foo -> Integer
+  :Integer.foo= this + this
+
+data(Rec(foo -> Integer))
+
+f(x -> Integer) -> Integer
+f(x)=
+  n = x.foo
+  n + 1
+
+main{io -> IO}= io.println(msg= f(x= -3).toString).exit(val= 0)

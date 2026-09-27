@@ -778,6 +778,14 @@ data TypeEnv tg = TypeEnv {
   teClassGraph        :: ClassGraph,
   teTypeGraph         :: tg,
   teNames             :: S.HashSet Name,
+  -- | The arg keysets each name BOUND in an argument pattern declares, for the names 'teNames'
+  -- holds only because they are bound there: a record field (@Rec(foo -> Integer)@'s @foo@,
+  -- declaring @∅@) or a function-typed parameter (@fn(acc, v)@, declaring @{acc, v}@). Such a
+  -- name has no object of its own in 'teTypeGraph', and without this it would be read as open
+  -- world by 'declaredArgKeys' — admitting any args at all, so a relative reference that also
+  -- matches it could never have that candidate refuted. A name bound in several patterns
+  -- declares every keyset any of them does.
+  teBoundArgKeys      :: H.HashMap Name [S.HashSet ArgName],
   teDisableCompact    :: Bool,
   teDebug             :: Bool,
   -- | When 'True', type operations are performed under the closed-world assumption:
@@ -826,7 +834,7 @@ defaultTypeEnvDebug = False
 
 
 emptyTypeEnv' :: TypeEnv EmptyTypeGraph
-emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty False defaultTypeEnvDebug False False False Nothing (mkSatCache mempty S.empty)
+emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty H.empty False defaultTypeEnvDebug False False False Nothing (mkSatCache mempty S.empty)
 
 -- | A class or type node within the 'ClassGraph'
 --
@@ -1012,7 +1020,7 @@ instance Monoid ClassGraph where
 
 instance (Semigroup tg) => Semigroup (TypeEnv tg) where
   -- A merged env is a DIFFERENT value: it never carries a query-cache token.
-  (TypeEnv cg1 tg1 n1 d1 dc1 pe1 ap1 is1 _ _) <> (TypeEnv cg2 tg2 n2 d2 dc2 pe2 ap2 is2 _ _) = TypeEnv cg' (tg1 <> tg2) n' (d1 || d2) (dc1 || dc2) (pe1 || pe2) (ap1 || ap2) (is1 || is2) Nothing (mkSatCache cg' n')
+  (TypeEnv cg1 tg1 n1 b1 d1 dc1 pe1 ap1 is1 _ _) <> (TypeEnv cg2 tg2 n2 b2 d2 dc2 pe2 ap2 is2 _ _) = TypeEnv cg' (tg1 <> tg2) n' (H.unionWith (++) b1 b2) (d1 || d2) (dc1 || dc2) (pe1 || pe2) (ap1 || ap2) (is1 || is2) Nothing (mkSatCache cg' n')
     where
       cg' = cg1 <> cg2
       n' = S.union n1 n2
@@ -2956,13 +2964,15 @@ argModesOverlap PartialType{ptArgs=aArgs, ptArgMode=PtArgMode aLb aUb} PartialTy
 -- positive-partial form (the class placeholder) is exactly the bare argless reference —
 -- a parameterized class carries type parameters in 'ptVars', never 'ptArgs' — so its only
 -- realizable arg-set is ∅; likewise the synthetic 'classPlaceholderLeaf' marker name,
--- which is only ever built argless. An unknown name (neither declared nor a class) is
--- open world.
+-- which is only ever built argless. A name bound only in an argument pattern — a record
+-- field, a function-typed parameter — declares the keysets its patterns write
+-- ('teBoundArgKeys'). An unknown name (none of these) is open world.
 declaredArgKeys :: TypeGraph tg => TypeEnv tg -> TypeName -> Maybe [S.HashSet ArgName]
 declaredArgKeys typeEnv name = case typeGraphArgKeys typeEnv name of
   Just kss -> Just kss
   Nothing | H.member name (scClasses (teSatCache typeEnv)) -> Just [S.empty]
           | nameStr name == classPlaceholderStr -> Just [S.empty]
+          | Just kss <- H.lookup name (teBoundArgKeys typeEnv) -> Just kss
           | otherwise -> Nothing
 
 -- | Drops vacuous arg-mode interval bounds (see 'PtArgMode'), canonicalizing the mode

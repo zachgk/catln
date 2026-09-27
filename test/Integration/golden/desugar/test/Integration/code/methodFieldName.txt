@@ -1,0 +1,94 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= CInt
+                                { ciValue = 0 }
+                            )
+                            ( Value /this= println
+                                ( Value msg= toString
+                                    ( Value /this= f
+                                        ( Value x= /operator-
+                                            ( Value /a= CInt
+                                                { ciValue = 3 }
+                                            )
+                                        )
+                                    )
+                                )( Value /this= Value io )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Lib/foo"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Lib/foo( Value /this -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Lib/foo( Value /this -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l= Value this )( Value /r= Value this ) ]
+                    }
+                )
+            ,
+                ( "/f.n"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ f.n( Value /x )= foo( Value /this= Value x ) ]
+                    }
+                )
+            ,
+                ( "/Rec"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Rec( Value /foo -> /Data/Primitive/Integer ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/f"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ f( Value x -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ f( Value x ) -> /Data/Primitive/Integer = /operator+
+                            ( Value /l= f.n( Value /x= Value /x ) )
+                            ( Value /r= CInt
+                                { ciValue = 1 }
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A method and a record field that share a name, called from a local binding.
+                `x.foo` has two readings: the method [/Lib/foo] declared below, and the field `foo` of [Rec].
+                An [Integer] has no field `foo`, so only the method applies. The same call written directly in a
+                body (`x.foo + 1`) and written as a local binding (`n = x.foo`) must both resolve to the method." }
+            )
+        ]
+    }
