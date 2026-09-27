@@ -18,17 +18,29 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Map/remove( Value m= Value Leaf )( Value key )= Value Leaf
+                        [ /Data/Map/remove( Value m= Value Leaf )( Value key ) -> ∀/Data/Map
+                            [ /K=TopType
+                            , /V=TopType
+                            ] = Value Leaf
                         , /Data/Map/remove
                             ( Value m= Node( Value left )( Value key@Value nk )( Value value@Value nv )( Value right ) )( Value key ) | isLess
-                            ( Value /this= compareTo( Value other= Value nk )( Value /this= Value key ) )= Node
+                            ( Value /this= compareTo( Value other= Value nk )( Value /this= Value key ) ) -> ∀/Data/Map
+                            [ /K=TopType
+                            , /V=TopType
+                            ] = Node
                             ( Value left= remove( Value m= Value left )( Value key= Value key ) )( Value key= Value nk )( Value value= Value nv )( Value right= Value right )
                         , /Data/Map/remove
                             ( Value m= Node( Value left )( Value key@Value nk )( Value value@Value nv )( Value right ) )( Value key ) | isGreater
-                            ( Value /this= compareTo( Value other= Value nk )( Value /this= Value key ) )= Node( Value left= Value left )( Value key= Value nk )( Value value= Value nv )
+                            ( Value /this= compareTo( Value other= Value nk )( Value /this= Value key ) ) -> ∀/Data/Map
+                            [ /K=TopType
+                            , /V=TopType
+                            ] = Node( Value left= Value left )( Value key= Value nk )( Value value= Value nv )
                             ( Value right= remove( Value m= Value right )( Value key= Value key ) )
                         , /Data/Map/remove
-                            ( Value m= Node( Value left )( Value key@Value nk )( Value value@Value nv )( Value right ) )( Value key )= graft( Value from= Value left )( Value into= Value right )
+                            ( Value m= Node( Value left )( Value key@Value nk )( Value value@Value nv )( Value right ) )( Value key ) -> ∀/Data/Map
+                            [ /K=TopType
+                            , /V=TopType
+                            ] = graft( Value from= Value left )( Value into= Value right )
                         ]
                     }
                 )
@@ -45,31 +57,6 @@ Prgm
                         [ /Data/Map/maybeContains( Value r= Value /Data/Maybe/Nothing ) -> ∀/Data/Primitive/Boolean = Value False
                         , /Data/Map/maybeContains
                             ( Value r= /Data/Maybe/Some( Value value ) ) -> ∀/Data/Primitive/Boolean = Value True
-                        ]
-                    }
-                )
-            ,
-                ( "/Data/Map/getStep"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/Map/getStep[ /MV : TopType ][ /MK : ∀/Data/Algebra/Ord ]( Value cmp -> ∀/Data/Algebra/Comparison )( Value key -> $/MK )
-                            ( Value left -> ∀/Data/Map/BinTree
-                                [ /K=$_/MK
-                                , /V=$_/MV
-                                ]
-                            )( Value value -> $/MV )
-                            ( Value right -> ∀/Data/Map/BinTree
-                                [ /K=$_/MK
-                                , /V=$_/MV
-                                ]
-                            ) -> ∀/Data/Maybe[ /T=$_/MV ]
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Map/getStep( Value cmp= Value /Data/Algebra/Equal )( Value key )( Value left )( Value value )( Value right )= /Data/Maybe/Some( Value value= Value value )
-                        , /Data/Map/getStep( Value cmp= Value /Data/Algebra/LessThan )( Value key )( Value left )( Value value )( Value right )= get( Value m= Value left )( Value key= Value key )
-                        , /Data/Map/getStep( Value cmp= Value /Data/Algebra/GreaterThan )( Value key )( Value left )( Value value )( Value right )= get( Value m= Value right )( Value key= Value key )
                         ]
                     }
                 )
@@ -156,7 +143,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Map/keys( Value m )= foldEntries( Value m= Value m )
+                        [ /Data/Map/keys( Value m ) -> ∀/Data/List[ /T=TopType ] = foldEntries( Value m= Value m )
                             ( fn( Value acc )( Value k )( Value v )= /Data/List/Cons( Value head= Value k )( Value tail= Value acc ) )( Value init= Value /Data/List/Nil )
                         ]
                     }
@@ -175,10 +162,15 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Map/get( Value m= Value Leaf )( Value key )= Value /Data/Maybe/Nothing
+                        [ /Data/Map/get( Value m= Value Leaf )( Value key ) -> ∀/Data/Maybe[ /T=TopType ] = Value /Data/Maybe/Nothing
                         , /Data/Map/get
-                            ( Value m= Node( Value left )( Value key@Value nk )( Value value )( Value right ) )( Value key )= getStep
-                            ( Value cmp= compareTo( Value other= Value nk )( Value /this= Value key ) )( Value key= Value key )( Value left= Value left )( Value value= Value value )( Value right= Value right )
+                            ( Value m= Node( Value left )( Value key@Value nk )( Value value )( Value right ) )( Value key ) | isEq
+                            ( Value /this= compareTo( Value other= Value nk )( Value /this= Value key ) ) -> ∀/Data/Maybe[ /T=TopType ] = /Data/Maybe/Some( Value value= Value value )
+                        , /Data/Map/get
+                            ( Value m= Node( Value left )( Value key@Value nk )( Value value )( Value right ) )( Value key ) | isLess
+                            ( Value /this= compareTo( Value other= Value nk )( Value /this= Value key ) ) -> ∀/Data/Maybe[ /T=TopType ] = get( Value m= Value left )( Value key= Value key )
+                        , /Data/Map/get
+                            ( Value m= Node( Value left )( Value key@Value nk )( Value value )( Value right ) )( Value key ) -> ∀/Data/Maybe[ /T=TopType ] = get( Value m= Value right )( Value key= Value key )
                         ]
                     }
                 )
@@ -230,7 +222,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Map/graft( Value from )( Value into )= foldEntries( Value m= Value from )
+                        [ /Data/Map/graft( Value from )( Value into ) -> ∀/Data/Map
+                            [ /K=TopType
+                            , /V=TopType
+                            ] = foldEntries( Value m= Value from )
                             ( fn( Value acc )( Value k )( Value v )= insert( Value m= Value acc )( Value key= Value k )( Value value= Value v ) )( Value init= Value into )
                         ]
                     }
@@ -281,16 +276,28 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Map/insert( Value m= Value Leaf )( Value key )( Value value )= Node( Value left= Value Leaf )( Value key= Value key )( Value value= Value value )( Value right= Value Leaf )
+                        [ /Data/Map/insert( Value m= Value Leaf )( Value key )( Value value ) -> ∀/Data/Map
+                            [ /K=TopType
+                            , /V=TopType
+                            ] = Node( Value left= Value Leaf )( Value key= Value key )( Value value= Value value )( Value right= Value Leaf )
                         , /Data/Map/insert
                             ( Value m= Node( Value left )( Value key@Value nk )( Value value@Value nv )( Value right ) )( Value key )( Value value ) | isEq
-                            ( Value /this= compareTo( Value other= Value nk )( Value /this= Value key ) )= Node( Value left= Value left )( Value key= Value nk )( Value value= Value value )( Value right= Value right )
+                            ( Value /this= compareTo( Value other= Value nk )( Value /this= Value key ) ) -> ∀/Data/Map
+                            [ /K=TopType
+                            , /V=TopType
+                            ] = Node( Value left= Value left )( Value key= Value nk )( Value value= Value value )( Value right= Value right )
                         , /Data/Map/insert
                             ( Value m= Node( Value left )( Value key@Value nk )( Value value@Value nv )( Value right ) )( Value key )( Value value ) | isLess
-                            ( Value /this= compareTo( Value other= Value nk )( Value /this= Value key ) )= Node
+                            ( Value /this= compareTo( Value other= Value nk )( Value /this= Value key ) ) -> ∀/Data/Map
+                            [ /K=TopType
+                            , /V=TopType
+                            ] = Node
                             ( Value left= insert( Value m= Value left )( Value key= Value key )( Value value= Value value ) )( Value key= Value nk )( Value value= Value nv )( Value right= Value right )
                         , /Data/Map/insert
-                            ( Value m= Node( Value left )( Value key@Value nk )( Value value@Value nv )( Value right ) )( Value key )( Value value )= Node( Value left= Value left )( Value key= Value nk )( Value value= Value nv )
+                            ( Value m= Node( Value left )( Value key@Value nk )( Value value@Value nv )( Value right ) )( Value key )( Value value ) -> ∀/Data/Map
+                            [ /K=TopType
+                            , /V=TopType
+                            ] = Node( Value left= Value left )( Value key= Value nk )( Value value= Value nv )
                             ( Value right= insert( Value m= Value right )( Value key= Value key )( Value value= Value value ) )
                         ]
                     }
@@ -314,10 +321,16 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Map/mapValues( Value m= Value Leaf )
-                            ( fn( Value v ) )= Value Leaf
+                            ( fn( Value v ) ) -> ∀/Data/Map/BinTree
+                            [ /K=TopType
+                            , /V=TopType
+                            ] = Value Leaf
                         , /Data/Map/mapValues
                             ( Value m= Node( Value left )( Value key )( Value value )( Value right ) )
-                            ( fn( Value v ) )= Node
+                            ( fn( Value v ) ) -> ∀/Data/Map/BinTree
+                            [ /K=TopType
+                            , /V=TopType
+                            ] = Node
                             ( Value left= mapValues( Value m= Value left )
                                 ( fn( Value v )= fn( Value v= Value v ) )
                             )( Value key= Value key )
@@ -393,7 +406,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Map/values( Value m )= foldEntries( Value m= Value m )
+                        [ /Data/Map/values( Value m ) -> ∀/Data/List[ /T=TopType ] = foldEntries( Value m= Value m )
                             ( fn( Value acc )( Value k )( Value v )= /Data/List/Cons( Value head= Value v )( Value tail= Value acc ) )( Value init= Value /Data/List/Nil )
                         ]
                     }
@@ -402,7 +415,6 @@ Prgm
         }
     , prgmCg =
         [ CGType
-        , CGType
         , CGType
         , CGType
         , CGType

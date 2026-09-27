@@ -189,8 +189,16 @@ linkClassMethodReceivers (Prgm _ (ClassGraph fullCg) _) (Prgm (ObjectMap objMap)
 -- which return-type-directed dispatch ('outVarBoundSrc') needs to bind a callee's output
 -- variable (e.g. picking a @pure@-style instance).
 --
--- Only a variable-free declared return is copied: a return typed by a declaration variable
--- (@-> $M@) would capture the definition's like-named variable rather than the declaration's.
+-- A declaration variable cannot be copied as written: a return typed by one (@-> $M@) would
+-- capture the definition's like-named variable rather than the declaration's. So its external
+-- references are read as the ⊤ they denote outside the declaration ('freeTVExtToTopDeep'), and
+-- what is copied is the return's variable-free upper bound — @-> Maybe[$T -> $_MV]@ seeds
+-- @∀Maybe[/T=⊤]@. Every definition's result is within its declaration's, so this bound holds for
+-- each of them. It is what keeps a generic definition's result a VALUE: left at ⊤, the result of
+-- an arm whose body is a recursive call is inferred as that raw call, so the body's tree leaves
+-- the call unevaluated and the rewrite that should finish it re-enters the arm and is dropped as
+-- cyclical (a guarded generic @get@ over a map then found no arm for its own recursive call). A
+-- return that is nothing but a variable (@-> $_B@) bounds nothing and is not copied.
 -- A definition with its own authored return annotation is left untouched, and multiple
 -- declarations contribute the union of their returns (the body's own arrow narrows it further).
 seedDefResultTypes :: DesPrgm -> DesPrgm -> DesPrgm
@@ -203,7 +211,7 @@ seedDefResultTypes fullPrgm@(Prgm (ObjectMap fullObjMap) _ _) (Prgm (ObjectMap o
                            | ObjectMapItem{omiDecls} <- maybeToList (H.lookup name fullObjMap)
                            , oa <- omiDecls
                            , Just (_, dm) <- [oaArr oa]
-                           , let t = getMetaType dm
+                           , let t = freeTVExtToTopDeep H.empty (getMetaType dm)
                            , t /= PTopType
                            , not (typeContainsTypeVar t) ] of
       [] -> Nothing

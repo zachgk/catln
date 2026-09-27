@@ -348,28 +348,7 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /b -> ∀/Data/List/ConsList[ /T=TopType ] }
-                            ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/List/ConsList[ /T=TopType ]
-                                , fromList []
-                                , []
-                                )
-                            , /Data/List/foldr
-                                ( /fn
-                                    ( /acc=TopType
-                                    , /v=TopType
-                                    )=/Data/List/Cons
-                                    ( /head=TopType
-                                    , /tail=/Data/List/Cons[ /T=TopType ]
-                                        ( /head=$/T
-                                        , /tail=∀/Data/List/ConsList[ /T=$_/T ]
-                                        )
-                                    )
-                                , /init=∀/Data/List/ConsList[ /T=TopType ]
-                                , /lst=∀/Data/List/ConsList[ /T=TopType ]
-                                )
-                            , []
-                            ) =
+                            ) -> ∀/Data/List/ConsList[ /T=TopType ] =
                             ( /Data/List/foldr
                                 ( EAppArg
                                     { eaaArg = Value /lst -> TVArg /a = ( Value /a ↦ TVArg /a ) }
@@ -435,55 +414,7 @@ Prgm
                                 { eaaArg = /fn
                                     ( EAppArg { eaaArg = Value /v } ) -> ∀/Data/Primitive/Boolean
                                 }
-                            ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/List/ConsList[ /T=TopType ]
-                                , fromList []
-                                , []
-                                )
-                            ,
-                                ( /Data/List/append
-                                    ( /a=∀/Data/List/ConsList[ /T=TopType ]
-                                    , /b=∀/Data/List/ConsList[ /T=TopType ]
-                                    ) + /Data/List/foldr
-                                    [ /B=∀/Data/List/ConsList[ /T=TopType ]
-                                    , /A=TopType
-                                    ]
-                                    ( /fn
-                                        ( /acc=TopType
-                                        , /v=TopType
-                                        )=/Data/List/Cons
-                                        ( /head=TopType
-                                        , /tail=/Data/List/Cons[ /T=TopType ]
-                                            ( /head=TopType
-                                            , /tail=∀/Data/List/ConsList[ /T=$_/T ]
-                                            )
-                                        )
-                                    , /init=∀/Data/List/ConsList[ /T=TopType ]
-                                    , /lst=
-                                        ( /Data/List/Nil + /Data/List/Cons[ /T=TopType ]
-                                            ( /head=TopType
-                                            , /tail=∀/Data/List/ConsList[ /T=$_/T ]
-                                            )
-                                        )
-                                    ) + /Data/Monad/mmap
-                                    ( /fn( /v=TopType )=UnionType
-                                        ( Just
-                                            ( PredClass /Data/List/ConsList[ /T=TopType ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/List/Cons[ /T=TopType ]
-                                            ( /head=TopType
-                                            , /tail=/Data/List/Nil
-                                            )
-                                        , []
-                                        )
-                                    , /m=∀/Data/List/ConsList[ /T=TopType ]
-                                    )
-                                )
-                            , []
-                            ) =
+                            ) -> ∀/Data/List/ConsList[ /T=TopType ] =
                             ( /Data/Monad/mmap
                                 ( EAppArg
                                     { eaaArg = Value /m -> TVArg /lst = ( Value /lst ↦ TVArg /lst ) }
@@ -528,41 +459,7 @@ Prgm
                                             )
                                         )
                                     }
-                                ) ↦ UnionType
-                                ( Just
-                                    ( PredClass /Data/List/ConsList[ /T=TopType ]
-                                    , fromList []
-                                    , []
-                                    )
-                                ,
-                                    ( /Data/List/append
-                                        ( /a=∀/Data/List/ConsList[ /T=TopType ]
-                                        , /b=∀/Data/List/ConsList[ /T=TopType ]
-                                        ) + /Data/List/foldr
-                                        [ /B=∀/Data/List/ConsList[ /T=TopType ]
-                                        , /A=TopType
-                                        ]
-                                        ( /fn
-                                            ( /acc=TopType
-                                            , /v=TopType
-                                            )=/Data/List/Cons
-                                            ( /head=TopType
-                                            , /tail=/Data/List/Cons[ /T=TopType ]
-                                                ( /head=TopType
-                                                , /tail=∀/Data/List/ConsList[ /T=$_/T ]
-                                                )
-                                            )
-                                        , /init=∀/Data/List/ConsList[ /T=TopType ]
-                                        , /lst=
-                                            ( /Data/List/Nil + /Data/List/Cons[ /T=TopType ]
-                                                ( /head=TopType
-                                                , /tail=∀/Data/List/ConsList[ /T=$_/T ]
-                                                )
-                                            )
-                                        )
-                                    )
-                                , []
-                                )
+                                ) ↦ ∀/Data/List/ConsList[ /T=TopType ]
                             )
                         ]
                     }
@@ -678,7 +575,7 @@ Prgm
                     , omiDefs =
                         [ /sorted./Data/List/insert
                             ( EAppArg { eaaArg = Value /x -> ∀/Data/Algebra/Ord } )
-                            ( EAppArg { eaaArg = Value /lst -> /Data/List/Nil = Value /Data/List/Nil } ) -> /Data/List/Cons
+                            ( EAppArg { eaaArg = Value /lst -> /Data/List/Nil = Value /Data/List/Nil } ) -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                             ( /head=∀/Data/Algebra/Ord
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
@@ -715,7 +612,7 @@ Prgm
                                         ) ↦ ∀/Data/Algebra/Comparison
                                     )
                                 }
-                            ) -> /Data/List/Cons
+                            ) -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                             ( /head=∀/Data/Algebra/Ord
                             , /tail=/Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                                 ( /head=∀/Data/Algebra/Ord
@@ -755,7 +652,7 @@ Prgm
                                         { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] }
                                     )
                                 }
-                            ) -> /Data/List/Cons
+                            ) -> /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                             ( /head=∀/Data/Algebra/Ord
                             , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                             ) = /Data/List/Cons
@@ -974,29 +871,13 @@ Prgm
                                 }
                             ) -> UnionType
                             ( Just
-                                ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ]
                                 , fromList []
                                 , []
                                 )
-                            ,
-                                ( /sorted./Data/List/insert
-                                    ( /x=∀/Data/Algebra/Ord
-                                    , /lst=UnionType
-                                        ( Just
-                                            ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=∀/Data/Algebra/Ord ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                            ( /head=∀/Data/Algebra/Ord
-                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                            )
-                                        , []
-                                        )
-                                    ) + /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
-                                    ( /head=∀/Data/Algebra/Ord
-                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    )
+                            , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
+                                ( /head=∀/Data/Algebra/Ord
+                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                 )
                             , []
                             ) =
@@ -1036,7 +917,7 @@ Prgm
                                     }
                                 ) ↦ UnionType
                                 ( Just
-                                    ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                    ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ]
                                     , fromList []
                                     , []
                                     )
@@ -1194,8 +1075,8 @@ Prgm
                     , omiDefs =
                         [ /filter./Data/List/keepIf
                             ( EAppArg { eaaArg = Value /v } )
-                            ( EAppArg { eaaArg = Value /keep -> /Data/Primitive/True = Value /Data/Primitive/True } ) -> /Data/List/Cons
-                            ( /head=TopType
+                            ( EAppArg { eaaArg = Value /keep -> /Data/Primitive/True = Value /Data/Primitive/True } ) -> /Data/List/Cons[ /T=TopType ]
+                            ( /head=$/T
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
                             ( EAppArg

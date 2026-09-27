@@ -42,7 +42,7 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] }
-                            )=
+                            ) -> ∀/Data/Set[ /T=TopType ] =
                             ( /Data/Set/addAll
                                 ( EAppArg
                                     { eaaArg = Value /s ->
@@ -87,7 +87,7 @@ Prgm
                                             ) ↦ ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                         )
                                     }
-                                ) ↦ TopType
+                                ) ↦ ∀/Data/Set[ /T=TopType ]
                             )
                         ]
                     }
@@ -118,7 +118,7 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] }
-                            )=
+                            ) -> ∀/Data/Set[ /T=TopType ] =
                             ( /Data/Set/addAll
                                 ( EAppArg
                                     { eaaArg = Value /s -> TVArg /a = ( Value /a ↦ TVArg /a ) }
@@ -131,7 +131,7 @@ Prgm
                                             ) ↦ ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                         )
                                     }
-                                ) ↦ TopType
+                                ) ↦ ∀/Data/Set[ /T=TopType ]
                             )
                         ]
                     }
@@ -238,7 +238,7 @@ Prgm
                                     )
                                 , []
                                 )
-                            ) = /Data/Set/MkSet
+                            )| PredClass /Data/Set[ /T=TopType ] = /Data/Set/MkSet
                             ( EAppArg
                                 { eaaArg = Value /map -> UnionType
                                     ( Just
@@ -415,11 +415,11 @@ Prgm
                                         }
                                     )
                                 }
-                            )=
+                            ) -> ∀/Data/List[ /T=TopType ] =
                             ( /Data/Map/keys
                                 ( EAppArg
                                     { eaaArg = Value /m -> TVArg /map = ( Value /map ↦ TVArg /map ) }
-                                ) ↦ TopType
+                                ) ↦ ∀/Data/List[ /T=TopType ]
                             )
                         ]
                     }
@@ -504,15 +504,31 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /items -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] }
-                            )=
+                            ) -> ∀/Data/Set[ /T=TopType ] =
                             ( /Data/List/foldl
                                 ( EAppArg
                                     { eaaArg = Value /lst -> TVArg /items = ( Value /items ↦ TVArg /items ) }
                                 )
                                 ( EAppArg
                                     { eaaArg = /fn
-                                        ( EAppArg { eaaArg = Value /acc } )
-                                        ( EAppArg { eaaArg = Value /v } ) -> UnionType
+                                        ( EAppArg
+                                            { eaaArg = Value /acc -> UnionType
+                                                ( Just
+                                                    ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    , fromList []
+                                                    , []
+                                                    )
+                                                , /Data/Set/MkSet
+                                                    ( /map=∀/Data/Map
+                                                        [ /K=TopType
+                                                        , /V=TopType
+                                                        ]
+                                                    )| PredClass /Data/Set[ /T=TopType ]
+                                                , []
+                                                )
+                                            }
+                                        )
+                                        ( EAppArg { eaaArg = Value /v -> ∀/Data/Algebra/Ord } ) -> UnionType
                                         ( Just
                                             ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
                                             , fromList []
@@ -523,7 +539,7 @@ Prgm
                                                 [ /K=TopType
                                                 , /V=TopType
                                                 ]
-                                            )
+                                            )| PredClass /Data/Set[ /T=TopType ]
                                         , []
                                         ) =
                                         ( /remove
@@ -543,7 +559,7 @@ Prgm
                                                     [ /K=TopType
                                                     , /V=TopType
                                                     ]
-                                                )
+                                                )| PredClass /Data/Set[ /T=TopType ]
                                             , []
                                             )
                                         )
@@ -551,7 +567,7 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /init -> TVArg /s = ( Value /s ↦ TVArg /s ) }
-                                ) ↦ TopType
+                                ) ↦ ∀/Data/Set[ /T=TopType ]
                             )
                         ]
                     }
@@ -653,20 +669,20 @@ Prgm
                                     { eaaArg = Value /l -> ∀/Data/Primitive/Boolean =
                                         ( /operator==
                                             ( EAppArg
-                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                { eaaArg = Value /l -> ∀/Data/Algebra/Eq =
                                                     ( /size
                                                         ( EAppArg
                                                             { eaaArg = Value /s -> TVArg /a = ( Value /a ↦ TVArg /a ) }
-                                                        ) ↦ /Data/Primitive/Integer
+                                                        ) ↦ ∀/Data/Algebra/Eq
                                                     )
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                { eaaArg = Value /r -> ∀/Data/Algebra/Eq =
                                                     ( /size
                                                         ( EAppArg
                                                             { eaaArg = Value /s -> TVArg /b = ( Value /b ↦ TVArg /b ) }
-                                                        ) ↦ /Data/Primitive/Integer
+                                                        ) ↦ ∀/Data/Algebra/Eq
                                                     )
                                                 }
                                             ) ↦ ∀/Data/Primitive/Boolean
@@ -707,11 +723,11 @@ Prgm
                             ) -> ∀/Data/Primitive/Boolean =
                             ( /operator==
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                    { eaaArg = Value /l -> ∀/Data/Algebra/Eq =
                                         ( /size
                                             ( EAppArg
                                                 { eaaArg = Value /s -> TVArg /s = ( Value /s ↦ TVArg /s ) }
-                                            ) ↦ /Data/Primitive/Integer
+                                            ) ↦ ∀/Data/Algebra/Eq
                                         )
                                     }
                                 )
@@ -748,7 +764,7 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /items -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] }
-                            )=
+                            ) -> ∀/Data/Set[ /T=TopType ] =
                             ( /Data/List/foldl
                                 ( EAppArg
                                     { eaaArg = Value /lst -> TVArg /items = ( Value /items ↦ TVArg /items ) }
@@ -756,7 +772,7 @@ Prgm
                                 ( EAppArg
                                     { eaaArg = /fn
                                         ( EAppArg { eaaArg = Value /acc } )
-                                        ( EAppArg { eaaArg = Value /v } ) -> UnionType
+                                        ( EAppArg { eaaArg = Value /v -> ∀/Data/Algebra/Ord } ) -> UnionType
                                         ( Just
                                             ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
                                             , fromList []
@@ -829,7 +845,7 @@ Prgm
                                                     )
                                                 , []
                                                 )
-                                            )
+                                            )| PredClass /Data/Set[ /T=TopType ]
                                         , []
                                         ) =
                                         ( /Data/Set/add
@@ -911,7 +927,7 @@ Prgm
                                                         )
                                                     , []
                                                     )
-                                                )
+                                                )| PredClass /Data/Set[ /T=TopType ]
                                             , []
                                             )
                                         )
@@ -919,7 +935,7 @@ Prgm
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /init -> TVArg /s = ( Value /s ↦ TVArg /s ) }
-                                ) ↦ TopType
+                                ) ↦ ∀/Data/Set[ /T=TopType ]
                             )
                         ]
                     }
@@ -997,7 +1013,7 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] }
-                            )=
+                            ) -> ∀/Data/Set[ /T=TopType ] =
                             ( /Data/Set/removeAll
                                 ( EAppArg
                                     { eaaArg = Value /s -> TVArg /a = ( Value /a ↦ TVArg /a ) }
@@ -1010,7 +1026,7 @@ Prgm
                                             ) ↦ ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                         )
                                     }
-                                ) ↦ TopType
+                                ) ↦ ∀/Data/Set[ /T=TopType ]
                             )
                         ]
                     }
@@ -1108,7 +1124,7 @@ Prgm
                                 [ /K=TopType
                                 , /V=TopType
                                 ]
-                            ) = /Data/Set/MkSet
+                            )| PredClass /Data/Set[ /T=TopType ] = /Data/Set/MkSet
                             ( EAppArg
                                 { eaaArg = Value /map -> ∀/Data/Map
                                     [ /K=TopType
@@ -1328,7 +1344,8 @@ Prgm
                                             )
                                         , []
                                         )
-                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                    )|
+                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                 , []
                                 ) =
                                 ( /Data/Set/add
@@ -1406,7 +1423,8 @@ Prgm
                                                         )
                                                     , []
                                                     )
-                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                )|
+                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                             , []
                                             ) =
                                             ( /Data/Set/add
@@ -1501,7 +1519,8 @@ Prgm
                                                             )
                                                         , []
                                                         )
-                                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    )|
+                                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                 , []
                                                 )
                                             )
@@ -1582,7 +1601,8 @@ Prgm
                                                 )
                                             , []
                                             )
-                                        )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                        )|
+                                        ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                     , []
                                     )
                                 )
@@ -1677,7 +1697,8 @@ Prgm
                                             )
                                         , []
                                         )
-                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                    )|
+                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                 , []
                                 ) =
                                 ( /Data/Set/add
@@ -1772,7 +1793,8 @@ Prgm
                                                 )
                                             , []
                                             )
-                                        )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                        )|
+                                        ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                     , []
                                     )
                                 )
@@ -1803,7 +1825,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                { eaaArg = Value /p -> ∀/Catln/Doc/DShow =
                     ( /size
                         ( EAppArg
                             { eaaArg = Value /s -> UnionType
@@ -1957,7 +1979,8 @@ Prgm
                                                         )
                                                     , []
                                                     )
-                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                )|
+                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                             , []
                                             ) =
                                             ( /Data/Set/add
@@ -2052,7 +2075,8 @@ Prgm
                                                             )
                                                         , []
                                                         )
-                                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    )|
+                                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                 , []
                                                 )
                                             )
@@ -2138,7 +2162,7 @@ Prgm
                                     )
                                 )
                             }
-                        ) ↦ /Data/Primitive/Integer
+                        ) ↦ ∀/Catln/Doc/DShow
                     )
                 }
             )
@@ -2514,7 +2538,8 @@ Prgm
                                                                     )
                                                                 , []
                                                                 )
-                                                            )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                            )|
+                                                            ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                         , []
                                                         ) =
                                                         ( /Data/Set/add
@@ -2609,7 +2634,8 @@ Prgm
                                                                         )
                                                                     , []
                                                                     )
-                                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                                )|
+                                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                             , []
                                                             )
                                                         )
@@ -2783,7 +2809,8 @@ Prgm
                                         [ /K=TopType
                                         , /V=TopType
                                         ]
-                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                    )|
+                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                 , []
                                 ) =
                                 ( /remove
@@ -2861,7 +2888,8 @@ Prgm
                                                         )
                                                     , []
                                                     )
-                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                )|
+                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                             , []
                                             ) =
                                             ( /Data/Set/add
@@ -2939,7 +2967,8 @@ Prgm
                                                                     )
                                                                 , []
                                                                 )
-                                                            )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                            )|
+                                                            ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                         , []
                                                         ) =
                                                         ( /Data/Set/add
@@ -3034,7 +3063,8 @@ Prgm
                                                                         )
                                                                     , []
                                                                     )
-                                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                                )|
+                                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                             , []
                                                             )
                                                         )
@@ -3115,7 +3145,8 @@ Prgm
                                                             )
                                                         , []
                                                         )
-                                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    )|
+                                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                 , []
                                                 )
                                             )
@@ -3134,7 +3165,8 @@ Prgm
                                             [ /K=TopType
                                             , /V=TopType
                                             ]
-                                        )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                        )|
+                                        ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                     , []
                                     )
                                 )
@@ -3167,7 +3199,8 @@ Prgm
                                         [ /K=TopType
                                         , /V=TopType
                                         ]
-                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                    )|
+                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                 , []
                                 ) =
                                 ( /remove
@@ -3245,7 +3278,8 @@ Prgm
                                                         )
                                                     , []
                                                     )
-                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                )|
+                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                             , []
                                             ) =
                                             ( /Data/Set/add
@@ -3323,7 +3357,8 @@ Prgm
                                                                     )
                                                                 , []
                                                                 )
-                                                            )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                            )|
+                                                            ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                         , []
                                                         ) =
                                                         ( /Data/Set/add
@@ -3418,7 +3453,8 @@ Prgm
                                                                         )
                                                                     , []
                                                                     )
-                                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                                )|
+                                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                             , []
                                                             )
                                                         )
@@ -3499,7 +3535,8 @@ Prgm
                                                             )
                                                         , []
                                                         )
-                                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    )|
+                                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                 , []
                                                 )
                                             )
@@ -3518,7 +3555,8 @@ Prgm
                                             [ /K=TopType
                                             , /V=TopType
                                             ]
-                                        )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                        )|
+                                        ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                     , []
                                     )
                                 )
@@ -3543,7 +3581,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                { eaaArg = Value /p -> ∀/Catln/Doc/DShow =
                     ( /size
                         ( EAppArg
                             { eaaArg = Value /s -> ∀/Data/Set[ /T=TopType ] =
@@ -3622,7 +3660,8 @@ Prgm
                                                         )
                                                     , []
                                                     )
-                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                )|
+                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                             , []
                                             ) =
                                             ( /Data/Set/add
@@ -3700,7 +3739,8 @@ Prgm
                                                                     )
                                                                 , []
                                                                 )
-                                                            )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                            )|
+                                                            ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                         , []
                                                         ) =
                                                         ( /Data/Set/add
@@ -3795,7 +3835,8 @@ Prgm
                                                                         )
                                                                     , []
                                                                     )
-                                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                                )|
+                                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                             , []
                                                             )
                                                         )
@@ -3876,7 +3917,8 @@ Prgm
                                                             )
                                                         , []
                                                         )
-                                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    )|
+                                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                 , []
                                                 )
                                             )
@@ -3956,7 +3998,8 @@ Prgm
                                                         )
                                                     , []
                                                     )
-                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                )|
+                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                             , []
                                             ) =
                                             ( /Data/Set/add
@@ -4034,7 +4077,8 @@ Prgm
                                                                     )
                                                                 , []
                                                                 )
-                                                            )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                            )|
+                                                            ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                         , []
                                                         ) =
                                                         ( /Data/Set/add
@@ -4129,7 +4173,8 @@ Prgm
                                                                         )
                                                                     , []
                                                                     )
-                                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                                )|
+                                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                             , []
                                                             )
                                                         )
@@ -4210,7 +4255,8 @@ Prgm
                                                             )
                                                         , []
                                                         )
-                                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    )|
+                                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                 , []
                                                 )
                                             )
@@ -4218,7 +4264,7 @@ Prgm
                                     ) ↦ ∀/Data/Set[ /T=TopType ]
                                 )
                             }
-                        ) ↦ /Data/Primitive/Integer
+                        ) ↦ ∀/Catln/Doc/DShow
                     )
                 }
             )
@@ -4308,7 +4354,8 @@ Prgm
                                                         )
                                                     , []
                                                     )
-                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                )|
+                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                             , []
                                             ) =
                                             ( /Data/Set/add
@@ -4403,7 +4450,8 @@ Prgm
                                                             )
                                                         , []
                                                         )
-                                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    )|
+                                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                 , []
                                                 )
                                             )
@@ -4483,7 +4531,8 @@ Prgm
                                                         )
                                                     , []
                                                     )
-                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                )|
+                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                             , []
                                             ) =
                                             ( /Data/Set/add
@@ -4578,7 +4627,8 @@ Prgm
                                                             )
                                                         , []
                                                         )
-                                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    )|
+                                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                 , []
                                                 )
                                             )
@@ -4606,7 +4656,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                { eaaArg = Value /p -> ∀/Catln/Doc/DShow =
                     ( /size
                         ( EAppArg
                             { eaaArg = Value /s -> ∀/Data/Set[ /T=TopType ] =
@@ -4685,7 +4735,8 @@ Prgm
                                                         )
                                                     , []
                                                     )
-                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                )|
+                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                             , []
                                             ) =
                                             ( /Data/Set/add
@@ -4763,7 +4814,8 @@ Prgm
                                                                     )
                                                                 , []
                                                                 )
-                                                            )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                            )|
+                                                            ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                         , []
                                                         ) =
                                                         ( /Data/Set/add
@@ -4858,7 +4910,8 @@ Prgm
                                                                         )
                                                                     , []
                                                                     )
-                                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                                )|
+                                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                             , []
                                                             )
                                                         )
@@ -4939,7 +4992,8 @@ Prgm
                                                             )
                                                         , []
                                                         )
-                                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    )|
+                                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                 , []
                                                 )
                                             )
@@ -5019,7 +5073,8 @@ Prgm
                                                         )
                                                     , []
                                                     )
-                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                )|
+                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                             , []
                                             ) =
                                             ( /Data/Set/add
@@ -5114,7 +5169,8 @@ Prgm
                                                             )
                                                         , []
                                                         )
-                                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    )|
+                                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                 , []
                                                 )
                                             )
@@ -5122,7 +5178,7 @@ Prgm
                                     ) ↦ ∀/Data/Set[ /T=TopType ]
                                 )
                             }
-                        ) ↦ /Data/Primitive/Integer
+                        ) ↦ ∀/Catln/Doc/DShow
                     )
                 }
             )
@@ -5212,7 +5268,8 @@ Prgm
                                                         )
                                                     , []
                                                     )
-                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                )|
+                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                             , []
                                             ) =
                                             ( /Data/Set/add
@@ -5290,7 +5347,8 @@ Prgm
                                                                     )
                                                                 , []
                                                                 )
-                                                            )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                            )|
+                                                            ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                         , []
                                                         ) =
                                                         ( /Data/Set/add
@@ -5385,7 +5443,8 @@ Prgm
                                                                         )
                                                                     , []
                                                                     )
-                                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                                )|
+                                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                             , []
                                                             )
                                                         )
@@ -5466,7 +5525,8 @@ Prgm
                                                             )
                                                         , []
                                                         )
-                                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    )|
+                                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                 , []
                                                 )
                                             )
@@ -5546,7 +5606,8 @@ Prgm
                                                         )
                                                     , []
                                                     )
-                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                )|
+                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                             , []
                                             ) =
                                             ( /Data/Set/add
@@ -5641,7 +5702,8 @@ Prgm
                                                             )
                                                         , []
                                                         )
-                                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    )|
+                                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                 , []
                                                 )
                                             )
@@ -5742,7 +5804,8 @@ Prgm
                                                         )
                                                     , []
                                                     )
-                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                )|
+                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                             , []
                                             ) =
                                             ( /Data/Set/add
@@ -5820,7 +5883,8 @@ Prgm
                                                                     )
                                                                 , []
                                                                 )
-                                                            )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                            )|
+                                                            ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                         , []
                                                         ) =
                                                         ( /Data/Set/add
@@ -5915,7 +5979,8 @@ Prgm
                                                                         )
                                                                     , []
                                                                     )
-                                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                                )|
+                                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                             , []
                                                             )
                                                         )
@@ -5996,7 +6061,8 @@ Prgm
                                                             )
                                                         , []
                                                         )
-                                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    )|
+                                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                 , []
                                                 )
                                             )
@@ -6076,7 +6142,8 @@ Prgm
                                                         )
                                                     , []
                                                     )
-                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                )|
+                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                             , []
                                             ) =
                                             ( /Data/Set/add
@@ -6171,7 +6238,8 @@ Prgm
                                                             )
                                                         , []
                                                         )
-                                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    )|
+                                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                 , []
                                                 )
                                             )
@@ -6199,7 +6267,7 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                { eaaArg = Value /p -> ∀/Catln/Doc/DShow =
                     ( /size
                         ( EAppArg
                             { eaaArg = Value /s -> ∀/Data/Set[ /T=TopType ] =
@@ -6278,7 +6346,8 @@ Prgm
                                                         )
                                                     , []
                                                     )
-                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                )|
+                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                             , []
                                             ) =
                                             ( /Data/Set/add
@@ -6356,7 +6425,8 @@ Prgm
                                                                     )
                                                                 , []
                                                                 )
-                                                            )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                            )|
+                                                            ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                         , []
                                                         ) =
                                                         ( /Data/Set/add
@@ -6451,7 +6521,8 @@ Prgm
                                                                         )
                                                                     , []
                                                                     )
-                                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                                )|
+                                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                             , []
                                                             )
                                                         )
@@ -6532,7 +6603,8 @@ Prgm
                                                             )
                                                         , []
                                                         )
-                                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    )|
+                                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                 , []
                                                 )
                                             )
@@ -6612,7 +6684,8 @@ Prgm
                                                         )
                                                     , []
                                                     )
-                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                )|
+                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                             , []
                                             ) =
                                             ( /Data/Set/add
@@ -6690,7 +6763,8 @@ Prgm
                                                                     )
                                                                 , []
                                                                 )
-                                                            )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                            )|
+                                                            ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                         , []
                                                         ) =
                                                         ( /Data/Set/add
@@ -6785,7 +6859,8 @@ Prgm
                                                                         )
                                                                     , []
                                                                     )
-                                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                                )|
+                                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                             , []
                                                             )
                                                         )
@@ -6866,7 +6941,8 @@ Prgm
                                                             )
                                                         , []
                                                         )
-                                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    )|
+                                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                 , []
                                                 )
                                             )
@@ -6874,7 +6950,7 @@ Prgm
                                     ) ↦ ∀/Data/Set[ /T=TopType ]
                                 )
                             }
-                        ) ↦ /Data/Primitive/Integer
+                        ) ↦ ∀/Catln/Doc/DShow
                     )
                 }
             )
@@ -6964,7 +7040,8 @@ Prgm
                                                         )
                                                     , []
                                                     )
-                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                )|
+                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                             , []
                                             ) =
                                             ( /Data/Set/add
@@ -7042,7 +7119,8 @@ Prgm
                                                                     )
                                                                 , []
                                                                 )
-                                                            )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                            )|
+                                                            ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                         , []
                                                         ) =
                                                         ( /Data/Set/add
@@ -7137,7 +7215,8 @@ Prgm
                                                                         )
                                                                     , []
                                                                     )
-                                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                                )|
+                                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                             , []
                                                             )
                                                         )
@@ -7218,7 +7297,8 @@ Prgm
                                                             )
                                                         , []
                                                         )
-                                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    )|
+                                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                 , []
                                                 )
                                             )
@@ -7298,7 +7378,8 @@ Prgm
                                                         )
                                                     , []
                                                     )
-                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                )|
+                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                             , []
                                             ) =
                                             ( /Data/Set/add
@@ -7376,7 +7457,8 @@ Prgm
                                                                     )
                                                                 , []
                                                                 )
-                                                            )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                            )|
+                                                            ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                         , []
                                                         ) =
                                                         ( /Data/Set/add
@@ -7471,7 +7553,8 @@ Prgm
                                                                         )
                                                                     , []
                                                                     )
-                                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                                )|
+                                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                             , []
                                                             )
                                                         )
@@ -7552,7 +7635,8 @@ Prgm
                                                             )
                                                         , []
                                                         )
-                                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    )|
+                                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                 , []
                                                 )
                                             )
@@ -7653,7 +7737,8 @@ Prgm
                                                         )
                                                     , []
                                                     )
-                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                )|
+                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                             , []
                                             ) =
                                             ( /Data/Set/add
@@ -7731,7 +7816,8 @@ Prgm
                                                                     )
                                                                 , []
                                                                 )
-                                                            )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                            )|
+                                                            ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                         , []
                                                         ) =
                                                         ( /Data/Set/add
@@ -7826,7 +7912,8 @@ Prgm
                                                                         )
                                                                     , []
                                                                     )
-                                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                                )|
+                                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                             , []
                                                             )
                                                         )
@@ -7907,7 +7994,8 @@ Prgm
                                                             )
                                                         , []
                                                         )
-                                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    )|
+                                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                 , []
                                                 )
                                             )
@@ -7987,7 +8075,8 @@ Prgm
                                                         )
                                                     , []
                                                     )
-                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                )|
+                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                             , []
                                             ) =
                                             ( /Data/Set/add
@@ -8065,7 +8154,8 @@ Prgm
                                                                     )
                                                                 , []
                                                                 )
-                                                            )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                            )|
+                                                            ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                         , []
                                                         ) =
                                                         ( /Data/Set/add
@@ -8160,7 +8250,8 @@ Prgm
                                                                         )
                                                                     , []
                                                                     )
-                                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                                )|
+                                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                             , []
                                                             )
                                                         )
@@ -8241,7 +8332,8 @@ Prgm
                                                             )
                                                         , []
                                                         )
-                                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    )|
+                                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                 , []
                                                 )
                                             )
@@ -8345,7 +8437,8 @@ Prgm
                                             )
                                         , []
                                         )
-                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                    )|
+                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                 , []
                                 ) =
                                 ( /Data/Set/add
@@ -8440,7 +8533,8 @@ Prgm
                                                 )
                                             , []
                                             )
-                                        )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                        )|
+                                        ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                     , []
                                     )
                                 )
@@ -8520,7 +8614,8 @@ Prgm
                                             )
                                         , []
                                         )
-                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                    )|
+                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                 , []
                                 ) =
                                 ( /Data/Set/add
@@ -8598,7 +8693,8 @@ Prgm
                                                         )
                                                     , []
                                                     )
-                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                )|
+                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                             , []
                                             ) =
                                             ( /Data/Set/add
@@ -8693,7 +8789,8 @@ Prgm
                                                             )
                                                         , []
                                                         )
-                                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    )|
+                                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                 , []
                                                 )
                                             )
@@ -8774,7 +8871,8 @@ Prgm
                                                 )
                                             , []
                                             )
-                                        )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                        )|
+                                        ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                     , []
                                     )
                                 )
@@ -8866,7 +8964,8 @@ Prgm
                                             )
                                         , []
                                         )
-                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                    )|
+                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                 , []
                                 ) =
                                 ( /Data/Set/add
@@ -8944,7 +9043,8 @@ Prgm
                                                         )
                                                     , []
                                                     )
-                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                )|
+                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                             , []
                                             ) =
                                             ( /Data/Set/add
@@ -9039,7 +9139,8 @@ Prgm
                                                             )
                                                         , []
                                                         )
-                                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    )|
+                                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                 , []
                                                 )
                                             )
@@ -9120,7 +9221,8 @@ Prgm
                                                 )
                                             , []
                                             )
-                                        )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                        )|
+                                        ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                     , []
                                     )
                                 )
@@ -9200,7 +9302,8 @@ Prgm
                                             )
                                         , []
                                         )
-                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                    )|
+                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                 , []
                                 ) =
                                 ( /Data/Set/add
@@ -9278,7 +9381,8 @@ Prgm
                                                         )
                                                     , []
                                                     )
-                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                )|
+                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                             , []
                                             ) =
                                             ( /Data/Set/add
@@ -9373,7 +9477,8 @@ Prgm
                                                             )
                                                         , []
                                                         )
-                                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    )|
+                                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                 , []
                                                 )
                                             )
@@ -9454,7 +9559,8 @@ Prgm
                                                 )
                                             , []
                                             )
-                                        )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                        )|
+                                        ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                     , []
                                     )
                                 )
@@ -9570,7 +9676,8 @@ Prgm
                                             )
                                         , []
                                         )
-                                    )| PredClass /Data/Algebra/Eq
+                                    )|
+                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Algebra/Eq )
                                 , []
                                 ) =
                                 ( /Data/Set/add
@@ -9648,7 +9755,8 @@ Prgm
                                                         )
                                                     , []
                                                     )
-                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                )|
+                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                             , []
                                             ) =
                                             ( /Data/Set/add
@@ -9743,7 +9851,8 @@ Prgm
                                                             )
                                                         , []
                                                         )
-                                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    )|
+                                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                 , []
                                                 )
                                             )
@@ -9824,7 +9933,8 @@ Prgm
                                                 )
                                             , []
                                             )
-                                        )| PredClass /Data/Algebra/Eq
+                                        )|
+                                        ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Algebra/Eq )
                                     , []
                                     )
                                 )
@@ -9904,7 +10014,8 @@ Prgm
                                             )
                                         , []
                                         )
-                                    )| PredClass /Data/Algebra/Eq
+                                    )|
+                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Algebra/Eq )
                                 , []
                                 ) =
                                 ( /Data/Set/add
@@ -9982,7 +10093,8 @@ Prgm
                                                         )
                                                     , []
                                                     )
-                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                )|
+                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                             , []
                                             ) =
                                             ( /Data/Set/add
@@ -10077,7 +10189,8 @@ Prgm
                                                             )
                                                         , []
                                                         )
-                                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    )|
+                                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                 , []
                                                 )
                                             )
@@ -10158,7 +10271,8 @@ Prgm
                                                 )
                                             , []
                                             )
-                                        )| PredClass /Data/Algebra/Eq
+                                        )|
+                                        ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Algebra/Eq )
                                     , []
                                     )
                                 )
@@ -10250,7 +10364,8 @@ Prgm
                                             )
                                         , []
                                         )
-                                    )| PredClass /Data/Algebra/Eq
+                                    )|
+                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Algebra/Eq )
                                 , []
                                 ) =
                                 ( /Data/Set/add
@@ -10328,7 +10443,8 @@ Prgm
                                                         )
                                                     , []
                                                     )
-                                                )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                )|
+                                                ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                             , []
                                             ) =
                                             ( /Data/Set/add
@@ -10423,7 +10539,8 @@ Prgm
                                                             )
                                                         , []
                                                         )
-                                                    )| PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                                    )|
+                                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ] )
                                                 , []
                                                 )
                                             )
@@ -10504,7 +10621,8 @@ Prgm
                                                 )
                                             , []
                                             )
-                                        )| PredClass /Data/Algebra/Eq
+                                        )|
+                                        ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Algebra/Eq )
                                     , []
                                     )
                                 )
@@ -10584,7 +10702,8 @@ Prgm
                                             )
                                         , []
                                         )
-                                    )| PredClass /Data/Algebra/Eq
+                                    )|
+                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Algebra/Eq )
                                 , []
                                 ) =
                                 ( /Data/Set/add
@@ -10679,7 +10798,8 @@ Prgm
                                                 )
                                             , []
                                             )
-                                        )| PredClass /Data/Algebra/Eq
+                                        )|
+                                        ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Algebra/Eq )
                                     , []
                                     )
                                 )
@@ -10771,7 +10891,8 @@ Prgm
                                             )
                                         , []
                                         )
-                                    )| PredClass /Data/Algebra/Eq
+                                    )|
+                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Algebra/Eq )
                                 , []
                                 ) =
                                 ( /Data/Set/add
@@ -10866,7 +10987,8 @@ Prgm
                                                 )
                                             , []
                                             )
-                                        )| PredClass /Data/Algebra/Eq
+                                        )|
+                                        ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Algebra/Eq )
                                     , []
                                     )
                                 )
@@ -10946,7 +11068,8 @@ Prgm
                                             )
                                         , []
                                         )
-                                    )| PredClass /Data/Algebra/Eq
+                                    )|
+                                    ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Algebra/Eq )
                                 , []
                                 ) =
                                 ( /Data/Set/add
@@ -11041,7 +11164,8 @@ Prgm
                                                 )
                                             , []
                                             )
-                                        )| PredClass /Data/Algebra/Eq
+                                        )|
+                                        ( PredClass /Data/Set[ /T=TopType ] && PredClass /Data/Algebra/Eq )
                                     , []
                                     )
                                 )

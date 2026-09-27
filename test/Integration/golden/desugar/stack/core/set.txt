@@ -22,7 +22,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Set/intersection( Value a )( Value b )= addAll( Value s= Value empty )
+                        [ /Data/Set/intersection( Value a )( Value b ) -> ∀/Data/Set[ /T=TopType ] = addAll( Value s= Value empty )
                             ( Value items= /Data/List/filter
                                 ( Value lst= elements( Value s= Value a ) )
                                 ( fn( Value v )= contains( Value s= Value b )( Value item= Value v ) )
@@ -41,7 +41,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Set/union( Value a )( Value b )= addAll( Value s= Value a )
+                        [ /Data/Set/union( Value a )( Value b ) -> ∀/Data/Set[ /T=TopType ] = addAll( Value s= Value a )
                             ( Value items= elements( Value s= Value b ) )
                         ]
                     }
@@ -57,7 +57,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Set/add
-                            ( Value s= MkSet( Value map ) )( Value item )= MkSet
+                            ( Value s= MkSet( Value map ) )( Value item ) -> ∀/Data/Set[ /T=TopType ] = MkSet
                             ( Value map= /Data/Map/insert( Value m= Value map )( Value key= Value item )( Value value= Value / ) )
                         ]
                     }
@@ -73,7 +73,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Set/elements
-                            ( Value s= MkSet( Value map ) )= /Data/Map/keys( Value m= Value map )
+                            ( Value s= MkSet( Value map ) ) -> ∀/Data/List[ /T=TopType ] = /Data/Map/keys( Value m= Value map )
                         ]
                     }
                 )
@@ -105,7 +105,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Set/removeAll( Value s )( Value items )= /Data/List/foldl( Value lst= Value items )
+                        [ /Data/Set/removeAll( Value s )( Value items ) -> ∀/Data/Set[ /T=TopType ] = /Data/List/foldl( Value lst= Value items )
                             ( fn( Value acc )( Value v )= remove( Value s= Value acc )( Value item= Value v ) )( Value init= Value s )
                         ]
                     }
@@ -190,7 +190,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Set/addAll( Value s )( Value items )= /Data/List/foldl( Value lst= Value items )
+                        [ /Data/Set/addAll( Value s )( Value items ) -> ∀/Data/Set[ /T=TopType ] = /Data/List/foldl( Value lst= Value items )
                             ( fn( Value acc )( Value v )= add( Value s= Value acc )( Value item= Value v ) )( Value init= Value s )
                         ]
                     }
@@ -221,7 +221,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Set/difference( Value a )( Value b )= removeAll( Value s= Value a )
+                        [ /Data/Set/difference( Value a )( Value b ) -> ∀/Data/Set[ /T=TopType ] = removeAll( Value s= Value a )
                             ( Value items= elements( Value s= Value b ) )
                         ]
                     }
@@ -250,7 +250,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Set/remove
-                            ( Value s= MkSet( Value map ) )( Value item )= MkSet
+                            ( Value s= MkSet( Value map ) )( Value item ) -> ∀/Data/Set[ /T=TopType ] = MkSet
                             ( Value map= /Data/Map/remove( Value m= Value map )( Value key= Value item ) )
                         ]
                     }

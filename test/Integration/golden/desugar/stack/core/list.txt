@@ -134,7 +134,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/List/append( Value a )( Value b )= foldr( Value lst= Value a )
+                        [ /Data/List/append( Value a )( Value b ) -> ∀/Data/List/ConsList[ /T=TopType ] = foldr( Value lst= Value a )
                             ( fn( Value acc )( Value v )= Cons( Value head= Value v )( Value tail= Value acc ) )( Value init= Value b )
                         ]
                     }
@@ -151,7 +151,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/List/filter( Value lst )
-                            ( fn( Value v ) )= /Data/Monad/mmap( Value m= Value lst )
+                            ( fn( Value v ) ) -> ∀/Data/List/ConsList[ /T=TopType ] = /Data/Monad/mmap( Value m= Value lst )
                             ( fn( Value v )= keepIf( Value v= Value v )
                                 ( Value keep= fn( Value v= Value v ) )
                             )
@@ -190,13 +190,13 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ sorted./Data/List/insert( Value x )( Value lst= Value Nil )= Cons( Value head= Value x )( Value tail= Value Nil )
+                        [ sorted./Data/List/insert( Value x )( Value lst= Value Nil ) -> ∀/Data/List/ConsList[ /T=TopType ] = Cons( Value head= Value x )( Value tail= Value Nil )
                         , sorted./Data/List/insert( Value x )
                             ( Value lst= Cons[ /T : ∀/Data/Algebra/Ord ]( Value head )( Value tail ) ) | isLessEq
-                            ( Value /this= compareTo( Value other= Value head )( Value /this= Value x ) )= Cons( Value head= Value x )
+                            ( Value /this= compareTo( Value other= Value head )( Value /this= Value x ) ) -> ∀/Data/List/ConsList[ /T=TopType ] = Cons( Value head= Value x )
                             ( Value tail= Cons( Value head= Value head )( Value tail= Value tail ) )
                         , sorted./Data/List/insert( Value x )
-                            ( Value lst= Cons[ /T : ∀/Data/Algebra/Ord ]( Value head )( Value tail ) )= Cons( Value head= Value head )
+                            ( Value lst= Cons[ /T : ∀/Data/Algebra/Ord ]( Value head )( Value tail ) ) -> ∀/Data/List/ConsList[ /T=TopType ] = Cons( Value head= Value head )
                             ( Value tail= insert( Value x= Value x )( Value lst= Value tail ) )
                         ]
                     }
@@ -277,9 +277,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/List/sorted( Value lst= Value Nil )= Value Nil
+                        [ /Data/List/sorted( Value lst= Value Nil ) -> ∀/Data/List[ /T=TopType ] = Value Nil
                         , /Data/List/sorted
-                            ( Value lst= Cons[ /T : ∀/Data/Algebra/Ord ]( Value head@Value h )( Value tail@Value t ) )= insert( Value x= Value h )
+                            ( Value lst= Cons[ /T : ∀/Data/Algebra/Ord ]( Value head@Value h )( Value tail@Value t ) ) -> ∀/Data/List[ /T=TopType ] = insert( Value x= Value h )
                             ( Value lst= sorted( Value lst= Value t ) )
                         ]
                     }
@@ -311,8 +311,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ filter./Data/List/keepIf( Value v )( Value keep= Value /Data/Primitive/True )= /Data/List/Cons( Value /head= Value v )( Value /tail= Value /Data/List/Nil )
-                        , filter./Data/List/keepIf( Value v )( Value keep= Value /Data/Primitive/False )= Value /Data/List/Nil
+                        [ filter./Data/List/keepIf( Value v )( Value keep= Value /Data/Primitive/True ) -> ∀/Data/List/ConsList[ /T=TopType ] = /Data/List/Cons( Value /head= Value v )( Value /tail= Value /Data/List/Nil )
+                        , filter./Data/List/keepIf( Value v )( Value keep= Value /Data/Primitive/False ) -> ∀/Data/List/ConsList[ /T=TopType ] = Value /Data/List/Nil
                         ]
                     }
                 )
