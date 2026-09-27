@@ -13,6 +13,7 @@ import mapValuesResponse from '../../../test/fixtures/debugger-mapvalues-respons
 import foldEntriesResponse from '../../../test/fixtures/debugger-foldentries-response.json'
 import syntaxResponse from '../../../test/fixtures/debugger-syntax-response.json'
 import syntaxClosureResponse from '../../../test/fixtures/debugger-syntax-closure-response.json'
+import syntaxFmapResponse from '../../../test/fixtures/debugger-syntax-fmap-response.json'
 
 const theme = createTheme()
 
@@ -111,9 +112,11 @@ describe('Debugger', () => {
     const record = screen.getAllByRole('listitem')[0]
     await user.click(within(record).getByRole('button'))
 
+    // The call is opened to and marked, as the record is.
     const items = screen.getAllByRole('treeitem')
     expect(items).toHaveLength(2)
-    expect(items[1]).toHaveAttribute('aria-selected', 'true')
+    expect(items[1]).toHaveAttribute('data-highlighted', 'true')
+    expect(record).toHaveClass('catln-debug-focused')
   })
 
   // A call's line is what it was given and what it gave back. The definition it was a call of is
@@ -675,13 +678,23 @@ describe('Debugger over a call over a map, whose recursion is a tree', () => {
       expect(labelOf(itemOf('Else'))).toHaveTextContent('not evaluated')
     })
 
-    it('leads from a #debug record to the call it was recorded in', async () => {
+    // The record and the #debug it was recorded by are marked alike, and pressing the record again lets
+    // both go.
+    it('marks a #debug record and the line it was recorded at, until pressed again', async () => {
       const user = userEvent.setup()
       render(<Providers><Debugger {...syntaxRun()} /></Providers>)
 
-      await user.click(within(screen.getAllByRole('listitem')[0]).getByRole('button'))
+      const record = screen.getAllByRole('listitem')[0]
+      await user.click(within(record).getByRole('button'))
 
-      expect(itemOf('total(a')).toHaveAttribute('aria-selected', 'true')
+      const line = itemOf('#debug(d = sum)')
+      expect(line).toHaveAttribute('data-highlighted', 'true')
+      expect(record).toHaveClass('catln-debug-focused')
+      expect(document.querySelectorAll('[data-highlighted]')).toHaveLength(1)
+
+      await user.click(record)
+      expect(document.querySelectorAll('[data-highlighted]')).toHaveLength(0)
+      expect(record).not.toHaveClass('catln-debug-focused')
     })
 
     // A call of a function is a block of source, which says where it is written: the file and line of
@@ -734,6 +747,40 @@ describe('Debugger over a call over a map, whose recursion is a tree', () => {
       const call = part.nextElementSibling.querySelector('[role=treeitem]')
       expect(call).toHaveClass('catln-debug-step')
       expect(call).toHaveTextContent('=> 2')
+    })
+  })
+
+  // debugNested.ct's `totals(xs= [1, 2])`, whose line `shifted= fmap(lst= xs, fn(v)= total(a= v, b= 2))`
+  // maps the list with total. Each call of total records its #debug, so the records lead into the
+  // rows of the fmap's display.
+  describe('a #debug recorded under a display', () => {
+    function fmapRun() {
+      return {
+        '/run': { tag: 'StrVal', contents: JSON.stringify(syntaxFmapResponse) },
+        '/fun': { tag: 'StrVal', contents: 'totals(xs= [1, 2])' },
+      }
+    }
+
+    it('opens the row it was recorded under and marks the #debug there', async () => {
+      const user = userEvent.setup()
+      render(<Providers><Debugger {...fmapRun()} /></Providers>)
+
+      // The second element's call of total, where sum is 4.
+      const record = screen.getAllByRole('listitem')[1]
+      expect(record).toHaveTextContent('↦ 4')
+      await user.click(record)
+
+      const marked = document.querySelectorAll('[data-highlighted]')
+      expect(marked).toHaveLength(1)
+      expect(marked[0]).toHaveTextContent('#debug(d = sum)')
+      expect(marked[0]).toHaveTextContent('/d = 4')
+      // Inside the fmap's display, whose row for the element (index 1, 2 ↦ 84) was opened to show it.
+      const around = []
+      for (let el = marked[0].parentElement?.closest('[role=treeitem]'); el; el = el.parentElement?.closest('[role=treeitem]')) {
+        around.push(el.querySelector(':scope > .MuiTreeItem-content').textContent.replace(/\s+/g, ' ').trim())
+      }
+      expect(around).toContain('12↦84')
+      expect(around).toContain('/Data/Functor/fmap')
     })
   })
 })

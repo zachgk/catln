@@ -17,6 +17,11 @@ import {valList} from '../Common';
 // one. A step table read anywhere else is a table of what a call did, with no run behind it to open.
 const CallStepsContext = createContext([]);
 
+// The id each row of a step table is known by in the tree around it, where there is one: a debugger
+// opens a row to reveal what is inside it, and tells the rows of two tables apart, by these. Without
+// one a row is known by its place in its table.
+const CallStepIdsContext = createContext(null);
+
 // A call shown as what it did, step by step.
 //
 // This draws a /Catln/Doc/Show/Steps and knows nothing about which call it is of. Which is the point:
@@ -35,6 +40,7 @@ const CallStepsContext = createContext([]);
 function Steps(props) {
   const steps = valList(props["/steps"]);
   const rowNodes = useContext(CallStepsContext);
+  const rowIds = useContext(CallStepIdsContext);
   const {keyed} = props;
 
   if (!steps.length) {
@@ -52,7 +58,7 @@ function Steps(props) {
         return (
           <TreeItem
             key={i}
-            itemId={`step-${i}`}
+            itemId={rowIds?.[i] ?? `step-${i}`}
             label={<StepRow keyed={keyed} cells={keyCells(keyed, [cell(args["/index"]), cell(args["/input"]), "↦", cell(args["/output"])], cell(args["/key"]))} />}
           >
             {children}
@@ -158,4 +164,4 @@ const cellStyles = [indexStyle, undefined, arrowStyle, undefined];
 const keyedCellStyles = [indexStyle, keyStyle, undefined, arrowStyle, undefined];
 
 export default Steps;
-export {CallStepsContext, StepLine, StepTable, keyCells};
+export {CallStepIdsContext, CallStepsContext, StepLine, StepTable, keyCells};

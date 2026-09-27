@@ -1,6 +1,7 @@
 import React from 'react';
 
 import {RawExpr, RawObjArr} from '../Syntax';
+import {exprContents} from '../Semantics';
 import {InlineValue} from '../Value';
 import {rawExprMeta, statementBody} from '../RawPrgm';
 
@@ -103,6 +104,10 @@ function buildTree(roots, syntax) {
       it = callItem(call, node);
     } else if (stop && stop.stmt) {
       it = item({kind: 'lineref', id: `l:${id}`, node, stop}, []);
+    } else if (node[5]) {
+      // Its display's rows, each holding the calls it opens onto, as the display groups them.
+      const rows = chainSteps(node, nodeFun(node));
+      it = item({kind: 'step', id, node}, rows.map((level, i) => item({kind: 'showrow', id: `${id}:step-${i}`, index: i}, level.map(stepItem))));
     } else {
       it = item({kind: 'step', id, node}, node[3].map(stepItem));
     }
@@ -230,8 +235,41 @@ function buildTree(roots, syntax) {
     );
   }
 
-  const items = roots.map(stepItem);
+  // A step at the top of the run that an earlier one already holds is shown there and not again: the
+  // calls that went on rewriting a line's value are made where the line was used, which for an
+  // expression run is the top, and are shown under the line they rewrote.
+  const items = [];
+  roots.forEach(root => {
+    if (!byNode[root[4]]) {
+      items.push(stepItem(root));
+    }
+  });
   return {items, parents, byNode, byId};
+}
+
+// The item a #debug record is shown at: the #debug statement it was recorded by, in the block of the
+// call it was recorded in. The record names the call as the node it was open in, which is the call's
+// own or the arrow of a line of it, and the statement by where it is written, which is the position
+// the compiler gives the annotation (`EvalDebug`). A run the syntax does not cover shows the node.
+function debugTargetOf(record, tree, stops) {
+  const stop = stops[record.edNode];
+  const callNode = stop?.call ?? record.edNode;
+  const start = record.edPos?.[0];
+  if (start && tree.byId[callNode]?.kind === 'call') {
+    const prefix = `s:${callNode}:`;
+    const written = Object.values(tree.byId).find(it => {
+      if (it.kind !== 'stmt' || !it.id.startsWith(prefix) || it.tree.rstStatement.tag !== 'RawAnnot') {
+        return false;
+      }
+      const at = rawExprMeta(statementBody(it.tree.rstStatement))?.getMetaPos?.[0];
+      return at && at.line === start.line && at.col === start.col;
+    });
+    if (written) {
+      return written.id;
+    }
+    return callNode;
+  }
+  return stop?.stmt ? stmtItemId(stop.call, stop.stmt) : record.edNode;
 }
 
 // The expression a statement evaluates: what a declaration is defined as, the expression a result is
@@ -371,4 +409,94 @@ function RunValues(props) {
   );
 }
 
-export {LineNumber, RunValues, StatementText, buildTree, isComment, statementLine, stmtItemId, syntaxIndex};
+// The definition a node is a call of, as the name its arrow is written under. A node carries that
+// arrow in either of two forms -- the program's own, or the one built for the call -- and the name is
+// read the same way out of both.
+function nodeFun(node) {
+  const [eitherOa] = node;
+  const oa = "Left" in eitherOa ? eitherOa["Left"] : eitherOa["Right"];
+  const obj = oa && oa.oaObj;
+  return obj ? exprPath(obj) : null;
+}
+
+// The head of a name expression, walking down through however many arguments were applied to it and
+// through whatever was written around it. Both the program's expressions and the built ones are
+// walked, since a node carries its arrow in either form -- which is what `exprContents` is for.
+function exprPath(expr) {
+  let e = expr;
+  for (;;) {
+    const parts = e && exprContents(e);
+    if (!parts) {
+      return null;
+    }
+    switch (e.tag) {
+    case "TupleApply":
+    case "TTupleApply":
+      e = parts[1][1];
+      break;
+    case "EWhere":
+    case "TWhere":
+      e = parts[1];
+      break;
+    case "AliasExpr":
+    case "TAliasExpr":
+      e = parts[0];
+      break;
+    case "Value":
+    case "TValue":
+      return parts[1];
+    default:
+      return null;
+    }
+  }
+}
+
+// A call with a display of its own stands for the whole recursion of calls of the same definition
+// underneath it, because that is what its display describes: a mapping over three elements is four
+// nested calls of one definition, and one table of three rows.
+//
+// What each row opens onto is collected here. At each level, everything that is NOT the recursion
+// continuing is what that level did -- for an fmap, the one call of the mapped function -- and those
+// calls are one row. A level that did more than one such thing hands over all of them rather than
+// picking, since a row that quietly showed one of two would be a row that lied about what happened.
+//
+// The recursion need not be a chain. A definition over a tree calls itself on both subtrees, and its
+// rows are wanted in the order its levels did their own work, which is the order it made its calls
+// in: a level's row goes after the rows of the recursive calls it made before its own work and before
+// the rows of those it made after. A mapping over a map's values calls itself on the left subtree,
+// then the mapped function, then itself on the right, so its rows come out in key order; a list's
+// chain has its own work before its one recursive call, so its rows come out in element order as
+// they always have. Nothing here knows which of those it is walking.
+function chainSteps(node, fun) {
+  const steps = levelSteps(node, fun);
+  // The last level of a chain is the one that ended it -- an fmap's Nil arm -- and did nothing of its
+  // own, so it contributes no row. Dropping it here rather than in the walk keeps the walk about the
+  // shape of the recursion and this about what a table has rows for.
+  while (steps.length && !steps[steps.length - 1].length) {
+    steps.pop();
+  }
+  return steps;
+}
+
+// The rows of one level and of every level below it, in the order the calls were made.
+//
+// A level that made no call at all -- a leaf of the recursion, such as a map's empty subtree --
+// contributes nothing, where one that recursed without doing anything of its own still contributes
+// its empty row, which keeps every row after it opening onto its own level.
+function levelSteps(node, fun) {
+  const children = node[3];
+  const own = children.filter(child => nodeFun(child) !== fun);
+  const recursive = children.filter(child => nodeFun(child) === fun);
+  if (!own.length && !recursive.length) {
+    return [];
+  }
+  const firstOwn = children.findIndex(child => nodeFun(child) !== fun);
+  const before = firstOwn < 0 ? 0 : recursive.filter(child => children.indexOf(child) < firstOwn).length;
+  return [
+    ...recursive.slice(0, before).flatMap(child => levelSteps(child, fun)),
+    own,
+    ...recursive.slice(before).flatMap(child => levelSteps(child, fun)),
+  ];
+}
+
+export {LineNumber, RunValues, StatementText, buildTree, chainSteps, debugTargetOf, isComment, nodeFun, statementLine, stmtItemId, syntaxIndex};

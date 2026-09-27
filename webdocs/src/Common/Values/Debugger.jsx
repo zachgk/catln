@@ -6,12 +6,12 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import {TreeItem} from '@mui/x-tree-view/TreeItem';
 import Link from '@mui/material/Link';
 
-import {ExprStyleContext, exprContents, runStyle} from '../Semantics';
+import {ExprStyleContext, runStyle} from '../Semantics';
 import {NameLinkContext, PTypeName} from '../Common';
 import {InlineValue, Value} from '../Value';
-import {CallStepsContext} from './Steps';
+import {CallStepIdsContext, CallStepsContext} from './Steps';
 import {SourceButton, SourceContext, SourcePanel} from './DebugSource';
-import {LineNumber, RunValues, StatementText, buildTree, isComment, statementLine, stmtItemId, syntaxIndex} from './DebugSyntax';
+import {LineNumber, RunValues, StatementText, buildTree, debugTargetOf, isComment, nodeFun, statementLine, stmtItemId, syntaxIndex} from './DebugSyntax';
 
 // How an item of the tree reaches the rest of it: what each node's expression came to, the items by
 // the node they stand for, and how to go to another item.
@@ -69,7 +69,7 @@ function Debugger(props) {
 
   // An item inside a call opened under the part of a line it was is shown only once that call is,
   // so going to it opens each such call above it as well as expanding it.
-  const goTo = useCallback(itemId => {
+  const expandTo = useCallback(itemId => {
     const above = [];
     const opened = id => tree.byId[id]?.inLine ? [openKey(id)] : [];
     above.push(...opened(itemId));
@@ -80,15 +80,26 @@ function Debugger(props) {
       const closed = above.filter(id => !open.includes(id));
       return closed.length ? [...open, ...closed] : open;
     });
-    setSelected(itemId);
   }, [tree]);
+  const goTo = useCallback(itemId => {
+    expandTo(itemId);
+    setSelected(itemId);
+  }, [expandTo]);
 
-  // A #debug record names the call it was recorded in, which is either a call of a function or the
-  // arrow of a line of one; the record leads to whichever it is.
-  const reveal = useCallback(node => {
-    const stop = tree.stops[node];
-    goTo(stop?.stmt ? stmtItemId(stop.call, stop.stmt) : node);
-  }, [tree, goTo]);
+  // The #debug record being followed, if one is: it and the line of the tree it was recorded at are
+  // marked alike, so the two read as one thing, and pressing it again lets both go. Marked rather than
+  // selected, since the tree's own selection is the reader's and draws over any mark.
+  const debugTargets = useMemo(() => debugs.map(d => debugTargetOf(d, tree, tree.stops)), [debugs, tree]);
+  const [focusedDebug, setFocusedDebug] = useState(null);
+  const highlighted = focusedDebug === null ? null : debugTargets[focusedDebug];
+  const focusDebug = useCallback(i => {
+    if (focusedDebug === i) {
+      setFocusedDebug(null);
+    } else {
+      setFocusedDebug(i);
+      expandTo(debugTargets[i]);
+    }
+  }, [focusedDebug, debugTargets, expandTo]);
 
   // Opening a call in place shows it with its lines, since its lines are what it was opened to read.
   const toggleOpen = useCallback(id => {
@@ -97,8 +108,8 @@ function Debugger(props) {
       : [...open, openKey(id), ...(open.includes(id) ? [] : [id])]);
   }, []);
   const isOpen = useCallback(id => expanded.includes(openKey(id)), [expanded]);
-  const treeContext = useMemo(() => ({resolved: tree.resolved, byNode: tree.byNode, byId: tree.byId, goTo, nodeRefs, isOpen, toggleOpen}),
-                              [tree, goTo, isOpen, toggleOpen]);
+  const treeContext = useMemo(() => ({resolved: tree.resolved, byNode: tree.byNode, byId: tree.byId, goTo, nodeRefs, isOpen, toggleOpen, highlighted}),
+                              [tree, goTo, isOpen, toggleOpen, highlighted]);
 
   // After the ancestors are open, since an item inside a collapsed one has nothing on screen to
   // bring into view. Optional chained because jsdom implements no scrolling at all.
@@ -107,6 +118,11 @@ function Debugger(props) {
       nodeRefs.current[selected]?.scrollIntoView?.({block: 'nearest'});
     }
   }, [selected, expanded]);
+  useEffect(() => {
+    if (highlighted) {
+      nodeRefs.current[highlighted]?.scrollIntoView?.({block: 'nearest'});
+    }
+  }, [highlighted, expanded]);
 
   // Written for reading a run rather than a program, with its types on hover and without the call
   // trees the tree below already shows as calls: see ExprStyleContext.
@@ -157,8 +173,10 @@ function Debugger(props) {
               <h3>Debug</h3>
               <ol>
                 {debugs.map((d, i) => (
-                  <li key={i}>
-                    <Link component="button" type="button" onClick={() => reveal(d.edNode)}>
+                  <li key={i} className={focusedDebug === i ? "catln-debug-focused" : undefined}
+                    onClick={() => focusDebug(i)} style={{cursor: 'pointer', width: 'fit-content', padding: '0 6px', borderRadius: '4px', ...(focusedDebug === i ? HIGHLIGHT_STYLE : {})}}>
+                    <Link component="button" type="button" aria-pressed={focusedDebug === i}
+                      title={focusedDebug === i ? "Stop following this record" : "Go to where this was recorded"}>
                       {showDebugPos(d.edPos)}
                     </Link>
                     {" ↦ "}
@@ -198,96 +216,6 @@ function showDebugPos(pos) {
   }
   const [start] = pos;
   return `${start.name.split("/").pop()}:${start.line}`;
-}
-
-// The definition a node is a call of, as the name its arrow is written under. A node carries that
-// arrow in either of two forms -- the program's own, or the one built for the call -- and the name is
-// read the same way out of both.
-function nodeFun(node) {
-  const [eitherOa] = node;
-  const oa = "Left" in eitherOa ? eitherOa["Left"] : eitherOa["Right"];
-  const obj = oa && oa.oaObj;
-  return obj ? exprPath(obj) : null;
-}
-
-// The head of a name expression, walking down through however many arguments were applied to it and
-// through whatever was written around it. Both the program's expressions and the built ones are
-// walked, since a node carries its arrow in either form -- which is what `exprContents` is for.
-function exprPath(expr) {
-  let e = expr;
-  for (;;) {
-    const parts = e && exprContents(e);
-    if (!parts) {
-      return null;
-    }
-    switch (e.tag) {
-    case "TupleApply":
-    case "TTupleApply":
-      e = parts[1][1];
-      break;
-    case "EWhere":
-    case "TWhere":
-      e = parts[1];
-      break;
-    case "AliasExpr":
-    case "TAliasExpr":
-      e = parts[0];
-      break;
-    case "Value":
-    case "TValue":
-      return parts[1];
-    default:
-      return null;
-    }
-  }
-}
-
-// A call with a display of its own stands for the whole recursion of calls of the same definition
-// underneath it, because that is what its display describes: a mapping over three elements is four
-// nested calls of one definition, and one table of three rows.
-//
-// What each row opens onto is collected here. At each level, everything that is NOT the recursion
-// continuing is what that level did -- for an fmap, the one call of the mapped function -- and those
-// calls are one row. A level that did more than one such thing hands over all of them rather than
-// picking, since a row that quietly showed one of two would be a row that lied about what happened.
-//
-// The recursion need not be a chain. A definition over a tree calls itself on both subtrees, and its
-// rows are wanted in the order its levels did their own work, which is the order it made its calls
-// in: a level's row goes after the rows of the recursive calls it made before its own work and before
-// the rows of those it made after. A mapping over a map's values calls itself on the left subtree,
-// then the mapped function, then itself on the right, so its rows come out in key order; a list's
-// chain has its own work before its one recursive call, so its rows come out in element order as
-// they always have. Nothing here knows which of those it is walking.
-function chainSteps(node, fun) {
-  const steps = levelSteps(node, fun);
-  // The last level of a chain is the one that ended it -- an fmap's Nil arm -- and did nothing of its
-  // own, so it contributes no row. Dropping it here rather than in the walk keeps the walk about the
-  // shape of the recursion and this about what a table has rows for.
-  while (steps.length && !steps[steps.length - 1].length) {
-    steps.pop();
-  }
-  return steps;
-}
-
-// The rows of one level and of every level below it, in the order the calls were made.
-//
-// A level that made no call at all -- a leaf of the recursion, such as a map's empty subtree --
-// contributes nothing, where one that recursed without doing anything of its own still contributes
-// its empty row, which keeps every row after it opening onto its own level.
-function levelSteps(node, fun) {
-  const children = node[3];
-  const own = children.filter(child => nodeFun(child) !== fun);
-  const recursive = children.filter(child => nodeFun(child) === fun);
-  if (!own.length && !recursive.length) {
-    return [];
-  }
-  const firstOwn = children.findIndex(child => nodeFun(child) !== fun);
-  const before = firstOwn < 0 ? 0 : recursive.filter(child => children.indexOf(child) < firstOwn).length;
-  return [
-    ...recursive.slice(0, before).flatMap(child => levelSteps(child, fun)),
-    own,
-    ...recursive.slice(before).flatMap(child => levelSteps(child, fun)),
-  ];
 }
 
 // The arrow a node entered, in whichever of its two forms it carries: the program's own, or the one
@@ -337,6 +265,10 @@ const callSx = {
     paddingBottom: '2px',
   },
 };
+// The mark a followed #debug record and the line it was recorded at share.
+const HIGHLIGHT_STYLE = {backgroundColor: 'rgba(76, 175, 80, 0.30)', outline: '2px solid rgba(46, 125, 50, 0.75)'};
+const highlightSx = {'& > .MuiTreeItem-content': {...HIGHLIGHT_STYLE, outlineOffset: '-2px'}};
+
 const stepSx = {
   '& > .MuiTreeItem-content': {
     fontSize: '0.85em',
@@ -438,8 +370,10 @@ function BreakdownRow(props) {
 // One item of the run's tree (see `buildTree` in DebugSyntax for the kinds).
 function DebugItem(props) {
   const {item} = props;
-  const {goTo, nodeRefs} = useContext(DebugTreeContext);
+  const {goTo, nodeRefs, highlighted} = useContext(DebugTreeContext);
   const ref = el => {nodeRefs.current[item.id] = el};
+  const marked = highlighted === item.id;
+  const mark = marked ? highlightSx : {};
   // A statement's breakdown holds the items opened in it, so only the statements under it, and a
   // step's own children, are items of their own here.
   const itemChildren = item.breakdowns
@@ -468,7 +402,7 @@ function DebugItem(props) {
         </span>
       </span>
     );
-    return <TreeItem itemId={item.id} label={label} ref={ref} className="catln-debug-call" sx={callSx}>{children}</TreeItem>;
+    return <TreeItem itemId={item.id} label={label} ref={ref} className="catln-debug-call" sx={[callSx, mark]} data-highlighted={marked || undefined}>{children}</TreeItem>;
   }
   case 'stmt': {
     // A line of the function with no run was not evaluated in this call: desugar evaluates a line where
@@ -490,7 +424,7 @@ function DebugItem(props) {
         {value}
       </span>
     );
-    return <TreeItem itemId={item.id} label={label} ref={ref} className="catln-debug-stmt" data-stmt={item.sid}>{children}</TreeItem>;
+    return <TreeItem itemId={item.id} label={label} ref={ref} className="catln-debug-stmt" data-stmt={item.sid} sx={mark} data-highlighted={marked || undefined}>{children}</TreeItem>;
   }
   case 'lineref': {
     // A line of a function shown elsewhere in the tree, where it opens onto how it was evaluated.
@@ -506,7 +440,7 @@ function DebugItem(props) {
         <StepLabel node={node} />
       </span>
     );
-    return <TreeItem itemId={item.id} label={label} ref={ref} className="catln-debug-step" sx={stepSx} />;
+    return <TreeItem itemId={item.id} label={label} ref={ref} className="catln-debug-step" sx={[stepSx, mark]} data-highlighted={marked || undefined} />;
   }
   default: {
     const {node} = item;
@@ -521,26 +455,27 @@ function DebugItem(props) {
     if (show) {
       return <ShowItem item={item} fun={nodeFun(node)} id={id} show={show} itemRef={ref} />;
     }
-    return <TreeItem itemId={item.id} label={<StepLabel node={node} />} ref={ref} className="catln-debug-step" sx={stepSx}>{children}</TreeItem>;
+    return <TreeItem itemId={item.id} label={<StepLabel node={node} />} ref={ref} className="catln-debug-step" sx={[stepSx, mark]} data-highlighted={marked || undefined}>{children}</TreeItem>;
   }
   }
 }
 
-// A call with a display of its own, whose rows open onto the items of the calls each row stands for.
+// A call with a display of its own, whose rows open onto the items of the calls each row stands for
+// (the `showrow` items `buildTree` makes of them).
 function ShowItem(props) {
   const {item, fun, id, show, itemRef} = props;
-  const {byNode} = useContext(DebugTreeContext);
-  const steps = chainSteps(item.node, fun).map(
-    level => level.map(child => byNode[child[4]] ? <DebugItem item={byNode[child[4]]} key={child[4]} /> : null)
-  );
+  const steps = item.children.map(row => row.children.map(child => <DebugItem item={child} key={child.id} />));
+  const rowIds = item.children.map(row => row.id);
   // Named rather than written out. The generic label spells the whole definition because that is all
   // it has to say about the call; this one has the display below it saying what the call did, so the
   // definition it was is a heading rather than the content.
   return (
     <TreeItem itemId={item.id} label={<span><SourceButton id={id} oa={nodeArrow(item.node)} /><PTypeName name={fun} /></span>} ref={itemRef}>
-      <CallStepsContext.Provider value={steps}>
-        <Value data={show} />
-      </CallStepsContext.Provider>
+      <CallStepIdsContext.Provider value={rowIds}>
+        <CallStepsContext.Provider value={steps}>
+          <Value data={show} />
+        </CallStepsContext.Provider>
+      </CallStepIdsContext.Provider>
     </TreeItem>
   );
 }

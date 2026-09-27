@@ -3,7 +3,7 @@ import React, {useContext} from 'react';
 import {TreeItem} from '@mui/x-tree-view/TreeItem';
 
 import {valList} from '../Common';
-import {CallStepsContext, StepLine, StepTable, keyCells} from './Steps';
+import {CallStepIdsContext, CallStepsContext, StepLine, StepTable, keyCells} from './Steps';
 
 // A fold shown as what it did, step by step: the accumulator each step was handed, the element it
 // combined in, and the accumulator it handed on.
@@ -26,6 +26,7 @@ function FoldSteps(props) {
   const steps = valList(props["/steps"]);
   const fromRight = isTrue(props["/fromRight"]);
   const rowNodes = useContext(CallStepsContext);
+  const rowIds = useContext(CallStepIdsContext);
   const {keyed} = props;
 
   const init = <StepLine><FoldRow className="catln-fold-init" keyed={keyed} cells={keyCells(keyed, ["init", "", "", "", "", cell(props["/init"]), fromRight ? upFlow(steps.length) : downFlow(steps.length)], "")} /></StepLine>;
@@ -39,7 +40,7 @@ function FoldSteps(props) {
     return (
       <TreeItem
         key={i}
-        itemId={`step-${i}`}
+        itemId={rowIds?.[i] ?? `step-${i}`}
         label={<FoldRow keyed={keyed} cells={keyCells(keyed, [cell(args["/index"]), cell(args["/acc"]), "⊕", cell(args["/input"]), "↦", cell(args["/output"]), flow], cell(args["/key"]))} />}
       >
         {rowNodes[i]}
