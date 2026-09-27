@@ -11,7 +11,7 @@ import {NameLinkContext, PTypeName} from '../Common';
 import {InlineValue, Value} from '../Value';
 import {CallStepsContext} from './Steps';
 import {SourceButton, SourceContext, SourcePanel} from './DebugSource';
-import {RunValues, StatementText, buildTree, isComment, stmtItemId, syntaxIndex} from './DebugSyntax';
+import {LineNumber, RunValues, StatementText, buildTree, isComment, statementLine, stmtItemId, syntaxIndex} from './DebugSyntax';
 
 // How an item of the tree reaches the rest of it: what each node's expression came to, the items by
 // the node they stand for, and how to go to another item.
@@ -294,6 +294,54 @@ function StepLabel(props) {
   return <span><SourceButton id={id} oa={nodeArrow(node)} /><InlineValue data={input} /> =&gt; <InlineValue data={val} />{cameTo}</span>;
 }
 
+// How the two kinds of item are told apart. A call of a function is a block of source: a header naming
+// the function and the file it is written in, over a tinted body holding its statements, each beside
+// the line it is written on. A step of the evaluation between them is smaller and plainer, as the
+// working that connects one piece of source to the next rather than source itself.
+const BLOCK_EDGE = 'rgba(25, 118, 210, 0.45)';
+const callSx = {
+  margin: '6px 0',
+  '& > .MuiTreeItem-content': {
+    border: `1px solid ${BLOCK_EDGE}`,
+    borderRadius: '6px',
+    backgroundColor: 'rgba(25, 118, 210, 0.10)',
+  },
+  '&[aria-expanded="true"] > .MuiTreeItem-content': {
+    borderRadius: '6px 6px 0 0',
+  },
+  '& > .MuiTreeItem-groupTransition': {
+    borderLeft: `3px solid ${BLOCK_EDGE}`,
+    borderBottom: `1px solid ${BLOCK_EDGE}`,
+    borderRadius: '0 0 0 6px',
+    backgroundColor: 'rgba(25, 118, 210, 0.035)',
+    marginLeft: '6px',
+    paddingLeft: '4px',
+    paddingBottom: '2px',
+  },
+};
+const stepSx = {
+  '& > .MuiTreeItem-content': {
+    fontSize: '0.85em',
+    color: 'text.secondary',
+    paddingTop: 0,
+    paddingBottom: 0,
+  },
+};
+
+// The file a call's function is written in, and where, heading its block. The name alone, with the
+// whole path on hover: a run reaches whatever it imports, and the paths mostly share a prefix.
+function FileTag(props) {
+  const {statement} = props;
+  const line = statementLine(statement.ssTree.rstStatement);
+  const name = statement.ssFile.split("/").pop();
+  return (
+    <span className="catln-debug-file" title={statement.ssFile}
+      style={{fontSize: '0.75em', fontWeight: 600, letterSpacing: '0.02em', marginRight: '0.75em', padding: '1px 6px', borderRadius: '3px', backgroundColor: 'rgba(25, 118, 210, 0.18)'}}>
+      {name}{line ? `:${line}` : ""}
+    </span>
+  );
+}
+
 // One item of the run's tree (see `buildTree` in DebugSyntax for the kinds).
 function DebugItem(props) {
   const {item} = props;
@@ -309,6 +357,7 @@ function DebugItem(props) {
     const {call, node, statement, runs} = item;
     const label = (
       <span>
+        <FileTag statement={statement} />
         <SourceButton id={call.scNode} oa={nodeArrow(node)} />
         <StatementText statement={statement.ssTree.rstStatement} />
         {runs.length ? <RunValues runs={runs} /> : null}
@@ -317,7 +366,7 @@ function DebugItem(props) {
         </span>
       </span>
     );
-    return <TreeItem itemId={item.id} label={label} ref={ref} className="catln-debug-call">{children}</TreeItem>;
+    return <TreeItem itemId={item.id} label={label} ref={ref} className="catln-debug-call" sx={callSx}>{children}</TreeItem>;
   }
   case 'stmt': {
     // A line of the function with no run was not evaluated in this call: desugar evaluates a line where
@@ -334,6 +383,7 @@ function DebugItem(props) {
     }
     const label = (
       <span style={{opacity: own || runs.length ? 1 : 0.55}}>
+        <LineNumber statement={statement} />
         <StatementText statement={statement} />
         {value}
       </span>
@@ -341,7 +391,7 @@ function DebugItem(props) {
     return <TreeItem itemId={item.id} label={label} ref={ref} className="catln-debug-stmt" data-stmt={item.sid}>{children}</TreeItem>;
   }
   case 'run':
-    return <TreeItem itemId={item.id} label={<span>run {item.index + 1}<RunValues runs={[item.run]} /></span>} ref={ref}>{children}</TreeItem>;
+    return <TreeItem itemId={item.id} label={<span>run {item.index + 1}<RunValues runs={[item.run]} /></span>} ref={ref} sx={stepSx}>{children}</TreeItem>;
   case 'lineref': {
     // A line of a function shown elsewhere in the tree, where it opens onto how it was evaluated.
     const {stop, node} = item;
@@ -356,7 +406,7 @@ function DebugItem(props) {
         <StepLabel node={node} />
       </span>
     );
-    return <TreeItem itemId={item.id} label={label} ref={ref} />;
+    return <TreeItem itemId={item.id} label={label} ref={ref} className="catln-debug-step" sx={stepSx} />;
   }
   default: {
     const {node} = item;
@@ -371,7 +421,7 @@ function DebugItem(props) {
     if (show) {
       return <ShowItem item={item} fun={nodeFun(node)} id={id} show={show} itemRef={ref} />;
     }
-    return <TreeItem itemId={item.id} label={<StepLabel node={node} />} ref={ref}>{children}</TreeItem>;
+    return <TreeItem itemId={item.id} label={<StepLabel node={node} />} ref={ref} className="catln-debug-step" sx={stepSx}>{children}</TreeItem>;
   }
   }
 }

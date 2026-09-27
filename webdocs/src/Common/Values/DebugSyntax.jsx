@@ -158,6 +158,43 @@ function statementId(statement) {
   return body?.roaObj ? rawExprMeta(body.roaObj)?.getMetaId : null;
 }
 
+// The line of its file a statement is written on: the first line anything in it is placed on.
+//
+// Read over everything in the statement rather than off its own meta, because the parser gives an
+// operator or a method call no position of its own (`mkOp2` in src/Syntax/Ct/Parser/Expr.hs), and a
+// result line is usually one: `scale(v= …) + sum` is placed only by the parts it is made of.
+function statementLine(statement) {
+  const body = statementBody(statement);
+  const expr = statement.tag === "RawAnnot" ? body : body?.roaObj;
+  let first = null;
+  const walk = value => {
+    if (Array.isArray(value)) {
+      value.forEach(walk);
+    } else if (value && typeof value === 'object') {
+      if ('getMetaPos' in value) {
+        const line = value.getMetaPos?.[0]?.line;
+        if (line && (first === null || line < first)) {
+          first = line;
+        }
+        return;
+      }
+      Object.values(value).forEach(walk);
+    }
+  };
+  walk(expr);
+  return first;
+}
+
+// The line number a statement is shown beside, so each line of a block says where it is written.
+function LineNumber(props) {
+  const line = statementLine(props.statement);
+  return (
+    <span className="catln-debug-lineno" style={{display: 'inline-block', minWidth: '2.5em', marginRight: '0.75em', textAlign: 'right', opacity: 0.45, fontFamily: 'monospace', fontSize: '0.85em'}}>
+      {line ?? ""}
+    </span>
+  );
+}
+
 // A comment written inside a function, which is not evaluated and so has no value to show.
 function isComment(statement) {
   return statement.tag === "RawAnnot" && (rawPath(statementBody(statement)) ?? "").endsWith("#md");
@@ -215,4 +252,4 @@ function RunValues(props) {
   );
 }
 
-export {RunValues, StatementText, buildTree, isComment, stmtItemId, syntaxIndex};
+export {LineNumber, RunValues, StatementText, buildTree, isComment, statementLine, stmtItemId, syntaxIndex};

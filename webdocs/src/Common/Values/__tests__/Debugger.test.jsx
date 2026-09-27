@@ -566,10 +566,18 @@ describe('Debugger over a call over a map, whose recursion is a tree', () => {
       return item.querySelector(':scope > .MuiTreeItem-content .MuiTreeItem-label')
     }
 
+    // What a label says, without where it is written: the file heading a block and the line number
+    // beside each statement.
+    function labelText(item) {
+      const label = labelOf(item).cloneNode(true)
+      label.querySelectorAll('.catln-debug-file, .catln-debug-lineno').forEach(e => e.remove())
+      return label.textContent
+    }
+
     // The item on screen whose label starts as given, or matches the given pattern.
     function itemOf(text) {
       const matches = label => typeof text === 'string' ? label.startsWith(text) : text.test(label)
-      const found = screen.getAllByRole('treeitem').filter(item => matches(labelOf(item).textContent))
+      const found = screen.getAllByRole('treeitem').filter(item => matches(labelText(item)))
       expect(found).toHaveLength(1)
       return found[0]
     }
@@ -635,6 +643,25 @@ describe('Debugger over a call over a map, whose recursion is a tree', () => {
       await user.click(within(screen.getAllByRole('listitem')[0]).getByRole('button'))
 
       expect(itemOf('total(a')).toHaveAttribute('aria-selected', 'true')
+    })
+
+    // A call of a function is a block of source, which says where it is written: the file and line of
+    // the function heading it, and the line of each statement beside it. The steps between are not.
+    it('heads each function with where it is written, and numbers its lines', async () => {
+      const user = userEvent.setup()
+      render(<Providers><Debugger {...syntaxRun()} /></Providers>)
+
+      const total = itemOf('total(a')
+      expect(total).toHaveClass('catln-debug-call')
+      expect(labelOf(total).querySelector('.catln-debug-file')).toHaveTextContent('debugNested.ct:14')
+      expect(labelOf(itemOf('sum = a + b')).querySelector('.catln-debug-lineno')).toHaveTextContent('15')
+
+      await user.click(labelOf(itemOf('scale(v = helper')))
+      expect(labelOf(itemOf(/^scale\(v -> /)).querySelector('.catln-debug-file')).toHaveTextContent('debugNested.ct:7')
+      // A use of a line is a step between blocks, drawn as one rather than as source.
+      const use = screen.getAllByRole('button', { name: '↑ line' })[0].closest('[role=treeitem]')
+      expect(use).toHaveClass('catln-debug-step')
+      expect(labelOf(use).querySelector('.catln-debug-file')).toBeNull()
     })
 
     // The whole run is this tree: there is no second tree of calls, nor of arrows.
