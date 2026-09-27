@@ -1,0 +1,395 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/bump.$9471e8"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /bump.$9471e8
+                            ( EAppArg
+                                { eaaArg = Value /$9471e8-arg@Value /x }
+                            ) -> /Data/Maybe/Some( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                            ( EAppArg
+                                { eaaArg = Value /value -> /Data/Primitive/Integer =
+                                    ( /operator+
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) =
+                                                ( /bump.$9471e8.doubled
+                                                    ( EAppArg
+                                                        { eaaArg = Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) }
+                                                    ) ↦ ( /Data/Primitive/Integer + /Data/Primitive/Float )
+                                                )
+                                            }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                        ) ↦ /Data/Primitive/Integer
+                                    )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/bump"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /bump
+                            ( EAppArg
+                                { eaaArg = Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
+                            ) ->
+                            ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Maybe[ /T=TopType ] ) =
+                            ( /Data/bindap
+                                ( EAppArg
+                                    { eaaArg = Value /m -> TVArg /m = ( Value /m ↦ TVArg /m ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = /fn
+                                        ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) =
+                                        ( /bump.$9471e8
+                                            ( EAppArg
+                                                { eaaArg = Value /$9471e8-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                            ) ↦ /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                        )
+                                    }
+                                ) ↦
+                                ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/Maybe[ /T=TopType ] )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
+                            ( /Catln/exit
+                                ( /this=/Catln/IO
+                                , /val=/Data/Primitive/Integer
+                                ) + /Catln/IO
+                            ) =
+                            ( /Catln/exit
+                                ( EAppArg
+                                    { eaaArg = Value /val -> /Data/Primitive/Integer =
+                                        ( /operator-
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                    ( /total
+                                                        ( EAppArg
+                                                            { eaaArg = Value /a -> /Data/Primitive/Integer = 1 }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /b -> /Data/Primitive/Integer = 2 }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer = 63 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                ) ↦ /Catln/IO
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/total.helper"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /total.helper
+                            ( EAppArg { eaaArg = Value /a -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /b -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /y -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                            ( /operator+
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /y = ( Value /y ↦ TVArg /y ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                        ( /total.sum
+                                            ( EAppArg
+                                                { eaaArg = Value /a -> TVArg /a = ( Value /a ↦ TVArg /a ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /b -> TVArg /b = ( Value /b ↦ TVArg /b ) }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/scale"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /scale
+                            ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                            ( /operator*
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 10 }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/sign.$c1be8f"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /sign.$c1be8f
+                            ( EAppArg { eaaArg = Value /$c1be8f-arg -> /Catln/Then = Value /Catln/Then } ) -> /Data/Primitive/Integer = 1
+                        , /sign.$c1be8f
+                            ( EAppArg { eaaArg = Value /$c1be8f-arg -> /Catln/Else = Value /Catln/Else } ) ->
+                            ( /operator-( /a=/Data/Primitive/Integer ) + /Data/Primitive/Integer ) =
+                            ( /operator-
+                                ( EAppArg
+                                    { eaaArg = Value /a -> /Data/Primitive/Integer = 1 }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/bump.$9471e8.doubled"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /bump.$9471e8.doubled
+                            ( EAppArg { eaaArg = Value /x } ) ->
+                            ( /operator+
+                                ( /r=TopType
+                                , /l=TopType
+                                ) + /Data/Primitive/Integer + /Data/Primitive/Float
+                            ) =
+                            ( /operator+
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /x = ( Value /x ↦ TVArg /x ) }
+                                ) ↦ ( /Data/Primitive/Integer + /Data/Primitive/Float )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/total.unused"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /total.unused
+                            ( EAppArg { eaaArg = Value /a -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /b -> /Data/Primitive/Integer } ) ->
+                            ( /operator*
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
+                            ) =
+                            ( /operator*
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/total.sum"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /total.sum
+                            ( EAppArg { eaaArg = Value /a -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /b -> /Data/Primitive/Integer } ) ->
+                            ( /operator+
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
+                            ) =
+                            ( /operator+
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/sign"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /sign
+                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) ->
+                            ( /operator-( /a=/Data/Primitive/Integer ) + /sign.$c1be8f
+                                ( /$c1be8f-arg=( /Catln/Else + /Catln/Then ) ) + /Data/Primitive/Integer
+                            ) =
+                            ( /sign.$c1be8f
+                                ( EAppArg
+                                    { eaaArg = Value /$c1be8f-arg -> ( /Catln/Else + /Catln/Then ) =
+                                        ( /Catln/ThenElse/fromBool
+                                            ( EAppArg
+                                                { eaaArg = Value /v -> ∀/Data/Primitive/Boolean =
+                                                    ( /operator>=
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 0 }
+                                                        ) ↦ ∀/Data/Primitive/Boolean
+                                                    )
+                                                }
+                                            ) ↦ ( /Catln/Else + /Catln/Then )
+                                        )
+                                    }
+                                ) ↦
+                                ( /operator-( /a=/Data/Primitive/Integer ) + /Data/Primitive/Integer )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/total"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /total
+                            ( EAppArg { eaaArg = Value /a -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /b -> /Data/Primitive/Integer } ) ->
+                            ( /operator+
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
+                            ) =
+                            ( /operator+
+                                ( EAppArg
+                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                        ( /scale
+                                            ( EAppArg
+                                                { eaaArg = Value /v -> /Data/Primitive/Integer =
+                                                    ( /total.helper
+                                                        ( EAppArg
+                                                            { eaaArg = Value /a -> TVArg /a = ( Value /a ↦ TVArg /a ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /b -> TVArg /b = ( Value /b ↦ TVArg /b ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /y -> /Data/Primitive/Integer =
+                                                                ( /total.sum
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /a -> TVArg /a = ( Value /a ↦ TVArg /a ) }
+                                                                    )
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /b -> TVArg /b = ( Value /b ↦ TVArg /b ) }
+                                                                    ) ↦ /Data/Primitive/Integer
+                                                                )
+                                                            }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                        ( /operator*
+                                            ( EAppArg
+                                                { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                    ( /total.sum
+                                                        ( EAppArg
+                                                            { eaaArg = Value /a -> TVArg /a = ( Value /a ↦ TVArg /a ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /b -> TVArg /b = ( Value /b ↦ TVArg /b ) }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /r -> /Data/Primitive/Integer =
+                                                    ( /sign
+                                                        ( EAppArg
+                                                            { eaaArg = Value /x -> TVArg /a = ( Value /a ↦ TVArg /a ) }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "Tests the syntax view of the debugger: a definition written as intermediate lines leading to a
+                result, with a line used twice, a line never used, a nested helper taking its own parameter, an
+                [#assert] and a [#debug], a call to another top level function, an if and a bind." }
+            )
+        ]
+    }

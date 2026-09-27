@@ -1,0 +1,35 @@
+import "core"
+import "core"
+
+
+# Tests the syntax view of the debugger: a definition written as intermediate lines leading to a
+  result, with a line used twice, a line never used, a nested helper taking its own parameter, an
+  [#assert] and a [#debug], a call to another top level function, an if and a bind.
+scale(v -> Integer) -> Integer= v * 10
+
+sign(x -> Integer) -> Integer= if(x >= 0)
+  Then= 1
+
+  Else= -1
+
+total(a -> Integer, b -> Integer) -> Integer =
+  sum= a + b
+
+  unused= a * b
+
+  helper(y -> Integer) -> Integer= y + sum
+
+  #assert(test= sum >= 0)
+  #debug(d= sum)
+  scale(v= helper(y= sum)) + sum * sign(x= a)
+
+bump(m -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe =
+  x<- m
+
+  doubled= x + x
+
+  /Data/Maybe/Some(value= doubled + 1)
+
+main{io -> IO} =
+  #assert(test= bump(m= /Data/Maybe/Some(value= 5)) == /Data/Maybe/Some(value= 11))
+  io.exit(val= total(a= 1, b= 2) - 63)

@@ -79,6 +79,26 @@ interleavePrgm prgm = H.fromList $ execWriter $ mapMetaPrgmM f prgm
 metaIDNamespace :: UUID.UUID
 metaIDNamespace = UUID5.generateNamed UUID5.namespaceURL $ utf8Bytes "https://catln.dev/metaID"
 
+-- | What desugar synthesizes an arrow for on behalf of a written statement: the continuation of a
+-- bind, an arm of an @if@ / @match@ / @case@, or the fall through a guarded @case@ arm leaves to the
+-- next one.
+data DerivedMeta
+  = DerivedBindCont
+  | DerivedBranchArm
+  | DerivedCaseFallthrough
+  deriving (Eq, Ord, Show, Enum, Bounded)
+
+-- | The id of a meta desugar synthesizes for a written statement, from the id of the statement it
+-- stands for.
+--
+-- Derived rather than numbered in 'desugarMetaIDScope', so the arrow it names can be traced back to
+-- the statement it was written as: a debugger showing a run by the page that was written finds the
+-- statement a synthesized arrow belongs to by computing this for each statement. Derived rather than
+-- copied, because an id names one meta ('interleavePrgm' keys metas by it, and an arrow's object id
+-- is the id of the test it declares) and the statement's own meta is still in the program.
+derivedMetaID :: DerivedMeta -> UUID.UUID -> UUID.UUID
+derivedMetaID kind origin = UUID5.generateNamed metaIDNamespace $ utf8Bytes $ printf "derived:%s:%s" (show kind) (UUID.toString origin)
+
 utf8Bytes :: String -> [Word8]
 utf8Bytes = B.unpack . BSU.fromString
 

@@ -14,6 +14,7 @@ module Syntax.Ct.Builder where
 import           CtConstants
 import           Data.Bifunctor          (first)
 import           Data.UUID               (nil)
+import           MapMeta                 (DerivedMeta, derivedMetaID)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
@@ -29,6 +30,12 @@ rawVal s = RawValue m (mkName s)
   where
     m = emptyMetaN
     -- m = Meta (typeVal (PTypeName name)) Nothing emptyMetaDat
+
+-- | The name of an arrow desugar synthesizes for a written statement, carrying the statement's
+-- position and an id derived from the statement's ('derivedMetaID'). The statement is named by the
+-- meta of its object, as 'Syntax.Ct.MapRawMeta.rawStatementExprIds' names statements.
+rawValDerived :: (MetaDat m) => DerivedMeta -> Meta m -> String -> RawExpr m
+rawValDerived kind origin s = RawValue (emptyMetaM origin){getMetaId=derivedMetaID kind (getMetaId origin)} (mkName s)
 
 applyRawArgs :: (MetaDat m, Show m) => RawExpr m -> [(Maybe ArgName, RawExpr m)] -> RawExpr m
 applyRawArgs base args = applyRawEArgs base (map mapArg args)

@@ -1,0 +1,194 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/bump.$9471e8"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ bump.$9471e8
+                            ( Value $9471e8-arg@Value x )= /Data/Maybe/Some
+                            ( Value value= /operator+
+                                ( Value /l= bump.$9471e8.doubled( Value /x= Value /x ) )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/bump"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ bump
+                            ( Value m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe = /Data/bindap( Value m= Value m )
+                            ( fn( Value v )= bump.$9471e8
+                                ( Value /$9471e8-arg= Value v )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= /operator-
+                                ( Value /l= total
+                                    ( Value a= CInt
+                                        { ciValue = 1 }
+                                    )
+                                    ( Value b= CInt
+                                        { ciValue = 2 }
+                                    )
+                                )
+                                ( Value /r= CInt
+                                    { ciValue = 63 }
+                                )
+                            )( Value /this= Value io )
+                        ]
+                    }
+                )
+            ,
+                ( "/total.helper"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ total.helper( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer )( Value y -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l= Value y )
+                            ( Value /r= total.sum( Value /a= Value /a )( Value /b= Value /b ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/scale"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ scale( Value v -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator*( Value /l= Value v )
+                            ( Value /r= CInt
+                                { ciValue = 10 }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/sign.$c1be8f"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ sign.$c1be8f( Value /$c1be8f-arg= Value Then )= CInt
+                            { ciValue = 1 }
+                        , sign.$c1be8f( Value /$c1be8f-arg= Value Else )= /operator-
+                            ( Value /a= CInt
+                                { ciValue = 1 }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/bump.$9471e8.doubled"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ bump.$9471e8.doubled( Value /x )= /operator+( Value /l= Value x )( Value /r= Value x ) ]
+                    }
+                )
+            ,
+                ( "/total.unused"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ total.unused( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer )= /operator*( Value /l= Value a )( Value /r= Value b ) ]
+                    }
+                )
+            ,
+                ( "/total.sum"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ total.sum( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer )= /operator+( Value /l= Value a )( Value /r= Value b ) ]
+                    }
+                )
+            ,
+                ( "/sign"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ sign( Value x -> /Data/Primitive/Integer )= sign.$c1be8f
+                            ( Value /$c1be8f-arg= /Catln/ThenElse/fromBool
+                                ( Value /v= /operator>=( Value /l= Value x )
+                                    ( Value /r= CInt
+                                        { ciValue = 0 }
+                                    )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/total"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ total( Value a -> /Data/Primitive/Integer )( Value b -> /Data/Primitive/Integer )= /operator+
+                            ( Value /l= scale
+                                ( Value v= total.helper( Value /a= Value /a )( Value /b= Value /b )
+                                    ( Value y= total.sum( Value /a= Value /a )( Value /b= Value /b ) )
+                                )
+                            )
+                            ( Value /r= /operator*
+                                ( Value /l= total.sum( Value /a= Value /a )( Value /b= Value /b ) )
+                                ( Value /r= sign( Value x= Value a ) )
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Tests the syntax view of the debugger: a definition written as intermediate lines leading to a
+                result, with a line used twice, a line never used, a nested helper taking its own parameter, an
+                [#assert] and a [#debug], a call to another top level function, an if and a bind." }
+            )
+        ]
+    }
