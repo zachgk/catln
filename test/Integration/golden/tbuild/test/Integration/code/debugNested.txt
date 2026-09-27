@@ -257,6 +257,114 @@ Prgm
                     }
                 )
             ,
+                ( "/totals.shifted"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /totals.shifted
+                            ( EAppArg
+                                { eaaArg = Value /xs -> ∀/Data/List[ /T=/Data/Primitive/Integer ] }
+                            ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/List[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ]
+                                , fromList []
+                                , []
+                                )
+                            ,
+                                ( /Data/Functor/fmap
+                                    ( /fn( /v=TopType )=/Data/Primitive/Integer
+                                    , /lst=∀/Data/List[ /T=/Data/Primitive/Integer ]
+                                    ) + /Data/List/Cons
+                                    ( /head=TopType
+                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                    )
+                                )
+                            , []
+                            ) =
+                            ( /Data/Functor/fmap
+                                ( EAppArg
+                                    { eaaArg = Value /lst -> TVArg /xs = ( Value /xs ↦ TVArg /xs ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = /fn
+                                        ( EAppArg { eaaArg = Value /v } ) -> /Data/Primitive/Integer =
+                                        ( /total
+                                            ( EAppArg
+                                                { eaaArg = Value /a -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /b -> /Data/Primitive/Integer = 2 }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                ) ↦
+                                ( TopType | PredClass /Data/List[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ] )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/totals"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /totals
+                            ( EAppArg
+                                { eaaArg = Value /xs -> ∀/Data/List[ /T=/Data/Primitive/Integer ] }
+                            ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/List[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ]
+                                , fromList []
+                                , []
+                                )
+                            ,
+                                ( /Data/Functor/fmap
+                                    [ /F=
+                                        ( TopType | PredClass /Data/List[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=TopType ] )
+                                    , /B=/Data/Primitive/Integer
+                                    , /A=TopType
+                                    ]
+                                    ( /fn( /v=TopType )=/Data/Primitive/Integer
+                                    , /lst=
+                                        ( TopType | PredClass /Data/List[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=TopType ] )
+                                    ) + /Data/List/Cons
+                                    ( /head=TopType
+                                    , /tail=∀/Data/List/ConsList[ /T=TopType ]
+                                    ) + /totals.shifted
+                                    ( /xs=∀/Data/List[ /T=/Data/Primitive/Integer ] )
+                                )
+                            , []
+                            ) =
+                            ( /totals.shifted
+                                ( EAppArg
+                                    { eaaArg = Value /xs -> TVArg /xs = ( Value /xs ↦ TVArg /xs ) }
+                                ) ↦ UnionType
+                                ( Just
+                                    ( PredClass /Data/List[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ]
+                                    , fromList []
+                                    , []
+                                    )
+                                , /Data/Functor/fmap
+                                    [ /F=
+                                        ( TopType | PredClass /Data/List[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=TopType ] )
+                                    , /B=/Data/Primitive/Integer
+                                    , /A=TopType
+                                    ]
+                                    ( /fn( /v=TopType )=/Data/Primitive/Integer
+                                    , /lst=
+                                        ( TopType | PredClass /Data/List[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=TopType ] )
+                                    )
+                                , []
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/sign"
                 , ObjectMapItem
                     { omiDecls = []
@@ -383,6 +491,8 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
@@ -390,6 +500,11 @@ Prgm
                 { eaaArg = Value /text -> /Data/String = "Tests the syntax view of the debugger: a definition written as intermediate lines leading to a
                 result, with a line used twice, a line never used, a nested helper taking its own parameter, an
                 [#assert] and a [#debug], a call to another top level function, an if and a bind." }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String = "A map over a list with a function of this page, so a run has an fmap among the calls of a
+                function, and under each element of the fmap the calls of a function written over several lines." }
             )
         ]
     }

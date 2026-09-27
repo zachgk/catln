@@ -380,7 +380,9 @@ function Breakdown(props) {
           {b.rows.map((row, i) => <BreakdownRow row={row} key={i} />)}
           {b.rest.length ? (
             <div style={{marginTop: '2px'}}>
-              <div style={{fontSize: '0.75em', opacity: 0.6}}>also evaluated</div>
+              {/* Beside parts, these are what the parts do not account for; with none, they are how the
+                  line was evaluated, and need no heading saying they are something else. */}
+              {b.rows.length ? <div style={{fontSize: '0.75em', opacity: 0.6}}>also evaluated</div> : null}
               {b.rest.map(child => <DebugItem item={child} key={child.id} />)}
             </div>
           ) : null}

@@ -131,6 +131,35 @@ Prgm
                     }
                 )
             ,
+                ( "/totals.shifted"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ totals.shifted
+                            ( Value /xs -> ∀/Data/List[ /T=/Data/Primitive/Integer ] )= fmap( Value lst= Value xs )
+                            ( fn( Value v )= total( Value a= Value v )
+                                ( Value b= CInt
+                                    { ciValue = 2 }
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/totals"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ totals
+                            ( Value xs -> ∀/Data/List[ /T=/Data/Primitive/Integer ] )= totals.shifted( Value /xs= Value /xs )
+                        ]
+                    }
+                )
+            ,
                 ( "/sign"
                 , ObjectMapItem
                     { omiDecls = []
@@ -182,6 +211,8 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
@@ -189,6 +220,11 @@ Prgm
                 { csValue = "Tests the syntax view of the debugger: a definition written as intermediate lines leading to a
                 result, with a line used twice, a line never used, a nested helper taking its own parameter, an
                 [#assert] and a [#debug], a call to another top level function, an if and a bind." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "A map over a list with a function of this page, so a run has an fmap among the calls of a
+                function, and under each element of the fmap the calls of a function written over several lines." }
             )
         ]
     }

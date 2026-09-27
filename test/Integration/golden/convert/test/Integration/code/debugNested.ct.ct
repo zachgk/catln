@@ -30,6 +30,13 @@ bump(m -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe =
 
   /Data/Maybe/Some(value= doubled + 1)
 
+# A map over a list with a function of this page, so a run has an fmap among the calls of a
+  function, and under each element of the fmap the calls of a function written over several lines.
+totals(xs -> /Data/List[$T -> Integer]) -> /Data/List[$T -> Integer] =
+  shifted= fmap(lst= xs, fn(v)= total(a= v, b= 2))
+  shifted
+
 main{io -> IO} =
   #assert(test= bump(m= /Data/Maybe/Some(value= 5)) == /Data/Maybe/Some(value= 11))
+  #assert(test= totals(xs= [1, 2]) == [63, 84])
   io.exit(val= total(a= 1, b= 2) - 63)

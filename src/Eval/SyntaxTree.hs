@@ -168,8 +168,11 @@ data CallAcc = CallAcc { caStmt  :: UUID
                        , caCalls :: [String]
                        }
 
-data Acc = Acc { acCalls :: H.HashMap String CallAcc
-               , acRoots :: [String]
+data Acc = Acc { acCalls     :: H.HashMap String CallAcc
+               , acRoots     :: [String]
+               -- | The call each step of a line's rewriting was made for: the call the line is a line
+               -- of, rather than whichever call the chain it was made in happened to be inside.
+               , acRewriting :: H.HashMap String String
                }
 
 -- | A run read by the functions the given pages write ('SyntaxRun').
@@ -184,9 +187,26 @@ runSyntax prgms DebugRun{drResult=EvalResult{erTreebug, erExprs, erAnnots}} = Sy
     -- The call an expression was written as, for a node that only continued its rewriting: a
     -- function returns a call of one of its own arms, which the caller then makes.
     chainHead nid = H.lookup nid exprOf >>= listToMaybe . exSteps
+    -- The calls that went on rewriting what a line's arrow returned. A line is an arrow whose result is
+    -- the term its body rewrites to, and what that term is rewritten through is made by whoever used
+    -- the line, as the next steps of the expression that used it: @shifted= fmap(…)@ returns the fmap
+    -- unapplied, and the fmap's calls follow the line's in the chain. They are the rest of how the line
+    -- came to its value, up to the next step that is a line of its own, which has its own run.
+    continuation nid = case H.lookup nid exprOf of
+      Just EvalExprRun{exSteps} -> takeWhile (not . isLineArrow) $ drop 1 $ dropWhile (/= nid) exSteps
+      Nothing                   -> []
+    isLineArrow step = case H.lookup step nodesById >>= arrowKeyOfNode >>= (`H.lookup` ixArrows ix) of
+      Just ArrowLine{}        -> True
+      Just ArrowArm{}         -> True
+      Just ArrowBindCont{}    -> True
+      Just ArrowFallthrough{} -> True
+      _                       -> False
+    arrowKeyOfNode (EvalTreebugClosed oa _ _ _ _ _) = arrowKey oa
+    nodesById = H.fromList $ concatMap nodeEntries erTreebug
+    nodeEntries n@(EvalTreebugClosed _ _ _ children nid _) = (nid, n) : concatMap nodeEntries children
     annotsOf = H.fromListWith (flip (++)) [(eaNode a, [a]) | a <- erAnnots]
 
-    Acc{acCalls=finalCalls, acRoots=finalRoots} = execState (mapM_ (visit ix []) erTreebug) (Acc H.empty [])
+    Acc{acCalls=finalCalls, acRoots=finalRoots} = execState (mapM_ (visit ix []) erTreebug) (Acc H.empty [] H.empty)
 
     calls = map buildCall (reverse finalRoots)
     buildCall nid = SyntaxCall caStmt nid (groupRuns $ reverse caRuns) (map buildCall $ reverse caCalls)
@@ -203,7 +223,10 @@ runSyntax prgms DebugRun{drResult=EvalResult{erTreebug, erExprs, erAnnots}} = Sy
     visit Index{ixArrows} stack (EvalTreebugClosed oa input _ children nid _) =
       case arrowKey oa >>= (`H.lookup` ixArrows) of
         Just (ArrowFunction si@StmtInfo{siId}) -> do
-          addCall (fst <$> listToMaybe stack) nid siId
+          -- A call made rewriting a line is a call of the function the line is in, however far out
+          -- the chain that made it runs.
+          rewritingFor <- gets (H.lookup nid . acRewriting)
+          addCall (rewritingFor <|> fst <$> listToMaybe stack) nid siId
           segmentRuns nid si nid Nothing body
           annotRuns nid annots
           continue ((nid, siId) : stack)
@@ -246,7 +269,11 @@ runSyntax prgms DebugRun{drResult=EvalResult{erTreebug, erExprs, erAnnots}} = Sy
     segmentRuns :: String -> StmtInfo -> String -> Maybe String -> [String] -> State Acc ()
     segmentRuns c si@StmtInfo{siId} nid lineNode body = do
       let result = if hasBind si then Nothing else resultStmt si
-      addRun c siId (LineRun (resolved nid) (if result == Just siId || hasBind si then body else []) lineNode (Just nid))
+      -- A line's own arrow is followed by the rest of its rewriting; a function's call is not, as what
+      -- follows a call is its caller's.
+      let rewriting = maybe [] (const $ continuation nid) lineNode
+      modify $ \acc@Acc{acRewriting} -> acc{acRewriting = foldr (`H.insert` c) acRewriting rewriting}
+      addRun c siId (LineRun (resolved nid) ((if result == Just siId || hasBind si then body else []) ++ rewriting) lineNode (Just nid))
       case result of
         Just r | r /= siId -> addRun c r (LineRun (resolved nid) body Nothing (Just nid))
         _                  -> return ()
