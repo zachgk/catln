@@ -4753,9 +4753,19 @@ isSubtypeOfWithEnvRaw typeEnv vaenv t1@(UnionType Nothing subPartials []) t2@(Un
   || positiveLeafsAllUninhabited typeEnv vaenv subPartials
   || leafPredsImplyTop
   || posPartCovers
+  || topPartCovers
   || leafwise
   || disjointFromExcluded
   where
+    -- ...and the rhs's predicate part alone likewise: it is a subset of the rhs, and a pure top
+    -- is decided by the clauses built for it (a negated formula by its meet) where the mixed
+    -- expansion above is not. Without it @Cons[/T=$_/c].. ⊆ (⊤|¬(~OrdCS ∧ ~EqCO))@ held and
+    -- the same with @/Integer@ beside the top did not (propComplementInverse, 9321: Seed
+    -- 7338669767399355190 4717664703887332163).
+    topPartCovers = case t2 of
+      UnionType (Just topData) pos2 cs2 | not (H.null pos2) || not (null cs2) ->
+        isSubtypeOfWithEnv typeEnv vaenv t1 (UnionType (Just topData) H.empty [])
+      _ -> False
     -- Against the universe minus leafs alone the question is exactly a meet: @t1 ⊆ ⊤ − n2 ⟺
     -- t1 ∩ n2 = ∅@, and the meet is exact or wider, so an empty one is proof. The routes above
     -- compare slot by slot and do not carry a variable-valued slot through
