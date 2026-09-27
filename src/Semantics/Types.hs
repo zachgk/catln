@@ -7859,7 +7859,35 @@ substitutePartialKeepScoped typeEnv scope vaenv partial@PartialType{ptVars, ptAr
 -- @Some@'s own parameters), which the meet reads without consulting the ambient env.
 innerOpen :: TypeVarAux -> Type -> Bool
 innerOpen _ TypeVar{} = True
-innerOpen v i         = not (S.null (typeOuterVarRefs i)) || typeMentionsVar v i
+innerOpen v i         = typeHasFreeOuterRef i || typeMentionsVar v i
+
+-- | Whether a type has an outer reference no partial inside it binds: any 'TVExt' (it reads the
+-- ambient env), or a 'TVParent' outside every partial of the type or naming a parameter its
+-- enclosing partial does not declare. The scoping is 'substituteTVExtScoped''s: descending into a
+-- partial's args and predicates makes that partial's parameters the layer a parent reference
+-- reads, and its 'ptVars' VALUES keep the layer they arrived with. So a recursive field's
+-- @tail=∀ConsList[/T=$_/T]@ inside a @Cons[/T=..]@ is bound by that @Cons@, and the value holding
+-- it is closed.
+typeHasFreeOuterRef :: Type -> Bool
+typeHasFreeOuterRef = go Nothing
+  where
+    go _ (TypeVar _ TVExt _) = True
+    go layer (TypeVar (TVVar n) TVParent i) = maybe True (not . S.member n) layer || go layer i
+    go _ (TypeVar _ TVParent _) = True
+    go layer (TypeVar _ _ i) = go layer i
+    go layer (UnionType mtop pos _) = topHas || any (leafHas layer) (splitUnionType pos)
+      where topHas = case mtop of
+              Just (preds, negLeafs, _) -> predsHas layer preds || any (leafHas layer) (splitUnionType negLeafs)
+              Nothing                   -> False
+    leafHas layer PartialType{ptVars, ptArgs, ptPreds} =
+      any (go layer) (H.elems ptVars) || predsHas layer' ptPreds || any (go layer') (H.elems ptArgs)
+      where layer' = Just (S.fromList (H.keys ptVars))
+    predsHas layer (PredsOne p)  = leafHas layer (predPartial p)
+    predsHas layer (PredsAnd ps) = any (predsHas layer) ps
+    predsHas layer (PredsNot p)  = predsHas layer p
+    predPartial (PredExpr p)  = p
+    predPartial (PredClass p) = p
+    predPartial (PredRel p)   = p
 
 -- | Whether a type refers to the variable @v@ (by name, under any location spelling) anywhere.
 typeMentionsVar :: TypeVarAux -> Type -> Bool
