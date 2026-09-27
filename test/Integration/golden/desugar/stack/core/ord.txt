@@ -84,8 +84,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/rel( Value a )( Value b )
-                            ( Value /this -> ∀/Data/Algebra/Ordering[ /T=$_/T ] ) -> ∀/Data/Primitive/Boolean = isEq
+                        [ /Data/Algebra/rel( Value a )( Value b )( Value /this -> ∀/Data/Algebra/Ordering ) -> ∀/Data/Primitive/Boolean = isEq
                             ( Value /this= compare( Value a= Value a )( Value b= Value b )( Value /this= Value this ) )
                         ]
                     }

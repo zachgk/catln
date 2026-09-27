@@ -148,16 +148,12 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/List/length
-                            ( EAppArg
-                                { eaaArg = Value /this -> ∀/Data/List[ /T=$_/T ] }
-                            ) -> /Data/Primitive/Integer
+                            ( EAppArg { eaaArg = Value /this -> ∀/Data/List } ) -> /Data/Primitive/Integer
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls =
                         [ /Data/List/length
-                            ( EAppArg
-                                { eaaArg = Value /this -> ∀/Data/List[ /T=$_/T ] }
-                            ) ->
+                            ( EAppArg { eaaArg = Value /this -> ∀/Data/List } ) ->
                             ( TopType | PredExpr /operator==
                                 ( /r=/Data/Primitive/True
                                 , /l=~nonNeg( /this=~/$this )

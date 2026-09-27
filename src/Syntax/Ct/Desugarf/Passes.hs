@@ -15,6 +15,7 @@
 
 module Syntax.Ct.Desugarf.Passes where
 
+import           Control.Monad.Writer    (execWriter, tell)
 import           CtConstants             (thisKey)
 import           Data.Graph
 import qualified Data.HashMap.Strict     as H
@@ -138,6 +139,13 @@ resolveRelativeNames fullPrgm@(Prgm fullPrgmObjMap _ _) (Prgm objMap (ClassGraph
 --
 -- Parameters already present on the receiver (e.g. the explicit @:Result[$R, $E].default@ form)
 -- are left untouched, and receivers that are not parameterized classes are unchanged.
+--
+-- Only a parameter the method itself names is linked: the link exists so the method's own @$T@
+-- shares the receiver's parameter, and a method with no @$T@ (@:List.length -> Integer@) has no
+-- variable for it to name. Linked anyway it was a reference to a binder that does not exist —
+-- @length(this=∀List[/T=$_/T])@ — which a caller frame binding its own @/T@ captures by name, and
+-- which the algebra cannot read (propDifferenceByIntersection, 6415: Seed 6239727124165917557
+-- 9825796995401062037). Such a receiver keeps the bare class, whose parameter is unconstrained.
 linkClassMethodReceivers :: DesPrgm -> DesPrgm -> DesPrgm
 linkClassMethodReceivers (Prgm _ (ClassGraph fullCg) _) (Prgm (ObjectMap objMap) classGraph annots) = Prgm (ObjectMap objMap') classGraph annots
   where
@@ -146,22 +154,28 @@ linkClassMethodReceivers (Prgm _ (ClassGraph fullCg) _) (Prgm (ObjectMap objMap)
     enrichItem (ObjectMapItem ds rs rfs defs) =
       ObjectMapItem (map enrichObjArr ds) (map enrichObjArr rs) (map enrichObjArr rfs) (map enrichObjArr defs)
 
-    enrichObjArr oa@ObjArr{oaObj=Just objExpr} = oa{oaObj=Just (enrichThis objExpr)}
+    enrichObjArr oa@ObjArr{oaObj=Just objExpr} = oa{oaObj=Just (enrichThis (namedByMethod oa objExpr) objExpr)}
     enrichObjArr oa                            = oa
 
+    -- Whether the method names a variable: as one of the object's own variables, or in any of
+    -- its metas (argument annotations, result, body).
+    namedByMethod oa objExpr k = H.member (TVVar k) (exprVarArgs objExpr) || any (typeMentionsVar (TVVar k)) metaTypes
+      where metaTypes = execWriter (mapMetaObjArrM (\_ m -> tell [getMetaType m] >> return m) Nothing oa)
+
     -- The @this@ receiver is applied last, so it is the outermost 'EAppArg'.
-    enrichThis (TupleApply m (bm, be) (EAppArg oa@ObjArr{oaObj=Just oe, oaArr=Just (ae, arrM)}))
-      | isThisArg oe = TupleApply m (bm, enrichThis be) (EAppArg oa{oaArr=Just (ae, mWithType (enrichReceiverType (getMetaType arrM)) arrM)})
-    enrichThis (TupleApply m (bm, be) app) = TupleApply m (bm, enrichThis be) app
-    enrichThis e = e
+    enrichThis named (TupleApply m (bm, be) (EAppArg oa@ObjArr{oaObj=Just oe, oaArr=Just (ae, arrM)}))
+      | isThisArg oe = TupleApply m (bm, enrichThis named be) (EAppArg oa{oaArr=Just (ae, mWithType (enrichReceiverType named (getMetaType arrM)) arrM)})
+    enrichThis named (TupleApply m (bm, be) app) = TupleApply m (bm, enrichThis named be) app
+    enrichThis _ e = e
 
     isThisArg oe = let p = nameStr (exprPath oe) in p == thisKey || p == "this"
 
-    enrichReceiverType (TopType negPartials (PredsOne (PredClass p@PartialType{ptName, ptVars})))
+    enrichReceiverType named (TopType negPartials (PredsOne (PredClass p@PartialType{ptName, ptVars})))
       | Just (CGClass _ PartialType{ptVars=classVarsDecl} _ _) <- graphLookup (PClassName ptName) fullCg
-      , not (H.null classVarsDecl)
-      = TopType negPartials (PredsOne (PredClass p{ptVars=H.union ptVars (H.mapWithKey (\k _ -> TypeVar (TVVar k) TVExt PTopType) classVarsDecl)}))
-    enrichReceiverType t = t
+      , let linked = H.filterWithKey (\k _ -> named k) classVarsDecl
+      , not (H.null linked)
+      = TopType negPartials (PredsOne (PredClass p{ptVars=H.union ptVars (H.mapWithKey (\k _ -> TypeVar (TVVar k) TVExt PTopType) linked)}))
+    enrichReceiverType _ t = t
 
 -- |
 -- Seeds an annotation-less definition's result meta with its declaration's return type.
