@@ -390,6 +390,7 @@ evalBaseEnvService service prgm@Prgm{prgmObjMap} = Env {
         evCallStack = [],
         evCoverage = H.empty,
         evTreebugOpen = [],
+        evTreebugClaimed = S.empty,
         evTreebugClosed = [],
         evTreebugNextId = 0,
         evDebugs = [],

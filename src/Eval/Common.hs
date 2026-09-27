@@ -398,7 +398,7 @@ instance ToJSON EPrim where
 -- Without it a closing arrow adopts whatever closed before it, whether or not that call happened
 -- inside it — so an arrow calling two others in sequence reads as the second one calling the first,
 -- and a run reads as a single spine however it branched.
-type EvalTreebugOpen = (String, AnyObjArr, [EvalTreebugClosed])
+type EvalTreebugOpen = (String, AnyObjArr, [EvalTreebugClosed], S.HashSet String)
 
 -- | One call the evaluation made: the arrow it entered, what it was given, what it returned, the
 -- calls made inside it, the id it was entered under, and the display the call has of its own.
@@ -411,11 +411,11 @@ type EvalTreebugOpen = (String, AnyObjArr, [EvalTreebugClosed])
 data EvalTreebugClosed = EvalTreebugClosed AnyObjArr Val Val [EvalTreebugClosed] String (Maybe Val)
   deriving (Eq, Generic, Hashable, ToJSON)
 
-data Env = Env { evObjMap        :: EObjectMap
-               , evTypeEnv       :: TypeEnv (ObjArrTypeGraph Expr EvalMetaDat)
-               , evArgs          :: Args
-               , evExEnv         :: ResExEnv
-               , evTbEnv         :: TBEnv
+data Env = Env { evObjMap         :: EObjectMap
+               , evTypeEnv        :: TypeEnv (ObjArrTypeGraph Expr EvalMetaDat)
+               , evArgs           :: Args
+               , evExEnv          :: ResExEnv
+               , evTbEnv          :: TBEnv
                -- | The compilation service this evaluation may ask about the pages there are, and
                -- about the stages of them it cannot reach on its own.
                --
@@ -426,32 +426,38 @@ data Env = Env { evObjMap        :: EObjectMap
                -- annotation may ask the service to evaluate something, and what it evaluates cannot
                -- ask again — and it falls out of those paths building their environments with no
                -- service rather than out of anything tracking how deep a call is.
-               , evService       :: Maybe EvalService
+               , evService        :: Maybe EvalService
                -- | The definition an annotation being evaluated is written on, for a primitive
                -- reporting on that definition. An annotation is local to the program it is written
                -- in and to whatever it is written on, and only the second is otherwise lost: the
                -- annotation is built as an expression of its own, with nothing left of what it
                -- annotates. Nothing for a program's own annotation, which is written on the program
                -- rather than on any definition of it.
-               , evAnnotObj      :: Maybe EObjArr
-               , evCallStack     :: [String]
-               , evCoverage      :: H.HashMap EObjArr Int
-               , evTreebugOpen   :: [EvalTreebugOpen]
-               , evTreebugClosed :: [EvalTreebugClosed]
+               , evAnnotObj       :: Maybe EObjArr
+               , evCallStack      :: [String]
+               , evCoverage       :: H.HashMap EObjArr Int
+               , evTreebugOpen    :: [EvalTreebugOpen]
+               , evTreebugClosed  :: [EvalTreebugClosed]
+               -- | The calls of 'evTreebugClosed' already recorded as the steps of an expression
+               -- ('EvalExprRun'). An expression is evaluated inside another -- the condition of the
+               -- arm a call is dispatched to is evaluated while the call is -- and the calls the inner
+               -- one made close at the same level as the outer one's, so without this the outer one
+               -- would count them as its own steps. Put aside and restored with 'evTreebugClosed'.
+               , evTreebugClaimed :: S.HashSet String
                -- | The next id to give an arrow being entered. A counter rather than something
                -- derived from the arrow, since the same definition is entered as many times as it is
                -- called and each of those is a different node of the tree.
-               , evTreebugNextId :: Int
+               , evTreebugNextId  :: Int
                -- | Every @#debug@ the run has recorded so far, most recent first. Unlike
                -- 'evTreebugClosed', which is replaced by each arrow that closes over it, this only
                -- ever grows: what a reader of a run wants is every value it recorded, in the order
                -- it recorded them, however many calls of however many definitions they came from.
-               , evDebugs        :: [EvalDebug]
+               , evDebugs         :: [EvalDebug]
                -- | Every expression the run rewrote through calls, most recent first ('EvalExprRun').
-               , evExprRuns      :: [EvalExprRun]
+               , evExprRuns       :: [EvalExprRun]
                -- | Every annotation of a definition the run evaluated, most recent first
                -- ('EvalAnnotRun').
-               , evAnnotRuns     :: [EvalAnnotRun]
+               , evAnnotRuns      :: [EvalAnnotRun]
                }
 
 -- | One expression of a run that was rewritten through calls: where it is written, the call it was
@@ -563,9 +569,14 @@ data SyntaxRun = SyntaxRun { srCalls      :: [SyntaxCall]
 
 -- | A statement of a page that a run called, by the id its object's meta has
 -- ('Syntax.Ct.MapRawMeta.rawStatementExprIds'), with the lines written under it.
-data SyntaxStatement = SyntaxStatement { ssId   :: UUID
-                                       , ssFile :: String
-                                       , ssTree :: RawStatementTree RawExpr ()
+--
+-- 'ssLines' are the statements under it that are its own lines, which a call of it has a run of
+-- whenever it evaluated them. The rest of what is written under it is a function nested in it, which
+-- takes parameters of its own and whose lines are run in calls of that function instead.
+data SyntaxStatement = SyntaxStatement { ssId    :: UUID
+                                       , ssFile  :: String
+                                       , ssTree  :: RawStatementTree RawExpr ()
+                                       , ssLines :: [UUID]
                                        } deriving (Eq, Generic, ToJSON)
 
 -- | One call of a function as written: its statement, the node of the arrow that was entered for
@@ -585,13 +596,19 @@ data SyntaxLine = SyntaxLine { slStmt :: UUID
                              , slRuns :: [LineRun]
                              } deriving (Eq, Generic, ToJSON)
 
--- | One evaluation of a line: what it came to, and the nodes of the evaluation tree it was
--- evaluated through, which break it down.
+-- | One evaluation of a line: what it came to, the nodes of the evaluation tree it was evaluated
+-- through, which break it down, and the node that is the line itself where it has one.
 --
 -- The value is 'Nothing' where the run recorded nothing the line came to, rather than being filled
 -- with something else: a node's output is the term its arrow rewrote to, which is not the value.
+--
+-- 'lrNode' is the arrow desugar made of the line, entered wherever the line was used: its node
+-- appears inside the breakdown of whatever used the line, which is where a reader is led back to the
+-- line from. A result or an annotation is evaluated in the arrow of the function it is written in,
+-- and has none of its own.
 data LineRun = LineRun { lrValue :: Maybe Val
                        , lrInner :: [String]
+                       , lrNode  :: Maybe String
                        } deriving (Eq, Generic, ToJSON)
 
 emptySyntaxRun :: SyntaxRun

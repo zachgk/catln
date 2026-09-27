@@ -83,7 +83,9 @@ bodyName (RawDeclStatement RawObjArr{roaArr=Just (Just body, _)}) = nameStr <$> 
 bodyName _ = Nothing
 
 -- | Whether a declaration's object gives it parameters of its own. A line is written as a bare name
--- (@sum= a + b@), and a guard on an arm's name does not make it a function either.
+-- (@sum= a + b@), and a guard on an arm's name does not make it a function either. Read only of a
+-- declaration with an arrow: the result a function is written over several lines to reach is a bare
+-- expression, which applies arguments without declaring anything.
 takesParams :: RawExpr () -> Bool
 takesParams RawValue{}         = False
 takesParams (RawWhere _ b _)   = takesParams b
@@ -105,7 +107,7 @@ indexPrgms prgms = Index (H.fromList [(siId si, si) | si <- stmts]) (H.fromList 
             RawBindStatement{}                                 -> StmtBind
             _ | inBranch                                       -> StmtArm
             _ | Nothing <- owner                               -> StmtFunction
-            RawDeclStatement RawObjArr{roaObj=Just o} | takesParams o -> StmtFunction
+            RawDeclStatement RawObjArr{roaObj=Just o, roaArr=Just _} | takesParams o -> StmtFunction
             _                                                  -> StmtLine
           owner' = if kind == StmtFunction then Just sid else owner
           si = StmtInfo sid file tree owner' parent kind
@@ -191,24 +193,28 @@ runSyntax prgms DebugRun{drResult=EvalResult{erTreebug, erExprs, erAnnots}} = Sy
       where CallAcc{caStmt, caRuns, caCalls} = finalCalls H.! nid
     groupRuns runs = [SyntaxLine sid [r | (sid', r) <- runs, sid' == sid] | sid <- ordNub (map fst runs)]
 
-    statements = [SyntaxStatement ssId siFile siTree | ssId <- ordNub (map caStmt $ H.elems finalCalls), Just StmtInfo{siFile, siTree} <- [H.lookup ssId ixStmts]]
+    statements = [SyntaxStatement ssId siFile siTree (ownedLines ssId siTree) | ssId <- ordNub (map caStmt $ H.elems finalCalls), Just StmtInfo{siFile, siTree} <- [H.lookup ssId ixStmts]]
+    -- In the order they are written, which is the order a reader of the function reads them in.
+    ownedLines fun (RawStatementTree _ children) = concatMap ownedIn children
+      where
+        ownedIn (RawStatementTree s cs) = [sid | Just sid <- [statementId s], Just StmtInfo{siOwner=Just owner} <- [H.lookup sid ixStmts], owner == fun, sid /= fun] ++ concatMap ownedIn cs
 
     visit :: Index -> [(String, UUID)] -> EvalTreebugClosed -> State Acc ()
     visit Index{ixArrows} stack (EvalTreebugClosed oa input _ children nid _) =
       case arrowKey oa >>= (`H.lookup` ixArrows) of
         Just (ArrowFunction si@StmtInfo{siId}) -> do
           addCall (fst <$> listToMaybe stack) nid siId
-          segmentRuns nid si nid body
+          segmentRuns nid si nid Nothing body
           annotRuns nid annots
           continue ((nid, siId) : stack)
-        Just (ArrowLine si) -> owned stack si $ \c -> segmentRuns c si nid body >> annotRuns c annots
-        Just (ArrowArm si) -> owned stack si $ \c -> segmentRuns c si nid body >> annotRuns c annots
+        Just (ArrowLine si) -> owned stack si $ \c -> segmentRuns c si nid (Just nid) body >> annotRuns c annots
+        Just (ArrowArm si) -> owned stack si $ \c -> segmentRuns c si nid (Just nid) body >> annotRuns c annots
         Just (ArrowBindCont si@StmtInfo{siId, siParent}) -> owned stack si $ \c -> do
-          addRun c siId (LineRun (boundValue oa input) [])
+          addRun c siId (LineRun (boundValue oa input) [] (Just nid))
           -- The rest of the statement the bind is written under is this continuation, so the
           -- statement's result is reached here when no later bind continues it further.
           case siParent >>= (`H.lookup` ixStmts) of
-            Just parent | lastBind parent == Just siId, Just r <- resultStmt parent -> addRun c r (LineRun (resolved nid) body)
+            Just parent | lastBind parent == Just siId, Just r <- resultStmt parent -> addRun c r (LineRun (resolved nid) body Nothing)
             _ -> return ()
           annotRuns c annots
         Just (ArrowFallthrough si) -> owned stack si $ \c -> annotRuns c annots
@@ -235,16 +241,17 @@ runSyntax prgms DebugRun{drResult=EvalResult{erTreebug, erExprs, erAnnots}} = Sy
 
     -- The runs of a statement evaluated by one node: what it came to, and, where its result is written
     -- as a statement of its own, what that came to. The node's own calls break down whichever of the
-    -- two is its result.
-    segmentRuns :: String -> StmtInfo -> String -> [String] -> State Acc ()
-    segmentRuns c si@StmtInfo{siId} nid body = do
+    -- two is its result. A statement with a bind has its result in the bind's continuation, and its
+    -- own calls are the bind's: the monad bound over, and the continuation run through it.
+    segmentRuns :: String -> StmtInfo -> String -> Maybe String -> [String] -> State Acc ()
+    segmentRuns c si@StmtInfo{siId} nid lineNode body = do
       let result = if hasBind si then Nothing else resultStmt si
-      addRun c siId (LineRun (resolved nid) (if result == Just siId then body else []))
+      addRun c siId (LineRun (resolved nid) (if result == Just siId || hasBind si then body else []) lineNode)
       case result of
-        Just r | r /= siId -> addRun c r (LineRun (resolved nid) body)
+        Just r | r /= siId -> addRun c r (LineRun (resolved nid) body Nothing)
         _                  -> return ()
 
-    annotRuns c annots = forM_ annots $ \EvalAnnotRun{eaAnnot, eaValue, eaCalls} -> addRun c eaAnnot (LineRun (Just eaValue) eaCalls)
+    annotRuns c annots = forM_ annots $ \EvalAnnotRun{eaAnnot, eaValue, eaCalls} -> addRun c eaAnnot (LineRun (Just eaValue) eaCalls Nothing)
 
     addRun :: String -> UUID -> LineRun -> State Acc ()
     addRun c sid r = modify $ \acc@Acc{acCalls} -> acc{acCalls = H.adjust (\ca@CallAcc{caRuns} -> ca{caRuns = (sid, r) : caRuns}) c acCalls}

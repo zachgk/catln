@@ -16,6 +16,7 @@
 module Eval.Env where
 
 import qualified Data.HashMap.Strict as H
+import qualified Data.HashSet        as S
 
 import           Control.Monad.State
 import           CRes
@@ -28,13 +29,14 @@ import           TreeBuild           (buildArrow)
 
 evalStartEArrow :: PartialType -> AnyObjArr -> Args -> StateT Env CRes (TExpr EvalMetaDat, [TExpr EvalMetaDat], Args)
 evalStartEArrow srcType oa newArgs = do
-  env@Env{evExEnv, evTbEnv, evArgs, evCoverage, evTreebugOpen, evTreebugClosed, evTreebugNextId} <- get
+  env@Env{evExEnv, evTbEnv, evArgs, evCoverage, evTreebugOpen, evTreebugClosed, evTreebugClaimed, evTreebugNextId} <- get
   let env' = env{
                 evArgs=newArgs
                 -- The enclosing call's finished calls go aside with the arrow being entered, and this
                 -- one starts with none of its own. 'evalEndEArrow' puts them back.
-                , evTreebugOpen = (show evTreebugNextId, oa, evTreebugClosed) : evTreebugOpen
+                , evTreebugOpen = (show evTreebugNextId, oa, evTreebugClosed, evTreebugClaimed) : evTreebugOpen
                 , evTreebugClosed = []
+                , evTreebugClaimed = S.empty
                 , evTreebugNextId = evTreebugNextId + 1
                 }
   case oa of
@@ -63,7 +65,8 @@ evalEndEArrow input val newArgs env@Env{evTreebugOpen, evTreebugClosed} = env {
   -- The call that just finished takes what finished INSIDE it as its children, and joins what the
   -- enclosing call had already finished. Appended rather than prepended, so the calls under a node
   -- are in the order the run made them.
-  evTreebugClosed = (\(closedId, oa, siblings) -> siblings ++ [EvalTreebugClosed oa input val evTreebugClosed closedId Nothing]) (head evTreebugOpen),
+  evTreebugClosed = (\(closedId, oa, siblings, _) -> siblings ++ [EvalTreebugClosed oa input val evTreebugClosed closedId Nothing]) (head evTreebugOpen),
+  evTreebugClaimed = (\(_, _, _, claimed) -> claimed) (head evTreebugOpen),
   evArgs = newArgs
                                                             }
 
@@ -77,14 +80,14 @@ evalEndEArrow input val newArgs env@Env{evTreebugOpen, evTreebugClosed} = env {
 evalRecordDebug :: CodeRange -> Val -> Env -> Env
 evalRecordDebug _ _ Env{evTreebugOpen} | null evTreebugOpen = error $ printf "Tried to record a #debug with an empty treebug open"
 evalRecordDebug pos val env@Env{evTreebugOpen, evDebugs} = env {
-  evDebugs = EvalDebug pos val ((\(openId, _, _) -> openId) $ head evTreebugOpen) : evDebugs
+  evDebugs = EvalDebug pos val ((\(openId, _, _, _) -> openId) $ head evTreebugOpen) : evDebugs
                                                                }
 
 -- | Where the evaluation is in the tree: the call it is inside, and how many calls have finished in
 -- it so far. Taken before evaluating something whose calls are to be told apart from the ones before
 -- it, and handed back to 'evalClosedSince' afterwards.
 evalTreebugMark :: Env -> (Maybe String, Int)
-evalTreebugMark Env{evTreebugOpen, evTreebugClosed} = ((\(openId, _, _) -> openId) <$> listToMaybe evTreebugOpen, length evTreebugClosed)
+evalTreebugMark Env{evTreebugOpen, evTreebugClosed} = ((\(openId, _, _, _) -> openId) <$> listToMaybe evTreebugOpen, length evTreebugClosed)
 
 -- | The ids of the calls that finished in the current call since a mark was taken, in the order they
 -- were entered. Every call entered in between has closed again by then, and closed into the current
@@ -93,11 +96,14 @@ evalClosedSince :: Int -> Env -> [String]
 evalClosedSince before Env{evTreebugClosed} = map (\(EvalTreebugClosed _ _ _ _ closedId _) -> closedId) $ drop before evTreebugClosed
 
 -- | Records an expression rewritten through calls ('EvalExprRun'), from the mark taken before its
--- call tree was run. One rewritten by no call is left unrecorded.
+-- call tree was run. Its steps are the calls made since then that no expression evaluated inside it
+-- has already claimed ('evTreebugClaimed'). One rewritten by no call is left unrecorded.
 evalRecordExpr :: (Maybe String, Int) -> CodeRange -> Val -> Env -> Env
-evalRecordExpr (node, before) pos val env@Env{evExprRuns} = case evalClosedSince before env of
+evalRecordExpr (node, before) pos val env@Env{evExprRuns, evTreebugClaimed} = case filter (not . (`S.member` evTreebugClaimed)) (evalClosedSince before env) of
   []    -> env
-  steps -> env{evExprRuns = EvalExprRun node pos steps val : evExprRuns}
+  steps -> env{ evExprRuns = EvalExprRun node pos steps val : evExprRuns
+              , evTreebugClaimed = foldr S.insert evTreebugClaimed steps
+              }
 
 -- | Records an annotation of the call being evaluated ('EvalAnnotRun'), from the mark taken before
 -- it was evaluated. There is always a call open, as for 'evalRecordDebug': an annotation of a
