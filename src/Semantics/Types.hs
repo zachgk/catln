@@ -6984,6 +6984,7 @@ intersectTypesWithVarEnv typeEnv vaenv tv@(TypeVar v loc inner) t
                        | isSubtypeOfWithEnv typeEnv vaenv l wNew = (TypeVar v loc, bothInners)
                        | otherwise = (TypeVar v loc, meetInner typeEnv vaenv bothInners wNew)
                  in if isBottomType bound then (vaenv, BottomType) else (H.insert v i e, occ bound)
+           _ | recursive i -> (e, onOccurrence)
            _ -> (H.insert v i e, tv)
   | innerRejects t = (vaenv, BottomType)
   -- An UNBOUND @v@ against a different variable: @⟦v⟧ = ⊤ ⊇ ⟦w⟧@, so the meet is @w@'s
@@ -6995,9 +6996,22 @@ intersectTypesWithVarEnv typeEnv vaenv tv@(TypeVar v loc inner) t
   | TypeVar w lw j <- t, w /= v =
       let bound = meetInner typeEnv vaenv inner j
       in if isBottomType bound then (vaenv, BottomType) else (H.insert v t vaenv, TypeVar w lw bound)
+  | recursive t = (vaenv, onOccurrence)
   | otherwise = (H.insert v t vaenv, tv)
   where isSelfVar var (TypeVar var' _ _) = var' == var
         isSelfVar _   _                  = False
+        -- A value that mentions @v@ itself is a recursive EQUATION for @v@, not a binding: resolving
+        -- it re-meets the value, which holds @v@ again, and unfolds forever
+        -- (propIntersectionDistributesUnion, 8765: Seed 10125965364343093828
+        -- 10644152076901789221 — @b ↦ ozfbh[/tmfir=$_/b∩{..}] + …@ from a slot union holding
+        -- @$_/b@). 'comparedPartialsEnv' refuses the same shape. The meet is still exact
+        -- without it: it is @⟦v⟧ ⊓ inner ⊓ t@, which is the occurrence with @t@ met into its
+        -- inner, and the env keeps the binding it had. Only an EXTERNAL reference re-enters the
+        -- env: a like-named partial-local pointer (@Cons[/T=⊤](/head=$/T)@ as @/T@'s value)
+        -- names that partial's own parameter, and treating it as recursive kept ordinary
+        -- bindings out of the env and stalled inference on the core.
+        recursive x = S.member v (typeExtVarAuxes x)
+        onOccurrence = TypeVar v loc (meetInner typeEnv vaenv inner t)
         -- The meet can only narrow @w@'s binding, so "unchanged" is the reverse inclusion.
         -- Compared as SETS: the meet may respell an equal binding (@X..@ as @X[/p=⊤]@).
         -- An unbound @w@ never qualifies: the recursive meet binds it to @l@, and the
