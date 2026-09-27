@@ -151,20 +151,24 @@ abs(x -> Integer) else = x
 - **Prefer dispatching on constructors over testing a value** where the shape allows it. Arms
   that pattern-match `Nil`/`Cons`, `Leaf`/`Node`, `True`/`False`, or `Equal`/`LessThan`/
   `GreaterThan` need no guard at all, and they are checked for coverage.
-- **Frontier — a branch inside a *generic* definition fails its derived overlap test.** The
-  preprocessors rewrite an arm into a generated function that has no declaration of its own, so
-  in a generic definition `deriveOverlapTests` generates metavariable inputs for it and the test
-  dies with "eval failed". Dispatch on constructors in a separate declared function instead —
-  that is why `Data/Map/get` still routes through a `getStep`.
+- **Frontier — a `match`/`case` arm written as a constructor does not select.** The `match` and
+  `case` preprocessors put each arm's pattern in as the alias of a hole (`_@pattern`), which
+  constrains nothing, so constructor arms (`/Data/Algebra/Equal= …`) share one ⊤ domain: the
+  last arm answers for every value, and in a generic definition the arms' derived overlap test
+  fails with "eval failed". (`if` was fixed by moving the pattern to the argument position; doing
+  the same for `match`/`case` currently breaks binder arms like `x2 | x >= 0= …`, because a bare
+  binder in an argument-value position is not bounded by anything.) Also note `x -> Type= …` in
+  a match arm is a binder with a declared *result* type, not a type pattern. Use arrow guards —
+  that is why `Data/Map/get`/`insert`/`remove` are guarded.
 - **Test a branch by running the branch that is not taken.** All four branching forms were
   silently broken — a guarded arm was taken whether or not its guard held — while `case.ct`,
   `match.ct`, `ifThenElse.ct` and `cond.ct` all passed, because each only ever evaluated a point
   where both arms return the same value. An example that cannot distinguish the arms is not a
   test of the branch.
-- **Frontier — a guard cannot dispatch off a `TopType` scrutinee.** If the compared value
-  arrives through a higher-order lambda parameter (§6), the guard's `else` arm fails to match at
-  runtime: "Found no matching conditions in evalTree". A function reachable from generic
-  higher-order code therefore has to dispatch on constructors rather than on guards.
+- **Guards work in generic, recursive definitions.** An arm whose body is a recursive call once
+  failed at runtime ("Found no matching conditions in evalTree") because a generic declaration's
+  result was not seeded onto its definitions, so the recursive call was left unevaluated; that is
+  fixed (`seedDefResultTypes`), and `Data/Map/get` is now guarded.
 
 ## 5. Prefer a combinator to a fresh recursion
 
