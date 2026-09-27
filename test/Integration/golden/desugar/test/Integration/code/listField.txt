@@ -19,8 +19,8 @@ Prgm
                 ( "/Tagged"
                 , ObjectMapItem
                     { omiDecls =
-                        [ Tagged( Value /name -> /Data/String )
-                            ( Value /tags -> ∀/Data/List[ /T=/Data/String ] )
+                        [ Tagged( Value /name -> ∀/Data/String )
+                            ( Value /tags -> ∀/Data/List[ /T=∀/Data/String ] )
                         , /Tagged
                             ( Value name= CStr
                                 { csValue = "none" }
@@ -44,8 +44,8 @@ Prgm
                 ( "/ConsTagged"
                 , ObjectMapItem
                     { omiDecls =
-                        [ ConsTagged( Value /name -> /Data/String )
-                            ( Value /tags -> ∀/Data/List/ConsList[ /T=/Data/String ] )
+                        [ ConsTagged( Value /name -> ∀/Data/String )
+                            ( Value /tags -> ∀/Data/List/ConsList[ /T=∀/Data/String ] )
                         , /ConsTagged
                             ( Value name= CStr
                                 { csValue = "none" }

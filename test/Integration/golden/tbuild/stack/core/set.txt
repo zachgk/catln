@@ -1233,46 +1233,60 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "# Sets
-                A [Set] is a collection of zero or more unique items. It is not ordered. [Set] is an interface:
-                it names the operations every set supports — membership, insertion, the set-algebra combinators —
-                without fixing how the items are stored. Concrete set types implement it; the [MapSet] below is
-                the one this file provides, and a future hash-backed set would be another. Because the operations
-                are declared on [Set] rather than on one concrete type, every set type reuses those declarations
-                just by being a [Set]. The [Set] interface lives here directly under [Data]; the [MapSet]
-                implementation and the operations live in the [Data/Set] namespace it opens." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Sets
+                  A [Set] is a collection of zero or more unique items. It is not ordered. [Set] is an interface:
+                  it names the operations every set supports — membership, insertion, the set-algebra combinators —
+                  without fixing how the items are stored. Concrete set types implement it; the [MapSet] below is
+                  the one this file provides, and a future hash-backed set would be another. Because the operations
+                  are declared on [Set] rather than on one concrete type, every set type reuses those declarations
+                  just by being a [Set]. The [Set] interface lives here directly under [Data]; the [MapSet]
+                  implementation and the operations live in the [Data/Set] namespace it opens."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "# The MapSet and the Set operations
-                Everything else set-related lives in [module(Data/Set)] — the namespace the [Set] class opens — so
-                the [MapSet] type, its constructor, and every operation sit under [/Data/Set]." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# The MapSet and the Set operations
+                  Everything else set-related lives in [module(Data/Set)] — the namespace the [Set] class opens — so
+                  the [MapSet] type, its constructor, and every operation sit under [/Data/Set]."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## A Map-backed set
-                A [MapSet] is the simplest [Set]: it wraps a [Map] whose keys are the set's items and whose
-                values are the unit type [()] (a set only needs to record which items are present, not any value
-                against them). Every operation delegates to the underlying [Map] — membership is a key lookup,
-                insertion stores the item with a [()] value, and the item list is the map's keys. The items must
-                be [Ord] because the backing [Map] orders its keys." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## A Map-backed set
+                  A [MapSet] is the simplest [Set]: it wraps a [Map] whose keys are the set's items and whose
+                  values are the unit type [()] (a set only needs to record which items are present, not any value
+                  against them). Every operation delegates to the underlying [Map] — membership is a key lookup,
+                  insertion stores the item with a [()] value, and the item list is the map's keys. The items must
+                  be [Ord] because the backing [Map] orders its keys."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Every [MapSet] is a [Set], so each [Set] operation resolves on it through the arms below. The
-                empty set is [empty]." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Every [MapSet] is a [Set], so each [Set] operation resolves on it through the arms below. The
+                  empty set is [empty]."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## The empty set" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## The empty set"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Membership" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Membership"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Insertion" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Insertion"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -1619,7 +1633,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -1807,15 +1823,21 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Size" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Size"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Adding the same item twice leaves the size at one — a set holds each item at most once." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Adding the same item twice leaves the size at one — a set holds each item at most once."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -2159,7 +2181,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "1" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -2172,7 +2196,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -2357,11 +2383,15 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Items" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Items"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -2735,31 +2765,45 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "NOTE: rendering a set directly (a [ToString] instance so [> aSet] prints [{1, 2}]) is blocked by" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "NOTE: rendering a set directly (a [ToString] instance so [> aSet] prints [{1, 2}]) is blocked by"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  the polymorphic-element rendering frontier: the generic [add] returns a set whose item type is" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  the polymorphic-element rendering frontier: the generic [add] returns a set whose item type is"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  the abstract [Ord] bound rather than the concrete item type, and [Ord] is not [ToString]. The" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  the abstract [Ord] bound rather than the concrete item type, and [Ord] is not [ToString]. The"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  same frontier stops [sorted]/[reversed] in [Data/list] from printing directly. Verify a set's" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  same frontier stops [sorted]/[reversed] in [Data/list] from printing directly. Verify a set's"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  contents with [elements] and [operator==] (as above) instead." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  contents with [elements] and [operator==] (as above) instead."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Removal" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Removal"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -3141,7 +3185,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -3523,11 +3569,15 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Union" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Union"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -4211,7 +4261,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "3" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -4580,11 +4632,15 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Difference" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Difference"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -5109,7 +5165,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "1" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -5637,7 +5695,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -6165,11 +6225,15 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Intersection" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Intersection"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -6853,7 +6917,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "1" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -7540,7 +7606,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -8227,11 +8295,15 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Subset" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Subset"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -8774,7 +8846,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -9476,25 +9550,33 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "# MapSet Eq membership (order-independent)
-                Makes a [MapSet] of [Ord] items a proper member of [Eq], so the generic [operator==] dispatches
-                through [equal]. Equality is ORDER-INDEPENDENT: two sets are equal when they hold the same items,
-                regardless of the insertion order that shaped their backing trees. [setEqual] decides it — equal
-                [size] and every item of one [isSubsetOf] the other (equal size plus one-directional containment
-                gives equality). Mirrors the [BinTree] [Eq] membership in [Data/map], and inherits its
-                order-independence from the map underneath." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# MapSet Eq membership (order-independent)
+                  Makes a [MapSet] of [Ord] items a proper member of [Eq], so the generic [operator==] dispatches
+                  through [equal]. Equality is ORDER-INDEPENDENT: two sets are equal when they hold the same items,
+                  regardless of the insertion order that shaped their backing trees. [setEqual] decides it — equal
+                  [size] and every item of one [isSubsetOf] the other (equal size plus one-directional containment
+                  gives equality). Mirrors the [BinTree] [Eq] membership in [Data/map], and inherits its
+                  order-independence from the map underneath."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Two sets with the same items are equal even when built in different orders; sets differing in an" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Two sets with the same items are equal even when built in different orders; sets differing in an"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  item or in size are not." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  item or in size are not."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -10172,7 +10254,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -10691,7 +10775,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -11051,7 +11137,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         ]
     }

@@ -18,7 +18,8 @@ Prgm
                                 { ciValue = 0 }
                             )
                             ( Value /this -> /Catln/IO = /Catln/println
-                                ( Value /msg -> /Data/String = CStr
+                                ( Value /msg -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                     { csValue = "hello world" }
                                 )( Value /this -> TVArg /io = Value /io )
                             )

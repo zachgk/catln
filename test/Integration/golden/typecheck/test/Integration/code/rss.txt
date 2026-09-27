@@ -25,7 +25,8 @@ Prgm
     , prgmCg = [ CGType ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "Tests importing an RSS feed. The feed is a page and each entry of it is a value declared on that
                 page, so a feed of four entries is a page of four declarations beneath what the feed calls itself.
                 The feed is named as a file rather than as an address, which is why there is a golden to compare

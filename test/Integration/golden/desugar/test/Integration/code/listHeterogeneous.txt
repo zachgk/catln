@@ -5,7 +5,7 @@ Prgm
                 ( "/Mixed/Tagged"
                 , ObjectMapItem
                     { omiDecls =
-                        [ Mixed/Tagged( Value /value -> /Data/String ) ]
+                        [ Mixed/Tagged( Value /value -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -67,7 +67,7 @@ Prgm
             , cgcPartial = /Mixed
             , cgcExtends =
                 [ /Mixed/Plain
-                , /Mixed/Tagged( /value=/Data/String )
+                , /Mixed/Tagged( /value=∀/Data/String )
                 ]
             , cgcDoc = Just ""
             }

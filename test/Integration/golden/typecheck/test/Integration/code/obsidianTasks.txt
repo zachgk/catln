@@ -25,7 +25,8 @@ Prgm
     , prgmCg = [ CGType ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "Tests importing an Obsidian vault which runs the Tasks community plugin. Every checkbox of such a
                 vault is read as a /Data/Note/Task/Obsidian, holding the line as it was written and the plugin's
                 own writing read out of it, where a checkbox of the vault beside this one — artifacts/catln-test,

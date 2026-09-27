@@ -24,49 +24,25 @@ Prgm
                 ( "/Dated"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Dated( Value /name -> /Data/String )
-                            ( Value /due -> ∀/Data/Maybe[ /T=/Data/String ] )
+                        [ /Dated( Value /name -> ∀/Data/String )
+                            ( Value /due -> ∀/Data/Maybe[ /T=∀/Data/String ] )
                         , /Dated
-                            ( Value /name -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "has one" }
-                                    ]
-                                ) = CStr
+                            ( Value /name -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "has one" }
                             )
                             ( Value /due -> /Data/Maybe/Some
-                                ( /value=UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "2026-01-01" }
-                                        ]
-                                    )
+                                ( /value=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                 ) = /Data/Maybe/Some
-                                ( Value /value -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "2026-01-01" }
-                                        ]
-                                    ) = CStr
+                                ( Value /value -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                     { csValue = "2026-01-01" }
                                 )
                             )
                         , /Dated
-                            ( Value /name -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "has none" }
-                                    ]
-                                ) = CStr
+                            ( Value /name -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "has none" }
                             )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                         ]
@@ -90,7 +66,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A field of a data type may be a [/Data/Maybe] of a concrete element.
                 A task read out of an Obsidian note has a due date or it has none, and having none is the
                 [/Data/Maybe/Nothing] arm rather than an empty string standing in for one. So a field has to be able to
@@ -102,36 +79,38 @@ Prgm
                 back in Catln is @bareDataDeclaration.ct@." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "Shown as the value it is, with no display type standing in for it, as a task is." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "Printed so that the values are evaluated and not only built." }
             )
         , /Catln/#print
             ( Value /p -> ∀/Catln/Doc/DShow = /Dated
-                ( Value /name -> /Data/String = CStr
+                ( Value /name -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                     { csValue = "has one" }
                 )
                 ( Value /due -> /Data/Maybe/Some
-                    [ /T=UnionType
-                        ( Nothing
-                        , ∅
-                        ,
-                            [ CStr
-                                { csValue = "2026-01-01" }
-                            ]
-                        )
-                    ]( /value=/Data/String ) = /Data/Maybe/Some
-                    ( Value /value -> /Data/String = CStr
+                    [ /T=/Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                    ]
+                    ( /value=/Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                    ) = /Data/Maybe/Some
+                    ( Value /value -> /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                         { csValue = "2026-01-01" }
                     )
                 )
             )
         , /Catln/#print
             ( Value /p -> ∀/Catln/Doc/DShow = /Dated
-                ( Value /name -> /Data/String = CStr
+                ( Value /name -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                     { csValue = "has none" }
                 )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
             )

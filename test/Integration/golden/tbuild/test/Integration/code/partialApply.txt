@@ -75,14 +75,16 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Partial application, as `docs/philosophy/basics.md` describes it: a name may be bound to a
-                call that has only some of its arguments, and the rest are applied later.
-                  baseFunctionCall = callName(arg1=1, arg2=2)
-                  finalCall = baseFunctionCall(arg3=9)
-                `g` is `f` with `b` and `c` already given, so `g(a= 1)` is `f(a= 1, b= 2, c= 3)`.
-                The arguments `g` carries have to survive the later application: applying `a` extends the
-                tuple `g` already is, rather than starting a fresh one. Distinct non-zero values, so the
-                answer distinguishes an argument that landed in the wrong slot." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Partial application, as `docs/philosophy/basics.md` describes it: a name may be bound to a
+                  call that has only some of its arguments, and the rest are applied later.
+                    baseFunctionCall = callName(arg1=1, arg2=2)
+                    finalCall = baseFunctionCall(arg3=9)
+                  `g` is `f` with `b` and `c` already given, so `g(a= 1)` is `f(a= 1, b= 2, c= 3)`.
+                  The arguments `g` carries have to survive the later application: applying `a` extends the
+                  tuple `g` already is, rather than starting a fresh one. Distinct non-zero values, so the
+                  answer distinguishes an argument that landed in the wrong slot."
+                }
             )
         ]
     }

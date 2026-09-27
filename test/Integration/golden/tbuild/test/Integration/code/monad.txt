@@ -20,15 +20,21 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Cross-module check that the [Maybe] [Monad] instance (defined in stack/core/maybe.ct) resolves" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Cross-module check that the [Maybe] [Monad] instance (defined in stack/core/maybe.ct) resolves"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "when [mmap] is called from another module. A stack/core function can type-check in its own module" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "when [mmap] is called from another module. A stack/core function can type-check in its own module"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "yet fail once imported, so this exercises the imported path end to end." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "yet fail once imported, so this exercises the imported path end to end."
+                }
             )
         ]
     }

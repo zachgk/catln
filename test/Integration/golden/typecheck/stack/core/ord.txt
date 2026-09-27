@@ -351,7 +351,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "# Ordering
                 Ordering describes types whose values can be compared and sorted — numbers from smallest to
                 largest, strings alphabetically, and so on. It builds on equality from [Data/Algebra/eq]: just
@@ -365,25 +366,30 @@ Prgm
                 directly in [Data/Primitive]." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## The comparison result
                 Comparing two values yields a [Comparison]: the left is [LessThan], [Equal] to, or
                 [GreaterThan] the right." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "These predicates read a [Comparison] as a [Boolean]." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "[mkComparison] builds a [Comparison] from the two primitive answers "is less than" and "is" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "  equal to". The per-type [compare] arms build their result with it." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## The Ordering class
                 An [Ordering] is the class of orderings over a type [$T], the analog of [Eqv]. Each object in
                 the class is a single ordering and supplies [compare], which ranks two values of [$T] as
@@ -391,7 +397,8 @@ Prgm
                 defines it for its own type (see the per-type instances such as [IntOrdering] below)." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## Ordering is an equivalence
                 Comparing also decides equality, so every [Ordering] is an [Eqv]: two values are equivalent
                 exactly when they compare [Equal]. This behavioral edge supplies the abstract [rel] of [Eqv]
@@ -399,34 +406,41 @@ Prgm
                 [compare] to also be a usable [Eqv]." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## The Ord class
                 An [Ord] type can be ordered. Every [Ord] is an [Eq], and the standard numeric types are [Ord].
                 An [Ord] type names its canonical ordering with [ord], from which [compareTo] follows — the
                 direct parallel to an [Eq] type naming [eq] and deriving [equal]." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "[ord] is the standard ordering for an [Ord] type; [compareTo] is the single method through which" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "  values are compared." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "The per-type [Ordering] instances ([IntOrdering] etc.) and the [ord] / [compareTo] / [eq] each" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "  numeric type derives from its ordering live alongside their types in [Data/Primitive]; the" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "  class here defines only the abstract concept." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## Partial ordering
                 Some types can be compared but need not be totally ordered: two values may have no order
                 between them. [pcompare] yields a [PComparison], which is either an ordinary [Comparison] or
@@ -434,15 +448,18 @@ Prgm
                 partial one.)" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "[isNoOrdering] / [isComparable] read a [PComparison] across all of its members, including" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "  [NoOrdering], where the [Comparison]-only predicates above do not apply." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## Partial ordering example: divisibility
                 The integers are partially ordered by divisibility: [a] precedes [b] when [a] divides [b].
                 Some pairs — like 2 and 3 — divide neither way and are incomparable, which an ordinary total
@@ -450,7 +467,8 @@ Prgm
                 partial result, and [pcompare] is the partial comparison." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## Examples
                 [compareTo] ranks integers by size, and a type's equality agrees with its ordering: values
                 compare [Equal] exactly when they are equal." }
@@ -466,7 +484,8 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#print
@@ -480,7 +499,8 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#print
@@ -494,7 +514,8 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#print
@@ -508,11 +529,13 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "The divisibility ordering distinguishes ordered pairs from incomparable ones." }
             )
         , /Catln/#print
@@ -526,7 +549,8 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#print
@@ -540,25 +564,30 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "## Laws of ordering
                 Each law is a property of the [Ordering] class itself, checked against every instance ([$O]) at
                 arbitrary members of that instance's type ([$T])." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "Reflexivity: every value compares [Equal] to itself." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "Antisymmetry: comparing dual values reverses the ordering — a < b exactly when b > a." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "Transitivity: a < b and b < c imply a < c, expressed as a material implication." }
             )
         ]

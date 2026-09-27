@@ -6,19 +6,29 @@ import "core/cons.ct"
 
 module(Data)
   # # Strings
-    A [String] is a list of characters. Its equality is defined here alongside the type.
-  data(String)
+    A [String] is a list of characters: a [String/Text], whose one field [chars] holds them in
+    order. So a string is taken apart and built up the way any list is, character by character.
+    It is a type of its own holding a list rather than the list itself. A list is displayed as its
+    items in brackets and a string as its text, and an empty string is not an empty list of
+    anything else — neither of which could be told apart at runtime were a string only its list.
+    [String] is a class with the one member rather than a data type so that [String] written as a
+    type means every string: a data type's bare name means its argument-less form, which a string
+    with characters is not.
+    Only the type is declared here. What a string does — comparing two, joining two — is written
+    over its characters on @core/string.ct@, a page of its own so that @core/list.ct@, which builds
+    a list's text out of strings, can import it without this page's group reaching
+    @core/list.ct@ (see @core/cons.ct@).
+  class(String, [String/Text(chars -> /Data/List/ConsList[$T -> Char])])
+
   data(Char)
     # A [Char] is a single character.
-      It is declared beside [String] because it is a primitive of the same kind: the compiler names
-      it as one, in `Semantics.Types.charLeaf`, and an evaluation carries one as a `CharVal`. A tree
+      It is declared beside [String], which is made of them. A [Char] is a primitive: the compiler
+      names it as one, in `Semantics.Types.charLeaf`, and an evaluation carries one as a `CharVal`. A tree
       build makes a [Char] out of a character constant, and the test generator produces them. So the
       type was already being handed to programs and read back from them; what was missing was the
       declaration saying so, and until it was written the name `/Data/Char` referred to nothing and
       was open to the world.
       A [Char] is written as a literal between single quotes: `'a'`, or an escape such as `'\n'`.
-      A [String] is not yet a list of [Char] but a primitive of its own — which is why [String] is
-      declared above rather than as `/Data/List[$T -> Char]`.
 
   # ## Characters
     A [Char] is ordered by its Unicode code point, which is also what [code] answers with. The
@@ -68,34 +78,3 @@ module(Data)
     >>> 97
   > fromCode(code= 98)
     >>> b
-  strEqual(l -> String, r -> String) -> Boolean
-    #runtime("strEq")
-
-  # ## Equality
-    [String] is an [Eq] type: [StrEqv] wraps the primitive [strEqual], and [eq]/[equal] follow.
-  every(String, isa= [/Data/Algebra/Eq])
-
-  data(StrEqv, isa= [/Data/Algebra/Eqv[$T -> String]])
-
-  :StrEqv.rel(a, b)= /Data/strEqual(l= a, r= b)
-
-  :String.eq= StrEqv
-
-  :String.equal(other)= this.eq.rel(a= this, b= other)
-
-  > ("hi" == "hi")
-    >>> True
-  > ("hi" == "no")
-    >>> False
-  # ## Concatenation
-  every(String, isa= [/Data/Algebra/Semigroup])
-    # [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
-      (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
-      yet dispatched by return type across multiple types, so only the [Semigroup] is declared.)
-
-  (_ :: String ++ _ :: String) -> String
-    # [operator++] joins two strings, the [Semigroup] operation on [String].
-    #runtime("strConcat")
-
-  > ("foo" ++ "bar")
-    >>> foobar

@@ -19,8 +19,8 @@ Prgm
                 ( "/Tagged"
                 , ObjectMapItem
                     { omiDecls =
-                        [ Tagged( Value /name -> /Data/String )
-                            ( Value /tags -> ∀/Data/List[ /T=/Data/String ] )
+                        [ Tagged( Value /name -> ∀/Data/String )
+                            ( Value /tags -> ∀/Data/List[ /T=∀/Data/String ] )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -43,7 +43,7 @@ Prgm
                 ( "/Mixed/Labelled"
                 , ObjectMapItem
                     { omiDecls =
-                        [ Mixed/Labelled( Value /value -> /Data/String ) ]
+                        [ Mixed/Labelled( Value /value -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -80,7 +80,7 @@ Prgm
             , cgcPartial = /Mixed
             , cgcExtends =
                 [ /Mixed/Plain
-                , /Mixed/Labelled( /value=/Data/String )
+                , /Mixed/Labelled( /value=∀/Data/String )
                 ]
             , cgcDoc = Just ""
             }

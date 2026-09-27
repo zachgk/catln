@@ -91,7 +91,9 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Tests data classes and matching values in functions (c=Type(...)) with type vars" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Tests data classes and matching values in functions (c=Type(...)) with type vars"
+                }
             )
         ]
     }

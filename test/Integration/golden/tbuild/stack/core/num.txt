@@ -693,38 +693,54 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "# Numbers
-                The numeric primitives [Integer] and [Float] make up the [Number] class. Their arithmetic and
-                comparison operators are primitive runtime operations, and their [Eq]/[Ord] instances —
-                defined here alongside the types — build on those primitives." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Numbers
+                  The numeric primitives [Integer] and [Float] make up the [Number] class. Their arithmetic and
+                  comparison operators are primitive runtime operations, and their [Eq]/[Ord] instances —
+                  defined here alongside the types — build on those primitives."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Integers" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Integers"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "The diagonal of subtraction: a value minus itself is zero. Both operands are aliased to the same" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The diagonal of subtraction: a value minus itself is zero. Both operands are aliased to the same"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  [x] (a non-linear pattern), so this only matches equal operands and short-circuits to [0]. It" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  [x] (a non-linear pattern), so this only matches equal operands and short-circuits to [0]. It"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  overlaps the primitive subtraction, so the auto-derived overlap-agreement test checks they" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  overlaps the primitive subtraction, so the auto-derived overlap-agreement test checks they"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  agree on the diagonal — i.e. it derives and verifies [x - x == 0]." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  agree on the diagonal — i.e. it derives and verifies [x - x == 0]."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "The arithmetic operators on [Integer], shown on concrete inputs. [operator//] is integer" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The arithmetic operators on [Integer], shown on concrete inputs. [operator//] is integer"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  division (rounding toward zero) and [operator%] is the remainder." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  division (rounding toward zero) and [operator%] is the remainder."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -740,7 +756,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "5" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "5"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -756,7 +774,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "3" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -772,7 +792,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "12" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "12"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -788,7 +810,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "3" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "3"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -804,7 +828,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "1" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -820,35 +846,51 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "The primitive integer "less than" is also exposed as a named function so [Data/Algebra/ord]'s" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The primitive integer "less than" is also exposed as a named function so [Data/Algebra/ord]'s"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  [Ordering] instances can build a [Comparison] from it." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  [Ordering] instances can build a [Comparison] from it."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "The non-negativity predicate: an [Integer] is at least zero. Defined as a method so it can be" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The non-negativity predicate: an [Integer] is at least zero. Defined as a method so it can be"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  used as a projection refinement (e.g. [Integer_nonNeg], desugaring to [$this.nonNeg == True])." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  used as a projection refinement (e.g. [Integer_nonNeg], desugaring to [$this.nonNeg == True])."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "[Integer]'s instances of the algebra ordering/equality classes. [IntOrdering] is its" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[Integer]'s instances of the algebra ordering/equality classes. [IntOrdering] is its"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  [/Data/Algebra/Ordering]; [ord] and [compareTo] follow from it, and [eq] derives from the" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  [/Data/Algebra/Ordering]; [ord] and [compareTo] follow from it, and [eq] derives from the"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  same ordering (an [Ordering] is an [Eqv], so it doubles as the canonical equivalence)." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  same ordering (an [Ordering] is an [Eqv], so it doubles as the canonical equivalence)."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -864,7 +906,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -880,23 +924,33 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "### Commutative Group" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "### Commutative Group"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Floats" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Floats"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "[Float] renders no text of its own (it is not a [ToString]), so its behavior is shown through" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[Float] renders no text of its own (it is not a [ToString]), so its behavior is shown through"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  the [Boolean] a comparison produces." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  the [Boolean] a comparison produces."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -912,15 +966,21 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Named-function form of the primitive float "less than", used by [Data/Algebra/ord]." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Named-function form of the primitive float "less than", used by [Data/Algebra/ord]."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "[Float]'s instances of the algebra ordering/equality classes, mirroring [Integer] above." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[Float]'s instances of the algebra ordering/equality classes, mirroring [Integer] above."
+                }
             )
         ]
     }

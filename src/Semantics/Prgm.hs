@@ -17,6 +17,7 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleInstances         #-}
 {-# LANGUAGE InstanceSigs              #-}
+{-# LANGUAGE PatternSynonyms           #-}
 
 module Semantics.Prgm where
 
@@ -36,8 +37,8 @@ import           Data.Void           (Void)
 import           Semantics.CtType
 import           Semantics.TypeGraph (ReachesTree)
 import           Semantics.Types
-import           Semantics.Val       (Val (IntVal, StrVal, TupleVal), valArg,
-                                      valStrArg)
+import           Semantics.Val       (Val (IntVal, TupleVal), pattern StrVal,
+                                      valArg, valStrArg)
 import           Text.Megaparsec
 import           Text.Printf
 

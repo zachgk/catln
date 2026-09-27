@@ -20,23 +20,33 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Exercises the core generic [fmap] (dispatched through the [Functor] class) with concrete" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Exercises the core generic [fmap] (dispatched through the [Functor] class) with concrete"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "values from an importing module, comparing results with the generic [operator==]. The law" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "values from an importing module, comparing results with the generic [operator==]. The law"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "properties in stack/core/functor.ct check these shapes generically; this asserts exact" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "properties in stack/core/functor.ct check these shapes generically; this asserts exact"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "values on the imported path (identity, increment, and composed increments, over both the" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "values on the imported path (identity, increment, and composed increments, over both the"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "[ConsList] and [Maybe] instances)." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[ConsList] and [Maybe] instances)."
+                }
             )
         ]
     }

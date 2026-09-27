@@ -110,7 +110,8 @@ Prgm
     , prgmAnnots =
         [ Value /#noCore
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "An arrow whose source is a declared data type.
                 A bare name is a term in its own right, so an arrow may be written from it — `/Sample= Outer(..)`
                 in `recordField.ct` is one, `f= f(b= 2, c= 3)` in `defaultArrow.ct` is another. In both, the name

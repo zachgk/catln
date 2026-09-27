@@ -1,0 +1,460 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/operator++"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator++
+                            ( EAppArg
+                                { eaaArg = Value /l -> ∀/Data/String = Hole ∀/Data/String HoleActive { haName = Nothing } }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> ∀/Data/String = Hole ∀/Data/String HoleActive { haName = Nothing } }
+                            ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /operator++
+                            ( EAppArg
+                                { eaaArg = Value /l -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                                    ( EAppArg
+                                        { eaaArg = Value /chars@Value /a -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                                    ( EAppArg
+                                        { eaaArg = Value /chars@Value /b -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                                    )
+                                }
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                            ( EAppArg
+                                { eaaArg = Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                                    ( /Data/appendChars
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) }
+                                        ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/charsEqual"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/charsEqual
+                            ( EAppArg
+                                { eaaArg = Value /a -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /b -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/charsEqual
+                            ( EAppArg { eaaArg = Value /a -> /Data/List/Nil = Value /Data/List/Nil } )
+                            ( EAppArg { eaaArg = Value /b -> /Data/List/Nil = Value /Data/List/Nil } ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /Data/charsEqual
+                            ( EAppArg { eaaArg = Value /a -> /Data/List/Nil = Value /Data/List/Nil } )
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head -> /Data/Char } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                                    )
+                                }
+                            ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/charsEqual
+                            ( EAppArg
+                                { eaaArg = Value /a -> /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head -> /Data/Char } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /b -> /Data/List/Nil = Value /Data/List/Nil } ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/charsEqual
+                            ( EAppArg
+                                { eaaArg = Value /a -> /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head@Value /ah -> /Data/Char } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail@Value /at -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head@Value /bh -> /Data/Char } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail@Value /bt -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                                    )
+                                }
+                            ) | /operator==
+                            ( EAppArg
+                                { eaaArg = Value /l -> TVArg /ah = ( Value /ah ↦ TVArg /ah ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> TVArg /bh = ( Value /bh ↦ TVArg /bh ) }
+                            ) -> ∀/Data/Primitive/Boolean =
+                            ( /Data/charsEqual
+                                ( EAppArg
+                                    { eaaArg = Value /a -> TVArg /at = ( Value /at ↦ TVArg /at ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /b -> TVArg /bt = ( Value /bt ↦ TVArg /bt ) }
+                                ) ↦ ∀/Data/Primitive/Boolean
+                            )
+                        , /Data/charsEqual
+                            ( EAppArg
+                                { eaaArg = Value /a -> /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head@Value /ah -> /Data/Char } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail@Value /at -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head@Value /bh -> /Data/Char } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail@Value /bt -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                                    )
+                                }
+                            ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/rel"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/rel
+                            ( EAppArg
+                                { eaaArg = Value /a -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                                    ( EAppArg
+                                        { eaaArg = Value /chars@Value /ac -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /b -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                                    ( EAppArg
+                                        { eaaArg = Value /chars@Value /bc -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/StrEqv[ /T=∀/Data/String ] }
+                            ) -> ∀/Data/Primitive/Boolean =
+                            ( /Data/charsEqual
+                                ( EAppArg
+                                    { eaaArg = Value /a -> TVArg /ac = ( Value /ac ↦ TVArg /ac ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /b -> TVArg /bc = ( Value /bc ↦ TVArg /bc ) }
+                                ) ↦ ∀/Data/Primitive/Boolean
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/eq"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/eq
+                            ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> /Data/StrEqv[ /T=∀/Data/String ] = Value /Data/StrEqv
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/appendChars"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/appendChars
+                            ( EAppArg
+                                { eaaArg = Value /l -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/appendChars
+                            ( EAppArg { eaaArg = Value /l -> /Data/List/Nil = Value /Data/List/Nil } )
+                            ( EAppArg
+                                { eaaArg = Value /r -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                            ( Value /r ↦ ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                        , /Data/appendChars
+                            ( EAppArg
+                                { eaaArg = Value /l -> /Data/List/Cons[ /T=/Data/Char ]
+                                    ( /head=/Data/Char
+                                    , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    ) = /Data/List/Cons
+                                    ( EAppArg { eaaArg = Value /head -> /Data/Char } )
+                                    ( EAppArg
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
+                            ) -> /Data/List/Cons[ /T=/Data/Char ]
+                            ( /head=/Data/Char
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                            ) = /Data/List/Cons
+                            ( EAppArg
+                                { eaaArg = Value /head -> TVArg /head = ( Value /head ↦ TVArg /head ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
+                                    ( /Data/appendChars
+                                        ( EAppArg
+                                            { eaaArg = Value /l -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /r -> TVArg /r = ( Value /r ↦ TVArg /r ) }
+                                        ) ↦ ∀/Data/List/ConsList[ /T=/Data/Char ]
+                                    )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/equal"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/equal
+                            ( EAppArg { eaaArg = Value /other -> ∀/Data/Algebra/Eq } )
+                            ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> ∀/Data/Primitive/Boolean =
+                            ( /rel
+                                ( EAppArg
+                                    { eaaArg = Value /a -> TVArg /this = ( Value /this ↦ TVArg /this ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /this -> /Data/StrEqv[ /T=∀/Data/String ] =
+                                        ( /eq
+                                            ( EAppArg
+                                                { eaaArg = Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) }
+                                            ) ↦ /Data/StrEqv[ /T=∀/Data/String ]
+                                        )
+                                    }
+                                ) ↦ ∀/Data/Primitive/Boolean
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/StrEqv"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/StrEqv ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/String
+            , cgcExtends = [ ∀/Data/String ]
+            , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Eqv[ /T=∀/Data/String ]
+            , cgcExtends =
+                [ /Data/StrEqv[ /T=∀/Data/String ] ]
+            , cgcDoc = Nothing
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/String
+            , cgcExtends = [ ∀/Data/String ]
+            , cgcDoc = Just "[String] is a [Semigroup] under concatenation: joining strings end to end is associative.
+              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
+              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.)"
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# String operations
+                  What a [String] does, written over the list of characters it holds. The type itself is
+                  declared on @core/str.ct@, one of the pages every program compiles together. These are on a page
+                  of their own, outside that group, so that @core/list.ct@ — which builds a list's text out of
+                  strings — can import them without the group reaching it (see @core/cons.ct@).
+                  They recur over the characters directly rather than through the list operations of
+                  @core/list.ct@, which would make the two pages import each other."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Equality
+                  Two strings are equal when their characters are, one by one, through [/Data/CharOrdering]."
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                    ( /operator==
+                        ( EAppArg
+                            { eaaArg = Value /l -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "hi"
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "hi"
+                            }
+                        ) ↦ ∀/Data/Primitive/Boolean
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                    ( /operator==
+                        ( EAppArg
+                            { eaaArg = Value /l -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "hi"
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "no"
+                            }
+                        ) ↦ ∀/Data/Primitive/Boolean
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
+                    ( /operator==
+                        ( EAppArg
+                            { eaaArg = Value /l -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ""
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ""
+                            }
+                        ) ↦ ∀/Data/Primitive/Boolean
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Concatenation"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[String] is a [Semigroup] under concatenation: joining strings end to end is associative.
+                  (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
+                  yet dispatched by return type across multiple types, so only the [Semigroup] is declared.)"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> ∀/Data/String =
+                    ( /operator++
+                        ( EAppArg
+                            { eaaArg = Value /l -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "foo"
+                            }
+                        )
+                        ( EAppArg
+                            { eaaArg = Value /r -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "bar"
+                            }
+                        ) ↦ ∀/Data/String
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "foobar"
+                }
+            )
+        ]
+    }

@@ -6,47 +6,23 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/Task/Simple
-                            ( Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Read [[Welcome]]" }
-                                    ]
-                                ) = CStr
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Read [[Welcome]]" }
                             )( Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
                         , /Data/Note/Task/Simple
-                            ( Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Write this note" }
-                                    ]
-                                ) = CStr
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Write this note" }
                             )( Value /state -> /Data/Primitive/True = Value /Data/Primitive/True )
                         , /Data/Note/Task/Simple
-                            ( Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Plan the rest" }
-                                    ]
-                                ) = CStr
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Plan the rest" }
                             )( Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
                         , /Data/Note/Task/Simple
-                            ( Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "A checkbox indented deeper is a task of its own" }
-                                    ]
-                                ) = CStr
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "A checkbox indented deeper is a task of its own" }
                             )( Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
                         ]
@@ -60,14 +36,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/Page
-                            ( Value /title -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Tasks" }
-                                    ]
-                                ) = CStr
+                            ( Value /title -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Tasks" }
                             )
                         ]

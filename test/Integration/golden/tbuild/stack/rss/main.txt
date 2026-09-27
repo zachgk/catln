@@ -11,68 +11,72 @@ Prgm
                         [ /Catln/Doc/dshow
                             ( EAppArg
                                 { eaaArg = Value /s -> /Data/RSS/Item
-                                    ( /published=/Data/String
-                                    , /link=/Data/String
-                                    , /title=/Data/String
-                                    , /description=/Data/String
+                                    ( /published=∀/Data/String
+                                    , /link=∀/Data/String
+                                    , /title=∀/Data/String
+                                    , /description=∀/Data/String
                                     ) = /Data/RSS/Item
-                                    ( EAppArg { eaaArg = Value /title -> /Data/String } )
-                                    ( EAppArg { eaaArg = Value /link -> /Data/String } )
-                                    ( EAppArg { eaaArg = Value /published -> /Data/String } )
-                                    ( EAppArg { eaaArg = Value /description -> /Data/String } )
+                                    ( EAppArg { eaaArg = Value /title -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /link -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /published -> ∀/Data/String } )
+                                    ( EAppArg { eaaArg = Value /description -> ∀/Data/String } )
                                 }
-                            ) -> /Catln/Doc/Show/Html( /contents=/Data/String ) = /Catln/Doc/Show/Html
+                            ) -> /Catln/Doc/Show/Html( /contents=∀/Data/String ) = /Catln/Doc/Show/Html
                             ( EAppArg
-                                { eaaArg = Value /contents -> /Data/String =
+                                { eaaArg = Value /contents -> ∀/Data/String =
                                     ( /operator++
                                         ( EAppArg
-                                            { eaaArg = Value /l -> /Data/String =
+                                            { eaaArg = Value /l -> ∀/Data/String =
                                                 ( /operator++
                                                     ( EAppArg
-                                                        { eaaArg = Value /l -> /Data/String =
+                                                        { eaaArg = Value /l -> ∀/Data/String =
                                                             ( /operator++
                                                                 ( EAppArg
-                                                                    { eaaArg = Value /l -> /Data/String =
+                                                                    { eaaArg = Value /l -> ∀/Data/String =
                                                                         ( /operator++
                                                                             ( EAppArg
-                                                                                { eaaArg = Value /l -> /Data/String = "<p>" }
+                                                                                { eaaArg = Value /l -> /Data/String/Text
+                                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "<p>"
+                                                                                }
                                                                             )
                                                                             ( EAppArg
-                                                                                { eaaArg = Value /r -> /Data/String =
+                                                                                { eaaArg = Value /r -> ∀/Data/String =
                                                                                     ( /Catln/Doc/dshow./Data/RSS/titleOf
                                                                                         ( EAppArg
                                                                                             { eaaArg = Value /title -> TVArg /title = ( Value /title ↦ TVArg /title ) }
                                                                                         )
                                                                                         ( EAppArg
                                                                                             { eaaArg = Value /link -> TVArg /link = ( Value /link ↦ TVArg /link ) }
-                                                                                        ) ↦ /Data/String
+                                                                                        ) ↦ ∀/Data/String
                                                                                     )
                                                                                 }
-                                                                            ) ↦ /Data/String
+                                                                            ) ↦ ∀/Data/String
                                                                         )
                                                                     }
                                                                 )
                                                                 ( EAppArg
-                                                                    { eaaArg = Value /r -> /Data/String =
+                                                                    { eaaArg = Value /r -> ∀/Data/String =
                                                                         ( /Catln/Doc/dshow./Data/RSS/publishedOf
                                                                             ( EAppArg
                                                                                 { eaaArg = Value /published -> TVArg /published = ( Value /published ↦ TVArg /published ) }
-                                                                            ) ↦ /Data/String
+                                                                            ) ↦ ∀/Data/String
                                                                         )
                                                                     }
-                                                                ) ↦ /Data/String
+                                                                ) ↦ ∀/Data/String
                                                             )
                                                         }
                                                     )
                                                     ( EAppArg
-                                                        { eaaArg = Value /r -> /Data/String = "</p>" }
-                                                    ) ↦ /Data/String
+                                                        { eaaArg = Value /r -> /Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "</p>"
+                                                        }
+                                                    ) ↦ ∀/Data/String
                                                 )
                                             }
                                         )
                                         ( EAppArg
                                             { eaaArg = Value /r -> TVArg /description = ( Value /description ↦ TVArg /description ) }
-                                        ) ↦ /Data/String
+                                        ) ↦ ∀/Data/String
                                     )
                                 }
                             )
@@ -84,11 +88,11 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/RSS/Item
-                            ( EAppArg { eaaArg = Value /title -> /Data/String } )
-                            ( EAppArg { eaaArg = Value /link -> /Data/String } )
-                            ( EAppArg { eaaArg = Value /guid -> /Data/String } )
-                            ( EAppArg { eaaArg = Value /published -> /Data/String } )
-                            ( EAppArg { eaaArg = Value /description -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /title -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /link -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /guid -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /published -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /description -> ∀/Data/String } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -100,75 +104,87 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/Doc/dshow./Data/RSS/titleOf
-                            ( EAppArg { eaaArg = Value /title -> /Data/String } )
-                            ( EAppArg { eaaArg = Value /link -> /Data/String } ) -> /Data/String
+                            ( EAppArg { eaaArg = Value /title -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /link -> ∀/Data/String } ) -> ∀/Data/String
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Catln/Doc/dshow./Data/RSS/titleOf
-                            ( EAppArg { eaaArg = Value /title -> /Data/String } )
-                            ( EAppArg { eaaArg = Value /link -> /Data/String } ) | /operator==
+                            ( EAppArg { eaaArg = Value /title -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /link -> ∀/Data/String } ) | /operator==
                             ( EAppArg
                                 { eaaArg = Value /l -> TVArg /link = ( Value /link ↦ TVArg /link ) }
                             )
                             ( EAppArg
-                                { eaaArg = Value /r -> /Data/String = "" }
-                            ) -> /Data/String =
+                                { eaaArg = Value /r -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ""
+                                }
+                            ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String =
+                                    { eaaArg = Value /l -> ∀/Data/String =
                                         ( /operator++
                                             ( EAppArg
-                                                { eaaArg = Value /l -> /Data/String = "<strong>" }
+                                                { eaaArg = Value /l -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "<strong>"
+                                                }
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /r -> TVArg /title = ( Value /title ↦ TVArg /title ) }
-                                            ) ↦ /Data/String
+                                            ) ↦ ∀/Data/String
                                         )
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String = "</strong>" }
-                                ) ↦ /Data/String
+                                    { eaaArg = Value /r -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "</strong>"
+                                    }
+                                ) ↦ ∀/Data/String
                             )
                         , /Catln/Doc/dshow./Data/RSS/titleOf
-                            ( EAppArg { eaaArg = Value /title -> /Data/String } )
-                            ( EAppArg { eaaArg = Value /link -> /Data/String } ) -> /Data/String =
+                            ( EAppArg { eaaArg = Value /title -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /link -> ∀/Data/String } ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String =
+                                    { eaaArg = Value /l -> ∀/Data/String =
                                         ( /operator++
                                             ( EAppArg
-                                                { eaaArg = Value /l -> /Data/String =
+                                                { eaaArg = Value /l -> ∀/Data/String =
                                                     ( /operator++
                                                         ( EAppArg
-                                                            { eaaArg = Value /l -> /Data/String =
+                                                            { eaaArg = Value /l -> ∀/Data/String =
                                                                 ( /operator++
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /l -> /Data/String = "<strong><a href="" }
+                                                                        { eaaArg = Value /l -> /Data/String/Text
+                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "<strong><a href=""
+                                                                        }
                                                                     )
                                                                     ( EAppArg
                                                                         { eaaArg = Value /r -> TVArg /link = ( Value /link ↦ TVArg /link ) }
-                                                                    ) ↦ /Data/String
+                                                                    ) ↦ ∀/Data/String
                                                                 )
                                                             }
                                                         )
                                                         ( EAppArg
-                                                            { eaaArg = Value /r -> /Data/String = "">" }
-                                                        ) ↦ /Data/String
+                                                            { eaaArg = Value /r -> /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "">"
+                                                            }
+                                                        ) ↦ ∀/Data/String
                                                     )
                                                 }
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /r -> TVArg /title = ( Value /title ↦ TVArg /title ) }
-                                            ) ↦ /Data/String
+                                            ) ↦ ∀/Data/String
                                         )
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String = "</a></strong>" }
-                                ) ↦ /Data/String
+                                    { eaaArg = Value /r -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "</a></strong>"
+                                    }
+                                ) ↦ ∀/Data/String
                             )
                         ]
                     }
@@ -178,37 +194,44 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/Doc/dshow./Data/RSS/publishedOf
-                            ( EAppArg { eaaArg = Value /published -> /Data/String } ) -> /Data/String
+                            ( EAppArg { eaaArg = Value /published -> ∀/Data/String } ) -> ∀/Data/String
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Catln/Doc/dshow./Data/RSS/publishedOf
-                            ( EAppArg { eaaArg = Value /published -> /Data/String } ) | /operator==
+                            ( EAppArg { eaaArg = Value /published -> ∀/Data/String } ) | /operator==
                             ( EAppArg
                                 { eaaArg = Value /l -> TVArg /published = ( Value /published ↦ TVArg /published ) }
                             )
                             ( EAppArg
-                                { eaaArg = Value /r -> /Data/String = "" }
-                            ) -> /Data/String = ""
+                                { eaaArg = Value /r -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ""
+                                }
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = ""
                         , /Catln/Doc/dshow./Data/RSS/publishedOf
-                            ( EAppArg { eaaArg = Value /published -> /Data/String } ) -> /Data/String =
+                            ( EAppArg { eaaArg = Value /published -> ∀/Data/String } ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String =
+                                    { eaaArg = Value /l -> ∀/Data/String =
                                         ( /operator++
                                             ( EAppArg
-                                                { eaaArg = Value /l -> /Data/String = " <small>" }
+                                                { eaaArg = Value /l -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " <small>"
+                                                }
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /r -> TVArg /published = ( Value /published ↦ TVArg /published ) }
-                                            ) ↦ /Data/String
+                                            ) ↦ ∀/Data/String
                                         )
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String = "</small>" }
-                                ) ↦ /Data/String
+                                    { eaaArg = Value /r -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "</small>"
+                                    }
+                                ) ↦ ∀/Data/String
                             )
                         ]
                     }
@@ -224,17 +247,19 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "# RSS
-                An RSS feed is a page and each entry of it is a value declared on that page, in the way a note
-                is a page and each checkbox of it is a task declared on that page. Importing a feed writes the
-                page — @import rss("https://xkcd.com/rss.xml")@ — and what the page holds is one [Item] per
-                entry, newest first.
-                A feed is a window rather than a document: it says what it says now, and an entry falls off the
-                end of it as newer ones arrive. So the page is built out of what every read of that feed has
-                ever seen and not out of the last read alone, and the entries the feed no longer carries are
-                written below the ones it does.
-                This is not part of the standard library. A program which imports no feed has no use for the
-                type, and the page a feed is read as writes the import itself." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# RSS
+                  An RSS feed is a page and each entry of it is a value declared on that page, in the way a note
+                  is a page and each checkbox of it is a task declared on that page. Importing a feed writes the
+                  page — @import rss("https://xkcd.com/rss.xml")@ — and what the page holds is one [Item] per
+                  entry, newest first.
+                  A feed is a window rather than a document: it says what it says now, and an entry falls off the
+                  end of it as newer ones arrive. So the page is built out of what every read of that feed has
+                  ever seen and not out of the last read alone, and the entries the feed no longer carries are
+                  written below the ones it does.
+                  This is not part of the standard library. A program which imports no feed has no use for the
+                  type, and the page a feed is read as writes the import itself."
+                }
             )
         ]
     }

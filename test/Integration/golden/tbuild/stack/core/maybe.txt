@@ -295,27 +295,37 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "# Maybe
-                A [Maybe] holds either a single value ([Some]) or nothing ([Nothing]). Unlike a [ConsList] it is
-                not recursive, so it is the simplest parameterized type on which to define structural equality
-                and ordering. The [Some] and [Nothing] constructors are named into the [Maybe] namespace, so
-                they live at [/Data/Maybe/Some] and [/Data/Maybe/Nothing] rather than loose under [/Data]." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Maybe
+                  A [Maybe] holds either a single value ([Some]) or nothing ([Nothing]). Unlike a [ConsList] it is
+                  not recursive, so it is the simplest parameterized type on which to define structural equality
+                  and ordering. The [Some] and [Nothing] constructors are named into the [Maybe] namespace, so
+                  they live at [/Data/Maybe/Some] and [/Data/Maybe/Nothing] rather than loose under [/Data]."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "# Maybe equality and ordering examples" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Maybe equality and ordering examples"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "A [Maybe] of any [Eq] element is an [Eq] member (see the end of this file), so [operator==]" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A [Maybe] of any [Eq] element is an [Eq] member (see the end of this file), so [operator==]"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  checks both arms structurally." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  checks both arms structurally."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -339,7 +349,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -363,15 +375,21 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "A [Maybe] of any [Ord] element is an [Ord] member (see the end of this file), so [compareTo]" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A [Maybe] of any [Ord] element is an [Ord] member (see the end of this file), so [compareTo]"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  orders both arms structurally, with [Nothing] before any [Some]." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  orders both arms structurally, with [Nothing] before any [Some]."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -401,7 +419,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -431,7 +451,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -455,58 +477,78 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "# Maybe Eq membership
-                Makes a [Maybe] of any [Eq] element a proper member of [Eq], so the generic [operator==]
-                dispatches through the [equal] method. Two [Maybe]s are equal when both are [Nothing], or both
-                are [Some] of equal values. Mirrors the [ConsList] membership in [Data/list]." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Maybe Eq membership
+                  Makes a [Maybe] of any [Eq] element a proper member of [Eq], so the generic [operator==]
+                  dispatches through the [equal] method. Two [Maybe]s are equal when both are [Nothing], or both
+                  are [Some] of equal values. Mirrors the [ConsList] membership in [Data/list]."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "# Maybe Ord membership
-                Makes a [Maybe] of any [Ord] element a proper member of [Ord], so [compareTo] dispatches per
-                constructor. A [Maybe] of [Ord] elements is ordered with [Nothing] before any [Some], and two
-                [Some]s ordered by their wrapped values. Mirrors the [Eq] membership above (and every [Ord] is an
-                [Eq], which the [Eq] membership already supplies)." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Maybe Ord membership
+                  Makes a [Maybe] of any [Ord] element a proper member of [Ord], so [compareTo] dispatches per
+                  constructor. A [Maybe] of [Ord] elements is ordered with [Nothing] before any [Some], and two
+                  [Some]s ordered by their wrapped values. Mirrors the [Eq] membership above (and every [Ord] is an
+                  [Eq], which the [Eq] membership already supplies)."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "# Maybe Functor instance
-                Makes a [Maybe] a [Functor]: [fmap] applies a function to the wrapped value of a [Some] and
-                leaves a [Nothing] unchanged. The instances are defined under the declaration's absolute name
-                (see the [ConsList] instance in [Data/list] for the naming rationale)." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Maybe Functor instance
+                  Makes a [Maybe] a [Functor]: [fmap] applies a function to the wrapped value of a [Some] and
+                  leaves a [Nothing] unchanged. The instances are defined under the declaration's absolute name
+                  (see the [ConsList] instance in [Data/list] for the naming rationale)."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "# Maybe Monad instance
-                Makes a [Maybe] a [Monad]: [mmap] applies a value-to-[Maybe] function to the wrapped value of a
-                [Some] (returning whatever [Maybe] the function produces, which flattens the two layers into one),
-                and short-circuits a [Nothing] unchanged. Mirrors the [Functor] instance above; the definitions
-                are written under the declaration's absolute name (see the [ConsList] instance in [Data/list] for
-                the naming rationale)." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Maybe Monad instance
+                  Makes a [Maybe] a [Monad]: [mmap] applies a value-to-[Maybe] function to the wrapped value of a
+                  [Some] (returning whatever [Maybe] the function produces, which flattens the two layers into one),
+                  and short-circuits a [Nothing] unchanged. Mirrors the [Functor] instance above; the definitions
+                  are written under the declaration's absolute name (see the [ConsList] instance in [Data/list] for
+                  the naming rationale)."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "[mmap] binds through the [Some] arm (its result is whatever [Maybe] the function returns) and" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[mmap] binds through the [Some] arm (its result is whatever [Maybe] the function returns) and"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  short-circuits the [Nothing] arm. [Maybe] is already an [Eq] member (see above), so the" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  short-circuits the [Nothing] arm. [Maybe] is already an [Eq] member (see above), so the"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  flattened result compares with [operator==]. (A function whose body computes the wrapped" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  flattened result compares with [operator==]. (A function whose body computes the wrapped"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  value, e.g. [Some(value= v + 1)], is not yet comparable — a pre-existing gap unrelated to" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  value, e.g. [Some(value= v + 1)], is not yet comparable — a pre-existing gap unrelated to"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  [Monad]; see the note in [Data/monad].)" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  [Monad]; see the note in [Data/monad].)"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -544,7 +586,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -573,7 +617,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -599,15 +645,21 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "[pure] for [Maybe] wraps the value in a [Some]; the call site's expected [Maybe] type selects" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[pure] for [Maybe] wraps the value in a [Some]; the call site's expected [Maybe] type selects"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  this instance (return-type-directed dispatch — see [pure] in [Data/monad])." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  this instance (return-type-directed dispatch — see [pure] in [Data/monad])."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -633,7 +685,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         ]
     }

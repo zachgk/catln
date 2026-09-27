@@ -40,11 +40,13 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Tests multiple definitions of the same name distinguished by their RETURN type. Both `mdbl`
-                definitions take the same input (`v -> Integer`) but return different types: one returns
-                `Integer`, the other `Maybe[Integer]`. The use site `mdbl(v= 1) + 1` demands an `Integer`
-                (the operand of `+`), so the compiler must select the Integer-returning definition. That gives
-                `1 + 1 == 2`." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Tests multiple definitions of the same name distinguished by their RETURN type. Both `mdbl`
+                  definitions take the same input (`v -> Integer`) but return different types: one returns
+                  `Integer`, the other `Maybe[Integer]`. The use site `mdbl(v= 1) + 1` demands an `Integer`
+                  (the operand of `+`), so the compiler must select the Integer-returning definition. That gives
+                  `1 + 1 == 2`."
+                }
             )
         ]
     }

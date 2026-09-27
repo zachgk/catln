@@ -1,0 +1,216 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/operator++"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator++
+                            ( Value /l -> ∀/Data/String = Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /r -> ∀/Data/String = Hole TopType HoleActive { haName = Nothing } ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /operator++
+                            ( Value /l= String/Text( Value chars@Value a ) )
+                            ( Value /r= String/Text( Value chars@Value b ) ) -> ∀/Data/String = String/Text
+                            ( Value chars= appendChars( Value l= Value a )( Value r= Value b ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/charsEqual"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/charsEqual
+                            ( Value a -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( Value b -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/charsEqual( Value a= Value /Data/List/Nil )( Value b= Value /Data/List/Nil ) -> ∀/Data/Primitive/Boolean = Value True
+                        , /Data/charsEqual( Value a= Value /Data/List/Nil )
+                            ( Value b= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/Primitive/Boolean = Value False
+                        , /Data/charsEqual
+                            ( Value a= /Data/List/Cons( Value head )( Value tail ) )( Value b= Value /Data/List/Nil ) -> ∀/Data/Primitive/Boolean = Value False
+                        , /Data/charsEqual
+                            ( Value a= /Data/List/Cons( Value head@Value ah )( Value tail@Value at ) )
+                            ( Value b= /Data/List/Cons( Value head@Value bh )( Value tail@Value bt ) ) | /operator==( Value /l= Value ah )( Value /r= Value bh ) -> ∀/Data/Primitive/Boolean = charsEqual( Value a= Value at )( Value b= Value bt )
+                        , /Data/charsEqual
+                            ( Value a= /Data/List/Cons( Value head@Value ah )( Value tail@Value at ) )
+                            ( Value b= /Data/List/Cons( Value head@Value bh )( Value tail@Value bt ) ) -> ∀/Data/Primitive/Boolean = Value False
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/rel"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/rel
+                            ( Value a= String/Text( Value chars@Value ac ) )
+                            ( Value b= String/Text( Value chars@Value bc ) )( Value /this -> /Data/StrEqv ) -> ∀/Data/Primitive/Boolean = charsEqual( Value a= Value ac )( Value b= Value bc )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/eq"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/eq( Value /this -> ∀/Data/String ) -> ∀/Data/Algebra/Eqv[ /T=TopType ] = Value StrEqv ]
+                    }
+                )
+            ,
+                ( "/Data/appendChars"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/appendChars
+                            ( Value l -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( Value r -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/List/ConsList[ /T=/Data/Char ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/appendChars( Value l= Value /Data/List/Nil )( Value r ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = Value r
+                        , /Data/appendChars
+                            ( Value l= /Data/List/Cons( Value head )( Value tail ) )( Value r ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/List/Cons( Value head= Value head )
+                            ( Value tail= appendChars( Value l= Value tail )( Value r= Value r ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/equal"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/equal( Value other )( Value /this -> ∀/Data/String ) -> ∀/Data/Primitive/Boolean = rel( Value a= Value this )( Value b= Value other )
+                            ( Value /this= eq( Value /this= Value this ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/StrEqv"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/StrEqv ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/String
+            , cgcExtends = [ ∀/Data/String ]
+            , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Eqv[ /T=∀/Data/String ]
+            , cgcExtends =
+                [ /Data/StrEqv[ /T=∀/Data/String ] ]
+            , cgcDoc = Nothing
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/String
+            , cgcExtends = [ ∀/Data/String ]
+            , cgcDoc = Just "[String] is a [Semigroup] under concatenation: joining strings end to end is associative.
+              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
+              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.)"
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "# String operations
+                What a [String] does, written over the list of characters it holds. The type itself is
+                declared on @core/str.ct@, one of the pages every program compiles together. These are on a page
+                of their own, outside that group, so that @core/list.ct@ — which builds a list's text out of
+                strings — can import them without the group reaching it (see @core/cons.ct@).
+                They recur over the characters directly rather than through the list operations of
+                @core/list.ct@, which would make the two pages import each other." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Equality
+                Two strings are equal when their characters are, one by one, through [/Data/CharOrdering]." }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= CStr
+                    { csValue = "hi" }
+                )
+                ( Value /r= CStr
+                    { csValue = "hi" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= CStr
+                    { csValue = "hi" }
+                )
+                ( Value /r= CStr
+                    { csValue = "no" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "False" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= CStr
+                    { csValue = "" }
+                )
+                ( Value /r= CStr
+                    { csValue = "" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "True" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Concatenation" }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "[String] is a [Semigroup] under concatenation: joining strings end to end is associative.
+                (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
+                yet dispatched by return type across multiple types, so only the [Semigroup] is declared.)" }
+            )
+        , /Catln/#print
+            ( Value /p= /operator++
+                ( Value /l= CStr
+                    { csValue = "foo" }
+                )
+                ( Value /r= CStr
+                    { csValue = "bar" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "foobar" }
+            )
+        ]
+    }

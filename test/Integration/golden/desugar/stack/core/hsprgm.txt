@@ -52,7 +52,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/Hole/HoleActive
-                            ( Value /name -> ∀/Data/Maybe[ /T=/Data/String.. ] )
+                            ( Value /name -> ∀/Data/Maybe[ /T=∀/Data/String ] )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -74,7 +74,7 @@ Prgm
                     { omiDecls =
                         [ /Catln/CGNode/CGClass( Value /sealed -> ∀/Data/Primitive/Boolean )( Value /partial -> /Catln/PartialType.. )
                             ( Value /extends -> ∀/Data/List[ /T=∀/Catln/Type ] )
-                            ( Value /doc -> ∀/Data/Maybe[ /T=/Data/String.. ] )
+                            ( Value /doc -> ∀/Data/Maybe[ /T=∀/Data/String ] )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -119,7 +119,7 @@ Prgm
                                     [ /B=∀/Data/List
                                         [ /T=/Catln/Pair
                                             [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption.. ]
-                                            , /A=/Data/String..
+                                            , /A=∀/Data/String
                                             ]..
                                         ]
                                     , /C=∀/Data/List[ /T=∀/Catln/Constant ]
@@ -130,7 +130,7 @@ Prgm
                             ( Value /leafs -> ∀/Data/List
                                 [ /T=/Catln/Pair
                                     [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption.. ]
-                                    , /A=/Data/String..
+                                    , /A=∀/Data/String
                                     ]..
                                 ]
                             )
@@ -145,7 +145,7 @@ Prgm
                 ( "/Catln/PartialName/PTypeName"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/PartialName/PTypeName( Value /name -> /Data/String.. ) ]
+                        [ /Catln/PartialName/PTypeName( Value /name -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -261,7 +261,7 @@ Prgm
                 ( "/Catln/PartialName/PClassName"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/PartialName/PClassName( Value /name -> /Data/String.. ) ]
+                        [ /Catln/PartialName/PClassName( Value /name -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -335,7 +335,7 @@ Prgm
                 ( "/Catln/SourcePos"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/SourcePos( Value /file -> /Data/String.. )( Value /line -> /Data/Primitive/Integer.. )( Value /column -> /Data/Primitive/Integer.. ) ]
+                        [ /Catln/SourcePos( Value /file -> ∀/Data/String )( Value /line -> /Data/Primitive/Integer.. )( Value /column -> /Data/Primitive/Integer.. ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -345,7 +345,7 @@ Prgm
                 ( "/Catln/Constant/CStr"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/Constant/CStr( Value /value -> /Data/String.. ) ]
+                        [ /Catln/Constant/CStr( Value /value -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -385,7 +385,7 @@ Prgm
                 ( "/Catln/PartialKey"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/PartialKey( Value /name -> /Data/String.. )
+                        [ /Catln/PartialKey( Value /name -> ∀/Data/String )
                             ( Value /vars -> ∀/Data/List[ /T=/Catln/PartialKey.. ] )
                             ( Value /args -> ∀/Data/List[ /T=/Catln/PartialKey.. ] )
                         ]
@@ -444,7 +444,7 @@ Prgm
                                     , /A=/Catln/SourcePos..
                                     ]..
                                 ]
-                            )( Value /id -> /Data/String.. )( Value /dat -> /Catln/Unit.. )
+                            )( Value /id -> ∀/Data/String )( Value /dat -> /Catln/Unit.. )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -455,7 +455,7 @@ Prgm
                 ( "/Catln/PartialType"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/PartialType( Value /name -> /Data/String.. )
+                        [ /Catln/PartialType( Value /name -> ∀/Data/String )
                             ( Value /vars -> ∀/Data/List
                                 [ /T=/Catln/Pair
                                     [ /B=∀/Catln/Type
@@ -504,7 +504,7 @@ Prgm
                             ( Value /items -> ∀/Data/List
                                 [ /T=/Catln/Pair
                                     [ /B=/Catln/ObjectMapItem..
-                                    , /A=/Data/String..
+                                    , /A=∀/Data/String
                                     ]..
                                 ]
                             )
@@ -533,7 +533,7 @@ Prgm
                 ( "/Catln/PartialName/PRelativeName"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/PartialName/PRelativeName( Value /name -> /Data/String.. ) ]
+                        [ /Catln/PartialName/PRelativeName( Value /name -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -555,7 +555,7 @@ Prgm
                     { omiDecls =
                         [ /Catln/ObjArr
                             ( Value /obj -> ∀/Data/Maybe[ /T=∀/Catln/Expr ] )( Value /basis -> ∀/Catln/ObjectBasis )
-                            ( Value /doc -> ∀/Data/Maybe[ /T=/Data/String.. ] )
+                            ( Value /doc -> ∀/Data/Maybe[ /T=∀/Data/String ] )
                             ( Value /annots -> ∀/Data/List[ /T=∀/Catln/Expr ] )
                             ( Value /arr -> ∀/Data/Maybe
                                 [ /T=/Catln/Pair
@@ -583,7 +583,7 @@ Prgm
                 ( "/Catln/Expr/Value"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/Expr/Value( Value /meta -> /Catln/Meta.. )( Value /name -> /Data/String.. ) ]
+                        [ /Catln/Expr/Value( Value /meta -> /Catln/Meta.. )( Value /name -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -594,7 +594,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Catln/prgmFor( Value /name -> /Data/String ) -> /Catln/Prgm.. ]
+                        [ /Catln/prgmFor( Value /name -> ∀/Data/String ) -> /Catln/Prgm.. ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -711,7 +711,7 @@ Prgm
                 [ /Catln/CGNode/CGClass
                     ( /sealed=∀/Data/Primitive/Boolean
                     , /extends=∀/Data/List[ /T=∀/Catln/Type ]
-                    , /doc=∀/Data/Maybe[ /T=/Data/String.. ]
+                    , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
                     , /partial=/Catln/PartialType..
                     )
                 , /Catln/CGNode/CGType
@@ -724,7 +724,7 @@ Prgm
             , cgcExtends =
                 [ /Catln/Constant/CInt( /value=/Data/Primitive/Integer.. )
                 , /Catln/Constant/CFloat( /value=/Data/Primitive/Float.. )
-                , /Catln/Constant/CStr( /value=/Data/String.. )
+                , /Catln/Constant/CStr( /value=∀/Data/String )
                 , /Catln/Constant/CChar( /value=/Data/Char.. )
                 ]
             , cgcDoc = Just "A value written directly in a program: a whole number, a fractional number, a string, or a character.A character constant cannot be written in Catln — the language has no character literal — but the compiler makes one where it needs to, so a program reading a program can be handed one."
@@ -751,7 +751,7 @@ Prgm
                     , /meta=/Catln/Meta..
                     )
                 , /Catln/Expr/Value
-                    ( /name=/Data/String..
+                    ( /name=∀/Data/String
                     , /meta=/Catln/Meta..
                     )
                 , /Catln/Expr/HoleExpr
@@ -783,7 +783,7 @@ Prgm
             , cgcPartial = /Catln/Hole
             , cgcExtends =
                 [ /Catln/Hole/HoleActive
-                    ( /name=∀/Data/Maybe[ /T=/Data/String.. ] )
+                    ( /name=∀/Data/Maybe[ /T=∀/Data/String ] )
                 , /Catln/Hole/HoleUndefined
                 , /Catln/Hole/HoleTodefine
                 ]
@@ -805,9 +805,9 @@ Prgm
             { cgcSealed = True
             , cgcPartial = /Catln/PartialName
             , cgcExtends =
-                [ /Catln/PartialName/PTypeName( /name=/Data/String.. )
-                , /Catln/PartialName/PClassName( /name=/Data/String.. )
-                , /Catln/PartialName/PRelativeName( /name=/Data/String.. )
+                [ /Catln/PartialName/PTypeName( /name=∀/Data/String )
+                , /Catln/PartialName/PClassName( /name=∀/Data/String )
+                , /Catln/PartialName/PRelativeName( /name=∀/Data/String )
                 ]
             , cgcDoc = Just "What a partial type is named by: a type, a class, or a suffix that could be either.A [PTypeName] names one declared type and a [PClassName] one declared class. A [PRelativeName] is a name written without its full path — the compiler resolves it to one of the other two, so a program reading a compiled one will not meet it."
             }
@@ -821,7 +821,7 @@ Prgm
                             [ /B=∀/Data/List
                                 [ /T=/Catln/Pair
                                     [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption.. ]
-                                    , /A=/Data/String..
+                                    , /A=∀/Data/String
                                     ]..
                                 ]
                             , /C=∀/Data/List[ /T=∀/Catln/Constant ]
@@ -832,7 +832,7 @@ Prgm
                     , /leafs=∀/Data/List
                         [ /T=/Catln/Pair
                             [ /B=∀/Data/List[ /T=/Catln/PartialArgsOption.. ]
-                            , /A=/Data/String..
+                            , /A=∀/Data/String
                             ]..
                         ]
                     )

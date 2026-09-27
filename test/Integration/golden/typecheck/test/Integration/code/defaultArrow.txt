@@ -41,7 +41,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "The default arrow. A name with no arguments applied is a value in its own right — the partial
                 application `f` has before anything is given to it — so an arrow may be written from it.
                 `f= f(b= 2, c= 3)` rewrites that bare `f`, and the `a` of `f(a= 1)` is applied on top of what the

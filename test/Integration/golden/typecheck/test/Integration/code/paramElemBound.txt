@@ -63,7 +63,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "Prerequisite for multiFieldRouting: a destructured field must inherit the bound declared on
                 its type parameter. `Box`'s field `x` has type `$A`, and `useBox` is declared over
                 Box[$A -> Boxed], so the destructured `x` is bounded by `Boxed`: `unbox(b= x)` must type-check

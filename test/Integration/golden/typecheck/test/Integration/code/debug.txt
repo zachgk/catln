@@ -51,7 +51,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "Tests the [#debug] annotation, which records its value every time the definition it is written on
                 is evaluated.
                 Two of them on one definition, one on an argument and one on a computed expression. The computed

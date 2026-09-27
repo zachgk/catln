@@ -6,14 +6,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/Task/Simple
-                            ( Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Finish reading the page these notes are written over" }
-                                    ]
-                                ) = CStr
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Finish reading the page these notes are written over" }
                             )( Value /state -> /Data/Primitive/False = Value /Data/Primitive/False )
                         ]
@@ -27,14 +21,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/Page
-                            ( Value /title -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Overlay" }
-                                    ]
-                                ) = CStr
+                            ( Value /title -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Overlay" }
                             )
                         ]

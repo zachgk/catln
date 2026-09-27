@@ -1,0 +1,286 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/operator++"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator++
+                            ( Value /l -> ∀/Data/String = Hole ∀/Data/String HoleActive { haName = Nothing } )
+                            ( Value /r -> ∀/Data/String = Hole ∀/Data/String HoleActive { haName = Nothing } ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /operator++
+                            ( Value /l -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                                ( Value /chars@Value /a -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )
+                            ( Value /r -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                                ( Value /chars@Value /b -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                            ( Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/appendChars( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/charsEqual"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/charsEqual
+                            ( Value /a -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( Value /b -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/charsEqual( Value /a -> /Data/List/Nil = Value /Data/List/Nil )( Value /b -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /Data/charsEqual( Value /a -> /Data/List/Nil = Value /Data/List/Nil )
+                            ( Value /b -> /Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                ) = /Data/List/Cons( Value /head -> /Data/Char )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/charsEqual
+                            ( Value /a -> /Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                ) = /Data/List/Cons( Value /head -> /Data/Char )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )( Value /b -> /Data/List/Nil = Value /Data/List/Nil ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/charsEqual
+                            ( Value /a -> /Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                ) = /Data/List/Cons( Value /head@Value /ah -> /Data/Char )
+                                ( Value /tail@Value /at -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )
+                            ( Value /b -> /Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                ) = /Data/List/Cons( Value /head@Value /bh -> /Data/Char )
+                                ( Value /tail@Value /bt -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ) | /operator==( Value /l -> TVArg /ah = Value /ah )( Value /r -> TVArg /bh = Value /bh ) -> ∀/Data/Primitive/Boolean = /Data/charsEqual( Value /a -> TVArg /at = Value /at )( Value /b -> TVArg /bt = Value /bt )
+                        , /Data/charsEqual
+                            ( Value /a -> /Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                ) = /Data/List/Cons( Value /head@Value /ah -> /Data/Char )
+                                ( Value /tail@Value /at -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )
+                            ( Value /b -> /Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                ) = /Data/List/Cons( Value /head@Value /bh -> /Data/Char )
+                                ( Value /tail@Value /bt -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/rel"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/rel
+                            ( Value /a -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                                ( Value /chars@Value /ac -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )
+                            ( Value /b -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                                ( Value /chars@Value /bc -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )
+                            ( Value /this -> /Data/StrEqv[ /T=∀/Data/String ] ) -> ∀/Data/Primitive/Boolean = /Data/charsEqual( Value /a -> TVArg /ac = Value /ac )( Value /b -> TVArg /bc = Value /bc )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/eq"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/eq( Value /this -> ∀/Data/String ) -> /Data/StrEqv[ /T=∀/Data/String ] = Value /Data/StrEqv ]
+                    }
+                )
+            ,
+                ( "/Data/appendChars"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/appendChars
+                            ( Value /l -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( Value /r -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/List/ConsList[ /T=/Data/Char ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/appendChars( Value /l -> /Data/List/Nil = Value /Data/List/Nil )
+                            ( Value /r -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> ∀/Data/List/ConsList[ /T=/Data/Char ] = Value /r
+                        , /Data/appendChars
+                            ( Value /l -> /Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                ) = /Data/List/Cons( Value /head -> /Data/Char )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            )
+                            ( Value /r -> ∀/Data/List/ConsList[ /T=/Data/Char ] ) -> /Data/List/Cons[ /T=/Data/Char ]
+                            ( /head=/Data/Char
+                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                            ) = /Data/List/Cons( Value /head -> TVArg /head = Value /head )
+                            ( Value /tail -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/appendChars( Value /l -> TVArg /tail = Value /tail )( Value /r -> TVArg /r = Value /r ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/equal"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/equal( Value /other -> ∀/Data/Algebra/Eq )( Value /this -> ∀/Data/String ) -> ∀/Data/Primitive/Boolean = /rel( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
+                            ( Value /this -> /Data/StrEqv[ /T=∀/Data/String ] = /eq( Value /this -> TVArg /this = Value /this ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/StrEqv"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/StrEqv ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/String
+            , cgcExtends = [ ∀/Data/String ]
+            , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Algebra/Eqv[ /T=∀/Data/String ]
+            , cgcExtends =
+                [ /Data/StrEqv[ /T=∀/Data/String ] ]
+            , cgcDoc = Nothing
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/String
+            , cgcExtends = [ ∀/Data/String ]
+            , cgcDoc = Just "[String] is a [Semigroup] under concatenation: joining strings end to end is associative.
+              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
+              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.)"
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "# String operations
+                What a [String] does, written over the list of characters it holds. The type itself is
+                declared on @core/str.ct@, one of the pages every program compiles together. These are on a page
+                of their own, outside that group, so that @core/list.ct@ — which builds a list's text out of
+                strings — can import them without the group reaching it (see @core/cons.ct@).
+                They recur over the characters directly rather than through the list operations of
+                @core/list.ct@, which would make the two pages import each other." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "## Equality
+                Two strings are equal when their characters are, one by one, through [/Data/CharOrdering]." }
+            )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
+                ( Value /l -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    { csValue = "hi" }
+                )
+                ( Value /r -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    { csValue = "hi" }
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
+                ( Value /l -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    { csValue = "hi" }
+                )
+                ( Value /r -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    { csValue = "no" }
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "False" }
+            )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/Primitive/Boolean = /operator==
+                ( Value /l -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    { csValue = "" }
+                )
+                ( Value /r -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    { csValue = "" }
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "True" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "## Concatenation" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "[String] is a [Semigroup] under concatenation: joining strings end to end is associative.
+                (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
+                yet dispatched by return type across multiple types, so only the [Semigroup] is declared.)" }
+            )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/String = /operator++
+                ( Value /l -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    { csValue = "foo" }
+                )
+                ( Value /r -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                    { csValue = "bar" }
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "foobar" }
+            )
+        ]
+    }

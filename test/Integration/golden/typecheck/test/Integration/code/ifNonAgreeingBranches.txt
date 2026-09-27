@@ -27,14 +27,23 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /greet( Value /name -> /Data/String )( Value /formal -> ∀/Data/Primitive/Boolean ) ->
-                            ( /operator++[ /T=/Data/String ]
-                                ( /r=/Data/String
-                                , /l=/Data/String
-                                ) + /Data/String + /greet.$c213d7
-                                ( /$c213d7-arg=( /Catln/Else + /Catln/Then )
-                                , /name=/Data/String
+                        [ /greet( Value /name -> ∀/Data/String )( Value /formal -> ∀/Data/Primitive/Boolean ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/String
+                                , fromList []
+                                , []
                                 )
+                            ,
+                                ( /operator++
+                                    ( /r=∀/Data/String
+                                    , /l=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ) + /greet.$c213d7
+                                    ( /$c213d7-arg=( /Catln/Else + /Catln/Then )
+                                    , /name=∀/Data/String
+                                    )
+                                )
+                            , []
                             ) = /greet.$c213d7( Value /name -> TVArg /name = Value /name )
                             ( Value /$c213d7-arg -> ( /Catln/Else + /Catln/Then ) = /Catln/ThenElse/fromBool( Value /v -> TVArg /formal = Value /formal ) )
                         ]
@@ -47,22 +56,38 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /greet.$c213d7( Value /name -> /Data/String )( Value /$c213d7-arg -> /Catln/Then = Value /Catln/Then ) ->
-                            ( /operator++
-                                ( /r=/Data/String
-                                , /l=/Data/String
-                                ) + /Data/String
+                        [ /greet.$c213d7( Value /name -> ∀/Data/String )( Value /$c213d7-arg -> /Catln/Then = Value /Catln/Then ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/String
+                                , fromList []
+                                , []
+                                )
+                            , /operator++
+                                ( /r=∀/Data/String
+                                , /l=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                )
+                            , []
                             ) = /operator++
-                            ( Value /l -> /Data/String = CStr
+                            ( Value /l -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Dear " }
                             )( Value /r -> TVArg /name = Value /name )
-                        , /greet.$c213d7( Value /name -> /Data/String )( Value /$c213d7-arg -> /Catln/Else = Value /Catln/Else ) ->
-                            ( /operator++
-                                ( /r=/Data/String
-                                , /l=/Data/String
-                                ) + /Data/String
+                        , /greet.$c213d7( Value /name -> ∀/Data/String )( Value /$c213d7-arg -> /Catln/Else = Value /Catln/Else ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/String
+                                , fromList []
+                                , []
+                                )
+                            , /operator++
+                                ( /r=∀/Data/String
+                                , /l=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                )
+                            , []
                             ) = /operator++
-                            ( Value /l -> /Data/String = CStr
+                            ( Value /l -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Hi " }
                             )( Value /r -> TVArg /name = Value /name )
                         ]
@@ -77,7 +102,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "An [if] whose two branches produce different values is just an [if], not a disagreement.
                 This is a regression test for a gap where such an [if] derived an overlap-agreement test pairing
                 its two branches against each other and reporting that they disagree — asserting, in effect, that
@@ -95,21 +121,25 @@ Prgm
                 preprocessors putting a pattern somewhere it could not constrain anything." }
             )
         , /Catln/#print
-            ( Value /p -> /Data/String = /greet
-                ( Value /name -> /Data/String = CStr
+            ( Value /p -> ∀/Data/String = /greet
+                ( Value /name -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                     { csValue = "Ada" }
                 )( Value /formal -> /Data/Primitive/True = Value /Data/Primitive/True )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "Dear Ada" }
             )
         , /Catln/#print
-            ( Value /p -> /Data/String = /greet
-                ( Value /name -> /Data/String = CStr
+            ( Value /p -> ∀/Data/String = /greet
+                ( Value /name -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                     { csValue = "Ada" }
                 )( Value /formal -> /Data/Primitive/False = Value /Data/Primitive/False )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "Hi Ada" }
             )
         ]

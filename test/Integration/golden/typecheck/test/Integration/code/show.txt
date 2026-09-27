@@ -26,8 +26,9 @@ Prgm
                                 )
                             ,
                                 ( /operator==
-                                    ( /r=/Data/String
-                                    , /l=/Data/String
+                                    ( /r=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /l=∀/Data/String
                                     ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
                                     ( /this=∀/Data/Algebra/Eq
                                     , /other=∀/Data/Algebra/Eq
@@ -35,12 +36,13 @@ Prgm
                                 )
                             , []
                             ) = /operator==
-                            ( Value /l -> /Data/String = /Data/toString
+                            ( Value /l -> ∀/Data/String = /Data/toString
                                 ( Value /this -> /Data/Primitive/Integer = CInt
                                     { ciValue = 1 }
                                 )
                             )
-                            ( Value /r -> /Data/String = CStr
+                            ( Value /r -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "1" }
                             )
                         ]
@@ -54,7 +56,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "Tests the toString method, later will be the Show class" }
             )
         ]

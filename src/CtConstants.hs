@@ -43,6 +43,14 @@ strPrim = "/Data/String"
 charPrim = "/Data/Char"
 ioPrim = "/Catln/IO"
 
+-- | What a string value is: the one member of the @\/Data\/String@ class, holding in its one field
+-- the list of @\/Data\/Char@ the string is made of. A class with one member rather than a data type,
+-- so that @String@ written as a type means every string and not only the one with no characters —
+-- a data type's bare name is its argument-less form, which a string with characters is not.
+ctStringText, ctStringChars :: String
+ctStringText = "/Data/String/Text"
+ctStringChars = "chars"
+
 pattern ContextStr :: String
 pattern ContextStr = "/Context"
 pattern ContextInStr :: String
@@ -459,10 +467,12 @@ ctElemVar = "$T"
 --
 -- 'ctBooleanPath' beside 'truePrim' and 'falsePrim', which are its two members;
 -- @stack\/core\/bool.ct@ writes them as one @class(Boolean, [True, False])@.
-ctBooleanPath, ctMaybePath, ctListPath :: String
+ctBooleanPath, ctMaybePath, ctListPath, ctConsListPath :: String
 ctBooleanPath = "/Data/Primitive/Boolean"
 ctMaybePath = "/Data/Maybe"
 ctListPath = "/Data/List"
+-- | The list a string's characters are held in (@stack\/core\/cons.ct@).
+ctConsListPath = "/Data/List/ConsList"
 
 -- | The files a library may ship beside its pages for the webdocs to load, and the content type each
 -- is served as.

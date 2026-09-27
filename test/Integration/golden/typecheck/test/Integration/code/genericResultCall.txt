@@ -113,7 +113,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A call whose declared result is a declaration variable, landing where nothing requires a type.
                 A term may be handed on unrewritten — rewriting is a chain and the consumer's followup applies
                 it — so the tree build leaves a term that already reaches its destination alone. A Top
@@ -138,7 +139,8 @@ Prgm
                     { ciValue = 5 }
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "6" }
             )
         , /Catln/#print
@@ -152,11 +154,13 @@ Prgm
                     { ciValue = 5 }
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "6" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "The same defect is what stopped a fold over a polymorphic accumulator, which is the shape it was
                 found from. The recursive call is what reaches the step function, and it reached it as the
                 unevaluated @/foldrG(..)@ tuple:
@@ -206,7 +210,8 @@ Prgm
                     { ciValue = 0 }
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "6" }
             )
         , /Catln/#print
@@ -218,11 +223,13 @@ Prgm
                     { ciValue = 0 }
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "0" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "The accumulator need not be the element type: fold a list of Integers into a String." }
             )
         , /Catln/#print
@@ -247,15 +254,18 @@ Prgm
                     )
                 )
                 ( /fn( Value /acc -> ∀/Data/Algebra/Semigroup )( Value /v -> /Data/Primitive/Integer ) -> ∀/Data/Algebra/Semigroup = /operator++( Value /l -> TVArg /acc = Value /acc )
-                    ( Value /r -> /Data/String = CStr
+                    ( Value /r -> /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                         { csValue = "x" }
                     )
                 )
-                ( Value /init -> /Data/String = CStr
+                ( Value /init -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                     { csValue = "s" }
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "sxx" }
             )
         ]

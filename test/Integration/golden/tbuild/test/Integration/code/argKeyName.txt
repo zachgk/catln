@@ -47,7 +47,7 @@ Prgm
                                     { eaaArg = Value /this -> /Catln/IO =
                                         ( /Catln/println
                                             ( EAppArg
-                                                { eaaArg = Value /msg -> /Data/String =
+                                                { eaaArg = Value /msg -> ∀/Data/String =
                                                     ( /Data/toString
                                                         ( EAppArg
                                                             { eaaArg = Value /this -> /Data/Primitive/Integer =
@@ -60,7 +60,7 @@ Prgm
                                                                     ) ↦ /Data/Primitive/Integer
                                                                 )
                                                             }
-                                                        ) ↦ /Data/String
+                                                        ) ↦ ∀/Data/String
                                                     )
                                                 }
                                             )
@@ -97,12 +97,14 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "An argument named the same as a function of the module it is declared in.
-                [power] takes an argument called [exp], and [exp] is also a method declared beside it. A call's
-                arguments are keyed by the names they are given, so `2.power(exp= 3)` fills the argument [exp]
-                whatever else is called that — the method is not what the key refers to. [power] is a runtime
-                primitive, which reads its argument by the key @/exp@, so a key named after the method instead is
-                an argument the primitive never finds." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "An argument named the same as a function of the module it is declared in.
+                  [power] takes an argument called [exp], and [exp] is also a method declared beside it. A call's
+                  arguments are keyed by the names they are given, so `2.power(exp= 3)` fills the argument [exp]
+                  whatever else is called that — the method is not what the key refers to. [power] is a runtime
+                  primitive, which reads its argument by the key @/exp@, so a key named after the method instead is
+                  an argument the primitive never finds."
+                }
             )
         ]
     }

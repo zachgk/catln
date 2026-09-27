@@ -24,7 +24,7 @@ Prgm
                                     { eaaArg = Value /this -> /Catln/IO =
                                         ( /Catln/println
                                             ( EAppArg
-                                                { eaaArg = Value /msg -> /Data/String =
+                                                { eaaArg = Value /msg -> ∀/Data/String =
                                                     ( /Data/toString
                                                         ( EAppArg
                                                             { eaaArg = Value /this -> /Data/Primitive/Integer =
@@ -40,7 +40,7 @@ Prgm
                                                                     ) ↦ /Data/Primitive/Integer
                                                                 )
                                                             }
-                                                        ) ↦ /Data/String
+                                                        ) ↦ ∀/Data/String
                                                     )
                                                 }
                                             )
@@ -157,10 +157,12 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "A method and a record field that share a name, called from a local binding.
-                `x.foo` has two readings: the method [/Lib/foo] declared below, and the field `foo` of [Rec].
-                An [Integer] has no field `foo`, so only the method applies. The same call written directly in a
-                body (`x.foo + 1`) and written as a local binding (`n = x.foo`) must both resolve to the method." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A method and a record field that share a name, called from a local binding.
+                  `x.foo` has two readings: the method [/Lib/foo] declared below, and the field `foo` of [Rec].
+                  An [Integer] has no field `foo`, so only the method applies. The same call written directly in a
+                  body (`x.foo + 1`) and written as a local binding (`n = x.foo`) must both resolve to the method."
+                }
             )
         ]
     }

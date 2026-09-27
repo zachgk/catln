@@ -70,11 +70,11 @@ Prgm
                 ( "/Data/Note/Task/Obsidian"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Note/Task/Obsidian( Value /contents -> /Data/String )( Value /symbol -> /Data/String )( Value /statusType -> ∀/Data/Note/StatusType )( Value /description -> /Data/String )( Value /priority -> ∀/Data/Note/Priority )
-                            ( Value /start -> ∀/Data/Maybe[ /T=/Data/String ] )
-                            ( Value /scheduled -> ∀/Data/Maybe[ /T=/Data/String ] )
-                            ( Value /due -> ∀/Data/Maybe[ /T=/Data/String ] )
-                            ( Value /recurrence -> ∀/Data/Maybe[ /T=/Data/String ] )( Value /rest -> /Data/String )
+                        [ /Data/Note/Task/Obsidian( Value /contents -> ∀/Data/String )( Value /symbol -> ∀/Data/String )( Value /statusType -> ∀/Data/Note/StatusType )( Value /description -> ∀/Data/String )( Value /priority -> ∀/Data/Note/Priority )
+                            ( Value /start -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                            ( Value /scheduled -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                            ( Value /due -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                            ( Value /recurrence -> ∀/Data/Maybe[ /T=∀/Data/String ] )( Value /rest -> ∀/Data/String )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -85,7 +85,7 @@ Prgm
                 ( "/Data/Note/#tasks"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Note/#tasks( Value /query -> /Data/String ) ]
+                        [ /Data/Note/#tasks( Value /query -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -104,7 +104,7 @@ Prgm
                 ( "/Data/Note/Show/TaskQuery"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Note/Show/TaskQuery( Value /result -> /Data/String ) ]
+                        [ /Data/Note/Show/TaskQuery( Value /result -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -115,7 +115,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Catln/Doc/dshow./Data/Note/taskList( Value annot ) -> /Data/String ]
+                        [ /Catln/Doc/dshow./Data/Note/taskList( Value annot ) -> ∀/Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -137,9 +137,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Calendar/calendarDay
-                            ( Value /this= Task/Simple( Value contents )( Value state ) ) -> ∀/Data/Maybe[ /T=/Data/String ] = Value /Data/Maybe/Nothing
+                            ( Value /this= Task/Simple( Value contents )( Value state ) ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = Value /Data/Maybe/Nothing
                         , /Data/Calendar/calendarDay
-                            ( Value /this= Task/Obsidian( Value contents )( Value symbol )( Value statusType )( Value description )( Value priority )( Value start )( Value scheduled )( Value due )( Value recurrence )( Value rest ) ) -> ∀/Data/Maybe[ /T=/Data/String ] = firstDay( Value a= Value start )( Value b= Value scheduled )( Value c= Value due )
+                            ( Value /this= Task/Obsidian( Value contents )( Value symbol )( Value statusType )( Value description )( Value priority )( Value start )( Value scheduled )( Value due )( Value recurrence )( Value rest ) ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = firstDay( Value a= Value start )( Value b= Value scheduled )( Value c= Value due )
                         ]
                     }
                 )
@@ -147,7 +147,7 @@ Prgm
                 ( "/Data/Note/Show/Properties"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Note/Show/Properties( Value /text -> /Data/String ) ]
+                        [ /Data/Note/Show/Properties( Value /text -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -166,7 +166,7 @@ Prgm
                 ( "/Data/Note/#properties"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Note/#properties( Value /text -> /Data/String ) ]
+                        [ /Data/Note/#properties( Value /text -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -177,18 +177,18 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/firstDay
-                            ( Value a -> ∀/Data/Maybe[ /T=/Data/String ] )
-                            ( Value b -> ∀/Data/Maybe[ /T=/Data/String ] )
-                            ( Value c -> ∀/Data/Maybe[ /T=/Data/String ] ) -> ∀/Data/Maybe[ /T=/Data/String ]
+                            ( Value a -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                            ( Value b -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                            ( Value c -> ∀/Data/Maybe[ /T=∀/Data/String ] ) -> ∀/Data/Maybe[ /T=∀/Data/String ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Note/firstDay
-                            ( Value a= /Data/Maybe/Some( Value value ) )( Value b )( Value c ) -> ∀/Data/Maybe[ /T=/Data/String ] = /Data/Maybe/Some( Value value= Value value )
+                            ( Value a= /Data/Maybe/Some( Value value ) )( Value b )( Value c ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = /Data/Maybe/Some( Value value= Value value )
                         , /Data/Note/firstDay( Value a= Value /Data/Maybe/Nothing )
-                            ( Value b= /Data/Maybe/Some( Value value ) )( Value c ) -> ∀/Data/Maybe[ /T=/Data/String ] = /Data/Maybe/Some( Value value= Value value )
-                        , /Data/Note/firstDay( Value a= Value /Data/Maybe/Nothing )( Value b= Value /Data/Maybe/Nothing )( Value c ) -> ∀/Data/Maybe[ /T=/Data/String ] = Value c
+                            ( Value b= /Data/Maybe/Some( Value value ) )( Value c ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = /Data/Maybe/Some( Value value= Value value )
+                        , /Data/Note/firstDay( Value a= Value /Data/Maybe/Nothing )( Value b= Value /Data/Maybe/Nothing )( Value c ) -> ∀/Data/Maybe[ /T=∀/Data/String ] = Value c
                         ]
                     }
                 )
@@ -205,7 +205,7 @@ Prgm
                 ( "/Data/Note/Task/Simple"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Note/Task/Simple( Value /contents -> /Data/String )( Value /state -> ∀/Data/Primitive/Boolean ) ]
+                        [ /Data/Note/Task/Simple( Value /contents -> ∀/Data/String )( Value /state -> ∀/Data/Primitive/Boolean ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -224,7 +224,7 @@ Prgm
                 ( "/Data/Note/Show/TaskList"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Note/Show/TaskList( Value /tasks -> /Data/String ) ]
+                        [ /Data/Note/Show/TaskList( Value /tasks -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -235,7 +235,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Catln/Doc/dshow./Data/Note/tasksQuery( Value query -> /Data/String ) -> /Data/String ]
+                        [ /Catln/Doc/dshow./Data/Note/tasksQuery( Value query -> ∀/Data/String ) -> ∀/Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -271,7 +271,7 @@ Prgm
                 ( "/Data/Note/Page"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Note/Page( Value /title -> /Data/String ) ]
+                        [ /Data/Note/Page( Value /title -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []

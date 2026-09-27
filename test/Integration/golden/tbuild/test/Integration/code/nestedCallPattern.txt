@@ -226,30 +226,38 @@ Prgm
         [ Value /#noCore
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "A call written as a pattern is not a declaration of the function it calls.
-                An arm may match a call rather than a value: [describe] below matches an [mmap] over a [Box], which
-                is the shape of an arm of [/Catln/Doc/dshowCall] giving a call a display of its own. The call
-                inside that pattern is an object the type checker enumerates beside [describe] itself, and it is
-                enumerated as what it is — something written inside another object's arguments.
-                It used to be enumerated as a bodiless function object, which is the precedence a declaration of a
-                type gets, so it outranked the real declaration of [mmap] and the declaration was dropped from the
-                union of all objects. Every other call of [mmap] was then bounded by the one pattern, and the call
-                over a [Maybe] at the bottom met it as nothing: "Required type contains bottomType".
-                Written without the core library so that when a compiler change breaks it there is one page to
-                read rather than a standard library." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A call written as a pattern is not a declaration of the function it calls.
+                  An arm may match a call rather than a value: [describe] below matches an [mmap] over a [Box], which
+                  is the shape of an arm of [/Catln/Doc/dshowCall] giving a call a display of its own. The call
+                  inside that pattern is an object the type checker enumerates beside [describe] itself, and it is
+                  enumerated as what it is — something written inside another object's arguments.
+                  It used to be enumerated as a bodiless function object, which is the precedence a declaration of a
+                  type gets, so it outranked the real declaration of [mmap] and the declaration was dropped from the
+                  union of all objects. Every other call of [mmap] was then bounded by the one pattern, and the call
+                  over a [Maybe] at the bottom met it as nothing: "Required type contains bottomType".
+                  Written without the core library so that when a compiler change breaks it there is one page to
+                  read rather than a standard library."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "What an example is printed as. A [Maybe] is shown as itself, which is all this page needs." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "What an example is printed as. A [Maybe] is shown as itself, which is all this page needs."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Matches a call of [mmap] over a [Box], not the value one evaluates to." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Matches a call of [mmap] over a [Box], not the value one evaluates to."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "The call the pattern above used to break. An example rather than a definition, since examples are
-                solved last against every object of the page, which is how the pattern reaches it." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The call the pattern above used to break. An example rather than a definition, since examples are
+                  solved last against every object of the page, which is how the pattern reaches it."
+                }
             )
         , /Catln/#print
             ( EAppArg

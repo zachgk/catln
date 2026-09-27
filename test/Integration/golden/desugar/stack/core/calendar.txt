@@ -17,7 +17,7 @@ Prgm
                 ( "/Data/Calendar/calendarDay"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Calendar/calendarDay[ /E : ∀/Data/Calendar/CalendarEntry ]( Value /this -> $/E ) -> ∀/Data/Maybe[ /T=/Data/String ] ]
+                        [ /Data/Calendar/calendarDay[ /E : ∀/Data/Calendar/CalendarEntry ]( Value /this -> $/E ) -> ∀/Data/Maybe[ /T=∀/Data/String ] ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -28,7 +28,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Catln/Doc/dshow./Data/Calendar/calendarEntries( Value annot ) -> /Data/String ]
+                        [ /Catln/Doc/dshow./Data/Calendar/calendarEntries( Value annot ) -> ∀/Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -46,7 +46,7 @@ Prgm
                 ( "/Data/Calendar/Show/Calendar"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Calendar/Show/Calendar( Value /result -> /Data/String ) ]
+                        [ /Data/Calendar/Show/Calendar( Value /result -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []

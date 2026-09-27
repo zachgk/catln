@@ -40,7 +40,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "Tests an identity function.
                 It requires using the type of the input argument as the output type of id as well.
                 So, it must be read as `id($T) -> $T`, not (id(Any) -> Any)." }

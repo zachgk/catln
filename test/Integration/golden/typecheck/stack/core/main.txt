@@ -4,7 +4,8 @@ Prgm
     , prgmCg = []
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "# Catln Core Library
                 This is the Catln core library.
                 It defines the fundamental units of the language, core data types, basic compilation, and standard methods.

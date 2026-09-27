@@ -93,7 +93,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A guard on an arm of a [case] or a [match] selects that arm only when its condition holds.
                 This is a regression test for a gap that made both forms answer with the guarded arm whether or
                 not its guard was true: @abs(x= -5)@ answered @-5@, having run the arm guarded by @x2 >= 0@ on an
@@ -118,7 +119,8 @@ Prgm
                     { ciValue = 5 }
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "5" }
             )
         , /Catln/#print
@@ -129,7 +131,8 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "5" }
             )
         ]

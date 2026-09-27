@@ -82,11 +82,14 @@ remodePartial p = do
   -- representation set-equivalent to a different one)
   return p{ptArgMode = if H.null (ptArgs p) then mode{ptArgLb=True} else mode}
 
--- | A constant drawn from the four constant kinds.
+-- | A constant drawn from the constant kinds a type can hold.
+--
+-- No string constant: a string is a list of characters and not a primitive, so a type never holds
+-- one ('Semantics.Types.constantType' types a string literal as a string of any characters). A type
+-- built with one is a type nothing can produce.
 genConstant :: Gen Constant
 genConstant = HG.choice [ CInt <$> HG.integral (linear (-100) 100)
                         , CFloat <$> HG.double (linearFrac (-100) 100)
-                        , CStr <$> HG.string (linear 0 5) HG.alpha
                         , CChar <$> HG.unicode ]
 
 -- | Constants deduplicated, keeping the first occurrence: a repeated constant in a union is not a

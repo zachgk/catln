@@ -52,7 +52,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "# Lists
                 A [List] is an ordered collection of zero or more items. [List] is an interface: it names the
                 operations every list supports without fixing how the items are stored. Concrete list types
@@ -68,13 +69,15 @@ Prgm
                 reaching @core/list.ct@ from one costs)." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
                 smaller list ([tail]). Almost every operation on @core/list.ct@ is a two-arm recursion — a
                 base case for [Nil], and a step that consumes the [head] and recurses on the [tail]." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "Every [ConsList] is a [List], so each [List] operation resolves on it through the arms of
                 @core/list.ct@." }
             )

@@ -6,7 +6,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Json/parseJson( Value /path -> /Data/String ) -> /Catln/ImportResult.. ]
+                        [ /Json/parseJson( Value /path -> ∀/Data/String ) -> /Catln/ImportResult.. ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -16,7 +16,8 @@ Prgm
     , prgmCg = [ CGType ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "# Reading JSON
                 An importer: a way of reading files written in another syntax, declared in Catln rather than
                 built into the compiler. A file which writes `import "json/importer.ct"` on one line may write

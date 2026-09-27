@@ -8,7 +8,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ to_oct( Value n -> /Data/Primitive/Integer ) -> /Data/String = oct( Value /this= Value n ) ]
+                        [ to_oct( Value n -> /Data/Primitive/Integer ) -> ∀/Data/String = oct( Value /this= Value n ) ]
                     }
                 )
             ,
@@ -28,7 +28,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ string_length( Value s -> /Data/String ) -> /Data/Primitive/Integer = length( Value /this= Value s ) ]
+                        [ string_length( Value s -> ∀/Data/String ) -> /Data/Primitive/Integer = length( Value /this= Value s ) ]
                     }
                 )
             ,
@@ -79,10 +79,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn
-                            ( Value /value= say_hello( Value msg -> /Data/String ) )( Value /io -> /Catln/IO )= println( Value /this= Value io )
+                            ( Value /value= say_hello( Value msg -> ∀/Data/String ) )( Value /io -> /Catln/IO )= println( Value /this= Value io )
                             ( Value /msg= toString( Value /this= Value msg ) )
                         , /ContextIn
-                            ( Value /value= print_twice( Value msg -> /Data/String ) )( Value /io -> /Catln/IO )= println
+                            ( Value /value= print_twice( Value msg -> ∀/Data/String ) )( Value /io -> /Catln/IO )= println
                             ( Value /this= println( Value /this= Value io )
                                 ( Value /msg= toString( Value /this= Value msg ) )
                             )
@@ -154,7 +154,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ to_bin( Value n -> /Data/Primitive/Integer ) -> /Data/String = bin( Value /this= Value n ) ]
+                        [ to_bin( Value n -> /Data/Primitive/Integer ) -> ∀/Data/String = bin( Value /this= Value n ) ]
                     }
                 )
             ,
@@ -300,7 +300,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ char_from_code( Value n -> /Data/Primitive/Integer ) -> /Data/String = chr( Value /n= Value n ) ]
+                        [ char_from_code( Value n -> /Data/Primitive/Integer ) -> ∀/Data/String = chr( Value /n= Value n ) ]
                     }
                 )
             ,
@@ -310,7 +310,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ code_from_char( Value c -> /Data/String ) -> /Data/Primitive/Integer = ord( Value /this= Value c ) ]
+                        [ code_from_char( Value c -> ∀/Data/String ) -> /Data/Primitive/Integer = ord( Value /this= Value c ) ]
                     }
                 )
             ,
@@ -320,7 +320,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ concat_strings( Value a -> /Data/String )( Value b -> /Data/String ) -> /Data/String = /operator+( Value /l= Value a )( Value /r= Value b ) ]
+                        [ concat_strings( Value a -> ∀/Data/String )( Value b -> ∀/Data/String ) -> ∀/Data/String = /operator+( Value /l= Value a )( Value /r= Value b ) ]
                     }
                 )
             ,
@@ -370,7 +370,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ to_hex( Value n -> /Data/Primitive/Integer ) -> /Data/String = hex( Value /this= Value n ) ]
+                        [ to_hex( Value n -> /Data/Primitive/Integer ) -> ∀/Data/String = hex( Value /this= Value n ) ]
                     }
                 )
             ,
@@ -392,7 +392,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ to_str_from_int( Value x -> /Data/Primitive/Integer ) -> /Data/String = toString( Value /this= Value x ) ]
+                        [ to_str_from_int( Value x -> /Data/Primitive/Integer ) -> ∀/Data/String = toString( Value /this= Value x ) ]
                     }
                 )
             ,
@@ -422,7 +422,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ to_str_from_float( Value x -> /Data/Primitive/Float ) -> /Data/String = toString( Value /this= Value x ) ]
+                        [ to_str_from_float( Value x -> /Data/Primitive/Float ) -> ∀/Data/String = toString( Value /this= Value x ) ]
                     }
                 )
             ]

@@ -8,7 +8,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /to_oct( Value /n -> /Data/Primitive/Integer ) -> /Data/String = /oct( Value /this -> TVArg /n = Value /n ) ]
+                        [ /to_oct( Value /n -> /Data/Primitive/Integer ) -> ∀/Data/String = /oct( Value /this -> TVArg /n = Value /n ) ]
                     }
                 )
             ,
@@ -28,7 +28,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /string_length( Value /s -> /Data/String ) -> /Data/Primitive/Integer = /length( Value /this -> TVArg /s = Value /s ) ]
+                        [ /string_length( Value /s -> ∀/Data/String ) -> /Data/Primitive/Integer = /length( Value /this -> TVArg /s = Value /s ) ]
                     }
                 )
             ,
@@ -91,32 +91,33 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn
-                            ( Value /value -> /say_hello( /msg=/Data/String ) = /say_hello( Value /msg -> /Data/String ) )( Value /io -> /Catln/IO ) ->
+                            ( Value /value -> /say_hello( /msg=∀/Data/String ) = /say_hello( Value /msg -> ∀/Data/String ) )( Value /io -> /Catln/IO ) ->
                             ( /Catln/println
                                 ( /this=/Catln/IO
-                                , /msg=/Data/String
+                                , /msg=∀/Data/String
                                 ) + /Catln/IO
                             ) = /println( Value /this -> TVArg /io = Value /io )
-                            ( Value /msg -> /Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
+                            ( Value /msg -> ∀/Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
                         , /ContextIn
-                            ( Value /value -> /print_twice( /msg=/Data/String ) = /print_twice( Value /msg -> /Data/String ) )( Value /io -> /Catln/IO ) ->
+                            ( Value /value -> /print_twice( /msg=∀/Data/String ) = /print_twice( Value /msg -> ∀/Data/String ) )( Value /io -> /Catln/IO ) ->
                             ( /Catln/println
                                 ( /this=/Catln/IO
-                                , /msg=/Data/String
+                                , /msg=∀/Data/String
                                 ) + /Catln/IO
                             ) = /println
                             ( Value /this -> /Catln/IO = /println( Value /this -> TVArg /io = Value /io )
-                                ( Value /msg -> /Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
+                                ( Value /msg -> ∀/Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
                             )
-                            ( Value /msg -> /Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
+                            ( Value /msg -> ∀/Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
                         , /ContextIn( Value /value -> /echo = Value /echo )( Value /io -> /Catln/IO ) ->
                             ( /Catln/println
                                 ( /this=/Catln/IO
-                                , /msg=/Data/String
+                                , /msg=∀/Data/String
                                 ) + /Catln/IO
                             ) = /println( Value /this -> TVArg /io = Value /io )
-                            ( Value /msg -> /Data/String = /toString
-                                ( Value /this -> /Data/String = CStr
+                            ( Value /msg -> ∀/Data/String = /toString
+                                ( Value /this -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                     { csValue = """" }
                                 )
                             )
@@ -181,7 +182,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /to_bin( Value /n -> /Data/Primitive/Integer ) -> /Data/String = /bin( Value /this -> TVArg /n = Value /n ) ]
+                        [ /to_bin( Value /n -> /Data/Primitive/Integer ) -> ∀/Data/String = /bin( Value /this -> TVArg /n = Value /n ) ]
                     }
                 )
             ,
@@ -336,7 +337,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /char_from_code( Value /n -> /Data/Primitive/Integer ) -> /Data/String = /chr( Value /n -> TVArg /n = Value /n ) ]
+                        [ /char_from_code( Value /n -> /Data/Primitive/Integer ) -> ∀/Data/String = /chr( Value /n -> TVArg /n = Value /n ) ]
                     }
                 )
             ,
@@ -346,7 +347,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /code_from_char( Value /c -> /Data/String ) -> /Data/Primitive/Integer = /ord( Value /this -> TVArg /c = Value /c ) ]
+                        [ /code_from_char( Value /c -> ∀/Data/String ) -> /Data/Primitive/Integer = /ord( Value /this -> TVArg /c = Value /c ) ]
                     }
                 )
             ,
@@ -356,7 +357,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /concat_strings( Value /a -> /Data/String )( Value /b -> /Data/String ) -> /Data/String = /operator+( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) ]
+                        [ /concat_strings( Value /a -> ∀/Data/String )( Value /b -> ∀/Data/String ) -> ∀/Data/String = /operator+( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) ]
                     }
                 )
             ,
@@ -406,7 +407,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /to_hex( Value /n -> /Data/Primitive/Integer ) -> /Data/String = /hex( Value /this -> TVArg /n = Value /n ) ]
+                        [ /to_hex( Value /n -> /Data/Primitive/Integer ) -> ∀/Data/String = /hex( Value /this -> TVArg /n = Value /n ) ]
                     }
                 )
             ,
@@ -428,7 +429,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /to_str_from_int( Value /x -> /Data/Primitive/Integer ) -> /Data/String = /toString( Value /this -> TVArg /x = Value /x ) ]
+                        [ /to_str_from_int( Value /x -> /Data/Primitive/Integer ) -> ∀/Data/String = /toString( Value /this -> TVArg /x = Value /x ) ]
                     }
                 )
             ,
@@ -458,7 +459,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /to_str_from_float( Value /x -> /Data/Primitive/Float ) -> /Data/String = /toString( Value /this -> TVArg /x = Value /x ) ]
+                        [ /to_str_from_float( Value /x -> /Data/Primitive/Float ) -> ∀/Data/String = /toString( Value /this -> TVArg /x = Value /x ) ]
                     }
                 )
             ]

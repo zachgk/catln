@@ -9,11 +9,11 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /to_oct
-                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/String =
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> ∀/Data/String =
                             ( /oct
                                 ( EAppArg
                                     { eaaArg = Value /this -> TVArg /n = ( Value /n ↦ TVArg /n ) }
-                                ) ↦ /Data/String
+                                ) ↦ ∀/Data/String
                             )
                         ]
                     }
@@ -43,7 +43,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /string_length
-                            ( EAppArg { eaaArg = Value /s -> /Data/String } ) -> /Data/Primitive/Integer =
+                            ( EAppArg { eaaArg = Value /s -> ∀/Data/String } ) -> /Data/Primitive/Integer =
                             ( /length
                                 ( EAppArg
                                     { eaaArg = Value /this -> TVArg /s = ( Value /s ↦ TVArg /s ) }
@@ -157,14 +157,14 @@ Prgm
                     , omiDefs =
                         [ /ContextIn
                             ( EAppArg
-                                { eaaArg = Value /value -> /say_hello( /msg=/Data/String ) = /say_hello
-                                    ( EAppArg { eaaArg = Value /msg -> /Data/String } )
+                                { eaaArg = Value /value -> /say_hello( /msg=∀/Data/String ) = /say_hello
+                                    ( EAppArg { eaaArg = Value /msg -> ∀/Data/String } )
                                 }
                             )
                             ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
                             ( /Catln/println
                                 ( /this=/Catln/IO
-                                , /msg=/Data/String
+                                , /msg=∀/Data/String
                                 ) + /Catln/IO
                             ) =
                             ( /println
@@ -172,25 +172,25 @@ Prgm
                                     { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /msg -> /Data/String =
+                                    { eaaArg = Value /msg -> ∀/Data/String =
                                         ( /toString
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /msg = ( Value /msg ↦ TVArg /msg ) }
-                                            ) ↦ /Data/String
+                                            ) ↦ ∀/Data/String
                                         )
                                     }
                                 ) ↦ /Catln/IO
                             )
                         , /ContextIn
                             ( EAppArg
-                                { eaaArg = Value /value -> /print_twice( /msg=/Data/String ) = /print_twice
-                                    ( EAppArg { eaaArg = Value /msg -> /Data/String } )
+                                { eaaArg = Value /value -> /print_twice( /msg=∀/Data/String ) = /print_twice
+                                    ( EAppArg { eaaArg = Value /msg -> ∀/Data/String } )
                                 }
                             )
                             ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
                             ( /Catln/println
                                 ( /this=/Catln/IO
-                                , /msg=/Data/String
+                                , /msg=∀/Data/String
                                 ) + /Catln/IO
                             ) =
                             ( /println
@@ -201,11 +201,11 @@ Prgm
                                                 { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /msg -> /Data/String =
+                                                { eaaArg = Value /msg -> ∀/Data/String =
                                                     ( /toString
                                                         ( EAppArg
                                                             { eaaArg = Value /this -> TVArg /msg = ( Value /msg ↦ TVArg /msg ) }
-                                                        ) ↦ /Data/String
+                                                        ) ↦ ∀/Data/String
                                                     )
                                                 }
                                             ) ↦ /Catln/IO
@@ -213,11 +213,11 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /msg -> /Data/String =
+                                    { eaaArg = Value /msg -> ∀/Data/String =
                                         ( /toString
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /msg = ( Value /msg ↦ TVArg /msg ) }
-                                            ) ↦ /Data/String
+                                            ) ↦ ∀/Data/String
                                         )
                                     }
                                 ) ↦ /Catln/IO
@@ -227,7 +227,7 @@ Prgm
                             ( EAppArg { eaaArg = Value /io -> /Catln/IO } ) ->
                             ( /Catln/println
                                 ( /this=/Catln/IO
-                                , /msg=/Data/String
+                                , /msg=∀/Data/String
                                 ) + /Catln/IO
                             ) =
                             ( /println
@@ -235,11 +235,13 @@ Prgm
                                     { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /msg -> /Data/String =
+                                    { eaaArg = Value /msg -> ∀/Data/String =
                                         ( /toString
                                             ( EAppArg
-                                                { eaaArg = Value /this -> /Data/String = """" }
-                                            ) ↦ /Data/String
+                                                { eaaArg = Value /this -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = """"
+                                                }
+                                            ) ↦ ∀/Data/String
                                         )
                                     }
                                 ) ↦ /Catln/IO
@@ -354,11 +356,11 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /to_bin
-                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/String =
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> ∀/Data/String =
                             ( /bin
                                 ( EAppArg
                                     { eaaArg = Value /this -> TVArg /n = ( Value /n ↦ TVArg /n ) }
-                                ) ↦ /Data/String
+                                ) ↦ ∀/Data/String
                             )
                         ]
                     }
@@ -620,11 +622,11 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /char_from_code
-                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/String =
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> ∀/Data/String =
                             ( /chr
                                 ( EAppArg
                                     { eaaArg = Value /n -> TVArg /n = ( Value /n ↦ TVArg /n ) }
-                                ) ↦ /Data/String
+                                ) ↦ ∀/Data/String
                             )
                         ]
                     }
@@ -637,7 +639,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /code_from_char
-                            ( EAppArg { eaaArg = Value /c -> /Data/String } ) -> /Data/Primitive/Integer =
+                            ( EAppArg { eaaArg = Value /c -> ∀/Data/String } ) -> /Data/Primitive/Integer =
                             ( /ord
                                 ( EAppArg
                                     { eaaArg = Value /this -> TVArg /c = ( Value /c ↦ TVArg /c ) }
@@ -654,15 +656,15 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /concat_strings
-                            ( EAppArg { eaaArg = Value /a -> /Data/String } )
-                            ( EAppArg { eaaArg = Value /b -> /Data/String } ) -> /Data/String =
+                            ( EAppArg { eaaArg = Value /a -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /b -> ∀/Data/String } ) -> ∀/Data/String =
                             ( /operator+
                                 ( EAppArg
                                     { eaaArg = Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) }
                                 )
                                 ( EAppArg
                                     { eaaArg = Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) }
-                                ) ↦ /Data/String
+                                ) ↦ ∀/Data/String
                             )
                         ]
                     }
@@ -743,11 +745,11 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /to_hex
-                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/String =
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> ∀/Data/String =
                             ( /hex
                                 ( EAppArg
                                     { eaaArg = Value /this -> TVArg /n = ( Value /n ↦ TVArg /n ) }
-                                ) ↦ /Data/String
+                                ) ↦ ∀/Data/String
                             )
                         ]
                     }
@@ -770,11 +772,11 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /to_str_from_int
-                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) -> /Data/String =
+                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } ) -> ∀/Data/String =
                             ( /toString
                                 ( EAppArg
                                     { eaaArg = Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) }
-                                ) ↦ /Data/String
+                                ) ↦ ∀/Data/String
                             )
                         ]
                     }
@@ -821,11 +823,11 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /to_str_from_float
-                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Float } ) -> /Data/String =
+                            ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Float } ) -> ∀/Data/String =
                             ( /toString
                                 ( EAppArg
                                     { eaaArg = Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) }
-                                ) ↦ /Data/String
+                                ) ↦ ∀/Data/String
                             )
                         ]
                     }

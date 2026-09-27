@@ -69,23 +69,33 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Class-method type-parameter binding." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Class-method type-parameter binding."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "The abstract [rel] is declared over the parameterized class [TEqv] with its arguments typed" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The abstract [rel] is declared over the parameterized class [TEqv] with its arguments typed"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "by the class parameter. The object [MyEqv] is a member of [TEqv] with the parameter bound to" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "by the class parameter. The object [MyEqv] is a member of [TEqv] with the parameter bound to"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "[Integer], so the definition of [rel] sees its arguments as [Integer] and the declaration is" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[Integer], so the definition of [rel] sees its arguments as [Integer] and the declaration is"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "fulfilled by covering the receiver (every member of the class has a definition)." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "fulfilled by covering the receiver (every member of the class has a definition)."
+                }
             )
         ]
     }

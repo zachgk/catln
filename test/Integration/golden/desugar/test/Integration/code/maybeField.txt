@@ -19,8 +19,8 @@ Prgm
                 ( "/Dated"
                 , ObjectMapItem
                     { omiDecls =
-                        [ Dated( Value /name -> /Data/String )
-                            ( Value /due -> ∀/Data/Maybe[ /T=/Data/String ] )
+                        [ Dated( Value /name -> ∀/Data/String )
+                            ( Value /due -> ∀/Data/Maybe[ /T=∀/Data/String ] )
                         , /Dated
                             ( Value name= CStr
                                 { csValue = "has one" }

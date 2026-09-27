@@ -6,11 +6,11 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/Doc/Show/EntryFoldSteps
-                            ( EAppArg { eaaArg = Value /init -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /init -> ∀/Data/String } )
                             ( EAppArg
                                 { eaaArg = Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/EntryFoldStep.. ] }
                             )
-                            ( EAppArg { eaaArg = Value /result -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /result -> ∀/Data/String } )
                             ( EAppArg { eaaArg = Value /fromRight -> ∀/Data/Primitive/Boolean } )
                         ]
                     , omiRuntimeDecls = []
@@ -24,9 +24,9 @@ Prgm
                     { omiDecls =
                         [ /Catln/Doc/Show/FoldStep
                             ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /acc -> /Data/String } )
-                            ( EAppArg { eaaArg = Value /input -> /Data/String } )
-                            ( EAppArg { eaaArg = Value /output -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /acc -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /output -> ∀/Data/String } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -39,9 +39,9 @@ Prgm
                     { omiDecls =
                         [ /Catln/Doc/Show/EntryStep
                             ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /key -> /Data/String } )
-                            ( EAppArg { eaaArg = Value /input -> /Data/String } )
-                            ( EAppArg { eaaArg = Value /output -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /key -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /output -> ∀/Data/String } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -68,10 +68,10 @@ Prgm
                     { omiDecls =
                         [ /Catln/Doc/Show/EntryFoldStep
                             ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /key -> /Data/String } )
-                            ( EAppArg { eaaArg = Value /acc -> /Data/String } )
-                            ( EAppArg { eaaArg = Value /input -> /Data/String } )
-                            ( EAppArg { eaaArg = Value /output -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /key -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /acc -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /output -> ∀/Data/String } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -83,11 +83,11 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/Doc/Show/FoldSteps
-                            ( EAppArg { eaaArg = Value /init -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /init -> ∀/Data/String } )
                             ( EAppArg
                                 { eaaArg = Value /steps -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] }
                             )
-                            ( EAppArg { eaaArg = Value /result -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /result -> ∀/Data/String } )
                             ( EAppArg { eaaArg = Value /fromRight -> ∀/Data/Primitive/Boolean } )
                         ]
                     , omiRuntimeDecls = []
@@ -107,7 +107,7 @@ Prgm
                             )
                             ( EAppArg { eaaArg = Value /value -> $/V } )
                             ( EAppArg
-                                { eaaArg = Value /assets -> ∀/Data/List[ /T=/Data/String ] }
+                                { eaaArg = Value /assets -> ∀/Data/List[ /T=∀/Data/String ] }
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -121,8 +121,8 @@ Prgm
                     { omiDecls =
                         [ /Catln/Doc/Show/Step
                             ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } )
-                            ( EAppArg { eaaArg = Value /input -> /Data/String } )
-                            ( EAppArg { eaaArg = Value /output -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /input -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /output -> ∀/Data/String } )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -171,71 +171,81 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "# A display a library renders for itself
-                A [Show/Rendered] is a value together with the files that draw it. It is the third way a library
-                says what one of its types looks like, and the first that can say what one *does*.
-                The two before it each give up something. Membership of [DShow] hands the value itself to the
-                webdocs, which then need a component named after the type — so the display lives in the doc
-                server rather than in the library, which is what [Show/Html] is written against. An arm of
-                [/Catln/Doc/dshow] building a [Show/Html] keeps the display in the library, but what it builds is
-                markup and nothing more: a tree that folds when it is clicked needs a script, and markup laid
-                into a page brings none. A browser does not run a script written into markup handed to it, and an
-                arm joining strings together has nowhere to put one in any case.
-                So this carries both halves. The [value] is handed over whole, as membership would, and the
-                [assets] name the JavaScript and the CSS that turn it into a display. Both live in the library's
-                own directory beside the pages declaring the type, and the doc server fetches them without
-                knowing what they are for." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# A display a library renders for itself
+                  A [Show/Rendered] is a value together with the files that draw it. It is the third way a library
+                  says what one of its types looks like, and the first that can say what one *does*.
+                  The two before it each give up something. Membership of [DShow] hands the value itself to the
+                  webdocs, which then need a component named after the type — so the display lives in the doc
+                  server rather than in the library, which is what [Show/Html] is written against. An arm of
+                  [/Catln/Doc/dshow] building a [Show/Html] keeps the display in the library, but what it builds is
+                  markup and nothing more: a tree that folds when it is clicked needs a script, and markup laid
+                  into a page brings none. A browser does not run a script written into markup handed to it, and an
+                  arm joining strings together has nowhere to put one in any case.
+                  So this carries both halves. The [value] is handed over whole, as membership would, and the
+                  [assets] name the JavaScript and the CSS that turn it into a display. Both live in the library's
+                  own directory beside the pages declaring the type, and the doc server fetches them without
+                  knowing what they are for."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "# A call shown as what it did, step by step
-                A [Show/Steps] is a call displayed as a row per step of it: what the step was handed, and what the
-                call made of that. It is the first display in this file that is of a call rather than of a value,
-                which is what a library reaches for when the interesting thing about one of its functions is not
-                what the function returns but how it got there.
-                The three displays above it each answer "what does this value look like". A mapping over a list
-                answers that with the list it produced, which is the one thing about it a reader could already see
-                without asking. What they cannot see is which element became which, and that is a shape — an
-                ordered correspondence — rather than a value, so it takes a display of its own.
-                A library writes one of these by writing an arm of [/Catln/Doc/dshowCall] whose argument is a call
-                of the function, as it writes an arm of [/Catln/Doc/dshow] whose argument is a value of a type.
-                Nothing else is needed and nothing marks the function: the arm is the whole declaration, and a
-                function with no such arm has no display of its own and is shown the way everything else is. See
-                [/Data/List] in @core/list-webdocs.ct@, which is where the list library's are written.
-                A show of a call PERFORMS the call. It is handed the call's own arguments and nothing else — not a
-                result computed elsewhere and passed in — so a step's output is what the arm works out for that
-                step. That is what makes it a display of the function rather than of something the function left
-                behind, and it is why an arm needs no cooperation from whatever is showing it." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# A call shown as what it did, step by step
+                  A [Show/Steps] is a call displayed as a row per step of it: what the step was handed, and what the
+                  call made of that. It is the first display in this file that is of a call rather than of a value,
+                  which is what a library reaches for when the interesting thing about one of its functions is not
+                  what the function returns but how it got there.
+                  The three displays above it each answer "what does this value look like". A mapping over a list
+                  answers that with the list it produced, which is the one thing about it a reader could already see
+                  without asking. What they cannot see is which element became which, and that is a shape — an
+                  ordered correspondence — rather than a value, so it takes a display of its own.
+                  A library writes one of these by writing an arm of [/Catln/Doc/dshowCall] whose argument is a call
+                  of the function, as it writes an arm of [/Catln/Doc/dshow] whose argument is a value of a type.
+                  Nothing else is needed and nothing marks the function: the arm is the whole declaration, and a
+                  function with no such arm has no display of its own and is shown the way everything else is. See
+                  [/Data/List] in @core/list-webdocs.ct@, which is where the list library's are written.
+                  A show of a call PERFORMS the call. It is handed the call's own arguments and nothing else — not a
+                  result computed elsewhere and passed in — so a step's output is what the arm works out for that
+                  step. That is what makes it a display of the function rather than of something the function left
+                  behind, and it is why an arm needs no cooperation from whatever is showing it."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "# A call over the entries of a map
-                A step of a call over a map is a step over one of its entries, and an entry is a key as well as
-                the value the step was handed. The key is not the step's input, since the step was never handed
-                it — a mapping over a map's values applies its function to the value alone — but a row without it
-                does not say which entry it is, and the key is what a reader of a map looks an entry up by. So it
-                is a column of its own rather than folded into the input's text, where it would read as part of
-                what the step was handed.
-                These are [Show/Step] and [Show/FoldStep] with that column, and a second pair of displays rather
-                than a key field on the first pair: a key a list's rows would have to leave blank is a column
-                every list's table would draw empty. See [/Data/Map] in @core/map-webdocs.ct@, which writes them." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# A call over the entries of a map
+                  A step of a call over a map is a step over one of its entries, and an entry is a key as well as
+                  the value the step was handed. The key is not the step's input, since the step was never handed
+                  it — a mapping over a map's values applies its function to the value alone — but a row without it
+                  does not say which entry it is, and the key is what a reader of a map looks an entry up by. So it
+                  is a column of its own rather than folded into the input's text, where it would read as part of
+                  what the step was handed.
+                  These are [Show/Step] and [Show/FoldStep] with that column, and a second pair of displays rather
+                  than a key field on the first pair: a key a list's rows would have to leave blank is a column
+                  every list's table would draw empty. See [/Data/Map] in @core/map-webdocs.ct@, which writes them."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "# Why this is not written in core/webdoc.ct
-                [assets] is a [/Data/List], and @core/webdoc.ct@ may not name one. That page is reached from
-                @core/compile.ct@, which every program reaches, so an import of @core/list.ct@ written there closes
-                the cycle @core/result.ct@ measures at seven hundred seconds. This page sits where @core/result.ct@
-                sits for the same reason and by the same arrangement: it reaches @core/list.ct@ freely, and only
-                @core/main.ct@ reaches it." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Why this is not written in core/webdoc.ct
+                  [assets] is a [/Data/List], and @core/webdoc.ct@ may not name one. That page is reached from
+                  @core/compile.ct@, which every program reaches, so an import of @core/list.ct@ written there closes
+                  the cycle @core/result.ct@ measures at seven hundred seconds. This page sits where @core/result.ct@
+                  sits for the same reason and by the same arrangement: it reaches @core/list.ct@ freely, and only
+                  @core/main.ct@ reaches it."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "# What a doc server does not do with these files
-                A library's assets are not pages. Nothing reads them, nothing watches them, and the extensions a
-                read knows ([Syntax.InferImport.isSupportedFileExtension]) do not include them. So a script edited
-                while a doc server is running changes nothing until the reader loads the page again — the server
-                has not noticed, and the browser is holding the module it already fetched." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# What a doc server does not do with these files
+                  A library's assets are not pages. Nothing reads them, nothing watches them, and the extensions a
+                  read knows ([Syntax.InferImport.isSupportedFileExtension]) do not include them. So a script edited
+                  while a doc server is running changes nothing until the reader loads the page again — the server
+                  has not noticed, and the browser is holding the module it already fetched."
+                }
             )
         ]
     }

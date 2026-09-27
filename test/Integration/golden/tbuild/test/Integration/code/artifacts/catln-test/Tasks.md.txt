@@ -7,53 +7,29 @@ Prgm
                     { omiDecls =
                         [ /Data/Note/Task/Simple
                             ( EAppArg
-                                { eaaArg = Value /contents -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "Read [[Welcome]]" }
-                                        ]
-                                    ) = "Read [[Welcome]]"
+                                { eaaArg = Value /contents -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Read [[Welcome]]"
                                 }
                             )
                             ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
                         , /Data/Note/Task/Simple
                             ( EAppArg
-                                { eaaArg = Value /contents -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "Write this note" }
-                                        ]
-                                    ) = "Write this note"
+                                { eaaArg = Value /contents -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Write this note"
                                 }
                             )
                             ( EAppArg { eaaArg = Value /state -> /Data/Primitive/True = Value /Data/Primitive/True } )
                         , /Data/Note/Task/Simple
                             ( EAppArg
-                                { eaaArg = Value /contents -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "Plan the rest" }
-                                        ]
-                                    ) = "Plan the rest"
+                                { eaaArg = Value /contents -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Plan the rest"
                                 }
                             )
                             ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
                         , /Data/Note/Task/Simple
                             ( EAppArg
-                                { eaaArg = Value /contents -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "A checkbox indented deeper is a task of its own" }
-                                        ]
-                                    ) = "A checkbox indented deeper is a task of its own"
+                                { eaaArg = Value /contents -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A checkbox indented deeper is a task of its own"
                                 }
                             )
                             ( EAppArg { eaaArg = Value /state -> /Data/Primitive/False = Value /Data/Primitive/False } )
@@ -69,14 +45,8 @@ Prgm
                     { omiDecls =
                         [ /Data/Note/Page
                             ( EAppArg
-                                { eaaArg = Value /title -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "Tasks" }
-                                        ]
-                                    ) = "Tasks"
+                                { eaaArg = Value /title -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Tasks"
                                 }
                             )
                         ]

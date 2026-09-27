@@ -1,0 +1,57 @@
+import "core/str.ct"
+import "core/cons.ct"
+
+
+module(Data)
+  # # String operations
+    What a [String] does, written over the list of characters it holds. The type itself is
+    declared on @core/str.ct@, one of the pages every program compiles together. These are on a page
+    of their own, outside that group, so that @core/list.ct@ — which builds a list's text out of
+    strings — can import them without the group reaching it (see @core/cons.ct@).
+    They recur over the characters directly rather than through the list operations of
+    @core/list.ct@, which would make the two pages import each other.
+  # ## Equality
+    Two strings are equal when their characters are, one by one, through [/Data/CharOrdering].
+  charsEqual(a -> /Data/List/ConsList[$T -> Char], b -> /Data/List/ConsList[$T -> Char]) -> Boolean
+    # [charsEqual] is whether [a] and [b] hold the same characters in the same order. It stops at
+      the first pair that differs.
+  charsEqual(a= /Data/List/Nil, b= /Data/List/Nil)= True
+  charsEqual(a= /Data/List/Nil, b= /Data/List/Cons(head, tail))= False
+  charsEqual(a= /Data/List/Cons(head, tail), b= /Data/List/Nil)= False
+  charsEqual(a= /Data/List/Cons(head@ah, tail@at), b= /Data/List/Cons(head@bh, tail@bt)) | ah == bh= charsEqual(a= at, b= bt)
+  charsEqual(a= /Data/List/Cons(head@ah, tail@at), b= /Data/List/Cons(head@bh, tail@bt)) else = False
+
+  every(String, isa= [/Data/Algebra/Eq])
+
+  data(StrEqv, isa= [/Data/Algebra/Eqv[$T -> String]])
+
+  :StrEqv.rel(a= String/Text(chars@ac), b= String/Text(chars@bc))= charsEqual(a= ac, b= bc)
+
+  :String.eq= StrEqv
+
+  :String.equal(other)= this.eq.rel(a= this, b= other)
+
+  > ("hi" == "hi")
+    >>> True
+  > ("hi" == "no")
+    >>> False
+  > ("" == "")
+    >>> True
+  # ## Concatenation
+  every(String, isa= [/Data/Algebra/Semigroup])
+    # [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
+      (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
+      yet dispatched by return type across multiple types, so only the [Semigroup] is declared.)
+
+  appendChars(l -> /Data/List/ConsList[$T -> Char], r -> /Data/List/ConsList[$T -> Char]) -> /Data/List/ConsList[$T -> Char]
+    # [appendChars] is the characters of [l] followed by those of [r].
+  appendChars(l= /Data/List/Nil, r)= r
+  appendChars(l= /Data/List/Cons(head, tail), r)= /Data/List/Cons(head= head, tail= appendChars(l= tail, r= r))
+
+  (_ :: String ++ _ :: String) -> String
+    # [operator++] joins two strings, the [Semigroup] operation on [String]: the characters of the
+      first followed by those of the second.
+  (String/Text(chars@a) ++ String/Text(chars@b))= String/Text(chars= appendChars(l= a, r= b))
+
+  > ("foo" ++ "bar")
+    >>> foobar

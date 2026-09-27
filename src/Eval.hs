@@ -590,7 +590,6 @@ valCallTree tbEnv input = listToMaybe $ mapMaybe build [getValPartialType input,
 displayableVal :: Val -> Bool
 displayableVal IntVal{}        = True
 displayableVal FloatVal{}      = True
-displayableVal StrVal{}        = True
 displayableVal CharVal{}       = True
 displayableVal (TupleVal _ as) = all displayableVal (H.elems as)
 displayableVal _               = False

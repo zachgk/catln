@@ -7,37 +7,19 @@ Prgm
                     { omiDecls =
                         [ /Data/Note/Task/Obsidian
                             ( EAppArg
-                                { eaaArg = Value /contents -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "Read the note" }
-                                        ]
-                                    ) = "Read the note"
+                                { eaaArg = Value /contents -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Read the note"
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /symbol -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = " " }
-                                        ]
-                                    ) = " "
+                                { eaaArg = Value /symbol -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " "
                                 }
                             )
                             ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
                             ( EAppArg
-                                { eaaArg = Value /description -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "Read the note" }
-                                        ]
-                                    ) = "Read the note"
+                                { eaaArg = Value /description -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Read the note"
                                 }
                             )
                             ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
@@ -46,49 +28,25 @@ Prgm
                             ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg
-                                { eaaArg = Value /rest -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "{"statusName":"Todo"}" }
-                                        ]
-                                    ) = "{"statusName":"Todo"}"
+                                { eaaArg = Value /rest -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{"statusName":"Todo"}"
                                 }
                             )
                         , /Data/Note/Task/Obsidian
                             ( EAppArg
-                                { eaaArg = Value /contents -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "Write this note ✅ 2026-01-05" }
-                                        ]
-                                    ) = "Write this note ✅ 2026-01-05"
+                                { eaaArg = Value /contents -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Write this note ✅ 2026-01-05"
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /symbol -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "x" }
-                                        ]
-                                    ) = "x"
+                                { eaaArg = Value /symbol -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "x"
                                 }
                             )
                             ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Done = Value /Data/Note/StatusType/Done } )
                             ( EAppArg
-                                { eaaArg = Value /description -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "Write this note" }
-                                        ]
-                                    ) = "Write this note"
+                                { eaaArg = Value /description -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Write this note"
                                 }
                             )
                             ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
@@ -97,49 +55,25 @@ Prgm
                             ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg
-                                { eaaArg = Value /rest -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "{"statusDate":"2026-01-05","statusName":"Done"}" }
-                                        ]
-                                    ) = "{"statusDate":"2026-01-05","statusName":"Done"}"
+                                { eaaArg = Value /rest -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{"statusDate":"2026-01-05","statusName":"Done"}"
                                 }
                             )
                         , /Data/Note/Task/Obsidian
                             ( EAppArg
-                                { eaaArg = Value /contents -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "Plan the rest" }
-                                        ]
-                                    ) = "Plan the rest"
+                                { eaaArg = Value /contents -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Plan the rest"
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /symbol -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "/" }
-                                        ]
-                                    ) = "/"
+                                { eaaArg = Value /symbol -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "/"
                                 }
                             )
                             ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/InProgress = Value /Data/Note/StatusType/InProgress } )
                             ( EAppArg
-                                { eaaArg = Value /description -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "Plan the rest" }
-                                        ]
-                                    ) = "Plan the rest"
+                                { eaaArg = Value /description -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Plan the rest"
                                 }
                             )
                             ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
@@ -148,49 +82,25 @@ Prgm
                             ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg
-                                { eaaArg = Value /rest -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "{"statusName":"In Progress"}" }
-                                        ]
-                                    ) = "{"statusName":"In Progress"}"
+                                { eaaArg = Value /rest -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{"statusName":"In Progress"}"
                                 }
                             )
                         , /Data/Note/Task/Obsidian
                             ( EAppArg
-                                { eaaArg = Value /contents -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "Drop the old plan ❌ 2026-01-06" }
-                                        ]
-                                    ) = "Drop the old plan ❌ 2026-01-06"
+                                { eaaArg = Value /contents -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Drop the old plan ❌ 2026-01-06"
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /symbol -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "-" }
-                                        ]
-                                    ) = "-"
+                                { eaaArg = Value /symbol -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "-"
                                 }
                             )
                             ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Cancelled = Value /Data/Note/StatusType/Cancelled } )
                             ( EAppArg
-                                { eaaArg = Value /description -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "Drop the old plan" }
-                                        ]
-                                    ) = "Drop the old plan"
+                                { eaaArg = Value /description -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Drop the old plan"
                                 }
                             )
                             ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
@@ -199,49 +109,25 @@ Prgm
                             ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg
-                                { eaaArg = Value /rest -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "{"statusDate":"2026-01-06","statusName":"Cancelled"}" }
-                                        ]
-                                    ) = "{"statusDate":"2026-01-06","statusName":"Cancelled"}"
+                                { eaaArg = Value /rest -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{"statusDate":"2026-01-06","statusName":"Cancelled"}"
                                 }
                             )
                         , /Data/Note/Task/Obsidian
                             ( EAppArg
-                                { eaaArg = Value /contents -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "Ship it #work ⏫ 📅 2026-01-04" }
-                                        ]
-                                    ) = "Ship it #work ⏫ 📅 2026-01-04"
+                                { eaaArg = Value /contents -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Ship it #work ⏫ 📅 2026-01-04"
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /symbol -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = " " }
-                                        ]
-                                    ) = " "
+                                { eaaArg = Value /symbol -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " "
                                 }
                             )
                             ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
                             ( EAppArg
-                                { eaaArg = Value /description -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "Ship it #work" }
-                                        ]
-                                    ) = "Ship it #work"
+                                { eaaArg = Value /description -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Ship it #work"
                                 }
                             )
                             ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/High = Value /Data/Note/Priority/High } )
@@ -249,96 +135,48 @@ Prgm
                             ( EAppArg { eaaArg = Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg
                                 { eaaArg = Value /due -> /Data/Maybe/Some
-                                    ( /value=UnionType
-                                        ( Nothing
-                                        , ∅
-                                        ,
-                                            [ CStr
-                                                { csValue = "2026-01-04" }
-                                            ]
-                                        )
+                                    ( /value=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                     ) = /Data/Maybe/Some
                                     ( EAppArg
-                                        { eaaArg = Value /value -> UnionType
-                                            ( Nothing
-                                            , ∅
-                                            ,
-                                                [ CStr
-                                                    { csValue = "2026-01-04" }
-                                                ]
-                                            ) = "2026-01-04"
+                                        { eaaArg = Value /value -> /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2026-01-04"
                                         }
                                     )
                                 }
                             )
                             ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg
-                                { eaaArg = Value /rest -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "{"statusName":"Todo","tags":["#work"]}" }
-                                        ]
-                                    ) = "{"statusName":"Todo","tags":["#work"]}"
+                                { eaaArg = Value /rest -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{"statusName":"Todo","tags":["#work"]}"
                                 }
                             )
                         , /Data/Note/Task/Obsidian
                             ( EAppArg
-                                { eaaArg = Value /contents -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "Water the plants 🔁 every week 🛫 2026-01-02" }
-                                        ]
-                                    ) = "Water the plants 🔁 every week 🛫 2026-01-02"
+                                { eaaArg = Value /contents -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Water the plants 🔁 every week 🛫 2026-01-02"
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /symbol -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = " " }
-                                        ]
-                                    ) = " "
+                                { eaaArg = Value /symbol -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " "
                                 }
                             )
                             ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
                             ( EAppArg
-                                { eaaArg = Value /description -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "Water the plants" }
-                                        ]
-                                    ) = "Water the plants"
+                                { eaaArg = Value /description -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Water the plants"
                                 }
                             )
                             ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
                             ( EAppArg
                                 { eaaArg = Value /start -> /Data/Maybe/Some
-                                    ( /value=UnionType
-                                        ( Nothing
-                                        , ∅
-                                        ,
-                                            [ CStr
-                                                { csValue = "2026-01-02" }
-                                            ]
-                                        )
+                                    ( /value=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                     ) = /Data/Maybe/Some
                                     ( EAppArg
-                                        { eaaArg = Value /value -> UnionType
-                                            ( Nothing
-                                            , ∅
-                                            ,
-                                                [ CStr
-                                                    { csValue = "2026-01-02" }
-                                                ]
-                                            ) = "2026-01-02"
+                                        { eaaArg = Value /value -> /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2026-01-02"
                                         }
                                     )
                                 }
@@ -347,72 +185,36 @@ Prgm
                             ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg
                                 { eaaArg = Value /recurrence -> /Data/Maybe/Some
-                                    ( /value=UnionType
-                                        ( Nothing
-                                        , ∅
-                                        ,
-                                            [ CStr
-                                                { csValue = "every week" }
-                                            ]
-                                        )
+                                    ( /value=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                     ) = /Data/Maybe/Some
                                     ( EAppArg
-                                        { eaaArg = Value /value -> UnionType
-                                            ( Nothing
-                                            , ∅
-                                            ,
-                                                [ CStr
-                                                    { csValue = "every week" }
-                                                ]
-                                            ) = "every week"
+                                        { eaaArg = Value /value -> /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "every week"
                                         }
                                     )
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /rest -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "{"statusName":"Todo"}" }
-                                        ]
-                                    ) = "{"statusName":"Todo"}"
+                                { eaaArg = Value /rest -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{"statusName":"Todo"}"
                                 }
                             )
                         , /Data/Note/Task/Obsidian
                             ( EAppArg
-                                { eaaArg = Value /contents -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "Do this first 🆔 dcf64c 🏁 delete" }
-                                        ]
-                                    ) = "Do this first 🆔 dcf64c 🏁 delete"
+                                { eaaArg = Value /contents -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Do this first 🆔 dcf64c 🏁 delete"
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /symbol -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = " " }
-                                        ]
-                                    ) = " "
+                                { eaaArg = Value /symbol -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " "
                                 }
                             )
                             ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
                             ( EAppArg
-                                { eaaArg = Value /description -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "Do this first" }
-                                        ]
-                                    ) = "Do this first"
+                                { eaaArg = Value /description -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Do this first"
                                 }
                             )
                             ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
@@ -421,49 +223,25 @@ Prgm
                             ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg
-                                { eaaArg = Value /rest -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "{"id":"dcf64c","onCompletion":"delete","statusName":"Todo"}" }
-                                        ]
-                                    ) = "{"id":"dcf64c","onCompletion":"delete","statusName":"Todo"}"
+                                { eaaArg = Value /rest -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{"id":"dcf64c","onCompletion":"delete","statusName":"Todo"}"
                                 }
                             )
                         , /Data/Note/Task/Obsidian
                             ( EAppArg
-                                { eaaArg = Value /contents -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "Do this after ⛔ dcf64c, 0h17ye ➕ 2026-01-01" }
-                                        ]
-                                    ) = "Do this after ⛔ dcf64c, 0h17ye ➕ 2026-01-01"
+                                { eaaArg = Value /contents -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Do this after ⛔ dcf64c, 0h17ye ➕ 2026-01-01"
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /symbol -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = " " }
-                                        ]
-                                    ) = " "
+                                { eaaArg = Value /symbol -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " "
                                 }
                             )
                             ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
                             ( EAppArg
-                                { eaaArg = Value /description -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "Do this after" }
-                                        ]
-                                    ) = "Do this after"
+                                { eaaArg = Value /description -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Do this after"
                                 }
                             )
                             ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
@@ -472,73 +250,37 @@ Prgm
                             ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg
-                                { eaaArg = Value /rest -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "{"created":"2026-01-01","dependsOn":["dcf64c","0h17ye"],"statusName":"Todo"}" }
-                                        ]
-                                    ) = "{"created":"2026-01-01","dependsOn":["dcf64c","0h17ye"],"statusName":"Todo"}"
+                                { eaaArg = Value /rest -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{"created":"2026-01-01","dependsOn":["dcf64c","0h17ye"],"statusName":"Todo"}"
                                 }
                             )
                         , /Data/Note/Task/Obsidian
                             ( EAppArg
-                                { eaaArg = Value /contents -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "Answer the question ⏳ 2026-01-03 🔽 ^answer-it" }
-                                        ]
-                                    ) = "Answer the question ⏳ 2026-01-03 🔽 ^answer-it"
+                                { eaaArg = Value /contents -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Answer the question ⏳ 2026-01-03 🔽 ^answer-it"
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /symbol -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = " " }
-                                        ]
-                                    ) = " "
+                                { eaaArg = Value /symbol -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " "
                                 }
                             )
                             ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
                             ( EAppArg
-                                { eaaArg = Value /description -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "Answer the question" }
-                                        ]
-                                    ) = "Answer the question"
+                                { eaaArg = Value /description -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Answer the question"
                                 }
                             )
                             ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/Low = Value /Data/Note/Priority/Low } )
                             ( EAppArg { eaaArg = Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg
                                 { eaaArg = Value /scheduled -> /Data/Maybe/Some
-                                    ( /value=UnionType
-                                        ( Nothing
-                                        , ∅
-                                        ,
-                                            [ CStr
-                                                { csValue = "2026-01-03" }
-                                            ]
-                                        )
+                                    ( /value=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                     ) = /Data/Maybe/Some
                                     ( EAppArg
-                                        { eaaArg = Value /value -> UnionType
-                                            ( Nothing
-                                            , ∅
-                                            ,
-                                                [ CStr
-                                                    { csValue = "2026-01-03" }
-                                                ]
-                                            ) = "2026-01-03"
+                                        { eaaArg = Value /value -> /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2026-01-03"
                                         }
                                     )
                                 }
@@ -546,49 +288,25 @@ Prgm
                             ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg
-                                { eaaArg = Value /rest -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "{"blockLink":"answer-it","statusName":"Todo"}" }
-                                        ]
-                                    ) = "{"blockLink":"answer-it","statusName":"Todo"}"
+                                { eaaArg = Value /rest -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{"blockLink":"answer-it","statusName":"Todo"}"
                                 }
                             )
                         , /Data/Note/Task/Obsidian
                             ( EAppArg
-                                { eaaArg = Value /contents -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "Book 📅 lunch" }
-                                        ]
-                                    ) = "Book 📅 lunch"
+                                { eaaArg = Value /contents -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Book 📅 lunch"
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /symbol -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = " " }
-                                        ]
-                                    ) = " "
+                                { eaaArg = Value /symbol -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = " "
                                 }
                             )
                             ( EAppArg { eaaArg = Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo } )
                             ( EAppArg
-                                { eaaArg = Value /description -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "Book 📅 lunch" }
-                                        ]
-                                    ) = "Book 📅 lunch"
+                                { eaaArg = Value /description -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Book 📅 lunch"
                                 }
                             )
                             ( EAppArg { eaaArg = Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None } )
@@ -597,14 +315,8 @@ Prgm
                             ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg { eaaArg = Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                             ( EAppArg
-                                { eaaArg = Value /rest -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "{"statusName":"Todo"}" }
-                                        ]
-                                    ) = "{"statusName":"Todo"}"
+                                { eaaArg = Value /rest -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "{"statusName":"Todo"}"
                                 }
                             )
                         ]
@@ -619,14 +331,8 @@ Prgm
                     { omiDecls =
                         [ /Data/Note/Page
                             ( EAppArg
-                                { eaaArg = Value /title -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "Tasks" }
-                                        ]
-                                    ) = "Tasks"
+                                { eaaArg = Value /title -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Tasks"
                                 }
                             )
                         ]

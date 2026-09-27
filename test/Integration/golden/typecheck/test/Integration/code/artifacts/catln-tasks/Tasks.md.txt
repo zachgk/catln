@@ -6,497 +6,209 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/Task/Obsidian
-                            ( Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Read the note" }
-                                    ]
-                                ) = CStr
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Read the note" }
                             )
-                            ( Value /symbol -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = " " }
-                                    ]
-                                ) = CStr
+                            ( Value /symbol -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = " " }
                             )( Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
-                            ( Value /description -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Read the note" }
-                                    ]
-                                ) = CStr
+                            ( Value /description -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Read the note" }
                             )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( Value /rest -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "{"statusName":"Todo"}" }
-                                    ]
-                                ) = CStr
+                            ( Value /rest -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"statusName":"Todo"}" }
                             )
                         , /Data/Note/Task/Obsidian
-                            ( Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Write this note ✅ 2026-01-05" }
-                                    ]
-                                ) = CStr
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Write this note ✅ 2026-01-05" }
                             )
-                            ( Value /symbol -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "x" }
-                                    ]
-                                ) = CStr
+                            ( Value /symbol -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "x" }
                             )( Value /statusType -> /Data/Note/StatusType/Done = Value /Data/Note/StatusType/Done )
-                            ( Value /description -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Write this note" }
-                                    ]
-                                ) = CStr
+                            ( Value /description -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Write this note" }
                             )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( Value /rest -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "{"statusDate":"2026-01-05","statusName":"Done"}" }
-                                    ]
-                                ) = CStr
+                            ( Value /rest -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"statusDate":"2026-01-05","statusName":"Done"}" }
                             )
                         , /Data/Note/Task/Obsidian
-                            ( Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Plan the rest" }
-                                    ]
-                                ) = CStr
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Plan the rest" }
                             )
-                            ( Value /symbol -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "/" }
-                                    ]
-                                ) = CStr
+                            ( Value /symbol -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "/" }
                             )( Value /statusType -> /Data/Note/StatusType/InProgress = Value /Data/Note/StatusType/InProgress )
-                            ( Value /description -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Plan the rest" }
-                                    ]
-                                ) = CStr
+                            ( Value /description -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Plan the rest" }
                             )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( Value /rest -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "{"statusName":"In Progress"}" }
-                                    ]
-                                ) = CStr
+                            ( Value /rest -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"statusName":"In Progress"}" }
                             )
                         , /Data/Note/Task/Obsidian
-                            ( Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Drop the old plan ❌ 2026-01-06" }
-                                    ]
-                                ) = CStr
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Drop the old plan ❌ 2026-01-06" }
                             )
-                            ( Value /symbol -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "-" }
-                                    ]
-                                ) = CStr
+                            ( Value /symbol -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "-" }
                             )( Value /statusType -> /Data/Note/StatusType/Cancelled = Value /Data/Note/StatusType/Cancelled )
-                            ( Value /description -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Drop the old plan" }
-                                    ]
-                                ) = CStr
+                            ( Value /description -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Drop the old plan" }
                             )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( Value /rest -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "{"statusDate":"2026-01-06","statusName":"Cancelled"}" }
-                                    ]
-                                ) = CStr
+                            ( Value /rest -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"statusDate":"2026-01-06","statusName":"Cancelled"}" }
                             )
                         , /Data/Note/Task/Obsidian
-                            ( Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Ship it #work ⏫ 📅 2026-01-04" }
-                                    ]
-                                ) = CStr
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Ship it #work ⏫ 📅 2026-01-04" }
                             )
-                            ( Value /symbol -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = " " }
-                                    ]
-                                ) = CStr
+                            ( Value /symbol -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = " " }
                             )( Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
-                            ( Value /description -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Ship it #work" }
-                                    ]
-                                ) = CStr
+                            ( Value /description -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Ship it #work" }
                             )( Value /priority -> /Data/Note/Priority/High = Value /Data/Note/Priority/High )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( Value /due -> /Data/Maybe/Some
-                                ( /value=UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "2026-01-04" }
-                                        ]
-                                    )
+                                ( /value=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                 ) = /Data/Maybe/Some
-                                ( Value /value -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "2026-01-04" }
-                                        ]
-                                    ) = CStr
+                                ( Value /value -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                     { csValue = "2026-01-04" }
                                 )
                             )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( Value /rest -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "{"statusName":"Todo","tags":["#work"]}" }
-                                    ]
-                                ) = CStr
+                            ( Value /rest -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"statusName":"Todo","tags":["#work"]}" }
                             )
                         , /Data/Note/Task/Obsidian
-                            ( Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Water the plants 🔁 every week 🛫 2026-01-02" }
-                                    ]
-                                ) = CStr
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Water the plants 🔁 every week 🛫 2026-01-02" }
                             )
-                            ( Value /symbol -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = " " }
-                                    ]
-                                ) = CStr
+                            ( Value /symbol -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = " " }
                             )( Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
-                            ( Value /description -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Water the plants" }
-                                    ]
-                                ) = CStr
+                            ( Value /description -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Water the plants" }
                             )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )
                             ( Value /start -> /Data/Maybe/Some
-                                ( /value=UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "2026-01-02" }
-                                        ]
-                                    )
+                                ( /value=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                 ) = /Data/Maybe/Some
-                                ( Value /value -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "2026-01-02" }
-                                        ]
-                                    ) = CStr
+                                ( Value /value -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                     { csValue = "2026-01-02" }
                                 )
                             )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( Value /recurrence -> /Data/Maybe/Some
-                                ( /value=UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "every week" }
-                                        ]
-                                    )
+                                ( /value=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                 ) = /Data/Maybe/Some
-                                ( Value /value -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "every week" }
-                                        ]
-                                    ) = CStr
+                                ( Value /value -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                     { csValue = "every week" }
                                 )
                             )
-                            ( Value /rest -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "{"statusName":"Todo"}" }
-                                    ]
-                                ) = CStr
+                            ( Value /rest -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"statusName":"Todo"}" }
                             )
                         , /Data/Note/Task/Obsidian
-                            ( Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Do this first 🆔 dcf64c 🏁 delete" }
-                                    ]
-                                ) = CStr
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Do this first 🆔 dcf64c 🏁 delete" }
                             )
-                            ( Value /symbol -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = " " }
-                                    ]
-                                ) = CStr
+                            ( Value /symbol -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = " " }
                             )( Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
-                            ( Value /description -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Do this first" }
-                                    ]
-                                ) = CStr
+                            ( Value /description -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Do this first" }
                             )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( Value /rest -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "{"id":"dcf64c","onCompletion":"delete","statusName":"Todo"}" }
-                                    ]
-                                ) = CStr
+                            ( Value /rest -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"id":"dcf64c","onCompletion":"delete","statusName":"Todo"}" }
                             )
                         , /Data/Note/Task/Obsidian
-                            ( Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Do this after ⛔ dcf64c, 0h17ye ➕ 2026-01-01" }
-                                    ]
-                                ) = CStr
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Do this after ⛔ dcf64c, 0h17ye ➕ 2026-01-01" }
                             )
-                            ( Value /symbol -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = " " }
-                                    ]
-                                ) = CStr
+                            ( Value /symbol -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = " " }
                             )( Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
-                            ( Value /description -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Do this after" }
-                                    ]
-                                ) = CStr
+                            ( Value /description -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Do this after" }
                             )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( Value /rest -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "{"created":"2026-01-01","dependsOn":["dcf64c","0h17ye"],"statusName":"Todo"}" }
-                                    ]
-                                ) = CStr
+                            ( Value /rest -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"created":"2026-01-01","dependsOn":["dcf64c","0h17ye"],"statusName":"Todo"}" }
                             )
                         , /Data/Note/Task/Obsidian
-                            ( Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Answer the question ⏳ 2026-01-03 🔽 ^answer-it" }
-                                    ]
-                                ) = CStr
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Answer the question ⏳ 2026-01-03 🔽 ^answer-it" }
                             )
-                            ( Value /symbol -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = " " }
-                                    ]
-                                ) = CStr
+                            ( Value /symbol -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = " " }
                             )( Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
-                            ( Value /description -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Answer the question" }
-                                    ]
-                                ) = CStr
+                            ( Value /description -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Answer the question" }
                             )( Value /priority -> /Data/Note/Priority/Low = Value /Data/Note/Priority/Low )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
                             ( Value /scheduled -> /Data/Maybe/Some
-                                ( /value=UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "2026-01-03" }
-                                        ]
-                                    )
+                                ( /value=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                 ) = /Data/Maybe/Some
-                                ( Value /value -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "2026-01-03" }
-                                        ]
-                                    ) = CStr
+                                ( Value /value -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                     { csValue = "2026-01-03" }
                                 )
                             )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( Value /rest -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "{"blockLink":"answer-it","statusName":"Todo"}" }
-                                    ]
-                                ) = CStr
+                            ( Value /rest -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"blockLink":"answer-it","statusName":"Todo"}" }
                             )
                         , /Data/Note/Task/Obsidian
-                            ( Value /contents -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Book 📅 lunch" }
-                                    ]
-                                ) = CStr
+                            ( Value /contents -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Book 📅 lunch" }
                             )
-                            ( Value /symbol -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = " " }
-                                    ]
-                                ) = CStr
+                            ( Value /symbol -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = " " }
                             )( Value /statusType -> /Data/Note/StatusType/Todo = Value /Data/Note/StatusType/Todo )
-                            ( Value /description -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Book 📅 lunch" }
-                                    ]
-                                ) = CStr
+                            ( Value /description -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Book 📅 lunch" }
                             )( Value /priority -> /Data/Note/Priority/None = Value /Data/Note/Priority/None )( Value /start -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /scheduled -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )( Value /recurrence -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
-                            ( Value /rest -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "{"statusName":"Todo"}" }
-                                    ]
-                                ) = CStr
+                            ( Value /rest -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "{"statusName":"Todo"}" }
                             )
                         ]
@@ -510,14 +222,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Note/Page
-                            ( Value /title -> UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "Tasks" }
-                                    ]
-                                ) = CStr
+                            ( Value /title -> /Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                                 { csValue = "Tasks" }
                             )
                         ]

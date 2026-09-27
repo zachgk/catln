@@ -81,15 +81,21 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Exercises the bind operator ([<-]) routing through [bindap]'s [mmap] arm — the monadic bind over" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Exercises the bind operator ([<-]) routing through [bindap]'s [mmap] arm — the monadic bind over"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "[Maybe]. The continuation returns a [Maybe], so the results are flattened (not nested). A" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[Maybe]. The continuation returns a [Maybe], so the results are flattened (not nested). A"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "bind-using function needs a declared return type to pin the [bindap] result." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "bind-using function needs a declared return type to pin the [bindap] result."
+                }
             )
         ]
     }

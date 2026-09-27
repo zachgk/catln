@@ -818,7 +818,7 @@ pattern LLVMIO c = RuntimeVal (LLVMIORV c)
 -- | The arms above are every 'Semantics.Val.RuntimeVal' there is, so a match listing them together
 -- with the data arms is total. Without this every existing @case@ over a value would be read as
 -- missing the 'Semantics.Val.RuntimeVal' case and @-Wall@ would report it.
-{-# COMPLETE IntVal, FloatVal, StrVal, CharVal, TupleVal, ObjArrVal, IOVal, LLVMVal, LLVMQueue, LLVMIO, NoVal #-}
+{-# COMPLETE IntVal, FloatVal, CharVal, TupleVal, ObjArrVal, IOVal, LLVMVal, LLVMQueue, LLVMIO, NoVal #-}
 
 -- | What an evaluation says about its own values.
 --
@@ -870,7 +870,6 @@ resultType = singletonType resultLeaf
 getValType :: Val -> Type
 getValType (IntVal n)   = constantType (CInt n)
 getValType (FloatVal f) = constantType (CFloat f)
-getValType (StrVal s)   = constantType (CStr s)
 getValType (CharVal c)  = constantType (CChar c)
 getValType (TupleVal name args) = singletonType (partialVal (mkName name)){ptArgs=H.fromList $ map fromArg $ H.toList args}
   where fromArg (argName, argVal) = (partialKey (mkName argName), getValType argVal)
@@ -887,7 +886,6 @@ getValType NoVal = error "getValType of NoVal"
 getValPartialType :: Val -> PartialType
 getValPartialType IntVal{} = intLeaf
 getValPartialType FloatVal{} = floatLeaf
-getValPartialType StrVal{} = strLeaf
 getValPartialType CharVal{} = charLeaf
 getValPartialType (TupleVal name args) = (partialVal (mkName name)){ptArgs=H.fromList $ map fromArg $ H.toList args}
   where fromArg (argName, argVal) = (partialKey (mkName argName), singletonType $ getValPartialType argVal)

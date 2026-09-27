@@ -37,7 +37,7 @@ Prgm
                 ( "/Data/Json/Member"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Json/Member( Value /key -> /Data/String )( Value /value -> ∀/Data/Json ) ]
+                        [ /Data/Json/Member( Value /key -> ∀/Data/String )( Value /value -> ∀/Data/Json ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -57,26 +57,26 @@ Prgm
                 ( "/Data/typeName"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/typeName( Value value -> ∀/Data/Json ) -> /Data/String ]
+                        [ /Data/typeName( Value value -> ∀/Data/Json ) -> ∀/Data/String ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/typeName( Value value= Value Json/Null ) -> /Data/String = CStr
+                        [ /Data/typeName( Value value= Value Json/Null ) -> ∀/Data/String = CStr
                             { csValue = "null" }
                         , /Data/typeName
-                            ( Value value= Json/Bool( Value value@Value b ) ) -> /Data/String = CStr
+                            ( Value value= Json/Bool( Value value@Value b ) ) -> ∀/Data/String = CStr
                             { csValue = "boolean" }
                         , /Data/typeName
-                            ( Value value= Json/Number( Value value@Value n ) ) -> /Data/String = CStr
+                            ( Value value= Json/Number( Value value@Value n ) ) -> ∀/Data/String = CStr
                             { csValue = "number" }
                         , /Data/typeName
-                            ( Value value= Json/Str( Value value@Value s ) ) -> /Data/String = CStr
+                            ( Value value= Json/Str( Value value@Value s ) ) -> ∀/Data/String = CStr
                             { csValue = "string" }
                         , /Data/typeName
-                            ( Value value= Json/Array( Value entries ) ) -> /Data/String = CStr
+                            ( Value value= Json/Array( Value entries ) ) -> ∀/Data/String = CStr
                             { csValue = "array" }
                         , /Data/typeName
-                            ( Value value= Json/Object( Value entries ) ) -> /Data/String = CStr
+                            ( Value value= Json/Object( Value entries ) ) -> ∀/Data/String = CStr
                             { csValue = "object" }
                         ]
                     }
@@ -116,7 +116,7 @@ Prgm
                 ( "/Data/Json/Str"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Json/Str( Value /value -> /Data/String ) ]
+                        [ /Data/Json/Str( Value /value -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -153,7 +153,7 @@ Prgm
                 [ /Data/Json/Null
                 , /Data/Json/Bool( /value=∀/Data/Primitive/Boolean )
                 , /Data/Json/Number( /value=∀/Data/Primitive/Number )
-                , /Data/Json/Str( /value=/Data/String )
+                , /Data/Json/Str( /value=∀/Data/String )
                 , /Data/Json/Array
                     ( /entries=∀/Data/List[ /T=∀/Data/Json ] )
                 , /Data/Json/Object

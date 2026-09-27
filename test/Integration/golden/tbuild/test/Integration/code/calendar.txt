@@ -33,17 +33,19 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Tests a /Data/Calendar/#calendar over a vault of tasks. A calendar shows everything the page it is
-                written in reaches which sits on a day, so this page reaches the vault beside it and the calendar
-                is of the tasks that vault holds.
-                Written in a .ct page and not in a note. A calendar is Catln's own and not a reading of the
-                Obsidian Tasks plugin, which has no such block for a note to write; what a note has to ask about
-                its own vault is /Data/Note/#tasks, which is a reading of the plugin and is tested apart.
-                The vault is named note by note as obsidianTasks.ct names it, and for its reason: a vault does not
-                import the notes it holds, so a golden test walking out from here would reach the vault and stop.
-                What the calendar finds is not written down here. The annotations of a page are evaluated for the
-                file a test names, and what they evaluate to is not what a golden of the program records — so the
-                annotation is what is written down here and what answers it is CalendarTests." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Tests a /Data/Calendar/#calendar over a vault of tasks. A calendar shows everything the page it is
+                  written in reaches which sits on a day, so this page reaches the vault beside it and the calendar
+                  is of the tasks that vault holds.
+                  Written in a .ct page and not in a note. A calendar is Catln's own and not a reading of the
+                  Obsidian Tasks plugin, which has no such block for a note to write; what a note has to ask about
+                  its own vault is /Data/Note/#tasks, which is a reading of the plugin and is tested apart.
+                  The vault is named note by note as obsidianTasks.ct names it, and for its reason: a vault does not
+                  import the notes it holds, so a golden test walking out from here would reach the vault and stop.
+                  What the calendar finds is not written down here. The annotations of a page are evaluated for the
+                  file a test names, and what they evaluate to is not what a golden of the program records — so the
+                  annotation is what is written down here and what answers it is CalendarTests."
+                }
             )
         , Value /Data/Calendar/#calendar
         ]

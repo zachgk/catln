@@ -19,9 +19,9 @@ Prgm
                 ( "/Noted"
                 , ObjectMapItem
                     { omiDecls =
-                        [ Noted( Value /name -> /Data/String )
-                            ( Value /tags -> ∀/Data/List[ /T=/Data/String ] )
-                            ( Value /due -> ∀/Data/Maybe[ /T=/Data/String ] )
+                        [ Noted( Value /name -> ∀/Data/String )
+                            ( Value /tags -> ∀/Data/List[ /T=∀/Data/String ] )
+                            ( Value /due -> ∀/Data/Maybe[ /T=∀/Data/String ] )
                         , /Noted
                             ( Value name= CStr
                                 { csValue = "has both" }

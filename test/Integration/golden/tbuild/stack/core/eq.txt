@@ -264,64 +264,86 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "# Equivalence and Equality
-                This file defines equivalence relations ([Eqv]), the [Eq] class of types that have a canonical
-                equality, and the [operator==] / [operator!=] built on top of them. It is the foundation that
-                ordering ([Ord], in [Data/Algebra/ord]) builds upon." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Equivalence and Equality
+                  This file defines equivalence relations ([Eqv]), the [Eq] class of types that have a canonical
+                  equality, and the [operator==] / [operator!=] built on top of them. It is the foundation that
+                  ordering ([Ord], in [Data/Algebra/ord]) builds upon."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Equivalence Relations
-                An [Eqv] is the class of equivalence relations over a type [$T]. Each object in the class is
-                a single equivalence relation, and supplies the [rel] that decides whether two values of [$T]
-                are to be considered equivalent." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Equivalence Relations
+                  An [Eqv] is the class of equivalence relations over a type [$T]. Each object in the class is
+                  a single equivalence relation, and supplies the [rel] that decides whether two values of [$T]
+                  are to be considered equivalent."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "[rel] is the equivalence function of an [Eqv]. It is a class declaration: every object in the" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[rel] is the equivalence function of an [Eqv]. It is a class declaration: every object in the"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "class defines it for its own type. See the per-type instances (such as [IntEqv]) below." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "class defines it for its own type. See the per-type instances (such as [IntEqv]) below."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## The Eq class
-                The [Eq] class is used to define values which can be compared for equality. While naive tuple
-                equality often works, some types have equality that behaves differently and must be defined.
-                For example, a TreeSet can insert items in different order and produce different trees, but with
-                equal sets. An [Eq] type names its canonical equivalence with [eq], from which [equal],
-                [operator==] and [operator!=] follow." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## The Eq class
+                  The [Eq] class is used to define values which can be compared for equality. While naive tuple
+                  equality often works, some types have equality that behaves differently and must be defined.
+                  For example, a TreeSet can insert items in different order and produce different trees, but with
+                  equal sets. An [Eq] type names its canonical equivalence with [eq], from which [equal],
+                  [operator==] and [operator!=] follow."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "[eq] is the standard equivalence relation for an [Eq] type; [equal] is the single method" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[eq] is the standard equivalence relation for an [Eq] type; [equal] is the single method"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  through which [operator==] dispatches." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  through which [operator==] dispatches."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "[operator==] is the equality operator; [operator!=] is its negation. Creating an instance of" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[operator==] is the equality operator; [operator!=] is its negation. Creating an instance of"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  [Eq] only requires defining [eq]; [equal], [operator==] and [operator!=] then follow." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  [Eq] only requires defining [eq]; [equal], [operator==] and [operator!=] then follow."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Example and law objects
-                The example and law tests reference named [Eqv] objects, since the class is defined by its
-                members rather than constructed inline. [IntEqExample] is ordinary integer equality, and
-                [AllEqv] relates every pair (handy for demonstrating the symmetry and transitivity laws on
-                distinct values)." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Example and law objects
+                  The example and law tests reference named [Eqv] objects, since the class is defined by its
+                  members rather than constructed inline. [IntEqExample] is ordinary integer equality, and
+                  [AllEqv] relates every pair (handy for demonstrating the symmetry and transitivity laws on
+                  distinct values)."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Example
-                The simplest [Eqv] over [Integer] compares its values with the built-in integer equality;
-                [AllEqv] relates every pair." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Example
+                  The simplest [Eqv] over [Integer] compares its values with the built-in integer equality;
+                  [AllEqv] relates every pair."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -340,7 +362,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -359,7 +383,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "False" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "False"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -378,42 +404,60 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "True" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "True"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "## Laws of equivalence
-                Reflexivity is a property of the [Eqv] class itself: every equivalence relation must relate
-                each value to itself. Expressed as a property test, it is checked against every [Eqv]
-                instance (here [$E]) at arbitrary members of that instance's type (here [$T])." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## Laws of equivalence
+                  Reflexivity is a property of the [Eqv] class itself: every equivalence relation must relate
+                  each value to itself. Expressed as a property test, it is checked against every [Eqv]
+                  instance (here [$E]) at arbitrary members of that instance's type (here [$T])."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Symmetry: equivalent values relate the same in either direction. Checked against every [Eqv]" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Symmetry: equivalent values relate the same in either direction. Checked against every [Eqv]"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  instance ([$E]) at arbitrary members ([$T]); the biconditional makes it non-vacuous." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  instance ([$E]) at arbitrary members ([$T]); the biconditional makes it non-vacuous."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Transitivity: a~b and b~c imply a~c. Expressed as a material implication, so ordinary equalities" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Transitivity: a~b and b~c imply a~c. Expressed as a material implication, so ordinary equalities"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  satisfy it vacuously and a relation like [AllEqv] exercises the premise." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  satisfy it vacuously and a relation like [AllEqv] exercises the premise."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "The per-type [Eqv] instances ([BoolEqv], [IntOrdering], [StrEqv], …) and each type's [eq] /" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The per-type [Eqv] instances ([BoolEqv], [IntOrdering], [StrEqv], …) and each type's [eq] /"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  [equal] live alongside their types in [Data/bool], [Data/num] and [Data/str]; this file" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  [equal] live alongside their types in [Data/bool], [Data/num] and [Data/str]; this file"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "  defines only the abstract [Eqv]/[Eq] classes and the [operator==] / [operator!=] built on them." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  defines only the abstract [Eqv]/[Eq] classes and the [operator==] / [operator!=] built on them."
+                }
             )
         ]
     }

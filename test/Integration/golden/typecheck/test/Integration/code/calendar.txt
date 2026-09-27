@@ -25,7 +25,8 @@ Prgm
     , prgmCg = [ CGType ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "Tests a /Data/Calendar/#calendar over a vault of tasks. A calendar shows everything the page it is
                 written in reaches which sits on a day, so this page reaches the vault beside it and the calendar
                 is of the tasks that vault holds.

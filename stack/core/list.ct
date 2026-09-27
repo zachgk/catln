@@ -1,4 +1,5 @@
 import "core/cons.ct"
+import "core/string.ct"
 import "core/ord.ct"
 import "core/functor.ct"
 import "core/monad.ct"
@@ -25,6 +26,14 @@ module(Data/List)
 
   > [10, 20, 30].length
     >>> 3
+  # ## Joining
+  append[$T](l -> ConsList[$T -> $_T], r -> ConsList[$T -> $_T]) -> ConsList[$T -> $_T]
+    # [append] is the items of [l] followed by the items of [r].
+  append(l= Nil, r)= r
+  append(l= Cons(head, tail), r)= Cons(head= head, tail= append(l= tail, r= r))
+
+  > /Data/List/append(l= [1, 2], r= [3])
+    >>> [1, 2, 3]
   # ## Folds
     [foldr] collapses a list from the right: every [Cons] becomes a step function and the [Nil]
     becomes an initial value, so [foldr(lst= [a, b], fn, init)] is [fn(acc= fn(acc= init, v= b), v=

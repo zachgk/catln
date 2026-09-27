@@ -40,7 +40,7 @@ Prgm
                     { omiDecls =
                         [ /Catln/RawObjArr
                             ( Value /obj -> ∀/Data/Maybe[ /T=∀/Catln/RawExpr ] )( Value /basis -> ∀/Catln/ObjectBasis )
-                            ( Value /doc -> ∀/Data/Maybe[ /T=/Data/String.. ] )
+                            ( Value /doc -> ∀/Data/Maybe[ /T=∀/Data/String ] )
                             ( Value /annots -> ∀/Data/List[ /T=∀/Catln/RawExpr ] )
                             ( Value /arr -> ∀/Data/Maybe
                                 [ /T=/Catln/Pair
@@ -70,7 +70,7 @@ Prgm
                 ( "/Catln/RawExpr/RawMacroValue"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/RawExpr/RawMacroValue( Value /meta -> /Catln/Meta.. )( Value /name -> /Data/String.. ) ]
+                        [ /Catln/RawExpr/RawMacroValue( Value /meta -> /Catln/Meta.. )( Value /name -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -110,7 +110,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/ImportResult( Value /prgm -> /Catln/RawPrgm.. )
-                            ( Value /source -> ∀/Data/Maybe[ /T=/Data/String.. ] )
+                            ( Value /source -> ∀/Data/Maybe[ /T=∀/Data/String ] )
                             ( Value /reads -> ∀/Data/Maybe
                                 [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
                             )
@@ -124,7 +124,7 @@ Prgm
                 ( "/Catln/RawExpr/RawFmtStrExpr"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/RawExpr/RawFmtStrExpr( Value /meta -> /Catln/Meta.. )( Value /name -> /Data/String.. )( Value /str -> /Data/String.. ) ]
+                        [ /Catln/RawExpr/RawFmtStrExpr( Value /meta -> /Catln/Meta.. )( Value /name -> ∀/Data/String )( Value /str -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -157,9 +157,9 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/AFileImport( Value /raw -> ∀/Catln/RawExpr )( Value /abs -> ∀/Catln/RawExpr )
-                            ( Value /disp -> ∀/Data/Maybe[ /T=/Data/String.. ] )
-                            ( Value /calledDir -> ∀/Data/Maybe[ /T=/Data/String.. ] )
-                            ( Value /dir -> ∀/Data/Maybe[ /T=/Data/String.. ] )
+                            ( Value /disp -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                            ( Value /calledDir -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                            ( Value /dir -> ∀/Data/Maybe[ /T=∀/Data/String ] )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -200,7 +200,7 @@ Prgm
                 ( "/Catln/ReadPath/ReadTree"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/ReadPath/ReadTree( Value /path -> /Data/String.. ) ]
+                        [ /Catln/ReadPath/ReadTree( Value /path -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -232,7 +232,7 @@ Prgm
                 ( "/Catln/TypeProperty/TypePropRel"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/TypeProperty/TypePropRel( Value /name -> /Data/String.. )( Value /expr -> ∀/Catln/RawExpr ) ]
+                        [ /Catln/TypeProperty/TypePropRel( Value /name -> ∀/Data/String )( Value /expr -> ∀/Catln/RawExpr ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -277,7 +277,7 @@ Prgm
                 ( "/Catln/TypeProperty/TypePropProj"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/TypeProperty/TypePropProj( Value /name -> /Data/String.. )( Value /expr -> ∀/Catln/RawExpr ) ]
+                        [ /Catln/TypeProperty/TypePropProj( Value /name -> ∀/Data/String )( Value /expr -> ∀/Catln/RawExpr ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -307,7 +307,7 @@ Prgm
                 ( "/Catln/ReadPath/ReadExists"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/ReadPath/ReadExists( Value /path -> /Data/String.. ) ]
+                        [ /Catln/ReadPath/ReadExists( Value /path -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -337,7 +337,7 @@ Prgm
                 ( "/Catln/ReadPath/ReadDir"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/ReadPath/ReadDir( Value /path -> /Data/String.. ) ]
+                        [ /Catln/ReadPath/ReadDir( Value /path -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -347,7 +347,7 @@ Prgm
                 ( "/Catln/RawExpr/RawValue"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/RawExpr/RawValue( Value /meta -> /Catln/Meta.. )( Value /name -> /Data/String.. ) ]
+                        [ /Catln/RawExpr/RawValue( Value /meta -> /Catln/Meta.. )( Value /name -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -357,7 +357,7 @@ Prgm
                 ( "/Catln/ReadPath/ReadFile"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/ReadPath/ReadFile( Value /path -> /Data/String.. ) ]
+                        [ /Catln/ReadPath/ReadFile( Value /path -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -437,7 +437,7 @@ Prgm
                     , /meta=/Catln/Meta..
                     )
                 , /Catln/RawExpr/RawValue
-                    ( /name=/Data/String..
+                    ( /name=∀/Data/String
                     , /meta=/Catln/Meta..
                     )
                 , /Catln/RawExpr/RawHoleExpr
@@ -445,7 +445,7 @@ Prgm
                     , /meta=/Catln/Meta..
                     )
                 , /Catln/RawExpr/RawMacroValue
-                    ( /name=/Data/String..
+                    ( /name=∀/Data/String
                     , /meta=/Catln/Meta..
                     )
                 , /Catln/RawExpr/RawApplyExpr
@@ -453,8 +453,8 @@ Prgm
                     , /meta=/Catln/Meta..
                     )
                 , /Catln/RawExpr/RawFmtStrExpr
-                    ( /str=/Data/String..
-                    , /name=/Data/String..
+                    ( /str=∀/Data/String
+                    , /name=∀/Data/String
                     , /meta=/Catln/Meta..
                     )
                 , /Catln/RawExpr/RawTheExpr( /expr=∀/Catln/RawExpr )
@@ -525,10 +525,10 @@ Prgm
             { cgcSealed = True
             , cgcPartial = /Catln/ReadPath
             , cgcExtends =
-                [ /Catln/ReadPath/ReadFile( /path=/Data/String.. )
-                , /Catln/ReadPath/ReadExists( /path=/Data/String.. )
-                , /Catln/ReadPath/ReadDir( /path=/Data/String.. )
-                , /Catln/ReadPath/ReadTree( /path=/Data/String.. )
+                [ /Catln/ReadPath/ReadFile( /path=∀/Data/String )
+                , /Catln/ReadPath/ReadExists( /path=∀/Data/String )
+                , /Catln/ReadPath/ReadDir( /path=∀/Data/String )
+                , /Catln/ReadPath/ReadTree( /path=∀/Data/String )
                 ]
             , cgcDoc = Just "Something a reading of a page looked at, and how it looked at it.A [ReadFile] is a file whose text was read; a [ReadExists] is one a reading only found, which a write to does not change what was read. A [ReadDir] is a directory whose listing was read, and a [ReadTree] is a directory and everything under it.A page is read again exactly when one of these is written to, so an importer which leaves one out is one whose page goes stale, and one which reports more than it read is a page read more often than it need be."
             }
@@ -537,11 +537,11 @@ Prgm
             , cgcPartial = /Catln/TypeProperty
             , cgcExtends =
                 [ /Catln/TypeProperty/TypePropProj
-                    ( /name=/Data/String..
+                    ( /name=∀/Data/String
                     , /expr=∀/Catln/RawExpr
                     )
                 , /Catln/TypeProperty/TypePropRel
-                    ( /name=/Data/String..
+                    ( /name=∀/Data/String
                     , /expr=∀/Catln/RawExpr
                     )
                 ]

@@ -8,8 +8,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Catln/Doc/dshow( Value /s -> /Data/Calendar/#calendar = Value /Data/Calendar/#calendar ) -> /Data/Calendar/Show/Calendar( /result=/Data/String ) = /Data/Calendar/Show/Calendar
-                            ( Value /result -> /Data/String = /Catln/Doc/dshow./Data/Calendar/calendarEntries( Value /annot -> /s = Value /s ) )
+                        [ /Catln/Doc/dshow( Value /s -> /Data/Calendar/#calendar = Value /Data/Calendar/#calendar ) -> /Data/Calendar/Show/Calendar( /result=∀/Data/String ) = /Data/Calendar/Show/Calendar
+                            ( Value /result -> ∀/Data/String = /Catln/Doc/dshow./Data/Calendar/calendarEntries( Value /annot -> /s = Value /s ) )
                         ]
                     }
                 )
@@ -17,7 +17,7 @@ Prgm
                 ( "/Data/Calendar/calendarDay"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Calendar/calendarDay[ /E : ∀/Data/Calendar/CalendarEntry ]( Value /this -> $/E ) -> ∀/Data/Maybe[ /T=/Data/String ] ]
+                        [ /Data/Calendar/calendarDay[ /E : ∀/Data/Calendar/CalendarEntry ]( Value /this -> $/E ) -> ∀/Data/Maybe[ /T=∀/Data/String ] ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -28,7 +28,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /Catln/Doc/dshow./Data/Calendar/calendarEntries( Value /annot ) -> /Data/String ]
+                        [ /Catln/Doc/dshow./Data/Calendar/calendarEntries( Value /annot ) -> ∀/Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -46,7 +46,7 @@ Prgm
                 ( "/Data/Calendar/Show/Calendar"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Calendar/Show/Calendar( Value /result -> /Data/String ) ]
+                        [ /Data/Calendar/Show/Calendar( Value /result -> ∀/Data/String ) ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -99,7 +99,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "# Calendars
                 A calendar lays out the things a page reaches which sit on a day, on the days they sit on.
                 What such a thing is, is not decided here. This declares only what a calendar needs to know
@@ -109,7 +110,8 @@ Prgm
                 declared." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "[CalendarEntry] is the class of things a calendar can show. A task is one, which
                 @stack/core/note.ct@ says where a task is declared rather than this file saying it here.
                 Membership is declared by the member and not by the class for the reason the class exists: a
@@ -122,7 +124,8 @@ Prgm
                 holding its members rather than above them. The layering that forces is the one wanted anyway." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A [/Data/Maybe] of something showable is showable, which is what lets an answer of
                 [calendarDay] be evaluated at all: a tree is built toward a class, and a tree built toward a
                 value's own type comes back as the unevaluated application of it.

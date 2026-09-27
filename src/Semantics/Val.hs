@@ -24,6 +24,9 @@
 -- 'RuntimeValue' instance below.
 --------------------------------------------------------------------
 
+{-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE ViewPatterns    #-}
+
 module Semantics.Val where
 
 import           CtConstants
@@ -41,7 +44,6 @@ import           Text.Printf
 data Val r
   = IntVal Integer
   | FloatVal Double
-  | StrVal String
   | CharVal Char
   | TupleVal String (H.HashMap String (Val r))
   -- | A value only the runtime knows the inside of — a closure, an action, compiled code.
@@ -50,6 +52,34 @@ data Val r
 
 -- | The arguments of an evaluated value, by the name each is declared under.
 type Args r = H.HashMap String (Val r)
+
+-- | A string: a @\/Data\/String\/Text@ holding the list of characters it is made of.
+--
+-- A string is not a primitive of its own. @stack\/core\/str.ct@ declares it as the one member of
+-- the @String@ class, @String\/Text(chars -> ConsList[$T -> Char])@, so what an evaluation holds for
+-- one is that tuple, with a
+-- @Cons@ per character — which is what lets a string be taken apart and built up in Catln. This
+-- pattern is how the compiler's own code reads and writes one as the Haskell 'String' it is to the
+-- outside world: matching it walks the characters, and building it lays them out.
+--
+-- A tuple whose characters are not all 'CharVal's, or whose list does not end, does not match.
+pattern StrVal :: String -> Val r
+pattern StrVal s <- (valString -> Just s)
+  where StrVal s = TupleVal ctStringText (H.singleton (runtimeArgKey ctStringChars) (valListOf (map CharVal s)))
+
+-- | The characters of a string value, where it is one.
+valString :: Val r -> Maybe String
+valString (TupleVal name args) | name == ctStringText = charsOf =<< H.lookup (runtimeArgKey ctStringChars) args
+  where
+    charsOf (TupleVal n _) | n == ctListNil = Just []
+    charsOf (TupleVal n as) | n == ctListCons = do
+      h <- H.lookup (runtimeArgKey ctListConsHead) as
+      t <- H.lookup (runtimeArgKey ctListConsTail) as
+      case h of
+        CharVal c -> (c:) <$> charsOf t
+        _         -> Nothing
+    charsOf _ = Nothing
+valString _ = Nothing
 
 -- | What a runtime must say about its own values for a 'Val' to be shown, compared, hashed or
 -- serialized.

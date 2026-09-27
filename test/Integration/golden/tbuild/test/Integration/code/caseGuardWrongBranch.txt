@@ -145,23 +145,25 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "A guard on an arm of a [case] or a [match] selects that arm only when its condition holds.
-                This is a regression test for a gap that made both forms answer with the guarded arm whether or
-                not its guard was true: @abs(x= -5)@ answered @-5@, having run the arm guarded by @x2 >= 0@ on an
-                input that is not.
-                The cause was where the guard was put. A branch preprocessor
-                (@Syntax/Ct/Desugarf/Preprocessors.hs@) rewrites each arm into an arm of a generated @$hash@
-                function, and it used to leave the arm's guard inside the pattern nested in that function's
-                argument. @Semantics/exprWhereConds@ reads only an [AliasExpr]'s base, so a guard sitting there
-                was invisible to it — and that is the field both @TreeBuild/completeTreeSet@ and
-                @TreeBuild/buildGuards@ read to decide whether an arm is guarded. Reading as unconditional, the
-                arm's domain covered the whole source on its own, so its siblings were dropped as adding nothing
-                and the lone survivor was then run without its condition ever being evaluated. The guard is now
-                hoisted onto the generated arm as a whole.
-                The equivalent choice written as guards on a declared function's own arms was always correct, and
-                @test/Integration/code/cond.ct@ covers that form.
-                A test of a branch has to run the branch that is not taken: @case.ct@ and @match.ct@ missed this
-                because each calls @abs(0)@ and nothing else, and at zero both arms answer zero." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A guard on an arm of a [case] or a [match] selects that arm only when its condition holds.
+                  This is a regression test for a gap that made both forms answer with the guarded arm whether or
+                  not its guard was true: @abs(x= -5)@ answered @-5@, having run the arm guarded by @x2 >= 0@ on an
+                  input that is not.
+                  The cause was where the guard was put. A branch preprocessor
+                  (@Syntax/Ct/Desugarf/Preprocessors.hs@) rewrites each arm into an arm of a generated @$hash@
+                  function, and it used to leave the arm's guard inside the pattern nested in that function's
+                  argument. @Semantics/exprWhereConds@ reads only an [AliasExpr]'s base, so a guard sitting there
+                  was invisible to it — and that is the field both @TreeBuild/completeTreeSet@ and
+                  @TreeBuild/buildGuards@ read to decide whether an arm is guarded. Reading as unconditional, the
+                  arm's domain covered the whole source on its own, so its siblings were dropped as adding nothing
+                  and the lone survivor was then run without its condition ever being evaluated. The guard is now
+                  hoisted onto the generated arm as a whole.
+                  The equivalent choice written as guards on a declared function's own arms was always correct, and
+                  @test/Integration/code/cond.ct@ covers that form.
+                  A test of a branch has to run the branch that is not taken: @case.ct@ and @match.ct@ missed this
+                  because each calls @abs(0)@ and nothing else, and at zero both arms answer zero."
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -174,7 +176,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "5" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "5"
+                }
             )
         , /Catln/#print
             ( EAppArg
@@ -193,7 +197,9 @@ Prgm
                 }
             )
             ( EAppArg
-                { eaaArg = Value /result -> /Data/String = "5" }
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "5"
+                }
             )
         ]
     }

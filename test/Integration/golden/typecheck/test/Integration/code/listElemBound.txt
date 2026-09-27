@@ -129,7 +129,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A list whose element parameter is bounded by a CONCRETE DATA TYPE, destructured.
                 Every list in the checked standard library bounds its element by a CLASS — [/Data/ToString],
                 [/Data/Algebra/Ord], [/Data/Algebra/Eq] — so a bound naming a data type directly was never
@@ -144,7 +145,8 @@ Prgm
             )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /countAll( Value /ks -> /Data/List/Nil = Value /Data/List/Nil ) )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "0" }
             )
         , /Catln/#print
@@ -175,12 +177,14 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "2" }
             )
         , /Catln/#print
             ( Value /p -> /Data/Primitive/Integer = /countCons( Value /ks -> /Data/List/Nil = Value /Data/List/Nil ) )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "0" }
             )
         , /Catln/#print
@@ -212,11 +216,13 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "2" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A FIELDLESS data bound has nothing to restore, so it reads the same both ways and went through
                 even while the bound above did not. Held beside it so a regression says which of the two broke." }
             )
@@ -236,7 +242,8 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "2" }
             )
         ]

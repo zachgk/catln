@@ -24,7 +24,9 @@ Prgm
                                     { eaaArg = Value /this -> /Catln/IO =
                                         ( /Catln/println
                                             ( EAppArg
-                                                { eaaArg = Value /msg -> /Data/String = "hello world" }
+                                                { eaaArg = Value /msg -> /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "hello world"
+                                                }
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) }

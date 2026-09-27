@@ -139,7 +139,8 @@ Prgm
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "A class's name may be a prefix of its members' names.
                 A note's checkbox is read as one of two things, and the two are named under the name of the class
                 they are both members of, so that what a checkbox is read as is one name with two readings under
@@ -156,7 +157,8 @@ Prgm
                 @test/Integration/disabled/classMemberByName.ct@." }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "The values a page of such members declares, written out and never defined — the shape a note's
                 page holds a checkbox as." }
             )
@@ -168,7 +170,8 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "3" }
             )
         , /Catln/#print
@@ -185,7 +188,8 @@ Prgm
                     )
                 )
             )
-            ( Value /result -> /Data/String = CStr
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
                 { csValue = "7" }
             )
         ]

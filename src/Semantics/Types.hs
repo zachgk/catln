@@ -50,7 +50,7 @@ import           Debug.Trace         (trace)
 import           GHC.Generics
 import           Prelude             hiding (unzip)
 import           Semantics.CtType
-import           Semantics.Val       (Val (StrVal))
+import           Semantics.Val       (pattern StrVal)
 import           System.IO.Unsafe    (unsafePerformIO)
 import           Text.Printf
 import           Utils
@@ -1329,7 +1329,12 @@ intLeaf = partialVal "/Data/Primitive/Integer"
 floatLeaf = partialVal "/Data/Primitive/Float"
 trueLeaf = partialVal "/Data/Primitive/True"
 falseLeaf = partialVal "/Data/Primitive/False"
-strLeaf = partialVal "/Data/String"
+-- | A string holding any characters: the one member of the @\/Data\/String@ class
+-- ('ctStringText'), as @stack\/core\/str.ct@ declares it — its one field the list of characters it
+-- is made of, @chars -> ConsList[$T -> Char]@. It is every value of the class, as @String@ says in
+-- Catln, and it is the member's own declared form so that it is a member.
+strLeaf = (partialVal (mkName ctStringText)){ptArgs = H.singleton (partialKey (mkName ctStringChars)) charList}
+  where charList = classPartial (partialVal (mkName ctConsListPath)){ptVars = H.singleton (partialKey "T") (singletonType charLeaf)}
 charLeaf = partialVal (mkName charPrim)
 ioLeaf = partialVal "/Catln/IO"
 
@@ -1350,14 +1355,20 @@ constantPartialType CStr{}   = strLeaf
 constantPartialType CChar{}  = charLeaf
 
 -- | Whether a leaf's name is one of the primitive types whose values include constants
--- (@Integer@, @Float@, @String@, @Char@). Any other leaf denotes only constructed values.
+-- (@Integer@, @Float@, @Char@). Any other leaf denotes only constructed values.
 leafHoldsConstants :: PartialType -> Bool
-leafHoldsConstants PartialType{ptName=n} = n `elem` map ptName [intLeaf, floatLeaf, strLeaf, charLeaf]
+leafHoldsConstants PartialType{ptName=n} = n `elem` map ptName [intLeaf, floatLeaf, charLeaf]
 
 -- | The singleton type containing exactly one constant value.
 -- For example, @constantType (CInt 5)@ represents the type @{5}@, a subtype of @Integer@.
+--
+-- Except a string literal, which is typed as a 'strType' and not as the one string it is. A string
+-- is a list of characters rather than a primitive, so its exact type is a @Cons@ per character —
+-- as long as the text, for every doc comment and annotation argument written as one — and nothing
+-- dispatches on which string a value is: a string is matched against another by @==@.
 constantType :: Constant -> Type
-constantType c = UnionType Nothing H.empty [c]
+constantType CStr{} = strType
+constantType c      = UnionType Nothing H.empty [c]
 
 
 -- | The 'Type' containing all possible values, equivalent to the universal.

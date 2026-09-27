@@ -59,8 +59,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Tests id with type variables.
-                This is one of the simplest tests with type variables." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Tests id with type variables.
+                  This is one of the simplest tests with type variables."
+                }
             )
         ]
     }

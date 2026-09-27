@@ -32,56 +32,32 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Dated
-                            ( EAppArg { eaaArg = Value /name -> /Data/String } )
+                            ( EAppArg { eaaArg = Value /name -> ∀/Data/String } )
                             ( EAppArg
-                                { eaaArg = Value /due -> ∀/Data/Maybe[ /T=/Data/String ] }
+                                { eaaArg = Value /due -> ∀/Data/Maybe[ /T=∀/Data/String ] }
                             )
                         , /Dated
                             ( EAppArg
-                                { eaaArg = Value /name -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "has one" }
-                                        ]
-                                    ) = "has one"
+                                { eaaArg = Value /name -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "has one"
                                 }
                             )
                             ( EAppArg
                                 { eaaArg = Value /due -> /Data/Maybe/Some
-                                    ( /value=UnionType
-                                        ( Nothing
-                                        , ∅
-                                        ,
-                                            [ CStr
-                                                { csValue = "2026-01-01" }
-                                            ]
-                                        )
+                                    ( /value=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
                                     ) = /Data/Maybe/Some
                                     ( EAppArg
-                                        { eaaArg = Value /value -> UnionType
-                                            ( Nothing
-                                            , ∅
-                                            ,
-                                                [ CStr
-                                                    { csValue = "2026-01-01" }
-                                                ]
-                                            ) = "2026-01-01"
+                                        { eaaArg = Value /value -> /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2026-01-01"
                                         }
                                     )
                                 }
                             )
                         , /Dated
                             ( EAppArg
-                                { eaaArg = Value /name -> UnionType
-                                    ( Nothing
-                                    , ∅
-                                    ,
-                                        [ CStr
-                                            { csValue = "has none" }
-                                        ]
-                                    ) = "has none"
+                                { eaaArg = Value /name -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "has none"
                                 }
                             )
                             ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
@@ -107,43 +83,50 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "A field of a data type may be a [/Data/Maybe] of a concrete element.
-                A task read out of an Obsidian note has a due date or it has none, and having none is the
-                [/Data/Maybe/Nothing] arm rather than an empty string standing in for one. So a field has to be able to
-                hold a [/Data/Maybe], which nothing in the checked standard library does — [/Data/Maybe] is used
-                there only as what a function takes and answers with.
-                Written as values declared and never defined, since that is the whole of what a note does with
-                such a field: a checkbox is read into a declaration, and what reads the fields back out is the
-                webdocs reading the evaluated value rather than anything written in Catln. Reading such a field
-                back in Catln is @bareDataDeclaration.ct@." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A field of a data type may be a [/Data/Maybe] of a concrete element.
+                  A task read out of an Obsidian note has a due date or it has none, and having none is the
+                  [/Data/Maybe/Nothing] arm rather than an empty string standing in for one. So a field has to be able to
+                  hold a [/Data/Maybe], which nothing in the checked standard library does — [/Data/Maybe] is used
+                  there only as what a function takes and answers with.
+                  Written as values declared and never defined, since that is the whole of what a note does with
+                  such a field: a checkbox is read into a declaration, and what reads the fields back out is the
+                  webdocs reading the evaluated value rather than anything written in Catln. Reading such a field
+                  back in Catln is @bareDataDeclaration.ct@."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Shown as the value it is, with no display type standing in for it, as a task is." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Shown as the value it is, with no display type standing in for it, as a task is."
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Printed so that the values are evaluated and not only built." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Printed so that the values are evaluated and not only built."
+                }
             )
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p -> ∀/Catln/Doc/DShow = /Dated
                     ( EAppArg
-                        { eaaArg = Value /name -> /Data/String = "has one" }
+                        { eaaArg = Value /name -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "has one"
+                        }
                     )
                     ( EAppArg
                         { eaaArg = Value /due -> /Data/Maybe/Some
-                            [ /T=UnionType
-                                ( Nothing
-                                , ∅
-                                ,
-                                    [ CStr
-                                        { csValue = "2026-01-01" }
-                                    ]
-                                )
-                            ]( /value=/Data/String ) = /Data/Maybe/Some
+                            [ /T=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ]
+                            ( /value=/Data/String/Text
+                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ) = /Data/Maybe/Some
                             ( EAppArg
-                                { eaaArg = Value /value -> /Data/String = "2026-01-01" }
+                                { eaaArg = Value /value -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "2026-01-01"
+                                }
                             )
                         }
                     )
@@ -153,7 +136,9 @@ Prgm
             ( EAppArg
                 { eaaArg = Value /p -> ∀/Catln/Doc/DShow = /Dated
                     ( EAppArg
-                        { eaaArg = Value /name -> /Data/String = "has none" }
+                        { eaaArg = Value /name -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "has none"
+                        }
                     )
                     ( EAppArg { eaaArg = Value /due -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } )
                 }

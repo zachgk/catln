@@ -20,11 +20,15 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Exercises the core [Maybe] type's [Eq] and [Ord] instances from an importing module" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Exercises the core [Maybe] type's [Eq] and [Ord] instances from an importing module"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "(the in-module #tests in stack/core/maybe.ct cover it in-module; this covers the imported path)." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "(the in-module #tests in stack/core/maybe.ct cover it in-module; this covers the imported path)."
+                }
             )
         ]
     }

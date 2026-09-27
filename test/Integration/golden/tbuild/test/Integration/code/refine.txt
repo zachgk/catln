@@ -108,16 +108,20 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Tests refinement types with type properties
-                TODO: Convert evenAdd to return (Integer | even($out)), switch to type props, switch to using refinement definition of addition rather than separate evenadd function
-                - Convert evenAdd to check | even(a) && even(b)
-                - Convert evenAdd to return (Integer | even($out))
-                - switch to type props
-                - switch to using refinement definition of addition rather than separate evenadd function" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Tests refinement types with type properties
+                  TODO: Convert evenAdd to return (Integer | even($out)), switch to type props, switch to using refinement definition of addition rather than separate evenadd function
+                  - Convert evenAdd to check | even(a) && even(b)
+                  - Convert evenAdd to return (Integer | even($out))
+                  - switch to type props
+                  - switch to using refinement definition of addition rather than separate evenadd function"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "evenAdd(a: Integer_even, b: Integer_even) -> Integer_even = a + b" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "evenAdd(a: Integer_even, b: Integer_even) -> Integer_even = a + b"
+                }
             )
         ]
     }

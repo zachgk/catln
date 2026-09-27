@@ -19,8 +19,8 @@ Prgm
                 ( "/Tagged"
                 , ObjectMapItem
                     { omiDecls =
-                        [ Tagged( Value /name -> /Data/String )
-                            ( Value /tags -> ∀/Data/List[ /T=/Data/String ] )
+                        [ Tagged( Value /name -> ∀/Data/String )
+                            ( Value /tags -> ∀/Data/List[ /T=∀/Data/String ] )
                         , /Tagged
                             ( Value name= CStr
                                 { csValue = "two of the same" }

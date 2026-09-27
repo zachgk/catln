@@ -379,13 +379,17 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Tests the various integer arithmetic operations" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Tests the various integer arithmetic operations"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Adding zero leaves a number alone, whatever number it is. Written as a [#test] rather than an
-                [#assert] on a single value, so the test engine generates the inputs and the webdocs show how many
-                it got through." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Adding zero leaves a number alone, whatever number it is. Written as a [#test] rather than an
+                  [#assert] on a single value, so the test engine generates the inputs and the webdocs show how many
+                  it got through."
+                }
             )
         ]
     }

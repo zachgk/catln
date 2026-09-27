@@ -62,7 +62,9 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Tests using the conditions if and else guards for arrows" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Tests using the conditions if and else guards for arrows"
+                }
             )
         ]
     }

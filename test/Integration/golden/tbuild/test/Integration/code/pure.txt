@@ -64,15 +64,21 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Cross-module check that [pure] (declared over [Monad] in stack/core/monad.ct) dispatches by the" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Cross-module check that [pure] (declared over [Monad] in stack/core/monad.ct) dispatches by the"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "call site's expected type: the same call [pure(v= ...)] builds a [Some] or a singleton [Cons]" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "call site's expected type: the same call [pure(v= ...)] builds a [Some] or a singleton [Cons]"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "depending only on the caller's declared return type (return-type-directed dispatch)." }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "depending only on the caller's declared return type (return-type-directed dispatch)."
+                }
             )
         ]
     }

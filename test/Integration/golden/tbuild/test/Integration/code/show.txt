@@ -29,8 +29,9 @@ Prgm
                                 )
                             ,
                                 ( /operator==
-                                    ( /r=/Data/String
-                                    , /l=/Data/String
+                                    ( /r=/Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    , /l=∀/Data/String
                                     ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
                                     ( /this=∀/Data/Algebra/Eq
                                     , /other=∀/Data/Algebra/Eq
@@ -39,16 +40,18 @@ Prgm
                             , []
                             ) = /operator==
                             ( EAppArg
-                                { eaaArg = Value /l -> /Data/String =
+                                { eaaArg = Value /l -> ∀/Data/String =
                                     ( /Data/toString
                                         ( EAppArg
                                             { eaaArg = Value /this -> /Data/Primitive/Integer = 1 }
-                                        ) ↦ /Data/String
+                                        ) ↦ ∀/Data/String
                                     )
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /r -> /Data/String = "1" }
+                                { eaaArg = Value /r -> /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "1"
+                                }
                             )
                         ]
                     }
@@ -62,7 +65,9 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "Tests the toString method, later will be the Show class" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "Tests the toString method, later will be the Show class"
+                }
             )
         ]
     }

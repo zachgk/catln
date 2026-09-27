@@ -147,15 +147,21 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "The intlist tests recursive data structures without type variables" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "The intlist tests recursive data structures without type variables"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "operator+:(Integer l, ConsList r) = Cons(head=l, tail=r)" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "operator+:(Integer l, ConsList r) = Cons(head=l, tail=r)"
+                }
             )
         , /Catln/#md
             ( EAppArg
-                { eaaArg = Value /text -> /Data/String = "TODO: Fix example below which should work without explicit return value" }
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "TODO: Fix example below which should work without explicit return value"
+                }
             )
         ]
     }
