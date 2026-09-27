@@ -64,9 +64,6 @@ module(Data/List)
     >>> 0
   > /Data/List/foldl(lst= [1, 2], fn(acc, v)= acc ++ "x", init= "s")
     >>> sxx
-  # TODO: [append] and [reversed] below are folds too and are still their own two-arm recursions.
-    [reversed] is a [foldl] with [Cons] as the step, and [append] is what [mmap] is built on, so
-    rewriting it moves the whole [Monad] instance with it.
   # ## Summing
   sum(lst -> /Data/List[$T -> Integer]) -> Integer
     # [sum] adds a list of [Integer]s: [foldr] with addition, starting from zero.
@@ -176,15 +173,10 @@ module(Data/List)
     container — [fn(v)= v] forces both the monad variable and the element variable to [ConsList].
   # ## Reversing
   reversed(lst -> /Data/List) -> /Data/List
-    # [reversed] returns a list with its items in the opposite order. Since there is no
-      list-append operator, it is built with [reverseOnto], which moves items one at a time onto an
-      accumulator that starts empty — each [head] is prepended to the growing result, which leaves
-      the accumulator holding the reversal once [lst] is exhausted.
-  reversed(lst) =
-    reverseOnto(lst -> ConsList, acc -> ConsList) -> ConsList
-    reverseOnto(lst= Nil, acc)= acc
-    reverseOnto(lst= Cons(head, tail), acc)= reverseOnto(lst= tail, acc= Cons(head= head, tail= acc))
-    reverseOnto(lst= lst, acc= Nil)
+    # [reversed] returns a list with its items in the opposite order. It is a [foldl] with [Cons]
+      as the step: walking from the left, each item is prepended to an accumulator that starts
+      empty, so the first item ends up last.
+  reversed(lst)= foldl(lst= lst, fn(acc, v)= Cons(head= v, tail= acc), init= Nil)
 
   > /Data/List/reversed(lst= [1, 2, 3])
     >>> [3, 2, 1]
@@ -321,11 +313,10 @@ module(Data/List)
   [mmap] over a [ConsList] is concatMap: the function returns a whole list for each element, and
   the results are appended in order.
 module(Data/List)
-  # [append] joins two lists in order — the recursive structural join (it recurses through itself
-  # so the recursion stays a concrete arrow).
+  # [append] joins two lists in order. It is a [foldr] with [Cons] as the step, starting from [b]
+  # rather than [Nil], so the items of [a] are prepended onto [b] from the right.
   append(a -> ConsList[$T -> $_T], b -> ConsList[$T -> $_T]) -> ConsList[$T -> $_T]
-  append(a= Nil, b)= b
-  append(a= Cons(head, tail), b)= Cons(head= head, tail= append(a= tail, b= b))
+  append(a, b)= foldr(lst= a, fn(acc, v)= Cons(head= v, tail= acc), init= b)
 module(Data)
   every(/Data/List/ConsList[$T -> $_T], isa= [/Data/Monad])
 module(Data/List)

@@ -1082,18 +1082,7 @@ Prgm
                                             { eaaArg = /fn
                                                 ( EAppArg { eaaArg = Value /v } )
                                             }
-                                        ) ↦ UnionType
-                                        ( Just
-                                            ( PredClass /Data/List/ConsList[ /T=TopType ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/List/Cons[ /T=TopType ]
-                                            ( /head=TopType
-                                            , /tail=∀/Data/List/ConsList[ /T=TopType ]
-                                            )
-                                        , []
-                                        )
+                                        ) ↦ ∀/Data/List/ConsList[ /T=TopType ]
                                     )
                                 }
                             ) -> /Catln/Doc/Show/Steps
